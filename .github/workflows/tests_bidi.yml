@@ -26,8 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # TODO: add Firefox
-        channel: [bidi-chrome-stable]
+        channel: [bidi-chromium, bidi-firefox-beta]
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -38,5 +37,8 @@ jobs:
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
     - run: npm run build
     - run: npx playwright install --with-deps chromium
+      if: matrix.channel == 'bidi-chromium'
+    - run: npx -y @puppeteer/browsers install firefox@beta
+      if: matrix.channel == 'bidi-firefox-beta'
     - name: Run tests
       run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run biditest -- --project=${{ matrix.channel }}*

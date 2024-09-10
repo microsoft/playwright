@@ -63,20 +63,8 @@ export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
 }
 
 export function serializeError(error: Error | any): TestInfoError {
-  if (error instanceof Error) {
-    const result: TestInfoError = filterStackTrace(error);
-    if ('matcherResult' in error && error.matcherResult) {
-      const matcherResult = (error.matcherResult as TestInfoError['matcherResult'])!;
-      result.matcherResult = {
-        pass: matcherResult.pass,
-        name: matcherResult.name,
-        expected: matcherResult.expected,
-        actual: matcherResult.actual,
-        timeout: matcherResult.timeout,
-      };
-    }
-    return result;
-  }
+  if (error instanceof Error)
+    return filterStackTrace(error);
   return {
     value: util.inspect(error)
   };
@@ -307,8 +295,23 @@ function folderIsModule(folder: string): boolean {
   return require(packageJsonPath).type === 'module';
 }
 
-// This follows the --moduleResolution=bundler strategy from tsc.
-// https://devblogs.microsoft.com/typescript/announcing-typescript-5-0-beta/#moduleresolution-bundler
+const packageJsonMainFieldCache = new Map<string, string | undefined>();
+
+function getMainFieldFromPackageJson(packageJsonPath: string) {
+  if (!packageJsonMainFieldCache.has(packageJsonPath)) {
+    let mainField: string | undefined;
+    try {
+      mainField = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')).main;
+    } catch {
+    }
+    packageJsonMainFieldCache.set(packageJsonPath, mainField);
+  }
+  return packageJsonMainFieldCache.get(packageJsonPath);
+}
+
+// This method performs "file extension subsitution" to find the ts, js or similar source file
+// based on the import specifier, which might or might not have an extension. See TypeScript docs:
+// https://www.typescriptlang.org/docs/handbook/modules/reference.html#file-extension-substitution.
 const kExtLookups = new Map([
   ['.js', ['.jsx', '.ts', '.tsx']],
   ['.jsx', ['.tsx']],
@@ -316,7 +319,7 @@ const kExtLookups = new Map([
   ['.mjs', ['.mts']],
   ['', ['.js', '.ts', '.jsx', '.tsx', '.cjs', '.mjs', '.cts', '.mts']],
 ]);
-export function resolveImportSpecifierExtension(resolved: string): string | undefined {
+function resolveImportSpecifierExtension(resolved: string): string | undefined {
   if (fileExists(resolved))
     return resolved;
 
@@ -330,13 +333,45 @@ export function resolveImportSpecifierExtension(resolved: string): string | unde
     }
     break;  // Do not try '' when a more specific extension like '.jsx' matched.
   }
+}
+
+// This method resolves directory imports and performs "file extension subsitution".
+// It is intended to be called after the path mapping resolution.
+//
+// Directory imports follow the --moduleResolution=bundler strategy from tsc.
+// https://www.typescriptlang.org/docs/handbook/modules/reference.html#directory-modules-index-file-resolution
+// https://www.typescriptlang.org/docs/handbook/modules/reference.html#bundler
+//
+// See also Node.js "folder as module" behavior:
+// https://nodejs.org/dist/latest-v20.x/docs/api/modules.html#folders-as-modules.
+export function resolveImportSpecifierAfterMapping(resolved: string, afterPathMapping: boolean): string | undefined {
+  const resolvedFile = resolveImportSpecifierExtension(resolved);
+  if (resolvedFile)
+    return resolvedFile;
 
   if (dirExists(resolved)) {
+    const packageJsonPath = path.join(resolved, 'package.json');
+
+    if (afterPathMapping) {
+      // Most notably, the module resolution algorithm is not performed after the path mapping.
+      // This means no node_modules lookup or package.json#exports.
+      //
+      // Only the "folder as module" Node.js behavior is respected:
+      //  - consult `package.json#main`;
+      //  - look for `index.js` or similar.
+      const mainField = getMainFieldFromPackageJson(packageJsonPath);
+      const mainFieldResolved = mainField ? resolveImportSpecifierExtension(path.resolve(resolved, mainField)) : undefined;
+      return mainFieldResolved || resolveImportSpecifierExtension(path.join(resolved, 'index'));
+    }
+
     // If we import a package, let Node.js figure out the correct import based on package.json.
-    if (fileExists(path.join(resolved, 'package.json')))
+    // This also covers the "main" field for "folder as module".
+    if (fileExists(packageJsonPath))
       return resolved;
 
-    // Otherwise, try to find a corresponding index file.
+    // Implement the "folder as module" Node.js behavior.
+    // Note that we do not delegate to Node.js, because we support this for ESM as well,
+    // following the TypeScript "bundler" mode.
     const dirImport = path.join(resolved, 'index');
     return resolveImportSpecifierExtension(dirImport);
   }

@@ -63,8 +63,8 @@ if (executablePath && !process.env.TEST_WORKER_INDEX)
   console.error(`Using executable at ${executablePath}`);
 const testIgnore: RegExp[] = [];
 const browserToChannels = {
-  '_bidiChromium': ['bidi-chrome-stable'],
-  '_bidiFirefox': ['bidi-firefox-stable'],
+  '_bidiChromium': ['bidi-chromium', 'bidi-chrome-canary', 'bidi-chrome-stable'],
+  '_bidiFirefox': ['bidi-firefox-nightly', 'bidi-firefox-beta', 'bidi-firefox-stable'],
 };
 for (const [key, channels] of Object.entries(browserToChannels)) {
   const browserName: any = key;
