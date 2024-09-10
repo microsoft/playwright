@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/experimental-ct-react';
 import Button from '@/components/Button';
 import EmptyFragment from '@/components/EmptyFragment';
 import { ComponentAsProp } from '@/components/ComponentAsProp';
+import DefaultChildren from '@/components/DefaultChildren';
 
 test('render props', async ({ mount }) => {
   const component = await mount(<Button title="Submit" />);
@@ -30,4 +31,18 @@ test('render an empty component', async ({ mount, page }) => {
   expect(await component.allTextContents()).toEqual(['']);
   expect(await component.textContent()).toBe('');
   await expect(component).toHaveText('');
+});
+
+function MyInlineComponent({ value }: { value: string }) {
+  return <>Hello {value}</>;
+}
+
+test('render inline component with an error', async ({ mount }) => {
+  await expect(mount(<MyInlineComponent value="Max" />)).rejects.toThrow('Component "MyInlineComponent" cannot be mounted.');
+});
+
+test('render inline component with an error if its nested', async ({ mount }) => {
+  await expect(mount(<DefaultChildren>
+    <MyInlineComponent value="Max" />
+  </DefaultChildren>)).rejects.toThrow('Component "MyInlineComponent" cannot be mounted.');
 });
