@@ -8208,7 +8208,7 @@ export interface TestInfo {
   title: string;
 
   /**
-   * The full title path starting with the project.
+   * The full title path starting with the test file name.
    */
   titlePath: Array<string>;
 
