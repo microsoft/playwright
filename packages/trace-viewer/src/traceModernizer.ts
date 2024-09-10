@@ -395,10 +395,6 @@ export class TraceModernizer {
         result.push({ ...event, monotonicTime: 0, origin: 'library' });
         continue;
       }
-      if (event.type === 'frame-snapshot') {
-        result.push({ ...event, snapshot: { ...event.snapshot, wallTime: 0 } });
-        continue;
-      }
       // Take wall and monotonic time from the first event.
       if (!this._contextEntry.wallTime && event.type === 'before')
         this._contextEntry.wallTime = event.wallTime;
