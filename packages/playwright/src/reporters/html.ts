@@ -30,7 +30,7 @@ import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
-import EmptyReporter from './empty';
+import type { ReporterV2 } from './reporterV2';
 
 type TestEntry = {
   testCase: TestCase;
@@ -55,7 +55,7 @@ type HtmlReporterOptions = {
   _isTestServer?: boolean;
 };
 
-class HtmlReporter extends EmptyReporter {
+class HtmlReporter implements ReporterV2 {
   private config!: FullConfig;
   private suite!: Suite;
   private _options: HtmlReporterOptions;
@@ -68,19 +68,22 @@ class HtmlReporter extends EmptyReporter {
   private _topLevelErrors: TestError[] = [];
 
   constructor(options: HtmlReporterOptions) {
-    super();
     this._options = options;
   }
 
-  override printsToStdio() {
+  version(): 'v2' {
+    return 'v2';
+  }
+
+  printsToStdio() {
     return false;
   }
 
-  override onConfigure(config: FullConfig) {
+  onConfigure(config: FullConfig) {
     this.config = config;
   }
 
-  override onBegin(suite: Suite) {
+  onBegin(suite: Suite) {
     const { outputFolder, open, attachmentsBaseURL, host, port } = this._resolveOptions();
     this._outputFolder = outputFolder;
     this._open = open;
@@ -122,18 +125,18 @@ class HtmlReporter extends EmptyReporter {
     return !!relativePath && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
   }
 
-  override onError(error: TestError): void {
+  onError(error: TestError): void {
     this._topLevelErrors.push(error);
   }
 
-  override async onEnd(result: FullResult) {
+  async onEnd(result: FullResult) {
     const projectSuites = this.suite.suites;
     await removeFolders([this._outputFolder]);
     const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL);
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
   }
 
-  override async onExit() {
+  async onExit() {
     if (process.env.CI || !this._buildResult)
       return;
     const { ok, singleTestId } = this._buildResult;

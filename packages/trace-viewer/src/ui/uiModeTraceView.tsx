@@ -91,7 +91,7 @@ export const TraceView: React.FC<{
       if (pollTimer.current)
         clearTimeout(pollTimer.current);
     };
-  }, [outputDir, item, setModel, counter, setCounter]);
+  }, [outputDir, item, setModel, counter, setCounter, pathSeparator]);
 
   return <Workbench
     key='workbench'
