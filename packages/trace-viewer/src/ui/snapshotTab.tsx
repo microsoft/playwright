@@ -55,7 +55,7 @@ export const SnapshotTab: React.FunctionComponent<{
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
   const [showScreenshotInsteadOfSnapshot] = useSetting('screenshot-instead-of-snapshot', false);
 
-  type Snapshot = { action: ActionTraceEvent, snapshotName: string, point?: { x: number, y: number } };
+  type Snapshot = { action: ActionTraceEvent, snapshotName: string, point?: { x: number, y: number }, hasInputTarget?: boolean };
   const { snapshots } = React.useMemo(() => {
     if (!action)
       return { snapshots: {} };
@@ -68,7 +68,7 @@ export const SnapshotTab: React.FunctionComponent<{
       beforeSnapshot = a?.afterSnapshot ? { action: a, snapshotName: a?.afterSnapshot } : undefined;
     }
     const afterSnapshot: Snapshot | undefined = action.afterSnapshot ? { action, snapshotName: action.afterSnapshot } : beforeSnapshot;
-    const actionSnapshot: Snapshot | undefined = action.inputSnapshot ? { action, snapshotName: action.inputSnapshot } : afterSnapshot;
+    const actionSnapshot: Snapshot | undefined = action.inputSnapshot ? { action, snapshotName: action.inputSnapshot, hasInputTarget: true } : afterSnapshot;
     if (actionSnapshot)
       actionSnapshot.point = action.point;
     return { snapshots: { action: actionSnapshot, before: beforeSnapshot, after: afterSnapshot } };
@@ -85,6 +85,8 @@ export const SnapshotTab: React.FunctionComponent<{
     if (snapshot.point) {
       params.set('pointX', String(snapshot.point.x));
       params.set('pointY', String(snapshot.point.y));
+      if (snapshot.hasInputTarget)
+        params.set('hasInputTarget', '1');
     }
     const snapshotUrl = new URL(`snapshot/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
     const snapshotInfoUrl = new URL(`snapshotInfo/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
@@ -95,6 +97,8 @@ export const SnapshotTab: React.FunctionComponent<{
     if (snapshot.point) {
       popoutParams.set('pointX', String(snapshot.point.x));
       popoutParams.set('pointY', String(snapshot.point.y));
+      if (snapshot.hasInputTarget)
+        params.set('hasInputTarget', '1');
     }
     const popoutUrl = new URL(`snapshot.html?${popoutParams.toString()}`, window.location.href).toString();
     return { snapshots, snapshotInfoUrl, snapshotUrl, popoutUrl, point: snapshot.point };
