@@ -38,11 +38,11 @@ function MyInlineComponent({ value }: { value: string }) {
 }
 
 test('render inline component with an error', async ({ mount }) => {
-  await expect(mount(<MyInlineComponent value="Max" />)).rejects.toThrow('JSX component was not able to get resolved');
+  await expect(mount(<MyInlineComponent value="Max" />)).rejects.toThrow('Component "MyInlineComponent" cannot be mounted.');
 });
 
 test('render inline component with an error if its nested', async ({ mount }) => {
   await expect(mount(<DefaultChildren>
     <MyInlineComponent value="Max" />
-  </DefaultChildren>)).rejects.toThrow('JSX component was not able to get resolved');
+  </DefaultChildren>)).rejects.toThrow('Component "MyInlineComponent" cannot be mounted.');
 });

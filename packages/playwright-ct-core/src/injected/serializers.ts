@@ -68,8 +68,9 @@ export function transformObject(value: any, mapping: (v: any) => { result: any }
   }
   if (value?.__pw_type === 'jsx' && typeof value.type === 'function') {
     throw new Error([
-      'JSX component was not able to get resolved.',
-      'Make sure to define components outside of your test file.'
+      `Component "${value.type.name}" cannot be mounted.`,
+      `Most likely, this component is defined in the test file. Create a test story instead.`,
+      `For more information, see https://playwright.dev/docs/test-components#test-stories.`,
     ].join('\n'));
   }
   const result2: any = {};
