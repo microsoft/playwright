@@ -23,7 +23,6 @@ import GitHubReporter from '../reporters/github';
 import HtmlReporter from '../reporters/html';
 import JSONReporter from '../reporters/json';
 import JUnitReporter from '../reporters/junit';
-import LastRunReporter from '../reporters/lastrun';
 import LineReporter from '../reporters/line';
 import ListReporter from '../reporters/list';
 import MarkdownReporter from '../reporters/markdown';
@@ -77,13 +76,6 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     else if (mode !== 'merge')
       reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter());
   }
-
-  if (!isTestServer && (mode === 'test' || mode === 'merge')) {
-    // If we are not in the test server, always add a last-run reporter.
-    const lastRunOutputFile = config.lastRunFile ?? config.projects.length >= 0 ? path.join(config.projects[0].project.outputDir, '.last-run.json') : undefined;
-    reporters.push(new LastRunReporter({ ...runOptions, outputFile: lastRunOutputFile }));
-  }
-
   return reporters;
 }
 

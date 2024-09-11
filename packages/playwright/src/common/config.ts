@@ -24,7 +24,7 @@ import { getPackageJsonPath, mergeObjects } from '../util';
 import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
 import type { FullConfig, FullProject } from '../../types/testReporter';
-import type { LastRunInfo } from '../runner/runner';
+import { LastRunReporter } from '../runner/lastRun';
 
 export type ConfigLocation = {
   resolvedConfigFile?: string;
@@ -59,7 +59,7 @@ export class FullConfigInternal {
   defineConfigWasUsed = false;
   shardingMode: ShardingMode;
   lastRunFile: string | undefined;
-  lastRunInfo?: LastRunInfo;
+  readonly lastRunReporter: LastRunReporter;
 
   constructor(location: ConfigLocation, userConfig: Config, configCLIOverrides: ConfigCLIOverrides) {
     if (configCLIOverrides.projects && userConfig.projects)
@@ -135,6 +135,8 @@ export class FullConfigInternal {
     resolveProjectDependencies(this.projects);
     this._assignUniqueProjectIds(this.projects);
     this.config.projects = this.projects.map(p => p.project);
+
+    this.lastRunReporter = new LastRunReporter(this);
   }
 
   private _assignUniqueProjectIds(projects: FullProjectInternal[]) {

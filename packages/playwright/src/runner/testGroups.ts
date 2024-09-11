@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { PlaywrightTestConfig } from '../../types/test';
+import type { FullConfigInternal } from '../common/config';
 import type { Suite, TestCase } from '../common/test';
-import type { LastRunInfo } from './runner';
+import type { LastRunInfo } from './lastRun';
 
 export type TestGroup = {
   workerHash: string;
@@ -132,23 +132,21 @@ export function createTestGroups(projectSuite: Suite, workers: number): TestGrou
   return result;
 }
 
-export function filterForShard(
-  mode: PlaywrightTestConfig['shardingMode'],
-  shard: { total: number, current: number },
-  testGroups: TestGroup[],
-  lastRunInfo?: LastRunInfo,
-): Set<TestGroup> {
+export async function filterForShard(config: FullConfigInternal, testGroups: TestGroup[]): Promise<Set<TestGroup>> {
   // Note that sharding works based on test groups.
   // This means parallel files will be sharded by single tests,
   // while non-parallel files will be sharded by the whole file.
   //
   // Shards are still balanced by the number of tests, not files,
   // even in the case of non-paralleled files.
-
+  const mode = config.shardingMode;
+  const shard = config.config.shard!;
   if (mode === 'round-robin')
     return filterForShardRoundRobin(shard, testGroups);
-  if (mode === 'duration-round-robin')
+  if (mode === 'duration-round-robin') {
+    const lastRunInfo = await config.lastRunReporter.lastRunInfo();
     return filterForShardRoundRobin(shard, testGroups, lastRunInfo);
+  }
   return filterForShardPartition(shard, testGroups);
 }
 
