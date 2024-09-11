@@ -24,6 +24,7 @@ import { TestRun, createTaskRunner, createTaskRunnerForClearCache, createTaskRun
 import type { FullConfigInternal } from '../common/config';
 import { affectedTestFiles } from '../transform/compilationCache';
 import { InternalReporter } from '../reporters/internalReporter';
+import { LastRunReporter } from './lastRun';
 
 type ProjectConfigWithFiles = {
   name: string;
@@ -74,10 +75,11 @@ export class Runner {
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
 
     const reporters = await createReporters(config, listOnly ? 'list' : 'test', false);
+    const lastRun = new LastRunReporter(config);
     if (config.cliLastFailed)
-      await config.lastRunReporter.filterLastFailed();
+      await lastRun.filterLastFailed();
 
-    const reporter = new InternalReporter([...reporters, config.lastRunReporter]);
+    const reporter = new InternalReporter([...reporters, lastRun]);
     const taskRunner = listOnly ? createTaskRunnerForList(
         config,
         reporter,

@@ -16,7 +16,7 @@
 
 import type { FullConfigInternal } from '../common/config';
 import type { Suite, TestCase } from '../common/test';
-import type { LastRunInfo } from './lastRun';
+import { LastRunReporter, type LastRunInfo } from './lastRun';
 
 export type TestGroup = {
   workerHash: string;
@@ -144,7 +144,8 @@ export async function filterForShard(config: FullConfigInternal, testGroups: Tes
   if (mode === 'round-robin')
     return filterForShardRoundRobin(shard, testGroups);
   if (mode === 'duration-round-robin') {
-    const lastRunInfo = await config.lastRunReporter.lastRunInfo();
+    const lastRun = new LastRunReporter(config);
+    const lastRunInfo = await lastRun.lastRunInfo();
     return filterForShardRoundRobin(shard, testGroups, lastRunInfo);
   }
   return filterForShardPartition(shard, testGroups);
