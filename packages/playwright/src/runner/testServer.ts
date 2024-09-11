@@ -23,7 +23,7 @@ import type * as reporterTypes from '../../types/testReporter';
 import { affectedTestFiles, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import type { ConfigLocation, FullConfigInternal } from '../common/config';
 import { createErrorCollectingReporter, createReporterForTestServer, createReporters } from './reporters';
-import { TestRun, createTaskRunnerForList, createTaskRunnerForTestServer, createTaskRunnerForWatchSetup, createTaskRunnerForListFiles, createTaskRunnerForDevServer, createTaskRunnerForRelatedTestFiles, createTaskRunnerForClearCache } from './tasks';
+import { TestRun, runTasks, createLoadTask, createRunTestsTasks, createReportBeginTask, createListFilesTask, runTasksDeferCleanup, createClearCacheTask, createGlobalSetupTasks, createStartDevServerTask } from './tasks';
 import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
 import { SigIntWatcher } from './sigIntWatcher';
@@ -150,17 +150,13 @@ export class TestServerDispatcher implements TestServerInterface {
     if (!config)
       return { status: 'failed', report };
 
-    const taskRunner = createTaskRunnerForWatchSetup(config, reporter);
-    reporter.onConfigure(config.config);
-    const testRun = new TestRun(config);
-    const { status, cleanup: globalCleanup } = await taskRunner.runDeferCleanup(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
-    if (status !== 'passed') {
-      await globalCleanup();
-      return { report, status };
-    }
-    this._globalSetup = { cleanup: globalCleanup, report };
+    const { status, cleanup } = await runTasksDeferCleanup(new TestRun(config, reporter), [
+      ...createGlobalSetupTasks(config),
+    ]);
+    if (status !== 'passed')
+      await cleanup();
+    else
+      this._globalSetup = { cleanup, report };
     return { report, status };
   }
 
@@ -179,17 +175,14 @@ export class TestServerDispatcher implements TestServerInterface {
     if (!config)
       return { report, status: 'failed' };
 
-    const taskRunner = createTaskRunnerForDevServer(config, reporter, 'out-of-process', false);
-    const testRun = new TestRun(config);
-    reporter.onConfigure(config.config);
-    const { status, cleanup } = await taskRunner.runDeferCleanup(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
-    if (status !== 'passed') {
+    const { status, cleanup } = await runTasksDeferCleanup(new TestRun(config, reporter), [
+      createLoadTask('out-of-process', { failOnLoadErrors: true, filterOnly: false }),
+      createStartDevServerTask(),
+    ]);
+    if (status !== 'passed')
       await cleanup();
-      return { report, status };
-    }
-    this._devServer = { cleanup, report };
+    else
+      this._devServer = { cleanup, report };
     return { report, status };
   }
 
@@ -205,13 +198,9 @@ export class TestServerDispatcher implements TestServerInterface {
     const config = await this._loadConfigOrReportError(reporter);
     if (!config)
       return;
-
-    const taskRunner = createTaskRunnerForClearCache(config, reporter, 'out-of-process', false);
-    const testRun = new TestRun(config);
-    reporter.onConfigure(config.config);
-    const status = await taskRunner.run(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
+    await runTasks(new TestRun(config, reporter), [
+      createClearCacheTask(config),
+    ]);
   }
 
   async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {
@@ -221,12 +210,10 @@ export class TestServerDispatcher implements TestServerInterface {
       return { status: 'failed', report };
 
     config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
-    const taskRunner = createTaskRunnerForListFiles(config, reporter);
-    reporter.onConfigure(config.config);
-    const testRun = new TestRun(config);
-    const status = await taskRunner.run(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
+    const status = await runTasks(new TestRun(config, reporter), [
+      createListFilesTask(),
+      createReportBeginTask(),
+    ]);
     return { report, status };
   }
 
@@ -264,12 +251,10 @@ export class TestServerDispatcher implements TestServerInterface {
     config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
     config.cliListOnly = true;
 
-    const taskRunner = createTaskRunnerForList(config, reporter, 'out-of-process', { failOnLoadErrors: false });
-    const testRun = new TestRun(config);
-    reporter.onConfigure(config.config);
-    const status = await taskRunner.run(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
+    const status = await runTasks(new TestRun(config, reporter), [
+      createLoadTask('out-of-process', { failOnLoadErrors: false, filterOnly: false }),
+      createReportBeginTask(),
+    ]);
     return { config, report, reporter, status };
   }
 
@@ -344,13 +329,12 @@ export class TestServerDispatcher implements TestServerInterface {
 
     const configReporters = await createReporters(config, 'test', true);
     const reporter = new InternalReporter([...configReporters, wireReporter]);
-    const taskRunner = createTaskRunnerForTestServer(config, reporter);
-    const testRun = new TestRun(config);
-    reporter.onConfigure(config.config);
     const stop = new ManualPromise();
-    const run = taskRunner.run(testRun, 0, stop).then(async status => {
-      await reporter.onEnd({ status });
-      await reporter.onExit();
+    const tasks = [
+      createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, doNotRunDepsOutsideProjectFilter: true }),
+      ...createRunTestsTasks(config),
+    ];
+    const run = runTasks(new TestRun(config, reporter), tasks, 0, stop).then(async status => {
       this._testRun = undefined;
       return status;
     });
@@ -373,13 +357,9 @@ export class TestServerDispatcher implements TestServerInterface {
     const config = await this._loadConfigOrReportError(reporter);
     if (!config)
       return { errors: errorReporter.errors(), testFiles: [] };
-
-    const taskRunner = createTaskRunnerForRelatedTestFiles(config, reporter, 'out-of-process', false);
-    const testRun = new TestRun(config);
-    reporter.onConfigure(config.config);
-    const status = await taskRunner.run(testRun, 0);
-    await reporter.onEnd({ status });
-    await reporter.onExit();
+    const status = await runTasks(new TestRun(config, reporter), [
+      createLoadTask('out-of-process', { failOnLoadErrors: true, filterOnly: false, populateDependencies: true }),
+    ]);
     if (status !== 'passed')
       return { errors: errorReporter.errors(), testFiles: [] };
     return { testFiles: affectedTestFiles(params.files) };
