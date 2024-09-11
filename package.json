@@ -93,6 +93,7 @@
     "eslint-plugin-react-hooks": "^4.6.2",
     "formidable": "^2.1.1",
     "immutable": "^4.3.7",
+    "knip": "^5.30.1",
     "license-checker": "^25.0.1",
     "mime": "^3.0.0",
     "node-stream-zip": "^1.15.0",
