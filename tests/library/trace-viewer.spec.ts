@@ -1496,3 +1496,28 @@ test('should handle case where neither snapshots nor screenshots exist', async (
   await expect(screenshot).not.toBeVisible();
 });
 
+test('should show only one pointer with multilevel iframes', async ({ page, runAndTrace, server, browserName }) => {
+  test.fixme(browserName !== 'chromium', 'Elements in iframe are not marked');
+
+  server.setRoute('/level-0.html', (req, res) => {
+    res.writeHead(200);
+    res.end(`<iframe src="/level-1.html" style="position: absolute; left: 100px"></iframe>`);
+  });
+  server.setRoute('/level-1.html', (req, res) => {
+    res.writeHead(200);
+    res.end(`<iframe src="/level-2.html"></iframe>`);
+  });
+  server.setRoute('/level-2.html', (req, res) => {
+    res.writeHead(200);
+    res.end(`<button>Click me</button>`);
+  });
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/level-0.html');
+    await page.frameLocator('iframe').frameLocator('iframe').locator('button').click({ position: { x: 5, y: 5 } });
+  });
+  const snapshotFrame = await traceViewer.snapshotFrame('locator.click');
+  await expect.soft(snapshotFrame.locator('x-pw-pointer')).not.toBeAttached();
+  await expect.soft(snapshotFrame.frameLocator('iframe').locator('x-pw-pointer')).not.toBeAttached();
+  await expect.soft(snapshotFrame.frameLocator('iframe').frameLocator('iframe').locator('x-pw-pointer')).toBeVisible();
+});
