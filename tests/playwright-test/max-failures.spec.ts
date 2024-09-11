@@ -76,8 +76,8 @@ test('max-failures should work with retries', async ({ runInlineTest }) => {
     `,
   }, { 'max-failures': 2, 'retries': 4 });
   expect(result.exitCode).toBe(1);
-  expect(result.failed).toBe(1);
-  expect(result.output.split('\n').filter(l => l.includes('Received:')).length).toBe(2);
+  expect(result.failed).toBe(2);
+  expect(result.output.split('\n').filter(l => l.includes('Received:')).length).toBe(2 * (4 + 1)); // 2 tests * (4 retries + 1 original)
 });
 
 test('max-failures should stop workers', async ({ runInlineTest }) => {
