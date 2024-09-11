@@ -22,7 +22,7 @@ import { projectExpectationPath } from './expectationUtil';
 
 type ReporterOptions = {
   rebase?: boolean;
-}
+};
 
 class ExpectationReporter implements Reporter {
   private _suite: Suite;

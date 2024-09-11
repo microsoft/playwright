@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { TestInfo } from 'playwright/test';
+import type { TestInfo } from 'playwright/test';
 
 type ShouldSkipPredicate = (info: TestInfo) => boolean;
 
@@ -42,7 +42,7 @@ export async function parseBidiExpectations(projectName: string): Promise<Should
     const key = [info.project.name, ...info.titlePath].join(' › ');
     const expectation = expectationsMap.get(key);
     return expectation === 'fail' || expectation === 'timeout';
-  }
+  };
 }
 
 export function projectExpectationPath(project: string): string {
