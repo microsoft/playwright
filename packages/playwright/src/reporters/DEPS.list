@@ -6,6 +6,7 @@
 
 [merge.ts]
 ../runner/reporters.ts
+../runner/lastRun.ts
 
 [internalReporter.ts]
 ../transform/babelBundle.ts
