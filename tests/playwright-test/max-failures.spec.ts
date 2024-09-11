@@ -76,8 +76,8 @@ test('max-failures should work with retries', async ({ runInlineTest }) => {
     `,
   }, { 'max-failures': 2, 'retries': 4 });
   expect(result.exitCode).toBe(1);
-  expect(result.failed).toBe(1);
-  expect(result.output.split('\n').filter(l => l.includes('Received:')).length).toBe(2);
+  expect(result.failed).toBe(2);
+  expect(result.output.split('\n').filter(l => l.includes('Received:')).length).toBe(2 * (4 + 1)); // 2 tests * (4 retries + 1 original)
 });
 
 test('max-failures should stop workers', async ({ runInlineTest }) => {
@@ -180,4 +180,32 @@ test('max-failures should work across phases', async ({ runInlineTest }) => {
   expect(result.output).toContain('running b');
   expect(result.output).toContain('running c');
   expect(result.output).not.toContain('running d');
+});
+
+test('max-failures should not consider retries as failures', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        maxFailures: 10,
+        retries: 10,
+      };
+    `,
+    'example.spec.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('I fail 9 times 1', () => {
+        if (test.info().retry < 9)
+          throw new Error('failing intentionally');
+      });
+
+      test('I fail 9 times 2', () => {
+        if (test.info().retry < 9)
+          throw new Error('failing intentionally');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.failed).toBe(0);
+  expect(result.flaky).toBe(2);
+  expect(result.passed).toBe(0);
 });
