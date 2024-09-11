@@ -2,6 +2,7 @@
 
 import { test, expect } from '@playwright/test';
 import type { Page } from '@playwright/test';
+
 test.describe.configure({ mode: 'parallel' });
 
 test.beforeEach(async ({ page }) => {
