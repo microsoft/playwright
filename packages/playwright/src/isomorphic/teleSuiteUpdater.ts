@@ -77,6 +77,7 @@ export class TeleSuiteUpdater {
         // To work around that, have a dedicated per-run receiver that will only have
         // suite for a single test run, and hence will have correct total.
         this._lastRunReceiver = new TeleReporterReceiver({
+          version: () => 'v2',
           onBegin: (suite: reporterTypes.Suite) => {
             this._lastRunTestCount = suite.allTests().length;
             this._lastRunReceiver = undefined;
@@ -127,20 +128,13 @@ export class TeleSuiteUpdater {
 
       onError: (error: reporterTypes.TestError) => this._handleOnError(error),
 
-      printsToStdio: () => {
-        return false;
-      },
-
-      onStdOut: () => { },
-      onStdErr: () => { },
-      onExit: () => { },
-      onStepBegin: () => { },
-      onStepEnd: () => { },
+      printsToStdio: () => false,
     };
   }
 
   processGlobalReport(report: any[]) {
     const receiver = new TeleReporterReceiver({
+      version: () => 'v2',
       onConfigure: (c: reporterTypes.FullConfig) => {
         this.config = c;
       },

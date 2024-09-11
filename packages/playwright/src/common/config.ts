@@ -54,6 +54,7 @@ export class FullConfigInternal {
   cliListOnly = false;
   cliPassWithNoTests?: boolean;
   cliFailOnFlakyTests?: boolean;
+  cliLastFailed?: boolean;
   testIdMatcher?: Matcher;
   defineConfigWasUsed = false;
   shardingMode: ShardingMode;

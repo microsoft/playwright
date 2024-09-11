@@ -19,7 +19,7 @@
 import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
-import { Runner, readLastRunInfo } from './runner/runner';
+import { Runner } from './runner/runner';
 import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
@@ -208,15 +208,6 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   if (!config)
     return;
 
-  if (opts.lastFailed || config.shardingMode === 'duration-round-robin') {
-    const lastRunInfo = await readLastRunInfo(config);
-    if (opts.lastFailed)
-      config.testIdMatcher = id => lastRunInfo.failedTests.includes(id);
-
-    if (config.shardingMode === 'duration-round-robin')
-      config.lastRunInfo = lastRunInfo;
-  }
-
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
   config.cliOnlyChanged = opts.onlyChanged === true ? 'HEAD' : opts.onlyChanged;
@@ -225,6 +216,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliProjectFilter = opts.project || undefined;
   config.cliPassWithNoTests = !!opts.passWithNoTests;
   config.cliFailOnFlakyTests = !!opts.failOnFlakyTests;
+  config.cliLastFailed = !!opts.lastFailed;
 
   const runner = new Runner(config);
   const status = await runner.runAllTests();

@@ -24,6 +24,8 @@ import { baseTest } from './baseTest';
 import { type RemoteServerOptions, type PlaywrightServer, RunServer, RemoteServer } from './remoteServer';
 import type { Log } from '../../packages/trace/src/har';
 import { parseHar } from '../config/utils';
+import { parseBidiExpectations as parseBidiProjectExpectations } from '../bidi/expectationUtil';
+import type { TestInfo } from '@playwright/test';
 
 export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserVersion: string;
@@ -33,6 +35,7 @@ export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserType: BrowserType;
   isAndroid: boolean;
   isElectron: boolean;
+  bidiTestSkipPredicate: (info: TestInfo) => boolean;
 };
 
 interface StartRemoteServer {
@@ -46,6 +49,7 @@ type BrowserTestTestFixtures = PageTestFixtures & {
   startRemoteServer: StartRemoteServer;
   contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
   pageWithHar(options?: { outputPath?: string, content?: 'embed' | 'attach' | 'omit', omitContent?: boolean }): Promise<{ context: BrowserContext, page: Page, getLog: () => Promise<Log>, getZip: () => Promise<Map<string, Buffer>> }>
+  autoSkipBidiTest: void;
 };
 
 const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>({
@@ -165,7 +169,18 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       };
     };
     await use(pageWithHar);
-  }
+  },
+
+  bidiTestSkipPredicate: [async ({ }, run) => {
+    const filter = await parseBidiProjectExpectations(test.info().project.name);
+    await run(filter);
+  }, { scope: 'worker' }],
+
+  autoSkipBidiTest: [async ({ bidiTestSkipPredicate }, run) => {
+    if (bidiTestSkipPredicate(test.info()))
+      test.skip(true);
+    await run();
+  }, { auto: true, scope: 'test' }],
 });
 
 export const playwrightTest = test;

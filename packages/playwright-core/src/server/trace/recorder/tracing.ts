@@ -472,7 +472,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
             sha1,
             width: params.width,
             height: params.height,
-            timestamp: monotonicTime()
+            timestamp: monotonicTime(),
+            frameSwapWallTime: params.frameSwapWallTime,
           };
           // Make sure to write the screencast frame before adding a reference to it.
           this._appendResource(sha1, params.buffer);

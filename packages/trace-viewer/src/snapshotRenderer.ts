@@ -346,6 +346,8 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
       if (search.get('pointX') && search.get('pointY')) {
         const pointX = +search.get('pointX')!;
         const pointY = +search.get('pointY')!;
+        const hasInputTarget = search.has('hasInputTarget');
+        const isTopFrame = window.location.pathname.match(/\/page@[a-z0-9]+$/);
         const hasTargetElements = targetElements.length > 0;
         const roots = document.documentElement ? [document.documentElement] : [];
         for (const target of (hasTargetElements ? targetElements : roots)) {
@@ -370,7 +372,8 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
             pointElement.style.left = centerX + 'px';
             pointElement.style.top = centerY + 'px';
             // "Warning symbol" indicates that action point is not 100% correct.
-            if (Math.abs(centerX - pointX) >= 10 || Math.abs(centerY - pointY) >= 10) {
+            // Note that action point is relative to the top frame, so we can only compare in the top frame.
+            if (isTopFrame && (Math.abs(centerX - pointX) >= 10 || Math.abs(centerY - pointY) >= 10)) {
               const warningElement = document.createElement('x-pw-pointer-warning');
               warningElement.textContent = '⚠';
               warningElement.style.fontSize = '19px';
@@ -380,13 +383,14 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
               pointElement.appendChild(warningElement);
               pointElement.setAttribute('title', kPointerWarningTitle);
             }
-          } else {
+            document.documentElement.appendChild(pointElement);
+          } else if (isTopFrame && !hasInputTarget) {
             // For actions without a target element, e.g. page.mouse.move(),
-            // show the point at the recorder location.
+            // show the point at the recorded location, which is relative to the top frame.
             pointElement.style.left = pointX + 'px';
             pointElement.style.top = pointY + 'px';
+            document.documentElement.appendChild(pointElement);
           }
-          document.documentElement.appendChild(pointElement);
         }
       }
     };

@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import type { FullResult, TestError } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
@@ -26,6 +24,7 @@ import { TestRun, createTaskRunner, createTaskRunnerForClearCache, createTaskRun
 import type { FullConfigInternal } from '../common/config';
 import { affectedTestFiles } from '../transform/compilationCache';
 import { InternalReporter } from '../reporters/internalReporter';
+import { LastRunReporter } from './lastRun';
 
 type ProjectConfigWithFiles = {
   name: string;
@@ -76,7 +75,11 @@ export class Runner {
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
 
     const reporters = await createReporters(config, listOnly ? 'list' : 'test', false);
-    const reporter = new InternalReporter(reporters);
+    const lastRun = new LastRunReporter(config);
+    if (config.cliLastFailed)
+      await lastRun.filterLastFailed();
+
+    const reporter = new InternalReporter([...reporters, lastRun]);
     const taskRunner = listOnly ? createTaskRunnerForList(
         config,
         reporter,
@@ -139,23 +142,4 @@ export class Runner {
     await reporter.onExit();
     return { status };
   }
-}
-
-export type LastRunInfo = {
-  status: FullResult['status'];
-  failedTests: string[];
-  testDurations?: { [testId: string]: number };
-};
-
-export async function readLastRunInfo(config: FullConfigInternal): Promise<LastRunInfo> {
-  const [project] = filterProjects(config.projects, config.cliProjectFilter);
-  if (!project)
-    return { status: 'passed', failedTests: [] };
-  const outputDir = project.project.outputDir;
-  try {
-    const lastRunReportFile = config.lastRunFile || path.join(outputDir, '.last-run.json');
-    return JSON.parse(await fs.promises.readFile(lastRunReportFile, 'utf8')) as LastRunInfo;
-  } catch {
-  }
-  return { status: 'passed', failedTests: [] };
 }
