@@ -147,13 +147,13 @@ export async function populateComponentsFromTests(componentRegistry: ComponentRe
     for (const importInfo of importList)
       componentRegistry.set(importInfo.id, importInfo);
     if (componentsByImportingFile)
-      componentsByImportingFile.set(file, importList.map(i => resolveHook(i.filename, i.importSource, true)).filter(Boolean) as string[]);
+      componentsByImportingFile.set(file, importList.map(i => resolveHook(i.filename, i.importSource)).filter(Boolean) as string[]);
   }
 }
 
 export function hasJSComponents(components: ImportInfo[]): boolean {
   for (const component of components) {
-    const importPath = resolveHook(component.filename, component.importSource, true);
+    const importPath = resolveHook(component.filename, component.importSource);
     const extname = importPath ? path.extname(importPath) : '';
     if (extname === '.js' || (importPath && !extname && fs.existsSync(importPath + '.js')))
       return true;
@@ -183,7 +183,7 @@ export function transformIndexFile(id: string, content: string, templateDir: str
   lines.push(registerSource);
 
   for (const value of importInfos.values()) {
-    const importPath = resolveHook(value.filename, value.importSource, true) || value.importSource;
+    const importPath = resolveHook(value.filename, value.importSource) || value.importSource;
     lines.push(`const ${value.id} = () => import('${importPath?.replaceAll(path.sep, '/')}').then((mod) => mod.${value.remoteName || 'default'});`);
   }
 

@@ -92,21 +92,15 @@ function loadAndValidateTsconfigsForFile(file: string): ParsedTsConfigData[] {
 const pathSeparator = process.platform === 'win32' ? ';' : ':';
 const builtins = new Set(Module.builtinModules);
 
-export function resolveHook(filename: string, specifier: string, isESM: boolean): string | undefined {
+export function resolveHook(filename: string, specifier: string): string | undefined {
   if (specifier.startsWith('node:') || builtins.has(specifier))
     return;
   if (!shouldTransform(filename))
     return;
 
   if (isRelativeSpecifier(specifier))
-    return resolveImportSpecifierExtension(path.resolve(path.dirname(filename), specifier), false, isESM);
+    return resolveImportSpecifierExtension(path.resolve(path.dirname(filename), specifier));
 
-  /**
-   * TypeScript discourages path-mapping into node_modules
-   *    (https://www.typescriptlang.org/docs/handbook/modules/reference.html#paths-should-not-point-to-monorepo-packages-or-node_modules-packages).
-   * It seems like TypeScript tries path-mapping first, but does not look at the `package.json` or `index.js` files in ESM.
-   * If path-mapping doesn't yield a result, TypeScript falls back to the default resolution (typically node_modules).
-   */
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
   const tsconfigs = loadAndValidateTsconfigsForFile(filename);
   for (const tsconfig of tsconfigs) {
@@ -148,7 +142,7 @@ export function resolveHook(filename: string, specifier: string, isESM: boolean)
         if (value.includes('*'))
           candidate = candidate.replace('*', matchedPartOfSpecifier);
         candidate = path.resolve(tsconfig.pathsBase!, candidate);
-        const existing = resolveImportSpecifierExtension(candidate, true, isESM);
+        const existing = resolveImportSpecifierExtension(candidate);
         if (existing) {
           longestPrefixLength = keyPrefix.length;
           pathMatchedByLongestPrefix = existing;
@@ -162,7 +156,7 @@ export function resolveHook(filename: string, specifier: string, isESM: boolean)
   if (path.isAbsolute(specifier)) {
     // Handle absolute file paths like `import '/path/to/file'`
     // Do not handle module imports like `import 'fs'`
-    return resolveImportSpecifierExtension(specifier, false, isESM);
+    return resolveImportSpecifierExtension(specifier);
   }
 }
 
@@ -244,7 +238,7 @@ function installTransformIfNeeded() {
   const originalResolveFilename = (Module as any)._resolveFilename;
   function resolveFilename(this: any, specifier: string, parent: Module, ...rest: any[]) {
     if (parent) {
-      const resolved = resolveHook(parent.filename, specifier, false);
+      const resolved = resolveHook(parent.filename, specifier);
       if (resolved !== undefined)
         specifier = resolved;
     }
