@@ -27,7 +27,7 @@ export async function createSkipTestPredicate(projectName: string): Promise<Shou
     return () => false;
   const expectationsMap = await parseBidiExpectations(projectName);
   return (info: TestInfo) => {
-    const key = [info.project.name, ...info.titlePath].join(' › ');
+    const key = info.titlePath.join(' › ');
     const expectation = expectationsMap.get(key);
     return expectation === 'fail' || expectation === 'timeout';
   };
