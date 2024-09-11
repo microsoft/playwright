@@ -37,7 +37,7 @@ const reporters = () => {
     ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
   ] : [
     ['html', { open: 'on-failure' }],
-    ['./expectationReporter', { rebase: true }],
+    ['./expectationReporter', { rebase: false }],
   ];
   return result;
 };
