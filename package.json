@@ -45,7 +45,8 @@
     "roll": "node utils/roll_browser.js",
     "check-deps": "node utils/check_deps.js",
     "build-android-driver": "./utils/build_android_driver.sh",
-    "innerloop": "playwright run-server --reuse-browser"
+    "innerloop": "playwright run-server --reuse-browser",
+    "knip": "knip"
   },
   "workspaces": [
     "packages/*"
@@ -61,7 +62,6 @@
     "@babel/plugin-transform-nullish-coalescing-operator": "^7.23.4",
     "@babel/plugin-transform-optional-chaining": "^7.23.4",
     "@babel/plugin-transform-typescript": "^7.23.6",
-    "@babel/preset-react": "^7.23.3",
     "@types/babel__core": "^7.20.2",
     "@types/codemirror": "^5.60.7",
     "@types/formidable": "^2.0.4",
@@ -82,7 +82,6 @@
     "chromium-bidi": "^0.6.4",
     "colors": "^1.4.0",
     "concurrently": "^6.2.1",
-    "cross-env": "^7.0.3",
     "dotenv": "^16.4.5",
     "electron": "^30.1.2",
     "esbuild": "^0.18.11",
