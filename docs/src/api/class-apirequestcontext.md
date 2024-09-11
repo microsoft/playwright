@@ -522,6 +522,65 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.head.maxRetries = %%-js-python-csharp-fetch-option-maxretries-%%
 * since: v1.46
 
+## async method: APIRequestContext.options
+* since: v1.48
+- returns: <[APIResponse]>
+
+Sends HTTP(S) [OPTIONS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/OPTIONS) request and returns its response.
+The method will populate request cookies from the context and update
+context cookies from the response. The method will automatically follow redirects.
+
+### param: APIRequestContext.options.url = %%-fetch-param-url-%%
+* since: v1.16
+
+### option: APIRequestContext.options.params = %%-js-fetch-option-params-%%
+* since: v1.16
+
+### param: APIRequestContext.options.params = %%-java-csharp-fetch-params-%%
+* since: v1.18
+
+### option: APIRequestContext.options.params = %%-python-fetch-option-params-%%
+* since: v1.16
+
+### option: APIRequestContext.options.params = %%-csharp-fetch-option-params-%%
+* since: v1.16
+
+### option: APIRequestContext.options.headers = %%-js-python-csharp-fetch-option-headers-%%
+* since: v1.16
+
+### option: APIRequestContext.options.data = %%-js-python-csharp-fetch-option-data-%%
+* since: v1.26
+
+### option: APIRequestContext.options.form = %%-js-python-fetch-option-form-%%
+* since: v1.26
+
+### option: APIRequestContext.options.form = %%-csharp-fetch-option-form-%%
+* since: v1.26
+
+### option: APIRequestContext.options.multipart = %%-js-fetch-option-multipart-%%
+* since: v1.26
+
+### option: APIRequestContext.options.multipart = %%-python-fetch-option-multipart-%%
+* since: v1.26
+
+### option: APIRequestContext.options.multipart = %%-csharp-fetch-option-multipart-%%
+* since: v1.26
+
+### option: APIRequestContext.options.timeout = %%-js-python-csharp-fetch-option-timeout-%%
+* since: v1.16
+
+### option: APIRequestContext.options.failOnStatusCode = %%-js-python-csharp-fetch-option-failonstatuscode-%%
+* since: v1.16
+
+### option: APIRequestContext.options.ignoreHTTPSErrors = %%-js-python-csharp-fetch-option-ignorehttpserrors-%%
+* since: v1.16
+
+### option: APIRequestContext.options.maxRedirects = %%-js-python-csharp-fetch-option-maxredirects-%%
+* since: v1.26
+
+### option: APIRequestContext.options.maxRetries = %%-js-python-csharp-fetch-option-maxretries-%%
+* since: v1.46
+
 ## async method: APIRequestContext.patch
 * since: v1.16
 - returns: <[APIResponse]>

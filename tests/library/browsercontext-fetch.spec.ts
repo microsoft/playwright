@@ -570,6 +570,19 @@ it('head should support post data', async ({ context, server }) => {
   expect(request.url).toBe('/simple.json');
 });
 
+it('options should support post data', async ({ context, server }) => {
+  const [request, response] = await Promise.all([
+    server.waitForRequest('/simple.json'),
+    context.request.options(`${server.PREFIX}/simple.json`, {
+      data: 'My request'
+    })
+  ]);
+  expect(request.method).toBe('OPTIONS');
+  expect((await request.postBody).toString()).toBe('My request');
+  expect(response.status()).toBe(200);
+  expect(request.url).toBe('/simple.json');
+});
+
 it('patch should support post data', async ({ context, server }) => {
   const [request, response] = await Promise.all([
     server.waitForRequest('/simple.json'),

@@ -139,6 +139,13 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     });
   }
 
+  async options(url: string, options?: RequestWithBodyOptions): Promise<APIResponse> {
+    return await this.fetch(url, {
+      ...options,
+      method: 'OPTIONS',
+    });
+  }
+
   async patch(url: string, options?: RequestWithBodyOptions): Promise<APIResponse> {
     return await this.fetch(url, {
       ...options,
