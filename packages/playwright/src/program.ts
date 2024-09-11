@@ -145,6 +145,7 @@ function addMergeReportsCommand(program: Command) {
   });
   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
   command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`);
+  command.option('--last-run-file <file>', `Path to a json file where the last run information is written to (default: test-results/.last-run.json)`);
   command.addHelpText('afterAll', `
 Arguments [dir]:
   Directory containing blob reports.
@@ -272,7 +273,8 @@ async function listTestFiles(opts: { [key: string]: any }) {
 
 async function mergeReports(reportDir: string | undefined, opts: { [key: string]: any }) {
   const configFile = opts.config;
-  const config = configFile ? await loadConfigFromFileRestartIfNeeded(configFile) : await loadEmptyConfigForMergeReports();
+  const cliOverrides = overridesFromOptions(opts);
+  const config = configFile ? await loadConfigFromFileRestartIfNeeded(configFile, cliOverrides) : await loadEmptyConfigForMergeReports(cliOverrides);
   if (!config)
     return;
 
@@ -382,7 +384,7 @@ const testOptions: [string, string][] = [
   ['--headed', `Run tests in headed browsers (default: headless)`],
   ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`],
   ['--last-failed', `Only re-run the failures`],
-  ['--last-run-file', `Path to a json file where the last run information is read from and written to (default: test-results/.last-run.json)`],
+  ['--last-run-file <file>', `Path to a json file where the last run information is read from and written to (default: test-results/.last-run.json)`],
   ['--list', `Collect all the tests and report them, but do not run`],
   ['--max-failures <N>', `Stop after the first N failures`],
   ['--no-deps', 'Do not run project dependencies'],

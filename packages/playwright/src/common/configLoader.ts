@@ -346,9 +346,9 @@ export async function loadConfigFromFileRestartIfNeeded(configFile: string | und
   return await loadConfig(location, overrides, ignoreDeps);
 }
 
-export async function loadEmptyConfigForMergeReports() {
+export async function loadEmptyConfigForMergeReports(overrides?: ConfigCLIOverrides) {
   // Merge reports is "different" for no good reason. It should not pick up local config from the cwd.
-  return await loadConfig({ configDir: process.cwd() });
+  return await loadConfig({ configDir: process.cwd() }, overrides);
 }
 
 export function restartWithExperimentalTsEsm(configFile: string | undefined, force: boolean = false): boolean {
