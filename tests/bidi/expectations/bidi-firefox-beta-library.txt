@@ -592,7 +592,7 @@ bidi-firefox-beta-library › library/capabilities.spec.ts › service worker sh
 bidi-firefox-beta-library › library/capabilities.spec.ts › service worker should register in an iframe [pass]
 bidi-firefox-beta-library › library/capabilities.spec.ts › serviceWorker should intercept document request [pass]
 bidi-firefox-beta-library › library/capabilities.spec.ts › should not crash on page with mp4 @smoke [fail]
-bidi-firefox-beta-library › library/capabilities.spec.ts › should not crash on showDirectoryPicker [unknown]
+bidi-firefox-beta-library › library/capabilities.spec.ts › should not crash on showDirectoryPicker [flaky]
 bidi-firefox-beta-library › library/capabilities.spec.ts › should not crash on storage.getDirectory() [pass]
 bidi-firefox-beta-library › library/capabilities.spec.ts › should play audio @smoke [fail]
 bidi-firefox-beta-library › library/capabilities.spec.ts › should play video @smoke [pass]
