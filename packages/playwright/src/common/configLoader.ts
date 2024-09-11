@@ -225,6 +225,11 @@ function validateConfig(file: string, config: Config) {
       throw errorWithFile(file, `config.shard.current must be a positive number, not greater than config.shard.total`);
   }
 
+  if ('shardingMode' in config && config.shardingMode !== undefined) {
+    if (typeof config.shardingMode !== 'string' || !['partition', 'round-robin', 'duration-round-robin'].includes(config.shardingMode))
+      throw errorWithFile(file, `config.shardingMode must be one of "partition", "round-robin" or "duration-round-robin"`);
+  }
+
   if ('updateSnapshots' in config && config.updateSnapshots !== undefined) {
     if (typeof config.updateSnapshots !== 'string' || !['all', 'none', 'missing'].includes(config.updateSnapshots))
       throw errorWithFile(file, `config.updateSnapshots must be one of "all", "none" or "missing"`);
