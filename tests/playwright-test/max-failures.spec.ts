@@ -191,27 +191,18 @@ test('max-failures should not consider retries as failures', async ({ runInlineT
       };
     `,
     'example.spec.ts': `
-      import fs from 'fs';
       import { test, expect } from '@playwright/test';
 
       test('I fail 9 times 1', () => {
-        let count = parseInt(fs.readFileSync('count1', 'utf8'), 10);
-        count++;
-        fs.writeFileSync('count1', String(count));
-        if (count < 10)
+        if (test.info().retry < 9)
           throw new Error('failing intentionally');
       });
 
       test('I fail 9 times 2', () => {
-        let count = parseInt(fs.readFileSync('count2', 'utf8'), 10);
-        count++;
-        fs.writeFileSync('count2', String(count));
-        if (count < 10)
+        if (test.info().retry < 9)
           throw new Error('failing intentionally');
       });
     `,
-    'count1': '0',
-    'count2': '0',
   }, { workers: 1 });
   expect(result.exitCode).toBe(0);
   expect(result.failed).toBe(0);
