@@ -18,8 +18,9 @@ The Network tab in the trace viewer has several nice improvements:
 
 ### Miscellaneous
 
-- The `mcr.microsoft.com/playwright-java:v1.47.0` now serves a Playwright image based on Ubuntu 24.04 Noble.
-  To use the 22.02 jammy-based image, please use `mcr.microsoft.com/playwright-java:v1.47.0-jammy` instead.
+- The `mcr.microsoft.com/playwright/java:v1.47.0` now serves a Playwright image based on Ubuntu 24.04 Noble.
+  To use the 22.02 jammy-based image, please use `mcr.microsoft.com/playwright/java:v1.47.0-jammy` instead.
+- The `:latest`/`:focal`/`:jammy` tag for Playwright Docker images is no longer being published. Pin to a specific version for better stability and reproducibility.
 - TLS client certificates can now be passed from memory by passing [`option: cert`] and [`option: key`] as byte arrays instead of file paths.
 - [`option: noWaitAfter`] in [`method: Locator.selectOption`] was deprecated.
 - We've seen reports of WebGL in Webkit misbehaving on GitHub Actions `macos-13`. We recommend upgrading GitHub Actions to `macos-14`.
