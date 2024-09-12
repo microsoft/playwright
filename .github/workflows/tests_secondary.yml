@@ -50,7 +50,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-13, macos-14]
+        # From macos-14 onwards, GitHub is using Apple Silicon machines by default.
+        os: [macos-12, macos-13, macos-13-xlarge, macos-14-large, macos-14]
         browser: [chromium, firefox, webkit]
     runs-on: ${{ matrix.os }}
     steps:
