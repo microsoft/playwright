@@ -36,6 +36,7 @@ interface RecorderTool {
   cursor(): string;
   cleanup?(): void;
   onClick?(event: MouseEvent): void;
+  onDblClick?(event: MouseEvent): void;
   onContextMenu?(event: MouseEvent): void;
   onDragStart?(event: DragEvent): void;
   onInput?(event: Event): void;
@@ -210,6 +211,7 @@ class RecordActionTool implements RecorderTool {
   private _hoveredElement: HTMLElement | null = null;
   private _activeModel: HighlightModel | null = null;
   private _expectProgrammaticKeyUp = false;
+  private _pendingClickAction: { action: actions.ClickAction, timeout: NodeJS.Timeout } | undefined;
 
   constructor(recorder: Recorder) {
     this._recorder = recorder;
@@ -252,6 +254,38 @@ class RecordActionTool implements RecorderTool {
       return;
     }
 
+    this._cancelPendingClickAction();
+
+    // Stall click in case we are observing double-click.
+    if (event.detail === 1) {
+      this._pendingClickAction = {
+        action: {
+          name: 'click',
+          selector: this._hoveredModel!.selector,
+          position: positionForEvent(event),
+          signals: [],
+          button: buttonForEvent(event),
+          modifiers: modifiersForEvent(event),
+          clickCount: event.detail
+        },
+        timeout: setTimeout(() => this._commitPendingClickAction(), 200)
+      };
+    }
+  }
+
+  onDblClick(event: MouseEvent) {
+    if (isRangeInput(this._hoveredElement))
+      return;
+    if (this._shouldIgnoreMouseEvent(event))
+      return;
+    // Only allow double click dispatch while action is in progress.
+    if (this._actionInProgress(event))
+      return;
+    if (this._consumedDueToNoModel(event, this._hoveredModel))
+      return;
+
+    this._cancelPendingClickAction();
+
     this._performAction({
       name: 'click',
       selector: this._hoveredModel!.selector,
@@ -261,6 +295,18 @@ class RecordActionTool implements RecorderTool {
       modifiers: modifiersForEvent(event),
       clickCount: event.detail
     });
+  }
+
+  private _commitPendingClickAction() {
+    if (this._pendingClickAction)
+      this._performAction(this._pendingClickAction.action);
+    this._cancelPendingClickAction();
+  }
+
+  private _cancelPendingClickAction() {
+    if (this._pendingClickAction)
+      clearTimeout(this._pendingClickAction.timeout);
+    this._pendingClickAction = undefined;
   }
 
   onContextMenu(event: MouseEvent) {
@@ -915,6 +961,10 @@ class Overlay {
     }
     return false;
   }
+
+  onDblClick(event: MouseEvent) {
+    return false;
+  }
 }
 
 export class Recorder {
@@ -970,6 +1020,7 @@ export class Recorder {
     this._listeners = [
       addEventListener(this.document, 'click', event => this._onClick(event as MouseEvent), true),
       addEventListener(this.document, 'auxclick', event => this._onClick(event as MouseEvent), true),
+      addEventListener(this.document, 'dblclick', event => this._onDblClick(event as MouseEvent), true),
       addEventListener(this.document, 'contextmenu', event => this._onContextMenu(event as MouseEvent), true),
       addEventListener(this.document, 'dragstart', event => this._onDragStart(event as DragEvent), true),
       addEventListener(this.document, 'input', event => this._onInput(event), true),
@@ -1041,6 +1092,16 @@ export class Recorder {
     if (this._ignoreOverlayEvent(event))
       return;
     this._currentTool.onClick?.(event);
+  }
+
+  private _onDblClick(event: MouseEvent) {
+    if (!event.isTrusted)
+      return;
+    if (this.overlay?.onDblClick(event))
+      return;
+    if (this._ignoreOverlayEvent(event))
+      return;
+    this._currentTool.onDblClick?.(event);
   }
 
   private _onContextMenu(event: MouseEvent) {

@@ -15,11 +15,13 @@
  */
 
 import { createGuid, monotonicTime, serializeExpectedTextValues } from '../../utils';
-import { toClickOptions, toKeyboardModifiers } from '../codegen/language';
+import { toKeyboardModifiers } from '../codegen/language';
 import type { ActionInContext } from '../codegen/types';
 import type { Frame } from '../frames';
 import type { CallMetadata } from '../instrumentation';
 import type { Page } from '../page';
+import type * as actions from './recorderActions';
+import type * as types from '../types';
 import { buildFullSelector } from './recorderUtils';
 
 async function innerPerformAction(mainFrame: Frame, action: string, params: any, cb: (callMetadata: CallMetadata) => Promise<any>): Promise<boolean> {
@@ -125,4 +127,18 @@ export async function performAction(pageAliases: Map<Page, string>, actionInCont
     }));
   }
   throw new Error('Internal error: unexpected action ' + (action as any).name);
+}
+
+export function toClickOptions(action: actions.ClickAction): types.MouseClickOptions {
+  const modifiers = toKeyboardModifiers(action.modifiers);
+  const options: types.MouseClickOptions = {};
+  if (action.button !== 'left')
+    options.button = action.button;
+  if (modifiers.length)
+    options.modifiers = modifiers;
+  if (action.clickCount > 1)
+    options.clickCount = action.clickCount;
+  if (action.position)
+    options.position = action.position;
+  return options;
 }

@@ -16,7 +16,7 @@
 
 import type { BrowserContextOptions } from '../../../types/types';
 import type { ActionInContext, Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
-import { sanitizeDeviceOptions, toSignalMap, toKeyboardModifiers, toClickOptions } from './language';
+import { sanitizeDeviceOptions, toSignalMap, toKeyboardModifiers, toClickOptionsForSourceCode } from './language';
 import { escapeWithQuotes, toSnakeCase, asLocator } from '../../utils';
 import { deviceDescriptors } from '../deviceDescriptors';
 
@@ -94,7 +94,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
         let method = 'click';
         if (action.clickCount === 2)
           method = 'dblclick';
-        const options = toClickOptions(action);
+        const options = toClickOptionsForSourceCode(action);
         const optionsString = formatOptions(options, false);
         return `${subject}.${this._asLocator(action.selector)}.${method}(${optionsString})`;
       }

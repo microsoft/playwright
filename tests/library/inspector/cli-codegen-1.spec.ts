@@ -52,6 +52,46 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`)
     expect(message.text()).toBe('click');
   });
 
+  test('should double click', async ({ page, openRecorder }) => {
+    const recorder = await openRecorder();
+
+    await recorder.setContentAndWait(`<button onclick="console.log('click ' + event.detail)" ondblclick="console.log('dblclick ' + event.detail)">Submit</button>`);
+
+    const locator = await recorder.hoverOverElement('button');
+    expect(locator).toBe(`getByRole('button', { name: 'Submit' })`);
+
+    const messages: string[] = [];
+    page.on('console', message => {
+      if (message.text().includes('click'))
+        messages.push(message.text());
+    });
+    const [, sources] = await Promise.all([
+      page.waitForEvent('console', msg => msg.type() !== 'error' && msg.text() === 'dblclick 2'),
+      recorder.waitForOutput('JavaScript', 'dblclick'),
+      recorder.trustedDblclick(),
+    ]);
+
+    expect.soft(sources.get('JavaScript')!.text).toContain(`
+  await page.getByRole('button', { name: 'Submit' }).dblclick();`);
+
+    expect.soft(sources.get('Python')!.text).toContain(`
+    page.get_by_role("button", name="Submit").dblclick()`);
+
+    expect.soft(sources.get('Python Async')!.text).toContain(`
+    await page.get_by_role("button", name="Submit").dblclick()`);
+
+    expect.soft(sources.get('Java')!.text).toContain(`
+      page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Submit")).dblclick()`);
+
+    expect.soft(sources.get('C#')!.text).toContain(`
+await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).DblClickAsync();`);
+
+    expect(messages).toEqual([
+      'click 1',
+      'click 2',
+      'dblclick 2',
+    ]);
+  });
 
   test('should ignore programmatic events', async ({ page, openRecorder }) => {
     const recorder = await openRecorder();
