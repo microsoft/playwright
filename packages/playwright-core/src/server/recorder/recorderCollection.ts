@@ -16,18 +16,25 @@
 
 import { EventEmitter } from 'events';
 import type { Frame } from '../frames';
+import type { Page } from '../page';
 import type { Signal } from './recorderActions';
 import type { ActionInContext } from '../codegen/types';
+import type { CallMetadata } from '@protocol/callMetadata';
+import { createGuid } from '../../utils/crypto';
+import { monotonicTime } from '../../utils/time';
+import { mainFrameForAction, traceParamsForAction } from './recorderUtils';
 
 export class RecorderCollection extends EventEmitter {
   private _currentAction: ActionInContext | null = null;
   private _lastAction: ActionInContext | null = null;
   private _actions: ActionInContext[] = [];
   private _enabled: boolean;
+  private _pageAliases: Map<Page, string>;
 
-  constructor(enabled: boolean) {
+  constructor(pageAliases: Map<Page, string>, enabled: boolean) {
     super();
     this._enabled = enabled;
+    this._pageAliases = pageAliases;
     this.restart();
   }
 
@@ -46,29 +53,55 @@ export class RecorderCollection extends EventEmitter {
     this._enabled = enabled;
   }
 
-  addAction(action: ActionInContext) {
+  async willPerformAction(actionInContext: ActionInContext): Promise<CallMetadata | null> {
     if (!this._enabled)
-      return;
-    this.willPerformAction(action);
-    this.didPerformAction(action);
+      return null;
+    const mainFrame = mainFrameForAction(this._pageAliases, actionInContext);
+
+    const { action } = actionInContext;
+    const callMetadata: CallMetadata = {
+      id: `call@${createGuid()}`,
+      apiName: 'frame.' + action.name,
+      objectId: mainFrame.guid,
+      pageId: mainFrame._page.guid,
+      frameId: mainFrame.guid,
+      startTime: monotonicTime(),
+      endTime: 0,
+      type: 'Frame',
+      method: action.name,
+      params: traceParamsForAction(actionInContext),
+      log: [],
+    };
+    await mainFrame.instrumentation.onBeforeCall(mainFrame, callMetadata);
+    this._currentAction = actionInContext;
+    return callMetadata;
   }
 
-  willPerformAction(action: ActionInContext) {
+  async didPerformAction(callMetadata: CallMetadata, actionInContext: ActionInContext, error?: Error) {
     if (!this._enabled)
       return;
-    this._currentAction = action;
-  }
 
-  performedActionFailed(action: ActionInContext) {
-    if (!this._enabled)
-      return;
-    if (this._currentAction === action)
+    if (error) {
+      // Do not clear current action on delayed error.
+      if (this._currentAction === actionInContext)
+        this._currentAction = null;
+    } else {
       this._currentAction = null;
+      this._actions.push(actionInContext);
+    }
+
+    this._lastAction = actionInContext;
+    const mainFrame = mainFrameForAction(this._pageAliases, actionInContext);
+    callMetadata.endTime = monotonicTime();
+    await mainFrame.instrumentation.onAfterCall(mainFrame, callMetadata);
+
+    this.emit('change');
   }
 
-  didPerformAction(actionInContext: ActionInContext) {
+  addRecordedAction(actionInContext: ActionInContext) {
     if (!this._enabled)
       return;
+    this._currentAction = null;
     const action = actionInContext.action;
     let eraseLastAction = false;
     if (this._lastAction && this._lastAction.frame.pageAlias === actionInContext.frame.pageAlias) {
@@ -81,14 +114,12 @@ export class RecorderCollection extends EventEmitter {
       if (lastAction && action.name === 'navigate' && lastAction.name === 'navigate') {
         if (action.url === lastAction.url) {
           // Already at a target URL.
-          this._currentAction = null;
           return;
         }
       }
     }
 
     this._lastAction = actionInContext;
-    this._currentAction = null;
     if (eraseLastAction)
       this._actions.pop();
     this._actions.push(actionInContext);
@@ -125,7 +156,7 @@ export class RecorderCollection extends EventEmitter {
     }
 
     if (signal.name === 'navigation' && frame._page.mainFrame() === frame) {
-      this.addAction({
+      this.addRecordedAction({
         frame: {
           pageAlias,
           framePath: [],
