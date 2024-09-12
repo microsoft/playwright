@@ -18,14 +18,27 @@ import fs from 'fs';
 import path from 'path';
 import type { TestInfo } from 'playwright/test';
 
+export type TestExpectation = 'unknown' | 'flaky' | 'pass' | 'fail' | 'timeout';
+
 type ShouldSkipPredicate = (info: TestInfo) => boolean;
 
-export async function parseBidiExpectations(projectName: string): Promise<ShouldSkipPredicate> {
+export async function createSkipTestPredicate(projectName: string): Promise<ShouldSkipPredicate> {
+  if (!process.env.PWTEST_USE_BIDI_EXPECTATIONS)
+    return () => false;
+  const expectationsMap = await parseBidiExpectations(projectName);
+  return (info: TestInfo) => {
+    const key = info.titlePath.join(' › ');
+    const expectation = expectationsMap.get(key);
+    return expectation === 'fail' || expectation === 'timeout';
+  };
+}
+
+export async function parseBidiExpectations(projectName: string): Promise<Map<string, TestExpectation>> {
   const filePath = projectExpectationPath(projectName);
   try {
     await fs.promises.access(filePath);
   } catch (e) {
-    return () => false;
+    return new Map();
   }
   const content = await fs.promises.readFile(filePath);
   const pairs = content.toString().split('\n').map(line => {
@@ -35,14 +48,8 @@ export async function parseBidiExpectations(projectName: string): Promise<Should
       return undefined;
     }
     return [match.groups!.titlePath, match.groups!.expectation];
-  }).filter(Boolean) as [string, string][];
-  const expectationsMap = new Map(pairs);
-
-  return (info: TestInfo) => {
-    const key = [info.project.name, ...info.titlePath].join(' › ');
-    const expectation = expectationsMap.get(key);
-    return expectation === 'fail' || expectation === 'timeout';
-  };
+  }).filter(Boolean) as [string, TestExpectation][];
+  return new Map(pairs);
 }
 
 export function projectExpectationPath(project: string): string {

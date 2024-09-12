@@ -18,7 +18,8 @@ import type {
   FullConfig, FullResult, Reporter, Suite, TestCase
 } from '@playwright/test/reporter';
 import fs from 'fs';
-import { projectExpectationPath } from './expectationUtil';
+import { parseBidiExpectations as parseExpectations, projectExpectationPath } from './expectationUtil';
+import type { TestExpectation } from './expectationUtil';
 
 type ReporterOptions = {
   rebase?: boolean;
@@ -27,6 +28,7 @@ type ReporterOptions = {
 class ExpectationReporter implements Reporter {
   private _suite: Suite;
   private _options: ReporterOptions;
+  private _pendingUpdates: Promise<void>[] = [];
 
   constructor(options: ReporterOptions) {
     this._options = options;
@@ -40,18 +42,28 @@ class ExpectationReporter implements Reporter {
     if (!this._options.rebase)
       return;
     for (const project of this._suite.suites)
-      this._updateProjectExpectations(project);
+      this._pendingUpdates.push(this._updateProjectExpectations(project));
   }
 
-  private _updateProjectExpectations(project: Suite) {
-    const results = project.allTests().map(test => {
-      const outcome = getOutcome(test);
-      const line = `${test.titlePath().slice(1).join(' › ')} [${outcome}]`;
-      return line;
-    });
+  async onExit() {
+    await Promise.all(this._pendingUpdates);
+  }
+
+  private async _updateProjectExpectations(project: Suite) {
     const outputFile = projectExpectationPath(project.title);
+    const expectations = await parseExpectations(project.title);
+    for (const test of project.allTests()) {
+      const outcome = getOutcome(test);
+      // Strip root and project names.
+      const key = test.titlePath().slice(2).join(' › ');
+      if (!expectations.has(key) || expectations.get(key) === 'unknown')
+        expectations.set(key, outcome);
+    }
+    const keys = Array.from(expectations.keys());
+    keys.sort();
+    const results = keys.map(key => `${key} [${expectations.get(key)}]`);
     console.log('Writing new expectations to', outputFile);
-    fs.writeFileSync(outputFile, results.join('\n'));
+    await fs.promises.writeFile(outputFile, results.join('\n'));
   }
 
   printsToStdio(): boolean {
@@ -59,7 +71,7 @@ class ExpectationReporter implements Reporter {
   }
 }
 
-function getOutcome(test: TestCase): 'unknown' | 'flaky' | 'pass' | 'fail' | 'timeout' {
+function getOutcome(test: TestCase): TestExpectation {
   if (test.results.length === 0)
     return 'unknown';
   if (test.results.every(r => r.status === 'timedOut'))
