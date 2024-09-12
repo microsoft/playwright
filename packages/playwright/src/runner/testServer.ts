@@ -252,7 +252,7 @@ export class TestServerDispatcher implements TestServerInterface {
     config.cliListOnly = true;
 
     const status = await runTasks(new TestRun(config, reporter), [
-      createLoadTask('out-of-process', { failOnLoadErrors: false, filterOnly: false }),
+      createLoadTask('out-of-process', { failOnLoadErrors: false, filterOnly: false, populateDependencies: true }),
       createReportBeginTask(),
     ]);
     return { config, report, reporter, status };
