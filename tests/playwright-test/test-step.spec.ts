@@ -1239,3 +1239,94 @@ fixture   |  fixture: page
 fixture   |  fixture: context
 `);
 });
+
+test('test with custom location', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      import { test } from '@playwright/test';
+
+      export function getStepLocation() {
+        return { file: 'custom-file.ts', line: 99, column: 1 };
+      }
+
+      export async function customStep(test, title, action) {
+        const location = getStepLocation();
+        return await test.step(title, action, { location });
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      import { customStep } from './helper';
+
+      test('test with custom location', async ({ page }) => {
+        await customStep(test, 'User logs in', async () => {
+          await page.goto('http://localhost:1234/login');
+          await page.fill('input#username', 'testuser');
+          await page.fill('input#password', 'testpass');
+          await page.click('button[type="submit"]');
+          await page.waitForSelector('.profile');
+          const profileVisible = await page.isVisible('.profile');
+          expect(profileVisible).toBeTruthy();
+        });
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    'hook      |Before Hooks',
+    'test.step |User logs in @ custom-file.ts:99',
+    'test.step |↪ success: Profile is visible',
+    'hook      |After Hooks'
+  ]);
+});
+
+test('nested step test with custom locations', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'helper.ts': `
+      import { test } from '@playwright/test';
+
+      export function getStepLocation(line) {
+        return { file: 'nested-steps.ts', line: line, column: 1 };
+      }
+
+      export async function customStep(test, title, line, action) {
+        const location = getStepLocation(line);
+        return await test.step(title, action, { location });
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      import { customStep } from './helper';
+
+      test('nested step test with custom locations', async ({ page }) => {
+        await customStep(test, 'Outer step', 10, async () => {
+          await page.goto('http://localhost:1234');
+          await customStep(test, 'Inner step', 20, async () => {
+            const buttonVisible = await page.isVisible('button#submit');
+            expect(buttonVisible).toBeTruthy();
+          });
+        });
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    'hook      |Before Hooks',
+    'test.step |Outer step @ nested-steps.ts:10',
+    'test.step |Inner step @ nested-steps.ts:20',
+    'test.step |↪ success: Button is visible',
+    'hook      |After Hooks'
+  ]);
+});
