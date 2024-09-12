@@ -814,3 +814,23 @@ test('should run global teardown before exiting', async ({ runWatchTest }) => {
   testProcess.write('\x1B');
   await testProcess.waitForOutput('running teardown');
 });
+
+test('should stop testrun on pressing escape', async ({ runWatchTest }) => {
+  const testProcess = await runWatchTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('stalls', async () => {
+        await new Promise(() => {});
+      });
+    `,
+  });
+  // add once https://github.com/microsoft/playwright/pull/32583 lands
+  // await testProcess.waitForOutput('Waiting for file changes.');
+  // testProcess.clearOutput();
+  // testProcess.write('\r\n');
+
+  await testProcess.waitForOutput('Running 1 test');
+  await timers.setTimeout(500);
+  testProcess.write('\x1B');
+  await testProcess.waitForOutput('1 interrupted');
+});

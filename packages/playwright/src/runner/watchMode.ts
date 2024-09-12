@@ -28,6 +28,7 @@ import { EventEmitter } from 'stream';
 import { type TestServerTransport, TestServerConnection } from '../isomorphic/testServerConnection';
 import { TeleSuiteUpdater } from '../isomorphic/teleSuiteUpdater';
 import { restartWithExperimentalTsEsm } from '../common/configLoader';
+import type { Disposable } from '../isomorphic/events';
 
 class InMemoryTransport extends EventEmitter implements TestServerTransport {
   public readonly _send: (data: string) => void;
@@ -251,11 +252,36 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   return result === 'passed' ? teardown.status : result;
 }
 
+function readKeyPress(handler: (text: string, key: any) => void): Disposable {
+  const rl = readline.createInterface({ input: process.stdin, escapeCodeTimeout: 50 });
+  readline.emitKeypressEvents(process.stdin, rl);
+  if (process.stdin.isTTY)
+    process.stdin.setRawMode(true);
+
+  process.stdin.on('keypress', handler);
+
+  return {
+    dispose: () => {
+      process.stdin.off('keypress', handler);
+      rl.close();
+      if (process.stdin.isTTY)
+        process.stdin.setRawMode(false);
+    }
+  };
+}
+
+const isInterrupt = (text: string, key: any) => text === '\x03' || text === '\x1B' || (key && key.name === 'escape') || (key && key.ctrl && key.name === 'c');
+
 async function runTests(watchOptions: WatchModeOptions, testServerConnection: TestServerConnection, options?: {
     title?: string,
     testIds?: string[],
   }) {
   printConfiguration(watchOptions, options?.title);
+
+  const reader = readKeyPress((text: string, key: any) => {
+    if (isInterrupt(text, key))
+      testServerConnection.stopTestsNoReply({});
+  });
 
   await testServerConnection.runTests({
     grep: watchOptions.grep,
@@ -266,18 +292,14 @@ async function runTests(watchOptions: WatchModeOptions, testServerConnection: Te
     reuseContext: connectWsEndpoint ? true : undefined,
     workers: connectWsEndpoint ? 1 : undefined,
     headed: connectWsEndpoint ? true : undefined,
-  });
+  }).finally(reader.dispose);
 }
 
 function readCommand(): ManualPromise<Command> {
   const result = new ManualPromise<Command>();
-  const rl = readline.createInterface({ input: process.stdin, escapeCodeTimeout: 50 });
-  readline.emitKeypressEvents(process.stdin, rl);
-  if (process.stdin.isTTY)
-    process.stdin.setRawMode(true);
 
-  const handler = (text: string, key: any) => {
-    if (text === '\x03' || text === '\x1B' || (key && key.name === 'escape') || (key && key.ctrl && key.name === 'c')) {
+  const reader = readKeyPress((text: string, key: any) => {
+    if (isInterrupt(text, key)) {
       result.resolve('interrupted');
       return;
     }
@@ -316,15 +338,9 @@ Change settings
       case 'f': result.resolve('failed'); break;
       case 's': result.resolve('toggle-show-browser'); break;
     }
-  };
-
-  process.stdin.on('keypress', handler);
-  void result.finally(() => {
-    process.stdin.off('keypress', handler);
-    rl.close();
-    if (process.stdin.isTTY)
-      process.stdin.setRawMode(false);
   });
+
+  void result.finally(reader.dispose);
   return result;
 }
 
