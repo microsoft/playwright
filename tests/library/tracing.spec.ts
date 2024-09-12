@@ -37,9 +37,9 @@ test('should collect trace with resources, but no js', async ({ context, page, s
   await page.locator('input[type="file"]').setInputFiles(asset('file-to-upload.txt'));
   await page.waitForTimeout(2000);  // Give it some time to produce screenshots.
   await page.close();
-  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+  await context.tracing.stop({ path: testInfo.outputPath('trace.pwtrace.zip') });
 
-  const { events, actions } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  const { events, actions } = await parseTraceRaw(testInfo.outputPath('trace.pwtrace.zip'));
   expect(events[0].type).toBe('context-options');
   expect(actions).toEqual([
     'page.goto',
@@ -81,8 +81,8 @@ test('should use the correct apiName for event driven callbacks', async ({ conte
   });
   await page.evaluate(() => alert('yo'));
 
-  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
-  const { events, actions } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  await context.tracing.stop({ path: testInfo.outputPath('trace.pwtrace.zip') });
+  const { events, actions } = await parseTraceRaw(testInfo.outputPath('trace.pwtrace.zip'));
   expect(events[0].type).toBe('context-options');
   expect(actions).toEqual([
     'page.route',
@@ -102,9 +102,9 @@ test('should not collect snapshots by default', async ({ context, page, server }
   await page.setContent('<button>Click</button>');
   await page.click('"Click"');
   await page.close();
-  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+  await context.tracing.stop({ path: testInfo.outputPath('trace.pwtrace.zip') });
 
-  const { events } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  const { events } = await parseTraceRaw(testInfo.outputPath('trace.pwtrace.zip'));
   expect(events.some(e => e.type === 'frame-snapshot')).toBeFalsy();
   expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
 });
@@ -113,8 +113,8 @@ test('should not include buffers in the trace', async ({ context, page, server }
   await context.tracing.start({ snapshots: true });
   await page.goto(server.PREFIX + '/empty.html');
   await page.screenshot();
-  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
-  const { actionObjects } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  await context.tracing.stop({ path: testInfo.outputPath('trace.pwtrace.zip') });
+  const { actionObjects } = await parseTraceRaw(testInfo.outputPath('trace.pwtrace.zip'));
   const screenshotEvent = actionObjects.find(a => a.apiName === 'page.screenshot');
   expect(screenshotEvent.beforeSnapshot).toBeTruthy();
   expect(screenshotEvent.afterSnapshot).toBeTruthy();
@@ -129,9 +129,9 @@ test('should exclude internal pages', async ({ browserName, context, page, serve
   await context.tracing.start();
   await context.storageState();
   await page.close();
-  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+  await context.tracing.stop({ path: testInfo.outputPath('trace.pwtrace.zip') });
 
-  const trace = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  const trace = await parseTraceRaw(testInfo.outputPath('trace.pwtrace.zip'));
   const pageIds = new Set();
   trace.events.forEach(e => {
     const pageId = e.pageId;
@@ -144,8 +144,8 @@ test('should exclude internal pages', async ({ browserName, context, page, serve
 test('should include context API requests', async ({ browserName, context, page, server }, testInfo) => {
   await context.tracing.start({ snapshots: true });
   await page.request.post(server.PREFIX + '/simple.json', { data: { foo: 'bar' } });
-  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
-  const { events } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  await context.tracing.stop({ path: testInfo.outputPath('trace.pwtrace.zip') });
+  const { events } = await parseTraceRaw(testInfo.outputPath('trace.pwtrace.zip'));
   const postEvent = events.find(e => e.apiName === 'apiRequestContext.post');
   expect(postEvent).toBeTruthy();
   const harEntry = events.find(e => e.type === 'resource-snapshot');
@@ -428,9 +428,9 @@ for (const params of [
       await page.setContent('<body style="box-sizing: border-box; width: 100%; height: 100%; margin:0; background: red; border: 50px solid blue"></body>');
       await page.evaluate(() => new Promise(window.builtinRequestAnimationFrame));
     }
-    await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+    await context.tracing.stop({ path: testInfo.outputPath('trace.pwtrace.zip') });
 
-    const { events, resources } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+    const { events, resources } = await parseTraceRaw(testInfo.outputPath('trace.pwtrace.zip'));
     const frames = events.filter(e => e.type === 'screencast-frame');
 
     // Check all frame sizes.
@@ -460,10 +460,10 @@ test('should include interrupted actions', async ({ context, page, server }, tes
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<button>Click</button>');
   page.click('"ClickNoButton"').catch(() =>  {});
-  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+  await context.tracing.stop({ path: testInfo.outputPath('trace.pwtrace.zip') });
   await context.close();
 
-  const { events } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  const { events } = await parseTraceRaw(testInfo.outputPath('trace.pwtrace.zip'));
   const clickEvent = events.find(e => e.apiName === 'page.click');
   expect(clickEvent).toBeTruthy();
 });
@@ -475,7 +475,7 @@ test('should throw when starting with different options', async ({ context }) =>
 });
 
 test('should throw when stopping without start', async ({ context }, testInfo) => {
-  const error = await context.tracing.stop({ path: testInfo.outputPath('trace.zip') }).catch(e => e);
+  const error = await context.tracing.stop({ path: testInfo.outputPath('trace.pwtrace.zip') }).catch(e => e);
   expect(error.message).toContain('Must start tracing before stopping');
 });
 
@@ -492,7 +492,7 @@ test('should work with multiple chunks', async ({ context, page, server }, testI
   await page.click('"Click"');
   page.click('"ClickNoButton"', { timeout: 0 }).catch(() =>  {});
   await page.evaluate(() => {});
-  await context.tracing.stopChunk({ path: testInfo.outputPath('trace.zip') });
+  await context.tracing.stopChunk({ path: testInfo.outputPath('trace.pwtrace.zip') });
 
   await context.tracing.startChunk();
   await page.hover('"Click"');
@@ -502,7 +502,7 @@ test('should work with multiple chunks', async ({ context, page, server }, testI
   await page.click('"Click"');
   await context.tracing.stopChunk();  // Should stop without a path.
 
-  const trace1 = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  const trace1 = await parseTraceRaw(testInfo.outputPath('trace.pwtrace.zip'));
   expect(trace1.events[0].type).toBe('context-options');
   expect(trace1.actions).toEqual([
     'page.setContent',
@@ -533,7 +533,7 @@ test('should export trace concurrently to second navigation', async ({ context, 
     await page.waitForTimeout(timeout);
     await Promise.all([
       promise,
-      context.tracing.stop({ path: testInfo.outputPath('trace.zip') }),
+      context.tracing.stop({ path: testInfo.outputPath('trace.pwtrace.zip') }),
     ]);
   }
 });
@@ -561,9 +561,9 @@ test('should ignore iframes in head', async ({ context, page, server }, testInfo
 
   await context.tracing.start({ screenshots: true, snapshots: true });
   await page.click('button');
-  await context.tracing.stopChunk({ path: testInfo.outputPath('trace.zip') });
+  await context.tracing.stopChunk({ path: testInfo.outputPath('trace.pwtrace.zip') });
 
-  const trace = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  const trace = await parseTraceRaw(testInfo.outputPath('trace.pwtrace.zip'));
   expect(trace.actions).toEqual([
     'page.click',
   ]);
@@ -581,7 +581,7 @@ test('should hide internal stack frames', async ({ context, page }, testInfo) =>
   await page.setContent(`<div onclick='window.alert(123)'>Click me</div>`);
   await page.click('div');
   await evalPromise;
-  const tracePath = testInfo.outputPath('trace.zip');
+  const tracePath = testInfo.outputPath('trace.pwtrace.zip');
   await context.tracing.stop({ path: tracePath });
 
   const trace = await parseTraceRaw(tracePath);
@@ -602,7 +602,7 @@ test('should hide internal stack frames in expect', async ({ context, page }, te
   await page.click('div');
   await expect(page.locator('div')).toBeVisible();
   await expectPromise;
-  const tracePath = testInfo.outputPath('trace.zip');
+  const tracePath = testInfo.outputPath('trace.pwtrace.zip');
   await context.tracing.stop({ path: tracePath });
 
   const trace = await parseTraceRaw(tracePath);
@@ -616,7 +616,7 @@ test('should record global request trace', async ({ request, context, server }, 
   await (request as any)._tracing.start({ snapshots: true });
   const url = server.PREFIX + '/simple.json';
   await request.get(url);
-  const tracePath = testInfo.outputPath('trace.zip');
+  const tracePath = testInfo.outputPath('trace.pwtrace.zip');
   await (request as any)._tracing.stop({ path: tracePath });
 
   const trace = await parseTraceRaw(tracePath);
@@ -649,7 +649,7 @@ test('should store global request traces separately', async ({ request, server, 
     request.get(url),
     request2.post(url)
   ]);
-  const tracePath = testInfo.outputPath('trace.zip');
+  const tracePath = testInfo.outputPath('trace.pwtrace.zip');
   const trace2Path = testInfo.outputPath('trace2.zip');
   await Promise.all([
     (request as any)._tracing.stop({ path: tracePath }),
@@ -682,7 +682,7 @@ test('should store postData for global request', async ({ request, server }, tes
   await request.post(url, {
     data: 'test'
   });
-  const tracePath = testInfo.outputPath('trace.zip');
+  const tracePath = testInfo.outputPath('trace.pwtrace.zip');
   await (request as any)._tracing.stop({ path: tracePath });
 
   const trace = await parseTraceRaw(tracePath);
@@ -755,7 +755,7 @@ test('should flush console events on tracing stop', async ({ context, page }, te
     });
   });
   await promise;
-  const tracePath = testInfo.outputPath('trace.zip');
+  const tracePath = testInfo.outputPath('trace.pwtrace.zip');
   await context.tracing.stop({ path: tracePath });
   const trace = await parseTraceRaw(tracePath);
   const events = trace.events.filter(e => e.type === 'console');

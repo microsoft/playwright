@@ -19925,7 +19925,7 @@ export interface Touchscreen {
  * await context.tracing.start({ screenshots: true, snapshots: true });
  * const page = await context.newPage();
  * await page.goto('https://playwright.dev');
- * await context.tracing.stop({ path: 'trace.zip' });
+ * await context.tracing.stop({ path: 'trace.pwtrace.zip' });
  * ```
  *
  */
@@ -19939,7 +19939,7 @@ export interface Tracing {
    * await context.tracing.start({ screenshots: true, snapshots: true });
    * const page = await context.newPage();
    * await page.goto('https://playwright.dev');
-   * await context.tracing.stop({ path: 'trace.zip' });
+   * await context.tracing.stop({ path: 'trace.pwtrace.zip' });
    * ```
    *
    * @param options

@@ -74,7 +74,7 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
     runBeforeCloseBrowserContext: async () => {
       await page.hover('body');
       await page.close();
-      traceFile = path.join(workerInfo.project.outputDir, String(workerInfo.workerIndex), browserName, 'trace.zip');
+      traceFile = path.join(workerInfo.project.outputDir, String(workerInfo.workerIndex), browserName, 'trace.pwtrace.zip');
       await context.tracing.stop({ path: traceFile });
     }
   };
@@ -698,7 +698,7 @@ test('should handle file URIs', async ({ page, runAndTrace, browserName }) => {
 });
 
 test('should preserve currentSrc', async ({ browser, server, showTraceViewer }) => {
-  const traceFile = test.info().outputPath('trace.zip');
+  const traceFile = test.info().outputPath('trace.pwtrace.zip');
   const page = await browser.newPage({ deviceScaleFactor: 3 });
   await page.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
   await page.setViewportSize({ width: 300, height: 300 });
@@ -1294,7 +1294,7 @@ test('should highlight locator in iframe while typing', async ({ page, runAndTra
 });
 
 test('should preserve noscript when javascript is disabled', async ({ browser, server, showTraceViewer }) => {
-  const traceFile = test.info().outputPath('trace.zip');
+  const traceFile = test.info().outputPath('trace.pwtrace.zip');
   const page = await browser.newPage({ javaScriptEnabled: false });
   await page.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
   await page.goto(server.EMPTY_PAGE);
@@ -1311,8 +1311,8 @@ test('should preserve noscript when javascript is disabled', async ({ browser, s
   await expect(frame.getByText('javascript is disabled!')).toBeVisible();
 });
 
-test('should remove noscript by default', async ({ browser, server, showTraceViewer, browserType }) => {
-  const traceFile = test.info().outputPath('trace.zip');
+test('should remove noscript by default', async ({ browser, server, showTraceViewer }) => {
+  const traceFile = test.info().outputPath('trace.pwtrace.zip');
   const page = await browser.newPage({ javaScriptEnabled: undefined });
   await page.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
   await page.goto(server.EMPTY_PAGE);
@@ -1329,8 +1329,8 @@ test('should remove noscript by default', async ({ browser, server, showTraceVie
   await expect(frame.getByText('Enable JavaScript to run this app.')).toBeHidden();
 });
 
-test('should remove noscript when javaScriptEnabled is set to true', async ({ browser, server, showTraceViewer, browserType }) => {
-  const traceFile = test.info().outputPath('trace.zip');
+test('should remove noscript when javaScriptEnabled is set to true', async ({ browser, server, showTraceViewer }) => {
+  const traceFile = test.info().outputPath('trace.pwtrace.zip');
   const page = await browser.newPage({ javaScriptEnabled: true });
   await page.context().tracing.start({ snapshots: true, screenshots: true, sources: true });
   await page.goto(server.EMPTY_PAGE);

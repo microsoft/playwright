@@ -128,7 +128,7 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
 
   runAndTrace: async ({ context, showTraceViewer }, use, testInfo) => {
     await use(async (body: () => Promise<void>, optsOverrides = {}) => {
-      const traceFile = testInfo.outputPath('trace.zip');
+      const traceFile = testInfo.outputPath('trace.pwtrace.zip');
       await context.tracing.start({ snapshots: true, screenshots: true, sources: true, ...optsOverrides });
       await body();
       await context.tracing.stop({ path: traceFile });

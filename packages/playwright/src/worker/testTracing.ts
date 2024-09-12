@@ -214,7 +214,7 @@ export class TestTracing {
       });
     });
 
-    const tracePath = this._testInfo.outputPath('trace.zip');
+    const tracePath = this._testInfo.outputPath('trace.pwtrace.zip');
     await mergeTraceFiles(tracePath, this._temporaryTraceFiles);
     this._testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
   }

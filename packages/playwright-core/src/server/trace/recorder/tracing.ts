@@ -310,7 +310,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
     this._fs.copyFile(this._state.networkFile, newNetworkFile);
 
-    const zipFileName = this._state.traceFile + '.zip';
+    const zipFileName = this._state.traceFile + '.pwtrace.zip';
     if (params.mode === 'archive')
       this._fs.zip(entries, zipFileName);
 
