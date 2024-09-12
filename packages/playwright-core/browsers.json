@@ -42,7 +42,11 @@
     {
       "name": "ffmpeg",
       "revision": "1010",
-      "installByDefault": true
+      "installByDefault": true,
+      "revisionOverrides": {
+        "mac12": "1010",
+        "mac12-arm64": "1010"
+      }
     },
     {
       "name": "android",
