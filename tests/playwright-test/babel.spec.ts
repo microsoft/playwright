@@ -148,5 +148,6 @@ test('should not transform external', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
+  test.skip(result.output.includes('Error: This is caused by either a bug in Node.js or incorrect usage of Node.js internals'), 'Node.js bug');
   expect(result.output).toContain('Cannot use import statement outside a module');
 });
