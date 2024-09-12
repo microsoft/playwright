@@ -122,7 +122,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   });
   testServerConnection.onReport(report => teleSuiteUpdater.processTestReportEvent(report));
 
-  await testServerConnection.initialize({ interceptStdio: false, watchTestDirs: true });
+  await testServerConnection.initialize({ interceptStdio: false, watchTestDirs: true, populateDependenciesOnList: true });
   await testServerConnection.runGlobalSetup({});
 
   const { report } = await testServerConnection.listTests({});
