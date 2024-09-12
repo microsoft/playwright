@@ -16,6 +16,7 @@
 
 .network-request-details-tab {
   width: 100%;
+  height: 100%;
   user-select: text;
   line-height: 24px;
   margin-left: 10px;
