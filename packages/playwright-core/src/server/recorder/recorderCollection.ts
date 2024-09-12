@@ -25,7 +25,6 @@ import { monotonicTime } from '../../utils/time';
 import { mainFrameForAction, traceParamsForAction } from './recorderUtils';
 
 export class RecorderCollection extends EventEmitter {
-  private _currentAction: ActionInContext | null = null;
   private _lastAction: ActionInContext | null = null;
   private _actions: ActionInContext[] = [];
   private _enabled: boolean;
@@ -39,7 +38,6 @@ export class RecorderCollection extends EventEmitter {
   }
 
   restart() {
-    this._currentAction = null;
     this._lastAction = null;
     this._actions = [];
     this.emit('change');
@@ -56,8 +54,14 @@ export class RecorderCollection extends EventEmitter {
   async willPerformAction(actionInContext: ActionInContext): Promise<CallMetadata | null> {
     if (!this._enabled)
       return null;
-    const mainFrame = mainFrameForAction(this._pageAliases, actionInContext);
+    const { callMetadata, mainFrame } = this._callMetadataForAction(actionInContext);
+    await mainFrame.instrumentation.onBeforeCall(mainFrame, callMetadata);
+    this._lastAction = actionInContext;
+    return callMetadata;
+  }
 
+  private _callMetadataForAction(actionInContext: ActionInContext): { callMetadata: CallMetadata, mainFrame: Frame } {
+    const mainFrame = mainFrameForAction(this._pageAliases, actionInContext);
     const { action } = actionInContext;
     const callMetadata: CallMetadata = {
       id: `call@${createGuid()}`,
@@ -72,25 +76,16 @@ export class RecorderCollection extends EventEmitter {
       params: traceParamsForAction(actionInContext),
       log: [],
     };
-    await mainFrame.instrumentation.onBeforeCall(mainFrame, callMetadata);
-    this._currentAction = actionInContext;
-    return callMetadata;
+    return { callMetadata, mainFrame };
   }
 
   async didPerformAction(callMetadata: CallMetadata, actionInContext: ActionInContext, error?: Error) {
     if (!this._enabled)
       return;
 
-    if (error) {
-      // Do not clear current action on delayed error.
-      if (this._currentAction === actionInContext)
-        this._currentAction = null;
-    } else {
-      this._currentAction = null;
+    if (!error)
       this._actions.push(actionInContext);
-    }
 
-    this._lastAction = actionInContext;
     const mainFrame = mainFrameForAction(this._pageAliases, actionInContext);
     callMetadata.endTime = monotonicTime();
     await mainFrame.instrumentation.onAfterCall(mainFrame, callMetadata);
@@ -101,27 +96,18 @@ export class RecorderCollection extends EventEmitter {
   addRecordedAction(actionInContext: ActionInContext) {
     if (!this._enabled)
       return;
-    this._currentAction = null;
     const action = actionInContext.action;
-    let eraseLastAction = false;
-    if (this._lastAction && this._lastAction.frame.pageAlias === actionInContext.frame.pageAlias) {
-      const lastAction = this._lastAction.action;
-      // We augment last action based on the type.
-      if (this._lastAction && action.name === 'fill' && lastAction.name === 'fill') {
-        if (action.selector === lastAction.selector)
-          eraseLastAction = true;
-      }
-      if (lastAction && action.name === 'navigate' && lastAction.name === 'navigate') {
-        if (action.url === lastAction.url) {
-          // Already at a target URL.
-          return;
-        }
-      }
+
+    const lastAction = this._lastAction && this._lastAction.frame.pageAlias === actionInContext.frame.pageAlias ? this._lastAction.action : undefined;
+    if (lastAction && action.name === 'navigate' && lastAction.name === 'navigate' && action.url === lastAction.url) {
+      // Already at a target URL.
+      return;
     }
 
-    this._lastAction = actionInContext;
-    if (eraseLastAction)
+    if (lastAction && action.name === 'fill' && lastAction.name === 'fill' && action.selector === lastAction.selector)
       this._actions.pop();
+
+    this._lastAction = actionInContext;
     this._actions.push(actionInContext);
     this.emit('change');
   }
@@ -138,18 +124,7 @@ export class RecorderCollection extends EventEmitter {
     if (!this._enabled)
       return;
 
-    // Signal either arrives while action is being performed or shortly after.
-    if (this._currentAction) {
-      this._currentAction.action.signals.push(signal);
-      return;
-    }
-
-    if (this._lastAction && (!this._lastAction.committed || signal.name !== 'navigation')) {
-      const signals = this._lastAction.action.signals;
-      if (signal.name === 'navigation' && signals.length && signals[signals.length - 1].name === 'download')
-        return;
-      if (signal.name === 'download' && signals.length && signals[signals.length - 1].name === 'navigation')
-        signals.length = signals.length - 1;
+    if (this._lastAction && !this._lastAction.committed) {
       this._lastAction.action.signals.push(signal);
       this.emit('change');
       return;
