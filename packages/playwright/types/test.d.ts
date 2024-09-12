@@ -4584,6 +4584,51 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * });
    * ```
    *
+   * **Custom Step Location**
+   *
+   * Allows the specification of a custom location for a test step. This is particularly useful when `test.step` is used
+   * within helper functions or other layers of abstraction, enabling more accurate pinpointing of the step's origin in
+   * the source code.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   * import { getStepLocation } from './helpers';
+   *
+   * test('user login process with custom step location', async ({ page }) => {
+   *   const location = getStepLocation();
+   *   await test.step(`Navigate to login page`, async () => {
+   *     await page.goto('https://example.com/login');
+   *   }, { location });
+   *
+   *   await test.step(`Fill in login credentials and submit`, async () => {
+   *     await page.fill('input#username', 'testuser');
+   *     await page.fill('input#password', 'testpass');
+   *     await page.click('button[type="submit"]');
+   *   }, { location });
+   *
+   *   await test.step(`Check if the profile is visible post-login`, async () => {
+   *     const profileVisible = await page.isVisible('.profile');
+   *     expect(profileVisible).toBeTruthy();
+   *   }, { location });
+   * });
+   *
+   * function getStepLocation() {
+   *   const error = new Error();
+   *   const stackInfo = error.stack.split('\n')[2]; // Adjust based on environment
+   *   const match = /at (.+):(\d+):(\d+)/.exec(stackInfo);
+   *   return {
+   *     file: match[1],
+   *     line: parseInt(match[2], 10),
+   *     column: parseInt(match[3], 10)
+   *   };
+   * }
+   * ```
+   *
+   * This revised code demonstrates how to track and report the location of each step in a user login process, making
+   * debugging and tracing much easier in complex tests. The getStepLocation function is crafted to fetch the exact
+   * location where the test step is defined, which can be dynamically adjusted to fit different JavaScript
+   * environments.
+   *
    * **Decorator**
    *
    * You can use TypeScript method decorators to turn a method into a step. Each call to the decorated method will show
