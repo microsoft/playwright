@@ -19,7 +19,7 @@
   height: 100%;
   user-select: text;
   line-height: 24px;
-  padding-left: 10px;
+  margin-left: 10px;
   overflow: auto;
 }
 
