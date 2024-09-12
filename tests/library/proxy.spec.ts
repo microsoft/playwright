@@ -145,7 +145,6 @@ it('should authenticate', async ({ browserType, server }) => {
 });
 
 it('should work with authenticate followed by redirect', async ({ browserName, browserType, server }) => {
-  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/10095');
   function hasAuth(req, res) {
     const auth = req.headers['proxy-authorization'];
     if (!auth) {
@@ -324,7 +323,6 @@ async function setupSocksForwardingServer(port: number, forwardPort: number) {
 }
 
 it('should use SOCKS proxy for websocket requests', async ({ browserName, platform, browserType, server }, testInfo) => {
-  it.fixme(browserName === 'webkit' && platform !== 'linux');
   const { proxyServerAddr, closeProxyServer } = await setupSocksForwardingServer(testInfo.workerIndex + 2048 + 2, server.PORT);
   const browser = await browserType.launch({
     proxy: {
