@@ -1242,6 +1242,7 @@ fixture   |  fixture: context
 
 test('test with custom location', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
     'helper.ts': `
       import { test } from '@playwright/test';
 
@@ -1288,6 +1289,7 @@ test('test with custom location', async ({ runInlineTest }) => {
 
 test('nested step test with custom locations', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
     'helper.ts': `
       import { test } from '@playwright/test';
 
