@@ -78,21 +78,12 @@ export class RecorderCollection extends EventEmitter {
         if (action.selector === lastAction.selector)
           eraseLastAction = true;
       }
-      if (lastAction && action.name === 'click' && lastAction.name === 'click') {
-        if (action.selector === lastAction.selector && action.clickCount > lastAction.clickCount)
-          eraseLastAction = true;
-      }
       if (lastAction && action.name === 'navigate' && lastAction.name === 'navigate') {
         if (action.url === lastAction.url) {
           // Already at a target URL.
           this._currentAction = null;
           return;
         }
-      }
-      // Check and uncheck erase click.
-      if (lastAction && (action.name === 'check' || action.name === 'uncheck') && lastAction.name === 'click') {
-        if (action.selector === lastAction.selector)
-          eraseLastAction = true;
       }
     }
 

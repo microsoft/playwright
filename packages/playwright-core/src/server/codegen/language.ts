@@ -69,13 +69,14 @@ export function toKeyboardModifiers(modifiers: number): types.SmartKeyboardModif
   return result;
 }
 
-export function toClickOptions(action: actions.ClickAction): types.MouseClickOptions {
+export function toClickOptionsForSourceCode(action: actions.ClickAction): types.MouseClickOptions {
   const modifiers = toKeyboardModifiers(action.modifiers);
   const options: types.MouseClickOptions = {};
   if (action.button !== 'left')
     options.button = action.button;
   if (modifiers.length)
     options.modifiers = modifiers;
+  // Do not render clickCount === 2 for dblclick.
   if (action.clickCount > 2)
     options.clickCount = action.clickCount;
   if (action.position)
