@@ -323,6 +323,10 @@ export class BidiPage implements PageDelegate {
     throw new Error('Method not implemented.');
   }
 
+  async forceGarbageCollection(): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
   async addInitScript(initScript: InitScript): Promise<void> {
     const { script } = await this._session.send('script.addPreloadScript', {
       // TODO: remove function call from the source.

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './pageTest';
+import { test, expect } from './pageTest';
 
-it('should work', async function({ page, browserName }) {
+test('should work', async ({ page }) => {
   await page.evaluate(() => {
     globalThis.objectToDestroy = {};
     globalThis.weakRef = new WeakRef(globalThis.objectToDestroy);
