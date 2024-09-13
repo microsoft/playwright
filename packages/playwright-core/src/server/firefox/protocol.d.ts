@@ -315,6 +315,11 @@ export module Protocol {
     };
     export type cancelDownloadReturnValue = void;
   }
+  export module Heap {
+    export type collectGarbageParameters = {
+    };
+    export type collectGarbageReturnValue = void;
+  }
   export module Page {
     export type DOMPoint = {
       x: number;
@@ -1124,6 +1129,7 @@ export module Protocol {
     "Browser.setForcedColors": Browser.setForcedColorsParameters;
     "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsParameters;
     "Browser.cancelDownload": Browser.cancelDownloadParameters;
+    "Heap.collectGarbage": Heap.collectGarbageParameters;
     "Page.close": Page.closeParameters;
     "Page.setFileInputFiles": Page.setFileInputFilesParameters;
     "Page.addBinding": Page.addBindingParameters;
@@ -1204,6 +1210,7 @@ export module Protocol {
     "Browser.setForcedColors": Browser.setForcedColorsReturnValue;
     "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsReturnValue;
     "Browser.cancelDownload": Browser.cancelDownloadReturnValue;
+    "Heap.collectGarbage": Heap.collectGarbageReturnValue;
     "Page.close": Page.closeReturnValue;
     "Page.setFileInputFiles": Page.setFileInputFilesReturnValue;
     "Page.addBinding": Page.addBindingReturnValue;
