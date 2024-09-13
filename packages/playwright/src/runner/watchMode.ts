@@ -122,7 +122,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   });
   testServerConnection.onReport(report => teleSuiteUpdater.processTestReportEvent(report));
 
-  await testServerConnection.initialize({ interceptStdio: false, watchTestDirs: true });
+  await testServerConnection.initialize({ interceptStdio: false, watchTestDirs: true, populateDependenciesOnList: true });
   await testServerConnection.runGlobalSetup({});
 
   const { report } = await testServerConnection.listTests({});
@@ -132,9 +132,6 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
 
   let lastRun: { type: 'changed' | 'regular' | 'failed', failedTestIds?: string[], dirtyTestIds?: string[] } = { type: 'regular' };
   let result: FullResult['status'] = 'passed';
-
-  // Enter the watch loop.
-  await runTests(options, testServerConnection);
 
   while (true) {
     printPrompt();
@@ -330,7 +327,7 @@ Change settings
 
 let showBrowserServer: PlaywrightServer | undefined;
 let connectWsEndpoint: string | undefined = undefined;
-let seq = 0;
+let seq = 1;
 
 function printConfiguration(options: WatchModeOptions, title?: string) {
   const packageManagerCommand = getPackageManagerExecCommand();
@@ -344,9 +341,7 @@ function printConfiguration(options: WatchModeOptions, title?: string) {
     tokens.push(...options.files.map(a => colors.bold(a)));
   if (title)
     tokens.push(colors.dim(`(${title})`));
-  if (seq)
-    tokens.push(colors.dim(`#${seq}`));
-  ++seq;
+  tokens.push(colors.dim(`#${seq++}`));
   const lines: string[] = [];
   const sep = separator();
   lines.push('\x1Bc' + sep);
