@@ -15,6 +15,7 @@
  */
 
 import type * as channels from '@protocol/channels';
+import { kMaxCookieExpiresDateInSeconds } from './network';
 
 class Cookie {
   private _raw: channels.NetworkCookie;
@@ -113,6 +114,97 @@ export class CookieStore {
         cookies.delete(cookie);
     }
   }
+}
+
+type RawCookie = {
+  name: string,
+  value: string,
+  domain?: string,
+  path?: string,
+  expires?: number,
+  httpOnly?: boolean,
+  secure?: boolean,
+  sameSite?: 'Strict' | 'Lax' | 'None',
+};
+
+export function parseRawCookie(header: string): RawCookie | null {
+  const pairs = header.split(';').filter(s => s.trim().length > 0).map(p => {
+    let key = '';
+    let value = '';
+    const separatorPos = p.indexOf('=');
+    if (separatorPos === -1) {
+      // If only a key is specified, the value is left undefined.
+      key = p.trim();
+    } else {
+      // Otherwise we assume that the key is the element before the first `=`
+      key = p.slice(0, separatorPos).trim();
+      // And the value is the rest of the string.
+      value = p.slice(separatorPos + 1).trim();
+    }
+    return [key, value];
+  });
+  if (!pairs.length)
+    return null;
+  const [name, value] = pairs[0];
+  const cookie: RawCookie = {
+    name,
+    value,
+  };
+  for (let i = 1; i < pairs.length; i++) {
+    const [name, value] = pairs[i];
+    switch (name.toLowerCase()) {
+      case 'expires':
+        const expiresMs = (+new Date(value));
+        // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.1
+        if (isFinite(expiresMs)) {
+          if (expiresMs <= 0)
+            cookie.expires = 0;
+          else
+            cookie.expires = Math.min(expiresMs / 1000, kMaxCookieExpiresDateInSeconds);
+        }
+        break;
+      case 'max-age':
+        const maxAgeSec = parseInt(value, 10);
+        if (isFinite(maxAgeSec)) {
+          // From https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.2
+          // If delta-seconds is less than or equal to zero (0), let expiry-time
+          // be the earliest representable date and time.
+          if (maxAgeSec <= 0)
+            cookie.expires = 0;
+          else
+            cookie.expires = Math.min(Date.now() / 1000 + maxAgeSec, kMaxCookieExpiresDateInSeconds);
+        }
+        break;
+      case 'domain':
+        cookie.domain = value.toLocaleLowerCase() || '';
+        if (cookie.domain && !cookie.domain.startsWith('.') && cookie.domain.includes('.'))
+          cookie.domain = '.' + cookie.domain;
+        break;
+      case 'path':
+        cookie.path = value || '';
+        break;
+      case 'secure':
+        cookie.secure = true;
+        break;
+      case 'httponly':
+        cookie.httpOnly = true;
+        break;
+      case 'samesite':
+        switch (value.toLowerCase()) {
+          case 'none':
+            cookie.sameSite = 'None';
+            break;
+          case 'lax':
+            cookie.sameSite = 'Lax';
+            break;
+          case 'strict':
+            cookie.sameSite = 'Strict';
+            break;
+        }
+        break;
+    }
+  }
+  return cookie;
 }
 
 export function domainMatches(value: string, domain: string): boolean {

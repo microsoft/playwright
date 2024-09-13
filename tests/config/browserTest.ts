@@ -62,21 +62,21 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     await run(playwright[browserName]);
   }, { scope: 'worker' }],
 
-  allowsThirdParty: [async ({ browserName, browserMajorVersion, channel }, run) => {
+  allowsThirdParty: [async ({ browserName }, run) => {
     if (browserName === 'firefox')
       await run(true);
     else
       await run(false);
   }, { scope: 'worker' }],
 
-  defaultSameSiteCookieValue: [async ({ browserName, browserMajorVersion, channel, isLinux }, run) => {
-    if (browserName === 'chromium')
+  defaultSameSiteCookieValue: [async ({ browserName, isLinux }, run) => {
+    if (browserName === 'chromium' || browserName as any === '_bidiChromium')
       await run('Lax');
     else if (browserName === 'webkit' && isLinux)
       await run('Lax');
     else if (browserName === 'webkit' && !isLinux)
       await run('None');
-    else if (browserName === 'firefox')
+    else if (browserName === 'firefox' || browserName as any === '_bidiFirefox')
       await run('None');
     else
       throw new Error('unknown browser - ' + browserName);
