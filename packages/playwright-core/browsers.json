@@ -3,15 +3,15 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1134",
+      "revision": "1135",
       "installByDefault": true,
-      "browserVersion": "129.0.6668.29"
+      "browserVersion": "129.0.6668.42"
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1256",
+      "revision": "1259",
       "installByDefault": false,
-      "browserVersion": "130.0.6695.0"
+      "browserVersion": "130.0.6713.0"
     },
     {
       "name": "firefox",
@@ -42,7 +42,11 @@
     {
       "name": "ffmpeg",
       "revision": "1010",
-      "installByDefault": true
+      "installByDefault": true,
+      "revisionOverrides": {
+        "mac12": "1010",
+        "mac12-arm64": "1010"
+      }
     },
     {
       "name": "android",

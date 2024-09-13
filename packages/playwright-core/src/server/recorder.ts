@@ -26,14 +26,12 @@ import { type Language } from './codegen/types';
 import { Debugger } from './debugger';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import { ContextRecorder, generateFrameSelector } from './recorder/contextRecorder';
-import { type IRecorderApp } from './recorder/recorderApp';
+import type { IRecorderAppFactory, IRecorderApp, IRecorder } from './recorder/recorderFrontend';
 import { buildFullSelector, metadataToCallLog } from './recorder/recorderUtils';
 
 const recorderSymbol = Symbol('recorderSymbol');
 
-export type RecorderAppFactory = (recorder: Recorder) => Promise<IRecorderApp>;
-
-export class Recorder implements InstrumentationListener {
+export class Recorder implements InstrumentationListener, IRecorder {
   private _context: BrowserContext;
   private _mode: Mode;
   private _highlightedSelector = '';
@@ -47,14 +45,14 @@ export class Recorder implements InstrumentationListener {
   private _omitCallTracking = false;
   private _currentLanguage: Language;
 
-  static showInspector(context: BrowserContext, recorderAppFactory: RecorderAppFactory) {
+  static showInspector(context: BrowserContext, recorderAppFactory: IRecorderAppFactory) {
     const params: channels.BrowserContextRecorderSupplementEnableParams = {};
     if (isUnderTest())
       params.language = process.env.TEST_INSPECTOR_LANGUAGE;
     Recorder.show(context, recorderAppFactory, params).catch(() => {});
   }
 
-  static show(context: BrowserContext, recorderAppFactory: RecorderAppFactory, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<Recorder> {
+  static show(context: BrowserContext, recorderAppFactory: IRecorderAppFactory, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<Recorder> {
     let recorderPromise = (context as any)[recorderSymbol] as Promise<Recorder>;
     if (!recorderPromise) {
       recorderPromise = Recorder._create(context, recorderAppFactory, params);
@@ -63,7 +61,7 @@ export class Recorder implements InstrumentationListener {
     return recorderPromise;
   }
 
-  private static async _create(context: BrowserContext, recorderAppFactory: RecorderAppFactory, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<Recorder> {
+  private static async _create(context: BrowserContext, recorderAppFactory: IRecorderAppFactory, params: channels.BrowserContextRecorderSupplementEnableParams = {}): Promise<Recorder> {
     const recorder = new Recorder(context, params);
     const recorderApp = await recorderAppFactory(recorder);
     await recorder._install(recorderApp);

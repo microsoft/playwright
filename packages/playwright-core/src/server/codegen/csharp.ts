@@ -16,7 +16,7 @@
 
 import type { BrowserContextOptions } from '../../../types/types';
 import type { ActionInContext, Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
-import { sanitizeDeviceOptions, toClickOptions, toKeyboardModifiers, toSignalMap } from './language';
+import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
 import { escapeWithQuotes, asLocator } from '../../utils';
 import { deviceDescriptors } from '../deviceDescriptors';
 
@@ -112,7 +112,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
         let method = 'Click';
         if (action.clickCount === 2)
           method = 'DblClick';
-        const options = toClickOptions(action);
+        const options = toClickOptionsForSourceCode(action);
         if (!Object.entries(options).length)
           return `await ${subject}.${this._asLocator(action.selector)}.${method}Async();`;
         const optionsString = formatObject(options, '    ', 'Locator' + method + 'Options');

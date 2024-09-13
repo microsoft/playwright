@@ -18,41 +18,6 @@ import path from 'path';
 import { test, expect, parseTestRunnerOutput, stripAnsi } from './playwright-test-fixtures';
 const { spawnAsync } = require('../../packages/playwright-core/lib/utils');
 
-test('should be able to call expect.extend in config', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'helper.ts': `
-      import { test as base, expect } from '@playwright/test';
-      expect.extend({
-        toBeWithinRange(received, floor, ceiling) {
-          const pass = received >= floor && received <= ceiling;
-          if (pass) {
-            return {
-              message: () =>
-                'passed',
-              pass: true,
-            };
-          } else {
-            return {
-              message: () => 'failed',
-              pass: false,
-            };
-          }
-        },
-      });
-      export const test = base;
-    `,
-    'expect-test.spec.ts': `
-      import { test } from './helper';
-      test('numeric ranges', () => {
-        test.expect(100).toBeWithinRange(90, 110);
-        test.expect(101).not.toBeWithinRange(0, 100);
-      });
-    `
-  });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-});
-
 test('should not expand huge arrays', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'expect-test.spec.ts': `
@@ -1043,8 +1008,8 @@ test('should expose timeout to custom matchers', async ({ runInlineTest, runTSC 
 test('should throw error when using .equals()', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'helper.ts': `
-      import { test as base, expect } from '@playwright/test';
-      expect.extend({
+      import { test as base, expect as baseExpect } from '@playwright/test';
+      export const expect = baseExpect.extend({
         toBeWithinRange(received, floor, ceiling) {
           this.equals(1, 2);
         },
@@ -1052,14 +1017,55 @@ test('should throw error when using .equals()', async ({ runInlineTest }) => {
       export const test = base;
     `,
     'expect-test.spec.ts': `
-      import { test } from './helper';
+      import { test, expect } from './helper';
       test('numeric ranges', () => {
-        test.expect(() => {
-          test.expect(100).toBeWithinRange(90, 110);
+        expect(() => {
+          expect(100).toBeWithinRange(90, 110);
         }).toThrowError('It looks like you are using custom expect matchers that are not compatible with Playwright. See https://aka.ms/playwright/expect-compatibility');
       });
     `
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+});
+
+test('expect.extend should be immutable', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      const expectFoo = expect.extend({
+        toFoo() {
+          console.log('%%foo');
+          return { pass: true };
+        }
+      });
+      const expectFoo2 = expect.extend({
+        toFoo() {
+          console.log('%%foo2');
+          return { pass: true };
+        }
+      });
+      const expectBar = expectFoo.extend({
+        toBar() {
+          console.log('%%bar');
+          return { pass: true };
+        }
+      });
+      test('logs', () => {
+        expect(expectFoo).not.toBe(expectFoo2);
+        expect(expectFoo).not.toBe(expectBar);
+
+        expectFoo().toFoo();
+        expectFoo2().toFoo();
+        expectBar().toFoo();
+        expectBar().toBar();
+      });
+    `
+  });
+  expect(result.outputLines).toEqual([
+    'foo',
+    'foo2',
+    'foo',
+    'bar',
+  ]);
 });

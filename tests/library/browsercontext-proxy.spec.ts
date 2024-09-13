@@ -25,10 +25,6 @@ it.beforeEach(({ server }) => {
 });
 
 it('should work when passing the proxy only on the context level', async ({ browserName, platform, browserType, server, proxyServer }) => {
-  // Currently an upstream bug in the network stack of Chromium which leads that
-  // the wrong proxy gets used in the BrowserContext.
-  it.fixme(browserName === 'chromium' && platform === 'win32');
-
   proxyServer.forwardTo(server.PORT);
   let browser;
   try {

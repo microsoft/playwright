@@ -10,3 +10,6 @@
 ../../utils/**
 ../../utilsBundle.ts
 ../../zipBundle.ts
+
+[recorderInTraceViewer.ts]
+../trace/viewer/traceViewer.ts

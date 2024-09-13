@@ -14,115 +14,130 @@
  * limitations under the License.
  */
 
-import { createGuid, monotonicTime, serializeExpectedTextValues } from '../../utils';
-import { toClickOptions, toKeyboardModifiers } from '../codegen/language';
+import { serializeExpectedTextValues } from '../../utils';
+import { toKeyboardModifiers } from '../codegen/language';
 import type { ActionInContext } from '../codegen/types';
-import type { Frame } from '../frames';
 import type { CallMetadata } from '../instrumentation';
 import type { Page } from '../page';
-import { buildFullSelector } from './recorderUtils';
+import type * as actions from './recorderActions';
+import type * as types from '../types';
+import { buildFullSelector, mainFrameForAction } from './recorderUtils';
 
-async function innerPerformAction(mainFrame: Frame, action: string, params: any, cb: (callMetadata: CallMetadata) => Promise<any>): Promise<boolean> {
-  const callMetadata: CallMetadata = {
-    id: `call@${createGuid()}`,
-    apiName: 'frame.' + action,
-    objectId: mainFrame.guid,
-    pageId: mainFrame._page.guid,
-    frameId: mainFrame.guid,
-    startTime: monotonicTime(),
-    endTime: 0,
-    type: 'Frame',
-    method: action,
-    params,
-    log: [],
-  };
-
-  try {
-    await mainFrame.instrumentation.onBeforeCall(mainFrame, callMetadata);
-    await cb(callMetadata);
-  } catch (e) {
-    callMetadata.endTime = monotonicTime();
-    await mainFrame.instrumentation.onAfterCall(mainFrame, callMetadata);
-    return false;
-  }
-
-  callMetadata.endTime = monotonicTime();
-  await mainFrame.instrumentation.onAfterCall(mainFrame, callMetadata);
-  return true;
-}
-
-export async function performAction(pageAliases: Map<Page, string>, actionInContext: ActionInContext): Promise<boolean> {
-  const pageAlias = actionInContext.frame.pageAlias;
-  const page = [...pageAliases.entries()].find(([, alias]) => pageAlias === alias)?.[0];
-  if (!page)
-    throw new Error('Internal error: page not found');
-  const mainFrame = page.mainFrame();
+export async function performAction(callMetadata: CallMetadata, pageAliases: Map<Page, string>, actionInContext: ActionInContext) {
+  const mainFrame = mainFrameForAction(pageAliases, actionInContext);
   const { action } = actionInContext;
+
   const kActionTimeout = 5000;
 
-  if (action.name === 'navigate')
-    return await innerPerformAction(mainFrame, 'goto', { url: action.url }, callMetadata => mainFrame.goto(callMetadata, action.url, { timeout: kActionTimeout }));
+  if (action.name === 'navigate') {
+    await mainFrame.goto(callMetadata, action.url, { timeout: kActionTimeout });
+    return;
+  }
+
   if (action.name === 'openPage')
     throw Error('Not reached');
-  if (action.name === 'closePage')
-    return await innerPerformAction(mainFrame, 'close', {}, callMetadata => mainFrame._page.close(callMetadata));
+
+  if (action.name === 'closePage') {
+    await mainFrame._page.close(callMetadata);
+    return;
+  }
 
   const selector = buildFullSelector(actionInContext.frame.framePath, action.selector);
 
   if (action.name === 'click') {
     const options = toClickOptions(action);
-    return await innerPerformAction(mainFrame, 'click', { selector }, callMetadata => mainFrame.click(callMetadata, selector, { ...options, timeout: kActionTimeout, strict: true }));
+    await mainFrame.click(callMetadata, selector, { ...options, timeout: kActionTimeout, strict: true });
+    return;
   }
+
   if (action.name === 'press') {
     const modifiers = toKeyboardModifiers(action.modifiers);
     const shortcut = [...modifiers, action.key].join('+');
-    return await innerPerformAction(mainFrame, 'press', { selector, key: shortcut }, callMetadata => mainFrame.press(callMetadata, selector, shortcut, { timeout: kActionTimeout, strict: true }));
+    await mainFrame.press(callMetadata, selector, shortcut, { timeout: kActionTimeout, strict: true });
+    return;
   }
-  if (action.name === 'fill')
-    return await innerPerformAction(mainFrame, 'fill', { selector, text: action.text }, callMetadata => mainFrame.fill(callMetadata, selector, action.text, { timeout: kActionTimeout, strict: true }));
-  if (action.name === 'setInputFiles')
-    return await innerPerformAction(mainFrame, 'setInputFiles', { selector, files: action.files }, callMetadata => mainFrame.setInputFiles(callMetadata, selector, { selector, payloads: [], timeout: kActionTimeout, strict: true }));
-  if (action.name === 'check')
-    return await innerPerformAction(mainFrame, 'check', { selector }, callMetadata => mainFrame.check(callMetadata, selector, { timeout: kActionTimeout, strict: true }));
-  if (action.name === 'uncheck')
-    return await innerPerformAction(mainFrame, 'uncheck', { selector }, callMetadata => mainFrame.uncheck(callMetadata, selector, { timeout: kActionTimeout, strict: true }));
+
+  if (action.name === 'fill') {
+    await mainFrame.fill(callMetadata, selector, action.text, { timeout: kActionTimeout, strict: true });
+    return;
+  }
+
+  if (action.name === 'setInputFiles') {
+    await mainFrame.setInputFiles(callMetadata, selector, { selector, payloads: [], timeout: kActionTimeout, strict: true });
+    return;
+  }
+
+  if (action.name === 'check') {
+    await mainFrame.check(callMetadata, selector, { timeout: kActionTimeout, strict: true });
+    return;
+  }
+
+  if (action.name === 'uncheck') {
+    await mainFrame.uncheck(callMetadata, selector, { timeout: kActionTimeout, strict: true });
+    return;
+  }
+
   if (action.name === 'select') {
     const values = action.options.map(value => ({ value }));
-    return await innerPerformAction(mainFrame, 'selectOption', { selector, values }, callMetadata => mainFrame.selectOption(callMetadata, selector, [], values, { timeout: kActionTimeout, strict: true }));
+    await mainFrame.selectOption(callMetadata, selector, [], values, { timeout: kActionTimeout, strict: true });
+    return;
   }
+
   if (action.name === 'assertChecked') {
-    return await innerPerformAction(mainFrame, 'expect', { selector }, callMetadata => mainFrame.expect(callMetadata, selector, {
+    await mainFrame.expect(callMetadata, selector, {
       selector,
       expression: 'to.be.checked',
       isNot: !action.checked,
       timeout: kActionTimeout,
-    }));
+    });
+    return;
   }
+
   if (action.name === 'assertText') {
-    return await innerPerformAction(mainFrame, 'expect', { selector }, callMetadata => mainFrame.expect(callMetadata, selector, {
+    await mainFrame.expect(callMetadata, selector, {
       selector,
       expression: 'to.have.text',
       expectedText: serializeExpectedTextValues([action.text], { matchSubstring: true, normalizeWhiteSpace: true }),
       isNot: false,
       timeout: kActionTimeout,
-    }));
+    });
+    return;
   }
+
   if (action.name === 'assertValue') {
-    return await innerPerformAction(mainFrame, 'expect', { selector }, callMetadata => mainFrame.expect(callMetadata, selector, {
+    await mainFrame.expect(callMetadata, selector, {
       selector,
       expression: 'to.have.value',
       expectedValue: action.value,
       isNot: false,
       timeout: kActionTimeout,
-    }));
+    });
+    return;
   }
+
   if (action.name === 'assertVisible') {
-    return await innerPerformAction(mainFrame, 'expect', { selector }, callMetadata => mainFrame.expect(callMetadata, selector, {
+    await mainFrame.expect(callMetadata, selector, {
       selector,
       expression: 'to.be.visible',
       isNot: false,
       timeout: kActionTimeout,
-    }));
+    });
+    return;
   }
+
   throw new Error('Internal error: unexpected action ' + (action as any).name);
+}
+
+export function toClickOptions(action: actions.ClickAction): types.MouseClickOptions {
+  const modifiers = toKeyboardModifiers(action.modifiers);
+  const options: types.MouseClickOptions = {};
+  if (action.button !== 'left')
+    options.button = action.button;
+  if (modifiers.length)
+    options.modifiers = modifiers;
+  if (action.clickCount > 1)
+    options.clickCount = action.clickCount;
+  if (action.position)
+    options.position = action.position;
+  return options;
 }

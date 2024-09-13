@@ -69,13 +69,13 @@ export class ContextRecorder extends EventEmitter {
     // Make a copy of options to modify them later.
     const languageGeneratorOptions: LanguageGeneratorOptions = {
       browserName: context._browser.options.name,
-      launchOptions: { headless: false, ...params.launchOptions },
+      launchOptions: { headless: false, ...params.launchOptions, tracesDir: undefined },
       contextOptions: { ...params.contextOptions },
       deviceName: params.device,
       saveStorage: params.saveStorage,
     };
 
-    const collection = new RecorderCollection(params.mode === 'recording');
+    const collection = new RecorderCollection(this._pageAliases, params.mode === 'recording');
     collection.on('change', () => {
       this._recorderSources = [];
       for (const languageGenerator of this._orderedLanguages) {
@@ -163,7 +163,7 @@ export class ContextRecorder extends EventEmitter {
     // First page is called page, others are called popup1, popup2, etc.
     const frame = page.mainFrame();
     page.on('close', () => {
-      this._collection.addAction({
+      this._collection.addRecordedAction({
         frame: this._describeMainFrame(page),
         committed: true,
         action: {
@@ -185,7 +185,7 @@ export class ContextRecorder extends EventEmitter {
     if (page.opener()) {
       this._onPopup(page.opener()!, page);
     } else {
-      this._collection.addAction({
+      this._collection.addRecordedAction({
         frame: this._describeMainFrame(page),
         committed: true,
         action: {
@@ -236,14 +236,15 @@ export class ContextRecorder extends EventEmitter {
 
     await this._delegate.rewriteActionInContext?.(this._pageAliases, actionInContext);
 
-    this._collection.willPerformAction(actionInContext);
-    const success = await performAction(this._pageAliases, actionInContext);
-    if (success) {
-      this._collection.didPerformAction(actionInContext);
+    const callMetadata = await this._collection.willPerformAction(actionInContext);
+    if (!callMetadata)
+      return;
+    const error = await performAction(callMetadata, this._pageAliases, actionInContext).then(() => undefined).catch((e: Error) => e);
+    await this._collection.didPerformAction(callMetadata, actionInContext, error);
+    if (error)
+      actionInContext.committed = true;
+    else
       this._setCommittedAfterTimeout(actionInContext);
-    } else {
-      this._collection.performedActionFailed(actionInContext);
-    }
   }
 
   private async _recordAction(frame: Frame, action: actions.Action) {
@@ -260,7 +261,7 @@ export class ContextRecorder extends EventEmitter {
     await this._delegate.rewriteActionInContext?.(this._pageAliases, actionInContext);
 
     this._setCommittedAfterTimeout(actionInContext);
-    this._collection.addAction(actionInContext);
+    this._collection.addRecordedAction(actionInContext);
   }
 
   private _setCommittedAfterTimeout(actionInContext: ActionInContext) {
