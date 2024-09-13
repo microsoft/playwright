@@ -41,6 +41,7 @@ import type * as types from './types';
 import type { HeadersArray, ProxySettings } from './types';
 import { kMaxCookieExpiresDateInSeconds } from './network';
 import { getMatchingTLSOptionsForOrigin, rewriteOpenSSLErrorIfNeeded } from './socksClientCertificatesInterceptor';
+import type * as har from '@trace/har';
 
 type FetchRequestOptions = {
   userAgent: string;
@@ -72,6 +73,7 @@ export type APIRequestFinishedEvent = {
   statusCode: number;
   statusMessage: string;
   body?: Buffer;
+  timings: har.Timings;
 };
 
 type SendRequestOptions = https.RequestOptions & {
@@ -307,8 +309,30 @@ export abstract class APIRequestContext extends SdkObject {
       // If we have a proxy agent already, do not override it.
       const agent = options.agent || (url.protocol === 'https:' ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent);
       const requestOptions = { ...options, agent };
+
+      const startAt = monotonicTime();
+      const timings: Record<'startAt' | 'requestFinishAt' | 'dnsLookupAt' | 'tcpConnectionAt' | 'tlsHandshakeAt' | 'firstByteAt' | 'endAt', number | undefined> = {
+        startAt,
+        requestFinishAt: undefined,
+        dnsLookupAt: undefined,
+        tcpConnectionAt: undefined,
+        tlsHandshakeAt: undefined,
+        firstByteAt: undefined,
+        endAt: undefined
+      };
+
       const request = requestConstructor(url, requestOptions as any, async response => {
+        response.once('readable', () => { timings.firstByteAt = monotonicTime(); });
+        response.once('end', () => { timings.endAt = monotonicTime(); });
+
         const notifyRequestFinished = (body?: Buffer) => {
+          const send = timings.requestFinishAt! - startAt;
+          const dnsLookup = timings.dnsLookupAt ? startAt - timings.dnsLookupAt : undefined;
+          const tcpConnection = timings.tcpConnectionAt! - (timings.dnsLookupAt ?? startAt);
+          const tlsHandshake = timings.tlsHandshakeAt ? (timings.tlsHandshakeAt - timings.tcpConnectionAt!) : undefined;
+          const firstByte = timings.firstByteAt! - (timings.tlsHandshakeAt ?? timings.tcpConnectionAt!);
+          const contentTransfer = timings.endAt! - timings.firstByteAt!;
+
           const requestFinishedEvent: APIRequestFinishedEvent = {
             requestEvent,
             httpVersion: response.httpVersion,
@@ -317,7 +341,16 @@ export abstract class APIRequestContext extends SdkObject {
             headers: response.headers,
             rawHeaders: response.rawHeaders,
             cookies,
-            body
+            body,
+            timings: {
+              send,
+              wait: firstByte,
+              receive: contentTransfer,
+              dns: dnsLookup,
+              connect: tcpConnection,
+              ssl: tlsHandshake,
+              blocked: firstByte,
+            },
           };
           this.emit(APIRequestContext.Events.RequestFinished, requestFinishedEvent);
         };
@@ -462,6 +495,13 @@ export abstract class APIRequestContext extends SdkObject {
       };
       this.on(APIRequestContext.Events.Dispose, disposeListener);
       request.on('close', () => this.off(APIRequestContext.Events.Dispose, disposeListener));
+
+      request.on('socket', socket => {
+        socket.on('lookup', () => { timings.dnsLookupAt = monotonicTime(); });
+        socket.on('connect', () => { timings.tcpConnectionAt = monotonicTime(); });
+        socket.on('secureConnect', () => { timings.tlsHandshakeAt = monotonicTime(); });
+      });
+      request.on('finish', () => { timings.requestFinishAt = monotonicTime(); });
 
       progress.log(`→ ${options.method} ${url.toString()}`);
       if (options.headers) {

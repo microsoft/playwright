@@ -212,6 +212,10 @@ export class HarTracer {
     harEntry.response.statusText = event.statusMessage;
     harEntry.response.httpVersion = event.httpVersion;
     harEntry.response.redirectURL = event.headers.location || '';
+
+    harEntry.timings = event.timings;
+    this._computeHarEntryTotalTime(harEntry);
+
     for (let i = 0; i < event.rawHeaders.length; i += 2) {
       harEntry.response.headers.push({
         name: event.rawHeaders[i],
