@@ -2555,6 +2555,11 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * Force the browser to perform garbage collection.
+   */
+  forceGarbageCollection(): Promise<void>;
+
+  /**
    * Returns frame matching the specified criteria. Either `name` or `url` must be specified.
    *
    * **Usage**

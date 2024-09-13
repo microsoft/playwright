@@ -1430,6 +1430,8 @@ Page:
         slowMo: true
         snapshot: true
 
+    forceGarbageCollection:
+
     registerLocatorHandler:
       parameters:
         selector: string
