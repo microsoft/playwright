@@ -16559,7 +16559,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -16689,7 +16689,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -16807,7 +16807,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -16893,7 +16893,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -16979,7 +16979,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -17107,7 +17107,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -17193,7 +17193,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by

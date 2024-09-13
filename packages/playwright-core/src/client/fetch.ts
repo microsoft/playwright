@@ -36,8 +36,8 @@ export type FetchOptions = {
   method?: string,
   headers?: Headers,
   data?: string | Buffer | Serializable,
-  form?: { [key: string]: string|number|boolean; };
-  multipart?: { [key: string]: string|number|boolean|fs.ReadStream|FilePayload; };
+  form?: { [key: string]: string|number|boolean; } | FormData;
+  multipart?: { [key: string]: string|number|boolean|fs.ReadStream|FilePayload; } | FormData;
   timeout?: number,
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
@@ -202,7 +202,16 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
           throw new Error(`Unexpected 'data' type`);
         }
       } else if (options.form) {
-        formData = objectToArray(options.form);
+        if (globalThis.FormData && options.form instanceof FormData) {
+          formData = [];
+          for (const [name, value] of options.form.entries()) {
+            if (typeof value !== 'string')
+              throw new Error(`Expected string for options.form["${name}"], found File. Please use options.multipart instead.`);
+            formData.push({ name, value });
+          }
+        } else {
+          formData = objectToArray(options.form);
+        }
       } else if (options.multipart) {
         multipartData = [];
         if (globalThis.FormData && options.multipart instanceof FormData) {
