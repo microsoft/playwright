@@ -546,6 +546,7 @@ test.describe('browser', () => {
       keyPath: asset('client-certificates/client/trusted/key.pem'),
     };
     const page = await browser.newPage({
+      ignoreHTTPSErrors: true,
       clientCertificates: [{
         origin: new URL(serverURL).origin,
         ...baseOptions,

@@ -23,7 +23,7 @@ import { createSocket, createTLSSocket } from '../utils/happy-eyeballs';
 import { escapeHTML, generateSelfSignedCertificate, ManualPromise, rewriteErrorMessage } from '../utils';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
 import { SocksProxy } from '../common/socksProxy';
-import type * as channels from '@protocol/channels';
+import type * as types from './types';
 import { debugLogger } from '../utils/debugLogger';
 
 let dummyServerTlsOptions: tls.TlsOptions | undefined = undefined;
@@ -235,7 +235,7 @@ export class ClientCertificatesProxy {
   alpnCache: ALPNCache;
 
   constructor(
-    contextOptions: Pick<channels.BrowserNewContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors'>
+    contextOptions: Pick<types.BrowserContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors'>
   ) {
     this.alpnCache = new ALPNCache();
     this.ignoreHTTPSErrors = contextOptions.ignoreHTTPSErrors;
@@ -261,9 +261,9 @@ export class ClientCertificatesProxy {
     loadDummyServerCertsIfNeeded();
   }
 
-  _initSecureContexts(clientCertificates: channels.BrowserNewContextOptions['clientCertificates']) {
+  _initSecureContexts(clientCertificates: types.BrowserContextOptions['clientCertificates']) {
     // Step 1. Group certificates by origin.
-    const origin2certs = new Map<string, channels.BrowserNewContextOptions['clientCertificates']>();
+    const origin2certs = new Map<string, types.BrowserContextOptions['clientCertificates']>();
     for (const cert of clientCertificates || []) {
       const origin = normalizeOrigin(cert.origin);
       const certs = origin2certs.get(origin) || [];
@@ -282,9 +282,9 @@ export class ClientCertificatesProxy {
     }
   }
 
-  public async listen(): Promise<string> {
+  public async listen() {
     const port = await this._socksProxy.listen(0, '127.0.0.1');
-    return `socks5://127.0.0.1:${port}`;
+    return { server: `socks5://127.0.0.1:${port}` };
   }
 
   public async close() {
@@ -301,7 +301,7 @@ function normalizeOrigin(origin: string): string {
 }
 
 function convertClientCertificatesToTLSOptions(
-  clientCertificates: channels.BrowserNewContextOptions['clientCertificates']
+  clientCertificates: types.BrowserContextOptions['clientCertificates']
 ): Pick<https.RequestOptions, 'pfx' | 'key' | 'cert'> | undefined {
   if (!clientCertificates || !clientCertificates.length)
     return;
@@ -322,7 +322,7 @@ function convertClientCertificatesToTLSOptions(
 }
 
 export function getMatchingTLSOptionsForOrigin(
-  clientCertificates: channels.BrowserNewContextOptions['clientCertificates'],
+  clientCertificates: types.BrowserContextOptions['clientCertificates'],
   origin: string
 ): Pick<https.RequestOptions, 'pfx' | 'key' | 'cert'> | undefined {
   const matchingCerts = clientCertificates?.filter(c =>

@@ -543,7 +543,7 @@ class FrameSession {
       const options = this._crPage._browserContext._options;
       if (options.bypassCSP)
         promises.push(this._client.send('Page.setBypassCSP', { enabled: true }));
-      if (options.ignoreHTTPSErrors)
+      if (options.ignoreHTTPSErrors || options.internalIgnoreHTTPSErrors)
         promises.push(this._client.send('Security.setIgnoreCertificateErrors', { ignore: true }));
       if (this._isMainFrame())
         promises.push(this._updateViewport());
@@ -1213,7 +1213,7 @@ async function emulateTimezone(session: CRSession, timezoneId: string) {
 const contextDelegateSymbol = Symbol('delegate');
 
 // Chromium reference: https://source.chromium.org/chromium/chromium/src/+/main:components/embedder_support/user_agent_utils.cc;l=434;drc=70a6711e08e9f9e0d8e4c48e9ba5cab62eb010c2
-function calculateUserAgentMetadata(options: channels.BrowserNewContextParams) {
+function calculateUserAgentMetadata(options: types.BrowserContextOptions) {
   const ua = options.userAgent;
   if (!ua)
     return undefined;
