@@ -177,7 +177,7 @@ it('rich text editable fields should have children', async function({ page, brow
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('rich text editable fields with role should have children', async function({ page, browserName, browserMajorVersion, browserVersion, isWebView2 }) {
+it('rich text editable fields with role should have children', async function({ page, browserName, browserVersion, isWebView2 }) {
   it.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
   it.skip(isWebView2, 'WebView2 is missing a Chromium fix');
 
@@ -196,7 +196,7 @@ it('rich text editable fields with role should have children', async function({ 
   } : {
     role: 'textbox',
     name: '',
-    multiline: (browserName === 'chromium' && browserMajorVersion >= 92) ? true : undefined,
+    multiline: (browserName === 'chromium') ? true : undefined,
     value: 'Edit this image: ',
     children: (chromiumVersionLessThan(browserVersion, '104.0.1293.1') && browserName === 'chromium') ? [{
       role: 'text',

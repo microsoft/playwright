@@ -318,6 +318,7 @@ export interface APIRequestContextChannel extends APIRequestContextEventTarget, 
 }
 export type APIRequestContextFetchParams = {
   url: string,
+  encodedParams?: string,
   params?: NameValue[],
   method?: string,
   headers?: NameValue[],
@@ -332,6 +333,7 @@ export type APIRequestContextFetchParams = {
   maxRetries?: number,
 };
 export type APIRequestContextFetchOptions = {
+  encodedParams?: string,
   params?: NameValue[],
   method?: string,
   headers?: NameValue[],
@@ -562,6 +564,8 @@ export type PlaywrightInitializer = {
   chromium: BrowserTypeChannel,
   firefox: BrowserTypeChannel,
   webkit: BrowserTypeChannel,
+  bidiChromium: BrowserTypeChannel,
+  bidiFirefox: BrowserTypeChannel,
   android: AndroidChannel,
   electron: ElectronChannel,
   utils?: LocalUtilsChannel,
@@ -1753,7 +1757,6 @@ export type BrowserContextRecorderSupplementEnableParams = {
   device?: string,
   saveStorage?: string,
   outputFile?: string,
-  handleSIGINT?: boolean,
   omitCallTracking?: boolean,
 };
 export type BrowserContextRecorderSupplementEnableOptions = {
@@ -1766,7 +1769,6 @@ export type BrowserContextRecorderSupplementEnableOptions = {
   device?: string,
   saveStorage?: string,
   outputFile?: string,
-  handleSIGINT?: boolean,
   omitCallTracking?: boolean,
 };
 export type BrowserContextRecorderSupplementEnableResult = void;
@@ -2939,7 +2941,6 @@ export type FrameSelectOptionParams = {
   }[],
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type FrameSelectOptionOptions = {
   strict?: boolean,
@@ -2952,7 +2953,6 @@ export type FrameSelectOptionOptions = {
   }[],
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type FrameSelectOptionResult = {
   values: string[],
@@ -3555,7 +3555,6 @@ export type ElementHandleSelectOptionParams = {
   }[],
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type ElementHandleSelectOptionOptions = {
   elements?: ElementHandleChannel[],
@@ -3567,7 +3566,6 @@ export type ElementHandleSelectOptionOptions = {
   }[],
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type ElementHandleSelectOptionResult = {
   values: string[],

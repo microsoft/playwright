@@ -16,7 +16,7 @@
 
 import path from 'path';
 import type { FullConfig, TestError } from '../../types/testReporter';
-import { formatError } from '../reporters/base';
+import { colors, formatError } from '../reporters/base';
 import DotReporter from '../reporters/dot';
 import EmptyReporter from '../reporters/empty';
 import GitHubReporter from '../reporters/github';
@@ -67,7 +67,7 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     reporters.push(wrapReporterAsV2(new reporterConstructor(runOptions)));
   }
 
-  const someReporterPrintsToStdio = reporters.some(r => r.printsToStdio());
+  const someReporterPrintsToStdio = reporters.some(r => r.printsToStdio ? r.printsToStdio() : true);
   if (reporters.length && !someReporterPrintsToStdio) {
     // Add a line/dot/list-mode reporter for convenience.
     // Important to put it first, just in case some other reporter stalls onEnd.
@@ -84,6 +84,23 @@ export async function createReporterForTestServer(file: string, messageSink: (me
   return wrapReporterAsV2(new reporterConstructor({
     _send: messageSink,
   }));
+}
+
+interface ErrorCollectingReporter extends ReporterV2 {
+  errors(): TestError[];
+}
+
+export function createErrorCollectingReporter(writeToConsole?: boolean): ErrorCollectingReporter {
+  const errors: TestError[] = [];
+  return {
+    version: () => 'v2',
+    onError(error: TestError) {
+      errors.push(error);
+      if (writeToConsole)
+        process.stdout.write(formatError(error, colors.enabled).message + '\n');
+    },
+    errors: () => errors,
+  };
 }
 
 function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', isTestServer: boolean) {
@@ -114,14 +131,18 @@ function computeCommandHash(config: FullConfigInternal) {
   return parts.join('-');
 }
 
-class ListModeReporter extends EmptyReporter {
+class ListModeReporter implements ReporterV2 {
   private config!: FullConfig;
 
-  override onConfigure(config: FullConfig) {
+  version(): 'v2' {
+    return 'v2';
+  }
+
+  onConfigure(config: FullConfig) {
     this.config = config;
   }
 
-  override onBegin(suite: Suite): void {
+  onBegin(suite: Suite): void {
     // eslint-disable-next-line no-console
     console.log(`Listing tests:`);
     const tests = suite.allTests();
@@ -139,12 +160,8 @@ class ListModeReporter extends EmptyReporter {
     console.log(`Total: ${tests.length} ${tests.length === 1 ? 'test' : 'tests'} in ${files.size} ${files.size === 1 ? 'file' : 'files'}`);
   }
 
-  override onError(error: TestError) {
+  onError(error: TestError) {
     // eslint-disable-next-line no-console
     console.error('\n' + formatError(error, false).message);
-  }
-
-  override printsToStdio(): boolean {
-    return true;
   }
 }

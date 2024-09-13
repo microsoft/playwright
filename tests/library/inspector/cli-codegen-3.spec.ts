@@ -120,20 +120,20 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).Nth(1).ClickAsy
       frameHello1.click('text=Hello1'),
     ]);
 
-    expect(sources.get('JavaScript')!.text).toContain(`
-  await page.frameLocator('#frame1').getByText('Hello1').click();`);
+    expect.soft(sources.get('JavaScript')!.text).toContain(`
+  await page.locator('#frame1').contentFrame().getByText('Hello1').click();`);
 
-    expect(sources.get('Java')!.text).toContain(`
-      page.frameLocator("#frame1").getByText("Hello1").click();`);
+    expect.soft(sources.get('Java')!.text).toContain(`
+      page.locator("#frame1").contentFrame().getByText("Hello1").click();`);
 
-    expect(sources.get('Python')!.text).toContain(`
-    page.frame_locator("#frame1").get_by_text("Hello1").click()`);
+    expect.soft(sources.get('Python')!.text).toContain(`
+    page.locator("#frame1").content_frame().get_by_text("Hello1").click()`);
 
-    expect(sources.get('Python Async')!.text).toContain(`
-    await page.frame_locator("#frame1").get_by_text("Hello1").click()`);
+    expect.soft(sources.get('Python Async')!.text).toContain(`
+    await page.locator("#frame1").content_frame().get_by_text("Hello1").click()`);
 
-    expect(sources.get('C#')!.text).toContain(`
-await page.FrameLocator("#frame1").GetByText("Hello1").ClickAsync();`);
+    expect.soft(sources.get('C#')!.text).toContain(`
+await page.Locator("#frame1").ContentFrame().GetByText("Hello1").ClickAsync();`);
 
 
     [sources] = await Promise.all([
@@ -142,19 +142,19 @@ await page.FrameLocator("#frame1").GetByText("Hello1").ClickAsync();`);
     ]);
 
     expect.soft(sources.get('JavaScript')!.text).toContain(`
-  await page.frameLocator('#frame1').frameLocator('iframe').getByText('Hello2').click();`);
+  await page.locator('#frame1').contentFrame().locator('iframe').contentFrame().getByText('Hello2').click();`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
-      page.frameLocator("#frame1").frameLocator("iframe").getByText("Hello2").click();`);
+      page.locator("#frame1").contentFrame().locator("iframe").contentFrame().getByText("Hello2").click();`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
-    page.frame_locator("#frame1").frame_locator("iframe").get_by_text("Hello2").click()`);
+    page.locator("#frame1").content_frame().locator("iframe").content_frame().get_by_text("Hello2").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
-    await page.frame_locator("#frame1").frame_locator("iframe").get_by_text("Hello2").click()`);
+    await page.locator("#frame1").content_frame().locator("iframe").content_frame().get_by_text("Hello2").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-await page.FrameLocator("#frame1").FrameLocator("iframe").GetByText("Hello2").ClickAsync();`);
+await page.Locator("#frame1").ContentFrame().Locator("iframe").ContentFrame().GetByText("Hello2").ClickAsync();`);
 
 
     [sources] = await Promise.all([
@@ -163,19 +163,19 @@ await page.FrameLocator("#frame1").FrameLocator("iframe").GetByText("Hello2").Cl
     ]);
 
     expect.soft(sources.get('JavaScript')!.text).toContain(`
-  await page.frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').getByText('HelloNameOne').click();`);
+  await page.locator('#frame1').contentFrame().locator('iframe').contentFrame().locator('iframe[name="one"]').contentFrame().getByText('HelloNameOne').click();`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
-      page.frameLocator("#frame1").frameLocator("iframe").frameLocator("iframe[name=\\"one\\"]").getByText("HelloNameOne").click();`);
+      page.locator("#frame1").contentFrame().locator("iframe").contentFrame().locator("iframe[name=\\"one\\"]").contentFrame().getByText("HelloNameOne").click();`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
-    page.frame_locator("#frame1").frame_locator("iframe").frame_locator("iframe[name=\\"one\\"]").get_by_text("HelloNameOne").click()`);
+    page.locator("#frame1").content_frame().locator("iframe").content_frame().locator("iframe[name=\\"one\\"]").content_frame().get_by_text("HelloNameOne").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
-    await page.frame_locator("#frame1").frame_locator("iframe").frame_locator("iframe[name=\\"one\\"]").get_by_text("HelloNameOne").click()`);
+    await page.locator("#frame1").content_frame().locator("iframe").content_frame().locator("iframe[name=\\"one\\"]").content_frame().get_by_text("HelloNameOne").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-await page.FrameLocator("#frame1").FrameLocator("iframe").FrameLocator("iframe[name=\\"one\\"]").GetByText("HelloNameOne").ClickAsync();`);
+await page.Locator("#frame1").ContentFrame().Locator("iframe").ContentFrame().Locator("iframe[name=\\"one\\"]").ContentFrame().GetByText("HelloNameOne").ClickAsync();`);
 
     [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'HelloNameAnonymous'),
@@ -183,19 +183,19 @@ await page.FrameLocator("#frame1").FrameLocator("iframe").FrameLocator("iframe[n
     ]);
 
     expect.soft(sources.get('JavaScript')!.text).toContain(`
-  await page.frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe >> nth=2').getByText('HelloNameAnonymous').click();`);
+  await page.locator('#frame1').contentFrame().locator('iframe').contentFrame().locator('iframe').nth(2).contentFrame().getByText('HelloNameAnonymous').click();`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
-      page.frameLocator("#frame1").frameLocator("iframe").frameLocator("iframe >> nth=2").getByText("HelloNameAnonymous").click();`);
+      page.locator("#frame1").contentFrame().locator("iframe").contentFrame().locator("iframe").nth(2).contentFrame().getByText("HelloNameAnonymous").click();`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
-    page.frame_locator("#frame1").frame_locator("iframe").frame_locator("iframe >> nth=2").get_by_text("HelloNameAnonymous").click()`);
+    page.locator("#frame1").content_frame().locator("iframe").content_frame().locator("iframe").nth(2).content_frame().get_by_text("HelloNameAnonymous").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
-    await page.frame_locator("#frame1").frame_locator("iframe").frame_locator("iframe >> nth=2").get_by_text("HelloNameAnonymous").click()`);
+    await page.locator("#frame1").content_frame().locator("iframe").content_frame().locator("iframe").nth(2).content_frame().get_by_text("HelloNameAnonymous").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-await page.FrameLocator("#frame1").FrameLocator("iframe").FrameLocator("iframe >> nth=2").GetByText("HelloNameAnonymous").ClickAsync();`);
+await page.Locator("#frame1").ContentFrame().Locator("iframe").ContentFrame().Locator("iframe").Nth(2).ContentFrame().GetByText("HelloNameAnonymous").ClickAsync();`);
   });
 
   test('should generate frame locators with special characters in name attribute', async ({ page, openRecorder, server }) => {
@@ -208,22 +208,22 @@ await page.FrameLocator("#frame1").FrameLocator("iframe").FrameLocator("iframe >
     });
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'Click me'),
-      page.frameLocator('iframe[name="foo<bar\'\\"`>"]').getByRole('button', { name: 'Click me' }).click(),
+      page.locator('iframe[name="foo<bar\'\\"`>"]').contentFrame().getByRole('button', { name: 'Click me' }).click(),
     ]);
     expect.soft(sources.get('JavaScript')!.text).toContain(`
-  await page.frameLocator('iframe[name="foo\\\\<bar\\\\\\'\\\\"\\\\\`\\\\>"]').getByRole('button', { name: 'Click me' }).click();`);
+  await page.locator('iframe[name="foo\\\\<bar\\\\\\'\\\\"\\\\\`\\\\>"]').contentFrame().getByRole('button', { name: 'Click me' }).click();`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
-      page.frameLocator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName("Click me")).click()`);
+      page.locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").contentFrame().getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName("Click me")).click()`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
-    page.frame_locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").get_by_role("button", name="Click me").click()`);
+    page.locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").content_frame().get_by_role("button", name="Click me").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
-    await page.frame_locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").get_by_role("button", name="Click me").click()`);
+    await page.locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").content_frame().get_by_role("button", name="Click me").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-await page.FrameLocator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync();`);
+await page.Locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").ContentFrame().GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync();`);
   });
 
   test('should generate frame locators with title attribute', async ({ page, openRecorder, server }) => {
@@ -234,27 +234,27 @@ await page.FrameLocator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]")
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'Click me'),
-      page.frameLocator('[title="hello world"]').getByRole('button', { name: 'Click me' }).click(),
+      page.locator('[title="hello world"]').contentFrame().getByRole('button', { name: 'Click me' }).click(),
     ]);
 
-    expect(sources.get('JavaScript')!.text).toContain(
-        `await page.frameLocator('iframe[title="hello world"]').getByRole('button', { name: 'Click me' }).click();`
+    expect.soft(sources.get('JavaScript')!.text).toContain(
+        `await page.locator('iframe[title="hello world"]').contentFrame().getByRole('button', { name: 'Click me' }).click();`
     );
 
-    expect(sources.get('Java')!.text).toContain(
-        `page.frameLocator(\"iframe[title=\\\"hello world\\\"]\").getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName(\"Click me\")).click();`
+    expect.soft(sources.get('Java')!.text).toContain(
+        `page.locator(\"iframe[title=\\\"hello world\\\"]\").contentFrame().getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName(\"Click me\")).click();`
     );
 
-    expect(sources.get('Python')!.text).toContain(
-        `page.frame_locator(\"iframe[title=\\\"hello world\\\"]\").get_by_role(\"button\", name=\"Click me\").click()`
+    expect.soft(sources.get('Python')!.text).toContain(
+        `page.locator(\"iframe[title=\\\"hello world\\\"]\").content_frame().get_by_role(\"button\", name=\"Click me\").click()`
     );
 
-    expect(sources.get('Python Async')!.text).toContain(
-        `await page.frame_locator("iframe[title=\\\"hello world\\\"]").get_by_role("button", name="Click me").click()`
+    expect.soft(sources.get('Python Async')!.text).toContain(
+        `await page.locator("iframe[title=\\\"hello world\\\"]").content_frame().get_by_role("button", name="Click me").click()`
     );
 
-    expect(sources.get('C#')!.text).toContain(
-        `await page.FrameLocator("iframe[title=\\\"hello world\\\"]").GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync();`
+    expect.soft(sources.get('C#')!.text).toContain(
+        `await page.Locator("iframe[title=\\\"hello world\\\"]").ContentFrame().GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync();`
     );
   });
 
@@ -266,27 +266,27 @@ await page.FrameLocator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]")
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'Click me'),
-      page.frameLocator('[name="hello world"]').getByRole('button', { name: 'Click me' }).click(),
+      page.locator('[name="hello world"]').contentFrame().getByRole('button', { name: 'Click me' }).click(),
     ]);
 
-    expect(sources.get('JavaScript')!.text).toContain(
-        `await page.frameLocator('iframe[name="hello world"]').getByRole('button', { name: 'Click me' }).click();`
+    expect.soft(sources.get('JavaScript')!.text).toContain(
+        `await page.locator('iframe[name="hello world"]').contentFrame().getByRole('button', { name: 'Click me' }).click();`
     );
 
-    expect(sources.get('Java')!.text).toContain(
-        `page.frameLocator(\"iframe[name=\\\"hello world\\\"]\").getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName(\"Click me\")).click();`
+    expect.soft(sources.get('Java')!.text).toContain(
+        `page.locator(\"iframe[name=\\\"hello world\\\"]\").contentFrame().getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName(\"Click me\")).click();`
     );
 
-    expect(sources.get('Python')!.text).toContain(
-        `page.frame_locator(\"iframe[name=\\\"hello world\\\"]\").get_by_role(\"button\", name=\"Click me\").click()`
+    expect.soft(sources.get('Python')!.text).toContain(
+        `page.locator(\"iframe[name=\\\"hello world\\\"]\").content_frame().get_by_role(\"button\", name=\"Click me\").click()`
     );
 
-    expect(sources.get('Python Async')!.text).toContain(
-        `await page.frame_locator("iframe[name=\\\"hello world\\\"]").get_by_role("button", name="Click me").click()`
+    expect.soft(sources.get('Python Async')!.text).toContain(
+        `await page.locator("iframe[name=\\\"hello world\\\"]").content_frame().get_by_role("button", name="Click me").click()`
     );
 
-    expect(sources.get('C#')!.text).toContain(
-        `await page.FrameLocator("iframe[name=\\\"hello world\\\"]").GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync();`
+    expect.soft(sources.get('C#')!.text).toContain(
+        `await page.Locator("iframe[name=\\\"hello world\\\"]").ContentFrame().GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync();`
     );
   });
 
@@ -298,27 +298,27 @@ await page.FrameLocator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]")
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'Click me'),
-      page.frameLocator('[id="hello-world"]').getByRole('button', { name: 'Click me' }).click(),
+      page.locator('[id="hello-world"]').contentFrame().getByRole('button', { name: 'Click me' }).click(),
     ]);
 
-    expect(sources.get('JavaScript')!.text).toContain(
-        `await page.frameLocator('#hello-world').getByRole('button', { name: 'Click me' }).click();`
+    expect.soft(sources.get('JavaScript')!.text).toContain(
+        `await page.locator('#hello-world').contentFrame().getByRole('button', { name: 'Click me' }).click();`
     );
 
-    expect(sources.get('Java')!.text).toContain(
-        `page.frameLocator(\"#hello-world\").getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName(\"Click me\")).click();`
+    expect.soft(sources.get('Java')!.text).toContain(
+        `page.locator(\"#hello-world\").contentFrame().getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName(\"Click me\")).click();`
     );
 
-    expect(sources.get('Python')!.text).toContain(
-        `page.frame_locator(\"#hello-world\").get_by_role(\"button\", name=\"Click me\").click()`
+    expect.soft(sources.get('Python')!.text).toContain(
+        `page.locator(\"#hello-world\").content_frame().get_by_role(\"button\", name=\"Click me\").click()`
     );
 
-    expect(sources.get('Python Async')!.text).toContain(
-        `await page.frame_locator("#hello-world").get_by_role("button", name="Click me").click()`
+    expect.soft(sources.get('Python Async')!.text).toContain(
+        `await page.locator("#hello-world").content_frame().get_by_role("button", name="Click me").click()`
     );
 
-    expect(sources.get('C#')!.text).toContain(
-        `await page.FrameLocator("#hello-world").GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync();`
+    expect.soft(sources.get('C#')!.text).toContain(
+        `await page.Locator("#hello-world").ContentFrame().GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync();`
     );
   });
 
@@ -330,27 +330,27 @@ await page.FrameLocator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]")
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'my-testid'),
-      page.frameLocator('iframe[data-testid="my-testid"]').getByRole('button', { name: 'Click me' }).click(),
+      page.locator('iframe[data-testid="my-testid"]').contentFrame().getByRole('button', { name: 'Click me' }).click(),
     ]);
 
-    expect(sources.get('JavaScript')!.text).toContain(
-        `await page.frameLocator('[data-testid="my-testid"]').getByRole('button', { name: 'Click me' }).click();`
+    expect.soft(sources.get('JavaScript')!.text).toContain(
+        `await page.locator('[data-testid="my-testid"]').contentFrame().getByRole('button', { name: 'Click me' }).click();`
     );
 
-    expect(sources.get('Java')!.text).toContain(
-        `page.frameLocator(\"[data-testid=\\\"my-testid\\\"]\").getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName(\"Click me\")).click();`
+    expect.soft(sources.get('Java')!.text).toContain(
+        `page.locator(\"[data-testid=\\\"my-testid\\\"]\").contentFrame().getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName(\"Click me\")).click();`
     );
 
-    expect(sources.get('Python')!.text).toContain(
-        `page.frame_locator(\"[data-testid=\\\"my-testid\\\"]\").get_by_role(\"button\", name=\"Click me\").click()`
+    expect.soft(sources.get('Python')!.text).toContain(
+        `page.locator(\"[data-testid=\\\"my-testid\\\"]\").content_frame().get_by_role(\"button\", name=\"Click me\").click()`
     );
 
-    expect(sources.get('Python Async')!.text).toContain(
-        `await page.frame_locator("[data-testid=\\\"my-testid\\\"]").get_by_role("button", name="Click me").click()`
+    expect.soft(sources.get('Python Async')!.text).toContain(
+        `await page.locator("[data-testid=\\\"my-testid\\\"]").content_frame().get_by_role("button", name="Click me").click()`
     );
 
-    expect(sources.get('C#')!.text).toContain(
-        `await page.FrameLocator("[data-testid=\\\"my-testid\\\"]").GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync();`
+    expect.soft(sources.get('C#')!.text).toContain(
+        `await page.Locator("[data-testid=\\\"my-testid\\\"]").ContentFrame().GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync();`
     );
   });
 
@@ -365,19 +365,19 @@ await page.FrameLocator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]")
     ]);
 
     expect.soft(sources.get('JavaScript')!.text).toContain(`
-  await page.frameLocator('#frame1').getByRole('button', { name: 'Submit' }).click();`);
+  await page.locator('#frame1').contentFrame().getByRole('button', { name: 'Submit' }).click();`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
-      page.frameLocator("#frame1").getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName("Submit")).click();`);
+      page.locator("#frame1").contentFrame().getByRole(AriaRole.BUTTON, new FrameLocator.GetByRoleOptions().setName("Submit")).click();`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
-    page.frame_locator("#frame1").get_by_role("button", name="Submit").click()`);
+    page.locator("#frame1").content_frame().get_by_role("button", name="Submit").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
-    await page.frame_locator("#frame1").get_by_role("button", name="Submit").click()`);
+    await page.locator("#frame1").content_frame().get_by_role("button", name="Submit").click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-await page.FrameLocator("#frame1").GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
+await page.Locator("#frame1").ContentFrame().GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
   });
 
   test('should generate getByTestId', async ({ page, openRecorder }) => {

@@ -39,10 +39,6 @@ class ListReporter extends BaseReporter {
     this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options.printSteps);
   }
 
-  override printsToStdio() {
-    return true;
-  }
-
   override onBegin(suite: Suite) {
     super.onBegin(suite);
     const startingMessage = this.generateStartingMessage();
@@ -52,9 +48,7 @@ class ListReporter extends BaseReporter {
     }
   }
 
-  override onTestBegin(test: TestCase, result: TestResult) {
-    super.onTestBegin(test, result);
-
+  onTestBegin(test: TestCase, result: TestResult) {
     const index = String(this._resultIndex.size + 1);
     this._resultIndex.set(result, index);
 
@@ -88,8 +82,7 @@ class ListReporter extends BaseReporter {
     return stepIndex;
   }
 
-  override onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
-    super.onStepBegin(test, result, step);
+  onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
     if (step.category !== 'test.step')
       return;
     const testIndex = this._resultIndex.get(result) || '';
@@ -108,8 +101,7 @@ class ListReporter extends BaseReporter {
     }
   }
 
-  override onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-    super.onStepEnd(test, result, step);
+  onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
     if (step.category !== 'test.step')
       return;
 

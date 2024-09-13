@@ -59,7 +59,7 @@ const RequestTab: React.FunctionComponent<{
   React.useEffect(() => {
     const readResources = async  () => {
       if (resource.request.postData) {
-        const requestContentTypeHeader = resource.request.headers.find(q => q.name === 'Content-Type');
+        const requestContentTypeHeader = resource.request.headers.find(q => q.name.toLowerCase() === 'content-type');
         const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
         if (resource.request.postData._sha1) {
           const response = await fetch(`sha1/${resource.request.postData._sha1}`);
@@ -82,6 +82,12 @@ const RequestTab: React.FunctionComponent<{
       Status Code: <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
         {`${resource.response.status} ${resource.response.statusText}`}
       </span></div>}
+    {resource.request.queryString.length ? <>
+      <div className='network-request-details-header'>Query String Parameters</div>
+      <div className='network-request-details-headers'>
+        {resource.request.queryString.map(param => `${param.name}: ${param.value}`).join('\n')}
+      </div>
+    </> : null}
     <div className='network-request-details-header'>Request Headers</div>
     <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
     {requestBody && <div className='network-request-details-header'>Request Body</div>}

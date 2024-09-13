@@ -21,7 +21,7 @@ import { MultiTraceModel } from './modelUtil';
 import './workbenchLoader.css';
 import { toggleTheme } from '@web/theme';
 import { Workbench } from './workbench';
-import { TestServerConnection } from '@testIsomorphic/testServerConnection';
+import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';
 
 export const WorkbenchLoader: React.FunctionComponent<{
 }> = () => {
@@ -102,7 +102,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       const guid = new URLSearchParams(window.location.search).get('ws');
       const wsURL = new URL(`../${guid}`, window.location.toString());
       wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
-      const testServerConnection = new TestServerConnection(wsURL.toString());
+      const testServerConnection = new TestServerConnection(new WebSocketTestServerTransport(wsURL));
       testServerConnection.onLoadTraceRequested(async params => {
         setTraceURLs(params.traceUrl ? [params.traceUrl] : []);
         setDragOver(false);

@@ -75,6 +75,14 @@ it.describe('setTimeout', () => {
     }).toThrow();
   });
 
+  it('does not throw if |undefined| or |null| is passed as a callback', async ({ clock }) => {
+    const timerId1 = clock.setTimeout(undefined, 10);
+    const timerId2 = clock.setTimeout(null, 10);
+    await clock.runFor(10);
+    expect(timerId1).toBeGreaterThan(0);
+    expect(timerId2).toBeGreaterThan(timerId1);
+  });
+
   it('returns numeric id or object with numeric id', async ({ clock }) => {
     const result = clock.setTimeout(() => { }, 10);
     expect(result).toEqual(expect.any(Number));
@@ -759,6 +767,14 @@ it.describe('setInterval', () => {
       // @ts-expect-error
       clock.setInterval();
     }).toThrow();
+  });
+
+  it('does not throw if |undefined| or |null| is passed as a callback', async ({ clock }) => {
+    const timerId1 = clock.setInterval(undefined, 10);
+    const timerId2 = clock.setInterval(null, 10);
+    await clock.runFor(10);
+    expect(timerId1).toBeGreaterThan(0);
+    expect(timerId2).toBeGreaterThan(timerId1);
   });
 
   it('returns numeric id or object with numeric id', async ({ clock }) => {

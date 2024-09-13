@@ -141,7 +141,7 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.delete.params = %%-js-fetch-option-params-%%
 * since: v1.16
 
-### param: APIRequestContext.delete.params = %%-java-csharp-fetch-params-%%
+### param: APIRequestContext.delete.params = %%-java-fetch-params-%%
 * since: v1.18
 
 ### option: APIRequestContext.delete.params = %%-python-fetch-option-params-%%
@@ -149,6 +149,9 @@ context cookies from the response. The method will automatically follow redirect
 
 ### option: APIRequestContext.delete.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
+
+### option: APIRequestContext.delete.paramsString = %%-csharp-fetch-option-paramsString-%%
+* since: v1.47
 
 ### option: APIRequestContext.delete.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
@@ -303,7 +306,7 @@ Target URL or Request to get all parameters from.
 ### option: APIRequestContext.fetch.params = %%-js-fetch-option-params-%%
 * since: v1.16
 
-### param: APIRequestContext.fetch.params = %%-java-csharp-fetch-params-%%
+### param: APIRequestContext.fetch.params = %%-java-fetch-params-%%
 * since: v1.18
 
 ### option: APIRequestContext.fetch.params = %%-python-fetch-option-params-%%
@@ -311,6 +314,9 @@ Target URL or Request to get all parameters from.
 
 ### option: APIRequestContext.fetch.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
+
+### option: APIRequestContext.fetch.paramsString = %%-csharp-fetch-option-paramsString-%%
+* since: v1.47
 
 ### option: APIRequestContext.fetch.method
 * since: v1.16
@@ -418,7 +424,7 @@ await request.GetAsync("https://example.com/api/getText", new() { Params = query
 ### option: APIRequestContext.get.params = %%-js-fetch-option-params-%%
 * since: v1.16
 
-### param: APIRequestContext.get.params = %%-java-csharp-fetch-params-%%
+### param: APIRequestContext.get.params = %%-java-fetch-params-%%
 * since: v1.18
 
 ### option: APIRequestContext.get.params = %%-python-fetch-option-params-%%
@@ -426,6 +432,9 @@ await request.GetAsync("https://example.com/api/getText", new() { Params = query
 
 ### option: APIRequestContext.get.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
+
+### option: APIRequestContext.get.paramsString = %%-csharp-fetch-option-paramsString-%%
+* since: v1.47
 
 ### option: APIRequestContext.get.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
@@ -477,7 +486,7 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.head.params = %%-js-fetch-option-params-%%
 * since: v1.16
 
-### param: APIRequestContext.head.params = %%-java-csharp-fetch-params-%%
+### param: APIRequestContext.head.params = %%-java-fetch-params-%%
 * since: v1.18
 
 ### option: APIRequestContext.head.params = %%-python-fetch-option-params-%%
@@ -485,6 +494,9 @@ context cookies from the response. The method will automatically follow redirect
 
 ### option: APIRequestContext.head.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
+
+### option: APIRequestContext.head.paramsString = %%-csharp-fetch-option-paramsString-%%
+* since: v1.47
 
 ### option: APIRequestContext.head.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
@@ -536,7 +548,7 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.patch.params = %%-js-fetch-option-params-%%
 * since: v1.16
 
-### param: APIRequestContext.patch.params = %%-java-csharp-fetch-params-%%
+### param: APIRequestContext.patch.params = %%-java-fetch-params-%%
 * since: v1.18
 
 ### option: APIRequestContext.patch.params = %%-python-fetch-option-params-%%
@@ -544,6 +556,9 @@ context cookies from the response. The method will automatically follow redirect
 
 ### option: APIRequestContext.patch.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
+
+### option: APIRequestContext.patch.paramsString = %%-csharp-fetch-option-paramsString-%%
+* since: v1.47
 
 ### option: APIRequestContext.patch.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
@@ -716,7 +731,7 @@ await request.PostAsync("https://example.com/api/uploadScript", new() { Multipar
 ### option: APIRequestContext.post.params = %%-js-fetch-option-params-%%
 * since: v1.16
 
-### param: APIRequestContext.post.params = %%-java-csharp-fetch-params-%%
+### param: APIRequestContext.post.params = %%-java-fetch-params-%%
 * since: v1.18
 
 ### option: APIRequestContext.post.params = %%-python-fetch-option-params-%%
@@ -724,6 +739,9 @@ await request.PostAsync("https://example.com/api/uploadScript", new() { Multipar
 
 ### option: APIRequestContext.post.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
+
+### option: APIRequestContext.post.paramsString = %%-csharp-fetch-option-paramsString-%%
+* since: v1.47
 
 ### option: APIRequestContext.post.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16
@@ -775,7 +793,7 @@ context cookies from the response. The method will automatically follow redirect
 ### option: APIRequestContext.put.params = %%-js-fetch-option-params-%%
 * since: v1.16
 
-### param: APIRequestContext.put.params = %%-java-csharp-fetch-params-%%
+### param: APIRequestContext.put.params = %%-java-fetch-params-%%
 * since: v1.18
 
 ### option: APIRequestContext.put.params = %%-python-fetch-option-params-%%
@@ -783,6 +801,9 @@ context cookies from the response. The method will automatically follow redirect
 
 ### option: APIRequestContext.put.params = %%-csharp-fetch-option-params-%%
 * since: v1.16
+
+### option: APIRequestContext.put.paramsString = %%-csharp-fetch-option-paramsString-%%
+* since: v1.47
 
 ### option: APIRequestContext.put.headers = %%-js-python-csharp-fetch-option-headers-%%
 * since: v1.16

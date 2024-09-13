@@ -15,9 +15,6 @@
  */
 
 import { test, expect } from './playwright-test-fixtures';
-import path from 'path';
-
-export const ctReactCliEntrypoint = path.join(__dirname, '../../packages/playwright-ct-react/cli.js');
 
 test('should list related tests', async ({ runCLICommand }) => {
   const result = await runCLICommand({
@@ -77,7 +74,7 @@ test('should list related tests for ct', async ({ runCLICommand }) => {
         await mount(<Button />);
       });
     `,
-  }, 'find-related-test-files', ['helper.tsx'], ctReactCliEntrypoint);
+  }, 'find-related-test-files', ['helper.tsx']);
   expect(result.exitCode).toBe(0);
   const data = JSON.parse(result.stdout);
   expect(data).toEqual({
@@ -85,4 +82,19 @@ test('should list related tests for ct', async ({ runCLICommand }) => {
       expect.stringContaining('button.spec.tsx'),
     ]
   });
+});
+
+test('should return errors', async ({ runCLICommand }) => {
+  const result = await runCLICommand({
+    'a.spec.ts': `
+      const a = 1;
+      const a = 2;
+    `,
+  }, 'find-related-test-files', ['a.spec.ts']);
+  expect(result.exitCode).toBe(0);
+  const data = JSON.parse(result.stdout);
+  expect(data).toEqual({ testFiles: [], errors: [
+    expect.objectContaining({ message: expect.stringContaining(`Identifier 'a' has already been declared`) }),
+    expect.objectContaining({ message: expect.stringContaining(`No tests found`) }),
+  ] });
 });

@@ -77,7 +77,7 @@ function serializeMember(member) {
 }
 
 function serializeProperty(arg) {
-  const result = { ...arg };
+  const result = { ...arg, parent: undefined };
   sanitize(result);
   if (arg.type)
     result.type = serializeType(arg.type, arg.name === 'options');

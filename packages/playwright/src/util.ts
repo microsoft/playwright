@@ -295,8 +295,23 @@ function folderIsModule(folder: string): boolean {
   return require(packageJsonPath).type === 'module';
 }
 
-// This follows the --moduleResolution=bundler strategy from tsc.
-// https://devblogs.microsoft.com/typescript/announcing-typescript-5-0-beta/#moduleresolution-bundler
+const packageJsonMainFieldCache = new Map<string, string | undefined>();
+
+function getMainFieldFromPackageJson(packageJsonPath: string) {
+  if (!packageJsonMainFieldCache.has(packageJsonPath)) {
+    let mainField: string | undefined;
+    try {
+      mainField = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')).main;
+    } catch {
+    }
+    packageJsonMainFieldCache.set(packageJsonPath, mainField);
+  }
+  return packageJsonMainFieldCache.get(packageJsonPath);
+}
+
+// This method performs "file extension subsitution" to find the ts, js or similar source file
+// based on the import specifier, which might or might not have an extension. See TypeScript docs:
+// https://www.typescriptlang.org/docs/handbook/modules/reference.html#file-extension-substitution.
 const kExtLookups = new Map([
   ['.js', ['.jsx', '.ts', '.tsx']],
   ['.jsx', ['.tsx']],
@@ -304,7 +319,7 @@ const kExtLookups = new Map([
   ['.mjs', ['.mts']],
   ['', ['.js', '.ts', '.jsx', '.tsx', '.cjs', '.mjs', '.cts', '.mts']],
 ]);
-export function resolveImportSpecifierExtension(resolved: string, isPathMapping: boolean, isESM: boolean): string | undefined {
+function resolveImportSpecifierExtension(resolved: string): string | undefined {
   if (fileExists(resolved))
     return resolved;
 
@@ -318,26 +333,47 @@ export function resolveImportSpecifierExtension(resolved: string, isPathMapping:
     }
     break;  // Do not try '' when a more specific extension like '.jsx' matched.
   }
+}
 
-  // After TypeScript path mapping, here's how directories with a `package.json` are resolved:
-  //  - `package.json#exports` is not respected
-  //  - `package.json#main` is respected only in CJS mode
-  //  - `index.js` default is respected only in CJS mode
-  //
-  // More info:
-  //  - https://www.typescriptlang.org/docs/handbook/modules/reference.html#paths-should-not-point-to-monorepo-packages-or-node_modules-packages
-  //  - https://www.typescriptlang.org/docs/handbook/modules/reference.html#directory-modules-index-file-resolution
-  //  - https://nodejs.org/dist/latest-v20.x/docs/api/modules.html#folders-as-modules
+// This method resolves directory imports and performs "file extension subsitution".
+// It is intended to be called after the path mapping resolution.
+//
+// Directory imports follow the --moduleResolution=bundler strategy from tsc.
+// https://www.typescriptlang.org/docs/handbook/modules/reference.html#directory-modules-index-file-resolution
+// https://www.typescriptlang.org/docs/handbook/modules/reference.html#bundler
+//
+// See also Node.js "folder as module" behavior:
+// https://nodejs.org/dist/latest-v20.x/docs/api/modules.html#folders-as-modules.
+export function resolveImportSpecifierAfterMapping(resolved: string, afterPathMapping: boolean): string | undefined {
+  const resolvedFile = resolveImportSpecifierExtension(resolved);
+  if (resolvedFile)
+    return resolvedFile;
 
-  const shouldNotResolveDirectory = isPathMapping && isESM;
+  if (dirExists(resolved)) {
+    const packageJsonPath = path.join(resolved, 'package.json');
 
-  if (!shouldNotResolveDirectory && dirExists(resolved)) {
+    if (afterPathMapping) {
+      // Most notably, the module resolution algorithm is not performed after the path mapping.
+      // This means no node_modules lookup or package.json#exports.
+      //
+      // Only the "folder as module" Node.js behavior is respected:
+      //  - consult `package.json#main`;
+      //  - look for `index.js` or similar.
+      const mainField = getMainFieldFromPackageJson(packageJsonPath);
+      const mainFieldResolved = mainField ? resolveImportSpecifierExtension(path.resolve(resolved, mainField)) : undefined;
+      return mainFieldResolved || resolveImportSpecifierExtension(path.join(resolved, 'index'));
+    }
+
     // If we import a package, let Node.js figure out the correct import based on package.json.
-    if (fileExists(path.join(resolved, 'package.json')))
+    // This also covers the "main" field for "folder as module".
+    if (fileExists(packageJsonPath))
       return resolved;
 
+    // Implement the "folder as module" Node.js behavior.
+    // Note that we do not delegate to Node.js, because we support this for ESM as well,
+    // following the TypeScript "bundler" mode.
     const dirImport = path.join(resolved, 'index');
-    return resolveImportSpecifierExtension(dirImport, isPathMapping, isESM);
+    return resolveImportSpecifierExtension(dirImport);
   }
 }
 
@@ -347,4 +383,15 @@ function fileExists(resolved: string) {
 
 function dirExists(resolved: string) {
   return fs.statSync(resolved, { throwIfNoEntry: false })?.isDirectory();
+}
+
+export async function removeDirAndLogToConsole(dir: string) {
+  try {
+    if (!fs.existsSync(dir))
+      return;
+    // eslint-disable-next-line no-console
+    console.log(`Removing ${await fs.promises.realpath(dir)}`);
+    await fs.promises.rm(dir, { recursive: true, force: true });
+  } catch {
+  }
 }

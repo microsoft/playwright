@@ -29,4 +29,12 @@ it.describe('block', () => {
       page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
     ]);
   });
+
+  it('should not throw error on about:blank', async ({ page }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32292' });
+    const errors = [];
+    page.on('pageerror', error => errors.push(error));
+    await page.goto('about:blank');
+    expect(errors).toEqual([]);
+  });
 });

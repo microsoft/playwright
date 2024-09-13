@@ -72,7 +72,9 @@ export const Workbench: React.FunctionComponent<{
   const activeAction = model ? highlightedAction || selectedAction : undefined;
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
-  const [showRouteActions, , showRouteActionsSetting] = useSetting('show-route-actions', true, 'Show route actions');
+  const [showRouteActions, setShowRouteActions] = useSetting('show-route-actions', true);
+  const [showScreenshot, setShowScreenshot] = useSetting('screenshot-instead-of-snapshot', false);
+
 
   const filteredActions = React.useMemo(() => {
     return (model?.actions || []).filter(action => showRouteActions || !isRouteAction(action));
@@ -83,7 +85,7 @@ export const Workbench: React.FunctionComponent<{
     setRevealedStack(action?.stack);
   }, [setSelectedActionImpl, setRevealedStack]);
 
-  const sources = React.useMemo(() => model?.sources || new Map(), [model]);
+  const sources = React.useMemo(() => model?.sources || new Map<string, modelUtil.SourceModel>(), [model]);
 
   React.useEffect(() => {
     setSelectedTime(undefined);
@@ -179,9 +181,17 @@ export const Workbench: React.FunctionComponent<{
       selectPropertiesTab('source');
     }} />
   };
+
+  // Fallback location w/o action stands for file / test.
+  // Render error count on Source tab for that case.
+  let fallbackSourceErrorCount: number | undefined = undefined;
+  if (!selectedAction && fallbackLocation)
+    fallbackSourceErrorCount = fallbackLocation.source?.errors.length;
+
   const sourceTab: TabbedPaneTabModel = {
     id: 'source',
     title: 'Source',
+    errorCount: fallbackSourceErrorCount,
     render: () => <SourceTab
       stack={revealedStack}
       sources={sources}
@@ -291,7 +301,10 @@ export const Workbench: React.FunctionComponent<{
   const settingsTab: TabbedPaneTabModel = {
     id: 'settings',
     title: 'Settings',
-    component: <SettingsView settings={[showRouteActionsSetting]}/>,
+    component: <SettingsView settings={[
+      { value: showRouteActions, set: setShowRouteActions, title: 'Show route actions' },
+      { value: showScreenshot, set: setShowScreenshot, title: 'Show screenshot instead of snapshot' }
+    ]}/>,
   };
 
   return <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
@@ -317,6 +330,7 @@ export const Workbench: React.FunctionComponent<{
         settingName='actionListSidebar'
         main={<SnapshotTab
           action={activeAction}
+          model={model}
           sdkLanguage={sdkLanguage}
           testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
           isInspecting={isInspecting}

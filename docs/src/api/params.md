@@ -364,7 +364,7 @@ Query parameters to be sent with the URL.
 
 ## python-fetch-option-params
 * langs: python
-- `params` <[Object]<[string], [string]|[float]|[boolean]>>
+- `params` <[Object]<[string], [string]|[float]|[boolean]>|[string]>
 
 Query parameters to be sent with the URL.
 
@@ -374,7 +374,13 @@ Query parameters to be sent with the URL.
 
 Query parameters to be sent with the URL.
 
-## java-csharp-fetch-params
+## csharp-fetch-option-paramsString
+* langs: csharp
+- `paramsString` <[string]>
+
+Query parameters to be sent with the URL.
+
+## java-fetch-params
 * langs: java
 - `options` ?<[RequestOptions]>
 
@@ -768,12 +774,6 @@ Actual picture of each page will be scaled down if necessary to fit the specifie
   - `password` ?<[string]> Optional password to use if HTTP proxy requires authentication.
 
 Network proxy settings to use with this context. Defaults to none.
-
-:::note
-For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If all
-contexts override the proxy, global proxy will be never used and can be any string, for example
-`launch({ proxy: { server: 'http://per-context' } })`.
-:::
 
 ## context-option-strict
 - `strictSelectors` <[boolean]>

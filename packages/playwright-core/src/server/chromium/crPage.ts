@@ -690,15 +690,16 @@ class FrameSession {
     if (!frame || this._eventBelongsToStaleFrame(frame._id))
       return;
     const delegate = new CRExecutionContext(this._client, contextPayload);
-    let worldName: types.World|null = null;
+    let worldName: types.World;
     if (contextPayload.auxData && !!contextPayload.auxData.isDefault)
       worldName = 'main';
     else if (contextPayload.name === UTILITY_WORLD_NAME)
       worldName = 'utility';
+    else
+      return;
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
     (context as any)[contextDelegateSymbol] = delegate;
-    if (worldName)
-      frame._contextCreated(worldName, context);
+    frame._contextCreated(worldName, context);
     this._contextIdToContext.set(contextPayload.id, context);
   }
 
@@ -897,7 +898,7 @@ class FrameSession {
     const buffer = Buffer.from(payload.data, 'base64');
     this._page.emit(Page.Events.ScreencastFrame, {
       buffer,
-      timestamp: payload.metadata.timestamp,
+      frameSwapWallTime: payload.metadata.timestamp ? payload.metadata.timestamp * 1000 : undefined,
       width: payload.metadata.deviceWidth,
       height: payload.metadata.deviceHeight,
     });

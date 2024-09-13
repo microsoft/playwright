@@ -308,7 +308,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any): Promise<void> {
-    const source = await evaluationScript(script, arg, arguments.length > 1);
+    const source = await evaluationScript(script, arg);
     await this._channel.addInitScript({ source });
   }
 
@@ -481,7 +481,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       mode?: 'recording' | 'inspecting',
       testIdAttributeName?: string,
       outputFile?: string,
-      handleSIGINT?: boolean,
   }) {
     await this._channel.recorderSupplementEnable(params);
   }

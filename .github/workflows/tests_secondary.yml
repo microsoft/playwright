@@ -50,7 +50,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-12, macos-13, macos-14]
+        # Intel: macos-13, macos-14-large
+        # Arm64: macos-13-xlarge, macos-14
+        os: [macos-13, macos-13-xlarge, macos-14-large, macos-14]
         browser: [chromium, firefox, webkit]
     runs-on: ${{ matrix.os }}
     steps:
@@ -235,7 +237,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, macos-12, windows-latest]
+        os: [ubuntu-20.04, macos-13, windows-latest]
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test

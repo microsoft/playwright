@@ -15,6 +15,7 @@
  */
 
 import path from 'path';
+import timers from 'timers/promises';
 import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
 
 test.describe.configure({ mode: 'parallel' });
@@ -281,8 +282,8 @@ test('should respect file filter P', async ({ runWatchTest }) => {
   await testProcess.waitForOutput('Waiting for file changes.');
 });
 
-test('should respect project filter C', async ({ runWatchTest }) => {
-  const testProcess = await runWatchTest({
+test('should respect project filter C', async ({ runWatchTest, writeFiles }) => {
+  const files = {
     'playwright.config.ts': `
       import { defineConfig } from '@playwright/test';
       export default defineConfig({ projects: [{name: 'foo'}, {name: 'bar'}] });
@@ -291,9 +292,9 @@ test('should respect project filter C', async ({ runWatchTest }) => {
       import { test, expect } from '@playwright/test';
       test('passes', () => {});
     `,
-  });
+  };
+  const testProcess = await runWatchTest(files, { project: 'foo' });
   await testProcess.waitForOutput('[foo] › a.test.ts:3:11 › passes');
-  await testProcess.waitForOutput('[bar] › a.test.ts:3:11 › passes');
   await testProcess.waitForOutput('Waiting for file changes.');
   testProcess.clearOutput();
   testProcess.write('c');
@@ -305,6 +306,16 @@ test('should respect project filter C', async ({ runWatchTest }) => {
   await testProcess.waitForOutput('npx playwright test --project foo #1');
   await testProcess.waitForOutput('[foo] › a.test.ts:3:11 › passes');
   expect(testProcess.output).not.toContain('[bar] › a.test.ts:3:11 › passes');
+
+  testProcess.clearOutput();
+
+  await writeFiles(files); // file change triggers listTests with project filter
+  await testProcess.waitForOutput('[foo] › a.test.ts:3:11 › passes');
+
+  testProcess.write('c');
+  await testProcess.waitForOutput('Select projects');
+  await testProcess.waitForOutput('foo');
+  await testProcess.waitForOutput('bar'); // second selection should still show all
 });
 
 test('should respect file filter P and split files', async ({ runWatchTest }) => {
@@ -418,6 +429,17 @@ test('should run on changed files', async ({ runWatchTest, writeFiles }) => {
   expect(testProcess.output).not.toContain('a.test.ts:3:11 › passes');
   expect(testProcess.output).not.toContain('b.test.ts:3:11 › passes');
   await testProcess.waitForOutput('Waiting for file changes.');
+
+  testProcess.clearOutput();
+  await writeFiles({
+    'b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+  });
+
+  await testProcess.waitForOutput('b.test.ts:3:11 › passes');
+  expect(testProcess.output).not.toContain('c.test.ts:3:11 › passes');
 });
 
 test('should run on changed deps', async ({ runWatchTest, writeFiles }) => {
@@ -545,7 +567,7 @@ test('should not trigger on changes to non-tests', async ({ runWatchTest, writeF
     `,
   });
 
-  await new Promise(f => setTimeout(f, 1000));
+  await timers.setTimeout(1000);
   expect(testProcess.output).not.toContain('Waiting for file changes.');
 });
 
@@ -603,7 +625,7 @@ test('should watch filtered files', async ({ runWatchTest, writeFiles }) => {
     `,
   });
 
-  await new Promise(f => setTimeout(f, 1000));
+  await timers.setTimeout(1000);
   expect(testProcess.output).not.toContain('Waiting for file changes.');
 });
 

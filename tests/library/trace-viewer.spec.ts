@@ -289,6 +289,20 @@ test('should filter network requests by resource type', async ({ page, runAndTra
   await expect(traceViewer.networkRequests.getByText('font.woff2')).toBeVisible();
 });
 
+test('should show font preview', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(`${server.PREFIX}/network-tab/network.html`);
+  });
+  await traceViewer.selectAction('http://localhost');
+  await traceViewer.showNetworkTab();
+
+  await traceViewer.page.getByText('Font', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await traceViewer.networkRequests.getByText('font.woff2').click();
+  await traceViewer.page.getByTestId('network-request-details').getByTitle('Body').click();
+  await expect(traceViewer.page.locator('.network-request-details-tab')).toContainText('ABCDEF');
+});
+
 test('should filter network requests by url', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(`${server.PREFIX}/network-tab/network.html`);
@@ -1450,4 +1464,60 @@ test('should serve css without content-type', async ({ page, runAndTrace, server
   });
   const snapshotFrame = await traceViewer.snapshotFrame('page.goto');
   await expect(snapshotFrame.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)', { timeout: 0 });
+});
+
+test('should allow showing screenshots instead of snapshots', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/one-style.html');
+    await page.waitForTimeout(1000); // ensure we could take a screenshot
+  });
+
+  const screenshot = traceViewer.page.getByAltText(`Screenshot of page.goto > Action`);
+  const snapshot = (await traceViewer.snapshotFrame('page.goto')).owner();
+  await expect(snapshot).toBeVisible();
+  await expect(screenshot).not.toBeVisible();
+
+  await traceViewer.page.getByTitle('Settings').click();
+  await traceViewer.page.getByText('Show screenshot instead of snapshot').setChecked(true);
+
+  await expect(snapshot).not.toBeVisible();
+  await expect(screenshot).toBeVisible();
+});
+
+test('should handle case where neither snapshots nor screenshots exist', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/one-style.html');
+  }, { snapshots: false, screenshots: false });
+
+  await traceViewer.page.getByTitle('Settings').click();
+  await traceViewer.page.getByText('Show screenshot instead of snapshot').setChecked(true);
+
+  const screenshot = traceViewer.page.getByAltText(`Screenshot of page.goto > Action`);
+  await expect(screenshot).not.toBeVisible();
+});
+
+test('should show only one pointer with multilevel iframes', async ({ page, runAndTrace, server, browserName }) => {
+  test.fixme(browserName !== 'chromium', 'Elements in iframe are not marked');
+
+  server.setRoute('/level-0.html', (req, res) => {
+    res.writeHead(200);
+    res.end(`<iframe src="/level-1.html" style="position: absolute; left: 100px"></iframe>`);
+  });
+  server.setRoute('/level-1.html', (req, res) => {
+    res.writeHead(200);
+    res.end(`<iframe src="/level-2.html"></iframe>`);
+  });
+  server.setRoute('/level-2.html', (req, res) => {
+    res.writeHead(200);
+    res.end(`<button>Click me</button>`);
+  });
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/level-0.html');
+    await page.frameLocator('iframe').frameLocator('iframe').locator('button').click({ position: { x: 5, y: 5 } });
+  });
+  const snapshotFrame = await traceViewer.snapshotFrame('locator.click');
+  await expect.soft(snapshotFrame.locator('x-pw-pointer')).not.toBeAttached();
+  await expect.soft(snapshotFrame.frameLocator('iframe').locator('x-pw-pointer')).not.toBeAttached();
+  await expect.soft(snapshotFrame.frameLocator('iframe').frameLocator('iframe').locator('x-pw-pointer')).toBeVisible();
 });

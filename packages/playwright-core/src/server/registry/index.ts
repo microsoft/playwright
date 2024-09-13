@@ -264,6 +264,9 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac14-arm64': 'builds/android/%s/android.zip',
     'win64': 'builds/android/%s/android.zip',
   },
+  // TODO(bidi): implement downloads.
+  'bidi': {
+  } as DownloadPaths,
 };
 
 export const registryDirectory = (() => {
@@ -349,14 +352,15 @@ function readDescriptors(browsersJSON: BrowsersJSON) {
   });
 }
 
-export type BrowserName = 'chromium' | 'firefox' | 'webkit';
+export type BrowserName = 'chromium' | 'firefox' | 'webkit' | 'bidi';
 type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-tip-of-tree' | 'android';
+type BidiChannel = 'bidi-firefox-stable' | 'bidi-firefox-beta' | 'bidi-firefox-nightly' | 'bidi-chrome-canary' | 'bidi-chrome-stable' | 'bidi-chromium';
 type ChromiumChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
 const allDownloadable = ['chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-tip-of-tree'];
 
 export interface Executable {
   type: 'browser' | 'tool' | 'channel';
-  name: BrowserName | InternalTool | ChromiumChannel;
+  name: BrowserName | InternalTool | ChromiumChannel | BidiChannel;
   browserName: BrowserName | undefined;
   installType: 'download-by-default' | 'download-on-demand' | 'install-script' | 'none';
   directory: string | undefined;
@@ -521,6 +525,48 @@ export class Registry {
       'win32': `\\Microsoft\\Edge SxS\\Application\\msedge.exe`,
     }));
 
+    this._executables.push(this._createBidiFirefoxChannel('bidi-firefox-stable', {
+      'linux': '/firefox/firefox',
+      'darwin': '/Firefox.app/Contents/MacOS/firefox',
+      'win32': '\\core\\firefox.exe',
+    }));
+    this._executables.push(this._createBidiFirefoxChannel('bidi-firefox-beta', {
+      'linux': '/firefox/firefox',
+      'darwin': '/Firefox.app/Contents/MacOS/firefox',
+      'win32': '\\core\\firefox.exe',
+    }));
+    this._executables.push(this._createBidiFirefoxChannel('bidi-firefox-nightly', {
+      'linux': '/firefox/firefox',
+      'darwin': '/Firefox Nightly.app/Contents/MacOS/firefox',
+      'win32': '\\firefox\\firefox.exe',
+    }));
+
+    this._executables.push(this._createBidiChannel('bidi-chrome-stable', {
+      'linux': '/opt/google/chrome/chrome',
+      'darwin': '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      'win32': `\\Google\\Chrome\\Application\\chrome.exe`,
+    }));
+    this._executables.push(this._createBidiChannel('bidi-chrome-canary', {
+      'linux': '',
+      'darwin': '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
+      'win32': `\\Google\\Chrome SxS\\Application\\chrome.exe`,
+    }));
+    this._executables.push({
+      type: 'browser',
+      name: 'bidi-chromium',
+      browserName: 'bidi',
+      directory: chromium.dir,
+      executablePath: () => chromiumExecutable,
+      executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumExecutable, chromium.installByDefault, sdkLanguage),
+      installType: 'download-on-demand',
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromium.dir, ['chrome-linux'], [], ['chrome-win']),
+      downloadURLs: this._downloadURLs(chromium),
+      browserVersion: chromium.browserVersion,
+      _install: () => this._downloadExecutable(chromium, chromiumExecutable),
+      _dependencyGroup: 'chromium',
+      _isHermeticInstallation: true,
+    });
+
     const firefox = descriptors.find(d => d.name === 'firefox')!;
     const firefoxExecutable = findExecutablePath(firefox.dir, 'firefox');
     this._executables.push({
@@ -616,6 +662,21 @@ export class Registry {
       _dependencyGroup: 'tools',
       _isHermeticInstallation: true,
     });
+
+    this._executables.push({
+      type: 'browser',
+      name: 'bidi',
+      browserName: 'bidi',
+      directory: undefined,
+      executablePath: () => undefined,
+      executablePathOrDie: () => '',
+      installType: 'none',
+      _validateHostRequirements: () => Promise.resolve(),
+      downloadURLs: [],
+      _install: () => Promise.resolve(),
+      _dependencyGroup: 'tools',
+      _isHermeticInstallation: true,
+    });
   }
 
   private _createChromiumChannel(name: ChromiumChannel, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
@@ -646,6 +707,86 @@ export class Registry {
       type: 'channel',
       name,
       browserName: 'chromium',
+      directory: undefined,
+      executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
+      executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,
+      installType: install ? 'install-script' : 'none',
+      _validateHostRequirements: () => Promise.resolve(),
+      _isHermeticInstallation: false,
+      _install: install,
+    };
+  }
+
+  private _createBidiFirefoxChannel(name: BidiChannel, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
+    const executablePath = (sdkLanguage: string, shouldThrow: boolean) => {
+      const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
+      if (!suffix) {
+        if (shouldThrow)
+          throw new Error(`Firefox distribution '${name}' is not supported on ${process.platform}`);
+        return undefined;
+      }
+      const folder = path.resolve('firefox');
+      let channelName = 'stable';
+      if (name.includes('beta'))
+        channelName = 'beta';
+      else if (name.includes('nightly'))
+        channelName = 'nightly';
+      const installedVersions = fs.readdirSync(folder);
+      const found = installedVersions.filter(e => e.includes(channelName));
+      if (found.length === 1)
+        return path.join(folder, found[0], suffix);
+      if (found.length > 1) {
+        if (shouldThrow)
+          throw new Error(`Multiple Firefox installations found for channel '${name}': ${found.join(', ')}`);
+        else
+          return undefined;
+      }
+      if (shouldThrow)
+        throw new Error(`Cannot find Firefox installation for channel '${name}' under ${folder}`);
+      return undefined;
+    };
+    return {
+      type: 'channel',
+      name,
+      browserName: 'bidi',
+      directory: undefined,
+      executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
+      executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,
+      installType: 'none',
+      _validateHostRequirements: () => Promise.resolve(),
+      _isHermeticInstallation: true,
+      _install: install,
+    };
+  }
+
+  private _createBidiChannel(name: BidiChannel, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
+    const executablePath = (sdkLanguage: string, shouldThrow: boolean) => {
+      const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
+      if (!suffix) {
+        if (shouldThrow)
+          throw new Error(`Firefox distribution '${name}' is not supported on ${process.platform}`);
+        return undefined;
+      }
+      const prefixes = (process.platform === 'win32' ? [
+        process.env.LOCALAPPDATA, process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)']
+      ].filter(Boolean) : ['']) as string[];
+
+      for (const prefix of prefixes) {
+        const executablePath = path.join(prefix, suffix);
+        if (canAccessFile(executablePath))
+          return executablePath;
+      }
+      if (!shouldThrow)
+        return undefined;
+
+      const location = prefixes.length ? ` at ${path.join(prefixes[0], suffix)}` : ``;
+      const installation = install ? `\nRun "${buildPlaywrightCLICommand(sdkLanguage, 'install ' + name)}"` : '';
+      throw new Error(`Firefox distribution '${name}' is not found${location}${installation}`);
+    };
+    return {
+      type: 'channel',
+      name,
+      browserName: 'bidi',
       directory: undefined,
       executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
       executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,

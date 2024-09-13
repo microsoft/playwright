@@ -2040,12 +2040,15 @@ test('project filter in report name', async ({ runInlineTest }) => {
   const reportDir = test.info().outputPath('blob-report');
 
   {
-    await runInlineTest(files, { shard: `2/2`, project: 'foo' });
+    const result = await runInlineTest(files, { shard: `2/2`, project: 'foo' });
+    expect(result.exitCode).toBe(0);
     const reportFiles = await fs.promises.readdir(reportDir);
     expect(reportFiles.sort()).toEqual(['report-foo-2.zip']);
   }
+
   {
-    await runInlineTest(files, { shard: `1/2`, project: 'foo,b*r', grep: 'smoke' });
+    const result = await runInlineTest(files, { shard: `1/2`, project: ['foo', 'b*r'], grep: 'smoke' });
+    expect(result.exitCode).toBe(0);
     const reportFiles = await fs.promises.readdir(reportDir);
     expect(reportFiles.sort()).toEqual(['report-foo-b-r-6d9d49e-1.zip']);
   }

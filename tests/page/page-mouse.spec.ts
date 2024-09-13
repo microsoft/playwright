@@ -78,6 +78,33 @@ it('should dblclick the div', async ({ page, server }) => {
   expect(event.button).toBe(0);
 });
 
+it('down and up should generate click', async ({ page, server }) => {
+  await page.evaluate(() => {
+    window['clickPromise'] = new Promise(resolve => {
+      document.addEventListener('click', event => {
+        resolve({
+          type: event.type,
+          detail: event.detail,
+          clientX: event.clientX,
+          clientY: event.clientY,
+          isTrusted: event.isTrusted,
+          button: event.button
+        });
+      });
+    });
+  });
+  await page.mouse.move(50, 60);
+  await page.mouse.down();
+  await page.mouse.up();
+  const event = await page.evaluate(() => window['clickPromise']);
+  expect(event.type).toBe('click');
+  expect(event.detail).toBe(1);
+  expect(event.clientX).toBe(50);
+  expect(event.clientY).toBe(60);
+  expect(event.isTrusted).toBe(true);
+  expect(event.button).toBe(0);
+});
+
 it('should pointerdown the div with a custom button', async ({ page, server, browserName }) => {
   await page.setContent(`<div style='width: 100px; height: 100px;'>Click me</div>`);
   await page.evaluate(() => {

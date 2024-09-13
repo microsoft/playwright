@@ -44,7 +44,7 @@ export interface TestServerInterface {
 
   installBrowsers(params: {}): Promise<void>;
 
-  runGlobalSetup(params: {}): Promise<{
+  runGlobalSetup(params: { outputDir?: string }): Promise<{
     report: ReportEntry[],
     status: reporterTypes.FullResult['status']
   }>;
@@ -81,6 +81,7 @@ export interface TestServerInterface {
     locations?: string[];
     grep?: string;
     grepInvert?: string;
+    outputDir?: string;
   }): Promise<{
     report: ReportEntry[],
     status: reporterTypes.FullResult['status']

@@ -15,15 +15,16 @@
  */
 
 import crypto from 'crypto';
+import fs from 'fs';
 import path from 'path';
 import url from 'url';
 import { sourceMapSupport, pirates } from '../utilsBundle';
 import type { Location } from '../../types/testReporter';
 import type { LoadedTsConfig } from '../third_party/tsconfig-loader';
-import { tsConfigLoader } from '../third_party/tsconfig-loader';
+import { loadTsConfig } from '../third_party/tsconfig-loader';
 import Module from 'module';
 import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
-import { createFileMatcher, fileIsModule, resolveImportSpecifierExtension } from '../util';
+import { createFileMatcher, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
 import type { Matcher } from '../util';
 import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules, installSourceMapSupport } from './compilationCache';
 
@@ -57,14 +58,15 @@ export function transformConfig(): TransformConfig {
   return _transformConfig;
 }
 
-let _singleTSConfig: string | undefined;
+let _singleTSConfigPath: string | undefined;
+let _singleTSConfig: ParsedTsConfigData[] | undefined;
 
 export function setSingleTSConfig(value: string | undefined) {
-  _singleTSConfig = value;
+  _singleTSConfigPath = value;
 }
 
 export function singleTSConfig(): string | undefined {
-  return _singleTSConfig;
+  return _singleTSConfigPath;
 }
 
 function validateTsConfig(tsconfig: LoadedTsConfig): ParsedTsConfigData {
@@ -81,31 +83,65 @@ function validateTsConfig(tsconfig: LoadedTsConfig): ParsedTsConfigData {
 }
 
 function loadAndValidateTsconfigsForFile(file: string): ParsedTsConfigData[] {
-  const tsconfigPathOrDirecotry = _singleTSConfig || path.dirname(file);
-  if (!cachedTSConfigs.has(tsconfigPathOrDirecotry)) {
-    const loaded = tsConfigLoader(tsconfigPathOrDirecotry);
-    cachedTSConfigs.set(tsconfigPathOrDirecotry, loaded.map(validateTsConfig));
+  if (_singleTSConfigPath && !_singleTSConfig)
+    _singleTSConfig = loadTsConfig(_singleTSConfigPath).map(validateTsConfig);
+  if (_singleTSConfig)
+    return _singleTSConfig;
+  return loadAndValidateTsconfigsForFolder(path.dirname(file));
+}
+
+function loadAndValidateTsconfigsForFolder(folder: string): ParsedTsConfigData[] {
+  const foldersWithConfig: string[] = [];
+  let currentFolder = path.resolve(folder);
+  let result: ParsedTsConfigData[] | undefined;
+  while (true) {
+    const cached = cachedTSConfigs.get(currentFolder);
+    if (cached) {
+      result = cached;
+      break;
+    }
+
+    foldersWithConfig.push(currentFolder);
+
+    for (const name of ['tsconfig.json', 'jsconfig.json']) {
+      const configPath = path.join(currentFolder, name);
+      if (fs.existsSync(configPath)) {
+        const loaded = loadTsConfig(configPath);
+        result = loaded.map(validateTsConfig);
+        break;
+      }
+    }
+    if (result)
+      break;
+
+    const parentFolder = path.resolve(currentFolder, '../');
+    if (currentFolder === parentFolder)
+      break;
+    currentFolder = parentFolder;
   }
-  return cachedTSConfigs.get(tsconfigPathOrDirecotry)!;
+
+  result = result || [];
+  for (const folder of foldersWithConfig)
+    cachedTSConfigs.set(folder, result);
+  return result;
 }
 
 const pathSeparator = process.platform === 'win32' ? ';' : ':';
 const builtins = new Set(Module.builtinModules);
 
-export function resolveHook(filename: string, specifier: string, isESM: boolean): string | undefined {
+export function resolveHook(filename: string, specifier: string): string | undefined {
   if (specifier.startsWith('node:') || builtins.has(specifier))
     return;
   if (!shouldTransform(filename))
     return;
 
   if (isRelativeSpecifier(specifier))
-    return resolveImportSpecifierExtension(path.resolve(path.dirname(filename), specifier), false, isESM);
+    return resolveImportSpecifierAfterMapping(path.resolve(path.dirname(filename), specifier), false);
 
   /**
-   * TypeScript discourages path-mapping into node_modules
-   *    (https://www.typescriptlang.org/docs/handbook/modules/reference.html#paths-should-not-point-to-monorepo-packages-or-node_modules-packages).
-   * It seems like TypeScript tries path-mapping first, but does not look at the `package.json` or `index.js` files in ESM.
-   * If path-mapping doesn't yield a result, TypeScript falls back to the default resolution (typically node_modules).
+   * TypeScript discourages path-mapping into node_modules:
+   * https://www.typescriptlang.org/docs/handbook/modules/reference.html#paths-should-not-point-to-monorepo-packages-or-node_modules-packages
+   * However, if path-mapping doesn't yield a result, TypeScript falls back to the default resolution through node_modules.
    */
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
   const tsconfigs = loadAndValidateTsconfigsForFile(filename);
@@ -148,7 +184,7 @@ export function resolveHook(filename: string, specifier: string, isESM: boolean)
         if (value.includes('*'))
           candidate = candidate.replace('*', matchedPartOfSpecifier);
         candidate = path.resolve(tsconfig.pathsBase!, candidate);
-        const existing = resolveImportSpecifierExtension(candidate, true, isESM);
+        const existing = resolveImportSpecifierAfterMapping(candidate, true);
         if (existing) {
           longestPrefixLength = keyPrefix.length;
           pathMatchedByLongestPrefix = existing;
@@ -162,7 +198,7 @@ export function resolveHook(filename: string, specifier: string, isESM: boolean)
   if (path.isAbsolute(specifier)) {
     // Handle absolute file paths like `import '/path/to/file'`
     // Do not handle module imports like `import 'fs'`
-    return resolveImportSpecifierExtension(specifier, false, isESM);
+    return resolveImportSpecifierAfterMapping(specifier, false);
   }
 }
 
@@ -244,7 +280,7 @@ function installTransformIfNeeded() {
   const originalResolveFilename = (Module as any)._resolveFilename;
   function resolveFilename(this: any, specifier: string, parent: Module, ...rest: any[]) {
     if (parent) {
-      const resolved = resolveHook(parent.filename, specifier, false);
+      const resolved = resolveHook(parent.filename, specifier);
       if (resolved !== undefined)
         specifier = resolved;
     }

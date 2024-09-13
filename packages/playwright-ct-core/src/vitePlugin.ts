@@ -31,6 +31,8 @@ import type { ImportInfo } from './tsxTransform';
 import type { ComponentRegistry } from './viteUtils';
 import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, resolveEndpoint, transformIndexFile } from './viteUtils';
 import { resolveHook } from 'playwright/lib/transform/transform';
+import { runDevServer } from './devServer';
+import { removeDirAndLogToConsole } from 'playwright/lib/util';
 
 const log = debug('pw:vite');
 
@@ -72,6 +74,17 @@ export function createPlugin(): TestRunnerPlugin {
 
     populateDependencies: async () => {
       await buildBundle(config, configDir);
+    },
+
+    startDevServer: async () => {
+      return await runDevServer(config);
+    },
+
+    clearCache: async () => {
+      const configDir = config.configFile ? path.dirname(config.configFile) : config.rootDir;
+      const dirs = await resolveDirs(configDir, config);
+      if (dirs)
+        await removeDirAndLogToConsole(dirs.outDir);
     },
   };
 }
@@ -249,7 +262,7 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
 
     async writeBundle(this: PluginContext) {
       for (const importInfo of importInfos.values()) {
-        const importPath = resolveHook(importInfo.filename, importInfo.importSource, true);
+        const importPath = resolveHook(importInfo.filename, importInfo.importSource);
         if (!importPath)
           continue;
         const deps = new Set<string>();

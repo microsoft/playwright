@@ -16,6 +16,8 @@
 
 import fs from 'fs';
 import tls from 'tls';
+import type https from 'https';
+import zlib from 'zlib';
 import type http2 from 'http2';
 import type http from 'http';
 import { expect, playwrightTest as base } from '../config/browserTest';
@@ -72,15 +74,6 @@ const test = base.extend<TestOptions>({
     if (server)
       await new Promise<void>(resolve => server.close(() => resolve()));
   },
-});
-
-test.use({
-  launchOptions: async ({ launchOptions }, use) => {
-    await use({
-      ...launchOptions,
-      proxy: { server: 'per-context' }
-    });
-  }
 });
 
 const kDummyFileName = __filename;
@@ -375,6 +368,138 @@ test.describe('browser', () => {
     await page.close();
   });
 
+  test('should handle TLS renegotiation with client certificates', async ({ browser, asset, browserName, platform }) => {
+    const server: https.Server = createHttpsServer({
+      key: fs.readFileSync(asset('client-certificates/server/server_key.pem')),
+      cert: fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
+      ca: [fs.readFileSync(asset('client-certificates/server/server_cert.pem'))],
+      requestCert: false, // Initially don't request client cert
+      rejectUnauthorized: false,
+      // TLSv1.3 does not support renegotiation
+      minVersion: 'TLSv1.2',
+      maxVersion: 'TLSv1.2',
+    });
+
+    server.on('request', async (req, res) => {
+      if (!req.socket)
+        return;
+      const renegotiate = () => new Promise<void>((resolve, reject) => {
+        (req.socket as tls.TLSSocket).renegotiate({
+          requestCert: true,
+          rejectUnauthorized: false
+        }, err => {
+          if (err)
+            reject(err);
+          else
+            resolve();
+        });
+      });
+      if (req.url === '/') {
+        res.writeHead(200, { 'Content-Type': 'text/html', 'connection': 'close' });
+        res.end();
+      } else if (req.url === '/from-fetch-api') {
+        res.writeHead(200, {
+          'Content-Type': 'text/plain',
+          'Transfer-Encoding': 'chunked'
+        });
+        res.flushHeaders();
+
+        await new Promise<void>(resolve => req.once('data', data => {
+          res.write(`server received: ${data.toString()}\n`);
+          resolve();
+        }));
+
+        await renegotiate();
+        for (let i = 0; i < 4; i++) {
+          res.write(`${i}-from-server\n`);
+          // Best-effort to trigger a new chunk
+          await new Promise<void>(resolve => setTimeout(resolve, 100));
+        }
+        res.end('server closed the connection');
+      } else if (req.url === '/style.css') {
+        res.writeHead(200, {
+          'Content-Type': 'text/css',
+          'Content-Encoding': 'gzip',
+          'Transfer-Encoding': 'chunked'
+        });
+
+        await renegotiate();
+
+        const stylesheet = `
+          button {
+            background-color: red;
+          }  
+        `;
+
+        const stylesheetBuffer = await new Promise<Buffer>((resolve, reject) => {
+          zlib.gzip(stylesheet, (err, buffer) => {
+            if (err)
+              reject(err);
+            else
+              resolve(buffer);
+          });
+        });
+        for (let i = 0; i < stylesheetBuffer.length; i += 100) {
+          res.write(stylesheetBuffer.slice(i, i + 100));
+          // Best-effort to trigger a new chunk
+          await new Promise<void>(resolve => setTimeout(resolve, 20));
+        }
+        res.end();
+      } else {
+        res.writeHead(404);
+        res.end();
+      }
+    });
+
+    await new Promise<void>(resolve => server.listen(0, 'localhost', resolve));
+    const port = (server.address() as net.AddressInfo).port;
+    const origin = 'https://' + (browserName === 'webkit' && platform === 'darwin' ? 'local.playwright' : 'localhost');
+    const serverUrl = `${origin}:${port}`;
+
+    const context = await browser.newContext({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+    });
+
+    const page = await context.newPage();
+
+    await test.step('fetch API', async () => {
+      await page.goto(serverUrl);
+      const response = await page.evaluate(async () => {
+        const response = await fetch('/from-fetch-api', {
+          method: 'POST',
+          body: 'client-request-payload'
+        });
+        return await response.text();
+      });
+      expect(response).toBe([
+        'server received: client-request-payload',
+        '0-from-server',
+        '1-from-server',
+        '2-from-server',
+        '3-from-server',
+        'server closed the connection'
+      ].join('\n'));
+    });
+
+    await test.step('Gzip encoded CSS Stylesheet', async () => {
+      await page.goto(serverUrl);
+      // The <link> would throw with net::ERR_INVALID_CHUNKED_ENCODING
+      await page.setContent(`
+        <button>Click me</button>
+        <link rel="stylesheet" href="/style.css">
+      `);
+      await expect(page.locator('button')).toHaveCSS('background-color', /* red */'rgb(255, 0, 0)');
+    });
+
+    await context.close();
+    await new Promise<void>(resolve => server.close(() => resolve()));
+  });
+
   test('should pass with matching certificates in pfx format when passing as content', async ({ browser, startCCServer, asset, browserName }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
     const page = await browser.newPage({
@@ -467,8 +592,7 @@ test.describe('browser', () => {
 
   test('support http2', async ({ browser, startCCServer, asset, browserName }) => {
     test.skip(browserName === 'webkit' && process.platform === 'darwin', 'WebKit on macOS doesn\n proxy localhost');
-    const enableHTTP1FallbackWhenUsingHttp2 = browserName === 'webkit' && process.platform === 'linux';
-    const serverURL = await startCCServer({ http2: true, enableHTTP1FallbackWhenUsingHttp2 });
+    const serverURL = await startCCServer({ http2: true });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
@@ -477,19 +601,16 @@ test.describe('browser', () => {
         keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
-    // TODO: We should investigate why http2 is not supported in WebKit on Linux.
-    // https://bugs.webkit.org/show_bug.cgi?id=276990
-    const expectedProtocol = enableHTTP1FallbackWhenUsingHttp2 ? 'http/1.1' : 'h2';
     {
       await page.goto(serverURL.replace('localhost', 'local.playwright'));
       await expect(page.getByTestId('message')).toHaveText('Sorry, but you need to provide a client certificate to continue.');
-      await expect(page.getByTestId('alpn-protocol')).toHaveText(expectedProtocol);
+      await expect(page.getByTestId('alpn-protocol')).toHaveText('h2');
       await expect(page.getByTestId('servername')).toHaveText('local.playwright');
     }
     {
       await page.goto(serverURL);
       await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
-      await expect(page.getByTestId('alpn-protocol')).toHaveText(expectedProtocol);
+      await expect(page.getByTestId('alpn-protocol')).toHaveText('h2');
     }
     await page.close();
   });
@@ -535,6 +656,39 @@ test.describe('browser', () => {
     await page.goto(serverURL);
     await expect(page.getByText('Playwright client-certificate error: self-signed certificate')).toBeVisible();
     await page.close();
+  });
+
+  test('should handle rejected certificate in handshake with HTTP/2', async ({ browser, asset, browserName, platform }) => {
+    const server: http2.Http2SecureServer = createHttp2Server({
+      key: fs.readFileSync(asset('client-certificates/server/server_key.pem')),
+      cert: fs.readFileSync(asset('client-certificates/server/server_cert.pem')),
+      ca: [fs.readFileSync(asset('client-certificates/server/server_cert.pem'))],
+      requestCert: true,
+    }, async (req: http2.Http2ServerRequest, res: http2.Http2ServerResponse) => {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end('Hello world');
+    });
+
+    await new Promise<void>(resolve => server.listen(0, 'localhost', resolve));
+    const port = (server.address() as net.AddressInfo).port;
+    const serverUrl = 'https://' + (browserName === 'webkit' && platform === 'darwin' ? 'local.playwright' : 'localhost') + ':' + port;
+
+    const context = await browser.newContext({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: 'https://just-there-that-the-client-certificates-proxy-server-is-getting-launched.com',
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+    });
+
+    const page = await context.newPage();
+
+    // This was triggering an unhandled error before.
+    await page.goto(serverUrl).catch(() => {});
+
+    await context.close();
+    await new Promise<void>(resolve => server.close(() => resolve()));
   });
 
   test.describe('persistentContext', () => {

@@ -44,7 +44,9 @@ export class SnapshotServer {
     const snapshot = this._snapshot(pathname.substring('/snapshotInfo'.length), searchParams);
     return this._respondWithJson(snapshot ? {
       viewport: snapshot.viewport(),
-      url: snapshot.snapshot().frameUrl
+      url: snapshot.snapshot().frameUrl,
+      timestamp: snapshot.snapshot().timestamp,
+      wallTime: snapshot.snapshot().wallTime,
     } : {
       error: 'No snapshot found'
     });

@@ -432,6 +432,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        # Force a non-shallow checkout, so that we can reference $GITHUB_BASE_REF.
+        # See https://github.com/actions/checkout for more details.
+        fetch-depth: 0
     - uses: actions/setup-node@v4
       with:
         node-version: 18

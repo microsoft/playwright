@@ -15,9 +15,6 @@
  */
 
 import { test, expect } from './playwright-test-fixtures';
-import path from 'path';
-
-export const ctReactCliEntrypoint = path.join(__dirname, '../../packages/playwright-ct-react/cli.js');
 
 test('should clear cache with type:module', async ({ runCLICommand }) => {
   const result = await runCLICommand({
@@ -46,6 +43,6 @@ test('should clear cache for ct', async ({ runCLICommand }) => {
       import { test } from '@playwright/test';
       test('example', () => {});
     `,
-  }, 'clear-cache', [], ctReactCliEntrypoint);
+  }, 'clear-cache', []);
   expect(result.exitCode).toBe(0);
 });

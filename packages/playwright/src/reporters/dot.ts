@@ -20,10 +20,6 @@ import type { FullResult, TestCase, TestResult, Suite, TestError } from '../../t
 class DotReporter extends BaseReporter {
   private _counter = 0;
 
-  override printsToStdio() {
-    return true;
-  }
-
   override onBegin(suite: Suite) {
     super.onBegin(suite);
     console.log(this.generateStartingMessage());

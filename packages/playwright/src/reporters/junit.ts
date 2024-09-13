@@ -18,8 +18,8 @@ import fs from 'fs';
 import path from 'path';
 import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
 import { formatFailure, resolveOutputFile, stripAnsiEscapes } from './base';
-import EmptyReporter from './empty';
 import { getAsBooleanFromENV } from 'playwright-core/lib/utils';
+import type { ReporterV2 } from './reporterV2';
 
 type JUnitOptions = {
   outputFile?: string,
@@ -29,7 +29,7 @@ type JUnitOptions = {
   configDir: string,
 };
 
-class JUnitReporter extends EmptyReporter {
+class JUnitReporter implements ReporterV2 {
   private config!: FullConfig;
   private configDir: string;
   private suite!: Suite;
@@ -42,27 +42,30 @@ class JUnitReporter extends EmptyReporter {
   private includeProjectInTestName = false;
 
   constructor(options: JUnitOptions) {
-    super();
     this.stripANSIControlSequences = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_STRIP_ANSI', !!options.stripANSIControlSequences);
     this.includeProjectInTestName = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_PROJECT_IN_TEST_NAME', !!options.includeProjectInTestName);
     this.configDir = options.configDir;
     this.resolvedOutputFile = resolveOutputFile('JUNIT', options)?.outputFile;
   }
 
-  override printsToStdio() {
+  version(): 'v2' {
+    return 'v2';
+  }
+
+  printsToStdio() {
     return !this.resolvedOutputFile;
   }
 
-  override onConfigure(config: FullConfig) {
+  onConfigure(config: FullConfig) {
     this.config = config;
   }
 
-  override onBegin(suite: Suite) {
+  onBegin(suite: Suite) {
     this.suite = suite;
     this.timestamp = new Date();
   }
 
-  override async onEnd(result: FullResult) {
+  async onEnd(result: FullResult) {
     const children: XMLEntry[] = [];
     for (const projectSuite of this.suite.suites) {
       for (const fileSuite of projectSuite.suites)

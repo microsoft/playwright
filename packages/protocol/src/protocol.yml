@@ -287,6 +287,7 @@ APIRequestContext:
     fetch:
       parameters:
         url: string
+        encodedParams: string?
         params:
           type: array?
           items: NameValue
@@ -670,6 +671,8 @@ Playwright:
     chromium: BrowserType
     firefox: BrowserType
     webkit: BrowserType
+    bidiChromium: BrowserType
+    bidiFirefox: BrowserType
     android: Android
     electron: Electron
     utils: LocalUtils?
@@ -1189,7 +1192,6 @@ BrowserContext:
         device: string?
         saveStorage: string?
         outputFile: string?
-        handleSIGINT: boolean?
         omitCallTracking: boolean?
 
     newCDPSession:
@@ -2185,7 +2187,6 @@ Frame:
               index: number?
         force: boolean?
         timeout: number?
-        noWaitAfter: boolean?
       returns:
         values:
           type: array
@@ -2741,7 +2742,6 @@ ElementHandle:
               index: number?
         force: boolean?
         timeout: number?
-        noWaitAfter: boolean?
       returns:
         values:
           type: array

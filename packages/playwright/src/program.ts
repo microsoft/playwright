@@ -19,14 +19,14 @@
 import type { Command } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
-import { Runner, readLastRunInfo } from './runner/runner';
+import { Runner } from './runner/runner';
 import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 import { serializeError } from './util';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
-import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports } from './common/configLoader';
+import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
 import type { ConfigCLIOverrides } from './common/ipc';
-import type { FullResult, TestError } from '../types/testReporter';
+import type { TestError } from '../types/testReporter';
 import type { TraceMode } from '../types/test';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import { program } from 'playwright-core/lib/cli/program';
@@ -34,7 +34,7 @@ export { program } from 'playwright-core/lib/cli/program';
 import type { ReporterDescription } from '../types/test';
 import { prepareErrorStack } from './reporters/base';
 import * as testServer from './runner/testServer';
-import { clearCacheAndLogToConsole } from './runner/testServer';
+import { runWatchModeLoop } from './runner/watchMode';
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -73,10 +73,13 @@ function addClearCacheCommand(program: Command) {
   command.description('clears build and test caches');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async opts => {
-    const configInternal = await loadConfigFromFileRestartIfNeeded(opts.config);
-    if (!configInternal)
+    const config = await loadConfigFromFileRestartIfNeeded(opts.config);
+    if (!config)
       return;
-    await clearCacheAndLogToConsole(configInternal);
+    const runner = new Runner(config);
+    const { status } = await runner.clearCache();
+    const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
+    gracefullyProcessExitDoNotHang(exitCode);
   });
 }
 
@@ -85,7 +88,8 @@ function addFindRelatedTestFilesCommand(program: Command) {
   command.description('Returns the list of related tests to the given files');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async (files, options) => {
-    await withRunnerAndMutedWrite(options.config, runner => runner.findRelatedTestFiles('in-process', files));
+    const resolvedFiles = (files as string[]).map(file => path.resolve(process.cwd(), file));
+    await withRunnerAndMutedWrite(options.config, runner => runner.findRelatedTestFiles(resolvedFiles));
   });
 }
 
@@ -94,17 +98,13 @@ function addDevServerCommand(program: Command) {
   command.description('start dev server');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async options => {
-    const configInternal = await loadConfigFromFileRestartIfNeeded(options.config);
-    if (!configInternal)
+    const config = await loadConfigFromFileRestartIfNeeded(options.config);
+    if (!config)
       return;
-    const { config } = configInternal;
-    const implementation = (config as any)['@playwright/test']?.['cli']?.['dev-server'];
-    if (implementation) {
-      await implementation(configInternal);
-    } else {
-      console.log(`DevServer is not available in the package you are using. Did you mean to use component testing?`);
-      gracefullyProcessExitDoNotHang(1);
-    }
+    const runner = new Runner(config);
+    const { status } = await runner.runDevServer();
+    const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
+    gracefullyProcessExitDoNotHang(exitCode);
   });
 }
 
@@ -183,14 +183,29 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     return;
   }
 
+  if (process.env.PWTEST_WATCH) {
+    if (opts.onlyChanged)
+      throw new Error(`--only-changed is not supported in watch mode. If you'd like that to change, file an issue and let us know about your usecase for it.`);
+
+    const status = await runWatchModeLoop(
+        resolveConfigLocation(opts.config),
+        {
+          projects: opts.project,
+          files: args,
+          grep: opts.grep
+        }
+    );
+    await stopProfiling('runner');
+    if (status === 'restarted')
+      return;
+    const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
+    gracefullyProcessExitDoNotHang(exitCode);
+    return;
+  }
+
   const config = await loadConfigFromFileRestartIfNeeded(opts.config, cliOverrides, opts.deps === false);
   if (!config)
     return;
-
-  if (opts.lastFailed) {
-    const lastRunInfo = await readLastRunInfo(config);
-    config.testIdMatcher = id => lastRunInfo.failedTests.includes(id);
-  }
 
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
@@ -200,13 +215,10 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliProjectFilter = opts.project || undefined;
   config.cliPassWithNoTests = !!opts.passWithNoTests;
   config.cliFailOnFlakyTests = !!opts.failOnFlakyTests;
+  config.cliLastFailed = !!opts.lastFailed;
 
   const runner = new Runner(config);
-  let status: FullResult['status'];
-  if (process.env.PWTEST_WATCH)
-    status = await runner.watchAllTests();
-  else
-    status = await runner.runAllTests();
+  const status = await runner.runAllTests();
   await stopProfiling('runner');
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);

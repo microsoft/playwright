@@ -142,6 +142,10 @@ export class TimeoutManager {
     return this._running ? this._running.deadline : kMaxDeadline;
   }
 
+  currentSlotType() {
+    return this._running ? this._running.runnable.type : 'test';
+  }
+
   private _createTimeoutError(running: Running): Error {
     let message = '';
     const timeout = running.slot.timeout;

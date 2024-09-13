@@ -1543,7 +1543,7 @@ await frame.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" })
 ### option: Frame.selectOption.force = %%-input-force-%%
 * since: v1.13
 
-### option: Frame.selectOption.noWaitAfter = %%-input-no-wait-after-%%
+### option: Frame.selectOption.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Frame.selectOption.strict = %%-input-strict-%%

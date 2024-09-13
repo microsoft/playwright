@@ -21,6 +21,7 @@ export * from './debug';
 export * from './debugLogger';
 export * from './env';
 export * from './eventsHelper';
+export * from './expectUtils';
 export * from './fileUtils';
 export * from './headers';
 export * from './hostPlatform';

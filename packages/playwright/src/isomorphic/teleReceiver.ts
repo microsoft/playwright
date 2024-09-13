@@ -133,12 +133,12 @@ export class TeleReporterReceiver {
   public isListing = false;
   private _rootSuite: TeleSuite;
   private _options: TeleReporterReceiverOptions;
-  private _reporter: Partial<ReporterV2>;
+  private _reporter: ReporterV2;
   private _tests = new Map<string, TeleTestCase>();
   private _rootDir!: string;
   private _config!: reporterTypes.FullConfig;
 
-  constructor(reporter: Partial<ReporterV2>, options: TeleReporterReceiverOptions = {}) {
+  constructor(reporter: ReporterV2, options: TeleReporterReceiverOptions = {}) {
     this._rootSuite = new TeleSuite('', 'root');
     this._options = options;
     this._reporter = reporter;
