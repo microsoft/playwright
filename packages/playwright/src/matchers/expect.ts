@@ -290,7 +290,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
     if (this._info.isPoll) {
       if ((customAsyncMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
         throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
-      matcher = (...args: any[]) => pollMatcher(resolvedMatcherName, !!this._info.isNot, this._info.pollIntervals, this._info.pollTimeout ?? currentExpectTimeout(), this._info.generator!, ...args);
+      matcher = (...args: any[]) => pollMatcher(resolvedMatcherName, this._info, this._prefix, ...args);
     }
     return (...args: any[]) => {
       const testInfo = currentTestInfo();
@@ -350,25 +350,34 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
   }
 }
 
-async function pollMatcher(qualifiedMatcherName: any, isNot: boolean, pollIntervals: number[] | undefined, timeout: number, generator: () => any, ...args: any[]) {
+async function pollMatcher(qualifiedMatcherName: string, info: ExpectMetaInfo, prefix: string[], ...args: any[]) {
   const testInfo = currentTestInfo();
+  const timeout = info.pollTimeout ?? currentExpectTimeout();
   const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
 
   const result = await pollAgainstDeadline<Error|undefined>(async () => {
     if (testInfo && currentTestInfo() !== testInfo)
       return { continuePolling: false, result: undefined };
 
-    const value = await generator();
-    let expectInstance = expectLibrary(value) as any;
-    if (isNot)
-      expectInstance = expectInstance.not;
+    const innerInfo: ExpectMetaInfo = {
+      ...info,
+      isSoft: false, // soft is outside of poll, not inside
+      isPoll: false,
+      pollTimeout: undefined,
+      pollIntervals: undefined,
+      generator: undefined,
+    };
+    const value = await info.generator!();
     try {
-      expectInstance[qualifiedMatcherName].call(expectInstance, ...args);
+      let matchers = createMatchers(value, innerInfo, prefix);
+      if (info.isNot)
+        matchers = matchers.not;
+      matchers[qualifiedMatcherName](...args);
       return { continuePolling: false, result: undefined };
     } catch (error) {
       return { continuePolling: true, result: error };
     }
-  }, deadline, pollIntervals ?? [100, 250, 500, 1000]);
+  }, deadline, info.pollIntervals ?? [100, 250, 500, 1000]);
 
   if (result.timedOut) {
     const message = result.result ? [

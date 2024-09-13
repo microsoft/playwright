@@ -263,3 +263,19 @@ test('should propagate string exception from async arrow function', { annotation
 
   expect(result.output).toContain('some error');
 });
+
+test('should show custom message', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32582' }
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should fail', async () => {
+        await expect.poll(() => 1, { message: 'custom message', timeout: 500 }).toBe(2);
+      });
+    `,
+  });
+  expect(result.output).toContain('Error: custom message');
+  expect(result.output).toContain('Expected: 2');
+  expect(result.output).toContain('Received: 1');
+});
