@@ -22,6 +22,7 @@ import type { Frame } from '../frames';
 import type * as actions from './recorderActions';
 import { toKeyboardModifiers } from '../codegen/language';
 import { serializeExpectedTextValues } from '../../utils/expectUtils';
+import { createGuid, monotonicTime } from '../../utils';
 
 export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {
   let title = metadata.apiName || metadata.method;
@@ -59,7 +60,7 @@ export function mainFrameForAction(pageAliases: Map<Page, string>, actionInConte
   const pageAlias = actionInContext.frame.pageAlias;
   const page = [...pageAliases.entries()].find(([, alias]) => pageAlias === alias)?.[0];
   if (!page)
-    throw new Error('Internal error: page not found');
+    throw new Error(`Internal error: page ${pageAlias} not found in [${[...pageAliases.values()]}]`);
   return page.mainFrame();
 }
 
@@ -128,4 +129,23 @@ export function traceParamsForAction(actionInContext: ActionInContext) {
       };
     }
   }
+}
+
+export function callMetadataForAction(pageAliases: Map<Page, string>, actionInContext: ActionInContext): { callMetadata: CallMetadata, mainFrame: Frame } {
+  const mainFrame = mainFrameForAction(pageAliases, actionInContext);
+  const { action } = actionInContext;
+  const callMetadata: CallMetadata = {
+    id: `call@${createGuid()}`,
+    apiName: 'frame.' + action.name,
+    objectId: mainFrame.guid,
+    pageId: mainFrame._page.guid,
+    frameId: mainFrame.guid,
+    startTime: monotonicTime(),
+    endTime: 0,
+    type: 'Frame',
+    method: action.name,
+    params: traceParamsForAction(actionInContext),
+    log: [],
+  };
+  return { callMetadata, mainFrame };
 }
