@@ -209,6 +209,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
+      options: --user 1001
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -218,8 +219,6 @@ jobs:
         run: npm ci
       - name: Run your tests
         run: npx playwright test
-        env:
-          HOME: /root
 ```
 
 ```yml python title=".github/workflows/playwright.yml"
@@ -235,6 +234,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright/python:v%%VERSION%%-jammy
+      options: --user 1001
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -248,8 +248,6 @@ jobs:
           pip install -e .
       - name: Run your tests
         run: pytest
-        env:
-          HOME: /root
 ```
 
 ```yml java title=".github/workflows/playwright.yml"
@@ -265,6 +263,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright/java:v%%VERSION%%-jammy
+      options: --user 1001
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v3
@@ -275,8 +274,6 @@ jobs:
         run: mvn -B install -D skipTests --no-transfer-progress
       - name: Run tests
         run: mvn test
-        env:
-          HOME: /root
 ```
 
 ```yml csharp title=".github/workflows/playwright.yml"
@@ -292,6 +289,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-jammy
+      options: --user 1001
     steps:
       - uses: actions/checkout@v4
       - name: Setup dotnet
@@ -301,8 +299,6 @@ jobs:
       - run: dotnet build
       - name: Run your tests
         run: dotnet test
-        env:
-          HOME: /root
 ```
 
 #### On deployment
