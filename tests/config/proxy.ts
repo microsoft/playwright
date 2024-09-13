@@ -15,9 +15,11 @@
  */
 
 import type { IncomingMessage } from 'http';
-import type { Socket } from 'net';
 import type { ProxyServer } from '../third_party/proxy';
 import { createProxy } from '../third_party/proxy';
+import net from 'net';
+import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../../packages/playwright-core/src/common/socksProxy';
+import { SocksProxy } from '../../packages/playwright-core/lib/common/socksProxy';
 
 export class TestProxy {
   readonly PORT: number;
@@ -27,7 +29,7 @@ export class TestProxy {
   requestUrls: string[] = [];
 
   private readonly _server: ProxyServer;
-  private readonly _sockets = new Set<Socket>();
+  private readonly _sockets = new Set<net.Socket>();
   private _handlers: { event: string, handler: (...args: any[]) => void }[] = [];
 
   static async create(port: number): Promise<TestProxy> {
@@ -90,7 +92,7 @@ export class TestProxy {
     this._server.prependListener(event, handler);
   }
 
-  private _onSocket(socket: Socket) {
+  private _onSocket(socket: net.Socket) {
     this._sockets.add(socket);
     // ECONNRESET and HPE_INVALID_EOF_STATE are legit errors given
     // that tab closing aborts outgoing connections to the server.
@@ -100,5 +102,46 @@ export class TestProxy {
     });
     socket.once('close', () => this._sockets.delete(socket));
   }
+}
 
+export async function setupSocksForwardingServer({
+  port, forwardPort, allowedTargetPort
+}: {
+  port: number, forwardPort: number, allowedTargetPort: number
+}) {
+  const connectHosts = [];
+  const connections = new Map<string, net.Socket>();
+  const socksProxy = new SocksProxy();
+  socksProxy.setPattern('*');
+  socksProxy.addListener(SocksProxy.Events.SocksRequested, async (payload: SocksSocketRequestedPayload) => {
+    if (!['127.0.0.1', 'fake-localhost-127-0-0-1.nip.io', 'localhost'].includes(payload.host) || payload.port !== allowedTargetPort) {
+      socksProxy.sendSocketError({ uid: payload.uid, error: 'ECONNREFUSED' });
+      return;
+    }
+    const target = new net.Socket();
+    target.on('error', error => socksProxy.sendSocketError({ uid: payload.uid, error: error.toString() }));
+    target.on('end', () => socksProxy.sendSocketEnd({ uid: payload.uid }));
+    target.on('data', data => socksProxy.sendSocketData({ uid: payload.uid, data }));
+    target.setKeepAlive(false);
+    target.connect(forwardPort, '127.0.0.1');
+    target.on('connect', () => {
+      connections.set(payload.uid, target);
+      if (!connectHosts.includes(`${payload.host}:${payload.port}`))
+        connectHosts.push(`${payload.host}:${payload.port}`);
+      socksProxy.socketConnected({ uid: payload.uid, host: target.localAddress, port: target.localPort });
+    });
+  });
+  socksProxy.addListener(SocksProxy.Events.SocksData, async (payload: SocksSocketDataPayload) => {
+    connections.get(payload.uid)?.write(payload.data);
+  });
+  socksProxy.addListener(SocksProxy.Events.SocksClosed, (payload: SocksSocketClosedPayload) => {
+    connections.get(payload.uid)?.destroy();
+    connections.delete(payload.uid);
+  });
+  await socksProxy.listen(port, 'localhost');
+  return {
+    closeProxyServer: () => socksProxy.close(),
+    proxyServerAddr: `socks5://localhost:${port}`,
+    connectHosts,
+  };
 }

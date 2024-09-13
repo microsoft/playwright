@@ -172,20 +172,9 @@ export abstract class APIRequestContext extends SdkObject {
     // When `clientCertificates` is present, we set the `proxy` property to our own socks proxy
     // for the browser to use. However, we don't need it here, because we already respect
     // `clientCertificates` when fetching from Node.js.
-    if (proxy && !defaults.clientCertificates?.length && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass)) {
-      const proxyOpts = url.parse(proxy.server);
-      if (proxyOpts.protocol?.startsWith('socks')) {
-        agent = new SocksProxyAgent({
-          host: proxyOpts.hostname,
-          port: proxyOpts.port || undefined,
-        });
-      } else {
-        if (proxy.username)
-          proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
-        // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
-        agent = new HttpsProxyAgent(proxyOpts);
-      }
-    }
+    if (proxy && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass))
+      agent = createProxyAgent(proxy);
+
 
     const timeout = defaults.timeoutSettings.timeout(params);
     const deadline = timeout && (monotonicTime() + timeout);
@@ -578,8 +567,6 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       if (!/^\w+:\/\//.test(url))
         url = 'http://' + url;
       proxy.server = url;
-      if (options.clientCertificates)
-        throw new Error('Cannot specify both proxy and clientCertificates');
     }
     if (options.storageState) {
       this._origins = options.storageState.origins;
@@ -628,6 +615,20 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       origins: this._origins || []
     };
   }
+}
+
+export function createProxyAgent(proxy: types.ProxySettings) {
+  const proxyOpts = url.parse(proxy.server);
+  if (proxyOpts.protocol?.startsWith('socks')) {
+    return new SocksProxyAgent({
+      host: proxyOpts.hostname,
+      port: proxyOpts.port || undefined,
+    });
+  }
+  if (proxy.username)
+    proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
+  // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
+  return new HttpsProxyAgent(proxyOpts);
 }
 
 function toHeadersArray(rawHeaders: string[]): types.HeadersArray {

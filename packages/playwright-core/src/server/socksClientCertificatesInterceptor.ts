@@ -25,6 +25,9 @@ import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketReque
 import { SocksProxy } from '../common/socksProxy';
 import type * as types from './types';
 import { debugLogger } from '../utils/debugLogger';
+import { createProxyAgent } from './fetch';
+import { EventEmitter } from 'events';
+import { verifyClientCertificates } from './browserContext';
 
 let dummyServerTlsOptions: tls.TlsOptions | undefined = undefined;
 function loadDummyServerCertsIfNeeded() {
@@ -94,7 +97,12 @@ class SocksProxyConnection {
   }
 
   async connect() {
-    this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
+    if (this.socksProxy.agent)
+      // @ts-expect-error
+      this.target = await this.socksProxy.agent.callback(new EventEmitter(), { host: rewriteToLocalhostIfNeeded(this.host), port: this.port });
+    else
+      this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
+
     this.target.once('close', this._targetCloseEventListener);
     this.target.once('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
     if (this._closed) {
@@ -233,12 +241,15 @@ export class ClientCertificatesProxy {
   ignoreHTTPSErrors: boolean | undefined;
   secureContextMap: Map<string, tls.SecureContext> = new Map();
   alpnCache: ALPNCache;
+  agent: ReturnType<typeof createProxyAgent> | undefined;
 
   constructor(
-    contextOptions: Pick<types.BrowserContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors'>
+    contextOptions: Pick<types.BrowserContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors' | 'proxy'>
   ) {
+    verifyClientCertificates(contextOptions.clientCertificates);
     this.alpnCache = new ALPNCache();
     this.ignoreHTTPSErrors = contextOptions.ignoreHTTPSErrors;
+    this.agent = contextOptions.proxy ? createProxyAgent(contextOptions.proxy) : undefined;
     this._initSecureContexts(contextOptions.clientCertificates);
     this._socksProxy = new SocksProxy();
     this._socksProxy.setPattern('*');

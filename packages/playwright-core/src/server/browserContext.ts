@@ -42,7 +42,7 @@ import * as consoleApiSource from '../generated/consoleApiSource';
 import { BrowserContextAPIRequestContext } from './fetch';
 import type { Artifact } from './artifact';
 import { Clock } from './clock';
-import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
+import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { RecorderApp } from './recorder/recorderApp';
 
 export abstract class BrowserContext extends SdkObject {
@@ -657,15 +657,6 @@ export function assertBrowserContextIsNotOwned(context: BrowserContext) {
     if (page._ownedContext)
       throw new Error('Please use browser.newContext() for multi-page scripts that share the context.');
   }
-}
-
-export async function createClientCertificatesProxyIfNeeded(options: types.BrowserContextOptions, browserOptions?: BrowserOptions) {
-  if (!options.clientCertificates?.length)
-    return;
-  if ((options.proxy?.server && options.proxy?.server !== 'per-context') || (browserOptions?.proxy?.server && browserOptions?.proxy?.server !== 'http://per-context'))
-    throw new Error('Cannot specify both proxy and clientCertificates');
-  verifyClientCertificates(options.clientCertificates);
-  return new ClientCertificatesProxy(options);
 }
 
 export function validateBrowserContextOptions(options: types.BrowserContextOptions, browserOptions: BrowserOptions) {

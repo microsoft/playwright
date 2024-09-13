@@ -18,7 +18,7 @@ import fs from 'fs';
 import * as os from 'os';
 import path from 'path';
 import type { BrowserContext } from './browserContext';
-import { createClientCertificatesProxyIfNeeded, normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
+import { normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
 import type { BrowserName } from './registry';
 import { registry } from './registry';
 import type { ConnectionTransport } from './transport';
@@ -39,6 +39,7 @@ import { RecentLogsCollector } from '../utils/debugLogger';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import { type ProtocolError, isProtocolError } from './protocolError';
+import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 
 export const kNoXServerRunningError = 'Looks like you launched a headed browser without having a XServer running.\n' +
   'Set either \'headless: true\' or use \'xvfb-run <your-playwright-app>\' before running Playwright.\n\n<3 Playwright Team';
@@ -92,7 +93,7 @@ export abstract class BrowserType extends SdkObject {
     return browser;
   }
 
-  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, persistentContextOptions: channels.BrowserTypeLaunchPersistentContextOptions & { useWebSocket?: boolean }): Promise<BrowserContext> {
+  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, persistentContextOptions: channels.BrowserTypeLaunchPersistentContextOptions & { useWebSocket?: boolean, internalIgnoreHTTPSErrors?: boolean }): Promise<BrowserContext> {
     const launchOptions = this._validateLaunchOptions(persistentContextOptions);
     if (this._useBidi)
       launchOptions.useWebSocket = true;
@@ -100,9 +101,12 @@ export abstract class BrowserType extends SdkObject {
     controller.setLogName('browser');
     const browser = await controller.run(async progress => {
       // Note: Any initial TLS requests will fail since we rely on the Page/Frames initialize which sets ignoreHTTPSErrors.
-      const clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(persistentContextOptions);
-      if (clientCertificatesProxy)
+      let clientCertificatesProxy: ClientCertificatesProxy | undefined;
+      if (persistentContextOptions.clientCertificates?.length) {
+        clientCertificatesProxy = new ClientCertificatesProxy(persistentContextOptions);
         launchOptions.proxyOverride = await clientCertificatesProxy?.listen();
+        persistentContextOptions.internalIgnoreHTTPSErrors = true;
+      }
       progress.cleanupWhenAborted(() => clientCertificatesProxy?.close());
       const browser = await this._innerLaunchWithRetries(progress, launchOptions, persistentContextOptions, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupLog(e); });
       browser._defaultContext!._clientCertificatesProxy = clientCertificatesProxy;
