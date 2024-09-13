@@ -41,7 +41,7 @@ export type BrowserOptions = {
   downloadsPath: string,
   tracesDir: string,
   headful?: boolean,
-  persistent?: channels.BrowserNewContextParams,  // Undefined means no persistent context.
+  persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.
   browserProcess: BrowserProcess,
   customExecutablePath?: string;
   proxy?: ProxySettings,
@@ -85,7 +85,7 @@ export abstract class Browser extends SdkObject {
     const clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(options, this.options);
     if (clientCertificatesProxy) {
       options.proxyOverride = await clientCertificatesProxy.listen();
-      options.ignoreHTTPSErrorsOverride = true;
+      options.internalIgnoreHTTPSErrors = true;
     }
     let context;
     try {

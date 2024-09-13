@@ -207,7 +207,7 @@ export class WKBrowser extends Browser {
 export class WKBrowserContext extends BrowserContext {
   declare readonly _browser: WKBrowser;
 
-  constructor(browser: WKBrowser, browserContextId: string | undefined, options: channels.BrowserNewContextParams) {
+  constructor(browser: WKBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
     this._validateEmulatedViewport(options.viewport);
     this._authenticateProxyViaHeader();
@@ -222,7 +222,7 @@ export class WKBrowserContext extends BrowserContext {
       downloadPath: this._browser.options.downloadsPath,
       browserContextId
     }));
-    if (this._options.ignoreHTTPSErrors || this._options.ignoreHTTPSErrorsOverride)
+    if (this._options.ignoreHTTPSErrors || this._options.internalIgnoreHTTPSErrors)
       promises.push(this._browser._browserSession.send('Playwright.setIgnoreCertificateErrors', { browserContextId, ignore: true }));
     if (this._options.locale)
       promises.push(this._browser._browserSession.send('Playwright.setLanguages', { browserContextId, languages: [this._options.locale] }));

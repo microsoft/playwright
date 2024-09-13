@@ -157,7 +157,7 @@ export type LaunchOptions = channels.BrowserTypeLaunchOptions & {
 
 export type BrowserContextOptions = channels.BrowserNewContextOptions & {
   proxyOverride?: ProxySettings;
-  ignoreHTTPSErrorsOverride?: boolean;
+  internalIgnoreHTTPSErrors?: boolean;
 };
 
 export type ProtocolLogger = (direction: 'send' | 'receive', message: object) => void;

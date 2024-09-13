@@ -50,7 +50,7 @@ type FetchRequestOptions = {
   timeoutSettings: TimeoutSettings;
   ignoreHTTPSErrors?: boolean;
   baseURL?: string;
-  clientCertificates?: channels.BrowserNewContextOptions['clientCertificates'];
+  clientCertificates?: types.BrowserContextOptions['clientCertificates'];
 };
 
 type HeadersObject = Readonly<{ [name: string]: string }>;
