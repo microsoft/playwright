@@ -282,9 +282,9 @@ export class ClientCertificatesProxy {
     }
   }
 
-  public async listen(): Promise<string> {
+  public async listen() {
     const port = await this._socksProxy.listen(0, '127.0.0.1');
-    return `socks5://127.0.0.1:${port}`;
+    return { server: `socks5://127.0.0.1:${port}` };
   }
 
   public async close() {

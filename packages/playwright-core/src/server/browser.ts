@@ -74,15 +74,19 @@ export abstract class Browser extends SdkObject {
     this.instrumentation.onBrowserOpen(this);
   }
 
-  abstract doCreateNewContext(options: channels.BrowserNewContextParams): Promise<BrowserContext>;
+  abstract doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext>;
   abstract contexts(): BrowserContext[];
   abstract isConnected(): boolean;
   abstract version(): string;
   abstract userAgent(): string;
 
-  async newContext(metadata: CallMetadata, options: channels.BrowserNewContextParams): Promise<BrowserContext> {
+  async newContext(metadata: CallMetadata, options: types.BrowserContextOptions): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);
     const clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(options, this.options);
+    if (clientCertificatesProxy) {
+      options.proxyOverride = await clientCertificatesProxy.listen();
+      options.ignoreHTTPSErrorsOverride = true;
+    }
     let context;
     try {
       context = await this.doCreateNewContext(options);

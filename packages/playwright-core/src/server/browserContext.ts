@@ -68,7 +68,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _activeProgressControllers = new Set<ProgressController>();
-  readonly _options: channels.BrowserNewContextParams;
+  readonly _options: types.BrowserContextOptions;
   _requestInterceptor?: network.RouteHandler;
   private _isPersistentContext: boolean;
   private _closedStatus: 'open' | 'closing' | 'closed' = 'open';
@@ -665,10 +665,7 @@ export async function createClientCertificatesProxyIfNeeded(options: channels.Br
   if ((options.proxy?.server && options.proxy?.server !== 'per-context') || (browserOptions?.proxy?.server && browserOptions?.proxy?.server !== 'http://per-context'))
     throw new Error('Cannot specify both proxy and clientCertificates');
   verifyClientCertificates(options.clientCertificates);
-  const clientCertificatesProxy = new ClientCertificatesProxy(options);
-  options.proxy = { server: await clientCertificatesProxy.listen() };
-  options.ignoreHTTPSErrors = true;
-  return clientCertificatesProxy;
+  return new ClientCertificatesProxy(options);
 }
 
 export function validateBrowserContextOptions(options: channels.BrowserNewContextParams, browserOptions: BrowserOptions) {

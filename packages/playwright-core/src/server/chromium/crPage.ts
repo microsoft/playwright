@@ -543,7 +543,7 @@ class FrameSession {
       const options = this._crPage._browserContext._options;
       if (options.bypassCSP)
         promises.push(this._client.send('Page.setBypassCSP', { enabled: true }));
-      if (options.ignoreHTTPSErrors)
+      if (options.ignoreHTTPSErrors || options.ignoreHTTPSErrorsOverride)
         promises.push(this._client.send('Security.setIgnoreCertificateErrors', { ignore: true }));
       if (this._isMainFrame())
         promises.push(this._updateViewport());
