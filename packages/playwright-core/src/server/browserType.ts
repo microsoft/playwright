@@ -288,7 +288,7 @@ export abstract class BrowserType extends SdkObject {
     throw new Error('Connecting to SELENIUM_REMOTE_URL is only supported by Chromium');
   }
 
-  private _validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): types.LaunchOptions {
+  private _validateLaunchOptions(options: types.LaunchOptions): types.LaunchOptions {
     const { devtools = false } = options;
     let { headless = !devtools, downloadsPath, proxy } = options;
     if (debugMode())
