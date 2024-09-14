@@ -17,7 +17,7 @@
 import type http from 'http';
 import fs from 'fs';
 import path from 'path';
-import { mime, wsServer } from '../utilsBundle';
+import { mime, wsServer, type WebSocket } from '../utilsBundle';
 import { assert } from './debug';
 import { createHttpServer } from './network';
 import { ManualPromise } from './manualPromise';
@@ -81,9 +81,17 @@ export class HttpServer {
     assert(!this._wsGuid, 'can only create one main websocket transport per server');
     this._wsGuid = guid || createGuid();
     const wss = new wsServer({ server: this._server, path: '/' + this._wsGuid });
+    const openedWebSockets = () => [...wss.clients].filter(ws => ws.readyState === ws.OPEN);
+    transport.sendEvent = (method, params) => {
+      const msg = JSON.stringify({ method, params });
+      for (const ws of openedWebSockets())
+        ws.send(msg);
+    };
+    transport.close = () => {
+      for (const ws of openedWebSockets())
+        ws.close();
+    };
     wss.on('connection', ws => {
-      transport.sendEvent = (method, params)  => ws.send(JSON.stringify({ method, params }));
-      transport.close = () => ws.close();
       ws.on('message', async message => {
         const { id, method, params } = JSON.parse(String(message));
         try {
@@ -93,8 +101,12 @@ export class HttpServer {
           ws.send(JSON.stringify({ id, error: String(e) }));
         }
       });
-      ws.on('close', () => transport.onclose());
-      ws.on('error', () => transport.onclose());
+      const onclose = () => {
+        if (openedWebSockets().length === 0)
+          transport.onclose();
+      };
+      ws.on('close', onclose);
+      ws.on('error', onclose);
     });
   }
 
