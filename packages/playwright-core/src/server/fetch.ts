@@ -319,8 +319,6 @@ export abstract class APIRequestContext extends SdkObject {
       let endAt: number | undefined;
 
       const request = requestConstructor(url, requestOptions as any, async response => {
-        response.once('readable', () => { firstByteAt = monotonicTime(); });
-
         const notifyRequestFinished = (body?: Buffer) => {
           const timings: har.Timings = {
             send: requestFinishAt! - startAt,
@@ -476,7 +474,10 @@ export abstract class APIRequestContext extends SdkObject {
           body.on('error', reject);
         }
 
-        body.on('data', chunk => chunks.push(chunk));
+        body.on('data', chunk => {
+          firstByteAt ??= monotonicTime();
+          chunks.push(chunk);
+        });
         body.on('end', notifyBodyFinished);
       });
       request.on('error', error => reject(rewriteOpenSSLErrorIfNeeded(error)));
