@@ -820,6 +820,17 @@ it('should include API request', async ({ contextFactory, server }, testInfo) =>
   expect(entry.response.headers.find(h => h.name.toLowerCase() === 'content-type')?.value).toContain('application/json');
   expect(entry.response.content.size).toBe(15);
   expect(entry.response.content.text).toBe(responseBody.toString());
+
+  expect(entry.time).toBeGreaterThan(0);
+  expect(entry.timings).toEqual(expect.objectContaining({
+    blocked: -1,
+    connect: expect.any(Number),
+    dns: expect.any(Number),
+    receive: expect.any(Number),
+    send: expect.any(Number),
+    ssl: expect.any(Number),
+    wait: expect.any(Number),
+  }));
 });
 
 it('should not hang on resources served from cache', async ({ contextFactory, server, browserName }, testInfo) => {
