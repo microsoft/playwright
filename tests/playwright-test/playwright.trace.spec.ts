@@ -53,7 +53,7 @@ test('should stop tracing with trace: on-first-retry, when not retrying', async 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.flaky).toBe(1);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-shared-flaky-retry1', 'trace.zip'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-shared-flaky-retry1', 'trace.pwtrace.zip'))).toBeTruthy();
 });
 
 test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
@@ -86,7 +86,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
   expect(result.passed).toBe(2);
   expect(result.failed).toBe(1);
   // One trace file for request context and one for each APIRequestContext
-  const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.pwtrace.zip'));
   expect(trace1.actionTree).toEqual([
     'Before Hooks',
     '  fixture: request',
@@ -105,14 +105,14 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     '  fixture: request',
     '    apiRequestContext.dispose',
   ]);
-  const trace2 = await parseTrace(testInfo.outputPath('test-results', 'a-api-pass', 'trace.zip'));
+  const trace2 = await parseTrace(testInfo.outputPath('test-results', 'a-api-pass', 'trace.pwtrace.zip'));
   expect(trace2.actionTree).toEqual([
     'Before Hooks',
     'apiRequest.newContext',
     'apiRequestContext.get',
     'After Hooks',
   ]);
-  const trace3 = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
+  const trace3 = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.pwtrace.zip'));
   expect(trace3.actionTree).toEqual([
     'Before Hooks',
     '  fixture: request',
@@ -204,7 +204,7 @@ test('should not mixup network files between contexts', async ({ runInlineTest, 
   }, { workers: 1, timeout: 15000 });
   expect(result.exitCode).toEqual(0);
   expect(result.passed).toBe(1);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-example', 'trace.zip'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-example', 'trace.pwtrace.zip'))).toBe(true);
 });
 
 test('should save sources when requested', async ({ runInlineTest }, testInfo) => {
@@ -224,7 +224,7 @@ test('should save sources when requested', async ({ runInlineTest }, testInfo) =
     `,
   }, { workers: 1 });
   expect(result.exitCode).toEqual(0);
-  const { resources } = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  const { resources } = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.pwtrace.zip'));
   expect([...resources.keys()].filter(name => name.startsWith('resources/src@'))).toHaveLength(1);
 });
 
@@ -248,7 +248,7 @@ test('should not save sources when not requested', async ({ runInlineTest }, tes
     `,
   }, { workers: 1 });
   expect(result.exitCode).toEqual(0);
-  const { resources } = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  const { resources } = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.pwtrace.zip'));
   expect([...resources.keys()].filter(name => name.startsWith('resources/src@'))).toHaveLength(0);
 });
 
@@ -283,8 +283,8 @@ test('should work in serial mode', async ({ runInlineTest }, testInfo) => {
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-serial-passes', 'trace.zip'))).toBeFalsy();
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-serial-fails', 'trace.zip'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-serial-passes', 'trace.pwtrace.zip'))).toBeFalsy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-serial-fails', 'trace.pwtrace.zip'))).toBeTruthy();
 });
 
 test('should not override trace file in afterAll', async ({ runInlineTest, server }, testInfo) => {
@@ -313,7 +313,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
-  const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'));
+  const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-test-1', 'trace.pwtrace.zip'));
 
   expect(trace1.actionTree).toEqual([
     'Before Hooks',
@@ -338,7 +338,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
   ]);
   expect(trace1.errors).toEqual([`'oh no!'`]);
 
-  const error = await parseTrace(testInfo.outputPath('test-results', 'a-test-2', 'trace.zip')).catch(e => e);
+  const error = await parseTrace(testInfo.outputPath('test-results', 'a-test-2', 'trace.pwtrace.zip')).catch(e => e);
   expect(error).toBeTruthy();
 });
 
@@ -366,8 +366,8 @@ test('should retain traces for interrupted tests', async ({ runInlineTest }, tes
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.interrupted).toBe(1);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'))).toBeTruthy();
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'b-test-2', 'trace.zip'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.pwtrace.zip'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'b-test-2', 'trace.pwtrace.zip'))).toBeTruthy();
 });
 
 test('should respect --trace', async ({ runInlineTest }, testInfo) => {
@@ -382,7 +382,7 @@ test('should respect --trace', async ({ runInlineTest }, testInfo) => {
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.pwtrace.zip'))).toBeTruthy();
 });
 
 test('should respect PW_TEST_DISABLE_TRACING', async ({ runInlineTest }, testInfo) => {
@@ -400,7 +400,7 @@ test('should respect PW_TEST_DISABLE_TRACING', async ({ runInlineTest }, testInf
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.zip'))).toBe(false);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-test-1', 'trace.pwtrace.zip'))).toBe(false);
 });
 
 for (const mode of ['off', 'retain-on-failure', 'on-first-retry', 'on-all-retries', 'retain-on-first-failure']) {
@@ -465,7 +465,7 @@ test(`trace:retain-on-failure should create trace if context is closed before fa
       });
     `,
   }, { trace: 'retain-on-failure' });
-  const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
+  const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.pwtrace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.apiNames).toContain('page.goto');
   expect(result.failed).toBe(1);
@@ -487,7 +487,7 @@ test(`trace:retain-on-failure should create trace if context is closed before fa
       });
     `,
   }, { trace: 'retain-on-failure' });
-  const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
+  const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.pwtrace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.apiNames).toContain('page.goto');
   expect(result.failed).toBe(1);
@@ -507,7 +507,7 @@ test(`trace:retain-on-failure should create trace if request context is disposed
       });
     `,
   }, { trace: 'retain-on-failure' });
-  const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.zip');
+  const tracePath = test.info().outputPath('test-results', 'a-passing-test', 'trace.pwtrace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.apiNames).toContain('apiRequestContext.get');
   expect(result.failed).toBe(1);
@@ -529,7 +529,7 @@ test('should include attachments by default', async ({ runInlineTest, server }, 
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.pwtrace.zip'));
   expect(trace.apiNames).toEqual([
     'Before Hooks',
     `attach "foo"`,
@@ -559,7 +559,7 @@ test('should opt out of attachments', async ({ runInlineTest, server }, testInfo
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.pwtrace.zip'));
   expect(trace.apiNames).toEqual([
     'Before Hooks',
     `attach "foo"`,
@@ -592,7 +592,7 @@ test('should record with custom page fixture', async ({ runInlineTest }, testInf
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('failure!');
-  const trace = await parseTraceRaw(testInfo.outputPath('test-results', 'a-fails', 'trace.zip'));
+  const trace = await parseTraceRaw(testInfo.outputPath('test-results', 'a-fails', 'trace.pwtrace.zip'));
   expect(trace.events).toContainEqual(expect.objectContaining({
     type: 'frame-snapshot',
   }));
@@ -617,7 +617,7 @@ test('should expand expect.toPass', async ({ runInlineTest }, testInfo) => {
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.zip'));
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-pass', 'trace.pwtrace.zip'));
   expect(trace.actionTree).toEqual([
     'Before Hooks',
     '  fixture: browser',
@@ -656,7 +656,7 @@ test('should show non-expect error in trace', async ({ runInlineTest }, testInfo
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.pwtrace.zip'));
   expect(trace.actionTree).toEqual([
     'Before Hooks',
     '  fixture: browser',
@@ -692,7 +692,7 @@ test('should show error from beforeAll in trace', async ({ runInlineTest }, test
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.pwtrace.zip'));
   expect(trace.errors).toEqual(['Error: Oh my!']);
 });
 
@@ -730,7 +730,7 @@ test('should not throw when attachment is missing', async ({ runInlineTest }, te
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-passes', 'trace.zip'));
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-passes', 'trace.pwtrace.zip'));
   expect(trace.actionTree).toContain('attach "screenshot"');
 });
 
@@ -754,7 +754,7 @@ test('should not throw when screenshot on failure fails', async ({ runInlineTest
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-has-pdf-page', 'trace.zip'));
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-has-pdf-page', 'trace.pwtrace.zip'));
   const attachedScreenshots = trace.actionTree.filter(s => s.trim() === `attach "screenshot"`);
   // One screenshot for the page, no screenshot for pdf page since it should have failed.
   expect(attachedScreenshots.length).toBe(1);
@@ -778,7 +778,7 @@ test('should use custom expect message in trace', async ({ runInlineTest }, test
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.zip'));
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-fail', 'trace.pwtrace.zip'));
   expect(trace.actionTree).toEqual([
     'Before Hooks',
     '  fixture: browser',
@@ -837,7 +837,7 @@ test('should not throw when merging traces multiple times', async ({ runInlineTe
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-foo', 'trace.zip'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-foo', 'trace.pwtrace.zip'))).toBe(true);
 });
 
 test('should record nested steps, even after timeout', async ({ runInlineTest }, testInfo) => {
@@ -928,7 +928,7 @@ test('should record nested steps, even after timeout', async ({ runInlineTest },
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-example', 'trace.zip'));
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-example', 'trace.pwtrace.zip'));
   expect(trace.actionTree).toEqual([
     'Before Hooks',
     '  beforeAll hook',
@@ -1022,14 +1022,14 @@ test('should attribute worker fixture teardown to the right test', async ({ runI
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
-  const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-one', 'trace.zip'));
+  const trace1 = await parseTrace(testInfo.outputPath('test-results', 'a-one', 'trace.pwtrace.zip'));
   expect(trace1.actionTree).toEqual([
     'Before Hooks',
     '  fixture: foo',
     '    step in foo setup',
     'After Hooks',
   ]);
-  const trace2 = await parseTrace(testInfo.outputPath('test-results', 'a-two', 'trace.zip'));
+  const trace2 = await parseTrace(testInfo.outputPath('test-results', 'a-two', 'trace.pwtrace.zip'));
   expect(trace2.actionTree).toEqual([
     'Before Hooks',
     'After Hooks',
@@ -1050,11 +1050,11 @@ test('trace:retain-on-first-failure should create trace but only on first failur
     `,
   }, { trace: 'retain-on-first-failure', retries: 1 });
 
-  const retryTracePath = test.info().outputPath('test-results', 'a-fail-retry1', 'trace.zip');
+  const retryTracePath = test.info().outputPath('test-results', 'a-fail-retry1', 'trace.pwtrace.zip');
   const retryTraceExists = fs.existsSync(retryTracePath);
   expect(retryTraceExists).toBe(false);
 
-  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
+  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.pwtrace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.apiNames).toContain('page.goto');
   expect(result.failed).toBe(1);
@@ -1071,7 +1071,7 @@ test('trace:retain-on-first-failure should create trace if context is closed bef
       });
     `,
   }, { trace: 'retain-on-first-failure' });
-  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
+  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.pwtrace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.apiNames).toContain('page.goto');
   expect(result.failed).toBe(1);
@@ -1090,7 +1090,7 @@ test('trace:retain-on-first-failure should create trace if context is closed bef
       });
     `,
   }, { trace: 'retain-on-first-failure' });
-  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
+  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.pwtrace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.apiNames).toContain('page.goto');
   expect(result.failed).toBe(1);
@@ -1107,7 +1107,7 @@ test('trace:retain-on-first-failure should create trace if request context is di
       });
     `,
   }, { trace: 'retain-on-first-failure' });
-  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
+  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.pwtrace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.apiNames).toContain('apiRequestContext.get');
   expect(result.failed).toBe(1);
@@ -1132,7 +1132,7 @@ test('should not corrupt actions when no library trace is present', async ({ run
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 
-  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
+  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.pwtrace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.actionTree).toEqual([
     'Before Hooks',
@@ -1162,7 +1162,7 @@ test('should record trace for manually created context in a failed test', async 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 
-  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.zip');
+  const tracePath = test.info().outputPath('test-results', 'a-fail', 'trace.pwtrace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.actionTree).toEqual([
     'Before Hooks',
@@ -1204,7 +1204,7 @@ test('should not nest top level expect into unfinished api calls ', {
   expect(result.exitCode).toBe(0);
   expect(result.failed).toBe(0);
 
-  const tracePath = test.info().outputPath('test-results', 'a-pass', 'trace.zip');
+  const tracePath = test.info().outputPath('test-results', 'a-pass', 'trace.pwtrace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.actionTree).toEqual([
     'Before Hooks',
@@ -1246,7 +1246,7 @@ test('should record trace after fixture teardown timeout', {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 
-  const tracePath = test.info().outputPath('test-results', 'a-fails', 'trace.zip');
+  const tracePath = test.info().outputPath('test-results', 'a-fails', 'trace.pwtrace.zip');
   const trace = await parseTrace(tracePath);
   expect(trace.actionTree).toEqual([
     'Before Hooks',
