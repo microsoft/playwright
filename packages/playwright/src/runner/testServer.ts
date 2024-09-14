@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { installRootRedirect, openTraceInBrowser, openTraceViewerApp, registry, startTraceViewerServer } from 'playwright-core/lib/server';
+import { installRootRedirect, openTraceInBrowser, openTraceViewerApp, registry, serverSideCallMetadata, startTraceViewerServer } from 'playwright-core/lib/server';
 import { ManualPromise, gracefullyProcessExitDoNotHang, isUnderTest } from 'playwright-core/lib/utils';
 import type { Transport, HttpServer } from 'playwright-core/lib/utils';
 import type * as reporterTypes from '../../types/testReporter';
@@ -38,6 +38,7 @@ import { serializeError } from '../util';
 import { baseFullConfig } from '../isomorphic/teleReceiver';
 import { InternalReporter } from '../reporters/internalReporter';
 import type { ReporterV2 } from '../reporters/reporterV2';
+import type { Page } from 'playwright-core/lib/server/page';
 
 const originalStdoutWrite = process.stdout.write;
 const originalStderrWrite = process.stderr.write;
@@ -80,6 +81,7 @@ export class TestServerDispatcher implements TestServerInterface {
   private _watchTestDirs = false;
   private _closeOnDisconnect = false;
   private _populateDependenciesOnList = false;
+  private _traceViewerPagePromise: Promise<Page> | undefined;
 
   constructor(configLocation: ConfigLocation) {
     this._configLocation = configLocation;
@@ -388,6 +390,42 @@ export class TestServerDispatcher implements TestServerInterface {
       process.stdout.write = originalStdoutWrite;
       process.stderr.write = originalStderrWrite;
     }
+  }
+
+  async openTraceViewer(params: { traceViewerURL: string; openInBrowser?: boolean }): Promise<void> {
+    if (this._traceViewerPagePromise)
+      throw new Error(`Trace Viewer already open`);
+
+    if (params.openInBrowser) {
+      await openTraceInBrowser(params.traceViewerURL);
+    } else {
+      this._traceViewerPagePromise = openTraceViewerApp(params.traceViewerURL, 'chromium', {
+        headless: isUnderTest() && process.env.PWTEST_HEADED_FOR_TEST !== '1',
+        persistentContextOptions: {
+          handleSIGINT: false,
+        },
+      });
+      const page = await this._traceViewerPagePromise;
+      page.on('close', () => {
+        this._traceViewerPagePromise = undefined;
+        this._dispatchEvent('traceViewerEvent', { method: 'didClose', params: {} });
+      });
+    }
+  }
+
+  async closeTraceViewer(): Promise<void> {
+    if (!this._traceViewerPagePromise)
+      return;
+    const page = await this._traceViewerPagePromise;
+    await page.close(serverSideCallMetadata());
+    this._traceViewerPagePromise = undefined;
+  }
+
+  async dispatchTraceViewerEvent(params: { method: string; params: any; }): Promise<void> {
+    if (params.method === 'loadTraceRequested')
+      this._dispatchEvent('loadTraceRequested', params.params);
+    else
+      this._dispatchEvent('traceViewerEvent', params);
   }
 
   async closeGracefully() {

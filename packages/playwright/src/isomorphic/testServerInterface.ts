@@ -21,6 +21,7 @@ import type { JsonEvent } from './teleReceiver';
 // -- Reuse boundary -- Everything below this line is reused in the vscode extension.
 
 export type ReportEntry = JsonEvent;
+export type TraceViewerEvent = JsonEvent;
 
 export interface TestServerInterface {
   initialize(params: {
@@ -114,6 +115,12 @@ export interface TestServerInterface {
 
   stopTests(params: {}): Promise<void>;
 
+  openTraceViewer(params: { traceViewerURL: string; openInBrowser?: boolean }): Promise<void>;
+
+  closeTraceViewer(params: {}): Promise<void>;
+
+  dispatchTraceViewerEvent(params: { method: string; params: any; }): Promise<void>;
+
   closeGracefully(params: {}): Promise<void>;
 }
 
@@ -122,6 +129,7 @@ export interface TestServerInterfaceEvents {
   onStdio: Event<{ type: 'stdout' | 'stderr', text?: string, buffer?: string }>;
   onTestFilesChanged: Event<{ testFiles: string[] }>;
   onLoadTraceRequested: Event<{ traceUrl: string }>;
+  onTraceViewerEvent: Event<{ method: string; params: any; }>;
 }
 
 export interface TestServerInterfaceEventEmitters {
@@ -129,4 +137,5 @@ export interface TestServerInterfaceEventEmitters {
   dispatchEvent(event: 'stdio', params: { type: 'stdout' | 'stderr', text?: string, buffer?: string }): void;
   dispatchEvent(event: 'testFilesChanged', params: { testFiles: string[] }): void;
   dispatchEvent(event: 'loadTraceRequested', params: { traceUrl: string }): void;
+  dispatchEvent(event: 'traceViewerEvent', params: { method: string; params: any; }): void;
 }

@@ -67,12 +67,14 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
   readonly onStdio: events.Event<{ type: 'stderr' | 'stdout'; text?: string | undefined; buffer?: string | undefined; }>;
   readonly onTestFilesChanged: events.Event<{ testFiles: string[] }>;
   readonly onLoadTraceRequested: events.Event<{ traceUrl: string }>;
+  readonly onTraceViewerEvent: events.Event<{ method: string; params: any; }>;
 
   private _onCloseEmitter = new events.EventEmitter<void>();
   private _onReportEmitter = new events.EventEmitter<any>();
   private _onStdioEmitter = new events.EventEmitter<{ type: 'stderr' | 'stdout'; text?: string | undefined; buffer?: string | undefined; }>();
   private _onTestFilesChangedEmitter = new events.EventEmitter<{ testFiles: string[] }>();
   private _onLoadTraceRequestedEmitter = new events.EventEmitter<{ traceUrl: string }>();
+  private _onTraceViewerEventEmitter = new events.EventEmitter<{ method: string; params: any }>();
 
   private _lastId = 0;
   private _transport: TestServerTransport;
@@ -86,6 +88,7 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
     this.onStdio = this._onStdioEmitter.event;
     this.onTestFilesChanged = this._onTestFilesChangedEmitter.event;
     this.onLoadTraceRequested = this._onLoadTraceRequestedEmitter.event;
+    this.onTraceViewerEvent = this._onTraceViewerEventEmitter.event;
 
     this._transport = transport;
     this._transport.onmessage(data => {
@@ -146,6 +149,8 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
       this._onTestFilesChangedEmitter.fire(params);
     else if (method === 'loadTraceRequested')
       this._onLoadTraceRequestedEmitter.fire(params);
+    else if (method === 'traceViewerEvent')
+      this._onTraceViewerEventEmitter.fire(params);
   }
 
   async initialize(params: Parameters<TestServerInterface['initialize']>[0]): ReturnType<TestServerInterface['initialize']> {
@@ -234,6 +239,22 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
 
   stopTestsNoReply(params: Parameters<TestServerInterface['stopTests']>[0]) {
     this._sendMessageNoReply('stopTests', params);
+  }
+
+  async openTraceViewer(params: Parameters<TestServerInterface['openTraceViewer']>[0]): ReturnType<TestServerInterface['openTraceViewer']>  {
+    await this._sendMessage('openTraceViewer', params);
+  }
+
+  async closeTraceViewer(params: Parameters<TestServerInterface['closeTraceViewer']>[0]): ReturnType<TestServerInterface['closeTraceViewer']> {
+    await this._sendMessage('closeTraceViewer', params);
+  }
+
+  async dispatchTraceViewerEvent(params: Parameters<TestServerInterface['dispatchTraceViewerEvent']>[0]): ReturnType<TestServerInterface['dispatchTraceViewerEvent']> {
+    await this._sendMessage('dispatchTraceViewerEvent', params);
+  }
+
+  dispatchTraceViewerEventNoReply(params: Parameters<TestServerInterface['dispatchTraceViewerEvent']>[0]) {
+    this._sendMessageNoReply('dispatchTraceViewerEvent', params);
   }
 
   async closeGracefully(params: Parameters<TestServerInterface['closeGracefully']>[0]): ReturnType<TestServerInterface['closeGracefully']> {
