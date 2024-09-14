@@ -21,6 +21,7 @@ import * as net from 'net';
 import * as tls from 'tls';
 import { ManualPromise } from './manualPromise';
 import { assert } from './debug';
+import { monotonicTime } from './time';
 
 // Implementation(partial) of Happy Eyeballs 2 algorithm described in
 // https://www.rfc-editor.org/rfc/rfc8305
@@ -107,6 +108,7 @@ export async function createConnectionAsync(
   const lookup = (options as any).__testHookLookup || lookupAddresses;
   const hostname = clientRequestArgsToHostName(options);
   const addresses = await lookup(hostname);
+  const dnsLookupAt = monotonicTime();
   const sockets = new Set<net.Socket>();
   let firstError;
   let errorCount = 0;
@@ -132,9 +134,13 @@ export async function createConnectionAsync(
         port: options.port as number,
         host: address });
 
+    (socket as any).dnsLookupAt = dnsLookupAt;
+
     // Each socket may fire only one of 'connect', 'timeout' or 'error' events.
     // None of these events are fired after socket.destroy() is called.
     socket.on('connect', () => {
+      (socket as any).tcpConnectionAt = monotonicTime();
+
       connected.resolve();
       oncreate?.(null, socket);
       // TODO: Cache the result?
