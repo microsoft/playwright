@@ -311,29 +311,26 @@ export abstract class APIRequestContext extends SdkObject {
       const requestOptions = { ...options, agent };
 
       const startAt = monotonicTime();
-      const timings: Record<'startAt' | 'requestFinishAt' | 'dnsLookupAt' | 'tcpConnectionAt' | 'tlsHandshakeAt' | 'firstByteAt' | 'endAt', number | undefined> = {
-        startAt,
-        dnsLookupAt: undefined,
-        tcpConnectionAt: undefined,
-        tlsHandshakeAt: undefined,
-        requestFinishAt: undefined,
-        firstByteAt: undefined,
-        endAt: undefined
-      };
+      let dnsLookupAt: number | undefined;
+      let tcpConnectionAt: number | undefined;
+      let tlsHandshakeAt: number | undefined;
+      let requestFinishAt: number | undefined;
+      let firstByteAt: number | undefined;
+      let endAt: number | undefined;
 
       const request = requestConstructor(url, requestOptions as any, async response => {
-        response.once('readable', () => { timings.firstByteAt = monotonicTime(); });
-        response.once('end', () => { timings.endAt = monotonicTime(); });
+        response.once('readable', () => { firstByteAt = monotonicTime(); });
+        response.once('end', () => { endAt = monotonicTime(); });
 
         const notifyRequestFinished = (body?: Buffer) => {
-          const harTimings: har.Timings = {
-            send: timings.requestFinishAt! - startAt,
-            wait: timings.firstByteAt! - timings.requestFinishAt!,
-            receive: timings.endAt! - timings.firstByteAt!,
-            dns: timings.dnsLookupAt ? timings.dnsLookupAt - startAt : -1,
-            connect: (timings.tlsHandshakeAt ?? timings.tcpConnectionAt!) - startAt,
-            ssl: timings.tlsHandshakeAt ? timings.tlsHandshakeAt - timings.tcpConnectionAt! : -1,
-            blocked: -1, // TODO: time spent in queue waiting for a network connection
+          const timings: har.Timings = {
+            send: requestFinishAt! - startAt,
+            wait: firstByteAt! - requestFinishAt!,
+            receive: endAt! - firstByteAt!,
+            dns: dnsLookupAt ? dnsLookupAt - startAt : -1,
+            connect: (tlsHandshakeAt ?? tcpConnectionAt!) - startAt,
+            ssl: tlsHandshakeAt ? tlsHandshakeAt - tcpConnectionAt! : -1,
+            blocked: -1,
           };
 
           const requestFinishedEvent: APIRequestFinishedEvent = {
@@ -345,7 +342,7 @@ export abstract class APIRequestContext extends SdkObject {
             rawHeaders: response.rawHeaders,
             cookies,
             body,
-            timings: harTimings,
+            timings,
           };
           this.emit(APIRequestContext.Events.RequestFinished, requestFinishedEvent);
         };
@@ -493,15 +490,15 @@ export abstract class APIRequestContext extends SdkObject {
 
       request.on('socket', socket => {
         // happy eyeballs don't emit lookup and connect events, so we use our custom ones
-        timings.dnsLookupAt = (socket as any).dnsLookupAt;
-        timings.tcpConnectionAt = (socket as any).tcpConnectionAt;
+        dnsLookupAt = (socket as any).dnsLookupAt;
+        tcpConnectionAt = (socket as any).tcpConnectionAt;
 
         // standard case
-        socket.on('lookup', () => { timings.dnsLookupAt = monotonicTime(); });
-        socket.on('connect', () => { timings.tcpConnectionAt = monotonicTime(); });
-        socket.on('secureConnect', () => { timings.tlsHandshakeAt = monotonicTime(); });
+        socket.on('lookup', () => { dnsLookupAt = monotonicTime(); });
+        socket.on('connect', () => { tcpConnectionAt = monotonicTime(); });
+        socket.on('secureConnect', () => { tlsHandshakeAt = monotonicTime(); });
       });
-      request.on('finish', () => { timings.requestFinishAt = monotonicTime(); });
+      request.on('finish', () => { requestFinishAt = monotonicTime(); });
 
       progress.log(`→ ${options.method} ${url.toString()}`);
       if (options.headers) {
