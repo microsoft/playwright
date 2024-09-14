@@ -131,7 +131,7 @@ export class TestTracing {
   }
 
   generateNextTraceRecordingPath() {
-    const file = path.join(this._artifactsDir, createGuid() + '.zip');
+    const file = path.join(this._artifactsDir, createGuid() + '.pwtrace.zip');
     this._temporaryTraceFiles.push(file);
     return file;
   }
