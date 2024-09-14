@@ -494,7 +494,7 @@ export abstract class APIRequestContext extends SdkObject {
         dnsLookupAt = (socket as any).dnsLookupAt;
         tcpConnectionAt = (socket as any).tcpConnectionAt;
 
-        // standard case
+        // non-happy-eyeballs sockets
         socket.on('lookup', () => { dnsLookupAt = monotonicTime(); });
         socket.on('connect', () => { tcpConnectionAt = monotonicTime(); });
         socket.on('secureConnect', () => { tlsHandshakeAt = monotonicTime(); });
