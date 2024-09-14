@@ -320,7 +320,6 @@ export abstract class APIRequestContext extends SdkObject {
 
       const request = requestConstructor(url, requestOptions as any, async response => {
         response.once('readable', () => { firstByteAt = monotonicTime(); });
-        response.once('end', () => { endAt = monotonicTime(); });
 
         const notifyRequestFinished = (body?: Buffer) => {
           const timings: har.Timings = {
@@ -437,6 +436,7 @@ export abstract class APIRequestContext extends SdkObject {
 
         const chunks: Buffer[] = [];
         const notifyBodyFinished = () => {
+          endAt = monotonicTime();
           const body = Buffer.concat(chunks);
           notifyRequestFinished(body);
           fulfill({
