@@ -91,7 +91,7 @@ export const IDEModeView: React.FunctionComponent = () => {
     <div className='progress'>
       <div className='inner-progress' style={{ width: progress.total ? (100 * progress.done / progress.total) + '%' : 0 }}></div>
     </div>
-    <Workbench model={model} onSelectionChanged={selectionChanged} showSettings />
+    <Workbench model={model} onSelectionChanged={selectionChanged} showSettings excludeSidebarTabs={['source']} />
     {!traceURLs.length && <div className='empty-state'>
       <div className='title'>Select test to see the trace</div>
     </div>}

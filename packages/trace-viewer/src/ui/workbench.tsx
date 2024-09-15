@@ -59,7 +59,8 @@ export const Workbench: React.FunctionComponent<{
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
   showSettings?: boolean,
-}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, annotations, inert, openPage, onOpenExternally, revealSource, showSettings }) => {
+  excludeSidebarTabs?: string[]
+}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, annotations, inert, openPage, onOpenExternally, revealSource, showSettings, excludeSidebarTabs }) => {
   const [selectedAction, setSelectedActionImpl] = React.useState<modelUtil.ActionTraceEventInContext | undefined>(undefined);
   const [revealedStack, setRevealedStack] = React.useState<StackFrame[] | undefined>(undefined);
   const [highlightedAction, setHighlightedAction] = React.useState<modelUtil.ActionTraceEventInContext | undefined>();
@@ -347,7 +348,7 @@ export const Workbench: React.FunctionComponent<{
         }
       />}
       sidebar={<TabbedPane
-        tabs={tabs}
+        tabs={excludeSidebarTabs ? tabs.filter(t => !excludeSidebarTabs.includes(t.id)) : tabs}
         selectedTab={selectedPropertiesTab}
         setSelectedTab={selectPropertiesTab}
         rightToolbar={[
