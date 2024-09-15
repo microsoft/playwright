@@ -479,15 +479,17 @@ export async function runUIMode(configFile: string | undefined, options: TraceVi
   });
 }
 
-export async function runTestServer(configFile: string | undefined, options: { host?: string, port?: number }): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
+export async function runTestServer(configFile: string | undefined, options: { host?: string, port?: number, ideMode?: boolean }): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
   const configLocation = resolveConfigLocation(configFile);
   return await innerRunTestServer(configLocation, options, async server => {
+    if (options.ideMode)
+      await installRootRedirect(server, [], { ...options, webApp: 'ideMode.html' });
     // eslint-disable-next-line no-console
     console.log('Listening on ' + server.urlPrefix('precise').replace('http:', 'ws:') + '/' + server.wsGuid());
   });
 }
 
-async function innerRunTestServer(configLocation: ConfigLocation, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>, configLocation: ConfigLocation) => Promise<void>): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
+async function innerRunTestServer(configLocation: ConfigLocation, options: { host?: string, port?: number, ideMode?: boolean }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>, configLocation: ConfigLocation) => Promise<void>): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
   if (restartWithExperimentalTsEsm(undefined, true))
     return 'restarted';
   const testServer = new TestServer(configLocation);

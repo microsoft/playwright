@@ -18,30 +18,10 @@ import '@web/common.css';
 import { applyTheme } from '@web/theme';
 import '@web/third_party/vscode/codicon.css';
 import * as ReactDOM from 'react-dom/client';
-import { EmbeddedWorkbenchLoader } from './ui/embeddedWorkbenchLoader';
+import { IDEModeView } from './ui/ideModeView';
 
 (async () => {
   applyTheme();
-
-  // workaround to send keystrokes back to vscode webview to keep triggering key bindings there
-  const handleKeyEvent = (e: KeyboardEvent) => {
-    if (!e.isTrusted)
-      return;
-    window.parent?.postMessage({
-      type: e.type,
-      key: e.key,
-      keyCode: e.keyCode,
-      code: e.code,
-      shiftKey: e.shiftKey,
-      altKey: e.altKey,
-      ctrlKey: e.ctrlKey,
-      metaKey: e.metaKey,
-      repeat: e.repeat,
-    }, '*');
-  };
-  window.addEventListener('keydown', handleKeyEvent);
-  window.addEventListener('keyup', handleKeyEvent);
-
   if (window.location.protocol !== 'file:') {
     if (!navigator.serviceWorker)
       throw new Error(`Service workers are not supported.\nMake sure to serve the Trace Viewer (${window.location}) via HTTPS or localhost.`);
@@ -56,5 +36,5 @@ import { EmbeddedWorkbenchLoader } from './ui/embeddedWorkbenchLoader';
     setInterval(function() { fetch('ping'); }, 10000);
   }
 
-  ReactDOM.createRoot(document.querySelector('#root')!).render(<EmbeddedWorkbenchLoader />);
+  ReactDOM.createRoot(document.querySelector('#root')!).render(<IDEModeView />);
 })();

@@ -114,6 +114,7 @@ function addTestServerCommand(program: Command) {
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.option('--host <host>', 'Host to start the server on', 'localhost');
   command.option('--port <port>', 'Port to start the server on', '0');
+  command.option('--ide-mode', 'IDE node');
   command.action(opts => runTestServer(opts));
 }
 
@@ -227,7 +228,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 async function runTestServer(opts: { [key: string]: any }) {
   const host = opts.host || 'localhost';
   const port = opts.port ? +opts.port : 0;
-  const status = await testServer.runTestServer(opts.config, { host, port });
+  const ideMode = !!opts.ideMode;
+  const status = await testServer.runTestServer(opts.config, { host, port, ideMode });
   if (status === 'restarted')
     return;
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);

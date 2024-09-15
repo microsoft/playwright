@@ -48,6 +48,7 @@ body.dark-mode .empty-state {
   flex: none;
   width: 100%;
   height: 3px;
+  margin-top: -3px;
   z-index: 10;
 }
 
@@ -56,8 +57,49 @@ body.dark-mode .empty-state {
   height: 100%;
 }
 
-.workbench-loader {
+.header {
+  display: flex;
+  background-color: #000;
+  flex: none;
+  flex-basis: 48px;
+  line-height: 48px;
+  font-size: 16px;
+  color: #cccccc;
+}
+
+.ide-mode {
   contain: size;
+}
+
+.ide-mode .header .toolbar-button {
+  margin: 12px;
+  padding: 8px 4px;
+}
+
+.ide-mode .logo {
+  margin-left: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.ide-mode .logo img {
+  height: 32px;
+  width: 32px;
+  pointer-events: none;
+  flex: none;
+}
+
+.ide-mode .product {
+  font-weight: 600;
+  margin-left: 16px;
+  flex: none;
+}
+
+.ide-mode .header .title {
+  margin-left: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
 }
 
 /* Limit to a reasonable minimum viewport */

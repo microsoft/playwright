@@ -14,42 +14,28 @@
   limitations under the License.
 */
 
+import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';
+import { ToolbarButton } from '@web/components/toolbarButton';
+import { toggleTheme } from '@web/theme';
 import * as React from 'react';
 import type { ContextEntry } from '../entries';
+import './ideModeView.css';
+import type { ActionTraceEventInContext } from './modelUtil';
 import { MultiTraceModel } from './modelUtil';
-import './embeddedWorkbenchLoader.css';
 import { Workbench } from './workbench';
-import { currentTheme, toggleTheme } from '@web/theme';
-import type { SourceLocation } from './modelUtil';
 
-function openPage(url: string, target?: string) {
-  if (url)
-    window.parent!.postMessage({ method: 'openExternal', params: { url, target } }, '*');
-}
-
-function openSourceLocation({ file, line, column }: SourceLocation) {
-  window.parent!.postMessage({ method: 'openSourceLocation', params: { file, line, column } }, '*');
-}
-
-export const EmbeddedWorkbenchLoader: React.FunctionComponent = () => {
+export const IDEModeView: React.FunctionComponent = () => {
   const [traceURLs, setTraceURLs] = React.useState<string[]>([]);
   const [model, setModel] = React.useState<MultiTraceModel>(emptyModel);
   const [progress, setProgress] = React.useState<{ done: number, total: number }>({ done: 0, total: 0 });
-  const [processingErrorMessage, setProcessingErrorMessage] = React.useState<string | null>(null);
+  const [testServerConnection, setTestServerConnection] = React.useState<TestServerConnection>();
 
-  React.useEffect(() => {
-    window.addEventListener('message', async ({ data: { method, params } }) => {
-      if (method === 'loadTraceRequested') {
-        setTraceURLs(params.traceUrl ? [params.traceUrl] : []);
-        setProcessingErrorMessage(null);
-      } else if (method === 'applyTheme') {
-        if (currentTheme() !== params.theme)
-          toggleTheme();
-      }
-    });
-    // notify vscode that it is now listening to its messages
-    window.parent!.postMessage({ type: 'loaded' }, '*');
-  }, []);
+  const selectionChanged = React.useCallback((action: ActionTraceEventInContext) => {
+    if (!testServerConnection || !action?.stack || action.stack.length === 0)
+      return;
+    const [{ file, line, column }] = action.stack;
+    testServerConnection.dispatchTraceViewerEventNoReply({ method: 'openSourceLocation', params: { file, line, column } });
+  }, [testServerConnection]);
 
   React.useEffect(() => {
     (async () => {
@@ -66,10 +52,8 @@ export const EmbeddedWorkbenchLoader: React.FunctionComponent = () => {
           const params = new URLSearchParams();
           params.set('trace', url);
           const response = await fetch(`contexts?${params.toString()}`);
-          if (!response.ok) {
-            setProcessingErrorMessage((await response.json()).error);
+          if (!response.ok)
             return;
-          }
           contextEntries.push(...(await response.json()));
         }
         navigator.serviceWorker.removeEventListener('message', swListener);
@@ -83,15 +67,31 @@ export const EmbeddedWorkbenchLoader: React.FunctionComponent = () => {
   }, [traceURLs]);
 
   React.useEffect(() => {
-    if (processingErrorMessage)
-      window.parent?.postMessage({ method: 'showErrorMessage', params: { message: processingErrorMessage } }, '*');
-  }, [processingErrorMessage]);
+    const guid = new URLSearchParams(window.location.search).get('ws');
+    const wsURL = new URL(`../${guid}`, window.location.toString());
+    wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
+    const testServerConnection = new TestServerConnection(new WebSocketTestServerTransport(wsURL));
+    testServerConnection.onLoadTraceRequested(async params => {
+      setTraceURLs(params.traceUrl ? [params.traceUrl] : []);
+    });
+    testServerConnection.dispatchTraceViewerEventNoReply({ method: 'loaded', params: {} });
+    setTestServerConnection(testServerConnection);
+  }, []);
 
-  return <div className='vbox workbench-loader'>
+  return <div className='vbox ide-mode'>
+    <div className='hbox header'>
+      <div className='logo'>
+        <img src='playwright-logo.svg' alt='Playwright logo' />
+      </div>
+      <div className='product'>Playwright</div>
+      {model.title && <div className='title'>{model.title}</div>}
+      <div className='spacer'></div>
+      <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
+    </div>
     <div className='progress'>
       <div className='inner-progress' style={{ width: progress.total ? (100 * progress.done / progress.total) + '%' : 0 }}></div>
     </div>
-    <Workbench model={model} openPage={openPage} onOpenExternally={openSourceLocation} showSettings />
+    <Workbench model={model} onSelectionChanged={selectionChanged} showSettings />
     {!traceURLs.length && <div className='empty-state'>
       <div className='title'>Select test to see the trace</div>
     </div>}
