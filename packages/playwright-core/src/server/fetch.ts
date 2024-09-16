@@ -315,16 +315,16 @@ export abstract class APIRequestContext extends SdkObject {
       let tcpConnectionAt: number | undefined;
       let tlsHandshakeAt: number | undefined;
       let requestFinishAt: number | undefined;
-      let firstByteAt: number | undefined;
       let endAt: number | undefined;
 
       const request = requestConstructor(url, requestOptions as any, async response => {
+        const responseAt = monotonicTime();
         const notifyRequestFinished = (body?: Buffer) => {
           // spec: http://www.softwareishard.com/blog/har-12-spec/#timings
           const timings: har.Timings = {
             send: requestFinishAt! - startAt,
-            wait: firstByteAt! - requestFinishAt!,
-            receive: endAt! - firstByteAt!,
+            wait: responseAt - requestFinishAt!,
+            receive: endAt! - responseAt,
             dns: dnsLookupAt ? dnsLookupAt - startAt : -1,
             connect: (tlsHandshakeAt ?? tcpConnectionAt!) - startAt, // "If [ssl] is defined then the time is also included in the connect field "
             ssl: tlsHandshakeAt ? tlsHandshakeAt - tcpConnectionAt! : -1,
@@ -475,10 +475,7 @@ export abstract class APIRequestContext extends SdkObject {
           body.on('error', reject);
         }
 
-        body.on('data', chunk => {
-          firstByteAt ??= monotonicTime();
-          chunks.push(chunk);
-        });
+        body.on('data', chunk => chunks.push(chunk));
         body.on('end', notifyBodyFinished);
       });
       request.on('error', error => reject(rewriteOpenSSLErrorIfNeeded(error)));
