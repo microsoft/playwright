@@ -987,9 +987,12 @@ expect    |expect.poll.toHaveLength @ a.test.ts:14
 pw:api    |  page.goto(about:blank) @ a.test.ts:7
 test.step |  inner step attempt: 0 @ a.test.ts:8
 expect    |    expect.toBe @ a.test.ts:10
+expect    |  expect.toHaveLength @ a.test.ts:6
+expect    |  ↪ error: Error: expect(received).toHaveLength(expected)
 pw:api    |  page.goto(about:blank) @ a.test.ts:7
 test.step |  inner step attempt: 1 @ a.test.ts:8
 expect    |    expect.toBe @ a.test.ts:10
+expect    |  expect.toHaveLength @ a.test.ts:6
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -1036,9 +1039,12 @@ expect    |expect.poll.toBe @ a.test.ts:13
 expect    |  expect.toHaveText @ a.test.ts:7
 test.step |  iteration 1 @ a.test.ts:9
 expect    |    expect.toBeVisible @ a.test.ts:10
+expect    |  expect.toBe @ a.test.ts:6
+expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 expect    |  expect.toHaveText @ a.test.ts:7
 test.step |  iteration 2 @ a.test.ts:9
 expect    |    expect.toBeVisible @ a.test.ts:10
+expect    |  expect.toBe @ a.test.ts:6
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
