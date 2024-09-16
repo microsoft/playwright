@@ -25,7 +25,7 @@ Playwright tests can be ran on any CI provider. In this section we will cover ru
 
 #### You will learn
 * langs: python, java, csharp
-  
+
 - [How to set up GitHub Actions](/ci-intro.md#setting-up-github-actions)
 - [How to view test logs](/ci-intro.md#viewing-test-logs)
 - [How to view the trace](/ci-intro.md#viewing-the-trace)
@@ -323,4 +323,4 @@ This step will not work for pull requests created from a forked repository becau
 - [Learn how to write Assertions](./test-assertions.md)
 - [Learn more about the Trace Viewer](/trace-viewer.md)
 - [Learn more ways of running tests on GitHub Actions](/ci.md)
-- [Learn more about running tests on other CI providers](/ci.md#github-actions) // TODO: is this link correct?
+- [Learn more about running tests on other CI providers](/ci.md#github-actions)
