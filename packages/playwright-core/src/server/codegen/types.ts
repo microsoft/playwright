@@ -36,7 +36,7 @@ export type ActionInContext = {
   frame: FrameDescription;
   description?: string;
   action: actions.Action;
-  committed?: boolean;
+  timestamp: number;
 };
 
 export interface LanguageGenerator {

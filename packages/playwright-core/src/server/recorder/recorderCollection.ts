@@ -19,13 +19,14 @@ import type { Frame } from '../frames';
 import type { Page } from '../page';
 import type { Signal } from './recorderActions';
 import type { ActionInContext } from '../codegen/types';
-import type { CallMetadata } from '@protocol/callMetadata';
-import { createGuid } from '../../utils/crypto';
 import { monotonicTime } from '../../utils/time';
-import { mainFrameForAction, traceParamsForAction } from './recorderUtils';
+import { callMetadataForAction } from './recorderUtils';
+import { serializeError } from '../errors';
+import { performAction } from './recorderRunner';
+import type { CallMetadata } from '@protocol/callMetadata';
+import { isUnderTest } from '../../utils/debug';
 
 export class RecorderCollection extends EventEmitter {
-  private _lastAction: ActionInContext | null = null;
   private _actions: ActionInContext[] = [];
   private _enabled: boolean;
   private _pageAliases: Map<Page, string>;
@@ -38,7 +39,6 @@ export class RecorderCollection extends EventEmitter {
   }
 
   restart() {
-    this._lastAction = null;
     this._actions = [];
     this.emit('change');
   }
@@ -51,98 +51,73 @@ export class RecorderCollection extends EventEmitter {
     this._enabled = enabled;
   }
 
-  async willPerformAction(actionInContext: ActionInContext): Promise<CallMetadata | null> {
-    if (!this._enabled)
-      return null;
-    const { callMetadata, mainFrame } = this._callMetadataForAction(actionInContext);
-    await mainFrame.instrumentation.onBeforeCall(mainFrame, callMetadata);
-    this._lastAction = actionInContext;
-    return callMetadata;
-  }
-
-  private _callMetadataForAction(actionInContext: ActionInContext): { callMetadata: CallMetadata, mainFrame: Frame } {
-    const mainFrame = mainFrameForAction(this._pageAliases, actionInContext);
-    const { action } = actionInContext;
-    const callMetadata: CallMetadata = {
-      id: `call@${createGuid()}`,
-      apiName: 'frame.' + action.name,
-      objectId: mainFrame.guid,
-      pageId: mainFrame._page.guid,
-      frameId: mainFrame.guid,
-      startTime: monotonicTime(),
-      endTime: 0,
-      type: 'Frame',
-      method: action.name,
-      params: traceParamsForAction(actionInContext),
-      log: [],
-    };
-    return { callMetadata, mainFrame };
-  }
-
-  async didPerformAction(callMetadata: CallMetadata, actionInContext: ActionInContext, error?: Error) {
-    if (!this._enabled)
-      return;
-
-    if (!error)
-      this._actions.push(actionInContext);
-
-    const mainFrame = mainFrameForAction(this._pageAliases, actionInContext);
-    callMetadata.endTime = monotonicTime();
-    await mainFrame.instrumentation.onAfterCall(mainFrame, callMetadata);
-
-    this.emit('change');
+  async performAction(actionInContext: ActionInContext) {
+    await this._addAction(actionInContext, async callMetadata => {
+      await performAction(callMetadata, this._pageAliases, actionInContext);
+    });
   }
 
   addRecordedAction(actionInContext: ActionInContext) {
-    if (!this._enabled)
-      return;
-    const action = actionInContext.action;
-
-    const lastAction = this._lastAction && this._lastAction.frame.pageAlias === actionInContext.frame.pageAlias ? this._lastAction.action : undefined;
-    if (lastAction && action.name === 'navigate' && lastAction.name === 'navigate' && action.url === lastAction.url) {
-      // Already at a target URL.
+    if (['openPage', 'closePage'].includes(actionInContext.action.name)) {
+      this._actions.push(actionInContext);
+      this.emit('change');
       return;
     }
-
-    if (lastAction && action.name === 'fill' && lastAction.name === 'fill' && action.selector === lastAction.selector)
-      this._actions.pop();
-
-    this._lastAction = actionInContext;
-    this._actions.push(actionInContext);
-    this.emit('change');
+    this._addAction(actionInContext).catch(() => {});
   }
 
-  commitLastAction() {
+  private async _addAction(actionInContext: ActionInContext, callback?: (callMetadata: CallMetadata) => Promise<void>) {
     if (!this._enabled)
       return;
-    const action = this._lastAction;
-    if (action)
-      action.committed = true;
+
+    const { callMetadata, mainFrame } = callMetadataForAction(this._pageAliases, actionInContext);
+    await mainFrame.instrumentation.onBeforeCall(mainFrame, callMetadata);
+    this._actions.push(actionInContext);
+    this.emit('change');
+    const error = await callback?.(callMetadata).catch((e: Error) => e);
+    callMetadata.endTime = monotonicTime();
+    callMetadata.error = error ? serializeError(error) : undefined;
+    await mainFrame.instrumentation.onAfterCall(mainFrame, callMetadata);
   }
 
   signal(pageAlias: string, frame: Frame, signal: Signal) {
     if (!this._enabled)
       return;
 
-    if (this._lastAction && !this._lastAction.committed) {
-      this._lastAction.action.signals.push(signal);
-      this.emit('change');
+    if (signal.name === 'navigation' && frame._page.mainFrame() === frame) {
+      const timestamp = monotonicTime();
+      const lastAction = this._actions[this._actions.length - 1];
+      const signalThreshold = isUnderTest() ? 500 : 5000;
+
+      let generateGoto = false;
+      if (!lastAction)
+        generateGoto = true;
+      else if (lastAction.action.name !== 'click' && lastAction.action.name !== 'press')
+        generateGoto = true;
+      else if (timestamp - lastAction.timestamp > signalThreshold)
+        generateGoto = true;
+
+      if (generateGoto) {
+        this.addRecordedAction({
+          frame: {
+            pageAlias,
+            framePath: [],
+          },
+          action: {
+            name: 'navigate',
+            url: frame.url(),
+            signals: [],
+          },
+          timestamp
+        });
+      }
       return;
     }
 
-    if (signal.name === 'navigation' && frame._page.mainFrame() === frame) {
-      this.addRecordedAction({
-        frame: {
-          pageAlias,
-          framePath: [],
-        },
-        committed: true,
-        action: {
-          name: 'navigate',
-          url: frame.url(),
-          signals: [],
-        },
-      });
+    if (this._actions.length) {
+      this._actions[this._actions.length - 1].action.signals.push(signal);
+      this.emit('change');
+      return;
     }
   }
 }
