@@ -42,7 +42,7 @@ export type HighlightOptions = {
 export class Highlight {
   private _glassPaneElement: HTMLElement;
   private _glassPaneShadow: ShadowRoot;
-  private _glassPaneMutationObserver: MutationObserver | undefined;
+  private _glassPaneInterval?: NodeJS.Timeout;
   private _highlightEntries: HighlightEntry[] = [];
   private _highlightOptions: HighlightOptions = {};
   private _actionPointElement: HTMLElement;
@@ -93,14 +93,10 @@ export class Highlight {
   install() {
     this._injectedScript.document.documentElement.appendChild(this._glassPaneElement);
 
-    // JS frameworks like React erase the entire DOM upon hydration, so we need to recreate it
-    this._glassPaneMutationObserver = new MutationObserver(mutations => mutations.forEach(mutation => {
-      for (const removedNode of mutation.removedNodes) {
-        if (removedNode === this._glassPaneElement)
-          this._injectedScript.document.documentElement.appendChild(this._glassPaneElement);
-      }
-    }));
-    this._glassPaneMutationObserver.observe(this._glassPaneElement);
+    this._glassPaneInterval = setInterval(() => {
+      if (!this._injectedScript.document.documentElement.contains(this._glassPaneElement))
+        this._injectedScript.document.documentElement.appendChild(this._glassPaneElement);
+    }, 500);
   }
 
   setLanguage(language: Language) {
@@ -117,7 +113,7 @@ export class Highlight {
   uninstall() {
     if (this._rafRequest)
       cancelAnimationFrame(this._rafRequest);
-    this._glassPaneMutationObserver?.disconnect();
+    clearInterval(this._glassPaneInterval);
     this._glassPaneElement.remove();
   }
 
