@@ -1261,10 +1261,11 @@ test('test with custom location', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      import { test } from '@playwright/test';
-      import { customStep } from './helper';
+    import { test, expect } from '@playwright/test';
+    import { customStep } from './helper';
 
-      test('test with custom location', async ({ page }) => {
+    test('test with custom location', async ({ page }) => {
+      try {
         await customStep(test, 'User logs in', async () => {
           await page.goto('http://localhost:1234/login');
           await page.fill('input#username', 'testuser');
@@ -1274,8 +1275,12 @@ test('test with custom location', async ({ runInlineTest }) => {
           const profileVisible = await page.isVisible('.profile');
           expect(profileVisible).toBeTruthy();
         });
-      });
-    `
+      } catch (e) {
+        console.error('Login test failed:', e);
+        throw e;
+      }
+    });
+  `
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(0);
