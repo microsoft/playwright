@@ -81,12 +81,13 @@ export class WKBrowser extends Browser {
     this._didClose();
   }
 
-  async doCreateNewContext(options: channels.BrowserNewContextParams): Promise<BrowserContext> {
-    const createOptions = options.proxy ? {
-      // Enable socks5 hostname resolution on Windows. Workaround can be removed once fixed upstream.
+  async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
+    const proxy = options.proxyOverride || options.proxy;
+    const createOptions = proxy ? {
+      // Enable socks5 hostname resolution on Windows.
       // See https://github.com/microsoft/playwright/issues/20451
-      proxyServer: process.platform === 'win32' ? options.proxy.server.replace(/^socks5:\/\//, 'socks5h://') : options.proxy.server,
-      proxyBypassList: options.proxy.bypass
+      proxyServer: process.platform === 'win32' ? proxy.server.replace(/^socks5:\/\//, 'socks5h://') : proxy.server,
+      proxyBypassList: proxy.bypass
     } : undefined;
     const { browserContextId } = await this._browserSession.send('Playwright.createContext', createOptions);
     options.userAgent = options.userAgent || DEFAULT_USER_AGENT;
@@ -206,7 +207,7 @@ export class WKBrowser extends Browser {
 export class WKBrowserContext extends BrowserContext {
   declare readonly _browser: WKBrowser;
 
-  constructor(browser: WKBrowser, browserContextId: string | undefined, options: channels.BrowserNewContextParams) {
+  constructor(browser: WKBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
     this._validateEmulatedViewport(options.viewport);
     this._authenticateProxyViaHeader();
@@ -221,7 +222,7 @@ export class WKBrowserContext extends BrowserContext {
       downloadPath: this._browser.options.downloadsPath,
       browserContextId
     }));
-    if (this._options.ignoreHTTPSErrors)
+    if (this._options.ignoreHTTPSErrors || this._options.internalIgnoreHTTPSErrors)
       promises.push(this._browser._browserSession.send('Playwright.setIgnoreCertificateErrors', { browserContextId, ignore: true }));
     if (this._options.locale)
       promises.push(this._browser._browserSession.send('Playwright.setLanguages', { browserContextId, languages: [this._options.locale] }));

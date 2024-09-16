@@ -248,7 +248,7 @@ test('should reset tracing', async ({ reusedContext, trace }, testInfo) => {
   page = context.pages()[0];
   await page.evaluate('2 + 2');
 
-  const error = await context.tracing.stopChunk({ path: testInfo.outputPath('trace.zip') }).catch(e => e);
+  const error = await context.tracing.stopChunk({ path: testInfo.outputPath('trace.pwtrace.zip') }).catch(e => e);
   expect(error.message).toContain('Must start tracing before stopping');
 });
 

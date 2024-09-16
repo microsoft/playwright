@@ -29,7 +29,7 @@ export type PageWorkerFixtures = {
   screenshot: ScreenshotMode | { mode: ScreenshotMode } & Pick<PageScreenshotOptions, 'fullPage' | 'omitBackground'>;
   trace: 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'retain-on-first-failure' | 'on-all-retries' | /** deprecated */ 'retry-with-trace';
   video: VideoMode | { mode: VideoMode, size: ViewportSize };
-  browserName: 'chromium' | 'firefox' | 'webkit';
+  browserName: 'chromium' | 'firefox' | 'webkit' | '_bidiFirefox' | '_bidiChromium';
   browserVersion: string;
   browserMajorVersion: number;
   electronMajorVersion: number;

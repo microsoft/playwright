@@ -31,7 +31,6 @@ import { CRDevTools } from './crDevTools';
 import type { BrowserOptions, BrowserProcess } from '../browser';
 import { Browser } from '../browser';
 import type * as types from '../types';
-import type * as channels from '@protocol/channels';
 import type { HTTPRequestParams } from '../../utils/network';
 import { fetchData } from '../../utils/network';
 import { getUserAgent } from '../../utils/userAgent';
@@ -98,7 +97,7 @@ export class Chromium extends BrowserType {
       await cleanedUp;
     };
     const browserProcess: BrowserProcess = { close: doClose, kill: doClose };
-    const persistent: channels.BrowserNewContextParams = { noDefaultViewport: true };
+    const persistent: types.BrowserContextOptions = { noDefaultViewport: true };
     const browserOptions: BrowserOptions = {
       slowMo: options.slowMo,
       name: 'chromium',
@@ -287,7 +286,7 @@ export class Chromium extends BrowserType {
   }
 
   private _innerDefaultArgs(options: types.LaunchOptions): string[] {
-    const { args = [], proxy } = options;
+    const { args = [] } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
       throw this._createUserDataDirArgMisuseError('--user-data-dir');
@@ -321,6 +320,7 @@ export class Chromium extends BrowserType {
     }
     if (options.chromiumSandbox !== true)
       chromeArguments.push('--no-sandbox');
+    const proxy = options.proxyOverride || options.proxy;
     if (proxy) {
       const proxyURL = new URL(proxy.server);
       const isSocks = proxyURL.protocol === 'socks5:';

@@ -91,7 +91,7 @@ export class BidiChromium extends BrowserType {
   }
 
   private _innerDefaultArgs(options: types.LaunchOptions): string[] {
-    const { args = [], proxy } = options;
+    const { args = [] } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
       throw this._createUserDataDirArgMisuseError('--user-data-dir');
@@ -125,6 +125,7 @@ export class BidiChromium extends BrowserType {
     }
     if (options.chromiumSandbox !== true)
       chromeArguments.push('--no-sandbox');
+    const proxy = options.proxyOverride || options.proxy;
     if (proxy) {
       const proxyURL = new URL(proxy.server);
       const isSocks = proxyURL.protocol === 'socks5:';

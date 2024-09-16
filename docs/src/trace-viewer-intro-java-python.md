@@ -25,7 +25,7 @@ Options for tracing are:
 - `off`: Do not record trace. (default)
 - `retain-on-failure`: Record trace for each test, but remove all traces from successful test runs.
 
-This will record the trace and place it into the file named `trace.zip` in your `test-results` directory.
+This will record the trace and place it into the file named `trace.pwtrace.zip` in your `test-results` directory.
 
 <details>
 <summary>If you are not using Pytest, click here to learn how to record traces.</summary>
@@ -41,7 +41,7 @@ page = await context.new_page()
 await page.goto("https://playwright.dev")
 
 # Stop tracing and export it into a zip archive.
-await context.tracing.stop(path = "trace.zip")
+await context.tracing.stop(path = "trace.pwtrace.zip")
 ```
 
 ```python sync
@@ -55,7 +55,7 @@ page = context.new_page()
 page.goto("https://playwright.dev")
 
 # Stop tracing and export it into a zip archive.
-context.tracing.stop(path = "trace.zip")
+context.tracing.stop(path = "trace.pwtrace.zip")
 ```
 
 </details>
@@ -80,22 +80,22 @@ page.navigate("https://playwright.dev");
 
 // Stop tracing and export it into a zip archive.
 context.tracing().stop(new Tracing.StopOptions()
-  .setPath(Paths.get("trace.zip")));
+  .setPath(Paths.get("trace.pwtrace.zip")));
 ```
 
 
-This will record the trace and place it into the file named `trace.zip`.
+This will record the trace and place it into the file named `trace.pwtrace.zip`.
 
 ## Opening the trace
 
 You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev). Make sure to add the full path to where your trace's zip file is located. Once opened you can click on each action or use the timeline to see the state of the page before and after each action. You can also inspect the log, source and network during each step of the test. The trace viewer creates a DOM snapshot so you can fully interact with it, open devtools etc.
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="show-trace trace.zip"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="show-trace trace.pwtrace.zip"
 ```
 
 ```bash python
-playwright show-trace trace.zip
+playwright show-trace trace.pwtrace.zip
 ```
 
 ######

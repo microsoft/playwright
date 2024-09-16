@@ -22,6 +22,7 @@ import type * as frames from '../frames';
 import type * as types from '../types';
 import * as bidi from './third_party/bidiProtocol';
 import type { BidiSession } from './bidiConnection';
+import { parseRawCookie } from '../cookieStore';
 
 
 export class BidiNetworkManager {
@@ -68,7 +69,7 @@ export class BidiNetworkManager {
       if (redirectedFrom) {
         this._session.sendMayFail('network.continueRequest', {
           request: param.request.request,
-          headers: redirectedFrom._originalRequestRoute?._alreadyContinuedHeaders,
+          ...(redirectedFrom._originalRequestRoute?._alreadyContinuedHeaders || {}),
         });
       } else {
         route = new BidiRouteImpl(this._session, param.request.request);
@@ -245,7 +246,7 @@ class BidiRouteImpl implements network.RouteDelegate {
   private _requestId: bidi.Network.Request;
   private _session: BidiSession;
   private _request!: network.Request;
-  _alreadyContinuedHeaders: bidi.Network.Header[] | undefined;
+  _alreadyContinuedHeaders: types.HeadersArray | undefined;
 
   constructor(session: BidiSession, requestId: bidi.Network.Request) {
     this._session = session;
@@ -266,13 +267,12 @@ class BidiRouteImpl implements network.RouteDelegate {
         return header;
       });
     }
-    this._alreadyContinuedHeaders = toBidiHeaders(headers);
+    this._alreadyContinuedHeaders = headers;
     await this._session.sendMayFail('network.continueRequest', {
       request: this._requestId,
       url: overrides.url,
       method: overrides.method,
-      // TODO: cookies!
-      headers: this._alreadyContinuedHeaders,
+      ...toBidiRequestHeaders(this._alreadyContinuedHeaders),
       body: overrides.postData ? { type: 'base64', value: Buffer.from(overrides.postData).toString('base64') } : undefined,
     });
   }
@@ -283,7 +283,7 @@ class BidiRouteImpl implements network.RouteDelegate {
       request: this._requestId,
       statusCode: response.status,
       reasonPhrase: network.statusText(response.status),
-      headers: toBidiHeaders(response.headers),
+      ...toBidiResponseHeaders(response.headers),
       body: { type: 'base64', value: base64body },
     });
   }
@@ -302,6 +302,27 @@ function fromBidiHeaders(bidiHeaders: bidi.Network.Header[]): types.HeadersArray
   return result;
 }
 
+function toBidiRequestHeaders(allHeaders: types.HeadersArray): { cookies: bidi.Network.CookieHeader[], headers: bidi.Network.Header[] } {
+  const bidiHeaders = toBidiHeaders(allHeaders);
+  const cookies = bidiHeaders.filter(h => h.name.toLowerCase() === 'cookie');
+  const headers = bidiHeaders.filter(h => h.name.toLowerCase() !== 'cookie');
+  return { cookies, headers };
+}
+
+function toBidiResponseHeaders(headers: types.HeadersArray): { cookies: bidi.Network.SetCookieHeader[], headers: bidi.Network.Header[] } {
+  const setCookieHeaders = headers.filter(h => h.name.toLowerCase() === 'set-cookie');
+  const otherHeaders = headers.filter(h => h.name.toLowerCase() !== 'set-cookie');
+  const rawCookies = setCookieHeaders.map(h => parseRawCookie(h.value));
+  const cookies: bidi.Network.SetCookieHeader[] = rawCookies.filter(Boolean).map(c => {
+    return {
+      ...c!,
+      value: { type: 'string', value: c!.value },
+      sameSite: toBidiSameSite(c!.sameSite),
+    };
+  });
+  return { cookies, headers: toBidiHeaders(otherHeaders) };
+}
+
 function toBidiHeaders(headers: types.HeadersArray): bidi.Network.Header[] {
   return headers.map(({ name, value }) => ({ name, value: { type: 'string', value } }));
 }
@@ -313,4 +334,14 @@ export function bidiBytesValueToString(value: bidi.Network.BytesValue): string {
     return Buffer.from(value.type, 'base64').toString('binary');
   return 'unknown value type: ' + (value as any).type;
 
+}
+
+function toBidiSameSite(sameSite?: 'Strict' | 'Lax' | 'None'): bidi.Network.SameSite | undefined {
+  if (!sameSite)
+    return undefined;
+  if (sameSite === 'Strict')
+    return bidi.Network.SameSite.Strict;
+  if (sameSite === 'Lax')
+    return bidi.Network.SameSite.Lax;
+  return bidi.Network.SameSite.None;
 }

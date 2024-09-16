@@ -2333,6 +2333,11 @@ last redirect. If cannot go forward, returns `null`.
 
 Navigate to the next page in history.
 
+## async method: Page.forceGarbageCollection
+* since: v1.47
+
+Force the browser to perform garbage collection.
+
 ### option: Page.goForward.waitUntil = %%-navigation-wait-until-%%
 * since: v1.8
 

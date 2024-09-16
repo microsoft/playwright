@@ -58,7 +58,7 @@ test('should work when wrapped inside @playwright/test and trace is enabled', as
         await expect(window).toHaveTitle(/Playwright/);
         await expect(window.getByRole('heading')).toHaveText('Playwright');
 
-        const path = test.info().outputPath('electron-trace.zip');
+        const path = test.info().outputPath('electron-trace.pwtrace.zip');
         if (trace) {
           await window.context().tracing.stop({ path });
           test.info().attachments.push({ name: 'trace', path, contentType: 'application/zip' });
@@ -73,9 +73,9 @@ test('should work when wrapped inside @playwright/test and trace is enabled', as
   });
   const traces = [
     // our actual trace.
-    path.join(tmpWorkspace, 'test-results', 'electron-with-tracing-should-work', 'electron-trace.zip'),
+    path.join(tmpWorkspace, 'test-results', 'electron-with-tracing-should-work', 'electron-trace.pwtrace.zip'),
     // contains the expect() calls
-    path.join(tmpWorkspace, 'test-results', 'electron-with-tracing-should-work', 'trace.zip'),
+    path.join(tmpWorkspace, 'test-results', 'electron-with-tracing-should-work', 'trace.pwtrace.zip'),
   ];
   for (const trace of traces)
     expect(fs.existsSync(trace)).toBe(true);

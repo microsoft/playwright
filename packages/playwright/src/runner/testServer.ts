@@ -79,6 +79,7 @@ export class TestServerDispatcher implements TestServerInterface {
   private _serializer = require.resolve('./uiModeReporter');
   private _watchTestDirs = false;
   private _closeOnDisconnect = false;
+  private _populateDependenciesOnList = false;
 
   constructor(configLocation: ConfigLocation) {
     this._configLocation = configLocation;
@@ -113,6 +114,7 @@ export class TestServerDispatcher implements TestServerInterface {
     this._closeOnDisconnect = !!params.closeOnDisconnect;
     await this._setInterceptStdio(!!params.interceptStdio);
     this._watchTestDirs = !!params.watchTestDirs;
+    this._populateDependenciesOnList = !!params.populateDependenciesOnList;
   }
 
   async ping() {}
@@ -252,7 +254,7 @@ export class TestServerDispatcher implements TestServerInterface {
     config.cliListOnly = true;
 
     const status = await runTasks(new TestRun(config, reporter), [
-      createLoadTask('out-of-process', { failOnLoadErrors: false, filterOnly: false }),
+      createLoadTask('out-of-process', { failOnLoadErrors: false, filterOnly: false, populateDependencies: this._populateDependenciesOnList }),
       createReportBeginTask(),
     ]);
     return { config, report, reporter, status };

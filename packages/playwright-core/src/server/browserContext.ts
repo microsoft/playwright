@@ -68,7 +68,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _activeProgressControllers = new Set<ProgressController>();
-  readonly _options: channels.BrowserNewContextParams;
+  readonly _options: types.BrowserContextOptions;
   _requestInterceptor?: network.RouteHandler;
   private _isPersistentContext: boolean;
   private _closedStatus: 'open' | 'closing' | 'closed' = 'open';
@@ -93,7 +93,7 @@ export abstract class BrowserContext extends SdkObject {
   readonly clock: Clock;
   _clientCertificatesProxy: ClientCertificatesProxy | undefined;
 
-  constructor(browser: Browser, options: channels.BrowserNewContextParams, browserContextId: string | undefined) {
+  constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
     this.attribution.context = this;
     this._browser = browser;
@@ -659,19 +659,16 @@ export function assertBrowserContextIsNotOwned(context: BrowserContext) {
   }
 }
 
-export async function createClientCertificatesProxyIfNeeded(options: channels.BrowserNewContextOptions, browserOptions?: BrowserOptions) {
+export async function createClientCertificatesProxyIfNeeded(options: types.BrowserContextOptions, browserOptions?: BrowserOptions) {
   if (!options.clientCertificates?.length)
     return;
   if ((options.proxy?.server && options.proxy?.server !== 'per-context') || (browserOptions?.proxy?.server && browserOptions?.proxy?.server !== 'http://per-context'))
     throw new Error('Cannot specify both proxy and clientCertificates');
   verifyClientCertificates(options.clientCertificates);
-  const clientCertificatesProxy = new ClientCertificatesProxy(options);
-  options.proxy = { server: await clientCertificatesProxy.listen() };
-  options.ignoreHTTPSErrors = true;
-  return clientCertificatesProxy;
+  return new ClientCertificatesProxy(options);
 }
 
-export function validateBrowserContextOptions(options: channels.BrowserNewContextParams, browserOptions: BrowserOptions) {
+export function validateBrowserContextOptions(options: types.BrowserContextOptions, browserOptions: BrowserOptions) {
   if (options.noDefaultViewport && options.deviceScaleFactor !== undefined)
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
   if (options.noDefaultViewport && !!options.isMobile)
@@ -720,7 +717,7 @@ export function verifyGeolocation(geolocation?: types.Geolocation) {
     throw new Error(`geolocation.accuracy: precondition 0 <= ACCURACY failed.`);
 }
 
-export function verifyClientCertificates(clientCertificates?: channels.BrowserNewContextParams['clientCertificates']) {
+export function verifyClientCertificates(clientCertificates?: types.BrowserContextOptions['clientCertificates']) {
   if (!clientCertificates)
     return;
   for (const cert of clientCertificates) {

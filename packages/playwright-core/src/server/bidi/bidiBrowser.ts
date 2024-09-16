@@ -111,7 +111,7 @@ export class BidiBrowser extends Browser {
     this._didClose();
   }
 
-  async doCreateNewContext(options: channels.BrowserNewContextParams): Promise<BrowserContext> {
+  async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
     const { userContext } = await this._browserSession.send('browser.createUserContext', {});
     const context = new BidiBrowserContext(this, userContext, options);
     await context._initialize();
@@ -190,7 +190,7 @@ export class BidiBrowser extends Browser {
 export class BidiBrowserContext extends BrowserContext {
   declare readonly _browser: BidiBrowser;
 
-  constructor(browser: BidiBrowser, browserContextId: string | undefined, options: channels.BrowserNewContextParams) {
+  constructor(browser: BidiBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
     this._authenticateProxyViaHeader();
   }

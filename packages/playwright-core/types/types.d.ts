@@ -2555,6 +2555,11 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * Force the browser to perform garbage collection.
+   */
+  forceGarbageCollection(): Promise<void>;
+
+  /**
    * Returns frame matching the specified criteria. Either `name` or `url` must be specified.
    *
    * **Usage**
@@ -16559,7 +16564,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -16689,7 +16694,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -16807,7 +16812,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -16893,7 +16898,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -16979,7 +16984,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -17107,7 +17112,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -17193,7 +17198,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -19925,7 +19930,7 @@ export interface Touchscreen {
  * await context.tracing.start({ screenshots: true, snapshots: true });
  * const page = await context.newPage();
  * await page.goto('https://playwright.dev');
- * await context.tracing.stop({ path: 'trace.zip' });
+ * await context.tracing.stop({ path: 'trace.pwtrace.zip' });
  * ```
  *
  */
@@ -19939,7 +19944,7 @@ export interface Tracing {
    * await context.tracing.start({ screenshots: true, snapshots: true });
    * const page = await context.newPage();
    * await page.goto('https://playwright.dev');
-   * await context.tracing.stop({ path: 'trace.zip' });
+   * await context.tracing.stop({ path: 'trace.pwtrace.zip' });
    * ```
    *
    * @param options
@@ -19994,12 +19999,12 @@ export interface Tracing {
    * await context.tracing.startChunk();
    * await page.getByText('Get Started').click();
    * // Everything between startChunk and stopChunk will be recorded in the trace.
-   * await context.tracing.stopChunk({ path: 'trace1.zip' });
+   * await context.tracing.stopChunk({ path: 'trace1.pwtrace.zip' });
    *
    * await context.tracing.startChunk();
    * await page.goto('http://example.com');
    * // Save a second trace file with different actions.
-   * await context.tracing.stopChunk({ path: 'trace2.zip' });
+   * await context.tracing.stopChunk({ path: 'trace2.pwtrace.zip' });
    * ```
    *
    * @param options

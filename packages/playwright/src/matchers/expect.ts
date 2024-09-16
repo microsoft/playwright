@@ -121,10 +121,10 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], customMatchers: Re
       const [actual, messageOrOptions] = argumentsList;
       const message = isString(messageOrOptions) ? messageOrOptions : messageOrOptions?.message || info.message;
       const newInfo = { ...info, message };
-      if (newInfo.isPoll) {
+      if (newInfo.poll) {
         if (typeof actual !== 'function')
           throw new Error('`expect.poll()` accepts only function as a first argument');
-        newInfo.generator = actual as any;
+        newInfo.poll.generator = actual as any;
       }
       return createMatchers(actual, newInfo, prefix);
     },
@@ -189,10 +189,10 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], customMatchers: Re
     if ('soft' in configuration)
       newInfo.isSoft = configuration.soft;
     if ('_poll' in configuration) {
-      newInfo.isPoll = !!configuration._poll;
+      newInfo.poll = configuration._poll ? { ...info.poll, generator: () => {} } : undefined;
       if (typeof configuration._poll === 'object') {
-        newInfo.pollTimeout = configuration._poll.timeout;
-        newInfo.pollIntervals = configuration._poll.intervals;
+        newInfo.poll!.timeout = configuration._poll.timeout ?? newInfo.poll!.timeout;
+        newInfo.poll!.intervals = configuration._poll.intervals ?? newInfo.poll!.intervals;
       }
     }
     return createExpect(newInfo, prefix, customMatchers);
@@ -249,11 +249,12 @@ type ExpectMetaInfo = {
   message?: string;
   isNot?: boolean;
   isSoft?: boolean;
-  isPoll?: boolean;
+  poll?: {
+    timeout?: number;
+    intervals?: number[];
+    generator: Generator;
+  };
   timeout?: number;
-  pollTimeout?: number;
-  pollIntervals?: number[];
-  generator?: Generator;
 };
 
 class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
@@ -287,10 +288,10 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         this._info.isNot = !this._info.isNot;
       return new Proxy(matcher, this);
     }
-    if (this._info.isPoll) {
+    if (this._info.poll) {
       if ((customAsyncMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
         throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
-      matcher = (...args: any[]) => pollMatcher(resolvedMatcherName, !!this._info.isNot, this._info.pollIntervals, this._info.pollTimeout ?? currentExpectTimeout(), this._info.generator!, ...args);
+      matcher = (...args: any[]) => pollMatcher(resolvedMatcherName, this._info, this._prefix, ...args);
     }
     return (...args: any[]) => {
       const testInfo = currentTestInfo();
@@ -302,7 +303,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       const customMessage = this._info.message || '';
       const argsSuffix = computeArgsSuffix(matcherName, args);
 
-      const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
+      const defaultTitle = `expect${this._info.poll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
       const title = customMessage || defaultTitle;
 
       // This looks like it is unnecessary, but it isn't - we need to filter
@@ -336,7 +337,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         const callback = () => matcher.call(target, ...args);
         // toPass and poll matchers can contain other steps, expects and API calls,
         // so they behave like a retriable step.
-        const result = (matcherName === 'toPass' || this._info.isPoll) ?
+        const result = (matcherName === 'toPass' || this._info.poll) ?
           zones.run('stepZone', step, callback) :
           zones.run<ExpectZone, any>('expectZone', { title, stepId: step.stepId }, callback);
         if (result instanceof Promise)
@@ -350,25 +351,32 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
   }
 }
 
-async function pollMatcher(qualifiedMatcherName: any, isNot: boolean, pollIntervals: number[] | undefined, timeout: number, generator: () => any, ...args: any[]) {
+async function pollMatcher(qualifiedMatcherName: string, info: ExpectMetaInfo, prefix: string[], ...args: any[]) {
   const testInfo = currentTestInfo();
+  const poll = info.poll!;
+  const timeout = poll.timeout ?? currentExpectTimeout();
   const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
 
   const result = await pollAgainstDeadline<Error|undefined>(async () => {
     if (testInfo && currentTestInfo() !== testInfo)
       return { continuePolling: false, result: undefined };
 
-    const value = await generator();
-    let expectInstance = expectLibrary(value) as any;
-    if (isNot)
-      expectInstance = expectInstance.not;
+    const innerInfo: ExpectMetaInfo = {
+      ...info,
+      isSoft: false, // soft is outside of poll, not inside
+      poll: undefined,
+    };
+    const value = await poll.generator();
     try {
-      expectInstance[qualifiedMatcherName].call(expectInstance, ...args);
+      let matchers = createMatchers(value, innerInfo, prefix);
+      if (info.isNot)
+        matchers = matchers.not;
+      matchers[qualifiedMatcherName](...args);
       return { continuePolling: false, result: undefined };
     } catch (error) {
       return { continuePolling: true, result: error };
     }
-  }, deadline, pollIntervals ?? [100, 250, 500, 1000]);
+  }, deadline, poll.intervals ?? [100, 250, 500, 1000]);
 
   if (result.timedOut) {
     const message = result.result ? [

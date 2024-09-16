@@ -92,27 +92,26 @@ export abstract class BrowserType extends SdkObject {
     return browser;
   }
 
-  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { useWebSocket?: boolean }): Promise<BrowserContext> {
-    options = this._validateLaunchOptions(options);
+  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, persistentContextOptions: channels.BrowserTypeLaunchPersistentContextOptions & { useWebSocket?: boolean }): Promise<BrowserContext> {
+    const launchOptions = this._validateLaunchOptions(persistentContextOptions);
     if (this._useBidi)
-      options.useWebSocket = true;
+      launchOptions.useWebSocket = true;
     const controller = new ProgressController(metadata, this);
-    const persistent: channels.BrowserNewContextParams = { ...options };
     controller.setLogName('browser');
     const browser = await controller.run(async progress => {
       // Note: Any initial TLS requests will fail since we rely on the Page/Frames initialize which sets ignoreHTTPSErrors.
-      const clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(persistent);
+      const clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(persistentContextOptions);
       if (clientCertificatesProxy)
-        options.proxy = persistent.proxy;
+        launchOptions.proxyOverride = await clientCertificatesProxy?.listen();
       progress.cleanupWhenAborted(() => clientCertificatesProxy?.close());
-      const browser = await this._innerLaunchWithRetries(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupLog(e); });
+      const browser = await this._innerLaunchWithRetries(progress, launchOptions, persistentContextOptions, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupLog(e); });
       browser._defaultContext!._clientCertificatesProxy = clientCertificatesProxy;
       return browser;
-    }, TimeoutSettings.launchTimeout(options));
+    }, TimeoutSettings.launchTimeout(launchOptions));
     return browser._defaultContext!;
   }
 
-  async _innerLaunchWithRetries(progress: Progress, options: types.LaunchOptions, persistent: channels.BrowserNewContextParams | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
+  async _innerLaunchWithRetries(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
     try {
       return await this._innerLaunch(progress, options, persistent, protocolLogger, userDataDir);
     } catch (error) {
@@ -126,7 +125,7 @@ export abstract class BrowserType extends SdkObject {
     }
   }
 
-  async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: channels.BrowserNewContextParams | undefined, protocolLogger: types.ProtocolLogger, maybeUserDataDir?: string): Promise<Browser> {
+  async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, maybeUserDataDir?: string): Promise<Browser> {
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
     const browserLogsCollector = new RecentLogsCollector();
     const { browserProcess, userDataDir, artifactsDir, transport } = await this._launchProcess(progress, options, !!persistent, browserLogsCollector, maybeUserDataDir);
@@ -289,7 +288,7 @@ export abstract class BrowserType extends SdkObject {
     throw new Error('Connecting to SELENIUM_REMOTE_URL is only supported by Chromium');
   }
 
-  private _validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
+  private _validateLaunchOptions(options: types.LaunchOptions): types.LaunchOptions {
     const { devtools = false } = options;
     let { headless = !devtools, downloadsPath, proxy } = options;
     if (debugMode())
