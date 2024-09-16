@@ -313,12 +313,17 @@ test('should respect project filter C', async ({ runWatchTest, writeFiles }) => 
   await testProcess.waitForOutput('[foo] › a.test.ts:3:11 › passes');
   expect(testProcess.output).not.toContain('[bar] › a.test.ts:3:11 › passes');
 
+  await testProcess.waitForOutput('Waiting for file changes.');
   testProcess.clearOutput();
 
   await writeFiles(files); // file change triggers listTests with project filter
   await testProcess.waitForOutput('[foo] › a.test.ts:3:11 › passes');
 
+  testProcess.clearOutput();
+  await testProcess.waitForOutput('Waiting for file changes.');
+
   testProcess.write('c');
+  testProcess.clearOutput();
   await testProcess.waitForOutput('Select projects');
   await testProcess.waitForOutput('foo');
   await testProcess.waitForOutput('bar'); // second selection should still show all

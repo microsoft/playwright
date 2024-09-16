@@ -119,7 +119,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
       }
       changedFiles.clear();
 
-      if (dirtyTestIds.size > 0) {
+      if (dirtyTestIds.size > 0) {
         onDirtyTests.resolve('changed');
         onDirtyTests = new ManualPromise();
       }
@@ -144,10 +144,9 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     else
       printPrompt();
 
-    const readCommandPromise = readCommand();
     const command = await Promise.race([
       onDirtyTests,
-      readCommandPromise,
+      readCommand(),
     ]);
 
     if (bufferMode && command === 'changed')
