@@ -42,7 +42,6 @@ export type HighlightOptions = {
 export class Highlight {
   private _glassPaneElement: HTMLElement;
   private _glassPaneShadow: ShadowRoot;
-  private _glassPaneInterval?: NodeJS.Timeout;
   private _highlightEntries: HighlightEntry[] = [];
   private _highlightOptions: HighlightOptions = {};
   private _actionPointElement: HTMLElement;
@@ -91,12 +90,8 @@ export class Highlight {
   }
 
   install() {
-    this._injectedScript.document.documentElement.appendChild(this._glassPaneElement);
-
-    this._glassPaneInterval = setInterval(() => {
-      if (!this._injectedScript.document.documentElement.contains(this._glassPaneElement))
-        this._injectedScript.document.documentElement.appendChild(this._glassPaneElement);
-    }, 500);
+    if (!this._injectedScript.document.documentElement.contains(this._glassPaneElement))
+      this._injectedScript.document.documentElement.appendChild(this._glassPaneElement);
   }
 
   setLanguage(language: Language) {
@@ -113,7 +108,6 @@ export class Highlight {
   uninstall() {
     if (this._rafRequest)
       cancelAnimationFrame(this._rafRequest);
-    clearInterval(this._glassPaneInterval);
     this._glassPaneElement.remove();
   }
 

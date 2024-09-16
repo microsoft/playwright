@@ -1036,7 +1036,13 @@ export class Recorder {
       addEventListener(this.document, 'focus', event => this._onFocus(event), true),
       addEventListener(this.document, 'scroll', event => this._onScroll(event), true),
     ];
+
     this.highlight.install();
+    const recreationInterval = setInterval(() => {
+      this.highlight.install();
+    }, 500);
+    this._listeners.push(() => clearInterval(recreationInterval));
+
     this.overlay?.install();
     this.document.adoptedStyleSheets.push(this._stylesheet);
   }
