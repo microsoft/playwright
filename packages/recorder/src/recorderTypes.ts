@@ -96,7 +96,7 @@ declare global {
     playwrightSetSources: (sources: Source[]) => void;
     playwrightSetOverlayVisible: (visible: boolean) => void;
     playwrightUpdateLogs: (callLogs: CallLog[]) => void;
-    playwrightSetFileIfNeeded: (file: string) => void;
+    playwrightSetFile: (file: string) => void;
     playwrightSetSelector: (selector: string, focus?: boolean) => void;
     playwrightSourcesEchoForTest: Source[];
     dispatch(data: any): Promise<void>;

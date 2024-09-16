@@ -97,10 +97,7 @@ export class ContextRecorder extends EventEmitter {
         if (languageGenerator === this._orderedLanguages[0])
           this._throttledOutputFile?.setContent(source.text);
       }
-      this.emit(ContextRecorder.Events.Change, {
-        sources: this._recorderSources,
-        primaryFileName: this._orderedLanguages[0].id
-      });
+      this.emit(ContextRecorder.Events.Change, { sources: this._recorderSources });
     });
     context.on(BrowserContext.Events.BeforeClose, () => {
       this._throttledOutputFile?.flush();

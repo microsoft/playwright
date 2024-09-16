@@ -55,7 +55,7 @@ export class RecorderInTraceViewer extends EventEmitter implements IRecorderApp 
     this._transport.sendEvent?.('setMode', { mode });
   }
 
-  async setFileIfNeeded(file: string): Promise<void> {
+  async setFile(file: string): Promise<void> {
     this._transport.sendEvent?.('setFileIfNeeded', { file });
   }
 
