@@ -211,7 +211,7 @@ class RecordActionTool implements RecorderTool {
   private _hoveredElement: HTMLElement | null = null;
   private _activeModel: HighlightModel | null = null;
   private _expectProgrammaticKeyUp = false;
-  private _pendingClickAction: { action: actions.ClickAction, timeout: NodeJS.Timeout } | undefined;
+  private _pendingClickAction: { action: actions.ClickAction, timeout: number } | undefined;
 
   constructor(recorder: Recorder) {
     this._recorder = recorder;
@@ -268,7 +268,7 @@ class RecordActionTool implements RecorderTool {
           modifiers: modifiersForEvent(event),
           clickCount: event.detail
         },
-        timeout: setTimeout(() => this._commitPendingClickAction(), 200)
+        timeout: this._recorder.injectedScript.builtinSetTimeout(() => this._commitPendingClickAction(), 200)
       };
     }
   }
