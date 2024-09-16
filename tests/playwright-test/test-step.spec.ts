@@ -1272,10 +1272,9 @@ test('test custom location functionality', async ({ runInlineTest }) => {
   }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(0);
-  expect(result.outputLines).toEqual([
-    'hook      |Before Hooks',
-    'test.step |Perform a dummy step @ dummy-file.ts:123',
-    'hook      |After Hooks'
-  ]);
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+test.step |Perform a dummy step @ dummy-file.ts:123
+hook      |After Hooks
+`);
 });
-
