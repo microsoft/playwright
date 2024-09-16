@@ -13060,7 +13060,8 @@ export interface Locator {
   nth(index: number): Locator;
 
   /**
-   * Creates a locator that matches either of the two locators.
+   * Creates a locator that matches either of the two locators. [Locator strictness](https://playwright.dev/docs/api/locators#strictness) still
+   * applies (if it results in multiple elements, it throws).
    *
    * **Usage**
    *
