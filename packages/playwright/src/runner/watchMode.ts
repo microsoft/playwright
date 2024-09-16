@@ -140,7 +140,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
 
   while (true) {
     if (bufferMode)
-      printBufferPrompt(dirtyTestFiles);
+      printBufferPrompt(dirtyTestFiles, teleSuiteUpdater.config!.rootDir);
     else
       printPrompt();
 
@@ -369,7 +369,7 @@ function printConfiguration(options: WatchModeOptions, title?: string) {
   process.stdout.write(lines.join('\n'));
 }
 
-function printBufferPrompt(dirtyTestFiles: Set<string>) {
+function printBufferPrompt(dirtyTestFiles: Set<string>, rootDir: string) {
   const sep = separator();
   process.stdout.write('\x1Bc');
   process.stdout.write(`${sep}\n`);
@@ -381,7 +381,7 @@ function printBufferPrompt(dirtyTestFiles: Set<string>) {
 
   process.stdout.write(`${colors.dim(`${dirtyTestFiles.size} test ${dirtyTestFiles.size === 1 ? 'file' : 'files'} changed:`)}\n\n`);
   for (const file of dirtyTestFiles)
-    process.stdout.write(` · ${file}\n`);
+    process.stdout.write(` · ${path.relative(rootDir, file)}\n`);
   process.stdout.write(`\n${colors.dim(`Press`)} ${colors.bold('enter')} ${colors.dim('to run')}, ${colors.bold('q')} ${colors.dim('to quit or')} ${colors.bold('h')} ${colors.dim('for more options.')}\n\n`);
 }
 
