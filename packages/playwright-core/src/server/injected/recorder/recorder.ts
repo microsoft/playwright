@@ -1038,6 +1038,7 @@ export class Recorder {
     ];
 
     this.highlight.install();
+    // some frameworks erase the DOM on hydration, so periodically ensure that the highlighter is installed
     const recreationInterval = setInterval(() => {
       this.highlight.install();
     }, 500);
