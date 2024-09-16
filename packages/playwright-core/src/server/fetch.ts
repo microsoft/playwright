@@ -315,11 +315,11 @@ export abstract class APIRequestContext extends SdkObject {
       let tcpConnectionAt: number | undefined;
       let tlsHandshakeAt: number | undefined;
       let requestFinishAt: number | undefined;
-      let endAt: number | undefined;
 
       const request = requestConstructor(url, requestOptions as any, async response => {
         const responseAt = monotonicTime();
         const notifyRequestFinished = (body?: Buffer) => {
+          const endAt = monotonicTime();
           // spec: http://www.softwareishard.com/blog/har-12-spec/#timings
           const timings: har.Timings = {
             send: requestFinishAt! - startAt,
@@ -435,7 +435,6 @@ export abstract class APIRequestContext extends SdkObject {
 
         const chunks: Buffer[] = [];
         const notifyBodyFinished = () => {
-          endAt = monotonicTime();
           const body = Buffer.concat(chunks);
           notifyRequestFinished(body);
           fulfill({
