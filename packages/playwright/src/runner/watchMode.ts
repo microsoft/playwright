@@ -152,8 +152,8 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     if (bufferMode && command === 'changed')
       continue;
 
-    const commandToTriggerTestRun = (bufferMode ? 'run' : 'changed');
-    if (command === commandToTriggerTestRun) {
+    const shouldRunChangedFiles = bufferMode ? command === 'run' : command === 'changed';
+    if (shouldRunChangedFiles) {
       if (dirtyTestIds.size === 0)
         continue;
 
