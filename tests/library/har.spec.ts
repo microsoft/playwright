@@ -833,6 +833,23 @@ it('should include API request', async ({ contextFactory, server }, testInfo) =>
   }));
 });
 
+it('should include redirects from API request', async ({ contextFactory, server }, testInfo) => {
+  server.setRedirect('/redirect-me', '/simple.json');
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.request.post(server.PREFIX + '/redirect-me', {
+    headers: { cookie: 'a=b; c=d' },
+    data: { foo: 'bar' }
+  });
+  const log = await getLog();
+  expect(log.entries.length).toBe(2);
+  const [redirect, json] = log.entries;
+  expect(redirect.request.url).toBe(server.PREFIX + '/redirect-me');
+  expect(json.request.url).toBe(server.PREFIX + '/simple.json');
+
+  expect(redirect.timings).toBeDefined();
+  expect(json.timings).toBeDefined();
+});
+
 it('should not hang on resources served from cache', async ({ contextFactory, server, browserName }, testInfo) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11435' });
   server.setRoute('/one-style.css', (req, res) => {
