@@ -1242,6 +1242,7 @@ fixture   |  fixture: context
 
 test('test custom location functionality', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
     'helper.ts': `
       import { test } from '@playwright/test';
 
