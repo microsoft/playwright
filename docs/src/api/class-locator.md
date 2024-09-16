@@ -1654,7 +1654,9 @@ var banana = await page.GetByRole(AriaRole.Listitem).Nth(2);
   - alias-python: or_
 - returns: <[Locator]>
 
-Creates a locator that matches either of the two locators.
+Creates a locator matching all elements that match one or both of the two locators.
+
+Note that when both locators match something, the resulting locator will have multiple matches and violate [locator strictness](../locators.md#strictness) guidelines.
 
 **Usage**
 
