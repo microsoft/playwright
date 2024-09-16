@@ -1656,7 +1656,7 @@ var banana = await page.GetByRole(AriaRole.Listitem).Nth(2);
 
 Creates a locator matching all elements that match one or both of the two locators.
 
-Note that when both locators match something, the resulting locator will have multiple matches and violate [locator strictness](./locators.md#strictness) guidelines.
+Note that when both locators match something, the resulting locator will have multiple matches and violate [locator strictness](../locators.md#strictness) guidelines.
 
 **Usage**
 
