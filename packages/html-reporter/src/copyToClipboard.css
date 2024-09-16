@@ -20,15 +20,31 @@
   width: 24px;
   border: none;
   outline: none;
-  color: var(--color-fg-default);
+  color: var(--color-fg-muted);
   background: transparent;
   padding: 4px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   border-radius: 4px;
+}
+
+.copy-icon svg {
+  margin: 0;
 }
 
 .copy-icon:not(:disabled):hover {
   background-color: var(--color-border-default);
+}
+
+.copy-button-container {
+  visibility: hidden;
+  display: inline-flex;
+  margin-left: 8px;
+  vertical-align: bottom;
+}
+
+.copy-value-container:hover .copy-button-container {
+  visibility: visible;
 }
