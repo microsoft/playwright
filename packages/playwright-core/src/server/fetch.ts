@@ -320,12 +320,13 @@ export abstract class APIRequestContext extends SdkObject {
 
       const request = requestConstructor(url, requestOptions as any, async response => {
         const notifyRequestFinished = (body?: Buffer) => {
+          // spec: http://www.softwareishard.com/blog/har-12-spec/#timings
           const timings: har.Timings = {
             send: requestFinishAt! - startAt,
             wait: firstByteAt! - requestFinishAt!,
             receive: endAt! - firstByteAt!,
             dns: dnsLookupAt ? dnsLookupAt - startAt : -1,
-            connect: (tlsHandshakeAt ?? tcpConnectionAt!) - startAt,
+            connect: (tlsHandshakeAt ?? tcpConnectionAt!) - startAt, // "If [ssl] is defined then the time is also included in the connect field "
             ssl: tlsHandshakeAt ? tlsHandshakeAt - tcpConnectionAt! : -1,
             blocked: -1,
           };
