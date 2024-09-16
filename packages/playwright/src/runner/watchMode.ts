@@ -73,6 +73,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     return 'restarted';
 
   const options: WatchModeOptions = { ...initialOptions };
+  let bufferMode = false;
 
   const testServerDispatcher = new TestServerDispatcher(configLocation);
   const transport = new InMemoryTransport(
@@ -94,8 +95,9 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
 
   const teleSuiteUpdater = new TeleSuiteUpdater({ pathSeparator: path.sep, onUpdate() { } });
 
+  const dirtyTestFiles = new Set<string>();
   const dirtyTestIds = new Set<string>();
-  let onDirtyTests = new ManualPromise();
+  let onDirtyTests = new ManualPromise<'changed'>();
 
   let queue = Promise.resolve();
   const changedFiles = new Set<string>();
@@ -110,14 +112,17 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
       teleSuiteUpdater.processListReport(report);
 
       for (const test of teleSuiteUpdater.rootSuite!.allTests()) {
-        if (changedFiles.has(test.location.file))
+        if (changedFiles.has(test.location.file)) {
+          dirtyTestFiles.add(test.location.file);
           dirtyTestIds.add(test.id);
+        }
       }
-
       changedFiles.clear();
 
-      if (dirtyTestIds.size > 0)
-        onDirtyTests.resolve?.();
+      if (dirtyTestIds.size > 0) {
+        onDirtyTests.resolve('changed');
+        onDirtyTests = new ManualPromise();
+      }
     });
   });
   testServerConnection.onReport(report => teleSuiteUpdater.processTestReportEvent(report));
@@ -134,21 +139,28 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   let result: FullResult['status'] = 'passed';
 
   while (true) {
-    printPrompt();
+    if (bufferMode)
+      printBufferPrompt(dirtyTestFiles);
+    else
+      printPrompt();
+
     const readCommandPromise = readCommand();
-    await Promise.race([
+    const command = await Promise.race([
       onDirtyTests,
       readCommandPromise,
     ]);
-    if (!readCommandPromise.isDone())
-      readCommandPromise.resolve('changed');
 
-    const command = await readCommandPromise;
+    if (bufferMode && command === 'changed')
+      continue;
 
-    if (command === 'changed') {
-      onDirtyTests = new ManualPromise();
+    const commandToTriggerTestRun = (bufferMode ? 'run' : 'changed');
+    if (command === commandToTriggerTestRun) {
+      if (dirtyTestIds.size === 0)
+        continue;
+
       const testIds = [...dirtyTestIds];
       dirtyTestIds.clear();
+      dirtyTestFiles.clear();
       await runTests(options, testServerConnection, { testIds, title: 'files changed' });
       lastRun = { type: 'changed', dirtyTestIds: testIds };
       continue;
@@ -234,6 +246,11 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
       continue;
     }
 
+    if (command === 'toggle-buffer-mode') {
+      bufferMode = !bufferMode;
+      continue;
+    }
+
     if (command === 'exit')
       break;
 
@@ -300,6 +317,7 @@ Change settings
   ${colors.bold('p')}        ${colors.dim('set file filter')}
   ${colors.bold('t')}        ${colors.dim('set title filter')}
   ${colors.bold('s')}        ${colors.dim('toggle show & reuse the browser')}
+  ${colors.bold('b')}        ${colors.dim('toggle buffer mode')}
 `);
       return;
     }
@@ -312,6 +330,7 @@ Change settings
       case 't': result.resolve('grep'); break;
       case 'f': result.resolve('failed'); break;
       case 's': result.resolve('toggle-show-browser'); break;
+      case 'b': result.resolve('toggle-buffer-mode'); break;
     }
   };
 
@@ -350,6 +369,22 @@ function printConfiguration(options: WatchModeOptions, title?: string) {
   process.stdout.write(lines.join('\n'));
 }
 
+function printBufferPrompt(dirtyTestFiles: Set<string>) {
+  const sep = separator();
+  process.stdout.write('\x1Bc');
+  process.stdout.write(`${sep}\n`);
+
+  if (dirtyTestFiles.size === 0) {
+    process.stdout.write(`${colors.dim('Waiting for file changes. Press')} ${colors.bold('q')} ${colors.dim('to quit or')} ${colors.bold('h')} ${colors.dim('for more options.')}\n\n`);
+    return;
+  }
+
+  process.stdout.write(`${colors.dim(`${dirtyTestFiles.size} test ${dirtyTestFiles.size === 1 ? 'file' : 'files'} changed:`)}\n\n`);
+  for (const file of dirtyTestFiles)
+    process.stdout.write(` · ${file}\n`);
+  process.stdout.write(`\n${colors.dim(`Press`)} ${colors.bold('enter')} ${colors.dim('to run')}, ${colors.bold('q')} ${colors.dim('to quit or')} ${colors.bold('h')} ${colors.dim('for more options.')}\n\n`);
+}
+
 function printPrompt() {
   const sep = separator();
   process.stdout.write(`
@@ -371,4 +406,4 @@ async function toggleShowBrowser() {
   }
 }
 
-type Command = 'run' | 'failed' | 'repeat' | 'changed' | 'project' | 'file' | 'grep' | 'exit' | 'interrupted' | 'toggle-show-browser';
+type Command = 'run' | 'failed' | 'repeat' | 'changed' | 'project' | 'file' | 'grep' | 'exit' | 'interrupted' | 'toggle-show-browser' | 'toggle-buffer-mode';
