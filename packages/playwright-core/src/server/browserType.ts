@@ -93,8 +93,8 @@ export abstract class BrowserType extends SdkObject {
     return browser;
   }
 
-  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, persistentContextOptions: channels.BrowserTypeLaunchPersistentContextOptions & { useWebSocket?: boolean, internalIgnoreHTTPSErrors?: boolean }): Promise<BrowserContext> {
-    const launchOptions = this._validateLaunchOptions(persistentContextOptions);
+  async launchPersistentContext(metadata: CallMetadata, userDataDir: string, options: channels.BrowserTypeLaunchPersistentContextOptions & { useWebSocket?: boolean, internalIgnoreHTTPSErrors?: boolean }): Promise<BrowserContext> {
+    const launchOptions = this._validateLaunchOptions(options);
     if (this._useBidi)
       launchOptions.useWebSocket = true;
     const controller = new ProgressController(metadata, this);
@@ -102,13 +102,14 @@ export abstract class BrowserType extends SdkObject {
     const browser = await controller.run(async progress => {
       // Note: Any initial TLS requests will fail since we rely on the Page/Frames initialize which sets ignoreHTTPSErrors.
       let clientCertificatesProxy: ClientCertificatesProxy | undefined;
-      if (persistentContextOptions.clientCertificates?.length) {
-        clientCertificatesProxy = new ClientCertificatesProxy(persistentContextOptions);
+      if (options.clientCertificates?.length) {
+        clientCertificatesProxy = new ClientCertificatesProxy(options);
         launchOptions.proxyOverride = await clientCertificatesProxy?.listen();
-        persistentContextOptions.internalIgnoreHTTPSErrors = true;
+        options = { ...options };
+        options.internalIgnoreHTTPSErrors = true;
       }
       progress.cleanupWhenAborted(() => clientCertificatesProxy?.close());
-      const browser = await this._innerLaunchWithRetries(progress, launchOptions, persistentContextOptions, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupLog(e); });
+      const browser = await this._innerLaunchWithRetries(progress, launchOptions, options, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupLog(e); });
       browser._defaultContext!._clientCertificatesProxy = clientCertificatesProxy;
       return browser;
     }, TimeoutSettings.launchTimeout(launchOptions));

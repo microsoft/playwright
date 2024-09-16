@@ -97,9 +97,8 @@ class SocksProxyConnection {
   }
 
   async connect() {
-    if (this.socksProxy.agent)
-      // @ts-expect-error
-      this.target = await this.socksProxy.agent.callback(new EventEmitter(), { host: rewriteToLocalhostIfNeeded(this.host), port: this.port });
+    if (this.socksProxy.proxyAgentFromOptions)
+      this.target = await this.socksProxy.proxyAgentFromOptions.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
     else
       this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
 
@@ -241,7 +240,7 @@ export class ClientCertificatesProxy {
   ignoreHTTPSErrors: boolean | undefined;
   secureContextMap: Map<string, tls.SecureContext> = new Map();
   alpnCache: ALPNCache;
-  agent: ReturnType<typeof createProxyAgent> | undefined;
+  proxyAgentFromOptions: ReturnType<typeof createProxyAgent> | undefined;
 
   constructor(
     contextOptions: Pick<types.BrowserContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors' | 'proxy'>
@@ -249,7 +248,7 @@ export class ClientCertificatesProxy {
     verifyClientCertificates(contextOptions.clientCertificates);
     this.alpnCache = new ALPNCache();
     this.ignoreHTTPSErrors = contextOptions.ignoreHTTPSErrors;
-    this.agent = contextOptions.proxy ? createProxyAgent(contextOptions.proxy) : undefined;
+    this.proxyAgentFromOptions = contextOptions.proxy ? createProxyAgent(contextOptions.proxy) : undefined;
     this._initSecureContexts(contextOptions.clientCertificates);
     this._socksProxy = new SocksProxy();
     this._socksProxy.setPattern('*');
