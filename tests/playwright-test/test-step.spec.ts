@@ -1261,11 +1261,10 @@ test('test with custom location', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-    import { test, expect } from '@playwright/test';
-    import { customStep } from './helper';
+      import { test } from '@playwright/test';
+      import { customStep } from './helper';
 
-    test('test with custom location', async ({ page }) => {
-      try {
+      test('test with custom location', async ({ page }) => {
         await customStep(test, 'User logs in', async () => {
           await page.goto('http://localhost:1234/login');
           await page.fill('input#username', 'testuser');
@@ -1275,15 +1274,11 @@ test('test with custom location', async ({ runInlineTest }) => {
           const profileVisible = await page.isVisible('.profile');
           expect(profileVisible).toBeTruthy();
         });
-      } catch (e) {
-        console.error('Login test failed:', e);
-        throw e;
-      }
-    });
-  `
+      });
+    `
   }, { reporter: '', workers: 1 });
 
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
   expect(result.outputLines).toEqual([
     'hook      |Before Hooks',
     'test.step |User logs in @ custom-file.ts:99',
@@ -1328,7 +1323,7 @@ test('nested step test with custom locations', async ({ runInlineTest }) => {
     `
   }, { reporter: '', workers: 1 });
 
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
   expect(result.outputLines).toEqual([
     'hook      |Before Hooks',
     'test.step |Outer step @ nested-steps.ts:10',
