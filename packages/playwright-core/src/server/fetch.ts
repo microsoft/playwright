@@ -73,6 +73,8 @@ export type APIRequestFinishedEvent = {
   statusMessage: string;
   body?: Buffer;
   timings: har.Timings;
+  serverIPAddress?: string;
+  serverPort?: number;
 };
 
 type SendRequestOptions = https.RequestOptions & {
@@ -302,6 +304,8 @@ export abstract class APIRequestContext extends SdkObject {
       let tcpConnectionAt: number | undefined;
       let tlsHandshakeAt: number | undefined;
       let requestFinishAt: number | undefined;
+      let serverIPAddress: string | undefined;
+      let serverPort: number | undefined;
 
       const request = requestConstructor(url, requestOptions as any, async response => {
         const responseAt = monotonicTime();
@@ -328,6 +332,8 @@ export abstract class APIRequestContext extends SdkObject {
             cookies,
             body,
             timings,
+            serverIPAddress,
+            serverPort,
           };
           this.emit(APIRequestContext.Events.RequestFinished, requestFinishedEvent);
         };
@@ -483,6 +489,9 @@ export abstract class APIRequestContext extends SdkObject {
         socket.on('lookup', () => { dnsLookupAt = monotonicTime(); });
         socket.on('connect', () => { tcpConnectionAt = monotonicTime(); });
         socket.on('secureConnect', () => { tlsHandshakeAt = monotonicTime(); });
+
+        serverIPAddress = socket.remoteAddress;
+        serverPort = socket.remotePort;
       });
       request.on('finish', () => { requestFinishAt = monotonicTime(); });
 

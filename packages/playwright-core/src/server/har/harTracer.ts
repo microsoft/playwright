@@ -208,6 +208,8 @@ export class HarTracer {
     if (!harEntry)
       return;
 
+    harEntry.serverIPAddress = event.serverIPAddress;
+    harEntry._serverPort = event.serverPort;
     harEntry.response.status = event.statusCode;
     harEntry.response.statusText = event.statusMessage;
     harEntry.response.httpVersion = event.httpVersion;

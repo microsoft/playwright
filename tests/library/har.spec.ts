@@ -831,6 +831,9 @@ it('should include API request', async ({ contextFactory, server }, testInfo) =>
     ssl: expect.any(Number),
     wait: expect.any(Number),
   }));
+
+  expect(entry.serverIPAddress).toBeDefined();
+  expect(entry._serverPort).toEqual(server.PORT);
 });
 
 it('should respect minimal mode for API Requests', async ({ contextFactory, server }, testInfo) => {
