@@ -114,7 +114,7 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
 
-  const trace1 = await parseTrace(testInfo.outputPath('test-results', 'reuse-one', 'trace.pwtrace.zip'));
+  const trace1 = await parseTrace(testInfo.outputPath('test-results', 'reuse-one', 'trace.zip'));
   expect(trace1.actionTree).toEqual([
     'Before Hooks',
     '  fixture: browser',
@@ -131,7 +131,7 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
   expect(trace1.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-one', 'trace-1.zip'))).toBe(false);
 
-  const trace2 = await parseTrace(testInfo.outputPath('test-results', 'reuse-two', 'trace.pwtrace.zip'));
+  const trace2 = await parseTrace(testInfo.outputPath('test-results', 'reuse-two', 'trace.zip'));
   expect(trace2.actionTree).toEqual([
     'Before Hooks',
     '  fixture: context',
@@ -533,6 +533,6 @@ test('should survive serial mode with tracing and reuse', async ({ runInlineTest
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
 
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-one', 'trace.pwtrace.zip'))).toBe(true);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-two', 'trace.pwtrace.zip'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-one', 'trace.zip'))).toBe(true);
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-two', 'trace.zip'))).toBe(true);
 });

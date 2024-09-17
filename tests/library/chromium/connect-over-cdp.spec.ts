@@ -489,7 +489,7 @@ test('should allow tracing over cdp session', async ({ browserType, trace }, tes
     await context.tracing.start({ screenshots: true, snapshots: true });
     const page = await context.newPage();
     await page.evaluate(() => 2 + 2);
-    const traceZip = testInfo.outputPath('trace.pwtrace.zip');
+    const traceZip = testInfo.outputPath('trace.zip');
     await context.tracing.stop({ path: traceZip });
     await cdpBrowser.close();
     expect(fs.existsSync(traceZip)).toBe(true);

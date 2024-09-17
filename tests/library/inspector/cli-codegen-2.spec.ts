@@ -491,7 +491,7 @@ await page1.GotoAsync("about:blank?foo");`);
   });
 
   test('should --save-trace', async ({ runCLI }, testInfo) => {
-    const traceFileName = testInfo.outputPath('trace.pwtrace.zip');
+    const traceFileName = testInfo.outputPath('trace.zip');
     const cli = runCLI([`--save-trace=${traceFileName}`], {
       autoExitWhen: ' ',
     });
@@ -502,7 +502,7 @@ await page1.GotoAsync("about:blank?foo");`);
   test('should save assets via SIGINT', async ({ runCLI, platform }, testInfo) => {
     test.skip(platform === 'win32', 'SIGINT not supported on Windows');
 
-    const traceFileName = testInfo.outputPath('trace.pwtrace.zip');
+    const traceFileName = testInfo.outputPath('trace.zip');
     const storageFileName = testInfo.outputPath('auth.json');
     const harFileName = testInfo.outputPath('har.har');
     const cli = runCLI([`--save-trace=${traceFileName}`, `--save-storage=${storageFileName}`, `--save-har=${harFileName}`]);

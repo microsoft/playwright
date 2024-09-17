@@ -131,7 +131,7 @@ export class TestTracing {
   }
 
   generateNextTraceRecordingPath() {
-    const file = path.join(this._artifactsDir, createGuid() + '.pwtrace.zip');
+    const file = path.join(this._artifactsDir, createGuid() + '.zip');
     this._temporaryTraceFiles.push(file);
     return file;
   }
@@ -214,7 +214,7 @@ export class TestTracing {
       });
     });
 
-    const tracePath = this._testInfo.outputPath('trace.pwtrace.zip');
+    const tracePath = this._testInfo.outputPath('trace.zip');
     await mergeTraceFiles(tracePath, this._temporaryTraceFiles);
     this._testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
   }

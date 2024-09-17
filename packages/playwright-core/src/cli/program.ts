@@ -318,7 +318,7 @@ program
     }).addHelpText('afterAll', `
 Examples:
 
-  $ show-trace https://example.com/trace.pwtrace.zip`);
+  $ show-trace https://example.com/trace.zip`);
 
 type Options = {
   browser: string;

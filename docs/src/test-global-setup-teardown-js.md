@@ -238,12 +238,12 @@ async function globalSetup(config: FullConfig) {
     await page.getByText('Sign in').click();
     await context.storageState({ path: storageState as string });
     await context.tracing.stop({
-      path: './test-results/setup-trace.pwtrace.zip',
+      path: './test-results/setup-trace.zip',
     });
     await browser.close();
   } catch (error) {
     await context.tracing.stop({
-      path: './test-results/failed-setup-trace.pwtrace.zip',
+      path: './test-results/failed-setup-trace.zip',
     });
     await browser.close();
     throw error;
