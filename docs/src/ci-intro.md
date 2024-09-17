@@ -322,5 +322,5 @@ This step will not work for pull requests created from a forked repository becau
 - [Learn how to perform Actions](./input.md)
 - [Learn how to write Assertions](./test-assertions.md)
 - [Learn more about the Trace Viewer](/trace-viewer.md)
-- [Learn more ways of running tests on GitHub Actions](/ci.md)
-- [Learn more about running tests on other CI providers](/ci.md#github-actions)
+- [Learn more ways of running tests on GitHub Actions](/ci.md#github-actions)
+- [Learn more about running tests on other CI providers](/ci.md)
