@@ -69,7 +69,7 @@ function addListFilesCommand(program: Command) {
 }
 
 function addClearCacheCommand(program: Command) {
-  const command = program.command('clear-cache', { hidden: true });
+  const command = program.command('clear-cache');
   command.description('clears build and test caches');
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async opts => {

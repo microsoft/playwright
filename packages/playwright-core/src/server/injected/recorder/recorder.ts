@@ -211,7 +211,7 @@ class RecordActionTool implements RecorderTool {
   private _hoveredElement: HTMLElement | null = null;
   private _activeModel: HighlightModel | null = null;
   private _expectProgrammaticKeyUp = false;
-  private _pendingClickAction: { action: actions.ClickAction, timeout: NodeJS.Timeout } | undefined;
+  private _pendingClickAction: { action: actions.ClickAction, timeout: number } | undefined;
 
   constructor(recorder: Recorder) {
     this._recorder = recorder;
@@ -268,7 +268,7 @@ class RecordActionTool implements RecorderTool {
           modifiers: modifiersForEvent(event),
           clickCount: event.detail
         },
-        timeout: setTimeout(() => this._commitPendingClickAction(), 200)
+        timeout: this._recorder.injectedScript.builtinSetTimeout(() => this._commitPendingClickAction(), 200)
       };
     }
   }
@@ -1036,7 +1036,14 @@ export class Recorder {
       addEventListener(this.document, 'focus', event => this._onFocus(event), true),
       addEventListener(this.document, 'scroll', event => this._onScroll(event), true),
     ];
+
     this.highlight.install();
+    // some frameworks erase the DOM on hydration, this ensures it's reattached
+    const recreationInterval = setInterval(() => {
+      this.highlight.install();
+    }, 500);
+    this._listeners.push(() => clearInterval(recreationInterval));
+
     this.overlay?.install();
     this.document.adoptedStyleSheets.push(this._stylesheet);
   }

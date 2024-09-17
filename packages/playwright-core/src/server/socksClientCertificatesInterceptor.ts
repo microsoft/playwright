@@ -25,6 +25,9 @@ import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketReque
 import { SocksProxy } from '../common/socksProxy';
 import type * as types from './types';
 import { debugLogger } from '../utils/debugLogger';
+import { createProxyAgent } from './fetch';
+import { EventEmitter } from 'events';
+import { verifyClientCertificates } from './browserContext';
 
 let dummyServerTlsOptions: tls.TlsOptions | undefined = undefined;
 function loadDummyServerCertsIfNeeded() {
@@ -94,7 +97,11 @@ class SocksProxyConnection {
   }
 
   async connect() {
-    this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
+    if (this.socksProxy.proxyAgentFromOptions)
+      this.target = await this.socksProxy.proxyAgentFromOptions.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
+    else
+      this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
+
     this.target.once('close', this._targetCloseEventListener);
     this.target.once('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
     if (this._closed) {
@@ -233,12 +240,15 @@ export class ClientCertificatesProxy {
   ignoreHTTPSErrors: boolean | undefined;
   secureContextMap: Map<string, tls.SecureContext> = new Map();
   alpnCache: ALPNCache;
+  proxyAgentFromOptions: ReturnType<typeof createProxyAgent> | undefined;
 
   constructor(
-    contextOptions: Pick<types.BrowserContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors'>
+    contextOptions: Pick<types.BrowserContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors' | 'proxy'>
   ) {
+    verifyClientCertificates(contextOptions.clientCertificates);
     this.alpnCache = new ALPNCache();
     this.ignoreHTTPSErrors = contextOptions.ignoreHTTPSErrors;
+    this.proxyAgentFromOptions = contextOptions.proxy ? createProxyAgent(contextOptions.proxy) : undefined;
     this._initSecureContexts(contextOptions.clientCertificates);
     this._socksProxy = new SocksProxy();
     this._socksProxy.setPattern('*');

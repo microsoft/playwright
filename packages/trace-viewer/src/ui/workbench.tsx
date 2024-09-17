@@ -20,11 +20,11 @@ import { ActionList } from './actionList';
 import { CallTab } from './callTab';
 import { LogTab } from './logTab';
 import { ErrorsTab, useErrorsTabModel } from './errorsTab';
+import type { ErrorDescription } from './errorsTab';
 import type { ConsoleEntry } from './consoleTab';
 import { ConsoleTab, useConsoleTabModel } from './consoleTab';
 import type * as modelUtil from './modelUtil';
 import { isRouteAction } from './modelUtil';
-import type { StackFrame } from '@protocol/channels';
 import { NetworkTab, useNetworkTabModel } from './networkTab';
 import { SnapshotTab } from './snapshotTab';
 import { SourceTab } from './sourceTab';
@@ -49,8 +49,6 @@ export const Workbench: React.FunctionComponent<{
   showSourcesFirst?: boolean,
   rootDir?: string,
   fallbackLocation?: modelUtil.SourceLocation,
-  initialSelection?: modelUtil.ActionTraceEventInContext,
-  onSelectionChanged?: (action: modelUtil.ActionTraceEventInContext) => void,
   isLive?: boolean,
   status?: UITestStatus,
   annotations?: { type: string; description?: string; }[];
@@ -59,9 +57,10 @@ export const Workbench: React.FunctionComponent<{
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
   showSettings?: boolean,
-}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, initialSelection, onSelectionChanged, isLive, status, annotations, inert, openPage, onOpenExternally, revealSource, showSettings }) => {
-  const [selectedAction, setSelectedActionImpl] = React.useState<modelUtil.ActionTraceEventInContext | undefined>(undefined);
-  const [revealedStack, setRevealedStack] = React.useState<StackFrame[] | undefined>(undefined);
+}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, status, annotations, inert, openPage, onOpenExternally, revealSource, showSettings }) => {
+  const [selectedCallId, setSelectedCallId] = React.useState<string | undefined>(undefined);
+  const [revealedError, setRevealedError] = React.useState<ErrorDescription | undefined>(undefined);
+
   const [highlightedAction, setHighlightedAction] = React.useState<modelUtil.ActionTraceEventInContext | undefined>();
   const [highlightedEntry, setHighlightedEntry] = React.useState<Entry | undefined>();
   const [highlightedConsoleMessage, setHighlightedConsoleMessage] = React.useState<ConsoleEntry | undefined>();
@@ -69,38 +68,39 @@ export const Workbench: React.FunctionComponent<{
   const [selectedPropertiesTab, setSelectedPropertiesTab] = useSetting<string>('propertiesTab', showSourcesFirst ? 'source' : 'call');
   const [isInspecting, setIsInspectingState] = React.useState(false);
   const [highlightedLocator, setHighlightedLocator] = React.useState<string>('');
-  const activeAction = model ? highlightedAction || selectedAction : undefined;
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
   const [showRouteActions, setShowRouteActions] = useSetting('show-route-actions', true);
   const [showScreenshot, setShowScreenshot] = useSetting('screenshot-instead-of-snapshot', false);
-
 
   const filteredActions = React.useMemo(() => {
     return (model?.actions || []).filter(action => showRouteActions || !isRouteAction(action));
   }, [model, showRouteActions]);
 
   const setSelectedAction = React.useCallback((action: modelUtil.ActionTraceEventInContext | undefined) => {
-    setSelectedActionImpl(action);
-    setRevealedStack(action?.stack);
-  }, [setSelectedActionImpl, setRevealedStack]);
+    setSelectedCallId(action?.callId);
+    setRevealedError(undefined);
+  }, []);
 
   const sources = React.useMemo(() => model?.sources || new Map<string, modelUtil.SourceModel>(), [model]);
 
   React.useEffect(() => {
     setSelectedTime(undefined);
-    setRevealedStack(undefined);
+    setRevealedError(undefined);
   }, [model]);
 
-  React.useEffect(() => {
-    if (selectedAction && model?.actions.includes(selectedAction))
-      return;
+  const selectedAction = React.useMemo(() => {
+    if (selectedCallId) {
+      const action = model?.actions.find(a => a.callId === selectedCallId);
+      if (action)
+        return action;
+    }
+
     const failedAction = model?.failedAction();
-    if (initialSelection && model?.actions.includes(initialSelection)) {
-      setSelectedAction(initialSelection);
-    } else if (failedAction) {
-      setSelectedAction(failedAction);
-    } else if (model?.actions.length) {
+    if (failedAction)
+      return failedAction;
+
+    if (model?.actions.length) {
       // Select the last non-after hooks item.
       let index = model.actions.length - 1;
       for (let i = 0; i < model.actions.length; ++i) {
@@ -109,15 +109,24 @@ export const Workbench: React.FunctionComponent<{
           break;
         }
       }
-      setSelectedAction(model.actions[index]);
+      return model.actions[index];
     }
-  }, [model, selectedAction, setSelectedAction, initialSelection]);
+  }, [model, selectedCallId]);
+
+  const revealedStack = React.useMemo(() => {
+    if (revealedError)
+      return revealedError.stack;
+    return selectedAction?.stack;
+  }, [selectedAction, revealedError]);
+
+  const activeAction = React.useMemo(() => {
+    return highlightedAction || selectedAction;
+  }, [selectedAction, highlightedAction]);
 
   const onActionSelected = React.useCallback((action: modelUtil.ActionTraceEventInContext) => {
     setSelectedAction(action);
     setHighlightedAction(undefined);
-    onSelectionChanged?.(action);
-  }, [setSelectedAction, onSelectionChanged, setHighlightedAction]);
+  }, [setSelectedAction, setHighlightedAction]);
 
   const selectPropertiesTab = React.useCallback((tab: string) => {
     setSelectedPropertiesTab(tab);
@@ -177,7 +186,7 @@ export const Workbench: React.FunctionComponent<{
       if (error.action)
         setSelectedAction(error.action);
       else
-        setRevealedStack(error.stack);
+        setRevealedError(error);
       selectPropertiesTab('source');
     }} />
   };

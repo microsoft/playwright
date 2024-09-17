@@ -94,6 +94,14 @@ export class BidiBrowser extends Browser {
         'script',
       ],
     });
+
+    if (options.persistent) {
+      browser._defaultContext = new BidiBrowserContext(browser, undefined, options.persistent);
+      await (browser._defaultContext as BidiBrowserContext)._initialize();
+      // Create default page as we cannot get access to the existing one.
+      const pageDelegate = await browser._defaultContext.newPageDelegate();
+      await pageDelegate.pageOrError();
+    }
     return browser;
   }
 
@@ -294,10 +302,11 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async doClose(reason: string | undefined) {
-    // TODO: implement for persistent context
-    if (!this._browserContextId)
+    if (!this._browserContextId) {
+      // Closing persistent context should close the browser.
+      await this._browser.close({ reason });
       return;
-
+    }
     await this._browser._browserSession.send('browser.removeUserContext', {
       userContext: this._browserContextId
     });

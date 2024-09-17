@@ -27,14 +27,6 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import { toggleTheme } from '@web/theme';
 import { copy } from '@web/uiUtils';
 
-declare global {
-  interface Window {
-    playwrightSetFileIfNeeded: (file: string) => void;
-    playwrightSetSelector: (selector: string, focus?: boolean) => void;
-    dispatch(data: any): Promise<void>;
-  }
-}
-
 export interface RecorderProps {
   sources: Source[],
   paused: boolean,
@@ -56,14 +48,22 @@ export const Recorder: React.FC<RecorderProps> = ({
       setFileId(sources[0].id);
   }, [fileId, sources]);
 
-  const source: Source = sources.find(s => s.id === fileId) || {
-    id: 'default',
-    isRecorded: false,
-    text: '',
-    language: 'javascript',
-    label: '',
-    highlight: []
-  };
+  const source = React.useMemo(() => {
+    if (fileId) {
+      const source = sources.find(s => s.id === fileId);
+      if (source)
+        return source;
+    }
+    const source: Source = {
+      id: 'default',
+      isRecorded: false,
+      text: '',
+      language: 'javascript',
+      label: '',
+      highlight: []
+    };
+    return source;
+  }, [sources, fileId]);
 
   const [locator, setLocator] = React.useState('');
   window.playwrightSetSelector = (selector: string, focus?: boolean) => {
@@ -73,13 +73,7 @@ export const Recorder: React.FC<RecorderProps> = ({
     setLocator(asLocator(language, selector));
   };
 
-  window.playwrightSetFileIfNeeded = (value: string) => {
-    const newSource = sources.find(s => s.id === value);
-    // Do not forcefully switch between two recorded sources, because
-    // user did explicitly choose one.
-    if (newSource && !newSource.isRecorded || !source.isRecorded)
-      setFileId(value);
-  };
+  window.playwrightSetFile = setFileId;
 
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   React.useLayoutEffect(() => {

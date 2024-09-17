@@ -30,7 +30,7 @@ import type { IRecorder, IRecorderApp, IRecorderAppFactory } from './recorderFro
 
 declare global {
   interface Window {
-    playwrightSetFileIfNeeded: (file: string) => void;
+    playwrightSetFile: (file: string) => void;
     playwrightSetMode: (mode: Mode) => void;
     playwrightSetPaused: (paused: boolean) => void;
     playwrightSetSources: (sources: Source[]) => void;
@@ -46,7 +46,7 @@ export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   async close(): Promise<void> {}
   async setPaused(paused: boolean): Promise<void> {}
   async setMode(mode: Mode): Promise<void> {}
-  async setFileIfNeeded(file: string): Promise<void> {}
+  async setFile(file: string): Promise<void> {}
   async setSelector(selector: string, userGesture?: boolean): Promise<void> {}
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
   async setSources(sources: Source[]): Promise<void> {}
@@ -144,9 +144,9 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     }).toString(), { isFunction: true }, mode).catch(() => {});
   }
 
-  async setFileIfNeeded(file: string): Promise<void> {
+  async setFile(file: string): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((file: string) => {
-      window.playwrightSetFileIfNeeded(file);
+      window.playwrightSetFile(file);
     }).toString(), { isFunction: true }, file).catch(() => {});
   }
 

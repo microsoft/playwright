@@ -9202,8 +9202,6 @@ export interface Browser {
      * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
      * with an exact match to the request origin that the certificate is valid for.
      *
-     * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
-     *
      * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
      * work by replacing `localhost` with `local.playwright`.
      */
@@ -13060,7 +13058,10 @@ export interface Locator {
   nth(index: number): Locator;
 
   /**
-   * Creates a locator that matches either of the two locators.
+   * Creates a locator matching all elements that match one or both of the two locators.
+   *
+   * Note that when both locators match something, the resulting locator will have multiple matches and violate
+   * [locator strictness](https://playwright.dev/docs/locators#strictness) guidelines.
    *
    * **Usage**
    *
@@ -13920,8 +13921,6 @@ export interface BrowserType<Unused = {}> {
      * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
      * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
      * with an exact match to the request origin that the certificate is valid for.
-     *
-     * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
      * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
      * work by replacing `localhost` with `local.playwright`.
@@ -16346,8 +16345,6 @@ export interface APIRequest {
      * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
      * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
      * with an exact match to the request origin that the certificate is valid for.
-     *
-     * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
      * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
      * work by replacing `localhost` with `local.playwright`.
@@ -20708,8 +20705,6 @@ export interface BrowserContextOptions {
    * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
    * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
    * with an exact match to the request origin that the certificate is valid for.
-   *
-   * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
    *
    * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
    * work by replacing `localhost` with `local.playwright`.

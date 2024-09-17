@@ -132,10 +132,9 @@ export class Recorder implements InstrumentationListener, IRecorder {
       this._context.instrumentation.removeListener(this);
       this._recorderApp?.close().catch(() => {});
     });
-    this._contextRecorder.on(ContextRecorder.Events.Change, (data: { sources: Source[], primaryFileName: string }) => {
+    this._contextRecorder.on(ContextRecorder.Events.Change, (data: { sources: Source[] }) => {
       this._recorderSources = data.sources;
       this._pushAllSources();
-      this._recorderApp?.setFileIfNeeded(data.primaryFileName);
     });
 
     await this._context.exposeBinding('__pw_recorderState', false, source => {
@@ -294,7 +293,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
     }
     this._pushAllSources();
     if (fileToSelect)
-      this._recorderApp?.setFileIfNeeded(fileToSelect);
+      this._recorderApp?.setFile(fileToSelect);
   }
 
   private _pushAllSources() {

@@ -23,6 +23,7 @@ import type http from 'http';
 import { expect, playwrightTest as base } from '../config/browserTest';
 import type net from 'net';
 import type { BrowserContextOptions } from 'packages/playwright-test';
+import { setupSocksForwardingServer } from '../config/proxy';
 const { createHttpsServer, createHttp2Server } = require('../../packages/playwright-core/lib/utils');
 
 type TestOptions = {
@@ -88,14 +89,6 @@ const kValidationSubTests: [BrowserContextOptions, string][] = [
       passphrase: kDummyFileName,
     }]
   }, 'pfx is specified together with cert, key or passphrase'],
-  [{
-    proxy: { server: 'http://localhost:8080' },
-    clientCertificates: [{
-      origin: 'test',
-      certPath: kDummyFileName,
-      keyPath: kDummyFileName,
-    }]
-  }, 'Cannot specify both proxy and clientCertificates'],
 ];
 
 test.describe('fetch', () => {
@@ -178,6 +171,54 @@ test.describe('fetch', () => {
     expect(response.status()).toBe(200);
     expect(await response.text()).toContain('Hello Alice, your certificate was issued by localhost!');
     await request.dispose();
+  });
+
+  test('pass with trusted client certificates and when a http proxy is used', async ({ playwright, startCCServer, proxyServer, asset }) => {
+    const serverURL = await startCCServer();
+    proxyServer.forwardTo(parseInt(new URL(serverURL).port, 10), { allowConnectRequests: true });
+    const request = await playwright.request.newContext({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+      proxy: { server: `localhost:${proxyServer.PORT}` }
+    });
+    expect(proxyServer.connectHosts).toEqual([]);
+    const response = await request.get(serverURL);
+    expect(proxyServer.connectHosts).toEqual([new URL(serverURL).host]);
+    expect(response.url()).toBe(serverURL);
+    expect(response.status()).toBe(200);
+    expect(await response.text()).toContain('Hello Alice, your certificate was issued by localhost!');
+    await request.dispose();
+  });
+
+  test('pass with trusted client certificates and when a socks proxy is used', async ({ playwright, startCCServer, asset }) => {
+    const serverURL = await startCCServer({ host: '127.0.0.1' });
+    const serverPort = parseInt(new URL(serverURL).port, 10);
+    const { proxyServerAddr, closeProxyServer, connectHosts } = await setupSocksForwardingServer({
+      port: test.info().workerIndex + 2048 + 2,
+      forwardPort: serverPort,
+      allowedTargetPort: serverPort,
+    });
+    const request = await playwright.request.newContext({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+      proxy: { server: proxyServerAddr }
+    });
+    expect(connectHosts).toEqual([]);
+    const response = await request.get(serverURL);
+    expect(connectHosts).toEqual([new URL(serverURL).host]);
+    expect(response.url()).toBe(serverURL);
+    expect(response.status()).toBe(200);
+    expect(await response.text()).toContain('Hello Alice, your certificate was issued by localhost!');
+    await request.dispose();
+    await closeProxyServer();
   });
 
   test('should throw a http error if the pfx passphrase is incorect', async ({ playwright, startCCServer, asset, browserName }) => {
@@ -309,6 +350,50 @@ test.describe('browser', () => {
     await page.goto(serverURL);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
     await page.close();
+  });
+
+  test('should pass with matching certificates and when a http proxy is used', async ({ browser, startCCServer, asset, browserName, proxyServer }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+    proxyServer.forwardTo(parseInt(new URL(serverURL).port, 10), { allowConnectRequests: true });
+    const page = await browser.newPage({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+      proxy: { server: `localhost:${proxyServer.PORT}` }
+    });
+    expect(proxyServer.connectHosts).toEqual([]);
+    await page.goto(serverURL);
+    expect([...new Set(proxyServer.connectHosts)]).toEqual([`localhost:${new URL(serverURL).port}`]);
+    await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
+    await page.close();
+  });
+
+  test('should pass with matching certificates and when a socks proxy is used', async ({ browser, startCCServer, asset, browserName }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin', host: '127.0.0.1' });
+    const serverPort = parseInt(new URL(serverURL).port, 10);
+    const { proxyServerAddr, closeProxyServer, connectHosts } = await setupSocksForwardingServer({
+      port: test.info().workerIndex + 2048 + 2,
+      forwardPort: serverPort,
+      allowedTargetPort: serverPort,
+    });
+    const page = await browser.newPage({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL(serverURL).origin,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+      proxy: { server: proxyServerAddr }
+    });
+    expect(connectHosts).toEqual([]);
+    await page.goto(serverURL);
+    expect(connectHosts).toEqual([`localhost:${serverPort}`]);
+    await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
+    await page.close();
+    await closeProxyServer();
   });
 
   test('should not hang on tls errors during TLS 1.2 handshake', async ({ browser, asset, platform, browserName }) => {

@@ -313,12 +313,17 @@ test('should respect project filter C', async ({ runWatchTest, writeFiles }) => 
   await testProcess.waitForOutput('[foo] › a.test.ts:3:11 › passes');
   expect(testProcess.output).not.toContain('[bar] › a.test.ts:3:11 › passes');
 
+  await testProcess.waitForOutput('Waiting for file changes.');
   testProcess.clearOutput();
 
   await writeFiles(files); // file change triggers listTests with project filter
   await testProcess.waitForOutput('[foo] › a.test.ts:3:11 › passes');
 
+  testProcess.clearOutput();
+  await testProcess.waitForOutput('Waiting for file changes.');
+
   testProcess.write('c');
+  testProcess.clearOutput();
   await testProcess.waitForOutput('Select projects');
   await testProcess.waitForOutput('foo');
   await testProcess.waitForOutput('bar'); // second selection should still show all
@@ -811,4 +816,50 @@ test('should run global teardown before exiting', async ({ runWatchTest }) => {
   await testProcess.waitForOutput('Waiting for file changes.');
   testProcess.write('\x1B');
   await testProcess.waitForOutput('running teardown');
+});
+
+test('buffer mode', async ({ runWatchTest, writeFiles }) => {
+  const testProcess = await runWatchTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+    'b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes in b', () => {});
+    `,
+  });
+
+  testProcess.clearOutput();
+  testProcess.write('b');
+  await testProcess.waitForOutput('Waiting for file changes. Press q to quit');
+
+
+  testProcess.clearOutput();
+  await writeFiles({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes again', () => {});
+    `,
+  });
+
+  await testProcess.waitForOutput('1 test file changed:');
+  await testProcess.waitForOutput('a.test.ts');
+
+  testProcess.clearOutput();
+  await writeFiles({
+    'b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes in b again', () => {});
+    `,
+  });
+  await testProcess.waitForOutput('2 test files changed:');
+  await testProcess.waitForOutput('a.test.ts');
+  await testProcess.waitForOutput('b.test.ts');
+
+  testProcess.clearOutput();
+  testProcess.write('\r\n');
+
+  await testProcess.waitForOutput('a.test.ts:3:11 › passes');
+  await testProcess.waitForOutput('b.test.ts:3:11 › passes');
 });
