@@ -319,12 +319,18 @@ export class BidiPage implements PageDelegate {
     });
   }
 
-  goBack(): Promise<boolean> {
-    throw new Error('Method not implemented.');
+  async goBack(): Promise<boolean> {
+    return await this._session.send('browsingContext.traverseHistory', {
+      context: this._session.sessionId,
+      delta: -1,
+    }).then(() => true).catch(() => false);
   }
 
-  goForward(): Promise<boolean> {
-    throw new Error('Method not implemented.');
+  async goForward(): Promise<boolean> {
+    return await this._session.send('browsingContext.traverseHistory', {
+      context: this._session.sessionId,
+      delta: +1,
+    }).then(() => true).catch(() => false);
   }
 
   async forceGarbageCollection(): Promise<void> {
