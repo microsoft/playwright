@@ -422,6 +422,11 @@ export abstract class APIRequestContext extends SdkObject {
 
         const chunks: Buffer[] = [];
         const notifyBodyFinished = () => {
+          function relativeTime(time: number | undefined): number {
+            if (!time)
+              return -1;
+            return time - startAt;
+          }
           const endAt = monotonicTime();
           // spec: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming
           const timing: channels.ResourceTiming = {
@@ -430,8 +435,8 @@ export abstract class APIRequestContext extends SdkObject {
             domainLookupEnd: dnsLookupAt ? dnsLookupAt! - startAt : -1,
             connectStart: dnsLookupAt ? dnsLookupAt! - startAt  : 0,
             secureConnectionStart: dnsLookupAt ? dnsLookupAt! - startAt : 0,
-            connectEnd: (tlsHandshakeAt ?? tcpConnectionAt!) - startAt,
-            requestStart: (tlsHandshakeAt ?? tcpConnectionAt!) - startAt,
+            connectEnd: relativeTime(tlsHandshakeAt ?? tcpConnectionAt),
+            requestStart: relativeTime(tlsHandshakeAt ?? tcpConnectionAt),
             responseStart: responseAt - startAt,
           };
           const responseEndTiming = endAt - startAt;
@@ -499,6 +504,9 @@ export abstract class APIRequestContext extends SdkObject {
         socket.on('lookup', () => { dnsLookupAt = monotonicTime(); });
         socket.on('connect', () => { tcpConnectionAt = monotonicTime(); });
         socket.on('secureConnect', () => { tlsHandshakeAt = monotonicTime(); });
+
+        // socks / http proxy
+        socket.on('proxyConnect', () => { tcpConnectionAt = monotonicTime(); });
       });
       request.on('finish', () => { requestFinishAt = monotonicTime(); });
 
