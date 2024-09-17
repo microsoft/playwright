@@ -820,6 +820,7 @@ it('should include API request', async ({ contextFactory, server }, testInfo) =>
   expect(entry.response.headers.find(h => h.name.toLowerCase() === 'content-type')?.value).toContain('application/json');
   expect(entry.response.content.size).toBe(15);
   expect(entry.response.content.text).toBe(responseBody.toString());
+  expect(entry.response.bodySize).toBe(15);
 
   expect(entry.time).toBeGreaterThan(0);
   expect(entry.timings).toEqual(expect.objectContaining({
@@ -844,6 +845,7 @@ it('should respect minimal mode for API Requests', async ({ contextFactory, serv
   expect(entries).toHaveLength(1);
   const [entry] = entries;
   expect(entry.timings).toEqual({ receive: -1, send: -1, wait: -1 });
+  expect(entry.response.bodySize).toBe(-1);
 });
 
 it('should include redirects from API request', async ({ contextFactory, server }, testInfo) => {
