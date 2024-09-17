@@ -324,7 +324,7 @@ export abstract class APIRequestContext extends SdkObject {
           const timings: har.Timings = {
             send: requestFinishAt! - startAt,
             wait: responseAt - requestFinishAt!,
-            receive: endAt! - responseAt,
+            receive: endAt - responseAt,
             dns: dnsLookupAt ? dnsLookupAt - startAt : -1,
             connect: (tlsHandshakeAt ?? tcpConnectionAt!) - startAt, // "If [ssl] is defined then the time is also included in the connect field "
             ssl: tlsHandshakeAt ? tlsHandshakeAt - tcpConnectionAt! : -1,
