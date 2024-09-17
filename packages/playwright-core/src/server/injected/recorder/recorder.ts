@@ -1036,7 +1036,14 @@ export class Recorder {
       addEventListener(this.document, 'focus', event => this._onFocus(event), true),
       addEventListener(this.document, 'scroll', event => this._onScroll(event), true),
     ];
+
     this.highlight.install();
+    // some frameworks erase the DOM on hydration, this ensures it's reattached
+    const recreationInterval = setInterval(() => {
+      this.highlight.install();
+    }, 500);
+    this._listeners.push(() => clearInterval(recreationInterval));
+
     this.overlay?.install();
     this.document.adoptedStyleSheets.push(this._stylesheet);
   }
