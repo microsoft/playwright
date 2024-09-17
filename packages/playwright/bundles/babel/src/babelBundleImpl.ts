@@ -23,7 +23,6 @@ import * as babel from '@babel/core';
 export { codeFrameColumns } from '@babel/code-frame';
 export { declare } from '@babel/helper-plugin-utils';
 export { types } from '@babel/core';
-export { parse } from '@babel/parser';
 import traverseFunction from '@babel/traverse';
 export const traverse = traverseFunction;
 

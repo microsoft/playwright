@@ -12,7 +12,6 @@
     "@babel/code-frame": "^7.24.2",
     "@babel/core": "^7.24.4",
     "@babel/helper-plugin-utils": "^7.24.0",
-    "@babel/parser": "^7.24.4",
     "@babel/plugin-proposal-decorators": "^7.24.1",
     "@babel/plugin-proposal-explicit-resource-management": "^7.24.1",
     "@babel/plugin-syntax-async-generators": "^7.8.4",
