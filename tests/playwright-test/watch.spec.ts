@@ -403,6 +403,7 @@ test('should re-run failed tests on F > R', async ({ runWatchTest }) => {
   await testProcess.waitForOutput('npx playwright test (running failed tests) #2');
   await testProcess.waitForOutput('c.test.ts:3:11 › fails');
   expect(testProcess.output).not.toContain('a.test.ts:3:11');
+  await testProcess.waitForOutput('Waiting for file changes.');
   testProcess.clearOutput();
   testProcess.write('r');
   await testProcess.waitForOutput('npx playwright test (re-running tests) #3');
