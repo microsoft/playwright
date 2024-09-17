@@ -398,7 +398,20 @@ export class BidiPage implements PageDelegate {
   }
 
   async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
-    throw new Error('Method not implemented.');
+    const rect = (documentRect || viewportRect)!;
+    const { data } = await this._session.send('browsingContext.captureScreenshot', {
+      context: this._session.sessionId,
+      format: {
+        type: `image/${format === 'png' ? 'png' : 'jpeg'}`,
+        quality: quality || 80,
+      },
+      origin: documentRect ? 'document' : 'viewport',
+      clip: {
+        type: 'box',
+        ...rect,
+      }
+    });
+    return Buffer.from(data, 'base64');
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
