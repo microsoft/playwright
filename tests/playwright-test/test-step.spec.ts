@@ -1240,7 +1240,7 @@ fixture   |  fixture: context
 `);
 });
 
-test('test custom location functionality', async ({ runInlineTest }) => {
+test('test location to test.step', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'helper.ts': `
