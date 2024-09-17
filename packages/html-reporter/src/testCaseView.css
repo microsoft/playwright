@@ -47,6 +47,7 @@
   flex: none;
   align-items: center;
   padding: 0 8px 8px;
+  line-height: 24px;
 }
 
 .test-case-path {

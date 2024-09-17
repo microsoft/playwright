@@ -128,7 +128,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   afterAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   afterAll(title: string, inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs>): void;
-  step<T>(title: string, body: () => T | Promise<T>, options?: { box?: boolean }): Promise<T>;
+  step<T>(title: string, body: () => T | Promise<T>, options?: { box?: boolean, location?: Location }): Promise<T>;
   expect: Expect<{}>;
   extend<T extends KeyValue, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
   info(): TestInfo;

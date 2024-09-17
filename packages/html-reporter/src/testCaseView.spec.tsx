@@ -81,9 +81,9 @@ test('should render copy buttons for annotations', async ({ mount, page, context
 
   const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCase} run={0} anchor=''></TestCaseView>);
   await expect(component.getByText('Annotation text', { exact: false }).first()).toBeVisible();
-  component.getByText('Annotation text', { exact: false }).first().hover();
-  await expect(component.getByLabel('Copy to clipboard').first()).toBeVisible();
-  await component.getByLabel('Copy to clipboard').first().click();
+  await component.getByText('Annotation text', { exact: false }).first().hover();
+  await expect(component.locator('.test-case-annotation').getByLabel('Copy to clipboard').first()).toBeVisible();
+  await component.locator('.test-case-annotation').getByLabel('Copy to clipboard').first().click();
   const handle = await page.evaluateHandle(() => navigator.clipboard.readText());
   const clipboardContent = await handle.jsonValue();
   expect(clipboardContent).toBe('Annotation text');

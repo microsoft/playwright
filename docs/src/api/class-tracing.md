@@ -11,7 +11,7 @@ const context = await browser.newContext();
 await context.tracing.start({ screenshots: true, snapshots: true });
 const page = await context.newPage();
 await page.goto('https://playwright.dev');
-await context.tracing.stop({ path: 'trace.pwtrace.zip' });
+await context.tracing.stop({ path: 'trace.zip' });
 ```
 
 ```java
@@ -23,7 +23,7 @@ context.tracing().start(new Tracing.StartOptions()
 Page page = context.newPage();
 page.navigate("https://playwright.dev");
 context.tracing().stop(new Tracing.StopOptions()
-  .setPath(Paths.get("trace.pwtrace.zip")));
+  .setPath(Paths.get("trace.zip")));
 ```
 
 ```python async
@@ -32,7 +32,7 @@ context = await browser.new_context()
 await context.tracing.start(screenshots=True, snapshots=True)
 page = await context.new_page()
 await page.goto("https://playwright.dev")
-await context.tracing.stop(path = "trace.pwtrace.zip")
+await context.tracing.stop(path = "trace.zip")
 ```
 
 ```python sync
@@ -41,7 +41,7 @@ context = browser.new_context()
 context.tracing.start(screenshots=True, snapshots=True)
 page = context.new_page()
 page.goto("https://playwright.dev")
-context.tracing.stop(path = "trace.pwtrace.zip")
+context.tracing.stop(path = "trace.zip")
 ```
 
 ```csharp
@@ -57,7 +57,7 @@ var page = await context.NewPageAsync();
 await page.GotoAsync("https://playwright.dev");
 await context.Tracing.StopAsync(new()
 {
-  Path = "trace.pwtrace.zip"
+  Path = "trace.zip"
 });
 ```
 
@@ -72,7 +72,7 @@ Start tracing.
 await context.tracing.start({ screenshots: true, snapshots: true });
 const page = await context.newPage();
 await page.goto('https://playwright.dev');
-await context.tracing.stop({ path: 'trace.pwtrace.zip' });
+await context.tracing.stop({ path: 'trace.zip' });
 ```
 
 ```java
@@ -82,21 +82,21 @@ context.tracing().start(new Tracing.StartOptions()
 Page page = context.newPage();
 page.navigate("https://playwright.dev");
 context.tracing().stop(new Tracing.StopOptions()
-  .setPath(Paths.get("trace.pwtrace.zip")));
+  .setPath(Paths.get("trace.zip")));
 ```
 
 ```python async
 await context.tracing.start(screenshots=True, snapshots=True)
 page = await context.new_page()
 await page.goto("https://playwright.dev")
-await context.tracing.stop(path = "trace.pwtrace.zip")
+await context.tracing.stop(path = "trace.zip")
 ```
 
 ```python sync
 context.tracing.start(screenshots=True, snapshots=True)
 page = context.new_page()
 page.goto("https://playwright.dev")
-context.tracing.stop(path = "trace.pwtrace.zip")
+context.tracing.stop(path = "trace.zip")
 ```
 
 ```csharp
@@ -112,7 +112,7 @@ var page = await context.NewPageAsync();
 await page.GotoAsync("https://playwright.dev");
 await context.Tracing.StopAsync(new()
 {
-  Path = "trace.pwtrace.zip"
+  Path = "trace.zip"
 });
 ```
 
@@ -177,12 +177,12 @@ await page.goto('https://playwright.dev');
 await context.tracing.startChunk();
 await page.getByText('Get Started').click();
 // Everything between startChunk and stopChunk will be recorded in the trace.
-await context.tracing.stopChunk({ path: 'trace1.pwtrace.zip' });
+await context.tracing.stopChunk({ path: 'trace1.zip' });
 
 await context.tracing.startChunk();
 await page.goto('http://example.com');
 // Save a second trace file with different actions.
-await context.tracing.stopChunk({ path: 'trace2.pwtrace.zip' });
+await context.tracing.stopChunk({ path: 'trace2.zip' });
 ```
 
 ```java
@@ -196,13 +196,13 @@ context.tracing().startChunk();
 page.getByText("Get Started").click();
 // Everything between startChunk and stopChunk will be recorded in the trace.
 context.tracing().stopChunk(new Tracing.StopChunkOptions()
-  .setPath(Paths.get("trace1.pwtrace.zip")));
+  .setPath(Paths.get("trace1.zip")));
 
 context.tracing().startChunk();
 page.navigate("http://example.com");
 // Save a second trace file with different actions.
 context.tracing().stopChunk(new Tracing.StopChunkOptions()
-  .setPath(Paths.get("trace2.pwtrace.zip")));
+  .setPath(Paths.get("trace2.zip")));
 ```
 
 ```python async
@@ -213,12 +213,12 @@ await page.goto("https://playwright.dev")
 await context.tracing.start_chunk()
 await page.get_by_text("Get Started").click()
 # Everything between start_chunk and stop_chunk will be recorded in the trace.
-await context.tracing.stop_chunk(path = "trace1.pwtrace.zip")
+await context.tracing.stop_chunk(path = "trace1.zip")
 
 await context.tracing.start_chunk()
 await page.goto("http://example.com")
 # Save a second trace file with different actions.
-await context.tracing.stop_chunk(path = "trace2.pwtrace.zip")
+await context.tracing.stop_chunk(path = "trace2.zip")
 ```
 
 ```python sync
@@ -229,12 +229,12 @@ page.goto("https://playwright.dev")
 context.tracing.start_chunk()
 page.get_by_text("Get Started").click()
 # Everything between start_chunk and stop_chunk will be recorded in the trace.
-context.tracing.stop_chunk(path = "trace1.pwtrace.zip")
+context.tracing.stop_chunk(path = "trace1.zip")
 
 context.tracing.start_chunk()
 page.goto("http://example.com")
 # Save a second trace file with different actions.
-context.tracing.stop_chunk(path = "trace2.pwtrace.zip")
+context.tracing.stop_chunk(path = "trace2.zip")
 ```
 
 ```csharp
@@ -254,7 +254,7 @@ await page.GetByText("Get Started").ClickAsync();
 // Everything between StartChunkAsync and StopChunkAsync will be recorded in the trace.
 await context.Tracing.StopChunkAsync(new()
 {
-  Path = "trace1.pwtrace.zip"
+  Path = "trace1.zip"
 });
 
 await context.Tracing.StartChunkAsync();
@@ -262,7 +262,7 @@ await page.GotoAsync("http://example.com");
 // Save a second trace file with different actions.
 await context.Tracing.StopChunkAsync(new()
 {
-  Path = "trace2.pwtrace.zip"
+  Path = "trace2.zip"
 });
 ```
 
