@@ -21,7 +21,8 @@ import type * as accessibility from '../accessibility';
 import * as dom from '../dom';
 import * as dialog from '../dialog';
 import type * as frames from '../frames';
-import { type InitScript, Page, type PageDelegate } from '../page';
+import { Page } from '../page';
+import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
 import type { BidiBrowserContext } from './bidiBrowser';
@@ -33,6 +34,7 @@ import { BidiNetworkManager } from './bidiNetworkManager';
 import { BrowserContext } from '../browserContext';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
+const kPlaywrightBindingChannel = 'playwrightChannel';
 
 export class BidiPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -62,6 +64,7 @@ export class BidiPage implements PageDelegate {
     this._page.on(Page.Events.FrameDetached, (frame: frames.Frame) => this._removeContextsForFrame(frame, false));
     this._sessionListeners = [
       eventsHelper.addEventListener(bidiSession, 'script.realmCreated', this._onRealmCreated.bind(this)),
+      eventsHelper.addEventListener(bidiSession, 'script.message', this._onScriptMessage.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.contextDestroyed', this._onBrowsingContextDestroyed.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.navigationStarted', this._onNavigationStarted.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.navigationAborted', this._onNavigationAborted.bind(this)),
@@ -93,6 +96,7 @@ export class BidiPage implements PageDelegate {
       this.updateHttpCredentials(),
       this.updateRequestInterception(),
       this._updateViewport(),
+      this._installMainBinding(),
       this._addAllInitScripts(),
     ]);
   }
@@ -327,6 +331,45 @@ export class BidiPage implements PageDelegate {
     throw new Error('Method not implemented.');
   }
 
+  // TODO: consider calling this only when bindings are added.
+  private async _installMainBinding() {
+    const functionDeclaration = addMainBinding.toString();
+    const args: bidi.Script.ChannelValue[] = [{
+      type: 'channel',
+      value: {
+        channel: kPlaywrightBindingChannel,
+        ownership: bidi.Script.ResultOwnership.Root,
+      }
+    }];
+    const promises = [];
+    promises.push(this._session.send('script.addPreloadScript', {
+      functionDeclaration,
+      arguments: args,
+    }));
+    promises.push(this._session.send('script.callFunction', {
+      functionDeclaration,
+      arguments: args,
+      target: toBidiExecutionContext(await this._page.mainFrame()._mainContext())._target,
+      awaitPromise: false,
+      userActivation: false,
+    }));
+    await Promise.all(promises);
+  }
+
+  private async _onScriptMessage(event: bidi.Script.MessageParameters) {
+    if (event.channel !== kPlaywrightBindingChannel)
+      return;
+    const pageOrError = await this.pageOrError();
+    if (pageOrError instanceof Error)
+      return;
+    const context = this._realmToContext.get(event.source.realm);
+    if (!context)
+      return;
+    if (event.data.type !== 'string')
+      return;
+    await this._page._onBindingCalled(event.data.value, context);
+  }
+
   async addInitScript(initScript: InitScript): Promise<void> {
     const { script } = await this._session.send('script.addPreloadScript', {
       // TODO: remove function call from the source.
@@ -520,6 +563,10 @@ export class BidiPage implements PageDelegate {
   shouldToggleStyleSheetToSyncAnimations(): boolean {
     return true;
   }
+}
+
+function addMainBinding(callback: (arg: any) => void) {
+  (globalThis as any)['__playwright__binding__'] = callback;
 }
 
 function toBidiExecutionContext(executionContext: dom.FrameExecutionContext): BidiExecutionContext {

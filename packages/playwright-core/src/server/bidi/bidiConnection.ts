@@ -72,7 +72,7 @@ export class BidiConnection {
       let context;
       if ('context' in object.params)
         context = object.params.context;
-      else if (object.method === 'log.entryAdded')
+      else if (object.method === 'log.entryAdded' || object.method === 'script.message')
         context = object.params.source?.context;
       if (context) {
         const session = this._browsingContextToSession.get(context);
