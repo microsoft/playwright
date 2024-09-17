@@ -52,6 +52,17 @@ it('fetch should work', async ({ context, server }) => {
   expect(response.ok()).toBeTruthy();
   expect(response.headers()['content-type']).toBe('application/json; charset=utf-8');
   expect(response.headersArray()).toContainEqual({ name: 'Content-Type', value: 'application/json; charset=utf-8' });
+  expect(response.timing()).toEqual({
+    connectEnd: expect.any(Number),
+    connectStart: expect.any(Number),
+    domainLookupEnd: expect.any(Number),
+    domainLookupStart: expect.any(Number),
+    requestStart: expect.any(Number),
+    responseStart: expect.any(Number),
+    responseEnd: expect.any(Number),
+    secureConnectionStart: expect.any(Number),
+    startTime: expect.any(Number),
+  });
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 

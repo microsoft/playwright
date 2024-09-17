@@ -353,6 +353,8 @@ APIResponse:
     headers:
       type: array
       items: NameValue
+    timing: ResourceTiming
+    responseEndTiming: number
 
 
 LifecycleEvent:

@@ -314,7 +314,7 @@ Returns resource size information for given request.
   - `startTime` <[float]> Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
   - `domainLookupStart` <[float]> Time immediately before the browser starts the domain name lookup for the
     resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `domainLookupEnd` <[float]> Time immediately after the browser starts the domain name lookup for the resource.
+  - `domainLookupEnd` <[float]> Time immediately after the browser ends the domain name lookup for the resource.
     The value is given in milliseconds relative to `startTime`, -1 if not available.
   - `connectStart` <[float]> Time immediately before the user agent starts establishing the connection to the server
     to retrieve the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.

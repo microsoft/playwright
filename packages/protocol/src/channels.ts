@@ -398,6 +398,8 @@ export type APIResponse = {
   status: number,
   statusText: string,
   headers: NameValue[],
+  timing: ResourceTiming,
+  responseEndTiming: number,
 };
 
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';

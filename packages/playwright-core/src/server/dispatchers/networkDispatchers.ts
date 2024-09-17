@@ -212,7 +212,9 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
         status: fetchResponse.status,
         statusText: fetchResponse.statusText,
         headers: fetchResponse.headers,
-        fetchUid: fetchResponse.fetchUid
+        fetchUid: fetchResponse.fetchUid,
+        timing: fetchResponse.timing,
+        responseEndTiming: fetchResponse.responseEndTiming,
       }
     };
   }

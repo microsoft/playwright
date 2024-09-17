@@ -422,6 +422,20 @@ export abstract class APIRequestContext extends SdkObject {
 
         const chunks: Buffer[] = [];
         const notifyBodyFinished = () => {
+          const endAt = monotonicTime();
+          // spec: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming
+          const timing: channels.ResourceTiming = {
+            startTime: startAt,
+            domainLookupStart: dnsLookupAt ? 0 : -1,
+            domainLookupEnd: dnsLookupAt ? dnsLookupAt! - startAt : -1,
+            connectStart: dnsLookupAt ? dnsLookupAt! - startAt  : 0,
+            secureConnectionStart: dnsLookupAt ? dnsLookupAt! - startAt : 0,
+            connectEnd: (tlsHandshakeAt ?? tcpConnectionAt!) - startAt,
+            requestStart: (tlsHandshakeAt ?? tcpConnectionAt!) - startAt,
+            responseStart: responseAt - startAt,
+          };
+          const responseEndTiming = endAt - startAt;
+
           const body = Buffer.concat(chunks);
           notifyRequestFinished(body);
           fulfill({
@@ -429,7 +443,9 @@ export abstract class APIRequestContext extends SdkObject {
             status: response.statusCode || 0,
             statusText: response.statusMessage || '',
             headers: toHeadersArray(response.rawHeaders),
-            body
+            body,
+            timing,
+            responseEndTiming,
           });
         };
 

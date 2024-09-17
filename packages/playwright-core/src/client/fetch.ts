@@ -332,6 +332,13 @@ export class APIResponse implements api.APIResponse {
     return this._headers.headersArray();
   }
 
+  timing() {
+    return {
+      ...this._initializer.timing,
+      responseEnd: this._initializer.responseEndTiming,
+    };
+  }
+
   async body(): Promise<Buffer> {
     try {
       const result = await this._request._channel.fetchResponseBody({ fetchUid: this._fetchUid() });

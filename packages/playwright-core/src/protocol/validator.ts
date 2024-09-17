@@ -224,6 +224,8 @@ scheme.APIResponse = tObject({
   status: tNumber,
   statusText: tString,
   headers: tArray(tType('NameValue')),
+  timing: tType('ResourceTiming'),
+  responseEndTiming: tNumber,
 });
 scheme.LifecycleEvent = tEnum(['load', 'domcontentloaded', 'networkidle', 'commit']);
 scheme.LocalUtilsInitializer = tObject({
