@@ -127,6 +127,12 @@ test('should complain about newer version of trace in old viewer', async ({ show
   await expect(traceViewer.page.getByText('The trace was created by a newer version of Playwright and is not supported by this version of the viewer.')).toBeVisible();
 });
 
+test('should properly synchronize local and remote time', async ({ showTraceViewer, asset }, testInfo) => {
+  const traceViewer = await showTraceViewer([asset('trace-remote-time-diff.zip')]);
+  // The total duration should be sub 10s, rather than 16h.
+  await expect(traceViewer.page.locator('.timeline-time').last()).toHaveText('8.5s');
+});
+
 test('should contain action info', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.selectAction('locator.click');
