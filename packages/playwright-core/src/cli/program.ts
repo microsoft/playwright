@@ -567,10 +567,6 @@ async function codegen(options: Options & { target: string, output?: string, tes
     tracesDir,
   });
   dotenv.config({ path: 'playwright.env' });
-  if (process.env.PW_RECORDER_IS_TRACE_VIEWER) {
-    await fs.promises.mkdir(tracesDir, { recursive: true });
-    await context.tracing.start({ name: 'trace', _live: true });
-  }
   await context._enableRecorder({
     language,
     launchOptions,
