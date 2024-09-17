@@ -22,7 +22,7 @@ import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { StackFrame } from '@protocol/channels';
 
-type ErrorDescription = {
+export type ErrorDescription = {
   action?: modelUtil.ActionTraceEventInContext;
   stack?: StackFrame[];
 };
