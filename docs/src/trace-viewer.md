@@ -132,7 +132,7 @@ npx playwright show-report
 * langs: js
 
 Traces should be run on continuous integration on the first retry of a failed test
-by setting the `trace: 'on-first-retry'` option in the test configuration file. This will produce a `trace.pwtrace.zip` file for each test that was retried.
+by setting the `trace: 'on-first-retry'` option in the test configuration file. This will produce a `trace.zip` file for each test that was retried.
 
 ```js tab=js-test title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
@@ -155,7 +155,7 @@ const page = await context.newPage();
 await page.goto('https://playwright.dev');
 
 // Stop tracing and export it into a zip archive.
-await context.tracing.stop({ path: 'trace.pwtrace.zip' });
+await context.tracing.stop({ path: 'trace.zip' });
 ```
 
 Available options to record a trace:
@@ -185,7 +185,7 @@ Options for tracing are:
 - `off`: Do not record trace. (default)
 - `retain-on-failure`: Record trace for each test, but remove all traces from successful test runs.
 
-This will record the trace and place it into the file named `trace.pwtrace.zip` in your `test-results` directory.
+This will record the trace and place it into the file named `trace.zip` in your `test-results` directory.
 
 <details>
 <summary>If you are not using Pytest, click here to learn how to record traces.</summary>
@@ -201,7 +201,7 @@ page = await context.new_page()
 await page.goto("https://playwright.dev")
 
 # Stop tracing and export it into a zip archive.
-await context.tracing.stop(path = "trace.pwtrace.zip")
+await context.tracing.stop(path = "trace.zip")
 ```
 
 ```python sync
@@ -215,7 +215,7 @@ page = context.new_page()
 page.goto("https://playwright.dev")
 
 # Stop tracing and export it into a zip archive.
-context.tracing.stop(path = "trace.pwtrace.zip")
+context.tracing.stop(path = "trace.zip")
 ```
 
 </details>
@@ -240,10 +240,10 @@ page.navigate("https://playwright.dev");
 
 // Stop tracing and export it into a zip archive.
 context.tracing().stop(new Tracing.StopOptions()
-  .setPath(Paths.get("trace.pwtracezip")));
+  .setPath(Paths.get("trace.zip")));
 ```
 
-This will record the trace and place it into the file named `trace.pwtrace.zip`.
+This will record the trace and place it into the file named `trace.zip`.
 
 ## Recording a trace
 * langs: csharp
@@ -466,22 +466,22 @@ public class ExampleTest : PageTest
 
 ## Opening the trace
 
-You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev). Make sure to add the full path to where your `trace.pwtrace.zip` file is located.
+You can open the saved trace using the Playwright CLI or in your browser on [`trace.playwright.dev`](https://trace.playwright.dev). Make sure to add the full path to where your `trace.zip` file is located.
 
 ```bash js
-npx playwright show-trace path/to/trace.pwtrace.zip
+npx playwright show-trace path/to/trace.zip
 ```
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="show-trace trace.pwtrace.zip"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="show-trace trace.zip"
 ```
 
 ```bash python
-playwright show-trace trace.pwtrace.zip
+playwright show-trace trace.zip
 ```
 
 ```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 show-trace trace.pwtrace.zip
+pwsh bin/Debug/netX/playwright.ps1 show-trace trace.zip
 ```
 
 ## Using [trace.playwright.dev](https://trace.playwright.dev)
@@ -496,19 +496,19 @@ pwsh bin/Debug/netX/playwright.ps1 show-trace trace.pwtrace.zip
 You can open remote traces using its URL. They could be generated on a CI run which makes it easy to view the remote trace without having to manually download the file.
 
 ```bash js
-npx playwright show-trace https://example.com/trace.pwtrace.zip
+npx playwright show-trace https://example.com/trace.zip
 ```
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="show-trace https://example.com/trace.pwtrace.zip"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="show-trace https://example.com/trace.zip"
 ```
 
 ```bash python
-playwright show-trace https://example.com/trace.pwtrace.zip
+playwright show-trace https://example.com/trace.zip
 ```
 
 ```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 show-trace https://example.com/trace.pwtrace.zip
+pwsh bin/Debug/netX/playwright.ps1 show-trace https://example.com/trace.zip
 ```
 
 

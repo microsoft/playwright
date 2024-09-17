@@ -799,7 +799,7 @@ it.describe('screencast', () => {
     it.fixme(!headless || !!process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW, 'different trace screencast image size on all browsers');
 
     const size = { width: 500, height: 400 };
-    const traceFile = testInfo.outputPath('trace.pwtrace.zip');
+    const traceFile = testInfo.outputPath('trace.zip');
 
     const context = await browser.newContext({
       recordVideo: {

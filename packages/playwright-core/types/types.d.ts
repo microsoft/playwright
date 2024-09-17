@@ -19927,7 +19927,7 @@ export interface Touchscreen {
  * await context.tracing.start({ screenshots: true, snapshots: true });
  * const page = await context.newPage();
  * await page.goto('https://playwright.dev');
- * await context.tracing.stop({ path: 'trace.pwtrace.zip' });
+ * await context.tracing.stop({ path: 'trace.zip' });
  * ```
  *
  */
@@ -19941,7 +19941,7 @@ export interface Tracing {
    * await context.tracing.start({ screenshots: true, snapshots: true });
    * const page = await context.newPage();
    * await page.goto('https://playwright.dev');
-   * await context.tracing.stop({ path: 'trace.pwtrace.zip' });
+   * await context.tracing.stop({ path: 'trace.zip' });
    * ```
    *
    * @param options
@@ -19996,12 +19996,12 @@ export interface Tracing {
    * await context.tracing.startChunk();
    * await page.getByText('Get Started').click();
    * // Everything between startChunk and stopChunk will be recorded in the trace.
-   * await context.tracing.stopChunk({ path: 'trace1.pwtrace.zip' });
+   * await context.tracing.stopChunk({ path: 'trace1.zip' });
    *
    * await context.tracing.startChunk();
    * await page.goto('http://example.com');
    * // Save a second trace file with different actions.
-   * await context.tracing.stopChunk({ path: 'trace2.pwtrace.zip' });
+   * await context.tracing.stopChunk({ path: 'trace2.zip' });
    * ```
    *
    * @param options
