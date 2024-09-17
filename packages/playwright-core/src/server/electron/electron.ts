@@ -36,6 +36,7 @@ import type { BrowserWindow } from 'electron';
 import type { Progress } from '../progress';
 import { ProgressController } from '../progress';
 import { helper } from '../helper';
+import type * as types from '../types';
 import { eventsHelper } from '../../utils/eventsHelper';
 import type { BrowserOptions, BrowserProcess } from '../browser';
 import type { Playwright } from '../playwright';
@@ -265,7 +266,7 @@ export class Electron extends SdkObject {
         close: gracefullyClose,
         kill
       };
-      const contextOptions: channels.BrowserNewContextParams = {
+      const contextOptions: types.BrowserContextOptions = {
         ...options,
         noDefaultViewport: true,
       };

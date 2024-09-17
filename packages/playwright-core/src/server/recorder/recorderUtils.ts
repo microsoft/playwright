@@ -20,6 +20,9 @@ import type { Page } from '../page';
 import type { ActionInContext } from '../codegen/types';
 import type { Frame } from '../frames';
 import type * as actions from './recorderActions';
+import { toKeyboardModifiers } from '../codegen/language';
+import { serializeExpectedTextValues } from '../../utils/expectUtils';
+import { createGuid, monotonicTime } from '../../utils';
 
 export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {
   let title = metadata.apiName || metadata.method;
@@ -57,7 +60,7 @@ export function mainFrameForAction(pageAliases: Map<Page, string>, actionInConte
   const pageAlias = actionInContext.frame.pageAlias;
   const page = [...pageAliases.entries()].find(([, alias]) => pageAlias === alias)?.[0];
   if (!page)
-    throw new Error('Internal error: page not found');
+    throw new Error(`Internal error: page ${pageAlias} not found in [${[...pageAliases.values()]}]`);
   return page.mainFrame();
 }
 
@@ -71,4 +74,78 @@ export async function frameForAction(pageAliases: Map<Page, string>, actionInCon
   if (!result)
     throw new Error('Internal error: frame not found');
   return result.frame;
+}
+
+export function traceParamsForAction(actionInContext: ActionInContext) {
+  const { action } = actionInContext;
+
+  switch (action.name) {
+    case 'navigate': return { url: action.url };
+    case 'openPage': return {};
+    case 'closePage': return {};
+  }
+
+  const selector = buildFullSelector(actionInContext.frame.framePath, action.selector);
+  switch (action.name) {
+    case 'click': return { selector, clickCount: action.clickCount };
+    case 'press': {
+      const modifiers = toKeyboardModifiers(action.modifiers);
+      const shortcut = [...modifiers, action.key].join('+');
+      return { selector, key: shortcut };
+    }
+    case 'fill': return { selector, text: action.text };
+    case 'setInputFiles': return { selector, files: action.files };
+    case 'check': return { selector };
+    case 'uncheck': return { selector };
+    case 'select': return { selector, values: action.options.map(value => ({ value })) };
+    case 'assertChecked': {
+      return {
+        selector,
+        expression: 'to.be.checked',
+        isNot: !action.checked,
+      };
+    }
+    case 'assertText': {
+      return {
+        selector,
+        expression: 'to.have.text',
+        expectedText: serializeExpectedTextValues([action.text], { matchSubstring: true, normalizeWhiteSpace: true }),
+        isNot: false,
+      };
+    }
+    case 'assertValue': {
+      return {
+        selector,
+        expression: 'to.have.value',
+        expectedValue: action.value,
+        isNot: false,
+      };
+    }
+    case 'assertVisible': {
+      return {
+        selector,
+        expression: 'to.be.visible',
+        isNot: false,
+      };
+    }
+  }
+}
+
+export function callMetadataForAction(pageAliases: Map<Page, string>, actionInContext: ActionInContext): { callMetadata: CallMetadata, mainFrame: Frame } {
+  const mainFrame = mainFrameForAction(pageAliases, actionInContext);
+  const { action } = actionInContext;
+  const callMetadata: CallMetadata = {
+    id: `call@${createGuid()}`,
+    apiName: 'frame.' + action.name,
+    objectId: mainFrame.guid,
+    pageId: mainFrame._page.guid,
+    frameId: mainFrame.guid,
+    startTime: monotonicTime(),
+    endTime: 0,
+    type: 'Frame',
+    method: action.name,
+    params: traceParamsForAction(actionInContext),
+    log: [],
+  };
+  return { callMetadata, mainFrame };
 }

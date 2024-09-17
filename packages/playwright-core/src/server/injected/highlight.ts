@@ -90,7 +90,8 @@ export class Highlight {
   }
 
   install() {
-    this._injectedScript.document.documentElement.appendChild(this._glassPaneElement);
+    if (!this._injectedScript.document.documentElement.contains(this._glassPaneElement))
+      this._injectedScript.document.documentElement.appendChild(this._glassPaneElement);
   }
 
   setLanguage(language: Language) {

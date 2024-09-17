@@ -23,8 +23,11 @@ import { createSocket, createTLSSocket } from '../utils/happy-eyeballs';
 import { escapeHTML, generateSelfSignedCertificate, ManualPromise, rewriteErrorMessage } from '../utils';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
 import { SocksProxy } from '../common/socksProxy';
-import type * as channels from '@protocol/channels';
+import type * as types from './types';
 import { debugLogger } from '../utils/debugLogger';
+import { createProxyAgent } from './fetch';
+import { EventEmitter } from 'events';
+import { verifyClientCertificates } from './browserContext';
 
 let dummyServerTlsOptions: tls.TlsOptions | undefined = undefined;
 function loadDummyServerCertsIfNeeded() {
@@ -94,7 +97,11 @@ class SocksProxyConnection {
   }
 
   async connect() {
-    this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
+    if (this.socksProxy.proxyAgentFromOptions)
+      this.target = await this.socksProxy.proxyAgentFromOptions.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
+    else
+      this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
+
     this.target.once('close', this._targetCloseEventListener);
     this.target.once('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
     if (this._closed) {
@@ -233,12 +240,15 @@ export class ClientCertificatesProxy {
   ignoreHTTPSErrors: boolean | undefined;
   secureContextMap: Map<string, tls.SecureContext> = new Map();
   alpnCache: ALPNCache;
+  proxyAgentFromOptions: ReturnType<typeof createProxyAgent> | undefined;
 
   constructor(
-    contextOptions: Pick<channels.BrowserNewContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors'>
+    contextOptions: Pick<types.BrowserContextOptions, 'clientCertificates' | 'ignoreHTTPSErrors' | 'proxy'>
   ) {
+    verifyClientCertificates(contextOptions.clientCertificates);
     this.alpnCache = new ALPNCache();
     this.ignoreHTTPSErrors = contextOptions.ignoreHTTPSErrors;
+    this.proxyAgentFromOptions = contextOptions.proxy ? createProxyAgent(contextOptions.proxy) : undefined;
     this._initSecureContexts(contextOptions.clientCertificates);
     this._socksProxy = new SocksProxy();
     this._socksProxy.setPattern('*');
@@ -261,9 +271,9 @@ export class ClientCertificatesProxy {
     loadDummyServerCertsIfNeeded();
   }
 
-  _initSecureContexts(clientCertificates: channels.BrowserNewContextOptions['clientCertificates']) {
+  _initSecureContexts(clientCertificates: types.BrowserContextOptions['clientCertificates']) {
     // Step 1. Group certificates by origin.
-    const origin2certs = new Map<string, channels.BrowserNewContextOptions['clientCertificates']>();
+    const origin2certs = new Map<string, types.BrowserContextOptions['clientCertificates']>();
     for (const cert of clientCertificates || []) {
       const origin = normalizeOrigin(cert.origin);
       const certs = origin2certs.get(origin) || [];
@@ -282,9 +292,9 @@ export class ClientCertificatesProxy {
     }
   }
 
-  public async listen(): Promise<string> {
+  public async listen() {
     const port = await this._socksProxy.listen(0, '127.0.0.1');
-    return `socks5://127.0.0.1:${port}`;
+    return { server: `socks5://127.0.0.1:${port}` };
   }
 
   public async close() {
@@ -301,7 +311,7 @@ function normalizeOrigin(origin: string): string {
 }
 
 function convertClientCertificatesToTLSOptions(
-  clientCertificates: channels.BrowserNewContextOptions['clientCertificates']
+  clientCertificates: types.BrowserContextOptions['clientCertificates']
 ): Pick<https.RequestOptions, 'pfx' | 'key' | 'cert'> | undefined {
   if (!clientCertificates || !clientCertificates.length)
     return;
@@ -322,7 +332,7 @@ function convertClientCertificatesToTLSOptions(
 }
 
 export function getMatchingTLSOptionsForOrigin(
-  clientCertificates: channels.BrowserNewContextOptions['clientCertificates'],
+  clientCertificates: types.BrowserContextOptions['clientCertificates'],
   origin: string
 ): Pick<https.RequestOptions, 'pfx' | 'key' | 'cert'> | undefined {
   const matchingCerts = clientCertificates?.filter(c =>

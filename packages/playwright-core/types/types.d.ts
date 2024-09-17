@@ -2555,6 +2555,11 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * Force the browser to perform garbage collection.
+   */
+  forceGarbageCollection(): Promise<void>;
+
+  /**
    * Returns frame matching the specified criteria. Either `name` or `url` must be specified.
    *
    * **Usage**
@@ -9197,8 +9202,6 @@ export interface Browser {
      * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
      * with an exact match to the request origin that the certificate is valid for.
      *
-     * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
-     *
      * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
      * work by replacing `localhost` with `local.playwright`.
      */
@@ -13055,7 +13058,10 @@ export interface Locator {
   nth(index: number): Locator;
 
   /**
-   * Creates a locator that matches either of the two locators.
+   * Creates a locator matching all elements that match one or both of the two locators.
+   *
+   * Note that when both locators match something, the resulting locator will have multiple matches and violate
+   * [locator strictness](https://playwright.dev/docs/locators#strictness) guidelines.
    *
    * **Usage**
    *
@@ -13915,8 +13921,6 @@ export interface BrowserType<Unused = {}> {
      * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
      * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
      * with an exact match to the request origin that the certificate is valid for.
-     *
-     * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
      *
      * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
      * work by replacing `localhost` with `local.playwright`.
@@ -16342,8 +16346,6 @@ export interface APIRequest {
      * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
      * with an exact match to the request origin that the certificate is valid for.
      *
-     * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
-     *
      * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
      * work by replacing `localhost` with `local.playwright`.
      */
@@ -16559,7 +16561,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -16689,7 +16691,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -16807,7 +16809,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -16893,7 +16895,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -16979,7 +16981,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -17107,7 +17109,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -17193,7 +17195,7 @@ export interface APIRequestContext {
      * as this request body. If this parameter is specified `content-type` header will be set to
      * `application/x-www-form-urlencoded` unless explicitly provided.
      */
-    form?: { [key: string]: string|number|boolean; };
+    form?: { [key: string]: string|number|boolean; }|FormData;
 
     /**
      * Allows to set HTTP headers. These headers will apply to the fetched request as well as any redirects initiated by
@@ -20703,8 +20705,6 @@ export interface BrowserContextOptions {
    * a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally,
    * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
    * with an exact match to the request origin that the certificate is valid for.
-   *
-   * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
    *
    * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
    * work by replacing `localhost` with `local.playwright`.

@@ -28,7 +28,7 @@ import { getUserAgent } from '../utils/userAgent';
 import { assert, createGuid, monotonicTime } from '../utils';
 import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 import { BrowserContext, verifyClientCertificates } from './browserContext';
-import { CookieStore, domainMatches } from './cookieStore';
+import { CookieStore, domainMatches, parseRawCookie } from './cookieStore';
 import { MultipartFormData } from './formData';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../utils/happy-eyeballs';
 import type { CallMetadata } from './instrumentation';
@@ -39,7 +39,6 @@ import { ProgressController } from './progress';
 import { Tracing } from './trace/recorder/tracing';
 import type * as types from './types';
 import type { HeadersArray, ProxySettings } from './types';
-import { kMaxCookieExpiresDateInSeconds } from './network';
 import { getMatchingTLSOptionsForOrigin, rewriteOpenSSLErrorIfNeeded } from './socksClientCertificatesInterceptor';
 
 type FetchRequestOptions = {
@@ -50,7 +49,7 @@ type FetchRequestOptions = {
   timeoutSettings: TimeoutSettings;
   ignoreHTTPSErrors?: boolean;
   baseURL?: string;
-  clientCertificates?: channels.BrowserNewContextOptions['clientCertificates'];
+  clientCertificates?: types.BrowserContextOptions['clientCertificates'];
 };
 
 type HeadersObject = Readonly<{ [name: string]: string }>;
@@ -169,23 +168,11 @@ export abstract class APIRequestContext extends SdkObject {
     const method = params.method?.toUpperCase() || 'GET';
     const proxy = defaults.proxy;
     let agent;
-    // When `clientCertificates` is present, we set the `proxy` property to our own socks proxy
-    // for the browser to use. However, we don't need it here, because we already respect
-    // `clientCertificates` when fetching from Node.js.
-    if (proxy && !defaults.clientCertificates?.length && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass)) {
-      const proxyOpts = url.parse(proxy.server);
-      if (proxyOpts.protocol?.startsWith('socks')) {
-        agent = new SocksProxyAgent({
-          host: proxyOpts.hostname,
-          port: proxyOpts.port || undefined,
-        });
-      } else {
-        if (proxy.username)
-          proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
-        // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
-        agent = new HttpsProxyAgent(proxyOpts);
-      }
-    }
+    // We skip 'per-context' in order to not break existing users. 'per-context' was previously used to
+    // workaround an upstream Chromium bug. Can be removed in the future.
+    if (proxy && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass))
+      agent = createProxyAgent(proxy);
+
 
     const timeout = defaults.timeoutSettings.timeout(params);
     const deadline = timeout && (monotonicTime() + timeout);
@@ -578,8 +565,6 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       if (!/^\w+:\/\//.test(url))
         url = 'http://' + url;
       proxy.server = url;
-      if (options.clientCertificates)
-        throw new Error('Cannot specify both proxy and clientCertificates');
     }
     if (options.storageState) {
       this._origins = options.storageState.origins;
@@ -630,6 +615,20 @@ export class GlobalAPIRequestContext extends APIRequestContext {
   }
 }
 
+export function createProxyAgent(proxy: types.ProxySettings) {
+  const proxyOpts = url.parse(proxy.server);
+  if (proxyOpts.protocol?.startsWith('socks')) {
+    return new SocksProxyAgent({
+      host: proxyOpts.hostname,
+      port: proxyOpts.port || undefined,
+    });
+  }
+  if (proxy.username)
+    proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
+  // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
+  return new HttpsProxyAgent(proxyOpts);
+}
+
 function toHeadersArray(rawHeaders: string[]): types.HeadersArray {
   const result: types.HeadersArray = [];
   for (let i = 0; i < rawHeaders.length; i += 2)
@@ -640,27 +639,10 @@ function toHeadersArray(rawHeaders: string[]): types.HeadersArray {
 const redirectStatus = [301, 302, 303, 307, 308];
 
 function parseCookie(header: string): channels.NetworkCookie | null {
-  const pairs = header.split(';').filter(s => s.trim().length > 0).map(p => {
-    let key = '';
-    let value = '';
-    const separatorPos = p.indexOf('=');
-    if (separatorPos === -1) {
-      // If only a key is specified, the value is left undefined.
-      key = p.trim();
-    } else {
-      // Otherwise we assume that the key is the element before the first `=`
-      key = p.slice(0, separatorPos).trim();
-      // And the value is the rest of the string.
-      value = p.slice(separatorPos + 1).trim();
-    }
-    return [key, value];
-  });
-  if (!pairs.length)
+  const raw = parseRawCookie(header);
+  if (!raw)
     return null;
-  const [name, value] = pairs[0];
   const cookie: channels.NetworkCookie = {
-    name,
-    value,
     domain: '',
     path: '',
     expires: -1,
@@ -668,62 +650,9 @@ function parseCookie(header: string): channels.NetworkCookie | null {
     secure: false,
     // From https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
     // The cookie-sending behavior if SameSite is not specified is SameSite=Lax.
-    sameSite: 'Lax'
+    sameSite: 'Lax',
+    ...raw
   };
-  for (let i = 1; i < pairs.length; i++) {
-    const [name, value] = pairs[i];
-    switch (name.toLowerCase()) {
-      case 'expires':
-        const expiresMs = (+new Date(value));
-        // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.1
-        if (isFinite(expiresMs)) {
-          if (expiresMs <= 0)
-            cookie.expires = 0;
-          else
-            cookie.expires = Math.min(expiresMs / 1000, kMaxCookieExpiresDateInSeconds);
-        }
-        break;
-      case 'max-age':
-        const maxAgeSec = parseInt(value, 10);
-        if (isFinite(maxAgeSec)) {
-          // From https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.2
-          // If delta-seconds is less than or equal to zero (0), let expiry-time
-          // be the earliest representable date and time.
-          if (maxAgeSec <= 0)
-            cookie.expires = 0;
-          else
-            cookie.expires = Math.min(Date.now() / 1000 + maxAgeSec, kMaxCookieExpiresDateInSeconds);
-        }
-        break;
-      case 'domain':
-        cookie.domain = value.toLocaleLowerCase() || '';
-        if (cookie.domain && !cookie.domain.startsWith('.') && cookie.domain.includes('.'))
-          cookie.domain = '.' + cookie.domain;
-        break;
-      case 'path':
-        cookie.path = value || '';
-        break;
-      case 'secure':
-        cookie.secure = true;
-        break;
-      case 'httponly':
-        cookie.httpOnly = true;
-        break;
-      case 'samesite':
-        switch (value.toLowerCase()) {
-          case 'none':
-            cookie.sameSite = 'None';
-            break;
-          case 'lax':
-            cookie.sameSite = 'Lax';
-            break;
-          case 'strict':
-            cookie.sameSite = 'Strict';
-            break;
-        }
-        break;
-    }
-  }
   return cookie;
 }
 

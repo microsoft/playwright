@@ -16,6 +16,7 @@
 
 import {
   captureRawStack,
+  createGuid,
   isString,
   pollAgainstDeadline } from 'playwright-core/lib/utils';
 import type { ExpectZone } from 'playwright-core/lib/utils';
@@ -104,33 +105,43 @@ export const printReceivedStringContainExpectedResult = (
 
 type ExpectMessage = string | { message?: string };
 
-function createMatchers(actual: unknown, info: ExpectMetaInfo): any {
-  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(info));
+function createMatchers(actual: unknown, info: ExpectMetaInfo, prefix: string[]): any {
+  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(info, prefix));
 }
 
-function createExpect(info: ExpectMetaInfo) {
+const getCustomMatchersSymbol = Symbol('get custom matchers');
+
+function qualifiedMatcherName(qualifier: string[], matcherName: string) {
+  return qualifier.join(':') + '$' + matcherName;
+}
+
+function createExpect(info: ExpectMetaInfo, prefix: string[], customMatchers: Record<string, Function>) {
   const expectInstance: Expect<{}> = new Proxy(expectLibrary, {
     apply: function(target: any, thisArg: any, argumentsList: [unknown, ExpectMessage?]) {
       const [actual, messageOrOptions] = argumentsList;
       const message = isString(messageOrOptions) ? messageOrOptions : messageOrOptions?.message || info.message;
       const newInfo = { ...info, message };
-      if (newInfo.isPoll) {
+      if (newInfo.poll) {
         if (typeof actual !== 'function')
           throw new Error('`expect.poll()` accepts only function as a first argument');
-        newInfo.generator = actual as any;
+        newInfo.poll.generator = actual as any;
       }
-      return createMatchers(actual, newInfo);
+      return createMatchers(actual, newInfo, prefix);
     },
 
-    get: function(target: any, property: string) {
+    get: function(target: any, property: string | typeof getCustomMatchersSymbol) {
       if (property === 'configure')
         return configure;
 
       if (property === 'extend') {
         return (matchers: any) => {
+          const qualifier = [...prefix, createGuid()];
+
           const wrappedMatchers: any = {};
+          const extendedMatchers: any = { ...customMatchers };
           for (const [name, matcher] of Object.entries(matchers)) {
-            wrappedMatchers[name] = function(...args: any[]) {
+            const key = qualifiedMatcherName(qualifier, name);
+            wrappedMatchers[key] = function(...args: any[]) {
               const { isNot, promise, utils } = this;
               const newThis: ExpectMatcherState = {
                 isNot,
@@ -141,9 +152,12 @@ function createExpect(info: ExpectMetaInfo) {
               (newThis as any).equals = throwUnsupportedExpectMatcherError;
               return (matcher as any).call(newThis, ...args);
             };
+            Object.defineProperty(wrappedMatchers[key], 'name', { value: name });
+            extendedMatchers[name] = wrappedMatchers[key];
           }
           expectLibrary.extend(wrappedMatchers);
-          return expectInstance;
+
+          return createExpect(info, qualifier, extendedMatchers);
         };
       }
 
@@ -152,6 +166,9 @@ function createExpect(info: ExpectMetaInfo) {
           return configure({ soft: true })(actual, messageOrOptions) as any;
         };
       }
+
+      if (property === getCustomMatchersSymbol)
+        return customMatchers;
 
       if (property === 'poll') {
         return (actual: unknown, messageOrOptions?: ExpectMessage & { timeout?: number, intervals?: number[] }) => {
@@ -172,13 +189,13 @@ function createExpect(info: ExpectMetaInfo) {
     if ('soft' in configuration)
       newInfo.isSoft = configuration.soft;
     if ('_poll' in configuration) {
-      newInfo.isPoll = !!configuration._poll;
+      newInfo.poll = configuration._poll ? { ...info.poll, generator: () => {} } : undefined;
       if (typeof configuration._poll === 'object') {
-        newInfo.pollTimeout = configuration._poll.timeout;
-        newInfo.pollIntervals = configuration._poll.intervals;
+        newInfo.poll!.timeout = configuration._poll.timeout ?? newInfo.poll!.timeout;
+        newInfo.poll!.intervals = configuration._poll.intervals ?? newInfo.poll!.intervals;
       }
     }
-    return createExpect(newInfo);
+    return createExpect(newInfo, prefix, customMatchers);
   };
 
   return expectInstance;
@@ -232,24 +249,38 @@ type ExpectMetaInfo = {
   message?: string;
   isNot?: boolean;
   isSoft?: boolean;
-  isPoll?: boolean;
+  poll?: {
+    timeout?: number;
+    intervals?: number[];
+    generator: Generator;
+  };
   timeout?: number;
-  pollTimeout?: number;
-  pollIntervals?: number[];
-  generator?: Generator;
 };
 
 class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
   private _info: ExpectMetaInfo;
+  private _prefix: string[];
 
-  constructor(info: ExpectMetaInfo) {
+  constructor(info: ExpectMetaInfo, prefix: string[]) {
     this._info = { ...info };
+    this._prefix = prefix;
   }
 
   get(target: Object, matcherName: string | symbol, receiver: any): any {
     let matcher = Reflect.get(target, matcherName, receiver);
     if (typeof matcherName !== 'string')
       return matcher;
+
+    let resolvedMatcherName = matcherName;
+    for (let i = this._prefix.length; i > 0; i--) {
+      const qualifiedName = qualifiedMatcherName(this._prefix.slice(0, i), matcherName);
+      if (Reflect.has(target, qualifiedName)) {
+        matcher = Reflect.get(target, qualifiedName, receiver);
+        resolvedMatcherName = qualifiedName;
+        break;
+      }
+    }
+
     if (matcher === undefined)
       throw new Error(`expect: Property '${matcherName}' not found.`);
     if (typeof matcher !== 'function') {
@@ -257,10 +288,10 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         this._info.isNot = !this._info.isNot;
       return new Proxy(matcher, this);
     }
-    if (this._info.isPoll) {
+    if (this._info.poll) {
       if ((customAsyncMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
         throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
-      matcher = (...args: any[]) => pollMatcher(matcherName, !!this._info.isNot, this._info.pollIntervals, this._info.pollTimeout ?? currentExpectTimeout(), this._info.generator!, ...args);
+      matcher = (...args: any[]) => pollMatcher(resolvedMatcherName, this._info, this._prefix, ...args);
     }
     return (...args: any[]) => {
       const testInfo = currentTestInfo();
@@ -272,7 +303,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       const customMessage = this._info.message || '';
       const argsSuffix = computeArgsSuffix(matcherName, args);
 
-      const defaultTitle = `expect${this._info.isPoll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
+      const defaultTitle = `expect${this._info.poll ? '.poll' : ''}${this._info.isSoft ? '.soft' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
       const title = customMessage || defaultTitle;
 
       // This looks like it is unnecessary, but it isn't - we need to filter
@@ -306,7 +337,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         const callback = () => matcher.call(target, ...args);
         // toPass and poll matchers can contain other steps, expects and API calls,
         // so they behave like a retriable step.
-        const result = (matcherName === 'toPass' || this._info.isPoll) ?
+        const result = (matcherName === 'toPass' || this._info.poll) ?
           zones.run('stepZone', step, callback) :
           zones.run<ExpectZone, any>('expectZone', { title, stepId: step.stepId }, callback);
         if (result instanceof Promise)
@@ -320,25 +351,32 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
   }
 }
 
-async function pollMatcher(matcherName: any, isNot: boolean, pollIntervals: number[] | undefined, timeout: number, generator: () => any, ...args: any[]) {
+async function pollMatcher(qualifiedMatcherName: string, info: ExpectMetaInfo, prefix: string[], ...args: any[]) {
   const testInfo = currentTestInfo();
+  const poll = info.poll!;
+  const timeout = poll.timeout ?? currentExpectTimeout();
   const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
 
   const result = await pollAgainstDeadline<Error|undefined>(async () => {
     if (testInfo && currentTestInfo() !== testInfo)
       return { continuePolling: false, result: undefined };
 
-    const value = await generator();
-    let expectInstance = expectLibrary(value) as any;
-    if (isNot)
-      expectInstance = expectInstance.not;
+    const innerInfo: ExpectMetaInfo = {
+      ...info,
+      isSoft: false, // soft is outside of poll, not inside
+      poll: undefined,
+    };
+    const value = await poll.generator();
     try {
-      expectInstance[matcherName].call(expectInstance, ...args);
+      let matchers = createMatchers(value, innerInfo, prefix);
+      if (info.isNot)
+        matchers = matchers.not;
+      matchers[qualifiedMatcherName](...args);
       return { continuePolling: false, result: undefined };
     } catch (error) {
       return { continuePolling: true, result: error };
     }
-  }, deadline, pollIntervals ?? [100, 250, 500, 1000]);
+  }, deadline, poll.intervals ?? [100, 250, 500, 1000]);
 
   if (result.timedOut) {
     const message = result.result ? [
@@ -375,8 +413,15 @@ function computeArgsSuffix(matcherName: string, args: any[]) {
   return value ? `(${value})` : '';
 }
 
-export const expect: Expect<{}> = createExpect({}).extend(customMatchers);
+export const expect: Expect<{}> = createExpect({}, [], {}).extend(customMatchers);
 
 export function mergeExpects(...expects: any[]) {
-  return expect;
+  let merged = expect;
+  for (const e of expects) {
+    const internals = e[getCustomMatchersSymbol];
+    if (!internals) // non-playwright expects mutate the global expect, so we don't need to do anything special
+      continue;
+    merged = merged.extend(internals);
+  }
+  return merged;
 }

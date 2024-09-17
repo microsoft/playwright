@@ -311,7 +311,9 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      expect.extend({
+      import { test, expect as baseExpect } from '@playwright/test';
+
+      const expect = baseExpect.extend({
         toBeWithinRange(received, floor, ceiling) {
           const pass = received >= floor && received <= ceiling;
           if (pass) {
@@ -338,7 +340,6 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
         },
       });
 
-      import { test, expect } from '@playwright/test';
       test('fail', async ({}) => {
         expect(15).toBeWithinRange(10, 20);
         await expect(1).toBeFailingAsync(22);
@@ -349,8 +350,8 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toBe(`
 hook      |Before Hooks
-expect    |expect.toBeWithinRange @ a.test.ts:31
-expect    |expect.toBeFailingAsync @ a.test.ts:32
+expect    |expect.toBeWithinRange @ a.test.ts:32
+expect    |expect.toBeFailingAsync @ a.test.ts:33
 expect    |↪ error: Error: It fails!
 hook      |After Hooks
 hook      |Worker Cleanup
@@ -986,9 +987,12 @@ expect    |expect.poll.toHaveLength @ a.test.ts:14
 pw:api    |  page.goto(about:blank) @ a.test.ts:7
 test.step |  inner step attempt: 0 @ a.test.ts:8
 expect    |    expect.toBe @ a.test.ts:10
+expect    |  expect.toHaveLength @ a.test.ts:6
+expect    |  ↪ error: Error: expect(received).toHaveLength(expected)
 pw:api    |  page.goto(about:blank) @ a.test.ts:7
 test.step |  inner step attempt: 1 @ a.test.ts:8
 expect    |    expect.toBe @ a.test.ts:10
+expect    |  expect.toHaveLength @ a.test.ts:6
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -1035,9 +1039,12 @@ expect    |expect.poll.toBe @ a.test.ts:13
 expect    |  expect.toHaveText @ a.test.ts:7
 test.step |  iteration 1 @ a.test.ts:9
 expect    |    expect.toBeVisible @ a.test.ts:10
+expect    |  expect.toBe @ a.test.ts:6
+expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 expect    |  expect.toHaveText @ a.test.ts:7
 test.step |  iteration 2 @ a.test.ts:9
 expect    |    expect.toBeVisible @ a.test.ts:10
+expect    |  expect.toBe @ a.test.ts:6
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context

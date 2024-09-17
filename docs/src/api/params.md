@@ -405,8 +405,16 @@ Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to d
 Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
 for all status codes.
 
-## js-python-fetch-option-form
-* langs: js, python
+## js-fetch-option-form
+* langs: js
+- `form` <[Object]<[string], [string]|[float]|[boolean]>|[FormData]>
+
+Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
+this request body. If this parameter is specified `content-type` header will be set to `application/x-www-form-urlencoded`
+unless explicitly provided.
+
+## python-fetch-option-form
+* langs: python
 - `form` <[Object]<[string], [string]|[float]|[boolean]>>
 
 Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
@@ -549,10 +557,6 @@ TLS Client Authentication allows the server to request a client certificate and 
 **Details**
 
 An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`, a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally, `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided with an exact match to the request origin that the certificate is valid for.
-
-:::note
-Using Client Certificates in combination with Proxy Servers is not supported.
-:::
 
 :::note
 When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it work by replacing `localhost` with `local.playwright`.

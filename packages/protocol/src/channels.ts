@@ -1933,6 +1933,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   exposeBinding(params: PageExposeBindingParams, metadata?: CallMetadata): Promise<PageExposeBindingResult>;
   goBack(params: PageGoBackParams, metadata?: CallMetadata): Promise<PageGoBackResult>;
   goForward(params: PageGoForwardParams, metadata?: CallMetadata): Promise<PageGoForwardResult>;
+  forceGarbageCollection(params?: PageForceGarbageCollectionParams, metadata?: CallMetadata): Promise<PageForceGarbageCollectionResult>;
   registerLocatorHandler(params: PageRegisterLocatorHandlerParams, metadata?: CallMetadata): Promise<PageRegisterLocatorHandlerResult>;
   resolveLocatorHandlerNoReply(params: PageResolveLocatorHandlerNoReplyParams, metadata?: CallMetadata): Promise<PageResolveLocatorHandlerNoReplyResult>;
   unregisterLocatorHandler(params: PageUnregisterLocatorHandlerParams, metadata?: CallMetadata): Promise<PageUnregisterLocatorHandlerResult>;
@@ -2070,6 +2071,9 @@ export type PageGoForwardOptions = {
 export type PageGoForwardResult = {
   response?: ResponseChannel,
 };
+export type PageForceGarbageCollectionParams = {};
+export type PageForceGarbageCollectionOptions = {};
+export type PageForceGarbageCollectionResult = void;
 export type PageRegisterLocatorHandlerParams = {
   selector: string,
   noWaitAfter?: boolean,

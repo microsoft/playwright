@@ -191,6 +191,13 @@ class Recorder {
     await this.page.mouse.up(options);
   }
 
+  async trustedDblclick() {
+    await this.page.mouse.down();
+    await this.page.mouse.up();
+    await this.page.mouse.down({ clickCount: 2 });
+    await this.page.mouse.up();
+  }
+
   async focusElement(selector: string): Promise<string> {
     return this.waitForHighlight(() => this.page.focus(selector));
   }

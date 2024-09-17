@@ -16,7 +16,7 @@
 
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
-import { BrowserContext, createClientCertificatesProxyIfNeeded, validateBrowserContextOptions } from './browserContext';
+import { BrowserContext, validateBrowserContextOptions } from './browserContext';
 import { Page } from './page';
 import { Download } from './download';
 import type { ProxySettings } from './types';
@@ -25,6 +25,7 @@ import type { RecentLogsCollector } from '../utils/debugLogger';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
+import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);
@@ -41,7 +42,7 @@ export type BrowserOptions = {
   downloadsPath: string,
   tracesDir: string,
   headful?: boolean,
-  persistent?: channels.BrowserNewContextParams,  // Undefined means no persistent context.
+  persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.
   browserProcess: BrowserProcess,
   customExecutablePath?: string;
   proxy?: ProxySettings,
@@ -74,15 +75,21 @@ export abstract class Browser extends SdkObject {
     this.instrumentation.onBrowserOpen(this);
   }
 
-  abstract doCreateNewContext(options: channels.BrowserNewContextParams): Promise<BrowserContext>;
+  abstract doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext>;
   abstract contexts(): BrowserContext[];
   abstract isConnected(): boolean;
   abstract version(): string;
   abstract userAgent(): string;
 
-  async newContext(metadata: CallMetadata, options: channels.BrowserNewContextParams): Promise<BrowserContext> {
+  async newContext(metadata: CallMetadata, options: types.BrowserContextOptions): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this.options);
-    const clientCertificatesProxy = await createClientCertificatesProxyIfNeeded(options, this.options);
+    let clientCertificatesProxy: ClientCertificatesProxy | undefined;
+    if (options.clientCertificates?.length) {
+      clientCertificatesProxy = new ClientCertificatesProxy(options);
+      options = { ...options };
+      options.proxyOverride = await clientCertificatesProxy.listen();
+      options.internalIgnoreHTTPSErrors = true;
+    }
     let context;
     try {
       context = await this.doCreateNewContext(options);

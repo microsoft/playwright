@@ -73,6 +73,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     return 'restarted';
 
   const options: WatchModeOptions = { ...initialOptions };
+  let bufferMode = false;
 
   const testServerDispatcher = new TestServerDispatcher(configLocation);
   const transport = new InMemoryTransport(
@@ -94,6 +95,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
 
   const teleSuiteUpdater = new TeleSuiteUpdater({ pathSeparator: path.sep, onUpdate() { } });
 
+  const dirtyTestFiles = new Set<string>();
   const dirtyTestIds = new Set<string>();
   let onDirtyTests = new ManualPromise<'changed'>();
 
@@ -110,19 +112,22 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
       teleSuiteUpdater.processListReport(report);
 
       for (const test of teleSuiteUpdater.rootSuite!.allTests()) {
-        if (changedFiles.has(test.location.file))
+        if (changedFiles.has(test.location.file)) {
+          dirtyTestFiles.add(test.location.file);
           dirtyTestIds.add(test.id);
+        }
       }
-
       changedFiles.clear();
 
-      if (dirtyTestIds.size > 0)
+      if (dirtyTestIds.size > 0) {
         onDirtyTests.resolve('changed');
+        onDirtyTests = new ManualPromise();
+      }
     });
   });
   testServerConnection.onReport(report => teleSuiteUpdater.processTestReportEvent(report));
 
-  await testServerConnection.initialize({ interceptStdio: false, watchTestDirs: true });
+  await testServerConnection.initialize({ interceptStdio: false, watchTestDirs: true, populateDependenciesOnList: true });
   await testServerConnection.runGlobalSetup({});
 
   const { report } = await testServerConnection.listTests({});
@@ -133,20 +138,28 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   let lastRun: { type: 'changed' | 'regular' | 'failed', failedTestIds?: string[], dirtyTestIds?: string[] } = { type: 'regular' };
   let result: FullResult['status'] = 'passed';
 
-  // Enter the watch loop.
-  await runTests(options, testServerConnection);
-
   while (true) {
-    printPrompt();
+    if (bufferMode)
+      printBufferPrompt(dirtyTestFiles, teleSuiteUpdater.config!.rootDir);
+    else
+      printPrompt();
+
     const command = await Promise.race([
       onDirtyTests,
       readCommand(),
     ]);
 
-    if (command === 'changed') {
-      onDirtyTests = new ManualPromise();
+    if (bufferMode && command === 'changed')
+      continue;
+
+    const shouldRunChangedFiles = bufferMode ? command === 'run' : command === 'changed';
+    if (shouldRunChangedFiles) {
+      if (dirtyTestIds.size === 0)
+        continue;
+
       const testIds = [...dirtyTestIds];
       dirtyTestIds.clear();
+      dirtyTestFiles.clear();
       await runTests(options, testServerConnection, { testIds, title: 'files changed' });
       lastRun = { type: 'changed', dirtyTestIds: testIds };
       continue;
@@ -229,6 +242,11 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
 
     if (command === 'toggle-show-browser') {
       await toggleShowBrowser();
+      continue;
+    }
+
+    if (command === 'toggle-buffer-mode') {
+      bufferMode = !bufferMode;
       continue;
     }
 
@@ -321,6 +339,7 @@ Change settings
   ${colors.bold('p')}        ${colors.dim('set file filter')}
   ${colors.bold('t')}        ${colors.dim('set title filter')}
   ${colors.bold('s')}        ${colors.dim('toggle show & reuse the browser')}
+  ${colors.bold('b')}        ${colors.dim('toggle buffer mode')}
 `);
       return;
     }
@@ -333,13 +352,14 @@ Change settings
       case 't': return 'grep';
       case 'f': return 'failed';
       case 's': return 'toggle-show-browser';
+      case 'b': return 'toggle-buffer-mode';
     }
   });
 }
 
 let showBrowserServer: PlaywrightServer | undefined;
 let connectWsEndpoint: string | undefined = undefined;
-let seq = 0;
+let seq = 1;
 
 function printConfiguration(options: WatchModeOptions, title?: string) {
   const packageManagerCommand = getPackageManagerExecCommand();
@@ -353,15 +373,29 @@ function printConfiguration(options: WatchModeOptions, title?: string) {
     tokens.push(...options.files.map(a => colors.bold(a)));
   if (title)
     tokens.push(colors.dim(`(${title})`));
-  if (seq)
-    tokens.push(colors.dim(`#${seq}`));
-  ++seq;
+  tokens.push(colors.dim(`#${seq++}`));
   const lines: string[] = [];
   const sep = separator();
   lines.push('\x1Bc' + sep);
   lines.push(`${tokens.join(' ')}`);
   lines.push(`${colors.dim('Show & reuse browser:')} ${colors.bold(showBrowserServer ? 'on' : 'off')}`);
   process.stdout.write(lines.join('\n'));
+}
+
+function printBufferPrompt(dirtyTestFiles: Set<string>, rootDir: string) {
+  const sep = separator();
+  process.stdout.write('\x1Bc');
+  process.stdout.write(`${sep}\n`);
+
+  if (dirtyTestFiles.size === 0) {
+    process.stdout.write(`${colors.dim('Waiting for file changes. Press')} ${colors.bold('q')} ${colors.dim('to quit or')} ${colors.bold('h')} ${colors.dim('for more options.')}\n\n`);
+    return;
+  }
+
+  process.stdout.write(`${colors.dim(`${dirtyTestFiles.size} test ${dirtyTestFiles.size === 1 ? 'file' : 'files'} changed:`)}\n\n`);
+  for (const file of dirtyTestFiles)
+    process.stdout.write(` · ${path.relative(rootDir, file)}\n`);
+  process.stdout.write(`\n${colors.dim(`Press`)} ${colors.bold('enter')} ${colors.dim('to run')}, ${colors.bold('q')} ${colors.dim('to quit or')} ${colors.bold('h')} ${colors.dim('for more options.')}\n\n`);
 }
 
 function printPrompt() {
@@ -385,4 +419,4 @@ async function toggleShowBrowser() {
   }
 }
 
-type Command = 'run' | 'failed' | 'repeat' | 'changed' | 'project' | 'file' | 'grep' | 'exit' | 'interrupted' | 'toggle-show-browser';
+type Command = 'run' | 'failed' | 'repeat' | 'changed' | 'project' | 'file' | 'grep' | 'exit' | 'interrupted' | 'toggle-show-browser' | 'toggle-buffer-mode';

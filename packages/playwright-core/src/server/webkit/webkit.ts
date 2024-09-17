@@ -53,7 +53,7 @@ export class WebKit extends BrowserType {
   }
 
   override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
-    const { args = [], proxy, headless } = options;
+    const { args = [], headless } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
       throw this._createUserDataDirArgMisuseError('--user-data-dir');
@@ -68,6 +68,7 @@ export class WebKit extends BrowserType {
       webkitArguments.push(`--user-data-dir=${userDataDir}`);
     else
       webkitArguments.push(`--no-startup-window`);
+    const proxy = options.proxyOverride || options.proxy;
     if (proxy) {
       if (process.platform === 'darwin') {
         webkitArguments.push(`--proxy=${proxy.server}`);

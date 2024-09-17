@@ -26,6 +26,7 @@ import { TestResultView } from './testResultView';
 import { linkifyText } from '@web/renderUtils';
 import { hashStringToInt, msToString } from './utils';
 import { clsx } from '@web/uiUtils';
+import { CopyToClipboardContainer } from './copyToClipboard';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
@@ -73,7 +74,7 @@ function TestCaseAnnotationView({ annotation: { type, description } }: { annotat
   return (
     <div className='test-case-annotation'>
       <span style={{ fontWeight: 'bold' }}>{type}</span>
-      {description && <span>: {linkifyText(description)}</span>}
+      {description && <CopyToClipboardContainer value={description}>: {linkifyText(description)}</CopyToClipboardContainer>}
     </div>
   );
 }

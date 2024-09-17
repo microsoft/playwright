@@ -20,6 +20,7 @@ import type * as types from '../types';
 import type { ActionInContext, LanguageGenerator, LanguageGeneratorOptions } from './types';
 
 export function generateCode(actions: ActionInContext[], languageGenerator: LanguageGenerator, options: LanguageGeneratorOptions) {
+  actions = collapseActions(actions);
   const header = languageGenerator.generateHeader(options);
   const footer = languageGenerator.generateFooter(options.saveStorage);
   const actionTexts = actions.map(a => languageGenerator.generateAction(a)).filter(Boolean);
@@ -69,16 +70,33 @@ export function toKeyboardModifiers(modifiers: number): types.SmartKeyboardModif
   return result;
 }
 
-export function toClickOptions(action: actions.ClickAction): types.MouseClickOptions {
+export function toClickOptionsForSourceCode(action: actions.ClickAction): types.MouseClickOptions {
   const modifiers = toKeyboardModifiers(action.modifiers);
   const options: types.MouseClickOptions = {};
   if (action.button !== 'left')
     options.button = action.button;
   if (modifiers.length)
     options.modifiers = modifiers;
+  // Do not render clickCount === 2 for dblclick.
   if (action.clickCount > 2)
     options.clickCount = action.clickCount;
   if (action.position)
     options.position = action.position;
   return options;
+}
+
+function collapseActions(actions: ActionInContext[]): ActionInContext[] {
+  const result: ActionInContext[] = [];
+  for (const action of actions) {
+    const lastAction = result[result.length - 1];
+    const isSameAction = lastAction && lastAction.action.name === action.action.name && lastAction.frame.pageAlias === action.frame.pageAlias && lastAction.frame.framePath.join('|') === action.frame.framePath.join('|');
+    const isSameSelector = lastAction && 'selector' in lastAction.action && 'selector' in action.action && action.action.selector === lastAction.action.selector;
+    const shouldMerge = isSameAction && (action.action.name === 'navigate' || (action.action.name === 'fill' && isSameSelector));
+    if (!shouldMerge) {
+      result.push(action);
+      continue;
+    }
+    result[result.length - 1] = action;
+  }
+  return result;
 }

@@ -76,12 +76,6 @@ export class BidiFirefox extends BrowserType {
       firefoxArguments.push('--foreground');
     firefoxArguments.push(`--profile`, userDataDir);
     firefoxArguments.push(...args);
-    // TODO: make ephemeral context work without this argument.
-    firefoxArguments.push('about:blank');
-    // if (isPersistent)
-    //   firefoxArguments.push('about:blank');
-    // else
-    //   firefoxArguments.push('-silent');
     return firefoxArguments;
   }
 

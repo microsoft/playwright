@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
+import { setupSocksForwardingServer } from '../config/proxy';
 import { playwrightTest as it, expect } from '../config/browserTest';
 import net from 'net';
-import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../../packages/playwright-core/src/common/socksProxy';
-import { SocksProxy } from '../../packages/playwright-core/lib/common/socksProxy';
 
 it.skip(({ mode }) => mode.startsWith('service'));
 
@@ -145,7 +144,6 @@ it('should authenticate', async ({ browserType, server }) => {
 });
 
 it('should work with authenticate followed by redirect', async ({ browserName, browserType, server }) => {
-  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/10095');
   function hasAuth(req, res) {
     const auth = req.headers['proxy-authorization'];
     if (!auth) {
@@ -289,43 +287,13 @@ it('should use proxy with emulated user agent', async ({ browserType }) => {
   expect(requestText).toContain('MyUserAgent');
 });
 
-async function setupSocksForwardingServer(port: number, forwardPort: number) {
-  const connections = new Map<string, net.Socket>();
-  const socksProxy = new SocksProxy();
-  socksProxy.setPattern('*');
-  socksProxy.addListener(SocksProxy.Events.SocksRequested, async (payload: SocksSocketRequestedPayload) => {
-    if (!['127.0.0.1', 'fake-localhost-127-0-0-1.nip.io'].includes(payload.host) || payload.port !== 1337) {
-      socksProxy.sendSocketError({ uid: payload.uid, error: 'ECONNREFUSED' });
-      return;
-    }
-    const target = new net.Socket();
-    target.on('error', error => socksProxy.sendSocketError({ uid: payload.uid, error: error.toString() }));
-    target.on('end', () => socksProxy.sendSocketEnd({ uid: payload.uid }));
-    target.on('data', data => socksProxy.sendSocketData({ uid: payload.uid, data }));
-    target.setKeepAlive(false);
-    target.connect(forwardPort, '127.0.0.1');
-    target.on('connect', () => {
-      connections.set(payload.uid, target);
-      socksProxy.socketConnected({ uid: payload.uid, host: target.localAddress, port: target.localPort });
-    });
-  });
-  socksProxy.addListener(SocksProxy.Events.SocksData, async (payload: SocksSocketDataPayload) => {
-    connections.get(payload.uid)?.write(payload.data);
-  });
-  socksProxy.addListener(SocksProxy.Events.SocksClosed, (payload: SocksSocketClosedPayload) => {
-    connections.get(payload.uid)?.destroy();
-    connections.delete(payload.uid);
-  });
-  await socksProxy.listen(port, 'localhost');
-  return {
-    closeProxyServer: () => socksProxy.close(),
-    proxyServerAddr: `socks5://localhost:${port}`,
-  };
-}
 
-it('should use SOCKS proxy for websocket requests', async ({ browserName, platform, browserType, server }, testInfo) => {
-  it.fixme(browserName === 'webkit' && platform !== 'linux');
-  const { proxyServerAddr, closeProxyServer } = await setupSocksForwardingServer(testInfo.workerIndex + 2048 + 2, server.PORT);
+it('should use SOCKS proxy for websocket requests', async ({ browserType, server }) => {
+  const { proxyServerAddr, closeProxyServer } = await setupSocksForwardingServer({
+    port: it.info().workerIndex + 2048 + 2,
+    forwardPort: server.PORT,
+    allowedTargetPort: 1337,
+  });
   const browser = await browserType.launch({
     proxy: {
       server: proxyServerAddr,

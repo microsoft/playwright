@@ -342,10 +342,6 @@ export function buildActionTree(actions: ActionTraceEventInContext[]): { rootIte
   return { rootItem, itemMap };
 }
 
-export function idForAction(action: ActionTraceEvent) {
-  return `${action.pageId || 'none'}:${action.callId}`;
-}
-
 export function context(action: ActionTraceEvent | trace.EventTraceEvent | ResourceSnapshot): ContextEntry {
   return (action as any)[contextSymbol];
 }

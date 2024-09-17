@@ -58,8 +58,9 @@ export class FFBrowser extends Browser {
       browser._defaultContext = new FFBrowserContext(browser, undefined, options.persistent);
       promises.push((browser._defaultContext as FFBrowserContext)._initialize());
     }
-    if (options.proxy)
-      promises.push(browser.session.send('Browser.setBrowserProxy', toJugglerProxyOptions(options.proxy)));
+    const proxy = options.originalLaunchOptions.proxyOverride || options.proxy;
+    if (proxy)
+      promises.push(browser.session.send('Browser.setBrowserProxy', toJugglerProxyOptions(proxy)));
     await Promise.all(promises);
     return browser;
   }
@@ -88,7 +89,7 @@ export class FFBrowser extends Browser {
     return !this._connection._closed;
   }
 
-  async doCreateNewContext(options: channels.BrowserNewContextParams): Promise<BrowserContext> {
+  async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
     if (options.isMobile)
       throw new Error('options.isMobile is not supported in Firefox');
     const { browserContextId } = await this.session.send('Browser.createBrowserContext', { removeOnDetach: true });
@@ -172,7 +173,7 @@ export class FFBrowser extends Browser {
 export class FFBrowserContext extends BrowserContext {
   declare readonly _browser: FFBrowser;
 
-  constructor(browser: FFBrowser, browserContextId: string | undefined, options: channels.BrowserNewContextParams) {
+  constructor(browser: FFBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
   }
 
@@ -205,7 +206,7 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this._browser.session.send('Browser.setUserAgentOverride', { browserContextId, userAgent: this._options.userAgent }));
     if (this._options.bypassCSP)
       promises.push(this._browser.session.send('Browser.setBypassCSP', { browserContextId, bypassCSP: true }));
-    if (this._options.ignoreHTTPSErrors)
+    if (this._options.ignoreHTTPSErrors || this._options.internalIgnoreHTTPSErrors)
       promises.push(this._browser.session.send('Browser.setIgnoreHTTPSErrors', { browserContextId, ignoreHTTPSErrors: true }));
     if (this._options.javaScriptEnabled === false)
       promises.push(this._browser.session.send('Browser.setJavaScriptDisabled', { browserContextId, javaScriptDisabled: true }));
@@ -251,10 +252,11 @@ export class FFBrowserContext extends BrowserContext {
         });
       }));
     }
-    if (this._options.proxy) {
+    const proxy = this._options.proxyOverride || this._options.proxy;
+    if (proxy) {
       promises.push(this._browser.session.send('Browser.setContextProxy', {
         browserContextId: this._browserContextId,
-        ...toJugglerProxyOptions(this._options.proxy)
+        ...toJugglerProxyOptions(proxy)
       }));
     }
 

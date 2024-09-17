@@ -5211,8 +5211,6 @@ export interface PlaywrightTestOptions {
    * `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided
    * with an exact match to the request origin that the certificate is valid for.
    *
-   * **NOTE** Using Client Certificates in combination with Proxy Servers is not supported.
-   *
    * **NOTE** When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it
    * work by replacing `localhost` with `local.playwright`.
    *

@@ -400,6 +400,10 @@ export class FFPage implements PageDelegate {
     return success;
   }
 
+  async forceGarbageCollection(): Promise<void> {
+    await this._session.send('Heap.collectGarbage');
+  }
+
   async addInitScript(initScript: InitScript, worldName?: string): Promise<void> {
     this._initScripts.push({ initScript, worldName });
     await this._session.send('Page.setInitScripts', { scripts: this._initScripts.map(s => ({ script: s.initScript.source, worldName: s.worldName })) });

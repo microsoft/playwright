@@ -739,4 +739,21 @@ await page.GetByLabel("Coun\\"try").ClickAsync();`);
     expect.soft(sources1.get('Java')!.text).toContain(`assertThat(page.getByRole(AriaRole.TEXTBOX)).isVisible()`);
     expect.soft(sources1.get('C#')!.text).toContain(`await Expect(page.GetByRole(AriaRole.Textbox)).ToBeVisibleAsync()`);
   });
+
+  test('should keep toolbar visible even if webpage erases content in hydration', async ({ openRecorder }) => {
+    const recorder = await openRecorder();
+
+    const hydrate = () => {
+      setTimeout(() => {
+        document.documentElement.innerHTML = '<p>Post-Hydration Content</p>';
+      }, 500);
+    };
+    await recorder.setContentAndWait(`
+      <p>Pre-Hydration Content</p>
+      <script>(${hydrate})()</script>
+    `);
+
+    await expect(recorder.page.getByText('Post-Hydration Content')).toBeVisible();
+    await expect(recorder.page.locator('x-pw-glass')).toBeVisible();
+  });
 });
