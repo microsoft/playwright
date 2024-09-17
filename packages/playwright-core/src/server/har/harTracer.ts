@@ -218,6 +218,9 @@ export class HarTracer {
       this._computeHarEntryTotalTime(harEntry);
     }
 
+    if (!this._options.omitSecurityDetails)
+      harEntry._securityDetails = event.securityDetails;
+
     for (let i = 0; i < event.rawHeaders.length; i += 2) {
       harEntry.response.headers.push({
         name: event.rawHeaders[i],
