@@ -213,8 +213,10 @@ export class HarTracer {
     harEntry.response.httpVersion = event.httpVersion;
     harEntry.response.redirectURL = event.headers.location || '';
 
-    harEntry.timings = event.timings;
-    this._computeHarEntryTotalTime(harEntry);
+    if (!this._options.omitTiming) {
+      harEntry.timings = event.timings;
+      this._computeHarEntryTotalTime(harEntry);
+    }
 
     for (let i = 0; i < event.rawHeaders.length; i += 2) {
       harEntry.response.headers.push({

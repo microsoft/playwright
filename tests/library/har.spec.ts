@@ -24,9 +24,9 @@ import type { Log } from '../../packages/trace/src/har';
 import { parseHar } from '../config/utils';
 const { createHttp2Server } = require('../../packages/playwright-core/lib/utils');
 
-async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string, content?: 'embed' | 'attach' | 'omit', omitContent?: boolean } = {}) {
+async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string } & Partial<Pick<BrowserContextOptions['recordHar'], 'content' | 'omitContent' | 'mode'>> = {}) {
   const harPath = testInfo.outputPath(options.outputPath || 'test.har');
-  const context = await contextFactory({ recordHar: { path: harPath, content: options.content, omitContent: options.omitContent }, ignoreHTTPSErrors: true });
+  const context = await contextFactory({ recordHar: { path: harPath, ...options }, ignoreHTTPSErrors: true });
   const page = await context.newPage();
   return {
     page,
@@ -831,6 +831,19 @@ it('should include API request', async ({ contextFactory, server }, testInfo) =>
     ssl: expect.any(Number),
     wait: expect.any(Number),
   }));
+});
+
+it('should respect minimal mode for API Requests', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo, { mode: 'minimal' });
+  const url = server.PREFIX + '/simple.json';
+  await page.request.post(url, {
+    headers: { cookie: 'a=b; c=d' },
+    data: { foo: 'bar' }
+  });
+  const { entries } = await getLog();
+  expect(entries).toHaveLength(1);
+  const [entry] = entries;
+  expect(entry.timings).toEqual({ receive: -1, send: -1, wait: -1 });
 });
 
 it('should include redirects from API request', async ({ contextFactory, server }, testInfo) => {
