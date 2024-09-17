@@ -29,6 +29,9 @@ import { monotonicTime } from './time';
 // Same as in Chromium (https://source.chromium.org/chromium/chromium/src/+/5666ff4f5077a7e2f72902f3a95f5d553ea0d88d:net/socket/transport_connect_job.cc;l=102)
 const connectionAttemptDelayMs = 300;
 
+const kDNSLookupAt = Symbol('kDNSLookupAt')
+const kTCPConnectionAt = Symbol('kTCPConnectionAt')
+
 class HttpHappyEyeballsAgent extends http.Agent {
   createConnection(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket?: net.Socket) => void): net.Socket | undefined {
     // There is no ambiguity in case of IP address.
@@ -134,12 +137,12 @@ export async function createConnectionAsync(
         port: options.port as number,
         host: address });
 
-    (socket as any).dnsLookupAt = dnsLookupAt;
+    (socket as any)[kDNSLookupAt] = dnsLookupAt;
 
     // Each socket may fire only one of 'connect', 'timeout' or 'error' events.
     // None of these events are fired after socket.destroy() is called.
     socket.on('connect', () => {
-      (socket as any).tcpConnectionAt = monotonicTime();
+      (socket as any)[kTCPConnectionAt] = monotonicTime();
 
       connected.resolve();
       oncreate?.(null, socket);
@@ -195,3 +198,9 @@ function clientRequestArgsToHostName(options: http.ClientRequestArgs): string {
   throw new Error('Either options.hostname or options.host must be provided');
 }
 
+export function timingForSocket(socket: net.Socket | tls.TLSSocket) {
+  return {
+    dnsLookupAt: (socket as any)[kDNSLookupAt] as number | undefined,
+    tcpConnectionAt: (socket as any)[kTCPConnectionAt] as number | undefined,
+  }
+}

@@ -30,7 +30,7 @@ import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 import { BrowserContext, verifyClientCertificates } from './browserContext';
 import { CookieStore, domainMatches } from './cookieStore';
 import { MultipartFormData } from './formData';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../utils/happy-eyeballs';
+import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent, timingForSocket } from '../utils/happy-eyeballs';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import type { Playwright } from './playwright';
@@ -488,8 +488,9 @@ export abstract class APIRequestContext extends SdkObject {
 
       request.on('socket', socket => {
         // happy eyeballs don't emit lookup and connect events, so we use our custom ones
-        dnsLookupAt = (socket as any).dnsLookupAt;
-        tcpConnectionAt = (socket as any).tcpConnectionAt;
+        const happyEyeBallsTimings = timingForSocket(socket);
+        dnsLookupAt = happyEyeBallsTimings.dnsLookupAt;
+        tcpConnectionAt = happyEyeBallsTimings.tcpConnectionAt;
 
         // non-happy-eyeballs sockets
         socket.on('lookup', () => { dnsLookupAt = monotonicTime(); });
