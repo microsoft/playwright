@@ -844,6 +844,8 @@ it('should respect minimal mode for API Requests', async ({ contextFactory, serv
   expect(entries).toHaveLength(1);
   const [entry] = entries;
   expect(entry.timings).toEqual({ receive: -1, send: -1, wait: -1 });
+  expect(entry.request.cookies).toEqual([]);
+  expect(entry.request.bodySize).toBe(-1);
 });
 
 it('should include redirects from API request', async ({ contextFactory, server }, testInfo) => {
