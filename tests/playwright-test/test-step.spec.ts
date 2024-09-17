@@ -1246,3 +1246,42 @@ fixture   |  fixture: page
 fixture   |  fixture: context
 `);
 });
+
+test('test location to test.step', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'helper.ts': `
+      import { test } from '@playwright/test';
+
+      export async function dummyStep(test, title, action, location) {
+        return await test.step(title, action, { location });
+      }
+
+      export function getCustomLocation() {
+        return { file: 'dummy-file.ts', line: 123, column: 45 };
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      import { dummyStep, getCustomLocation } from './helper';
+
+      test('custom location test', async () => {
+        const location = getCustomLocation();
+        await dummyStep(test, 'Perform a dummy step', async () => {
+        }, location);
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+test.step |Perform a dummy step @ dummy-file.ts:123
+hook      |After Hooks
+`);
+});
