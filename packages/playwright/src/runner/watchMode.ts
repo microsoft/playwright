@@ -28,7 +28,6 @@ import { EventEmitter } from 'stream';
 import { type TestServerTransport, TestServerConnection } from '../isomorphic/testServerConnection';
 import { TeleSuiteUpdater } from '../isomorphic/teleSuiteUpdater';
 import { restartWithExperimentalTsEsm } from '../common/configLoader';
-import type { Disposable } from '../isomorphic/events';
 
 class InMemoryTransport extends EventEmitter implements TestServerTransport {
   public readonly _send: (data: string) => void;
@@ -96,7 +95,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   const teleSuiteUpdater = new TeleSuiteUpdater({ pathSeparator: path.sep, onUpdate() { } });
 
   const dirtyTestIds = new Set<string>();
-  let onDirtyTests = new ManualPromise();
+  let onDirtyTests = new ManualPromise<'changed'>();
 
   let queue = Promise.resolve();
   const changedFiles = new Set<string>();
@@ -118,7 +117,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
       changedFiles.clear();
 
       if (dirtyTestIds.size > 0)
-        onDirtyTests.resolve?.();
+        onDirtyTests.resolve('changed');
     });
   });
   testServerConnection.onReport(report => teleSuiteUpdater.processTestReportEvent(report));
@@ -139,15 +138,10 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
 
   while (true) {
     printPrompt();
-    const readCommandPromise = readCommand();
-    await Promise.race([
+    const command = await Promise.race([
       onDirtyTests,
-      readCommandPromise,
+      readCommand(),
     ]);
-    if (!readCommandPromise.isDone())
-      readCommandPromise.resolve('changed');
-
-    const command = await readCommandPromise;
 
     if (command === 'changed') {
       onDirtyTests = new ManualPromise();
@@ -252,22 +246,27 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   return result === 'passed' ? teardown.status : result;
 }
 
-function readKeyPress(handler: (text: string, key: any) => void): Disposable {
-  const rl = readline.createInterface({ input: process.stdin, escapeCodeTimeout: 50 });
-  readline.emitKeypressEvents(process.stdin, rl);
-  if (process.stdin.isTTY)
-    process.stdin.setRawMode(true);
+function readKeyPress<T extends string>(handler: (text: string, key: any) => T | undefined): Promise<T> {
+  return new Promise(resolve => {
+    const rl = readline.createInterface({ input: process.stdin, escapeCodeTimeout: 50 });
+    readline.emitKeypressEvents(process.stdin, rl);
+    if (process.stdin.isTTY)
+      process.stdin.setRawMode(true);
 
-  process.stdin.on('keypress', handler);
+    function onKeypress(text: string, key: any) {
+      const result = handler(text, key);
+      if (result) {
+        process.stdin.off('keypress', onKeypress);
+        rl.close();
+        if (process.stdin.isTTY)
+          process.stdin.setRawMode(false);
 
-  return {
-    dispose: () => {
-      process.stdin.off('keypress', handler);
-      rl.close();
-      if (process.stdin.isTTY)
-        process.stdin.setRawMode(false);
+        resolve(result);
+      }
     }
-  };
+
+    process.stdin.on('keypress', onKeypress);
+  });
 }
 
 const isInterrupt = (text: string, key: any) => text === '\x03' || text === '\x1B' || (key && key.name === 'escape') || (key && key.ctrl && key.name === 'c');
@@ -278,9 +277,11 @@ async function runTests(watchOptions: WatchModeOptions, testServerConnection: Te
   }) {
   printConfiguration(watchOptions, options?.title);
 
-  const reader = readKeyPress((text: string, key: any) => {
-    if (isInterrupt(text, key))
+  void readKeyPress((text: string, key: any) => {
+    if (isInterrupt(text, key)) {
       testServerConnection.stopTestsNoReply({});
+      return 'done';
+    }
   });
 
   await testServerConnection.runTests({
@@ -292,26 +293,21 @@ async function runTests(watchOptions: WatchModeOptions, testServerConnection: Te
     reuseContext: connectWsEndpoint ? true : undefined,
     workers: connectWsEndpoint ? 1 : undefined,
     headed: connectWsEndpoint ? true : undefined,
-  }).finally(reader.dispose);
+  });
 }
 
-function readCommand(): ManualPromise<Command> {
-  const result = new ManualPromise<Command>();
-
-  const reader = readKeyPress((text: string, key: any) => {
-    if (isInterrupt(text, key)) {
-      result.resolve('interrupted');
-      return;
-    }
+function readCommand(): Promise<Command> {
+  return readKeyPress<Command>((text: string, key: any) => {
+    if (isInterrupt(text, key))
+      return 'interrupted';
     if (process.platform !== 'win32' && key && key.ctrl && key.name === 'z') {
       process.kill(process.ppid, 'SIGTSTP');
       process.kill(process.pid, 'SIGTSTP');
     }
     const name = key?.name;
-    if (name === 'q') {
-      result.resolve('exit');
-      return;
-    }
+    if (name === 'q')
+      return 'exit';
+
     if (name === 'h') {
       process.stdout.write(`${separator()}
 Run tests
@@ -330,18 +326,15 @@ Change settings
     }
 
     switch (name) {
-      case 'return': result.resolve('run'); break;
-      case 'r': result.resolve('repeat'); break;
-      case 'c': result.resolve('project'); break;
-      case 'p': result.resolve('file'); break;
-      case 't': result.resolve('grep'); break;
-      case 'f': result.resolve('failed'); break;
-      case 's': result.resolve('toggle-show-browser'); break;
+      case 'return': return 'run';
+      case 'r': return 'repeat';
+      case 'c': return 'project';
+      case 'p': return 'file';
+      case 't': return 'grep';
+      case 'f': return 'failed';
+      case 's': return 'toggle-show-browser';
     }
   });
-
-  void result.finally(reader.dispose);
-  return result;
 }
 
 let showBrowserServer: PlaywrightServer | undefined;
