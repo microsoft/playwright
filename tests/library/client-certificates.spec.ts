@@ -28,7 +28,6 @@ const { createHttpsServer, createHttp2Server } = require('../../packages/playwri
 
 type TestOptions = {
   startCCServer(options?: {
-    host?: string;
     http2?: boolean;
     enableHTTP1FallbackWhenUsingHttp2?: boolean;
     useFakeLocalhost?: boolean;
@@ -68,8 +67,8 @@ const test = base.extend<TestOptions>({
         }
         res.end(parts.map(({ key, value }) => `<div data-testid="${key}">${value}</div>`).join(''));
       });
-      await new Promise<void>(f => server.listen(0, options?.host ?? 'localhost', () => f()));
-      const host = options?.useFakeLocalhost ? 'local.playwright' : 'localhost';
+      await new Promise<void>(f => server.listen(0, '127.0.0.1', () => f()));
+      const host = options?.useFakeLocalhost ? 'local.playwright' : '127.0.0.1';
       return `https://${host}:${(server.address() as net.AddressInfo).port}/`;
     });
     if (server)
@@ -195,7 +194,7 @@ test.describe('fetch', () => {
   });
 
   test('pass with trusted client certificates and when a socks proxy is used', async ({ playwright, startCCServer, asset }) => {
-    const serverURL = await startCCServer({ host: '127.0.0.1' });
+    const serverURL = await startCCServer();
     const serverPort = parseInt(new URL(serverURL).port, 10);
     const { proxyServerAddr, closeProxyServer, connectHosts } = await setupSocksForwardingServer({
       port: test.info().workerIndex + 2048 + 2,
@@ -366,13 +365,13 @@ test.describe('browser', () => {
     });
     expect(proxyServer.connectHosts).toEqual([]);
     await page.goto(serverURL);
-    expect([...new Set(proxyServer.connectHosts)]).toEqual([`localhost:${new URL(serverURL).port}`]);
+    expect([...new Set(proxyServer.connectHosts)]).toEqual([`127.0.0.1:${new URL(serverURL).port}`]);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
     await page.close();
   });
 
   test('should pass with matching certificates and when a socks proxy is used', async ({ browser, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin', host: '127.0.0.1' });
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
     const serverPort = parseInt(new URL(serverURL).port, 10);
     const { proxyServerAddr, closeProxyServer, connectHosts } = await setupSocksForwardingServer({
       port: test.info().workerIndex + 2048 + 2,
@@ -390,7 +389,7 @@ test.describe('browser', () => {
     });
     expect(connectHosts).toEqual([]);
     await page.goto(serverURL);
-    expect(connectHosts).toEqual([`localhost:${serverPort}`]);
+    expect(connectHosts).toEqual([`127.0.0.1:${serverPort}`]);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
     await page.close();
     await closeProxyServer();
@@ -625,7 +624,7 @@ test.describe('browser', () => {
   });
 
   test('should pass with matching certificates on context APIRequestContext instance', async ({ browser, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ host: '127.0.0.1' });
+    const serverURL = await startCCServer();
     const baseOptions = {
       certPath: asset('client-certificates/client/trusted/cert.pem'),
       keyPath: asset('client-certificates/client/trusted/key.pem'),
@@ -688,7 +687,7 @@ test.describe('browser', () => {
       }],
     });
     {
-      await page.goto(serverURL.replace('localhost', 'local.playwright'));
+      await page.goto(serverURL.replace('127.0.0.1', 'local.playwright'));
       await expect(page.getByTestId('message')).toHaveText('Sorry, but you need to provide a client certificate to continue.');
       await expect(page.getByTestId('alpn-protocol')).toHaveText('h2');
       await expect(page.getByTestId('servername')).toHaveText('local.playwright');
@@ -714,7 +713,7 @@ test.describe('browser', () => {
       }],
     });
     {
-      await page.goto(serverURL.replace('localhost', 'local.playwright'));
+      await page.goto(serverURL.replace('127.0.0.1', 'local.playwright'));
       await expect(page.getByTestId('message')).toHaveText('Sorry, but you need to provide a client certificate to continue.');
       await expect(page.getByTestId('alpn-protocol')).toHaveText('http/1.1');
     }
