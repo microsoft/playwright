@@ -63,6 +63,7 @@ it('fetch should work', async ({ context, server }) => {
     secureConnectionStart: expect.any(Number),
     startTime: expect.any(Number),
   });
+  expect(response.timing().startTime, 'is right order of magnitude').toBeCloseTo(Date.now(), -3);
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 

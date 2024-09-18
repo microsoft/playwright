@@ -302,6 +302,7 @@ export abstract class APIRequestContext extends SdkObject {
       const requestOptions = { ...options, agent };
 
       const startAt = monotonicTime();
+      const startAtWallTime = Date.now();
       let dnsLookupAt: number | undefined;
       let tcpConnectionAt: number | undefined;
       let tlsHandshakeAt: number | undefined;
@@ -441,7 +442,7 @@ export abstract class APIRequestContext extends SdkObject {
           const endAt = monotonicTime();
           // spec: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming
           const timing: channels.ResourceTiming = {
-            startTime: startAt,
+            startTime: startAtWallTime,
             domainLookupStart: dnsLookupAt ? 0 : -1,
             domainLookupEnd: dnsLookupAt ? dnsLookupAt! - startAt : -1,
             connectStart: dnsLookupAt ? dnsLookupAt! - startAt  : 0,
