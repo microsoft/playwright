@@ -97,7 +97,7 @@ const RequestTab: React.FunctionComponent<{
       As cURL: <CopyToClipboard description='Copy as cURL' value={() => generateCurlCommand(resource)}/>
     </div>
     <div className='network-request-details-copy'>
-      As Fetch (Browser): <CopyToClipboard description='Copy as Fetch' value={() => generateFetchCall(resource)}/>
+      As Fetch: <CopyToClipboard description='Copy as Fetch' value={() => generateFetchCall(resource)}/>
     </div>
     {requestBody && <div className='network-request-details-header'>Request Body</div>}
     {requestBody && <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>}
