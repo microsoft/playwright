@@ -1039,9 +1039,12 @@ export class Recorder {
 
     this.highlight.install();
     // some frameworks erase the DOM on hydration, this ensures it's reattached
-    const recreationInterval = setInterval(() => {
+    let recreationInterval: number | undefined;
+    const recreate = () => {
       this.highlight.install();
-    }, 500);
+      recreationInterval = this.injectedScript.builtinSetTimeout(recreate, 500);
+    };
+    recreationInterval = this.injectedScript.builtinSetTimeout(recreate, 500);
     this._listeners.push(() => clearInterval(recreationInterval));
 
     this.overlay?.install();
