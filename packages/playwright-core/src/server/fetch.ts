@@ -444,12 +444,12 @@ export abstract class APIRequestContext extends SdkObject {
           const timing: channels.ResourceTiming = {
             startTime: startAtWallTime,
             domainLookupStart: dnsLookupAt ? 0 : -1,
-            domainLookupEnd: dnsLookupAt ? dnsLookupAt! - startAt : -1,
-            connectStart: dnsLookupAt ? dnsLookupAt! - startAt  : 0,
-            secureConnectionStart: dnsLookupAt ? dnsLookupAt! - startAt : 0,
+            domainLookupEnd: relativeTime(dnsLookupAt),
+            connectStart: dnsLookupAt ? relativeTime(dnsLookupAt) : 0,
+            secureConnectionStart: tlsHandshakeAt ? relativeTime(dnsLookupAt) : 0,
             connectEnd: relativeTime(tlsHandshakeAt ?? tcpConnectionAt),
             requestStart: relativeTime(tlsHandshakeAt ?? tcpConnectionAt),
-            responseStart: responseAt - startAt,
+            responseStart: relativeTime(responseAt),
           };
           const responseEndTiming = endAt - startAt;
 
