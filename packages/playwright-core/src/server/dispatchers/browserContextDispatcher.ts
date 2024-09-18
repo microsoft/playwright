@@ -41,6 +41,7 @@ import { serializeError } from '../errors';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { RecorderInTraceViewer } from '../recorder/recorderInTraceViewer';
 import { RecorderApp } from '../recorder/recorderApp';
+import type { IRecorderAppFactory } from '../recorder/recorderFrontend';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
   _type_EventTarget = true;
@@ -293,7 +294,20 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async recorderSupplementEnable(params: channels.BrowserContextRecorderSupplementEnableParams): Promise<void> {
-    const factory = process.env.PW_RECORDER_IS_TRACE_VIEWER ? RecorderInTraceViewer.factory(this._context) : RecorderApp.factory(this._context);
+    let factory: IRecorderAppFactory;
+    if (process.env.PW_RECORDER_IS_TRACE_VIEWER) {
+      factory = RecorderInTraceViewer.factory(this._context);
+      await this._context.tracing.start({
+        name: 'trace',
+        snapshots: true,
+        screenshots: false,
+        live: true,
+        inMemory: true,
+      });
+      await this._context.tracing.startChunk({ name: 'trace', title: 'trace' });
+    } else {
+      factory = RecorderApp.factory(this._context);
+    }
     await Recorder.show(this._context, factory, params);
   }
 

@@ -25,6 +25,7 @@ import { gracefullyProcessExitDoNotHang } from '../../utils/processLauncher';
 import type { Transport } from '../../utils/httpServer';
 
 export class RecorderInTraceViewer extends EventEmitter implements IRecorderApp {
+  readonly wsEndpointForTest: string | undefined;
   private _recorder: IRecorder;
   private _transport: Transport;
 
@@ -32,15 +33,16 @@ export class RecorderInTraceViewer extends EventEmitter implements IRecorderApp 
     return async (recorder: IRecorder) => {
       const transport = new RecorderTransport();
       const trace = path.join(context._browser.options.tracesDir, 'trace');
-      await openApp(trace, { transport });
-      return new RecorderInTraceViewer(context, recorder, transport);
+      const wsEndpointForTest = await openApp(trace, { transport, headless: !context._browser.options.headful });
+      return new RecorderInTraceViewer(context, recorder, transport, wsEndpointForTest);
     };
   }
 
-  constructor(context: BrowserContext, recorder: IRecorder, transport: Transport) {
+  constructor(context: BrowserContext, recorder: IRecorder, transport: Transport, wsEndpointForTest: string | undefined) {
     super();
     this._recorder = recorder;
     this._transport = transport;
+    this.wsEndpointForTest = wsEndpointForTest;
   }
 
   async close(): Promise<void> {
@@ -72,11 +74,12 @@ export class RecorderInTraceViewer extends EventEmitter implements IRecorderApp 
   }
 }
 
-async function openApp(trace: string, options?: TraceViewerServerOptions & { headless?: boolean }) {
+async function openApp(trace: string, options?: TraceViewerServerOptions & { headless?: boolean }): Promise<string | undefined> {
   const server = await startTraceViewerServer(options);
   await installRootRedirect(server, [trace], { ...options, webApp: 'recorder.html' });
   const page = await openTraceViewerApp(server.urlPrefix('precise'), 'chromium', options);
   page.on('close', () => gracefullyProcessExitDoNotHang(0));
+  return page.context()._browser.options.wsEndpoint;
 }
 
 class RecorderTransport implements Transport {
