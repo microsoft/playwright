@@ -97,12 +97,14 @@ export const renderAction = (
     time = 'Timed out';
   else if (!isLive)
     time = '-';
+
   return <>
     <div className='action-title' title={action.apiName}>
-      {action.class !== 'APIRequestContext' && <span>{action.apiName}</span>}
-      {action.class === 'APIRequestContext' && <span className='action-selector'>{action.params.method}</span>}
+      <span>{action.apiName}</span>
       {locator && <div className='action-selector' title={locator}>{locator}</div>}
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
+      {action.class === 'APIRequestContext' && action.params.method && <span className='action-selector'>{action.params.method}</span>}
+      {action.class === 'APIRequestContext' && action.result?.response?.status && <span className={action.result.response.status < 201 ? 'action-green' : action.result.response.status < 500 ? 'action-url' : 'action-red'}>{action.result.response.status}</span>}
       {action.class === 'APIRequestContext' && action.params.url && <div className='action-url' title={action.params.url}>{excludeOrigin(action.params.url)}</div>}
     </div>
     {(showDuration || showBadges) && <div className='spacer'></div>}

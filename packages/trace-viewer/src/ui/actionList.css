@@ -84,6 +84,20 @@
   color: var(--vscode-charts-blue);
 }
 
+.action-green {
+  display: inline;
+  flex: none;
+  padding-left: 5px;
+  color: var(--vscode-charts-green);
+}
+
+.action-red {
+  display: inline;
+  flex: none;
+  padding-left: 5px;
+  color: var(--vscode-charts-red);
+}
+
 .action-list-show-all {
   display: flex;
   cursor: pointer;
