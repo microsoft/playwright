@@ -38,17 +38,18 @@ export class RecorderCollection extends EventEmitter {
     this._context = context;
     this._enabled = enabled;
     this._pageAliases = pageAliases;
+
+    if (process.env.PW_RECORDER_IS_TRACE_VIEWER) {
+      this._context.tracing.onMemoryEvents(events => {
+        this._actions = traceEventsToAction(events);
+        this._fireChange();
+      });
+    }
   }
 
   restart() {
     this._actions = [];
     this._fireChange();
-  }
-
-  actions() {
-    if (!process.env.PW_RECORDER_IS_TRACE_VIEWER)
-      return collapseActions(this._actions);
-    return collapseActions(traceEventsToAction(this._context.tracing.inMemoryEvents()));
   }
 
   setEnabled(enabled: boolean) {
@@ -125,12 +126,12 @@ export class RecorderCollection extends EventEmitter {
 
     if (this._actions.length) {
       this._actions[this._actions.length - 1].action.signals.push(signal);
-      this.emit('change');
+      this._fireChange();
       return;
     }
   }
 
   private _fireChange() {
-    this.emit('change');
+    this.emit('change', collapseActions(this._actions));
   }
 }
