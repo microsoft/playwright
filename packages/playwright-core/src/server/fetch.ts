@@ -74,6 +74,8 @@ export type APIRequestFinishedEvent = {
   statusMessage: string;
   body?: Buffer;
   timings: har.Timings;
+  serverIPAddress?: string;
+  serverPort?: number;
   securityDetails?: har.SecurityDetails;
 };
 
@@ -304,6 +306,8 @@ export abstract class APIRequestContext extends SdkObject {
       let tcpConnectionAt: number | undefined;
       let tlsHandshakeAt: number | undefined;
       let requestFinishAt: number | undefined;
+      let serverIPAddress: string | undefined;
+      let serverPort: number | undefined;
 
       let securityDetails: har.SecurityDetails | undefined;
 
@@ -332,6 +336,8 @@ export abstract class APIRequestContext extends SdkObject {
             cookies,
             body,
             timings,
+            serverIPAddress,
+            serverPort,
             securityDetails,
           };
           this.emit(APIRequestContext.Events.RequestFinished, requestFinishedEvent);
@@ -501,6 +507,9 @@ export abstract class APIRequestContext extends SdkObject {
             };
           }
         });
+
+        serverIPAddress = socket.remoteAddress;
+        serverPort = socket.remotePort;
       });
       request.on('finish', () => { requestFinishAt = monotonicTime(); });
 

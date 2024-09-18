@@ -213,6 +213,11 @@ export class HarTracer {
     harEntry.response.httpVersion = event.httpVersion;
     harEntry.response.redirectURL = event.headers.location || '';
 
+    if (!this._options.omitServerIP) {
+      harEntry.serverIPAddress = event.serverIPAddress;
+      harEntry._serverPort = event.serverPort;
+    }
+
     if (!this._options.omitTiming) {
       harEntry.timings = event.timings;
       this._computeHarEntryTotalTime(harEntry);
