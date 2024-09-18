@@ -42,7 +42,7 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
   className,
 }) => {
   return <button
-    className={clsx(className, `toolbar-button ${icon}`, toggled && 'toggled')}
+    className={clsx(className, 'toolbar-button', icon, toggled && 'toggled')}
     onMouseDown={preventDefault}
     onClick={onClick}
     onDoubleClick={preventDefault}
