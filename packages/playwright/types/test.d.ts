@@ -7773,6 +7773,26 @@ interface SnapshotAssertions {
 }
 
 /**
+ * Represents a location in the source code where [TestCase] or [Suite] is defined.
+ */
+export interface Location {
+  /**
+   * Column number in the source file.
+   */
+  column: number;
+
+  /**
+   * Path to the source file.
+   */
+  file: string;
+
+  /**
+   * Line number in the source file.
+   */
+  line: number;
+}
+
+/**
  * `TestInfo` contains information about currently running test. It is available to test functions,
  * [test.beforeEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-before-each),
  * [test.afterEach([title, hookFunction])](https://playwright.dev/docs/api/class-test#test-after-each),

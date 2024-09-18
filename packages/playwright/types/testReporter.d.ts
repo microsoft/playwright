@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription, FullConfig, FullProject } from './test';
-export type { FullConfig, FullProject, TestStatus } from './test';
+import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription, FullConfig, FullProject, Location } from './test';
+export type { FullConfig, FullProject, TestStatus, Location } from './test';
 
 /**
  * Result of the full test run.
@@ -318,26 +318,6 @@ export type JSONReportSTDIOEntry = { text: string } | { buffer: string };
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export {};
 
-
-/**
- * Represents a location in the source code where {@link TestCase} or {@link Suite} is defined.
- */
-export interface Location {
-  /**
-   * Column number in the source file.
-   */
-  column: number;
-
-  /**
-   * Path to the source file.
-   */
-  file: string;
-
-  /**
-   * Line number in the source file.
-   */
-  line: number;
-}
 
 /**
  * `Suite` is a group of tests. All tests in Playwright Test form the following hierarchy:
