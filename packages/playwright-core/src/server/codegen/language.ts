@@ -20,7 +20,6 @@ import type * as types from '../types';
 import type { ActionInContext, LanguageGenerator, LanguageGeneratorOptions } from './types';
 
 export function generateCode(actions: ActionInContext[], languageGenerator: LanguageGenerator, options: LanguageGeneratorOptions) {
-  actions = collapseActions(actions);
   const header = languageGenerator.generateHeader(options);
   const footer = languageGenerator.generateFooter(options.saveStorage);
   const actionTexts = actions.map(a => languageGenerator.generateAction(a)).filter(Boolean);
@@ -70,6 +69,23 @@ export function toKeyboardModifiers(modifiers: number): types.SmartKeyboardModif
   return result;
 }
 
+export function fromKeyboardModifiers(modifiers?: types.SmartKeyboardModifier[]): number {
+  let result = 0;
+  if (!modifiers)
+    return result;
+  if (modifiers.includes('Alt'))
+    result |= 1;
+  if (modifiers.includes('Control'))
+    result |= 2;
+  if (modifiers.includes('ControlOrMeta'))
+    result |= 2;
+  if (modifiers.includes('Meta'))
+    result |= 4;
+  if (modifiers.includes('Shift'))
+    result |= 8;
+  return result;
+}
+
 export function toClickOptionsForSourceCode(action: actions.ClickAction): types.MouseClickOptions {
   const modifiers = toKeyboardModifiers(action.modifiers);
   const options: types.MouseClickOptions = {};
@@ -83,20 +99,4 @@ export function toClickOptionsForSourceCode(action: actions.ClickAction): types.
   if (action.position)
     options.position = action.position;
   return options;
-}
-
-function collapseActions(actions: ActionInContext[]): ActionInContext[] {
-  const result: ActionInContext[] = [];
-  for (const action of actions) {
-    const lastAction = result[result.length - 1];
-    const isSameAction = lastAction && lastAction.action.name === action.action.name && lastAction.frame.pageAlias === action.frame.pageAlias && lastAction.frame.framePath.join('|') === action.frame.framePath.join('|');
-    const isSameSelector = lastAction && 'selector' in lastAction.action && 'selector' in action.action && action.action.selector === lastAction.action.selector;
-    const shouldMerge = isSameAction && (action.action.name === 'navigate' || (action.action.name === 'fill' && isSameSelector));
-    if (!shouldMerge) {
-      result.push(action);
-      continue;
-    }
-    result[result.length - 1] = action;
-  }
-  return result;
 }

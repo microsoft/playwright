@@ -23,6 +23,7 @@ export interface IRecorder {
 }
 
 export interface IRecorderApp extends EventEmitter {
+  readonly wsEndpointForTest: string | undefined;
   close(): Promise<void>;
   setPaused(paused: boolean): Promise<void>;
   setMode(mode: Mode): Promise<void>;

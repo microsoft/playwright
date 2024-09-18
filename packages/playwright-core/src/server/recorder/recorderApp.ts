@@ -43,6 +43,7 @@ declare global {
 }
 
 export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
+  wsEndpointForTest: undefined;
   async close(): Promise<void> {}
   async setPaused(paused: boolean): Promise<void> {}
   async setMode(mode: Mode): Promise<void> {}
@@ -54,7 +55,7 @@ export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
 
 export class RecorderApp extends EventEmitter implements IRecorderApp {
   private _page: Page;
-  readonly wsEndpoint: string | undefined;
+  readonly wsEndpointForTest: string | undefined;
   private _recorder: IRecorder;
 
   constructor(recorder: IRecorder, page: Page, wsEndpoint: string | undefined) {
@@ -62,7 +63,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     this.setMaxListeners(0);
     this._recorder = recorder;
     this._page = page;
-    this.wsEndpoint = wsEndpoint;
+    this.wsEndpointForTest = wsEndpoint;
   }
 
   async close() {

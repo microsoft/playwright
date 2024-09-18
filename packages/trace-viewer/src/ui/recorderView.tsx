@@ -45,6 +45,8 @@ export const RecorderView: React.FunctionComponent = () => {
     connection.setMode('recording');
   }, [connection]);
 
+  window.playwrightSourcesEchoForTest = sources;
+
   return <div className='vbox workbench-loader'>
     <TraceView
       traceLocation={trace}
