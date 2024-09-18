@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import os from 'os';
 import { contextTest as it, expect } from '../config/browserTest';
 
 it('should return no cookies in pristine browser context', async ({ context, page, server }) => {
@@ -396,7 +397,7 @@ it('should support requestStorageAccess', async ({ page, server, channel, browse
         server.waitForRequest('/title.html'),
         frame.evaluate(() => fetch('/title.html'))
       ]);
-      if (isLinux && browserName === 'webkit')
+      if ((isLinux || (isMac && parseInt(os.release(), 10) >= 24)) && browserName === 'webkit')
         expect(serverRequest.headers.cookie).toBe(undefined);
       else
         expect(serverRequest.headers.cookie).toBe('name=value');
