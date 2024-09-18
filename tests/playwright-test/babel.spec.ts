@@ -148,5 +148,5 @@ test('should not transform external', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Cannot use import statement outside a module');
+  expect(result.output).toMatch(/(Cannot use import statement outside a module|require\(\) of ES Module .* not supported.)/);
 });
