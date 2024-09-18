@@ -3032,7 +3032,7 @@ Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
-### option: Page.press.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.press.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.press.strict = %%-input-strict-%%

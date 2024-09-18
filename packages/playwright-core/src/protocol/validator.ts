@@ -1606,7 +1606,6 @@ scheme.FramePressParams = tObject({
   strict: tOptional(tBoolean),
   key: tString,
   delay: tOptional(tNumber),
-  noWaitAfter: tOptional(tBoolean),
   timeout: tOptional(tNumber),
 });
 scheme.FramePressResult = tOptional(tObject({}));
@@ -1956,7 +1955,6 @@ scheme.ElementHandlePressParams = tObject({
   key: tString,
   delay: tOptional(tNumber),
   timeout: tOptional(tNumber),
-  noWaitAfter: tOptional(tBoolean),
 });
 scheme.ElementHandlePressResult = tOptional(tObject({}));
 scheme.ElementHandleQuerySelectorParams = tObject({

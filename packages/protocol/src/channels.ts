@@ -2895,13 +2895,11 @@ export type FramePressParams = {
   strict?: boolean,
   key: string,
   delay?: number,
-  noWaitAfter?: boolean,
   timeout?: number,
 };
 export type FramePressOptions = {
   strict?: boolean,
   delay?: number,
-  noWaitAfter?: boolean,
   timeout?: number,
 };
 export type FramePressResult = void;
@@ -3482,12 +3480,10 @@ export type ElementHandlePressParams = {
   key: string,
   delay?: number,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type ElementHandlePressOptions = {
   delay?: number,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type ElementHandlePressResult = void;
 export type ElementHandleQuerySelectorParams = {

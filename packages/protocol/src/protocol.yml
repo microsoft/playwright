@@ -2143,7 +2143,6 @@ Frame:
         strict: boolean?
         key: string
         delay: number?
-        noWaitAfter: boolean?
         timeout: number?
       flags:
         slowMo: true
@@ -2685,7 +2684,6 @@ ElementHandle:
         key: string
         delay: number?
         timeout: number?
-        noWaitAfter: boolean?
       flags:
         slowMo: true
         snapshot: true

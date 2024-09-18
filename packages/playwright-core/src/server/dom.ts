@@ -711,7 +711,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  async press(metadata: CallMetadata, key: string, options: { delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions & types.StrictOptions): Promise<void> {
+  async press(metadata: CallMetadata, key: string, options: { delay?: number } & types.TimeoutOptions & types.StrictOptions): Promise<void> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const result = await this._press(progress, key, options);
@@ -719,17 +719,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async _press(progress: Progress, key: string, options: { delay?: number, noWaitAfter?: boolean } & types.TimeoutOptions & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
+  async _press(progress: Progress, key: string, options: { delay?: number } & types.TimeoutOptions & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.press("${key}")`);
     await progress.beforeInputAction(this);
-    return this._page._frameManager.waitForSignalsCreatedBy(progress, !options.noWaitAfter, async () => {
-      const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
-      if (result !== 'done')
-        return result;
-      progress.throwIfAborted();  // Avoid action that has side-effects.
-      await this._page.keyboard.press(key, options);
-      return 'done';
-    });
+    const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
+    if (result !== 'done')
+      return result;
+    progress.throwIfAborted();  // Avoid action that has side-effects.
+    await this._page.keyboard.press(key, options);
+    return 'done';
   }
 
   async check(metadata: CallMetadata, options: { position?: types.Point } & types.PointerActionWaitOptions) {
