@@ -99,7 +99,8 @@ export const renderAction = (
     time = '-';
   return <>
     <div className='action-title' title={action.apiName}>
-      <span>{action.apiName}</span>
+      {action.class !== 'APIRequestContext' && <span>{action.apiName}</span>}
+      {action.class === 'APIRequestContext' && <span className='action-selector'>{action.params.method}</span>}
       {locator && <div className='action-selector' title={locator}>{locator}</div>}
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
       {action.class === 'APIRequestContext' && action.params.url && <div className='action-url' title={action.params.url}>{excludeOrigin(action.params.url)}</div>}
