@@ -108,6 +108,7 @@ export const UIModeView: React.FC<{}> = ({
   const [showRouteActions, setShowRouteActions] = useSetting('show-route-actions', true);
   const [darkMode, setDarkMode] = useDarkModeSetting();
   const [showScreenshot, setShowScreenshot] = useSetting('screenshot-instead-of-snapshot', false);
+  const [apiTestingView, setApiTestingView] = useSetting('api-testing-view', false);
 
 
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -528,6 +529,7 @@ export const UIModeView: React.FC<{}> = ({
           { value: darkMode, set: setDarkMode, title: 'Dark mode' },
           { value: showRouteActions, set: setShowRouteActions, title: 'Show route actions' },
           { value: showScreenshot, set: setShowScreenshot, title: 'Show screenshot instead of snapshot' },
+          { value: apiTestingView, set: setApiTestingView, title: 'API Testing view' },
         ]} />}
       </div>
       }

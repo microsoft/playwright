@@ -43,6 +43,7 @@ import './workbench.css';
 import { testStatusIcon, testStatusText } from './testUtils';
 import type { UITestStatus } from './testUtils';
 import { SettingsView } from './settingsView';
+import { NetworkResourceDetails } from './networkResourceDetails';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -72,6 +73,7 @@ export const Workbench: React.FunctionComponent<{
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
   const [showRouteActions, setShowRouteActions] = useSetting('show-route-actions', true);
   const [showScreenshot, setShowScreenshot] = useSetting('screenshot-instead-of-snapshot', false);
+  const [apiTestingView, setApiTestingView] = useSetting('api-testing-view', false);
 
   const filteredActions = React.useMemo(() => {
     return (model?.actions || []).filter(action => showRouteActions || !isRouteAction(action));
@@ -235,16 +237,10 @@ export const Workbench: React.FunctionComponent<{
     render: () => <AttachmentsTab model={model} />
   };
 
-  const tabs: TabbedPaneTabModel[] = [
-    inspectorTab,
-    callTab,
-    logTab,
-    errorsTab,
-    consoleTab,
-    networkTab,
-    sourceTab,
-    attachmentsTab,
-  ];
+  const tabs: TabbedPaneTabModel[] =
+    apiTestingView
+      ? [callTab, logTab, errorsTab, networkTab, attachmentsTab]
+      : [inspectorTab, callTab, logTab, errorsTab, consoleTab, networkTab, sourceTab, attachmentsTab];
 
   if (annotations !== undefined) {
     const annotationsTab: TabbedPaneTabModel = {
@@ -312,9 +308,14 @@ export const Workbench: React.FunctionComponent<{
     title: 'Settings',
     component: <SettingsView settings={[
       { value: showRouteActions, set: setShowRouteActions, title: 'Show route actions' },
-      { value: showScreenshot, set: setShowScreenshot, title: 'Show screenshot instead of snapshot' }
+      { value: showScreenshot, set: setShowScreenshot, title: 'Show screenshot instead of snapshot' },
+      { value: apiTestingView, set: setApiTestingView, title: 'API Testing View' }
     ]}/>,
   };
+
+  let entryForSelectedAction: Entry | undefined;
+  if (selectedAction?.method === 'fetch')
+    entryForSelectedAction = networkModel.resources.find(resource => resource.request.url === selectedAction.params.url && resource.request.method === selectedAction.params.method);
 
   return <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
     <Timeline
@@ -337,7 +338,7 @@ export const Workbench: React.FunctionComponent<{
         orientation='horizontal'
         sidebarIsFirst
         settingName='actionListSidebar'
-        main={<SnapshotTab
+        main={apiTestingView ? <NetworkResourceDetails resource={entryForSelectedAction} /> : <SnapshotTab
           action={activeAction}
           model={model}
           sdkLanguage={sdkLanguage}

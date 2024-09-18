@@ -24,29 +24,29 @@ import { generateCurlCommand, generateFetchCall } from '../third_party/devtools'
 import { CopyToClipboard } from './copyToClipboard';
 
 export const NetworkResourceDetails: React.FunctionComponent<{
-  resource: ResourceSnapshot;
-  onClose: () => void;
+  resource?: ResourceSnapshot;
+  onClose?: () => void;
 }> = ({ resource, onClose }) => {
   const [selectedTab, setSelectedTab] = React.useState('request');
 
   return <TabbedPane
     dataTestId='network-request-details'
-    leftToolbar={[<ToolbarButton key='close' icon='close' title='Close' onClick={onClose}></ToolbarButton>]}
+    leftToolbar={onClose ? [<ToolbarButton key='close' icon='close' title='Close' onClick={onClose}></ToolbarButton>] : undefined}
     tabs={[
       {
         id: 'request',
         title: 'Request',
-        render: () => <RequestTab resource={resource}/>,
+        render: () => resource ? <RequestTab resource={resource}/> : <div/>,
       },
       {
         id: 'response',
         title: 'Response',
-        render: () => <ResponseTab resource={resource}/>,
+        render: () => resource ? <ResponseTab resource={resource}/> : <div/>,
       },
       {
         id: 'body',
         title: 'Body',
-        render: () => <BodyTab resource={resource}/>,
+        render: () => resource ? <BodyTab resource={resource}/> : <div/>,
       },
     ]}
     selectedTab={selectedTab}
