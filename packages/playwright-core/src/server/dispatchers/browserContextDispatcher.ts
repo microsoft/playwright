@@ -302,7 +302,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         snapshots: true,
         screenshots: false,
         live: true,
-        inMemory: true,
       });
       await this._context.tracing.startChunk({ name: 'trace', title: 'trace' });
     } else {

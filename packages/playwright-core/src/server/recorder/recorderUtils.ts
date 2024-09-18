@@ -26,6 +26,7 @@ import { fromKeyboardModifiers, toKeyboardModifiers } from '../codegen/language'
 import { serializeExpectedTextValues } from '../../utils/expectUtils';
 import { createGuid, monotonicTime } from '../../utils';
 import { serializeValue } from '../../protocol/serializers';
+import type { SmartKeyboardModifier } from '../types';
 
 export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {
   let title = metadata.apiName || metadata.method;
@@ -213,62 +214,119 @@ export function callMetadataForAction(pageAliases: Map<Page, string>, actionInCo
 
 export function traceEventsToAction(events: trace.TraceEvent[]): ActionInContext[] {
   const result: ActionInContext[] = [];
+  const pageAliases = new Map<string, string>();
+
   for (const event of events) {
-    if (event.type !== 'before')
+    if (event.type === 'event' && event.class === 'BrowserContext' && event.method === 'page') {
+      const pageAlias = 'page' + pageAliases.size;
+      pageAliases.set(event.params.pageId, pageAlias);
+      const lastAction = result[result.length - 1];
+      lastAction.action.signals.push({
+        name: 'popup',
+        popupAlias: pageAlias,
+      });
+      result.push({
+        frame: { pageAlias, framePath: [] },
+        action: {
+          name: 'openPage',
+          url: '',
+          signals: [],
+        },
+        timestamp: event.time,
+      });
+      continue;
+    }
+
+    if (event.type === 'event' && event.class === 'BrowserContext' && event.method === 'pageClosed') {
+      const pageAlias = pageAliases.get(event.params.pageId) || 'page';
+      result.push({
+        frame: { pageAlias, framePath: [] },
+        action: {
+          name: 'closePage',
+          signals: [],
+        },
+        timestamp: event.time,
+      });
+      continue;
+    }
+
+    if (event.type !== 'before' || !event.pageId)
       continue;
     if (!event.stepId?.startsWith('recorder@'))
       continue;
 
-    if (event.method === 'goto') {
+    const { method, params: untypedParams, pageId } = event;
+
+    let pageAlias = pageAliases.get(pageId);
+    if (!pageAlias) {
+      pageAlias = 'page';
+      pageAliases.set(pageId, pageAlias);
       result.push({
-        frame: { pageAlias: 'page', framePath: [] },
+        frame: { pageAlias, framePath: [] },
+        action: {
+          name: 'openPage',
+          url: '',
+          signals: [],
+        },
+        timestamp: event.startTime,
+      });
+    }
+
+    if (method === 'goto') {
+      const params = untypedParams as channels.FrameGotoParams;
+      result.push({
+        frame: { pageAlias, framePath: [] },
         action: {
           name: 'navigate',
-          url: event.params.url,
+          url: params.url,
           signals: [],
         },
         timestamp: event.startTime,
       });
       continue;
     }
-    if (event.method === 'click') {
+
+    if (method === 'click') {
+      const params = untypedParams as channels.FrameClickParams;
       result.push({
-        frame: { pageAlias: 'page', framePath: [] },
+        frame: { pageAlias, framePath: [] },
         action: {
           name: 'click',
-          selector: event.params.selector,
+          selector: params.selector,
           signals: [],
-          button: event.params.button,
-          modifiers: fromKeyboardModifiers(event.params.modifiers),
-          clickCount: event.params.clickCount,
-          position: event.params.position,
+          button: params.button || 'left',
+          modifiers: fromKeyboardModifiers(params.modifiers),
+          clickCount: params.clickCount || 1,
+          position: params.position,
         },
         timestamp: event.startTime
       });
       continue;
     }
-    if (event.method === 'fill') {
+    if (method === 'fill') {
+      const params = untypedParams as channels.FrameFillParams;
       result.push({
-        frame: { pageAlias: 'page', framePath: [] },
+        frame: { pageAlias, framePath: [] },
         action: {
           name: 'fill',
-          selector: event.params.selector,
+          selector: params.selector,
           signals: [],
-          text: event.params.value,
+          text: params.value,
         },
         timestamp: event.startTime
       });
       continue;
     }
-    if (event.method === 'press') {
-      const tokens = event.params.key.split('+');
-      const modifiers = tokens.slice(0, tokens.length - 1);
+    if (method === 'press') {
+      const params = untypedParams as channels.FramePressParams;
+      const tokens = params.key.split('+');
+      const modifiers = tokens.slice(0, tokens.length - 1) as SmartKeyboardModifier[];
       const key = tokens[tokens.length - 1];
       result.push({
-        frame: { pageAlias: 'page', framePath: [] },
+        frame: { pageAlias, framePath: [] },
         action: {
           name: 'press',
-          selector: event.params.selector,
+          selector: params.selector,
           signals: [],
           key,
           modifiers: fromKeyboardModifiers(modifiers),
@@ -277,44 +335,62 @@ export function traceEventsToAction(events: trace.TraceEvent[]): ActionInContext
       });
       continue;
     }
-    if (event.method === 'check') {
+    if (method === 'check') {
+      const params = untypedParams as channels.FrameCheckParams;
       result.push({
-        frame: { pageAlias: 'page', framePath: [] },
+        frame: { pageAlias, framePath: [] },
         action: {
           name: 'check',
-          selector: event.params.selector,
+          selector: params.selector,
           signals: [],
         },
         timestamp: event.startTime
       });
       continue;
     }
-    if (event.method === 'uncheck') {
+    if (method === 'uncheck') {
+      const params = untypedParams as channels.FrameUncheckParams;
       result.push({
-        frame: { pageAlias: 'page', framePath: [] },
+        frame: { pageAlias, framePath: [] },
         action: {
           name: 'uncheck',
-          selector: event.params.selector,
+          selector: params.selector,
           signals: [],
         },
         timestamp: event.startTime
       });
       continue;
     }
-    if (event.method === 'selectOption') {
+    if (method === 'selectOption') {
+      const params = untypedParams as channels.FrameSelectOptionParams;
       result.push({
-        frame: { pageAlias: 'page', framePath: [] },
+        frame: { pageAlias, framePath: [] },
         action: {
           name: 'select',
-          selector: event.params.selector,
+          selector: params.selector,
           signals: [],
-          options: event.params.options.map((option: any) => option.value),
+          options: (params.options || []).map(option => option.value!),
+        },
+        timestamp: event.startTime
+      });
+      continue;
+    }
+    if (method === 'setInputFiles') {
+      const params = untypedParams as channels.FrameSetInputFilesParams;
+      result.push({
+        frame: { pageAlias, framePath: [] },
+        action: {
+          name: 'setInputFiles',
+          selector: params.selector,
+          signals: [],
+          files: params.localPaths || [],
         },
         timestamp: event.startTime
       });
       continue;
     }
   }
+
   return result;
 }
 
