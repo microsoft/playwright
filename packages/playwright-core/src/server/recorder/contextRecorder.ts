@@ -73,7 +73,7 @@ export class ContextRecorder extends EventEmitter {
       saveStorage: params.saveStorage,
     };
 
-    const collection = new RecorderCollection(this._pageAliases, params.mode === 'recording');
+    const collection = new RecorderCollection(context, this._pageAliases, params.mode === 'recording');
     collection.on('change', () => {
       this._recorderSources = [];
       for (const languageGenerator of this._orderedLanguages) {
