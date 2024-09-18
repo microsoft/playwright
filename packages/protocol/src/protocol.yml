@@ -1160,6 +1160,17 @@ BrowserContext:
               regexSource: string?
               regexFlags: string?
 
+    setWebSocketInterceptionPatterns:
+      parameters:
+        patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              glob: string?
+              regexSource: string?
+              regexFlags: string?
+
     setOffline:
       parameters:
         offline: boolean
@@ -1304,6 +1315,10 @@ BrowserContext:
     route:
       parameters:
         route: Route
+
+    webSocketRoute:
+      parameters:
+        webSocketRoute: WebSocketRoute
 
     video:
       parameters:
@@ -1510,6 +1525,17 @@ Page:
           items: NameValue
 
     setNetworkInterceptionPatterns:
+      parameters:
+        patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              glob: string?
+              regexSource: string?
+              regexFlags: string?
+
+    setWebSocketInterceptionPatterns:
       parameters:
         patterns:
           type: array
@@ -1770,6 +1796,10 @@ Page:
     route:
       parameters:
         route: Route
+
+    webSocketRoute:
+      parameters:
+        webSocketRoute: WebSocketRoute
 
     video:
       parameters:
@@ -2935,6 +2965,49 @@ Route:
         isBase64: boolean?
         fetchResponseUid: string?
         requestUrl: string
+
+
+WebSocketRoute:
+  type: interface
+
+  initializer:
+    url: string
+
+  commands:
+
+    connect:
+
+    ensureOpened:
+
+    sendToPage:
+      parameters:
+        message: string
+        isBase64: boolean
+
+    sendToServer:
+      parameters:
+        message: string
+        isBase64: boolean
+
+    close:
+      parameters:
+        code: number?
+        reason: string?
+
+  events:
+
+    messageFromPage:
+      parameters:
+        message: string
+        isBase64: boolean
+
+    messageFromServer:
+      parameters:
+        message: string
+        isBase64: boolean
+
+    close:
+
 
 ResourceTiming:
   type: object

@@ -22,6 +22,7 @@ import type net from 'net';
 import path from 'path';
 import url from 'url';
 import util from 'util';
+import type stream from 'stream';
 import ws from 'ws';
 import zlib, { gzip } from 'zlib';
 import { createHttpServer, createHttpsServer } from '../../../packages/playwright-core/lib/utils/network';
@@ -30,6 +31,11 @@ const fulfillSymbol = Symbol('fulfil callback');
 const rejectSymbol = Symbol('reject callback');
 
 const gzipAsync = util.promisify(gzip.bind(zlib));
+
+type UpgradeActions = {
+  doUpgrade: () => void;
+  socket: stream.Duplex;
+};
 
 export class TestServer {
   private _server: http.Server;
@@ -44,6 +50,7 @@ export class TestServer {
   private _extraHeaders = new Map<string, object>();
   private _gzipRoutes = new Set<string>();
   private _requestSubscribers = new Map<string, Promise<any>>();
+  private _upgradeCallback: (actions: UpgradeActions) => void | undefined;
   readonly PORT: number;
   readonly PREFIX: string;
   readonly CROSS_PROCESS_PREFIX: string;
@@ -73,6 +80,16 @@ export class TestServer {
     this._server.on('connection', socket => this._onSocket(socket));
     this._wsServer = new ws.WebSocketServer({ noServer: true });
     this._server.on('upgrade', async (request, socket, head) => {
+      const doUpgrade = () => {
+        this._wsServer.handleUpgrade(request, socket, head, ws => {
+          // Next emit is only for our internal 'connection' listeners.
+          this._wsServer.emit('connection', ws, request);
+        });
+      };
+      if (this._upgradeCallback) {
+        this._upgradeCallback({ doUpgrade, socket });
+        return;
+      }
       const pathname = url.parse(request.url!).path;
       if (pathname === '/ws-401') {
         socket.write('HTTP/1.1 401 Unauthorized\r\n\r\nUnauthorized body');
@@ -86,10 +103,7 @@ export class TestServer {
         socket.destroy();
         return;
       }
-      this._wsServer.handleUpgrade(request, socket, head, ws => {
-        // Next emit is only for our internal 'connection' listeners.
-        this._wsServer.emit('connection', ws, request);
-      });
+      doUpgrade();
     });
     this._server.listen(port);
     this._dirPath = dirPath;
@@ -177,6 +191,8 @@ export class TestServer {
     this._csp.clear();
     this._extraHeaders.clear();
     this._gzipRoutes.clear();
+    this._upgradeCallback = undefined;
+    this._wsServer.removeAllListeners('connection');
     this._server.closeAllConnections();
     const error = new Error('Static Server has been reset');
     for (const subscriber of this._requestSubscribers.values())
@@ -292,6 +308,14 @@ export class TestServer {
     return new Promise<http.IncomingMessage & { headers: http.IncomingHttpHeaders }>(fulfil => {
       this._wsServer.once('connection', (ws, req) => fulfil(req));
     });
+  }
+
+  waitForUpgrade() {
+    return new Promise<UpgradeActions>(fulfill => this._upgradeCallback = fulfill);
+  }
+
+  waitForWebSocket() {
+    return new Promise<ws.WebSocket>(fulfill => this._wsServer.once('connection', (ws, req) => fulfill(ws)));
   }
 
   sendOnWebSocketConnection(data) {

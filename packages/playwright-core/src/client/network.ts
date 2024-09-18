@@ -451,7 +451,131 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   }
 }
 
+export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel> implements api.WebSocketRoute {
+  static from(route: channels.WebSocketRouteChannel): WebSocketRoute {
+    return (route as any)._object;
+  }
+
+  private _routeSendHandler?: (message: string | Buffer) => any;
+  private _routeReceiveHandler?: (message: string | Buffer) => any;
+  private _connected = false;
+
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.WebSocketRouteInitializer) {
+    super(parent, type, guid, initializer);
+
+    this._channel.on('messageFromPage', ({ message, isBase64 }) => {
+      if (this._routeSendHandler)
+        this._routeSendHandler(isBase64 ? Buffer.from(message, 'base64') : message);
+      else
+        this._channel.sendToServer({ message, isBase64 }).catch(() => {});
+    });
+
+    this._channel.on('messageFromServer', ({ message, isBase64 }) => {
+      if (this._routeReceiveHandler)
+        this._routeReceiveHandler(isBase64 ? Buffer.from(message, 'base64') : message);
+      else
+        this._channel.sendToPage({ message, isBase64 }).catch(() => {});
+    });
+
+    this._channel.on('close', () => this.emit(Events.WebSocketRoute.Close));
+  }
+
+  url() {
+    return this._initializer.url;
+  }
+
+  async close(options: { code?: number, reason?: string } = {}) {
+    try {
+      await this._channel.close(options);
+    } catch (e) {
+      if (isTargetClosedError(e))
+        return;
+      throw e;
+    }
+  }
+
+  async connect() {
+    this._connected = true;
+    await this._channel.connect();
+  }
+
+  send(message: string | Buffer) {
+    if (isString(message))
+      this._channel.sendToServer({ message, isBase64: false }).catch(() => {});
+    else
+      this._channel.sendToServer({ message: message.toString('base64'), isBase64: true }).catch(() => {});
+  }
+
+  receive(message: string | Buffer) {
+    if (isString(message))
+      this._channel.sendToPage({ message, isBase64: false }).catch(() => {});
+    else
+      this._channel.sendToPage({ message: message.toString('base64'), isBase64: true }).catch(() => {});
+  }
+
+  routeSend(handler: (message: string | Buffer) => any) {
+    this._routeSendHandler = handler;
+  }
+
+  routeReceive(handler: (message: string | Buffer) => any) {
+    this._routeReceiveHandler = handler;
+  }
+
+  async [Symbol.asyncDispose]() {
+    await this.close();
+  }
+
+  async _afterHandle() {
+    if (this._connected)
+      return;
+    if (this._routeReceiveHandler)
+      throw new Error(`WebSocketRoute.routeReceive() call had no effect. Make sure to call WebSocketRoute.connect() as well.`);
+    // Ensure that websocket is "open", so that test can send messages to it
+    // without an actual server connection.
+    await this._channel.ensureOpened();
+  }
+}
+
+export class WebSocketRouteHandler {
+  private readonly _baseURL: string | undefined;
+  readonly url: URLMatch;
+  readonly handler: WebSocketRouteHandlerCallback;
+
+  constructor(baseURL: string | undefined, url: URLMatch, handler: WebSocketRouteHandlerCallback) {
+    this._baseURL = baseURL;
+    this.url = url;
+    this.handler = handler;
+  }
+
+  static prepareInterceptionPatterns(handlers: WebSocketRouteHandler[]) {
+    const patterns: channels.BrowserContextSetWebSocketInterceptionPatternsParams['patterns'] = [];
+    let all = false;
+    for (const handler of handlers) {
+      if (isString(handler.url))
+        patterns.push({ glob: handler.url });
+      else if (isRegExp(handler.url))
+        patterns.push({ regexSource: handler.url.source, regexFlags: handler.url.flags });
+      else
+        all = true;
+    }
+    if (all)
+      return [{ glob: '**/*' }];
+    return patterns;
+  }
+
+  public matches(wsURL: string): boolean {
+    return urlMatches(this._baseURL, wsURL, this.url);
+  }
+
+  public async handle(webSocketRoute: WebSocketRoute) {
+    const handler = this.handler;
+    await handler(webSocketRoute);
+    await webSocketRoute._afterHandle();
+  }
+}
+
 export type RouteHandlerCallback = (route: Route, request: Request) => Promise<any> | void;
+export type WebSocketRouteHandlerCallback = (ws: WebSocketRoute) => Promise<any> | void;
 
 export type ResourceTiming = {
   startTime: number;

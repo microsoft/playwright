@@ -42,12 +42,14 @@ import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { RecorderInTraceViewer } from '../recorder/recorderInTraceViewer';
 import { RecorderApp } from '../recorder/recorderApp';
 import type { IRecorderAppFactory } from '../recorder/recorderFrontend';
+import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
   _type_EventTarget = true;
   _type_BrowserContext = true;
   private _context: BrowserContext;
   private _subscriptions = new Set<channels.BrowserContextUpdateSubscriptionParams['event']>();
+  _webSocketInterceptionPatterns: channels.BrowserContextSetWebSocketInterceptionPatternsParams['patterns'] = [];
 
   constructor(parentScope: DispatcherScope, context: BrowserContext) {
     // We will reparent these to the context below.
@@ -282,6 +284,12 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._dispatchEvent('route', { route: RouteDispatcher.from(RequestDispatcher.from(this, request), route) });
       return true;
     });
+  }
+
+  async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
+    this._webSocketInterceptionPatterns = params.patterns;
+    if (params.patterns.length)
+      await WebSocketRouteDispatcher.installIfNeeded(this, this._context);
   }
 
   async storageState(params: channels.BrowserContextStorageStateParams, metadata: CallMetadata): Promise<channels.BrowserContextStorageStateResult> {
