@@ -1710,6 +1710,11 @@ Step body.
 
 Whether to box the step in the report. Defaults to `false`. When the step is boxed, errors thrown from the step internals point to the step call site. See below for more details.
 
+### option: Test.step.location
+* since: v1.48
+- `location` <[Location]>
+Specifies a custom location for the step to be shown in test reports. By default, location of the [`method: Test.step`] call is shown.
+
 ## method: Test.use
 * since: v1.10
 

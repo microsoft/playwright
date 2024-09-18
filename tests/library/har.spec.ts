@@ -610,6 +610,7 @@ it('should have security details', async ({ contextFactory, httpsServer, browser
 
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(httpsServer.EMPTY_PAGE);
+  await page.request.get(httpsServer.EMPTY_PAGE);
   const log = await getLog();
   const { serverIPAddress, _serverPort: port, _securityDetails: securityDetails } = log.entries[0];
   if (!mode.startsWith('service')) {
@@ -620,6 +621,8 @@ it('should have security details', async ({ contextFactory, httpsServer, browser
     expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
   else
     expect(securityDetails).toEqual({ issuer: 'playwright-test', protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
+
+  expect(log.entries[1]._securityDetails).toEqual({ issuer: 'playwright-test', protocol: 'TLSv1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
 });
 
 it('should have connection details for redirects', async ({ contextFactory, server, browserName, mode }, testInfo) => {
@@ -845,6 +848,8 @@ it('should respect minimal mode for API Requests', async ({ contextFactory, serv
   expect(entries).toHaveLength(1);
   const [entry] = entries;
   expect(entry.timings).toEqual({ receive: -1, send: -1, wait: -1 });
+  expect(entry.request.cookies).toEqual([]);
+  expect(entry.request.bodySize).toBe(-1);
   expect(entry.response.bodySize).toBe(-1);
 });
 

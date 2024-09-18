@@ -73,6 +73,7 @@ export class TraceModel {
       unzipProgress(++done, total);
 
       contextEntry.actions = modernizer.actions().sort((a1, a2) => a1.startTime - a2.startTime);
+
       if (!backend.isLive()) {
         // Terminate actions w/o after event gracefully.
         // This would close after hooks event that has not been closed because

@@ -41,6 +41,7 @@ import type * as types from './types';
 import type { HeadersArray, ProxySettings } from './types';
 import { getMatchingTLSOptionsForOrigin, rewriteOpenSSLErrorIfNeeded } from './socksClientCertificatesInterceptor';
 import type * as har from '@trace/har';
+import { TLSSocket } from 'tls';
 
 type FetchRequestOptions = {
   userAgent: string;
@@ -73,6 +74,7 @@ export type APIRequestFinishedEvent = {
   statusMessage: string;
   body?: Buffer;
   timings: har.Timings;
+  securityDetails?: har.SecurityDetails;
 };
 
 type SendRequestOptions = https.RequestOptions & {
@@ -303,6 +305,8 @@ export abstract class APIRequestContext extends SdkObject {
       let tlsHandshakeAt: number | undefined;
       let requestFinishAt: number | undefined;
 
+      let securityDetails: har.SecurityDetails | undefined;
+
       const request = requestConstructor(url, requestOptions as any, async response => {
         const responseAt = monotonicTime();
         const notifyRequestFinished = (body?: Buffer) => {
@@ -328,6 +332,7 @@ export abstract class APIRequestContext extends SdkObject {
             cookies,
             body,
             timings,
+            securityDetails,
           };
           this.emit(APIRequestContext.Events.RequestFinished, requestFinishedEvent);
         };
@@ -482,7 +487,20 @@ export abstract class APIRequestContext extends SdkObject {
         // non-happy-eyeballs sockets
         socket.on('lookup', () => { dnsLookupAt = monotonicTime(); });
         socket.on('connect', () => { tcpConnectionAt = monotonicTime(); });
-        socket.on('secureConnect', () => { tlsHandshakeAt = monotonicTime(); });
+        socket.on('secureConnect', () => {
+          tlsHandshakeAt = monotonicTime();
+
+          if (socket instanceof TLSSocket) {
+            const peerCertificate = socket.getPeerCertificate();
+            securityDetails = {
+              protocol: socket.getProtocol() ?? undefined,
+              subjectName: peerCertificate.subject.CN,
+              validFrom: new Date(peerCertificate.valid_from).getTime() / 1000,
+              validTo: new Date(peerCertificate.valid_to).getTime() / 1000,
+              issuer: peerCertificate.issuer.CN
+            };
+          }
+        });
       });
       request.on('finish', () => { requestFinishAt = monotonicTime(); });
 

@@ -55,7 +55,7 @@ export const test = contextTest.extend<CLITestArgs>({
     await run(async () => {
       while (!toImpl(context).recorderAppForTest)
         await new Promise(f => setTimeout(f, 100));
-      const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpoint;
+      const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpointForTest;
       const browser = await playwrightToAutomateInspector.chromium.connectOverCDP({ wsEndpoint });
       const c = browser.contexts()[0];
       return c.pages()[0] || await c.waitForEvent('page');

@@ -20,31 +20,35 @@ import type { Page } from '../page';
 import type { Signal } from './recorderActions';
 import type { ActionInContext } from '../codegen/types';
 import { monotonicTime } from '../../utils/time';
-import { callMetadataForAction } from './recorderUtils';
+import { callMetadataForAction, collapseActions, traceEventsToAction } from './recorderUtils';
 import { serializeError } from '../errors';
 import { performAction } from './recorderRunner';
 import type { CallMetadata } from '@protocol/callMetadata';
 import { isUnderTest } from '../../utils/debug';
+import type { BrowserContext } from '../browserContext';
 
 export class RecorderCollection extends EventEmitter {
   private _actions: ActionInContext[] = [];
   private _enabled: boolean;
   private _pageAliases: Map<Page, string>;
+  private _context: BrowserContext;
 
-  constructor(pageAliases: Map<Page, string>, enabled: boolean) {
+  constructor(context: BrowserContext, pageAliases: Map<Page, string>, enabled: boolean) {
     super();
+    this._context = context;
     this._enabled = enabled;
     this._pageAliases = pageAliases;
-    this.restart();
   }
 
   restart() {
     this._actions = [];
-    this.emit('change');
+    this._fireChange();
   }
 
   actions() {
-    return this._actions;
+    if (!process.env.PW_RECORDER_IS_TRACE_VIEWER)
+      return collapseActions(this._actions);
+    return collapseActions(traceEventsToAction(this._context.tracing.inMemoryEvents()));
   }
 
   setEnabled(enabled: boolean) {
@@ -60,7 +64,7 @@ export class RecorderCollection extends EventEmitter {
   addRecordedAction(actionInContext: ActionInContext) {
     if (['openPage', 'closePage'].includes(actionInContext.action.name)) {
       this._actions.push(actionInContext);
-      this.emit('change');
+      this._fireChange();
       return;
     }
     this._addAction(actionInContext).catch(() => {});
@@ -69,11 +73,16 @@ export class RecorderCollection extends EventEmitter {
   private async _addAction(actionInContext: ActionInContext, callback?: (callMetadata: CallMetadata) => Promise<void>) {
     if (!this._enabled)
       return;
+    if (actionInContext.action.name === 'openPage' || actionInContext.action.name === 'closePage') {
+      this._actions.push(actionInContext);
+      this._fireChange();
+      return;
+    }
 
     const { callMetadata, mainFrame } = callMetadataForAction(this._pageAliases, actionInContext);
     await mainFrame.instrumentation.onBeforeCall(mainFrame, callMetadata);
     this._actions.push(actionInContext);
-    this.emit('change');
+    this._fireChange();
     const error = await callback?.(callMetadata).catch((e: Error) => e);
     callMetadata.endTime = monotonicTime();
     callMetadata.error = error ? serializeError(error) : undefined;
@@ -119,5 +128,9 @@ export class RecorderCollection extends EventEmitter {
       this.emit('change');
       return;
     }
+  }
+
+  private _fireChange() {
+    this.emit('change');
   }
 }

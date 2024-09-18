@@ -312,7 +312,7 @@ function monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts: ContextEn
     for (const action of context.actions) {
       if (!action.startTime)
         continue;
-      const key = matchByStepId ? action.stepId! : `${action.apiName}@${(action as any).wallTime}`;
+      const key = matchByStepId ? action.callId! : `${action.apiName}@${(action as any).wallTime}`;
       const libraryAction = libraryActions.get(key);
       if (libraryAction)
         return action.startTime - libraryAction.startTime;
