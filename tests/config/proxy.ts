@@ -138,7 +138,7 @@ export async function setupSocksForwardingServer({
     connections.get(payload.uid)?.destroy();
     connections.delete(payload.uid);
   });
-  await socksProxy.listen(port, 'localhost');
+  await socksProxy.listen(port, '127.0.0.1');
   return {
     closeProxyServer: () => socksProxy.close(),
     proxyServerAddr: `socks5://localhost:${port}`,

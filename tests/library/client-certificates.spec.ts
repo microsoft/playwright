@@ -28,7 +28,6 @@ const { createHttpsServer, createHttp2Server } = require('../../packages/playwri
 
 type TestOptions = {
   startCCServer(options?: {
-    host?: string;
     http2?: boolean;
     enableHTTP1FallbackWhenUsingHttp2?: boolean;
     useFakeLocalhost?: boolean;
@@ -68,7 +67,7 @@ const test = base.extend<TestOptions>({
         }
         res.end(parts.map(({ key, value }) => `<div data-testid="${key}">${value}</div>`).join(''));
       });
-      await new Promise<void>(f => server.listen(0, options?.host ?? 'localhost', () => f()));
+      await new Promise<void>(f => server.listen(0, '127.0.0.1', () => f()));
       const host = options?.useFakeLocalhost ? 'local.playwright' : 'localhost';
       return `https://${host}:${(server.address() as net.AddressInfo).port}/`;
     });
@@ -195,7 +194,7 @@ test.describe('fetch', () => {
   });
 
   test('pass with trusted client certificates and when a socks proxy is used', async ({ playwright, startCCServer, asset }) => {
-    const serverURL = await startCCServer({ host: '127.0.0.1' });
+    const serverURL = await startCCServer();
     const serverPort = parseInt(new URL(serverURL).port, 10);
     const { proxyServerAddr, closeProxyServer, connectHosts } = await setupSocksForwardingServer({
       port: test.info().workerIndex + 2048 + 2,
@@ -372,7 +371,7 @@ test.describe('browser', () => {
   });
 
   test('should pass with matching certificates and when a socks proxy is used', async ({ browser, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin', host: '127.0.0.1' });
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
     const serverPort = parseInt(new URL(serverURL).port, 10);
     const { proxyServerAddr, closeProxyServer, connectHosts } = await setupSocksForwardingServer({
       port: test.info().workerIndex + 2048 + 2,
@@ -625,7 +624,7 @@ test.describe('browser', () => {
   });
 
   test('should pass with matching certificates on context APIRequestContext instance', async ({ browser, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ host: '127.0.0.1' });
+    const serverURL = await startCCServer();
     const baseOptions = {
       certPath: asset('client-certificates/client/trusted/cert.pem'),
       keyPath: asset('client-certificates/client/trusted/key.pem'),
