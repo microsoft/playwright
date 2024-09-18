@@ -261,6 +261,7 @@ export abstract class APIRequestContext extends SdkObject {
       try {
         return await this._sendRequest(progress, url, options, postData);
       } catch (e) {
+        e = rewriteOpenSSLErrorIfNeeded(e);
         if (maxRetries === 0)
           throw e;
         if (i === maxRetries || (options.deadline && monotonicTime() + backoff > options.deadline))
@@ -469,7 +470,7 @@ export abstract class APIRequestContext extends SdkObject {
         body.on('data', chunk => chunks.push(chunk));
         body.on('end', notifyBodyFinished);
       });
-      request.on('error', error => reject(rewriteOpenSSLErrorIfNeeded(error)));
+      request.on('error', reject);
 
       const disposeListener = () => {
         reject(new Error('Request context disposed.'));

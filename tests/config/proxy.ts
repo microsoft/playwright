@@ -57,14 +57,14 @@ export class TestProxy {
     this._prependHandler('request', (req: IncomingMessage) => {
       this.requestUrls.push(req.url);
       const url = new URL(req.url);
-      url.host = `localhost:${port}`;
+      url.host = `127.0.0.1:${port}`;
       req.url = url.toString();
     });
     this._prependHandler('connect', (req: IncomingMessage) => {
       if (!options?.allowConnectRequests)
         return;
       this.connectHosts.push(req.url);
-      req.url = `localhost:${port}`;
+      req.url = `127.0.0.1:${port}`;
     });
   }
 
@@ -141,7 +141,7 @@ export async function setupSocksForwardingServer({
   await socksProxy.listen(port, '127.0.0.1');
   return {
     closeProxyServer: () => socksProxy.close(),
-    proxyServerAddr: `socks5://localhost:${port}`,
+    proxyServerAddr: `socks5://127.0.0.1:${port}`,
     connectHosts,
   };
 }

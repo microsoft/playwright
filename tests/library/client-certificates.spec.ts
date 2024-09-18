@@ -68,7 +68,7 @@ const test = base.extend<TestOptions>({
         res.end(parts.map(({ key, value }) => `<div data-testid="${key}">${value}</div>`).join(''));
       });
       await new Promise<void>(f => server.listen(0, '127.0.0.1', () => f()));
-      const host = options?.useFakeLocalhost ? 'local.playwright' : 'localhost';
+      const host = options?.useFakeLocalhost ? 'local.playwright' : '127.0.0.1';
       return `https://${host}:${(server.address() as net.AddressInfo).port}/`;
     });
     if (server)
@@ -365,7 +365,7 @@ test.describe('browser', () => {
     });
     expect(proxyServer.connectHosts).toEqual([]);
     await page.goto(serverURL);
-    expect([...new Set(proxyServer.connectHosts)]).toEqual([`localhost:${new URL(serverURL).port}`]);
+    expect([...new Set(proxyServer.connectHosts)]).toEqual([`127.0.0.1:${new URL(serverURL).port}`]);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
     await page.close();
   });
@@ -389,7 +389,7 @@ test.describe('browser', () => {
     });
     expect(connectHosts).toEqual([]);
     await page.goto(serverURL);
-    expect(connectHosts).toEqual([`localhost:${serverPort}`]);
+    expect(connectHosts).toEqual([`127.0.0.1:${serverPort}`]);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
     await page.close();
     await closeProxyServer();
@@ -687,7 +687,7 @@ test.describe('browser', () => {
       }],
     });
     {
-      await page.goto(serverURL.replace('localhost', 'local.playwright'));
+      await page.goto(serverURL.replace('127.0.0.1', 'local.playwright'));
       await expect(page.getByTestId('message')).toHaveText('Sorry, but you need to provide a client certificate to continue.');
       await expect(page.getByTestId('alpn-protocol')).toHaveText('h2');
       await expect(page.getByTestId('servername')).toHaveText('local.playwright');
@@ -713,7 +713,7 @@ test.describe('browser', () => {
       }],
     });
     {
-      await page.goto(serverURL.replace('localhost', 'local.playwright'));
+      await page.goto(serverURL.replace('127.0.0.1', 'local.playwright'));
       await expect(page.getByTestId('message')).toHaveText('Sorry, but you need to provide a client certificate to continue.');
       await expect(page.getByTestId('alpn-protocol')).toHaveText('http/1.1');
     }
