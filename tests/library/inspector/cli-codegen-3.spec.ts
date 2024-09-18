@@ -744,7 +744,7 @@ await page.GetByLabel("Coun\\"try").ClickAsync();`);
     const recorder = await openRecorder();
 
     const hydrate = () => {
-      setTimeout(() => {
+      window.builtinSetTimeout(() => {
         document.documentElement.innerHTML = '<p>Post-Hydration Content</p>';
       }, 500);
     };
