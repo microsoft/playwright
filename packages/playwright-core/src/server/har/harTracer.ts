@@ -239,6 +239,8 @@ export class HarTracer {
     if (contentType)
       content.mimeType = contentType;
     this._storeResponseContent(event.body, content, 'other');
+    if (!this._options.omitSizes)
+      harEntry.response.bodySize = event.body?.length ?? 0;
 
     if (this._started)
       this._delegate.onEntryFinished(harEntry);
