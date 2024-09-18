@@ -181,6 +181,24 @@ test('should work with toBeVisible', async ({ page, server }) => {
   expect(called).toBe(1);
 });
 
+test('should work with locator.waitFor', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/handle-locator.html');
+
+  let called = 0;
+  await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
+    ++called;
+    await page.locator('#close').click();
+  });
+
+  await page.evaluate(() => {
+    (window as any).clicked = 0;
+    (window as any).setupAnnoyingInterstitial('remove', 1);
+  });
+  await page.locator('#target').waitFor();
+  await expect(page.locator('#interstitial')).not.toBeVisible();
+  expect(called).toBe(1);
+});
+
 test('should work with toHaveScreenshot', async ({ page, server, isAndroid }) => {
   test.fixme(isAndroid, 'Screenshots are cut off on Android');
   await page.setViewportSize({ width: 500, height: 500 });
