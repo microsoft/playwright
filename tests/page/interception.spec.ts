@@ -123,20 +123,24 @@ it('should intercept network activity from worker', async function({ page, serve
 
 it('should intercept worker requests when enabled after worker creation', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32355' }
-}, async function({ page, server, isAndroid, browserName }) {
+}, async ({ page, server, isAndroid, browserName }) => {
   it.skip(isAndroid);
   it.fixme(browserName === 'chromium');
 
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/data_for_worker', (req, res) => res.end('failed to intercept'));
   const url = server.PREFIX + '/data_for_worker';
-  await page.evaluate(url => {
-    (window as any).w = new Worker(URL.createObjectURL(new Blob([`
-    onmessage = function(e) {
-      fetch("${url}").then(response => response.text()).then(console.log);
-    };
-  `], { type: 'application/javascript' })));
-  }, url);
+  await Promise.all([
+    page.waitForEvent('worker'),
+    page.evaluate(url => {
+      (window as any).w = new Worker(URL.createObjectURL(new Blob([`
+        onmessage = function(e) {
+          fetch("${url}").then(response => response.text()).then(console.log);
+        };
+      `], { type: 'application/javascript' })));
+    }, url),
+  ]);
+  // Install the route **after** the worker has been created.
   await page.route(url, route => {
     route.fulfill({
       status: 200,
@@ -150,7 +154,9 @@ it('should intercept worker requests when enabled after worker creation', {
   expect(msg.text()).toBe('intercepted');
 });
 
-it('should intercept network activity from worker 2', async function({ page, server, isAndroid }) {
+it('should intercept network activity from worker 2', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31747' }
+}, async ({ page, server, isAndroid }) => {
   it.skip(isAndroid);
 
   const url = server.PREFIX + '/worker/worker.js';
