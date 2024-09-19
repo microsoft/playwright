@@ -117,6 +117,37 @@ it('clicking checkbox should activate it', async ({ page, browserName, headless,
   expect(nodeName).toBe('INPUT');
 });
 
+it('tab should cycle between document and browser', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32339' }
+}, async ({ page, browserName }) => {
+  it.fixme(browserName !== 'chromium');
+  await page.setContent(`<label for="test1">test1</label>
+    <input id="test1">
+    <script>
+    {
+      const input = document.getElementById('test1');
+      input.addEventListener('blur', () => {
+        const text = document.createElement('p');
+        text.textContent = "Input was blurred";
+        document.body.appendChild(text);
+      })
+      input.addEventListener('focus', () => {
+        const text = document.createElement('p');
+        text.textContent = "Input was focused";
+        document.body.appendChild(text);
+      })
+    }
+    </script>`);
+  await page.keyboard.press('Tab');
+  await expect(page.getByText('Input was focused')).toHaveCount(1);
+  await page.keyboard.press('Tab');
+  await expect(page.getByText('Input was blurred')).toHaveCount(1);
+  await page.keyboard.press('Tab');
+  await expect(page.getByText('Input was focused')).toHaveCount(2);
+  await page.keyboard.press('Tab');
+  await expect(page.getByText('Input was blurred')).toHaveCount(2);
+});
+
 it('keeps focus on element when attempting to focus a non-focusable element', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14254' });
 
