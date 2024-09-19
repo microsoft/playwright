@@ -18240,11 +18240,12 @@ export interface FileChooser {
 /**
  * FrameLocator represents a view to the `iframe` on the page. It captures the logic sufficient to retrieve the
  * `iframe` and locate elements in that iframe. FrameLocator can be created with either
+ * [locator.contentFrame()](https://playwright.dev/docs/api/class-locator#locator-content-frame),
  * [page.frameLocator(selector)](https://playwright.dev/docs/api/class-page#page-frame-locator) or
  * [locator.frameLocator(selector)](https://playwright.dev/docs/api/class-locator#locator-frame-locator) method.
  *
  * ```js
- * const locator = page.frameLocator('#my-frame').getByText('Submit');
+ * const locator = page.locator('#my-frame').contentFrame().getByText('Submit');
  * await locator.click();
  * ```
  *
@@ -18255,10 +18256,10 @@ export interface FileChooser {
  *
  * ```js
  * // Throws if there are several frames in DOM:
- * await page.frameLocator('.result-frame').getByRole('button').click();
+ * await page.locator('.result-frame').contentFrame().getByRole('button').click();
  *
  * // Works because we explicitly tell locator to pick the first frame:
- * await page.frameLocator('.result-frame').first().getByRole('button').click();
+ * await page.locator('.result-frame').contentFrame().first().getByRole('button').click();
  * ```
  *
  * **Converting Locator to FrameLocator**
@@ -18274,6 +18275,8 @@ export interface FileChooser {
 export interface FrameLocator {
   /**
    * Returns locator to the first matching frame.
+   * @deprecated Use [locator.first()](https://playwright.dev/docs/api/class-locator#locator-first) followed by
+   * [locator.contentFrame()](https://playwright.dev/docs/api/class-locator#locator-content-frame) instead.
    */
   first(): FrameLocator;
 
@@ -18598,6 +18601,8 @@ export interface FrameLocator {
 
   /**
    * Returns locator to the last matching frame.
+   * @deprecated Use [locator.last()](https://playwright.dev/docs/api/class-locator#locator-last) followed by
+   * [locator.contentFrame()](https://playwright.dev/docs/api/class-locator#locator-content-frame) instead.
    */
   last(): FrameLocator;
 
@@ -18650,6 +18655,8 @@ export interface FrameLocator {
 
   /**
    * Returns locator to the n-th matching frame. It's zero based, `nth(0)` selects the first frame.
+   * @deprecated Use [locator.nth(index)](https://playwright.dev/docs/api/class-locator#locator-nth) followed by
+   * [locator.contentFrame()](https://playwright.dev/docs/api/class-locator#locator-content-frame) instead.
    * @param index
    */
   nth(index: number): FrameLocator;
@@ -18666,7 +18673,7 @@ export interface FrameLocator {
    * **Usage**
    *
    * ```js
-   * const frameLocator = page.frameLocator('iframe[name="embedded"]');
+   * const frameLocator = page.locator('iframe[name="embedded"]').contentFrame();
    * // ...
    * const locator = frameLocator.owner();
    * await expect(locator).toBeVisible();

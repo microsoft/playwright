@@ -98,7 +98,7 @@ it('should work for $ and $$', async ({ page, server }) => {
 it('should wait for frame', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const error = await page.locator('body').frameLocator('iframe').locator('span').click({ timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain(`waiting for locator('body').frameLocator('iframe')`);
+  expect(error.message).toContain(`waiting for locator('body').locator('iframe').contentFrame()`);
 });
 
 it('should wait for frame 2', async ({ page, server }) => {
