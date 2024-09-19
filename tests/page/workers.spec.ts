@@ -225,7 +225,9 @@ it('should report and intercept network from nested worker', async function({ pa
   await expect.poll(() => messages).toEqual(['{"foo":"not bar"}', '{"foo":"not bar"}']);
 });
 
-it('should support extra http headers', async ({ page, server }) => {
+it('should support extra http headers', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31747' }
+}, async ({ page, server }) => {
   await page.setExtraHTTPHeaders({ foo: 'bar' });
   const [worker, request1] = await Promise.all([
     page.waitForEvent('worker'),
