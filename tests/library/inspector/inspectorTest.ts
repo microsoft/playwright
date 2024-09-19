@@ -50,7 +50,6 @@ const playwrightToAutomateInspector = require('../../../packages/playwright-core
 
 export const test = contextTest.extend<CLITestArgs>({
   recorderPageGetter: async ({ context, toImpl, mode }, run, testInfo) => {
-    process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
     testInfo.skip(mode.startsWith('service'));
     await run(async () => {
       while (!toImpl(context).recorderAppForTest)
@@ -69,7 +68,6 @@ export const test = contextTest.extend<CLITestArgs>({
   },
 
   runCLI: async ({ childProcess, browserName, channel, headless, mode, launchOptions }, run, testInfo) => {
-    process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
     testInfo.skip(mode.startsWith('service'));
 
     await run((cliArgs, { autoExitWhen } = {}) => {
