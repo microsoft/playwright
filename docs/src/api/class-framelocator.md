@@ -1,30 +1,30 @@
 # class: FrameLocator
 * since: v1.17
 
-FrameLocator represents a view to the `iframe` on the page. It captures the logic sufficient to retrieve the `iframe` and locate elements in that iframe. FrameLocator can be created with either [`method: Page.frameLocator`] or [`method: Locator.frameLocator`] method.
+FrameLocator represents a view to the `iframe` on the page. It captures the logic sufficient to retrieve the `iframe` and locate elements in that iframe. FrameLocator can be created with either [`method: Locator.contentFrame`], [`method: Page.frameLocator`] or [`method: Locator.frameLocator`] method.
 
 ```js
-const locator = page.frameLocator('#my-frame').getByText('Submit');
+const locator = page.locator('#my-frame').contentFrame().getByText('Submit');
 await locator.click();
 ```
 
 ```java
-Locator locator = page.frameLocator("#my-frame").getByText("Submit");
+Locator locator = page.locator("#my-frame").contentFrame().getByText("Submit");
 locator.click();
 ```
 
 ```python async
-locator = page.frame_locator("#my-frame").get_by_text("Submit")
+locator = page.locator("#my-frame").content_frame.get_by_text("Submit")
 await locator.click()
 ```
 
 ```python sync
-locator = page.frame_locator("my-frame").get_by_text("Submit")
+locator = page.locator("my-frame").content_frame.get_by_text("Submit")
 locator.click()
 ```
 
 ```csharp
-var locator = page.FrameLocator("#my-frame").GetByText("Submit");
+var locator = page.Locator("#my-frame").ContentFrame.GetByText("Submit");
 await locator.ClickAsync();
 ```
 
@@ -34,42 +34,42 @@ Frame locators are strict. This means that all operations on frame locators will
 
 ```js
 // Throws if there are several frames in DOM:
-await page.frameLocator('.result-frame').getByRole('button').click();
+await page.locator('.result-frame').contentFrame().getByRole('button').click();
 
 // Works because we explicitly tell locator to pick the first frame:
-await page.frameLocator('.result-frame').first().getByRole('button').click();
+await page.locator('.result-frame').contentFrame().first().getByRole('button').click();
 ```
 
 ```python async
 # Throws if there are several frames in DOM:
-await page.frame_locator('.result-frame').get_by_role('button').click()
+await page.locator('.result-frame').content_frame.get_by_role('button').click()
 
 # Works because we explicitly tell locator to pick the first frame:
-await page.frame_locator('.result-frame').first.get_by_role('button').click()
+await page.locator('.result-frame').first.content_frame.get_by_role('button').click()
 ```
 
 ```python sync
 # Throws if there are several frames in DOM:
-page.frame_locator('.result-frame').get_by_role('button').click()
+page.locator('.result-frame').content_frame.get_by_role('button').click()
 
 # Works because we explicitly tell locator to pick the first frame:
-page.frame_locator('.result-frame').first.get_by_role('button').click()
+page.locator('.result-frame').first.content_frame.get_by_role('button').click()
 ```
 
 ```java
 // Throws if there are several frames in DOM:
-page.frame_locator(".result-frame").getByRole(AriaRole.BUTTON).click();
+page.locator(".result-frame").contentFrame().getByRole(AriaRole.BUTTON).click();
 
 // Works because we explicitly tell locator to pick the first frame:
-page.frame_locator(".result-frame").first().getByRole(AriaRole.BUTTON).click();
+page.locator(".result-frame").first().contentFrame().getByRole(AriaRole.BUTTON).click();
 ```
 
 ```csharp
 // Throws if there are several frames in DOM:
-await page.FrameLocator(".result-frame").GetByRole(AriaRole.Button).ClickAsync();
+await page.Locator(".result-frame").ContentFrame.GetByRole(AriaRole.Button).ClickAsync();
 
 // Works because we explicitly tell locator to pick the first frame:
-await page.FrameLocator(".result-frame").First.getByRole(AriaRole.Button).ClickAsync();
+await page.Locator(".result-frame").First.ContentFrame.getByRole(AriaRole.Button).ClickAsync();
 ```
 
 **Converting Locator to FrameLocator**
@@ -82,6 +82,7 @@ If you have a [FrameLocator] object it can be converted to [Locator] pointing to
 
 
 ## method: FrameLocator.first
+* deprecated: Use [`method: Locator.first`] followed by [`method: Locator.contentFrame`] instead.
 * since: v1.17
 - returns: <[FrameLocator]>
 
@@ -171,6 +172,7 @@ in that iframe.
 ### option: FrameLocator.getByTitle.exact = %%-locator-get-by-text-exact-%%
 
 ## method: FrameLocator.last
+* deprecated: Use [`method: Locator.last`] followed by [`method: Locator.contentFrame`] instead.
 * since: v1.17
 - returns: <[FrameLocator]>
 
@@ -195,6 +197,7 @@ Returns locator to the last matching frame.
 * since: v1.33
 
 ## method: FrameLocator.nth
+* deprecated: Use [`method: Locator.nth`] followed by [`method: Locator.contentFrame`] instead.
 * since: v1.17
 - returns: <[FrameLocator]>
 
@@ -217,37 +220,36 @@ For a reverse operation, use [`method: Locator.contentFrame`].
 **Usage**
 
 ```js
-const frameLocator = page.frameLocator('iframe[name="embedded"]');
+const frameLocator = page.locator('iframe[name="embedded"]').contentFrame();
 // ...
 const locator = frameLocator.owner();
 await expect(locator).toBeVisible();
 ```
 
 ```java
-FrameLocator frameLocator = page.frameLocator("iframe[name=\"embedded\"]");
+FrameLocator frameLocator = page.locator("iframe[name=\"embedded\"]").contentFrame();
 // ...
 Locator locator = frameLocator.owner();
 assertThat(locator).isVisible();
 ```
 
 ```python async
-frame_locator = page.frame_locator("iframe[name=\"embedded\"]")
+frame_locator = page.locator("iframe[name=\"embedded\"]").content_frame
 # ...
 locator = frame_locator.owner
 await expect(locator).to_be_visible()
 ```
 
 ```python sync
-frame_locator = page.frame_locator("iframe[name=\"embedded\"]")
+frame_locator = page.locator("iframe[name=\"embedded\"]").content_frame
 # ...
 locator = frame_locator.owner
 expect(locator).to_be_visible()
 ```
 
 ```csharp
-var frameLocator = Page.FrameLocator("iframe[name=\"embedded\"]");
+var frameLocator = Page.Locator("iframe[name=\"embedded\"]").ContentFrame;
 // ...
 var locator = frameLocator.Owner;
 await Expect(locator).ToBeVisibleAsync();
 ```
-

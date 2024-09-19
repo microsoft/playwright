@@ -1232,16 +1232,16 @@ test('should pick locator in iframe', async ({ page, runAndTrace, server }) => {
   const snapshot = await traceViewer.snapshotFrame('page.evaluate');
 
   await snapshot.frameLocator('#frame1').getByText('Hello1').click();
-  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').getByText('Hello1')`);
+  await expect.soft(cmWrapper).toContainText(`locator('#frame1').contentFrame().getByText('Hello1')`);
 
   await snapshot.frameLocator('#frame1').frameLocator('iframe').getByText('Hello2').click();
-  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').frameLocator('iframe').getByText('Hello2')`, { timeout: 0 });
+  await expect.soft(cmWrapper).toContainText(`locator('#frame1').contentFrame().locator('iframe').contentFrame().getByText('Hello2')`, { timeout: 0 });
 
   await snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('[name=one]').getByText('HelloNameOne').click();
-  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').getByText('HelloNameOne')`, { timeout: 0 });
+  await expect.soft(cmWrapper).toContainText(`locator('#frame1').contentFrame().locator('iframe').contentFrame().locator('iframe[name="one"]').contentFrame().getByText('HelloNameOne')`, { timeout: 0 });
 
   await snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('[name=two]').getByText('HelloNameTwo').click();
-  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="two"]').getByText('HelloNameTwo')`, { timeout: 0 });
+  await expect.soft(cmWrapper).toContainText(`locator('#frame1').contentFrame().locator('iframe').contentFrame().locator('iframe[name="two"]').contentFrame().getByText('HelloNameTwo')`, { timeout: 0 });
 });
 
 test('should highlight locator in iframe while typing', async ({ page, runAndTrace, server, platform }) => {
@@ -1270,15 +1270,15 @@ test('should highlight locator in iframe while typing', async ({ page, runAndTra
   await traceViewer.page.locator('.CodeMirror').click();
 
   const locators = [{
-    text: `frameLocator('#frame1').getByText('Hello1')`,
+    text: `locator('#frame1').contentFrame().getByText('Hello1')`,
     element: snapshot.frameLocator('#frame1').locator('div', { hasText: 'Hello1' }),
     highlight: snapshot.frameLocator('#frame1').locator('x-pw-highlight'),
   }, {
-    text: `frameLocator('#frame1').frameLocator('iframe').getByText('Hello2')`,
+    text: `locator('#frame1').contentFrame().locator('iframe').contentFrame().getByText('Hello2')`,
     element: snapshot.frameLocator('#frame1').frameLocator('iframe').locator('div', { hasText: 'Hello2' }),
     highlight: snapshot.frameLocator('#frame1').frameLocator('iframe').locator('x-pw-highlight'),
   }, {
-    text: `frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').getByText('HelloNameOne')`,
+    text: `locator('#frame1').contentFrame().locator('iframe').contentFrame().locator('iframe[name="one"]').contentFrame().getByText('HelloNameOne')`,
     element: snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').locator('div', { hasText: 'HelloNameOne' }),
     highlight: snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').locator('x-pw-highlight'),
   }];
