@@ -19,8 +19,8 @@ import { test, expect } from './inspectorTest';
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
 
-  test('should click locator.first', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
+  test('should click locator.first', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
       <button onclick="console.log('click1')">Submit</button>
@@ -54,8 +54,8 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).First.ClickAsyn
     expect(message.text()).toBe('click1');
   });
 
-  test('should click locator.nth', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
+  test('should click locator.nth', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
       <button onclick="console.log('click1')">Submit</button>
@@ -89,8 +89,8 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).Nth(1).ClickAsy
     expect(message.text()).toBe('click2');
   });
 
-  test('should generate frame locators', async ({ page, openRecorder, server }) => {
-    const recorder = await openRecorder();
+  test('should generate frame locators', async ({ openRecorder, server }) => {
+    const { page, recorder } = await openRecorder();
     /*
       iframe
         div Hello1
@@ -198,8 +198,8 @@ await page.Locator("#frame1").ContentFrame.Locator("iframe").ContentFrame.Locato
 await page.Locator("#frame1").ContentFrame.Locator("iframe").ContentFrame.Locator("iframe").Nth(2).ContentFrame.GetByText("HelloNameAnonymous").ClickAsync();`);
   });
 
-  test('should generate frame locators with special characters in name attribute', async ({ page, openRecorder, server }) => {
-    const recorder = await openRecorder();
+  test('should generate frame locators with special characters in name attribute', async ({ openRecorder, server }) => {
+    const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
       <iframe srcdoc="<button>Click me</button>">
     `, server.EMPTY_PAGE, 2);
@@ -226,8 +226,8 @@ await page.Locator("#frame1").ContentFrame.Locator("iframe").ContentFrame.Locato
 await page.Locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").ContentFrame.GetByRole(AriaRole.Button, new() { Name = "Click me" }).ClickAsync();`);
   });
 
-  test('should generate frame locators with title attribute', async ({ page, openRecorder, server }) => {
-    const recorder = await openRecorder();
+  test('should generate frame locators with title attribute', async ({ openRecorder, server }) => {
+    const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
       <iframe title="hello world" srcdoc="<button>Click me</button>"></iframe>
     `, server.EMPTY_PAGE, 1);
@@ -258,8 +258,8 @@ await page.Locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").Cont
     );
   });
 
-  test('should generate frame locators with name attribute', async ({ page, openRecorder, server }) => {
-    const recorder = await openRecorder();
+  test('should generate frame locators with name attribute', async ({ openRecorder, server }) => {
+    const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
       <iframe name="hello world" srcdoc="<button>Click me</button>"></iframe>
     `, server.EMPTY_PAGE, 1);
@@ -290,8 +290,8 @@ await page.Locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").Cont
     );
   });
 
-  test('should generate frame locators with id attribute', async ({ page, openRecorder, server }) => {
-    const recorder = await openRecorder();
+  test('should generate frame locators with id attribute', async ({ openRecorder, server }) => {
+    const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
       <iframe id="hello-world" srcdoc="<button>Click me</button>"></iframe>
     `, server.EMPTY_PAGE, 1);
@@ -322,8 +322,8 @@ await page.Locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").Cont
     );
   });
 
-  test('should generate frame locators with testId', async ({ page, openRecorder, server }) => {
-    const recorder = await openRecorder();
+  test('should generate frame locators with testId', async ({ openRecorder, server }) => {
+    const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
     <iframe data-testid="my-testid" srcdoc="<button>Click me</button>"></iframe>
     `, server.EMPTY_PAGE, 1);
@@ -354,8 +354,8 @@ await page.Locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").Cont
     );
   });
 
-  test('should generate role locators undef frame locators', async ({ page, openRecorder, server }) => {
-    const recorder = await openRecorder();
+  test('should generate role locators undef frame locators', async ({ openRecorder, server }) => {
+    const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`<iframe id=frame1 srcdoc="<button>Submit</button>">`, server.EMPTY_PAGE, 2);
     const frame = page.mainFrame().childFrames()[0];
 
@@ -380,8 +380,8 @@ await page.Locator("iframe[name=\\"foo\\\\<bar\\\\'\\\\\\"\\\\\`\\\\>\\"]").Cont
 await page.Locator("#frame1").ContentFrame.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`);
   });
 
-  test('should generate getByTestId', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
+  test('should generate getByTestId', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<div data-testid=testid onclick="console.log('click')">Submit</div>`);
 
@@ -412,8 +412,8 @@ await page.GetByTestId("testid").ClickAsync();`);
     expect(message.text()).toBe('click');
   });
 
-  test('should generate getByPlaceholder', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
+  test('should generate getByPlaceholder', async ({ openRecorder }) => {
+    const { recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input placeholder="Country"></input>`);
 
@@ -441,8 +441,8 @@ await page.GetByTestId("testid").ClickAsync();`);
 await page.GetByPlaceholder("Country").ClickAsync();`);
   });
 
-  test('should generate getByAltText', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
+  test('should generate getByAltText', async ({ openRecorder }) => {
+    const { recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input alt="Country"></input>`);
 
@@ -470,8 +470,8 @@ await page.GetByPlaceholder("Country").ClickAsync();`);
 await page.GetByAltText("Country").ClickAsync();`);
   });
 
-  test('should generate getByLabel', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
+  test('should generate getByLabel', async ({ openRecorder }) => {
+    const { recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<label for=target>Country</label><input id=target>`);
 
@@ -499,8 +499,8 @@ await page.GetByAltText("Country").ClickAsync();`);
 await page.GetByLabel("Country").ClickAsync();`);
   });
 
-  test('should generate getByLabel without regex', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
+  test('should generate getByLabel without regex', async ({ openRecorder }) => {
+    const { recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<label for=target>Coun"try</label><input id=target>`);
 
@@ -528,8 +528,8 @@ await page.GetByLabel("Country").ClickAsync();`);
 await page.GetByLabel("Coun\\"try").ClickAsync();`);
   });
 
-  test('should consume pointer events', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
+  test('should consume pointer events', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
       <button onclick="console.log('clicked')">Submit</button>
@@ -559,8 +559,8 @@ await page.GetByLabel("Coun\\"try").ClickAsync();`);
     ]);
   });
 
-  test('should consume contextmenu events, despite a custom context menu', async ({ page, openRecorder, browserName, platform }) => {
-    const recorder = await openRecorder();
+  test('should consume contextmenu events, despite a custom context menu', async ({ openRecorder, browserName, platform }) => {
+    const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
       <button>Right click me.</button>
@@ -630,7 +630,7 @@ await page.GetByLabel("Coun\\"try").ClickAsync();`);
   });
 
   test('should assert value', async ({ openRecorder }) => {
-    const recorder = await openRecorder();
+    const { recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
       <input id=first value=foo>
@@ -679,7 +679,7 @@ await page.GetByLabel("Coun\\"try").ClickAsync();`);
   test('should assert value on disabled input', async ({ openRecorder, browserName }) => {
     test.fixme(browserName === 'firefox', 'pointerup event is not dispatched on a disabled input');
 
-    const recorder = await openRecorder();
+    const { recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
       <input id=first value=foo>
@@ -702,7 +702,7 @@ await page.GetByLabel("Coun\\"try").ClickAsync();`);
   });
 
   test('should assert value on disabled select', async ({ openRecorder, browserName }) => {
-    const recorder = await openRecorder();
+    const { recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
       <select id=first><option value=foo1>Foo1</option><option value=bar1>Bar1</option></select>
@@ -723,7 +723,7 @@ await page.GetByLabel("Coun\\"try").ClickAsync();`);
   });
 
   test('should assert visibility', async ({ openRecorder }) => {
-    const recorder = await openRecorder();
+    const { recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input>`);
 
@@ -741,7 +741,7 @@ await page.GetByLabel("Coun\\"try").ClickAsync();`);
   });
 
   test('should keep toolbar visible even if webpage erases content in hydration', async ({ openRecorder }) => {
-    const recorder = await openRecorder();
+    const { recorder } = await openRecorder();
 
     const hydrate = () => {
       window.builtinSetTimeout(() => {
