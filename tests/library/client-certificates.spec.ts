@@ -365,7 +365,8 @@ test.describe('browser', () => {
     });
     expect(proxyServer.connectHosts).toEqual([]);
     await page.goto(serverURL);
-    expect([...new Set(proxyServer.connectHosts)]).toEqual([`127.0.0.1:${new URL(serverURL).port}`]);
+    const host = browserName === 'webkit' && process.platform === 'darwin' ? 'localhost' : '127.0.0.1';
+    expect([...new Set(proxyServer.connectHosts)]).toEqual([`${host}:${new URL(serverURL).port}`]);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
     await page.close();
   });
@@ -389,7 +390,8 @@ test.describe('browser', () => {
     });
     expect(connectHosts).toEqual([]);
     await page.goto(serverURL);
-    expect(connectHosts).toEqual([`127.0.0.1:${serverPort}`]);
+    const host = browserName === 'webkit' && process.platform === 'darwin' ? 'localhost' : '127.0.0.1';
+    expect(connectHosts).toEqual([`${host}:${serverPort}`]);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
     await page.close();
     await closeProxyServer();
