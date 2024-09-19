@@ -150,3 +150,30 @@ test('should not transform external', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toMatch(/(Cannot use import statement outside a module|require\(\) of ES Module .* not supported.)/);
 });
+
+test('should support import assertions', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/32659'
+  }
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import packageJSON from './package.json' assert { type: 'json' };
+      console.log('imported value: ' + packageJSON.foo);
+      export default { };
+    `,
+    'package.json': JSON.stringify({ foo: 'bar' }),
+    'a.esm.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('check project name', ({}, testInfo) => {
+        expect(1).toBe(1);
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.stdout).toContain('imported value: bar');
+});
