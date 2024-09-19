@@ -68,7 +68,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       return formatter.format();
     }
 
-    const locators = actionInContext.frame.framePath.map(selector => `.${this._asLocator(selector)}.ContentFrame()`);
+    const locators = actionInContext.frame.framePath.map(selector => `.${this._asLocator(selector)}.ContentFrame`);
     const subject = `${pageAlias}${locators.join('')}`;
     const signals = toSignalMap(action);
 
