@@ -397,7 +397,7 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
       process.stdout.write('\n-------------8<-------------\n');
       const autoExitCondition = process.env.PWTEST_CLI_AUTO_EXIT_WHEN;
       if (autoExitCondition && text.includes(autoExitCondition))
-        Promise.all(context.pages().map(async p => p.close()));
+        closeBrowser();
     };
     // Make sure we exit abnormally when browser crashes.
     const logs: string[] = [];
@@ -504,7 +504,7 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
       if (hasPage)
         return;
       // Avoid the error when the last page is closed because the browser has been closed.
-      closeBrowser().catch(e => null);
+      closeBrowser().catch(() => {});
     });
   });
   process.on('SIGINT', async () => {
