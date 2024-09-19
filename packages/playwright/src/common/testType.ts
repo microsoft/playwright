@@ -259,11 +259,11 @@ export class TestTypeImpl {
     suite._use.push({ fixtures, location });
   }
 
-  async _step<T>(title: string, body: () => Promise<T>, options: {box?: boolean, location?: Location } = {}): Promise<T> {
+  async _step<T>(title: string, body: () => Promise<T>, options: { box?: boolean, location?: Location, params?: Record<string, any> } = {}): Promise<T> {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
-    const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
+    const step = testInfo._addStep({ category: 'test.step', title, location: options.location, params: options.params, box: options.box });
     return await zones.run('stepZone', step, async () => {
       try {
         const result = await body();

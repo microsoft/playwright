@@ -1715,6 +1715,11 @@ Whether to box the step in the report. Defaults to `false`. When the step is box
 - `location` <[Location]>
 Specifies a custom location for the step to be shown in test reports. By default, location of the [`method: Test.step`] call is shown.
 
+### option: Test.step.params
+* since: v1.48
+- `params` ?<[Object]>
+An optional key-value object where keys are step parameter names and values are their corresponding parameter values. This information is shown in the trace view.
+
 ## method: Test.use
 * since: v1.10
 

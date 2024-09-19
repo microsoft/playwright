@@ -15,6 +15,8 @@
  */
 
 import { test, expect, stripAnsi } from './playwright-test-fixtures';
+import { parseTrace } from '../config/utils';
+import { type ActionTreeItem, buildActionTree } from 'trace-viewer/src/ui/modelUtil';
 
 const stepIndentReporter = `
 import { FullConfig, Location, Reporter, Suite, TestStep } from '@playwright/test/reporter';
@@ -1297,4 +1299,58 @@ hook      |After Hooks
     `
   });
   expect(exitCode).toBe(0);
+});
+
+test('should allow passing params to test.step', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'helper.ts': `
+      import { test, TestType } from '@playwright/test';
+
+      export async function sayHello(name: string) {
+        await test.step('says hello', () => {}, { params: { name } });
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+        use: {
+          trace: 'on',
+        }
+      };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      import { sayHello } from './helper';
+
+      test('params', async () => {
+        await sayHello('World');
+      });
+    `
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-params', 'trace.zip'));
+
+  const { rootItem } = buildActionTree(trace.model.actions);
+  const actionTreeWithParams: string[] = [];
+  const visit = (actionItem: ActionTreeItem, indent: string) => {
+    const line = [
+      indent,
+      actionItem.action?.apiName || actionItem.id,
+      actionItem.action?.params && ` params: ${JSON.stringify(actionItem.action?.params)}`,
+    ].filter(Boolean).join('');
+
+    actionTreeWithParams.push(line);
+    for (const child of actionItem.children)
+      visit(child, indent + '  ');
+  };
+  rootItem.children.forEach(a => visit(a, ''));
+
+  expect(actionTreeWithParams).toEqual([
+    'Before Hooks params: {}',
+    'says hello params: {"name":"World"}',
+    'After Hooks params: {}',
+  ]);
 });
