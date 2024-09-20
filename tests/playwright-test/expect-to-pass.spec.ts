@@ -298,3 +298,20 @@ test('should give priority to intervals parameter over intervals in config file'
   expect(result.output).toContain('Expected: -1');
   expect(result.output).toContain('Received: 3');
 });
+
+test('should throw if you have nested toPass', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('nested toPass', async () => {
+        await test.expect(async () => {
+          await test.expect(() => {
+            expect(1).toBe(2);
+          }).toPass({ timeout: 50 });
+        }).toPass({ timeout: 100 });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Error: Nested toPass calls detected. toPass should not be used inside another toPass.');
+});

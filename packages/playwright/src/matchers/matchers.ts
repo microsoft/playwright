@@ -26,6 +26,7 @@ import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl } from '../worker/testInfo';
 import type { ExpectMatcherState } from '../../types/test';
 import { takeFirst } from '../common/config';
+import { AsyncLocalStorage } from 'async_hooks';
 
 interface LocatorEx extends Locator {
   _expect(expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
@@ -397,6 +398,7 @@ export async function toBeOK(
   return { message, pass };
 }
 
+const toPassContextStorage = new AsyncLocalStorage();
 export async function toPass(
   this: ExpectMatcherState,
   callback: () => any,
@@ -405,6 +407,8 @@ export async function toPass(
     timeout?: number,
   } = {},
 ) {
+  if (toPassContextStorage.getStore() !== undefined)
+    throw new Error(`Error: Nested toPass calls detected. toPass should not be used inside another toPass.`);
   const testInfo = currentTestInfo();
   const timeout = takeFirst(options.timeout, testInfo?._projectInternal.expect?.toPass?.timeout, 0);
   const intervals = takeFirst(options.intervals, testInfo?._projectInternal.expect?.toPass?.intervals, [100, 250, 500, 1000]);
@@ -414,7 +418,7 @@ export async function toPass(
     if (testInfo && currentTestInfo() !== testInfo)
       return { continuePolling: false, result: undefined };
     try {
-      await callback();
+      await toPassContextStorage.run('inside', () => callback());
       return { continuePolling: !!this.isNot, result: undefined };
     } catch (e) {
       return { continuePolling: !this.isNot, result: e };
