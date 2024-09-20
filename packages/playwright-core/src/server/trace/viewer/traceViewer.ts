@@ -223,6 +223,9 @@ class StdinServer implements Transport {
     process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
   }
 
+  onconnect() {
+  }
+
   async dispatch(method: string, params: any) {
     if (method === 'initialize') {
       if (this._traceUrl)

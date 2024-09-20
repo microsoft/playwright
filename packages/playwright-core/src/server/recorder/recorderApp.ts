@@ -162,8 +162,10 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     }).toString(), { isFunction: true }, sources).catch(() => {});
 
     // Testing harness for runCLI mode.
-    if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length)
-      (process as any)._didSetSourcesForTest(sources[0].text);
+    if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length) {
+      if ((process as any)._didSetSourcesForTest(sources[0].text))
+        this.close();
+    }
   }
 
   async setSelector(selector: string, userGesture?: boolean): Promise<void> {
