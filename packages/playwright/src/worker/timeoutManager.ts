@@ -60,6 +60,8 @@ export class TimeoutManager {
 
   setIgnoreTimeouts() {
     this._ignoreTimeouts = true;
+    if (this._running)
+      this._updateTimeout(this._running);
   }
 
   interrupt() {
