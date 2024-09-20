@@ -36,6 +36,8 @@
 
 .call-section {
   padding-left: 6px;
+  padding-top: 2px;
+  margin-top: 2px;
   font-weight: bold;
   text-transform: uppercase;
   font-size: 10px;
@@ -53,9 +55,8 @@
   align-items: center;
   text-overflow: ellipsis;
   overflow: hidden;
-  line-height: 18px;
+  line-height: 20px;
   white-space: nowrap;
-  max-height: 18px;
 }
 
 .call-line:not(:hover) .toolbar-button.copy {
@@ -64,7 +65,8 @@
 
 .call-line .toolbar-button.copy {
   margin-left: 5px;
-  transform: scale(0.8);
+  margin-top: -2px;
+  margin-bottom: -2px;
 }
 
 .call-value {

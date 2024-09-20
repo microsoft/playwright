@@ -47,7 +47,7 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
   }
   set.add(traceUrl);
 
-  const isRecorderMode = traceUrl.includes('/recorder-trace-');
+  const isRecorderMode = traceUrl.includes('/playwright-recorder-trace-');
 
   const traceModel = new TraceModel();
   try {

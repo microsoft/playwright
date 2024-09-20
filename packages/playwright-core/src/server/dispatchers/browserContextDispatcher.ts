@@ -308,7 +308,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         screenshots: true,
         live: true,
       });
-      await this._context.tracing.startChunk({ name: 'trace', title: 'trace' });
       await Recorder.show('trace-events', this._context, RecorderInTraceViewer.factory(this._context), params);
     } else {
       await Recorder.show('actions', this._context, RecorderApp.factory(this._context), params);

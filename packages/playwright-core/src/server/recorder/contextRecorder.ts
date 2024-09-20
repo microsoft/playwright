@@ -73,8 +73,8 @@ export class ContextRecorder extends EventEmitter {
       saveStorage: params.saveStorage,
     };
 
-    const collection = new RecorderCollection(codegenMode, context, this._pageAliases, params.mode === 'recording');
-    collection.on('change', (actions: ActionInContext[]) => {
+    this._collection = new RecorderCollection(codegenMode, context, this._pageAliases);
+    this._collection.on('change', (actions: ActionInContext[]) => {
       this._recorderSources = [];
       for (const languageGenerator of this._orderedLanguages) {
         const { header, footer, actionTexts, text } = generateCode(actions, languageGenerator, languageGeneratorOptions);
@@ -103,7 +103,7 @@ export class ContextRecorder extends EventEmitter {
     this._listeners.push(eventsHelper.addEventListener(process, 'exit', () => {
       this._throttledOutputFile?.flush();
     }));
-    this._collection = collection;
+    this.setEnabled(true);
   }
 
   setOutput(codegenId: string, outputFile?: string) {
@@ -145,6 +145,10 @@ export class ContextRecorder extends EventEmitter {
 
   setEnabled(enabled: boolean) {
     this._collection.setEnabled(enabled);
+    if (enabled)
+      this._context.tracing.startChunk({ name: 'trace', title: 'trace' }).catch(() => {});
+    else
+      this._context.tracing.stopChunk({ mode: 'discard' }).catch(() => {});
   }
 
   dispose() {

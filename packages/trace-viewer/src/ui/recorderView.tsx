@@ -102,6 +102,7 @@ export const TraceView: React.FC<{
     showSourcesFirst={true}
     fallbackLocation={fallbackLocation}
     isLive={true}
+    hideTimeline={true}
   />;
 };
 
