@@ -117,35 +117,67 @@ it('clicking checkbox should activate it', async ({ page, browserName, headless,
   expect(nodeName).toBe('INPUT');
 });
 
-it('tab should cycle between document and browser', {
+it('tab should cycle between single input and browser', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32339' }
-}, async ({ page, browserName }) => {
+}, async ({ page, browserName, headless }) => {
+  it.fixme(browserName === 'chromium' && !headless, 'Chromium in headful mode keeps input focused.');
   it.fixme(browserName !== 'chromium');
-  await page.setContent(`<label for="test1">test1</label>
-    <input id="test1">
+  await page.setContent(`<label for="input1">input1</label>
+    <input id="input1">
     <script>
     {
-      const input = document.getElementById('test1');
-      input.addEventListener('blur', () => {
-        const text = document.createElement('p');
-        text.textContent = "Input was blurred";
-        document.body.appendChild(text);
-      })
-      input.addEventListener('focus', () => {
-        const text = document.createElement('p');
-        text.textContent = "Input was focused";
-        document.body.appendChild(text);
-      })
+      window.focusEvents = [];
+      const input = document.getElementById('input1');
+      input.addEventListener('blur', () => focusEvents.push('blur'));
+      input.addEventListener('focus', () => focusEvents.push('focus'));
     }
     </script>`);
+  expect(await page.evaluate(() => document.activeElement.tagName)).toBe('BODY');
   await page.keyboard.press('Tab');
-  await expect(page.getByText('Input was focused')).toHaveCount(1);
+  expect(await page.evaluate(() => document.activeElement.id)).toBe('input1');
+  expect(await page.evaluate(() => (window as any).focusEvents)).toEqual(['focus']);
   await page.keyboard.press('Tab');
-  await expect(page.getByText('Input was blurred')).toHaveCount(1);
+  expect(await page.evaluate(() => document.activeElement.tagName)).toBe('BODY');
+  expect(await page.evaluate(() => (window as any).focusEvents)).toEqual(['focus', 'blur']);
   await page.keyboard.press('Tab');
-  await expect(page.getByText('Input was focused')).toHaveCount(2);
+  expect(await page.evaluate(() => document.activeElement.id)).toBe('input1');
+  expect(await page.evaluate(() => (window as any).focusEvents)).toEqual(['focus', 'blur', 'focus']);
+});
+
+it('tab should cycle between document elements and browser', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32339' }
+}, async ({ page, browserName, headless }) => {
+  it.fixme(browserName === 'chromium' && !headless, 'Chromium in headful mode keeps last input focused.');
+  it.fixme(browserName !== 'chromium');
+  await page.setContent(`
+    <input id="input1">
+    <input id="input2">
+    <script>
+      window.focusEvents = [];
+      {
+        const input = document.getElementById('input1');
+        input.addEventListener('blur', () => focusEvents.push('blur1'));
+        input.addEventListener('focus', () => focusEvents.push('focus1'));
+      }
+      {
+        const input = document.getElementById('input2');
+        input.addEventListener('blur', () => focusEvents.push('blur2'));
+        input.addEventListener('focus', () => focusEvents.push('focus2'));
+      }
+    </script>`);
+  expect(await page.evaluate(() => document.activeElement.tagName)).toBe('BODY');
   await page.keyboard.press('Tab');
-  await expect(page.getByText('Input was blurred')).toHaveCount(2);
+  expect(await page.evaluate(() => document.activeElement.id)).toBe('input1');
+  expect(await page.evaluate(() => (window as any).focusEvents)).toEqual(['focus1']);
+  await page.keyboard.press('Tab');
+  expect(await page.evaluate(() => document.activeElement.id)).toBe('input2');
+  expect(await page.evaluate(() => (window as any).focusEvents)).toEqual(['focus1', 'blur1', 'focus2']);
+  await page.keyboard.press('Tab');
+  expect(await page.evaluate(() => document.activeElement.tagName)).toBe('BODY');
+  expect(await page.evaluate(() => (window as any).focusEvents)).toEqual(['focus1', 'blur1', 'focus2', 'blur2']);
+  await page.keyboard.press('Tab');
+  expect(await page.evaluate(() => document.activeElement.id)).toBe('input1');
+  expect(await page.evaluate(() => (window as any).focusEvents)).toEqual(['focus1', 'blur1', 'focus2', 'blur2', 'focus1']);
 });
 
 it('keeps focus on element when attempting to focus a non-focusable element', async ({ page }) => {
