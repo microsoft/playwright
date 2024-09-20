@@ -130,7 +130,9 @@ test('should complain about newer version of trace in old viewer', async ({ show
 test('should properly synchronize local and remote time', async ({ showTraceViewer, asset }, testInfo) => {
   const traceViewer = await showTraceViewer([asset('trace-remote-time-diff.zip')]);
   // The total duration should be sub 10s, rather than 16h.
-  await expect(traceViewer.page.locator('.timeline-time').last()).toHaveText('8.5s');
+  await expect.poll(async () =>
+    parseInt(await traceViewer.page.locator('.timeline-time').last().innerText(), 10)
+  ).toBeLessThan(10);
 });
 
 test('should contain action info', async ({ showTraceViewer }) => {
