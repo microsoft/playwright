@@ -27,17 +27,21 @@ export const Main: React.FC = ({
   const [mode, setMode] = React.useState<Mode>('none');
 
   window.playwrightSetMode = setMode;
-  window.playwrightSetSources = setSources;
+  window.playwrightSetSources = React.useCallback((sources: Source[]) => {
+    setSources(sources);
+    window.playwrightSourcesEchoForTest = sources;
+  }, []);
   window.playwrightSetPaused = setPaused;
   window.playwrightUpdateLogs = callLogs => {
-    const newLog = new Map<string, CallLog>(log);
-    for (const callLog of callLogs) {
-      callLog.reveal = !log.has(callLog.id);
-      newLog.set(callLog.id, callLog);
-    }
-    setLog(newLog);
+    setLog(log => {
+      const newLog = new Map<string, CallLog>(log);
+      for (const callLog of callLogs) {
+        callLog.reveal = !log.has(callLog.id);
+        newLog.set(callLog.id, callLog);
+      }
+      return newLog;
+    });
   };
 
-  window.playwrightSourcesEchoForTest = sources;
   return <Recorder sources={sources} paused={paused} log={log} mode={mode} />;
 };

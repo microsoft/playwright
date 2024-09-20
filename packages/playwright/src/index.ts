@@ -16,14 +16,15 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video, PageScreenshotOptions } from 'playwright-core';
+import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
+import * as playwrightLibrary from 'playwright-core';
 import { createGuid, debugMode, addInternalStackPrefix, isString, asLocator, jsonStringifyForceASCII } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { TestInfoImpl } from './worker/testInfo';
 import { rootTestType } from './common/testType';
 import type { ContextReuseMode } from './common/config';
 import type { ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
-import { currentTestInfo, setTestLifecycleInstrumentation, type TestLifecycleInstrumentation } from './common/globals';
+import { currentTestInfo } from './common/globals';
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -44,12 +45,11 @@ if ((process as any)['__pw_initiator__']) {
 type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
   _setupContextOptions: void;
+  _setupArtifacts: void;
   _contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>;
 };
 
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
-  // Same as "playwright", but exposed so that our internal tests can override it.
-  _playwrightImpl: PlaywrightWorkerArgs['playwright'];
   _browserOptions: LaunchOptions;
   _optionContextReuseMode: ContextReuseMode,
   _optionConnectOptions: PlaywrightWorkerOptions['connectOptions'],
@@ -59,14 +59,9 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
 const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   defaultBrowserType: ['chromium', { scope: 'worker', option: true }],
   browserName: [({ defaultBrowserType }, use) => use(defaultBrowserType), { scope: 'worker', option: true }],
-  _playwrightImpl: [({}, use) => use(require('playwright-core')), { scope: 'worker', box: true }],
-
-  playwright: [async ({ _playwrightImpl, screenshot }, use) => {
-    await connector.setPlaywright(_playwrightImpl, screenshot);
-    await use(_playwrightImpl);
-    await connector.setPlaywright(undefined, screenshot);
+  playwright: [async ({}, use) => {
+    await use(require('playwright-core'));
   }, { scope: 'worker', box: true }],
-
   headless: [({ launchOptions }, use) => use(launchOptions.headless ?? true), { scope: 'worker', option: true }],
   channel: [({ launchOptions }, use) => use(launchOptions.channel), { scope: 'worker', option: true }],
   launchOptions: [{}, { scope: 'worker', option: true }],
@@ -88,15 +83,15 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.channel = channel;
     options.tracesDir = tracing().tracesDir();
 
-    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit, playwright._bidiChromium, playwright._bidiFirefox])
       (browserType as any)._defaultLaunchOptions = options;
     await use(options);
-    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit, playwright._bidiChromium, playwright._bidiFirefox])
       (browserType as any)._defaultLaunchOptions = undefined;
   }, { scope: 'worker', auto: true, box: true }],
 
   browser: [async ({ playwright, browserName, _browserOptions, connectOptions, _reuseContext }, use, testInfo) => {
-    if (!['chromium', 'firefox', 'webkit'].includes(browserName))
+    if (!['chromium', 'firefox', 'webkit', '_bidiChromium', '_bidiFirefox'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
 
     if (connectOptions) {
@@ -140,6 +135,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   permissions: [({ contextOptions }, use) => use(contextOptions.permissions), { option: true }],
   proxy: [({ contextOptions }, use) => use(contextOptions.proxy), { option: true }],
   storageState: [({ contextOptions }, use) => use(contextOptions.storageState), { option: true }],
+  clientCertificates: [({ contextOptions }, use) => use(contextOptions.clientCertificates), { option: true }],
   timezoneId: [({ contextOptions }, use) => use(contextOptions.timezoneId), { option: true }],
   userAgent: [({ contextOptions }, use) => use(contextOptions.userAgent), { option: true }],
   viewport: [({ contextOptions }, use) => use(contextOptions.viewport === undefined ? { width: 1280, height: 720 } : contextOptions.viewport), { option: true }],
@@ -155,6 +151,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   _combinedContextOptions: [async ({
     acceptDownloads,
     bypassCSP,
+    clientCertificates,
     colorScheme,
     deviceScaleFactor,
     extraHTTPHeaders,
@@ -209,6 +206,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.proxy = proxy;
     if (storageState !== undefined)
       options.storageState = storageState;
+    if (clientCertificates?.length)
+      options.clientCertificates = resolveClientCerticates(clientCertificates);
     if (timezoneId !== undefined)
       options.timezoneId = timezoneId;
     if (userAgent !== undefined)
@@ -227,10 +226,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   _setupContextOptions: [async ({ playwright, _combinedContextOptions, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
     if (testIdAttribute)
-      playwright.selectors.setTestIdAttribute(testIdAttribute);
+      playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = process.platform;
     if (debugMode())
-      testInfo.setTimeout(0);
+      (testInfo as TestInfoImpl)._setDebugMode();
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
       (browserType as any)._defaultContextOptions = _combinedContextOptions;
       (browserType as any)._defaultContextTimeout = actionTimeout || 0;
@@ -247,6 +246,63 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (browserType as any)._defaultContextNavigationTimeout = undefined;
     }
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
+
+  _setupArtifacts: [async ({ playwright, screenshot }, use, testInfo) => {
+    // This fixture has a separate zero-timeout slot to ensure that artifact collection
+    // happens even after some fixtures or hooks time out.
+    // Now that default test timeout is known, we can replace zero with an actual value.
+    testInfo.setTimeout(testInfo.project.timeout);
+
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
+    await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
+    const csiListener: ClientInstrumentationListener = {
+      onApiCallBegin: (apiName: string, params: Record<string, any>, frames: StackFrame[], userData: any, out: { stepId?: string }) => {
+        const testInfo = currentTestInfo();
+        if (!testInfo || apiName.includes('setTestIdAttribute'))
+          return { userObject: null };
+        const step = testInfo._addStep({
+          location: frames[0] as any,
+          category: 'pw:api',
+          title: renderApiCall(apiName, params),
+          apiName,
+          params,
+        });
+        userData.userObject = step;
+        out.stepId = step.stepId;
+      },
+      onApiCallEnd: (userData: any, error?: Error) => {
+        const step = userData.userObject;
+        step?.complete({ error });
+      },
+      onWillPause: () => {
+        currentTestInfo()?._setDebugMode();
+      },
+      runAfterCreateBrowserContext: async (context: BrowserContext) => {
+        await artifactsRecorder?.didCreateBrowserContext(context);
+        const testInfo = currentTestInfo();
+        if (testInfo)
+          attachConnectedHeaderIfNeeded(testInfo, context.browser());
+      },
+      runAfterCreateRequestContext: async (context: APIRequestContext) => {
+        await artifactsRecorder?.didCreateRequestContext(context);
+      },
+      runBeforeCloseBrowserContext: async (context: BrowserContext) => {
+        await artifactsRecorder?.willCloseBrowserContext(context);
+      },
+      runBeforeCloseRequestContext: async (context: APIRequestContext) => {
+        await artifactsRecorder?.willCloseRequestContext(context);
+      },
+    };
+
+    const clientInstrumentation = (playwright as any)._instrumentation as ClientInstrumentation;
+    clientInstrumentation.addListener(csiListener);
+
+    await use();
+
+    clientInstrumentation.removeListener(csiListener);
+    await artifactsRecorder.didFinishTest();
+
+  }, { auto: 'all-hooks-included',  title: 'trace recording', box: true, timeout: 0 } as any],
 
   _contextFactory: [async ({ browser, video, _reuseContext, _combinedContextOptions /** mitigate dep-via-auto lack of traceability */ }, use, testInfo) => {
     const testInfoImpl = testInfo as TestInfoImpl;
@@ -416,6 +472,26 @@ function attachConnectedHeaderIfNeeded(testInfo: TestInfo, browser: Browser | nu
   }
 }
 
+function resolveFileToConfig(file: string | undefined) {
+  const config = test.info().config.configFile;
+  if (!config || !file)
+    return file;
+  if (path.isAbsolute(file))
+    return file;
+  return path.resolve(path.dirname(config), file);
+}
+
+type ClientCertificates = NonNullable<PlaywrightTestOptions['clientCertificates']>;
+
+function resolveClientCerticates(clientCertificates: ClientCertificates): ClientCertificates {
+  for (const cert of clientCertificates) {
+    cert.certPath = resolveFileToConfig(cert.certPath);
+    cert.keyPath = resolveFileToConfig(cert.keyPath);
+    cert.pfxPath = resolveFileToConfig(cert.pfxPath);
+  }
+  return clientCertificates;
+}
+
 const kTracingStarted = Symbol('kTracingStarted');
 const kIsReusedContext = Symbol('kReusedContext');
 
@@ -436,7 +512,7 @@ class ArtifactsRecorder {
   private _playwright: Playwright;
   private _artifactsDir: string;
   private _screenshotMode: ScreenshotMode;
-  private _screenshotOptions: { mode: ScreenshotMode } & Pick<PageScreenshotOptions, 'fullPage' | 'omitBackground'> | undefined;
+  private _screenshotOptions: { mode: ScreenshotMode } & Pick<playwrightLibrary.PageScreenshotOptions, 'fullPage' | 'omitBackground'> | undefined;
   private _temporaryScreenshots: string[] = [];
   private _temporaryArtifacts: string[] = [];
   private _reusedContexts = new Set<BrowserContext>();
@@ -461,6 +537,7 @@ class ArtifactsRecorder {
 
   async willStartTest(testInfo: TestInfoImpl) {
     this._testInfo = testInfo;
+    testInfo._onDidFinishTestFunction = () => this.didFinishTestFunction();
 
     // Since beforeAll(s), test and afterAll(s) reuse the same TestInfo, make sure we do not
     // overwrite previous screenshots.
@@ -609,7 +686,7 @@ class ArtifactsRecorder {
     if ((tracing as any)[this._startedCollectingArtifacts])
       return;
     (tracing as any)[this._startedCollectingArtifacts] = true;
-    if (this._testInfo._tracing.traceOptions())
+    if (this._testInfo._tracing.traceOptions() && (tracing as any)[kTracingStarted])
       await tracing.stopChunk({ path: this._testInfo._tracing.generateNextTraceRecordingPath() });
   }
 }
@@ -641,101 +718,6 @@ function renderApiCall(apiName: string, params: any) {
 function tracing() {
   return (test.info() as TestInfoImpl)._tracing;
 }
-
-class InstrumentationConnector implements TestLifecycleInstrumentation, ClientInstrumentationListener {
-  private _playwright: PlaywrightWorkerArgs['playwright'] | undefined;
-  private _screenshot: ScreenshotOption = 'off';
-  private _artifactsRecorder: ArtifactsRecorder | undefined;
-  private _testIsRunning = false;
-
-  constructor() {
-    setTestLifecycleInstrumentation(this);
-  }
-
-  async setPlaywright(playwright: PlaywrightWorkerArgs['playwright'] | undefined, screenshot: ScreenshotOption) {
-    if (this._playwright) {
-      if (this._testIsRunning) {
-        // When "playwright" is destroyed during a test, collect artifacts immediately.
-        await this.onTestEnd();
-      }
-      const clientInstrumentation = (this._playwright as any)._instrumentation as ClientInstrumentation;
-      clientInstrumentation.removeListener(this);
-    }
-    this._playwright = playwright;
-    this._screenshot = screenshot;
-    if (this._playwright) {
-      const clientInstrumentation = (this._playwright as any)._instrumentation as ClientInstrumentation;
-      clientInstrumentation.addListener(this);
-      if (this._testIsRunning) {
-        // When "playwright" is created during a test, wire it up immediately.
-        await this.onTestBegin();
-      }
-    }
-  }
-
-  async onTestBegin() {
-    this._testIsRunning = true;
-    if (this._playwright) {
-      this._artifactsRecorder = new ArtifactsRecorder(this._playwright, tracing().artifactsDir(), this._screenshot);
-      await this._artifactsRecorder.willStartTest(currentTestInfo() as TestInfoImpl);
-    }
-  }
-
-  async onTestFunctionEnd() {
-    await this._artifactsRecorder?.didFinishTestFunction();
-  }
-
-  async onTestEnd() {
-    await this._artifactsRecorder?.didFinishTest();
-    this._artifactsRecorder = undefined;
-    this._testIsRunning = false;
-  }
-
-  onApiCallBegin(apiName: string, params: Record<string, any>, frames: StackFrame[], userData: any, out: { stepId?: string }) {
-    const testInfo = currentTestInfo();
-    if (!testInfo || apiName.includes('setTestIdAttribute'))
-      return { userObject: null };
-    const step = testInfo._addStep({
-      location: frames[0] as any,
-      category: 'pw:api',
-      title: renderApiCall(apiName, params),
-      apiName,
-      params,
-    });
-    userData.userObject = step;
-    out.stepId = step.stepId;
-  }
-
-  onApiCallEnd(userData: any, error?: Error) {
-    const step = userData.userObject;
-    step?.complete({ error });
-  }
-
-  onWillPause() {
-    currentTestInfo()?.setTimeout(0);
-  }
-
-  async runAfterCreateBrowserContext(context: BrowserContext) {
-    await this._artifactsRecorder?.didCreateBrowserContext(context);
-    const testInfo = currentTestInfo();
-    if (testInfo)
-      attachConnectedHeaderIfNeeded(testInfo, context.browser());
-  }
-
-  async runAfterCreateRequestContext(context: APIRequestContext) {
-    await this._artifactsRecorder?.didCreateRequestContext(context);
-  }
-
-  async runBeforeCloseBrowserContext(context: BrowserContext) {
-    await this._artifactsRecorder?.willCloseBrowserContext(context);
-  }
-
-  async runBeforeCloseRequestContext(context: APIRequestContext) {
-    await this._artifactsRecorder?.willCloseRequestContext(context);
-  }
-}
-
-const connector = new InstrumentationConnector();
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
 

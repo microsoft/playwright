@@ -52,51 +52,14 @@ export interface LoadedTsConfig {
   allowJs?: boolean;
 }
 
-export interface TsConfigLoaderParams {
-  cwd: string;
-}
-
-export function tsConfigLoader({ cwd, }: TsConfigLoaderParams): LoadedTsConfig[] {
-  const configPath = resolveConfigPath(cwd);
-
-  if (!configPath)
-    return [];
-
-  const references: LoadedTsConfig[] = [];
-  const config = loadTsConfig(configPath, references);
-  return [config, ...references];
-}
-
-function resolveConfigPath(cwd: string): string | undefined {
-  if (fs.statSync(cwd).isFile()) {
-    return path.resolve(cwd);
+export function loadTsConfig(configPath: string): LoadedTsConfig[] {
+  try {
+    const references: LoadedTsConfig[] = [];
+    const config = innerLoadTsConfig(configPath, references);
+    return [config, ...references];
+  } catch (e) {
+    throw new Error(`Failed to load tsconfig file at ${configPath}:\n${e.message}`);
   }
-
-  const configAbsolutePath = walkForTsConfig(cwd);
-  return configAbsolutePath ? path.resolve(configAbsolutePath) : undefined;
-}
-
-export function walkForTsConfig(
-  directory: string,
-  existsSync: (path: string) => boolean = fs.existsSync
-): string | undefined {
-  const tsconfigPath = path.join(directory, "./tsconfig.json");
-  if (existsSync(tsconfigPath)) {
-    return tsconfigPath;
-  }
-  const jsconfigPath = path.join(directory, "./jsconfig.json");
-  if (existsSync(jsconfigPath)) {
-    return jsconfigPath;
-  }
-
-  const parentDirectory = path.join(directory, "../");
-
-  // If we reached the top
-  if (directory === parentDirectory) {
-    return undefined;
-  }
-
-  return walkForTsConfig(parentDirectory, existsSync);
 }
 
 function resolveConfigFile(baseConfigFile: string, referencedConfigFile: string) {
@@ -110,7 +73,7 @@ function resolveConfigFile(baseConfigFile: string, referencedConfigFile: string)
   return resolvedConfigFile;
 }
 
-function loadTsConfig(
+function innerLoadTsConfig(
   configFilePath: string,
   references: LoadedTsConfig[],
   visited = new Map<string, LoadedTsConfig>(),
@@ -134,7 +97,7 @@ function loadTsConfig(
   const extendsArray = Array.isArray(parsedConfig.extends) ? parsedConfig.extends : (parsedConfig.extends ? [parsedConfig.extends] : []);
   for (const extendedConfig of extendsArray) {
     const extendedConfigPath = resolveConfigFile(configFilePath, extendedConfig);
-    const base = loadTsConfig(extendedConfigPath, references, visited);
+    const base = innerLoadTsConfig(extendedConfigPath, references, visited);
     // Retain result instance, so that caching works.
     Object.assign(result, base, { tsConfigPath: configFilePath });
   }
@@ -158,7 +121,7 @@ function loadTsConfig(
   }
 
   for (const ref of parsedConfig.references || [])
-    references.push(loadTsConfig(resolveConfigFile(configFilePath, ref.path), references, visited));
+    references.push(innerLoadTsConfig(resolveConfigFile(configFilePath, ref.path), references, visited));
 
   if (path.basename(configFilePath) === 'jsconfig.json' && result.allowJs === undefined)
     result.allowJs = true;

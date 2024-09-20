@@ -19,8 +19,8 @@ import url from 'url';
 import { contextTest as it, expect } from '../config/browserTest';
 import { hostPlatform } from '../../packages/playwright-core/src/utils/hostPlatform';
 
-it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer, browserName }) {
-  it.fail(browserName === 'webkit', 'no shared array buffer on webkit');
+it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer, isMac, browserName }) {
+  it.skip(browserName === 'webkit' && isMac && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS 12 is frozen and does not support SharedArrayBuffer');
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   httpsServer.setRoute('/sharedarraybuffer', (req, res) => {
@@ -110,6 +110,7 @@ it('should play audio @smoke', async ({ page, server, browserName, platform }) =
 });
 
 it('should support webgl @smoke', async ({ page, browserName, platform }) => {
+  it.fixme(browserName === 'chromium' && platform === 'darwin' && os.arch() === 'arm64', 'SwiftShader is not available on macOS-arm64 - https://github.com/microsoft/playwright/issues/28216');
   const hasWebGL = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
     return !!canvas.getContext('webgl');
@@ -118,7 +119,10 @@ it('should support webgl @smoke', async ({ page, browserName, platform }) => {
 });
 
 it('should support webgl 2 @smoke', async ({ page, browserName, headless, isWindows, platform }) => {
+  it.skip(browserName === 'webkit', 'WebKit doesn\'t have webgl2 enabled yet upstream.');
   it.fixme(browserName === 'firefox' && isWindows);
+  it.fixme(browserName === 'chromium' && !headless, 'chromium doesn\'t like webgl2 when running under xvfb');
+  it.fixme(browserName === 'chromium' && platform === 'darwin' && os.arch() === 'arm64', 'SwiftShader is not available on macOS-arm64 - https://github.com/microsoft/playwright/issues/28216');
 
   const hasWebGL2 = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
@@ -143,7 +147,7 @@ it('should not crash on showDirectoryPicker', async ({ page, server, browserName
     const dir = await (window as any).showDirectoryPicker();
     return dir.name;
     // In headless it throws (aborted), in headed it stalls (Test ended) and waits for the picker to be accepted.
-  }).catch(e => expect(e.message).toMatch(/((DOMException|AbortError): The user aborted a request|Test ended)/));
+  }).catch(e => expect(e.message).toMatch(/((DOMException|AbortError): .*The user aborted a request|Test ended)/));
   // The dialog will not be accepted, so we just wait for some time to
   // to give the browser a chance to crash.
   await page.waitForTimeout(3_000);

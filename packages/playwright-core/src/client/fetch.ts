@@ -25,18 +25,19 @@ import { assert, headersObjectToArray, isString } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import { ChannelOwner } from './channelOwner';
 import { RawHeaders } from './network';
-import type { FilePayload, Headers, StorageState } from './types';
+import type { ClientCertificate, FilePayload, Headers, StorageState } from './types';
 import type { Playwright } from './playwright';
 import { Tracing } from './tracing';
 import { TargetClosedError, isTargetClosedError } from './errors';
+import { toClientCertificatesProtocol } from './browserContext';
 
 export type FetchOptions = {
-  params?: { [key: string]: string; },
+  params?: { [key: string]: string | number | boolean; } | URLSearchParams | string,
   method?: string,
   headers?: Headers,
   data?: string | Buffer | Serializable,
-  form?: { [key: string]: string|number|boolean; };
-  multipart?: { [key: string]: string|number|boolean|fs.ReadStream|FilePayload; };
+  form?: { [key: string]: string|number|boolean; } | FormData;
+  multipart?: { [key: string]: string|number|boolean|fs.ReadStream|FilePayload; } | FormData;
   timeout?: number,
   failOnStatusCode?: boolean,
   ignoreHTTPSErrors?: boolean,
@@ -44,9 +45,10 @@ export type FetchOptions = {
   maxRetries?: number,
 };
 
-type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'storageState' | 'tracesDir'> & {
+type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'tracesDir'> & {
   extraHTTPHeaders?: Headers,
   storageState?: string | StorageState,
+  clientCertificates?: ClientCertificate[];
 };
 
 type RequestWithBodyOptions = Omit<FetchOptions, 'method'>;
@@ -74,6 +76,7 @@ export class APIRequest implements api.APIRequest {
       extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       storageState,
       tracesDir,
+      clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
     })).request);
     this._contexts.add(context);
     context._request = this;
@@ -172,10 +175,14 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
       assert(options.maxRedirects === undefined || options.maxRedirects >= 0, `'maxRedirects' must be greater than or equal to '0'`);
       assert(options.maxRetries === undefined || options.maxRetries >= 0, `'maxRetries' must be greater than or equal to '0'`);
       const url = options.url !== undefined ? options.url : options.request!.url();
-      const params = objectToArray(options.params);
       const method = options.method || options.request?.method();
+      let encodedParams = undefined;
+      if (typeof options.params === 'string')
+        encodedParams = options.params;
+      else if (options.params instanceof URLSearchParams)
+        encodedParams = options.params.toString();
       // Cannot call allHeaders() here as the request may be paused inside route handler.
-      const headersObj = options.headers || options.request?.headers() ;
+      const headersObj = options.headers || options.request?.headers();
       const headers = headersObj ? headersObjectToArray(headersObj) : undefined;
       let jsonData: any;
       let formData: channels.NameValue[] | undefined;
@@ -195,7 +202,16 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
           throw new Error(`Unexpected 'data' type`);
         }
       } else if (options.form) {
-        formData = objectToArray(options.form);
+        if (globalThis.FormData && options.form instanceof FormData) {
+          formData = [];
+          for (const [name, value] of options.form.entries()) {
+            if (typeof value !== 'string')
+              throw new Error(`Expected string for options.form["${name}"], found File. Please use options.multipart instead.`);
+            formData.push({ name, value });
+          }
+        } else {
+          formData = objectToArray(options.form);
+        }
       } else if (options.multipart) {
         multipartData = [];
         if (globalThis.FormData && options.multipart instanceof FormData) {
@@ -225,7 +241,8 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
       };
       const result = await this._channel.fetch({
         url,
-        params,
+        params: typeof options.params === 'object' ? objectToArray(options.params) : undefined,
+        encodedParams,
         method,
         headers,
         postData: postDataBuffer,
@@ -395,7 +412,7 @@ function isJsonContentType(headers?: HeadersArray): boolean {
   return false;
 }
 
-function objectToArray(map?:  { [key: string]: any }): NameValue[] | undefined {
+function objectToArray(map?: { [key: string]: any }): NameValue[] | undefined {
   if (!map)
     return undefined;
   const result = [];

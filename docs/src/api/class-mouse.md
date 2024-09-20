@@ -68,9 +68,13 @@ Shortcut for [`method: Mouse.move`], [`method: Mouse.down`], [`method: Mouse.up`
 * since: v1.8
 - `x` <[float]>
 
+X coordinate relative to the main frame's viewport in CSS pixels.
+
 ### param: Mouse.click.y
 * since: v1.8
 - `y` <[float]>
+
+Y coordinate relative to the main frame's viewport in CSS pixels.
 
 ### option: Mouse.click.button = %%-input-button-%%
 * since: v1.8
@@ -93,9 +97,13 @@ Shortcut for [`method: Mouse.move`], [`method: Mouse.down`], [`method: Mouse.up`
 * since: v1.8
 - `x` <[float]>
 
+X coordinate relative to the main frame's viewport in CSS pixels.
+
 ### param: Mouse.dblclick.y
 * since: v1.8
 - `y` <[float]>
+
+Y coordinate relative to the main frame's viewport in CSS pixels.
 
 ### option: Mouse.dblclick.button = %%-input-button-%%
 * since: v1.8
@@ -123,9 +131,13 @@ Dispatches a `mousemove` event.
 * since: v1.8
 - `x` <[float]>
 
+X coordinate relative to the main frame's viewport in CSS pixels.
+
 ### param: Mouse.move.y
 * since: v1.8
 - `y` <[float]>
+
+Y coordinate relative to the main frame's viewport in CSS pixels.
 
 ### option: Mouse.move.steps
 * since: v1.8

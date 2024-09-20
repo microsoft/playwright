@@ -78,7 +78,7 @@ it('should work with cross-process that fails before committing', async ({ page,
   expect(error instanceof Error).toBeTruthy();
 });
 
-it('should work with Cross-Origin-Opener-Policy', async ({ page, server, browserName }) => {
+it('should work with Cross-Origin-Opener-Policy', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
     res.end();
@@ -109,7 +109,42 @@ it('should work with Cross-Origin-Opener-Policy', async ({ page, server, browser
   expect(response.request().failure()).toBeNull();
 });
 
-it('should work with Cross-Origin-Opener-Policy after redirect', async ({ page, server, browserName }) => {
+it('should work with Cross-Origin-Opener-Policy and interception', async ({ page, server }) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.end();
+  });
+  const requests = new Set();
+  const events = [];
+  page.on('request', r => {
+    events.push('request');
+    requests.add(r);
+  });
+  page.on('requestfailed', r => {
+    events.push('requestfailed');
+    requests.add(r);
+  });
+  page.on('requestfinished', r => {
+    events.push('requestfinished');
+    requests.add(r);
+  });
+  page.on('response', r => {
+    events.push('response');
+    requests.add(r.request());
+  });
+  await page.route('**/*', async route => {
+    await new Promise(f => setTimeout(f, 100));
+    await route.continue();
+  });
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(page.url()).toBe(server.EMPTY_PAGE);
+  await response.finished();
+  expect(events).toEqual(['request', 'response', 'requestfinished']);
+  expect(requests.size).toBe(1);
+  expect(response.request().failure()).toBeNull();
+});
+
+it('should work with Cross-Origin-Opener-Policy after redirect', async ({ page, server }) => {
   server.setRedirect('/redirect', '/empty.html');
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
@@ -310,7 +345,7 @@ it('should fail when main resources failed to load', async ({ page, browserName,
   } else if (browserName === 'webkit' && isWindows && mode === 'service2') {
     expect(error.message).toContain(`proxy handshake error`);
   } else if (browserName === 'webkit' && isWindows) {
-    expect(error.message).toContain(`Couldn\'t connect to server`);
+    expect(error.message).toContain(`Could not connect to server`);
   } else if (browserName === 'webkit') {
     if (mode === 'service2')
       expect(error.message).toContain('Connection refused');

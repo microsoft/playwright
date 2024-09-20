@@ -20,7 +20,7 @@ import './consoleTab.css';
 import type * as modelUtil from './modelUtil';
 import { ListView } from '@web/components/listView';
 import type { Boundaries } from '../geometry';
-import { msToString } from '@web/uiUtils';
+import { clsx, msToString } from '@web/uiUtils';
 import { ansi2html } from '@web/ansi2html';
 import { PlaceholderPanel } from './placeholderPanel';
 
@@ -107,21 +107,25 @@ export const ConsoleTab: React.FunctionComponent<{
   boundaries: Boundaries,
   consoleModel: ConsoleTabModel,
   selectedTime: Boundaries | undefined,
-}> = ({ consoleModel, boundaries }) => {
+  onEntryHovered: (entry: ConsoleEntry | undefined) => void,
+  onAccepted: (entry: ConsoleEntry) => void,
+}> = ({ consoleModel, boundaries, onEntryHovered, onAccepted }) => {
   if (!consoleModel.entries.length)
     return <PlaceholderPanel text='No console entries' />;
 
   return <div className='console-tab'>
     <ConsoleListView
       name='console'
+      onAccepted={onAccepted}
+      onHighlighted={onEntryHovered}
       items={consoleModel.entries}
       isError={entry => entry.isError}
       isWarning={entry => entry.isWarning}
       render={entry => {
         const timestamp = msToString(entry.timestamp - boundaries.minimum);
         const timestampElement = <span className='console-time'>{timestamp}</span>;
-        const errorSuffix = entry.isError ? ' status-error' : entry.isWarning ? ' status-warning' : ' status-none';
-        const statusElement = entry.browserMessage || entry.browserError ? <span className={'codicon codicon-browser' + errorSuffix} title='Browser message'></span> : <span className={'codicon codicon-file' + errorSuffix} title='Runner message'></span>;
+        const errorSuffix = entry.isError ? 'status-error' : entry.isWarning ? 'status-warning' : 'status-none';
+        const statusElement = entry.browserMessage || entry.browserError ? <span className={clsx('codicon', 'codicon-browser', errorSuffix)} title='Browser message'></span> : <span className={clsx('codicon', 'codicon-file', errorSuffix)} title='Runner message'></span>;
         let locationText: string | undefined;
         let messageBody: JSX.Element[] | string | undefined;
         let messageInnerHTML: string | undefined;
@@ -209,6 +213,7 @@ function format(args: { preview: string, value: any }[]): JSX.Element[] {
 }
 
 function formatAnsi(text: string): JSX.Element[] {
+  // eslint-disable-next-line react/jsx-key
   return [<span dangerouslySetInnerHTML={{ __html: ansi2html(text.trim()) }}></span>];
 }
 

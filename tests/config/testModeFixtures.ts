@@ -30,12 +30,11 @@ export type TestModeTestFixtures = {
 export type TestModeWorkerFixtures = {
   toImplInWorkerScope: (rpcObject?: any) => any;
   playwright: typeof import('@playwright/test');
-  _playwrightImpl: typeof import('@playwright/test');
 };
 
 export const testModeTest = test.extend<TestModeTestFixtures, TestModeWorkerOptions & TestModeWorkerFixtures>({
   mode: ['default', { scope: 'worker', option: true }],
-  _playwrightImpl: [async ({ mode }, run) => {
+  playwright: [async ({ mode }, run) => {
     const testMode = {
       'default': new DefaultTestMode(),
       'service': new DefaultTestMode(),

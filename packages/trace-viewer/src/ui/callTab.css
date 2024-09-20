@@ -55,23 +55,30 @@
   overflow: hidden;
   line-height: 18px;
   white-space: nowrap;
+  max-height: 18px;
 }
 
-.copy-icon {
+.call-line:not(:hover) .toolbar-button.copy {
   display: none;
-  margin-right: 4px;
 }
 
-.call-line:hover .copy-icon {
-  display: block;
-  cursor: pointer;
+.call-line .toolbar-button.copy {
+  margin-left: 5px;
+  transform: scale(0.8);
 }
 
 .call-value {
   margin-left: 2px;
   text-overflow: ellipsis;
   overflow: hidden;
-  flex: 1;
+}
+
+a.call-value {
+  text-decoration: none;
+}
+
+a.call-value:hover {
+  text-decoration: underline;
 }
 
 .call-value::before {

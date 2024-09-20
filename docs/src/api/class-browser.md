@@ -1,6 +1,5 @@
 # class: Browser
 * since: v1.8
-* extends: [EventEmitter]
 
 A Browser is created via [`method: BrowserType.launch`]. An example of using a [Browser] to create a [Page]:
 
@@ -256,6 +255,9 @@ await browser.CloseAsync();
 ### option: Browser.newContext.proxy = %%-context-option-proxy-%%
 * since: v1.8
 
+### option: Browser.newContext.clientCertificates = %%-context-option-clientCertificates-%%
+* since: 1.46
+
 ### option: Browser.newContext.storageState = %%-js-python-context-option-storage-state-%%
 * since: v1.8
 
@@ -281,6 +283,9 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 ### option: Browser.newPage.proxy = %%-context-option-proxy-%%
 * since: v1.8
 
+### option: Browser.newPage.clientCertificates = %%-context-option-clientCertificates-%%
+* since: 1.46
+
 ### option: Browser.newPage.storageState = %%-js-python-context-option-storage-state-%%
 * since: v1.8
 
@@ -289,6 +294,20 @@ testing frameworks should explicitly create [`method: Browser.newContext`] follo
 
 ### option: Browser.newPage.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
 * since: v1.9
+
+## async method: Browser.removeAllListeners
+* since: v1.47
+* langs: js
+
+Removes all the listeners of the given type (or all registered listeners if no type given).
+Allows to wait for async listeners to complete or to ignore subsequent errors from these listeners.
+
+### param: Browser.removeAllListeners.type
+* since: v1.47
+- `type` ?<[string]>
+
+### option: Browser.removeAllListeners.behavior = %%-remove-all-listeners-options-behavior-%%
+* since: v1.47
 
 ## async method: Browser.startTracing
 * since: v1.11

@@ -18,15 +18,15 @@
 import { browserTest as it, expect } from '../config/browserTest';
 import * as path from 'path';
 import fs from 'fs';
-import http2 from 'http2';
 import type { BrowserContext, BrowserContextOptions } from 'playwright-core';
 import type { AddressInfo } from 'net';
 import type { Log } from '../../packages/trace/src/har';
 import { parseHar } from '../config/utils';
+const { createHttp2Server } = require('../../packages/playwright-core/lib/utils');
 
-async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string, content?: 'embed' | 'attach' | 'omit', omitContent?: boolean } = {}) {
+async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string } & Partial<Pick<BrowserContextOptions['recordHar'], 'content' | 'omitContent' | 'mode'>> = {}) {
   const harPath = testInfo.outputPath(options.outputPath || 'test.har');
-  const context = await contextFactory({ recordHar: { path: harPath, content: options.content, omitContent: options.omitContent }, ignoreHTTPSErrors: true });
+  const context = await contextFactory({ recordHar: { path: harPath, ...options }, ignoreHTTPSErrors: true });
   const page = await context.newPage();
   return {
     page,
@@ -610,6 +610,7 @@ it('should have security details', async ({ contextFactory, httpsServer, browser
 
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(httpsServer.EMPTY_PAGE);
+  await page.request.get(httpsServer.EMPTY_PAGE);
   const log = await getLog();
   const { serverIPAddress, _serverPort: port, _securityDetails: securityDetails } = log.entries[0];
   if (!mode.startsWith('service')) {
@@ -620,6 +621,8 @@ it('should have security details', async ({ contextFactory, httpsServer, browser
     expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
   else
     expect(securityDetails).toEqual({ issuer: 'playwright-test', protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
+
+  expect(log.entries[1]._securityDetails).toEqual({ issuer: 'playwright-test', protocol: 'TLSv1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
 });
 
 it('should have connection details for redirects', async ({ contextFactory, server, browserName, mode }, testInfo) => {
@@ -685,10 +688,8 @@ it('should return security details directly from response', async ({ contextFact
     expect(securityDetails).toEqual({ issuer: 'playwright-test', protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
 });
 
-it('should contain http2 for http2 requests', async ({ contextFactory, browserName, platform }, testInfo) => {
-  it.fixme(browserName === 'webkit' && platform === 'win32');
-
-  const server = http2.createSecureServer({
+it('should contain http2 for http2 requests', async ({ contextFactory }, testInfo) => {
+  const server = createHttp2Server({
     key: await fs.promises.readFile(path.join(__dirname, '..', 'config', 'testserver', 'key.pem')),
     cert: await fs.promises.readFile(path.join(__dirname, '..', 'config', 'testserver', 'cert.pem')),
   });
@@ -822,6 +823,56 @@ it('should include API request', async ({ contextFactory, server }, testInfo) =>
   expect(entry.response.headers.find(h => h.name.toLowerCase() === 'content-type')?.value).toContain('application/json');
   expect(entry.response.content.size).toBe(15);
   expect(entry.response.content.text).toBe(responseBody.toString());
+  expect(entry.response.bodySize).toBe(15);
+
+  expect(entry.time).toBeGreaterThan(0);
+  expect(entry.timings).toEqual(expect.objectContaining({
+    blocked: -1,
+    connect: expect.any(Number),
+    dns: expect.any(Number),
+    receive: expect.any(Number),
+    send: expect.any(Number),
+    ssl: expect.any(Number),
+    wait: expect.any(Number),
+  }));
+
+  expect(entry.serverIPAddress).toBeDefined();
+  expect(entry._serverPort).toEqual(server.PORT);
+});
+
+it('should respect minimal mode for API Requests', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo, { mode: 'minimal' });
+  const url = server.PREFIX + '/simple.json';
+  await page.request.post(url, {
+    headers: { cookie: 'a=b; c=d' },
+    data: { foo: 'bar' }
+  });
+  const { entries } = await getLog();
+  expect(entries).toHaveLength(1);
+  const [entry] = entries;
+  expect(entry.timings).toEqual({ receive: -1, send: -1, wait: -1 });
+  expect(entry.serverIPAddress).toBeUndefined();
+  expect(entry._serverPort).toBeUndefined();
+  expect(entry.request.cookies).toEqual([]);
+  expect(entry.request.bodySize).toBe(-1);
+  expect(entry.response.bodySize).toBe(-1);
+});
+
+it('should include redirects from API request', async ({ contextFactory, server }, testInfo) => {
+  server.setRedirect('/redirect-me', '/simple.json');
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.request.post(server.PREFIX + '/redirect-me', {
+    headers: { cookie: 'a=b; c=d' },
+    data: { foo: 'bar' }
+  });
+  const log = await getLog();
+  expect(log.entries.length).toBe(2);
+  const [redirect, json] = log.entries;
+  expect(redirect.request.url).toBe(server.PREFIX + '/redirect-me');
+  expect(json.request.url).toBe(server.PREFIX + '/simple.json');
+
+  expect(redirect.timings).toBeDefined();
+  expect(json.timings).toBeDefined();
 });
 
 it('should not hang on resources served from cache', async ({ contextFactory, server, browserName }, testInfo) => {

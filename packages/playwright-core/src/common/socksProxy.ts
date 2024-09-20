@@ -431,9 +431,9 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
     return this._port;
   }
 
-  async listen(port: number): Promise<number> {
+  async listen(port: number, hostname?: string): Promise<number> {
     return new Promise(f => {
-      this._server.listen(port, () => {
+      this._server.listen(port, hostname, () => {
         const port = (this._server.address() as AddressInfo).port;
         this._port = port;
         f(port);

@@ -23,11 +23,15 @@
 }
 
 .source-tab-file-name {
-  height: 24px;
-  margin-left: 8px;
+  padding-left: 8px;
+  height: 100%;
   display: flex;
   align-items: center;
-  background-color: var(--vscode-breadcrumb-background);
-  box-shadow: var(--vscode-scrollbar-shadow) 0 6px 6px -6px;
-  z-index: 10;
+  flex: 1 1 auto;
+}
+
+.source-tab-file-name div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

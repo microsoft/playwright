@@ -29,11 +29,13 @@ import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector, type GenerateSelectorOptions } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription } from './roleUtils';
+import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription, beginAriaCaches, endAriaCaches } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
-import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
+import { cacheNormalizedWhitespaces, escapeHTML, escapeHTMLAttribute, normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
+import { selectorForSimpleDomNodeId, generateSimpleDomNode } from './simpleDom';
+import type { SimpleDomNode } from './simpleDom';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
 
@@ -66,7 +68,25 @@ export class InjectedScript {
   // eslint-disable-next-line no-restricted-globals
   readonly window: Window & typeof globalThis;
   readonly document: Document;
-  readonly utils = { isInsideScope, elementText, asLocator, normalizeWhiteSpace, cacheNormalizedWhitespaces };
+
+  // Recorder must use any external dependencies through InjectedScript.
+  // Otherwise it will end up with a copy of all modules it uses, and any
+  // module-level globals will be duplicated, which leads to subtle bugs.
+  readonly utils = {
+    asLocator,
+    beginAriaCaches,
+    cacheNormalizedWhitespaces,
+    elementText,
+    endAriaCaches,
+    escapeHTML,
+    escapeHTMLAttribute,
+    getAriaRole,
+    getElementAccessibleDescription,
+    getElementAccessibleName,
+    isElementVisible,
+    isInsideScope,
+    normalizeWhiteSpace,
+  };
 
   // eslint-disable-next-line no-restricted-globals
   constructor(window: Window & typeof globalThis, isUnderTest: boolean, sdkLanguage: Language, testIdAttributeNameForStrictErrorAndConsoleCodegen: string, stableRafCount: number, browserName: string, customEngines: { name: string, engine: SelectorEngine }[]) {
@@ -426,10 +446,6 @@ export class InjectedScript {
     return new constrFunction(this, params);
   }
 
-  isVisible(element: Element): boolean {
-    return isElementVisible(element);
-  }
-
   async viewportRatio(element: Element): Promise<number> {
     return await new Promise(resolve => {
       const observer = new IntersectionObserver(entries => {
@@ -567,9 +583,9 @@ export class InjectedScript {
     }
 
     if (state === 'visible')
-      return this.isVisible(element);
+      return isElementVisible(element);
     if (state === 'hidden')
-      return !this.isVisible(element);
+      return !isElementVisible(element);
 
     const disabled = getAriaDisabled(element);
     if (state === 'disabled')
@@ -1297,16 +1313,15 @@ export class InjectedScript {
     throw this.createStacklessError('Unknown expect matcher: ' + expression);
   }
 
-  getElementAccessibleName(element: Element, includeHidden?: boolean): string {
-    return getElementAccessibleName(element, !!includeHidden);
+  generateSimpleDomNode(selector: string): SimpleDomNode | undefined {
+    const element = this.querySelector(this.parseSelector(selector), this.document.documentElement, true);
+    if (!element)
+      return;
+    return generateSimpleDomNode(this, element);
   }
 
-  getElementAccessibleDescription(element: Element, includeHidden?: boolean): string {
-    return getElementAccessibleDescription(element, !!includeHidden);
-  }
-
-  getAriaRole(element: Element) {
-    return getAriaRole(element);
+  selectorForSimpleDomNodeId(nodeId: string) {
+    return selectorForSimpleDomNodeId(this, nodeId);
   }
 }
 

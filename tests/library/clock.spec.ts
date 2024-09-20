@@ -75,6 +75,14 @@ it.describe('setTimeout', () => {
     }).toThrow();
   });
 
+  it('does not throw if |undefined| or |null| is passed as a callback', async ({ clock }) => {
+    const timerId1 = clock.setTimeout(undefined, 10);
+    const timerId2 = clock.setTimeout(null, 10);
+    await clock.runFor(10);
+    expect(timerId1).toBeGreaterThan(0);
+    expect(timerId2).toBeGreaterThan(timerId1);
+  });
+
   it('returns numeric id or object with numeric id', async ({ clock }) => {
     const result = clock.setTimeout(() => { }, 10);
     expect(result).toEqual(expect.any(Number));
@@ -761,6 +769,14 @@ it.describe('setInterval', () => {
     }).toThrow();
   });
 
+  it('does not throw if |undefined| or |null| is passed as a callback', async ({ clock }) => {
+    const timerId1 = clock.setInterval(undefined, 10);
+    const timerId2 = clock.setInterval(null, 10);
+    await clock.runFor(10);
+    expect(timerId1).toBeGreaterThan(0);
+    expect(timerId2).toBeGreaterThan(timerId1);
+  });
+
   it('returns numeric id or object with numeric id', async ({ clock }) => {
     const result = clock.setInterval(() => {}, 10);
     expect(result).toBeGreaterThan(0);
@@ -1058,6 +1074,18 @@ it.describe('stubTimers', () => {
     const next = performance.now();
     expect(next).toBe(1000);
     expect(prev).toBe(0);
+  });
+
+  it('replace Event.prototype.timeStamp', async ({ install }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31924' });
+    const clock = install();
+    await clock.runFor(1000);
+    const event1 = new Event('foo');
+    expect(event1.timeStamp).toBe(1000);
+    await clock.runFor(1000);
+    const event2 = new Event('foo');
+    expect(event2.timeStamp).toBe(2000);
+    expect(event1.timeStamp).toBe(1000);
   });
 
   it('uninstalls global performance.now', async ({ install }) => {

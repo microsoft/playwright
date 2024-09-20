@@ -85,6 +85,10 @@ export const Events = {
     FrameSent: 'framesent',
   },
 
+  WebSocketRoute: {
+    Close: 'close',
+  },
+
   Worker: {
     Close: 'close',
   },

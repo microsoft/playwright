@@ -94,6 +94,7 @@ test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
     /Before Hooks[\d.]+m?s/,
     /page.setContent[\d.]+m?s/,
     /expect.toHaveScreenshot[\d.]+m?s/,
+    /attach "trace-test-1-expected.png/,
     /attach "trace-test-1-actual.png/,
     /After Hooks[\d.]+m?s/,
     /Worker Cleanup[\d.]+m?s/,

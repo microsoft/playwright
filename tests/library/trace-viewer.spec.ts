@@ -31,7 +31,9 @@ test.slow();
 let traceFile: string;
 
 test.beforeAll(async function recordTrace({ browser, browserName, browserType, server }, workerInfo) {
-  const context = await browser.newContext();
+  const context = await browser.newContext({
+    baseURL: 'https://example.com',
+  });
   await context.tracing.start({ name: 'test', screenshots: true, snapshots: true, sources: true });
   const page = await context.newPage();
   await page.goto(`data:text/html,<!DOCTYPE html><html>Hello world</html>`);
@@ -118,6 +120,17 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html/,
     /page.setViewportSize/,
   ]);
+});
+
+test('should complain about newer version of trace in old viewer', async ({ showTraceViewer, asset }, testInfo) => {
+  const traceViewer = await showTraceViewer([asset('trace-from-the-future.zip')]);
+  await expect(traceViewer.page.getByText('The trace was created by a newer version of Playwright and is not supported by this version of the viewer.')).toBeVisible();
+});
+
+test('should properly synchronize local and remote time', async ({ showTraceViewer, asset }, testInfo) => {
+  const traceViewer = await showTraceViewer([asset('trace-remote-time-diff.zip')]);
+  // The total duration should be sub 10s, rather than 16h.
+  await expect(traceViewer.page.locator('.timeline-time').last()).toHaveText('8.5s');
 });
 
 test('should contain action info', async ({ showTraceViewer }) => {
@@ -249,6 +262,81 @@ test('should have network requests', async ({ showTraceViewer }) => {
   await expect(traceViewer.networkRequests.filter({ hasText: '404' })).toHaveCSS('background-color', 'rgb(242, 222, 222)');
 });
 
+test('should filter network requests by resource type', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    server.setRoute('/api/endpoint', (_, res) => res.setHeader('Content-Type', 'application/json').end());
+    await page.goto(`${server.PREFIX}/network-tab/network.html`);
+  });
+  await traceViewer.selectAction('http://localhost');
+  await traceViewer.showNetworkTab();
+
+  await traceViewer.page.getByText('JS', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('script.js')).toBeVisible();
+
+  await traceViewer.page.getByText('CSS', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('style.css')).toBeVisible();
+
+  await traceViewer.page.getByText('Image', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('image.png')).toBeVisible();
+
+  await traceViewer.page.getByText('Fetch', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('endpoint')).toBeVisible();
+
+  await traceViewer.page.getByText('HTML', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('network.html')).toBeVisible();
+
+  await traceViewer.page.getByText('Font', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('font.woff2')).toBeVisible();
+});
+
+test('should show font preview', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(`${server.PREFIX}/network-tab/network.html`);
+  });
+  await traceViewer.selectAction('http://localhost');
+  await traceViewer.showNetworkTab();
+
+  await traceViewer.page.getByText('Font', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await traceViewer.networkRequests.getByText('font.woff2').click();
+  await traceViewer.page.getByTestId('network-request-details').getByTitle('Body').click();
+  await expect(traceViewer.page.locator('.network-request-details-tab')).toContainText('ABCDEF');
+});
+
+test('should filter network requests by url', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(`${server.PREFIX}/network-tab/network.html`);
+  });
+  await traceViewer.selectAction('http://localhost');
+  await traceViewer.showNetworkTab();
+
+  await traceViewer.page.getByPlaceholder('Filter network').fill('script.');
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('script.js')).toBeVisible();
+
+  await traceViewer.page.getByPlaceholder('Filter network').fill('png');
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('image.png')).toBeVisible();
+
+  await traceViewer.page.getByPlaceholder('Filter network').fill('api/');
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('endpoint')).toBeVisible();
+
+  await traceViewer.page.getByPlaceholder('Filter network').fill('End');
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('endpoint')).toBeVisible();
+
+  await traceViewer.page.getByPlaceholder('Filter network').fill('FON');
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await expect(traceViewer.networkRequests.getByText('font.woff2')).toBeVisible();
+});
+
 test('should have network request overrides', async ({ page, server, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.route('**/style.css', route => route.abort());
@@ -284,13 +372,13 @@ test('should show snapshot URL', async ({ page, runAndTrace, server }) => {
 test('should popup snapshot', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
-    await page.setContent('hello');
+    await page.setContent('hello äöü 🙂');
   });
   await traceViewer.snapshotFrame('page.setContent');
   const popupPromise = traceViewer.page.context().waitForEvent('page');
   await traceViewer.page.getByTitle('Open snapshot in a new tab').click();
   const popup = await popupPromise;
-  await expect(popup.getByText('hello')).toBeVisible();
+  await expect(popup.getByText('hello äöü 🙂')).toBeVisible();
 });
 
 test('should capture iframe with sandbox attribute', async ({ page, server, runAndTrace }) => {
@@ -347,14 +435,12 @@ test('should capture data-url svg iframe', async ({ page, server, runAndTrace })
 });
 
 test('should contain adopted style sheets', async ({ page, runAndTrace, browserName }) => {
-  test.skip(browserName !== 'chromium', 'Constructed stylesheets are only in Chromium.');
-
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<button>Hello</button>');
     await page.evaluate(() => {
       const sheet = new CSSStyleSheet();
       sheet.addRule('button', 'color: red');
-      (document as any).adoptedStyleSheets = [sheet];
+      document.adoptedStyleSheets = [sheet];
 
       const sheet2 = new CSSStyleSheet();
       sheet2.addRule(':host', 'color: blue');
@@ -364,7 +450,7 @@ test('should contain adopted style sheets', async ({ page, runAndTrace, browserN
           mode: 'open'
         });
         root.append('foo');
-        (root as any).adoptedStyleSheets = [sheet2];
+        root.adoptedStyleSheets = [sheet2];
         document.body.appendChild(element);
       }
     });
@@ -377,22 +463,20 @@ test('should contain adopted style sheets', async ({ page, runAndTrace, browserN
 });
 
 test('should work with adopted style sheets and replace/replaceSync', async ({ page, runAndTrace, browserName }) => {
-  test.skip(browserName !== 'chromium', 'Constructed stylesheets are only in Chromium.');
-
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<button>Hello</button>');
     await page.evaluate(() => {
       const sheet = new CSSStyleSheet();
       sheet.addRule('button', 'color: red');
-      (document as any).adoptedStyleSheets = [sheet];
+      document.adoptedStyleSheets = [sheet];
     });
     await page.evaluate(() => {
-      const [sheet] = (document as any).adoptedStyleSheets;
+      const [sheet] = document.adoptedStyleSheets;
       sheet.replaceSync(`button { color: blue }`);
     });
-    await page.evaluate(() => {
-      const [sheet] = (document as any).adoptedStyleSheets;
-      sheet.replace(`button { color: #0F0 }`);
+    await page.evaluate(async () => {
+      const [sheet] = document.adoptedStyleSheets;
+      await sheet.replace(`button { color: #0F0 }`);
     });
   });
 
@@ -410,7 +494,56 @@ test('should work with adopted style sheets and replace/replaceSync', async ({ p
   }
 });
 
-test('should restore scroll positions', async ({ page, runAndTrace, browserName }) => {
+test('should work with adopted style sheets and all: unset', async ({ page, runAndTrace, browserName }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31500' });
+  test.fixme(browserName === 'chromium', 'https://issues.chromium.org/u/1/issues/41416124');
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent('<button>Hello</button>');
+    await page.evaluate(() => {
+      const stylesheet = new CSSStyleSheet();
+      // 'all: unset' is the problem here.
+      stylesheet.replaceSync('button { all: unset; border-radius: 24px; background-color: deepskyblue; color: black; padding: 5px }');
+      document.adoptedStyleSheets = [stylesheet];
+    });
+    await page.getByRole('button').click();
+  });
+  {
+    const frame = await traceViewer.snapshotFrame('page.evaluate', 0);
+    await expect(frame.locator('button')).toHaveCSS('border-radius', '24px');
+    await expect(frame.locator('button')).toHaveCSS('background-color', 'rgb(0, 191, 255)');
+    await expect(frame.locator('button')).toHaveCSS('color', 'rgb(0, 0, 0)');
+    await expect(frame.locator('button')).toHaveCSS('padding', '5px');
+  }
+});
+
+test('should work with nesting CSS selectors', async ({ page, runAndTrace }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31607' });
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent(`
+      <span class="foo" data-testid="green-element">Hi</span>
+      <span class="foo bar" data-testid="red-element">Hello</span>
+      <style>
+        .foo {
+          color: green;
+
+          &.bar {
+            color: red;
+          }
+        }
+      </style>
+      `);
+    await page.evaluate(() => { });
+  });
+  {
+    const frame = await traceViewer.snapshotFrame('page.evaluate', 0);
+    await expect(frame.getByTestId('green-element')).toHaveCSS('color', /* green */'rgb(0, 128, 0)');
+    await expect(frame.getByTestId('red-element')).toHaveCSS('color', /* red */'rgb(255, 0, 0)');
+  }
+});
+
+test('should restore scroll positions', async ({ page, runAndTrace }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <style>
@@ -749,10 +882,10 @@ test('should follow redirects', async ({ page, runAndTrace, server, asset }) => 
   await expect(snapshotFrame.locator('img')).toHaveJSProperty('naturalWidth', 10);
 });
 
-test('should include metainfo', async ({ showTraceViewer, browserName }) => {
+test('should include metainfo', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.page.locator('text=Metadata').click();
-  const callLine = traceViewer.page.locator('.metadata-view .call-line');
+  const callLine = traceViewer.metadataTab.locator('.call-line');
   await expect(callLine.getByText('start time')).toHaveText(/start time:[\d/,: ]+/);
   await expect(callLine.getByText('duration')).toHaveText(/duration:[\dms]+/);
   await expect(callLine.getByText('engine')).toHaveText(/engine:[\w]+/);
@@ -793,12 +926,12 @@ test('should open two trace files', async ({ context, page, request, server, sho
   await traceViewer.selectAction('apiRequestContext.get');
   await traceViewer.selectAction('apiRequestContext.post');
   await expect(traceViewer.actionTitles).toHaveText([
-    `apiRequestContext.get`,
+    `apiRequestContext.get/simple.json`,
     `page.gotohttp://localhost:${server.PORT}/input/button.html`,
-    `apiRequestContext.head`,
+    `apiRequestContext.head/simplezip.json`,
     `locator.clicklocator('button')`,
     `locator.clicklocator('button')`,
-    `apiRequestContext.post`,
+    `apiRequestContext.post/one-style.css`,
   ]);
 
   await traceViewer.page.locator('text=Metadata').click();
@@ -1099,16 +1232,16 @@ test('should pick locator in iframe', async ({ page, runAndTrace, server }) => {
   const snapshot = await traceViewer.snapshotFrame('page.evaluate');
 
   await snapshot.frameLocator('#frame1').getByText('Hello1').click();
-  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').getByText('Hello1')`);
+  await expect.soft(cmWrapper).toContainText(`locator('#frame1').contentFrame().getByText('Hello1')`);
 
   await snapshot.frameLocator('#frame1').frameLocator('iframe').getByText('Hello2').click();
-  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').frameLocator('iframe').getByText('Hello2')`, { timeout: 0 });
+  await expect.soft(cmWrapper).toContainText(`locator('#frame1').contentFrame().locator('iframe').contentFrame().getByText('Hello2')`, { timeout: 0 });
 
   await snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('[name=one]').getByText('HelloNameOne').click();
-  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').getByText('HelloNameOne')`, { timeout: 0 });
+  await expect.soft(cmWrapper).toContainText(`locator('#frame1').contentFrame().locator('iframe').contentFrame().locator('iframe[name="one"]').contentFrame().getByText('HelloNameOne')`, { timeout: 0 });
 
   await snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('[name=two]').getByText('HelloNameTwo').click();
-  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="two"]').getByText('HelloNameTwo')`, { timeout: 0 });
+  await expect.soft(cmWrapper).toContainText(`locator('#frame1').contentFrame().locator('iframe').contentFrame().locator('iframe[name="two"]').contentFrame().getByText('HelloNameTwo')`, { timeout: 0 });
 });
 
 test('should highlight locator in iframe while typing', async ({ page, runAndTrace, server, platform }) => {
@@ -1137,15 +1270,15 @@ test('should highlight locator in iframe while typing', async ({ page, runAndTra
   await traceViewer.page.locator('.CodeMirror').click();
 
   const locators = [{
-    text: `frameLocator('#frame1').getByText('Hello1')`,
+    text: `locator('#frame1').contentFrame().getByText('Hello1')`,
     element: snapshot.frameLocator('#frame1').locator('div', { hasText: 'Hello1' }),
     highlight: snapshot.frameLocator('#frame1').locator('x-pw-highlight'),
   }, {
-    text: `frameLocator('#frame1').frameLocator('iframe').getByText('Hello2')`,
+    text: `locator('#frame1').contentFrame().locator('iframe').contentFrame().getByText('Hello2')`,
     element: snapshot.frameLocator('#frame1').frameLocator('iframe').locator('div', { hasText: 'Hello2' }),
     highlight: snapshot.frameLocator('#frame1').frameLocator('iframe').locator('x-pw-highlight'),
   }, {
-    text: `frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').getByText('HelloNameOne')`,
+    text: `locator('#frame1').contentFrame().locator('iframe').contentFrame().locator('iframe[name="one"]').contentFrame().getByText('HelloNameOne')`,
     element: snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').locator('div', { hasText: 'HelloNameOne' }),
     highlight: snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').locator('x-pw-highlight'),
   }];
@@ -1237,6 +1370,17 @@ test('should open snapshot in new browser context', async ({ browser, page, runA
   await newPage.close();
 });
 
+test('should show similar actions from library-only trace', async ({ showTraceViewer, asset }) => {
+  const traceViewer = await showTraceViewer([asset('trace-library-1.46.zip')]);
+  await expect(traceViewer.actionTitles).toHaveText([
+    /page.setContent/,
+    /locator.getAttributelocator\('div'\)/,
+    /locator.isVisiblelocator\('div'\)/,
+    /locator.getAttributelocator\('div'\)/,
+    /locator.isVisiblelocator\('div'\)/,
+  ]);
+});
+
 function parseMillis(s: string): number {
   const matchMs = s.match(/(\d+)ms/);
   if (matchMs)
@@ -1270,4 +1414,116 @@ test('should show correct request start time', {
   const duration =  await line.locator('.grid-view-column-duration').textContent();
   expect(parseMillis(duration)).toBeGreaterThan(1000);
   expect(parseMillis(start)).toBeLessThan(1000);
+});
+
+test('should allow hiding route actions', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30970' },
+}, async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.route('**/*', async route => {
+      await route.fulfill({ contentType: 'text/html', body: 'Yo, page!' });
+    });
+    await page.goto(server.EMPTY_PAGE);
+  });
+
+  // Routes are visible by default.
+  await expect(traceViewer.actionTitles).toHaveText([
+    /page.route/,
+    /page.goto.*empty.html/,
+    /route.fulfill/,
+  ]);
+
+  await traceViewer.page.getByText('Settings').click();
+  await expect(traceViewer.page.getByRole('checkbox', { name: 'Show route actions' })).toBeChecked();
+  await traceViewer.page.getByRole('checkbox', { name: 'Show route actions' }).uncheck();
+  await traceViewer.page.getByText('Actions', { exact: true }).click();
+  await expect(traceViewer.actionTitles).toHaveText([
+    /page.goto.*empty.html/,
+  ]);
+
+  await traceViewer.page.getByText('Settings').click();
+  await traceViewer.page.getByRole('checkbox', { name: 'Show route actions' }).check();
+  await traceViewer.page.getByText('Actions', { exact: true }).click();
+  await expect(traceViewer.actionTitles).toHaveText([
+    /page.route/,
+    /page.goto.*empty.html/,
+    /route.fulfill/,
+  ]);
+});
+
+test('should show baseURL in metadata pane', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31847' },
+}, async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer([traceFile]);
+  await traceViewer.selectAction('page.evaluate');
+  await traceViewer.showMetadataTab();
+  await expect(traceViewer.metadataTab).toContainText('baseURL:https://example.com');
+});
+
+test('should serve css without content-type', async ({ page, runAndTrace, server }) => {
+  server.setRoute('/one-style.css', (req, res) => {
+    res.writeHead(200);
+    res.end(`body { background: red }`);
+  });
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/one-style.html');
+  });
+  const snapshotFrame = await traceViewer.snapshotFrame('page.goto');
+  await expect(snapshotFrame.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)', { timeout: 0 });
+});
+
+test('should allow showing screenshots instead of snapshots', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/one-style.html');
+    await page.waitForTimeout(1000); // ensure we could take a screenshot
+  });
+
+  const screenshot = traceViewer.page.getByAltText(`Screenshot of page.goto > Action`);
+  const snapshot = (await traceViewer.snapshotFrame('page.goto')).owner();
+  await expect(snapshot).toBeVisible();
+  await expect(screenshot).not.toBeVisible();
+
+  await traceViewer.page.getByTitle('Settings').click();
+  await traceViewer.page.getByText('Show screenshot instead of snapshot').setChecked(true);
+
+  await expect(snapshot).not.toBeVisible();
+  await expect(screenshot).toBeVisible();
+});
+
+test('should handle case where neither snapshots nor screenshots exist', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/one-style.html');
+  }, { snapshots: false, screenshots: false });
+
+  await traceViewer.page.getByTitle('Settings').click();
+  await traceViewer.page.getByText('Show screenshot instead of snapshot').setChecked(true);
+
+  const screenshot = traceViewer.page.getByAltText(`Screenshot of page.goto > Action`);
+  await expect(screenshot).not.toBeVisible();
+});
+
+test('should show only one pointer with multilevel iframes', async ({ page, runAndTrace, server, browserName }) => {
+  test.fixme(browserName !== 'chromium', 'Elements in iframe are not marked');
+
+  server.setRoute('/level-0.html', (req, res) => {
+    res.writeHead(200);
+    res.end(`<iframe src="/level-1.html" style="position: absolute; left: 100px"></iframe>`);
+  });
+  server.setRoute('/level-1.html', (req, res) => {
+    res.writeHead(200);
+    res.end(`<iframe src="/level-2.html"></iframe>`);
+  });
+  server.setRoute('/level-2.html', (req, res) => {
+    res.writeHead(200);
+    res.end(`<button>Click me</button>`);
+  });
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/level-0.html');
+    await page.frameLocator('iframe').frameLocator('iframe').locator('button').click({ position: { x: 5, y: 5 } });
+  });
+  const snapshotFrame = await traceViewer.snapshotFrame('locator.click');
+  await expect.soft(snapshotFrame.locator('x-pw-pointer')).not.toBeAttached();
+  await expect.soft(snapshotFrame.frameLocator('iframe').locator('x-pw-pointer')).not.toBeAttached();
+  await expect.soft(snapshotFrame.frameLocator('iframe').frameLocator('iframe').locator('x-pw-pointer')).toBeVisible();
 });

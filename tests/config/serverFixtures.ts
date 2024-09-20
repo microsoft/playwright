@@ -16,13 +16,15 @@
 
 import type { Fixtures } from '@playwright/test';
 import path from 'path';
-import socks from 'socksv5';
 import { TestServer } from './testserver';
 import { TestProxy } from './proxy';
+import type { SocksSocketRequestedPayload } from '../../packages/playwright-core/src/common/socksProxy';
+
+import { SocksProxy } from '../../packages/playwright-core/lib/common/socksProxy';
 
 export type ServerWorkerOptions = {
   loopback?: string;
-  __servers: ServerFixtures & { socksServer: socks.SocksServer };
+  __servers: ServerFixtures;
 };
 
 export type ServerFixtures = {
@@ -47,30 +49,9 @@ export const serverFixtures: Fixtures<ServerFixtures, ServerWorkerOptions> = {
     const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort, loopback);
     httpsServer.enableHTTPCache(cachedPath);
 
-    const socksServer = socks.createServer((info, accept, deny) => {
-      const socket = accept(true);
-      if (!socket)
-        return;
-      socket.on('data', data => {
-        if (!data.toString().includes('\r\n\r\n'))
-          return;
-        const body = '<html><title>Served by the SOCKS proxy</title></html>';
-        socket.end([
-          'HTTP/1.1 200 OK',
-          'Connection: close',
-          'Content-Type: text/html',
-          'Content-Length: ' + Buffer.byteLength(body),
-          '',
-          body
-        ].join('\r\n'));
-      });
-      // Catch and ignore ECONNRESET errors.
-      socket.on('error', () => {});
-      setTimeout(() => socket.end(), 1000);
-    });
+    const socksServer = new MockSocksServer();
     const socksPort = port + 2;
-    socksServer.listen(socksPort, 'localhost');
-    socksServer.useAuth(socks.auth.None());
+    await socksServer.listen(socksPort, 'localhost');
 
     const proxyPort = port + 3;
     const proxyServer = await TestProxy.create(proxyPort);
@@ -81,7 +62,6 @@ export const serverFixtures: Fixtures<ServerFixtures, ServerWorkerOptions> = {
       httpsServer,
       socksPort,
       proxyServer,
-      socksServer,
     });
 
     await Promise.all([
@@ -116,3 +96,39 @@ export const serverFixtures: Fixtures<ServerFixtures, ServerWorkerOptions> = {
   },
 };
 
+export class MockSocksServer {
+  private _socksProxy: SocksProxy;
+
+  constructor() {
+    this._socksProxy = new SocksProxy();
+    this._socksProxy.setPattern('*');
+    this._socksProxy.addListener(SocksProxy.Events.SocksRequested, async (payload: SocksSocketRequestedPayload) => {
+      this._socksProxy.socketConnected({
+        uid: payload.uid,
+        host: '127.0.0.1',
+        port: 0,
+      });
+    });
+    this._socksProxy.addListener(SocksProxy.Events.SocksData, async (payload: SocksSocketRequestedPayload) => {
+      const body = '<html><title>Served by the SOCKS proxy</title></html>';
+      const data = Buffer.from([
+        'HTTP/1.1 200 OK',
+        'Connection: close',
+        'Content-Type: text/html',
+        'Content-Length: ' + Buffer.byteLength(body),
+        '',
+        body
+      ].join('\r\n'));
+      this._socksProxy.sendSocketData({ uid: payload.uid, data });
+      this._socksProxy.sendSocketEnd({ uid: payload.uid });
+    });
+  }
+
+  async listen(port: number, hostname: string) {
+    await this._socksProxy.listen(port, hostname);
+  }
+
+  async close() {
+    await this._socksProxy.close();
+  }
+}

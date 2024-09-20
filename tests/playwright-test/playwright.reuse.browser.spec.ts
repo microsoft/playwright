@@ -98,3 +98,54 @@ test('should reuse browser with special characters in the launch options', async
   expect(guid2).toBe(guid1);
   expect(workerIndex2).not.toBe(workerIndex1);
 });
+
+test('should produce correct test steps', async ({ runInlineTest, runServer }) => {
+  const server = await runServer();
+  const result = await runInlineTest({
+    'reporter.ts': `
+      class Reporter {
+        onStepBegin(test, result, step) {
+          console.log('%% onStepBegin ' + step.title);
+        }
+        onStepEnd(test, result, step) {
+            console.log('%% onStepEnd ' + step.title);
+        }
+      }
+      module.exports = Reporter;
+    `,
+    'src/a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('a', async ({ page }) => {
+        await page.goto('about:blank');
+        await page.evaluate(() => console.log('hello'));
+      });
+    `,
+  }, { reporter: './reporter.ts,list' }, { PW_TEST_REUSE_CONTEXT: '1', PW_TEST_CONNECT_WS_ENDPOINT: server.wsEndpoint() });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.outputLines).toEqual([
+    'onStepBegin Before Hooks',
+    'onStepBegin fixture: browser',
+    'onStepBegin browserType.connect',
+    'onStepEnd browserType.connect',
+    'onStepEnd fixture: browser',
+    'onStepBegin fixture: context',
+    'onStepEnd fixture: context',
+    'onStepBegin fixture: page',
+    'onStepBegin browserContext.newPage',
+    'onStepEnd browserContext.newPage',
+    'onStepEnd fixture: page',
+    'onStepEnd Before Hooks',
+    'onStepBegin page.goto(about:blank)',
+    'onStepEnd page.goto(about:blank)',
+    'onStepBegin page.evaluate',
+    'onStepEnd page.evaluate',
+    'onStepBegin After Hooks',
+    'onStepBegin fixture: page',
+    'onStepEnd fixture: page',
+    'onStepBegin fixture: context',
+    'onStepEnd fixture: context',
+    'onStepEnd After Hooks'
+  ]);
+});

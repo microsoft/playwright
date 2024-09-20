@@ -227,7 +227,7 @@ Use [`property: TestConfig.repeatEach`] to change this option for all projects.
 * since: v1.45
 - type: ?<[boolean]>
 
-Whether to skip entries from `.gitignore` when searching for test files. By default, if neither [`property: TestConfig.testDir`] nor [`property: TestProject.testDir`] are explicitely specified, Playwright will ignore any test files matching `.gitignore` entries. This option allows to override that behavior.
+Whether to skip entries from `.gitignore` when searching for test files. By default, if neither [`property: TestConfig.testDir`] nor [`property: TestProject.testDir`] are explicitly specified, Playwright will ignore any test files matching `.gitignore` entries. This option allows to override that behavior.
 
 ## property: TestProject.retries
 * since: v1.10

@@ -220,11 +220,6 @@ export module Protocol {
       }|null;
     };
     export type setDefaultViewportReturnValue = void;
-    export type setScrollbarsHiddenParameters = {
-      browserContextId?: string;
-      hidden: boolean;
-    };
-    export type setScrollbarsHiddenReturnValue = void;
     export type setInitScriptsParameters = {
       browserContextId?: string;
       scripts: {
@@ -319,6 +314,11 @@ export module Protocol {
       uuid?: string;
     };
     export type cancelDownloadReturnValue = void;
+  }
+  export module Heap {
+    export type collectGarbageParameters = {
+    };
+    export type collectGarbageReturnValue = void;
   }
   export module Page {
     export type DOMPoint = {
@@ -1116,7 +1116,6 @@ export module Protocol {
     "Browser.setDownloadOptions": Browser.setDownloadOptionsParameters;
     "Browser.setTouchOverride": Browser.setTouchOverrideParameters;
     "Browser.setDefaultViewport": Browser.setDefaultViewportParameters;
-    "Browser.setScrollbarsHidden": Browser.setScrollbarsHiddenParameters;
     "Browser.setInitScripts": Browser.setInitScriptsParameters;
     "Browser.addBinding": Browser.addBindingParameters;
     "Browser.grantPermissions": Browser.grantPermissionsParameters;
@@ -1130,6 +1129,7 @@ export module Protocol {
     "Browser.setForcedColors": Browser.setForcedColorsParameters;
     "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsParameters;
     "Browser.cancelDownload": Browser.cancelDownloadParameters;
+    "Heap.collectGarbage": Heap.collectGarbageParameters;
     "Page.close": Page.closeParameters;
     "Page.setFileInputFiles": Page.setFileInputFilesParameters;
     "Page.addBinding": Page.addBindingParameters;
@@ -1197,7 +1197,6 @@ export module Protocol {
     "Browser.setDownloadOptions": Browser.setDownloadOptionsReturnValue;
     "Browser.setTouchOverride": Browser.setTouchOverrideReturnValue;
     "Browser.setDefaultViewport": Browser.setDefaultViewportReturnValue;
-    "Browser.setScrollbarsHidden": Browser.setScrollbarsHiddenReturnValue;
     "Browser.setInitScripts": Browser.setInitScriptsReturnValue;
     "Browser.addBinding": Browser.addBindingReturnValue;
     "Browser.grantPermissions": Browser.grantPermissionsReturnValue;
@@ -1211,6 +1210,7 @@ export module Protocol {
     "Browser.setForcedColors": Browser.setForcedColorsReturnValue;
     "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsReturnValue;
     "Browser.cancelDownload": Browser.cancelDownloadReturnValue;
+    "Heap.collectGarbage": Heap.collectGarbageReturnValue;
     "Page.close": Page.closeReturnValue;
     "Page.setFileInputFiles": Page.setFileInputFilesReturnValue;
     "Page.addBinding": Page.addBindingReturnValue;

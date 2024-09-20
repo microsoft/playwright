@@ -13,7 +13,7 @@ if [[ "$(uname -m)" == "arm64" ]]; then
     ANDROID_ARCH="arm64-v8a"
 fi
 
-${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager delete avd --name android33 || true
-yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-33;google_apis;$ANDROID_ARCH" platform-tools emulator
-echo "no" | ${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager create avd --force --name android33 --device "Nexus 5X" --package "system-images;android-33;google_apis;$ANDROID_ARCH"
+${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager delete avd --name android35 || true
+yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-35;google_apis;$ANDROID_ARCH" platform-tools emulator
+echo "no" | ${ANDROID_HOME}/cmdline-tools/latest/bin/avdmanager create avd --force --name android35 --device "Nexus 5X" --package "system-images;android-35;google_apis;$ANDROID_ARCH"
 ${ANDROID_HOME}/emulator/emulator -list-avds

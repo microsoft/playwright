@@ -140,7 +140,7 @@ for (const browserName of browserNames) {
         mode,
         video: !!video,
         trace: !!trace,
-        clock: 'clock-' + (process.env.PW_CLOCK || 'default'),
+        clock: process.env.PW_CLOCK ? 'clock-' + process.env.PW_CLOCK : undefined,
       },
     });
   }

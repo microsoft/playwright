@@ -451,7 +451,7 @@ The title of the currently running test as passed to `test(title, testFunction)`
 * since: v1.10
 - type: <[Array]<[string]>>
 
-The full title path starting with the project.
+The full title path starting with the test file name.
 
 ## property: TestInfo.workerIndex
 * since: v1.10

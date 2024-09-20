@@ -17,7 +17,6 @@
 // @ts-check
 
 const path = require('path');
-const fs = require('fs');
 const Documentation = require('./documentation');
 const { parseApi } = require('./api_parser');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
@@ -73,15 +72,15 @@ function serializeMember(member) {
   sanitize(result);
   result.args = member.argsArray.map(serializeProperty);
   if (member.type)
-    result.type = serializeType(member.type)
+    result.type = serializeType(member.type);
   return result;
 }
 
 function serializeProperty(arg) {
-  const result = { ...arg };
+  const result = { ...arg, parent: undefined };
   sanitize(result);
   if (arg.type)
-    result.type = serializeType(arg.type, arg.name === 'options')
+    result.type = serializeType(arg.type, arg.name === 'options');
   return result;
 }
 

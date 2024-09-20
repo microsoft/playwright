@@ -16,8 +16,8 @@
 
 import type * as channels from '@protocol/channels';
 import type { LookupAddress } from 'dns';
-import * as http from 'http';
-import * as https from 'https';
+import http from 'http';
+import https from 'https';
 import type { Readable, TransformCallback } from 'stream';
 import { pipeline, Transform } from 'stream';
 import url from 'url';
@@ -27,10 +27,10 @@ import { TimeoutSettings } from '../common/timeoutSettings';
 import { getUserAgent } from '../utils/userAgent';
 import { assert, createGuid, monotonicTime } from '../utils';
 import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
-import { BrowserContext } from './browserContext';
-import { CookieStore, domainMatches } from './cookieStore';
+import { BrowserContext, verifyClientCertificates } from './browserContext';
+import { CookieStore, domainMatches, parseRawCookie } from './cookieStore';
 import { MultipartFormData } from './formData';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../utils/happy-eyeballs';
+import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent, timingForSocket } from '../utils/happy-eyeballs';
 import type { CallMetadata } from './instrumentation';
 import { SdkObject } from './instrumentation';
 import type { Playwright } from './playwright';
@@ -39,7 +39,9 @@ import { ProgressController } from './progress';
 import { Tracing } from './trace/recorder/tracing';
 import type * as types from './types';
 import type { HeadersArray, ProxySettings } from './types';
-import { kMaxCookieExpiresDateInSeconds } from './network';
+import { getMatchingTLSOptionsForOrigin, rewriteOpenSSLErrorIfNeeded } from './socksClientCertificatesInterceptor';
+import type * as har from '@trace/har';
+import { TLSSocket } from 'tls';
 
 type FetchRequestOptions = {
   userAgent: string;
@@ -49,6 +51,7 @@ type FetchRequestOptions = {
   timeoutSettings: TimeoutSettings;
   ignoreHTTPSErrors?: boolean;
   baseURL?: string;
+  clientCertificates?: types.BrowserContextOptions['clientCertificates'];
 };
 
 type HeadersObject = Readonly<{ [name: string]: string }>;
@@ -70,6 +73,10 @@ export type APIRequestFinishedEvent = {
   statusCode: number;
   statusMessage: string;
   body?: Buffer;
+  timings: har.Timings;
+  serverIPAddress?: string;
+  serverPort?: number;
+  securityDetails?: har.SecurityDetails;
 };
 
 type SendRequestOptions = https.RequestOptions & {
@@ -153,9 +160,11 @@ export abstract class APIRequestContext extends SdkObject {
     }
 
     const requestUrl = new URL(params.url, defaults.baseURL);
-    if (params.params) {
+    if (params.encodedParams) {
+      requestUrl.search = params.encodedParams;
+    } else if (params.params) {
       for (const { name, value } of params.params)
-        requestUrl.searchParams.set(name, value);
+        requestUrl.searchParams.append(name, value);
     }
 
     const credentials = this._getHttpCredentials(requestUrl);
@@ -165,20 +174,11 @@ export abstract class APIRequestContext extends SdkObject {
     const method = params.method?.toUpperCase() || 'GET';
     const proxy = defaults.proxy;
     let agent;
-    if (proxy && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass)) {
-      const proxyOpts = url.parse(proxy.server);
-      if (proxyOpts.protocol?.startsWith('socks')) {
-        agent = new SocksProxyAgent({
-          host: proxyOpts.hostname,
-          port: proxyOpts.port || undefined,
-        });
-      } else {
-        if (proxy.username)
-          proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
-        // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
-        agent = new HttpsProxyAgent(proxyOpts);
-      }
-    }
+    // We skip 'per-context' in order to not break existing users. 'per-context' was previously used to
+    // workaround an upstream Chromium bug. Can be removed in the future.
+    if (proxy && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass))
+      agent = createProxyAgent(proxy);
+
 
     const timeout = defaults.timeoutSettings.timeout(params);
     const deadline = timeout && (monotonicTime() + timeout);
@@ -190,9 +190,10 @@ export abstract class APIRequestContext extends SdkObject {
       maxRedirects: params.maxRedirects === 0 ? -1 : params.maxRedirects === undefined ? 20 : params.maxRedirects,
       timeout,
       deadline,
+      ...getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, requestUrl.origin),
       __testHookLookup: (params as any).__testHookLookup,
     };
-    // rejectUnauthorized = undefined is treated as true in node 12.
+    // rejectUnauthorized = undefined is treated as true in Node.js 12.
     if (params.ignoreHTTPSErrors || defaults.ignoreHTTPSErrors)
       options.rejectUnauthorized = false;
 
@@ -205,8 +206,16 @@ export abstract class APIRequestContext extends SdkObject {
     });
     const fetchUid = this._storeResponseBody(fetchResponse.body);
     this.fetchLog.set(fetchUid, controller.metadata.log);
-    if (params.failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400))
-      throw new Error(`${fetchResponse.status} ${fetchResponse.statusText}`);
+    if (params.failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400)) {
+      let responseText = '';
+      if (fetchResponse.body.byteLength) {
+        let text = fetchResponse.body.toString('utf8');
+        if (text.length > 1000)
+          text = text.substring(0, 997) + '...';
+        responseText = `\nResponse text:\n${text}`;
+      }
+      throw new Error(`${fetchResponse.status} ${fetchResponse.statusText}${responseText}`);
+    }
     return { ...fetchResponse, fetchUid };
   }
 
@@ -254,6 +263,7 @@ export abstract class APIRequestContext extends SdkObject {
       try {
         return await this._sendRequest(progress, url, options, postData);
       } catch (e) {
+        e = rewriteOpenSSLErrorIfNeeded(e);
         if (maxRetries === 0)
           throw e;
         if (i === maxRetries || (options.deadline && monotonicTime() + backoff > options.deadline))
@@ -291,8 +301,32 @@ export abstract class APIRequestContext extends SdkObject {
       // If we have a proxy agent already, do not override it.
       const agent = options.agent || (url.protocol === 'https:' ? httpsHappyEyeballsAgent : httpHappyEyeballsAgent);
       const requestOptions = { ...options, agent };
+
+      const startAt = monotonicTime();
+      let dnsLookupAt: number | undefined;
+      let tcpConnectionAt: number | undefined;
+      let tlsHandshakeAt: number | undefined;
+      let requestFinishAt: number | undefined;
+      let serverIPAddress: string | undefined;
+      let serverPort: number | undefined;
+
+      let securityDetails: har.SecurityDetails | undefined;
+
       const request = requestConstructor(url, requestOptions as any, async response => {
+        const responseAt = monotonicTime();
         const notifyRequestFinished = (body?: Buffer) => {
+          const endAt = monotonicTime();
+          // spec: http://www.softwareishard.com/blog/har-12-spec/#timings
+          const timings: har.Timings = {
+            send: requestFinishAt! - startAt,
+            wait: responseAt - requestFinishAt!,
+            receive: endAt - responseAt,
+            dns: dnsLookupAt ? dnsLookupAt - startAt : -1,
+            connect: (tlsHandshakeAt ?? tcpConnectionAt!) - startAt, // "If [ssl] is defined then the time is also included in the connect field "
+            ssl: tlsHandshakeAt ? tlsHandshakeAt - tcpConnectionAt! : -1,
+            blocked: -1,
+          };
+
           const requestFinishedEvent: APIRequestFinishedEvent = {
             requestEvent,
             httpVersion: response.httpVersion,
@@ -301,7 +335,11 @@ export abstract class APIRequestContext extends SdkObject {
             headers: response.headers,
             rawHeaders: response.rawHeaders,
             cookies,
-            body
+            body,
+            timings,
+            serverIPAddress,
+            serverPort,
+            securityDetails,
           };
           this.emit(APIRequestContext.Events.RequestFinished, requestFinishedEvent);
         };
@@ -351,6 +389,7 @@ export abstract class APIRequestContext extends SdkObject {
             maxRedirects: options.maxRedirects - 1,
             timeout: options.timeout,
             deadline: options.deadline,
+            ...getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, url.origin),
             __testHookLookup: options.__testHookLookup,
           };
           // rejectUnauthorized = undefined is treated as true in node 12.
@@ -415,7 +454,10 @@ export abstract class APIRequestContext extends SdkObject {
             finishFlush: zlib.constants.Z_SYNC_FLUSH
           });
         } else if (encoding === 'br') {
-          transform = zlib.createBrotliDecompress();
+          transform = zlib.createBrotliDecompress({
+            flush: zlib.constants.BROTLI_OPERATION_FLUSH,
+            finishFlush: zlib.constants.BROTLI_OPERATION_FLUSH
+          });
         } else if (encoding === 'deflate') {
           transform = zlib.createInflate();
         }
@@ -442,6 +484,35 @@ export abstract class APIRequestContext extends SdkObject {
       };
       this.on(APIRequestContext.Events.Dispose, disposeListener);
       request.on('close', () => this.off(APIRequestContext.Events.Dispose, disposeListener));
+
+      request.on('socket', socket => {
+        // happy eyeballs don't emit lookup and connect events, so we use our custom ones
+        const happyEyeBallsTimings = timingForSocket(socket);
+        dnsLookupAt = happyEyeBallsTimings.dnsLookupAt;
+        tcpConnectionAt = happyEyeBallsTimings.tcpConnectionAt;
+
+        // non-happy-eyeballs sockets
+        socket.on('lookup', () => { dnsLookupAt = monotonicTime(); });
+        socket.on('connect', () => { tcpConnectionAt = monotonicTime(); });
+        socket.on('secureConnect', () => {
+          tlsHandshakeAt = monotonicTime();
+
+          if (socket instanceof TLSSocket) {
+            const peerCertificate = socket.getPeerCertificate();
+            securityDetails = {
+              protocol: socket.getProtocol() ?? undefined,
+              subjectName: peerCertificate.subject.CN,
+              validFrom: new Date(peerCertificate.valid_from).getTime() / 1000,
+              validTo: new Date(peerCertificate.valid_to).getTime() / 1000,
+              issuer: peerCertificate.issuer.CN
+            };
+          }
+        });
+
+        serverIPAddress = socket.remoteAddress;
+        serverPort = socket.remotePort;
+      });
+      request.on('finish', () => { requestFinishAt = monotonicTime(); });
 
       progress.log(`→ ${options.method} ${url.toString()}`);
       if (options.headers) {
@@ -522,6 +593,7 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
       timeoutSettings: this._context._timeoutSettings,
       ignoreHTTPSErrors: this._context._options.ignoreHTTPSErrors,
       baseURL: this._context._options.baseURL,
+      clientCertificates: this._context._options.clientCertificates,
     };
   }
 
@@ -562,12 +634,14 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       this._origins = options.storageState.origins;
       this._cookieStore.addCookies(options.storageState.cookies || []);
     }
+    verifyClientCertificates(options.clientCertificates);
     this._options = {
       baseURL: options.baseURL,
       userAgent: options.userAgent || getUserAgent(),
       extraHTTPHeaders: options.extraHTTPHeaders,
       ignoreHTTPSErrors: !!options.ignoreHTTPSErrors,
       httpCredentials: options.httpCredentials,
+      clientCertificates: options.clientCertificates,
       proxy,
       timeoutSettings,
     };
@@ -605,6 +679,20 @@ export class GlobalAPIRequestContext extends APIRequestContext {
   }
 }
 
+export function createProxyAgent(proxy: types.ProxySettings) {
+  const proxyOpts = url.parse(proxy.server);
+  if (proxyOpts.protocol?.startsWith('socks')) {
+    return new SocksProxyAgent({
+      host: proxyOpts.hostname,
+      port: proxyOpts.port || undefined,
+    });
+  }
+  if (proxy.username)
+    proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
+  // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
+  return new HttpsProxyAgent(proxyOpts);
+}
+
 function toHeadersArray(rawHeaders: string[]): types.HeadersArray {
   const result: types.HeadersArray = [];
   for (let i = 0; i < rawHeaders.length; i += 2)
@@ -615,27 +703,10 @@ function toHeadersArray(rawHeaders: string[]): types.HeadersArray {
 const redirectStatus = [301, 302, 303, 307, 308];
 
 function parseCookie(header: string): channels.NetworkCookie | null {
-  const pairs = header.split(';').filter(s => s.trim().length > 0).map(p => {
-    let key = '';
-    let value = '';
-    const separatorPos = p.indexOf('=');
-    if (separatorPos === -1) {
-      // If only a key is specified, the value is left undefined.
-      key = p.trim();
-    } else {
-      // Otherwise we assume that the key is the element before the first `=`
-      key = p.slice(0, separatorPos).trim();
-      // And the value is the rest of the string.
-      value = p.slice(separatorPos + 1).trim();
-    }
-    return [key, value];
-  });
-  if (!pairs.length)
+  const raw = parseRawCookie(header);
+  if (!raw)
     return null;
-  const [name, value] = pairs[0];
   const cookie: channels.NetworkCookie = {
-    name,
-    value,
     domain: '',
     path: '',
     expires: -1,
@@ -643,62 +714,9 @@ function parseCookie(header: string): channels.NetworkCookie | null {
     secure: false,
     // From https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
     // The cookie-sending behavior if SameSite is not specified is SameSite=Lax.
-    sameSite: 'Lax'
+    sameSite: 'Lax',
+    ...raw
   };
-  for (let i = 1; i < pairs.length; i++) {
-    const [name, value] = pairs[i];
-    switch (name.toLowerCase()) {
-      case 'expires':
-        const expiresMs = (+new Date(value));
-        // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.1
-        if (isFinite(expiresMs)) {
-          if (expiresMs <= 0)
-            cookie.expires = 0;
-          else
-            cookie.expires = Math.min(expiresMs / 1000, kMaxCookieExpiresDateInSeconds);
-        }
-        break;
-      case 'max-age':
-        const maxAgeSec = parseInt(value, 10);
-        if (isFinite(maxAgeSec)) {
-          // From https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.2
-          // If delta-seconds is less than or equal to zero (0), let expiry-time
-          // be the earliest representable date and time.
-          if (maxAgeSec <= 0)
-            cookie.expires = 0;
-          else
-            cookie.expires = Math.min(Date.now() / 1000 + maxAgeSec, kMaxCookieExpiresDateInSeconds);
-        }
-        break;
-      case 'domain':
-        cookie.domain = value.toLocaleLowerCase() || '';
-        if (cookie.domain && !cookie.domain.startsWith('.') && cookie.domain.includes('.'))
-          cookie.domain = '.' + cookie.domain;
-        break;
-      case 'path':
-        cookie.path = value || '';
-        break;
-      case 'secure':
-        cookie.secure = true;
-        break;
-      case 'httponly':
-        cookie.httpOnly = true;
-        break;
-      case 'samesite':
-        switch (value.toLowerCase()) {
-          case 'none':
-            cookie.sameSite = 'None';
-            break;
-          case 'lax':
-            cookie.sameSite = 'Lax';
-            break;
-          case 'strict':
-            cookie.sameSite = 'Strict';
-            break;
-        }
-        break;
-    }
-  }
   return cookie;
 }
 

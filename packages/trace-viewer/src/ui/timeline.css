@@ -98,6 +98,11 @@
   --action-background-color: #1a85ff66;
 }
 
+.timeline-bar.console-message {
+  --action-color: var(--vscode-charts-purple);
+  --action-background-color: #1a85ff66;
+}
+
 body.dark-mode .timeline-bar.action.error {
   --action-color: var(--vscode-errorForeground);
   --action-background-color: #f4877166;

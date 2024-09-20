@@ -40,6 +40,7 @@ export type InitializerTraits<T> =
     T extends BindingCallChannel ? BindingCallInitializer :
     T extends WebSocketChannel ? WebSocketInitializer :
     T extends ResponseChannel ? ResponseInitializer :
+    T extends WebSocketRouteChannel ? WebSocketRouteInitializer :
     T extends RouteChannel ? RouteInitializer :
     T extends RequestChannel ? RequestInitializer :
     T extends ElementHandleChannel ? ElementHandleInitializer :
@@ -77,6 +78,7 @@ export type EventsTraits<T> =
     T extends BindingCallChannel ? BindingCallEvents :
     T extends WebSocketChannel ? WebSocketEvents :
     T extends ResponseChannel ? ResponseEvents :
+    T extends WebSocketRouteChannel ? WebSocketRouteEvents :
     T extends RouteChannel ? RouteEvents :
     T extends RequestChannel ? RequestEvents :
     T extends ElementHandleChannel ? ElementHandleEvents :
@@ -114,6 +116,7 @@ export type EventTargetTraits<T> =
     T extends BindingCallChannel ? BindingCallEventTarget :
     T extends WebSocketChannel ? WebSocketEventTarget :
     T extends ResponseChannel ? ResponseEventTarget :
+    T extends WebSocketRouteChannel ? WebSocketRouteEventTarget :
     T extends RouteChannel ? RouteEventTarget :
     T extends RequestChannel ? RequestEventTarget :
     T extends ElementHandleChannel ? ElementHandleEventTarget :
@@ -177,6 +180,11 @@ export type SerializedValue = {
   d?: string,
   u?: string,
   bi?: string,
+  e?: {
+    m: string,
+    n: string,
+    s: string,
+  },
   r?: {
     p: string,
     f: string,
@@ -313,6 +321,7 @@ export interface APIRequestContextChannel extends APIRequestContextEventTarget, 
 }
 export type APIRequestContextFetchParams = {
   url: string,
+  encodedParams?: string,
   params?: NameValue[],
   method?: string,
   headers?: NameValue[],
@@ -327,6 +336,7 @@ export type APIRequestContextFetchParams = {
   maxRetries?: number,
 };
 export type APIRequestContextFetchOptions = {
+  encodedParams?: string,
   params?: NameValue[],
   method?: string,
   headers?: NameValue[],
@@ -557,6 +567,8 @@ export type PlaywrightInitializer = {
   chromium: BrowserTypeChannel,
   firefox: BrowserTypeChannel,
   webkit: BrowserTypeChannel,
+  bidiChromium: BrowserTypeChannel,
+  bidiFirefox: BrowserTypeChannel,
   android: AndroidChannel,
   electron: ElectronChannel,
   utils?: LocalUtilsChannel,
@@ -576,6 +588,13 @@ export type PlaywrightNewRequestParams = {
   userAgent?: string,
   ignoreHTTPSErrors?: boolean,
   extraHTTPHeaders?: NameValue[],
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
   httpCredentials?: {
     username: string,
     password: string,
@@ -600,6 +619,13 @@ export type PlaywrightNewRequestOptions = {
   userAgent?: string,
   ignoreHTTPSErrors?: boolean,
   extraHTTPHeaders?: NameValue[],
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
   httpCredentials?: {
     username: string,
     password: string,
@@ -944,6 +970,13 @@ export type BrowserTypeLaunchPersistentContextParams = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
@@ -1017,6 +1050,13 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
@@ -1125,6 +1165,13 @@ export type BrowserNewContextParams = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
@@ -1184,6 +1231,13 @@ export type BrowserNewContextOptions = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
@@ -1246,6 +1300,13 @@ export type BrowserNewContextForReuseParams = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
@@ -1305,6 +1366,13 @@ export type BrowserNewContextForReuseOptions = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
@@ -1428,6 +1496,7 @@ export interface BrowserContextEventTarget {
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
   on(event: 'pageError', callback: (params: BrowserContextPageErrorEvent) => void): this;
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
+  on(event: 'webSocketRoute', callback: (params: BrowserContextWebSocketRouteEvent) => void): this;
   on(event: 'video', callback: (params: BrowserContextVideoEvent) => void): this;
   on(event: 'backgroundPage', callback: (params: BrowserContextBackgroundPageEvent) => void): this;
   on(event: 'serviceWorker', callback: (params: BrowserContextServiceWorkerEvent) => void): this;
@@ -1453,6 +1522,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   setGeolocation(params: BrowserContextSetGeolocationParams, metadata?: CallMetadata): Promise<BrowserContextSetGeolocationResult>;
   setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, metadata?: CallMetadata): Promise<BrowserContextSetHTTPCredentialsResult>;
   setNetworkInterceptionPatterns(params: BrowserContextSetNetworkInterceptionPatternsParams, metadata?: CallMetadata): Promise<BrowserContextSetNetworkInterceptionPatternsResult>;
+  setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams, metadata?: CallMetadata): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
   setOffline(params: BrowserContextSetOfflineParams, metadata?: CallMetadata): Promise<BrowserContextSetOfflineResult>;
   storageState(params?: BrowserContextStorageStateParams, metadata?: CallMetadata): Promise<BrowserContextStorageStateResult>;
   pause(params?: BrowserContextPauseParams, metadata?: CallMetadata): Promise<BrowserContextPauseResult>;
@@ -1497,6 +1567,9 @@ export type BrowserContextPageErrorEvent = {
 };
 export type BrowserContextRouteEvent = {
   route: RouteChannel,
+};
+export type BrowserContextWebSocketRouteEvent = {
+  webSocketRoute: WebSocketRouteChannel,
 };
 export type BrowserContextVideoEvent = {
   artifact: ArtifactChannel,
@@ -1666,6 +1739,17 @@ export type BrowserContextSetNetworkInterceptionPatternsOptions = {
 
 };
 export type BrowserContextSetNetworkInterceptionPatternsResult = void;
+export type BrowserContextSetWebSocketInterceptionPatternsParams = {
+  patterns: {
+    glob?: string,
+    regexSource?: string,
+    regexFlags?: string,
+  }[],
+};
+export type BrowserContextSetWebSocketInterceptionPatternsOptions = {
+
+};
+export type BrowserContextSetWebSocketInterceptionPatternsResult = void;
 export type BrowserContextSetOfflineParams = {
   offline: boolean,
 };
@@ -1692,7 +1776,6 @@ export type BrowserContextRecorderSupplementEnableParams = {
   device?: string,
   saveStorage?: string,
   outputFile?: string,
-  handleSIGINT?: boolean,
   omitCallTracking?: boolean,
 };
 export type BrowserContextRecorderSupplementEnableOptions = {
@@ -1705,7 +1788,6 @@ export type BrowserContextRecorderSupplementEnableOptions = {
   device?: string,
   saveStorage?: string,
   outputFile?: string,
-  handleSIGINT?: boolean,
   omitCallTracking?: boolean,
 };
 export type BrowserContextRecorderSupplementEnableResult = void;
@@ -1827,6 +1909,7 @@ export interface BrowserContextEvents {
   'page': BrowserContextPageEvent;
   'pageError': BrowserContextPageErrorEvent;
   'route': BrowserContextRouteEvent;
+  'webSocketRoute': BrowserContextWebSocketRouteEvent;
   'video': BrowserContextVideoEvent;
   'backgroundPage': BrowserContextBackgroundPageEvent;
   'serviceWorker': BrowserContextServiceWorkerEvent;
@@ -1856,6 +1939,7 @@ export interface PageEventTarget {
   on(event: 'frameDetached', callback: (params: PageFrameDetachedEvent) => void): this;
   on(event: 'locatorHandlerTriggered', callback: (params: PageLocatorHandlerTriggeredEvent) => void): this;
   on(event: 'route', callback: (params: PageRouteEvent) => void): this;
+  on(event: 'webSocketRoute', callback: (params: PageWebSocketRouteEvent) => void): this;
   on(event: 'video', callback: (params: PageVideoEvent) => void): this;
   on(event: 'webSocket', callback: (params: PageWebSocketEvent) => void): this;
   on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
@@ -1870,6 +1954,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   exposeBinding(params: PageExposeBindingParams, metadata?: CallMetadata): Promise<PageExposeBindingResult>;
   goBack(params: PageGoBackParams, metadata?: CallMetadata): Promise<PageGoBackResult>;
   goForward(params: PageGoForwardParams, metadata?: CallMetadata): Promise<PageGoForwardResult>;
+  forceGarbageCollection(params?: PageForceGarbageCollectionParams, metadata?: CallMetadata): Promise<PageForceGarbageCollectionResult>;
   registerLocatorHandler(params: PageRegisterLocatorHandlerParams, metadata?: CallMetadata): Promise<PageRegisterLocatorHandlerResult>;
   resolveLocatorHandlerNoReply(params: PageResolveLocatorHandlerNoReplyParams, metadata?: CallMetadata): Promise<PageResolveLocatorHandlerNoReplyResult>;
   unregisterLocatorHandler(params: PageUnregisterLocatorHandlerParams, metadata?: CallMetadata): Promise<PageUnregisterLocatorHandlerResult>;
@@ -1878,6 +1963,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   screenshot(params: PageScreenshotParams, metadata?: CallMetadata): Promise<PageScreenshotResult>;
   setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams, metadata?: CallMetadata): Promise<PageSetExtraHTTPHeadersResult>;
   setNetworkInterceptionPatterns(params: PageSetNetworkInterceptionPatternsParams, metadata?: CallMetadata): Promise<PageSetNetworkInterceptionPatternsResult>;
+  setWebSocketInterceptionPatterns(params: PageSetWebSocketInterceptionPatternsParams, metadata?: CallMetadata): Promise<PageSetWebSocketInterceptionPatternsResult>;
   setViewportSize(params: PageSetViewportSizeParams, metadata?: CallMetadata): Promise<PageSetViewportSizeResult>;
   keyboardDown(params: PageKeyboardDownParams, metadata?: CallMetadata): Promise<PageKeyboardDownResult>;
   keyboardUp(params: PageKeyboardUpParams, metadata?: CallMetadata): Promise<PageKeyboardUpResult>;
@@ -1890,7 +1976,6 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   mouseClick(params: PageMouseClickParams, metadata?: CallMetadata): Promise<PageMouseClickResult>;
   mouseWheel(params: PageMouseWheelParams, metadata?: CallMetadata): Promise<PageMouseWheelResult>;
   touchscreenTap(params: PageTouchscreenTapParams, metadata?: CallMetadata): Promise<PageTouchscreenTapResult>;
-  touchscreenTouch(params: PageTouchscreenTouchParams, metadata?: CallMetadata): Promise<PageTouchscreenTouchResult>;
   accessibilitySnapshot(params: PageAccessibilitySnapshotParams, metadata?: CallMetadata): Promise<PageAccessibilitySnapshotResult>;
   pdf(params: PagePdfParams, metadata?: CallMetadata): Promise<PagePdfResult>;
   startJSCoverage(params: PageStartJSCoverageParams, metadata?: CallMetadata): Promise<PageStartJSCoverageResult>;
@@ -1925,6 +2010,9 @@ export type PageLocatorHandlerTriggeredEvent = {
 };
 export type PageRouteEvent = {
   route: RouteChannel,
+};
+export type PageWebSocketRouteEvent = {
+  webSocketRoute: WebSocketRouteChannel,
 };
 export type PageVideoEvent = {
   artifact: ArtifactChannel,
@@ -2008,6 +2096,9 @@ export type PageGoForwardOptions = {
 export type PageGoForwardResult = {
   response?: ResponseChannel,
 };
+export type PageForceGarbageCollectionParams = {};
+export type PageForceGarbageCollectionOptions = {};
+export type PageForceGarbageCollectionResult = void;
 export type PageRegisterLocatorHandlerParams = {
   selector: string,
   noWaitAfter?: boolean,
@@ -2155,6 +2246,17 @@ export type PageSetNetworkInterceptionPatternsOptions = {
 
 };
 export type PageSetNetworkInterceptionPatternsResult = void;
+export type PageSetWebSocketInterceptionPatternsParams = {
+  patterns: {
+    glob?: string,
+    regexSource?: string,
+    regexFlags?: string,
+  }[],
+};
+export type PageSetWebSocketInterceptionPatternsOptions = {
+
+};
+export type PageSetWebSocketInterceptionPatternsResult = void;
 export type PageSetViewportSizeParams = {
   viewportSize: {
     width: number,
@@ -2258,18 +2360,6 @@ export type PageTouchscreenTapOptions = {
 
 };
 export type PageTouchscreenTapResult = void;
-export type PageTouchscreenTouchParams = {
-  type: 'touchstart' | 'touchend' | 'touchmove' | 'touchcancel',
-  touchPoints: {
-    x: number,
-    y: number,
-    id?: number,
-  }[],
-};
-export type PageTouchscreenTouchOptions = {
-
-};
-export type PageTouchscreenTouchResult = void;
 export type PageAccessibilitySnapshotParams = {
   interestingOnly?: boolean,
   root?: ElementHandleChannel,
@@ -2394,6 +2484,7 @@ export interface PageEvents {
   'frameDetached': PageFrameDetachedEvent;
   'locatorHandlerTriggered': PageLocatorHandlerTriggeredEvent;
   'route': PageRouteEvent;
+  'webSocketRoute': PageWebSocketRouteEvent;
   'video': PageVideoEvent;
   'webSocket': PageWebSocketEvent;
   'worker': PageWorkerEvent;
@@ -2534,7 +2625,6 @@ export type FrameCheckParams = {
   selector: string,
   strict?: boolean,
   force?: boolean,
-  noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
   trial?: boolean,
@@ -2542,7 +2632,6 @@ export type FrameCheckParams = {
 export type FrameCheckOptions = {
   strict?: boolean,
   force?: boolean,
-  noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
   trial?: boolean,
@@ -2583,7 +2672,6 @@ export type FrameDragAndDropParams = {
   source: string,
   target: string,
   force?: boolean,
-  noWaitAfter?: boolean,
   timeout?: number,
   trial?: boolean,
   sourcePosition?: Point,
@@ -2592,7 +2680,6 @@ export type FrameDragAndDropParams = {
 };
 export type FrameDragAndDropOptions = {
   force?: boolean,
-  noWaitAfter?: boolean,
   timeout?: number,
   trial?: boolean,
   sourcePosition?: Point,
@@ -2604,7 +2691,6 @@ export type FrameDblclickParams = {
   selector: string,
   strict?: boolean,
   force?: boolean,
-  noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
@@ -2615,7 +2701,6 @@ export type FrameDblclickParams = {
 export type FrameDblclickOptions = {
   strict?: boolean,
   force?: boolean,
-  noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
@@ -2664,13 +2749,11 @@ export type FrameFillParams = {
   value: string,
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type FrameFillOptions = {
   strict?: boolean,
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type FrameFillResult = void;
 export type FrameFocusParams = {
@@ -2730,7 +2813,6 @@ export type FrameHoverParams = {
   position?: Point,
   timeout?: number,
   trial?: boolean,
-  noWaitAfter?: boolean,
 };
 export type FrameHoverOptions = {
   strict?: boolean,
@@ -2739,7 +2821,6 @@ export type FrameHoverOptions = {
   position?: Point,
   timeout?: number,
   trial?: boolean,
-  noWaitAfter?: boolean,
 };
 export type FrameHoverResult = void;
 export type FrameInnerHTMLParams = {
@@ -2901,7 +2982,6 @@ export type FrameSelectOptionParams = {
   }[],
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type FrameSelectOptionOptions = {
   strict?: boolean,
@@ -2914,7 +2994,6 @@ export type FrameSelectOptionOptions = {
   }[],
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type FrameSelectOptionResult = {
   values: string[],
@@ -2942,7 +3021,6 @@ export type FrameSetInputFilesParams = {
   localPaths?: string[],
   streams?: WritableStreamChannel[],
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type FrameSetInputFilesOptions = {
   strict?: boolean,
@@ -2956,14 +3034,12 @@ export type FrameSetInputFilesOptions = {
   localPaths?: string[],
   streams?: WritableStreamChannel[],
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type FrameSetInputFilesResult = void;
 export type FrameTapParams = {
   selector: string,
   strict?: boolean,
   force?: boolean,
-  noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
@@ -2972,7 +3048,6 @@ export type FrameTapParams = {
 export type FrameTapOptions = {
   strict?: boolean,
   force?: boolean,
-  noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
@@ -3001,13 +3076,11 @@ export type FrameTypeParams = {
   strict?: boolean,
   text: string,
   delay?: number,
-  noWaitAfter?: boolean,
   timeout?: number,
 };
 export type FrameTypeOptions = {
   strict?: boolean,
   delay?: number,
-  noWaitAfter?: boolean,
   timeout?: number,
 };
 export type FrameTypeResult = void;
@@ -3015,7 +3088,6 @@ export type FrameUncheckParams = {
   selector: string,
   strict?: boolean,
   force?: boolean,
-  noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
   trial?: boolean,
@@ -3023,7 +3095,6 @@ export type FrameUncheckParams = {
 export type FrameUncheckOptions = {
   strict?: boolean,
   force?: boolean,
-  noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
   trial?: boolean,
@@ -3291,14 +3362,12 @@ export type ElementHandleBoundingBoxResult = {
 };
 export type ElementHandleCheckParams = {
   force?: boolean,
-  noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
   trial?: boolean,
 };
 export type ElementHandleCheckOptions = {
   force?: boolean,
-  noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
   trial?: boolean,
@@ -3334,7 +3403,6 @@ export type ElementHandleContentFrameResult = {
 };
 export type ElementHandleDblclickParams = {
   force?: boolean,
-  noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
@@ -3344,7 +3412,6 @@ export type ElementHandleDblclickParams = {
 };
 export type ElementHandleDblclickOptions = {
   force?: boolean,
-  noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   delay?: number,
@@ -3365,12 +3432,10 @@ export type ElementHandleFillParams = {
   value: string,
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type ElementHandleFillOptions = {
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type ElementHandleFillResult = void;
 export type ElementHandleFocusParams = {};
@@ -3391,7 +3456,6 @@ export type ElementHandleHoverParams = {
   position?: Point,
   timeout?: number,
   trial?: boolean,
-  noWaitAfter?: boolean,
 };
 export type ElementHandleHoverOptions = {
   force?: boolean,
@@ -3399,7 +3463,6 @@ export type ElementHandleHoverOptions = {
   position?: Point,
   timeout?: number,
   trial?: boolean,
-  noWaitAfter?: boolean,
 };
 export type ElementHandleHoverResult = void;
 export type ElementHandleInnerHTMLParams = {};
@@ -3533,7 +3596,6 @@ export type ElementHandleSelectOptionParams = {
   }[],
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type ElementHandleSelectOptionOptions = {
   elements?: ElementHandleChannel[],
@@ -3545,7 +3607,6 @@ export type ElementHandleSelectOptionOptions = {
   }[],
   force?: boolean,
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type ElementHandleSelectOptionResult = {
   values: string[],
@@ -3570,7 +3631,6 @@ export type ElementHandleSetInputFilesParams = {
   localPaths?: string[],
   streams?: WritableStreamChannel[],
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type ElementHandleSetInputFilesOptions = {
   payloads?: {
@@ -3583,12 +3643,10 @@ export type ElementHandleSetInputFilesOptions = {
   localPaths?: string[],
   streams?: WritableStreamChannel[],
   timeout?: number,
-  noWaitAfter?: boolean,
 };
 export type ElementHandleSetInputFilesResult = void;
 export type ElementHandleTapParams = {
   force?: boolean,
-  noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
@@ -3596,7 +3654,6 @@ export type ElementHandleTapParams = {
 };
 export type ElementHandleTapOptions = {
   force?: boolean,
-  noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[],
   position?: Point,
   timeout?: number,
@@ -3611,25 +3668,21 @@ export type ElementHandleTextContentResult = {
 export type ElementHandleTypeParams = {
   text: string,
   delay?: number,
-  noWaitAfter?: boolean,
   timeout?: number,
 };
 export type ElementHandleTypeOptions = {
   delay?: number,
-  noWaitAfter?: boolean,
   timeout?: number,
 };
 export type ElementHandleTypeResult = void;
 export type ElementHandleUncheckParams = {
   force?: boolean,
-  noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
   trial?: boolean,
 };
 export type ElementHandleUncheckOptions = {
   force?: boolean,
-  noWaitAfter?: boolean,
   position?: Point,
   timeout?: number,
   trial?: boolean,
@@ -3755,6 +3808,70 @@ export type RouteFulfillOptions = {
 export type RouteFulfillResult = void;
 
 export interface RouteEvents {
+}
+
+// ----------- WebSocketRoute -----------
+export type WebSocketRouteInitializer = {
+  url: string,
+};
+export interface WebSocketRouteEventTarget {
+  on(event: 'messageFromPage', callback: (params: WebSocketRouteMessageFromPageEvent) => void): this;
+  on(event: 'messageFromServer', callback: (params: WebSocketRouteMessageFromServerEvent) => void): this;
+  on(event: 'close', callback: (params: WebSocketRouteCloseEvent) => void): this;
+}
+export interface WebSocketRouteChannel extends WebSocketRouteEventTarget, Channel {
+  _type_WebSocketRoute: boolean;
+  connect(params?: WebSocketRouteConnectParams, metadata?: CallMetadata): Promise<WebSocketRouteConnectResult>;
+  ensureOpened(params?: WebSocketRouteEnsureOpenedParams, metadata?: CallMetadata): Promise<WebSocketRouteEnsureOpenedResult>;
+  sendToPage(params: WebSocketRouteSendToPageParams, metadata?: CallMetadata): Promise<WebSocketRouteSendToPageResult>;
+  sendToServer(params: WebSocketRouteSendToServerParams, metadata?: CallMetadata): Promise<WebSocketRouteSendToServerResult>;
+  close(params: WebSocketRouteCloseParams, metadata?: CallMetadata): Promise<WebSocketRouteCloseResult>;
+}
+export type WebSocketRouteMessageFromPageEvent = {
+  message: string,
+  isBase64: boolean,
+};
+export type WebSocketRouteMessageFromServerEvent = {
+  message: string,
+  isBase64: boolean,
+};
+export type WebSocketRouteCloseEvent = {};
+export type WebSocketRouteConnectParams = {};
+export type WebSocketRouteConnectOptions = {};
+export type WebSocketRouteConnectResult = void;
+export type WebSocketRouteEnsureOpenedParams = {};
+export type WebSocketRouteEnsureOpenedOptions = {};
+export type WebSocketRouteEnsureOpenedResult = void;
+export type WebSocketRouteSendToPageParams = {
+  message: string,
+  isBase64: boolean,
+};
+export type WebSocketRouteSendToPageOptions = {
+
+};
+export type WebSocketRouteSendToPageResult = void;
+export type WebSocketRouteSendToServerParams = {
+  message: string,
+  isBase64: boolean,
+};
+export type WebSocketRouteSendToServerOptions = {
+
+};
+export type WebSocketRouteSendToServerResult = void;
+export type WebSocketRouteCloseParams = {
+  code?: number,
+  reason?: string,
+};
+export type WebSocketRouteCloseOptions = {
+  code?: number,
+  reason?: string,
+};
+export type WebSocketRouteCloseResult = void;
+
+export interface WebSocketRouteEvents {
+  'messageFromPage': WebSocketRouteMessageFromPageEvent;
+  'messageFromServer': WebSocketRouteMessageFromServerEvent;
+  'close': WebSocketRouteCloseEvent;
 }
 
 export type ResourceTiming = {
@@ -4551,6 +4668,13 @@ export type AndroidDeviceLaunchBrowserParams = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,
@@ -4608,6 +4732,13 @@ export type AndroidDeviceLaunchBrowserOptions = {
     height: number,
   },
   ignoreHTTPSErrors?: boolean,
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
   userAgent?: string,

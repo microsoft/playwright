@@ -23,8 +23,7 @@ import type { InstrumentationListener } from './instrumentation';
 import type { Playwright } from './playwright';
 import { Recorder } from './recorder';
 import { EmptyRecorderApp } from './recorder/recorderApp';
-import { asLocator } from '../utils/isomorphic/locatorGenerators';
-import type { Language } from '../utils/isomorphic/locatorGenerators';
+import { asLocator, type Language } from '../utils';
 
 const internalMetadata = serverSideCallMetadata();
 
@@ -53,7 +52,6 @@ export class DebugController extends SdkObject {
   initialize(codegenId: string, sdkLanguage: Language) {
     this._codegenId = codegenId;
     this._sdkLanguage = sdkLanguage;
-    Recorder.setAppFactory(async () => new InspectingRecorderApp(this));
   }
 
   setAutoCloseAllowed(allowed: boolean) {
@@ -63,7 +61,6 @@ export class DebugController extends SdkObject {
   dispose() {
     this.setReportStateChanged(false);
     this.setAutoCloseAllowed(false);
-    Recorder.setAppFactory(undefined);
   }
 
   setReportStateChanged(enabled: boolean) {
@@ -200,7 +197,7 @@ export class DebugController extends SdkObject {
     const contexts = new Set<BrowserContext>();
     for (const page of this._playwright.allPages())
       contexts.add(page.context());
-    const result = await Promise.all([...contexts].map(c => Recorder.show(c, { omitCallTracking: true })));
+    const result = await Promise.all([...contexts].map(c => Recorder.show(c, () => Promise.resolve(new InspectingRecorderApp(this)), { omitCallTracking: true })));
     return result.filter(Boolean) as Recorder[];
   }
 

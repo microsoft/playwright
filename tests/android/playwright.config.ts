@@ -42,7 +42,7 @@ const config: Config<ServerWorkerOptions & PlaywrightWorkerOptions & PlaywrightT
 
 const metadata = {
   platform: 'Android',
-  headful: false,
+  headless: 'headless',
   browserName: 'chromium',
   channel: 'chrome',
   mode: 'default',

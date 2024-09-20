@@ -59,7 +59,7 @@ class GitHubLogger {
 export class GitHubReporter extends BaseReporter {
   githubLogger = new GitHubLogger();
 
-  override printsToStdio() {
+  printsToStdio() {
     return false;
   }
 

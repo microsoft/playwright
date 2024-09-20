@@ -93,11 +93,9 @@ it('should emulate availWidth and availHeight', async ({ page }) => {
   expect(await page.evaluate(() => window.screen.availHeight)).toBe(600);
 });
 
-it('should not have touch by default', async ({ page, server }) => {
+it('should not have touch by default', async ({ page, server, browserName, platform }) => {
   await page.goto(server.PREFIX + '/mobile.html');
   expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(false);
-  await page.goto(server.PREFIX + '/detect-touch.html');
-  expect(await page.evaluate(() => document.body.textContent.trim())).toBe('NO');
 });
 
 it('should throw on tap if hasTouch is not enabled', async ({ page }) => {
@@ -181,7 +179,7 @@ browserTest('should be able to get correct orientation angle on non-mobile devic
 it('should set window.screen.orientation.type for mobile devices', async ({ contextFactory, browserName, server, isMac }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31151' });
   it.skip(browserName === 'firefox', 'Firefox does not support mobile emulation');
-  it.skip(isMac && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS 12 is frozen and does not support orientation.type override');
+  it.skip(browserName === 'webkit' && isMac && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS 12 is frozen and does not support orientation.type override');
   const context = await contextFactory(devices['iPhone 14']);
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/index.html');

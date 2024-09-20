@@ -22,20 +22,27 @@ import type * as traceV6 from './versions/traceV6';
 import type { ActionEntry, ContextEntry, PageEntry } from './entries';
 import type { SnapshotStorage } from './snapshotStorage';
 
+export class TraceVersionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TraceVersionError';
+  }
+}
+
+const latestVersion: trace.VERSION = 7;
+
 export class TraceModernizer {
   private _contextEntry: ContextEntry;
   private _snapshotStorage: SnapshotStorage;
-  private _attachments: Map<string, trace.AfterActionTraceEventAttachment>;
   private _actionMap = new Map<string, ActionEntry>();
   private _version: number | undefined;
   private _pageEntries = new Map<string, PageEntry>();
   private _jsHandles = new Map<string, { preview: string }>();
   private _consoleObjects = new Map<string, { type: string, text: string, location: { url: string, lineNumber: number, columnNumber: number }, args?: { preview: string, value: string }[] }>();
 
-  constructor(contextEntry: ContextEntry, snapshotStorage: SnapshotStorage, attachments: Map<string, trace.AfterActionTraceEventAttachment>) {
+  constructor(contextEntry: ContextEntry, snapshotStorage: SnapshotStorage) {
     this._contextEntry = contextEntry;
     this._snapshotStorage = snapshotStorage;
-    this._attachments = attachments;
   }
 
   appendTrace(trace: string) {
@@ -51,6 +58,7 @@ export class TraceModernizer {
     let pageEntry = this._pageEntries.get(pageId);
     if (!pageEntry) {
       pageEntry = {
+        pageId,
         screencastFrames: [],
       };
       this._pageEntries.set(pageId, pageEntry);
@@ -71,6 +79,8 @@ export class TraceModernizer {
     const contextEntry = this._contextEntry;
     switch (event.type) {
       case 'context-options': {
+        if (event.version > latestVersion)
+          throw new TraceVersionError('The trace was created by a newer version of Playwright and is not supported by this version of the viewer. Please use latest Playwright to open the trace.');
         this._version = event.version;
         contextEntry.origin = event.origin;
         contextEntry.browserName = event.browserName;
@@ -118,8 +128,6 @@ export class TraceModernizer {
         existing!.attachments = event.attachments;
         if (event.point)
           existing!.point = event.point;
-        for (const attachment of event.attachments?.filter(a => a.sha1) || [])
-          this._attachments.set(attachment.sha1!, attachment);
         break;
       }
       case 'action': {
@@ -181,9 +189,8 @@ export class TraceModernizer {
     let version = this._version || event.version;
     if (version === undefined)
       return [event];
-    const lastVersion: trace.VERSION = 7;
     let events = [event];
-    for (; version < lastVersion; ++version)
+    for (; version < latestVersion; ++version)
       events = (this as any)[`_modernize_${version}_to_${version + 1}`].call(this, events);
     return events;
   }

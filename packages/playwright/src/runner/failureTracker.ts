@@ -31,7 +31,8 @@ export class FailureTracker {
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
-    if (result.status !== 'skipped' && result.status !== test.expectedStatus)
+    // Test is considered failing after the last retry.
+    if (test.outcome() === 'unexpected' && test.results.length > test.retries)
       ++this._failureCount;
   }
 

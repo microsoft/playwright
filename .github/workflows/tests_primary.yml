@@ -219,7 +219,6 @@ jobs:
       with:
         command: npm run itest
         bot-name: "package-installations-${{ matrix.os }}"
-        # TODO: figure out why itest fails with 'bash' on Windows.
         shell: ${{ matrix.os == 'windows-latest' && 'pwsh' || 'bash' }}
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}

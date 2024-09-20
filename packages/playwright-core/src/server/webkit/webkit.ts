@@ -32,15 +32,15 @@ export class WebKit extends BrowserType {
     super(parent, 'webkit');
   }
 
-  _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
+  override connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
     return WKBrowser.connect(this.attribution.playwright, transport, options);
   }
 
-  _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
+  override amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
     return { ...env, CURL_COOKIE_JAR_PATH: path.join(userDataDir, 'cookiejar.db') };
   }
 
-  _doRewriteStartupLog(error: ProtocolError): ProtocolError {
+  override doRewriteStartupLog(error: ProtocolError): ProtocolError {
     if (!error.logs)
       return error;
     if (error.logs.includes('cannot open display'))
@@ -48,12 +48,12 @@ export class WebKit extends BrowserType {
     return error;
   }
 
-  _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
+  override attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
     transport.send({ method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId });
   }
 
-  _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
-    const { args = [], proxy, headless } = options;
+  override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
+    const { args = [], headless } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)
       throw this._createUserDataDirArgMisuseError('--user-data-dir');
@@ -68,6 +68,7 @@ export class WebKit extends BrowserType {
       webkitArguments.push(`--user-data-dir=${userDataDir}`);
     else
       webkitArguments.push(`--no-startup-window`);
+    const proxy = options.proxyOverride || options.proxy;
     if (proxy) {
       if (process.platform === 'darwin') {
         webkitArguments.push(`--proxy=${proxy.server}`);

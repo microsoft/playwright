@@ -123,9 +123,6 @@ export class BaseReporter implements ReporterV2 {
     (result as any)[kOutputSymbol].push(output);
   }
 
-  onTestBegin(test: TestCase, result: TestResult): void {
-  }
-
   onTestEnd(test: TestCase, result: TestResult) {
     if (result.status !== 'skipped' && result.status !== test.expectedStatus)
       ++this._failureCount;
@@ -144,19 +141,6 @@ export class BaseReporter implements ReporterV2 {
 
   async onEnd(result: FullResult) {
     this.result = result;
-  }
-
-  onStepBegin(test: TestCase, result: TestResult, step: TestStep): void {
-  }
-
-  onStepEnd(test: TestCase, result: TestResult, step: TestStep): void {
-  }
-
-  async onExit() {
-  }
-
-  printsToStdio() {
-    return true;
   }
 
   protected fitToScreen(line: string, prefix?: string): string {
@@ -319,7 +303,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
     if (includeAttachments) {
       for (let i = 0; i < result.attachments.length; ++i) {
         const attachment = result.attachments[i];
-        const hasPrintableContent = attachment.contentType.startsWith('text/') && attachment.body;
+        const hasPrintableContent = attachment.contentType.startsWith('text/');
         if (!attachment.path && !hasPrintableContent)
           continue;
         resultLines.push('');

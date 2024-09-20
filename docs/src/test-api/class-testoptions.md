@@ -138,6 +138,27 @@ export default defineConfig({
   ]
 });
 ```
+
+## property: TestOptions.clientCertificates = %%-context-option-clientCertificates-%%
+* since: 1.46
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    clientCertificates: [{
+      origin: 'https://example.com',
+      certPath: './cert.pem',
+      keyPath: './key.pem',
+      passphrase: 'mysecretpassword',
+    }],
+  },
+});
+```
+
 ## property: TestOptions.colorScheme = %%-context-option-colorscheme-%%
 * since: v1.10
 

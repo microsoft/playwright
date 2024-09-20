@@ -1,6 +1,5 @@
 # class: Page
 * since: v1.8
-* extends: [EventEmitter]
 
 Page provides methods to interact with a single tab in a [Browser], or an
 [extension background page](https://developer.chrome.com/extensions/background_pages) in Chromium. One [Browser]
@@ -688,7 +687,7 @@ Raw JavaScript content to be injected into frame.
 * since: v1.8
 - `type` <[string]>
 
-Script type. Use 'module' in order to load a Javascript ES6 module. See
+Script type. Use 'module' in order to load a JavaScript ES6 module. See
 [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
 
 ## async method: Page.addStyleTag
@@ -735,7 +734,6 @@ This method checks an element matching [`param: selector`] by performing the fol
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked. If not, this method throws.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -747,7 +745,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.check.force = %%-input-force-%%
 * since: v1.8
 
-### option: Page.check.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.check.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.check.position = %%-input-position-%%
@@ -879,8 +877,6 @@ This method double clicks an element matching [`param: selector`] by performing 
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that
-   if the first click of the `dblclick()` triggers a navigation event, this method will throw.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
@@ -904,7 +900,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.dblclick.modifiers = %%-input-modifiers-%%
 * since: v1.8
 
-### option: Page.dblclick.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.dblclick.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.dblclick.position = %%-input-position-%%
@@ -1092,7 +1088,7 @@ await Page.DragAndDropAsync("#source", "#target", new()
 ### option: Page.dragAndDrop.force = %%-input-force-%%
 * since: v1.13
 
-### option: Page.dragAndDrop.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.dragAndDrop.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.13
 
 ### option: Page.dragAndDrop.strict = %%-input-strict-%%
@@ -2050,7 +2046,7 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 ### option: Page.fill.force = %%-input-force-%%
 * since: v1.13
 
-### option: Page.fill.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.fill.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.fill.strict = %%-input-strict-%%
@@ -2315,7 +2311,7 @@ Attribute name to get the value for.
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-last redirect. If can not go back, returns `null`.
+last redirect. If cannot go back, returns `null`.
 
 Navigate to the previous page in history.
 
@@ -2333,9 +2329,14 @@ Navigate to the previous page in history.
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-last redirect. If can not go forward, returns `null`.
+last redirect. If cannot go forward, returns `null`.
 
 Navigate to the next page in history.
+
+## async method: Page.forceGarbageCollection
+* since: v1.47
+
+Force the browser to perform garbage collection.
 
 ### option: Page.goForward.waitUntil = %%-navigation-wait-until-%%
 * since: v1.8
@@ -2411,7 +2412,6 @@ This method hovers over an element matching [`param: selector`] by performing th
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
@@ -2440,7 +2440,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.hover.trial = %%-input-trial-%%
 * since: v1.11
 
-### option: Page.hover.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.hover.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.28
 
 ## async method: Page.innerHTML
@@ -3344,6 +3344,32 @@ Specifies the maximum number of times this handler should be called. Unlimited b
 
 By default, after calling the handler Playwright will wait until the overlay becomes hidden, and only then Playwright will continue with the action/assertion that triggered the handler. This option allows to opt-out of this behavior, so that overlay can stay visible after the handler has run.
 
+## async method: Page.removeAllListeners
+* since: v1.47
+* langs: js
+
+Removes all the listeners of the given type (or all registered listeners if no type given).
+Allows to wait for async listeners to complete or to ignore subsequent errors from these listeners.
+
+**Usage**
+
+```js
+page.on('request', async request => {
+  const response = await request.response();
+  const body = await response.body();
+  console.log(body.byteLength);
+});
+await page.goto('https://playwright.dev', { waitUntil: 'domcontentloaded' });
+// Waits for all the reported 'request' events to resolve.
+await page.removeAllListeners('request', { behavior: 'wait' });
+```
+
+### param: Page.removeAllListeners.type
+* since: v1.47
+- `type` ?<[string]>
+
+### option: Page.removeAllListeners.behavior = %%-remove-all-listeners-options-behavior-%%
+* since: v1.47
 
 ## async method: Page.removeLocatorHandler
 * since: v1.44
@@ -3598,13 +3624,106 @@ A glob pattern, regular expression or predicate to match the request URL. Only r
 * since: v1.32
 - `updateMode` <[HarMode]<"full"|"minimal">>
 
-When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `minimal`.
 
 ### option: Page.routeFromHAR.updateContent
 * since: v1.32
 - `updateContent` <[RouteFromHarUpdateContentPolicy]<"embed"|"attach">>
 
 Optional setting to control resource content management. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
+
+
+## async method: Page.routeWebSocket
+* since: v1.48
+
+This method allows to modify websocket connections that are made by the page.
+
+Note that only `WebSocket`s created after this method was called will be routed. It is recommended to call this method before navigating the page.
+
+**Usage**
+
+Below is an example of a simple handler that blocks some websocket messages.
+See [WebSocketRoute] for more details and examples.
+
+```js
+await page.routeWebSocket('/ws', async ws => {
+  ws.routeSend(message => {
+    if (message === 'to-be-blocked')
+      return;
+    ws.send(message);
+  });
+  await ws.connect();
+});
+```
+
+```java
+page.routeWebSocket("/ws", ws -> {
+  ws.routeSend(message -> {
+    if ("to-be-blocked".equals(message))
+      return;
+    ws.send(message);
+  });
+  ws.connect();
+});
+```
+
+```python async
+def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
+  if message == "to-be-blocked":
+    return
+  ws.send(message)
+
+async def handler(ws: WebSocketRoute):
+  ws.route_send(lambda message: message_handler(ws, message))
+  await ws.connect()
+
+await page.route_web_socket("/ws", handler)
+```
+
+```python sync
+def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
+  if message == "to-be-blocked":
+    return
+  ws.send(message)
+
+def handler(ws: WebSocketRoute):
+  ws.route_send(lambda message: message_handler(ws, message))
+  ws.connect()
+
+page.route_web_socket("/ws", handler)
+```
+
+```csharp
+await page.RouteWebSocketAsync("/ws", async ws => {
+  ws.RouteSend(message => {
+    if (message == "to-be-blocked")
+      return;
+    ws.Send(message);
+  });
+  await ws.ConnectAsync();
+});
+```
+
+### param: Page.routeWebSocket.url
+* since: v1.48
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+
+Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the [`option: baseURL`] from the context options.
+
+### param: Page.routeWebSocket.handler
+* since: v1.48
+* langs: js, python
+- `handler` <[function]\([WebSocketRoute]\): [Promise<any>|any]>
+
+Handler function to route the WebSocket.
+
+### param: Page.routeWebSocket.handler
+* since: v1.48
+* langs: csharp, java
+- `handler` <[function]\([WebSocketRoute]\)>
+
+Handler function to route the WebSocket.
+
 
 ## async method: Page.screenshot
 * since: v1.8
@@ -3705,7 +3824,7 @@ await page.SelectOptionAsync("select#colors", new[] { "red", "green", "blue" });
 ### option: Page.selectOption.force = %%-input-force-%%
 * since: v1.13
 
-### option: Page.selectOption.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.selectOption.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.selectOption.strict = %%-input-strict-%%
@@ -3742,7 +3861,6 @@ This method checks or unchecks an element matching [`param: selector`] by perfor
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked or unchecked. If not, this method throws.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -3757,7 +3875,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.setChecked.force = %%-input-force-%%
 * since: v1.15
 
-### option: Page.setChecked.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.setChecked.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.15
 
 ### option: Page.setChecked.position = %%-input-position-%%
@@ -3865,7 +3983,7 @@ This method expects [`param: selector`] to point to an
 ### param: Page.setInputFiles.files = %%-input-files-%%
 * since: v1.8
 
-### option: Page.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.setInputFiles.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.setInputFiles.strict = %%-input-strict-%%
@@ -3949,7 +4067,6 @@ This method taps an element matching [`param: selector`] by performing the follo
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
@@ -3967,7 +4084,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.tap.modifiers = %%-input-modifiers-%%
 * since: v1.8
 
-### option: Page.tap.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.tap.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.tap.position = %%-input-position-%%
@@ -4040,7 +4157,7 @@ A text to type into a focused element.
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
-### option: Page.type.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.type.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.type.strict = %%-input-strict-%%
@@ -4065,7 +4182,6 @@ This method unchecks an element matching [`param: selector`] by performing the f
    set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now unchecked. If not, this method throws.
 
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
@@ -4077,7 +4193,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.uncheck.force = %%-input-force-%%
 * since: v1.8
 
-### option: Page.uncheck.noWaitAfter = %%-input-no-wait-after-%%
+### option: Page.uncheck.noWaitAfter = %%-input-no-wait-after-removed-%%
 * since: v1.8
 
 ### option: Page.uncheck.position = %%-input-position-%%

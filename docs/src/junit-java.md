@@ -10,8 +10,6 @@ With a few lines of code, you can hook up Playwright to your favorite Java test 
 In [JUnit](https://junit.org/junit5/), you can use Playwright [fixtures](./junit.md#fixtures) to automatically initialize [Playwright], [Browser], [BrowserContext] or [Page]. In the example below, all three test methods use the same
 [Browser]. Each test uses its own [BrowserContext] and [Page].
 
-<!-- TOC -->
-
 ```java
 package org.example;
 

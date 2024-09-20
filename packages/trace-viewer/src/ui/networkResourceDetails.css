@@ -16,6 +16,7 @@
 
 .network-request-details-tab {
   width: 100%;
+  height: 100%;
   user-select: text;
   line-height: 24px;
   margin-left: 10px;
@@ -48,6 +49,31 @@
   overflow: hidden;
 }
 
+.network-request-details-copy {
+  display: flex;
+  margin-left: 10px;
+}
+
+.network-request-details-copy button {
+  border-radius: 4px
+}
+
+.network-font-preview {
+  font-family: font-preview;
+  font-size: 30px;
+  line-height: 40px;
+  padding: 16px;
+  padding-left: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+.network-font-preview-error {
+  margin-top: 8px;
+  text-align: center;
+}
+
 .tab-network .toolbar {
   min-height: 30px !important;
   background-color: initial !important;
@@ -60,4 +86,28 @@
 
 .tab-network .tabbed-pane-tab.selected {
   font-weight: bold;
+}
+
+.green-circle::before,
+.red-circle::before,
+.yellow-circle::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 6px;
+  margin-right: 2px;
+  align-self: center;
+}
+
+.green-circle::before {
+  background-color: var(--vscode-charts-green);
+}
+
+.red-circle::before {
+  background-color: var(--vscode-charts-red);
+}
+
+.yellow-circle::before {
+  background-color: var(--vscode-charts-yellow);
 }

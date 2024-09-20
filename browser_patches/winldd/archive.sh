@@ -39,5 +39,4 @@ fi
 
 # create a TMP directory to copy all necessary files
 cd ./x64/Release
-zip $ZIP_PATH ./PrintDeps.exe
-
+7z a "$ZIP_PATH" ./PrintDeps.exe

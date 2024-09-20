@@ -1,13 +1,12 @@
 # class: BrowserContext
 * since: v1.8
-* extends: [EventEmitter]
 
 BrowserContexts provide a way to operate multiple independent browser sessions.
 
 If a page opens another page, e.g. with a `window.open` call, the popup will belong to the parent page's browser
 context.
 
-Playwright allows creating "incognito" browser contexts with [`method: Browser.newContext`] method. "Incognito" browser
+Playwright allows creating isolated non-persistent browser contexts with [`method: Browser.newContext`] method. Non-persistent browser
 contexts don't write any browsing data to disk.
 
 ```js
@@ -1016,6 +1015,20 @@ Creates a new page in the browser context.
 
 Returns all open pages in the context.
 
+## async method: BrowserContext.removeAllListeners
+* since: v1.47
+* langs: js
+
+Removes all the listeners of the given type (or all registered listeners if no type given).
+Allows to wait for async listeners to complete or to ignore subsequent errors from these listeners.
+
+### param: BrowserContext.removeAllListeners.type
+* since: v1.47
+- `type` ?<[string]>
+
+### option: BrowserContext.removeAllListeners.behavior = %%-remove-all-listeners-options-behavior-%%
+* since: v1.47
+
 ## property: BrowserContext.request
 * since: v1.16
 * langs:
@@ -1252,6 +1265,99 @@ When set to `minimal`, only record information necessary for routing from HAR. T
 - `updateContent` <[RouteFromHarUpdateContentPolicy]<"embed"|"attach">>
 
 Optional setting to control resource content management. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
+
+
+## async method: BrowserContext.routeWebSocket
+* since: v1.48
+
+This method allows to modify websocket connections that are made by any page in the browser context.
+
+Note that only `WebSocket`s created after this method was called will be routed. It is recommended to call this method before creating any pages.
+
+**Usage**
+
+Below is an example of a simple handler that blocks some websocket messages.
+See [WebSocketRoute] for more details and examples.
+
+```js
+await context.routeWebSocket('/ws', async ws => {
+  ws.routeSend(message => {
+    if (message === 'to-be-blocked')
+      return;
+    ws.send(message);
+  });
+  await ws.connect();
+});
+```
+
+```java
+context.routeWebSocket("/ws", ws -> {
+  ws.routeSend(message -> {
+    if ("to-be-blocked".equals(message))
+      return;
+    ws.send(message);
+  });
+  ws.connect();
+});
+```
+
+```python async
+def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
+  if message == "to-be-blocked":
+    return
+  ws.send(message)
+
+async def handler(ws: WebSocketRoute):
+  ws.route_send(lambda message: message_handler(ws, message))
+  await ws.connect()
+
+await context.route_web_socket("/ws", handler)
+```
+
+```python sync
+def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
+  if message == "to-be-blocked":
+    return
+  ws.send(message)
+
+def handler(ws: WebSocketRoute):
+  ws.route_send(lambda message: message_handler(ws, message))
+  ws.connect()
+
+context.route_web_socket("/ws", handler)
+```
+
+```csharp
+await context.RouteWebSocketAsync("/ws", async ws => {
+  ws.RouteSend(message => {
+    if (message == "to-be-blocked")
+      return;
+    ws.Send(message);
+  });
+  await ws.ConnectAsync();
+});
+```
+
+### param: BrowserContext.routeWebSocket.url
+* since: v1.48
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+
+Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the [`option: baseURL`] from the context options.
+
+### param: BrowserContext.routeWebSocket.handler
+* since: v1.48
+* langs: js, python
+- `handler` <[function]\([WebSocketRoute]\): [Promise<any>|any]>
+
+Handler function to route the WebSocket.
+
+### param: BrowserContext.routeWebSocket.handler
+* since: v1.48
+* langs: csharp, java
+- `handler` <[function]\([WebSocketRoute]\)>
+
+Handler function to route the WebSocket.
+
 
 ## method: BrowserContext.serviceWorkers
 * since: v1.11

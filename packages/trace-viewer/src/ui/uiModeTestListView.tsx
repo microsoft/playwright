@@ -27,10 +27,10 @@ import type * as reporterTypes from 'playwright/types/testReporter';
 import React from 'react';
 import type { SourceLocation } from './modelUtil';
 import { testStatusIcon } from './testUtils';
-import type { TestModel } from './uiModeModel';
 import './uiModeTestListView.css';
 import type { TestServerConnection } from '@testIsomorphic/testServerConnection';
 import { TagView } from './tag';
+import type { TeleSuiteUpdaterTestModel } from '@testIsomorphic/teleSuiteUpdater';
 
 const TestTreeView = TreeView<TreeItem>;
 
@@ -38,17 +38,18 @@ export const TestListView: React.FC<{
   filterText: string,
   testTree: TestTree,
   testServerConnection: TestServerConnection | undefined,
-  testModel?: TestModel,
+  testModel?: TeleSuiteUpdaterTestModel,
   runTests: (mode: 'bounce-if-busy' | 'queue-if-busy', testIds: Set<string>) => void,
-  runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean },
+  runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean, completed?: boolean },
   watchAll: boolean,
   watchedTreeIds: { value: Set<string> },
   setWatchedTreeIds: (ids: { value: Set<string> }) => void,
   isLoading?: boolean,
   onItemSelected: (item: { treeItem?: TreeItem, testCase?: reporterTypes.TestCase, testFile?: SourceLocation }) => void,
   requestedCollapseAllCount: number,
-  setFilterText: (text: string) => void;
-}> = ({ filterText, testModel, testServerConnection, testTree, runTests, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, requestedCollapseAllCount, setFilterText }) => {
+  setFilterText: (text: string) => void,
+  onRevealSource: () => void,
+}> = ({ filterText, testModel, testServerConnection, testTree, runTests, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, requestedCollapseAllCount, setFilterText, onRevealSource }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
   const [collapseAllCount, setCollapseAllCount] = React.useState(requestedCollapseAllCount);
@@ -91,17 +92,7 @@ export const TestListView: React.FC<{
     if (!testModel)
       return { selectedTreeItem: undefined };
     const selectedTreeItem = selectedTreeItemId ? testTree.treeItemById(selectedTreeItemId) : undefined;
-    let testFile: SourceLocation | undefined;
-    if (selectedTreeItem) {
-      testFile = {
-        file: selectedTreeItem.location.file,
-        line: selectedTreeItem.location.line,
-        source: {
-          errors: testModel.loadErrors.filter(e => e.location?.file === selectedTreeItem.location.file).map(e => ({ line: e.location!.line, message: e.message! })),
-          content: undefined,
-        }
-      };
-    }
+    const testFile = itemLocation(selectedTreeItem, testModel);
     let selectedTest: reporterTypes.TestCase | undefined;
     if (selectedTreeItem?.kind === 'test')
       selectedTest = selectedTreeItem.test;
@@ -163,8 +154,8 @@ export const TestListView: React.FC<{
         </div>
         {!!treeItem.duration && treeItem.status !== 'skipped' && <div className='ui-mode-list-item-time'>{msToString(treeItem.duration)}</div>}
         <Toolbar noMinHeight={true} noShadow={true}>
-          <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState}></ToolbarButton>
-          <ToolbarButton icon='go-to-file' title='Open in VS Code' onClick={() => testServerConnection?.openNoReply({ location: treeItem.location })} style={(treeItem.kind === 'group' && treeItem.subKind === 'folder') ? { visibility: 'hidden' } : {}}></ToolbarButton>
+          <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState && !runningState.completed}></ToolbarButton>
+          <ToolbarButton icon='go-to-file' title='Show source' onClick={onRevealSource} style={(treeItem.kind === 'group' && treeItem.subKind === 'folder') ? { visibility: 'hidden' } : {}}></ToolbarButton>
           {!watchAll && <ToolbarButton icon='eye' title='Watch' onClick={() => {
             if (watchedTreeIds.value.has(treeItem.id))
               watchedTreeIds.value.delete(treeItem.id);
@@ -187,3 +178,17 @@ export const TestListView: React.FC<{
     autoExpandDepth={filterText ? 5 : 1}
     noItemsMessage={isLoading ? 'Loading\u2026' : 'No tests'} />;
 };
+
+function itemLocation(item: TreeItem | undefined, model: TeleSuiteUpdaterTestModel | undefined): SourceLocation | undefined {
+  if (!item || !model)
+    return;
+  return {
+    file: item.location.file,
+    line: item.location.line,
+    column: item.location.column,
+    source: {
+      errors: model.loadErrors.filter(e => e.location?.file === item.location.file).map(e => ({ line: e.location!.line, message: e.message! })),
+      content: undefined,
+    }
+  };
+}

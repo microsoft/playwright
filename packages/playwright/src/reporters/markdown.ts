@@ -34,7 +34,7 @@ class MarkdownReporter extends BaseReporter {
     this._options = options;
   }
 
-  override printsToStdio() {
+  printsToStdio() {
     return false;
   }
 

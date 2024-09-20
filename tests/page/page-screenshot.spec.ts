@@ -280,13 +280,12 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-clip-odd-size.png');
   });
 
-  it('should work for canvas', async ({ page, server, isElectron, isMac, browserName }) => {
+  it('should work for canvas', async ({ page, server, isElectron, isMac }) => {
     it.fixme(isElectron && isMac, 'Fails on the bots');
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/screenshots/canvas.html');
     const screenshot = await page.screenshot();
-    const screenshotPrefix = browserName === 'chromium' && isMac && process.arch === 'arm64' ? '-macOS-arm64' : '';
-    expect(screenshot).toMatchSnapshot(`screenshot-canvas${screenshotPrefix}.png`);
+    expect(screenshot).toMatchSnapshot('screenshot-canvas.png');
   });
 
   it('should capture canvas changes', async ({ page, isElectron, browserName, isMac, isWebView2 }) => {
@@ -324,6 +323,7 @@ it.describe('page screenshot', () => {
   it('should work for webgl', async ({ page, server, browserName, platform }) => {
     it.fixme(browserName === 'firefox');
     it.fixme(browserName === 'chromium' && platform === 'darwin' && os.arch() === 'arm64', 'SwiftShader is not available on macOS-arm64 - https://github.com/microsoft/playwright/issues/28216');
+    it.skip(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 22, 'WebGL is not available in macOS-13 - https://bugs.webkit.org/show_bug.cgi?id=278277');
 
     await page.setViewportSize({ width: 640, height: 480 });
     await page.goto(server.PREFIX + '/screenshots/webgl.html');

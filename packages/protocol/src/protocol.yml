@@ -82,6 +82,13 @@ SerializedValue:
     u: string?
     # String representation of BigInt.
     bi: string?
+    # Serialized Error object.
+    e:
+      type: object?
+      properties:
+        m: string
+        n: string
+        s: string
     # Regular expression pattern and flags.
     r:
       type: object?
@@ -280,6 +287,7 @@ APIRequestContext:
     fetch:
       parameters:
         url: string
+        encodedParams: string?
         params:
           type: array?
           items: NameValue
@@ -433,6 +441,16 @@ ContextOptions:
         width: number
         height: number
     ignoreHTTPSErrors: boolean?
+    clientCertificates:
+      type: array?
+      items:
+        type: object
+        properties:
+          origin: string
+          cert: binary?
+          key: binary?
+          passphrase: string?
+          pfx: binary?
     javaScriptEnabled: boolean?
     bypassCSP: boolean?
     userAgent: string?
@@ -653,6 +671,8 @@ Playwright:
     chromium: BrowserType
     firefox: BrowserType
     webkit: BrowserType
+    bidiChromium: BrowserType
+    bidiFirefox: BrowserType
     android: Android
     electron: Electron
     utils: LocalUtils?
@@ -673,6 +693,16 @@ Playwright:
         extraHTTPHeaders:
           type: array?
           items: NameValue
+        clientCertificates:
+          type: array?
+          items:
+            type: object
+            properties:
+              origin: string
+              cert: binary?
+              key: binary?
+              passphrase: string?
+              pfx: binary?
         httpCredentials:
           type: object?
           properties:
@@ -1130,6 +1160,17 @@ BrowserContext:
               regexSource: string?
               regexFlags: string?
 
+    setWebSocketInterceptionPatterns:
+      parameters:
+        patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              glob: string?
+              regexSource: string?
+              regexFlags: string?
+
     setOffline:
       parameters:
         offline: boolean
@@ -1162,7 +1203,6 @@ BrowserContext:
         device: string?
         saveStorage: string?
         outputFile: string?
-        handleSIGINT: boolean?
         omitCallTracking: boolean?
 
     newCDPSession:
@@ -1275,6 +1315,10 @@ BrowserContext:
     route:
       parameters:
         route: Route
+
+    webSocketRoute:
+      parameters:
+        webSocketRoute: WebSocketRoute
 
     video:
       parameters:
@@ -1401,6 +1445,8 @@ Page:
         slowMo: true
         snapshot: true
 
+    forceGarbageCollection:
+
     registerLocatorHandler:
       parameters:
         selector: string
@@ -1479,6 +1525,17 @@ Page:
           items: NameValue
 
     setNetworkInterceptionPatterns:
+      parameters:
+        patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              glob: string?
+              regexSource: string?
+              regexFlags: string?
+
+    setWebSocketInterceptionPatterns:
       parameters:
         patterns:
           type: array
@@ -1599,27 +1656,6 @@ Page:
       parameters:
         x: number
         y: number
-      flags:
-        slowMo: true
-        snapshot: true
-
-    touchscreenTouch:
-      parameters:
-        type:
-          type: enum
-          literals:
-          - touchstart
-          - touchend
-          - touchmove
-          - touchcancel
-        touchPoints:
-          type: array
-          items:
-            type: object
-            properties:
-              x: number
-              y: number
-              id: number?
       flags:
         slowMo: true
         snapshot: true
@@ -1761,6 +1797,10 @@ Page:
       parameters:
         route: Route
 
+    webSocketRoute:
+      parameters:
+        webSocketRoute: WebSocketRoute
+
     video:
       parameters:
         artifact: Artifact
@@ -1844,7 +1884,6 @@ Frame:
         selector: string
         strict: boolean?
         force: boolean?
-        noWaitAfter: boolean?
         position: Point?
         timeout: number?
         trial: boolean?
@@ -1894,7 +1933,6 @@ Frame:
         source: string
         target: string
         force: boolean?
-        noWaitAfter: boolean?
         timeout: number?
         trial: boolean?
         sourcePosition: Point?
@@ -1910,7 +1948,6 @@ Frame:
         selector: string
         strict: boolean?
         force: boolean?
-        noWaitAfter: boolean?
         modifiers:
           type: array?
           items:
@@ -1974,7 +2011,6 @@ Frame:
         value: string
         force: boolean?
         timeout: number?
-        noWaitAfter: boolean?
       flags:
         slowMo: true
         snapshot: true
@@ -2038,7 +2074,6 @@ Frame:
         position: Point?
         timeout: number?
         trial: boolean?
-        noWaitAfter: boolean?
       flags:
         slowMo: true
         snapshot: true
@@ -2184,7 +2219,6 @@ Frame:
               index: number?
         force: boolean?
         timeout: number?
-        noWaitAfter: boolean?
       returns:
         values:
           type: array
@@ -2224,7 +2258,6 @@ Frame:
           type: array?
           items: WritableStream
         timeout: number?
-        noWaitAfter: boolean?
       flags:
         slowMo: true
         snapshot: true
@@ -2235,7 +2268,6 @@ Frame:
         selector: string
         strict: boolean?
         force: boolean?
-        noWaitAfter: boolean?
         modifiers:
           type: array?
           items:
@@ -2274,7 +2306,6 @@ Frame:
         strict: boolean?
         text: string
         delay: number?
-        noWaitAfter: boolean?
         timeout: number?
       flags:
         slowMo: true
@@ -2286,7 +2317,6 @@ Frame:
         selector: string
         strict: boolean?
         force: boolean?
-        noWaitAfter: boolean?
         position: Point?
         timeout: number?
         trial: boolean?
@@ -2502,7 +2532,6 @@ ElementHandle:
     check:
       parameters:
         force: boolean?
-        noWaitAfter: boolean?
         position: Point?
         timeout: number?
         trial: boolean?
@@ -2548,7 +2577,6 @@ ElementHandle:
     dblclick:
       parameters:
         force: boolean?
-        noWaitAfter: boolean?
         modifiers:
           type: array?
           items:
@@ -2587,7 +2615,6 @@ ElementHandle:
         value: string
         force: boolean?
         timeout: number?
-        noWaitAfter: boolean?
       flags:
         slowMo: true
         snapshot: true
@@ -2620,7 +2647,6 @@ ElementHandle:
         position: Point?
         timeout: number?
         trial: boolean?
-        noWaitAfter: boolean?
       flags:
         slowMo: true
         snapshot: true
@@ -2748,7 +2774,6 @@ ElementHandle:
               index: number?
         force: boolean?
         timeout: number?
-        noWaitAfter: boolean?
       returns:
         values:
           type: array
@@ -2786,7 +2811,6 @@ ElementHandle:
           type: array?
           items: WritableStream
         timeout: number?
-        noWaitAfter: boolean?
       flags:
         slowMo: true
         snapshot: true
@@ -2795,7 +2819,6 @@ ElementHandle:
     tap:
       parameters:
         force: boolean?
-        noWaitAfter: boolean?
         modifiers:
           type: array?
           items:
@@ -2824,7 +2847,6 @@ ElementHandle:
       parameters:
         text: string
         delay: number?
-        noWaitAfter: boolean?
         timeout: number?
       flags:
         slowMo: true
@@ -2834,7 +2856,6 @@ ElementHandle:
     uncheck:
       parameters:
         force: boolean?
-        noWaitAfter: boolean?
         position: Point?
         timeout: number?
         trial: boolean?
@@ -2944,6 +2965,49 @@ Route:
         isBase64: boolean?
         fetchResponseUid: string?
         requestUrl: string
+
+
+WebSocketRoute:
+  type: interface
+
+  initializer:
+    url: string
+
+  commands:
+
+    connect:
+
+    ensureOpened:
+
+    sendToPage:
+      parameters:
+        message: string
+        isBase64: boolean
+
+    sendToServer:
+      parameters:
+        message: string
+        isBase64: boolean
+
+    close:
+      parameters:
+        code: number?
+        reason: string?
+
+  events:
+
+    messageFromPage:
+      parameters:
+        message: string
+        isBase64: boolean
+
+    messageFromServer:
+      parameters:
+        message: string
+        isBase64: boolean
+
+    close:
+
 
 ResourceTiming:
   type: object

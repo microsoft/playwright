@@ -370,7 +370,12 @@ class PageAgent {
     const unsafeObject = frame.unsafeObject(objectId);
     if (!unsafeObject)
       throw new Error('Object is not input!');
-    const nsFiles = await Promise.all(files.map(filePath => File.createFromFileName(filePath)));
+    let nsFiles;
+    if (unsafeObject.webkitdirectory) {
+      nsFiles = await new Directory(files[0]).getFiles(true);
+    } else {
+      nsFiles = await Promise.all(files.map(filePath => File.createFromFileName(filePath)));
+    }
     unsafeObject.mozSetFileArray(nsFiles);
     const events = [
       new (frame.domWindow().Event)('input', { bubbles: true, cancelable: true, composed: true }),

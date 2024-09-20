@@ -64,8 +64,23 @@ Install fake implementations for the following time-related functions:
 Fake timers are used to manually control the flow of time in tests. They allow you to advance time, fire timers, and control the behavior of time-dependent functions. See [`method: Clock.runFor`] and [`method: Clock.fastForward`] for more information.
 
 ### option: Clock.install.time
+* langs: js, java
 * since: v1.45
 - `time` <[long]|[string]|[Date]>
+
+Time to initialize with, current system time by default.
+
+### option: Clock.install.time
+* langs: python
+* since: v1.45
+- `time` <[float]|[string]|[Date]>
+
+Time to initialize with, current system time by default.
+
+### option: Clock.install.time
+* langs: csharp
+* since: v1.45
+- `time` <[string]|[Date]>
 
 Time to initialize with, current system time by default.
 
@@ -147,9 +162,25 @@ await page.Clock.PauseAtAsync("2020-02-02");
 ```
 
 ### param: Clock.pauseAt.time
+* langs: js, java
 * since: v1.45
 - `time` <[long]|[string]|[Date]>
 
+Time to pause at.
+
+### param: Clock.pauseAt.time
+* langs: python
+* since: v1.45
+- `time` <[float]|[string]|[Date]>
+
+Time to pause at.
+
+### param: Clock.pauseAt.time
+* langs: csharp
+* since: v1.45
+- `time` <[Date]|[string]>
+
+Time to pause at.
 
 ## async method: Clock.resume
 * since: v1.45
@@ -195,8 +226,23 @@ await page.Clock.SetFixedTimeAsync("2020-02-02");
 ```
 
 ### param: Clock.setFixedTime.time
+* langs: js, java
 * since: v1.45
 - `time` <[long]|[string]|[Date]>
+
+Time to be set in milliseconds.
+
+### param: Clock.setFixedTime.time
+* langs: python
+* since: v1.45
+- `time` <[float]|[string]|[Date]>
+
+Time to be set.
+
+### param: Clock.setFixedTime.time
+* langs: csharp
+* since: v1.45
+- `time` <[string]|[Date]>
 
 Time to be set.
 
@@ -238,5 +284,22 @@ await page.Clock.SetSystemTimeAsync("2020-02-02");
 ```
 
 ### param: Clock.setSystemTime.time
+* langs: js, java
 * since: v1.45
 - `time` <[long]|[string]|[Date]>
+
+Time to be set in milliseconds.
+
+### param: Clock.setSystemTime.time
+* langs: python
+* since: v1.45
+- `time` <[float]|[string]|[Date]>
+
+Time to be set.
+
+### param: Clock.setSystemTime.time
+* langs: csharp
+* since: v1.45
+- `time` <[string]|[Date]>
+
+Time to be set.

@@ -99,8 +99,8 @@ test(`testInfo.attach errors`, async ({ runInlineTest }) => {
   const text = result.output.replace(/\\/g, '/');
   expect(text).toMatch(/Error: ENOENT: no such file or directory, copyfile '.*foo.txt.*'/);
   expect(text).toContain(`Exactly one of "path" and "body" must be specified`);
-  expect(result.passed).toBe(0);
-  expect(result.failed).toBe(3);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(2);
   expect(result.exitCode).toBe(1);
 });
 
@@ -173,6 +173,21 @@ test(`testInfo.attach allow empty string body`, async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toMatch(/^.*attachment #1: name \(text\/plain\).*\n.*\n.*──────/gm);
+});
+
+test(`testInfo.attach allow without options`, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('success', async ({}, testInfo) => {
+        await testInfo.attach('Full name');
+        expect(0).toBe(1);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toMatch(/^.*attachment #1: Full name \(text\/plain\).*\n.*──────/gm);
 });
 
 test(`testInfo.attach allow empty buffer body`, async ({ runInlineTest }) => {
