@@ -965,9 +965,10 @@ scheme.BrowserContextStorageStateResult = tObject({
 });
 scheme.BrowserContextPauseParams = tOptional(tObject({}));
 scheme.BrowserContextPauseResult = tOptional(tObject({}));
-scheme.BrowserContextRecorderSupplementEnableParams = tObject({
+scheme.BrowserContextEnableRecorderParams = tObject({
   language: tOptional(tString),
   mode: tOptional(tEnum(['inspecting', 'recording'])),
+  codegenMode: tOptional(tEnum(['actions', 'trace-events'])),
   pauseOnNextStatement: tOptional(tBoolean),
   testIdAttributeName: tOptional(tString),
   launchOptions: tOptional(tAny),
@@ -977,7 +978,7 @@ scheme.BrowserContextRecorderSupplementEnableParams = tObject({
   outputFile: tOptional(tString),
   omitCallTracking: tOptional(tBoolean),
 });
-scheme.BrowserContextRecorderSupplementEnableResult = tOptional(tObject({}));
+scheme.BrowserContextEnableRecorderResult = tOptional(tObject({}));
 scheme.BrowserContextNewCDPSessionParams = tObject({
   page: tOptional(tChannel(['Page'])),
   frame: tOptional(tChannel(['Frame'])),

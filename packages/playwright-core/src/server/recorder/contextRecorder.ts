@@ -48,14 +48,14 @@ export class ContextRecorder extends EventEmitter {
   private _lastDialogOrdinal = -1;
   private _lastDownloadOrdinal = -1;
   private _context: BrowserContext;
-  private _params: channels.BrowserContextRecorderSupplementEnableParams;
+  private _params: channels.BrowserContextEnableRecorderParams;
   private _delegate: ContextRecorderDelegate;
   private _recorderSources: Source[];
   private _throttledOutputFile: ThrottledFile | null = null;
   private _orderedLanguages: LanguageGenerator[] = [];
   private _listeners: RegisteredListener[] = [];
 
-  constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams, delegate: ContextRecorderDelegate) {
+  constructor(codegenMode: 'actions' | 'trace-events', context: BrowserContext, params: channels.BrowserContextEnableRecorderParams, delegate: ContextRecorderDelegate) {
     super();
     this._context = context;
     this._params = params;
@@ -73,7 +73,7 @@ export class ContextRecorder extends EventEmitter {
       saveStorage: params.saveStorage,
     };
 
-    const collection = new RecorderCollection(context, this._pageAliases, params.mode === 'recording');
+    const collection = new RecorderCollection(codegenMode, context, this._pageAliases, params.mode === 'recording');
     collection.on('change', (actions: ActionInContext[]) => {
       this._recorderSources = [];
       for (const languageGenerator of this._orderedLanguages) {
