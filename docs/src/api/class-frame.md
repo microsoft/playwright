@@ -280,7 +280,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.click.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Frame.click.trial = %%-input-trial-%%
+### option: Frame.click.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
 ## async method: Frame.content
@@ -341,7 +341,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.dblclick.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Frame.dblclick.trial = %%-input-trial-%%
+### option: Frame.dblclick.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
 ## async method: Frame.dispatchEvent
@@ -1153,7 +1153,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.hover.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Frame.hover.trial = %%-input-trial-%%
+### option: Frame.hover.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
 ### option: Frame.hover.noWaitAfter = %%-input-no-wait-after-removed-%%
@@ -1703,7 +1703,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.tap.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Frame.tap.trial = %%-input-trial-%%
+### option: Frame.tap.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
 ## async method: Frame.textContent
