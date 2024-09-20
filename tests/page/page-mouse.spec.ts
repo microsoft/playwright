@@ -305,3 +305,44 @@ it('should dispatch mouse move after context menu was opened', async ({ page, br
   }
 });
 
+it('should support click trial', async ({ page }) => {
+  await page.setContent(`<button onclick="this.innerText = 'updated'">initial</button>`);
+  const locator = page.locator('button');
+
+  await locator.click({ trial: true });
+  await expect(locator).toHaveText('initial');
+
+  await locator.click();
+  await expect(locator).toHaveText('updated');
+});
+
+it('should support click trial with modifiers', async ({ page }) => {
+  await page.setContent(`<button onclick="this.innerText = 'clicked'">initial</button>`);
+  const locator = page.locator('button');
+
+  await page.evaluate(() => {
+    document.body.addEventListener('keydown', (event: KeyboardEvent) => {
+      document.querySelector('button').innerText = 'keydown:' + event.key;
+    });
+  });
+
+  await locator.click({ trial: true, modifiers: ['Shift'] });
+  await expect(locator).toHaveText('keydown:Shift');
+
+  await locator.click({ modifiers: ['Shift'] });
+  await expect(locator).toHaveText('clicked');
+});
+
+it('should support hover trial', async ({ page }) => {
+  await page.setContent(`<button onmouseover="this.innerText = 'mouseover'">initial</button>`);
+  const locator = page.locator('button');
+
+  await locator.hover({ trial: true });
+  await expect(locator).toHaveText('initial');
+
+  // Note: hover right after trial only works because trial restores the mouse
+  // position. Otherwise, the mouse would not move and hence no mousemove or
+  // mouseover event would be triggered.
+  await locator.hover();
+  await expect(locator).toHaveText('mouseover');
+});

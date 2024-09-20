@@ -457,11 +457,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if ((options as any).__testHookBeforePointerAction)
         await (options as any).__testHookBeforePointerAction();
       progress.throwIfAborted();  // Avoid action that has side-effects.
+      let restoreMousePosition: types.Point | undefined;
+      if (options.trial)
+        restoreMousePosition = await this._page.mouse.position();
       let restoreModifiers: types.KeyboardModifier[] | undefined;
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard.ensureModifiers(options.modifiers);
       progress.log(`  performing ${actionName} action`);
       await action(point);
+      if (restoreMousePosition)
+        await this._page.mouse.move(restoreMousePosition.x, restoreMousePosition.y);
       if (restoreModifiers)
         await this._page.keyboard.ensureModifiers(restoreModifiers);
       if (hitTargetInterceptionHandle) {

@@ -180,6 +180,10 @@ export class Mouse {
     this._keyboard = this._page.keyboard;
   }
 
+  async position(): Promise<types.Point> {
+    return { x: this._x, y: this._y };
+  }
+
   async move(x: number, y: number, options: { steps?: number, forClick?: boolean } = {}, metadata?: CallMetadata) {
     if (metadata)
       metadata.point = { x, y };
