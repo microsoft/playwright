@@ -1387,7 +1387,7 @@ const eventType = new Map<string, 'mouse' | 'keyboard' | 'touch' | 'pointer' | '
   ['devicemotion', 'devicemotion'],
 ]);
 
-const kHoverHitTargetInterceptorEvents = new Set(['mousemove']);
+const kHoverHitTargetInterceptorEvents = new Set(['mousemove', 'mouseover']);
 const kTapHitTargetInterceptorEvents = new Set(['pointerdown', 'pointerup', 'touchstart', 'touchend', 'touchcancel']);
 const kMouseHitTargetInterceptorEvents = new Set(['mousedown', 'mouseup', 'pointerdown', 'pointerup', 'click', 'auxclick', 'dblclick', 'contextmenu']);
 const kAllHitTargetInterceptorEvents = new Set([...kHoverHitTargetInterceptorEvents, ...kTapHitTargetInterceptorEvents, ...kMouseHitTargetInterceptorEvents]);
