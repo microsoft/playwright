@@ -50,6 +50,7 @@ export const Workbench: React.FunctionComponent<{
   rootDir?: string,
   fallbackLocation?: modelUtil.SourceLocation,
   isLive?: boolean,
+  hideTimeline?: boolean,
   status?: UITestStatus,
   annotations?: { type: string; description?: string; }[];
   inert?: boolean,
@@ -57,7 +58,7 @@ export const Workbench: React.FunctionComponent<{
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
   showSettings?: boolean,
-}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, status, annotations, inert, openPage, onOpenExternally, revealSource, showSettings }) => {
+}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, openPage, onOpenExternally, revealSource, showSettings }) => {
   const [selectedCallId, setSelectedCallId] = React.useState<string | undefined>(undefined);
   const [revealedError, setRevealedError] = React.useState<ErrorDescription | undefined>(undefined);
 
@@ -317,7 +318,7 @@ export const Workbench: React.FunctionComponent<{
   };
 
   return <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
-    <Timeline
+    {!hideTimeline && <Timeline
       model={model}
       consoleEntries={consoleModel.entries}
       boundaries={boundaries}
@@ -328,7 +329,7 @@ export const Workbench: React.FunctionComponent<{
       sdkLanguage={sdkLanguage}
       selectedTime={selectedTime}
       setSelectedTime={setSelectedTime}
-    />
+    />}
     <SplitView
       sidebarSize={250}
       orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'
