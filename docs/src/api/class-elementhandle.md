@@ -231,8 +231,11 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.click.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: ElementHandle.click.trial = %%-input-trial-%%
+### option: ElementHandle.click.trial
 * since: v1.11
+- `trial` <[boolean]>
+
+When set, this method only performs the [actionability](../actionability.md) checks, emits a `keydown`/`keyup` event if a `modifier` is passed and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it.
 
 ## async method: ElementHandle.contentFrame
 * since: v1.8

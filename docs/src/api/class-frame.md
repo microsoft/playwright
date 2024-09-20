@@ -280,8 +280,11 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.click.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Frame.click.trial = %%-input-trial-%%
+### option: Frame.click.trial
 * since: v1.11
+- `trial` <[boolean]>
+
+When set, this method only performs the [actionability](../actionability.md) checks, emits a `keydown`/`keyup` event if a `modifier` is passed and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it.
 
 ## async method: Frame.content
 * since: v1.8

@@ -433,8 +433,11 @@ await page.Locator("canvas").ClickAsync(new() {
 ### option: Locator.click.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-### option: Locator.click.trial = %%-input-trial-%%
+### option: Locator.click.trial
 * since: v1.14
+- `trial` <[boolean]>
+
+When set, this method only performs the [actionability](../actionability.md) checks, emits a `keydown`/`keyup` event if a `modifier` is passed and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it.
 
 ## async method: Locator.count
 * since: v1.14
