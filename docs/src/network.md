@@ -700,6 +700,28 @@ await Page.RouteAsync("**/title.html", async route =>
 });
 ```
 
+## Glob URL patterns
+
+Playwright uses glob patterns for URL matching in network interception methods like [`method: Page.route`] or [`method: Page.waitForResponse`]. These glob patterns are more specific than typical file globs and offer features similar to regular expressions:
+
+1. Asterisks:
+   - A single `*` matches any characters except `/`
+   - A double `**` matches any characters including `/`
+1. Question mark `?` matches any single character except `/`
+1. Character sets `[]` work like [RegExp character sets](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions/Character_classes#types):
+   - `[abc]` matches any single character from the set (a, b, or c)
+   - `[a-z]` matches any single character in the range a to z
+1. Alternatives `{}` work like a logical OR:
+   - `{png,jpg,jpeg}` matches "png" OR "jpg" OR "jpeg"
+
+Examples:
+- `https://example.com/*.js` would match `https://example.com/file.js` but not `https://example.com/bar/file.js`
+- `**/*.js` would match all of the above
+- `https://*.com/*.js` would match `https://example.com/file.js` but not `https://example.com/path/file.js`
+- `https://**/*.js` would match both `https://example.com/file.js` and `https://example.com/path/file.js`
+
+It's important to note that the glob pattern needs to match the entire URL, not just a part of it. When using globs for URL matching, consider the full URL structure, including the protocol and path separators.
+
 ## WebSockets
 
 Playwright supports [WebSockets](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) inspection out of the box. Every time a WebSocket is created, the [`event: Page.webSocket`] event is fired. This event contains the [WebSocket] instance for further web socket frames inspection:
