@@ -6571,6 +6571,11 @@ type PollMatchers<R, T, ExtendedMatchers> = {
   not: PollMatchers<R, T, ExtendedMatchers>;
 } & BaseMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, T>;
 
+type ExtendedAsymmetricMatchers<M = {}> = {
+  [K in keyof M]: M[K] extends (this: ExpectMatcherState, received: any, ...args: infer P) => any ? (...args: P) => AsymmetricMatcher
+    : never
+}
+
 export type Expect<ExtendedMatchers = {}> = {
   <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T, ExtendedMatchers>;
   soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T, ExtendedMatchers>;
@@ -6582,8 +6587,8 @@ export type Expect<ExtendedMatchers = {}> = {
     soft?: boolean,
   }) => Expect<ExtendedMatchers>;
   getState(): unknown;
-  not: Omit<AsymmetricMatchers, 'any' | 'anything'>;
-} & AsymmetricMatchers;
+  not: Omit<AsymmetricMatchers & ExtendedAsymmetricMatchers<ExtendedMatchers>, 'any' | 'anything'>;
+} & AsymmetricMatchers & ExtendedAsymmetricMatchers<ExtendedMatchers>;
 
 // --- BEGINGLOBAL ---
 declare global {
