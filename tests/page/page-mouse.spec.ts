@@ -214,6 +214,17 @@ it('should trigger hover state with removed window.Node', async ({ page, server 
   expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
 });
 
+it('should not emit mouseover event with trial: true', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/32703',
+  }
+}, async ({ page }) => {
+  await page.setContent(`<button onmouseover="window.__MOUSEOVER = true"></button>`);
+  await page.hover('button', { trial: true });
+  expect(await page.evaluate(() => (window as any).__MOUSEOVER)).toBe(undefined);
+});
+
 it('should set modifier keys on click', async ({ page, server, browserName, isMac }) => {
   await page.goto(server.PREFIX + '/input/scrollable.html');
   await page.evaluate(() => document.querySelector('#button-3').addEventListener('mousedown', e => window['lastEvent'] = e, true));
