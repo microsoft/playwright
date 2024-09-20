@@ -40,6 +40,7 @@ export type InitializerTraits<T> =
     T extends BindingCallChannel ? BindingCallInitializer :
     T extends WebSocketChannel ? WebSocketInitializer :
     T extends ResponseChannel ? ResponseInitializer :
+    T extends WebSocketRouteChannel ? WebSocketRouteInitializer :
     T extends RouteChannel ? RouteInitializer :
     T extends RequestChannel ? RequestInitializer :
     T extends ElementHandleChannel ? ElementHandleInitializer :
@@ -77,6 +78,7 @@ export type EventsTraits<T> =
     T extends BindingCallChannel ? BindingCallEvents :
     T extends WebSocketChannel ? WebSocketEvents :
     T extends ResponseChannel ? ResponseEvents :
+    T extends WebSocketRouteChannel ? WebSocketRouteEvents :
     T extends RouteChannel ? RouteEvents :
     T extends RequestChannel ? RequestEvents :
     T extends ElementHandleChannel ? ElementHandleEvents :
@@ -114,6 +116,7 @@ export type EventTargetTraits<T> =
     T extends BindingCallChannel ? BindingCallEventTarget :
     T extends WebSocketChannel ? WebSocketEventTarget :
     T extends ResponseChannel ? ResponseEventTarget :
+    T extends WebSocketRouteChannel ? WebSocketRouteEventTarget :
     T extends RouteChannel ? RouteEventTarget :
     T extends RequestChannel ? RequestEventTarget :
     T extends ElementHandleChannel ? ElementHandleEventTarget :
@@ -1493,6 +1496,7 @@ export interface BrowserContextEventTarget {
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
   on(event: 'pageError', callback: (params: BrowserContextPageErrorEvent) => void): this;
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
+  on(event: 'webSocketRoute', callback: (params: BrowserContextWebSocketRouteEvent) => void): this;
   on(event: 'video', callback: (params: BrowserContextVideoEvent) => void): this;
   on(event: 'backgroundPage', callback: (params: BrowserContextBackgroundPageEvent) => void): this;
   on(event: 'serviceWorker', callback: (params: BrowserContextServiceWorkerEvent) => void): this;
@@ -1518,6 +1522,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   setGeolocation(params: BrowserContextSetGeolocationParams, metadata?: CallMetadata): Promise<BrowserContextSetGeolocationResult>;
   setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, metadata?: CallMetadata): Promise<BrowserContextSetHTTPCredentialsResult>;
   setNetworkInterceptionPatterns(params: BrowserContextSetNetworkInterceptionPatternsParams, metadata?: CallMetadata): Promise<BrowserContextSetNetworkInterceptionPatternsResult>;
+  setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams, metadata?: CallMetadata): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
   setOffline(params: BrowserContextSetOfflineParams, metadata?: CallMetadata): Promise<BrowserContextSetOfflineResult>;
   storageState(params?: BrowserContextStorageStateParams, metadata?: CallMetadata): Promise<BrowserContextStorageStateResult>;
   pause(params?: BrowserContextPauseParams, metadata?: CallMetadata): Promise<BrowserContextPauseResult>;
@@ -1562,6 +1567,9 @@ export type BrowserContextPageErrorEvent = {
 };
 export type BrowserContextRouteEvent = {
   route: RouteChannel,
+};
+export type BrowserContextWebSocketRouteEvent = {
+  webSocketRoute: WebSocketRouteChannel,
 };
 export type BrowserContextVideoEvent = {
   artifact: ArtifactChannel,
@@ -1731,6 +1739,17 @@ export type BrowserContextSetNetworkInterceptionPatternsOptions = {
 
 };
 export type BrowserContextSetNetworkInterceptionPatternsResult = void;
+export type BrowserContextSetWebSocketInterceptionPatternsParams = {
+  patterns: {
+    glob?: string,
+    regexSource?: string,
+    regexFlags?: string,
+  }[],
+};
+export type BrowserContextSetWebSocketInterceptionPatternsOptions = {
+
+};
+export type BrowserContextSetWebSocketInterceptionPatternsResult = void;
 export type BrowserContextSetOfflineParams = {
   offline: boolean,
 };
@@ -1890,6 +1909,7 @@ export interface BrowserContextEvents {
   'page': BrowserContextPageEvent;
   'pageError': BrowserContextPageErrorEvent;
   'route': BrowserContextRouteEvent;
+  'webSocketRoute': BrowserContextWebSocketRouteEvent;
   'video': BrowserContextVideoEvent;
   'backgroundPage': BrowserContextBackgroundPageEvent;
   'serviceWorker': BrowserContextServiceWorkerEvent;
@@ -1919,6 +1939,7 @@ export interface PageEventTarget {
   on(event: 'frameDetached', callback: (params: PageFrameDetachedEvent) => void): this;
   on(event: 'locatorHandlerTriggered', callback: (params: PageLocatorHandlerTriggeredEvent) => void): this;
   on(event: 'route', callback: (params: PageRouteEvent) => void): this;
+  on(event: 'webSocketRoute', callback: (params: PageWebSocketRouteEvent) => void): this;
   on(event: 'video', callback: (params: PageVideoEvent) => void): this;
   on(event: 'webSocket', callback: (params: PageWebSocketEvent) => void): this;
   on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
@@ -1942,6 +1963,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   screenshot(params: PageScreenshotParams, metadata?: CallMetadata): Promise<PageScreenshotResult>;
   setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams, metadata?: CallMetadata): Promise<PageSetExtraHTTPHeadersResult>;
   setNetworkInterceptionPatterns(params: PageSetNetworkInterceptionPatternsParams, metadata?: CallMetadata): Promise<PageSetNetworkInterceptionPatternsResult>;
+  setWebSocketInterceptionPatterns(params: PageSetWebSocketInterceptionPatternsParams, metadata?: CallMetadata): Promise<PageSetWebSocketInterceptionPatternsResult>;
   setViewportSize(params: PageSetViewportSizeParams, metadata?: CallMetadata): Promise<PageSetViewportSizeResult>;
   keyboardDown(params: PageKeyboardDownParams, metadata?: CallMetadata): Promise<PageKeyboardDownResult>;
   keyboardUp(params: PageKeyboardUpParams, metadata?: CallMetadata): Promise<PageKeyboardUpResult>;
@@ -1988,6 +2010,9 @@ export type PageLocatorHandlerTriggeredEvent = {
 };
 export type PageRouteEvent = {
   route: RouteChannel,
+};
+export type PageWebSocketRouteEvent = {
+  webSocketRoute: WebSocketRouteChannel,
 };
 export type PageVideoEvent = {
   artifact: ArtifactChannel,
@@ -2221,6 +2246,17 @@ export type PageSetNetworkInterceptionPatternsOptions = {
 
 };
 export type PageSetNetworkInterceptionPatternsResult = void;
+export type PageSetWebSocketInterceptionPatternsParams = {
+  patterns: {
+    glob?: string,
+    regexSource?: string,
+    regexFlags?: string,
+  }[],
+};
+export type PageSetWebSocketInterceptionPatternsOptions = {
+
+};
+export type PageSetWebSocketInterceptionPatternsResult = void;
 export type PageSetViewportSizeParams = {
   viewportSize: {
     width: number,
@@ -2448,6 +2484,7 @@ export interface PageEvents {
   'frameDetached': PageFrameDetachedEvent;
   'locatorHandlerTriggered': PageLocatorHandlerTriggeredEvent;
   'route': PageRouteEvent;
+  'webSocketRoute': PageWebSocketRouteEvent;
   'video': PageVideoEvent;
   'webSocket': PageWebSocketEvent;
   'worker': PageWorkerEvent;
@@ -3771,6 +3808,70 @@ export type RouteFulfillOptions = {
 export type RouteFulfillResult = void;
 
 export interface RouteEvents {
+}
+
+// ----------- WebSocketRoute -----------
+export type WebSocketRouteInitializer = {
+  url: string,
+};
+export interface WebSocketRouteEventTarget {
+  on(event: 'messageFromPage', callback: (params: WebSocketRouteMessageFromPageEvent) => void): this;
+  on(event: 'messageFromServer', callback: (params: WebSocketRouteMessageFromServerEvent) => void): this;
+  on(event: 'close', callback: (params: WebSocketRouteCloseEvent) => void): this;
+}
+export interface WebSocketRouteChannel extends WebSocketRouteEventTarget, Channel {
+  _type_WebSocketRoute: boolean;
+  connect(params?: WebSocketRouteConnectParams, metadata?: CallMetadata): Promise<WebSocketRouteConnectResult>;
+  ensureOpened(params?: WebSocketRouteEnsureOpenedParams, metadata?: CallMetadata): Promise<WebSocketRouteEnsureOpenedResult>;
+  sendToPage(params: WebSocketRouteSendToPageParams, metadata?: CallMetadata): Promise<WebSocketRouteSendToPageResult>;
+  sendToServer(params: WebSocketRouteSendToServerParams, metadata?: CallMetadata): Promise<WebSocketRouteSendToServerResult>;
+  close(params: WebSocketRouteCloseParams, metadata?: CallMetadata): Promise<WebSocketRouteCloseResult>;
+}
+export type WebSocketRouteMessageFromPageEvent = {
+  message: string,
+  isBase64: boolean,
+};
+export type WebSocketRouteMessageFromServerEvent = {
+  message: string,
+  isBase64: boolean,
+};
+export type WebSocketRouteCloseEvent = {};
+export type WebSocketRouteConnectParams = {};
+export type WebSocketRouteConnectOptions = {};
+export type WebSocketRouteConnectResult = void;
+export type WebSocketRouteEnsureOpenedParams = {};
+export type WebSocketRouteEnsureOpenedOptions = {};
+export type WebSocketRouteEnsureOpenedResult = void;
+export type WebSocketRouteSendToPageParams = {
+  message: string,
+  isBase64: boolean,
+};
+export type WebSocketRouteSendToPageOptions = {
+
+};
+export type WebSocketRouteSendToPageResult = void;
+export type WebSocketRouteSendToServerParams = {
+  message: string,
+  isBase64: boolean,
+};
+export type WebSocketRouteSendToServerOptions = {
+
+};
+export type WebSocketRouteSendToServerResult = void;
+export type WebSocketRouteCloseParams = {
+  code?: number,
+  reason?: string,
+};
+export type WebSocketRouteCloseOptions = {
+  code?: number,
+  reason?: string,
+};
+export type WebSocketRouteCloseResult = void;
+
+export interface WebSocketRouteEvents {
+  'messageFromPage': WebSocketRouteMessageFromPageEvent;
+  'messageFromServer': WebSocketRouteMessageFromServerEvent;
+  'close': WebSocketRouteCloseEvent;
 }
 
 export type ResourceTiming = {

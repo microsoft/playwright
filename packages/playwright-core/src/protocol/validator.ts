@@ -832,6 +832,9 @@ scheme.BrowserContextPageErrorEvent = tObject({
 scheme.BrowserContextRouteEvent = tObject({
   route: tChannel(['Route']),
 });
+scheme.BrowserContextWebSocketRouteEvent = tObject({
+  webSocketRoute: tChannel(['WebSocketRoute']),
+});
 scheme.BrowserContextVideoEvent = tObject({
   artifact: tChannel(['Artifact']),
 });
@@ -943,6 +946,14 @@ scheme.BrowserContextSetNetworkInterceptionPatternsParams = tObject({
   })),
 });
 scheme.BrowserContextSetNetworkInterceptionPatternsResult = tOptional(tObject({}));
+scheme.BrowserContextSetWebSocketInterceptionPatternsParams = tObject({
+  patterns: tArray(tObject({
+    glob: tOptional(tString),
+    regexSource: tOptional(tString),
+    regexFlags: tOptional(tString),
+  })),
+});
+scheme.BrowserContextSetWebSocketInterceptionPatternsResult = tOptional(tObject({}));
 scheme.BrowserContextSetOfflineParams = tObject({
   offline: tBoolean,
 });
@@ -1069,6 +1080,9 @@ scheme.PageLocatorHandlerTriggeredEvent = tObject({
 });
 scheme.PageRouteEvent = tObject({
   route: tChannel(['Route']),
+});
+scheme.PageWebSocketRouteEvent = tObject({
+  webSocketRoute: tChannel(['WebSocketRoute']),
 });
 scheme.PageVideoEvent = tObject({
   artifact: tChannel(['Artifact']),
@@ -1211,6 +1225,14 @@ scheme.PageSetNetworkInterceptionPatternsParams = tObject({
   })),
 });
 scheme.PageSetNetworkInterceptionPatternsResult = tOptional(tObject({}));
+scheme.PageSetWebSocketInterceptionPatternsParams = tObject({
+  patterns: tArray(tObject({
+    glob: tOptional(tString),
+    regexSource: tOptional(tString),
+    regexFlags: tOptional(tString),
+  })),
+});
+scheme.PageSetWebSocketInterceptionPatternsResult = tOptional(tObject({}));
 scheme.PageSetViewportSizeParams = tObject({
   viewportSize: tObject({
     width: tNumber,
@@ -2114,6 +2136,37 @@ scheme.RouteFulfillParams = tObject({
   requestUrl: tString,
 });
 scheme.RouteFulfillResult = tOptional(tObject({}));
+scheme.WebSocketRouteInitializer = tObject({
+  url: tString,
+});
+scheme.WebSocketRouteMessageFromPageEvent = tObject({
+  message: tString,
+  isBase64: tBoolean,
+});
+scheme.WebSocketRouteMessageFromServerEvent = tObject({
+  message: tString,
+  isBase64: tBoolean,
+});
+scheme.WebSocketRouteCloseEvent = tOptional(tObject({}));
+scheme.WebSocketRouteConnectParams = tOptional(tObject({}));
+scheme.WebSocketRouteConnectResult = tOptional(tObject({}));
+scheme.WebSocketRouteEnsureOpenedParams = tOptional(tObject({}));
+scheme.WebSocketRouteEnsureOpenedResult = tOptional(tObject({}));
+scheme.WebSocketRouteSendToPageParams = tObject({
+  message: tString,
+  isBase64: tBoolean,
+});
+scheme.WebSocketRouteSendToPageResult = tOptional(tObject({}));
+scheme.WebSocketRouteSendToServerParams = tObject({
+  message: tString,
+  isBase64: tBoolean,
+});
+scheme.WebSocketRouteSendToServerResult = tOptional(tObject({}));
+scheme.WebSocketRouteCloseParams = tObject({
+  code: tOptional(tNumber),
+  reason: tOptional(tString),
+});
+scheme.WebSocketRouteCloseResult = tOptional(tObject({}));
 scheme.ResourceTiming = tObject({
   startTime: tNumber,
   domainLookupStart: tNumber,

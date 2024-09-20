@@ -48,6 +48,7 @@ import { Clock } from './clock';
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
   _routes: network.RouteHandler[] = [];
+  _webSocketRoutes: network.WebSocketRouteHandler[] = [];
   readonly _browser: Browser | null = null;
   _browserType: BrowserType | undefined;
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
@@ -90,6 +91,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('close', () => this._onClose());
     this._channel.on('page', ({ page }) => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route }) => this._onRoute(network.Route.from(route)));
+    this._channel.on('webSocketRoute', ({ webSocketRoute }) => this._onWebSocketRoute(network.WebSocketRoute.from(webSocketRoute)));
     this._channel.on('backgroundPage', ({ page }) => {
       const backgroundPage = Page.from(page);
       this._backgroundPages.add(backgroundPage);
@@ -221,6 +223,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await route._innerContinue(true).catch(() => {});
   }
 
+  async _onWebSocketRoute(webSocketRoute: network.WebSocketRoute) {
+    const routeHandler = this._webSocketRoutes.find(route => route.matches(webSocketRoute.url()));
+    if (routeHandler)
+      await routeHandler.handle(webSocketRoute);
+    else
+      await webSocketRoute.connect();
+  }
+
   async _onBinding(bindingCall: BindingCall) {
     const func = this._bindings.get(bindingCall._initializer.name);
     if (!func)
@@ -328,6 +338,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._updateInterceptionPatterns();
   }
 
+  async routeWebSocket(url: URLMatch, handler: network.WebSocketRouteHandlerCallback): Promise<void> {
+    this._webSocketRoutes.unshift(new network.WebSocketRouteHandler(this._options.baseURL, url, handler));
+    await this._updateWebSocketInterceptionPatterns();
+  }
+
   async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full'} = {}): Promise<void> {
     const { harId } = await this._channel.harStart({
       page: page?._channel,
@@ -385,6 +400,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   private async _updateInterceptionPatterns() {
     const patterns = network.RouteHandler.prepareInterceptionPatterns(this._routes);
     await this._channel.setNetworkInterceptionPatterns({ patterns });
+  }
+
+  private async _updateWebSocketInterceptionPatterns() {
+    const patterns = network.WebSocketRouteHandler.prepareInterceptionPatterns(this._webSocketRoutes);
+    await this._channel.setWebSocketInterceptionPatterns({ patterns });
   }
 
   _effectiveCloseReason(): string | undefined {

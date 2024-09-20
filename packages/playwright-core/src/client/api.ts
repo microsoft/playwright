@@ -34,7 +34,7 @@ export { TimeoutError } from './errors';
 export { Frame } from './frame';
 export { Keyboard, Mouse, Touchscreen } from './input';
 export { JSHandle } from './jsHandle';
-export { Request, Response, Route, WebSocket } from './network';
+export { Request, Response, Route, WebSocket, WebSocketRoute } from './network';
 export { APIRequest, APIRequestContext, APIResponse } from './fetch';
 export { Page } from './page';
 export { Selectors } from './selectors';
