@@ -277,9 +277,7 @@ it('should work when service worker is intefering', async ({ page, context, serv
   expect(storageState.origins[0].localStorage[0]).toEqual({ name: 'foo', value: 'bar' });
 });
 
-it('should set local storage in third-party context', async ({ contextFactory, server, browserName }) => {
-  it.fixme(browserName === 'webkit', 'look into setStorageBlockingPolicy');
-
+it('should set local storage in third-party context', async ({ contextFactory, server }) => {
   const context = await contextFactory({
     storageState: {
       cookies: [],
@@ -303,9 +301,7 @@ it('should set local storage in third-party context', async ({ contextFactory, s
   await context.close();
 });
 
-it('should roundtrip local storage in third-party context', async ({ page, contextFactory, server, browserName }) => {
-  it.fixme(browserName === 'webkit', 'look into setStorageBlockingPolicy');
-
+it('should roundtrip local storage in third-party context', async ({ page, contextFactory, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const frame = await attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
   await frame.evaluate(() => window.localStorage.setItem('name1', 'value1'));
