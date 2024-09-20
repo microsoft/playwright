@@ -105,7 +105,6 @@ export const UIModeView: React.FC<{}> = ({
   const [singleWorker, setSingleWorker] = React.useState(queryParams.workers === '1');
   const [showBrowser, setShowBrowser] = React.useState(queryParams.headed);
   const [updateSnapshots, setUpdateSnapshots] = React.useState(queryParams.updateSnapshots === 'all');
-  const [showRouteActions, setShowRouteActions] = useSetting('show-route-actions', true);
   const [darkMode, setDarkMode] = useDarkModeSetting();
   const [showScreenshot, setShowScreenshot] = useSetting('screenshot-instead-of-snapshot', false);
 
@@ -526,7 +525,6 @@ export const UIModeView: React.FC<{}> = ({
         </Toolbar>
         {settingsVisible && <SettingsView settings={[
           { value: darkMode, set: setDarkMode, title: 'Dark mode' },
-          { value: showRouteActions, set: setShowRouteActions, title: 'Show route actions' },
           { value: showScreenshot, set: setShowScreenshot, title: 'Show screenshot instead of snapshot' },
         ]} />}
       </div>

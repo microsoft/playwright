@@ -2911,7 +2911,6 @@ Route:
     abort:
       parameters:
         errorCode: string?
-        requestUrl: string
 
     continue:
       parameters:
@@ -2921,7 +2920,6 @@ Route:
           type: array?
           items: NameValue
         postData: binary?
-        requestUrl: string
         isFallback: boolean
 
     fulfill:
@@ -2934,7 +2932,6 @@ Route:
         body: string?
         isBase64: boolean?
         fetchResponseUid: string?
-        requestUrl: string
 
 ResourceTiming:
   type: object

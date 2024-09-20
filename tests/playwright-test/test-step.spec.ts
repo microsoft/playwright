@@ -546,37 +546,6 @@ fixture   |  fixture: browser
 `);
 });
 
-test('should not nest page.continue inside page.goto steps', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('pass', async ({ page }) => {
-        await page.route('**/*', route => route.fulfill('<html></html>'));
-        await page.goto('http://localhost:1234');
-      });
-    `
-  }, { reporter: '' });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.output).toBe(`
-hook      |Before Hooks
-fixture   |  fixture: browser
-pw:api    |    browserType.launch
-fixture   |  fixture: context
-pw:api    |    browser.newContext
-fixture   |  fixture: page
-pw:api    |    browserContext.newPage
-pw:api    |page.route @ a.test.ts:4
-pw:api    |page.goto(http://localhost:1234) @ a.test.ts:5
-pw:api    |route.fulfill @ a.test.ts:4
-hook      |After Hooks
-fixture   |  fixture: page
-fixture   |  fixture: context
-`);
-});
-
 test('should not propagate errors from within toPass', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,

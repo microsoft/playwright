@@ -66,10 +66,9 @@ test('should collect trace with resources, but no js', async ({ context, page, s
 
 test('should use the correct apiName for event driven callbacks', async ({ context, page, server }, testInfo) => {
   await context.tracing.start();
+  // route.* calls should not be included in the trace
   await page.route('**/empty.html', route => route.continue());
-  // page.goto -> page.route should be included in the trace since its handled.
   await page.goto(server.PREFIX + '/empty.html');
-  // page.route -> internalContinue should not be included in the trace since it was handled by Playwright internally.
   await page.goto(server.PREFIX + '/grid.html');
 
   // The default internal dialog handler should not provide an action.
@@ -87,7 +86,6 @@ test('should use the correct apiName for event driven callbacks', async ({ conte
   expect(actions).toEqual([
     'page.route',
     'page.goto',
-    'route.continue',
     'page.goto',
     'page.evaluate',
     'page.reload',

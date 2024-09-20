@@ -525,7 +525,7 @@ export abstract class BrowserContext extends SdkObject {
       const internalMetadata = serverSideCallMetadata();
       const page = await this.newPage(internalMetadata);
       await page._setServerRequestInterceptor(handler => {
-        handler.fulfill({ body: '<html></html>', requestUrl: handler.request().url() }).catch(() => {});
+        handler.fulfill({ body: '<html></html>' }).catch(() => {});
         return true;
       });
       for (const origin of originsToSave) {
@@ -559,7 +559,7 @@ export abstract class BrowserContext extends SdkObject {
       isServerSide: false,
     });
     await page._setServerRequestInterceptor(handler => {
-      handler.fulfill({ body: '<html></html>', requestUrl: handler.request().url() }).catch(() => {});
+      handler.fulfill({ body: '<html></html>' }).catch(() => {});
       return true;
     });
 
@@ -594,7 +594,7 @@ export abstract class BrowserContext extends SdkObject {
         const internalMetadata = serverSideCallMetadata();
         const page = await this.newPage(internalMetadata);
         await page._setServerRequestInterceptor(handler => {
-          handler.fulfill({ body: '<html></html>', requestUrl: handler.request().url() }).catch(() => {});
+          handler.fulfill({ body: '<html></html>' }).catch(() => {});
           return true;
         });
         for (const originState of state.origins) {

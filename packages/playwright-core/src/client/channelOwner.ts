@@ -40,6 +40,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
   _logger: Logger | undefined;
   readonly _instrumentation: ClientInstrumentation;
   private _eventToSubscriptionMapping: Map<string, string> = new Map();
+  private _isInternalType = false;
   _wasCollected: boolean = false;
 
   constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: channels.InitializerTraits<T>) {
@@ -59,6 +60,10 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
 
     this._channel = this._createChannel(new EventEmitter());
     this._initializer = initializer;
+  }
+
+  protected markAsInternalType() {
+    this._isInternalType = true;
   }
 
   _setEventToSubscriptionMapping(mapping: Map<string, string>) {
@@ -173,7 +178,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     let apiName: string | undefined = stackTrace.apiName;
     const frames: channels.StackFrame[] = stackTrace.frames;
 
-    isInternal = isInternal || this._type === 'LocalUtils';
+    isInternal = isInternal || this._isInternalType;
     if (isInternal)
       apiName = undefined;
 
