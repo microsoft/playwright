@@ -910,11 +910,20 @@ test('should support mergeExpects (TSC)', async ({ runTSC }) => {
       const expect1 = baseExpect.extend({
         async toBeAGoodPage(page: Page, x: number) {
           return { pass: true, message: () => '' };
+        },
+        matchFoo(received: unknown, expected: string) {
+          return { pass: true, message: () => '' };
+        },
+        toBeFoo(received: unknown) {
+          return { pass: true, message: () => '' };
         }
       });
 
       const expect2 = baseExpect.extend({
         async toBeABadPage(page: Page, y: string) {
+          return { pass: true, message: () => '' };
+        },
+        matchBar(received: unknown, expected: string) {
           return { pass: true, message: () => '' };
         }
       });
@@ -924,12 +933,19 @@ test('should support mergeExpects (TSC)', async ({ runTSC }) => {
       test('custom matchers', async ({ page }) => {
         await expect(page).toBeAGoodPage(123);
         await expect(page).toBeABadPage('123');
+        await expect('foo').toEqual(expect.matchFoo('123'));
+        await expect('bar').not.toEqual(expect.not.matchBar('123'));
+        await expect({ name: 'Foo' }).toMatchObject({ name: expect.toBeFoo() });
         // @ts-expect-error
         await expect(page).toBeAMediocrePage();
         // @ts-expect-error
         await expect(page).toBeABadPage(123);
         // @ts-expect-error
         await expect(page).toBeAGoodPage('123');
+        // @ts-expect-error
+        expect('foo').toEqual(expect.matchFoo(123));
+        // @ts-expect-error
+        expect('bar').not.toEqual(expect.not.matchBar(123));
       });
     `
   });
@@ -945,11 +961,20 @@ test('should support mergeExpects', async ({ runInlineTest }) => {
       const expect1 = baseExpect.extend({
         async toBeAGoodPage(page: Page, x: number) {
           return { pass: true, message: () => '' };
+        },
+        matchFoo(received: unknown, expected: string) {
+          return { pass: true, message: () => '' };
+        },
+        toBeFoo(received: unknown) {
+          return { pass: true, message: () => '' };
         }
       });
 
       const expect2 = baseExpect.extend({
         async toBeABadPage(page: Page, y: string) {
+          return { pass: true, message: () => '' };
+        },
+        matchBar(received: unknown, expected: string) {
           return { pass: true, message: () => '' };
         }
       });
@@ -959,6 +984,9 @@ test('should support mergeExpects', async ({ runInlineTest }) => {
       test('custom matchers', async ({ page }) => {
         await expect(page).toBeAGoodPage(123);
         await expect(page).toBeABadPage('123');
+        await expect('foo').toEqual(expect.matchFoo('123'));
+        await expect('bar').not.toEqual(expect.not.matchBar('123'));
+        await expect({ name: 'Foo' }).toMatchObject({ name: expect.toBeFoo() });
       });
     `
   }, { workers: 1 });
