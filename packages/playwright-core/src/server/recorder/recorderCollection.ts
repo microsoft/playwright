@@ -33,13 +33,13 @@ export class RecorderCollection extends EventEmitter {
   private _pageAliases: Map<Page, string>;
   private _context: BrowserContext;
 
-  constructor(context: BrowserContext, pageAliases: Map<Page, string>, enabled: boolean) {
+  constructor(codegenMode: 'actions' | 'trace-events', context: BrowserContext, pageAliases: Map<Page, string>, enabled: boolean) {
     super();
     this._context = context;
     this._enabled = enabled;
     this._pageAliases = pageAliases;
 
-    if (process.env.PW_RECORDER_IS_TRACE_VIEWER) {
+    if (codegenMode === 'trace-events') {
       this._context.tracing.onMemoryEvents(events => {
         this._actions = traceEventsToAction(events);
         this._fireChange();

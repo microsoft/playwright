@@ -193,13 +193,12 @@ export function traceParamsForAction(actionInContext: ActionInContext): { method
 
 export function callMetadataForAction(pageAliases: Map<Page, string>, actionInContext: ActionInContext): { callMetadata: CallMetadata, mainFrame: Frame } {
   const mainFrame = mainFrameForAction(pageAliases, actionInContext);
-  const { action } = actionInContext;
   const { method, params } = traceParamsForAction(actionInContext);
 
   const callMetadata: CallMetadata = {
     id: `call@${createGuid()}`,
     stepId: `recorder@${createGuid()}`,
-    apiName: 'frame.' + action.name,
+    apiName: 'page.' + method,
     objectId: mainFrame.guid,
     pageId: mainFrame._page.guid,
     frameId: mainFrame.guid,

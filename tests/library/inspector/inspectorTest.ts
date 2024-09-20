@@ -67,17 +67,30 @@ export const test = contextTest.extend<CLITestArgs>({
     });
   },
 
-  runCLI: async ({ childProcess, browserName, channel, headless, mode, launchOptions }, run, testInfo) => {
+  runCLI: async ({ childProcess, browserName, channel, headless, mode, launchOptions, codegenMode }, run, testInfo) => {
     testInfo.skip(mode.startsWith('service'));
 
     await run((cliArgs, { autoExitWhen } = {}) => {
-      return new CLIMock(childProcess, browserName, channel, headless, cliArgs, launchOptions.executablePath, autoExitWhen);
+      return new CLIMock(childProcess, {
+        browserName,
+        channel,
+        headless,
+        args: cliArgs,
+        executablePath: launchOptions.executablePath,
+        autoExitWhen,
+        codegenMode
+      });
     });
   },
 
-  openRecorder: async ({ context, recorderPageGetter }, run) => {
+  openRecorder: async ({ context, recorderPageGetter, codegenMode }, run) => {
     await run(async (options?: { testIdAttributeName?: string }) => {
-      await (context as any)._enableRecorder({ language: 'javascript', mode: 'recording', ...options });
+      await (context as any)._enableRecorder({
+        language: 'javascript',
+        mode: 'recording',
+        codegenMode,
+        ...options
+      });
       const page = await context.newPage();
       return { page, recorder: new Recorder(page, await recorderPageGetter()) };
     });
@@ -205,23 +218,24 @@ class Recorder {
 class CLIMock {
   process: TestChildProcess;
 
-  constructor(childProcess: CommonFixtures['childProcess'], browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined, autoExitWhen: string | undefined) {
+  constructor(childProcess: CommonFixtures['childProcess'], options: { browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined, autoExitWhen: string | undefined, codegenMode?: 'trace-events' | 'actions'}) {
     const nodeArgs = [
       'node',
       path.join(__dirname, '..', '..', '..', 'packages', 'playwright-core', 'cli.js'),
       'codegen',
-      ...args,
-      `--browser=${browserName}`,
+      ...options.args,
+      `--browser=${options.browserName}`,
     ];
-    if (channel)
-      nodeArgs.push(`--channel=${channel}`);
+    if (options.channel)
+      nodeArgs.push(`--channel=${options.channel}`);
     this.process = childProcess({
       command: nodeArgs,
       env: {
-        PWTEST_CLI_AUTO_EXIT_WHEN: autoExitWhen,
+        PW_RECORDER_IS_TRACE_VIEWER: options.codegenMode === 'trace-events' ? '1' : undefined,
+        PWTEST_CLI_AUTO_EXIT_WHEN: options.autoExitWhen,
         PWTEST_CLI_IS_UNDER_TEST: '1',
-        PWTEST_CLI_HEADLESS: headless ? '1' : undefined,
-        PWTEST_CLI_EXECUTABLE_PATH: executablePath,
+        PWTEST_CLI_HEADLESS: options.headless ? '1' : undefined,
+        PWTEST_CLI_EXECUTABLE_PATH: options.executablePath,
         DEBUG: (process.env.DEBUG ?? '') + ',pw:browser*',
       },
     });

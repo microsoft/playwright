@@ -337,7 +337,8 @@ await page.GetByRole(AriaRole.Button, new() { Name = "click me" }).ClickAsync();
     }
   });
 
-  test('should record open in a new tab with url', async ({ openRecorder, browserName }) => {
+  test('should record open in a new tab with url', async ({ openRecorder, browserName, codegenMode }) => {
+    test.skip(codegenMode === 'trace-events');
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`<a href="about:blank?foo">link</a>`);
 
@@ -490,7 +491,8 @@ await page1.GotoAsync("about:blank?foo");`);
     await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/page2.html');`);
   });
 
-  test('should --save-trace', async ({ runCLI }, testInfo) => {
+  test('should --save-trace', async ({ runCLI, codegenMode }, testInfo) => {
+    test.skip(codegenMode === 'trace-events');
     const traceFileName = testInfo.outputPath('trace.zip');
     const cli = runCLI([`--save-trace=${traceFileName}`], {
       autoExitWhen: ' ',
@@ -499,7 +501,8 @@ await page1.GotoAsync("about:blank?foo");`);
     expect(fs.existsSync(traceFileName)).toBeTruthy();
   });
 
-  test('should save assets via SIGINT', async ({ runCLI, platform }, testInfo) => {
+  test('should save assets via SIGINT', async ({ runCLI, platform, codegenMode }, testInfo) => {
+    test.skip(codegenMode === 'trace-events');
     test.skip(platform === 'win32', 'SIGINT not supported on Windows');
 
     const traceFileName = testInfo.outputPath('trace.zip');
