@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        channel: [bidi-chromium, bidi-firefox-beta]
+        channel: [bidi-chromium, bidi-firefox-nightly]
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -38,8 +38,8 @@ jobs:
     - run: npm run build
     - run: npx playwright install --with-deps chromium
       if: matrix.channel == 'bidi-chromium'
-    - run: npx -y @puppeteer/browsers install firefox@beta
-      if: matrix.channel == 'bidi-firefox-beta'
+    - run: npx -y @puppeteer/browsers install firefox@nightly
+      if: matrix.channel == 'bidi-firefox-nightly'
     - name: Run tests
       run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run biditest -- --project=${{ matrix.channel }}*
       env:
