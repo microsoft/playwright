@@ -966,28 +966,6 @@ test('should open two trace files of the same test', async ({ context, page, req
   ]);
 });
 
-test('should include requestUrl in route.fulfill', async ({ page, runAndTrace, browserName }) => {
-  await page.route('**/*', route => {
-    void route.fulfill({
-      status: 200,
-      headers: {
-        'content-type': 'text/html'
-      },
-      body: 'Hello there!'
-    });
-  });
-  const traceViewer = await runAndTrace(async () => {
-    await page.goto('http://test.com');
-  });
-
-  // Render snapshot, check expectations.
-  await traceViewer.selectAction('route.fulfill');
-  await traceViewer.page.locator('.tabbed-pane-tab-label', { hasText: 'Call' }).click();
-  const callLine = traceViewer.page.locator('.call-line');
-  await expect(callLine.getByText('status')).toContainText('200');
-  await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
-});
-
 test('should not crash with broken locator', async ({ page, runAndTrace, server }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21832' });
   const traceViewer = await runAndTrace(async () => {
@@ -999,37 +977,6 @@ test('should not crash with broken locator', async ({ page, runAndTrace, server 
   await expect(traceViewer.page).toHaveTitle('Playwright Trace Viewer');
   const header = traceViewer.page.getByText('Playwright', { exact: true });
   await expect(header).toBeVisible();
-});
-
-test('should include requestUrl in route.continue', async ({ page, runAndTrace, server }) => {
-  await page.route('**/*', route => {
-    void route.continue({ url: server.EMPTY_PAGE });
-  });
-  const traceViewer = await runAndTrace(async () => {
-    await page.goto('http://test.com');
-  });
-
-  // Render snapshot, check expectations.
-  await traceViewer.selectAction('route.continue');
-  await traceViewer.page.locator('.tabbed-pane-tab-label', { hasText: 'Call' }).click();
-  const callLine = traceViewer.page.locator('.call-line');
-  await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
-  await expect(callLine.getByText(/^url:.*/)).toContainText(server.EMPTY_PAGE);
-});
-
-test('should include requestUrl in route.abort', async ({ page, runAndTrace, server }) => {
-  await page.route('**/*', route => {
-    void route.abort();
-  });
-  const traceViewer = await runAndTrace(async () => {
-    await page.goto('http://test.com').catch(() => {});
-  });
-
-  // Render snapshot, check expectations.
-  await traceViewer.selectAction('route.abort');
-  await traceViewer.page.locator('.tabbed-pane-tab-label', { hasText: 'Call' }).click();
-  const callLine = traceViewer.page.locator('.call-line');
-  await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
 });
 
 test('should serve overridden request', async ({ page, runAndTrace, server }) => {
@@ -1418,7 +1365,7 @@ test('should show correct request start time', {
   expect(parseMillis(start)).toBeLessThan(1000);
 });
 
-test('should allow hiding route actions', {
+test('should not record route actions', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30970' },
 }, async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
@@ -1428,28 +1375,9 @@ test('should allow hiding route actions', {
     await page.goto(server.EMPTY_PAGE);
   });
 
-  // Routes are visible by default.
   await expect(traceViewer.actionTitles).toHaveText([
     /page.route/,
     /page.goto.*empty.html/,
-    /route.fulfill/,
-  ]);
-
-  await traceViewer.page.getByText('Settings').click();
-  await expect(traceViewer.page.getByRole('checkbox', { name: 'Show route actions' })).toBeChecked();
-  await traceViewer.page.getByRole('checkbox', { name: 'Show route actions' }).uncheck();
-  await traceViewer.page.getByText('Actions', { exact: true }).click();
-  await expect(traceViewer.actionTitles).toHaveText([
-    /page.goto.*empty.html/,
-  ]);
-
-  await traceViewer.page.getByText('Settings').click();
-  await traceViewer.page.getByRole('checkbox', { name: 'Show route actions' }).check();
-  await traceViewer.page.getByText('Actions', { exact: true }).click();
-  await expect(traceViewer.actionTitles).toHaveText([
-    /page.route/,
-    /page.goto.*empty.html/,
-    /route.fulfill/,
   ]);
 });
 

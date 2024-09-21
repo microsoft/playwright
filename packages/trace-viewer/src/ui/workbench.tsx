@@ -24,7 +24,6 @@ import type { ErrorDescription } from './errorsTab';
 import type { ConsoleEntry } from './consoleTab';
 import { ConsoleTab, useConsoleTabModel } from './consoleTab';
 import type * as modelUtil from './modelUtil';
-import { isRouteAction } from './modelUtil';
 import { NetworkTab, useNetworkTabModel } from './networkTab';
 import { SnapshotTab } from './snapshotTab';
 import { SourceTab } from './sourceTab';
@@ -71,12 +70,7 @@ export const Workbench: React.FunctionComponent<{
   const [highlightedLocator, setHighlightedLocator] = React.useState<string>('');
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
-  const [showRouteActions, setShowRouteActions] = useSetting('show-route-actions', true);
   const [showScreenshot, setShowScreenshot] = useSetting('screenshot-instead-of-snapshot', false);
-
-  const filteredActions = React.useMemo(() => {
-    return (model?.actions || []).filter(action => showRouteActions || !isRouteAction(action));
-  }, [model, showRouteActions]);
 
   const setSelectedAction = React.useCallback((action: modelUtil.ActionTraceEventInContext | undefined) => {
     setSelectedCallId(action?.callId);
@@ -292,7 +286,7 @@ export const Workbench: React.FunctionComponent<{
       </div>}
       <ActionList
         sdkLanguage={sdkLanguage}
-        actions={filteredActions}
+        actions={model?.actions || []}
         selectedAction={model ? selectedAction : undefined}
         selectedTime={selectedTime}
         setSelectedTime={setSelectedTime}
@@ -312,7 +306,6 @@ export const Workbench: React.FunctionComponent<{
     id: 'settings',
     title: 'Settings',
     component: <SettingsView settings={[
-      { value: showRouteActions, set: setShowRouteActions, title: 'Show route actions' },
       { value: showScreenshot, set: setShowScreenshot, title: 'Show screenshot instead of snapshot' }
     ]}/>,
   };

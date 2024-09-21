@@ -299,6 +299,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.RouteInitializer) {
     super(parent, type, guid, initializer);
+    this.markAsInternalType();
   }
 
   request(): Request {
@@ -325,7 +326,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async abort(errorCode?: string) {
     await this._handleRoute(async () => {
-      await this._raceWithTargetClose(this._channel.abort({ requestUrl: this.request()._initializer.url, errorCode }));
+      await this._raceWithTargetClose(this._channel.abort({ errorCode }));
     });
   }
 
@@ -409,7 +410,6 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
       headers['content-length'] = String(length);
 
     await this._raceWithTargetClose(this._channel.fulfill({
-      requestUrl: this.request()._initializer.url,
       status: statusOption || 200,
       headers: headersObjectToArray(headers),
       body,
@@ -421,7 +421,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
   async continue(options: FallbackOverrides = {}) {
     await this._handleRoute(async () => {
       this.request()._applyFallbackOverrides(options);
-      await this._innerContinue();
+      await this._innerContinue(false /* isFallback */);
     });
   }
 
@@ -436,18 +436,15 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     chain.resolve(done);
   }
 
-  async _innerContinue(internal = false) {
+  async _innerContinue(isFallback: boolean) {
     const options = this.request()._fallbackOverridesForContinue();
-    return await this._wrapApiCall(async () => {
-      await this._raceWithTargetClose(this._channel.continue({
-        requestUrl: this.request()._initializer.url,
-        url: options.url,
-        method: options.method,
-        headers: options.headers ? headersObjectToArray(options.headers) : undefined,
-        postData: options.postDataBuffer,
-        isFallback: internal,
-      }));
-    }, !!internal);
+    return await this._raceWithTargetClose(this._channel.continue({
+      url: options.url,
+      method: options.method,
+      headers: options.headers ? headersObjectToArray(options.headers) : undefined,
+      postData: options.postDataBuffer,
+      isFallback,
+    }));
   }
 }
 

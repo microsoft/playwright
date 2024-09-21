@@ -220,7 +220,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     }
     // If the page is closed or unrouteAll() was called without waiting and interception disabled,
     // the method will throw an error - silence it.
-    await route._innerContinue(true).catch(() => {});
+    await route._innerContinue(true /* isFallback */).catch(() => {});
   }
 
   async _onWebSocketRoute(webSocketRoute: network.WebSocketRoute) {

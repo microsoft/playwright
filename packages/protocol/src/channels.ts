@@ -3771,7 +3771,6 @@ export type RouteRedirectNavigationRequestOptions = {
 export type RouteRedirectNavigationRequestResult = void;
 export type RouteAbortParams = {
   errorCode?: string,
-  requestUrl: string,
 };
 export type RouteAbortOptions = {
   errorCode?: string,
@@ -3782,7 +3781,6 @@ export type RouteContinueParams = {
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
-  requestUrl: string,
   isFallback: boolean,
 };
 export type RouteContinueOptions = {
@@ -3798,7 +3796,6 @@ export type RouteFulfillParams = {
   body?: string,
   isBase64?: boolean,
   fetchResponseUid?: string,
-  requestUrl: string,
 };
 export type RouteFulfillOptions = {
   status?: number,
