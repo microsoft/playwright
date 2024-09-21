@@ -28,10 +28,6 @@
   background-color: var(--vscode-sideBar-background);
 }
 
-.snapshot-tab .toolbar .pick-locator {
-  margin: 0 4px;
-}
-
 .snapshot-controls {
   flex: none;
   background-color: var(--vscode-sideBar-background);

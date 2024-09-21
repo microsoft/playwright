@@ -43,6 +43,7 @@ export class RecorderInTraceViewer extends EventEmitter implements IRecorderApp 
   constructor(transport: RecorderTransport, tracePage: Page, traceServer: HttpServer, wsEndpointForTest: string | undefined) {
     super();
     this._transport = transport;
+    this._transport.eventSink.resolve(this);
     this._tracePage = tracePage;
     this._traceServer = traceServer;
     this.wsEndpointForTest = wsEndpointForTest;
@@ -94,6 +95,7 @@ async function openApp(trace: string, options?: TraceViewerServerOptions & { hea
 
 class RecorderTransport implements Transport {
   private _connected = new ManualPromise<void>();
+  readonly eventSink = new ManualPromise<EventEmitter>();
 
   constructor() {
   }
@@ -103,6 +105,8 @@ class RecorderTransport implements Transport {
   }
 
   async dispatch(method: string, params: any): Promise<any> {
+    const eventSink = await this.eventSink;
+    eventSink.emit('event', { event: method, params });
   }
 
   onclose() {

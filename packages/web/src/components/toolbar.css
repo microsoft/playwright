@@ -21,7 +21,7 @@
   min-height: 35px;
   align-items: center;
   flex: none;
-  padding-right: 4px;
+  padding: 0 4px;
 }
 
 .toolbar:after {

@@ -20,14 +20,6 @@
   flex: auto;
 }
 
-.recorder-chooser {
-  border: none;
-  background: none;
-  outline: none;
-  color: var(--vscode-sideBarTitle-foreground);
-  min-width: 100px;
-}
-
 .recorder .codicon {
   font-size: 16px;
 }

@@ -21,6 +21,10 @@ import type { SourceLocation } from './modelUtil';
 import { Workbench } from './workbench';
 import type { Mode, Source } from '@recorder/recorderTypes';
 import type { ContextEntry } from '../entries';
+import { emptySource, SourceChooser } from '@web/components/sourceChooser';
+import { Toolbar } from '@web/components/toolbar';
+import { ToolbarButton, ToolbarSeparator } from '@web/components/toolbarButton';
+import { toggleTheme } from '@web/theme';
 
 const searchParams = new URLSearchParams(window.location.search);
 const guid = searchParams.get('ws');
@@ -29,33 +33,81 @@ const trace = searchParams.get('trace') + '.json';
 export const RecorderView: React.FunctionComponent = () => {
   const [connection, setConnection] = React.useState<Connection | null>(null);
   const [sources, setSources] = React.useState<Source[]>([]);
+  const [mode, setMode] = React.useState<Mode>('none');
+  const [fileId, setFileId] = React.useState<string | undefined>();
+
+  React.useEffect(() => {
+    if (!fileId && sources.length > 0)
+      setFileId(sources[0].id);
+  }, [fileId, sources]);
+
+  const source = React.useMemo(() => {
+    if (fileId) {
+      const source = sources.find(s => s.id === fileId);
+      if (source)
+        return source;
+    }
+    return emptySource();
+  }, [sources, fileId]);
+
   React.useEffect(() => {
     const wsURL = new URL(`../${guid}`, window.location.toString());
     wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
     const webSocket = new WebSocket(wsURL.toString());
-    setConnection(new Connection(webSocket, { setSources }));
+    setConnection(new Connection(webSocket, { setSources, setMode }));
     return () => {
       webSocket.close();
     };
   }, []);
 
-  React.useEffect(() => {
-    if (!connection)
-      return;
-    connection.setMode('recording');
-  }, [connection]);
-
   return <div className='vbox workbench-loader'>
+    <Toolbar>
+      <ToolbarButton icon='circle-large-filled' title='Record' toggled={mode === 'recording' || mode === 'recording-inspecting' || mode === 'assertingText' || mode === 'assertingVisibility'} onClick={() => {
+        connection?.setMode(mode === 'none' || mode === 'standby' || mode === 'inspecting' ? 'recording' : 'standby');
+      }}>Record</ToolbarButton>
+      <ToolbarSeparator />
+      <ToolbarButton icon='inspect' title='Pick locator' toggled={mode === 'inspecting' || mode === 'recording-inspecting'} onClick={() => {
+        const newMode = ({
+          'inspecting': 'standby',
+          'none': 'inspecting',
+          'standby': 'inspecting',
+          'recording': 'recording-inspecting',
+          'recording-inspecting': 'recording',
+          'assertingText': 'recording-inspecting',
+          'assertingVisibility': 'recording-inspecting',
+          'assertingValue': 'recording-inspecting',
+        } as Record<string, Mode>)[mode];
+        connection?.setMode(newMode);
+      }}></ToolbarButton>
+      <ToolbarButton icon='eye' title='Assert visibility' toggled={mode === 'assertingVisibility'} disabled={mode === 'none' || mode === 'standby' || mode === 'inspecting'} onClick={() => {
+        connection?.setMode(mode === 'assertingVisibility' ? 'recording' : 'assertingVisibility');
+      }}></ToolbarButton>
+      <ToolbarButton icon='whole-word' title='Assert text' toggled={mode === 'assertingText'} disabled={mode === 'none' || mode === 'standby' || mode === 'inspecting'} onClick={() => {
+        connection?.setMode(mode === 'assertingText' ? 'recording' : 'assertingText');
+      }}></ToolbarButton>
+      <ToolbarButton icon='symbol-constant' title='Assert value' toggled={mode === 'assertingValue'} disabled={mode === 'none' || mode === 'standby' || mode === 'inspecting'} onClick={() => {
+        connection?.setMode(mode === 'assertingValue' ? 'recording' : 'assertingValue');
+      }}></ToolbarButton>
+      <ToolbarSeparator />
+      <div style={{ flex: 'auto' }}></div>
+      <div>Target:</div>
+      <SourceChooser fileId={fileId} sources={sources} setFileId={fileId => {
+        setFileId(fileId);
+      }} />
+      <ToolbarButton icon='clear-all' title='Clear' disabled={!source || !source.text} onClick={() => {
+      }}></ToolbarButton>
+      <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
+    </Toolbar>
     <TraceView
       traceLocation={trace}
-      sources={sources} />
+      source={source} />
   </div>;
 };
 
 export const TraceView: React.FC<{
   traceLocation: string,
-  sources: Source[],
-}> = ({ traceLocation, sources }) => {
+  source: Source | undefined,
+}> = ({ traceLocation, source }) => {
   const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean } | undefined>();
   const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
@@ -82,7 +134,7 @@ export const TraceView: React.FC<{
   }, [counter, traceLocation]);
 
   const fallbackLocation = React.useMemo(() => {
-    if (!sources.length)
+    if (!source)
       return undefined;
     const fallbackLocation: SourceLocation = {
       file: '',
@@ -90,11 +142,11 @@ export const TraceView: React.FC<{
       column: 0,
       source: {
         errors: [],
-        content: sources[0].text
+        content: source.text
       }
     };
     return fallbackLocation;
-  }, [sources]);
+  }, [source]);
 
   return <Workbench
     key='workbench'
@@ -103,6 +155,7 @@ export const TraceView: React.FC<{
     fallbackLocation={fallbackLocation}
     isLive={true}
     hideTimeline={true}
+    hideMetatada={true}
   />;
 };
 
@@ -114,13 +167,19 @@ async function loadSingleTraceFile(url: string): Promise<MultiTraceModel> {
   return new MultiTraceModel(contextEntries);
 }
 
+
+type ConnectionOptions = {
+  setSources: (sources: Source[]) => void;
+  setMode: (mode: Mode) => void;
+};
+
 class Connection {
   private _lastId = 0;
   private _webSocket: WebSocket;
   private _callbacks = new Map<number, { resolve: (arg: any) => void, reject: (arg: Error) => void }>();
-  private _options: { setSources: (sources: Source[]) => void; };
+  private _options: ConnectionOptions;
 
-  constructor(webSocket: WebSocket, options: { setSources: (sources: Source[]) => void }) {
+  constructor(webSocket: WebSocket, options: ConnectionOptions) {
     this._webSocket = webSocket;
     this._callbacks = new Map();
     this._options = options;
@@ -157,7 +216,7 @@ class Connection {
   }
 
   private _sendMessageNoReply(method: string, params?: any) {
-    this._sendMessage(method, params).catch(() => { });
+    this._sendMessage(method, params);
   }
 
   private _dispatchEvent(method: string, params?: any) {
@@ -165,6 +224,11 @@ class Connection {
       const { sources } = params as { sources: Source[] };
       this._options.setSources(sources);
       window.playwrightSourcesEchoForTest = sources;
+    }
+
+    if (method === 'setMode') {
+      const { mode } = params as { mode: Mode };
+      this._options.setMode(mode);
     }
   }
 }

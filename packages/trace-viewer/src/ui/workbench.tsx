@@ -50,7 +50,6 @@ export const Workbench: React.FunctionComponent<{
   rootDir?: string,
   fallbackLocation?: modelUtil.SourceLocation,
   isLive?: boolean,
-  hideTimeline?: boolean,
   status?: UITestStatus,
   annotations?: { type: string; description?: string; }[];
   inert?: boolean,
@@ -58,7 +57,9 @@ export const Workbench: React.FunctionComponent<{
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
   showSettings?: boolean,
-}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, openPage, onOpenExternally, revealSource, showSettings }) => {
+  hideTimeline?: boolean,
+  hideMetatada?: boolean,
+}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, hideMetatada, status, annotations, inert, openPage, onOpenExternally, revealSource, showSettings }) => {
   const [selectedCallId, setSelectedCallId] = React.useState<string | undefined>(undefined);
   const [revealedError, setRevealedError] = React.useState<ErrorDescription | undefined>(undefined);
 
@@ -280,42 +281,46 @@ export const Workbench: React.FunctionComponent<{
   else if (model && model.wallTime)
     time = Date.now() - model.wallTime;
 
+  const actionsView = <div className='vbox'>
+    {status && <div className='workbench-run-status'>
+      <span className={clsx('codicon', testStatusIcon(status))}></span>
+      <div>{testStatusText(status)}</div>
+      <div className='spacer'></div>
+      <div className='workbench-run-duration'>{time ? msToString(time) : ''}</div>
+    </div>}
+    <ActionList
+      sdkLanguage={sdkLanguage}
+      actions={filteredActions}
+      selectedAction={model ? selectedAction : undefined}
+      selectedTime={selectedTime}
+      setSelectedTime={setSelectedTime}
+      onSelected={onActionSelected}
+      onHighlighted={setHighlightedAction}
+      revealConsole={() => selectPropertiesTab('console')}
+      isLive={isLive}
+    />
+  </div>;
+  const metadataView = hideMetatada ? null : <MetadataView model={model}/>;
+  const settingsView = showSettings ? <SettingsView settings={[
+    { value: showRouteActions, set: setShowRouteActions, title: 'Show route actions' },
+    { value: showScreenshot, set: setShowScreenshot, title: 'Show screenshot instead of snapshot' }
+  ]}/> : null;
+
   const actionsTab: TabbedPaneTabModel = {
     id: 'actions',
     title: 'Actions',
-    component: <div className='vbox'>
-      {status && <div className='workbench-run-status'>
-        <span className={clsx('codicon', testStatusIcon(status))}></span>
-        <div>{testStatusText(status)}</div>
-        <div className='spacer'></div>
-        <div className='workbench-run-duration'>{time ? msToString(time) : ''}</div>
-      </div>}
-      <ActionList
-        sdkLanguage={sdkLanguage}
-        actions={filteredActions}
-        selectedAction={model ? selectedAction : undefined}
-        selectedTime={selectedTime}
-        setSelectedTime={setSelectedTime}
-        onSelected={onActionSelected}
-        onHighlighted={setHighlightedAction}
-        revealConsole={() => selectPropertiesTab('console')}
-        isLive={isLive}
-      />
-    </div>
+    component: actionsView,
   };
-  const metadataTab: TabbedPaneTabModel = {
+  const metadataTab: TabbedPaneTabModel | null = metadataView ? {
     id: 'metadata',
     title: 'Metadata',
-    component: <MetadataView model={model}/>
-  };
-  const settingsTab: TabbedPaneTabModel = {
+    component: metadataView,
+  } : null;
+  const settingsTab: TabbedPaneTabModel | null = settingsView ? {
     id: 'settings',
     title: 'Settings',
-    component: <SettingsView settings={[
-      { value: showRouteActions, set: setShowRouteActions, title: 'Show route actions' },
-      { value: showScreenshot, set: setShowScreenshot, title: 'Show screenshot instead of snapshot' }
-    ]}/>,
-  };
+    component: settingsView,
+  } : null;
 
   return <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
     {!hideTimeline && <Timeline
@@ -348,13 +353,11 @@ export const Workbench: React.FunctionComponent<{
           highlightedLocator={highlightedLocator}
           setHighlightedLocator={locatorPicked}
           openPage={openPage} />}
-        sidebar={
-          <TabbedPane
-            tabs={showSettings ? [actionsTab, metadataTab, settingsTab] : [actionsTab, metadataTab]}
-            selectedTab={selectedNavigatorTab}
-            setSelectedTab={setSelectedNavigatorTab}
-          />
-        }
+        sidebar={<TabbedPane
+          tabs={[actionsTab, metadataTab, settingsTab].filter(Boolean) as TabbedPaneTabModel[]}
+          selectedTab={selectedNavigatorTab}
+          setSelectedTab={setSelectedNavigatorTab}
+        />}
       />}
       sidebar={<TabbedPane
         tabs={tabs}

@@ -16,7 +16,7 @@
 
 import { SplitView } from '@web/components/splitView';
 import * as React from 'react';
-import { useAsyncMemo } from '@web/uiUtils';
+import { copy, useAsyncMemo } from '@web/uiUtils';
 import './sourceTab.css';
 import { StackTraceView } from './stackTrace';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
@@ -104,13 +104,18 @@ export const SourceTab: React.FunctionComponent<{
     orientation={stackFrameLocation === 'bottom' ? 'vertical' : 'horizontal'}
     sidebarHidden={!showStackFrames}
     main={<div className='vbox' data-testid='source-code'>
-      { fileName && <Toolbar>
+      {fileName && <Toolbar>
         <div className='source-tab-file-name' title={fileName}>
           <div>{shortFileName}</div>
         </div>
         <CopyToClipboard description='Copy filename' value={shortFileName}/>
         {location && <ToolbarButton icon='link-external' title='Open in VS Code' onClick={openExternally}></ToolbarButton>}
-      </Toolbar> }
+      </Toolbar>}
+      {!fileName && <div style={{ position: 'absolute', right: 5, top: 5 }}>
+        <ToolbarButton icon='files' title='Copy' onClick={() => {
+          copy(source.content || '');
+        }} />
+      </div>}
       <CodeMirrorWrapper text={source.content || ''} language='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} />
     </div>}
     sidebar={<StackTraceView stack={stack} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame} />}
