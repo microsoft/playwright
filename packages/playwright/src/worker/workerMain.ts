@@ -266,7 +266,7 @@ export class WorkerMain extends ProcessRunner {
       }
     };
 
-    if (!(this._isStopped && !process.env.NONE_ISOLATED))
+    if (!(this._isStopped && !process.env.NON_ISOLATED_TESTS))
       this._fixtureRunner.setPool(test._pool!);
 
     const suites = getSuites(test);
@@ -320,7 +320,7 @@ export class WorkerMain extends ProcessRunner {
         await testInfo._tracing.startIfNeeded(traceFixtureRegistration.fn);
       });
 
-      if ((this._isStopped && !process.env.NONE_ISOLATED) || isSkipped) {
+      if ((this._isStopped && !process.env.NON_ISOLATED_TESTS) || isSkipped) {
         // Two reasons to get here:
         // - Last test is skipped, so we should not run the test, but run the cleanup.
         // - Worker is requested to stop, but was not able to run full cleanup yet.
@@ -396,7 +396,7 @@ export class WorkerMain extends ProcessRunner {
       // In case of failure the worker will be stopped and we have to make sure that afterAll
       // hooks run before worker fixtures teardown.
       for (const suite of reversedSuites) {
-        if (!nextSuites.has(suite) || (testInfo._isFailure() && !process.env.NOT_ISOLATED)) {
+        if (!nextSuites.has(suite) || (testInfo._isFailure() && !process.env.NON_ISOLATED_TESTS)) {
           try {
             await this._runAfterAllHooksForSuite(suite, testInfo);
           } catch (error) {
@@ -412,7 +412,7 @@ export class WorkerMain extends ProcessRunner {
     if (testInfo._isFailure())
       this._isStopped = true;
 
-    if (this._isStopped && !process.env.NONE_ISOLATED) {
+    if (this._isStopped && !process.env.NON_ISOLATED_TESTS) {
       // Run all remaining "afterAll" hooks and teardown all fixtures when worker is shutting down.
       // Mark as "cleaned up" early to avoid running cleanup twice.
       this._didRunFullCleanup = true;
@@ -535,7 +535,7 @@ export class WorkerMain extends ProcessRunner {
       }
     }
     if (firstError) {
-      if (process.env.NONE_ISOLATED)
+      if (process.env.NON_ISOLATED_TESTS)
         this._didRunFullCleanup = true;
       throw firstError;
     }
@@ -544,7 +544,7 @@ export class WorkerMain extends ProcessRunner {
   private async _runAfterAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
     if (!this._activeSuites.has(suite))
       return;
-    if (!process.env.NONE_ISOLATED)
+    if (!process.env.NON_ISOLATED_TESTS)
       this._activeSuites.delete(suite);
     await this._runAllHooksForSuite(suite, testInfo, 'afterAll');
   }
