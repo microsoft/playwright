@@ -266,7 +266,7 @@ export class WorkerMain extends ProcessRunner {
       }
     };
 
-    if (!this._isStopped)
+    if (!(this._isStopped && !process.env.NONE_ISOLATED))
       this._fixtureRunner.setPool(test._pool!);
 
     const suites = getSuites(test);
@@ -320,7 +320,7 @@ export class WorkerMain extends ProcessRunner {
         await testInfo._tracing.startIfNeeded(traceFixtureRegistration.fn);
       });
 
-      if (this._isStopped || isSkipped) {
+      if ((this._isStopped && !process.env.NONE_ISOLATED) || isSkipped) {
         // Two reasons to get here:
         // - Last test is skipped, so we should not run the test, but run the cleanup.
         // - Worker is requested to stop, but was not able to run full cleanup yet.
@@ -412,7 +412,7 @@ export class WorkerMain extends ProcessRunner {
     if (testInfo._isFailure())
       this._isStopped = true;
 
-    if (this._isStopped) {
+    if (this._isStopped && !process.env.NONE_ISOLATED) {
       // Run all remaining "afterAll" hooks and teardown all fixtures when worker is shutting down.
       // Mark as "cleaned up" early to avoid running cleanup twice.
       this._didRunFullCleanup = true;
@@ -541,7 +541,9 @@ export class WorkerMain extends ProcessRunner {
   private async _runAfterAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
     if (!this._activeSuites.has(suite))
       return;
-    this._activeSuites.delete(suite);
+    if (!process.env.NONE_ISOLATED) {
+      this._activeSuites.delete(suite);
+    }
     await this._runAllHooksForSuite(suite, testInfo, 'afterAll');
   }
 
