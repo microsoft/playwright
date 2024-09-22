@@ -396,7 +396,7 @@ export class WorkerMain extends ProcessRunner {
       // In case of failure the worker will be stopped and we have to make sure that afterAll
       // hooks run before worker fixtures teardown.
       for (const suite of reversedSuites) {
-        if (!nextSuites.has(suite) || testInfo._isFailure()) {
+        if (!nextSuites.has(suite) || (testInfo._isFailure() && !process.env.NOT_ISOLATED)) {
           try {
             await this._runAfterAllHooksForSuite(suite, testInfo);
           } catch (error) {
@@ -534,8 +534,11 @@ export class WorkerMain extends ProcessRunner {
         }
       }
     }
-    if (firstError)
+    if (firstError) {
+      if (process.env.NONE_ISOLATED)
+        this._didRunFullCleanup = true;
       throw firstError;
+    }
   }
 
   private async _runAfterAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
