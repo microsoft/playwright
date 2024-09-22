@@ -541,9 +541,8 @@ export class WorkerMain extends ProcessRunner {
   private async _runAfterAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
     if (!this._activeSuites.has(suite))
       return;
-    if (!process.env.NONE_ISOLATED) {
+    if (!process.env.NONE_ISOLATED)
       this._activeSuites.delete(suite);
-    }
     await this._runAllHooksForSuite(suite, testInfo, 'afterAll');
   }
 
