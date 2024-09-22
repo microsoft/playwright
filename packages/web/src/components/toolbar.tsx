@@ -21,6 +21,7 @@ import * as React from 'react';
 type ToolbarProps = {
   noShadow?: boolean;
   noMinHeight?: boolean;
+  sidebarBackground?: boolean;
   className?: string;
   onClick?: (e: React.MouseEvent) => void;
 };
@@ -30,7 +31,8 @@ export const Toolbar: React.FC<React.PropsWithChildren<ToolbarProps>> = ({
   children,
   noMinHeight,
   className,
+  sidebarBackground,
   onClick,
 }) => {
-  return <div className={clsx('toolbar', noShadow && 'no-shadow', noMinHeight && 'no-min-height', className)} onClick={onClick}>{children}</div>;
+  return <div className={clsx('toolbar', noShadow && 'no-shadow', noMinHeight && 'no-min-height', className, sidebarBackground && 'toolbar-sidebar-background')} onClick={onClick}>{children}</div>;
 };

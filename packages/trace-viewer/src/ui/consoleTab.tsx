@@ -107,7 +107,7 @@ export const ConsoleTab: React.FunctionComponent<{
   boundaries: Boundaries,
   consoleModel: ConsoleTabModel,
   selectedTime: Boundaries | undefined,
-  onEntryHovered: (entry: ConsoleEntry | undefined) => void,
+  onEntryHovered?: (entry: ConsoleEntry | undefined) => void,
   onAccepted: (entry: ConsoleEntry) => void,
 }> = ({ consoleModel, boundaries, onEntryHovered, onAccepted }) => {
   if (!consoleModel.entries.length)

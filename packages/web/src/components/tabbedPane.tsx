@@ -32,11 +32,13 @@ export const TabbedPane: React.FunctionComponent<{
   tabs: TabbedPaneTabModel[],
   leftToolbar?: React.ReactElement[],
   rightToolbar?: React.ReactElement[],
-  selectedTab: string,
-  setSelectedTab: (tab: string) => void,
+  selectedTab?: string,
+  setSelectedTab?: (tab: string) => void,
   dataTestId?: string,
   mode?: 'default' | 'select',
 }> = ({ tabs, selectedTab, setSelectedTab, leftToolbar, rightToolbar, dataTestId, mode }) => {
+  if (!selectedTab)
+    selectedTab = tabs[0].id;
   if (!mode)
     mode = 'default';
   return <div className='tabbed-pane' data-testid={dataTestId}>
@@ -60,7 +62,7 @@ export const TabbedPane: React.FunctionComponent<{
         </div>}
         {mode === 'select' && <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }}>
           <select style={{ width: '100%', background: 'none', cursor: 'pointer' }} onChange={e => {
-            setSelectedTab(tabs[e.currentTarget.selectedIndex].id);
+            setSelectedTab?.(tabs[e.currentTarget.selectedIndex].id);
           }}>
             {tabs.map(tab => {
               let suffix = '';
@@ -95,10 +97,10 @@ export const TabbedPaneTab: React.FunctionComponent<{
   count?: number,
   errorCount?: number,
   selected?: boolean,
-  onSelect: (id: string) => void
+  onSelect?: (id: string) => void
 }> = ({ id, title, count, errorCount, selected, onSelect }) => {
   return <div className={clsx('tabbed-pane-tab', selected && 'selected')}
-    onClick={() => onSelect(id)}
+    onClick={() => onSelect?.(id)}
     title={title}
     key={id}>
     <div className='tabbed-pane-tab-label'>{title}</div>

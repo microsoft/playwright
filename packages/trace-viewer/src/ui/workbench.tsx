@@ -60,8 +60,7 @@ export const Workbench: React.FunctionComponent<{
 }> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, openPage, onOpenExternally, revealSource, showSettings }) => {
   const [selectedCallId, setSelectedCallId] = React.useState<string | undefined>(undefined);
   const [revealedError, setRevealedError] = React.useState<ErrorDescription | undefined>(undefined);
-
-  const [highlightedAction, setHighlightedAction] = React.useState<modelUtil.ActionTraceEventInContext | undefined>();
+  const [highlightedCallId, setHighlightedCallId] = React.useState<string | undefined>();
   const [highlightedEntry, setHighlightedEntry] = React.useState<Entry | undefined>();
   const [highlightedConsoleMessage, setHighlightedConsoleMessage] = React.useState<ConsoleEntry | undefined>();
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
@@ -75,6 +74,14 @@ export const Workbench: React.FunctionComponent<{
   const setSelectedAction = React.useCallback((action: modelUtil.ActionTraceEventInContext | undefined) => {
     setSelectedCallId(action?.callId);
     setRevealedError(undefined);
+  }, []);
+
+  const highlightedAction = React.useMemo(() => {
+    return model?.actions.find(a => a.callId === highlightedCallId);
+  }, [model, highlightedCallId]);
+
+  const setHighlightedAction = React.useCallback((highlightedAction: modelUtil.ActionTraceEventInContext | undefined) => {
+    setHighlightedCallId(highlightedAction?.callId);
   }, []);
 
   const sources = React.useMemo(() => model?.sources || new Map<string, modelUtil.SourceModel>(), [model]);
