@@ -25,7 +25,7 @@ import type { ConsoleEntry } from './consoleTab';
 import { ConsoleTab, useConsoleTabModel } from './consoleTab';
 import type * as modelUtil from './modelUtil';
 import { NetworkTab, useNetworkTabModel } from './networkTab';
-import { SnapshotTab } from './snapshotTab';
+import { SnapshotTabsView } from './snapshotTab';
 import { SourceTab } from './sourceTab';
 import { TabbedPane } from '@web/components/tabbedPane';
 import type { TabbedPaneTabModel } from '@web/components/tabbedPane';
@@ -331,7 +331,7 @@ export const Workbench: React.FunctionComponent<{
         orientation='horizontal'
         sidebarIsFirst
         settingName='actionListSidebar'
-        main={<SnapshotTab
+        main={<SnapshotTabsView
           action={activeAction}
           model={model}
           sdkLanguage={sdkLanguage}

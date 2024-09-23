@@ -15,12 +15,8 @@
 */
 
 .snapshot-tab {
-  display: flex;
-  flex: auto;
-  flex-direction: column;
   align-items: stretch;
   outline: none;
-  --browser-frame-header-height: 40px;
   overflow: hidden;
 }
 
@@ -73,6 +69,7 @@
   margin: 1px;
   padding: 10px;
   position: relative;
+  --browser-frame-header-height: 40px;
 }
 
 .snapshot-container {
