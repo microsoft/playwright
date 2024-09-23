@@ -1408,7 +1408,7 @@ test('should allow showing screenshots instead of snapshots', async ({ runAndTra
     await page.waitForTimeout(1000); // ensure we could take a screenshot
   });
 
-  const screenshot = traceViewer.page.getByAltText(`Screenshot of page.goto > Action`);
+  const screenshot = traceViewer.page.getByAltText(`Screenshot of page.goto`);
   const snapshot = (await traceViewer.snapshotFrame('page.goto')).owner();
   await expect(snapshot).toBeVisible();
   await expect(screenshot).not.toBeVisible();
