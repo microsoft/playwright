@@ -26,6 +26,7 @@ const test = baseTest.extend<{ git(command: string): void }>({
     git(`init --initial-branch=main`);
     git(`config --local user.name "Robert Botman"`);
     git(`config --local user.email "botty@mcbotface.com"`);
+    git(`config --local core.autocrlf false`);
 
     await use((command: string) => git(command));
   },
