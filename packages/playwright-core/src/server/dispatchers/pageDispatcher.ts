@@ -35,12 +35,14 @@ import { ArtifactDispatcher } from './artifactDispatcher';
 import type { Download } from '../download';
 import { createGuid, urlMatches } from '../../utils';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
+import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_EventTarget = true;
   _type_Page = true;
   private _page: Page;
   _subscriptions = new Set<channels.PageUpdateSubscriptionParams['event']>();
+  _webSocketInterceptionPatterns: channels.PageSetWebSocketInterceptionPatternsParams['patterns'] = [];
 
   static from(parentScope: BrowserContextDispatcher, page: Page): PageDispatcher {
     return PageDispatcher.fromNullable(parentScope, page)!;
@@ -184,6 +186,12 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       this._dispatchEvent('route', { route: RouteDispatcher.from(RequestDispatcher.from(this.parentScope(), request), route) });
       return true;
     });
+  }
+
+  async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
+    this._webSocketInterceptionPatterns = params.patterns;
+    if (params.patterns.length)
+      await WebSocketRouteDispatcher.installIfNeeded(this.parentScope(), this._page);
   }
 
   async expectScreenshot(params: channels.PageExpectScreenshotParams, metadata: CallMetadata): Promise<channels.PageExpectScreenshotResult> {

@@ -18,19 +18,22 @@ import * as React from 'react';
 import { ToolbarButton } from '@web/components/toolbarButton';
 
 export const CopyToClipboard: React.FunctionComponent<{
-  value: string,
+  value: string | (() => Promise<string>),
   description?: string,
 }> = ({ value, description }) => {
   const [icon, setIcon] = React.useState('copy');
 
   const handleCopy = React.useCallback(() => {
-    navigator.clipboard.writeText(value).then(() => {
-      setIcon('check');
-      setTimeout(() => {
-        setIcon('copy');
-      }, 3000);
-    }, () => {
-      setIcon('close');
+    const valuePromise = typeof value === 'function' ? value() : Promise.resolve(value);
+    valuePromise.then(value => {
+      navigator.clipboard.writeText(value).then(() => {
+        setIcon('check');
+        setTimeout(() => {
+          setIcon('copy');
+        }, 3000);
+      }, () => {
+        setIcon('close');
+      });
     });
 
   }, [value]);

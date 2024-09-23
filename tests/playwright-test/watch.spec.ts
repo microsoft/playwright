@@ -215,6 +215,24 @@ test('should run tests on Enter', async ({ runWatchTest }) => {
   await testProcess.waitForOutput('Waiting for file changes.');
 });
 
+test('should not print show-report command of HTML reporter', async ({ runWatchTest }) => {
+  const testProcess = await runWatchTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({ reporter: 'html' });
+    `,
+  });
+  await testProcess.waitForOutput('Waiting for file changes.');
+  testProcess.clearOutput();
+  testProcess.write('\r\n');
+  await testProcess.waitForOutput('Waiting for file changes.');
+  expect(testProcess.output).not.toContain('To open last HTML report run:');
+});
+
 test('should run tests on R', async ({ runWatchTest }) => {
   const testProcess = await runWatchTest({
     'a.test.ts': `

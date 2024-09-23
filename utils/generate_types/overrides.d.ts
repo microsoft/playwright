@@ -225,6 +225,11 @@ export interface CDPSession {
   ): Promise<Protocol.CommandReturnValues[T]>;
 }
 
+export interface WebSocketRoute {
+  routeSend(handler: (message: string | Buffer) => any): void;
+  routeReceive(handler: (message: string | Buffer) => any): void;
+}
+
 type DeviceDescriptor = {
   viewport: ViewportSize;
   userAgent: string;

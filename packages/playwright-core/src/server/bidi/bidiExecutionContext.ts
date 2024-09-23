@@ -23,7 +23,7 @@ import { BidiSerializer } from './third_party/bidiSerializer';
 
 export class BidiExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: BidiSession;
-  private readonly _target: bidi.Script.Target;
+  readonly _target: bidi.Script.Target;
 
   constructor(session: BidiSession, realmInfo: bidi.Script.RealmInfo) {
     this._session = session;

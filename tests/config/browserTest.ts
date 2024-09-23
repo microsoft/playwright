@@ -69,12 +69,16 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await run(false);
   }, { scope: 'worker' }],
 
-  defaultSameSiteCookieValue: [async ({ browserName, isLinux }, run) => {
+  defaultSameSiteCookieValue: [async ({ browserName, platform }, run) => {
     if (browserName === 'chromium' || browserName as any === '_bidiChromium')
       await run('Lax');
-    else if (browserName === 'webkit' && isLinux)
+    else if (browserName === 'webkit' && platform === 'linux')
       await run('Lax');
-    else if (browserName === 'webkit' && !isLinux)
+    else if (browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) >= 24)
+      // macOS 15 Sequoia onwards
+      await run('Lax');
+    else if (browserName === 'webkit')
+      // Windows + older macOS
       await run('None');
     else if (browserName === 'firefox' || browserName as any === '_bidiFirefox')
       await run('None');

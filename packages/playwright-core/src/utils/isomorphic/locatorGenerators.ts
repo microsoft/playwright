@@ -50,16 +50,6 @@ export function asLocators(lang: Language, selector: string, isFrameLocator: boo
 
 function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFrameLocator: boolean = false, maxOutputSize = 20): string[] {
   const parts = [...parsed.parts];
-  // frameLocator('iframe').first is actually "iframe >> nth=0 >> internal:control=enter-frame"
-  // To make it easier to parse, we turn it into "iframe >> internal:control=enter-frame >> nth=0"
-  for (let index = 0; index < parts.length - 1; index++) {
-    if (parts[index].name === 'nth' && parts[index + 1].name === 'internal:control' && (parts[index + 1].body as string) === 'enter-frame') {
-      // Swap nth and enter-frame.
-      const [nth] = parts.splice(index, 1);
-      parts.splice(index + 1, 0, nth);
-    }
-  }
-
   const tokens: string[][] = [];
   let nextBase: LocatorBase = isFrameLocator ? 'frame-locator' : 'page';
   for (let index = 0; index < parts.length; index++) {
@@ -167,15 +157,15 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
         continue;
       }
     }
+    if (part.name === 'internal:control' && (part.body as string) === 'enter-frame') {
+      tokens.push([factory.generateLocator(base, 'frame', '')]);
+      nextBase = 'frame-locator';
+      continue;
+    }
 
     let locatorType: LocatorType = 'default';
 
     const nextPart = parts[index + 1];
-    if (nextPart && nextPart.name === 'internal:control' && (nextPart.body as string) === 'enter-frame') {
-      locatorType = 'frame';
-      nextBase = 'frame-locator';
-      index++;
-    }
 
     const selectorPart = stringifySelector({ parts: [part] });
     const locatorPart = factory.generateLocator(base, locatorType, selectorPart);
@@ -264,7 +254,7 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
           return `locator(${this.quote(body as string)}, { hasNotText: ${this.toHasText(options.hasNotText)} })`;
         return `locator(${this.quote(body as string)})`;
       case 'frame':
-        return `frameLocator(${this.quote(body as string)})`;
+        return `contentFrame()`;
       case 'nth':
         return `nth(${body})`;
       case 'first':
@@ -356,7 +346,7 @@ export class PythonLocatorFactory implements LocatorFactory {
           return `locator(${this.quote(body as string)}, has_not_text=${this.toHasText(options.hasNotText)})`;
         return `locator(${this.quote(body as string)})`;
       case 'frame':
-        return `frame_locator(${this.quote(body as string)})`;
+        return `content_frame`;
       case 'nth':
         return `nth(${body})`;
       case 'first':
@@ -461,7 +451,7 @@ export class JavaLocatorFactory implements LocatorFactory {
           return `locator(${this.quote(body as string)}, new ${clazz}.LocatorOptions().setHasNotText(${this.toHasText(options.hasNotText)}))`;
         return `locator(${this.quote(body as string)})`;
       case 'frame':
-        return `frameLocator(${this.quote(body as string)})`;
+        return `contentFrame()`;
       case 'nth':
         return `nth(${body})`;
       case 'first':
@@ -556,7 +546,7 @@ export class CSharpLocatorFactory implements LocatorFactory {
           return `Locator(${this.quote(body as string)}, new() { ${this.toHasNotText(options.hasNotText)} })`;
         return `Locator(${this.quote(body as string)})`;
       case 'frame':
-        return `FrameLocator(${this.quote(body as string)})`;
+        return `ContentFrame`;
       case 'nth':
         return `Nth(${body})`;
       case 'first':

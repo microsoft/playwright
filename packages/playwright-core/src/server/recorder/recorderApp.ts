@@ -43,6 +43,7 @@ declare global {
 }
 
 export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
+  wsEndpointForTest: undefined;
   async close(): Promise<void> {}
   async setPaused(paused: boolean): Promise<void> {}
   async setMode(mode: Mode): Promise<void> {}
@@ -54,7 +55,7 @@ export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
 
 export class RecorderApp extends EventEmitter implements IRecorderApp {
   private _page: Page;
-  readonly wsEndpoint: string | undefined;
+  readonly wsEndpointForTest: string | undefined;
   private _recorder: IRecorder;
 
   constructor(recorder: IRecorder, page: Page, wsEndpoint: string | undefined) {
@@ -62,7 +63,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     this.setMaxListeners(0);
     this._recorder = recorder;
     this._page = page;
-    this.wsEndpoint = wsEndpoint;
+    this.wsEndpointForTest = wsEndpoint;
   }
 
   async close() {
@@ -80,7 +81,6 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
       const file = require.resolve('../../vite/recorder/' + uri);
       fs.promises.readFile(file).then(buffer => {
         route.fulfill({
-          requestUrl: route.request().url(),
           status: 200,
           headers: [
             { name: 'Content-Type', value: mime.getType(path.extname(file)) || 'application/octet-stream' }
@@ -122,9 +122,8 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
       persistentContextOptions: {
         noDefaultViewport: true,
         headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
-        useWebSocket: !!process.env.PWTEST_RECORDER_PORT,
+        useWebSocket: isUnderTest(),
         handleSIGINT: false,
-        args: process.env.PWTEST_RECORDER_PORT ? [`--remote-debugging-port=${process.env.PWTEST_RECORDER_PORT}`] : [],
         executablePath: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.customExecutablePath : undefined,
       }
     });
@@ -162,8 +161,10 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     }).toString(), { isFunction: true }, sources).catch(() => {});
 
     // Testing harness for runCLI mode.
-    if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length)
-      (process as any)._didSetSourcesForTest(sources[0].text);
+    if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length) {
+      if ((process as any)._didSetSourcesForTest(sources[0].text))
+        this.close();
+    }
   }
 
   async setSelector(selector: string, userGesture?: boolean): Promise<void> {

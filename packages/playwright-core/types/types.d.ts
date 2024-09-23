@@ -3827,6 +3827,34 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * This method allows to modify websocket connections that are made by the page.
+   *
+   * Note that only `WebSocket`s created after this method was called will be routed. It is recommended to call this
+   * method before navigating the page.
+   *
+   * **Usage**
+   *
+   * Below is an example of a simple handler that blocks some websocket messages. See {@link WebSocketRoute} for more
+   * details and examples.
+   *
+   * ```js
+   * await page.routeWebSocket('/ws', async ws => {
+   *   ws.routeSend(message => {
+   *     if (message === 'to-be-blocked')
+   *       return;
+   *     ws.send(message);
+   *   });
+   *   await ws.connect();
+   * });
+   * ```
+   *
+   * @param url Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the
+   * `baseURL` from the context options.
+   * @param handler Handler function to route the WebSocket.
+   */
+  routeWebSocket(url: string|RegExp|((url: URL) => boolean), handler: ((websocketroute: WebSocketRoute) => Promise<any>|any)): Promise<void>;
+
+  /**
    * Returns the buffer with the captured screenshot.
    * @param options
    */
@@ -8657,6 +8685,34 @@ export interface BrowserContext {
      */
     url?: string|RegExp;
   }): Promise<void>;
+
+  /**
+   * This method allows to modify websocket connections that are made by any page in the browser context.
+   *
+   * Note that only `WebSocket`s created after this method was called will be routed. It is recommended to call this
+   * method before creating any pages.
+   *
+   * **Usage**
+   *
+   * Below is an example of a simple handler that blocks some websocket messages. See {@link WebSocketRoute} for more
+   * details and examples.
+   *
+   * ```js
+   * await context.routeWebSocket('/ws', async ws => {
+   *   ws.routeSend(message => {
+   *     if (message === 'to-be-blocked')
+   *       return;
+   *     ws.send(message);
+   *   });
+   *   await ws.connect();
+   * });
+   * ```
+   *
+   * @param url Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the
+   * `baseURL` from the context options.
+   * @param handler Handler function to route the WebSocket.
+   */
+  routeWebSocket(url: string|RegExp|((url: URL) => boolean), handler: ((websocketroute: WebSocketRoute) => Promise<any>|any)): Promise<void>;
 
   /**
    * **NOTE** Service workers are only supported on Chromium-based browsers.
@@ -14567,6 +14623,134 @@ export interface CDPSession {
   detach(): Promise<void>;
 }
 
+/**
+ * Whenever a [`WebSocket`](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) route is set up with
+ * [page.routeWebSocket(url, handler)](https://playwright.dev/docs/api/class-page#page-route-web-socket) or
+ * [browserContext.routeWebSocket(url, handler)](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-web-socket),
+ * the `WebSocketRoute` object allows to handle the WebSocket.
+ *
+ * By default, the routed WebSocket will not actually connect to the server. This way, you can mock entire
+ * communcation over the WebSocket. Here is an example that responds to a `"query"` with a `"result"`.
+ *
+ * ```js
+ * await page.routeWebSocket('/ws', async ws => {
+ *   ws.routeSend(message => {
+ *     if (message === 'query')
+ *       ws.receive('result');
+ *   });
+ * });
+ * ```
+ *
+ */
+export interface WebSocketRoute {
+  /**
+   * This method allows to route messages that are sent by `WebSocket.send()` call in the page, instead of actually
+   * sending them to the server. Once this method is called, sent messages **are not** automatically forwarded to the
+   * server - you should do that manually by calling
+   * [webSocketRoute.send(message)](https://playwright.dev/docs/api/class-websocketroute#web-socket-route-send).
+   *
+   * Calling this method again times will override the handler with a new one.
+   * @param handler Handler function to route sent messages.
+   */
+  routeSend(handler: (message: string | Buffer) => any): void;
+  /**
+   * This method allows to route messages that are received by the
+   * [`WebSocket`](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) object in the page from the server. This
+   * method only makes sense if you are also calling
+   * [webSocketRoute.connect()](https://playwright.dev/docs/api/class-websocketroute#web-socket-route-connect).
+   *
+   * Once this method is called, received messages are not automatically dispatched to the
+   * [`WebSocket`](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) object in the page - you should do that
+   * manually by calling
+   * [webSocketRoute.receive(message)](https://playwright.dev/docs/api/class-websocketroute#web-socket-route-receive).
+   *
+   * Calling this method again times will override the handler with a new one.
+   * @param handler Handler function to route received messages.
+   */
+  routeReceive(handler: (message: string | Buffer) => any): void;
+  /**
+   * Emitted when the [`WebSocket`](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) closes.
+   */
+  on(event: 'close', listener: () => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'close', listener: () => any): this;
+
+  /**
+   * Emitted when the [`WebSocket`](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) closes.
+   */
+  addListener(event: 'close', listener: () => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'close', listener: () => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'close', listener: () => any): this;
+
+  /**
+   * Emitted when the [`WebSocket`](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) closes.
+   */
+  prependListener(event: 'close', listener: () => any): this;
+
+  /**
+   * Closes the server connection and the [`WebSocket`](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
+   * object in the page.
+   * @param options
+   */
+  close(options?: {
+    /**
+     * Optional [close code](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#code).
+     */
+    code?: number;
+
+    /**
+     * Optional [close reason](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#reason).
+     */
+    reason?: string;
+  }): Promise<void>;
+
+  /**
+   * By default, routed WebSocket does not connect to the server, so you can mock entire WebSocket communication. This
+   * method connects to the actual WebSocket server, giving the ability to send and receive messages from the server.
+   *
+   * Once connected:
+   * - Messages received from the server will be automatically dispatched to the
+   *   [`WebSocket`](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) object in the page, unless
+   *   [webSocketRoute.routeReceive(handler)](https://playwright.dev/docs/api/class-websocketroute#web-socket-route-route-receive)
+   *   is called.
+   * - Messages sent by the `WebSocket.send()` call in the page will be automatically sent to the server, unless
+   *   [webSocketRoute.routeSend(handler)](https://playwright.dev/docs/api/class-websocketroute#web-socket-route-route-send)
+   *   is called.
+   */
+  connect(): Promise<void>;
+
+  /**
+   * Dispatches a message to the [`WebSocket`](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) object in the
+   * page, like it was received from the server.
+   * @param message Message to receive.
+   */
+  receive(message: string|Buffer): void;
+
+  /**
+   * Sends a message to the server, like it was sent in the page with `WebSocket.send()`.
+   * @param message Message to send.
+   */
+  send(message: string|Buffer): void;
+
+  /**
+   * URL of the WebSocket created in the page.
+   */
+  url(): string;
+
+  [Symbol.asyncDispose](): Promise<void>;
+}
+
 type DeviceDescriptor = {
   viewport: ViewportSize;
   userAgent: string;
@@ -18240,11 +18424,12 @@ export interface FileChooser {
 /**
  * FrameLocator represents a view to the `iframe` on the page. It captures the logic sufficient to retrieve the
  * `iframe` and locate elements in that iframe. FrameLocator can be created with either
+ * [locator.contentFrame()](https://playwright.dev/docs/api/class-locator#locator-content-frame),
  * [page.frameLocator(selector)](https://playwright.dev/docs/api/class-page#page-frame-locator) or
  * [locator.frameLocator(selector)](https://playwright.dev/docs/api/class-locator#locator-frame-locator) method.
  *
  * ```js
- * const locator = page.frameLocator('#my-frame').getByText('Submit');
+ * const locator = page.locator('#my-frame').contentFrame().getByText('Submit');
  * await locator.click();
  * ```
  *
@@ -18255,10 +18440,10 @@ export interface FileChooser {
  *
  * ```js
  * // Throws if there are several frames in DOM:
- * await page.frameLocator('.result-frame').getByRole('button').click();
+ * await page.locator('.result-frame').contentFrame().getByRole('button').click();
  *
  * // Works because we explicitly tell locator to pick the first frame:
- * await page.frameLocator('.result-frame').first().getByRole('button').click();
+ * await page.locator('.result-frame').contentFrame().first().getByRole('button').click();
  * ```
  *
  * **Converting Locator to FrameLocator**
@@ -18274,6 +18459,8 @@ export interface FileChooser {
 export interface FrameLocator {
   /**
    * Returns locator to the first matching frame.
+   * @deprecated Use [locator.first()](https://playwright.dev/docs/api/class-locator#locator-first) followed by
+   * [locator.contentFrame()](https://playwright.dev/docs/api/class-locator#locator-content-frame) instead.
    */
   first(): FrameLocator;
 
@@ -18598,6 +18785,8 @@ export interface FrameLocator {
 
   /**
    * Returns locator to the last matching frame.
+   * @deprecated Use [locator.last()](https://playwright.dev/docs/api/class-locator#locator-last) followed by
+   * [locator.contentFrame()](https://playwright.dev/docs/api/class-locator#locator-content-frame) instead.
    */
   last(): FrameLocator;
 
@@ -18650,6 +18839,8 @@ export interface FrameLocator {
 
   /**
    * Returns locator to the n-th matching frame. It's zero based, `nth(0)` selects the first frame.
+   * @deprecated Use [locator.nth(index)](https://playwright.dev/docs/api/class-locator#locator-nth) followed by
+   * [locator.contentFrame()](https://playwright.dev/docs/api/class-locator#locator-content-frame) instead.
    * @param index
    */
   nth(index: number): FrameLocator;
@@ -18666,7 +18857,7 @@ export interface FrameLocator {
    * **Usage**
    *
    * ```js
-   * const frameLocator = page.frameLocator('iframe[name="embedded"]');
+   * const frameLocator = page.locator('iframe[name="embedded"]').contentFrame();
    * // ...
    * const locator = frameLocator.owner();
    * await expect(locator).toBeVisible();

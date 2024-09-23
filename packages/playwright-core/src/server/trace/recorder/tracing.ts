@@ -38,6 +38,8 @@ import { Snapshotter } from './snapshotter';
 import type { ConsoleMessage } from '../../console';
 import { Dispatcher } from '../../dispatchers/dispatcher';
 import { serializeError } from '../../errors';
+import type { Dialog } from '../../dialog';
+import type { Download } from '../../download';
 
 const version: trace.VERSION = 7;
 
@@ -79,6 +81,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _allResources = new Set<string>();
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
   private _pendingHarEntries = new Set<har.Entry>();
+  private _inMemoryEvents: trace.TraceEvent[] | undefined;
+  private _inMemoryEventsCallback: ((events: trace.TraceEvent[]) => void) | undefined;
 
   constructor(context: BrowserContext | APIRequestContext, tracesDir: string | undefined) {
     super(context, 'tracing');
@@ -179,7 +183,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       wallTime: Date.now(),
       monotonicTime: monotonicTime()
     };
-    this._fs.appendFile(this._state.traceFile, JSON.stringify(event) + '\n');
+    this._appendTraceEvent(event);
 
     this._context.instrumentation.addListener(this, this._context);
     this._eventListeners.push(
@@ -191,6 +195,11 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (this._state.options.snapshots)
       await this._snapshotter?.start();
     return { traceName: this._state.traceName };
+  }
+
+  onMemoryEvents(callback: (events: trace.TraceEvent[]) => void) {
+    this._inMemoryEventsCallback = callback;
+    this._inMemoryEvents = [];
   }
 
   private _startScreencast() {
@@ -447,6 +456,50 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._appendTraceEvent(event);
   }
 
+  onDialog(dialog: Dialog) {
+    const event: trace.EventTraceEvent = {
+      type: 'event',
+      time: monotonicTime(),
+      class: 'BrowserContext',
+      method: 'dialog',
+      params: { pageId: dialog.page().guid, type: dialog.type(), message: dialog.message(), defaultValue: dialog.defaultValue() },
+    };
+    this._appendTraceEvent(event);
+  }
+
+  onDownload(page: Page, download: Download) {
+    const event: trace.EventTraceEvent = {
+      type: 'event',
+      time: monotonicTime(),
+      class: 'BrowserContext',
+      method: 'download',
+      params: { pageId: page.guid, url: download.url, suggestedFilename: download.suggestedFilename() },
+    };
+    this._appendTraceEvent(event);
+  }
+
+  onPageOpen(page: Page) {
+    const event: trace.EventTraceEvent = {
+      type: 'event',
+      time: monotonicTime(),
+      class: 'BrowserContext',
+      method: 'page',
+      params: { pageId: page.guid, openerPageId: page.opener()?.guid },
+    };
+    this._appendTraceEvent(event);
+  }
+
+  onPageClose(page: Page) {
+    const event: trace.EventTraceEvent = {
+      type: 'event',
+      time: monotonicTime(),
+      class: 'BrowserContext',
+      method: 'pageClosed',
+      params: { pageId: page.guid },
+    };
+    this._appendTraceEvent(event);
+  }
+
   private _onPageError(error: Error, page: Page) {
     const event: trace.EventTraceEvent = {
       type: 'event',
@@ -487,6 +540,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     // Do not flush (console) events, they are too noisy, unless we are in ui mode (live).
     const flush = this._state!.options.live || (event.type !== 'event' && event.type !== 'console' && event.type !== 'log');
     this._fs.appendFile(this._state!.traceFile, JSON.stringify(visited) + '\n', flush);
+    if (this._inMemoryEvents) {
+      this._inMemoryEvents.push(event);
+      this._inMemoryEventsCallback?.(this._inMemoryEvents);
+    }
   }
 
   private _appendResource(sha1: string, buffer: Buffer) {

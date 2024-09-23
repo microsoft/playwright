@@ -346,7 +346,7 @@ function rewriteToLocalhostIfNeeded(host: string): string {
 }
 
 export function rewriteOpenSSLErrorIfNeeded(error: Error): Error {
-  if (error.message !== 'unsupported')
+  if (error.message !== 'unsupported' && (error as NodeJS.ErrnoException).code !== 'ERR_CRYPTO_UNSUPPORTED_OPERATION')
     return error;
   return rewriteErrorMessage(error, [
     'Unsupported TLS certificate.',

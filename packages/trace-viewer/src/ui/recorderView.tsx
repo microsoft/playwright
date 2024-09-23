@@ -102,6 +102,7 @@ export const TraceView: React.FC<{
     showSourcesFirst={true}
     fallbackLocation={fallbackLocation}
     isLive={true}
+    hideTimeline={true}
   />;
 };
 
@@ -163,6 +164,7 @@ class Connection {
     if (method === 'setSources') {
       const { sources } = params as { sources: Source[] };
       this._options.setSources(sources);
+      window.playwrightSourcesEchoForTest = sources;
     }
   }
 }

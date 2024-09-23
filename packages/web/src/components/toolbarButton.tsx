@@ -17,6 +17,7 @@
 import './toolbarButton.css';
 import '../third_party/vscode/codicon.css';
 import * as React from 'react';
+import { clsx } from '@web/uiUtils';
 
 export interface ToolbarButtonProps {
   title: string,
@@ -40,11 +41,8 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
   testId,
   className,
 }) => {
-  className = (className || '') + ` toolbar-button ${icon}`;
-  if (toggled)
-    className += ' toggled';
   return <button
-    className={className}
+    className={clsx(className, 'toolbar-button', icon, toggled && 'toggled')}
     onMouseDown={preventDefault}
     onClick={onClick}
     onDoubleClick={preventDefault}

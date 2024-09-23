@@ -41,12 +41,14 @@ import { serializeError } from '../errors';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { RecorderInTraceViewer } from '../recorder/recorderInTraceViewer';
 import { RecorderApp } from '../recorder/recorderApp';
+import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
   _type_EventTarget = true;
   _type_BrowserContext = true;
   private _context: BrowserContext;
   private _subscriptions = new Set<channels.BrowserContextUpdateSubscriptionParams['event']>();
+  _webSocketInterceptionPatterns: channels.BrowserContextSetWebSocketInterceptionPatternsParams['patterns'] = [];
 
   constructor(parentScope: DispatcherScope, context: BrowserContext) {
     // We will reparent these to the context below.
@@ -283,6 +285,12 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     });
   }
 
+  async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
+    this._webSocketInterceptionPatterns = params.patterns;
+    if (params.patterns.length)
+      await WebSocketRouteDispatcher.installIfNeeded(this, this._context);
+  }
+
   async storageState(params: channels.BrowserContextStorageStateParams, metadata: CallMetadata): Promise<channels.BrowserContextStorageStateResult> {
     return await this._context.storageState();
   }
@@ -292,9 +300,18 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.close(params);
   }
 
-  async recorderSupplementEnable(params: channels.BrowserContextRecorderSupplementEnableParams): Promise<void> {
-    const factory = process.env.PW_RECORDER_IS_TRACE_VIEWER ? RecorderInTraceViewer.factory(this._context) : RecorderApp.factory(this._context);
-    await Recorder.show(this._context, factory, params);
+  async enableRecorder(params: channels.BrowserContextEnableRecorderParams): Promise<void> {
+    if (params.codegenMode === 'trace-events') {
+      await this._context.tracing.start({
+        name: 'trace',
+        snapshots: true,
+        screenshots: true,
+        live: true,
+      });
+      await Recorder.show('trace-events', this._context, RecorderInTraceViewer.factory(this._context), params);
+    } else {
+      await Recorder.show('actions', this._context, RecorderApp.factory(this._context), params);
+    }
   }
 
   async pause(params: channels.BrowserContextPauseParams, metadata: CallMetadata) {
