@@ -17,7 +17,7 @@
 import type * as channels from '@protocol/channels';
 import type { Source } from '@recorder/recorderTypes';
 import { EventEmitter } from 'events';
-import * as recorderSource from '../../generated/recorderSource';
+import * as recorderSource from '../../generated/pollingRecorderSource';
 import { eventsHelper, monotonicTime, quoteCSSAttributeValue, type RegisteredListener } from '../../utils';
 import { raceAgainstDeadline } from '../../utils/timeoutRunner';
 import { BrowserContext } from '../browserContext';
