@@ -144,11 +144,13 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     else
       printPrompt();
 
+    const waitForCommand = readCommand();
     const command = await Promise.race([
       onDirtyTests,
-      readCommand(),
+      waitForCommand.result,
     ]);
-
+    if (command === 'changed')
+      waitForCommand.cancel();
     if (bufferMode && command === 'changed')
       continue;
 
@@ -282,7 +284,7 @@ async function runTests(watchOptions: WatchModeOptions, testServerConnection: Te
   });
 }
 
-function readCommand(): ManualPromise<Command> {
+function readCommand(): { result: Promise<Command>, cancel: () => void } {
   const result = new ManualPromise<Command>();
   const rl = readline.createInterface({ input: process.stdin, escapeCodeTimeout: 50 });
   readline.emitKeypressEvents(process.stdin, rl);
@@ -334,13 +336,14 @@ Change settings
   };
 
   process.stdin.on('keypress', handler);
-  void result.finally(() => {
+  const cancel = () => {
     process.stdin.off('keypress', handler);
     rl.close();
     if (process.stdin.isTTY)
       process.stdin.setRawMode(false);
-  });
-  return result;
+  };
+  void result.finally(cancel);
+  return { result, cancel };
 }
 
 let showBrowserServer: PlaywrightServer | undefined;
