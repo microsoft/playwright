@@ -146,6 +146,27 @@ it('should support request/response events when using backgroundPage()', async (
   await context.close();
 });
 
+it('should report console messages from content script', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32762' }
+}, async ({ browserType, createUserDataDir, asset, server }) => {
+  const userDataDir = await createUserDataDir();
+  const extensionPath = asset('extension-with-logging');
+  const extensionOptions = {
+    headless: false,
+    args: [
+      `--disable-extensions-except=${extensionPath}`,
+      `--load-extension=${extensionPath}`,
+    ],
+  };
+  const context = await browserType.launchPersistentContext(userDataDir, extensionOptions);
+  const page = await context.newPage();
+  const consolePromise = page.waitForEvent('console', e => e.text().includes('Test console log from a third-party execution context'));
+  await page.goto(server.EMPTY_PAGE);
+  const message = await consolePromise;
+  expect(message.text()).toContain('Test console log from a third-party execution context');
+  await context.close();
+});
+
 it('should not create pages automatically', async ({ browserType }) => {
   const browser = await browserType.launch();
   const browserSession = await browser.newBrowserCDPSession();
