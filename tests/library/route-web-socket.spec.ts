@@ -144,9 +144,10 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       ]);
     });
 
-    test('should work with error after successful open', async ({ page, server, browserName, isLinux }) => {
+    test('should work with error after successful open', async ({ page, server, browserName, isLinux, isWindows }) => {
       test.skip(browserName === 'firefox', 'Firefox does not close the websocket upon a bad frame');
       test.skip(browserName === 'webkit' && isLinux, 'WebKit linux does not close the websocket upon a bad frame');
+      test.skip(browserName === 'webkit' && isWindows, 'WebKit Windows does not close the websocket upon a bad frame');
 
       const upgradePromise = server.waitForUpgrade();
       await setupWS(page, server.PORT, 'blob');
