@@ -1116,7 +1116,7 @@ export class WKPage implements PageDelegate {
     const response = request.createResponse(event.response);
     this._page._frameManager.requestReceivedResponse(response);
 
-    if (response.status() === 204) {
+    if (response.status() === 204 && request.request.isNavigationRequest()) {
       this._onLoadingFailed(session, {
         requestId: event.requestId,
         errorText: 'Aborted: 204 No Content',
