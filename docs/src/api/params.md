@@ -136,6 +136,11 @@ defaults to 1. See [UIEvent.detail].
 
 When set, this method only performs the [actionability](../actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it.
 
+## input-trial-with-modifiers
+- `trial` <[boolean]>
+
+When set, this method only performs the [actionability](../actionability.md) checks and skips the action. Defaults to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys are pressed.
+
 ## input-source-position
 - `sourcePosition` <[Object]>
   - `x` <[float]>

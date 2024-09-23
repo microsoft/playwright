@@ -812,7 +812,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.click.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Page.click.trial = %%-input-trial-%%
+### option: Page.click.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
 ## async method: Page.close
@@ -915,7 +915,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.dblclick.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Page.dblclick.trial = %%-input-trial-%%
+### option: Page.dblclick.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
 ## async method: Page.dispatchEvent
@@ -2437,7 +2437,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.hover.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Page.hover.trial = %%-input-trial-%%
+### option: Page.hover.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
 ### option: Page.hover.noWaitAfter = %%-input-no-wait-after-removed-%%
@@ -4099,7 +4099,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Page.tap.timeout = %%-input-timeout-js-%%
 * since: v1.8
 
-### option: Page.tap.trial = %%-input-trial-%%
+### option: Page.tap.trial = %%-input-trial-with-modifiers-%%
 * since: v1.11
 
 ## async method: Page.textContent
