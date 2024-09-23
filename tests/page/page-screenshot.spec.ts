@@ -280,12 +280,16 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-clip-odd-size.png');
   });
 
-  it('should work for canvas', async ({ page, server, isElectron, isMac }) => {
+  it('should work for canvas', async ({ page, server, isElectron, isMac, browserName }) => {
     it.fixme(isElectron && isMac, 'Fails on the bots');
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/screenshots/canvas.html');
     const screenshot = await page.screenshot();
-    expect(screenshot).toMatchSnapshot('screenshot-canvas.png');
+    // rendering on macOS-14-arm14+ is different compared to Intel macs.
+    let maxDiffPixels = 0;
+    if (browserName === 'chromium' && isMac && os.arch() === 'arm64' && parseInt(os.release(), 10) >= 23)
+      maxDiffPixels = 4;
+    expect(screenshot).toMatchSnapshot('screenshot-canvas.png', { maxDiffPixels });
   });
 
   it('should capture canvas changes', async ({ page, isElectron, browserName, isMac, isWebView2 }) => {
