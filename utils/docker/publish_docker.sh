@@ -15,11 +15,6 @@ if [[ "${RELEASE_CHANNEL}" == "stable" ]]; then
     echo "ERROR: cannot publish stable docker with Playwright version '${PW_VERSION}'"
     exit 1
   fi
-elif [[ "${RELEASE_CHANNEL}" == "canary" ]]; then
-  if [[ "${PW_VERSION}" != *-* ]]; then
-    echo "ERROR: cannot publish canary docker with Playwright version '${PW_VERSION}'"
-    exit 1
-  fi
 else
   echo "ERROR: unknown release channel - ${RELEASE_CHANNEL}"
   echo "Must be either 'stable' or 'canary'"
@@ -28,35 +23,19 @@ fi
 
 # Ubuntu 20.04
 FOCAL_TAGS=(
-  "next"
-  "next-focal"
   "v${PW_VERSION}-focal"
 )
 
-if [[ "$RELEASE_CHANNEL" == "stable" ]]; then
-  FOCAL_TAGS+=("focal")
-fi
-
 # Ubuntu 22.04
 JAMMY_TAGS=(
-  "next-jammy"
   "v${PW_VERSION}-jammy"
-  "v${PW_VERSION}"
 )
 
-if [[ "$RELEASE_CHANNEL" == "stable" ]]; then
-  JAMMY_TAGS+=("latest")
-  JAMMY_TAGS+=("jammy")
-fi
-
+# Ubuntu 24.04
 NOBLE_TAGS=(
-  "next-noble"
+  "v${PW_VERSION}"
   "v${PW_VERSION}-noble"
 )
-
-if [[ "$RELEASE_CHANNEL" == "stable" ]]; then
-  NOBLE_TAGS+=("noble")
-fi
 
 tag_and_push() {
   local source="$1"

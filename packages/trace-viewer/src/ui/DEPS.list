@@ -6,3 +6,4 @@
 ../entries.ts
 ../geometry.ts
 ../../../playwright/src/isomorphic/**
+../third_party/devtools.ts

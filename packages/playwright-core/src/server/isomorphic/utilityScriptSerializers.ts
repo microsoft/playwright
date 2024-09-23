@@ -20,7 +20,8 @@ export type SerializedValue =
     { d: string } |
     { u: string } |
     { bi: string } |
-    { r: { p: string, f: string} } |
+    { e: { n: string, m: string, s: string } } |
+    { r: { p: string, f: string } } |
     { a: SerializedValue[], id: number } |
     { o: { k: string, v: SerializedValue }[], id: number } |
     { ref: number } |
@@ -94,6 +95,12 @@ export function source() {
         return new URL(value.u);
       if ('bi' in value)
         return BigInt(value.bi);
+      if ('e' in value) {
+        const error = new Error(value.e.m);
+        error.name = value.e.n;
+        error.stack = value.e.s;
+        return error;
+      }
       if ('r' in value)
         return new RegExp(value.r.p, value.r.f);
       if ('a' in value) {
@@ -164,12 +171,14 @@ export function source() {
       return { bi: value.toString() };
 
     if (isError(value)) {
-      const error = value;
-      if (error.stack?.startsWith(error.name + ': ' + error.message)) {
+      let stack;
+      if (value.stack?.startsWith(value.name + ': ' + value.message)) {
         // v8
-        return error.stack;
+        stack = value.stack;
+      } else {
+        stack = `${value.name}: ${value.message}\n${value.stack}`;
       }
-      return `${error.name}: ${error.message}\n${error.stack}`;
+      return { e: { n: value.name, m: value.message, s: stack } };
     }
     if (isDate(value))
       return { d: value.toJSON() };

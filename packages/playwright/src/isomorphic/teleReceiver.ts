@@ -19,8 +19,6 @@ import type { Metadata } from '../../types/test';
 import type * as reporterTypes from '../../types/testReporter';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
-// -- Reuse boundary -- Everything below this line is reused in the vscode extension.
-
 export type StringIntern = (s: string) => string;
 export type JsonLocation = reporterTypes.Location;
 export type JsonError = string;
@@ -135,12 +133,12 @@ export class TeleReporterReceiver {
   public isListing = false;
   private _rootSuite: TeleSuite;
   private _options: TeleReporterReceiverOptions;
-  private _reporter: Partial<ReporterV2>;
+  private _reporter: ReporterV2;
   private _tests = new Map<string, TeleTestCase>();
   private _rootDir!: string;
   private _config!: reporterTypes.FullConfig;
 
-  constructor(reporter: Partial<ReporterV2>, options: TeleReporterReceiverOptions = {}) {
+  constructor(reporter: ReporterV2, options: TeleReporterReceiverOptions = {}) {
     this._rootSuite = new TeleSuite('', 'root');
     this._options = options;
     this._reporter = reporter;
@@ -613,7 +611,7 @@ export function serializeRegexPatterns(patterns: string | RegExp | (string | Reg
 
 export function parseRegexPatterns(patterns: JsonPattern[]): (string | RegExp)[] {
   return patterns.map(p => {
-    if (p.s)
+    if (p.s !== undefined)
       return p.s;
     return new RegExp(p.r!.source, p.r!.flags);
   });

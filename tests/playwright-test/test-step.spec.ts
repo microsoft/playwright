@@ -17,37 +17,41 @@
 import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 const stepIndentReporter = `
+import { FullConfig, Location, Reporter, Suite, TestStep } from '@playwright/test/reporter';
 import * as path from 'path';
 
-function formatPrefix(str) {
+function formatPrefix(str: string) {
   return str.padEnd(10, ' ') + '|';
 }
 
-function formatLocation(location) {
+function formatLocation(location?: Location) {
+  if (!location)
+    throw new Error('Location is missing');
   return ' @ ' + path.basename(location.file) + ':' + location.line;
 }
 
-function formatStack(indent, stack) {
-  stack = stack.split('\\n').filter(s => s.startsWith('    at '));
+function formatStack(indent: string, rawStack: string) {
+  let stack = rawStack.split('\\n').filter(s => s.startsWith('    at '));
   stack = stack.map(s => {
     const match =  /^(    at.* )\\(?([^ )]+)\\)?/.exec(s);
-    let location = match[2];
+    let location = match![2];
     location = location.substring(location.lastIndexOf(path.sep) + 1);
     return '    at ' + location;
   });
   return indent + stack.join('\\n' + indent);
 }
 
-class Reporter {
+export default class MyReporter implements Reporter {
   printErrorLocation: boolean;
   skipErrorMessage: boolean;
+  suite!: Suite;
 
-  constructor(options) {
+  constructor(options: { printErrorLocation: boolean, skipErrorMessage: boolean }) {
     this.printErrorLocation = options.printErrorLocation;
     this.skipErrorMessage = options.skipErrorMessage;
   }
 
-  trimError(message) {
+  trimError(message: string) {
     if (this.skipErrorMessage)
       return '<error message>';
     const lines = message.split('\\n');
@@ -59,24 +63,24 @@ class Reporter {
   }
 
   // For easier debugging.
-  onStdOut(data) {
+  onStdOut(data: string|Buffer) {
     process.stdout.write(data.toString());
   }
   // For easier debugging.
-  onStdErr(data) {
+  onStdErr(data: string|Buffer) {
     process.stderr.write(data.toString());
   }
 
-  printStep(step, indent) {
+  printStep(step: TestStep, indent: string) {
     let location = '';
     if (step.location)
       location = formatLocation(step.location);
     console.log(formatPrefix(step.category) + indent + step.title + location);
     if (step.error) {
       const errorLocation = this.printErrorLocation ? formatLocation(step.error.location) : '';
-      console.log(formatPrefix(step.category) + indent + '↪ error: ' + this.trimError(step.error.message) + errorLocation);
+      console.log(formatPrefix(step.category) + indent + '↪ error: ' + this.trimError(step.error.message!) + errorLocation);
       if (this.printErrorLocation)
-        console.log(formatStack(formatPrefix(step.category) + indent, step.error.stack));
+        console.log(formatStack(formatPrefix(step.category) + indent, step.error.stack!));
     }
     indent += '  ';
     for (const child of step.steps)
@@ -94,9 +98,9 @@ class Reporter {
             this.printStep(step, '');
           for (const error of result.errors) {
             const errorLocation = this.printErrorLocation ? formatLocation(error.location) : '';
-            console.log(formatPrefix('') + this.trimError(error.message) + errorLocation);
+            console.log(formatPrefix('') + this.trimError(error.message!) + errorLocation);
             if (this.printErrorLocation)
-              console.log(formatStack(formatPrefix(''), error.stack));
+              console.log(formatStack(formatPrefix(''), error.stack!));
           }
         }
       }
@@ -104,7 +108,6 @@ class Reporter {
     processSuite(this.suite);
   }
 }
-module.exports = Reporter;
 `;
 
 test('should report api step hierarchy', async ({ runInlineTest }) => {
@@ -311,7 +314,9 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
       };
     `,
     'a.test.ts': `
-      expect.extend({
+      import { test, expect as baseExpect } from '@playwright/test';
+
+      const expect = baseExpect.extend({
         toBeWithinRange(received, floor, ceiling) {
           const pass = received >= floor && received <= ceiling;
           if (pass) {
@@ -338,7 +343,6 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
         },
       });
 
-      import { test, expect } from '@playwright/test';
       test('fail', async ({}) => {
         expect(15).toBeWithinRange(10, 20);
         await expect(1).toBeFailingAsync(22);
@@ -349,8 +353,8 @@ test('should report custom expect steps', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.output).toBe(`
 hook      |Before Hooks
-expect    |expect.toBeWithinRange @ a.test.ts:31
-expect    |expect.toBeFailingAsync @ a.test.ts:32
+expect    |expect.toBeWithinRange @ a.test.ts:32
+expect    |expect.toBeFailingAsync @ a.test.ts:33
 expect    |↪ error: Error: It fails!
 hook      |After Hooks
 hook      |Worker Cleanup
@@ -542,7 +546,7 @@ fixture   |  fixture: browser
 `);
 });
 
-test('should nest page.continue inside page.goto steps', async ({ runInlineTest }) => {
+test('should not nest page.continue inside page.goto steps', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `module.exports = { reporter: './reporter', };`,
@@ -566,7 +570,7 @@ fixture   |  fixture: page
 pw:api    |    browserContext.newPage
 pw:api    |page.route @ a.test.ts:4
 pw:api    |page.goto(http://localhost:1234) @ a.test.ts:5
-pw:api    |  route.fulfill @ a.test.ts:4
+pw:api    |route.fulfill @ a.test.ts:4
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -986,9 +990,12 @@ expect    |expect.poll.toHaveLength @ a.test.ts:14
 pw:api    |  page.goto(about:blank) @ a.test.ts:7
 test.step |  inner step attempt: 0 @ a.test.ts:8
 expect    |    expect.toBe @ a.test.ts:10
+expect    |  expect.toHaveLength @ a.test.ts:6
+expect    |  ↪ error: Error: expect(received).toHaveLength(expected)
 pw:api    |  page.goto(about:blank) @ a.test.ts:7
 test.step |  inner step attempt: 1 @ a.test.ts:8
 expect    |    expect.toBe @ a.test.ts:10
+expect    |  expect.toHaveLength @ a.test.ts:6
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -1035,9 +1042,12 @@ expect    |expect.poll.toBe @ a.test.ts:13
 expect    |  expect.toHaveText @ a.test.ts:7
 test.step |  iteration 1 @ a.test.ts:9
 expect    |    expect.toBeVisible @ a.test.ts:10
+expect    |  expect.toBe @ a.test.ts:6
+expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 expect    |  expect.toHaveText @ a.test.ts:7
 test.step |  iteration 2 @ a.test.ts:9
 expect    |    expect.toBeVisible @ a.test.ts:10
+expect    |  expect.toBe @ a.test.ts:6
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -1154,7 +1164,7 @@ pw:api    |    browserContext.newPage
 fixture   |  fixture: request
 pw:api    |    apiRequest.newContext
 pw:api    |page.waitForNavigation @ a.test.ts:5
-pw:api    |  page.goto(data:text/html,<button></button>) @ a.test.ts:6
+pw:api    |page.goto(data:text/html,<button></button>) @ a.test.ts:6
 pw:api    |page.click(button) @ a.test.ts:8
 pw:api    |locator.getByRole('button').click @ a.test.ts:9
 pw:api    |apiRequestContext.get(http://localhost2) @ a.test.ts:10
@@ -1238,4 +1248,53 @@ hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
 `);
+});
+
+test('should allow passing location to test.step', async ({ runInlineTest, runTSC }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'helper.ts': `
+      import { Location, TestType } from '@playwright/test';
+
+      export async function dummyStep(test: TestType<{}, {}>, title: string, action: () => void, location: Location) {
+        await test.step(title, action, { location });
+      }
+
+      export function getCustomLocation() {
+        return { file: 'dummy-file.ts', line: 123, column: 45 };
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      import { dummyStep, getCustomLocation } from './helper';
+
+      test('custom location test', async () => {
+        const location = getCustomLocation();
+        await dummyStep(test, 'Perform a dummy step', async () => {}, location);
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+test.step |Perform a dummy step @ dummy-file.ts:123
+hook      |After Hooks
+`);
+
+  const { exitCode } = await runTSC({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should work', async () => {
+        const location = { file: 'dummy-file.ts', line: 123, column: 45 };
+        await test.step('step1', () => {}, { location });
+      });
+    `
+  });
+  expect(exitCode).toBe(0);
 });

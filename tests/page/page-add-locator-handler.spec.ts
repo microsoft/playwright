@@ -87,7 +87,9 @@ test('should work with a custom check', async ({ page, server }) => {
   }
 });
 
-test('should work with locator.hover()', async ({ page, server }) => {
+test('should work with locator.hover()', async ({ page, server, headless }) => {
+  test.skip(!headless, 'Stray hovers in headed mode');
+
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
@@ -175,6 +177,24 @@ test('should work with toBeVisible', async ({ page, server }) => {
     (window as any).setupAnnoyingInterstitial('remove', 1);
   });
   await expect(page.locator('#target')).toBeVisible();
+  await expect(page.locator('#interstitial')).not.toBeVisible();
+  expect(called).toBe(1);
+});
+
+test('should work with locator.waitFor', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/handle-locator.html');
+
+  let called = 0;
+  await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
+    ++called;
+    await page.locator('#close').click();
+  });
+
+  await page.evaluate(() => {
+    (window as any).clicked = 0;
+    (window as any).setupAnnoyingInterstitial('remove', 1);
+  });
+  await page.locator('#target').waitFor();
   await expect(page.locator('#interstitial')).not.toBeVisible();
   expect(called).toBe(1);
 });

@@ -11,7 +11,9 @@ for (const pkg of workspace.packages()) {
   rmSync(path.join(pkg.path, 'src', 'generated'));
   const bundles = path.join(pkg.path, 'bundles');
   if (fs.existsSync(bundles) && fs.statSync(bundles).isDirectory()) {
-    for (const bundle of fs.readdirSync(bundles))
-      rmSync(path.join(bundles, bundle, 'node_modules'));
+    for (const bundle of fs.readdirSync(bundles, { withFileTypes: true })) {
+      if (bundle.isDirectory())
+        rmSync(path.join(bundles, bundle.name, 'node_modules'));
+    }
   }
 }

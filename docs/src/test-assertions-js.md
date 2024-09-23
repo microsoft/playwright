@@ -308,6 +308,8 @@ test('amount', async () => {
 });
 ```
 
+### Compatibility with expect library
+
 :::note
 Do not confuse Playwright's `expect` with the [`expect` library](https://jestjs.io/docs/expect). The latter is not fully integrated with Playwright test runner, so make sure to use Playwright's own `expect`.
 :::

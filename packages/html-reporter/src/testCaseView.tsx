@@ -23,8 +23,10 @@ import { ProjectLink } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
-import { hashStringToInt } from './labelUtils';
-import { msToString } from './uiUtils';
+import { linkifyText } from '@web/renderUtils';
+import { hashStringToInt, msToString } from './utils';
+import { clsx } from '@web/uiUtils';
+import { CopyToClipboardContainer } from './copyToClipboard';
 
 export const TestCaseView: React.FC<{
   projectNames: string[],
@@ -40,11 +42,19 @@ export const TestCaseView: React.FC<{
     return test.tags;
   }, [test]);
 
+  const visibleAnnotations = React.useMemo(() => {
+    return test?.annotations?.filter(annotation => !annotation.type.startsWith('_')) || [];
+  }, [test?.annotations]);
+
   return <div className='test-case-column vbox'>
     {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
     {test && <div className='test-case-title'>{test?.title}</div>}
     {test && <div className='hbox'>
-      <div className='test-case-location'>{test.location.file}:{test.location.line}</div>
+      <div className='test-case-location'>
+        <CopyToClipboardContainer value={`${test?.location.file}:${test?.location.line}`}>
+          {test.location.file}:{test.location.line}
+        </CopyToClipboardContainer>
+      </div>
       <div style={{ flex: 'auto' }}></div>
       <div className='test-case-duration'>{msToString(test.duration)}</div>
     </div>}
@@ -52,8 +62,8 @@ export const TestCaseView: React.FC<{
       {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
       {labels && <LabelsLinkView labels={labels} />}
     </div>}
-    {test && !!test.annotations.length && <AutoChip header='Annotations'>
-      {test?.annotations.map(annotation => <TestCaseAnnotationView annotation={annotation} />)}
+    {!!visibleAnnotations.length && <AutoChip header='Annotations'>
+      {visibleAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
     </AutoChip>}
     {test && <TabbedPane tabs={
       test.results.map((result, index) => ({
@@ -64,19 +74,11 @@ export const TestCaseView: React.FC<{
   </div>;
 };
 
-function renderAnnotationDescription(description: string) {
-  try {
-    if (['http:', 'https:'].includes(new URL(description).protocol))
-      return <a href={description} target='_blank' rel='noopener noreferrer'>{description}</a>;
-  } catch {}
-  return description;
-}
-
 function TestCaseAnnotationView({ annotation: { type, description } }: { annotation: TestCaseAnnotation }) {
   return (
     <div className='test-case-annotation'>
       <span style={{ fontWeight: 'bold' }}>{type}</span>
-      {description && <span>: {renderAnnotationDescription(description)}</span>}
+      {description && <CopyToClipboardContainer value={description}>: {linkifyText(description)}</CopyToClipboardContainer>}
     </div>
   );
 }
@@ -94,7 +96,7 @@ const LabelsLinkView: React.FC<React.PropsWithChildren<{
     <>
       {labels.map(label => (
         <a key={label} style={{ textDecoration: 'none', color: 'var(--color-fg-default)' }} href={`#?q=${label}`} >
-          <span style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={'label label-color-' + (hashStringToInt(label))}>
+          <span style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={clsx('label', 'label-color-' + hashStringToInt(label))}>
             {label.slice(1)}
           </span>
         </a>

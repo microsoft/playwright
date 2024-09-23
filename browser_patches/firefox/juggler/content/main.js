@@ -7,24 +7,10 @@ const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTr
 const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
 const {PageAgent} = ChromeUtils.import('chrome://juggler/content/content/PageAgent.js');
 
-const browsingContextToAgents = new Map();
 const helper = new Helper();
 
-function initialize(browsingContext, docShell, actor) {
-  if (browsingContext.parent) {
-    // For child frames, return agents from the main frame.
-    return browsingContextToAgents.get(browsingContext.top);
-  }
-
-  let data = browsingContextToAgents.get(browsingContext);
-  if (data) {
-    // Rebind from one main frame actor to another one.
-    data.channel.bindToActor(actor);
-    return data;
-  }
-
-  data = { channel: undefined, pageAgent: undefined, frameTree: undefined, failedToOverrideTimezone: false };
-  browsingContextToAgents.set(browsingContext, data);
+function initialize(browsingContext, docShell) {
+  const data = { channel: undefined, pageAgent: undefined, frameTree: undefined, failedToOverrideTimezone: false };
 
   const applySetting = {
     geolocation: (geolocation) => {
@@ -84,7 +70,6 @@ function initialize(browsingContext, docShell, actor) {
     data.frameTree.addBinding(worldName, name, script);
   data.frameTree.setInitScripts([...contextCrossProcessCookie.initScripts, ...pageCrossProcessCookie.initScripts]);
   data.channel = new SimpleChannel('', 'process-' + Services.appinfo.processID);
-  data.channel.bindToActor(actor);
   data.pageAgent = new PageAgent(data.channel, data.frameTree);
   docShell.fileInputInterceptionEnabled = !!pageCrossProcessCookie.interceptFileChooserDialog;
 

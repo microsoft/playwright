@@ -288,7 +288,7 @@ await Expect(page.GetByText("Strawberry")).ToBeVisibleAsync();
 
 ```java
 // Get the response from the HAR file
-page.routeFromHAR("./hars/fruit.har", new RouteFromHAROptions()
+page.routeFromHAR(Path.of("./hars/fruit.har"), new RouteFromHAROptions()
   .setUrl("*/**/api/v1/fruits")
   .setUpdate(true)
 );
@@ -386,7 +386,7 @@ await page.ExpectByTextAsync("Playwright", new() { Exact = true }).ToBeVisibleAs
 // Replay API requests from HAR.
 // Either use a matching response from the HAR,
 // or abort the request if nothing matches.
-page.routeFromHAR("./hars/fruit.har", new RouteFromHAROptions()
+page.routeFromHAR(Path.of("./hars/fruit.har"), new RouteFromHAROptions()
   .setUrl("*/**/api/v1/fruits")
   .setUpdate(false)
 );

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { clsx } from '@web/uiUtils';
 import './tabbedPane.css';
 import { Toolbar } from './toolbar';
 import * as React from 'react';
@@ -47,6 +48,7 @@ export const TabbedPane: React.FunctionComponent<{
         {mode === 'default' && <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }}>
           {[...tabs.map(tab => (
             <TabbedPaneTab
+              key={tab.id}
               id={tab.id}
               title={tab.title}
               count={tab.count}
@@ -62,15 +64,11 @@ export const TabbedPane: React.FunctionComponent<{
           }}>
             {tabs.map(tab => {
               let suffix = '';
-              if (tab.count === 1)
-                suffix = ' 🔵';
-              else if (tab.count)
-                suffix = ` 🔵✖️${tab.count}`;
-              if (tab.errorCount === 1)
-                suffix = ` 🔴`;
-              else if (tab.errorCount)
-                suffix = ` 🔴✖️${tab.errorCount}`;
-              return <option value={tab.id} selected={tab.id === selectedTab}>{tab.title}{suffix}</option>;
+              if (tab.count)
+                suffix = ` (${tab.count})`;
+              if (tab.errorCount)
+                suffix = ` (${tab.errorCount})`;
+              return <option key={tab.id} value={tab.id} selected={tab.id === selectedTab}>{tab.title}{suffix}</option>;
             })}
           </select>
         </div>}
@@ -99,7 +97,7 @@ export const TabbedPaneTab: React.FunctionComponent<{
   selected?: boolean,
   onSelect: (id: string) => void
 }> = ({ id, title, count, errorCount, selected, onSelect }) => {
-  return <div className={'tabbed-pane-tab ' + (selected ? 'selected' : '')}
+  return <div className={clsx('tabbed-pane-tab', selected && 'selected')}
     onClick={() => onSelect(id)}
     title={title}
     key={id}>

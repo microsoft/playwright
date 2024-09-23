@@ -18,7 +18,6 @@ export type Size = { width: number, height: number };
 export type Point = { x: number, y: number };
 export type Rect = Size & Point;
 export type Quad = [ Point, Point, Point, Point ];
-export type URLMatch = string | RegExp | ((url: URL) => boolean);
 export type TimeoutOptions = { timeout?: number };
 export type NameValue = { name: string, value: string };
 export type HeadersArray = NameValue[];

@@ -26,6 +26,8 @@ import { Selectors, SelectorsOwner } from './selectors';
 export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly _android: Android;
   readonly _electron: Electron;
+  readonly _bidiChromium: BrowserType;
+  readonly _bidiFirefox: BrowserType;
   readonly chromium: BrowserType;
   readonly firefox: BrowserType;
   readonly webkit: BrowserType;
@@ -45,6 +47,10 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this.webkit._playwright = this;
     this._android = Android.from(initializer.android);
     this._electron = Electron.from(initializer.electron);
+    this._bidiChromium = BrowserType.from(initializer.bidiChromium);
+    this._bidiChromium._playwright = this;
+    this._bidiFirefox = BrowserType.from(initializer.bidiFirefox);
+    this._bidiFirefox._playwright = this;
     this.devices = this._connection.localUtils()?.devices ?? {};
     this.selectors = new Selectors();
     this.errors = { TimeoutError };

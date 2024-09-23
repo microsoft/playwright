@@ -6,6 +6,164 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.47
+
+### Network Tab improvements
+
+The Network tab in the UI mode and trace viewer has several nice improvements:
+
+- filtering by asset type and URL
+- better display of query string parameters
+- preview of font assets
+
+![Network tab now has filters](https://github.com/user-attachments/assets/4bd1b67d-90bd-438b-a227-00b9e86872e2)
+
+
+### `--tsconfig` CLI option
+
+By default, Playwright will look up the closest tsconfig for each imported file using a heuristic. You can now specify a single tsconfig file in the command line, and Playwright will use it for all imported files, not only test files:
+
+```sh
+# Pass a specific tsconfig
+npx playwright test --tsconfig tsconfig.test.json
+```
+
+### [APIRequestContext] now accepts [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) and `string` as query parameters
+
+You can now pass [`URLSearchParams`](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) and `string` as query parameters to [APIRequestContext]:
+
+```ts
+test('query params', async ({ request }) => {
+  const searchParams = new URLSearchParams();
+  searchParams.set('userId', 1);
+  const response = await request.get(
+      'https://jsonplaceholder.typicode.com/posts',
+      {
+        params: searchParams // or as a string: 'userId=1'
+      }
+  );
+  // ...
+});
+``` 
+
+### Miscellaneous
+
+- The `mcr.microsoft.com/playwright:v1.47.0` now serves a Playwright image based on Ubuntu 24.04 Noble.
+  To use the 22.04 jammy-based image, please use `mcr.microsoft.com/playwright:v1.47.0-jammy` instead.
+- New option [`option: behavior`] in [`method: Page.removeAllListeners`], [`method: Browser.removeAllListeners`] and [`method: BrowserContext.removeAllListeners`] to wait for ongoing listeners to complete.
+- TLS client certificates can now be passed from memory by passing [`option: cert`] and [`option: key`] as buffers instead of file paths.
+- Attachments with a `text/html` content type can now be opened in a new tab in the HTML report. This is useful for including third-party reports or other HTML content in the Playwright test report and distributing it to your team.
+- [`option: noWaitAfter`] in [`method: Locator.selectOption`] was deprecated.
+- We've seen reports of WebGL in Webkit misbehaving on GitHub Actions `macos-13`. We recommend upgrading GitHub Actions to `macos-14`.
+
+### Browser Versions
+
+- Chromium 129.0.6668.29
+- Mozilla Firefox 130.0
+- WebKit 18.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 128
+- Microsoft Edge 128
+
+## Version 1.46
+
+<LiteYouTube
+  id="tQo7w-QQBsI"
+  title="Playwright 1.46"
+/>
+
+
+### TLS Client Certificates
+
+Playwright now allows you to supply client-side certificates, so that server can verify them, as specified by TLS Client Authentication.
+
+The following snippet sets up a client certificate for `https://example.com`:
+
+```ts
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  // ...
+  use: {
+    clientCertificates: [{
+      origin: 'https://example.com',
+      certPath: './cert.pem',
+      keyPath: './key.pem',
+      passphrase: 'mysecretpassword',
+    }],
+  },
+  // ...
+});
+```
+
+You can also provide client certificates to a particular [test project](./api/class-testproject#test-project-use) or as a parameter of [`method: Browser.newContext`] and [`method: APIRequest.newContext`].
+
+### `--only-changed` cli option
+
+New CLI option `--only-changed` will only run test files that have been changed since the last git commit or from a specific git "ref". This will also run all test files that import any changed files.
+
+```sh
+# Only run test files with uncommitted changes
+npx playwright test --only-changed
+
+# Only run test files changed relative to the "main" branch
+npx playwright test --only-changed=main
+```
+
+### Component Testing: New `router` fixture
+
+This release introduces an experimental `router` fixture to intercept and handle network requests in component testing.
+There are two ways to use the router fixture:
+
+- Call `router.route(url, handler)` that behaves similarly to [`method: Page.route`].
+- Call `router.use(handlers)` and pass [MSW library](https://mswjs.io) request handlers to it.
+
+Here is an example of reusing your existing MSW handlers in the test.
+
+```ts
+import { handlers } from '@src/mocks/handlers';
+
+test.beforeEach(async ({ router }) => {
+  // install common handlers before each test
+  await router.use(...handlers);
+});
+
+test('example test', async ({ mount }) => {
+  // test as usual, your handlers are active
+  // ...
+});
+```
+
+This fixture is only available in [component tests](./test-components#handling-network-requests).
+
+### UI Mode / Trace Viewer Updates
+
+- Test annotations are now shown in UI mode.
+- Content of text attachments is now rendered inline in the attachments pane.
+- New setting to show/hide routing actions like [`method: Route.continue`].
+- Request method and status are shown in the network details tab.
+- New button to copy source file location to clipboard.
+- Metadata pane now displays the `baseURL`.
+
+### Miscellaneous
+
+- New `maxRetries` option in [`method: APIRequestContext.fetch`] which retries on the `ECONNRESET` network error.
+- New option to [box a fixture](./test-fixtures#box-fixtures) to minimize the fixture exposure in test reports and error messages.
+- New option to provide a [custom fixture title](./test-fixtures#custom-fixture-title) to be used in test reports and error messages.
+
+### Browser Versions
+
+- Chromium 128.0.6613.18
+- Mozilla Firefox 128.0
+- WebKit 18.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 127
+- Microsoft Edge 127
+
 ## Version 1.45
 
 <LiteYouTube
@@ -44,7 +202,7 @@ See [the clock guide](./clock.md) for more details.
 
 - New CLI option `--fail-on-flaky-tests` that sets exit code to `1` upon any flaky tests. Note that by default, the test runner exits with code `0` when all failed tests recovered upon a retry. With this option, the test run will fail in such case.
 
-- New enviroment variable `PLAYWRIGHT_FORCE_TTY` controls whether built-in `list`, `line` and `dot` reporters assume a live terminal. For example, this could be useful to disable tty behavior when your CI environment does not handle ANSI control sequences well. Alternatively, you can enable tty behavior even when to live terminal is present, if you plan to post-process the output and handle control sequences.
+- New environment variable `PLAYWRIGHT_FORCE_TTY` controls whether built-in `list`, `line` and `dot` reporters assume a live terminal. For example, this could be useful to disable tty behavior when your CI environment does not handle ANSI control sequences well. Alternatively, you can enable tty behavior even when to live terminal is present, if you plan to post-process the output and handle control sequences.
 
   ```sh
   # Avoid TTY features that output ANSI control sequences
@@ -1841,7 +1999,7 @@ This version was also tested against the following stable channels:
 
 - We now ship a designated Python docker image `mcr.microsoft.com/playwright/python`. Please switch over to it if you use
   Python. This is the last release that includes Python inside our javascript `mcr.microsoft.com/playwright` docker image.
-- v1.20 is the last release to receive WebKit update for macOS 10.15 Catalina. Please update MacOS to keep using latest & greatest WebKit!
+- v1.20 is the last release to receive WebKit update for macOS 10.15 Catalina. Please update macOS to keep using latest & greatest WebKit!
 
 ### Browser Versions
 
@@ -2651,7 +2809,7 @@ This version of Playwright was also tested against the following stable channels
 
 #### New APIs
 
-- [`browserType.launch()`](./api/class-browsertype#browsertypelaunchoptions) now accepts the new `'channel'` option. Read more in [our documentation](./browsers).
+- [`method: BrowserType.launch`] now accepts the new `'channel'` option. Read more in [our documentation](./browsers).
 
 
 ## Version 1.9

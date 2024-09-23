@@ -64,3 +64,7 @@ export class ExpectError extends Error {
     this.stack = this.name + ': ' + this.message + '\n' + stringifyStackFrames(stackFrames).join('\n');
   }
 }
+
+export function isExpectError(e: unknown): e is ExpectError {
+  return e instanceof Error && 'matcherResult' in e;
+}

@@ -44,7 +44,10 @@ test('should poll predicate', async ({ runInlineTest }) => {
 test('should compile', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
+      import { test, expect as baseExpect } from '@playwright/test';
+      const expect = baseExpect.extend({
+        toBeWithinRange() { return { message: () => "is within range", pass: true }; },
+      })
       test('should poll sync predicate', async ({ page }) => {
         let i = 0;
         test.expect.poll(() => ++i).toBe(3);
@@ -57,6 +60,7 @@ test('should compile', async ({ runTSC }) => {
           return ++i;
         }).toBe(3);
         test.expect.poll(() => Promise.resolve(++i)).toBe(3);
+        expect.poll(() => Promise.resolve(++i)).toBeWithinRange();
 
         // @ts-expect-error
         await test.expect.poll(() => page.locator('foo')).toBeEnabled();
@@ -172,7 +176,9 @@ test('should support .not predicate', async ({ runInlineTest }) => {
 test('should support custom matchers', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `
-      expect.extend({
+      import { test, expect as baseExpect } from '@playwright/test';
+
+      const expect = baseExpect.extend({
         toBeWithinRange(received, floor, ceiling) {
           const pass = received >= floor && received <= ceiling;
           if (pass) {
@@ -191,10 +197,9 @@ test('should support custom matchers', async ({ runInlineTest }) => {
         },
       });
 
-      import { test, expect } from '@playwright/test';
       test('should poll', async () => {
         let i = 0;
-        await test.expect.poll(() => ++i).toBeWithinRange(3, Number.MAX_VALUE);
+        await expect.poll(() => ++i).toBeWithinRange(3, Number.MAX_VALUE);
       });
     `
   });
@@ -231,4 +236,46 @@ test('should show intermediate result for poll that spills over test time', asyn
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Expected: 2');
   expect(result.output).toContain('Received: 3');
+});
+
+test('should propagate promise rejections', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32256' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should fail', async () => {
+        await expect.poll(() => Promise.reject('some error')).toBe({ foo: 'baz' });
+      });
+    `
+  });
+
+  expect(result.output).toContain('some error');
+});
+
+test('should propagate string exception from async arrow function', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32256' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should fail', async () => {
+        await expect.poll(async () => { throw 'some error' }).toBe({ foo: 'baz' });
+      });
+    `
+  });
+
+  expect(result.output).toContain('some error');
+});
+
+test('should show custom message', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32582' }
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should fail', async () => {
+        await expect.poll(() => 1, { message: 'custom message', timeout: 500 }).toBe(2);
+      });
+    `,
+  });
+  expect(result.output).toContain('Error: custom message');
+  expect(result.output).toContain('Expected: 2');
+  expect(result.output).toContain('Received: 1');
 });

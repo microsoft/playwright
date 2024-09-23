@@ -24,7 +24,7 @@
     "esModuleInterop": true,
     "strict": true,
     "allowJs": false,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "resolveJsonModule": true,
     "noEmit": true,
     "noImplicitOverride": true,
@@ -35,5 +35,6 @@
   "include": ["packages"],
   "exclude": [
     "packages/*/lib",
-  ],
+    "packages/html-reporter/",
+  ]
 }

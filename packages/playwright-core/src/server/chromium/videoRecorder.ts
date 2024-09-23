@@ -53,7 +53,7 @@ export class VideoRecorder {
   private constructor(page: Page, ffmpegPath: string, progress: Progress) {
     this._progress = progress;
     this._ffmpegPath = ffmpegPath;
-    page.on(Page.Events.ScreencastFrame, frame => this.writeFrame(frame.buffer, frame.timestamp));
+    page.on(Page.Events.ScreencastFrame, frame => this.writeFrame(frame.buffer, frame.frameSwapWallTime / 1000));
   }
 
   private async _launch(options: types.PageScreencastOptions) {
@@ -98,7 +98,7 @@ export class VideoRecorder {
 
     const w = options.width;
     const h = options.height;
-    const args = `-loglevel error -f image2pipe -avioflags direct -fpsprobesize 0 -probesize 32 -analyzeduration 0 -c:v mjpeg -i - -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
+    const args = `-loglevel error -f image2pipe -avioflags direct -fpsprobesize 0 -probesize 32 -analyzeduration 0 -c:v mjpeg -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
     args.push(options.outputFile);
     const progress = this._progress;
 

@@ -16,7 +16,7 @@
 
 import type { SerializedValue } from '@protocol/channels';
 import type { ActionTraceEvent } from '@trace/trace';
-import { msToString } from '@web/uiUtils';
+import { clsx, msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './callTab.css';
 import { CopyToClipboard } from './copyToClipboard';
@@ -71,7 +71,7 @@ function renderProperty(property: Property, key: string) {
     text = `"${text}"`;
   return (
     <div key={key} className='call-line'>
-      {property.name}:<span className={`call-value ${property.type}`} title={property.text}>{text}</span>
+      {property.name}:<span className={clsx('call-value', property.type)} title={property.text}>{text}</span>
       { ['string', 'number', 'object', 'locator'].includes(property.type) &&
         <CopyToClipboard value={property.text} />
       }

@@ -1,5 +1,6 @@
 const http = require('http');
 
+console.log('output from server');
 console.error('error from server');
 
 const port = process.argv[2] || 3000;

@@ -31,37 +31,37 @@ export class Multiplexer implements ReporterV2 {
 
   onConfigure(config: FullConfig) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onConfigure(config));
+      wrap(() => reporter.onConfigure?.(config));
   }
 
   onBegin(suite: Suite) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onBegin(suite));
+      wrap(() => reporter.onBegin?.(suite));
   }
 
   onTestBegin(test: TestCase, result: TestResult) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onTestBegin(test, result));
+      wrap(() => reporter.onTestBegin?.(test, result));
   }
 
   onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onStdOut(chunk, test, result));
+      wrap(() => reporter.onStdOut?.(chunk, test, result));
   }
 
   onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onStdErr(chunk, test, result));
+      wrap(() => reporter.onStdErr?.(chunk, test, result));
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onTestEnd(test, result));
+      wrap(() => reporter.onTestEnd?.(test, result));
   }
 
   async onEnd(result: FullResult) {
     for (const reporter of this._reporters) {
-      const outResult = await wrapAsync(() => reporter.onEnd(result));
+      const outResult = await wrapAsync(() => reporter.onEnd?.(result));
       if (outResult?.status)
         result.status = outResult.status;
     }
@@ -70,28 +70,28 @@ export class Multiplexer implements ReporterV2 {
 
   async onExit() {
     for (const reporter of this._reporters)
-      await wrapAsync(() => reporter.onExit());
+      await wrapAsync(() => reporter.onExit?.());
   }
 
   onError(error: TestError) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onError(error));
+      wrap(() => reporter.onError?.(error));
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onStepBegin(test, result, step));
+      wrap(() => reporter.onStepBegin?.(test, result, step));
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
     for (const reporter of this._reporters)
-      wrap(() => reporter.onStepEnd(test, result, step));
+      wrap(() => reporter.onStepEnd?.(test, result, step));
   }
 
   printsToStdio(): boolean {
     return this._reporters.some(r => {
-      let prints = true;
-      wrap(() => prints = r.printsToStdio());
+      let prints = false;
+      wrap(() => prints = r.printsToStdio ? r.printsToStdio() : true);
       return prints;
     });
   }

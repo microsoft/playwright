@@ -31,7 +31,7 @@ packages.set('injected', packagesDir + '/playwright-core/src/server/injected/');
 packages.set('isomorphic', packagesDir + '/playwright-core/src/utils/isomorphic/');
 packages.set('testIsomorphic', packagesDir + '/playwright/src/isomorphic/');
 
-const peerDependencies = ['electron', 'react', 'react-dom', '@zip.js/zip.js'];
+const peerDependencies = ['electron', 'react', 'react-dom', 'react-dom/client', '@zip.js/zip.js'];
 
 const depsCache = {};
 
@@ -79,7 +79,7 @@ async function innerCheckDeps(root) {
   });
   const sourceFiles = program.getSourceFiles();
   const errors = [];
-  sourceFiles.filter(x => !x.fileName.includes('node_modules')).map(x => visit(x, x.fileName, x.getFullText()));
+  sourceFiles.filter(x => !x.fileName.includes(path.sep + 'node_modules' + path.sep) && !x.fileName.includes(path.sep + 'bundles' + path.sep)).map(x => visit(x, x.fileName, x.getFullText()));
 
   if (errors.length) {
     for (const error of errors)
@@ -244,7 +244,7 @@ async function innerCheckDeps(root) {
 function listAllFiles(dir) {
   const dirs = fs.readdirSync(dir, { withFileTypes: true });
   const result = [];
-  dirs.map(d => {
+  dirs.forEach(d => {
     const res = path.resolve(dir, d.name);
     if (d.isDirectory())
       result.push(...listAllFiles(res));

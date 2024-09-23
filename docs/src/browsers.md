@@ -230,13 +230,13 @@ Running 1 test using 1 worker
   ✓ [firefox] › example.spec.ts:3:1 › basic test (2s)
 ```
 
-The VS Code test runner runs your tests on the default browser of Chrome. To run on other/multiple browsers click the play button's dropdown from the testing sidebar and choose another profile or modify the default profile by clicking **Select Default Profile** and select the browsers you wish to run your tests on.
+With the VS Code extension you can run your tests on different browsers by checking the checkbox next to the browser name in the Playwright sidebar. These names are defined in your Playwright config file under the projects section. The default config when installing Playwright gives you 3 projects, Chromium, Firefox and WebKit. The first project is selected by default.
 
-<img width="1464" alt="selecting browsers" src="https://user-images.githubusercontent.com/13063165/221136731-9d4bc18f-38a4-4adb-997b-5b98c98aec7f.png" />
+![Projects section in VS Code extension](https://github.com/microsoft/playwright/assets/13063165/58fedea6-a2b9-4942-b2c7-2f3d482210cf)
 
-Choose a specific profile, various profiles or all profiles to run tests on.
+To run tests on multiple projects(browsers), select each project by checking the checkboxes next to the project name.
 
-<img width="1536" alt="choosing default profiles" src="https://user-images.githubusercontent.com/13063165/221669537-e5df8672-f50d-4ff1-96f9-141cd67e12f8.png" />
+![Selecting projects to run tests on](https://github.com/microsoft/playwright/assets/13063165/6dc86ef4-6097-481c-9cab-b6e053ec7ea6)
 
 ### Run tests on different browsers
 * langs: python
@@ -459,9 +459,13 @@ Google Chrome and Microsoft Edge respect enterprise policies, which include limi
 
 Playwright's Firefox version matches the recent [Firefox Stable](https://www.mozilla.org/en-US/firefox/new/) build. Playwright doesn't work with the branded version of Firefox since it relies on patches.
 
+Note that availability of certain features, which depend heavily on the underlying platform, may vary between operating systems. For example, available media codecs vary substantially between Linux, macOS and Windows.
+
 ### WebKit
 
-Playwright's WebKit version matches the recent WebKit trunk build, before it is used in Apple Safari and other WebKit-based browsers. This gives a lot of lead time to react on the potential browser update issues. Playwright doesn't work with the branded version of Safari since it relies on patches. Instead you can test against the recent WebKit build.
+Playwright's WebKit is derived from the latest WebKit main branch sources, often before these updates are incorporated into Apple Safari and other WebKit-based browsers. This gives a lot of lead time to react on the potential browser update issues. Playwright doesn't work with the branded version of Safari since it relies on patches. Instead, you can test using the most recent WebKit build.
+
+Note that availability of certain features, which depend heavily on the underlying platform, may vary between operating systems. For example, available media codecs vary substantially between Linux, macOS and Windows. While running WebKit on Linux CI is usually the most affordable option, for the closest-to-Safari experience you should run WebKit on mac, for example if you do video playback.
 
 ## Install behind a firewall or a proxy
 
@@ -763,7 +767,7 @@ pwsh bin/Debug/netX/playwright.ps1 install
 Playwright downloads Chromium, WebKit and Firefox browsers into the OS-specific cache folders:
 
 - `%USERPROFILE%\AppData\Local\ms-playwright` on Windows
-- `~/Library/Caches/ms-playwright` on MacOS
+- `~/Library/Caches/ms-playwright` on macOS
 - `~/.cache/ms-playwright` on Linux
 
 These browsers will take a few hundred megabytes of disk space when installed:

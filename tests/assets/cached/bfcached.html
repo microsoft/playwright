@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<link rel='stylesheet' href='./one-style.css'>
+<div>BFCached</div>
+<script>
+  window.didShow = new Promise(f => window.addEventListener('pageshow', event => {
+    console.log(event);
+    window._persisted = !!event.persisted;
+    window._event = event;
+    f({ persisted: !!event.persisted });
+  }));
+</script>

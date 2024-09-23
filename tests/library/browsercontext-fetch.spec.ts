@@ -122,22 +122,67 @@ it('should add session cookies to request', async ({ context, server }) => {
 });
 
 for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] as const) {
-  it(`${method} should support queryParams`, async ({ context, server }) => {
+  it(`${method} should support params passed as object`, async ({ context, server }) => {
     const url = new URL(server.EMPTY_PAGE);
-    url.searchParams.set('p1', 'v1');
+    url.searchParams.set('param1', 'value1');
     url.searchParams.set('парам2', 'знач2');
-    const [request] = await Promise.all([
+
+    const [request, response] = await Promise.all([
       server.waitForRequest(url.pathname + url.search),
-      context.request[method](server.EMPTY_PAGE + '?p1=foo', {
+      context.request[method](server.EMPTY_PAGE, {
         params: {
-          'p1': 'v1',
+          'param1': 'value1',
           'парам2': 'знач2',
         }
       }),
     ]);
-    const params = new URLSearchParams(request.url!.substr(request.url!.indexOf('?')));
-    expect(params.get('p1')).toEqual('v1');
-    expect(params.get('парам2')).toEqual('знач2');
+
+    const requestParams = new URLSearchParams(request.url.slice(request.url.indexOf('?')));
+    expect(requestParams.get('param1')).toEqual('value1');
+    expect(requestParams.get('парам2')).toBe('знач2');
+
+    const responseParams = new URL(response.url()).searchParams;
+    expect(responseParams.get('param1')).toEqual('value1');
+    expect(responseParams.get('парам2')).toBe('знач2');
+  });
+
+  it(`${method} should support params passed as URLSearchParams`, async ({ context, server }) => {
+    const url = new URL(server.EMPTY_PAGE);
+    const searchParams = new URLSearchParams();
+    searchParams.append('param1', 'value1');
+    searchParams.append('param1', 'value2');
+    searchParams.set('парам2', 'знач2');
+
+    const [request, response] = await Promise.all([
+      server.waitForRequest(url.pathname + '?' + searchParams),
+      context.request[method](server.EMPTY_PAGE, { params: searchParams }),
+    ]);
+
+    const requestParams = new URLSearchParams(request.url.slice(request.url.indexOf('?')));
+    expect(requestParams.getAll('param1')).toEqual(['value1', 'value2']);
+    expect(requestParams.get('парам2')).toBe('знач2');
+
+    const responseParams = new URL(response.url()).searchParams;
+    expect(responseParams.getAll('param1')).toEqual(['value1', 'value2']);
+    expect(responseParams.get('парам2')).toBe('знач2');
+  });
+
+  it(`${method} should support params passed as string`, async ({ context, server }) => {
+    const url = new URL(server.EMPTY_PAGE);
+    const params = '?param1=value1&param1=value2&парам2=знач2';
+
+    const [request, response] = await Promise.all([
+      server.waitForRequest(url.pathname + encodeURI(params)),
+      context.request[method](server.EMPTY_PAGE, { params }),
+    ]);
+
+    const requestParams = new URLSearchParams(request.url.slice(request.url.indexOf('?')));
+    expect(requestParams.getAll('param1')).toEqual(['value1', 'value2']);
+    expect(requestParams.get('парам2')).toBe('знач2');
+
+    const responseParams = new URL(response.url()).searchParams;
+    expect(responseParams.getAll('param1')).toEqual(['value1', 'value2']);
+    expect(responseParams.get('парам2')).toBe('знач2');
   });
 
   it(`${method} should support failOnStatusCode`, async ({ context, server }) => {
@@ -145,6 +190,8 @@ for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] 
       failOnStatusCode: true
     }).catch(e => e);
     expect(error.message).toContain('404 Not Found');
+    if (method !== 'head')
+      expect(error.message).toContain('Response text:\nFile not found:');
   });
 
   it(`${method}should support ignoreHTTPSErrors option`, async ({ context, httpsServer }) => {
@@ -913,6 +960,22 @@ it('should support application/x-www-form-urlencoded', async function({ context,
   expect(params.get('file')).toBe('f.js');
 });
 
+it('should support application/x-www-form-urlencoded with param lists', async function({ context, page, server }) {
+  const form = new FormData();
+  form.append('foo', '1');
+  form.append('foo', '2');
+  const [req] = await Promise.all([
+    server.waitForRequest('/empty.html'),
+    context.request.post(server.EMPTY_PAGE, { form })
+  ]);
+  expect(req.method).toBe('POST');
+  expect(req.headers['content-type']).toBe('application/x-www-form-urlencoded');
+  const body = (await req.postBody).toString('utf8');
+  const params = new URLSearchParams(body);
+  expect(req.headers['content-length']).toBe(String(params.toString().length));
+  expect(params.getAll('foo')).toEqual(['1', '2']);
+});
+
 it('should encode to application/json by default', async function({ context, page, server }) {
   const data = {
     firstName: 'John',
@@ -1288,7 +1351,7 @@ it('should not work after context dispose', async ({ context, server }) => {
   expect(await context.request.get(server.EMPTY_PAGE).catch(e => e.message)).toContain('Test ended.');
 });
 
-it('should retrty ECONNRESET', {
+it('should retry on ECONNRESET', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30978' }
 }, async ({ context, server }) => {
   let requestCount = 0;

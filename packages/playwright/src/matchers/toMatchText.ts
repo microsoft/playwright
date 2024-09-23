@@ -15,8 +15,6 @@
  */
 
 
-import type { ExpectedTextValue } from '@protocol/channels';
-import { isRegExp, isString } from 'playwright-core/lib/utils';
 import { expectTypes, callLogText } from '../util';
 import {
   printReceivedStringContainExpectedResult,
@@ -94,15 +92,4 @@ export async function toMatchText(
     log,
     timeout: timedOut ? timeout : undefined,
   };
-}
-
-export function toExpectedTextValues(items: (string | RegExp)[], options: { matchSubstring?: boolean, normalizeWhiteSpace?: boolean, ignoreCase?: boolean } = {}): ExpectedTextValue[] {
-  return items.map(i => ({
-    string: isString(i) ? i : undefined,
-    regexSource: isRegExp(i) ? i.source : undefined,
-    regexFlags: isRegExp(i) ? i.flags : undefined,
-    matchSubstring: options.matchSubstring,
-    ignoreCase: options.ignoreCase,
-    normalizeWhiteSpace: options.normalizeWhiteSpace,
-  }));
 }

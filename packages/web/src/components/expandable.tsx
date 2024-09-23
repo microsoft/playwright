@@ -16,6 +16,7 @@
 
 import * as React from 'react';
 import './expandable.css';
+import { clsx } from '../uiUtils';
 
 export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
   title: JSX.Element | string,
@@ -23,10 +24,10 @@ export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
   expanded: boolean,
   expandOnTitleClick?: boolean,
 }>> = ({ title, children, setExpanded, expanded, expandOnTitleClick }) => {
-  return <div className={'expandable' + (expanded ? ' expanded' : '')}>
+  return <div className={clsx('expandable', expanded && 'expanded')}>
     <div className='expandable-title' onClick={() => expandOnTitleClick && setExpanded(!expanded)}>
       <div
-        className={'codicon codicon-' + (expanded ? 'chevron-down' : 'chevron-right')}
+        className={clsx('codicon', expanded ? 'codicon-chevron-down' : 'codicon-chevron-right')}
         style={{ cursor: 'pointer', color: 'var(--vscode-foreground)', marginLeft: '5px' }}
         onClick={() => !expandOnTitleClick && setExpanded(!expanded)} />
       {title}

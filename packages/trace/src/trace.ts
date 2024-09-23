@@ -24,6 +24,7 @@ export type Size = { width: number, height: number };
 export type VERSION = 7;
 
 export type BrowserContextEventOptions = {
+  baseURL?: string,
   viewport?: Size,
   deviceScaleFactor?: number,
   isMobile?: boolean,
@@ -52,6 +53,7 @@ export type ScreencastFrameTraceEvent = {
   width: number,
   height: number,
   timestamp: number,
+  frameSwapWallTime?: number,
 };
 
 export type BeforeActionTraceEvent = {

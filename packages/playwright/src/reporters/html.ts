@@ -30,7 +30,7 @@ import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
-import EmptyReporter from './empty';
+import type { ReporterV2 } from './reporterV2';
 
 type TestEntry = {
   testCase: TestCase;
@@ -55,7 +55,7 @@ type HtmlReporterOptions = {
   _isTestServer?: boolean;
 };
 
-class HtmlReporter extends EmptyReporter {
+class HtmlReporter implements ReporterV2 {
   private config!: FullConfig;
   private suite!: Suite;
   private _options: HtmlReporterOptions;
@@ -68,19 +68,22 @@ class HtmlReporter extends EmptyReporter {
   private _topLevelErrors: TestError[] = [];
 
   constructor(options: HtmlReporterOptions) {
-    super();
     this._options = options;
   }
 
-  override printsToStdio() {
+  version(): 'v2' {
+    return 'v2';
+  }
+
+  printsToStdio() {
     return false;
   }
 
-  override onConfigure(config: FullConfig) {
+  onConfigure(config: FullConfig) {
     this.config = config;
   }
 
-  override onBegin(suite: Suite) {
+  onBegin(suite: Suite) {
     const { outputFolder, open, attachmentsBaseURL, host, port } = this._resolveOptions();
     this._outputFolder = outputFolder;
     this._open = open;
@@ -122,25 +125,25 @@ class HtmlReporter extends EmptyReporter {
     return !!relativePath && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
   }
 
-  override onError(error: TestError): void {
+  onError(error: TestError): void {
     this._topLevelErrors.push(error);
   }
 
-  override async onEnd(result: FullResult) {
+  async onEnd(result: FullResult) {
     const projectSuites = this.suite.suites;
     await removeFolders([this._outputFolder]);
     const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL);
     this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
   }
 
-  override async onExit() {
+  async onExit() {
     if (process.env.CI || !this._buildResult)
       return;
     const { ok, singleTestId } = this._buildResult;
     const shouldOpen = !this._options._isTestServer && (this._open === 'always' || (!ok && this._open === 'on-failure'));
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, this._host, this._port, singleTestId);
-    } else if (this._options._mode === 'test') {
+    } else if (this._options._mode === 'test' && !this._options._isTestServer) {
       const packageManagerCommand = getPackageManagerExecCommand();
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
       const hostArg = this._host ? ` --host ${this._host}` : '';
@@ -226,8 +229,6 @@ class HtmlBuilder {
   private _dataZipFile: ZipFile;
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
-  private _projectToId: Map<Suite, number> = new Map();
-  private _lastProjectId = 0;
 
   constructor(config: FullConfig, outputDir: string, attachmentsBaseURL: string) {
     this._config = config;
@@ -404,16 +405,6 @@ class HtmlBuilder {
         }),
       },
     };
-  }
-
-  private _projectId(suite: Suite): number {
-    const project = projectSuite(suite);
-    let id = this._projectToId.get(project);
-    if (!id) {
-      id = ++this._lastProjectId;
-      this._projectToId.set(project, id);
-    }
-    return id;
   }
 
   private _serializeAttachments(attachments: JsonAttachment[]) {
@@ -651,12 +642,6 @@ function createSnippets(stepsInFile: MultiMap<string, TestStep>) {
       step.snippet = snippetLines.join('\n');
     }
   }
-}
-
-function projectSuite(suite: Suite): Suite {
-  while (suite.parent?.parent)
-    suite = suite.parent;
-  return suite;
 }
 
 export default HtmlReporter;

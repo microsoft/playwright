@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import type { Locator } from 'playwright/test';
-import type { TestType } from '@playwright/experimental-ct-core';
+import type { TestType, Locator } from '@playwright/experimental-ct-core';
 
 type ComponentSlot = string | string[];
 type ComponentSlots = Record<string, ComponentSlot> & { default?: ComponentSlot };
@@ -56,7 +55,7 @@ export interface MountResultJsx extends Locator {
 export const test: TestType<{
   mount<HooksConfig>(
     component: JSX.Element,
-    options: MountOptionsJsx<HooksConfig>
+    options?: MountOptionsJsx<HooksConfig>
   ): Promise<MountResultJsx>;
   mount<HooksConfig, Component = unknown>(
     component: Component,
@@ -64,5 +63,4 @@ export const test: TestType<{
   ): Promise<MountResult<Component>>;
 }>;
 
-export { defineConfig, PlaywrightTestConfig } from '@playwright/experimental-ct-core';
-export { expect, devices } from 'playwright/test';
+export { defineConfig, PlaywrightTestConfig, expect, devices } from '@playwright/experimental-ct-core';

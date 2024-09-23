@@ -36,11 +36,7 @@ class ListReporter extends BaseReporter {
 
   constructor(options: { printSteps?: boolean } = {}) {
     super();
-    this._printSteps = isTTY && getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options.printSteps);
-  }
-
-  override printsToStdio() {
-    return true;
+    this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options.printSteps);
   }
 
   override onBegin(suite: Suite) {
@@ -52,13 +48,13 @@ class ListReporter extends BaseReporter {
     }
   }
 
-  override onTestBegin(test: TestCase, result: TestResult) {
-    super.onTestBegin(test, result);
+  onTestBegin(test: TestCase, result: TestResult) {
+    const index = String(this._resultIndex.size + 1);
+    this._resultIndex.set(result, index);
+
     if (!isTTY)
       return;
     this._maybeWriteNewLine();
-    const index = String(this._resultIndex.size + 1);
-    this._resultIndex.set(result, index);
     this._testRows.set(test, this._lastRow);
     const prefix = this._testPrefix(index, '');
     const line = colors.dim(formatTestTitle(this.config, test)) + this._retrySuffix(result);
@@ -75,33 +71,37 @@ class ListReporter extends BaseReporter {
     this._dumpToStdio(test, chunk, process.stderr);
   }
 
-  override onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
-    super.onStepBegin(test, result, step);
-    if (step.category !== 'test.step')
-      return;
-    const testIndex = this._resultIndex.get(result) || '';
-    if (!this._printSteps) {
-      if (isTTY)
-        this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
-      return;
-    }
+  private getStepIndex(testIndex: string, result: TestResult, step: TestStep): string {
+    if (this._stepIndex.has(step))
+      return this._stepIndex.get(step)!;
 
     const ordinal = ((result as any)[lastStepOrdinalSymbol] || 0) + 1;
     (result as any)[lastStepOrdinalSymbol] = ordinal;
     const stepIndex = `${testIndex}.${ordinal}`;
     this._stepIndex.set(step, stepIndex);
+    return stepIndex;
+  }
 
-    if (isTTY) {
+  onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
+    if (step.category !== 'test.step')
+      return;
+    const testIndex = this._resultIndex.get(result) || '';
+
+    if (!isTTY)
+      return;
+
+    if (this._printSteps) {
       this._maybeWriteNewLine();
       this._stepRows.set(step, this._lastRow);
-      const prefix = this._testPrefix(stepIndex, '');
+      const prefix = this._testPrefix(this.getStepIndex(testIndex, result, step), '');
       const line = test.title + colors.dim(stepSuffix(step));
       this._appendLine(line, prefix);
+    } else {
+      this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
     }
   }
 
-  override onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-    super.onStepEnd(test, result, step);
+  onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
     if (step.category !== 'test.step')
       return;
 
@@ -112,8 +112,8 @@ class ListReporter extends BaseReporter {
       return;
     }
 
-    const index = this._stepIndex.get(step)!;
-    const title = test.title + colors.dim(stepSuffix(step));
+    const index = this.getStepIndex(testIndex, result, step);
+    const title = isTTY ? test.title + colors.dim(stepSuffix(step)) : formatTestTitle(this.config, test, step);
     const prefix = this._testPrefix(index, '');
     let text = '';
     if (step.error)
@@ -204,7 +204,7 @@ class ListReporter extends BaseReporter {
   private _appendLine(text: string, prefix: string) {
     const line = prefix + this.fitToScreen(text, prefix);
     if (process.env.PW_TEST_DEBUG_REPORTERS) {
-      process.stdout.write(this._lastRow + ' : ' + line + '\n');
+      process.stdout.write('#' + this._lastRow + ' : ' + line + '\n');
     } else {
       process.stdout.write(line);
       process.stdout.write('\n');
@@ -215,7 +215,7 @@ class ListReporter extends BaseReporter {
   private _updateLine(row: number, text: string, prefix: string) {
     const line = prefix + this.fitToScreen(text, prefix);
     if (process.env.PW_TEST_DEBUG_REPORTERS)
-      process.stdout.write(row + ' : ' + line + '\n');
+      process.stdout.write('#' + row + ' : ' + line + '\n');
     else
       this._updateLineForTTY(row, line);
   }

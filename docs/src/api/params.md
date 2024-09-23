@@ -62,11 +62,18 @@ Maximum time in milliseconds. Defaults to `0` - no timeout. The default value ca
 [`method: Page.setDefaultTimeout`] methods.
 
 ## input-no-wait-after
+* deprecated: This option will default to `true` in the future.
 - `noWaitAfter` <[boolean]>
 
 Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
 opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating
 to inaccessible pages. Defaults to `false`.
+
+## input-no-wait-after-removed
+* deprecated: This option has no effect.
+- `noWaitAfter` <[boolean]>
+
+This option has no effect.
 
 ## input-force
 - `force` <[boolean]>
@@ -349,9 +356,15 @@ Emulates consistent window screen size available inside web page via `window.scr
 
 Target URL.
 
-## js-python-fetch-option-params
-* langs: js, python
-- `params` <[Object]<[string], [string]|[float]|[boolean]>>
+## js-fetch-option-params
+* langs: js
+- `params` <[Object]<[string], [string]|[number]|[boolean]>|[URLSearchParams]|[string]>
+
+Query parameters to be sent with the URL.
+
+## python-fetch-option-params
+* langs: python
+- `params` <[Object]<[string], [string]|[float]|[boolean]>|[string]>
 
 Query parameters to be sent with the URL.
 
@@ -361,7 +374,13 @@ Query parameters to be sent with the URL.
 
 Query parameters to be sent with the URL.
 
-## java-csharp-fetch-params
+## csharp-fetch-option-paramsString
+* langs: csharp
+- `paramsString` <[string]>
+
+Query parameters to be sent with the URL.
+
+## java-fetch-params
 * langs: java
 - `options` ?<[RequestOptions]>
 
@@ -386,8 +405,16 @@ Request timeout in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to d
 Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
 for all status codes.
 
-## js-python-fetch-option-form
-* langs: js, python
+## js-fetch-option-form
+* langs: js
+- `form` <[Object]<[string], [string]|[float]|[boolean]>|[FormData]>
+
+Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
+this request body. If this parameter is specified `content-type` header will be set to `application/x-www-form-urlencoded`
+unless explicitly provided.
+
+## python-fetch-option-form
+* langs: python
 - `form` <[Object]<[string], [string]|[float]|[boolean]>>
 
 Provides an object that will be serialized as html form using `application/x-www-form-urlencoded` encoding and sent as
@@ -462,7 +489,7 @@ Defaults to `20`. Pass `0` to not follow redirects.
 * langs: js, python, csharp
 - `maxRetries` <[int]>
 
-Maximum number of times socket errors should be retried. Currently only `ECONNRESET` error is retried. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
 
 ## evaluate-expression
 - `expression` <[string]>
@@ -513,6 +540,27 @@ Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `no_
 - `noViewport` <[boolean]>
 
 Does not enforce fixed viewport, allows resizing window in the headed mode.
+
+## context-option-clientCertificates
+- `clientCertificates` <[Array]<[Object]>>
+  - `origin` <[string]> Exact origin that the certificate is valid for. Origin includes `https` protocol, a hostname and optionally a port.
+  - `certPath` ?<[path]> Path to the file with the certificate in PEM format.
+  - `cert` ?<[Buffer]> Direct value of the certificate in PEM format.
+  - `keyPath` ?<[path]> Path to the file with the private key in PEM format.
+  - `key` ?<[Buffer]> Direct value of the private key in PEM format.
+  - `pfxPath` ?<[path]> Path to the PFX or PKCS12 encoded private key and certificate chain.
+  - `pfx` ?<[Buffer]> Direct value of the PFX or PKCS12 encoded private key and certificate chain.
+  - `passphrase` ?<[string]> Passphrase for the private key (PEM or PFX).
+
+TLS Client Authentication allows the server to request a client certificate and verify it.
+
+**Details**
+
+An array of client certificates to be used. Each certificate object must have either both `certPath` and `keyPath`, a single `pfxPath`, or their corresponding direct value equivalents (`cert` and `key`, or `pfx`). Optionally, `passphrase` property should be provided if the certificate is encrypted. The `origin` property should be provided with an exact match to the request origin that the certificate is valid for.
+
+:::note
+When using WebKit on macOS, accessing `localhost` will not pick up client certificates. You can make it work by replacing `localhost` with `local.playwright`.
+:::
 
 ## context-option-useragent
 - `userAgent` <[string]>
@@ -731,12 +779,6 @@ Actual picture of each page will be scaled down if necessary to fit the specifie
 
 Network proxy settings to use with this context. Defaults to none.
 
-:::note
-For Chromium on Windows the browser needs to be launched with the global proxy for this option to work. If all
-contexts override the proxy, global proxy will be never used and can be any string, for example
-`launch({ proxy: { server: 'http://per-context' } })`.
-:::
-
 ## context-option-strict
 - `strictSelectors` <[boolean]>
 
@@ -752,6 +794,16 @@ Whether to allow sites to register Service workers. Defaults to `'allow'`.
 * `'allow'`: [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) can be registered.
 * `'block'`: Playwright will block all registration of Service Workers.
 
+## remove-all-listeners-options-behavior
+* langs: js
+* since: v1.47
+- `behavior` <[RemoveAllListenersBehavior]<"wait"|"ignoreErrors"|"default">>
+
+Specifies whether to wait for already running listeners and what to do if they throw errors:
+* `'default'` - do not wait for current listener calls (if any) to finish, if the listener throws, it may result in unhandled error
+* `'wait'` - wait for current listener calls (if any) to finish
+* `'ignoreErrors'` - do not wait for current listener calls (if any) to finish, all errors thrown by the listeners after removal are silently caught
+
 ## unroute-all-options-behavior
 * langs: js, csharp, python
 * since: v1.41
@@ -761,6 +813,7 @@ Specifies whether to wait for already running handlers and what to do if they th
 * `'default'` - do not wait for current handler calls (if any) to finish, if unrouted handler throws, it may result in unhandled error
 * `'wait'` - wait for current handler calls (if any) to finish
 * `'ignoreErrors'` - do not wait for current handler calls (if any) to finish, all errors thrown by the handlers after unrouting are silently caught
+
 
 ## select-options-values
 * langs: java, js, csharp

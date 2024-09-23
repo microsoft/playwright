@@ -31,7 +31,7 @@ type BaseWorkerFixtures = {
 
 export type TraceViewerFixtures = {
   showTraceViewer: (trace: string[], options?: {host?: string, port?: number}) => Promise<TraceViewerPage>;
-  runAndTrace: (body: () => Promise<void>) => Promise<TraceViewerPage>;
+  runAndTrace: (body: () => Promise<void>, optsOverrides?: Parameters<BrowserContext['tracing']['start']>[0]) => Promise<TraceViewerPage>;
 };
 
 class TraceViewerPage {
@@ -44,6 +44,7 @@ class TraceViewerPage {
   consoleStacks: Locator;
   stackFrames: Locator;
   networkRequests: Locator;
+  metadataTab: Locator;
   snapshotContainer: Locator;
 
   constructor(public page: Page) {
@@ -57,6 +58,7 @@ class TraceViewerPage {
     this.stackFrames = page.getByTestId('stack-trace-list').locator('.list-view-entry');
     this.networkRequests = page.getByTestId('network-list').locator('.list-view-entry');
     this.snapshotContainer = page.locator('.snapshot-container iframe.snapshot-visible[name=snapshot]');
+    this.metadataTab = page.getByTestId('metadata-view');
   }
 
   async actionIconsText(action: string) {
@@ -93,6 +95,10 @@ class TraceViewerPage {
     await this.page.click('text="Network"');
   }
 
+  async showMetadataTab() {
+    await this.page.click('text="Metadata"');
+  }
+
   @step
   async snapshotFrame(actionName: string, ordinal: number = 0, hasSubframe: boolean = false): Promise<FrameLocator> {
     await this.selectAction(actionName, ordinal);
@@ -121,9 +127,9 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
   },
 
   runAndTrace: async ({ context, showTraceViewer }, use, testInfo) => {
-    await use(async (body: () => Promise<void>) => {
+    await use(async (body: () => Promise<void>, optsOverrides = {}) => {
       const traceFile = testInfo.outputPath('trace.zip');
-      await context.tracing.start({ snapshots: true, screenshots: true, sources: true });
+      await context.tracing.start({ snapshots: true, screenshots: true, sources: true, ...optsOverrides });
       await body();
       await context.tracing.stop({ path: traceFile });
       return showTraceViewer([traceFile]);

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+import { setupSocksForwardingServer } from '../config/proxy';
 import { playwrightTest as it, expect } from '../config/browserTest';
-import socks from 'socksv5';
 import net from 'net';
 
 it.skip(({ mode }) => mode.startsWith('service'));
@@ -144,7 +144,6 @@ it('should authenticate', async ({ browserType, server }) => {
 });
 
 it('should work with authenticate followed by redirect', async ({ browserName, browserType, server }) => {
-  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/10095');
   function hasAuth(req, res) {
     const auth = req.headers['proxy-authorization'];
     if (!auth) {
@@ -288,35 +287,13 @@ it('should use proxy with emulated user agent', async ({ browserType }) => {
   expect(requestText).toContain('MyUserAgent');
 });
 
-async function setupSocksForwardingServer(port: number, forwardPort: number){
-  const socksServer = socks.createServer((info, accept, deny) => {
-    if (!['127.0.0.1', 'fake-localhost-127-0-0-1.nip.io'].includes(info.dstAddr) || info.dstPort !== 1337) {
-      deny();
-      return;
-    }
-    const socket = accept(true);
-    if (socket) {
-      const dstSock = new net.Socket();
-      socket.pipe(dstSock).pipe(socket);
-      socket.on('close', () => dstSock.end());
-      socket.on('end', () => dstSock.end());
-      dstSock.on('error', () => socket.end());
-      dstSock.on('end', () => socket.end());
-      dstSock.setKeepAlive(false);
-      dstSock.connect(forwardPort, '127.0.0.1');
-    }
-  });
-  await new Promise<void>(resolve => socksServer.listen(port, 'localhost', resolve));
-  socksServer.useAuth(socks.auth.None());
-  return {
-    closeProxyServer: () => socksServer.close(),
-    proxyServerAddr: `socks5://localhost:${port}`,
-  };
-}
 
-it('should use SOCKS proxy for websocket requests', async ({ browserName, platform, browserType, server }, testInfo) => {
-  it.fixme(browserName === 'webkit' && platform !== 'linux');
-  const { proxyServerAddr, closeProxyServer } = await setupSocksForwardingServer(testInfo.workerIndex + 2048 + 2, server.PORT);
+it('should use SOCKS proxy for websocket requests', async ({ browserType, server }) => {
+  const { proxyServerAddr, closeProxyServer } = await setupSocksForwardingServer({
+    port: it.info().workerIndex + 2048 + 2,
+    forwardPort: server.PORT,
+    allowedTargetPort: 1337,
+  });
   const browser = await browserType.launch({
     proxy: {
       server: proxyServerAddr,
@@ -343,5 +320,5 @@ it('should use SOCKS proxy for websocket requests', async ({ browserName, platfo
   expect(value).toBe('incoming');
 
   await browser.close();
-  closeProxyServer();
+  await closeProxyServer();
 });

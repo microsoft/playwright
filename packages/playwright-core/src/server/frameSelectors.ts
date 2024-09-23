@@ -20,7 +20,7 @@ import { stringifySelector, type ParsedSelector, splitSelectorByFrame, InvalidSe
 import type { FrameExecutionContext, ElementHandle } from './dom';
 import type { JSHandle } from './javascript';
 import type { InjectedScript } from './injected/injectedScript';
-import { asLocator } from '../utils/isomorphic/locatorGenerators';
+import { asLocator } from '../utils';
 
 export type SelectorInfo = {
   parsed: ParsedSelector,
@@ -160,7 +160,7 @@ export class FrameSelectors {
 async function adoptIfNeeded<T extends Node>(handle: ElementHandle<T>, context: FrameExecutionContext): Promise<ElementHandle<T>> {
   if (handle._context === context)
     return handle;
-  const adopted = handle._page._delegate.adoptElementHandle(handle, context);
+  const adopted = await handle._page._delegate.adoptElementHandle(handle, context);
   handle.dispose();
   return adopted;
 }

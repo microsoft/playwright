@@ -16,6 +16,7 @@
 
 import { devices, defineConfig } from '@playwright/experimental-ct-react';
 import path from 'path';
+import url from 'url';
 
 export default defineConfig({
   testDir: 'src',
@@ -28,7 +29,7 @@ export default defineConfig({
     ctViteConfig: {
       resolve: {
         alias: {
-          '@web': path.resolve(__dirname, '../web/src'),
+          '@web': path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '../web/src'),
         },
       }
     },

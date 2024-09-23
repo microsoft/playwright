@@ -59,7 +59,7 @@ Headers with multiple entries, such as `Set-Cookie`, appear in the array multipl
 * since: v1.15
 - returns: <[null]|[string]>
 
-Returns the value of the header matching the name. The name is case insensitive. If multiple headers have
+Returns the value of the header matching the name. The name is case-insensitive. If multiple headers have
 the same name (except `set-cookie`), they are returned as a list separated by `, `. For `set-cookie`, the `\n` separator is used. If no headers are found, `null` is returned.
 
 ### param: Response.headerValue.name
@@ -72,7 +72,7 @@ Name of the header.
 * since: v1.15
 - returns: <[Array]<[string]>>
 
-Returns all values of the headers matching the name, for example `set-cookie`. The name is case insensitive.
+Returns all values of the headers matching the name, for example `set-cookie`. The name is case-insensitive.
 
 ### param: Response.headerValues.name
 * since: v1.15

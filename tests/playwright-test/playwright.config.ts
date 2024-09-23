@@ -47,9 +47,13 @@ export default defineConfig({
       testDir: path.join(__dirname, '../image_tools'),
       testIgnore: [path.join(__dirname, '../fixtures/**')],
     },
+    {
+      name: 'expect',
+      testDir: path.join(__dirname, '../expect'),
+    },
   ],
   reporter: reporters(),
   metadata: {
-    clock: 'clock-' + (process.env.PW_CLOCK || 'default'),
+    clock: process.env.PW_CLOCK ? 'clock-' + process.env.PW_CLOCK : undefined,
   },
 });

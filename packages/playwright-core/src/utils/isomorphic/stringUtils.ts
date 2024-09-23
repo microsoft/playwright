@@ -132,3 +132,11 @@ export function escapeRegExp(s: string) {
   // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }
+
+const escaped = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
+export function escapeHTMLAttribute(s: string): string {
+  return s.replace(/[&<>"']/ug, char => (escaped as any)[char]);
+}
+export function escapeHTML(s: string): string {
+  return s.replace(/[&<]/ug, char => (escaped as any)[char]);
+}

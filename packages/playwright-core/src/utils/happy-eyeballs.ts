@@ -20,12 +20,17 @@ import * as https from 'https';
 import * as net from 'net';
 import * as tls from 'tls';
 import { ManualPromise } from './manualPromise';
+import { assert } from './debug';
+import { monotonicTime } from './time';
 
 // Implementation(partial) of Happy Eyeballs 2 algorithm described in
 // https://www.rfc-editor.org/rfc/rfc8305
 
 // Same as in Chromium (https://source.chromium.org/chromium/chromium/src/+/5666ff4f5077a7e2f72902f3a95f5d553ea0d88d:net/socket/transport_connect_job.cc;l=102)
 const connectionAttemptDelayMs = 300;
+
+const kDNSLookupAt = Symbol('kDNSLookupAt')
+const kTCPConnectionAt = Symbol('kTCPConnectionAt')
 
 class HttpHappyEyeballsAgent extends http.Agent {
   createConnection(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket?: net.Socket) => void): net.Socket | undefined {
@@ -66,10 +71,47 @@ export async function createSocket(host: string, port: number): Promise<net.Sock
   });
 }
 
-async function createConnectionAsync(options: http.ClientRequestArgs, oncreate: ((err: Error | null, socket?: net.Socket) => void) | undefined, useTLS: boolean) {
+export async function createTLSSocket(options: tls.ConnectionOptions): Promise<tls.TLSSocket> {
+  return new Promise((resolve, reject) => {
+    assert(options.host, 'host is required');
+    if (net.isIP(options.host)) {
+      const socket = tls.connect(options)
+      socket.on('secureConnect', () => resolve(socket));
+      socket.on('error', error => reject(error));
+    } else {
+      createConnectionAsync(options, (err, socket) => {
+        if (err)
+          reject(err);
+        if (socket) {
+          socket.on('secureConnect', () => resolve(socket));
+          socket.on('error', error => reject(error));
+        }
+      }, true).catch(err => reject(err));
+    }
+  });
+}
+
+export async function createConnectionAsync(
+  options: http.ClientRequestArgs, 
+  oncreate: ((err: Error | null, socket?: tls.TLSSocket) => void) | undefined, 
+  useTLS: true
+): Promise<void>;
+
+export async function createConnectionAsync(
+  options: http.ClientRequestArgs, 
+  oncreate: ((err: Error | null, socket?: net.Socket) => void) | undefined, 
+  useTLS: false
+): Promise<void>;
+
+export async function createConnectionAsync(
+  options: http.ClientRequestArgs, 
+  oncreate: ((err: Error | null, socket?: any) => void) | undefined, 
+  useTLS: boolean
+): Promise<void> {
   const lookup = (options as any).__testHookLookup || lookupAddresses;
   const hostname = clientRequestArgsToHostName(options);
   const addresses = await lookup(hostname);
+  const dnsLookupAt = monotonicTime();
   const sockets = new Set<net.Socket>();
   let firstError;
   let errorCount = 0;
@@ -95,9 +137,13 @@ async function createConnectionAsync(options: http.ClientRequestArgs, oncreate: 
         port: options.port as number,
         host: address });
 
+    (socket as any)[kDNSLookupAt] = dnsLookupAt;
+
     // Each socket may fire only one of 'connect', 'timeout' or 'error' events.
     // None of these events are fired after socket.destroy() is called.
     socket.on('connect', () => {
+      (socket as any)[kTCPConnectionAt] = monotonicTime();
+
       connected.resolve();
       oncreate?.(null, socket);
       // TODO: Cache the result?
@@ -152,3 +198,9 @@ function clientRequestArgsToHostName(options: http.ClientRequestArgs): string {
   throw new Error('Either options.hostname or options.host must be provided');
 }
 
+export function timingForSocket(socket: net.Socket | tls.TLSSocket) {
+  return {
+    dnsLookupAt: (socket as any)[kDNSLookupAt] as number | undefined,
+    tcpConnectionAt: (socket as any)[kTCPConnectionAt] as number | undefined,
+  }
+}

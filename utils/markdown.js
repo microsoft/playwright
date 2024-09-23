@@ -124,7 +124,7 @@ function buildTree(lines) {
   const headerStack = [root];
 
   /** @type {{ indent: string, node: MarkdownNode }[]} */
-  let sectionStack = [];
+  const sectionStack = [];
 
   /**
    * @param {string} indent
@@ -133,7 +133,7 @@ function buildTree(lines) {
   const appendNode = (indent, node) => {
     while (sectionStack.length && sectionStack[0].indent.length >= indent.length)
       sectionStack.shift();
-    const parentNode = sectionStack.length ? sectionStack[0].node :headerStack[0];
+    const parentNode = sectionStack.length ? sectionStack[0].node : headerStack[0];
     if (!parentNode.children)
       parentNode.children = [];
     parentNode.children.push(node);
@@ -176,7 +176,7 @@ function buildTree(lines) {
       line = lines[++i];
       while (!line.trim().startsWith('```')) {
         if (line && !line.startsWith(indent)) {
-          const from = Math.max(0, i - 5)
+          const from = Math.max(0, i - 5);
           const to = Math.min(lines.length, from + 10);
           const snippet = lines.slice(from, to);
           throw new Error(`Bad code block: ${snippet.join('\n')}`);
@@ -200,7 +200,7 @@ function buildTree(lines) {
       const tokens = [];
       while (!line.trim().startsWith(':::')) {
         if (!line.startsWith(indent)) {
-          const from = Math.max(0, i - 5)
+          const from = Math.max(0, i - 5);
           const to = Math.min(lines.length, from + 10);
           const snippet = lines.slice(from, to);
           throw new Error(`Bad comment block: ${snippet.join('\n')}`);
@@ -254,7 +254,7 @@ function buildTree(lines) {
 }
 
 /**
- * @param {String} firstLine 
+ * @param {String} firstLine
  * @returns {[string, string|undefined]}
  */
 function parseCodeBlockMetadata(firstLine) {
@@ -279,7 +279,7 @@ function parse(content) {
 function render(nodes, options) {
   const result = [];
   let lastNode;
-  for (let node of nodes) {
+  for (const node of nodes) {
     if (node.type === 'null')
       continue;
     innerRenderMdNode('', node, /** @type {MarkdownNode} */ (lastNode), result, options);
@@ -322,7 +322,7 @@ function innerRenderMdNode(indent, node, lastNode, result, options) {
     const bothLinks = node.text.match(/\[[^\]]+\]:/) && lastNode && lastNode.type === 'text' && lastNode.text.match(/\[[^\]]+\]:/);
     if (!bothTables && !bothGen && !bothComments && !bothLinks && lastNode && lastNode.text)
       newLine();
-      result.push(wrapText(node.text, options, indent));
+    result.push(wrapText(node.text, options, indent));
     return;
   }
 
@@ -391,15 +391,15 @@ function tokenizeNoBreakLinks(text) {
  * @param {string} prefix
  * @returns {string}
  */
- function wrapText(text, options, prefix) {
+function wrapText(text, options, prefix) {
   if (options?.flattenText)
     text = text.replace(/↵/g, ' ');
   const lines = text.split(/[\n↵]/);
   const result = /** @type {string[]} */([]);
   const indent = ' '.repeat(prefix.length);
-  for (const line of lines) {
+  for (const line of lines)
     result.push(wrapLine(line, options?.maxColumns, result.length ? indent : prefix));
-  }
+
   return result.join('\n');
 }
 
@@ -463,24 +463,6 @@ function visit(node, visitor, depth = 0) {
 
 /**
  * @param {MarkdownNode[]} nodes
- * @param {boolean=} h3
- * @returns {string}
- */
-function generateToc(nodes, h3) {
-  const result = [];
-  visitAll(nodes, (node, depth) => {
-    if (node.type === 'h1' || node.type === 'h2' || (h3 && node.type === 'h3')) {
-      let link = node.text.toLowerCase();
-      link = link.replace(/[ ]+/g, '-');
-      link = link.replace(/[^\w-_]/g, '');
-      result.push(`${' '.repeat(depth * 2)}- [${node.text}](#${link})`);
-    }
-  });
-  return result.join('\n');
-}
-
-/**
- * @param {MarkdownNode[]} nodes
  * @param {string} language
  * @return {MarkdownNode[]}
  */
@@ -509,4 +491,4 @@ function filterNodesForLanguage(nodes, language) {
   return result;
 }
 
-module.exports = { parse, render, clone, visitAll, visit, generateToc, filterNodesForLanguage, wrapText };
+module.exports = { parse, render, clone, visitAll, visit, filterNodesForLanguage, wrapText };

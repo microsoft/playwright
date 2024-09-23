@@ -31,7 +31,7 @@ export const kBrowserCloseMessageId = -9999;
 
 // We emulate kPageProxyMessageReceived message to unify it with Browser.pageProxyCreated
 // and Browser.pageProxyDestroyed for easier management.
-export const kPageProxyMessageReceived = 'kPageProxyMessageReceived';
+export const kPageProxyMessageReceived = Symbol('kPageProxyMessageReceived');
 export type PageProxyMessageReceivedPayload = { pageProxyId: string, message: any };
 
 export class WKConnection {

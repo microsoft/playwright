@@ -21,6 +21,7 @@ import type {
   PlaywrightTestOptions,
   PlaywrightWorkerArgs,
   PlaywrightWorkerOptions,
+  BrowserContext,
 } from 'playwright/test';
 import type { InlineConfig } from 'vite';
 
@@ -33,8 +34,17 @@ export type PlaywrightTestConfig<T = {}, W = {}> = Omit<BasePlaywrightTestConfig
   };
 };
 
+interface RequestHandler {
+  run(args: { request: Request, requestId?: string, resolutionContext?: { baseUrl?: string } }): Promise<{ response?: Response } | null>;
+}
+
+export interface RouterFixture {
+  route(...args: Parameters<BrowserContext['route']>): Promise<void>;
+  use(...handlers: RequestHandler[]): Promise<void>;
+}
+
 export type TestType<ComponentFixtures> = BaseTestType<
-  PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures,
+  PlaywrightTestArgs & PlaywrightTestOptions & ComponentFixtures & { router: RouterFixture },
   PlaywrightWorkerArgs & PlaywrightWorkerOptions
 >;
 
@@ -45,4 +55,4 @@ export function defineConfig(config: PlaywrightTestConfig, ...configs: Playwrigh
 export function defineConfig<T>(config: PlaywrightTestConfig<T>, ...configs: PlaywrightTestConfig[]): PlaywrightTestConfig<T>;
 export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>, ...configs: PlaywrightTestConfig[]): PlaywrightTestConfig<T, W>;
 
-export { expect, devices } from 'playwright/test';
+export { expect, devices, Locator } from 'playwright/test';

@@ -20,6 +20,7 @@ import type { ConfigLocation, FullConfigInternal } from './config';
 import type { ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
 
 export type ConfigCLIOverrides = {
+  debug?: boolean;
   forbidOnly?: boolean;
   fullyParallel?: boolean;
   globalTimeout?: number;
@@ -33,6 +34,7 @@ export type ConfigCLIOverrides = {
   additionalReporters?: ReporterDescription[];
   shard?: { current: number, total: number };
   timeout?: number;
+  tsconfig?: string;
   ignoreSnapshots?: boolean;
   updateSnapshots?: 'all'|'none'|'missing';
   workers?: number | string;

@@ -23,7 +23,6 @@ import * as babel from '@babel/core';
 export { codeFrameColumns } from '@babel/code-frame';
 export { declare } from '@babel/helper-plugin-utils';
 export { types } from '@babel/core';
-export { parse } from '@babel/parser';
 import traverseFunction from '@babel/traverse';
 export const traverse = traverseFunction;
 
@@ -46,6 +45,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
         [require('@babel/plugin-syntax-async-generators')],
         [require('@babel/plugin-syntax-object-rest-spread')],
         [require('@babel/plugin-transform-export-namespace-from')],
+        [require('@babel/plugin-syntax-import-attributes'), { deprecatedAssertSyntax: true }],
         [
           // From https://github.com/G-Rath/babel-plugin-replace-ts-export-assignment/blob/8dfdca32c8aa428574b0cae341444fc5822f2dc6/src/index.ts
           (
@@ -87,8 +87,6 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
         }
       })
     ]);
-  } else {
-    plugins.push([require('@babel/plugin-syntax-import-attributes'), { deprecatedAssertSyntax: true }]);
   }
 
   return {

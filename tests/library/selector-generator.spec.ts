@@ -33,13 +33,22 @@ it.describe('selector generator', () => {
   });
 
   it('should prefer button over inner span', async ({ page }) => {
-    await page.setContent(`<button id=clickme><span></span></button>`);
-    expect(await generate(page, 'button')).toBe('#clickme');
+    await page.setContent(`<button><span>text</span></button>`);
+    expect(await generate(page, 'span')).toBe('internal:role=button[name="text"i]');
   });
 
   it('should prefer role=button over inner span', async ({ page }) => {
-    await page.setContent(`<div role=button><span></span></div>`);
-    expect(await generate(page, 'div')).toBe('internal:role=button');
+    await page.setContent(`<div role=button><span>text</span></div>`);
+    expect(await generate(page, 'span')).toBe('internal:role=button[name="text"i]');
+  });
+
+  it('should not prefer zero-sized button over inner span', async ({ page }) => {
+    await page.setContent(`
+      <button style="width:0;height:0;padding:0;border:0;overflow:visible;">
+        <span style="width:100px;height:100px;">text</span>
+      </button>
+    `);
+    expect(await generate(page, 'span')).toBe('internal:text="text"i');
   });
 
   it('should generate text and normalize whitespace', async ({ page }) => {

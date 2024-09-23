@@ -27,7 +27,7 @@ export { expect } from '@playwright/test';
 type CLITestArgs = {
   recorderPageGetter: () => Promise<Page>;
   closeRecorder: () => Promise<void>;
-  openRecorder: (options?: { testIdAttributeName: string }) => Promise<Recorder>;
+  openRecorder: (options?: { testIdAttributeName: string }) => Promise<{ recorder: Recorder, page: Page }>;
   runCLI: (args: string[], options?: { autoExitWhen?: string }) => CLIMock;
 };
 
@@ -50,12 +50,11 @@ const playwrightToAutomateInspector = require('../../../packages/playwright-core
 
 export const test = contextTest.extend<CLITestArgs>({
   recorderPageGetter: async ({ context, toImpl, mode }, run, testInfo) => {
-    process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
     testInfo.skip(mode.startsWith('service'));
     await run(async () => {
       while (!toImpl(context).recorderAppForTest)
         await new Promise(f => setTimeout(f, 100));
-      const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpoint;
+      const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpointForTest;
       const browser = await playwrightToAutomateInspector.chromium.connectOverCDP({ wsEndpoint });
       const c = browser.contexts()[0];
       return c.pages()[0] || await c.waitForEvent('page');
@@ -69,7 +68,6 @@ export const test = contextTest.extend<CLITestArgs>({
   },
 
   runCLI: async ({ childProcess, browserName, channel, headless, mode, launchOptions }, run, testInfo) => {
-    process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
     testInfo.skip(mode.startsWith('service'));
 
     await run((cliArgs, { autoExitWhen } = {}) => {
@@ -77,10 +75,11 @@ export const test = contextTest.extend<CLITestArgs>({
     });
   },
 
-  openRecorder: async ({ page, recorderPageGetter }, run) => {
+  openRecorder: async ({ context, recorderPageGetter }, run) => {
     await run(async (options?: { testIdAttributeName?: string }) => {
-      await (page.context() as any)._enableRecorder({ language: 'javascript', mode: 'recording', ...options });
-      return new Recorder(page, await recorderPageGetter());
+      await (context as any)._enableRecorder({ language: 'javascript', mode: 'recording', ...options });
+      const page = await context.newPage();
+      return { page, recorder: new Recorder(page, await recorderPageGetter()) };
     });
   },
 });
@@ -186,8 +185,15 @@ class Recorder {
     await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   }
 
-  async trustedClick() {
+  async trustedClick(options?: { button?: 'left' | 'right' | 'middle' }) {
+    await this.page.mouse.down(options);
+    await this.page.mouse.up(options);
+  }
+
+  async trustedDblclick() {
     await this.page.mouse.down();
+    await this.page.mouse.up();
+    await this.page.mouse.down({ clickCount: 2 });
     await this.page.mouse.up();
   }
 

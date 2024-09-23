@@ -35,12 +35,14 @@ import { ArtifactDispatcher } from './artifactDispatcher';
 import type { Download } from '../download';
 import { createGuid, urlMatches } from '../../utils';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
+import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_EventTarget = true;
   _type_Page = true;
   private _page: Page;
   _subscriptions = new Set<channels.PageUpdateSubscriptionParams['event']>();
+  _webSocketInterceptionPatterns: channels.PageSetWebSocketInterceptionPatternsParams['patterns'] = [];
 
   static from(parentScope: BrowserContextDispatcher, page: Page): PageDispatcher {
     return PageDispatcher.fromNullable(parentScope, page)!;
@@ -137,6 +139,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     return { response: ResponseDispatcher.fromNullable(this.parentScope(), await this._page.goForward(metadata, params)) };
   }
 
+  async forceGarbageCollection(params: channels.PageForceGarbageCollectionParams, metadata: CallMetadata): Promise<channels.PageForceGarbageCollectionResult> {
+    await this._page.forceGarbageCollection();
+  }
+
   async registerLocatorHandler(params: channels.PageRegisterLocatorHandlerParams, metadata: CallMetadata): Promise<channels.PageRegisterLocatorHandlerResult> {
     const uid = this._page.registerLocatorHandler(params.selector, params.noWaitAfter);
     return { uid };
@@ -180,6 +186,12 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       this._dispatchEvent('route', { route: RouteDispatcher.from(RequestDispatcher.from(this.parentScope(), request), route) });
       return true;
     });
+  }
+
+  async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
+    this._webSocketInterceptionPatterns = params.patterns;
+    if (params.patterns.length)
+      await WebSocketRouteDispatcher.installIfNeeded(this.parentScope(), this._page);
   }
 
   async expectScreenshot(params: channels.PageExpectScreenshotParams, metadata: CallMetadata): Promise<channels.PageExpectScreenshotResult> {
@@ -263,10 +275,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async touchscreenTap(params: channels.PageTouchscreenTapParams, metadata: CallMetadata): Promise<void> {
     await this._page.touchscreen.tap(params.x, params.y, metadata);
-  }
-
-  async touchscreenTouch(params: channels.PageTouchscreenTouchParams, metadata: CallMetadata) {
-    await this._page.touchscreen.touch(params.type, params.touchPoints, metadata);
   }
 
   async accessibilitySnapshot(params: channels.PageAccessibilitySnapshotParams, metadata: CallMetadata): Promise<channels.PageAccessibilitySnapshotResult> {

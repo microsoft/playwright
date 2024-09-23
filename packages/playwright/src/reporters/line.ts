@@ -23,10 +23,6 @@ class LineReporter extends BaseReporter {
   private _lastTest: TestCase | undefined;
   private _didBegin = false;
 
-  override printsToStdio() {
-    return true;
-  }
-
   override onBegin(suite: Suite) {
     super.onBegin(suite);
     const startingMessage = this.generateStartingMessage();
@@ -66,20 +62,17 @@ class LineReporter extends BaseReporter {
     console.log();
   }
 
-  override onTestBegin(test: TestCase, result: TestResult) {
-    super.onTestBegin(test, result);
+  onTestBegin(test: TestCase, result: TestResult) {
     ++this._current;
     this._updateLine(test, result, undefined);
   }
 
-  override onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
-    super.onStepBegin(test, result, step);
+  onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
     if (step.category === 'test.step')
       this._updateLine(test, result, step);
   }
 
-  override onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-    super.onStepEnd(test, result, step);
+  onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
     if (step.category === 'test.step')
       this._updateLine(test, result, step.parent);
   }

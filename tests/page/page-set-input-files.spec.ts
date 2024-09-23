@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
-import { attachFrame, chromiumVersionLessThan } from '../config/utils';
+import { attachFrame } from '../config/utils';
 
 import path from 'path';
 import fs from 'fs';
@@ -37,9 +37,9 @@ it('should upload the file', async ({ page, server, asset }) => {
   }, input)).toBe('contents of the file');
 });
 
-it('should upload a folder', async ({ page, server, browserName, headless, browserVersion, isAndroid }) => {
+it('should upload a folder', async ({ page, server, browserName, headless, browserMajorVersion, isAndroid }) => {
   it.skip(isAndroid);
-  it.skip(os.platform() === 'darwin' && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS-12 is frozen');
+  it.skip(browserName === 'webkit' && os.platform() === 'darwin' && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS-12 is frozen');
 
   await page.goto(server.PREFIX + '/input/folderupload.html');
   const input = await page.$('input');
@@ -54,7 +54,7 @@ it('should upload a folder', async ({ page, server, browserName, headless, brows
   await input.setInputFiles(dir);
   expect(new Set(await page.evaluate(e => [...e.files].map(f => f.webkitRelativePath), input))).toEqual(new Set([
     // https://issues.chromium.org/issues/345393164
-    ...((browserName === 'chromium' && headless && !process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW && chromiumVersionLessThan(browserVersion, '127.0.6533.0')) ? [] : ['file-upload-test/sub-dir/really.txt']),
+    ...((browserName === 'chromium' && headless && !process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW && browserMajorVersion < 127) ? [] : ['file-upload-test/sub-dir/really.txt']),
     'file-upload-test/file1.txt',
     'file-upload-test/file2',
   ]));
@@ -70,9 +70,9 @@ it('should upload a folder', async ({ page, server, browserName, headless, brows
   }
 });
 
-it('should upload a folder and throw for multiple directories', async ({ page, server, isAndroid }) => {
+it('should upload a folder and throw for multiple directories', async ({ page, server, isAndroid, browserName }) => {
   it.skip(isAndroid);
-  it.skip(os.platform() === 'darwin' && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS-12 is frozen');
+  it.skip(browserName === 'webkit' && os.platform() === 'darwin' && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS-12 is frozen');
 
   await page.goto(server.PREFIX + '/input/folderupload.html');
   const input = await page.$('input');
@@ -89,9 +89,9 @@ it('should upload a folder and throw for multiple directories', async ({ page, s
   ])).rejects.toThrow('Multiple directories are not supported');
 });
 
-it('should throw if a directory and files are passed', async ({ page, server, isAndroid }) => {
+it('should throw if a directory and files are passed', async ({ page, server, isAndroid, browserName }) => {
   it.skip(isAndroid);
-  it.skip(os.platform() === 'darwin' && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS-12 is frozen');
+  it.skip(browserName === 'webkit' && os.platform() === 'darwin' && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS-12 is frozen');
 
   await page.goto(server.PREFIX + '/input/folderupload.html');
   const input = await page.$('input');
@@ -106,9 +106,9 @@ it('should throw if a directory and files are passed', async ({ page, server, is
   ])).rejects.toThrow('File paths must be all files or a single directory');
 });
 
-it('should throw when uploading a folder in a normal file upload input', async ({ page, server, isAndroid }) => {
+it('should throw when uploading a folder in a normal file upload input', async ({ page, server, isAndroid, browserName }) => {
   it.skip(isAndroid);
-  it.skip(os.platform() === 'darwin' && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS-12 is frozen');
+  it.skip(browserName === 'webkit' && os.platform() === 'darwin' && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS-12 is frozen');
 
   await page.goto(server.PREFIX + '/input/fileupload.html');
   const input = await page.$('input');
@@ -118,6 +118,15 @@ it('should throw when uploading a folder in a normal file upload input', async (
     await fs.promises.writeFile(path.join(dir, 'file1.txt'), 'file1 content');
   }
   await expect(input.setInputFiles(dir)).rejects.toThrow('File input does not support directories, pass individual files instead');
+});
+
+it('should throw when uploading a file in a directory upload input', async ({ page, server, isAndroid, asset, browserName }) => {
+  it.skip(isAndroid);
+  it.skip(browserName === 'webkit' && os.platform() === 'darwin' && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS-12 is frozen');
+
+  await page.goto(server.PREFIX + '/input/folderupload.html');
+  const input = await page.$('input');
+  await expect(input.setInputFiles(asset('file to upload.txt'))).rejects.toThrow('[webkitdirectory] input requires passing a path to a directory');
 });
 
 it('should upload a file after popup', async ({ page, server, asset }) => {
@@ -341,8 +350,7 @@ it('should emit event via prepend', async ({ page, server }) => {
   expect(chooser).toBeTruthy();
 });
 
-it('should emit event for iframe', async ({ page, server, browserName }) => {
-  it.skip(browserName === 'firefox');
+it('should emit event for iframe', async ({ page, server }) => {
   const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await frame.setContent(`<input type=file>`);
   const [chooser] = await Promise.all([

@@ -20,8 +20,58 @@ import { ImageDiffView } from '@web/shared/imageDiffView';
 import type { MultiTraceModel } from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
+import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
+import { isTextualMimeType } from '@isomorphic/mimeType';
+import { Expandable } from '@web/components/expandable';
+import { linkifyText } from '@web/renderUtils';
 
 type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
+
+type ExpandableAttachmentProps = {
+  attachment: Attachment;
+};
+
+const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> = ({ attachment }) => {
+  const [expanded, setExpanded] = React.useState(false);
+  const [attachmentText, setAttachmentText] = React.useState<string | null>(null);
+  const [placeholder, setPlaceholder] = React.useState<string | null>(null);
+
+  const isTextAttachment = isTextualMimeType(attachment.contentType);
+  const hasContent = !!attachment.sha1 || !!attachment.path;
+
+  React.useEffect(() => {
+    if (expanded && attachmentText === null && placeholder === null) {
+      setPlaceholder('Loading ...');
+      fetch(attachmentURL(attachment)).then(response => response.text()).then(text => {
+        setAttachmentText(text);
+        setPlaceholder(null);
+      }).catch(e => {
+        setPlaceholder('Failed to load: ' + e.message);
+      });
+    }
+  }, [expanded, attachmentText, placeholder, attachment]);
+
+  const title = <span style={{ marginLeft: 5 }}>
+    {linkifyText(attachment.name)} {hasContent && <a style={{ marginLeft: 5 }} href={downloadURL(attachment)}>download</a>}
+  </span>;
+
+  if (!isTextAttachment || !hasContent)
+    return <div style={{ marginLeft: 20 }}>{title}</div>;
+
+  return <>
+    <Expandable title={title} expanded={expanded} setExpanded={setExpanded} expandOnTitleClick={true}>
+      {placeholder && <i>{placeholder}</i>}
+    </Expandable>
+    {expanded && attachmentText !== null && <CodeMirrorWrapper
+      text={attachmentText}
+      readOnly
+      mimeType={attachment.contentType}
+      linkify={true}
+      lineNumbers={true}
+      wrapLines={false}>
+    </CodeMirrorWrapper>}
+  </>;
+};
 
 export const AttachmentsTab: React.FunctionComponent<{
   model: MultiTraceModel | undefined,
@@ -47,8 +97,8 @@ export const AttachmentsTab: React.FunctionComponent<{
         const entry = diffMap.get(name) || { expected: undefined, actual: undefined, diff: undefined };
         entry[type] = attachment;
         diffMap.set(name, entry);
-      }
-      if (attachment.contentType.startsWith('image/')) {
+        attachments.delete(attachment);
+      } else if (attachment.contentType.startsWith('image/')) {
         screenshots.add(attachment);
         attachments.delete(attachment);
       }
@@ -63,11 +113,11 @@ export const AttachmentsTab: React.FunctionComponent<{
     {[...diffMap.values()].map(({ expected, actual, diff }) => {
       return <>
         {expected && actual && <div className='attachments-section'>Image diff</div>}
-        {expected && actual && <ImageDiffView diff={{
+        {expected && actual && <ImageDiffView noTargetBlank={true} diff={{
           name: 'Image diff',
-          expected: { attachment: { ...expected, path: attachmentURL(expected) }, title: 'Expected' },
-          actual: { attachment: { ...actual, path: attachmentURL(actual) } },
-          diff: diff ? { attachment: { ...diff, path: attachmentURL(diff) } } : undefined,
+          expected: { attachment: { ...expected, path: downloadURL(expected) }, title: 'Expected' },
+          actual: { attachment: { ...actual, path: downloadURL(actual) } },
+          diff: diff ? { attachment: { ...diff, path: downloadURL(diff) } } : undefined,
         }} />}
       </>;
     })}
@@ -76,20 +126,35 @@ export const AttachmentsTab: React.FunctionComponent<{
       const url = attachmentURL(a);
       return <div className='attachment-item' key={`screenshot-${i}`}>
         <div><img draggable='false' src={url} /></div>
-        <div><a target='_blank' href={url}>{a.name}</a></div>
+        <div><a target='_blank' href={url} rel='noreferrer'>{a.name}</a></div>
       </div>;
     })}
     {attachments.size ? <div className='attachments-section'>Attachments</div> : undefined}
     {[...attachments.values()].map((a, i) => {
-      return <div className='attachment-item' key={`attachment-${i}`}>
-        <a href={attachmentURL(a) + '&download'}>{a.name}</a>
+      return <div className='attachment-item' key={attachmentKey(a, i)}>
+        <ExpandableAttachment attachment={a} />
       </div>;
     })}
   </div>;
 };
 
-function attachmentURL(attachment: Attachment) {
-  if (attachment.sha1)
-    return 'sha1/' + attachment.sha1 + '?trace=' + encodeURIComponent(attachment.traceUrl);
-  return 'file?path=' + encodeURIComponent(attachment.path!);
+function attachmentURL(attachment: Attachment, queryParams: Record<string, string> = {}) {
+  const params = new URLSearchParams(queryParams);
+  if (attachment.sha1) {
+    params.set('trace', attachment.traceUrl);
+    return 'sha1/' + attachment.sha1 + '?' + params.toString();
+  }
+  params.set('path', attachment.path!);
+  return 'file?' + params.toString();
+}
+
+function downloadURL(attachment: Attachment) {
+  const params = { dn: attachment.name } as Record<string, string>;
+  if (attachment.contentType)
+    params.dct = attachment.contentType;
+  return attachmentURL(attachment, params);
+}
+
+function attachmentKey(attachment: Attachment, index: number) {
+  return index + '-' + (attachment.sha1 ? `sha1-` + attachment.sha1 : `path-` + attachment.path);
 }

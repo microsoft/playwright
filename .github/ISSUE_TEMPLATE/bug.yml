@@ -24,6 +24,7 @@ body:
         ## Make a minimal reproduction
         To file the report, you will need a GitHub repository with a minimal (but complete) example and simple/clear steps on how to reproduce the bug.
         The simpler you can make it, the more likely we are to successfully verify and fix the bug. You can create a new project with `npm init playwright@latest new-project` and then add the test code there.
+        Please make sure you only include the code and the dependencies absolutely necessary for your repro. Due to the security considerations, we can only run the code we trust. Major web frameworks are Ok to use, but smaller convenience libraries are not. 
   - type: markdown
     attributes:
       value: |

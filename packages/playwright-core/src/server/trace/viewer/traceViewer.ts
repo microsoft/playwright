@@ -47,6 +47,7 @@ export type TraceViewerRedirectOptions = {
   webApp?: string;
   isServer?: boolean;
   outputDir?: string;
+  updateSnapshots?: 'all' | 'none' | 'missing';
 };
 
 export type TraceViewerAppOptions = {
@@ -108,6 +109,8 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
 
 export async function installRootRedirect(server: HttpServer, traceUrls: string[], options: TraceViewerRedirectOptions) {
   const params = new URLSearchParams();
+  if (path.sep !== path.posix.sep)
+    params.set('pathSeparator', path.sep);
   for (const traceUrl of traceUrls)
     params.append('trace', traceUrl);
   if (server.wsGuid())
@@ -132,6 +135,8 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
     params.append('headed', '');
   if (options.outputDir)
     params.append('outputDir', options.outputDir);
+  if (options.updateSnapshots)
+    params.append('updateSnapshots', options.updateSnapshots);
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
 

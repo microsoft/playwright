@@ -400,10 +400,18 @@ function generateNameDefault(member, name, t, parent) {
       if (names[2] === names[1])
         names.pop(); // get rid of duplicates, cheaply
       let attemptedName = names.pop();
-      const typesDiffer = function(left, right) {
+      const typesDiffer = function(/** @type {Documentation.Type} */ left, /** @type {Documentation.Type} */ right) {
         if (left.expression && right.expression)
           return left.expression !== right.expression;
-        return JSON.stringify(right.properties) !== JSON.stringify(left.properties);
+        const toExpression = (/** @type {Documentation.Member} */ t) => t.name + t.type?.expression;
+        const leftOverRightProperties = new Set(left.properties?.map(toExpression) ?? []);
+        for (const prop of right.properties ?? []) {
+          const expression = toExpression(prop);
+          if (!leftOverRightProperties.has(expression))
+            return true;
+          leftOverRightProperties.delete(expression);
+        }
+        return leftOverRightProperties.size > 0;
       };
       while (true) {
         // crude attempt at removing plurality

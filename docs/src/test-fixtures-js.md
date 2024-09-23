@@ -454,10 +454,6 @@ test('example test', async ({ slowFixture }) => {
 
 ## Fixtures-options
 
-:::note
-Overriding custom fixtures in the config file has changed in version 1.18. [Learn more](./release-notes#breaking-change-custom-config-options).
-:::
-
 Playwright Test supports running multiple test projects that can be separately configured. You can use "option" fixtures to make your configuration options declarative and type-checked. Learn more about [parametrizing tests](./test-parameterize.md).
 
 Below we'll create a `defaultItem` option in addition to the `todoPage` fixture from other examples. This option will be set in configuration file. Note the tuple syntax and `{ option: true }` argument.
@@ -552,6 +548,30 @@ export default defineConfig<MyOptions>({
       use: { defaultItem: 'Exercise!' },
     },
   ]
+});
+```
+
+**Array as an option value**
+
+If the value of your option is an array, for example `[{ name: 'Alice' }, { name: 'Bob' }]`, you'll need to wrap it into an extra array when providing the value. This is best illustrated with an example.
+
+```js
+type Person = { name: string };
+const test = base.extend<{ persons: Person[] }>({
+  // Declare the option, default value is an empty array.
+  persons: [[], { option: true }],
+});
+
+// Option value is an array of persons.
+const actualPersons = [{ name: 'Alice' }, { name: 'Bob' }];
+test.use({
+  // CORRECT: Wrap the value into an array and pass the scope.
+  persons: [actualPersons, { scope: 'test' }],
+});
+
+test.use({
+  // WRONG: passing an array value directly will not work.
+  persons: actualPersons,
 });
 ```
 
@@ -675,27 +695,91 @@ test('passes', async ({ database, page, a11y }) => {
 
 ## Box fixtures
 
-You can minimize the fixture exposure to the reporters UI and error messages via boxing it:
+Usually, custom fixtures are reported as separate steps in in the UI mode, Trace Viewer and various test reports. They also appear in error messages from the test runner. For frequently-used fixtures, this can mean lots of noise. You can stop the fixtures steps from being shown in the UI by "boxing" it.
 
 ```js
 import { test as base } from '@playwright/test';
 
 export const test = base.extend({
-  _helperFixture: [async ({}, use, testInfo) => {
+  helperFixture: [async ({}, use, testInfo) => {
+    // ...
   }, { box: true }],
 });
 ```
 
+This is useful for non-interesting helper fixtures. For example, an [automatic](./test-fixtures.md#automatic-fixtures) fixture that sets up some common data can be safely hidden from a test report.
+
 ## Custom fixture title
 
-You can assign a custom title to a fixture to be used in error messages and in the
-reporters UI:
+Instead of the usual fixture name, you can give fixtures a custom title that will be shown in test reports and error messages.
 
 ```js
 import { test as base } from '@playwright/test';
 
 export const test = base.extend({
-  _innerFixture: [async ({}, use, testInfo) => {
+  innerFixture: [async ({}, use, testInfo) => {
+    // ...
   }, { title: 'my fixture' }],
 });
 ```
+
+## Adding global beforeEach/afterEach hooks
+
+[`method: Test.beforeEach`] and [`method: Test.afterEach`] hooks run before/after each test declared in the same file and same [`method: Test.describe`] block (if any). If you want to declare hooks that run before/after each test globally, you can declare them as auto fixtures like this:
+
+```ts title="fixtures.ts"
+import { test as base } from '@playwright/test';
+
+export const test = base.extend<{ forEachTest: void }>({
+  forEachTest: [async ({ page }, use) => {
+    // This code runs before every test.
+    await page.goto('http://localhost:8000');
+    await use();
+    // This code runs after every test.
+    console.log('Last URL:', page.url());
+  }, { auto: true }],  // automatically starts for every test.
+});
+```
+
+And then import the fixtures in all your tests:
+
+```ts title="mytest.spec.ts"
+import { test } from './fixtures';
+import { expect } from '@playwright/test';
+
+test('basic', async ({ page }) => {
+  expect(page).toHaveURL('http://localhost:8000');
+  await page.goto('https://playwright.dev');
+});
+```
+
+## Adding global beforeAll/afterAll hooks
+
+[`method: Test.beforeAll`] and [`method: Test.afterAll`] hooks run before/after all tests declared in the same file and same [`method: Test.describe`] block (if any), once per worker process. If you want to declare hooks
+that run before/after all tests in every file, you can declare them as auto fixtures with `scope: 'worker'` as follows:
+
+```ts title="fixtures.ts"
+import { test as base } from '@playwright/test';
+
+export const test = base.extend<{}, { forEachWorker: void }>({
+  forEachWorker: [async ({}, use) => {
+    // This code runs before all the tests in the worker process.
+    console.log(`Starting test worker ${test.info().workerIndex}`);
+    await use();
+    // This code runs after all the tests in the worker process.
+    console.log(`Stopping test worker ${test.info().workerIndex}`);
+  }, { scope: 'worker', auto: true }],  // automatically starts for every worker.
+});
+```
+
+And then import the fixtures in all your tests:
+
+```ts title="mytest.spec.ts"
+import { test } from './fixtures';
+import { expect } from '@playwright/test';
+
+test('basic', async ({ }) => {
+  // ...
+});
+```
+Note that the fixtures will still run once per [worker process](./test-parallel.md#worker-processes), but you don't need to redeclare them in every file.

@@ -144,7 +144,7 @@ it('should have passed URL when launching with ignoreDefaultArgs: true', async (
   it.skip(mode !== 'default');
 
   const userDataDir = await createUserDataDir();
-  const args = toImpl(browserType)._defaultArgs((browserType as any)._defaultLaunchOptions, 'persistent', userDataDir, 0).filter(a => a !== 'about:blank');
+  const args = toImpl(browserType).defaultArgs((browserType as any)._defaultLaunchOptions, 'persistent', userDataDir, 0).filter(a => a !== 'about:blank');
   const options = {
     args: browserName === 'firefox' ? [...args, '-new-tab', server.EMPTY_PAGE] : [...args, server.EMPTY_PAGE],
     ignoreDefaultArgs: true,

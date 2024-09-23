@@ -46,7 +46,7 @@ A browser window will open and the test will run and pause at where the breakpoi
 
 ### Debug in different Browsers
 
-By default debugging is done using the Chromium profile. You can debug your tests on different browsers by right clicking on the debug icon in the testing sidebar and clicking on the 'Select Default Profile' option from the dropdown.
+By default, debugging is done using the Chromium profile. You can debug your tests on different browsers by right clicking on the debug icon in the testing sidebar and clicking on the 'Select Default Profile' option from the dropdown.
 
 <img width="1312" alt="debugging on specific profile" src="https://user-images.githubusercontent.com/13063165/212879469-436f8130-c62a-49e1-9d67-c1903b478d5f.png" />
 
@@ -80,7 +80,7 @@ npx playwright test --debug
 ```
 #### Debug one test on all browsers
 
-To debug one test on a specific line run the test command followed by the name of the test file and the line number of the test you want to debug, followed by the `--debug` flag. This will run a single test in each browser configured in your [`playwright.config`](./test-projects.md#configure-projects-for-multiple-browsers) and open the inspector.
+To debug one test on a specific line, run the test command followed by the name of the test file and the line number of the test you want to debug, followed by the `--debug` flag. This will run a single test in each browser configured in your [`playwright.config`](./test-projects.md#configure-projects-for-multiple-browsers) and open the inspector.
 
 ```bash
 npx playwright test example.spec.ts:10 --debug
@@ -207,7 +207,7 @@ While running in debug mode you can live edit the locators. Next to the 'Pick Lo
 
 ### Picking locators
 
-While debugging you might need to choose a more resilient locator. You can do this by clicking on the **Pick Locator** button and hovering over any element in the browser window. While hovering over an element you will see the code needed to locate this element highlighted below. Clicking an element in the browser will add the locator into the field where you can then either tweak it or copy it into your code.
+While debugging, you might need to choose a more resilient locator. You can do this by clicking on the **Pick Locator** button and hovering over any element in the browser window. While hovering over an element you will see the code needed to locate this element highlighted below. Clicking an element in the browser will add the locator into the field where you can then either tweak it or copy it into your code.
 
 <img width="1392" alt="Picking locators" src="https://user-images.githubusercontent.com/13063165/212968640-ce82a027-9277-4bdf-b0a9-6282fb2becb7.png" />
 
@@ -242,7 +242,7 @@ This will also set the default timeouts of Playwright to 0 (= no timeout).
 
 <img width="1399" alt="Browser Developer Tools with Playwright object" src="https://user-images.githubusercontent.com/13063165/219128002-898f604d-9697-4b7f-95b5-a6a8260b7282.png" />
 
-To debug your tests using the browser developer tools start by setting a breakpoint in your test to pause the execution using the [`method: Page.pause`] method.
+To debug your tests using the browser developer tools, start by setting a breakpoint in your test to pause the execution using the [`method: Page.pause`] method.
 
 ```js
 await page.pause();
@@ -264,7 +264,7 @@ page.pause()
 await page.PauseAsync();
 ```
 
-Once you have set a breakpoint in your test you can then run your test with `PWDEBUG=console`.
+Once you have set a breakpoint in your test, you can then run your test with `PWDEBUG=console`.
 
 ```bash tab=bash-bash lang=js
 PWDEBUG=console npx playwright test
@@ -327,7 +327,7 @@ $env:PWDEBUG=console
 dotnet test
 ```
 
-Once Playwright launches the browser window you can open the developer tools.
+Once Playwright launches the browser window, you can open the developer tools.
 The `playwright` object will be available in the console panel.
 
 #### playwright.$(selector)

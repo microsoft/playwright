@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "esbuild": "esbuild ./src/babelBundleImpl.ts --bundle --outdir=../../lib/transform --format=cjs --platform=node --target=ES2019",
+    "esbuild": "esbuild ./src/babelBundleImpl.ts --bundle --outdir=../../lib/transform --format=cjs --platform=node --target=ES2019 --external:playwright",
     "build": "npm run esbuild -- --minify",
     "watch": "npm run esbuild -- --watch --sourcemap",
     "generate-license": "node ../../../../utils/generate_third_party_notice.js"
@@ -12,7 +12,6 @@
     "@babel/code-frame": "^7.24.2",
     "@babel/core": "^7.24.4",
     "@babel/helper-plugin-utils": "^7.24.0",
-    "@babel/parser": "^7.24.4",
     "@babel/plugin-proposal-decorators": "^7.24.1",
     "@babel/plugin-proposal-explicit-resource-management": "^7.24.1",
     "@babel/plugin-syntax-async-generators": "^7.8.4",
