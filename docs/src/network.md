@@ -702,7 +702,7 @@ await Page.RouteAsync("**/title.html", async route =>
 
 ## Glob URL patterns
 
-Playwright uses glob patterns for URL matching in network interception methods like [`method: Page.route`] or [`method: Page.waitForResponse`]. These glob patterns are more specific than typical file globs and offer features similar to regular expressions:
+Playwright uses glob patterns for URL matching in network interception methods like [`method: Page.route`] or [`method: Page.waitForResponse`]. These glob patterns are more limited than typical file globs:
 
 1. Asterisks:
    - A single `*` matches any characters except `/`
