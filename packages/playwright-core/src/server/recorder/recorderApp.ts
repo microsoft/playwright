@@ -81,7 +81,6 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
       const file = require.resolve('../../vite/recorder/' + uri);
       fs.promises.readFile(file).then(buffer => {
         route.fulfill({
-          requestUrl: route.request().url(),
           status: 200,
           headers: [
             { name: 'Content-Type', value: mime.getType(path.extname(file)) || 'application/octet-stream' }
@@ -162,8 +161,10 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     }).toString(), { isFunction: true }, sources).catch(() => {});
 
     // Testing harness for runCLI mode.
-    if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length)
-      (process as any)._didSetSourcesForTest(sources[0].text);
+    if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length) {
+      if ((process as any)._didSetSourcesForTest(sources[0].text))
+        this.close();
+    }
   }
 
   async setSelector(selector: string, userGesture?: boolean): Promise<void> {

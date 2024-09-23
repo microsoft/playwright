@@ -1526,7 +1526,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   setOffline(params: BrowserContextSetOfflineParams, metadata?: CallMetadata): Promise<BrowserContextSetOfflineResult>;
   storageState(params?: BrowserContextStorageStateParams, metadata?: CallMetadata): Promise<BrowserContextStorageStateResult>;
   pause(params?: BrowserContextPauseParams, metadata?: CallMetadata): Promise<BrowserContextPauseResult>;
-  recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: CallMetadata): Promise<BrowserContextRecorderSupplementEnableResult>;
+  enableRecorder(params: BrowserContextEnableRecorderParams, metadata?: CallMetadata): Promise<BrowserContextEnableRecorderResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: CallMetadata): Promise<BrowserContextNewCDPSessionResult>;
   harStart(params: BrowserContextHarStartParams, metadata?: CallMetadata): Promise<BrowserContextHarStartResult>;
   harExport(params: BrowserContextHarExportParams, metadata?: CallMetadata): Promise<BrowserContextHarExportResult>;
@@ -1766,9 +1766,10 @@ export type BrowserContextStorageStateResult = {
 export type BrowserContextPauseParams = {};
 export type BrowserContextPauseOptions = {};
 export type BrowserContextPauseResult = void;
-export type BrowserContextRecorderSupplementEnableParams = {
+export type BrowserContextEnableRecorderParams = {
   language?: string,
   mode?: 'inspecting' | 'recording',
+  codegenMode?: 'actions' | 'trace-events',
   pauseOnNextStatement?: boolean,
   testIdAttributeName?: string,
   launchOptions?: any,
@@ -1778,9 +1779,10 @@ export type BrowserContextRecorderSupplementEnableParams = {
   outputFile?: string,
   omitCallTracking?: boolean,
 };
-export type BrowserContextRecorderSupplementEnableOptions = {
+export type BrowserContextEnableRecorderOptions = {
   language?: string,
   mode?: 'inspecting' | 'recording',
+  codegenMode?: 'actions' | 'trace-events',
   pauseOnNextStatement?: boolean,
   testIdAttributeName?: string,
   launchOptions?: any,
@@ -1790,7 +1792,7 @@ export type BrowserContextRecorderSupplementEnableOptions = {
   outputFile?: string,
   omitCallTracking?: boolean,
 };
-export type BrowserContextRecorderSupplementEnableResult = void;
+export type BrowserContextEnableRecorderResult = void;
 export type BrowserContextNewCDPSessionParams = {
   page?: PageChannel,
   frame?: FrameChannel,
@@ -3769,7 +3771,6 @@ export type RouteRedirectNavigationRequestOptions = {
 export type RouteRedirectNavigationRequestResult = void;
 export type RouteAbortParams = {
   errorCode?: string,
-  requestUrl: string,
 };
 export type RouteAbortOptions = {
   errorCode?: string,
@@ -3780,7 +3781,6 @@ export type RouteContinueParams = {
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
-  requestUrl: string,
   isFallback: boolean,
 };
 export type RouteContinueOptions = {
@@ -3796,7 +3796,6 @@ export type RouteFulfillParams = {
   body?: string,
   isBase64?: boolean,
   fetchResponseUid?: string,
-  requestUrl: string,
 };
 export type RouteFulfillOptions = {
   status?: number,

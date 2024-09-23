@@ -35,6 +35,8 @@ export type Attribution = {
 };
 
 import type { CallMetadata } from '@protocol/callMetadata';
+import type { Dialog } from './dialog';
+import type { Download } from './download';
 export type { CallMetadata } from '@protocol/callMetadata';
 
 export class SdkObject extends EventEmitter {
@@ -62,6 +64,8 @@ export interface Instrumentation {
   onPageClose(page: Page): void;
   onBrowserOpen(browser: Browser): void;
   onBrowserClose(browser: Browser): void;
+  onDialog(dialog: Dialog): void;
+  onDownload(page: Page, download: Download): void;
 }
 
 export interface InstrumentationListener {
@@ -73,6 +77,8 @@ export interface InstrumentationListener {
   onPageClose?(page: Page): void;
   onBrowserOpen?(browser: Browser): void;
   onBrowserClose?(browser: Browser): void;
+  onDialog?(dialog: Dialog): void;
+  onDownload?(page: Page, download: Download): void;
 }
 
 export function createInstrumentation(): Instrumentation {

@@ -160,7 +160,7 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
 export async function parseTrace(file: string): Promise<{ resources: Map<string, Buffer>, events: (EventTraceEvent | ConsoleMessageTraceEvent)[], actions: ActionTraceEvent[], apiNames: string[], traceModel: TraceModel, model: MultiTraceModel, actionTree: string[], errors: string[] }> {
   const backend = new TraceBackend(file);
   const traceModel = new TraceModel();
-  await traceModel.load(backend, () => {});
+  await traceModel.load(backend, false, () => {});
   const model = new MultiTraceModel(traceModel.contextEntries);
   const { rootItem } = buildActionTree(model.actions);
   const actionTree: string[] = [];

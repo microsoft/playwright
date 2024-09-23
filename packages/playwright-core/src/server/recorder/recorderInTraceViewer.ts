@@ -21,75 +21,95 @@ import type { IRecorder, IRecorderApp, IRecorderAppFactory } from './recorderFro
 import { installRootRedirect, openTraceViewerApp, startTraceViewerServer } from '../trace/viewer/traceViewer';
 import type { TraceViewerServerOptions } from '../trace/viewer/traceViewer';
 import type { BrowserContext } from '../browserContext';
-import { gracefullyProcessExitDoNotHang } from '../../utils/processLauncher';
-import type { Transport } from '../../utils/httpServer';
+import type { HttpServer, Transport } from '../../utils/httpServer';
+import type { Page } from '../page';
+import { ManualPromise } from '../../utils/manualPromise';
 
 export class RecorderInTraceViewer extends EventEmitter implements IRecorderApp {
   readonly wsEndpointForTest: string | undefined;
-  private _recorder: IRecorder;
-  private _transport: Transport;
+  private _transport: RecorderTransport;
+  private _tracePage: Page;
+  private _traceServer: HttpServer;
 
   static factory(context: BrowserContext): IRecorderAppFactory {
     return async (recorder: IRecorder) => {
       const transport = new RecorderTransport();
       const trace = path.join(context._browser.options.tracesDir, 'trace');
-      const wsEndpointForTest = await openApp(trace, { transport, headless: !context._browser.options.headful });
-      return new RecorderInTraceViewer(context, recorder, transport, wsEndpointForTest);
+      const { wsEndpointForTest, tracePage, traceServer } = await openApp(trace, { transport, headless: !context._browser.options.headful });
+      return new RecorderInTraceViewer(transport, tracePage, traceServer, wsEndpointForTest);
     };
   }
 
-  constructor(context: BrowserContext, recorder: IRecorder, transport: Transport, wsEndpointForTest: string | undefined) {
+  constructor(transport: RecorderTransport, tracePage: Page, traceServer: HttpServer, wsEndpointForTest: string | undefined) {
     super();
-    this._recorder = recorder;
     this._transport = transport;
+    this._tracePage = tracePage;
+    this._traceServer = traceServer;
     this.wsEndpointForTest = wsEndpointForTest;
+    this._tracePage.once('close', () => {
+      this.close();
+    });
   }
 
   async close(): Promise<void> {
-    this._transport.sendEvent?.('close', {});
+    await this._tracePage.context().close({ reason: 'Recorder window closed' });
+    await this._traceServer.stop();
   }
 
   async setPaused(paused: boolean): Promise<void> {
-    this._transport.sendEvent?.('setPaused', { paused });
+    this._transport.deliverEvent('setPaused', { paused });
   }
 
   async setMode(mode: Mode): Promise<void> {
-    this._transport.sendEvent?.('setMode', { mode });
+    this._transport.deliverEvent('setMode', { mode });
   }
 
   async setFile(file: string): Promise<void> {
-    this._transport.sendEvent?.('setFileIfNeeded', { file });
+    this._transport.deliverEvent('setFileIfNeeded', { file });
   }
 
   async setSelector(selector: string, userGesture?: boolean): Promise<void> {
-    this._transport.sendEvent?.('setSelector', { selector, userGesture });
+    this._transport.deliverEvent('setSelector', { selector, userGesture });
   }
 
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {
-    this._transport.sendEvent?.('updateCallLogs', { callLogs });
+    this._transport.deliverEvent('updateCallLogs', { callLogs });
   }
 
   async setSources(sources: Source[]): Promise<void> {
-    this._transport.sendEvent?.('setSources', { sources });
+    this._transport.deliverEvent('setSources', { sources });
+    if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length) {
+      if ((process as any)._didSetSourcesForTest(sources[0].text))
+        this.close();
+    }
   }
 }
 
-async function openApp(trace: string, options?: TraceViewerServerOptions & { headless?: boolean }): Promise<string | undefined> {
-  const server = await startTraceViewerServer(options);
-  await installRootRedirect(server, [trace], { ...options, webApp: 'recorder.html' });
-  const page = await openTraceViewerApp(server.urlPrefix('precise'), 'chromium', options);
-  page.on('close', () => gracefullyProcessExitDoNotHang(0));
-  return page.context()._browser.options.wsEndpoint;
+async function openApp(trace: string, options?: TraceViewerServerOptions & { headless?: boolean }): Promise<{ wsEndpointForTest: string | undefined, tracePage: Page, traceServer: HttpServer }> {
+  const traceServer = await startTraceViewerServer(options);
+  await installRootRedirect(traceServer, [trace], { ...options, webApp: 'recorder.html' });
+  const page = await openTraceViewerApp(traceServer.urlPrefix('precise'), 'chromium', options);
+  return { wsEndpointForTest: page.context()._browser.options.wsEndpoint, tracePage: page, traceServer };
 }
 
 class RecorderTransport implements Transport {
+  private _connected = new ManualPromise<void>();
+
   constructor() {
   }
 
-  async dispatch(method: string, params: any) {
+  onconnect() {
+    this._connected.resolve();
+  }
+
+  async dispatch(method: string, params: any): Promise<any> {
   }
 
   onclose() {
+  }
+
+  deliverEvent(method: string, params: any) {
+    this._connected.then(() => this.sendEvent?.(method, params));
   }
 
   sendEvent?: (method: string, params: any) => void;

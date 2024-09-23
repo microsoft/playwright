@@ -29,17 +29,16 @@ import type { BrowserContext } from '../browserContext';
 
 export class RecorderCollection extends EventEmitter {
   private _actions: ActionInContext[] = [];
-  private _enabled: boolean;
+  private _enabled = false;
   private _pageAliases: Map<Page, string>;
   private _context: BrowserContext;
 
-  constructor(context: BrowserContext, pageAliases: Map<Page, string>, enabled: boolean) {
+  constructor(codegenMode: 'actions' | 'trace-events', context: BrowserContext, pageAliases: Map<Page, string>) {
     super();
     this._context = context;
-    this._enabled = enabled;
     this._pageAliases = pageAliases;
 
-    if (process.env.PW_RECORDER_IS_TRACE_VIEWER) {
+    if (codegenMode === 'trace-events') {
       this._context.tracing.onMemoryEvents(events => {
         this._actions = traceEventsToAction(events);
         this._fireChange();

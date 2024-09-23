@@ -25,7 +25,7 @@ import type * as trace from '@trace/trace';
 import { fromKeyboardModifiers, toKeyboardModifiers } from '../codegen/language';
 import { serializeExpectedTextValues } from '../../utils/expectUtils';
 import { createGuid, monotonicTime } from '../../utils';
-import { serializeValue } from '../../protocol/serializers';
+import { parseSerializedValue, serializeValue } from '../../protocol/serializers';
 import type { SmartKeyboardModifier } from '../types';
 
 export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {
@@ -158,7 +158,7 @@ export function traceParamsForAction(actionInContext: ActionInContext): { method
       const params: channels.FrameExpectParams = {
         selector: action.selector,
         expression: 'to.be.checked',
-        isNot: action.checked,
+        isNot: !action.checked,
       };
       return { method: 'expect', params };
     }
@@ -166,7 +166,7 @@ export function traceParamsForAction(actionInContext: ActionInContext): { method
       const params: channels.FrameExpectParams = {
         selector,
         expression: 'to.have.text',
-        expectedText: serializeExpectedTextValues([action.text], { matchSubstring: true, normalizeWhiteSpace: true }),
+        expectedText: serializeExpectedTextValues([action.text], { matchSubstring: action.substring, normalizeWhiteSpace: true }),
         isNot: false,
       };
       return { method: 'expect', params };
@@ -193,12 +193,12 @@ export function traceParamsForAction(actionInContext: ActionInContext): { method
 
 export function callMetadataForAction(pageAliases: Map<Page, string>, actionInContext: ActionInContext): { callMetadata: CallMetadata, mainFrame: Frame } {
   const mainFrame = mainFrameForAction(pageAliases, actionInContext);
-  const { action } = actionInContext;
   const { method, params } = traceParamsForAction(actionInContext);
+
   const callMetadata: CallMetadata = {
     id: `call@${createGuid()}`,
     stepId: `recorder@${createGuid()}`,
-    apiName: 'frame.' + action.name,
+    apiName: 'page.' + method,
     objectId: mainFrame.guid,
     pageId: mainFrame._page.guid,
     frameId: mainFrame.guid,
@@ -215,38 +215,70 @@ export function callMetadataForAction(pageAliases: Map<Page, string>, actionInCo
 export function traceEventsToAction(events: trace.TraceEvent[]): ActionInContext[] {
   const result: ActionInContext[] = [];
   const pageAliases = new Map<string, string>();
+  let lastDownloadOrdinal = 0;
+  let lastDialogOrdinal = 0;
+
+  const addSignal = (signal: actions.Signal) => {
+    const lastAction = result[result.length - 1];
+    if (!lastAction)
+      return;
+    lastAction.action.signals.push(signal);
+  };
 
   for (const event of events) {
-    if (event.type === 'event' && event.class === 'BrowserContext' && event.method === 'page') {
-      const pageAlias = 'page' + pageAliases.size;
-      pageAliases.set(event.params.pageId, pageAlias);
-      const lastAction = result[result.length - 1];
-      lastAction.action.signals.push({
-        name: 'popup',
-        popupAlias: pageAlias,
-      });
-      result.push({
-        frame: { pageAlias, framePath: [] },
-        action: {
-          name: 'openPage',
-          url: '',
-          signals: [],
-        },
-        timestamp: event.time,
-      });
-      continue;
-    }
+    if (event.type === 'event' && event.class === 'BrowserContext') {
+      const { method, params } = event;
+      if (method === 'page') {
+        const pageAlias = 'page' + (pageAliases.size || '');
+        pageAliases.set(params.pageId, pageAlias);
+        addSignal({
+          name: 'popup',
+          popupAlias: pageAlias,
+        });
+        result.push({
+          frame: { pageAlias, framePath: [] },
+          action: {
+            name: 'openPage',
+            url: '',
+            signals: [],
+          },
+          timestamp: event.time,
+        });
+        continue;
+      }
 
-    if (event.type === 'event' && event.class === 'BrowserContext' && event.method === 'pageClosed') {
-      const pageAlias = pageAliases.get(event.params.pageId) || 'page';
-      result.push({
-        frame: { pageAlias, framePath: [] },
-        action: {
-          name: 'closePage',
-          signals: [],
-        },
-        timestamp: event.time,
-      });
+      if (method === 'pageClosed') {
+        const pageAlias = pageAliases.get(event.params.pageId) || 'page';
+        result.push({
+          frame: { pageAlias, framePath: [] },
+          action: {
+            name: 'closePage',
+            signals: [],
+          },
+          timestamp: event.time,
+        });
+        continue;
+      }
+
+      if (method === 'download') {
+        const downloadAlias = lastDownloadOrdinal ? String(lastDownloadOrdinal) : '';
+        ++lastDownloadOrdinal;
+        addSignal({
+          name: 'download',
+          downloadAlias,
+        });
+        continue;
+      }
+
+      if (method === 'dialog') {
+        const dialogAlias = lastDialogOrdinal ? String(lastDialogOrdinal) : '';
+        ++lastDialogOrdinal;
+        addSignal({
+          name: 'dialog',
+          dialogAlias,
+        });
+        continue;
+      }
       continue;
     }
 
@@ -387,6 +419,67 @@ export function traceEventsToAction(events: trace.TraceEvent[]): ActionInContext
         },
         timestamp: event.startTime
       });
+      continue;
+    }
+    if (method === 'expect') {
+      const params = untypedParams as channels.FrameExpectParams;
+      if (params.expression === 'to.have.text') {
+        const entry = params.expectedText?.[0];
+        result.push({
+          frame: { pageAlias, framePath: [] },
+          action: {
+            name: 'assertText',
+            selector: params.selector,
+            signals: [],
+            text: entry?.string!,
+            substring: !!entry?.matchSubstring,
+          },
+          timestamp: event.startTime
+        });
+        continue;
+      }
+
+      if (params.expression === 'to.have.value') {
+        result.push({
+          frame: { pageAlias, framePath: [] },
+          action: {
+            name: 'assertValue',
+            selector: params.selector,
+            signals: [],
+            value: parseSerializedValue(params.expectedValue!.value, params.expectedValue!.handles),
+          },
+          timestamp: event.startTime
+        });
+        continue;
+      }
+
+      if (params.expression === 'to.be.checked') {
+        result.push({
+          frame: { pageAlias, framePath: [] },
+          action: {
+            name: 'assertChecked',
+            selector: params.selector,
+            signals: [],
+            checked: !params.isNot,
+          },
+          timestamp: event.startTime
+        });
+        continue;
+      }
+
+      if (params.expression === 'to.be.visible') {
+        result.push({
+          frame: { pageAlias, framePath: [] },
+          action: {
+            name: 'assertVisible',
+            selector: params.selector,
+            signals: [],
+          },
+          timestamp: event.startTime
+        });
+        continue;
+      }
+
       continue;
     }
   }

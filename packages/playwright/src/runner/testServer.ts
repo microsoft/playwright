@@ -84,6 +84,7 @@ export class TestServerDispatcher implements TestServerInterface {
   constructor(configLocation: ConfigLocation) {
     this._configLocation = configLocation;
     this.transport = {
+      onconnect: () => {},
       dispatch: (method, params) => (this as any)[method](params),
       onclose: () => {
         if (this._closeOnDisconnect)

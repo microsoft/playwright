@@ -45,8 +45,6 @@ export const RecorderView: React.FunctionComponent = () => {
     connection.setMode('recording');
   }, [connection]);
 
-  window.playwrightSourcesEchoForTest = sources;
-
   return <div className='vbox workbench-loader'>
     <TraceView
       traceLocation={trace}
@@ -104,6 +102,7 @@ export const TraceView: React.FC<{
     showSourcesFirst={true}
     fallbackLocation={fallbackLocation}
     isLive={true}
+    hideTimeline={true}
   />;
 };
 
@@ -165,6 +164,7 @@ class Connection {
     if (method === 'setSources') {
       const { sources } = params as { sources: Source[] };
       this._options.setSources(sources);
+      window.playwrightSourcesEchoForTest = sources;
     }
   }
 }

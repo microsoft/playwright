@@ -41,7 +41,6 @@ import { serializeError } from '../errors';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { RecorderInTraceViewer } from '../recorder/recorderInTraceViewer';
 import { RecorderApp } from '../recorder/recorderApp';
-import type { IRecorderAppFactory } from '../recorder/recorderFrontend';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
@@ -301,21 +300,18 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.close(params);
   }
 
-  async recorderSupplementEnable(params: channels.BrowserContextRecorderSupplementEnableParams): Promise<void> {
-    let factory: IRecorderAppFactory;
-    if (process.env.PW_RECORDER_IS_TRACE_VIEWER) {
-      factory = RecorderInTraceViewer.factory(this._context);
+  async enableRecorder(params: channels.BrowserContextEnableRecorderParams): Promise<void> {
+    if (params.codegenMode === 'trace-events') {
       await this._context.tracing.start({
         name: 'trace',
         snapshots: true,
-        screenshots: false,
+        screenshots: true,
         live: true,
       });
-      await this._context.tracing.startChunk({ name: 'trace', title: 'trace' });
+      await Recorder.show('trace-events', this._context, RecorderInTraceViewer.factory(this._context), params);
     } else {
-      factory = RecorderApp.factory(this._context);
+      await Recorder.show('actions', this._context, RecorderApp.factory(this._context), params);
     }
-    await Recorder.show(this._context, factory, params);
   }
 
   async pause(params: channels.BrowserContextPauseParams, metadata: CallMetadata) {
