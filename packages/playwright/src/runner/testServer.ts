@@ -147,6 +147,7 @@ export class TestServerDispatcher implements TestServerInterface {
 
     const overrides: ConfigCLIOverrides = {
       outputDir: params.outputDir,
+      tsconfig: params.tsconfig,
     };
     const { reporter, report } = await this._collectingInternalReporter(new ListReporter());
     const config = await this._loadConfigOrReportError(reporter, overrides);
@@ -242,6 +243,7 @@ export class TestServerDispatcher implements TestServerInterface {
       repeatEach: 1,
       retries: 0,
       outputDir: params.outputDir,
+      tsconfig: params.tsconfig,
     };
     const { reporter, report } = await this._collectingInternalReporter();
     const config = await this._loadConfigOrReportError(reporter, overrides);
@@ -308,6 +310,7 @@ export class TestServerDispatcher implements TestServerInterface {
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
       },
       outputDir: params.outputDir,
+      tsconfig: params.tsconfig,
       updateSnapshots: params.updateSnapshots,
       workers: params.workers,
     };

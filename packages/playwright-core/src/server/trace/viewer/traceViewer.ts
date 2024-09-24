@@ -48,6 +48,7 @@ export type TraceViewerRedirectOptions = {
   isServer?: boolean;
   outputDir?: string;
   updateSnapshots?: 'all' | 'none' | 'missing';
+  tsconfig?: string;
 };
 
 export type TraceViewerAppOptions = {
@@ -137,6 +138,8 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
     params.append('outputDir', options.outputDir);
   if (options.updateSnapshots)
     params.append('updateSnapshots', options.updateSnapshots);
+  if (options.tsconfig)
+    params.append('tsconfig', options.tsconfig);
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
 

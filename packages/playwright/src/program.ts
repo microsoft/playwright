@@ -174,6 +174,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
       timeout: cliOverrides.timeout,
       outputDir: cliOverrides.outputDir,
       updateSnapshots: cliOverrides.updateSnapshots,
+      tsconfig: cliOverrides.tsconfig,
     });
     await stopProfiling('runner');
     if (status === 'restarted')
