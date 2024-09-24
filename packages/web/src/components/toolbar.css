@@ -24,6 +24,10 @@
   padding-right: 4px;
 }
 
+.toolbar.toolbar-sidebar-background {
+  background-color: var(--vscode-sideBar-background);
+}
+
 .toolbar:after {
   content: '';
   display: block;

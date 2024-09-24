@@ -28,7 +28,7 @@ import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
 
 export const SourceTab: React.FunctionComponent<{
-  stack: StackFrame[] | undefined,
+  stack?: StackFrame[],
   stackFrameLocation: 'bottom' | 'right',
   sources: Map<string, SourceModel>,
   rootDir?: string,
