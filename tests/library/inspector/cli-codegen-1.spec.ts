@@ -19,7 +19,7 @@ import type { ConsoleMessage } from 'playwright';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
-  test.skip(({ trace }) => trace === 'on' && test.info().project.name.endsWith('-codegen-mode-trace'));
+  test.skip(({ trace, codegenMode }) => trace === 'on' && codegenMode === 'trace-events');
 
   test('should click', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
