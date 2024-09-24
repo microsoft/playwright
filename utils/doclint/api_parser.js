@@ -192,8 +192,7 @@ class ApiParser {
         method.argsArray.push(options);
       }
       p.required = false;
-      // @ts-ignore
-      options.type.properties.push(p);
+      options.type?.properties?.push(p);
     }
   }
 
