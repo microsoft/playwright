@@ -445,7 +445,9 @@ test('should show proper total when using deps', async ({ runUITest }) => {
   await expect(page.getByTestId('status-line')).toHaveText('2/2 passed (100%)');
 });
 
-test('should respect --tsconfig option', async ({ runUITest }) => {
+test('should respect --tsconfig option', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32797' }
+},async ({ runUITest }) => {
   const { page } = await runUITest({
     'playwright.config.ts': `
       import { foo } from '~/foo';
