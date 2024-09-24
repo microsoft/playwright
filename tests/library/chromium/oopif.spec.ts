@@ -269,7 +269,7 @@ it('ElementHandle.boundingBox() should work', async function({ page, browser, se
 
   await assertOOPIFCount(browser, 1);
   const handle1 = await page.frames()[1].$('.box:nth-of-type(13)');
-  expect(await handle1!.boundingBox()).toEqual({ x: 100 + 42, y: 50 + 17, width: 50, height: 50 });
+  await expect.poll(() => handle1!.boundingBox()).toEqual({ x: 100 + 42, y: 50 + 17, width: 50, height: 50 });
 
   await Promise.all([
     page.frames()[1].waitForNavigation(),
@@ -277,7 +277,7 @@ it('ElementHandle.boundingBox() should work', async function({ page, browser, se
   ]);
   await assertOOPIFCount(browser, 0);
   const handle2 = await page.frames()[1].$('.box:nth-of-type(13)');
-  expect(await handle2!.boundingBox()).toEqual({ x: 100 + 42, y: 50 + 17, width: 50, height: 50 });
+  await expect.poll(() => handle2!.boundingBox()).toEqual({ x: 100 + 42, y: 50 + 17, width: 50, height: 50 });
 });
 
 it('should click', async function({ page, browser, server }) {
