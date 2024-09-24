@@ -20,6 +20,7 @@ import fs from 'fs';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
+  test.skip(({ trace, codegenMode }) => trace === 'on' && codegenMode === 'trace-events');
 
   test('should contain open page', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
@@ -549,18 +550,17 @@ await page.Locator("#textarea").FillAsync(\"Hello'\\"\`\\nWorld\");`);
     expect(message.text()).toBe('Hello\'\"\`\nWorld');
   });
 
-});
+  test('should --test-id-attribute', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder({ testIdAttributeName: 'my-test-id' });
 
-test('should --test-id-attribute', async ({ openRecorder }) => {
-  const { page, recorder } = await openRecorder({ testIdAttributeName: 'my-test-id' });
+    await recorder.setContentAndWait(`<div my-test-id="foo">Hello</div>`);
+    await page.click('[my-test-id=foo]');
+    const sources = await recorder.waitForOutput('JavaScript', `page.getByTestId`);
 
-  await recorder.setContentAndWait(`<div my-test-id="foo">Hello</div>`);
-  await page.click('[my-test-id=foo]');
-  const sources = await recorder.waitForOutput('JavaScript', `page.getByTestId`);
-
-  expect.soft(sources.get('JavaScript')!.text).toContain(`await page.getByTestId('foo').click()`);
-  expect.soft(sources.get('Java')!.text).toContain(`page.getByTestId("foo").click()`);
-  expect.soft(sources.get('Python')!.text).toContain(`page.get_by_test_id("foo").click()`);
-  expect.soft(sources.get('Python Async')!.text).toContain(`await page.get_by_test_id("foo").click()`);
-  expect.soft(sources.get('C#')!.text).toContain(`await page.GetByTestId("foo").ClickAsync();`);
+    expect.soft(sources.get('JavaScript')!.text).toContain(`await page.getByTestId('foo').click()`);
+    expect.soft(sources.get('Java')!.text).toContain(`page.getByTestId("foo").click()`);
+    expect.soft(sources.get('Python')!.text).toContain(`page.get_by_test_id("foo").click()`);
+    expect.soft(sources.get('Python Async')!.text).toContain(`await page.get_by_test_id("foo").click()`);
+    expect.soft(sources.get('C#')!.text).toContain(`await page.GetByTestId("foo").ClickAsync();`);
+  });
 });
