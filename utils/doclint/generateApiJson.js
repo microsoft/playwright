@@ -17,7 +17,6 @@
 // @ts-check
 
 const path = require('path');
-const Documentation = require('./documentation');
 const { parseApi } = require('./api_parser');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 
@@ -38,14 +37,14 @@ const PROJECT_DIR = path.join(__dirname, '..', '..');
 }
 
 /**
- * @param {Documentation} documentation
+ * @param {import('./documentation').Documentation} documentation
  */
 function serialize(documentation) {
   return documentation.classesArray.map(serializeClass);
 }
 
 /**
- * @param {Documentation.Class} clazz
+ * @param {import('./documentation').Class} clazz
  */
 function serializeClass(clazz) {
   const result = { name: clazz.name, spec: clazz.spec };
@@ -65,7 +64,7 @@ function serializeClass(clazz) {
 }
 
 /**
- * @param {Documentation.Member} member
+ * @param {import('./documentation').Member} member
  */
 function serializeMember(member) {
   const result = /** @type {any} */ ({ ...member });
@@ -76,14 +75,20 @@ function serializeMember(member) {
   return result;
 }
 
+/**
+ * @param {import('./documentation').Member} arg
+ */
 function serializeProperty(arg) {
   const result = { ...arg, parent: undefined };
   sanitize(result);
   if (arg.type)
-    result.type = serializeType(arg.type, arg.name === 'options');
+    result.type = serializeType(arg.type);
   return result;
 }
 
+/**
+ * @param {object} result
+ */
 function sanitize(result) {
   delete result.args;
   delete result.argsArray;
@@ -92,14 +97,13 @@ function sanitize(result) {
 }
 
 /**
- * @param {Documentation.Type} type
- * @param {boolean} sortProperties
+ * @param {import('./documentation').Type} type
  */
-function serializeType(type, sortProperties = false) {
+function serializeType(type) {
   /** @type {any} */
   const result = { ...type };
   if (type.properties)
-    result.properties = (sortProperties ? type.sortedProperties() : type.properties).map(serializeProperty);
+    result.properties = type.properties.map(serializeProperty);
   if (type.union)
     result.union = type.union.map(type => serializeType(type));
   if (type.templates)

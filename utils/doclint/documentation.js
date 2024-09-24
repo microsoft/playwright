@@ -363,11 +363,6 @@ class Member {
       this.alias = match[1];
       this.overloadIndex = (+match[2]) - 1;
     }
-    /**
-     * Param is true and option false
-     * @type {Boolean | null}
-     */
-    this.paramOrOption = null;
   }
 
   index() {
@@ -384,10 +379,8 @@ class Member {
     for (const arg of this.argsArray) {
       this.args.set(arg.name, arg);
       arg.enclosingMethod = this;
-      if (arg.name === 'options') {
-        // @ts-ignore
-        arg.type.properties.sort((p1, p2) => p1.name.localeCompare(p2.name));
-      }
+      if (arg.name === 'options')
+        arg.type?.properties?.sort((p1, p2) => p1.name.localeCompare(p2.name));
       indexArg(arg);
     }
   }
@@ -410,11 +403,9 @@ class Member {
         continue;
       const overriddenArg = (arg.langs.overrides && arg.langs.overrides[lang]) || arg;
       overriddenArg.filterForLanguage(lang, options);
-      // @ts-ignore
-      if (overriddenArg.name === 'options' && !overriddenArg.type.properties.length)
+      if (overriddenArg.name === 'options' && !overriddenArg.type?.properties?.length)
         continue;
-      // @ts-ignore
-      overriddenArg.type.filterForLanguage(lang, options);
+      overriddenArg.type?.filterForLanguage(lang, options);
       argsArray.push(overriddenArg);
     }
     this.argsArray = argsArray;
@@ -433,7 +424,6 @@ class Member {
     const result = new Member(this.kind, { langs: this.langs, since: this.since, deprecated: this.deprecated, discouraged: this.discouraged }, this.name, this.type?.clone(), this.argsArray.map(arg => arg.clone()), this.spec, this.required);
     result.alias = this.alias;
     result.async = this.async;
-    result.paramOrOption = this.paramOrOption;
     return result;
   }
 
@@ -526,8 +516,7 @@ class Type {
     if (!inUnion && (parsedType.union || parsedType.unionName)) {
       const type = new Type(parsedType.unionName || '');
       type.union = [];
-      // @ts-ignore
-      for (let t = parsedType; t; t = t.union) {
+      for (let /** @type {ParsedType | null} */ t = parsedType; t; t = t.union) {
         const nestedUnion = !!t.unionName && t !== parsedType;
         type.union.push(Type.fromParsedType(t, !nestedUnion));
         if (nestedUnion)
@@ -539,7 +528,6 @@ class Type {
     if (parsedType.args || parsedType.retType) {
       const type = new Type('function');
       type.args = [];
-      // @ts-ignore
       for (let t = parsedType.args; t; t = t.next)
         type.args.push(Type.fromParsedType(t));
       type.returnType = parsedType.retType ? Type.fromParsedType(parsedType.retType) : undefined;
@@ -549,8 +537,7 @@ class Type {
     if (parsedType.template) {
       const type = new Type(parsedType.name);
       type.templates = [];
-      // @ts-ignore
-      for (let t = parsedType.template; t; t = t.next)
+      for (let /** @type {ParsedType | null} */ t = parsedType.template; t; t = t.next)
         type.templates.push(Type.fromParsedType(t));
       return type;
     }
@@ -611,17 +598,6 @@ class Type {
         return type.properties;
     }
     return [];
-  }
-
-  /**
-    * @returns {Member[] | undefined}
-  */
-  sortedProperties() {
-    if (!this.properties)
-      return this.properties;
-    const sortedProperties = [...this.properties];
-    sortedProperties.sort((p1, p2) => p1.name.localeCompare(p2.name));
-    return sortedProperties;
   }
 
   /**
@@ -768,11 +744,10 @@ function patchLinksInText(classOrMember, text, classesMap, membersMap, linkRende
       let alias = p2;
       if (classOrMember) {
         // param/option reference can only be in method or same method parameter comments.
-        // @ts-ignore
-        const method = classOrMember.enclosingMethod;
-        const param = method.argsArray.find(a => a.name === p2);
+        const method = /** @type {Member} */(classOrMember).enclosingMethod;
+        const param = method?.argsArray.find(a => a.name === p2);
         if (!param)
-          throw new Error(`Referenced parameter ${match} not found in the parent method ${method.name} `);
+          throw new Error(`Referenced parameter ${match} not found in the parent method ${method?.name} `);
         alias = param.alias;
       }
       return linkRenderer({ param: alias, href }) || match;
