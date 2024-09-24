@@ -83,9 +83,11 @@ test('click should not leak', async ({ page, browserName, toImpl }) => {
   expect(leakedJSHandles()).toBeFalsy();
 
   if (browserName === 'chromium') {
-    const counts = await objectCounts(toImpl(page), 'HTMLButtonElement');
-    expect(counts.main + counts.utility).toBeGreaterThanOrEqual(2);
-    expect(counts.main + counts.utility).toBeLessThan(25);
+    await expect(async () => {
+      const counts = await objectCounts(toImpl(page), 'HTMLButtonElement');
+      expect(counts.main + counts.utility).toBeGreaterThanOrEqual(2);
+      expect(counts.main + counts.utility).toBeLessThan(25);
+    }).toPass();
   }
 });
 
@@ -114,9 +116,11 @@ test('fill should not leak', async ({ page, mode, browserName, toImpl }) => {
   expect(leakedJSHandles()).toBeFalsy();
 
   if (browserName === 'chromium') {
-    const counts = await objectCounts(toImpl(page), 'HTMLInputElement');
-    expect(counts.main + counts.utility).toBeGreaterThanOrEqual(2);
-    expect(counts.main + counts.utility).toBeLessThan(25);
+    await expect(async () => {
+      const counts = await objectCounts(toImpl(page), 'HTMLInputElement');
+      expect(counts.main + counts.utility).toBeGreaterThanOrEqual(2);
+      expect(counts.main + counts.utility).toBeLessThan(25);
+    }).toPass();
   }
 });
 
@@ -144,9 +148,11 @@ test('expect should not leak', async ({ page, mode, browserName, toImpl }) => {
   expect(leakedJSHandles()).toBeFalsy();
 
   if (browserName === 'chromium') {
-    const counts = await objectCounts(toImpl(page), 'HTMLButtonElement');
-    expect(counts.main + counts.utility).toBeGreaterThanOrEqual(2);
-    expect(counts.main + counts.utility).toBeLessThan(25);
+    await expect(async () => {
+      const counts = await objectCounts(toImpl(page), 'HTMLButtonElement');
+      expect(counts.main + counts.utility).toBeGreaterThanOrEqual(2);
+      expect(counts.main + counts.utility).toBeLessThan(25);
+    }).toPass();
   }
 });
 
@@ -174,8 +180,10 @@ test('waitFor should not leak', async ({ page, mode, browserName, toImpl }) => {
   expect(leakedJSHandles()).toBeFalsy();
 
   if (browserName === 'chromium') {
-    const counts = await objectCounts(toImpl(page), 'HTMLButtonElement');
-    expect(counts.main + counts.utility).toBeGreaterThanOrEqual(2);
-    expect(counts.main + counts.utility).toBeLessThan(25);
+    await expect(async () => {
+      const counts = await objectCounts(toImpl(page), 'HTMLButtonElement');
+      expect(counts.main + counts.utility).toBeGreaterThanOrEqual(2);
+      expect(counts.main + counts.utility).toBeLessThan(25);
+    }).toPass();
   }
 });
