@@ -84,6 +84,8 @@ gzip "${REPORT_NAME}"
 
 AZ_STORAGE_ACCOUNT="folioflakinessdashboard"
 
+echo "Uploading ${REPORT_NAME}.gz"
+
 az storage blob upload --auth-mode login --account-name "${AZ_STORAGE_ACCOUNT}" -c uploads -f "${REPORT_NAME}.gz" -n "${REPORT_NAME}.gz"
 
 UTC_DATE=$(cat <<EOF | node
