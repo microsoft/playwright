@@ -427,7 +427,7 @@ await page1.GotoAsync("about:blank?foo");`);
       page.click('button'),
       recorder.waitForOutput('JavaScript', '.click(')
     ]);
-    expect(messages).toEqual(['mousedown', 'mouseup', 'click']);
+    await expect.poll(() => messages).toEqual(['mousedown', 'mouseup', 'click']);
   });
 
   test('should update hover model on action', async ({ openRecorder }) => {
