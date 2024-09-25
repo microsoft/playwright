@@ -50,9 +50,9 @@ export function isNonRecoverableDOMError(error: Error) {
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
   private _injectedScriptPromise?: Promise<js.JSHandle>;
-  readonly world: types.World;
+  readonly world: types.World | null;
 
-  constructor(delegate: js.ExecutionContextDelegate, frame: frames.Frame, world: types.World) {
+  constructor(delegate: js.ExecutionContextDelegate, frame: frames.Frame, world: types.World|null) {
     super(frame, delegate, world || 'content-script');
     this.frame = frame;
     this.world = world;

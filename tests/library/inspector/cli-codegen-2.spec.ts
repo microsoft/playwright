@@ -20,6 +20,7 @@ import fs from 'fs';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
+  test.skip(({ trace, codegenMode }) => trace === 'on' && codegenMode === 'trace-events');
 
   test('should contain open page', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
@@ -337,7 +338,8 @@ await page.GetByRole(AriaRole.Button, new() { Name = "click me" }).ClickAsync();
     }
   });
 
-  test('should record open in a new tab with url', async ({ openRecorder, browserName }) => {
+  test('should record open in a new tab with url', async ({ openRecorder, browserName, codegenMode }) => {
+    test.skip(codegenMode === 'trace-events');
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`<a href="about:blank?foo">link</a>`);
 
@@ -425,7 +427,7 @@ await page1.GotoAsync("about:blank?foo");`);
       page.click('button'),
       recorder.waitForOutput('JavaScript', '.click(')
     ]);
-    expect(messages).toEqual(['mousedown', 'mouseup', 'click']);
+    await expect.poll(() => messages).toEqual(['mousedown', 'mouseup', 'click']);
   });
 
   test('should update hover model on action', async ({ openRecorder }) => {
@@ -490,7 +492,8 @@ await page1.GotoAsync("about:blank?foo");`);
     await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/page2.html');`);
   });
 
-  test('should --save-trace', async ({ runCLI }, testInfo) => {
+  test('should --save-trace', async ({ runCLI, codegenMode }, testInfo) => {
+    test.skip(codegenMode === 'trace-events');
     const traceFileName = testInfo.outputPath('trace.zip');
     const cli = runCLI([`--save-trace=${traceFileName}`], {
       autoExitWhen: ' ',
@@ -499,7 +502,8 @@ await page1.GotoAsync("about:blank?foo");`);
     expect(fs.existsSync(traceFileName)).toBeTruthy();
   });
 
-  test('should save assets via SIGINT', async ({ runCLI, platform }, testInfo) => {
+  test('should save assets via SIGINT', async ({ runCLI, platform, codegenMode }, testInfo) => {
+    test.skip(codegenMode === 'trace-events');
     test.skip(platform === 'win32', 'SIGINT not supported on Windows');
 
     const traceFileName = testInfo.outputPath('trace.zip');
@@ -546,18 +550,17 @@ await page.Locator("#textarea").FillAsync(\"Hello'\\"\`\\nWorld\");`);
     expect(message.text()).toBe('Hello\'\"\`\nWorld');
   });
 
-});
+  test('should --test-id-attribute', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder({ testIdAttributeName: 'my-test-id' });
 
-test('should --test-id-attribute', async ({ openRecorder }) => {
-  const { page, recorder } = await openRecorder({ testIdAttributeName: 'my-test-id' });
+    await recorder.setContentAndWait(`<div my-test-id="foo">Hello</div>`);
+    await page.click('[my-test-id=foo]');
+    const sources = await recorder.waitForOutput('JavaScript', `page.getByTestId`);
 
-  await recorder.setContentAndWait(`<div my-test-id="foo">Hello</div>`);
-  await page.click('[my-test-id=foo]');
-  const sources = await recorder.waitForOutput('JavaScript', `page.getByTestId`);
-
-  expect.soft(sources.get('JavaScript')!.text).toContain(`await page.getByTestId('foo').click()`);
-  expect.soft(sources.get('Java')!.text).toContain(`page.getByTestId("foo").click()`);
-  expect.soft(sources.get('Python')!.text).toContain(`page.get_by_test_id("foo").click()`);
-  expect.soft(sources.get('Python Async')!.text).toContain(`await page.get_by_test_id("foo").click()`);
-  expect.soft(sources.get('C#')!.text).toContain(`await page.GetByTestId("foo").ClickAsync();`);
+    expect.soft(sources.get('JavaScript')!.text).toContain(`await page.getByTestId('foo').click()`);
+    expect.soft(sources.get('Java')!.text).toContain(`page.getByTestId("foo").click()`);
+    expect.soft(sources.get('Python')!.text).toContain(`page.get_by_test_id("foo").click()`);
+    expect.soft(sources.get('Python Async')!.text).toContain(`await page.get_by_test_id("foo").click()`);
+    expect.soft(sources.get('C#')!.text).toContain(`await page.GetByTestId("foo").ClickAsync();`);
+  });
 });

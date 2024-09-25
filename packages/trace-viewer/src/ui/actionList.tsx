@@ -32,9 +32,9 @@ export interface ActionListProps {
   selectedTime: Boundaries | undefined,
   setSelectedTime: (time: Boundaries | undefined) => void,
   sdkLanguage: Language | undefined;
-  onSelected: (action: ActionTraceEventInContext) => void,
-  onHighlighted: (action: ActionTraceEventInContext | undefined) => void,
-  revealConsole: () => void,
+  onSelected?: (action: ActionTraceEventInContext) => void,
+  onHighlighted?: (action: ActionTraceEventInContext | undefined) => void,
+  revealConsole?: () => void,
   isLive?: boolean,
 }
 
@@ -67,8 +67,8 @@ export const ActionList: React.FC<ActionListProps> = ({
       treeState={treeState}
       setTreeState={setTreeState}
       selectedItem={selectedItem}
-      onSelected={item => onSelected(item.action!)}
-      onHighlighted={item => onHighlighted(item?.action)}
+      onSelected={item => onSelected?.(item.action!)}
+      onHighlighted={item => onHighlighted?.(item?.action)}
       onAccepted={item => setSelectedTime({ minimum: item.action!.startTime, maximum: item.action!.endTime })}
       isError={item => !!item.action?.error?.message}
       isVisible={item => !selectedTime || (item.action!.startTime <= selectedTime.maximum && item.action!.endTime >= selectedTime.minimum)}

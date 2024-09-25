@@ -220,7 +220,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     }
     // If the page is closed or unrouteAll() was called without waiting and interception disabled,
     // the method will throw an error - silence it.
-    await route._innerContinue(true).catch(() => {});
+    await route._innerContinue(true /* isFallback */).catch(() => {});
   }
 
   async _onWebSocketRoute(webSocketRoute: network.WebSocketRoute) {
@@ -492,17 +492,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._closedPromise;
   }
 
-  async _enableRecorder(params: {
-      language: string,
-      launchOptions?: LaunchOptions,
-      contextOptions?: BrowserContextOptions,
-      device?: string,
-      saveStorage?: string,
-      mode?: 'recording' | 'inspecting',
-      testIdAttributeName?: string,
-      outputFile?: string,
-  }) {
-    await this._channel.recorderSupplementEnable(params);
+  async _enableRecorder(params: channels.BrowserContextEnableRecorderParams) {
+    await this._channel.enableRecorder(params);
   }
 }
 

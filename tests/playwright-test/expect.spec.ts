@@ -1069,3 +1069,37 @@ test('expect.extend should be immutable', async ({ runInlineTest }) => {
     'bar',
   ]);
 });
+
+test('expect.extend should fall back to legacy behavior', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      expect.extend({
+        toFoo() {
+          console.log('%%foo');
+          return { pass: true };
+        }
+      });
+      expect.extend({
+        toFoo() {
+          console.log('%%foo2');
+          return { pass: true };
+        }
+      });
+      expect.extend({
+        toBar() {
+          console.log('%%bar');
+          return { pass: true };
+        }
+      });
+      test('logs', () => {
+        expect().toFoo();
+        expect().toBar();
+      });
+    `
+  });
+  expect(result.outputLines).toEqual([
+    'foo2',
+    'bar',
+  ]);
+});

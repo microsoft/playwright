@@ -38,6 +38,8 @@ import { Snapshotter } from './snapshotter';
 import type { ConsoleMessage } from '../../console';
 import { Dispatcher } from '../../dispatchers/dispatcher';
 import { serializeError } from '../../errors';
+import type { Dialog } from '../../dialog';
+import type { Download } from '../../download';
 
 const version: trace.VERSION = 7;
 
@@ -450,6 +452,28 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       location: message.location(),
       time: monotonicTime(),
       pageId: message.page()?.guid,
+    };
+    this._appendTraceEvent(event);
+  }
+
+  onDialog(dialog: Dialog) {
+    const event: trace.EventTraceEvent = {
+      type: 'event',
+      time: monotonicTime(),
+      class: 'BrowserContext',
+      method: 'dialog',
+      params: { pageId: dialog.page().guid, type: dialog.type(), message: dialog.message(), defaultValue: dialog.defaultValue() },
+    };
+    this._appendTraceEvent(event);
+  }
+
+  onDownload(page: Page, download: Download) {
+    const event: trace.EventTraceEvent = {
+      type: 'event',
+      time: monotonicTime(),
+      class: 'BrowserContext',
+      method: 'download',
+      params: { pageId: page.guid, url: download.url, suggestedFilename: download.suggestedFilename() },
     };
     this._appendTraceEvent(event);
   }

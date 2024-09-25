@@ -2120,7 +2120,9 @@ export interface Page {
 
     /**
      * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
-     * to `false`. Useful to wait until the element is ready for the action without performing it.
+     * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+     * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+     * are pressed.
      */
     trial?: boolean;
   }): Promise<void>;
@@ -2233,7 +2235,9 @@ export interface Page {
 
     /**
      * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
-     * to `false`. Useful to wait until the element is ready for the action without performing it.
+     * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+     * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+     * are pressed.
      */
     trial?: boolean;
   }): Promise<void>;
@@ -3125,7 +3129,9 @@ export interface Page {
 
     /**
      * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
-     * to `false`. Useful to wait until the element is ready for the action without performing it.
+     * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+     * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+     * are pressed.
      */
     trial?: boolean;
   }): Promise<void>;
@@ -4266,7 +4272,9 @@ export interface Page {
 
     /**
      * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
-     * to `false`. Useful to wait until the element is ready for the action without performing it.
+     * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+     * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+     * are pressed.
      */
     trial?: boolean;
   }): Promise<void>;
@@ -5845,7 +5853,9 @@ export interface Frame {
 
     /**
      * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
-     * to `false`. Useful to wait until the element is ready for the action without performing it.
+     * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+     * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+     * are pressed.
      */
     trial?: boolean;
   }): Promise<void>;
@@ -5931,7 +5941,9 @@ export interface Frame {
 
     /**
      * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
-     * to `false`. Useful to wait until the element is ready for the action without performing it.
+     * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+     * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+     * are pressed.
      */
     trial?: boolean;
   }): Promise<void>;
@@ -6621,7 +6633,9 @@ export interface Frame {
 
     /**
      * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
-     * to `false`. Useful to wait until the element is ready for the action without performing it.
+     * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+     * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+     * are pressed.
      */
     trial?: boolean;
   }): Promise<void>;
@@ -7308,7 +7322,9 @@ export interface Frame {
 
     /**
      * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
-     * to `false`. Useful to wait until the element is ready for the action without performing it.
+     * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+     * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+     * are pressed.
      */
     trial?: boolean;
   }): Promise<void>;
@@ -12045,7 +12061,9 @@ export interface Locator {
 
     /**
      * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
-     * to `false`. Useful to wait until the element is ready for the action without performing it.
+     * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+     * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+     * are pressed.
      */
     trial?: boolean;
   }): Promise<void>;
@@ -12155,7 +12173,9 @@ export interface Locator {
 
     /**
      * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
-     * to `false`. Useful to wait until the element is ready for the action without performing it.
+     * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+     * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+     * are pressed.
      */
     trial?: boolean;
   }): Promise<void>;
@@ -12825,7 +12845,9 @@ export interface Locator {
 
     /**
      * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
-     * to `false`. Useful to wait until the element is ready for the action without performing it.
+     * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+     * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+     * are pressed.
      */
     trial?: boolean;
   }): Promise<void>;
@@ -13626,7 +13648,9 @@ export interface Locator {
 
     /**
      * When set, this method only performs the [actionability](https://playwright.dev/docs/actionability) checks and skips the action. Defaults
-     * to `false`. Useful to wait until the element is ready for the action without performing it.
+     * to `false`. Useful to wait until the element is ready for the action without performing it. Note that keyboard
+     * `modifiers` will be pressed regardless of `trial` to allow testing elements which are only visible when those keys
+     * are pressed.
      */
     trial?: boolean;
   }): Promise<void>;

@@ -58,7 +58,6 @@ const queryParams = {
   workers: searchParams.get('workers') || undefined,
   timeout: searchParams.has('timeout') ? +searchParams.get('timeout')! : undefined,
   headed: searchParams.has('headed'),
-  outputDir: searchParams.get('outputDir') || undefined,
   updateSnapshots: (searchParams.get('updateSnapshots') as 'all' | 'none' | 'missing' | undefined) || undefined,
   reporters: searchParams.has('reporter') ? searchParams.getAll('reporter') : undefined,
   pathSeparator: searchParams.get('pathSeparator') || '/',
@@ -105,7 +104,6 @@ export const UIModeView: React.FC<{}> = ({
   const [singleWorker, setSingleWorker] = React.useState(queryParams.workers === '1');
   const [showBrowser, setShowBrowser] = React.useState(queryParams.headed);
   const [updateSnapshots, setUpdateSnapshots] = React.useState(queryParams.updateSnapshots === 'all');
-  const [showRouteActions, setShowRouteActions] = useSetting('show-route-actions', true);
   const [darkMode, setDarkMode] = useDarkModeSetting();
   const [showScreenshot, setShowScreenshot] = useSetting('screenshot-instead-of-snapshot', false);
 
@@ -188,14 +186,12 @@ export const UIModeView: React.FC<{}> = ({
           interceptStdio: true,
           watchTestDirs: true
         });
-        const { status, report } = await testServerConnection.runGlobalSetup({
-          outputDir: queryParams.outputDir,
-        });
+        const { status, report } = await testServerConnection.runGlobalSetup({});
         teleSuiteUpdater.processGlobalReport(report);
         if (status !== 'passed')
           return;
 
-        const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert, outputDir: queryParams.outputDir });
+        const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert });
         teleSuiteUpdater.processListReport(result.report);
 
         testServerConnection.onReport(params => {
@@ -297,7 +293,6 @@ export const UIModeView: React.FC<{}> = ({
         workers: singleWorker ? '1' : (queryParams.workers === '1' ? undefined : queryParams.workers),
         timeout: queryParams.timeout,
         headed: showBrowser,
-        outputDir: queryParams.outputDir,
         updateSnapshots: updateSnapshots ? 'all' : queryParams.updateSnapshots,
         reporters: queryParams.reporters,
         trace: 'on',
@@ -320,7 +315,7 @@ export const UIModeView: React.FC<{}> = ({
       commandQueue.current = commandQueue.current.then(async () => {
         setIsLoading(true);
         try {
-          const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert, outputDir: queryParams.outputDir });
+          const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert });
           teleSuiteUpdater.processListReport(result.report);
         } catch (e) {
           // eslint-disable-next-line no-console
@@ -526,7 +521,6 @@ export const UIModeView: React.FC<{}> = ({
         </Toolbar>
         {settingsVisible && <SettingsView settings={[
           { value: darkMode, set: setDarkMode, title: 'Dark mode' },
-          { value: showRouteActions, set: setShowRouteActions, title: 'Show route actions' },
           { value: showScreenshot, set: setShowScreenshot, title: 'Show screenshot instead of snapshot' },
         ]} />}
       </div>

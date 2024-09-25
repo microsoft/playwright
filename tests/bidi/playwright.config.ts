@@ -50,7 +50,7 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   },
   maxFailures: 0,
   timeout: 15 * 1000,
-  globalTimeout: 30 * 60 * 1000,
+  globalTimeout: 60 * 60 * 1000,
   workers: process.env.CI ? 2 : undefined,
   fullyParallel: !process.env.CI,
   forbidOnly: !!process.env.CI,

@@ -397,7 +397,7 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
       process.stdout.write('\n-------------8<-------------\n');
       const autoExitCondition = process.env.PWTEST_CLI_AUTO_EXIT_WHEN;
       if (autoExitCondition && text.includes(autoExitCondition))
-        Promise.all(context.pages().map(async p => p.close()));
+        closeBrowser();
     };
     // Make sure we exit abnormally when browser crashes.
     const logs: string[] = [];
@@ -504,7 +504,7 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
       if (hasPage)
         return;
       // Avoid the error when the last page is closed because the browser has been closed.
-      closeBrowser().catch(e => null);
+      closeBrowser().catch(() => {});
     });
   });
   process.on('SIGINT', async () => {
@@ -560,7 +560,7 @@ async function open(options: Options, url: string | undefined, language: string)
 
 async function codegen(options: Options & { target: string, output?: string, testIdAttribute?: string }, url: string | undefined) {
   const { target: language, output: outputFile, testIdAttribute: testIdAttributeName } = options;
-  const tracesDir = path.join(os.tmpdir(), `recorder-trace-${Date.now()}`);
+  const tracesDir = path.join(os.tmpdir(), `playwright-recorder-trace-${Date.now()}`);
   const { context, launchOptions, contextOptions } = await launchContext(options, {
     headless: !!process.env.PWTEST_CLI_HEADLESS,
     executablePath: process.env.PWTEST_CLI_EXECUTABLE_PATH,
@@ -574,6 +574,7 @@ async function codegen(options: Options & { target: string, output?: string, tes
     device: options.device,
     saveStorage: options.saveStorage,
     mode: 'recording',
+    codegenMode: process.env.PW_RECORDER_IS_TRACE_VIEWER ? 'trace-events' : 'actions',
     testIdAttributeName,
     outputFile: outputFile ? path.resolve(outputFile) : undefined,
   });

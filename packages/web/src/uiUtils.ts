@@ -203,5 +203,10 @@ export function clsx(...classes: (string | undefined | false)[]) {
   return classes.filter(Boolean).join(' ');
 }
 
+export async function sha1(str: string): Promise<string> {
+  const buffer = new TextEncoder().encode(str);
+  return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-1', buffer))).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 const kControlCodesRe = '\\u0000-\\u0020\\u007f-\\u009f';
 export const kWebLinkRe = new RegExp('(?:[a-zA-Z][a-zA-Z0-9+.-]{2,}:\\/\\/|www\\.)[^\\s' + kControlCodesRe + '"]{2,}[^\\s' + kControlCodesRe + '"\')}\\],:;.!?]', 'ug');

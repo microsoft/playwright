@@ -21,6 +21,7 @@ import * as playwrightLibrary from 'playwright-core';
 
 export type TestModeWorkerOptions = {
   mode: TestModeName;
+  codegenMode: 'trace-events' | 'actions';
 };
 
 export type TestModeTestFixtures = {
@@ -48,6 +49,7 @@ export const testModeTest = test.extend<TestModeTestFixtures, TestModeWorkerOpti
     await run(playwright);
     await testMode.teardown();
   }, { scope: 'worker' }],
+  codegenMode: ['actions', { scope: 'worker', option: true }],
 
   toImplInWorkerScope: [async ({ playwright }, use) => {
     await use((playwright as any)._toImpl);

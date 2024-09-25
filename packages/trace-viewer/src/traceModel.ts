@@ -15,7 +15,7 @@
  */
 
 import { parseClientSideCallMetadata } from '../../../packages/playwright-core/src/utils/isomorphic/traceUtils';
-import type { ContextEntry } from './entries';
+import type { ActionEntry, ContextEntry } from './entries';
 import { createEmptyContext } from './entries';
 import { SnapshotStorage } from './snapshotStorage';
 import { TraceModernizer } from './traceModernizer';
@@ -38,7 +38,7 @@ export class TraceModel {
   constructor() {
   }
 
-  async load(backend: TraceModelBackend, unzipProgress: (done: number, total: number) => void) {
+  async load(backend: TraceModelBackend, isRecorderMode: boolean, unzipProgress: (done: number, total: number) => void) {
     this._backend = backend;
 
     const ordinals: string[] = [];
@@ -72,7 +72,8 @@ export class TraceModel {
       modernizer.appendTrace(network);
       unzipProgress(++done, total);
 
-      contextEntry.actions = modernizer.actions().sort((a1, a2) => a1.startTime - a2.startTime);
+      const actions = modernizer.actions().sort((a1, a2) => a1.startTime - a2.startTime);
+      contextEntry.actions = isRecorderMode ? collapseActionsForRecorder(actions) : actions;
 
       if (!backend.isLive()) {
         // Terminate actions w/o after event gracefully.
@@ -132,4 +133,20 @@ function stripEncodingFromContentType(contentType: string) {
   if (charset)
     return charset[1];
   return contentType;
+}
+
+function collapseActionsForRecorder(actions: ActionEntry[]): ActionEntry[] {
+  const result: ActionEntry[] = [];
+  for (const action of actions) {
+    const lastAction = result[result.length - 1];
+    const isSameAction = lastAction && lastAction.method === action.method && lastAction.pageId === action.pageId;
+    const isSameSelector = lastAction && 'selector' in lastAction.params && 'selector' in action.params && action.params.selector === lastAction.params.selector;
+    const shouldMerge = isSameAction && (action.method === 'goto' || (action.method === 'fill' && isSameSelector));
+    if (!shouldMerge) {
+      result.push(action);
+      continue;
+    }
+    result[result.length - 1] = action;
+  }
+  return result;
 }
