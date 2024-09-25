@@ -447,7 +447,7 @@ test('should show proper total when using deps', async ({ runUITest }) => {
 
 test('should respect --tsconfig option', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32797' }
-},async ({ runUITest }) => {
+}, async ({ runUITest }) => {
   const { page } = await runUITest({
     'playwright.config.ts': `
       import { foo } from '~/foo';

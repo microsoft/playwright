@@ -161,7 +161,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     if (opts.onlyChanged)
       throw new Error(`--only-changed is not supported in UI mode. If you'd like that to change, see https://github.com/microsoft/playwright/issues/15075 for more details.`);
 
-    const status = await testServer.runUIMode(opts.config, cliOverrides,{
+    const status = await testServer.runUIMode(opts.config, cliOverrides, {
       host: opts.uiHost,
       port: opts.uiPort ? +opts.uiPort : undefined,
       args,
