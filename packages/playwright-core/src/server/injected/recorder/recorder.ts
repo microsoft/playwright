@@ -205,7 +205,7 @@ class InspectTool implements RecorderTool {
 
 class RecordActionTool implements RecorderTool {
   private _recorder: Recorder;
-  private _performingAction: actions.PerformOnRecordAction | null = null;
+  private _performingActions = new Set<actions.PerformOnRecordAction>();
   private _hoveredModel: HighlightModel | null = null;
   private _hoveredElement: HTMLElement | null = null;
   private _activeModel: HighlightModel | null = null;
@@ -333,21 +333,21 @@ class RecordActionTool implements RecorderTool {
   onPointerDown(event: PointerEvent) {
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    if (!this._performingAction)
+    if (!this._performingActions.size)
       consumeEvent(event);
   }
 
   onPointerUp(event: PointerEvent) {
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    if (!this._performingAction)
+    if (!this._performingActions.size)
       consumeEvent(event);
   }
 
   onMouseDown(event: MouseEvent) {
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    if (!this._performingAction)
+    if (!this._performingActions.size)
       consumeEvent(event);
     this._activeModel = this._hoveredModel;
   }
@@ -355,7 +355,7 @@ class RecordActionTool implements RecorderTool {
   onMouseUp(event: MouseEvent) {
     if (this._shouldIgnoreMouseEvent(event))
       return;
-    if (!this._performingAction)
+    if (!this._performingActions.size)
       consumeEvent(event);
   }
 
@@ -509,12 +509,13 @@ class RecordActionTool implements RecorderTool {
   private _actionInProgress(event: Event): boolean {
     // If Playwright is performing action for us, bail.
     const isKeyEvent = event instanceof KeyboardEvent;
-    if (this._performingAction?.name === 'press' && isKeyEvent && event.key === this._performingAction.key)
-      return true;
-
     const isMouseOrPointerEvent = event instanceof MouseEvent || event instanceof PointerEvent;
-    if (isMouseOrPointerEvent && (this._performingAction?.name === 'click' || this._performingAction?.name === 'check' || this._performingAction?.name === 'uncheck'))
-      return true;
+    for (const action of this._performingActions) {
+      if (isKeyEvent && action.name === 'press' && event.key === action.key)
+        return true;
+      if (isMouseOrPointerEvent && (action.name === 'click' || action.name === 'check' || action.name === 'uncheck'))
+        return true;
+    }
 
     // Consume event if action is not being executed.
     consumeEvent(event);
@@ -540,9 +541,9 @@ class RecordActionTool implements RecorderTool {
     this._hoveredModel = null;
     this._activeModel = null;
     this._recorder.updateHighlight(null, false);
-    this._performingAction = action;
+    this._performingActions.add(action);
     void this._recorder.performAction(action).then(() => {
-      this._performingAction = null;
+      this._performingActions.delete(action);
 
       // If that was a keyboard action, it similarly requires new selectors for active model.
       this._onFocus(false);

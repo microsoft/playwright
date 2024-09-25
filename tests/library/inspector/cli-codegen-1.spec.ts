@@ -421,18 +421,32 @@ await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
       <input name="two"></input>
     `);
 
-    await page.click('input[name="one"]');
-    await recorder.waitForOutput('JavaScript', 'click');
-    await page.keyboard.type('foobar123');
-    await recorder.waitForOutput('JavaScript', 'foobar123');
+    const input1 = page.locator('input[name="one"]');
+    const input2 = page.locator('input[name="two"]');
 
-    await page.keyboard.press('Tab');
-    await recorder.waitForOutput('JavaScript', 'Tab');
-    await page.keyboard.type('barfoo321');
-    // I can't explain it atm, first character is being consumed for no apparent reason.
-    if (browserName === 'webkit' && codegenMode === 'trace-events')
-      await page.waitForTimeout(1000);
-    await recorder.waitForOutput('JavaScript', 'barfoo321');
+    {
+      await input1.click();
+      await recorder.waitForOutput('JavaScript', 'click');
+      await expect(input1).toBeFocused();
+    }
+
+    {
+      await page.keyboard.type('foobar123');
+      await recorder.waitForOutput('JavaScript', 'foobar123');
+      await expect(input1).toHaveValue('foobar123');
+    }
+
+    {
+      await page.keyboard.press('Tab');
+      await recorder.waitForOutput('JavaScript', 'Tab');
+      await expect(input2).toBeFocused();
+    }
+
+    {
+      await page.keyboard.type('barfoo321');
+      await recorder.waitForOutput('JavaScript', 'barfoo321');
+      await expect(input2).toHaveValue('barfoo321');
+    }
 
     const text = recorder.sources().get('JavaScript')!.text;
     expect(text).toContain(`
