@@ -154,16 +154,17 @@ for (const browserName of browserNames) {
     ...projectTemplate,
   });
 
-  config.projects.push({
-    name: `${browserName}-codegen-mode-trace`,
-    testDir: path.join(testDir, 'library'),
-    testMatch: '**/cli-codegen-*.spec.ts',
-    ...projectTemplate,
-    use: {
-      ...projectTemplate.use,
-      codegenMode: 'trace-events',
-    }
-  });
+  // TODO: figure out reporting to flakiness dashboard (Problem: they get merged, we want to keep them separate)
+  // config.projects.push({
+  //   name: `${browserName}-codegen-mode-trace`,
+  //   testDir: path.join(testDir, 'library'),
+  //   testMatch: '**/cli-codegen-*.spec.ts',
+  //   ...projectTemplate,
+  //   use: {
+  //     ...projectTemplate.use,
+  //     codegenMode: 'trace-events',
+  //   }
+  // });
 }
 
 export default config;
