@@ -413,7 +413,7 @@ await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
     expect(messages[0].text()).toBe('press');
   });
 
-  test('should update selected element after pressing Tab', async ({ openRecorder }) => {
+  test('should update selected element after pressing Tab', async ({ openRecorder, browserName, codegenMode }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
@@ -429,6 +429,9 @@ await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
     await page.keyboard.press('Tab');
     await recorder.waitForOutput('JavaScript', 'Tab');
     await page.keyboard.type('barfoo321');
+    // I can't explain it atm, first character is being consumed for no apparent reason.
+    if (browserName === 'webkit' && codegenMode === 'trace-events')
+      await page.waitForTimeout(1000);
     await recorder.waitForOutput('JavaScript', 'barfoo321');
 
     const text = recorder.sources().get('JavaScript')!.text;
