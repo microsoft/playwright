@@ -44,14 +44,16 @@ const originalStderrWrite = process.stderr.write;
 
 class TestServer {
   private _configLocation: ConfigLocation;
+  private _configCLIOverrides: ConfigCLIOverrides;
   private _dispatcher: TestServerDispatcher | undefined;
 
-  constructor(configLocation: ConfigLocation) {
+  constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
     this._configLocation = configLocation;
+    this._configCLIOverrides = configCLIOverrides;
   }
 
   async start(options: { host?: string, port?: number }): Promise<HttpServer> {
-    this._dispatcher = new TestServerDispatcher(this._configLocation);
+    this._dispatcher = new TestServerDispatcher(this._configLocation, this._configCLIOverrides);
     return await startTraceViewerServer({ ...options, transport: this._dispatcher.transport });
   }
 
@@ -63,6 +65,7 @@ class TestServer {
 
 export class TestServerDispatcher implements TestServerInterface {
   private _configLocation: ConfigLocation;
+  private _configCLIOverrides: ConfigCLIOverrides;
 
   private _watcher: Watcher;
   private _watchedProjectDirs = new Set<string>();
@@ -81,8 +84,9 @@ export class TestServerDispatcher implements TestServerInterface {
   private _closeOnDisconnect = false;
   private _populateDependenciesOnList = false;
 
-  constructor(configLocation: ConfigLocation) {
+  constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
     this._configLocation = configLocation;
+    this._configCLIOverrides = configCLIOverrides;
     this.transport = {
       onconnect: () => {},
       dispatch: (method, params) => (this as any)[method](params),
@@ -145,11 +149,8 @@ export class TestServerDispatcher implements TestServerInterface {
   async runGlobalSetup(params: Parameters<TestServerInterface['runGlobalSetup']>[0]): ReturnType<TestServerInterface['runGlobalSetup']> {
     await this.runGlobalTeardown();
 
-    const overrides: ConfigCLIOverrides = {
-      outputDir: params.outputDir,
-    };
     const { reporter, report } = await this._collectingInternalReporter(new ListReporter());
-    const config = await this._loadConfigOrReportError(reporter, overrides);
+    const config = await this._loadConfigOrReportError(reporter, this._configCLIOverrides);
     if (!config)
       return { status: 'failed', report };
 
@@ -239,9 +240,9 @@ export class TestServerDispatcher implements TestServerInterface {
     config?: FullConfigInternal,
   }> {
     const overrides: ConfigCLIOverrides = {
+      ...this._configCLIOverrides,
       repeatEach: 1,
       retries: 0,
-      outputDir: params.outputDir,
     };
     const { reporter, report } = await this._collectingInternalReporter();
     const config = await this._loadConfigOrReportError(reporter, overrides);
@@ -295,6 +296,7 @@ export class TestServerDispatcher implements TestServerInterface {
   private async _innerRunTests(params: Parameters<TestServerInterface['runTests']>[0]): ReturnType<TestServerInterface['runTests']> {
     await this.stopTests();
     const overrides: ConfigCLIOverrides = {
+      ...this._configCLIOverrides,
       repeatEach: 1,
       retries: 0,
       preserveOutputDir: true,
@@ -307,7 +309,6 @@ export class TestServerDispatcher implements TestServerInterface {
         _optionContextReuseMode: params.reuseContext ? 'when-possible' : undefined,
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
       },
-      outputDir: params.outputDir,
       updateSnapshots: params.updateSnapshots,
       workers: params.workers,
     };
@@ -424,9 +425,9 @@ export class TestServerDispatcher implements TestServerInterface {
   }
 }
 
-export async function runUIMode(configFile: string | undefined, options: TraceViewerServerOptions & TraceViewerRedirectOptions): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
+export async function runUIMode(configFile: string | undefined, configCLIOverrides: ConfigCLIOverrides, options: TraceViewerServerOptions & TraceViewerRedirectOptions): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
   const configLocation = resolveConfigLocation(configFile);
-  return await innerRunTestServer(configLocation, options, async (server: HttpServer, cancelPromise: ManualPromise<void>) => {
+  return await innerRunTestServer(configLocation, configCLIOverrides, options, async (server: HttpServer, cancelPromise: ManualPromise<void>) => {
     await installRootRedirect(server, [], { ...options, webApp: 'uiMode.html' });
     if (options.host !== undefined || options.port !== undefined) {
       await openTraceInBrowser(server.urlPrefix('human-readable'));
@@ -442,18 +443,18 @@ export async function runUIMode(configFile: string | undefined, options: TraceVi
   });
 }
 
-export async function runTestServer(configFile: string | undefined, options: { host?: string, port?: number }): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
+export async function runTestServer(configFile: string | undefined, configCLIOverrides: ConfigCLIOverrides, options: { host?: string, port?: number }): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
   const configLocation = resolveConfigLocation(configFile);
-  return await innerRunTestServer(configLocation, options, async server => {
+  return await innerRunTestServer(configLocation, configCLIOverrides, options, async server => {
     // eslint-disable-next-line no-console
     console.log('Listening on ' + server.urlPrefix('precise').replace('http:', 'ws:') + '/' + server.wsGuid());
   });
 }
 
-async function innerRunTestServer(configLocation: ConfigLocation, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>, configLocation: ConfigLocation) => Promise<void>): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
+async function innerRunTestServer(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>, configLocation: ConfigLocation) => Promise<void>): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
   if (restartWithExperimentalTsEsm(undefined, true))
     return 'restarted';
-  const testServer = new TestServer(configLocation);
+  const testServer = new TestServer(configLocation, configCLIOverrides);
   const cancelPromise = new ManualPromise<void>();
   const sigintWatcher = new SigIntWatcher();
   process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));

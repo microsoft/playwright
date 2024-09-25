@@ -75,7 +75,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   const options: WatchModeOptions = { ...initialOptions };
   let bufferMode = false;
 
-  const testServerDispatcher = new TestServerDispatcher(configLocation);
+  const testServerDispatcher = new TestServerDispatcher(configLocation, {});
   const transport = new InMemoryTransport(
       async data => {
         const { id, method, params } = JSON.parse(data);
