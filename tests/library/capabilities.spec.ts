@@ -399,3 +399,14 @@ it('service worker should register in an iframe', async ({ page, server }) => {
   });
   expect(response).toBe('responseFromServiceWorker');
 });
+
+it('should be able to render avif images', async ({ page, server, browserName, platform }) => {
+  it.fixme(browserName === 'webkit' && platform === 'win32');
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<img src="${server.PREFIX}/rgb.avif" onerror="window.error = true">`);
+  await expect.poll(() => page.locator('img').boundingBox()).toEqual(expect.objectContaining({
+    width: 128,
+    height: 128,
+  }));
+  expect(await page.evaluate(() => (window as any).error)).toBe(undefined);
+});
