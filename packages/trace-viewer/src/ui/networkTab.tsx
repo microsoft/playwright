@@ -65,7 +65,7 @@ export function useNetworkTabModel(model: MultiTraceModel | undefined, selectedT
 export const NetworkTab: React.FunctionComponent<{
   boundaries: Boundaries,
   networkModel: NetworkTabModel,
-  onEntryHovered: (entry: Entry | undefined) => void,
+  onEntryHovered?: (entry: Entry | undefined) => void,
 }> = ({ boundaries, networkModel, onEntryHovered }) => {
   const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
   const [selectedEntry, setSelectedEntry] = React.useState<RenderedEntry | undefined>(undefined);
@@ -95,7 +95,7 @@ export const NetworkTab: React.FunctionComponent<{
     items={renderedEntries}
     selectedItem={selectedEntry}
     onSelected={item => setSelectedEntry(item)}
-    onHighlighted={item => onEntryHovered(item?.resource)}
+    onHighlighted={item => onEntryHovered?.(item?.resource)}
     columns={visibleColumns(!!selectedEntry, renderedEntries)}
     columnTitle={columnTitle}
     columnWidths={columnWidths}

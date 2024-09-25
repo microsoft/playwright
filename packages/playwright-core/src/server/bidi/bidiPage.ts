@@ -22,6 +22,7 @@ import * as dom from '../dom';
 import * as dialog from '../dialog';
 import type * as frames from '../frames';
 import { Page } from '../page';
+import type * as channels from '@protocol/channels';
 import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
@@ -32,6 +33,7 @@ import * as bidi from './third_party/bidiProtocol';
 import { BidiExecutionContext } from './bidiExecutionContext';
 import { BidiNetworkManager } from './bidiNetworkManager';
 import { BrowserContext } from '../browserContext';
+import { BidiPDF } from './bidiPdf';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const kPlaywrightBindingChannel = 'playwrightChannel';
@@ -48,6 +50,7 @@ export class BidiPage implements PageDelegate {
   private _sessionListeners: RegisteredListener[] = [];
   readonly _browserContext: BidiBrowserContext;
   readonly _networkManager: BidiNetworkManager;
+  private readonly _pdf: BidiPDF;
   _initializedPage: Page | null = null;
   private _initScriptIds: string[] = [];
 
@@ -61,6 +64,7 @@ export class BidiPage implements PageDelegate {
     this._page = new Page(this, browserContext);
     this._browserContext = browserContext;
     this._networkManager = new BidiNetworkManager(this._session, this._page, this._onNavigationResponseStarted.bind(this));
+    this._pdf = new BidiPDF(this._session);
     this._page.on(Page.Events.FrameDetached, (frame: frames.Frame) => this._removeContextsForFrame(frame, false));
     this._sessionListeners = [
       eventsHelper.addEventListener(bidiSession, 'script.realmCreated', this._onRealmCreated.bind(this)),
@@ -279,6 +283,9 @@ export class BidiPage implements PageDelegate {
   }
 
   async bringToFront(): Promise<void> {
+    await this._session.send('browsingContext.activate', {
+      context: this._session.sessionId,
+    });
   }
 
   private async _updateViewport(): Promise<void> {
@@ -553,6 +560,10 @@ export class BidiPage implements PageDelegate {
   }
 
   async resetForReuse(): Promise<void> {
+  }
+
+  async pdf(options: channels.PagePdfParams): Promise<Buffer> {
+    return this._pdf.generate(options);
   }
 
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {

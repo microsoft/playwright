@@ -163,16 +163,15 @@ export class FFPage implements PageDelegate {
     if (!frame)
       return;
     const delegate = new FFExecutionContext(this._session, executionContextId);
-    let worldName: types.World;
+    let worldName: types.World|null = null;
     if (auxData.name === UTILITY_WORLD_NAME)
       worldName = 'utility';
     else if (!auxData.name)
       worldName = 'main';
-    else
-      return;
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
     (context as any)[contextDelegateSymbol] = delegate;
-    frame._contextCreated(worldName, context);
+    if (worldName)
+      frame._contextCreated(worldName, context);
     this._contextIdToContext.set(executionContextId, context);
   }
 

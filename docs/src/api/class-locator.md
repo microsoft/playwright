@@ -433,7 +433,7 @@ await page.Locator("canvas").ClickAsync(new() {
 ### option: Locator.click.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-### option: Locator.click.trial = %%-input-trial-%%
+### option: Locator.click.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
 
 ## async method: Locator.count
@@ -516,7 +516,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.dblclick.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-### option: Locator.dblclick.trial = %%-input-trial-%%
+### option: Locator.dblclick.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
 
 ## async method: Locator.dispatchEvent
@@ -1266,7 +1266,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.hover.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-### option: Locator.hover.trial = %%-input-trial-%%
+### option: Locator.hover.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
 
 ### option: Locator.hover.noWaitAfter = %%-input-no-wait-after-removed-%%
@@ -2331,7 +2331,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.tap.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-### option: Locator.tap.trial = %%-input-trial-%%
+### option: Locator.tap.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
 
 ## async method: Locator.textContent
