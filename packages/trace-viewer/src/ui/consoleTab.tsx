@@ -19,7 +19,7 @@ import * as React from 'react';
 import './consoleTab.css';
 import type * as modelUtil from './modelUtil';
 import { ListView } from '@web/components/listView';
-import type { Boundaries } from '../geometry';
+import type { Boundaries } from './geometry';
 import { clsx, msToString } from '@web/uiUtils';
 import { ansi2html } from '@web/ansi2html';
 import { PlaceholderPanel } from './placeholderPanel';

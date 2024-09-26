@@ -33,7 +33,7 @@ import { Timeline } from './timeline';
 import { MetadataView } from './metadataView';
 import { AttachmentsTab } from './attachmentsTab';
 import { AnnotationsTab } from './annotationsTab';
-import type { Boundaries } from '../geometry';
+import type { Boundaries } from './geometry';
 import { InspectorTab } from './inspectorTab';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { useSetting, msToString, clsx } from '@web/uiUtils';
