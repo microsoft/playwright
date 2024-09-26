@@ -121,7 +121,7 @@ await context.Tracing.StopAsync(new()
 - `name` <[string]>
 
 If specified, intermediate trace files are going to be saved into the files with the
-given name prefix inside the [`option: tracesDir`] folder specified in [`method: BrowserType.launch`].
+given name prefix inside the [`option: BrowserType.launch.tracesDir`] directory specified in [`method: BrowserType.launch`].
 To specify the final trace zip file name, you need to pass `path` option to
 [`method: Tracing.stop`] instead.
 
@@ -277,7 +277,7 @@ Trace name to be shown in the Trace Viewer.
 - `name` <[string]>
 
 If specified, intermediate trace files are going to be saved into the files with the
-given name prefix inside the [`option: tracesDir`] folder specified in [`method: BrowserType.launch`].
+given name prefix inside the [`option: BrowserType.launch.tracesDir`] directory specified in [`method: BrowserType.launch`].
 To specify the final trace zip file name, you need to pass `path` option to
 [`method: Tracing.stopChunk`] instead.
 

@@ -21,8 +21,8 @@ The Network tab in the trace viewer has several nice improvements:
 - The `mcr.microsoft.com/playwright/python:v1.47.0` now serves a Playwright image based on Ubuntu 24.04 Noble.
   To use the 22.04 jammy-based image, please use `mcr.microsoft.com/playwright/python:v1.47.0-jammy` instead.
 - The `:latest`/`:focal`/`:jammy` tag for Playwright Docker images is no longer being published. Pin to a specific version for better stability and reproducibility.
-- TLS client certificates can now be passed from memory by passing [`option: cert`] and [`option: key`] as bytes instead of file paths.
-- [`option: noWaitAfter`] in [`method: Locator.selectOption`] was deprecated.
+- TLS client certificates can now be passed from memory by passing [`option: Browser.newContext.clientCertificates.cert`] and [`option: Browser.newContext.clientCertificates.key`] as bytes instead of file paths.
+- [`option: Locator.selectOption.noWaitAfter`] in [`method: Locator.selectOption`] was deprecated.
 - We've seen reports of WebGL in Webkit misbehaving on GitHub Actions `macos-13`. We recommend upgrading GitHub Actions to `macos-14`.
 
 ### Browser Versions
@@ -260,7 +260,7 @@ expect(page.get_by_role("heading", name="Light and easy")).to_be_visible()
 
 ### New APIs
 
-- [`method: Page.pdf`] accepts two new options [`option: tagged`] and [`option: outline`].
+- [`method: Page.pdf`] accepts two new options [`option: Page.pdf.tagged`] and [`option: Page.pdf.outline`].
 
 ### Announcements
 
@@ -283,7 +283,7 @@ This version was also tested against the following stable channels:
 
 - New method [`method: Page.unrouteAll`] removes all routes registered by [`method: Page.route`] and [`method: Page.routeFromHAR`]. Optionally allows to wait for ongoing routes to finish, or ignore any errors from them.
 - New method [`method: BrowserContext.unrouteAll`] removes all routes registered by [`method: BrowserContext.route`] and [`method: BrowserContext.routeFromHAR`]. Optionally allows to wait for ongoing routes to finish, or ignore any errors from them.
-- New option [`option: style`] in [`method: Page.screenshot`] and [`method: Locator.screenshot`] to add custom CSS to the page before taking a screenshot.
+- New options [`option: Page.screenshot.style`] in [`method: Page.screenshot`] and [`option: Locator.screenshot.style`] in [`method: Locator.screenshot`] to add custom CSS to the page before taking a screenshot.
 
 ### Browser Versions
 
@@ -324,8 +324,8 @@ def test_example(page: Page) -> None:
 
 ### New APIs
 
-- Option [`option: reason`] in [`method: Page.close`], [`method: BrowserContext.close`] and [`method: Browser.close`]. Close reason is reported for all operations interrupted by the closure.
-- Option [`option: firefoxUserPrefs`] in [`method: BrowserType.launchPersistentContext`].
+- Options [`option: Page.close.reason`] in [`method: Page.close`], [`option: BrowserContext.close.reason`] in [`method: BrowserContext.close`] and [`option: Browser.close.reason`] in [`method: Browser.close`]. Close reason is reported for all operations interrupted by the closure.
+- Option [`option: BrowserType.launchPersistentContext.firefoxUserPrefs`] in [`method: BrowserType.launchPersistentContext`].
 
 ### Other Changes
 
@@ -504,7 +504,7 @@ This version was also tested against the following stable channels:
     page.get_by_role("button", name="Dismiss").click()
   new_email.click()
   ```
-* Use new options [`option: hasNot`] and [`option: hasNotText`] in [`method: Locator.filter`]
+* Use new options [`option: Locator.filter.hasNot`] and [`option: Locator.filter.hasNotText`] in [`method: Locator.filter`]
   to find elements that **do not match** certain conditions.
 
   ```python
@@ -520,10 +520,10 @@ This version was also tested against the following stable channels:
 ### New APIs
 
 - [`method: Locator.or`]
-- New option [`option: hasNot`] in [`method: Locator.filter`]
-- New option [`option: hasNotText`] in [`method: Locator.filter`]
+- New option [`option: Locator.filter.hasNot`] in [`method: Locator.filter`]
+- New option [`option: Locator.filter.hasNotText`] in [`method: Locator.filter`]
 - [`method: LocatorAssertions.toBeAttached`]
-- New option [`option: timeout`] in [`method: Route.fetch`]
+- New option [`option: Route.fetch.timeout`] in [`method: Route.fetch`]
 
 ### ⚠️ Breaking change
 
@@ -547,9 +547,9 @@ This version was also tested against the following stable channels:
 ### New APIs
 
 - Custom expect message, see [test assertions documentation](./test-assertions.md#custom-expect-message).
-- New options [`option: updateMode`] and [`option: updateContent`] in [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`].
+- New options [`option: Page.routeFromHAR.updateMode`] and [`option: Page.routeFromHAR.updateContent`] in [`method: Page.routeFromHAR`] and [`method: BrowserContext.routeFromHAR`].
 - Chaining existing locator objects, see [locator docs](./locators.md#matching-inside-a-locator) for details.
-- New option [`option: name`] in method [`method: Tracing.startChunk`].
+- New option [`option: Tracing.startChunk.name`] in method [`method: Tracing.startChunk`].
 
 ### Browser Versions
 

@@ -2382,7 +2382,7 @@ Headless mode doesn't support navigation to a PDF document. See the
 - `url` <[string]>
 
 URL to navigate page to. The url should include scheme, e.g. `https://`.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### option: Page.goto.waitUntil = %%-navigation-wait-until-%%
@@ -2589,7 +2589,7 @@ Returns whether the element is [enabled](../actionability.md#enabled).
 * discouraged: Use locator-based [`method: Locator.isHidden`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).  [`option: selector`] that does not match any elements is considered hidden.
+Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).  [`param: selector`] that does not match any elements is considered hidden.
 
 ### param: Page.isHidden.selector = %%-input-selector-%%
 * since: v1.8
@@ -2608,7 +2608,7 @@ Returns whether the element is hidden, the opposite of [visible](../actionabilit
 * discouraged: Use locator-based [`method: Locator.isVisible`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is [visible](../actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
+Returns whether the element is [visible](../actionability.md#visible). [`param: selector`] that does not match any elements is considered not visible.
 
 ### param: Page.isVisible.selector = %%-input-selector-%%
 * since: v1.8
@@ -2714,8 +2714,7 @@ User can inspect selectors or perform manual steps while paused. Resume will con
 the place it was paused.
 
 :::note
-This method requires Playwright to be started in a headed mode, with a falsy [`option: headless`] value in
-the [`method: BrowserType.launch`].
+This method requires Playwright to be started in a headed mode, with a falsy [`option: BrowserType.launch.headless`] option.
 :::
 
 ## async method: Page.pdf
@@ -3564,7 +3563,7 @@ Enabling routing disables http cache.
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: Page.route.handler
@@ -3708,7 +3707,7 @@ await page.RouteWebSocketAsync("/ws", async ws => {
 * since: v1.48
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
-Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the [`option: baseURL`] from the context options.
+Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the [`option: Browser.newContext.baseURL`] context option.
 
 ### param: Page.routeWebSocket.handler
 * since: v1.48
@@ -4072,7 +4071,7 @@ When all steps combined have not finished during the specified [`option: timeout
 [TimeoutError]. Passing zero timeout disables this.
 
 :::note
-[`method: Page.tap`] the method will throw if [`option: hasTouch`] option of the browser context is false.
+[`method: Page.tap`] the method will throw if [`option: Browser.newContext.hasTouch`] option of the browser context is false.
 :::
 
 ### param: Page.tap.selector = %%-input-selector-%%
@@ -4859,7 +4858,7 @@ await page.RunAndWaitForRequestAsync(async () =>
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Request]\):[boolean]>
 
 Request URL string, regex or predicate receiving [Request] object.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: Page.waitForRequest.urlOrPredicate
@@ -5003,7 +5002,7 @@ await page.RunAndWaitForResponseAsync(async () =>
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]>
 
 Request URL string, regex or predicate receiving [Response] object.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: Page.waitForResponse.urlOrPredicate
@@ -5012,7 +5011,7 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]|[Promise]<[boolean]>>
 
 Request URL string, regex or predicate receiving [Response] object.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### option: Page.waitForResponse.timeout

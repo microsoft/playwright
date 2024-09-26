@@ -7,7 +7,7 @@ title: "Downloads"
 
 For every attachment downloaded by the page, [`event: Page.download`] event is emitted. All these attachments are downloaded into a temporary folder. You can obtain the download url, file name and payload stream using the [Download] object from the event.
 
-You can specify where to persist downloaded files using the [`option: downloadsPath`] option in [`method: BrowserType.launch`].
+You can specify where to persist downloaded files using the [`option: BrowserType.launch.downloadsPath`] option in [`method: BrowserType.launch`].
 
 :::note
 Downloaded files are deleted when the browser context that produced them is closed.

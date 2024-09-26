@@ -451,7 +451,7 @@ will reset pre-configured user agent and device emulation.
 Playwright runs browsers in headless mode by default. To change this behavior,
 use `headless: false` as a launch option.
 
-You can also use the [`option: slowMo`] option
+You can also use the [`option: BrowserType.launch.slowMo`] option
 to slow down execution (by N milliseconds per operation) and follow along while debugging.
 
 ```js

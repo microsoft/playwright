@@ -54,7 +54,7 @@ foreach (var li in await page.GetByRole("listitem").AllAsync())
 Returns an array of `node.innerText` values for all matching nodes.
 
 :::warning[Asserting text]
-If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: LocatorAssertions.toHaveText.useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
 **Usage**
@@ -1291,7 +1291,7 @@ Returns the [`element.innerHTML`](https://developer.mozilla.org/en-US/docs/Web/A
 Returns the [`element.innerText`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/innerText).
 
 :::warning[Asserting text]
-If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: LocatorAssertions.toHaveText.useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
 ### option: Locator.innerText.timeout = %%-input-timeout-%%

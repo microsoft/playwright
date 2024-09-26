@@ -47,6 +47,7 @@ const md = require('../markdown');
  *   member?: Member,
  *   param?: string,
  *   option?: string,
+ *   optionFullPath?: string,
  *   href?: string,
  * }): string|undefined} Renderer
  */
@@ -737,23 +738,49 @@ function patchLinksInText(classOrMember, text, classesMap, membersMap, linkRende
       const memberName = p1 + ': ' + p2;
       const member = membersMap.get(memberName);
       if (!member)
-        throw new Error('Undefined member references: ' + match);
+        throw new Error(`Undefined member reference: ${match}\n=========\n${text}`);
       return linkRenderer({ member, href }) || match;
     }
-    if (p1 === 'param') {
-      let alias = p2;
-      if (classOrMember) {
-        // param/option reference can only be in method or same method parameter comments.
-        const method = /** @type {Member} */(classOrMember).enclosingMethod;
-        const param = method?.argsArray.find(a => a.name === p2);
-        if (!param)
-          throw new Error(`Referenced parameter ${match} not found in the parent method ${method?.name} `);
-        alias = param.alias;
+    if (p1 === 'param' || p1 === 'option') {
+      let /** @type {string } */ alias;
+      let /** @type {Member} */ member;
+      if (p2.includes('.')) {
+        // fully-qualified name
+        const [className, memberName, ...rest] = p2.split('.');
+        const maybeMember = membersMap.get(`method: ${className}.${memberName}`);
+        if (!maybeMember)
+          throw new Error(`Undefined reference: ${match}\n=========\n${text}`);
+        member = maybeMember;
+        alias = rest.join('.');
+      } else {
+        // non-fully-qualified param/option reference from the same method.
+        if (!classOrMember || !(classOrMember instanceof Member)) {
+          Error.stackTraceLimit = 100;
+          throw new Error(`No parent method to find referenced ${match}\n=========\n${text}`);
+        }
+        const maybeMember = classOrMember.enclosingMethod;
+        if (!maybeMember)
+          throw new Error(`Undefined reference: ${match}\n=========\n${text}`);
+        member = maybeMember;
+        alias = p2;
       }
-      return linkRenderer({ param: alias, href }) || match;
+      if (p1 === 'param') {
+        const param = member.argsArray.find(a => a.name === alias);
+        if (!param)
+          throw new Error(`Referenced parameter ${match} not found in the parent method ${member.name}\n=========\n${text}`);
+        alias = param.alias;
+        return linkRenderer({ member, param: alias, href }) || match;
+      } else {
+        // p1 === 'option'
+        const options = member.argsArray.find(a => a.name === 'options');
+        const parts = alias.split('.');
+        const option = options?.type?.properties?.find(a => a.name === parts[0]);
+        if (!option)
+          throw new Error(`Referenced option ${match} not found in the parent method ${member.name}\n=========\n${text}`);
+        parts[0] = option.alias;
+        return linkRenderer({ member, option: parts[0], optionFullPath: parts.join('.'), href }) || match;
+      }
     }
-    if (p1 === 'option')
-      return linkRenderer({ option: p2, href }) || match;
     throw new Error(`Undefined link prefix, expected event|method|property|param|option, got: ` + match);
   });
   text = text.replace(/\[([\w]+)\](?:\(([^)]*?)\))?/g, (match, p1, href) => {
@@ -830,7 +857,8 @@ function patchCSharpOptionOverloads(optionsArg, options = {}) {
     }
     if (options.csharpOptionOverloadsShortNotation) {
       const newProp = prop.clone();
-      newProp.alias = newProp.name = shortNotation.join('|');
+      newProp.name = prop.name;
+      newProp.alias = shortNotation.join('|');
       propsToAdd.push(newProp);
     }
   }
