@@ -63,10 +63,6 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandl
     return { value: serializeResult(await this._object.jsonValue()) };
   }
 
-  async objectCount(params?: channels.JSHandleObjectCountParams | undefined): Promise<channels.JSHandleObjectCountResult> {
-    return { count: await this._object.objectCount() };
-  }
-
   async dispose(_: any, metadata: CallMetadata) {
     metadata.potentiallyClosesScope = true;
     this._object.dispose();

@@ -3226,7 +3226,6 @@ export interface JSHandleChannel extends JSHandleEventTarget, Channel {
   getPropertyList(params?: JSHandleGetPropertyListParams, metadata?: CallMetadata): Promise<JSHandleGetPropertyListResult>;
   getProperty(params: JSHandleGetPropertyParams, metadata?: CallMetadata): Promise<JSHandleGetPropertyResult>;
   jsonValue(params?: JSHandleJsonValueParams, metadata?: CallMetadata): Promise<JSHandleJsonValueResult>;
-  objectCount(params?: JSHandleObjectCountParams, metadata?: CallMetadata): Promise<JSHandleObjectCountResult>;
 }
 export type JSHandlePreviewUpdatedEvent = {
   preview: string,
@@ -3277,11 +3276,6 @@ export type JSHandleJsonValueParams = {};
 export type JSHandleJsonValueOptions = {};
 export type JSHandleJsonValueResult = {
   value: SerializedValue,
-};
-export type JSHandleObjectCountParams = {};
-export type JSHandleObjectCountOptions = {};
-export type JSHandleObjectCountResult = {
-  count: number,
 };
 
 export interface JSHandleEvents {

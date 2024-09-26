@@ -98,10 +98,6 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
       objectId
     });
   }
-
-  objectCount(objectId: js.ObjectId): Promise<number> {
-    throw new Error('Method not implemented in Firefox.');
-  }
 }
 
 function checkException(exceptionDetails?: Protocol.Runtime.ExceptionDetails) {
