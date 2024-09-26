@@ -801,14 +801,9 @@ function generateSourceCodeComment(spec) {
       node.liType = 'default';
     if (node.type === 'code' && node.codeLang)
       node.codeLang = parseCodeLang(node.codeLang).highlighter;
-    if (node.type === 'note') {
-      // @ts-ignore
-      node.type = 'text';
-      node.text = '**NOTE** ' + node.text;
-    }
   });
   // 5 is a typical member doc offset.
-  return md.render(comments, { maxColumns: 120 - 5, omitLastCR: true, flattenText: true });
+  return md.render(comments, { maxColumns: 120 - 5, omitLastCR: true, flattenText: true, noteMode: 'compact' });
 }
 
 /**

@@ -2526,6 +2526,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * **NOTE** Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
    * independently.
+   *
    * - `test.describe.serial(title, callback)`
    * - `test.describe.serial(title)`
    * - `test.describe.serial(title, details, callback)`
@@ -2565,6 +2566,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * **NOTE** Using serial is not recommended. It is usually better to make your tests isolated, so they can be run
    * independently.
+   *
    * - `test.describe.serial.only(title, callback)`
    * - `test.describe.serial.only(title)`
    * - `test.describe.serial.only(title, details, callback)`
@@ -7926,6 +7928,7 @@ export interface TestInfo {
    * **NOTE** [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach)
    * automatically takes care of copying attached files to a location that is accessible to reporters. You can safely
    * remove the attachment after awaiting the attach call.
+   *
    * @param name Attachment name. The name will also be sanitized and used as the prefix of file name when saving to disk.
    * @param options
    */

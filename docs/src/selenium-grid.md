@@ -10,8 +10,6 @@ Playwright can connect to [Selenium Grid Hub](https://www.selenium.dev/documenta
 :::warning
 There is a risk of Playwright integration with Selenium Grid Hub breaking in the future. Make sure you weight risks against benefits before using it.
 
-<br />
-<br />
 <details>
 <summary>
 <span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.6'}}>More details</span>

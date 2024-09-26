@@ -50,7 +50,6 @@
 
 /** @typedef {MarkdownBaseNode & {
  *    type: 'note',
- *    text: string,
  *    noteType: string,
  *  }} MarkdownNoteNode */
 
@@ -66,8 +65,9 @@
 /** @typedef {{
  * maxColumns?: number,
  * omitLastCR?: boolean,
- * flattenText?: boolean
- * renderCodeBlockTitlesInHeader?: boolean
+ * flattenText?: boolean,
+ * renderCodeBlockTitlesInHeader?: boolean,
+ * noteMode?: 'docusaurus' | 'compact',
  * }} RenderOptions
  */
 
@@ -208,7 +208,7 @@ function buildTree(lines) {
         tokens.push(line.substring(indent.length));
         line = lines[++i];
       }
-      node.text = tokens.join('↵');
+      node.children = parse(tokens.join('\n'));
       appendNode(indent, node);
       continue;
     }
@@ -340,9 +340,21 @@ function innerRenderMdNode(indent, node, lastNode, result, options) {
 
   if (node.type === 'note') {
     newLine();
-    result.push(`${indent}:::${node.noteType}`);
-    result.push(wrapText(node.text, options, indent));
-    result.push(`${indent}:::`);
+    if (options?.noteMode !== 'compact')
+      result.push(`${indent}:::${node.noteType}`);
+    const children = node.children ?? [];
+    if (options?.noteMode === 'compact') {
+      children[0] = {
+        type: 'text',
+        text: `**NOTE** ${children[0].text}`,
+      }
+    }
+    for (const child of children) {
+      innerRenderMdNode(indent, child, lastNode, result, options);
+      lastNode = child;
+    }
+    if (options?.noteMode !== 'compact')
+      result.push(`${indent}:::`);
     newLine();
     return;
   }
