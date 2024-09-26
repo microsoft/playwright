@@ -56,7 +56,6 @@ const queryParams = {
   grepInvert: searchParams.get('grepInvert') || undefined,
   projects: searchParams.getAll('project'),
   workers: searchParams.get('workers') || undefined,
-  timeout: searchParams.has('timeout') ? +searchParams.get('timeout')! : undefined,
   headed: searchParams.has('headed'),
   updateSnapshots: (searchParams.get('updateSnapshots') as 'all' | 'none' | 'missing' | undefined) || undefined,
   reporters: searchParams.has('reporter') ? searchParams.getAll('reporter') : undefined,
@@ -101,9 +100,9 @@ export const UIModeView: React.FC<{}> = ({
   const onRevealSource = React.useCallback(() => setRevealSource(true), [setRevealSource]);
 
   const showTestingOptions = false;
-  const [singleWorker, setSingleWorker] = React.useState(queryParams.workers === '1');
-  const [showBrowser, setShowBrowser] = React.useState(queryParams.headed);
-  const [updateSnapshots, setUpdateSnapshots] = React.useState(queryParams.updateSnapshots === 'all');
+  const [singleWorker, setSingleWorker] = React.useState(false);
+  const [showBrowser, setShowBrowser] = React.useState(false);
+  const [updateSnapshots, setUpdateSnapshots] = React.useState(false);
   const [darkMode, setDarkMode] = useDarkModeSetting();
   const [showScreenshot, setShowScreenshot] = useSetting('screenshot-instead-of-snapshot', false);
 
@@ -288,12 +287,9 @@ export const UIModeView: React.FC<{}> = ({
         grepInvert: queryParams.grepInvert,
         testIds: [...testIds],
         projects: [...projectFilters].filter(([_, v]) => v).map(([p]) => p),
-        // When started with `--workers=1`, the setting allows to undo that.
-        // Otherwise, fallback to the cli `--workers=X` argument.
-        workers: singleWorker ? '1' : (queryParams.workers === '1' ? undefined : queryParams.workers),
-        timeout: queryParams.timeout,
-        headed: showBrowser,
-        updateSnapshots: updateSnapshots ? 'all' : queryParams.updateSnapshots,
+        ...(singleWorker ? { workers: '1' } : {}),
+        ...(showBrowser ? { headed: true } : {}),
+        ...(updateSnapshots ? { updateSnapshots: 'all' } : {}),
         reporters: queryParams.reporters,
         trace: 'on',
       });

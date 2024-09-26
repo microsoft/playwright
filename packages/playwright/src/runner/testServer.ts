@@ -300,9 +300,9 @@ export class TestServerDispatcher implements TestServerInterface {
       repeatEach: 1,
       retries: 0,
       preserveOutputDir: true,
-      timeout: params.timeout,
       reporter: params.reporters ? params.reporters.map(r => [r]) : undefined,
       use: {
+        ...(this._configCLIOverrides.use || {}),
         trace: params.trace === 'on' ? { mode: 'on', sources: false, _live: true } : (params.trace === 'off' ? 'off' : undefined),
         video: params.video === 'on' ? 'on' : (params.video === 'off' ? 'off' : undefined),
         headless: params.headed ? false : undefined,
