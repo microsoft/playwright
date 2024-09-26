@@ -6,3 +6,7 @@ ui/
 
 [sw-main.ts]
 sw/**
+
+
+[recorder.tsx]
+ui/recorder/**

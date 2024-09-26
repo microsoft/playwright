@@ -18,7 +18,7 @@ import '@web/common.css';
 import { applyTheme } from '@web/theme';
 import '@web/third_party/vscode/codicon.css';
 import * as ReactDOM from 'react-dom/client';
-import { RecorderView } from './ui/recorderView';
+import { RecorderView } from './ui/recorder/recorderView';
 
 (async () => {
   applyTheme();

@@ -47,14 +47,12 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
   }
   set.add(traceUrl);
 
-  const isRecorderMode = traceUrl.includes('/playwright-recorder-trace-');
-
   const traceModel = new TraceModel();
   try {
     // Allow 10% to hop from sw to page.
     const [fetchProgress, unzipProgress] = splitProgress(progress, [0.5, 0.4, 0.1]);
     const backend = traceUrl.endsWith('json') ? new FetchTraceModelBackend(traceUrl) : new ZipTraceModelBackend(traceUrl, fetchProgress);
-    await traceModel.load(backend, isRecorderMode, unzipProgress);
+    await traceModel.load(backend, unzipProgress);
   } catch (error: any) {
     // eslint-disable-next-line no-console
     console.error(error);
