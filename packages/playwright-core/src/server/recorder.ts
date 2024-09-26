@@ -28,6 +28,7 @@ import type { CallMetadata, InstrumentationListener, SdkObject } from './instrum
 import { ContextRecorder, generateFrameSelector } from './recorder/contextRecorder';
 import type { IRecorderAppFactory, IRecorderApp, IRecorder } from './recorder/recorderFrontend';
 import { buildFullSelector, metadataToCallLog } from './recorder/recorderUtils';
+import type * as actions from '@recorder/actions';
 
 const recorderSymbol = Symbol('recorderSymbol');
 
@@ -135,8 +136,9 @@ export class Recorder implements InstrumentationListener, IRecorder {
       this._context.instrumentation.removeListener(this);
       this._recorderApp?.close().catch(() => {});
     });
-    this._contextRecorder.on(ContextRecorder.Events.Change, (data: { sources: Source[] }) => {
+    this._contextRecorder.on(ContextRecorder.Events.Change, (data: { sources: Source[], actions: actions.ActionInContext[] }) => {
       this._recorderSources = data.sources;
+      recorderApp.setActions(data.actions);
       this._pushAllSources();
     });
 

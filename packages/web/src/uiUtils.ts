@@ -162,7 +162,7 @@ export function useSetting<S>(name: string | undefined, defaultValue: S): [S, Re
 
 declare global {
   interface Window {
-    saveSettings?(): Promise<void>;
+    saveSettings?(): void;
   }
 }
 

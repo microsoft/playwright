@@ -24,6 +24,7 @@ import type { BrowserContext } from '../browserContext';
 import type { HttpServer, Transport } from '../../utils/httpServer';
 import type { Page } from '../page';
 import { ManualPromise } from '../../utils/manualPromise';
+import type * as actions from '@recorder/actions';
 
 export class RecorderInTraceViewer extends EventEmitter implements IRecorderApp {
   readonly wsEndpointForTest: string | undefined;
@@ -83,6 +84,10 @@ export class RecorderInTraceViewer extends EventEmitter implements IRecorderApp 
       if ((process as any)._didSetSourcesForTest(sources[0].text))
         this.close();
     }
+  }
+
+  async setActions(actions: actions.ActionInContext[]): Promise<void> {
+    this._transport.deliverEvent('setActions', { actions });
   }
 }
 

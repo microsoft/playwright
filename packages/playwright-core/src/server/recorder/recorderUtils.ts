@@ -17,9 +17,8 @@
 import type { CallMetadata } from '../instrumentation';
 import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
 import type { Page } from '../page';
-import type { ActionInContext } from '../codegen/types';
 import type { Frame } from '../frames';
-import type * as actions from './recorderActions';
+import type * as actions from '@recorder/actions';
 import type * as channels from '@protocol/channels';
 import type * as trace from '@trace/trace';
 import { fromKeyboardModifiers, toKeyboardModifiers } from '../codegen/language';
@@ -60,7 +59,7 @@ export function buildFullSelector(framePath: string[], selector: string) {
   return [...framePath, selector].join(' >> internal:control=enter-frame >> ');
 }
 
-export function mainFrameForAction(pageAliases: Map<Page, string>, actionInContext: ActionInContext): Frame {
+export function mainFrameForAction(pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext): Frame {
   const pageAlias = actionInContext.frame.pageAlias;
   const page = [...pageAliases.entries()].find(([, alias]) => pageAlias === alias)?.[0];
   if (!page)
@@ -68,7 +67,7 @@ export function mainFrameForAction(pageAliases: Map<Page, string>, actionInConte
   return page.mainFrame();
 }
 
-export async function frameForAction(pageAliases: Map<Page, string>, actionInContext: ActionInContext, action: actions.ActionWithSelector): Promise<Frame> {
+export async function frameForAction(pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext, action: actions.ActionWithSelector): Promise<Frame> {
   const pageAlias = actionInContext.frame.pageAlias;
   const page = [...pageAliases.entries()].find(([, alias]) => pageAlias === alias)?.[0];
   if (!page)
@@ -80,7 +79,7 @@ export async function frameForAction(pageAliases: Map<Page, string>, actionInCon
   return result.frame;
 }
 
-export function traceParamsForAction(actionInContext: ActionInContext): { method: string, params: any } {
+export function traceParamsForAction(actionInContext: actions.ActionInContext): { method: string, params: any } {
   const { action } = actionInContext;
 
   switch (action.name) {
@@ -191,7 +190,7 @@ export function traceParamsForAction(actionInContext: ActionInContext): { method
   }
 }
 
-export function callMetadataForAction(pageAliases: Map<Page, string>, actionInContext: ActionInContext): { callMetadata: CallMetadata, mainFrame: Frame } {
+export function callMetadataForAction(pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext): { callMetadata: CallMetadata, mainFrame: Frame } {
   const mainFrame = mainFrameForAction(pageAliases, actionInContext);
   const { method, params } = traceParamsForAction(actionInContext);
 
@@ -212,8 +211,8 @@ export function callMetadataForAction(pageAliases: Map<Page, string>, actionInCo
   return { callMetadata, mainFrame };
 }
 
-export function traceEventsToAction(events: trace.TraceEvent[]): ActionInContext[] {
-  const result: ActionInContext[] = [];
+export function traceEventsToAction(events: trace.TraceEvent[]): actions.ActionInContext[] {
+  const result: actions.ActionInContext[] = [];
   const pageAliases = new Map<string, string>();
   let lastDownloadOrdinal = 0;
   let lastDialogOrdinal = 0;
@@ -487,8 +486,8 @@ export function traceEventsToAction(events: trace.TraceEvent[]): ActionInContext
   return result;
 }
 
-export function collapseActions(actions: ActionInContext[]): ActionInContext[] {
-  const result: ActionInContext[] = [];
+export function collapseActions(actions: actions.ActionInContext[]): actions.ActionInContext[] {
+  const result: actions.ActionInContext[] = [];
   for (const action of actions) {
     const lastAction = result[result.length - 1];
     const isSameAction = lastAction && lastAction.action.name === action.action.name && lastAction.frame.pageAlias === action.frame.pageAlias && lastAction.frame.framePath.join('|') === action.frame.framePath.join('|');

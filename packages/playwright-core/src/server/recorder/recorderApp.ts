@@ -20,27 +20,14 @@ import type { Page } from '../page';
 import { ProgressController } from '../progress';
 import { EventEmitter } from 'events';
 import { serverSideCallMetadata } from '../instrumentation';
-import type { CallLog, EventData, Mode, Source } from '@recorder/recorderTypes';
+import type { CallLog, Mode, Source } from '@recorder/recorderTypes';
 import { isUnderTest } from '../../utils';
 import { mime } from '../../utilsBundle';
 import { syncLocalStorageWithSettings } from '../launchApp';
 import type { BrowserContext } from '../browserContext';
 import { launchApp } from '../launchApp';
 import type { IRecorder, IRecorderApp, IRecorderAppFactory } from './recorderFrontend';
-
-declare global {
-  interface Window {
-    playwrightSetFile: (file: string) => void;
-    playwrightSetMode: (mode: Mode) => void;
-    playwrightSetPaused: (paused: boolean) => void;
-    playwrightSetSources: (sources: Source[]) => void;
-    playwrightSetOverlayVisible: (visible: boolean) => void;
-    playwrightSetSelector: (selector: string, focus?: boolean) => void;
-    playwrightUpdateLogs: (callLogs: CallLog[]) => void;
-    dispatch(data: EventData): Promise<void>;
-    saveSettings?(): Promise<void>;
-  }
-}
+import type * as actions from '@recorder/actions';
 
 export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   wsEndpointForTest: undefined;
@@ -51,6 +38,7 @@ export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   async setSelector(selector: string, userGesture?: boolean): Promise<void> {}
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
   async setSources(sources: Source[]): Promise<void> {}
+  async setActions(actions: actions.ActionInContext[]): Promise<void> {}
 }
 
 export class RecorderApp extends EventEmitter implements IRecorderApp {
@@ -165,6 +153,9 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
       if ((process as any)._didSetSourcesForTest(sources[0].text))
         this.close();
     }
+  }
+
+  async setActions(actions: actions.ActionInContext[]): Promise<void> {
   }
 
   async setSelector(selector: string, userGesture?: boolean): Promise<void> {

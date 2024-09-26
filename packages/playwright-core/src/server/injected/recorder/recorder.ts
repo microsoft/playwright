@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as actions from '../../recorder/recorderActions';
+import type * as actions from '@recorder/actions';
 import type { InjectedScript } from '../injectedScript';
 import type { Point } from '../../../common/types';
 import type { Mode, OverlayState, UIState } from '@recorder/recorderTypes';
