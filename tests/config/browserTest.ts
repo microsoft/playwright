@@ -30,6 +30,7 @@ import type { TestInfo } from '@playwright/test';
 export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserVersion: string;
   defaultSameSiteCookieValue: string;
+  sameSiteStoredValueForNone: string;
   allowsThirdParty: boolean;
   browserMajorVersion: number;
   browserType: BrowserType;
@@ -84,6 +85,13 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await run('None');
     else
       throw new Error('unknown browser - ' + browserName);
+  }, { scope: 'worker' }],
+
+  sameSiteStoredValueForNone: [async ({ browserName, isMac }, run) => {
+    if (browserName === 'webkit' && isMac && parseInt(os.release(), 10) >= 24)
+      await run('Lax');
+    else
+      await run('None');
   }, { scope: 'worker' }],
 
   browserMajorVersion: [async ({ browserVersion }, run) => {
