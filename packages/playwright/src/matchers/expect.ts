@@ -154,7 +154,6 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], customMatchers: Re
             const key = qualifiedMatcherName(qualifier, name);
             wrappedMatchers[key] = wrappedMatchers[name];
             Object.defineProperty(wrappedMatchers[key], 'name', { value: name });
-            Object.defineProperty(wrappedMatchers[key], 'qualifiedName', { value: key });
             extendedMatchers[name] = wrappedMatchers[key];
           }
           expectLibrary.extend(wrappedMatchers);
@@ -178,24 +177,6 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], customMatchers: Re
           return configure({ _poll: poll })(actual, messageOrOptions) as any;
         };
       }
-
-      if (typeof property === 'string' && typeof customMatchers[property] === 'function' && typeof (customMatchers[property] as any).qualifiedName === 'string') {
-        const qualifiedName = (customMatchers[property] as any).qualifiedName as string;
-        return (expectLibrary as any)[qualifiedName];
-      }
-
-      if (property === 'not') {
-        return new Proxy(expectLibrary.not, {
-          get: function(target: any, property: string) {
-            if (typeof property === 'string' && typeof customMatchers[property] === 'function' && typeof (customMatchers[property] as any).qualifiedName === 'string') {
-              const qualifiedName = (customMatchers[property] as any).qualifiedName as string;
-              return target[qualifiedName];
-            }
-            return target[property];
-          },
-        });
-      }
-
       return (expectLibrary as any)[property];
     },
   });
