@@ -247,7 +247,7 @@ export class CRPage implements PageDelegate {
     return this._go(+1);
   }
 
-  async forceGarbageCollection(): Promise<void> {
+  async requestGC(): Promise<void> {
     await this._mainFrameSession._client.send('HeapProfiler.collectGarbage');
   }
 

@@ -399,7 +399,7 @@ export class FFPage implements PageDelegate {
     return success;
   }
 
-  async forceGarbageCollection(): Promise<void> {
+  async requestGC(): Promise<void> {
     await this._session.send('Heap.collectGarbage');
   }
 

@@ -2559,11 +2559,6 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * Force the browser to perform garbage collection.
-   */
-  forceGarbageCollection(): Promise<void>;
-
-  /**
    * Returns frame matching the specified criteria. Either `name` or `url` must be specified.
    *
    * **Usage**
@@ -3711,6 +3706,26 @@ export interface Page {
    * [page.addLocatorHandler(locator, handler[, options])](https://playwright.dev/docs/api/class-page#page-add-locator-handler).
    */
   removeLocatorHandler(locator: Locator): Promise<void>;
+
+  /**
+   * Request the page to perform garbage collection. Note that there is no guarantee that all unreachable objects will
+   * be collected.
+   *
+   * This is useful to help detect memory leaks. For example, if your page has a large object `'suspect'` that might be
+   * leaked, you can check that it does not leak by using a
+   * [`WeakRef`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakRef).
+   *
+   * ```js
+   * // 1. In your page, save a WeakRef for the "suspect".
+   * await page.evaluate(() => globalThis.suspectWeakRef = new WeakRef(suspect));
+   * // 2. Request garbage collection.
+   * await page.requestGC();
+   * // 3. Check that weak ref does not deref to the original object.
+   * expect(await page.evaluate(() => !globalThis.suspectWeakRef.deref())).toBe(true);
+   * ```
+   *
+   */
+  requestGC(): Promise<void>;
 
   /**
    * Routing provides the capability to modify network requests that are made by a page.
