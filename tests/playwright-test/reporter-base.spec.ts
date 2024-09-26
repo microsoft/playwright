@@ -118,6 +118,39 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(output).toContain(`a.spec.ts:5:13`);
     });
 
+    test('should print error with a nested cause', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('foobar', async ({}) => {
+            try {
+              try {
+                throw new Error('my-message');
+              } catch (e) {
+                try {
+                  throw new Error('inner-message', { cause: e });
+                } catch (e) {
+                  throw new Error('outer-message', { cause: e });
+                }
+              }
+            } catch (e) {
+              throw new Error('wrapper-message', { cause: e });
+            }
+          });
+        `
+      });
+      expect(result.exitCode).toBe(1);
+      expect(result.failed).toBe(1);
+      const testFile = path.join(result.report.config.rootDir, result.report.suites[0].specs[0].file);
+      expect(result.output).toContain(`       at fn (${testFile}:15:21)`);
+      expect(result.output).toContain(`      [cause]: Error: outer-message`);
+      expect(result.output).toContain(`          at fn (${testFile}:11:25)`);
+      expect(result.output).toContain(`        [cause]: Error: inner-message`);
+      expect(result.output).toContain(`            at fn (${testFile}:9:25)`);
+      expect(result.output).toContain(`          [cause]: Error: my-message`);
+      expect(result.output).toContain(`              at fn (${testFile}:6:23)`);
+    });
+
     test('should print codeframe from a helper', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'helper.ts': `
