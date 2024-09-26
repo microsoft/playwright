@@ -37,7 +37,7 @@ export class WorkerHost extends ProcessHost {
     super(require.resolve('../worker/workerMain.js'), `worker-${workerIndex}`, {
       ...extraEnv,
       FORCE_COLOR: '1',
-      DEBUG_COLORS: '1',
+      DEBUG_COLORS: process.env.DEBUG_COLORS === undefined ? '1' : process.env.DEBUG_COLORS,
     });
     this.workerIndex = workerIndex;
     this.parallelIndex = parallelIndex;
