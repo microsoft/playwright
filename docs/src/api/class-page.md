@@ -2364,7 +2364,7 @@ await page.evaluate("globalThis.suspectWeakRef = new WeakRef(suspect)")
 # 2. Request garbage collection.
 await page.request_gc()
 # 3. Check that weak ref does not deref to the original object.
-assert page.evaluate("!globalThis.suspectWeakRef.deref()")
+assert await page.evaluate("!globalThis.suspectWeakRef.deref()")
 ```
 
 ```python sync
