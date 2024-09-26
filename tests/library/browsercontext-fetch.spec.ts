@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import os from 'os';
 import type { LookupAddress } from 'dns';
 import formidable from 'formidable';
 import fs from 'fs';
@@ -1245,7 +1246,7 @@ it('should work with connectOverCDP', async ({ browserName, browserType, server 
   }
 });
 
-it('should support SameSite cookie attribute over https', async ({ contextFactory, httpsServer, browserName, isWindows }) => {
+it('should support SameSite cookie attribute over https', async ({ contextFactory, httpsServer, browserName, isWindows, platform }) => {
   // Cookies with SameSite=None must also specify the Secure attribute. WebKit navigation
   // to HTTP url will fail if the response contains a cookie with Secure attribute, so
   // we do HTTPS navigation.
@@ -1261,6 +1262,8 @@ it('should support SameSite cookie attribute over https', async ({ contextFactor
       const [cookie] = await page.context().cookies();
       if (browserName === 'webkit' && isWindows)
         expect(cookie.sameSite).toBe('None');
+      else if (browserName === 'webkit' && platform === 'darwin' && value === 'None')
+        expect(cookie.sameSite).toBe('Lax');
       else
         expect(cookie.sameSite).toBe(value);
     });
@@ -1290,7 +1293,7 @@ it('fetch should not throw on long set-cookie value', async ({ context, server }
   expect(cookies.map(c => c.name)).toContain('bar');
 });
 
-it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows, isLinux }) => {
+it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows, isLinux, isMac }) => {
   for (const value of ['None', 'Lax', 'Strict']) {
     await it.step(`SameSite=${value}`, async () => {
       server.setRoute('/empty.html', (req, res) => {
@@ -1305,6 +1308,8 @@ it('should support set-cookie with SameSite and without Secure attribute over HT
         expect(cookie).toBeFalsy();
       else if (browserName === 'webkit' && isWindows)
         expect(cookie.sameSite).toBe('None');
+      else if (browserName === 'webkit' && isMac && parseInt(os.release(), 10) >= 24 && value === 'None')
+        expect(cookie.sameSite).toBe('Lax');
       else
         expect(cookie.sameSite).toBe(value);
     });
