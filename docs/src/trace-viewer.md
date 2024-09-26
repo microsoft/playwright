@@ -48,8 +48,6 @@ When tracing with the [`option: Tracing.start.snapshots`] option turned on (defa
 |Action|A snapshot at the moment of the performed input. This type of snapshot is especially useful when exploring where exactly Playwright clicked.|
 |After|A snapshot after the action.|
 
-<br/>
-
 Here is what the typical Action snapshot looks like:
 
 ![action tab in trace viewer](https://github.com/microsoft/playwright/assets/13063165/7168d549-eb0a-4964-9c93-483f03711fa9)
