@@ -15,11 +15,11 @@
  */
 
 import type { BrowserContextOptions } from '../../..';
-import type * as actions from '../recorder/recorderActions';
+import type * as actions from '@recorder/actions';
 import type * as types from '../types';
-import type { ActionInContext, LanguageGenerator, LanguageGeneratorOptions } from './types';
+import type { LanguageGenerator, LanguageGeneratorOptions } from './types';
 
-export function generateCode(actions: ActionInContext[], languageGenerator: LanguageGenerator, options: LanguageGeneratorOptions) {
+export function generateCode(actions: actions.ActionInContext[], languageGenerator: LanguageGenerator, options: LanguageGeneratorOptions) {
   const header = languageGenerator.generateHeader(options);
   const footer = languageGenerator.generateFooter(options.saveStorage);
   const actionTexts = actions.map(a => languageGenerator.generateAction(a)).filter(Boolean);

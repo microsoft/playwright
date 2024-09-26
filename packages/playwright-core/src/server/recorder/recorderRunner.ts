@@ -16,14 +16,13 @@
 
 import { serializeExpectedTextValues } from '../../utils';
 import { toKeyboardModifiers } from '../codegen/language';
-import type { ActionInContext } from '../codegen/types';
 import type { CallMetadata } from '../instrumentation';
 import type { Page } from '../page';
-import type * as actions from './recorderActions';
+import type * as actions from '@recorder/actions';
 import type * as types from '../types';
 import { buildFullSelector, mainFrameForAction } from './recorderUtils';
 
-export async function performAction(callMetadata: CallMetadata, pageAliases: Map<Page, string>, actionInContext: ActionInContext) {
+export async function performAction(callMetadata: CallMetadata, pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext) {
   const mainFrame = mainFrameForAction(pageAliases, actionInContext);
   const { action } = actionInContext;
 

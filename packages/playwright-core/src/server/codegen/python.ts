@@ -15,7 +15,8 @@
  */
 
 import type { BrowserContextOptions } from '../../../types/types';
-import type { ActionInContext, Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
+import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
+import type * as actions from '@recorder/actions';
 import { sanitizeDeviceOptions, toSignalMap, toKeyboardModifiers, toClickOptionsForSourceCode } from './language';
 import { escapeWithQuotes, toSnakeCase, asLocator } from '../../utils';
 import { deviceDescriptors } from '../deviceDescriptors';
@@ -40,7 +41,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     this._asyncPrefix = isAsync ? 'async ' : '';
   }
 
-  generateAction(actionInContext: ActionInContext): string {
+  generateAction(actionInContext: actions.ActionInContext): string {
     const action = actionInContext.action;
     if (this._isPyTest && (action.name === 'openPage' || action.name === 'closePage'))
       return '';
@@ -83,7 +84,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     return formatter.format();
   }
 
-  private _generateActionCall(subject: string, actionInContext: ActionInContext): string {
+  private _generateActionCall(subject: string, actionInContext: actions.ActionInContext): string {
     const action = actionInContext.action;
     switch (action.name) {
       case 'openPage':

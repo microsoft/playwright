@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Point } from '../../common/types';
+type Point = { x: number, y: number };
 
 export type ActionName =
   'check' |
@@ -143,3 +143,15 @@ export type DialogSignal = BaseSignal & {
 };
 
 export type Signal = NavigationSignal | PopupSignal | DownloadSignal | DialogSignal;
+
+export type FrameDescription = {
+  pageAlias: string;
+  framePath: string[];
+};
+
+export type ActionInContext = {
+  frame: FrameDescription;
+  description?: string;
+  action: Action;
+  timestamp: number;
+};

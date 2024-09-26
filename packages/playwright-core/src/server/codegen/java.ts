@@ -16,7 +16,8 @@
 
 import type { BrowserContextOptions } from '../../../types/types';
 import type * as types from '../types';
-import type { ActionInContext, Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
+import type * as actions from '@recorder/actions';
+import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
 import { toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
 import { deviceDescriptors } from '../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
@@ -44,7 +45,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     this._mode = mode;
   }
 
-  generateAction(actionInContext: ActionInContext): string {
+  generateAction(actionInContext: actions.ActionInContext): string {
     const action = actionInContext.action;
     const pageAlias = actionInContext.frame.pageAlias;
     const offset = this._mode === 'junit' ? 4 : 6;
@@ -90,7 +91,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     return formatter.format();
   }
 
-  private _generateActionCall(subject: string, actionInContext: ActionInContext, inFrameLocator: boolean): string {
+  private _generateActionCall(subject: string, actionInContext: actions.ActionInContext, inFrameLocator: boolean): string {
     const action = actionInContext.action;
     switch (action.name) {
       case 'openPage':

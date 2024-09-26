@@ -15,7 +15,7 @@
  */
 
 import type { Mode, OverlayState, UIState } from '@recorder/recorderTypes';
-import type * as actions from '../../recorder/recorderActions';
+import type * as actions from '@recorder/actions';
 import type { InjectedScript } from '../injectedScript';
 import { Recorder } from './recorder';
 import type { RecorderDelegate } from './recorder';

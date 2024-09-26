@@ -37,6 +37,7 @@ import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton, ToolbarSeparator } from '@web/components/toolbarButton';
 import { toggleTheme } from '@web/theme';
 import { SourceChooser } from '@web/components/sourceChooser';
+import type * as actions from '@recorder/actions';
 
 const searchParams = new URLSearchParams(window.location.search);
 const guid = searchParams.get('ws');
@@ -45,6 +46,7 @@ const traceLocation = searchParams.get('trace') + '.json';
 export const RecorderView: React.FunctionComponent = () => {
   const [connection, setConnection] = React.useState<Connection | null>(null);
   const [sources, setSources] = React.useState<Source[]>([]);
+  const [, setActions] = React.useState<actions.ActionInContext[]>([]);
   const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean, sha1: string } | undefined>();
   const [mode, setMode] = React.useState<Mode>('none');
   const [counter, setCounter] = React.useState(0);
@@ -54,7 +56,7 @@ export const RecorderView: React.FunctionComponent = () => {
     const wsURL = new URL(`../${guid}`, window.location.toString());
     wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
     const webSocket = new WebSocket(wsURL.toString());
-    setConnection(new Connection(webSocket, { setMode, setSources }));
+    setConnection(new Connection(webSocket, { setMode, setSources, setActions }));
     return () => {
       webSocket.close();
     };
@@ -336,8 +338,9 @@ const SnapshotContainer: React.FunctionComponent<{
 };
 
 type ConnectionOptions = {
-  setSources: (sources: Source[]) => void;
   setMode: (mode: Mode) => void;
+  setSources: (sources: Source[]) => void;
+  setActions: (actions: actions.ActionInContext[]) => void;
 };
 
 class Connection {
@@ -387,14 +390,18 @@ class Connection {
   }
 
   private _dispatchEvent(method: string, params?: any) {
+    if (method === 'setMode') {
+      const { mode } = params as { mode: Mode };
+      this._options.setMode(mode);
+    }
     if (method === 'setSources') {
       const { sources } = params as { sources: Source[] };
       this._options.setSources(sources);
       window.playwrightSourcesEchoForTest = sources;
     }
-    if (method === 'setMode') {
-      const { mode } = params as { mode: Mode };
-      this._options.setMode(mode);
+    if (method === 'setActions') {
+      const { actions } = params as { actions: actions.ActionInContext[] };
+      this._options.setActions(actions);
     }
   }
 }

@@ -18,7 +18,7 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { ActionTraceEvent } from '@trace/trace';
-import type { ContextEntry, PageEntry } from '../types/entries';
+import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
 import type { StackFrame } from '@protocol/channels';
 
 const contextSymbol = Symbol('context');
@@ -39,9 +39,8 @@ export type SourceModel = {
   content: string | undefined;
 };
 
-export type ActionTraceEventInContext = ActionTraceEvent & {
+export type ActionTraceEventInContext = ActionEntry & {
   context: ContextEntry;
-  log: { time: number, message: string }[];
 };
 
 export type ActionTreeItem = {
