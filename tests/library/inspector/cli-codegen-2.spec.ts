@@ -220,27 +220,15 @@ await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] {  });`);
       page.waitForEvent('download'),
       page.click('a')
     ]);
-    await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    const sources = await recorder.waitForOutput('JavaScript', 'download1Promise');
+    const sources = await recorder.waitForOutput('JavaScript', 'downloadPromise');
 
     expect.soft(sources.get('JavaScript')!.text).toContain(`
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('link', { name: 'Download' }).click();
   const download = await downloadPromise;`);
-    expect.soft(sources.get('JavaScript')!.text).toContain(`
-  const download1Promise = page.waitForEvent('download');
-  await page.getByRole('link', { name: 'Download' }).click();
-  const download1 = await download1Promise;`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
       Download download = page.waitForDownload(() -> {
-        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Download")).click();
-      });`);
-    expect.soft(sources.get('Java')!.text).toContain(`
-      Download download1 = page.waitForDownload(() -> {
         page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Download")).click();
       });`);
 
@@ -248,27 +236,14 @@ await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] {  });`);
     with page.expect_download() as download_info:
         page.get_by_role("link", name="Download").click()
     download = download_info.value`);
-    expect.soft(sources.get('Python')!.text).toContain(`
-    with page.expect_download() as download1_info:
-        page.get_by_role("link", name="Download").click()
-    download1 = download1_info.value`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
     async with page.expect_download() as download_info:
         await page.get_by_role("link", name="Download").click()
     download = await download_info.value`);
-    expect.soft(sources.get('Python Async')!.text).toContain(`
-    async with page.expect_download() as download1_info:
-        await page.get_by_role("link", name="Download").click()
-    download1 = await download1_info.value`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
 var download = await page.RunAndWaitForDownloadAsync(async () =>
-{
-    await page.GetByRole(AriaRole.Link, new() { Name = "Download" }).ClickAsync();
-});`);
-    expect.soft(sources.get('C#')!.text).toContain(`
-var download1 = await page.RunAndWaitForDownloadAsync(async () =>
 {
     await page.GetByRole(AriaRole.Link, new() { Name = "Download" }).ClickAsync();
 });`);

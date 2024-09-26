@@ -97,7 +97,7 @@ export const test = contextTest.extend<CLITestArgs>({
   },
 });
 
-class Recorder {
+export class Recorder {
   page: Page;
   _highlightCallback: Function;
   _highlightInstalled: boolean;
