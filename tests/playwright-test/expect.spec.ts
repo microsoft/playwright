@@ -1103,3 +1103,39 @@ test('expect.extend should fall back to legacy behavior', async ({ runInlineTest
     'bar',
   ]);
 });
+
+test('custom asymmetric matchers should work with expect.extend', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      import { test, expect as baseExpect, mergeExpects } from '@playwright/test';
+      const expect1 = baseExpect.extend({
+        isFoo(received: unknown, expected: string) {
+          return { pass: received === 'foo', message: () => '' };
+        },
+      });
+      const expect2 = baseExpect.extend({
+        isSomething(received: unknown, expected: string) {
+          return { pass: received === expected, message: () => '' };
+        },
+      });
+      const expect = mergeExpects(expect1, expect2);
+      test('example', () => {
+        expect('foo').toEqual(expect.isFoo());
+        expect('bar').toEqual(expect.isSomething('bar'));
+        try {
+          expect('foo2').toEqual(expect.isFoo());
+          console.log('should not run 1');
+        } catch (e) {
+        }
+        try {
+          expect('bar2').toEqual(expect.isSomething('bar'));
+          console.log('should not run 2');
+        } catch (e) {
+        }
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.output).not.toContain('should not run');
+});
