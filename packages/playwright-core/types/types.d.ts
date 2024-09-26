@@ -16825,7 +16825,7 @@ export interface AndroidDevice {
 
   /**
    * Launches a process in the shell on the device and returns a socket to communicate with the launched process.
-   * @param command
+   * @param command Shell command to execute.
    */
   open(command: string): Promise<AndroidSocket>;
 
