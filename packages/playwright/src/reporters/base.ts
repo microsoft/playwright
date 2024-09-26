@@ -567,28 +567,24 @@ export function resolveOutputFile(reporterName: string, options: {
     }
   }):  { outputFile: string, outputDir?: string } |undefined {
   const name = reporterName.toUpperCase();
-  let outputFile;
-  if (options.outputFile)
+  let outputFile = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_FILE`);
+  if (!outputFile && options.outputFile)
     outputFile = path.resolve(options.configDir, options.outputFile);
-  if (!outputFile)
-    outputFile = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_FILE`);
-  // Return early to avoid deleting outputDir.
   if (outputFile)
     return { outputFile };
 
-  let outputDir;
-  if (options.outputDir)
+  let outputDir = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_DIR`);
+  if (!outputDir && options.outputDir)
     outputDir = path.resolve(options.configDir, options.outputDir);
-  if (!outputDir)
-    outputDir = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_DIR`);
   if (!outputDir && options.default)
     outputDir = resolveReporterOutputPath(options.default.outputDir, options.configDir, undefined);
+  if (!outputDir)
+    outputDir = options.configDir;
 
-  if (!outputFile) {
-    const reportName = options.fileName ?? process.env[`PLAYWRIGHT_${name}_OUTPUT_NAME`] ?? options.default?.fileName;
-    if (!reportName)
-      return undefined;
-    outputFile = path.resolve(outputDir ?? process.cwd(), reportName);
-  }
+  const reportName = process.env[`PLAYWRIGHT_${name}_OUTPUT_NAME`] ?? options.fileName ?? options.default?.fileName;
+  if (!reportName)
+    return undefined;
+  outputFile = path.resolve(outputDir, reportName);
+
   return { outputFile, outputDir };
 }
