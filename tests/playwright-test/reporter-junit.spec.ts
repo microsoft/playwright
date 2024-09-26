@@ -523,7 +523,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           'package.json': `{ "name": "foo" }`,
           'bar/playwright.config.js': `
             module.exports = {
-              reporter: [['junit', { outputFile: 'results.xml' }]],
+              reporter: [['junit', { outputFile: 'results.xml' }], ['line', {}]],
               projects: [ {} ]
             };
           `,
@@ -561,7 +561,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           'package.json': `{ "name": "foo" }`,
           'bar/playwright.config.js': `
             module.exports = {
-              reporter: [['junit', {}]],
+              reporter: [['junit', {}], ['line', {}]],
               projects: [ {} ]
             };
           `,
