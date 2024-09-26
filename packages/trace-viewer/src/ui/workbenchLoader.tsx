@@ -16,7 +16,7 @@
 
 import { ToolbarButton } from '@web/components/toolbarButton';
 import * as React from 'react';
-import type { ContextEntry } from '../entries';
+import type { ContextEntry } from '../types/entries';
 import { MultiTraceModel } from './modelUtil';
 import './workbenchLoader.css';
 import { toggleTheme } from '@web/theme';

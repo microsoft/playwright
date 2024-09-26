@@ -24,7 +24,7 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
 import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
-import type { Boundaries } from '../geometry';
+import type { Boundaries } from './geometry';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],

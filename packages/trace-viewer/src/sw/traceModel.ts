@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import { parseClientSideCallMetadata } from '../../../packages/playwright-core/src/utils/isomorphic/traceUtils';
-import type { ActionEntry, ContextEntry } from './entries';
-import { createEmptyContext } from './entries';
+import { parseClientSideCallMetadata } from '@isomorphic/traceUtils';
+import type { ActionEntry, ContextEntry } from '../types/entries';
 import { SnapshotStorage } from './snapshotStorage';
 import { TraceModernizer } from './traceModernizer';
 
@@ -149,4 +148,27 @@ function collapseActionsForRecorder(actions: ActionEntry[]): ActionEntry[] {
     result[result.length - 1] = action;
   }
   return result;
+}
+
+function createEmptyContext(): ContextEntry {
+  return {
+    origin: 'testRunner',
+    traceUrl: '',
+    startTime: Number.MAX_SAFE_INTEGER,
+    wallTime: Number.MAX_SAFE_INTEGER,
+    endTime: 0,
+    browserName: '',
+    options: {
+      deviceScaleFactor: 1,
+      isMobile: false,
+      viewport: { width: 1280, height: 800 },
+    },
+    pages: [],
+    resources: [],
+    actions: [],
+    events: [],
+    errors: [],
+    stdio: [],
+    hasSource: false,
+  };
 }

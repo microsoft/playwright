@@ -18,7 +18,7 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { ActionTraceEvent } from '@trace/trace';
-import type { ContextEntry, PageEntry } from '../entries';
+import type { ContextEntry, PageEntry } from '../types/entries';
 import type { StackFrame } from '@protocol/channels';
 
 const contextSymbol = Symbol('context');

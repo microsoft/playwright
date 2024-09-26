@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Language } from '../../playwright-core/src/utils/isomorphic/locatorGenerators';
+import type { Language } from 'playwright-core/src/utils/isomorphic/locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 
@@ -54,26 +54,3 @@ export type PageEntry = {
 export type ActionEntry = trace.ActionTraceEvent & {
   log: { time: number, message: string }[];
 };
-
-export function createEmptyContext(): ContextEntry {
-  return {
-    origin: 'testRunner',
-    traceUrl: '',
-    startTime: Number.MAX_SAFE_INTEGER,
-    wallTime: Number.MAX_SAFE_INTEGER,
-    endTime: 0,
-    browserName: '',
-    options: {
-      deviceScaleFactor: 1,
-      isMobile: false,
-      viewport: { width: 1280, height: 800 },
-    },
-    pages: [],
-    resources: [],
-    actions: [],
-    events: [],
-    errors: [],
-    stdio: [],
-    hasSource: false,
-  };
-}
