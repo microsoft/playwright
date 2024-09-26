@@ -20,30 +20,20 @@ import type { Page } from '../page';
 import type { Signal } from '../../../../recorder/src/actions';
 import type * as actions from '@recorder/actions';
 import { monotonicTime } from '../../utils/time';
-import { callMetadataForAction, collapseActions, traceEventsToAction } from './recorderUtils';
+import { callMetadataForAction, collapseActions } from './recorderUtils';
 import { serializeError } from '../errors';
 import { performAction } from './recorderRunner';
 import type { CallMetadata } from '@protocol/callMetadata';
 import { isUnderTest } from '../../utils/debug';
-import type { BrowserContext } from '../browserContext';
 
 export class RecorderCollection extends EventEmitter {
   private _actions: actions.ActionInContext[] = [];
   private _enabled = false;
   private _pageAliases: Map<Page, string>;
-  private _context: BrowserContext;
 
-  constructor(codegenMode: 'actions' | 'trace-events', context: BrowserContext, pageAliases: Map<Page, string>) {
+  constructor(pageAliases: Map<Page, string>) {
     super();
-    this._context = context;
     this._pageAliases = pageAliases;
-
-    if (codegenMode === 'trace-events') {
-      this._context.tracing.onMemoryEvents(events => {
-        this._actions = traceEventsToAction(events);
-        this._fireChange();
-      });
-    }
   }
 
   restart() {
@@ -86,7 +76,8 @@ export class RecorderCollection extends EventEmitter {
     const error = await callback?.(callMetadata).catch((e: Error) => e);
     callMetadata.endTime = monotonicTime();
     callMetadata.error = error ? serializeError(error) : undefined;
-    await mainFrame.instrumentation.onAfterCall(mainFrame, callMetadata);
+    // Do not wait for onAfterCall so that performAction returned immediately after the action.
+    mainFrame.instrumentation.onAfterCall(mainFrame, callMetadata).catch(() => {});
   }
 
   signal(pageAlias: string, frame: Frame, signal: Signal) {

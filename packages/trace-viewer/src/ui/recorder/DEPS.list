@@ -1,0 +1,5 @@
+[*]
+@isomorphic/**
+@trace/**
+@web/**
+../**
