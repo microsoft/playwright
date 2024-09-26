@@ -8282,7 +8282,8 @@ export interface TestInfo {
   /**
    * Tags that apply to the test. Learn more about [tags](https://playwright.dev/docs/test-annotations#tag-tests).
    *
-   * Note that any changes made to this list while the test is running will not be visible to test reporters.
+   * **NOTE** Any changes made to this list while the test is running will not be visible to test reporters.
+   *
    */
   tags: Array<string>;
 
