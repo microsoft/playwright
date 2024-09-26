@@ -767,7 +767,7 @@ export class WKPage implements PageDelegate {
     });
   }
 
-  async forceGarbageCollection(): Promise<void> {
+  async requestGC(): Promise<void> {
     await this._session.send('Heap.gc');
   }
 

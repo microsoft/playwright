@@ -2333,10 +2333,57 @@ last redirect. If cannot go forward, returns `null`.
 
 Navigate to the next page in history.
 
-## async method: Page.forceGarbageCollection
-* since: v1.47
+## async method: Page.requestGC
+* since: v1.48
 
-Force the browser to perform garbage collection.
+Request the page to perform garbage collection. Note that there is no guarantee that all unreachable objects will be collected.
+
+This is useful to help detect memory leaks. For example, if your page has a large object `'suspect'` that might be leaked, you can check that it does not leak by using a [`WeakRef`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakRef).
+
+```js
+// 1. In your page, save a WeakRef for the "suspect".
+await page.evaluate(() => globalThis.suspectWeakRef = new WeakRef(suspect));
+// 2. Request garbage collection.
+await page.requestGC();
+// 3. Check that weak ref does not deref to the original object.
+expect(await page.evaluate(() => !globalThis.suspectWeakRef.deref())).toBe(true);
+```
+
+```java
+// 1. In your page, save a WeakRef for the "suspect".
+page.evaluate("globalThis.suspectWeakRef = new WeakRef(suspect)");
+// 2. Request garbage collection.
+page.requestGC();
+// 3. Check that weak ref does not deref to the original object.
+assertTrue(page.evaluate("!globalThis.suspectWeakRef.deref()"));
+```
+
+```python async
+# 1. In your page, save a WeakRef for the "suspect".
+await page.evaluate("globalThis.suspectWeakRef = new WeakRef(suspect)")
+# 2. Request garbage collection.
+await page.request_gc()
+# 3. Check that weak ref does not deref to the original object.
+assert await page.evaluate("!globalThis.suspectWeakRef.deref()")
+```
+
+```python sync
+# 1. In your page, save a WeakRef for the "suspect".
+page.evaluate("globalThis.suspectWeakRef = new WeakRef(suspect)")
+# 2. Request garbage collection.
+page.request_gc()
+# 3. Check that weak ref does not deref to the original object.
+assert page.evaluate("!globalThis.suspectWeakRef.deref()")
+```
+
+```csharp
+// 1. In your page, save a WeakRef for the "suspect".
+await Page.EvaluateAsync("globalThis.suspectWeakRef = new WeakRef(suspect)");
+// 2. Request garbage collection.
+await Page.RequestGCAsync();
+// 3. Check that weak ref does not deref to the original object.
+Assert.True(await Page.EvaluateAsync("!globalThis.suspectWeakRef.deref()"));
+```
 
 ### option: Page.goForward.waitUntil = %%-navigation-wait-until-%%
 * since: v1.8

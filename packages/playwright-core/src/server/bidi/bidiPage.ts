@@ -340,7 +340,7 @@ export class BidiPage implements PageDelegate {
     }).then(() => true).catch(() => false);
   }
 
-  async forceGarbageCollection(): Promise<void> {
+  async requestGC(): Promise<void> {
     throw new Error('Method not implemented.');
   }
 

@@ -18,10 +18,17 @@ import { test, expect } from './pageTest';
 
 test('should work', async ({ page }) => {
   await page.evaluate(() => {
-    globalThis.objectToDestroy = {};
+    globalThis.objectToDestroy = { hello: 'world' };
     globalThis.weakRef = new WeakRef(globalThis.objectToDestroy);
   });
+
+  await page.requestGC();
+  expect(await page.evaluate(() => globalThis.weakRef.deref())).toEqual({ hello: 'world' });
+
+  await page.requestGC();
+  expect(await page.evaluate(() => globalThis.weakRef.deref())).toEqual({ hello: 'world' });
+
   await page.evaluate(() => globalThis.objectToDestroy = null);
-  await page.forceGarbageCollection();
+  await page.requestGC();
   expect(await page.evaluate(() => globalThis.weakRef.deref())).toBe(undefined);
 });
