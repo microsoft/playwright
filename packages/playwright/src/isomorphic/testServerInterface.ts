@@ -94,7 +94,6 @@ export interface TestServerInterface {
     testIds?: string[];
     headed?: boolean;
     workers?: number | string;
-    timeout?: number,
     updateSnapshots?: 'all' | 'none' | 'missing';
     reporters?: string[],
     trace?: 'on' | 'off';

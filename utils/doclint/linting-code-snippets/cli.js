@@ -94,9 +94,9 @@ class LintingService {
   }
 
   /**
-   * @param {string} command 
+   * @param {string} command
    * @param {string[]} args
-   * @param {CodeSnippet[]} snippets 
+   * @param {CodeSnippet[]} snippets
    * @param {string} cwd
    * @returns {Promise<LintResult[]>}
    */
@@ -118,7 +118,7 @@ class LintingService {
   }
 
   /**
-   * @param {CodeSnippet[]} snippets 
+   * @param {CodeSnippet[]} snippets
    * @returns {Promise<LintResult[]>}
    */
   async lint(snippets) {
@@ -139,6 +139,7 @@ class JSLintingService extends LintingService {
     this.eslint = new ESLint({
       overrideConfigFile: path.join(PROJECT_DIR, '.eslintrc.js'),
       useEslintrc: false,
+      // @ts-ignore
       overrideConfig: {
         plugins: ['react'],
         settings: {
@@ -290,8 +291,8 @@ class LintingServiceFactory {
   }
 
   /**
-   * @param {string} language 
-   * @param {LintResult} result 
+   * @param {string} language
+   * @param {LintResult} result
    */
   _collectMetrics(language, result) {
     if (!this._metrics[language])

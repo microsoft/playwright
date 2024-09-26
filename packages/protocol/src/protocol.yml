@@ -1450,7 +1450,7 @@ Page:
         slowMo: true
         snapshot: true
 
-    forceGarbageCollection:
+    requestGC:
 
     registerLocatorHandler:
       parameters:

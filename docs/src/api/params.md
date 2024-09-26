@@ -699,7 +699,7 @@ Logger sink for Playwright logging.
   - `content` ?<[HarContentPolicy]<"omit"|"embed"|"attach">> Optional setting to control resource content management. If `omit` is specified, content is not persisted. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output files and to `embed` for all other file extensions.
   - `path` <[path]> Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by default.
   - `mode` ?<[HarMode]<"full"|"minimal">> When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page, cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
-  - `urlFilter` ?<[string]|[RegExp]> A glob or regex pattern to filter requests that are stored in the HAR. When a [`option: baseURL`] via the context options was provided and the passed URL is a path, it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
+  - `urlFilter` ?<[string]|[RegExp]> A glob or regex pattern to filter requests that are stored in the HAR. When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path, it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
 
 Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
 specified, the HAR is not recorded. Make sure to await [`method: BrowserContext.close`] for the HAR to be
@@ -765,8 +765,6 @@ not recorded. Make sure to call [`method: BrowserContext.close`] for videos to b
 * langs: csharp, java, python
   - alias-python: record_video_size
 - `recordVideoSize` <[Object]>
-  If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page will be
-  scaled down if necessary to fit the specified size.
   - `width` <[int]> Video frame width.
   - `height` <[int]> Video frame height.
 
@@ -1046,7 +1044,7 @@ Close the browser process on SIGHUP. Defaults to `true`.
 Whether to run browser in headless mode. More details for
 [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
 [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
-[`option: devtools`] option is `true`.
+[`option: BrowserType.launch.devtools`] option is `true`.
 
 ## js-python-browser-option-firefoxuserprefs
 * langs: js, python

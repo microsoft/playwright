@@ -1713,7 +1713,8 @@ Whether to box the step in the report. Defaults to `false`. When the step is box
 ### option: Test.step.location
 * since: v1.48
 - `location` <[Location]>
-Specifies a custom location for the step to be shown in test reports. By default, location of the [`method: Test.step`] call is shown.
+
+Specifies a custom location for the step to be shown in test reports and trace viewer. By default, location of the [`method: Test.step`] call is shown.
 
 ## method: Test.use
 * since: v1.10

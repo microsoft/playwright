@@ -40,13 +40,9 @@ export type TraceViewerRedirectOptions = {
   grep?: string;
   grepInvert?: string;
   project?: string[];
-  workers?: number | string;
-  headed?: boolean;
-  timeout?: number;
   reporter?: string[];
   webApp?: string;
   isServer?: boolean;
-  updateSnapshots?: 'all' | 'none' | 'missing';
 };
 
 export type TraceViewerAppOptions = {
@@ -126,14 +122,6 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
     params.append('grepInvert', options.grepInvert);
   for (const project of options.project || [])
     params.append('project', project);
-  if (options.workers)
-    params.append('workers', String(options.workers));
-  if (options.timeout)
-    params.append('timeout', String(options.timeout));
-  if (options.headed)
-    params.append('headed', '');
-  if (options.updateSnapshots)
-    params.append('updateSnapshots', options.updateSnapshots);
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
 

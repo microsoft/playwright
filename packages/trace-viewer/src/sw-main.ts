@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Adobe Inc. All rights reserved.
+ * Copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,4 @@
  * limitations under the License.
  */
 
-import { test, expect } from './pageTest';
-
-test('should work', async ({ page }) => {
-  await page.evaluate(() => {
-    globalThis.objectToDestroy = {};
-    globalThis.weakRef = new WeakRef(globalThis.objectToDestroy);
-  });
-  await page.evaluate(() => globalThis.objectToDestroy = null);
-  await page.forceGarbageCollection();
-  expect(await page.evaluate(() => globalThis.weakRef.deref())).toBe(undefined);
-});
+import './sw/main';

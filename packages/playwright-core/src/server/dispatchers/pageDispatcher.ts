@@ -139,8 +139,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     return { response: ResponseDispatcher.fromNullable(this.parentScope(), await this._page.goForward(metadata, params)) };
   }
 
-  async forceGarbageCollection(params: channels.PageForceGarbageCollectionParams, metadata: CallMetadata): Promise<channels.PageForceGarbageCollectionResult> {
-    await this._page.forceGarbageCollection();
+  async requestGC(params: channels.PageRequestGCParams, metadata: CallMetadata): Promise<channels.PageRequestGCResult> {
+    await this._page.requestGC();
   }
 
   async registerLocatorHandler(params: channels.PageRegisterLocatorHandlerParams, metadata: CallMetadata): Promise<channels.PageRegisterLocatorHandlerResult> {

@@ -177,7 +177,9 @@ Launches a process in the shell on the device and returns a socket to communicat
 
 ### param: AndroidDevice.open.command
 * since: v1.9
-- `command` <[string]> Shell command to execute.
+- `command` <[string]>
+
+Shell command to execute.
 
 ## async method: AndroidDevice.pinchClose
 * since: v1.9
@@ -445,7 +447,7 @@ Either a predicate that receives an event or an options object. Optional.
 * since: v1.9
 - returns: <[AndroidWebView]>
 
-This method waits until [AndroidWebView] matching the [`option: selector`] is opened and returns it. If there is already an open [AndroidWebView] matching the [`option: selector`], returns immediately.
+This method waits until [AndroidWebView] matching the [`param: selector`] is opened and returns it. If there is already an open [AndroidWebView] matching the [`param: selector`], returns immediately.
 
 ### param: AndroidDevice.webView.selector
 * since: v1.9

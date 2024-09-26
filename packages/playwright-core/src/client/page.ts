@@ -478,8 +478,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return Response.fromNullable((await this._channel.goForward({ ...options, waitUntil })).response);
   }
 
-  async forceGarbageCollection() {
-    await this._channel.forceGarbageCollection();
+  async requestGC() {
+    await this._channel.requestGC();
   }
 
   async emulateMedia(options: { media?: 'screen' | 'print' | null, colorScheme?: 'dark' | 'light' | 'no-preference' | null, reducedMotion?: 'reduce' | 'no-preference' | null, forcedColors?: 'active' | 'none' | null } = {}) {

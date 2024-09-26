@@ -25,9 +25,9 @@ const PROJECT_DIR = path.join(__dirname, '..', '..');
   documentation.setLinkRenderer(item => {
     const { clazz, param, option } = item;
     if (param)
-      return `\`${param}\``;
+      return `\`${param.alias}\``;
     if (option)
-      return `\`${option}\``;
+      return `\`${option.alias}\``;
     if (clazz)
       return `\`${clazz.name}\``;
   });

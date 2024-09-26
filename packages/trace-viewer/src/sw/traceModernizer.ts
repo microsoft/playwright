@@ -19,7 +19,7 @@ import type * as traceV3 from './versions/traceV3';
 import type * as traceV4 from './versions/traceV4';
 import type * as traceV5 from './versions/traceV5';
 import type * as traceV6 from './versions/traceV6';
-import type { ActionEntry, ContextEntry, PageEntry } from './entries';
+import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
 import type { SnapshotStorage } from './snapshotStorage';
 
 export class TraceVersionError extends Error {

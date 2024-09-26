@@ -31,7 +31,7 @@ In the Actions tab you can see what locator was used for every action and how lo
 
 ### Screenshots
 
-When tracing with the [`option: screenshots`] option turned on (default), each trace records a screencast and renders it as a film strip. You can hover over the film strip to see a magnified image of for each action and state which helps you easily find the action you want to inspect.
+When tracing with the [`option: Tracing.start.screenshots`] option turned on (default), each trace records a screencast and renders it as a film strip. You can hover over the film strip to see a magnified image of for each action and state which helps you easily find the action you want to inspect.
 
 Double click on an action to see the time range for that action. You can use the slider in the timeline to increase the actions selected and these will be shown in the Actions tab and all console logs and network logs will be filtered to only show the logs for the actions selected.
 
@@ -40,15 +40,13 @@ Double click on an action to see the time range for that action. You can use the
 
 ### Snapshots
 
-When tracing with the [`option: snapshots`] option turned on (default), Playwright captures a set of complete DOM snapshots for each action. Depending on the type of the action, it will capture:
+When tracing with the [`option: Tracing.start.snapshots`] option turned on (default), Playwright captures a set of complete DOM snapshots for each action. Depending on the type of the action, it will capture:
 
 | Type | Description |
 |------|-------------|
 |Before|A snapshot at the time action is called.|
 |Action|A snapshot at the moment of the performed input. This type of snapshot is especially useful when exploring where exactly Playwright clicked.|
 |After|A snapshot after the action.|
-
-<br/>
 
 Here is what the typical Action snapshot looks like:
 

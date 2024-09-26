@@ -1304,7 +1304,7 @@ Returns whether the element is [enabled](../actionability.md#enabled).
 * discouraged: Use locator-based [`method: Locator.isHidden`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).  [`option: selector`] that does not match any elements is considered hidden.
+Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).  [`param: selector`] that does not match any elements is considered hidden.
 
 ### param: Frame.isHidden.selector = %%-input-selector-%%
 * since: v1.8
@@ -1322,7 +1322,7 @@ Returns whether the element is hidden, the opposite of [visible](../actionabilit
 * discouraged: Use locator-based [`method: Locator.isVisible`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is [visible](../actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
+Returns whether the element is [visible](../actionability.md#visible). [`param: selector`] that does not match any elements is considered not visible.
 
 ### param: Frame.isVisible.selector = %%-input-selector-%%
 * since: v1.8

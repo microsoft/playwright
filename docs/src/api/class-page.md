@@ -2333,10 +2333,57 @@ last redirect. If cannot go forward, returns `null`.
 
 Navigate to the next page in history.
 
-## async method: Page.forceGarbageCollection
-* since: v1.47
+## async method: Page.requestGC
+* since: v1.48
 
-Force the browser to perform garbage collection.
+Request the page to perform garbage collection. Note that there is no guarantee that all unreachable objects will be collected.
+
+This is useful to help detect memory leaks. For example, if your page has a large object `'suspect'` that might be leaked, you can check that it does not leak by using a [`WeakRef`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakRef).
+
+```js
+// 1. In your page, save a WeakRef for the "suspect".
+await page.evaluate(() => globalThis.suspectWeakRef = new WeakRef(suspect));
+// 2. Request garbage collection.
+await page.requestGC();
+// 3. Check that weak ref does not deref to the original object.
+expect(await page.evaluate(() => !globalThis.suspectWeakRef.deref())).toBe(true);
+```
+
+```java
+// 1. In your page, save a WeakRef for the "suspect".
+page.evaluate("globalThis.suspectWeakRef = new WeakRef(suspect)");
+// 2. Request garbage collection.
+page.requestGC();
+// 3. Check that weak ref does not deref to the original object.
+assertTrue(page.evaluate("!globalThis.suspectWeakRef.deref()"));
+```
+
+```python async
+# 1. In your page, save a WeakRef for the "suspect".
+await page.evaluate("globalThis.suspectWeakRef = new WeakRef(suspect)")
+# 2. Request garbage collection.
+await page.request_gc()
+# 3. Check that weak ref does not deref to the original object.
+assert await page.evaluate("!globalThis.suspectWeakRef.deref()")
+```
+
+```python sync
+# 1. In your page, save a WeakRef for the "suspect".
+page.evaluate("globalThis.suspectWeakRef = new WeakRef(suspect)")
+# 2. Request garbage collection.
+page.request_gc()
+# 3. Check that weak ref does not deref to the original object.
+assert page.evaluate("!globalThis.suspectWeakRef.deref()")
+```
+
+```csharp
+// 1. In your page, save a WeakRef for the "suspect".
+await Page.EvaluateAsync("globalThis.suspectWeakRef = new WeakRef(suspect)");
+// 2. Request garbage collection.
+await Page.RequestGCAsync();
+// 3. Check that weak ref does not deref to the original object.
+Assert.True(await Page.EvaluateAsync("!globalThis.suspectWeakRef.deref()"));
+```
 
 ### option: Page.goForward.waitUntil = %%-navigation-wait-until-%%
 * since: v1.8
@@ -2382,7 +2429,7 @@ Headless mode doesn't support navigation to a PDF document. See the
 - `url` <[string]>
 
 URL to navigate page to. The url should include scheme, e.g. `https://`.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### option: Page.goto.waitUntil = %%-navigation-wait-until-%%
@@ -2589,7 +2636,7 @@ Returns whether the element is [enabled](../actionability.md#enabled).
 * discouraged: Use locator-based [`method: Locator.isHidden`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).  [`option: selector`] that does not match any elements is considered hidden.
+Returns whether the element is hidden, the opposite of [visible](../actionability.md#visible).  [`param: selector`] that does not match any elements is considered hidden.
 
 ### param: Page.isHidden.selector = %%-input-selector-%%
 * since: v1.8
@@ -2608,7 +2655,7 @@ Returns whether the element is hidden, the opposite of [visible](../actionabilit
 * discouraged: Use locator-based [`method: Locator.isVisible`] instead. Read more about [locators](../locators.md).
 - returns: <[boolean]>
 
-Returns whether the element is [visible](../actionability.md#visible). [`option: selector`] that does not match any elements is considered not visible.
+Returns whether the element is [visible](../actionability.md#visible). [`param: selector`] that does not match any elements is considered not visible.
 
 ### param: Page.isVisible.selector = %%-input-selector-%%
 * since: v1.8
@@ -2714,8 +2761,7 @@ User can inspect selectors or perform manual steps while paused. Resume will con
 the place it was paused.
 
 :::note
-This method requires Playwright to be started in a headed mode, with a falsy [`option: headless`] value in
-the [`method: BrowserType.launch`].
+This method requires Playwright to be started in a headed mode, with a falsy [`option: BrowserType.launch.headless`] option.
 :::
 
 ## async method: Page.pdf
@@ -3092,11 +3138,9 @@ Things to keep in mind:
 
 :::warning
 Running the handler will alter your page state mid-test. For example it will change the currently focused element and move the mouse. Make sure that actions that run after the handler are self-contained and do not rely on the focus and mouse state being unchanged.
-<br />
-<br />
+
 For example, consider a test that calls [`method: Locator.focus`] followed by [`method: Keyboard.press`]. If your handler clicks a button between these two actions, the focused element most likely will be wrong, and key press will happen on the unexpected element. Use [`method: Locator.press`] instead to avoid this problem.
-<br />
-<br />
+
 Another example is a series of mouse actions, where [`method: Mouse.move`] is followed by [`method: Mouse.down`]. Again, when the handler runs between these two actions, the mouse position will be wrong during the mouse down. Prefer self-contained actions like [`method: Locator.click`] that do not rely on the state being unchanged by a handler.
 :::
 
@@ -3564,7 +3608,7 @@ Enabling routing disables http cache.
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: Page.route.handler
@@ -3708,7 +3752,7 @@ await page.RouteWebSocketAsync("/ws", async ws => {
 * since: v1.48
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
-Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the [`option: baseURL`] from the context options.
+Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the [`option: Browser.newContext.baseURL`] context option.
 
 ### param: Page.routeWebSocket.handler
 * since: v1.48
@@ -4049,12 +4093,16 @@ await page.GotoAsync("https://www.microsoft.com");
 ### param: Page.setViewportSize.width
 * since: v1.10
 * langs: csharp, java
-- `width` <[int]> page width in pixels.
+- `width` <[int]>
+
+Page width in pixels.
 
 ### param: Page.setViewportSize.height
 * since: v1.10
 * langs: csharp, java
-- `height` <[int]> page height in pixels.
+- `height` <[int]>
+
+Page height in pixels.
 
 ## async method: Page.tap
 * since: v1.8
@@ -4072,7 +4120,7 @@ When all steps combined have not finished during the specified [`option: timeout
 [TimeoutError]. Passing zero timeout disables this.
 
 :::note
-[`method: Page.tap`] the method will throw if [`option: hasTouch`] option of the browser context is false.
+[`method: Page.tap`] the method will throw if [`option: Browser.newContext.hasTouch`] option of the browser context is false.
 :::
 
 ### param: Page.tap.selector = %%-input-selector-%%
@@ -4859,7 +4907,7 @@ await page.RunAndWaitForRequestAsync(async () =>
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Request]\):[boolean]>
 
 Request URL string, regex or predicate receiving [Request] object.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: Page.waitForRequest.urlOrPredicate
@@ -5003,7 +5051,7 @@ await page.RunAndWaitForResponseAsync(async () =>
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]>
 
 Request URL string, regex or predicate receiving [Response] object.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: Page.waitForResponse.urlOrPredicate
@@ -5012,7 +5060,7 @@ it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/We
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]|[Promise]<[boolean]>>
 
 Request URL string, regex or predicate receiving [Response] object.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### option: Page.waitForResponse.timeout

@@ -143,7 +143,7 @@ it('should get multiple cookies', async ({ context, page, server, defaultSameSit
   ]));
 });
 
-it('should get cookies from multiple urls', async ({ context, browserName, isWindows }) => {
+it('should get cookies from multiple urls', async ({ context, browserName, isWindows, sameSiteStoredValueForNone }) => {
   await context.addCookies([{
     url: 'https://foo.com',
     name: 'doggo',
@@ -178,7 +178,7 @@ it('should get cookies from multiple urls', async ({ context, browserName, isWin
     expires: -1,
     httpOnly: false,
     secure: true,
-    sameSite: 'None',
+    sameSite: sameSiteStoredValueForNone,
   }]));
 });
 
@@ -274,7 +274,7 @@ it('should return secure cookies based on HTTP(S) protocol', async ({ context, b
   }]);
 });
 
-it('should add cookies with an expiration', async ({ context }) => {
+it('should add cookies with an expiration', async ({ context, sameSiteStoredValueForNone }) => {
   const expires = Math.floor((Date.now() / 1000)) + 3600;
   await context.addCookies([{
     url: 'https://foo.com',
@@ -293,7 +293,7 @@ it('should add cookies with an expiration', async ({ context }) => {
     expires,
     httpOnly: false,
     secure: true,
-    sameSite: 'None',
+    sameSite: sameSiteStoredValueForNone,
   }]);
   {
     // Rollover to 5-digit year

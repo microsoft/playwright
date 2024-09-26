@@ -17,8 +17,8 @@
 import type { BrowserContext } from '../../browserContext';
 import type { Page } from '../../page';
 import type { FrameSnapshot } from '@trace/snapshot';
-import type { SnapshotRenderer } from '../../../../../trace-viewer/src/snapshotRenderer';
-import { SnapshotStorage } from '../../../../../trace-viewer/src/snapshotStorage';
+import type { SnapshotRenderer } from '../../../../../trace-viewer/src/sw/snapshotRenderer';
+import { SnapshotStorage } from '../../../../../trace-viewer/src/sw/snapshotStorage';
 import type { SnapshotterBlob, SnapshotterDelegate } from '../recorder/snapshotter';
 import { Snapshotter } from '../recorder/snapshotter';
 import type { ElementHandle } from '../../dom';

@@ -17,7 +17,7 @@
 import { clsx, msToString, useMeasure } from '@web/uiUtils';
 import { GlassPane } from '@web/shared/glassPane';
 import * as React from 'react';
-import type { Boundaries } from '../geometry';
+import type { Boundaries } from './geometry';
 import { FilmStrip } from './filmStrip';
 import type { FilmStripPreviewPoint } from './filmStrip';
 import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';

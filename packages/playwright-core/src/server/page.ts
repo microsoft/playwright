@@ -54,7 +54,7 @@ export interface PageDelegate {
   reload(): Promise<void>;
   goBack(): Promise<boolean>;
   goForward(): Promise<boolean>;
-  forceGarbageCollection(): Promise<void>;
+  requestGC(): Promise<void>;
   addInitScript(initScript: InitScript): Promise<void>;
   removeNonInternalInitScripts(): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
@@ -431,8 +431,8 @@ export class Page extends SdkObject {
     }), this._timeoutSettings.navigationTimeout(options));
   }
 
-  forceGarbageCollection(): Promise<void> {
-    return this._delegate.forceGarbageCollection();
+  requestGC(): Promise<void> {
+    return this._delegate.requestGC();
   }
 
   registerLocatorHandler(selector: string, noWaitAfter: boolean | undefined) {

@@ -50,10 +50,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Intel: macos-13, macos-14-large
-        # Arm64: macos-13-xlarge, macos-14
+        # Intel: macos-13, macos-14-large, macos-15-large
+        # Arm64: macos-13-xlarge, macos-14 macos-15
         os: [macos-13, macos-13-xlarge, macos-14-large, macos-14]
         browser: [chromium, firefox, webkit]
+        include:
+          - os: macos-15-large
+            browser: webkit
+          - os: macos-15
+            browser: webkit
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4

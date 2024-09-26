@@ -300,17 +300,17 @@ export class TestServerDispatcher implements TestServerInterface {
       repeatEach: 1,
       retries: 0,
       preserveOutputDir: true,
-      timeout: params.timeout,
       reporter: params.reporters ? params.reporters.map(r => [r]) : undefined,
       use: {
+        ...(this._configCLIOverrides.use || {}),
         trace: params.trace === 'on' ? { mode: 'on', sources: false, _live: true } : (params.trace === 'off' ? 'off' : undefined),
         video: params.video === 'on' ? 'on' : (params.video === 'off' ? 'off' : undefined),
         headless: params.headed ? false : undefined,
         _optionContextReuseMode: params.reuseContext ? 'when-possible' : undefined,
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
       },
-      updateSnapshots: params.updateSnapshots,
-      workers: params.workers,
+      ...(params.updateSnapshots ? { updateSnapshots: params.updateSnapshots } : {}),
+      ...(params.workers ? { workers: params.workers } : {}),
     };
     if (params.trace === 'on')
       process.env.PW_LIVE_TRACE_STACKS = '1';

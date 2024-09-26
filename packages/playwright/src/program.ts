@@ -168,11 +168,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
       grep: opts.grep as string | undefined,
       grepInvert: opts.grepInvert as string | undefined,
       project: opts.project || undefined,
-      headed: opts.headed,
       reporter: Array.isArray(opts.reporter) ? opts.reporter : opts.reporter ? [opts.reporter] : undefined,
-      workers: cliOverrides.workers,
-      timeout: cliOverrides.timeout,
-      updateSnapshots: cliOverrides.updateSnapshots,
     });
     await stopProfiling('runner');
     if (status === 'restarted')
