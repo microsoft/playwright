@@ -272,7 +272,7 @@ export class TestInfoImpl implements TestInfo {
         if (result.error) {
           if (typeof result.error === 'object' && !(result.error as any)?.[stepSymbol])
             (result.error as any)[stepSymbol] = step;
-          const error = serializeError(result.error);
+          const error = serializeError(result.error)[0];
           if (data.boxedStack)
             error.stack = `${error.message}\n${stringifyStackFrames(data.boxedStack).join('\n')}`;
           step.error = error;
@@ -333,9 +333,9 @@ export class TestInfoImpl implements TestInfo {
     const serialized = serializeError(error);
     const step: TestStepInternal | undefined = typeof error === 'object' ? (error as any)?.[stepSymbol] : undefined;
     if (step && step.boxedStack)
-      serialized.stack = `${(error as Error).name}: ${(error as Error).message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
-    this.errors.push(serialized);
-    this._tracing.appendForError(serialized);
+      serialized[0].stack = `${(error as Error).name}: ${(error as Error).message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
+    this.errors.push(...serialized);
+    this._tracing.appendForError(...serialized);
   }
 
   async _runAsStage(stage: TestStage, cb: () => Promise<any>) {

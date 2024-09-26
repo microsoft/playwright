@@ -112,7 +112,7 @@ export class WorkerMain extends ProcessRunner {
       await fakeTestInfo._runAsStage({ title: 'worker cleanup', runnable }, () => gracefullyCloseAll()).catch(() => {});
       this._fatalErrors.push(...fakeTestInfo.errors);
     } catch (e) {
-      this._fatalErrors.push(serializeError(e));
+      this._fatalErrors.push(...serializeError(e));
     }
 
     if (this._fatalErrors.length) {
@@ -153,7 +153,7 @@ export class WorkerMain extends ProcessRunner {
     // No current test - fatal error.
     if (!this._currentTest) {
       if (!this._fatalErrors.length)
-        this._fatalErrors.push(serializeError(error));
+        this._fatalErrors.push(...serializeError(error));
       void this._stop();
       return;
     }
@@ -224,7 +224,7 @@ export class WorkerMain extends ProcessRunner {
       // In theory, we should run above code without any errors.
       // However, in the case we screwed up, or loadTestFile failed in the worker
       // but not in the runner, let's do a fatal error.
-      this._fatalErrors.push(serializeError(e));
+      this._fatalErrors.push(...serializeError(e));
       void this._stop();
     } finally {
       const donePayload: DonePayload = {

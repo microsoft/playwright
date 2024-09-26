@@ -62,12 +62,18 @@ export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
   return frames;
 }
 
-export function serializeError(error: Error | any): TestInfoError {
-  if (error instanceof Error)
-    return filterStackTrace(error);
-  return {
+export function serializeError(error: Error | any): TestInfoError[] {
+  if (error instanceof Error) {
+    const errors = [filterStackTrace(error)];
+    while (error.cause) {
+      error = error.cause;
+      errors.push(filterStackTrace(error));
+    }
+    return errors;
+  }
+  return [{
     value: util.inspect(error)
-  };
+  }];
 }
 
 export type Matcher = (value: string) => boolean;

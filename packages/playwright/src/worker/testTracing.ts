@@ -219,14 +219,16 @@ export class TestTracing {
     this._testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
   }
 
-  appendForError(error: TestInfoError) {
-    const rawStack = error.stack?.split('\n') || [];
-    const stack = rawStack ? filteredStackTrace(rawStack) : [];
-    this._appendTraceEvent({
-      type: 'error',
-      message: error.message || String(error.value),
-      stack,
-    });
+  appendForError(...errors: TestInfoError[]) {
+    for (const error of errors) {
+      const rawStack = error.stack?.split('\n') || [];
+      const stack = rawStack ? filteredStackTrace(rawStack) : [];
+      this._appendTraceEvent({
+        type: 'error',
+        message: error.message || String(error.value),
+        stack,
+      });
+    }
   }
 
   appendStdioToTrace(type: 'stdout' | 'stderr', chunk: string | Buffer) {
