@@ -192,6 +192,7 @@ export abstract class BrowserType extends SdkObject {
       userDataDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), `playwright_${this._name}dev_profile-`));
       tempDirectories.push(userDataDir);
     }
+    await this.prepareUserDataDir(options, userDataDir);
 
     const browserArguments = [];
     if (ignoreAllDefaultArgs)
@@ -326,6 +327,9 @@ export abstract class BrowserType extends SdkObject {
 
   readyState(options: types.LaunchOptions): BrowserReadyState|undefined {
     return undefined;
+  }
+
+  async prepareUserDataDir(options: types.LaunchOptions, userDataDir: string): Promise<void> {
   }
 
   abstract defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];
