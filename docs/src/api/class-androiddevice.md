@@ -177,7 +177,9 @@ Launches a process in the shell on the device and returns a socket to communicat
 
 ### param: AndroidDevice.open.command
 * since: v1.9
-- `command` <[string]> Shell command to execute.
+- `command` <[string]>
+
+Shell command to execute.
 
 ## async method: AndroidDevice.pinchClose
 * since: v1.9

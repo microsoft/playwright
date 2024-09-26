@@ -4095,12 +4095,16 @@ await page.GotoAsync("https://www.microsoft.com");
 ### param: Page.setViewportSize.width
 * since: v1.10
 * langs: csharp, java
-- `width` <[int]> page width in pixels.
+- `width` <[int]>
+
+Page width in pixels.
 
 ### param: Page.setViewportSize.height
 * since: v1.10
 * langs: csharp, java
-- `height` <[int]> page height in pixels.
+- `height` <[int]>
+
+Page height in pixels.
 
 ## async method: Page.tap
 * since: v1.8
