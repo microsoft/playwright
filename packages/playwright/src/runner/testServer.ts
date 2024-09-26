@@ -309,8 +309,8 @@ export class TestServerDispatcher implements TestServerInterface {
         _optionContextReuseMode: params.reuseContext ? 'when-possible' : undefined,
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
       },
-      updateSnapshots: params.updateSnapshots,
-      workers: params.workers,
+      ...(params.updateSnapshots ? { updateSnapshots: params.updateSnapshots } : {}),
+      ...(params.workers ? { workers: params.workers } : {}),
     };
     if (params.trace === 'on')
       process.env.PW_LIVE_TRACE_STACKS = '1';
