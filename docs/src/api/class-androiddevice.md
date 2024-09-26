@@ -445,7 +445,7 @@ Either a predicate that receives an event or an options object. Optional.
 * since: v1.9
 - returns: <[AndroidWebView]>
 
-This method waits until [AndroidWebView] matching the [`option: selector`] is opened and returns it. If there is already an open [AndroidWebView] matching the [`option: selector`], returns immediately.
+This method waits until [AndroidWebView] matching the [`param: selector`] is opened and returns it. If there is already an open [AndroidWebView] matching the [`param: selector`], returns immediately.
 
 ### param: AndroidDevice.webView.selector
 * since: v1.9

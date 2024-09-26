@@ -1198,7 +1198,7 @@ Enabling routing disables http cache.
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: BrowserContext.route.handler
@@ -1342,7 +1342,7 @@ await context.RouteWebSocketAsync("/ws", async ws => {
 * since: v1.48
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
-Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the [`option: baseURL`] from the context options.
+Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the [`option: Browser.newContext.baseURL`] context option.
 
 ### param: BrowserContext.routeWebSocket.handler
 * since: v1.48

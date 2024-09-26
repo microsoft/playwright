@@ -75,7 +75,7 @@ with sync_playwright() as p:
     browser.close()
 ```
 
-By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `headless=False` flag while launching the browser. You can also use [`option: slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
+By default, Playwright runs the browsers in headless mode. To see the browser UI, set [`option: BrowserType.launch.headless`] option to `False`. You can also use [`option: BrowserType.launch.slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
 
 ```py
 firefox.launch(headless=False, slow_mo=50)

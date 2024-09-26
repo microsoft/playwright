@@ -48,7 +48,7 @@ Now run it.
 dotnet run
 ```
 
-By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `Headless = false` flag while launching the browser. You can also use [`option: slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
+By default, Playwright runs the browsers in headless mode. To see the browser UI, set [`option: BrowserType.launch.headless`] option to `false`. You can also use [`option: BrowserType.launch.slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
 
 ```csharp
 await using var browser = await playwright.Firefox.LaunchAsync(new()

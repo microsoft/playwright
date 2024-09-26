@@ -3437,8 +3437,7 @@ export interface Page {
    * User can inspect selectors or perform manual steps while paused. Resume will continue running the original script
    * from the place it was paused.
    *
-   * **NOTE** This method requires Playwright to be started in a headed mode, with a falsy `headless` value in the
-   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch).
+   * **NOTE** This method requires Playwright to be started in a headed mode, with a falsy `headless` option.
    */
   pause(): Promise<void>;
 
@@ -3723,8 +3722,8 @@ export interface Page {
    *
    * **NOTE** [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) will not
    * intercept requests intercepted by Service Worker. See [this](https://github.com/microsoft/playwright/issues/1090)
-   * issue. We recommend disabling Service Workers when using request interception by setting
-   * `Browser.newContext.serviceWorkers` to `'block'`.
+   * issue. We recommend disabling Service Workers when using request interception by setting `serviceWorkers` to
+   * `'block'`.
    *
    * **NOTE** [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route) will not
    * intercept the first request of a popup page. Use
@@ -3790,7 +3789,7 @@ export interface Page {
    *
    * Playwright will not serve requests intercepted by Service Worker from the HAR file. See
    * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when
-   * using request interception by setting `Browser.newContext.serviceWorkers` to `'block'`.
+   * using request interception by setting `serviceWorkers` to `'block'`.
    * @param har Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a
    * relative path, then it is resolved relative to the current working directory.
    * @param options
@@ -3855,7 +3854,7 @@ export interface Page {
    * ```
    *
    * @param url Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the
-   * `baseURL` from the context options.
+   * `baseURL` context option.
    * @param handler Handler function to route the WebSocket.
    */
   routeWebSocket(url: string|RegExp|((url: URL) => boolean), handler: ((websocketroute: WebSocketRoute) => Promise<any>|any)): Promise<void>;
@@ -8597,7 +8596,7 @@ export interface BrowserContext {
    * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route)
    * will not intercept requests intercepted by Service Worker. See
    * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when
-   * using request interception by setting `Browser.newContext.serviceWorkers` to `'block'`.
+   * using request interception by setting `serviceWorkers` to `'block'`.
    *
    * **Usage**
    *
@@ -8660,7 +8659,7 @@ export interface BrowserContext {
    *
    * Playwright will not serve requests intercepted by Service Worker from the HAR file. See
    * [this](https://github.com/microsoft/playwright/issues/1090) issue. We recommend disabling Service Workers when
-   * using request interception by setting `Browser.newContext.serviceWorkers` to `'block'`.
+   * using request interception by setting `serviceWorkers` to `'block'`.
    * @param har Path to a [HAR](http://www.softwareishard.com/blog/har-12-spec) file with prerecorded network data. If `path` is a
    * relative path, then it is resolved relative to the current working directory.
    * @param options
@@ -8725,7 +8724,7 @@ export interface BrowserContext {
    * ```
    *
    * @param url Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the
-   * `baseURL` from the context options.
+   * `baseURL` context option.
    * @param handler Handler function to route the WebSocket.
    */
   routeWebSocket(url: string|RegExp|((url: URL) => boolean), handler: ((websocketroute: WebSocketRoute) => Promise<any>|any)): Promise<void>;
@@ -16863,7 +16862,7 @@ export interface APIRequestContext {
    * ```
    *
    * The common way to send file(s) in the body of a request is to upload them as form fields with `multipart/form-data`
-   * encoding. Use [FormData] to construct request body and pass it to the request as `multipart` parameter:
+   * encoding, by specifiying the `multipart` parameter:
    *
    * ```js
    * const form = new FormData();
@@ -20164,7 +20163,7 @@ export interface Tracing {
   start(options?: {
     /**
      * If specified, intermediate trace files are going to be saved into the files with the given name prefix inside the
-     * `tracesDir` folder specified in
+     * `tracesDir` directory specified in
      * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch). To specify
      * the final trace zip file name, you need to pass `path` option to
      * [tracing.stop([options])](https://playwright.dev/docs/api/class-tracing#tracing-stop) instead.
@@ -20224,7 +20223,7 @@ export interface Tracing {
   startChunk(options?: {
     /**
      * If specified, intermediate trace files are going to be saved into the files with the given name prefix inside the
-     * `tracesDir` folder specified in
+     * `tracesDir` directory specified in
      * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch). To specify
      * the final trace zip file name, you need to pass `path` option to
      * [tracing.stopChunk([options])](https://playwright.dev/docs/api/class-tracing#tracing-stop-chunk) instead.

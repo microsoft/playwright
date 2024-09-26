@@ -130,14 +130,17 @@ async function run() {
   {
     const langs = ['js', 'java', 'python', 'csharp'];
     const documentationRoot = path.join(PROJECT_DIR, 'docs', 'src');
+    const apiRoot = path.join(documentationRoot, 'api');
+    const testApiRoot = path.join(documentationRoot, 'test-api');
+    const testReporterApiRoot = path.join(documentationRoot, 'test-reporter-api');
     for (const lang of langs) {
       try {
-        let documentation = parseApi(path.join(documentationRoot, 'api'));
+        let documentation = parseApi(apiRoot);
         if (lang === 'js') {
           documentation = documentation.mergeWith(
-            parseApi(path.join(documentationRoot, 'test-api'), path.join(documentationRoot, 'api', 'params.md'))
+            parseApi(testApiRoot, path.join(documentationRoot, 'api', 'params.md'))
           ).mergeWith(
-            parseApi(path.join(documentationRoot, 'test-reporter-api'))
+            parseApi(testReporterApiRoot)
           );
         }
         documentation.filterForLanguage(lang);
@@ -183,7 +186,8 @@ async function run() {
           // Validates code snippet groups.
           rootNode = docs.processCodeGroups(rootNode, lang, tabs => tabs.map(tab => tab.spec));
           // Renders links.
-          documentation.renderLinksInNodes(rootNode);
+          if (!filePath.startsWith(apiRoot) && !filePath.startsWith(testApiRoot) && !filePath.startsWith(testReporterApiRoot))
+            documentation.renderLinksInNodes(rootNode);
           // Validate links.
           {
             md.visitAll(rootNode, node => {
