@@ -61,9 +61,9 @@ documentation.setLinkRenderer(item => {
   else if (item.member)
     return `<see cref="I${toTitleCase(item.member.clazz.name)}.${toMemberName(item.member)}${asyncSuffix}"/>`;
   else if (item.option)
-    return `<paramref name="${item.option}"/>`;
+    return `<paramref name="${item.option.name}"/>`;
   else if (item.param)
-    return `<paramref name="${item.param}"/>`;
+    return `<paramref name="${item.param.name}"/>`;
   else
     throw new Error('Unknown link format.');
 });

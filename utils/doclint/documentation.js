@@ -45,9 +45,8 @@ const md = require('../markdown');
  * @typedef {function({
  *   clazz?: Class,
  *   member?: Member,
- *   param?: string,
- *   option?: string,
- *   optionFullPath?: string,
+ *   param?: { name: string, alias: string },
+ *   option?: { name: string, alias: string },
  *   href?: string,
  * }): string|undefined} Renderer
  */
@@ -742,7 +741,7 @@ function patchLinksInText(classOrMember, text, classesMap, membersMap, linkRende
       return linkRenderer({ member, href }) || match;
     }
     if (p1 === 'param' || p1 === 'option') {
-      let /** @type {string } */ alias;
+      let /** @type {string } */ name;
       let /** @type {Member} */ member;
       if (p2.includes('.')) {
         // fully-qualified name
@@ -751,7 +750,7 @@ function patchLinksInText(classOrMember, text, classesMap, membersMap, linkRende
         if (!maybeMember)
           throw new Error(`Undefined reference: ${match}\n=========\n${text}`);
         member = maybeMember;
-        alias = rest.join('.');
+        name = rest.join('.');
       } else {
         // non-fully-qualified param/option reference from the same method.
         if (!classOrMember || !(classOrMember instanceof Member)) {
@@ -762,23 +761,23 @@ function patchLinksInText(classOrMember, text, classesMap, membersMap, linkRende
         if (!maybeMember)
           throw new Error(`Undefined reference: ${match}\n=========\n${text}`);
         member = maybeMember;
-        alias = p2;
+        name = p2;
       }
       if (p1 === 'param') {
-        const param = member.argsArray.find(a => a.name === alias);
+        const param = member.argsArray.find(a => a.name === name);
         if (!param)
           throw new Error(`Referenced parameter ${match} not found in the parent method ${member.name}\n=========\n${text}`);
-        alias = param.alias;
-        return linkRenderer({ member, param: alias, href }) || match;
+        return linkRenderer({ member, param: { name, alias: param.alias }, href }) || match;
       } else {
         // p1 === 'option'
         const options = member.argsArray.find(a => a.name === 'options');
-        const parts = alias.split('.');
-        const option = options?.type?.properties?.find(a => a.name === parts[0]);
+        const parts = name.split('.');
+        const optionName = parts[0];
+        const option = options?.type?.properties?.find(a => a.name === optionName);
         if (!option)
           throw new Error(`Referenced option ${match} not found in the parent method ${member.name}\n=========\n${text}`);
         parts[0] = option.alias;
-        return linkRenderer({ member, option: parts[0], optionFullPath: parts.join('.'), href }) || match;
+        return linkRenderer({ member, option: { name: optionName, alias: parts.join('.') }, href }) || match;
       }
     }
     throw new Error(`Undefined link prefix, expected event|method|property|param|option, got: ` + match);
