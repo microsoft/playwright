@@ -22,7 +22,6 @@ import { expectedSSLError } from '../config/utils';
 it('should work @smoke', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
-  await new Promise(() => {});
 });
 
 it('should work with file URL', async ({ page, asset, isAndroid, mode }) => {
