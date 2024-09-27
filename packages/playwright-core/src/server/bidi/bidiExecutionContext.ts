@@ -122,10 +122,6 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     });
   }
 
-  objectCount(objectId: js.ObjectId): Promise<number> {
-    throw new Error('Method not implemented.');
-  }
-
   async rawCallFunction(functionDeclaration: string, arg: bidi.Script.LocalValue): Promise<bidi.Script.RemoteValue> {
     const response = await this._session.send('script.callFunction', {
       functionDeclaration,

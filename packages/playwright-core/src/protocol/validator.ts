@@ -1843,12 +1843,6 @@ scheme.JSHandleJsonValueResult = tObject({
   value: tType('SerializedValue'),
 });
 scheme.ElementHandleJsonValueResult = tType('JSHandleJsonValueResult');
-scheme.JSHandleObjectCountParams = tOptional(tObject({}));
-scheme.ElementHandleObjectCountParams = tType('JSHandleObjectCountParams');
-scheme.JSHandleObjectCountResult = tObject({
-  count: tNumber,
-});
-scheme.ElementHandleObjectCountResult = tType('JSHandleObjectCountResult');
 scheme.ElementHandleInitializer = tObject({
   preview: tString,
 });

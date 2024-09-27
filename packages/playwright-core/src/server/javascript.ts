@@ -58,7 +58,6 @@ export interface ExecutionContextDelegate {
   getProperties(context: ExecutionContext, objectId: ObjectId): Promise<Map<string, JSHandle>>;
   createHandle(context: ExecutionContext, remoteObject: RemoteObject): JSHandle;
   releaseHandle(objectId: ObjectId): Promise<void>;
-  objectCount(objectId: ObjectId): Promise<number>;
 }
 
 export class ExecutionContext extends SdkObject {
@@ -124,10 +123,6 @@ export class ExecutionContext extends SdkObject {
       this._utilityScriptPromise = this._raceAgainstContextDestroyed(this._delegate.rawEvaluateHandle(source).then(objectId => new JSHandle(this, 'object', 'UtilityScript', objectId)));
     }
     return this._utilityScriptPromise;
-  }
-
-  async objectCount(objectId: ObjectId): Promise<number> {
-    return this._delegate.objectCount(objectId);
   }
 
   async doSlowMo() {
@@ -245,12 +240,6 @@ export class JSHandle<T = any> extends SdkObject {
     this._preview = preview;
     if (this._previewCallback)
       this._previewCallback(preview);
-  }
-
-  async objectCount(): Promise<number> {
-    if (!this._objectId)
-      throw new Error('Can only count objects for a handle that points to the constructor prototype');
-    return this._context.objectCount(this._objectId);
   }
 }
 

@@ -2488,10 +2488,6 @@ JSHandle:
       returns:
         value: SerializedValue
 
-    objectCount:
-      returns:
-        count: number
-
   events:
 
     previewUpdated:
