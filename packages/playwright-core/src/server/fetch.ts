@@ -698,7 +698,7 @@ export function createProxyAgent(proxy: types.ProxySettings) {
   if (proxy.password)
     proxyURL.password = proxy.password;
   // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
-  return new HttpsProxyAgent(proxy.server);
+  return new HttpsProxyAgent(proxyURL);
 }
 
 function toHeadersArray(rawHeaders: string[]): types.HeadersArray {
