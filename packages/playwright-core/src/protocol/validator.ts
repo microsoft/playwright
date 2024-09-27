@@ -2139,7 +2139,16 @@ scheme.WebSocketRouteMessageFromServerEvent = tObject({
   message: tString,
   isBase64: tBoolean,
 });
-scheme.WebSocketRouteCloseEvent = tOptional(tObject({}));
+scheme.WebSocketRouteClosePageEvent = tObject({
+  code: tOptional(tNumber),
+  reason: tOptional(tString),
+  wasClean: tBoolean,
+});
+scheme.WebSocketRouteCloseServerEvent = tObject({
+  code: tOptional(tNumber),
+  reason: tOptional(tString),
+  wasClean: tBoolean,
+});
 scheme.WebSocketRouteConnectParams = tOptional(tObject({}));
 scheme.WebSocketRouteConnectResult = tOptional(tObject({}));
 scheme.WebSocketRouteEnsureOpenedParams = tOptional(tObject({}));
@@ -2154,11 +2163,18 @@ scheme.WebSocketRouteSendToServerParams = tObject({
   isBase64: tBoolean,
 });
 scheme.WebSocketRouteSendToServerResult = tOptional(tObject({}));
-scheme.WebSocketRouteCloseParams = tObject({
+scheme.WebSocketRouteClosePageParams = tObject({
   code: tOptional(tNumber),
   reason: tOptional(tString),
+  wasClean: tBoolean,
 });
-scheme.WebSocketRouteCloseResult = tOptional(tObject({}));
+scheme.WebSocketRouteClosePageResult = tOptional(tObject({}));
+scheme.WebSocketRouteCloseServerParams = tObject({
+  code: tOptional(tNumber),
+  reason: tOptional(tString),
+  wasClean: tBoolean,
+});
+scheme.WebSocketRouteCloseServerResult = tOptional(tObject({}));
 scheme.ResourceTiming = tObject({
   startTime: tNumber,
   domainLookupStart: tNumber,

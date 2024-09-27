@@ -3810,7 +3810,8 @@ export type WebSocketRouteInitializer = {
 export interface WebSocketRouteEventTarget {
   on(event: 'messageFromPage', callback: (params: WebSocketRouteMessageFromPageEvent) => void): this;
   on(event: 'messageFromServer', callback: (params: WebSocketRouteMessageFromServerEvent) => void): this;
-  on(event: 'close', callback: (params: WebSocketRouteCloseEvent) => void): this;
+  on(event: 'closePage', callback: (params: WebSocketRouteClosePageEvent) => void): this;
+  on(event: 'closeServer', callback: (params: WebSocketRouteCloseServerEvent) => void): this;
 }
 export interface WebSocketRouteChannel extends WebSocketRouteEventTarget, Channel {
   _type_WebSocketRoute: boolean;
@@ -3818,7 +3819,8 @@ export interface WebSocketRouteChannel extends WebSocketRouteEventTarget, Channe
   ensureOpened(params?: WebSocketRouteEnsureOpenedParams, metadata?: CallMetadata): Promise<WebSocketRouteEnsureOpenedResult>;
   sendToPage(params: WebSocketRouteSendToPageParams, metadata?: CallMetadata): Promise<WebSocketRouteSendToPageResult>;
   sendToServer(params: WebSocketRouteSendToServerParams, metadata?: CallMetadata): Promise<WebSocketRouteSendToServerResult>;
-  close(params: WebSocketRouteCloseParams, metadata?: CallMetadata): Promise<WebSocketRouteCloseResult>;
+  closePage(params: WebSocketRouteClosePageParams, metadata?: CallMetadata): Promise<WebSocketRouteClosePageResult>;
+  closeServer(params: WebSocketRouteCloseServerParams, metadata?: CallMetadata): Promise<WebSocketRouteCloseServerResult>;
 }
 export type WebSocketRouteMessageFromPageEvent = {
   message: string,
@@ -3828,7 +3830,16 @@ export type WebSocketRouteMessageFromServerEvent = {
   message: string,
   isBase64: boolean,
 };
-export type WebSocketRouteCloseEvent = {};
+export type WebSocketRouteClosePageEvent = {
+  code?: number,
+  reason?: string,
+  wasClean: boolean,
+};
+export type WebSocketRouteCloseServerEvent = {
+  code?: number,
+  reason?: string,
+  wasClean: boolean,
+};
 export type WebSocketRouteConnectParams = {};
 export type WebSocketRouteConnectOptions = {};
 export type WebSocketRouteConnectResult = void;
@@ -3851,20 +3862,32 @@ export type WebSocketRouteSendToServerOptions = {
 
 };
 export type WebSocketRouteSendToServerResult = void;
-export type WebSocketRouteCloseParams = {
+export type WebSocketRouteClosePageParams = {
+  code?: number,
+  reason?: string,
+  wasClean: boolean,
+};
+export type WebSocketRouteClosePageOptions = {
   code?: number,
   reason?: string,
 };
-export type WebSocketRouteCloseOptions = {
+export type WebSocketRouteClosePageResult = void;
+export type WebSocketRouteCloseServerParams = {
+  code?: number,
+  reason?: string,
+  wasClean: boolean,
+};
+export type WebSocketRouteCloseServerOptions = {
   code?: number,
   reason?: string,
 };
-export type WebSocketRouteCloseResult = void;
+export type WebSocketRouteCloseServerResult = void;
 
 export interface WebSocketRouteEvents {
   'messageFromPage': WebSocketRouteMessageFromPageEvent;
   'messageFromServer': WebSocketRouteMessageFromServerEvent;
-  'close': WebSocketRouteCloseEvent;
+  'closePage': WebSocketRouteClosePageEvent;
+  'closeServer': WebSocketRouteCloseServerEvent;
 }
 
 export type ResourceTiming = {

@@ -3686,65 +3686,54 @@ Note that only `WebSocket`s created after this method was called will be routed.
 
 **Usage**
 
-Below is an example of a simple handler that blocks some websocket messages.
-See [WebSocketRoute] for more details and examples.
+Below is an example of a simple mock that responds to a single message. See [WebSocketRoute] for more details and examples.
 
 ```js
-await page.routeWebSocket('/ws', async ws => {
-  ws.routeSend(message => {
-    if (message === 'to-be-blocked')
-      return;
-    ws.send(message);
+await page.routeWebSocket('/ws', ws => {
+  ws.onMessage(message => {
+    if (message === 'request')
+      ws.send('response');
   });
-  await ws.connect();
 });
 ```
 
 ```java
 page.routeWebSocket("/ws", ws -> {
-  ws.routeSend(message -> {
-    if ("to-be-blocked".equals(message))
-      return;
-    ws.send(message);
+  ws.onMessage(message -> {
+    if ("request".equals(message))
+      ws.send("response");
   });
-  ws.connect();
 });
 ```
 
 ```python async
 def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
-  if message == "to-be-blocked":
-    return
-  ws.send(message)
+  if message == "request":
+    ws.send("response")
 
-async def handler(ws: WebSocketRoute):
-  ws.route_send(lambda message: message_handler(ws, message))
-  await ws.connect()
+def handler(ws: WebSocketRoute):
+  ws.on_message(lambda message: message_handler(ws, message))
 
 await page.route_web_socket("/ws", handler)
 ```
 
 ```python sync
 def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
-  if message == "to-be-blocked":
-    return
-  ws.send(message)
+  if message == "request":
+    ws.send("response")
 
 def handler(ws: WebSocketRoute):
-  ws.route_send(lambda message: message_handler(ws, message))
-  ws.connect()
+  ws.on_message(lambda message: message_handler(ws, message))
 
 page.route_web_socket("/ws", handler)
 ```
 
 ```csharp
-await page.RouteWebSocketAsync("/ws", async ws => {
-  ws.RouteSend(message => {
-    if (message == "to-be-blocked")
-      return;
-    ws.Send(message);
+await page.RouteWebSocketAsync("/ws", ws => {
+  ws.OnMessage(message => {
+    if (message == "request")
+      ws.Send("response");
   });
-  await ws.ConnectAsync();
 });
 ```
 

@@ -2987,10 +2987,17 @@ WebSocketRoute:
         message: string
         isBase64: boolean
 
-    close:
+    closePage:
       parameters:
         code: number?
         reason: string?
+        wasClean: boolean
+
+    closeServer:
+      parameters:
+        code: number?
+        reason: string?
+        wasClean: boolean
 
   events:
 
@@ -3004,7 +3011,17 @@ WebSocketRoute:
         message: string
         isBase64: boolean
 
-    close:
+    closePage:
+      parameters:
+        code: number?
+        reason: string?
+        wasClean: boolean
+
+    closeServer:
+      parameters:
+        code: number?
+        reason: string?
+        wasClean: boolean
 
 
 ResourceTiming:

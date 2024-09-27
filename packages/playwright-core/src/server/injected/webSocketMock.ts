@@ -19,17 +19,19 @@ export type WSData = { data: string, isBase64: boolean };
 
 export type OnCreatePayload = { type: 'onCreate', id: string, url: string };
 export type OnMessageFromPagePayload = { type: 'onMessageFromPage', id: string, data: WSData };
-export type OnClosePayload = { type: 'onClose', id: string, code: number | undefined, reason: string | undefined, wasClean: boolean };
+export type OnClosePagePayload = { type: 'onClosePage', id: string, code: number | undefined, reason: string | undefined, wasClean: boolean };
 export type OnMessageFromServerPayload = { type: 'onMessageFromServer', id: string, data: WSData };
-export type BindingPayload = OnCreatePayload | OnMessageFromPagePayload | OnMessageFromServerPayload | OnClosePayload;
+export type OnCloseServerPayload = { type: 'onCloseServer', id: string, code: number | undefined, reason: string | undefined, wasClean: boolean };
+export type BindingPayload = OnCreatePayload | OnMessageFromPagePayload | OnMessageFromServerPayload | OnClosePagePayload | OnCloseServerPayload;
 
 export type ConnectRequest = { type: 'connect', id: string };
 export type PassthroughRequest = { type: 'passthrough', id: string };
 export type EnsureOpenedRequest = { type: 'ensureOpened', id: string };
 export type SendToPageRequest = { type: 'sendToPage', id: string, data: WSData };
 export type SendToServerRequest = { type: 'sendToServer', id: string, data: WSData };
-export type CloseRequest = { type: 'close', id: string, code: number | undefined, reason: string | undefined, wasClean: boolean };
-export type APIRequest = ConnectRequest | PassthroughRequest | EnsureOpenedRequest | SendToPageRequest | SendToServerRequest | CloseRequest;
+export type ClosePageRequest = { type: 'closePage', id: string, code: number | undefined, reason: string | undefined, wasClean: boolean };
+export type CloseServerRequest = { type: 'closeServer', id: string, code: number | undefined, reason: string | undefined, wasClean: boolean };
+export type APIRequest = ConnectRequest | PassthroughRequest | EnsureOpenedRequest | SendToPageRequest | SendToServerRequest | ClosePageRequest | CloseServerRequest;
 
 // eslint-disable-next-line no-restricted-globals
 type GlobalThis = typeof globalThis;
@@ -98,10 +100,12 @@ export function inject(globalThis: GlobalThis) {
       ws._apiEnsureOpened();
     if (request.type === 'sendToPage')
       ws._apiSendToPage(dataToMessage(request.data, ws.binaryType));
-    if (request.type === 'close')
-      ws._apiClose(request.code, request.reason, request.wasClean);
+    if (request.type === 'closePage')
+      ws._apiClosePage(request.code, request.reason, request.wasClean);
     if (request.type === 'sendToServer')
       ws._apiSendToServer(dataToMessage(request.data, ws.binaryType));
+    if (request.type === 'closeServer')
+      ws._apiCloseServer(request.code, request.reason, request.wasClean);
   };
 
   class WebSocketMock extends EventTarget {
@@ -214,10 +218,12 @@ export function inject(globalThis: GlobalThis) {
         throw new DOMException(`Failed to execute 'send' on 'WebSocket': Still in CONNECTING state.`);
       if (this.readyState !== WebSocketMock.OPEN)
         throw new DOMException(`WebSocket is already in CLOSING or CLOSED state.`);
-      if (this._passthrough)
-        this._apiSendToServer(message);
-      else
+      if (this._passthrough) {
+        if (this._ws)
+          this._apiSendToServer(message);
+      } else {
         messageToData(message, data => binding({ type: 'onMessageFromPage', id: this._id, data }));
+      }
     }
 
     close(code?: number, reason?: string): void {
@@ -225,10 +231,10 @@ export function inject(globalThis: GlobalThis) {
         throw new DOMException(`Failed to execute 'close' on 'WebSocket': The close code must be either 1000, or between 3000 and 4999. ${code} is neither.`);
       if (this.readyState === WebSocketMock.OPEN || this.readyState === WebSocketMock.CONNECTING)
         this.readyState = WebSocketMock.CLOSING;
-      if (this._ws)
-        this._ws.close(code, reason);
+      if (this._passthrough)
+        this._apiCloseServer(code, reason, true);
       else
-        this._onWSClose(code, reason, true);
+        binding({ type: 'onClosePage', id: this._id, code, reason, wasClean: true });
     }
 
     // --- methods called from the routing API ---
@@ -297,16 +303,26 @@ export function inject(globalThis: GlobalThis) {
       this._apiConnect();
     }
 
-    _apiClose(code: number | undefined, reason: string | undefined, wasClean: boolean) {
-      if (this.readyState !== WebSocketMock.CLOSED) {
-        this.readyState = WebSocketMock.CLOSED;
-        this.dispatchEvent(new CloseEvent('close', { code, reason, wasClean, cancelable: true }));
+    _apiCloseServer(code: number | undefined, reason: string | undefined, wasClean: boolean) {
+      if (!this._ws) {
+        // Short-curcuit when there is no server.
+        this._onWSClose(code, reason, wasClean);
+        return;
       }
-      // Immediately close the real WS and imitate that it has closed.
-      this._ws?.close(code, reason);
-      this._cleanupWS();
-      binding({ type: 'onClose', id: this._id, code, reason, wasClean });
-      idToWebSocket.delete(this._id);
+      if (this._ws.readyState === WebSocketMock.CONNECTING || this._ws.readyState === WebSocketMock.OPEN)
+        this._ws.close(code, reason);
+    }
+
+    _apiClosePage(code: number | undefined, reason: string | undefined, wasClean: boolean) {
+      if (this.readyState === WebSocketMock.CLOSED)
+        return;
+      this.readyState = WebSocketMock.CLOSED;
+      this.dispatchEvent(new CloseEvent('close', { code, reason, wasClean, cancelable: true }));
+      this._maybeCleanup();
+      if (this._passthrough)
+        this._apiCloseServer(code, reason, wasClean);
+      else
+        binding({ type: 'onClosePage', id: this._id, code, reason, wasClean });
     }
 
     // --- internals ---
@@ -319,24 +335,24 @@ export function inject(globalThis: GlobalThis) {
     }
 
     private _onWSClose(code: number | undefined, reason: string | undefined, wasClean: boolean) {
-      this._cleanupWS();
-      if (this.readyState !== WebSocketMock.CLOSED) {
-        this.readyState = WebSocketMock.CLOSED;
-        this.dispatchEvent(new CloseEvent('close', { code, reason, wasClean, cancelable: true }));
+      if (this._passthrough)
+        this._apiClosePage(code, reason, wasClean);
+      else
+        binding({ type: 'onCloseServer', id: this._id, code, reason, wasClean });
+      if (this._ws) {
+        this._ws.onopen = null;
+        this._ws.onclose = null;
+        this._ws.onmessage = null;
+        this._ws.onerror = null;
+        this._ws = undefined;
+        this._wsBufferedMessages = [];
       }
-      binding({ type: 'onClose', id: this._id, code, reason, wasClean });
-      idToWebSocket.delete(this._id);
+      this._maybeCleanup();
     }
 
-    private _cleanupWS() {
-      if (!this._ws)
-        return;
-      this._ws.onopen = null;
-      this._ws.onclose = null;
-      this._ws.onmessage = null;
-      this._ws.onerror = null;
-      this._ws = undefined;
-      this._wsBufferedMessages = [];
+    private _maybeCleanup() {
+      if (this.readyState === WebSocketMock.CLOSED && !this._ws)
+        idToWebSocket.delete(this._id);
     }
   }
   globalThis.WebSocket = class WebSocket extends WebSocketMock {};

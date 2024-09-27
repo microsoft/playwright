@@ -62,10 +62,10 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       if (mock === 'no-match') {
         await page.routeWebSocket(/zzz/, () => {});
       } else if (mock === 'pass-through') {
-        await page.routeWebSocket(/.*/, async ws => {
-          ws.routeSend(message => ws.send(message));
-          ws.routeReceive(message => ws.receive(message));
-          await ws.connect();
+        await page.routeWebSocket(/.*/, ws => {
+          const server = ws.connectToServer();
+          ws.onMessage(message => server.send(message));
+          server.onMessage(message => ws.send(message));
         });
       }
     });
@@ -196,9 +196,9 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
 
 test('should work with ws.close', async ({ page, server }) => {
   const { promise, resolve } = withResolvers<WebSocketRoute>();
-  await page.routeWebSocket(/.*/, async route => {
-    await route.connect();
-    resolve(route);
+  await page.routeWebSocket(/.*/, async ws => {
+    ws.connectToServer();
+    resolve(ws);
   });
 
   const wsPromise = server.waitForWebSocket();
@@ -206,7 +206,7 @@ test('should work with ws.close', async ({ page, server }) => {
   const ws = await wsPromise;
 
   const route = await promise;
-  route.receive('hello');
+  route.send('hello');
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([
     'open',
     `message: data=hello origin=ws://localhost:${server.PORT} lastEventId=`,
@@ -224,12 +224,12 @@ test('should work with ws.close', async ({ page, server }) => {
 
 test('should pattern match', async ({ page, server }) => {
   await page.routeWebSocket(/.*\/ws$/, async ws => {
-    await ws.connect();
+    ws.connectToServer();
   });
 
   await page.routeWebSocket('**/mock-ws', ws => {
-    ws.routeSend(message => {
-      ws.receive('mock-response');
+    ws.onMessage(message => {
+      ws.send('mock-response');
     });
   });
 
@@ -260,33 +260,33 @@ test('should pattern match', async ({ page, server }) => {
 
 test('should work with server', async ({ page, server }) => {
   const { promise, resolve } = withResolvers<WebSocketRoute>();
-  await page.routeWebSocket(/.*/, async route => {
-    route.routeSend(message => {
+  await page.routeWebSocket(/.*/, async ws => {
+    const server = ws.connectToServer();
+    ws.onMessage(message => {
       switch (message) {
         case 'to-respond':
-          route.receive('response');
+          ws.send('response');
           return;
         case 'to-block':
           return;
         case 'to-modify':
-          route.send('modified');
+          server.send('modified');
           return;
       }
-      route.send(message);
+      server.send(message);
     });
-    route.routeReceive(message => {
+    server.onMessage(message => {
       switch (message) {
         case 'to-block':
           return;
         case 'to-modify':
-          route.receive('modified');
+          ws.send('modified');
           return;
       }
-      route.receive(message);
+      ws.send(message);
     });
-    await route.connect();
-    route.send('fake');
-    resolve(route);
+    server.send('fake');
+    resolve(ws);
   });
 
   const wsPromise = server.waitForWebSocket();
@@ -324,7 +324,7 @@ test('should work with server', async ({ page, server }) => {
   ]);
 
   const route = await promise;
-  route.receive('another');
+  route.send('another');
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([
     'open',
     `message: data=modified origin=ws://localhost:${server.PORT} lastEventId=`,
@@ -346,15 +346,15 @@ test('should work with server', async ({ page, server }) => {
 
 test('should work without server', async ({ page, server }) => {
   const { promise, resolve } = withResolvers<WebSocketRoute>();
-  await page.routeWebSocket(/.*/, route => {
-    route.routeSend(message => {
+  await page.routeWebSocket(/.*/, ws => {
+    ws.onMessage(message => {
       switch (message) {
         case 'to-respond':
-          route.receive('response');
+          ws.send('response');
           return;
       }
     });
-    resolve(route);
+    resolve(ws);
   });
 
   await setupWS(page, server.PORT, 'blob');
@@ -373,7 +373,7 @@ test('should work without server', async ({ page, server }) => {
   ]);
 
   const route = await promise;
-  route.receive('another');
+  route.send('another');
   await route.close({ code: 3008, reason: 'oops' });
 
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([
@@ -387,68 +387,68 @@ test('should work without server', async ({ page, server }) => {
 
 test('should emit close upon frame navigation', async ({ page, server }) => {
   const { promise, resolve } = withResolvers<WebSocketRoute>();
-  await page.routeWebSocket(/.*/, async route => {
-    await route.connect();
-    resolve(route);
+  await page.routeWebSocket(/.*/, async ws => {
+    ws.connectToServer();
+    resolve(ws);
   });
 
   await setupWS(page, server.PORT, 'blob');
 
   const route = await promise;
-  route.receive('hello');
+  route.send('hello');
 
   await expect.poll(() => page.evaluate(() => window.log)).toEqual([
     'open',
     `message: data=hello origin=ws://localhost:${server.PORT} lastEventId=`,
   ]);
 
-  const closedPromise = new Promise<void>(f => route.addListener('close', f));
+  const closedPromise = new Promise<void>(f => route.onClose(() => f()));
   await page.goto(server.EMPTY_PAGE);
   await closedPromise;
 });
 
 test('should emit close upon frame detach', async ({ page, server }) => {
   const { promise, resolve } = withResolvers<WebSocketRoute>();
-  await page.routeWebSocket(/.*/, async route => {
-    await route.connect();
-    resolve(route);
+  await page.routeWebSocket(/.*/, async ws => {
+    ws.connectToServer();
+    resolve(ws);
   });
 
   const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await setupWS(frame, server.PORT, 'blob');
 
   const route = await promise;
-  route.receive('hello');
+  route.send('hello');
 
   await expect.poll(() => frame.evaluate(() => window.log)).toEqual([
     'open',
     `message: data=hello origin=ws://localhost:${server.PORT} lastEventId=`,
   ]);
 
-  const closedPromise = new Promise<void>(f => route.addListener('close', f));
+  const closedPromise = new Promise<void>(f => route.onClose(() => f()));
   await detachFrame(page, 'frame1');
   await closedPromise;
 });
 
 test('should route on context', async ({ page, server }) => {
   await page.routeWebSocket(/ws1/, ws => {
-    ws.routeSend(message => {
-      ws.receive('page-mock-1');
+    ws.onMessage(message => {
+      ws.send('page-mock-1');
     });
   });
 
   await page.routeWebSocket(/ws1/, ws => {
-    ws.routeSend(message => {
-      ws.receive('page-mock-2');
+    ws.onMessage(message => {
+      ws.send('page-mock-2');
     });
   });
 
   await page.context().routeWebSocket(/.*/, ws => {
-    ws.routeSend(message => {
-      ws.receive('context-mock-1');
+    ws.onMessage(message => {
+      ws.send('context-mock-1');
     });
-    ws.routeSend(message => {
-      ws.receive('context-mock-2');
+    ws.onMessage(message => {
+      ws.send('context-mock-2');
     });
   });
 
@@ -470,9 +470,9 @@ test('should route on context', async ({ page, server }) => {
 
 test('should not throw after page closure', async ({ page, server }) => {
   const { promise, resolve } = withResolvers<WebSocketRoute>();
-  await page.routeWebSocket(/.*/, async route => {
-    await route.connect();
-    resolve(route);
+  await page.routeWebSocket(/.*/, async ws => {
+    ws.connectToServer();
+    resolve(ws);
   });
 
   await setupWS(page, server.PORT, 'blob');
@@ -480,6 +480,31 @@ test('should not throw after page closure', async ({ page, server }) => {
   const route = await promise;
   await Promise.all([
     page.close(),
-    route.receive('hello'),
+    route.send('hello'),
   ]);
+});
+
+test('should not throw with empty handler', async ({ page, server }) => {
+  await page.routeWebSocket(/.*/, () => {});
+  await setupWS(page, server.PORT, 'blob');
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual(['open']);
+  await page.evaluate(() => window.ws.send('hi'));
+  await page.evaluate(() => window.ws.send('hi2'));
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual(['open']);
+});
+
+test('should throw when connecting twice', async ({ page, server }) => {
+  const { promise, resolve } = withResolvers<Error>();
+
+  await page.routeWebSocket(/.*/, ws => {
+    ws.connectToServer();
+    try {
+      ws.connectToServer();
+    } catch (e) {
+      resolve(e);
+    }
+  });
+  await setupWS(page, server.PORT, 'blob');
+  const error = await promise;
+  expect(error.message).toContain('Already connected to the server');
 });

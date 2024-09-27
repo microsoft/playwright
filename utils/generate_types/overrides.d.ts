@@ -226,8 +226,8 @@ export interface CDPSession {
 }
 
 export interface WebSocketRoute {
-  routeSend(handler: (message: string | Buffer) => any): void;
-  routeReceive(handler: (message: string | Buffer) => any): void;
+  onMessage(handler: (message: string | Buffer) => any): void;
+  onClose(handler: (code: number | undefined, reason: string | undefined) => any): void;
 }
 
 type DeviceDescriptor = {

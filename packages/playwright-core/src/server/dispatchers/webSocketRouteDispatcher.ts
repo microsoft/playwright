@@ -44,14 +44,14 @@ export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, chann
         // from the mock websocket, so pretend like it was closed.
         eventsHelper.addEventListener(frame._page, Page.Events.InternalFrameNavigatedToNewDocument, (frame: Frame) => {
           if (frame === this._frame)
-            this._onClose();
+            this._executionContextGone();
         }),
         eventsHelper.addEventListener(frame._page, Page.Events.FrameDetached, (frame: Frame) => {
           if (frame === this._frame)
-            this._onClose();
+            this._executionContextGone();
         }),
-        eventsHelper.addEventListener(frame._page, Page.Events.Close, () => this._onClose()),
-        eventsHelper.addEventListener(frame._page, Page.Events.Crash, () => this._onClose()),
+        eventsHelper.addEventListener(frame._page, Page.Events.Close, () => this._executionContextGone()),
+        eventsHelper.addEventListener(frame._page, Page.Events.Crash, () => this._executionContextGone()),
     );
     WebSocketRouteDispatcher._idToDispatcher.set(this._id, this);
     (scope as any)._dispatchEvent('webSocketRoute', { webSocketRoute: this });
@@ -84,8 +84,10 @@ export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, chann
           dispatcher?._dispatchEvent('messageFromPage', { message: payload.data.data, isBase64: payload.data.isBase64 });
         if (payload.type === 'onMessageFromServer')
           dispatcher?._dispatchEvent('messageFromServer', { message: payload.data.data, isBase64: payload.data.isBase64 });
-        if (payload.type === 'onClose')
-          dispatcher?._onClose();
+        if (payload.type === 'onClosePage')
+          dispatcher?._dispatchEvent('closePage', { code: payload.code, reason: payload.reason, wasClean: payload.wasClean });
+        if (payload.type === 'onCloseServer')
+          dispatcher?._dispatchEvent('closeServer', { code: payload.code, reason: payload.reason, wasClean: payload.wasClean });
       });
     }
 
@@ -117,8 +119,12 @@ export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, chann
     await this._evaluateAPIRequest({ id: this._id, type: 'sendToServer', data: { data: params.message, isBase64: params.isBase64 } });
   }
 
-  async close(params: channels.WebSocketRouteCloseParams) {
-    await this._evaluateAPIRequest({ id: this._id, type: 'close', code: params.code, reason: params.reason, wasClean: true });
+  async closePage(params: channels.WebSocketRouteClosePageParams) {
+    await this._evaluateAPIRequest({ id: this._id, type: 'closePage', code: params.code, reason: params.reason, wasClean: params.wasClean });
+  }
+
+  async closeServer(params: channels.WebSocketRouteCloseServerParams) {
+    await this._evaluateAPIRequest({ id: this._id, type: 'closeServer', code: params.code, reason: params.reason, wasClean: params.wasClean });
   }
 
   private async _evaluateAPIRequest(request: ws.APIRequest) {
@@ -129,14 +135,14 @@ export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, chann
     WebSocketRouteDispatcher._idToDispatcher.delete(this._id);
   }
 
-  _onClose() {
-    // We could enter here twice upon page closure:
+  private _executionContextGone() {
+    // We could enter here after being disposed upon page closure:
     // - first from the recursive dispose inintiated by PageDispatcher;
     // - then from our own page.on('close') listener.
-    if (this._disposed)
-      return;
-    this._dispatchEvent('close');
-    this._dispose();
+    if (!this._disposed) {
+      this._dispatchEvent('closePage', { wasClean: true });
+      this._dispatchEvent('closeServer', { wasClean: true });
+    }
   }
 }
 
