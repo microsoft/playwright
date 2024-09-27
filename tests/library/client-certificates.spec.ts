@@ -291,8 +291,8 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should fail with no client certificates', async ({ browser, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+  test('should fail with no client certificates', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
@@ -306,8 +306,8 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should fail with self-signed client certificates', async ({ browser, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+  test('should fail with self-signed client certificates', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
@@ -321,8 +321,8 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should pass with matching certificates', async ({ browser, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+  test('should pass with matching certificates', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
@@ -336,8 +336,8 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should pass with matching certificates when passing as content', async ({ browser, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+  test('should pass with matching certificates when passing as content', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
@@ -351,8 +351,8 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should pass with matching certificates and when a http proxy is used', async ({ browser, startCCServer, asset, browserName, proxyServer }) => {
-    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+  test('should pass with matching certificates and when a http proxy is used', async ({ browser, startCCServer, asset, browserName, proxyServer, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     proxyServer.forwardTo(parseInt(new URL(serverURL).port, 10), { allowConnectRequests: true });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
@@ -365,14 +365,14 @@ test.describe('browser', () => {
     });
     expect(proxyServer.connectHosts).toEqual([]);
     await page.goto(serverURL);
-    const host = browserName === 'webkit' && process.platform === 'darwin' ? 'localhost' : '127.0.0.1';
+    const host = browserName === 'webkit' && isMac ? 'localhost' : '127.0.0.1';
     expect([...new Set(proxyServer.connectHosts)]).toEqual([`${host}:${new URL(serverURL).port}`]);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
     await page.close();
   });
 
-  test('should pass with matching certificates and when a socks proxy is used', async ({ browser, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+  test('should pass with matching certificates and when a socks proxy is used', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const serverPort = parseInt(new URL(serverURL).port, 10);
     const { proxyServerAddr, closeProxyServer, connectHosts } = await setupSocksForwardingServer({
       port: test.info().workerIndex + 2048 + 2,
@@ -390,7 +390,7 @@ test.describe('browser', () => {
     });
     expect(connectHosts).toEqual([]);
     await page.goto(serverURL);
-    const host = browserName === 'webkit' && process.platform === 'darwin' ? 'localhost' : '127.0.0.1';
+    const host = browserName === 'webkit' && isMac ? 'localhost' : '127.0.0.1';
     expect(connectHosts).toEqual([`${host}:${serverPort}`]);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
     await page.close();
@@ -439,8 +439,8 @@ test.describe('browser', () => {
     }
   });
 
-  test('should pass with matching certificates in pfx format', async ({ browser, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+  test('should pass with matching certificates in pfx format', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
@@ -514,7 +514,7 @@ test.describe('browser', () => {
         const stylesheet = `
           button {
             background-color: red;
-          }  
+          }
         `;
 
         const stylesheetBuffer = await new Promise<Buffer>((resolve, reject) => {
@@ -586,8 +586,8 @@ test.describe('browser', () => {
     await new Promise<void>(resolve => server.close(() => resolve()));
   });
 
-  test('should pass with matching certificates in pfx format when passing as content', async ({ browser, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+  test('should pass with matching certificates in pfx format when passing as content', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
@@ -601,8 +601,8 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should fail with matching certificates in legacy pfx format', async ({ browser, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+  test('should fail with matching certificates in legacy pfx format', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     await expect(browser.newPage({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
@@ -613,8 +613,8 @@ test.describe('browser', () => {
     })).rejects.toThrow('Unsupported TLS certificate');
   });
 
-  test('should throw a http error if the pfx passphrase is incorect', async ({ browser, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+  test('should throw a http error if the pfx passphrase is incorect', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     await expect(browser.newPage({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
@@ -649,8 +649,8 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('should pass with matching certificates and trailing slash', async ({ browser, startCCServer, asset, browserName }) => {
-    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+  test('should pass with matching certificates and trailing slash', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
       clientCertificates: [{
@@ -677,8 +677,8 @@ test.describe('browser', () => {
     await page.close();
   });
 
-  test('support http2', async ({ browser, startCCServer, asset, browserName }) => {
-    test.skip(browserName === 'webkit' && process.platform === 'darwin', 'WebKit on macOS doesn\n proxy localhost');
+  test('support http2', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+    test.skip(browserName === 'webkit' && isMac, 'WebKit on macOS doesn\n proxy localhost');
     const serverURL = await startCCServer({ http2: true });
     const page = await browser.newPage({
       ignoreHTTPSErrors: true,
@@ -727,9 +727,9 @@ test.describe('browser', () => {
     await browser.close();
   });
 
-  test('should return target connection errors when using http2', async ({ browser, startCCServer, asset, browserName }) => {
-    test.skip(browserName === 'webkit' && process.platform === 'darwin', 'WebKit on macOS doesn\n proxy localhost');
-    test.fixme(browserName === 'webkit' && process.platform === 'linux', 'WebKit on Linux does not support http2 https://bugs.webkit.org/show_bug.cgi?id=276990');
+  test('should return target connection errors when using http2', async ({ browser, startCCServer, asset, browserName, isMac, isLinux }) => {
+    test.skip(browserName === 'webkit' && isMac, 'WebKit on macOS doesn\n proxy localhost');
+    test.fixme(browserName === 'webkit' && isLinux, 'WebKit on Linux does not support http2 https://bugs.webkit.org/show_bug.cgi?id=276990');
     test.skip(+process.versions.node.split('.')[0] < 20, 'http2.performServerHandshake is not supported in older Node.js versions');
 
     const serverURL = await startCCServer({ http2: true });
@@ -785,8 +785,8 @@ test.describe('browser', () => {
         await expect(launchPersistent(contextOptions)).rejects.toThrow(expected);
     });
 
-    test('should pass with matching certificates', async ({ launchPersistent, startCCServer, asset, browserName }) => {
-      const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && process.platform === 'darwin' });
+    test('should pass with matching certificates', async ({ launchPersistent, startCCServer, asset, browserName, isMac }) => {
+      const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
       const { page } = await launchPersistent({
         ignoreHTTPSErrors: true,
         clientCertificates: [{

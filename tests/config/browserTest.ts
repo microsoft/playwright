@@ -70,25 +70,23 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await run(false);
   }, { scope: 'worker' }],
 
-  defaultSameSiteCookieValue: [async ({ browserName, platform }, run) => {
+  defaultSameSiteCookieValue: [async ({ browserName, platform, macVersion }, run) => {
     if (browserName === 'chromium' || browserName as any === '_bidiChromium')
       await run('Lax');
     else if (browserName === 'webkit' && platform === 'linux')
       await run('Lax');
-    else if (browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) >= 24)
-      // macOS 15 Sequoia onwards
+    else if (browserName === 'webkit' && platform === 'darwin' && macVersion >= 15)
       await run('Lax');
     else if (browserName === 'webkit')
-      // Windows + older macOS
-      await run('None');
+      await run('None'); // Windows + older macOS
     else if (browserName === 'firefox' || browserName as any === '_bidiFirefox')
       await run('None');
     else
       throw new Error('unknown browser - ' + browserName);
   }, { scope: 'worker' }],
 
-  sameSiteStoredValueForNone: [async ({ browserName, isMac }, run) => {
-    if (browserName === 'webkit' && isMac && parseInt(os.release(), 10) >= 24)
+  sameSiteStoredValueForNone: [async ({ browserName, isMac, macVersion }, run) => {
+    if (browserName === 'webkit' && isMac && macVersion >= 15)
       await run('Lax');
     else
       await run('None');

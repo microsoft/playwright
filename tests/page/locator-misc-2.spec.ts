@@ -16,7 +16,6 @@
  */
 
 import { test as it, expect } from './pageTest';
-import os from 'os';
 
 it('should press @smoke', async ({ page }) => {
   await page.setContent(`<input type='text' />`);
@@ -43,9 +42,9 @@ it('should scroll into view', async ({ page, server, isAndroid }) => {
   }
 });
 
-it('should scroll zero-sized element into view', async ({ page, isAndroid, isElectron, isWebView2, browserName, isMac }) => {
+it('should scroll zero-sized element into view', async ({ page, isAndroid, isElectron, isWebView2, browserName, isMac, macVersion }) => {
   it.fixme(isAndroid || isElectron || isWebView2);
-  it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 20, 'WebKit for macOS 10.15 is frozen.');
+  it.skip(browserName === 'webkit' && isMac && macVersion < 11, 'WebKit for macOS 10.15 is frozen.');
 
   await page.setContent(`
     <style>

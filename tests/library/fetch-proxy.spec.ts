@@ -22,8 +22,12 @@ it('context request should pick up proxy credentials', async ({ browserType, ser
   proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
   let auth;
   proxyServer.setAuthHandler(req => {
-    auth = req.headers['proxy-authorization'];
-    return !!auth;
+    const header = req.headers['proxy-authorization'];
+    // Browser can issue various unrelated requests over the proxy,
+    // but we are only interested in our own request.
+    if (proxyServer.connectHosts.includes('non-existent.com:80'))
+      auth = header;
+    return !!header;
   });
   const browser = await browserType.launch({
     proxy: { server: `localhost:${proxyServer.PORT}`, username: 'user', password: 'secret' }
