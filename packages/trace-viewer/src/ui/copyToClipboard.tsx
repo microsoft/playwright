@@ -16,6 +16,7 @@
 
 import * as React from 'react';
 import { ToolbarButton } from '@web/components/toolbarButton';
+import './copyToClipboard.css';
 
 export const CopyToClipboard: React.FunctionComponent<{
   value: string | (() => Promise<string>),
@@ -34,8 +35,40 @@ export const CopyToClipboard: React.FunctionComponent<{
       }, () => {
         setIcon('close');
       });
+    }, () => {
+      setIcon('close');
     });
 
   }, [value]);
   return <ToolbarButton title={description ? description : 'Copy'} icon={icon} onClick={handleCopy}/>;
+};
+
+export const CopyToClipboardTextButton: React.FunctionComponent<{
+  value: string | (() => Promise<string>),
+  description: string,
+}> = ({ value, description }) => {
+  const [copied, setCopied] = React.useState<boolean>();
+
+  const handleCopy = React.useCallback(() => {
+    const valuePromise = typeof value === 'function' ? value() : Promise.resolve(value);
+    valuePromise.then(value => {
+      navigator.clipboard.writeText(value).then(() => {
+        setCopied(true);
+        setTimeout(() => {
+          setCopied(undefined);
+        }, 3000);
+      }, () => {
+        setCopied(false);
+      });
+    }, () => {
+      setCopied(false);
+    });
+
+  }, [value]);
+
+  return <ToolbarButton title={description ? description : 'Copy'} onClick={handleCopy} className='copy-to-clipboard-text-button'>
+    {copied === true && 'Copied!'}
+    {copied === false && 'Copy failed.'}
+    {copied === undefined && description}
+  </ToolbarButton>;
 };
