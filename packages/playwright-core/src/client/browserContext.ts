@@ -228,7 +228,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (routeHandler)
       await routeHandler.handle(webSocketRoute);
     else
-      await webSocketRoute.connect();
+      webSocketRoute.connectToServer();
   }
 
   async _onBinding(bindingCall: BindingCall) {
