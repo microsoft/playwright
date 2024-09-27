@@ -36,6 +36,7 @@ import { ModelContext, ModelProvider } from './modelContext';
 import './recorderView.css';
 import { ActionListView } from './actionListView';
 import { BackendContext, BackendProvider } from './backendContext';
+import type { Language } from '@isomorphic/locatorGenerators';
 
 export const RecorderView: React.FunctionComponent = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -81,6 +82,8 @@ export const Workbench: React.FunctionComponent = () => {
     return sourceLocation;
   }, [source]);
 
+  const sdkLanguage: Language = source?.language || 'javascript';
+
   const { boundaries } = React.useMemo(() => {
     const boundaries = { minimum: model?.startTime || 0, maximum: model?.endTime || 30000 };
     if (boundaries.minimum > boundaries.maximum) {
@@ -93,6 +96,7 @@ export const Workbench: React.FunctionComponent = () => {
   }, [model]);
 
   const actionList = <ActionListView
+    sdkLanguage={sdkLanguage}
     actions={backend?.actions || []}
     selectedAction={selectedAction}
     onSelectedAction={setSelectedAction}
@@ -132,12 +136,14 @@ export const Workbench: React.FunctionComponent = () => {
 
   const sidebarTabbedPane = <TabbedPane tabs={[actionsTab]} />;
   const traceView = <TraceView
+    sdkLanguage={sdkLanguage}
     callTime={selectedCallTime || 0}
     isInspecting={isInspecting}
     setIsInspecting={setIsInspecting}
     highlightedLocator={highlightedLocator}
     setHighlightedLocator={setHighlightedLocator} />;
   const propertiesView = <PropertiesView
+    sdkLanguage={sdkLanguage}
     boundaries={boundaries}
     setIsInspecting={setIsInspecting}
     highlightedLocator={highlightedLocator}
@@ -166,12 +172,14 @@ export const Workbench: React.FunctionComponent = () => {
 };
 
 const PropertiesView: React.FunctionComponent<{
+  sdkLanguage: Language,
   boundaries: Boundaries,
   setIsInspecting: (value: boolean) => void,
   highlightedLocator: string,
   setHighlightedLocator: (locator: string) => void,
   sourceLocation: modelUtil.SourceLocation | undefined,
 }> = ({
+  sdkLanguage,
   boundaries,
   setIsInspecting,
   highlightedLocator,
@@ -183,8 +191,6 @@ const PropertiesView: React.FunctionComponent<{
   const networkModel = useNetworkTabModel(model, boundaries);
   const sourceModel = React.useRef(new Map<string, modelUtil.SourceModel>());
   const [selectedPropertiesTab, setSelectedPropertiesTab] = useSetting<string>('recorderPropertiesTab', 'source');
-
-  const sdkLanguage = model?.sdkLanguage || 'javascript';
 
   const inspectorTab: TabbedPaneTabModel = {
     id: 'inspector',
@@ -233,12 +239,14 @@ const PropertiesView: React.FunctionComponent<{
 };
 
 const TraceView: React.FunctionComponent<{
+  sdkLanguage: Language,
   callTime: number;
   isInspecting: boolean;
   setIsInspecting: (value: boolean) => void;
   highlightedLocator: string;
   setHighlightedLocator: (locator: string) => void;
 }> = ({
+  sdkLanguage,
   callTime,
   isInspecting,
   setIsInspecting,
@@ -259,7 +267,7 @@ const TraceView: React.FunctionComponent<{
   }, [snapshot]);
 
   return <SnapshotView
-    sdkLanguage='javascript'
+    sdkLanguage={sdkLanguage}
     testIdAttributeName='data-testid'
     isInspecting={isInspecting}
     setIsInspecting={setIsInspecting}

@@ -27,8 +27,9 @@ import { Debugger } from './debugger';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import { ContextRecorder, generateFrameSelector } from './recorder/contextRecorder';
 import type { IRecorderAppFactory, IRecorderApp, IRecorder } from './recorder/recorderFrontend';
-import { buildFullSelector, metadataToCallLog } from './recorder/recorderUtils';
+import { metadataToCallLog } from './recorder/recorderUtils';
 import type * as actions from '@recorder/actions';
+import { buildFullSelector } from '../utils/isomorphic/recorderUtils';
 
 const recorderSymbol = Symbol('recorderSymbol');
 

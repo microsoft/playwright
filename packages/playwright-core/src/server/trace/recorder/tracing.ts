@@ -81,8 +81,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _allResources = new Set<string>();
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
   private _pendingHarEntries = new Set<har.Entry>();
-  private _inMemoryEvents: trace.TraceEvent[] | undefined;
-  private _inMemoryEventsCallback: ((events: trace.TraceEvent[]) => void) | undefined;
 
   constructor(context: BrowserContext | APIRequestContext, tracesDir: string | undefined) {
     super(context, 'tracing');
@@ -195,11 +193,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (this._state.options.snapshots)
       await this._snapshotter?.start();
     return { traceName: this._state.traceName };
-  }
-
-  onMemoryEvents(callback: (events: trace.TraceEvent[]) => void) {
-    this._inMemoryEventsCallback = callback;
-    this._inMemoryEvents = [];
   }
 
   private _startScreencast() {
@@ -540,10 +533,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     // Do not flush (console) events, they are too noisy, unless we are in ui mode (live).
     const flush = this._state!.options.live || (event.type !== 'event' && event.type !== 'console' && event.type !== 'log');
     this._fs.appendFile(this._state!.traceFile, JSON.stringify(visited) + '\n', flush);
-    if (this._inMemoryEvents) {
-      this._inMemoryEvents.push(event);
-      this._inMemoryEventsCallback?.(this._inMemoryEvents);
-    }
   }
 
   private _appendResource(sha1: string, buffer: Buffer) {

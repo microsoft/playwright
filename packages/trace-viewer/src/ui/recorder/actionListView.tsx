@@ -17,32 +17,47 @@
 import type * as actionTypes from '@recorder/actions';
 import { ListView } from '@web/components/listView';
 import * as React from 'react';
+import '../actionList.css';
+import { traceParamsForAction } from '@isomorphic/recorderUtils';
+import { asLocator } from '@isomorphic/locatorGenerators';
+import type { Language } from '@isomorphic/locatorGenerators';
 
 const ActionList = ListView<actionTypes.ActionInContext>;
 
 export const ActionListView: React.FC<{
+  sdkLanguage: Language,
   actions: actionTypes.ActionInContext[],
   selectedAction: actionTypes.ActionInContext | undefined,
   onSelectedAction: (action: actionTypes.ActionInContext | undefined) => void,
 }> = ({
+  sdkLanguage,
   actions,
   selectedAction,
   onSelectedAction,
 }) => {
+  const render = React.useCallback((action: actionTypes.ActionInContext) => {
+    return renderAction(sdkLanguage, action);
+  }, [sdkLanguage]);
   return <div className='vbox'>
     <ActionList
       name='actions'
       items={actions}
       selectedItem={selectedAction}
       onSelected={onSelectedAction}
-      render={renderAction} />
+      render={render} />
   </div>;
 };
 
-export const renderAction = (action: actionTypes.ActionInContext) => {
+export const renderAction = (sdkLanguage: Language, action: actionTypes.ActionInContext) => {
+  const { method, params } = traceParamsForAction(action);
+  const locator = params.selector ? asLocator(sdkLanguage || 'javascript', params.selector) : undefined;
+
+  const apiName = `page.${method}`;
   return <>
-    <div title={action.action.name}>
-      <span>{action.action.name}</span>
+    <div className='action-title' title={apiName}>
+      <span>{apiName}</span>
+      {locator && <div className='action-selector' title={locator}>{locator}</div>}
+      {method === 'goto' && params.url && <div className='action-url' title={params.url}>{params.url}</div>}
     </div>
   </>;
 };
