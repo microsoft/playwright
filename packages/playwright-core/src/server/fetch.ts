@@ -697,7 +697,7 @@ export function createProxyAgent(proxy: types.ProxySettings) {
     proxyURL.username = proxy.username;
   if (proxy.password)
     proxyURL.password = proxy.password;
-  // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
+  // TODO: We should use HttpProxyAgent conditional on proxyURL.protocol instead of always using CONNECT method.
   return new HttpsProxyAgent(proxyURL);
 }
 
