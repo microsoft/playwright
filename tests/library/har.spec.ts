@@ -868,8 +868,7 @@ it('should include timings when using http proxy', async ({ contextFactory, serv
   expect(log.entries[0].timings.connect).toBeGreaterThan(0);
 });
 
-// socks proxy library doesnt emit an event to know when the TCP connection starts
-it.fail('should include timings when using socks proxy', async ({ contextFactory, server, socksPort }, testInfo) => {
+it('should include timings when using socks proxy', async ({ contextFactory, server, socksPort }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo, { proxy: { server: `socks5://localhost:${socksPort}` } });
   const response = await page.request.get(server.EMPTY_PAGE);
   await response.body();

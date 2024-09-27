@@ -508,6 +508,10 @@ export abstract class APIRequestContext extends SdkObject {
           }
         });
 
+        // when using socks proxy, having the socket means the connection got established
+        if (agent instanceof SocksProxyAgent)
+          tcpConnectionAt ??= monotonicTime();
+
         serverIPAddress = socket.remoteAddress;
         serverPort = socket.remotePort;
       });
