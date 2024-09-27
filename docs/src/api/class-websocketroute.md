@@ -26,7 +26,7 @@ page.routeWebSocket("/ws", ws -> {
 ```
 
 ```python async
-def message_handler(ws, message):
+def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
   if message == "request":
     ws.send("response")
 
@@ -36,7 +36,7 @@ await page.route_web_socket("/ws", lambda ws: ws.on_message(
 ```
 
 ```python sync
-def message_handler(ws, message):
+def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
   if message == "request":
     ws.send("response")
 
