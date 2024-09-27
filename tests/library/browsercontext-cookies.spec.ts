@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import os from 'os';
 import { contextTest as it, expect } from '../config/browserTest';
 
 it('should return no cookies in pristine browser context', async ({ context, page, server }) => {
@@ -351,7 +350,7 @@ it('should be able to send third party cookies via an iframe', async ({ browser,
   }
 });
 
-it('should support requestStorageAccess', async ({ page, server, channel, browserName, isMac, isLinux, isWindows }) => {
+it('should support requestStorageAccess', async ({ page, server, channel, browserName, isMac, isLinux, isWindows, macVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/17285' });
   it.skip(browserName === 'chromium', 'requestStorageAccess API is not available in Chromium');
   it.skip(channel === 'firefox-beta', 'hasStorageAccess returns true, but no cookie is sent');
@@ -397,7 +396,7 @@ it('should support requestStorageAccess', async ({ page, server, channel, browse
         server.waitForRequest('/title.html'),
         frame.evaluate(() => fetch('/title.html'))
       ]);
-      if ((isLinux || (isMac && parseInt(os.release(), 10) >= 24)) && browserName === 'webkit')
+      if ((isLinux || (isMac && macVersion >= 15)) && browserName === 'webkit')
         expect(serverRequest.headers.cookie).toBe(undefined);
       else
         expect(serverRequest.headers.cookie).toBe('name=value');

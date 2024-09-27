@@ -59,11 +59,11 @@ test('should remove temp dir on process.exit', async ({ startRemoteServer, serve
 test.describe('signals', () => {
   test.skip(({ platform }) => platform === 'win32');
 
-  test('should report browser close signal 2', async ({ startRemoteServer, server, isMac, browserName }) => {
+  test('should report browser close signal 2', async ({ startRemoteServer, server, isMac, macVersion, browserName }) => {
     const remoteServer = await startRemoteServer('launchServer', { url: server.EMPTY_PAGE });
     const pid = await remoteServer.out('pid');
     process.kill(-pid, 'SIGKILL');
-    if (isMac && browserName === 'webkit' && parseInt(os.release(), 10) > 22 && os.arch() === 'arm64') {
+    if (isMac && browserName === 'webkit' && macVersion > 13 && os.arch() === 'arm64') {
       // WebKit on newer macOS exits sometimes with exit code, sometimes with signal.
       expect('exitCode:' + await remoteServer.out('exitCode') +
              'signal:' + await remoteServer.out('signal')).toMatch(/exitCode:137|signal:SIGKILL/);

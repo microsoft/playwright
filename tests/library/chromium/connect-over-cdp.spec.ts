@@ -409,13 +409,13 @@ test('should connect to an existing cdp session when passed as a first argument'
   }
 });
 
-test('should use proxy with connectOverCDP', async ({ browserType, server, mode }, testInfo) => {
+test('should use proxy with connectOverCDP', async ({ browserType, server }, testInfo) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
   const port = 9339 + testInfo.workerIndex;
   const browserServer = await browserType.launch({
-    args: ['--remote-debugging-port=' + port, ...(process.platform === 'win32' ? ['--proxy-server=some-value'] : [])]
+    args: ['--remote-debugging-port=' + port]
   });
   try {
     const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
