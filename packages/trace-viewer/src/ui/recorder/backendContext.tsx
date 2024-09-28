@@ -118,7 +118,7 @@ class Connection {
     }
     if (method === 'setActions') {
       const { actions } = params as { actions: actionTypes.ActionInContext[] };
-      this._options.setActions(actions);
+      this._options.setActions(actions.filter(a => a.action.name !== 'openPage' && a.action.name !== 'closePage'));
     }
   }
 }
