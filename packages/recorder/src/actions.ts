@@ -153,5 +153,6 @@ export type ActionInContext = {
   frame: FrameDescription;
   description?: string;
   action: Action;
-  timestamp: number;
+  startTime: number;
+  endTime?: number;
 };

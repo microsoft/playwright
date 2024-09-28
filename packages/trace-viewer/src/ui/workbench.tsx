@@ -165,6 +165,7 @@ export const Workbench: React.FunctionComponent<{
     id: 'inspector',
     title: 'Locator',
     render: () => <InspectorTab
+      showScreenshot={showScreenshot}
       sdkLanguage={sdkLanguage}
       setIsInspecting={setIsInspecting}
       highlightedLocator={highlightedLocator}

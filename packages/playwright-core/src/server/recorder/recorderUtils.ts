@@ -76,12 +76,11 @@ export function callMetadataForAction(pageAliases: Map<Page, string>, actionInCo
 
   const callMetadata: CallMetadata = {
     id: `call@${createGuid()}`,
-    stepId: `recorder@${createGuid()}`,
     apiName: 'page.' + method,
     objectId: mainFrame.guid,
     pageId: mainFrame._page.guid,
     frameId: mainFrame.guid,
-    startTime: actionInContext.timestamp,
+    startTime: actionInContext.startTime,
     endTime: 0,
     type: 'Frame',
     method,
@@ -102,7 +101,9 @@ export function collapseActions(actions: actions.ActionInContext[]): actions.Act
       result.push(action);
       continue;
     }
+    const startTime = result[result.length - 1].startTime;
     result[result.length - 1] = action;
+    result[result.length - 1].startTime = startTime;
   }
   return result;
 }
