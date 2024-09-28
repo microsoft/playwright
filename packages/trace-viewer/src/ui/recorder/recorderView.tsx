@@ -54,17 +54,25 @@ export const Workbench: React.FunctionComponent = () => {
   const backend = React.useContext(BackendContext);
   const model = React.useContext(ModelContext);
   const [fileId, setFileId] = React.useState<string | undefined>();
-  const [selectedCallTime, setSelectedCallTime] = React.useState<number | undefined>(undefined);
+  const [selectedStartTime, setSelectedStartTime] = React.useState<number | undefined>(undefined);
   const [isInspecting, setIsInspecting] = React.useState(false);
-  const [highlightedLocator, setHighlightedLocator] = React.useState<string>('');
+  const [highlightedLocatorInProperties, setHighlightedLocatorInProperties] = React.useState<string>('');
+  const [highlightedLocatorInTrace, setHighlightedLocatorInTrace] = React.useState<string>('');
+  const [traceCallId, setTraceCallId] = React.useState<string | undefined>();
 
   const setSelectedAction = React.useCallback((action: actionTypes.ActionInContext | undefined) => {
-    setSelectedCallTime(action?.timestamp);
+    setSelectedStartTime(action?.startTime);
   }, []);
 
   const selectedAction = React.useMemo(() => {
-    return backend?.actions.find(a => a.timestamp === selectedCallTime);
-  }, [backend?.actions, selectedCallTime]);
+    return backend?.actions.find(a => a.startTime === selectedStartTime);
+  }, [backend?.actions, selectedStartTime]);
+
+  React.useEffect(() => {
+    const callId = model?.actions.find(a => a.endTime && a.endTime === selectedAction?.endTime)?.callId;
+    if (callId)
+      setTraceCallId(callId);
+  }, [model, selectedAction]);
 
   const source = React.useMemo(() => backend?.sources.find(s => s.id === fileId) || backend?.sources[0], [backend?.sources, fileId]);
   const sourceLocation = React.useMemo(() => {
@@ -94,6 +102,17 @@ export const Workbench: React.FunctionComponent = () => {
     boundaries.maximum += (boundaries.maximum - boundaries.minimum) / 20;
     return { boundaries };
   }, [model]);
+
+  const locatorPickedInTrace = React.useCallback((locator: string) => {
+    setHighlightedLocatorInProperties(locator);
+    setHighlightedLocatorInTrace('');
+    setIsInspecting(false);
+  }, []);
+
+  const locatorTypedInProperties = React.useCallback((locator: string) => {
+    setHighlightedLocatorInTrace(locator);
+    setHighlightedLocatorInProperties(locator);
+  }, []);
 
   const actionList = <ActionListView
     sdkLanguage={sdkLanguage}
@@ -129,25 +148,23 @@ export const Workbench: React.FunctionComponent = () => {
     <SourceChooser fileId={fileId} sources={backend?.sources || []} setFileId={fileId => {
       setFileId(fileId);
     }} />
-    <ToolbarButton icon='clear-all' title='Clear' onClick={() => {
-    }}></ToolbarButton>
     <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
   </Toolbar>;
 
   const sidebarTabbedPane = <TabbedPane tabs={[actionsTab]} />;
   const traceView = <TraceView
     sdkLanguage={sdkLanguage}
-    callTime={selectedCallTime || 0}
+    callId={traceCallId}
     isInspecting={isInspecting}
     setIsInspecting={setIsInspecting}
-    highlightedLocator={highlightedLocator}
-    setHighlightedLocator={setHighlightedLocator} />;
+    highlightedLocator={highlightedLocatorInTrace}
+    setHighlightedLocator={locatorPickedInTrace} />;
   const propertiesView = <PropertiesView
     sdkLanguage={sdkLanguage}
     boundaries={boundaries}
     setIsInspecting={setIsInspecting}
-    highlightedLocator={highlightedLocator}
-    setHighlightedLocator={setHighlightedLocator}
+    highlightedLocator={highlightedLocatorInProperties}
+    setHighlightedLocator={locatorTypedInProperties}
     sourceLocation={sourceLocation} />;
 
   return <div className='vbox workbench'>
@@ -196,6 +213,7 @@ const PropertiesView: React.FunctionComponent<{
     id: 'inspector',
     title: 'Locator',
     render: () => <InspectorTab
+      showScreenshot={false}
       sdkLanguage={sdkLanguage}
       setIsInspecting={setIsInspecting}
       highlightedLocator={highlightedLocator}
@@ -240,14 +258,14 @@ const PropertiesView: React.FunctionComponent<{
 
 const TraceView: React.FunctionComponent<{
   sdkLanguage: Language,
-  callTime: number;
+  callId: string | undefined,
   isInspecting: boolean;
   setIsInspecting: (value: boolean) => void;
   highlightedLocator: string;
   setHighlightedLocator: (locator: string) => void;
 }> = ({
   sdkLanguage,
-  callTime,
+  callId,
   isInspecting,
   setIsInspecting,
   highlightedLocator,
@@ -255,8 +273,8 @@ const TraceView: React.FunctionComponent<{
 }) => {
   const model = React.useContext(ModelContext);
   const action = React.useMemo(() => {
-    return model?.actions.find(a => a.startTime === callTime);
-  }, [model, callTime]);
+    return model?.actions.find(a => a.callId === callId);
+  }, [model, callId]);
 
   const snapshot = React.useMemo(() => {
     const snapshot = collectSnapshots(action);

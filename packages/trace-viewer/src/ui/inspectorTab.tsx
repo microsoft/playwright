@@ -17,18 +17,17 @@
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import type { Language } from '@web/components/codeMirrorWrapper';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { copy, useSetting } from '@web/uiUtils';
+import { copy } from '@web/uiUtils';
 import * as React from 'react';
 import './sourceTab.css';
 
 export const InspectorTab: React.FunctionComponent<{
+  showScreenshot: boolean,
   sdkLanguage: Language,
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedLocator: string,
   setHighlightedLocator: (locator: string) => void,
-}> = ({ sdkLanguage, setIsInspecting, highlightedLocator, setHighlightedLocator }) => {
-  const [showScreenshot] = useSetting('screenshot-instead-of-snapshot', false);
-
+}> = ({ showScreenshot, sdkLanguage, setIsInspecting, highlightedLocator, setHighlightedLocator }) => {
   return <div className='vbox' style={{ backgroundColor: 'var(--vscode-sideBar-background)' }}>
     <div style={{ margin: '10px 0px 10px 10px', color: 'var(--vscode-editorCodeLens-foreground)', flex: 'none' }}>Locator</div>
     <div style={{ margin: '0 10px 10px', flex: 'auto' }}>

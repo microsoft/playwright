@@ -86,8 +86,8 @@ export class RecorderInTraceViewer extends EventEmitter implements IRecorderApp 
     }
   }
 
-  async setActions(actions: actions.ActionInContext[]): Promise<void> {
-    this._transport.deliverEvent('setActions', { actions });
+  async setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void> {
+    this._transport.deliverEvent('setActions', { actions, sources });
   }
 }
 

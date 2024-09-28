@@ -25,9 +25,8 @@ export const BackendProvider: React.FunctionComponent<React.PropsWithChildren<{
 }>> = ({ guid, children }) => {
   const [connection, setConnection] = React.useState<Connection | undefined>(undefined);
   const [mode, setMode] = React.useState<Mode>('none');
-  const [actions, setActions] = React.useState<actionTypes.ActionInContext[]>([]);
-  const [sources, setSources] = React.useState<Source[]>([]);
-  const callbacks = React.useRef({ setMode, setActions, setSources });
+  const [actions, setActions] = React.useState<{ actions: actionTypes.ActionInContext[], sources: Source[] }>({ actions: [], sources: [] });
+  const callbacks = React.useRef({ setMode, setActions });
 
   React.useEffect(() => {
     const wsURL = new URL(`../${guid}`, window.location.toString());
@@ -40,8 +39,8 @@ export const BackendProvider: React.FunctionComponent<React.PropsWithChildren<{
   }, [guid]);
 
   const backend = React.useMemo(() => {
-    return connection ? { mode, actions, sources, connection } : undefined;
-  }, [actions, mode, sources, connection]);
+    return connection ? { mode, actions: actions.actions, sources: actions.sources, connection } : undefined;
+  }, [actions, mode, connection]);
 
   return <BackendContext.Provider value={backend}>
     {children}
@@ -56,8 +55,7 @@ export type Backend = {
 
 type ConnectionCallbacks = {
   setMode: (mode: Mode) => void;
-  setActions: (actions: actionTypes.ActionInContext[]) => void;
-  setSources: (sources: Source[]) => void;
+  setActions: (data: { actions: actionTypes.ActionInContext[], sources: Source[] }) => void;
 };
 
 class Connection {
@@ -111,14 +109,10 @@ class Connection {
       const { mode } = params as { mode: Mode };
       this._options.setMode(mode);
     }
-    if (method === 'setSources') {
-      const { sources } = params as { sources: Source[] };
-      this._options.setSources(sources);
-      (window as any).playwrightSourcesEchoForTest = sources;
-    }
     if (method === 'setActions') {
-      const { actions } = params as { actions: actionTypes.ActionInContext[] };
-      this._options.setActions(actions.filter(a => a.action.name !== 'openPage' && a.action.name !== 'closePage'));
+      const { actions, sources } = params as { actions: actionTypes.ActionInContext[], sources: Source[] };
+      this._options.setActions({ actions: actions.filter(a => a.action.name !== 'openPage' && a.action.name !== 'closePage'), sources });
+      (window as any).playwrightSourcesEchoForTest = sources;
     }
   }
 }

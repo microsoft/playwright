@@ -172,7 +172,7 @@ export class ContextRecorder extends EventEmitter {
           name: 'closePage',
           signals: [],
         },
-        timestamp: monotonicTime()
+        startTime: monotonicTime()
       });
       this._pageAliases.delete(page);
     });
@@ -195,7 +195,7 @@ export class ContextRecorder extends EventEmitter {
           url: page.mainFrame().url(),
           signals: [],
         },
-        timestamp: monotonicTime()
+        startTime: monotonicTime()
       });
     }
   }
@@ -232,7 +232,7 @@ export class ContextRecorder extends EventEmitter {
       frame: frameDescription,
       action,
       description: undefined,
-      timestamp: monotonicTime()
+      startTime: monotonicTime()
     };
     await this._delegate.rewriteActionInContext?.(this._pageAliases, actionInContext);
     return actionInContext;

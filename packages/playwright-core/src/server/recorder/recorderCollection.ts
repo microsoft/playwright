@@ -75,9 +75,12 @@ export class RecorderCollection extends EventEmitter {
     this._fireChange();
     const error = await callback?.(callMetadata).catch((e: Error) => e);
     callMetadata.endTime = monotonicTime();
+    actionInContext.endTime = callMetadata.endTime;
     callMetadata.error = error ? serializeError(error) : undefined;
     // Do not wait for onAfterCall so that performAction returned immediately after the action.
-    mainFrame.instrumentation.onAfterCall(mainFrame, callMetadata).catch(() => {});
+    mainFrame.instrumentation.onAfterCall(mainFrame, callMetadata).then(() => {
+      this._fireChange();
+    }).catch(() => {});
   }
 
   signal(pageAlias: string, frame: Frame, signal: Signal) {
@@ -94,7 +97,7 @@ export class RecorderCollection extends EventEmitter {
         generateGoto = true;
       else if (lastAction.action.name !== 'click' && lastAction.action.name !== 'press')
         generateGoto = true;
-      else if (timestamp - lastAction.timestamp > signalThreshold)
+      else if (timestamp - lastAction.startTime > signalThreshold)
         generateGoto = true;
 
       if (generateGoto) {
@@ -108,7 +111,8 @@ export class RecorderCollection extends EventEmitter {
             url: frame.url(),
             signals: [],
           },
-          timestamp
+          startTime: timestamp,
+          endTime: timestamp,
         });
       }
       return;

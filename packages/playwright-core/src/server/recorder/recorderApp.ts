@@ -38,7 +38,7 @@ export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   async setSelector(selector: string, userGesture?: boolean): Promise<void> {}
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
   async setSources(sources: Source[]): Promise<void> {}
-  async setActions(actions: actions.ActionInContext[]): Promise<void> {}
+  async setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void> {}
 }
 
 export class RecorderApp extends EventEmitter implements IRecorderApp {
@@ -155,7 +155,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     }
   }
 
-  async setActions(actions: actions.ActionInContext[]): Promise<void> {
+  async setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void> {
   }
 
   async setSelector(selector: string, userGesture?: boolean): Promise<void> {
