@@ -437,3 +437,4 @@ npx playwright test --reporter="./myreporter/my-awesome-reporter.ts"
 * [Testmo](https://github.com/jonasclaes/playwright-testmo-reporter)
 * [Testomat.io](https://github.com/testomatio/reporter/blob/master/docs/frameworks.md#playwright)
 * [Tesults](https://www.tesults.com/docs/playwright)
+* [Theatron](https://www.theatron.dev)
