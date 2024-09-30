@@ -126,6 +126,8 @@ export class RecorderCollection extends EventEmitter {
   }
 
   private _fireChange() {
+    if (!this._enabled)
+      return;
     this.emit('change', collapseActions(this._actions));
   }
 }
