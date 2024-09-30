@@ -503,3 +503,23 @@ test('should respect --tsconfig option', {
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
 });
+
+test('should respect --ignore-snapshots option', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32868' }
+}, async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('snapshot', () => {
+        expect('foo').toMatchSnapshot(); // fails because no snapshot is present
+      });
+    `,
+  }, undefined, { additionalArgs: ['--ignore-snapshots'] });
+
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ a.test.ts
+        ✅ snapshot
+  `);
+});
