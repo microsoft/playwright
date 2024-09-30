@@ -144,3 +144,23 @@ it('should not fire events for favicon or favicon redirects', async ({ context, 
   expect(events).not.toEqual(expect.arrayContaining([expect.stringContaining(favicon)]));
   expect(events).not.toEqual(expect.arrayContaining([expect.stringContaining(hashedFaviconUrl)]));
 });
+
+it('should reject response.finished if context closes', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  server.setRoute('/get', (req, res) => {
+    // In Firefox, |fetch| will be hanging until it receives |Content-Type| header
+    // from server.
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.write('hello ');
+  });
+  // send request and wait for server response
+  const [pageResponse] = await Promise.all([
+    page.waitForEvent('response'),
+    page.evaluate(() => fetch('./get', { method: 'GET' })),
+  ]);
+
+  const finishPromise = pageResponse.finished().catch(e => e);
+  await page.context().close();
+  const error = await finishPromise;
+  expect(error.message).toContain('closed');
+});
