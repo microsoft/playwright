@@ -18,7 +18,7 @@ Get started by installing Playwright and generating a test to see it in action. 
 
 ## Installation
 
-Install the [VS Code extension from the marketplace](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright) or from the extensions tab in VS Code.
+To use Playwright for Node.js from VS Code, install the [VS Code extension from the marketplace](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright) or from the extensions tab in VS Code.
 
 ![VS Code extension for Playwright](https://github.com/microsoft/playwright/assets/13063165/cab54568-3168-4b3f-bf3d-854976594903)
 
