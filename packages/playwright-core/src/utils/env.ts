@@ -17,7 +17,7 @@
 export function getFromENV(name: string): string | undefined {
   let value = process.env[name];
   value = value === undefined ? process.env[`npm_config_${name.toLowerCase()}`] : value;
-  value = value === undefined ?  process.env[`npm_package_config_${name.toLowerCase()}`] : value;
+  value = value === undefined ? process.env[`npm_package_config_${name.toLowerCase()}`] : value;
   return value;
 }
 
@@ -47,3 +47,27 @@ export function getPackageManagerExecCommand() {
     return 'pnpm exec';
   return 'npx';
 }
+
+export function getParsedFromEnv(key: string): Array<{name: string, value: string}> {
+  const envValue = getFromENV(key);
+  if (envValue) {
+    const commaSplittedValuesInEnv = [...new Set(envValue.split(','))].map(prop => {
+      let property = prop.split('=');
+      if (property.length === 2 && property[0] && property[1])
+        return {name: property[0].trim(), value: property[1].trim()};
+    }).filter(item => !!item)
+    const uniqueItems = [];
+    const mapWithUniqueName = new Map();
+    for (const value of commaSplittedValuesInEnv) {
+      const key = Object.values(value)[0];
+      if (!mapWithUniqueName.has(key)) {
+        mapWithUniqueName.set(key, true);
+        uniqueItems.push(value);
+      }
+    }
+    return uniqueItems;
+  }
+  return [];
+}
+
+

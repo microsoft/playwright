@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
 import { formatFailure, resolveOutputFile, stripAnsiEscapes } from './base';
-import { getAsBooleanFromENV } from 'playwright-core/lib/utils';
+import { getAsBooleanFromENV, getParsedFromEnv } from 'playwright-core/lib/utils';
 import type { ReporterV2 } from './reporterV2';
 
 type JUnitOptions = {
@@ -40,12 +40,17 @@ class JUnitReporter implements ReporterV2 {
   private resolvedOutputFile: string | undefined;
   private stripANSIControlSequences = false;
   private includeProjectInTestName = false;
+  private propertiesFromEnv: Array<{
+    name: string;
+    value: string;
+  }> = [];
 
   constructor(options: JUnitOptions) {
     this.stripANSIControlSequences = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_STRIP_ANSI', !!options.stripANSIControlSequences);
     this.includeProjectInTestName = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_PROJECT_IN_TEST_NAME', !!options.includeProjectInTestName);
     this.configDir = options.configDir;
     this.resolvedOutputFile = resolveOutputFile('JUNIT', options)?.outputFile;
+    this.propertiesFromEnv = getParsedFromEnv('PLAYWRIGHT_JUNIT_PROPERTIES');
   }
 
   version(): 'v2' {
@@ -168,6 +173,17 @@ class JUnitReporter implements ReporterV2 {
         attributes: {
           name: annotation.type,
           value: (annotation?.description ? annotation.description : '')
+        }
+      };
+      properties.children?.push(property);
+    }
+
+    for (const propertyFromEnv of this.propertiesFromEnv) {
+      const property: XMLEntry = {
+        name: 'property',
+        attributes: {
+          name: propertyFromEnv.name,
+          value: propertyFromEnv.value
         }
       };
       properties.children?.push(property);
