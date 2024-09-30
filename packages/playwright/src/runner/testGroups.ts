@@ -49,6 +49,7 @@ export function createTestGroups(projectSuite: Suite, workers: number): TestGrou
     //   These should run as a serial group, each group is independent, key === serial suite.
     parallel: Map<Suite | TestCase, TestGroup>,
     parallelWithHooks: TestGroup,
+    parallelDescribes: Map<string, Array<TestCase>>,
   }>>();
 
   const createGroup = (test: TestCase): TestGroup => {
@@ -73,6 +74,7 @@ export function createTestGroups(projectSuite: Suite, workers: number): TestGrou
         general: createGroup(test),
         parallel: new Map(),
         parallelWithHooks: createGroup(test),
+        parallelDescribes: new Map(),
       };
       withWorkerHash.set(test._requireFile, withRequireFile);
     }
@@ -81,16 +83,28 @@ export function createTestGroups(projectSuite: Suite, workers: number): TestGrou
     let insideParallel = false;
     let outerMostSequentialSuite: Suite | undefined;
     let hasAllHooks = false;
+    let hasDescribe = false;
+    let currentTitle = '';
     for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
       if (parent._parallelMode === 'serial' || parent._parallelMode === 'default')
         outerMostSequentialSuite = parent;
       insideParallel = insideParallel || parent._parallelMode === 'parallel';
       hasAllHooks = hasAllHooks || parent._hooks.some(hook => hook.type === 'beforeAll' || hook.type === 'afterAll');
+      hasDescribe = hasDescribe || parent.type === 'describe';
+      if (parent._type === 'describe')
+        currentTitle = parent.title;
     }
 
     if (insideParallel) {
-      if (hasAllHooks && !outerMostSequentialSuite) {
+      if ((hasAllHooks && !outerMostSequentialSuite && !process.env.NON_ISOLATED_TESTS) || (!hasDescribe && process.env.NON_ISOLATED_TESTS)) {
         withRequireFile.parallelWithHooks.tests.push(test);
+      } else if (hasDescribe && process.env.NON_ISOLATED_TESTS) {
+        if (!withRequireFile.parallelDescribes.get(currentTitle)) {
+          withRequireFile.parallelDescribes.set(currentTitle, [test]);
+        } else {
+          const value = withRequireFile.parallelDescribes.get(currentTitle);
+          value?.push(test);
+        }
       } else {
         const key = outerMostSequentialSuite || test;
         let group = withRequireFile.parallel.get(key);
@@ -124,6 +138,20 @@ export function createTestGroups(projectSuite: Suite, workers: number): TestGrou
           result.push(lastGroup);
         }
         lastGroup.tests.push(test);
+      }
+      if (process.env.NON_ISOLATED_TESTS) {
+        const describeGroups = Array.from(withRequireFile.parallelDescribes, ([name, value]) => ({ name, value }));
+        let lastDescribeGroup;
+        for (const testGroup of describeGroups) {
+          lastDescribeGroup = null;
+          for (const test of testGroup.value) {
+            if (!lastDescribeGroup) {
+              lastDescribeGroup = createGroup(test);
+              result.push(lastDescribeGroup);
+            }
+            lastDescribeGroup.tests.push(test);
+          }
+        }
       }
     }
   }
