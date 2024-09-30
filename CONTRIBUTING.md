@@ -29,32 +29,32 @@ npm i -g npm@latest
 
 1. Clone this repository
 
-```bash
-git clone https://github.com/microsoft/playwright
-cd playwright
-```
+    ```bash
+    git clone https://github.com/microsoft/playwright
+    cd playwright
+    ```
 
 2. Install dependencies
 
-```bash
-npm ci
-```
+    ```bash
+    npm ci
+    ```
 
 3. Build Playwright
 
-```bash
-npm run build
-```
+    ```bash
+    npm run build
+    ```
 
 4. Run tests
 
-This will run a test on line `23` in `page-fill.spec.ts`:
+    This will run a test on line `23` in `page-fill.spec.ts`:
 
-```bash
-npm run ctest -- page-fill:23
-```
+    ```bash
+    npm run ctest -- page-fill:23
+    ```
 
-See [here](#running--writing-tests) for more information about running and writing tests.
+    See [here](#running--writing-tests) for more information about running and writing tests.
 
 ### Code reviews
 
@@ -155,63 +155,65 @@ These are integration tests, making sure public API methods and events work as e
 
 - To run all tests:
 
-```bash
-npx playwright install
-npm run test
-```
+    ```bash
+    npx playwright install
+    npm run test
+    ```
 
-Be sure to run `npm run build` or let `npm run watch` run before you re-run the
-tests after making your changes to check them.
+    Be sure to run `npm run build` or let `npm run watch` run before you re-run the
+    tests after making your changes to check them.
 
 - To run tests in Chromium
-```bash
-npm run ctest # also `ftest` for firefox and `wtest` for WebKit
-npm run ctest -- page-fill:23 # runs line 23 of page-fill.spec.ts
-```
 
-To run tests in WebKit / Firefox, use `wtest` or `ftest`.
+    ```bash
+    npm run ctest # also `ftest` for firefox and `wtest` for WebKit
+    npm run ctest -- page-fill:23 # runs line 23 of page-fill.spec.ts
+    ```
+
+- To run tests in WebKit / Firefox, use `wtest` or `ftest`.
 
 - To run the Playwright test runner tests
-```bash
-npm run ttest
-npm run ttest -- --grep "specific test"
-```
+
+    ```bash
+    npm run ttest
+    npm run ttest -- --grep "specific test"
+    ```
 
 - To run a specific test, substitute `it` with `it.only`, or use the `--grep 'My test'` CLI parameter:
 
-```js
-...
-// Using "it.only" to run a specific test
-it.only('should work', async ({server, page}) => {
-  const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.ok).toBe(true);
-});
-// or
-playwright test --config=xxx --grep 'should work'
-```
+    ```js
+    ...
+    // Using "it.only" to run a specific test
+    it.only('should work', async ({server, page}) => {
+      const response = await page.goto(server.EMPTY_PAGE);
+      expect(response.ok).toBe(true);
+    });
+    // or
+    playwright test --config=xxx --grep 'should work'
+    ```
 
 - To disable a specific test, substitute `it` with `it.skip`:
 
-```js
-...
-// Using "it.skip" to skip a specific test
-it.skip('should work', async ({server, page}) => {
-  const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.ok).toBe(true);
-});
-```
+    ```js
+    ...
+    // Using "it.skip" to skip a specific test
+    it.skip('should work', async ({server, page}) => {
+      const response = await page.goto(server.EMPTY_PAGE);
+      expect(response.ok).toBe(true);
+    });
+    ```
 
 - To run tests in non-headless (headed) mode:
 
-```bash
-npm run ctest -- --headed
-```
+    ```bash
+    npm run ctest -- --headed
+    ```
 
 - To run tests with custom browser executable, specify `CRPATH`, `WKPATH` or `FFPATH` env variable that points to browser executable:
 
-```bash
-CRPATH=<path-to-executable> npm run ctest
-```
+    ```bash
+    CRPATH=<path-to-executable> npm run ctest
+    ```
 
 - When should a test be marked with `skip` or `fixme`?
 
