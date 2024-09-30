@@ -402,8 +402,14 @@ it('service worker should register in an iframe', async ({ page, server }) => {
   expect(response).toBe('responseFromServiceWorker');
 });
 
-it('should be able to render avif images', async ({ page, server, browserName, platform }) => {
+it('should be able to render avif images', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/32673',
+  }
+}, async ({ page, server, browserName, platform }) => {
   it.fixme(browserName === 'webkit' && platform === 'win32');
+  it.fixme(browserName === 'webkit' && platform === 'linux', 'https://github.com/microsoft/playwright/issues/32673');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<img src="${server.PREFIX}/rgb.avif" onerror="window.error = true">`);
   await expect.poll(() => page.locator('img').boundingBox()).toEqual(expect.objectContaining({
