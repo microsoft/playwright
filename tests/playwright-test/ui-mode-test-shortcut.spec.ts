@@ -28,7 +28,7 @@ const basicTestTree = {
   `
 };
 
-['F5', 'Alt+r'].forEach((keyboardShortcut) => {
+['F5', 'Alt+r'].forEach(keyboardShortcut => {
   test(`should run tests with '${keyboardShortcut}'`, async ({
     runUITest,
   }) => {
@@ -41,7 +41,7 @@ const basicTestTree = {
     await page.keyboard.press(keyboardShortcut);
 
     await expect(page.getByTestId('status-line')).toHaveText(
-      '1/1 passed (100%)',
+        '1/1 passed (100%)',
     );
     await page.getByPlaceholder('Filter (e.g. text, @tag)').fill('');
 
@@ -56,7 +56,7 @@ const basicTestTree = {
   });
 });
 
-['Shift+F5', 'Alt+s'].forEach((keyboardShortcut) => {
+['Shift+F5', 'Alt+s'].forEach(keyboardShortcut => {
   test(`should stop tests with '${keyboardShortcut}'`, async ({
     runUITest,
   }) => {
@@ -75,8 +75,8 @@ const basicTestTree = {
         🕦 test 3
   `);
 
-    await expect(page.getByTitle("Run all")).toBeDisabled();
-    await expect(page.getByTitle("Stop")).toBeEnabled();
+    await expect(page.getByTitle('Run all')).toBeDisabled();
+    await expect(page.getByTitle('Stop')).toBeEnabled();
 
     await page.keyboard.press(keyboardShortcut);
 
