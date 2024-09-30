@@ -362,7 +362,7 @@ export const UIModeView: React.FC<{}> = ({
       } else if (e.code === 'F5' && e.shiftKey) {
         e.preventDefault();
         testServerConnection?.stopTestsNoReply({});
-      } else if (e.code === 'F5') {
+      } else if ((e.code === 'F5') || (e.code === 'KeyR' && e.altKey)) {
         e.preventDefault();
         runTests('bounce-if-busy', visibleTestIds);
       }

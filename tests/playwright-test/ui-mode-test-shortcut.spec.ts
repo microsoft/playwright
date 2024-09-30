@@ -28,26 +28,32 @@ const basicTestTree = {
   `
 };
 
-test('should run tests', async ({ runUITest }) => {
-  const { page } = await runUITest(basicTestTree);
+["F5", "Alt+r"].forEach((keyboardShortcut) => {
+  test.only(`should run tests with "${keyboardShortcut}"`, async ({
+    runUITest,
+  }) => {
+    const { page } = await runUITest(basicTestTree);
 
-  await expect(page.getByTitle('Run all')).toBeEnabled();
-  await expect(page.getByTitle('Stop')).toBeDisabled();
+    await expect(page.getByTitle("Run all")).toBeEnabled();
+    await expect(page.getByTitle("Stop")).toBeDisabled();
 
-  await page.getByPlaceholder('Filter (e.g. text, @tag)').fill('test 3');
-  await page.keyboard.press('F5');
+    await page.getByPlaceholder("Filter (e.g. text, @tag)").fill("test 3");
+    await page.keyboard.press(keyboardShortcut);
 
-  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
-  await page.getByPlaceholder('Filter (e.g. text, @tag)').fill('');
+    await expect(page.getByTestId("status-line")).toHaveText(
+      "1/1 passed (100%)",
+    );
+    await page.getByPlaceholder("Filter (e.g. text, @tag)").fill("");
 
-  // Only the filtered test was run.
-  await expect.poll(dumpTestTree(page)).toBe(`
+    // Only the filtered test was run.
+    await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ◯ test 0
         ◯ test 1
         ◯ test 2
         ✅ test 3
   `);
+  });
 });
 
 test('should stop tests', async ({ runUITest }) => {
@@ -78,6 +84,7 @@ test('should stop tests', async ({ runUITest }) => {
         ◯ test 2
         ◯ test 3
   `);
+  });
 });
 
 test('should toggle Terminal', async ({ runUITest }) => {
