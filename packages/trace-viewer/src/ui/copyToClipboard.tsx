@@ -47,28 +47,10 @@ export const CopyToClipboardTextButton: React.FunctionComponent<{
   value: string | (() => Promise<string>),
   description: string,
 }> = ({ value, description }) => {
-  const [copied, setCopied] = React.useState<boolean>();
-
-  const handleCopy = React.useCallback(() => {
-    const valuePromise = typeof value === 'function' ? value() : Promise.resolve(value);
-    valuePromise.then(value => {
-      navigator.clipboard.writeText(value).then(() => {
-        setCopied(true);
-        setTimeout(() => {
-          setCopied(undefined);
-        }, 3000);
-      }, () => {
-        setCopied(false);
-      });
-    }, () => {
-      setCopied(false);
-    });
-
+  const handleCopy = React.useCallback(async () => {
+    const valueToCopy = typeof value === 'function' ? await value() : value;
+    await navigator.clipboard.writeText(valueToCopy);
   }, [value]);
 
-  return <ToolbarButton title={description ? description : 'Copy'} onClick={handleCopy} className='copy-to-clipboard-text-button'>
-    {copied === true && 'Copied!'}
-    {copied === false && 'Copy failed.'}
-    {copied === undefined && description}
-  </ToolbarButton>;
+  return <ToolbarButton title={description} onClick={handleCopy} className='copy-to-clipboard-text-button'>{description}</ToolbarButton>;
 };
