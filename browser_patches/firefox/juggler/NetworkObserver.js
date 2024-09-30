@@ -145,10 +145,13 @@ class NetworkRequest {
     }
     this._expectingInterception = false;
     this._expectingResumedRequest = undefined;  // { method, headers, postData }
+    this._overriddenHeadersForRedirect = redirectedFrom?._overriddenHeadersForRedirect;
     this._sentOnResponse = false;
     this._fulfilled = false;
 
-    if (this._pageNetwork)
+    if (this._overriddenHeadersForRedirect)
+      overrideRequestHeaders(httpChannel, this._overriddenHeadersForRedirect);
+    else if (this._pageNetwork)
       appendExtraHTTPHeaders(httpChannel, this._pageNetwork.combinedExtraHTTPHeaders());
 
     this._responseBodyChunks = [];
@@ -230,20 +233,13 @@ class NetworkRequest {
     if (!this._expectingResumedRequest)
       return;
     const { method, headers, postData } = this._expectingResumedRequest;
+    this._overriddenHeadersForRedirect = headers;
     this._expectingResumedRequest = undefined;
 
-    if (headers) {
-      for (const header of requestHeaders(this.httpChannel)) {
-        // We cannot remove the "host" header.
-        if (header.name.toLowerCase() === 'host')
-          continue;
-        this.httpChannel.setRequestHeader(header.name, '', false /* merge */);
-      }
-      for (const header of headers)
-        this.httpChannel.setRequestHeader(header.name, header.value, false /* merge */);
-    } else if (this._pageNetwork) {
+    if (headers)
+      overrideRequestHeaders(this.httpChannel, headers);
+    else if (this._pageNetwork)
       appendExtraHTTPHeaders(this.httpChannel, this._pageNetwork.combinedExtraHTTPHeaders());
-    }
     if (method)
       this.httpChannel.requestMethod = method;
     if (postData !== undefined)
@@ -771,6 +767,20 @@ function requestHeaders(httpChannel) {
     visitHeader: (name, value) => headers.push({name, value}),
   });
   return headers;
+}
+
+function clearRequestHeaders(httpChannel) {
+  for (const header of requestHeaders(httpChannel)) {
+    // We cannot remove the "host" header.
+    if (header.name.toLowerCase() === 'host')
+      continue;
+    httpChannel.setRequestHeader(header.name, '', false /* merge */);
+  }
+}
+
+function overrideRequestHeaders(httpChannel, headers) {
+  clearRequestHeaders(httpChannel);
+  appendExtraHTTPHeaders(httpChannel, headers);
 }
 
 function causeTypeToString(causeType) {
