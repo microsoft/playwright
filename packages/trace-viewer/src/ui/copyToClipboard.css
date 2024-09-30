@@ -18,6 +18,5 @@
   background-color: var(--vscode-editor-inactiveSelectionBackground);
   border: none;
   padding: 4px 12px;
-  margin: 8px 8px 8px 0px;
   cursor: pointer;
 }
