@@ -359,7 +359,7 @@ export const UIModeView: React.FC<{}> = ({
       if (e.code === 'Backquote' && e.ctrlKey) {
         e.preventDefault();
         setIsShowingOutput(!isShowingOutput);
-      } else if (e.code === 'F5' && e.shiftKey) {
+      } else if ((e.code === 'F5' && e.shiftKey) || (e.code === 'KeyS' && e.altKey)) {
         e.preventDefault();
         testServerConnection?.stopTestsNoReply({});
       } else if ((e.code === 'F5') || (e.code === 'KeyR' && e.altKey)) {

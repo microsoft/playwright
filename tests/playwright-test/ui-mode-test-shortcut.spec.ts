@@ -29,7 +29,7 @@ const basicTestTree = {
 };
 
 ["F5", "Alt+r"].forEach((keyboardShortcut) => {
-  test.only(`should run tests with "${keyboardShortcut}"`, async ({
+  test(`should run tests with "${keyboardShortcut}"`, async ({
     runUITest,
   }) => {
     const { page } = await runUITest(basicTestTree);
@@ -56,15 +56,18 @@ const basicTestTree = {
   });
 });
 
-test('should stop tests', async ({ runUITest }) => {
-  const { page } = await runUITest(basicTestTree);
+["Shift+F5", "Alt+s"].forEach((keyboardShortcut) => {
+  test(`should stop tests with "${keyboardShortcut}"`, async ({
+    runUITest,
+  }) => {
+    const { page } = await runUITest(basicTestTree);
 
-  await expect(page.getByTitle('Run all')).toBeEnabled();
-  await expect(page.getByTitle('Stop')).toBeDisabled();
+    await expect(page.getByTitle("Run all")).toBeEnabled();
+    await expect(page.getByTitle("Stop")).toBeDisabled();
 
-  await page.getByTitle('Run all').click();
+    await page.getByTitle("Run all").click();
 
-  await expect.poll(dumpTestTree(page)).toBe(`
+    await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ↻ a.test.ts
         ⊘ test 0
         ✅ test 1
@@ -72,12 +75,12 @@ test('should stop tests', async ({ runUITest }) => {
         🕦 test 3
   `);
 
-  await expect(page.getByTitle('Run all')).toBeDisabled();
-  await expect(page.getByTitle('Stop')).toBeEnabled();
+    await expect(page.getByTitle("Run all")).toBeDisabled();
+    await expect(page.getByTitle("Stop")).toBeEnabled();
 
-  await page.keyboard.press('Shift+F5');
+    await page.keyboard.press(keyboardShortcut);
 
-  await expect.poll(dumpTestTree(page)).toBe(`
+    await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ⊘ test 0
         ✅ test 1
