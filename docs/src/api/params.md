@@ -639,14 +639,14 @@ If no origin is specified, the username and password are sent to any servers upo
 * langs: js, java
 - `colorScheme` <null|[ColorScheme]<"light"|"dark"|"no-preference">>
 
-Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
+Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'` and `'dark'`. See
 [`method: Page.emulateMedia`] for more details. Passing `null` resets emulation to system defaults. Defaults to `'light'`.
 
 ## context-option-colorscheme-csharp-python
 * langs: csharp, python
 - `colorScheme` <[ColorScheme]<"light"|"dark"|"no-preference"|"null">>
 
-Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
+Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'` and `'dark'`. See
 [`method: Page.emulateMedia`] for more details. Passing `'null'` resets emulation to system defaults. Defaults to `'light'`.
 
 ## context-option-reducedMotion
