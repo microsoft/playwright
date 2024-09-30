@@ -46,8 +46,6 @@ class FrameTree {
       Ci.nsISupportsWeakReference,
     ]);
 
-    this._addedScrollbarsStylesheetSymbol = Symbol('_addedScrollbarsStylesheetSymbol');
-
     this._wdm = Cc["@mozilla.org/dom/workers/workerdebuggermanager;1"].createInstance(Ci.nsIWorkerDebuggerManager);
     this._wdmListener = {
       QueryInterface: ChromeUtils.generateQI([Ci.nsIWorkerDebuggerManagerListener]),
@@ -130,22 +128,10 @@ class FrameTree {
   }
 
   _onDOMWindowCreated(window) {
-    if (!window[this._addedScrollbarsStylesheetSymbol] && this.scrollbarsHidden) {
-      const styleSheetService = Cc["@mozilla.org/content/style-sheet-service;1"].getService(Components.interfaces.nsIStyleSheetService);
-      const ioService = Cc["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService);
-      const uri = ioService.newURI('chrome://juggler/content/content/hidden-scrollbars.css', null, null);
-      const sheet = styleSheetService.preloadSheet(uri, styleSheetService.AGENT_SHEET);
-      window.windowUtils.addSheet(sheet, styleSheetService.AGENT_SHEET);
-      window[this._addedScrollbarsStylesheetSymbol] = true;
-    }
     const frame = this.frameForDocShell(window.docShell);
     if (!frame)
       return;
     frame._onGlobalObjectCleared();
-  }
-
-  setScrollbarsHidden(hidden) {
-    this.scrollbarsHidden = hidden;
   }
 
   setJavaScriptDisabled(javaScriptDisabled) {
