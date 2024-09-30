@@ -51,11 +51,8 @@
 
 .network-request-details-copy {
   display: flex;
-  margin-left: 10px;
-}
-
-.network-request-details-copy button {
-  border-radius: 4px
+  margin: 8px 10px;
+  gap: 8px;
 }
 
 .network-font-preview {

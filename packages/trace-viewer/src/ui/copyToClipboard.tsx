@@ -16,6 +16,7 @@
 
 import * as React from 'react';
 import { ToolbarButton } from '@web/components/toolbarButton';
+import './copyToClipboard.css';
 
 export const CopyToClipboard: React.FunctionComponent<{
   value: string | (() => Promise<string>),
@@ -34,8 +35,22 @@ export const CopyToClipboard: React.FunctionComponent<{
       }, () => {
         setIcon('close');
       });
+    }, () => {
+      setIcon('close');
     });
 
   }, [value]);
   return <ToolbarButton title={description ? description : 'Copy'} icon={icon} onClick={handleCopy}/>;
+};
+
+export const CopyToClipboardTextButton: React.FunctionComponent<{
+  value: string | (() => Promise<string>),
+  description: string,
+}> = ({ value, description }) => {
+  const handleCopy = React.useCallback(async () => {
+    const valueToCopy = typeof value === 'function' ? await value() : value;
+    await navigator.clipboard.writeText(valueToCopy);
+  }, [value]);
+
+  return <ToolbarButton title={description} onClick={handleCopy} className='copy-to-clipboard-text-button'>{description}</ToolbarButton>;
 };
