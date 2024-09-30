@@ -123,7 +123,13 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, macos-14-xlarge, windows-latest]
+        os: [ubuntu-24.04, macos-14-xlarge, windows-latest]
+        include:
+          # We have different binaries per Ubuntu version for WebKit.
+          - browser: webkit
+            os: ubuntu-20.04
+          - browser: webkit
+            os: ubuntu-22.04
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
