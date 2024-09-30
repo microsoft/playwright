@@ -188,9 +188,9 @@ test('test', async ({ page }) => {
   await page.getByRole('button', { name: 'Submit' }).click();
 });`
   });
-  const length = events.length;
   // No events after mode disabled
   await backend.setRecorderMode({ mode: 'none' });
+  const length = events.length;
   await page.getByRole('button').click();
   expect(events).toHaveLength(length);
 });
