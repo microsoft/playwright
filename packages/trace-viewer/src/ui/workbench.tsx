@@ -41,7 +41,6 @@ import type { Entry } from '@trace/har';
 import './workbench.css';
 import { testStatusIcon, testStatusText } from './testUtils';
 import type { UITestStatus } from './testUtils';
-import { SettingsView } from './settingsView';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -69,7 +68,7 @@ export const Workbench: React.FunctionComponent<{
   const [highlightedLocator, setHighlightedLocator] = React.useState<string>('');
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
-  const [showScreenshot, setShowScreenshot] = useSetting('screenshot-instead-of-snapshot', false);
+  const showScreenshot = false;
 
   const setSelectedAction = React.useCallback((action: modelUtil.ActionTraceEventInContext | undefined) => {
     setSelectedCallId(action?.callId);
@@ -310,13 +309,6 @@ export const Workbench: React.FunctionComponent<{
     title: 'Metadata',
     component: <MetadataView model={model}/>
   };
-  const settingsTab: TabbedPaneTabModel = {
-    id: 'settings',
-    title: 'Settings',
-    component: <SettingsView settings={[
-      { value: showScreenshot, set: setShowScreenshot, title: 'Show screenshot instead of snapshot' }
-    ]}/>,
-  };
 
   return <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
     {!hideTimeline && <Timeline
@@ -351,8 +343,7 @@ export const Workbench: React.FunctionComponent<{
           openPage={openPage} />}
         sidebar={
           <TabbedPane
-            // Hide settings tab for now, it only includes screenshots as snapshots option which is not ready yet.
-            tabs={(showSettings && false) ? [actionsTab, metadataTab, settingsTab] : [actionsTab, metadataTab]}
+            tabs={[actionsTab, metadataTab]}
             selectedTab={selectedNavigatorTab}
             setSelectedTab={setSelectedNavigatorTab}
           />
