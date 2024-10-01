@@ -249,7 +249,7 @@ Time to be set.
 ## async method: Clock.setSystemTime
 * since: v1.45
 
-Sets current system time but does not trigger any timers.
+Sets current system time without pausing, but does not trigger any timers. You most likely don't need this.
 
 **Usage**
 

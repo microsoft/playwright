@@ -18555,7 +18555,7 @@ export interface Clock {
   setFixedTime(time: number|string|Date): Promise<void>;
 
   /**
-   * Sets current system time but does not trigger any timers.
+   * Sets current system time without pausing, but does not trigger any timers. You most likely don't need this.
    *
    * **Usage**
    *
