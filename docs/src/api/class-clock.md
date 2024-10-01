@@ -249,7 +249,9 @@ Time to be set.
 ## async method: Clock.setSystemTime
 * since: v1.45
 
-Sets current system time without pausing, but does not trigger any timers. You most likely don't need this.
+Sets system time, but does not trigger any timers. Use this to test how the web page reacts to a time shift, for example switching from summer to winter time, or changing time zones.
+
+Don't use together with [`method: Clock.install`]. Read docs on [clock emulation](../clock.md) to learn more.
 
 **Usage**
 

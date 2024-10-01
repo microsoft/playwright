@@ -18555,7 +18555,11 @@ export interface Clock {
   setFixedTime(time: number|string|Date): Promise<void>;
 
   /**
-   * Sets current system time without pausing, but does not trigger any timers. You most likely don't need this.
+   * Sets system time, but does not trigger any timers. Use this to test how the web page reacts to a time shift, for
+   * example switching from summer to winter time, or changing time zones.
+   *
+   * Don't use together with [clock.install([options])](https://playwright.dev/docs/api/class-clock#clock-install). Read
+   * docs on [clock emulation](https://playwright.dev/docs/clock) to learn more.
    *
    * **Usage**
    *
