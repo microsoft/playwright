@@ -596,3 +596,22 @@ test('should allow import from shared file', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+
+test('should render fragment at root', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightCtConfigText,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+    'src/component.spec.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+
+      test('should work', async ({ mount, page }) => {
+        const component = await mount(<>Learn React</>);
+        await expect(component).toContainText('Learn React');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

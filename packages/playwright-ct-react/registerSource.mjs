@@ -39,6 +39,9 @@ function __pwRender(value) {
   return window.__pwTransformObject(value, v => {
     if (isJsxComponent(v)) {
       const component = v;
+      let type = component.type;
+      if ('__pw_type' in type && type.__pw_type === 'fragment')
+        type = __pwReact.Fragment;
       const props = component.props ? __pwRender(component.props) : {};
       const key = component.key ? __pwRender(component.key) : undefined;
       const { children, ...propsWithoutChildren } = props;
@@ -47,7 +50,7 @@ function __pwRender(value) {
       const createElementArguments = [propsWithoutChildren];
       if (children)
         createElementArguments.push(children);
-      return { result: __pwReact.createElement(component.type, ...createElementArguments) };
+      return { result: __pwReact.createElement(type, ...createElementArguments) };
     }
   });
 }

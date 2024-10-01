@@ -32,7 +32,7 @@ function jsxs(type, props, key) {
   };
 }
 
-const Fragment = {};
+const Fragment = { __pw_type: 'fragment' };
 
 module.exports = {
   Fragment,
