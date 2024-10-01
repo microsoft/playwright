@@ -51,15 +51,6 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     return payload.result!.objectId!;
   }
 
-  rawCallFunctionNoReply(func: Function, ...args: any[]) {
-    this._session.send('Runtime.callFunction', {
-      functionDeclaration: func.toString(),
-      args: args.map(a => a instanceof js.JSHandle ? { objectId: a._objectId } : { value: a }) as any,
-      returnByValue: true,
-      executionContextId: this._executionContextId
-    }).catch(() => {});
-  }
-
   async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
     const payload = await this._session.send('Runtime.callFunction', {
       functionDeclaration: expression,

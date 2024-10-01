@@ -215,20 +215,6 @@ it.describe('snapshots', () => {
     }
   });
 
-  it('should capture snapshot target', async ({ page, toImpl, snapshotter }) => {
-    await page.setContent('<button>Hello</button><button>World</button>');
-    {
-      const handle = await page.$('text=Hello');
-      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1', toImpl(handle));
-      expect(distillSnapshot(snapshot, false /* distillTarget */)).toBe('<BUTTON __playwright_target__=\"call@1\">Hello</BUTTON><BUTTON>World</BUTTON>');
-    }
-    {
-      const handle = await page.$('text=World');
-      const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2', toImpl(handle));
-      expect(distillSnapshot(snapshot, false /* distillTarget */)).toBe('<BUTTON __playwright_target__=\"call@1\">Hello</BUTTON><BUTTON __playwright_target__=\"call@2\">World</BUTTON>');
-    }
-  });
-
   it('should collect on attribute change', async ({ page, toImpl, snapshotter }) => {
     await page.setContent('<button>Hello</button>');
     {

@@ -1124,8 +1124,10 @@ export class Frame extends SdkObject {
       progress.throwIfAborted();
       if (!resolved)
         return continuePolling;
-      const result = await resolved.injected.evaluateHandle((injected, { info }) => {
+      const result = await resolved.injected.evaluateHandle((injected, { info, callId }) => {
         const elements = injected.querySelectorAll(info.parsed, document);
+        if (callId)
+          injected.markTargetElements(new Set(elements), callId);
         const element = elements[0] as Element | undefined;
         let log = '';
         if (elements.length > 1) {
@@ -1136,7 +1138,7 @@ export class Frame extends SdkObject {
           log = `  locator resolved to ${injected.previewNode(element)}`;
         }
         return { log, success: !!element, element };
-      }, { info: resolved.info });
+      }, { info: resolved.info, callId: progress.metadata.id });
       const { log, success } = await result.evaluate(r => ({ log: r.log, success: r.success }));
       if (log)
         progress.log(log);
@@ -1478,6 +1480,8 @@ export class Frame extends SdkObject {
 
     const { log, matches, received, missingReceived } = await injected.evaluate(async (injected, { info, options, callId }) => {
       const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
+      if (callId)
+        injected.markTargetElements(new Set(elements), callId);
       const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
       let log = '';
       if (isArray)
@@ -1486,8 +1490,6 @@ export class Frame extends SdkObject {
         throw injected.strictModeViolationError(info!.parsed, elements);
       else if (elements.length)
         log = `  locator resolved to ${injected.previewNode(elements[0])}`;
-      if (callId)
-        injected.markTargetElements(new Set(elements), callId);
       return { log, ...await injected.expect(elements[0], options, elements) };
     }, { info, options, callId: progress.metadata.id });
 
