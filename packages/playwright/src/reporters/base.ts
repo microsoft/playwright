@@ -312,7 +312,7 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
           const relativePath = path.relative(process.cwd(), attachment.path);
           resultLines.push(colors.cyan(`    ${relativePath}`));
           // Make this extensible
-          if (attachment.name === 'trace') {
+          if (attachment.name === 'trace' || attachment.contentType === 'application/zip;content=playwright-trace') {
             const packageManagerCommand = getPackageManagerExecCommand();
             resultLines.push(colors.cyan(`    Usage:`));
             resultLines.push('');

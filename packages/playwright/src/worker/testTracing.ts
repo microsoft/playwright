@@ -216,7 +216,7 @@ export class TestTracing {
 
     const tracePath = this._testInfo.outputPath('trace.zip');
     await mergeTraceFiles(tracePath, this._temporaryTraceFiles);
-    this._testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
+    this._testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip;content=playwright-trace' });
   }
 
   appendForError(error: TestInfoError) {

@@ -59,7 +59,7 @@ test('render screenshot attachment', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
 });
 
-test('render trace attachment', async ({ runInlineTest }) => {
+test('render trace attachment by name', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -77,6 +77,28 @@ test('render trace attachment', async ({ runInlineTest }) => {
   expect(text).toContain('    attachment #1: trace (application/zip) ─────────────────────────────────────────────────────────');
   expect(text).toContain('    test-results/a-one/my dir with space/trace.zip');
   expect(text).toContain('npx playwright show-trace "test-results/a-one/my dir with space/trace.zip"');
+  expect(text).toContain('    ────────────────────────────────────────────────────────────────────────────────────────────────');
+  expect(result.exitCode).toBe(1);
+});
+
+test('render trace attachment by content type', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('one', async ({}, testInfo) => {
+        testInfo.attachments.push({
+          name: 'foo-trace',
+          path: testInfo.outputPath('my dir with space', 'foo.zip'),
+          contentType: 'application/zip;content=playwright-trace'
+        });
+        expect(1).toBe(0);
+      });
+    `,
+  }, { reporter: 'line' });
+  const text = result.output.replace(/\\/g, '/');
+  expect(text).toContain('    attachment #1: foo-trace (application/zip;content=playwright-trace) ────────────────────────────');
+  expect(text).toContain('    test-results/a-one/my dir with space/foo.zip');
+  expect(text).toContain('npx playwright show-trace "test-results/a-one/my dir with space/foo.zip"');
   expect(text).toContain('    ────────────────────────────────────────────────────────────────────────────────────────────────');
   expect(result.exitCode).toBe(1);
 });

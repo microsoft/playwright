@@ -63,7 +63,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       if (!e.clipboardData?.files.length)
         return;
       for (const file of e.clipboardData.files) {
-        if (file.type !== 'application/zip')
+        if (file.type !== 'application/zip' && file.type !== 'application/zip;content=playwright-trace')
           return;
       }
       e.preventDefault();
