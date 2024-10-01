@@ -40,7 +40,7 @@ function __pwRender(value) {
     if (isJsxComponent(v)) {
       const component = v;
       let type = component.type;
-      if ('__pw_type' in type && type.__pw_type === 'fragment')
+      if (type && type.__pw_type === 'fragment')
         type = __pwReact.Fragment;
       const props = component.props ? __pwRender(component.props) : {};
       const key = component.key ? __pwRender(component.key) : undefined;
