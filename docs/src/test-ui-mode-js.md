@@ -60,7 +60,7 @@ Click on the pick locator button and hover over the DOM snapshot to see the loca
 
 ## Source
 
-As you hover over each action of your test the line of code for that action is highlighted in the source panel.
+When you click on an action in your test, the corresponding line of code is highlighted in the Source panel.
 
 ![showing source code of tests in ui mode](https://github.com/microsoft/playwright/assets/13063165/49b9fa2a-8a57-4044-acaa-0a2ea4784c5c)
 
