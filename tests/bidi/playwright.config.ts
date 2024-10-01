@@ -21,18 +21,22 @@ import { type Config, type PlaywrightTestOptions, type PlaywrightWorkerOptions, 
 import * as path from 'path';
 import type { TestModeWorkerOptions } from '../config/testModeFixtures';
 
-const getExecutablePath = () => {
-  return process.env.BIDIPATH;
-};
-
 const headed = process.argv.includes('--headed');
 const trace = !!process.env.PWTEST_TRACE;
+const hasDebugOutput = process.env.DEBUG?.includes('pw:');
+
+function firefoxUserPrefs() {
+  const prefsString = process.env.PWTEST_FIREFOX_USER_PREFS;
+  if (!prefsString)
+    return undefined;
+  return JSON.parse(prefsString);
+}
 
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 const testDir = path.join(__dirname, '..');
 const reporters = () => {
   const result: ReporterDescription[] = process.env.CI ? [
-    ['dot'],
+    hasDebugOutput ? ['list'] : ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
     ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
   ] : [
@@ -59,7 +63,7 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   projects: [],
 };
 
-const executablePath = getExecutablePath();
+const executablePath = process.env.BIDIPATH;
 if (executablePath && !process.env.TEST_WORKER_INDEX)
   console.error(`Using executable at ${executablePath}`);
 const testIgnore: RegExp[] = [];
@@ -83,6 +87,7 @@ for (const [key, channels] of Object.entries(browserToChannels)) {
           video: 'off',
           launchOptions: {
             executablePath,
+            firefoxUserPrefs: firefoxUserPrefs(),
           },
           trace: trace ? 'on' : undefined,
         },
