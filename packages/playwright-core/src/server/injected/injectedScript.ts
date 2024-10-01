@@ -29,12 +29,12 @@ import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector, type GenerateSelectorOptions } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription, beginAriaCaches, endAriaCaches } from './roleUtils';
+import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription, beginAriaCaches, endAriaCaches, getAriaLevel, getAriaChecked } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import { cacheNormalizedWhitespaces, escapeHTML, escapeHTMLAttribute, normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
-import { selectorForSimpleDomNodeId, generateSimpleDomNode } from './simpleDom';
+import { generateSimpleDomNode } from './simpleDom';
 import type { SimpleDomNode } from './simpleDom';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
@@ -81,11 +81,14 @@ export class InjectedScript {
     escapeHTML,
     escapeHTMLAttribute,
     getAriaRole,
+    getAriaLevel,
+    getAriaChecked,
     getElementAccessibleDescription,
     getElementAccessibleName,
     isElementVisible,
     isInsideScope,
     normalizeWhiteSpace,
+    autoClosingTags,
   };
 
   // eslint-disable-next-line no-restricted-globals
@@ -1318,10 +1321,6 @@ export class InjectedScript {
     if (!element)
       return;
     return generateSimpleDomNode(this, element);
-  }
-
-  selectorForSimpleDomNodeId(nodeId: string) {
-    return selectorForSimpleDomNodeId(this, nodeId);
   }
 }
 
