@@ -25,7 +25,7 @@ import zlib from 'zlib';
 import type { HTTPCredentials } from '../../types/types';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { getUserAgent } from '../utils/userAgent';
-import { assert, createGuid, monotonicTime } from '../utils';
+import { assert, constructURLBasedOnBaseURL, createGuid, monotonicTime } from '../utils';
 import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 import { BrowserContext, verifyClientCertificates } from './browserContext';
 import { CookieStore, domainMatches, parseRawCookie } from './cookieStore';
@@ -159,7 +159,7 @@ export abstract class APIRequestContext extends SdkObject {
         setHeader(headers, name, value);
     }
 
-    const requestUrl = new URL(params.url, defaults.baseURL);
+    const requestUrl = new URL(constructURLBasedOnBaseURL(defaults.baseURL, params.url));
     if (params.encodedParams) {
       requestUrl.search = params.encodedParams;
     } else if (params.params) {
