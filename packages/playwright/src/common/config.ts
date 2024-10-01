@@ -57,6 +57,9 @@ export class FullConfigInternal {
   testIdMatcher?: Matcher;
   defineConfigWasUsed = false;
 
+  globalSetups: string[] = [];
+  globalTeardowns: string[] = [];
+
   constructor(location: ConfigLocation, userConfig: Config, configCLIOverrides: ConfigCLIOverrides) {
     if (configCLIOverrides.projects && userConfig.projects)
       throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
@@ -70,13 +73,16 @@ export class FullConfigInternal {
     const privateConfiguration = (userConfig as any)['@playwright/test'];
     this.plugins = (privateConfiguration?.plugins || []).map((p: any) => ({ factory: p }));
 
+    this.globalSetups = (Array.isArray(userConfig.globalSetup) ? userConfig.globalSetup : [userConfig.globalSetup]).map(s => resolveScript(s, configDir)).filter((script): script is string => !!script);
+    this.globalTeardowns = (Array.isArray(userConfig.globalTeardown) ? userConfig.globalTeardown : [userConfig.globalTeardown]).map(s => resolveScript(s, configDir)).filter((script): script is string => !!script);
+
     this.config = {
       configFile: resolvedConfigFile,
       rootDir: pathResolve(configDir, userConfig.testDir) || configDir,
       forbidOnly: takeFirst(configCLIOverrides.forbidOnly, userConfig.forbidOnly, false),
       fullyParallel: takeFirst(configCLIOverrides.fullyParallel, userConfig.fullyParallel, false),
-      globalSetup: takeFirst(resolveScript(userConfig.globalSetup, configDir), null),
-      globalTeardown: takeFirst(resolveScript(userConfig.globalTeardown, configDir), null),
+      globalSetup: takeFirst(...this.globalSetups, null),
+      globalTeardown: takeFirst(...this.globalTeardowns, null),
       globalTimeout: takeFirst(configCLIOverrides.globalTimeout, userConfig.globalTimeout, 0),
       grep: takeFirst(userConfig.grep, defaultGrep),
       grepInvert: takeFirst(userConfig.grepInvert, null),
