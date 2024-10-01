@@ -60,7 +60,7 @@ Click on the pick locator button and hover over the DOM snapshot to see the loca
 
 ## Source
 
-When you click on an action in your test, the corresponding line of code is highlighted in the Source panel.
+When you click on an action in your test, the corresponding line of code is highlighted in the Source panel. If you are using VS Code, you can easily open your test by clicking the Open in VS Code icon on the right from the file name in the Source tab. This will open your test in VS Code right at the highlighted line of code.
 
 ![showing source code of tests in ui mode](https://github.com/microsoft/playwright/assets/13063165/49b9fa2a-8a57-4044-acaa-0a2ea4784c5c)
 
@@ -108,7 +108,7 @@ Next to the Actions tab you will find the Metadata tab which will show you more 
 
 ## Watch mode
 
-Next to the name of each test in the sidebar you will find an eye icon. Clicking on the icon will activate watch mode which will re-run the test when you make changes to it. You can watch a number of tests at the same time be clicking the eye icon next to each one or all tests by clicking the eye icon at the top of the sidebar. If you are using VS Code then you can easily open your test by clicking on the file icon next to the eye icon. This will open your test in VS Code right at the line of code that you clicked on.
+Next to the name of each test in the sidebar you will find an eye icon. Clicking on the icon will activate watch mode which will re-run the test when you make changes to it. You can watch a number of tests at the same time by clicking the eye icon next to each one or all tests by clicking the eye icon at the top of the sidebar.
 
 ![watch mode in ui mode](https://github.com/microsoft/playwright/assets/13063165/20d7d44c-b52d-43ff-8871-8b828671f3da)
 
