@@ -20,7 +20,7 @@ import type { ActionTraceEvent } from '@trace/trace';
 import { context, type MultiTraceModel, pageForAction, prevInList } from './modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { clsx, useMeasure, useSetting } from '@web/uiUtils';
+import { clsx, useMeasure } from '@web/uiUtils';
 import { InjectedScript } from '@injected/injectedScript';
 import { Recorder } from '@injected/recorder/recorder';
 import ConsoleAPI from '@injected/consoleApi';
@@ -52,7 +52,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
   openPage?: (url: string, target?: string) => Window | any,
 }> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator, openPage }) => {
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
-  const [showScreenshotInsteadOfSnapshot] = useSetting('screenshot-instead-of-snapshot', false);
+  const showScreenshotInsteadOfSnapshot = false;
 
   const snapshots = React.useMemo(() => {
     return collectSnapshots(action);
