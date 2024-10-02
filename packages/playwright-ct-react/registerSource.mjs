@@ -33,6 +33,14 @@ function isJsxComponent(component) {
 }
 
 /**
+ * @param {any} type
+ * @returns type is Playwright's mock JSX.Fragment
+ */
+function isJsxFragment(type) {
+  return typeof type === 'object' && type?.__pw_jsx_fragment;
+}
+
+/**
  * Turns the Playwright representation of JSX (see jsx-runtime.js) into React.createElement calls.
  * @param {any} value
  */
@@ -41,7 +49,7 @@ function __pwRender(value) {
     if (isJsxComponent(v)) {
       const component = v;
       let type = component.type;
-      if (type && type.__pw_jsx_fragment)
+      if (isJsxFragment(type))
         type = __pwReact.Fragment;
       const props = component.props ? __pwRender(component.props) : {};
       const key = component.key ? __pwRender(component.key) : undefined;
