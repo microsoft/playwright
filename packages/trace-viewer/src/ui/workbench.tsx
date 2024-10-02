@@ -114,15 +114,15 @@ export const Workbench: React.FunctionComponent<{
     }
   }, [model, selectedCallId]);
 
-  const revealedStack = React.useMemo(() => {
-    if (revealedError)
-      return revealedError.stack;
-    return selectedAction?.stack;
-  }, [selectedAction, revealedError]);
-
   const activeAction = React.useMemo(() => {
     return highlightedAction || selectedAction;
   }, [selectedAction, highlightedAction]);
+
+  const revealedStack = React.useMemo(() => {
+    if (revealedError)
+      return revealedError.stack;
+    return activeAction?.stack;
+  }, [activeAction, revealedError]);
 
   const onActionSelected = React.useCallback((action: modelUtil.ActionTraceEventInContext) => {
     setSelectedAction(action);
