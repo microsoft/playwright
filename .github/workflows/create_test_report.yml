@@ -22,6 +22,7 @@ jobs:
       env:
         DEBUG: pw:install
         PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+        ELECTRON_SKIP_BINARY_DOWNLOAD: 1
     - run: npm run build
 
     - name: Download blob report artifact
@@ -120,21 +121,3 @@ jobs:
             ]),
           });
           core.info('Posted comment: ' + response.html_url);
-
-          const check = await github.rest.checks.create({
-            ...context.repo,
-            name: 'Merge report (${{ github.event.workflow_run.name }})',
-            head_sha: '${{ github.event.workflow_run.head_sha }}',
-            status: 'completed',
-            conclusion: 'success',
-            details_url: reportUrl,
-            output: {
-              title: 'Test results for "${{ github.event.workflow_run.name }}"',
-              summary: [
-                reportMd,
-                '',
-                '---',
-                `Full [HTML report](${reportUrl}). Merge [workflow run](${mergeWorkflowUrl}).`
-              ].join('\n'),
-            }
-          });
