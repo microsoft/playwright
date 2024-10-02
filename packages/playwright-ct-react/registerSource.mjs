@@ -40,7 +40,7 @@ function __pwRender(value) {
     if (isJsxComponent(v)) {
       const component = v;
       let type = component.type;
-      if (type && type.__pw_type === 'fragment')
+      if (type && type.__pw_jsx_fragment) // detects the playwright mock Fragment (see jsx-runtime.js), used in <></> notation
         type = __pwReact.Fragment;
       const props = component.props ? __pwRender(component.props) : {};
       const key = component.key ? __pwRender(component.key) : undefined;
