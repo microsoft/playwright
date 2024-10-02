@@ -33,10 +33,12 @@ class ListReporter extends BaseReporter {
   private _stepIndex = new Map<TestStep, string>();
   private _needNewLine = false;
   private _printSteps: boolean;
+  private _appendTags: boolean;
 
-  constructor(options: { printSteps?: boolean } = {}) {
+  constructor(options: { printSteps?: boolean; appendTags?: boolean } = {}) {
     super();
     this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options.printSteps);
+    this._appendTags = getAsBooleanFromENV('PLAYWRIGHT_LIST_APPEND_TAGS', options.appendTags);
   }
 
   override onBegin(suite: Suite) {
@@ -57,7 +59,7 @@ class ListReporter extends BaseReporter {
     this._maybeWriteNewLine();
     this._testRows.set(test, this._lastRow);
     const prefix = this._testPrefix(index, '');
-    const line = colors.dim(formatTestTitle(this.config, test)) + this._retrySuffix(result);
+    const line = colors.dim(formatTestTitle(this.config, test, undefined, false, this._appendTags)) + this._retrySuffix(result);
     this._appendLine(line, prefix);
   }
 
@@ -97,7 +99,7 @@ class ListReporter extends BaseReporter {
       const line = test.title + colors.dim(stepSuffix(step));
       this._appendLine(line, prefix);
     } else {
-      this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
+      this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step, false, this._appendTags)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
     }
   }
 
@@ -108,12 +110,12 @@ class ListReporter extends BaseReporter {
     const testIndex = this._resultIndex.get(result) || '';
     if (!this._printSteps) {
       if (isTTY)
-        this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step.parent)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
+        this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step.parent, false, this._appendTags)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
       return;
     }
 
     const index = this.getStepIndex(testIndex, result, step);
-    const title = isTTY ? test.title + colors.dim(stepSuffix(step)) : formatTestTitle(this.config, test, step);
+    const title = isTTY ? test.title + colors.dim(stepSuffix(step)) : formatTestTitle(this.config, test, step, false, this._appendTags);
     const prefix = this._testPrefix(index, '');
     let text = '';
     if (step.error)
@@ -161,7 +163,7 @@ class ListReporter extends BaseReporter {
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
 
-    const title = formatTestTitle(this.config, test);
+    const title = formatTestTitle(this.config, test, undefined, false, this._appendTags);
     let prefix = '';
     let text = '';
 
