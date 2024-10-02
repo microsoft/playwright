@@ -65,6 +65,7 @@ export class InjectedScript {
   readonly isUnderTest: boolean;
   private _sdkLanguage: Language;
   private _testIdAttributeNameForStrictErrorAndConsoleCodegen: string = 'data-testid';
+  private _markedElements?: { callId: string, elements: Set<Element> };
   // eslint-disable-next-line no-restricted-globals
   readonly window: Window & typeof globalThis;
   readonly document: Document;
@@ -1081,14 +1082,33 @@ export class InjectedScript {
   }
 
   markTargetElements(markedElements: Set<Element>, callId: string) {
-    const customEvent = new CustomEvent('__playwright_target__', {
+    if (this._markedElements?.callId !== callId)
+      this._markedElements = undefined;
+    const previous = this._markedElements?.elements || new Set();
+
+    const unmarkEvent = new CustomEvent('__playwright_unmark_target__', {
       bubbles: true,
       cancelable: true,
       detail: callId,
       composed: true,
     });
-    for (const element of markedElements)
-      element.dispatchEvent(customEvent);
+    for (const element of previous) {
+      if (!markedElements.has(element))
+        element.dispatchEvent(unmarkEvent);
+    }
+
+    const markEvent = new CustomEvent('__playwright_mark_target__', {
+      bubbles: true,
+      cancelable: true,
+      detail: callId,
+      composed: true,
+    });
+    for (const element of markedElements) {
+      if (!previous.has(element))
+        element.dispatchEvent(markEvent);
+    }
+
+    this._markedElements = { callId, elements: markedElements };
   }
 
   private _setupGlobalListenersRemovalDetection() {

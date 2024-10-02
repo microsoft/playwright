@@ -139,11 +139,18 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
     }
 
     private _refreshListeners() {
-      (document as any).addEventListener('__playwright_target__', (event: CustomEvent) => {
+      (document as any).addEventListener('__playwright_mark_target__', (event: CustomEvent) => {
         if (!event.detail)
           return;
         const callId = event.detail as string;
         (event.composedPath()[0] as any).__playwright_target__ = callId;
+      });
+      (document as any).addEventListener('__playwright_unmark_target__', (event: CustomEvent) => {
+        if (!event.detail)
+          return;
+        const callId = event.detail as string;
+        if ((event.composedPath()[0] as any).__playwright_target__ === callId)
+          delete (event.composedPath()[0] as any).__playwright_target__;
       });
     }
 
