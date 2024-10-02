@@ -208,7 +208,7 @@ jobs:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
+      image: mcr.microsoft.com/playwright:v%%VERSION%%-noble
       options: --user 1001
     steps:
       - uses: actions/checkout@v4
@@ -233,7 +233,7 @@ jobs:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright/python:v%%VERSION%%-jammy
+      image: mcr.microsoft.com/playwright/python:v%%VERSION%%-noble
       options: --user 1001
     steps:
       - uses: actions/checkout@v4
@@ -262,7 +262,7 @@ jobs:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright/java:v%%VERSION%%-jammy
+      image: mcr.microsoft.com/playwright/java:v%%VERSION%%-noble
       options: --user 1001
     steps:
       - uses: actions/checkout@v4
@@ -288,7 +288,7 @@ jobs:
     name: 'Playwright Tests'
     runs-on: ubuntu-latest
     container:
-      image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-jammy
+      image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-noble
       options: --user 1001
     steps:
       - uses: actions/checkout@v4
@@ -415,7 +415,7 @@ Large test suites can take very long to execute. By executing a preliminary test
 This will give you a faster feedback loop and slightly lower CI consumption while working on Pull Requests.
 To detect test files affected by your changeset, `--only-changed` analyses your suites' dependency graph. This is a heuristic and might miss tests, so it's important that you always run the full test suite after the preliminary test run.
 
-```yml js title=".github/workflows/playwright.yml" {20-23}
+```yml js title=".github/workflows/playwright.yml"
 name: Playwright Tests
 on:
   push:
@@ -766,28 +766,28 @@ Running Playwright on CircleCI is very similar to running on GitHub Actions. In 
 
 ```yml js
 executors:
-  pw-jammy-development:
+  pw-noble-development:
     docker:
       - image: mcr.microsoft.com/playwright:v%%VERSION%%-noble
 ```
 
 ```yml python
 executors:
-  pw-jammy-development:
+  pw-noble-development:
     docker:
       - image: mcr.microsoft.com/playwright/python:v%%VERSION%%-noble
 ```
 
 ```yml java
 executors:
-  pw-jammy-development:
+  pw-noble-development:
     docker:
       - image: mcr.microsoft.com/playwright/java:v%%VERSION%%-noble
 ```
 
 ```yml csharp
 executors:
-  pw-jammy-development:
+  pw-noble-development:
     docker:
       - image: mcr.microsoft.com/playwright/dotnet:v%%VERSION%%-noble
 ```
@@ -801,7 +801,7 @@ Sharding in CircleCI is indexed with 0 which means that you will need to overrid
 
   ```yml
     playwright-job-name:
-      executor: pw-jammy-development
+      executor: pw-noble-development
       parallelism: 4
       steps:
         - run: SHARD="$((${CIRCLE_NODE_INDEX}+1))"; npx playwright test -- --shard=${SHARD}/${CIRCLE_NODE_TOTAL}
@@ -997,7 +997,7 @@ type: docker
 
 steps:
   - name: test
-    image: mcr.microsoft.com/playwright:v%%VERSION%%-jammy
+    image: mcr.microsoft.com/playwright:v%%VERSION%%-noble
     commands:
       - npx playwright test
 ```
