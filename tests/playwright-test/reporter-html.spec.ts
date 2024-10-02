@@ -2457,10 +2457,8 @@ for (const useIntermediateMergeReport of [false] as const) {
 
       await expect(page.locator('.test-file-test').locator('a').first()).toHaveAttribute('title', 'Root describe › Test passed');
       await expect(page.locator('.test-file-title')).toHaveText('Root describe › Test passed');
-      const testFilePathLink = page.locator('.test-file-path-link');
-      await expect(testFilePathLink).toHaveAttribute('title', 'Root describe › Test passed');
 
-      await testFilePathLink.click();
+      await page.locator('.test-file-title').click();
       await expect(page.locator('.test-case-path')).toHaveText('Root describe');
     });
   });
