@@ -250,8 +250,8 @@ it('should support offline', async ({ page, server, browserName }) => {
     page.goto(server.PREFIX + '/worker/worker.html'),
   ]);
   await page.context().setOffline(true);
-  expect(await worker.evaluate(() => navigator.onLine)).toBe(false);
+  await expect.poll(() =>  worker.evaluate(() => navigator.onLine)).toBe(false);
   expect(await worker.evaluate(() => fetch('/one-style.css').catch(e => 'error'))).toBe('error');
   await page.context().setOffline(false);
-  expect(await worker.evaluate(() => navigator.onLine)).toBe(true);
+  await expect.poll(() =>  worker.evaluate(() => navigator.onLine)).toBe(true);
 });

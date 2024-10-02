@@ -261,7 +261,7 @@ test('should have network requests', async ({ showTraceViewer }) => {
   await expect(traceViewer.networkRequests).toContainText([/style.cssGET200text\/css/]);
   await expect(traceViewer.networkRequests).toContainText([/404GET404text\/plain/]);
   await expect(traceViewer.networkRequests).toContainText([/script.jsGET200application\/javascript/]);
-  await expect(traceViewer.networkRequests.filter({ hasText: '404' })).toHaveCSS('background-color', 'rgb(242, 222, 222)');
+  await expect(traceViewer.networkRequests.filter({ hasText: '404GET404text' })).toHaveCSS('background-color', 'rgb(242, 222, 222)');
 });
 
 test('should filter network requests by resource type', async ({ page, runAndTrace, server }) => {
