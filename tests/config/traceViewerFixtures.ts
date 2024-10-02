@@ -77,6 +77,11 @@ class TraceViewerPage {
   }
 
   @step
+  async hoverAction(title: string, ordinal: number = 0) {
+    await this.page.locator(`.action-title:has-text("${title}")`).nth(ordinal).hover();
+  }
+
+  @step
   async selectSnapshot(name: string) {
     await this.page.click(`.snapshot-tab .tabbed-pane-tab-label:has-text("${name}")`);
   }
