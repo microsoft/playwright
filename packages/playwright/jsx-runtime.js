@@ -32,7 +32,8 @@ function jsxs(type, props, key) {
   };
 }
 
-const Fragment = {};
+// this is used in <></> notation
+const Fragment = { __pw_jsx_fragment: true };
 
 module.exports = {
   Fragment,

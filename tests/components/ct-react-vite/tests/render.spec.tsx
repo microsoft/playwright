@@ -46,3 +46,8 @@ test('render inline component with an error if its nested', async ({ mount }) =>
     <MyInlineComponent value="Max" />
   </DefaultChildren>)).rejects.toThrow('Component "MyInlineComponent" cannot be mounted.');
 });
+
+test('render Fragment shorthand notation', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32853' } }, async ({ mount }) => {
+  const component = await mount(<>Learn React</>);
+  await expect(component).toContainText('Learn React');
+});
