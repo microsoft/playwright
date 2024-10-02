@@ -14,16 +14,28 @@
   limitations under the License.
 */
 
+.hbox.static {
+  position: static;
+}
+
 .test-file-test {
   line-height: 32px;
-  align-items: center;
   padding: 2px 10px;
   overflow: hidden;
   text-overflow: ellipsis;
+  position: relative;
 }
 
 .test-file-test:hover {
   background-color: var(--color-canvas-subtle);
+}
+
+.test-file-link::before {
+  content: '';
+  display: block;
+  inset: 0;
+  position: absolute;
+  z-index: 0;
 }
 
 .test-file-title {
@@ -45,14 +57,12 @@
   text-overflow: ellipsis;
   overflow: hidden;
   color: var(--color-fg-subtle);
-}
-
-.test-file-path-link {
   margin-right: 10px;
 }
 
 .test-file-badge {
   flex: none;
+  position: relative;
 }
 
 .test-file-badge svg {
@@ -69,4 +79,10 @@
 
 .test-file-test-status-icon {
   flex: none;
+}
+
+.label {
+  cursor: pointer;
+  margin: 6px 0 0 6px;
+  position: relative;
 }

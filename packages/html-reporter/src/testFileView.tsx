@@ -41,13 +41,13 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
     </span>}>
     {file.tests.filter(t => filter.matches(t)).map(test =>
       <div key={`test-${test.testId}`} className={clsx('test-file-test', 'test-file-test-outcome-' + test.outcome)}>
-        <div className='hbox' style={{ alignItems: 'flex-start' }}>
-          <div className='hbox'>
+        <div className='hbox static' style={{ alignItems: 'flex-start' }}>
+          <div className='hbox static'>
             <span className='test-file-test-status-icon'>
               {statusIcon(test.outcome)}
             </span>
             <span>
-              <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
+              <Link className='test-file-link' href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
                 <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
               </Link>
               {report.projectNames.length > 1 && !!test.projectName &&
@@ -58,9 +58,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
           <span data-testid='test-duration' style={{ minWidth: '50px', textAlign: 'right' }}>{msToString(test.duration)}</span>
         </div>
         <div className='test-file-details-row'>
-          <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')} className='test-file-path-link'>
-            <span className='test-file-path'>{test.location.file}:{test.location.line}</span>
-          </Link>
+          <span className='test-file-path'>{test.location.file}:{test.location.line}</span>
           {imageDiffBadge(test)}
           {videoBadge(test)}
           {traceBadge(test)}
@@ -102,7 +100,7 @@ const LabelsClickView: React.FC<React.PropsWithChildren<{
   return labels.length > 0 ? (
     <>
       {labels.map(label => (
-        <span key={label} style={{ margin: '6px 0 0 6px', cursor: 'pointer' }} className={clsx('label', 'label-color-' + hashStringToInt(label))} onClick={e => onClickHandle(e, label)}>
+        <span key={label} className={clsx('label', 'label-color-' + hashStringToInt(label))} onClick={e => onClickHandle(e, label)}>
           {label.slice(1)}
         </span>
       ))}
