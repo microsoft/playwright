@@ -17,10 +17,6 @@
 import fs from 'fs';
 import { androidTest as test, expect } from './androidTest';
 
-test.afterAll(async ({ androidDevice }) => {
-  await androidDevice.shell('am force-stop com.android.chrome');
-});
-
 test('androidDevice.model', async function({ androidDevice }) {
   expect(androidDevice.model()).toContain('sdk_gphone');
   expect(androidDevice.model()).toContain('x86_64');
