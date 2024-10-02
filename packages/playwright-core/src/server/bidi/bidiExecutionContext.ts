@@ -77,10 +77,6 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 
-  rawCallFunctionNoReply(func: Function, ...args: any[]) {
-    throw new Error('Method not implemented.');
-  }
-
   async evaluateWithArguments(functionDeclaration: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
     const response = await this._session.send('script.callFunction', {
       functionDeclaration,

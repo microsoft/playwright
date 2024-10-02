@@ -53,7 +53,6 @@ export type SmartHandle<T> = T extends Node ? dom.ElementHandle<T> : JSHandle<T>
 export interface ExecutionContextDelegate {
   rawEvaluateJSON(expression: string): Promise<any>;
   rawEvaluateHandle(expression: string): Promise<ObjectId>;
-  rawCallFunctionNoReply(func: Function, ...args: any[]): void;
   evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle<any>, values: any[], objectIds: ObjectId[]): Promise<any>;
   getProperties(context: ExecutionContext, objectId: ObjectId): Promise<Map<string, JSHandle>>;
   createHandle(context: ExecutionContext, remoteObject: RemoteObject): JSHandle;
@@ -86,10 +85,6 @@ export class ExecutionContext extends SdkObject {
 
   rawEvaluateHandle(expression: string): Promise<ObjectId> {
     return this._raceAgainstContextDestroyed(this._delegate.rawEvaluateHandle(expression));
-  }
-
-  rawCallFunctionNoReply(func: Function, ...args: any[]): void {
-    this._delegate.rawCallFunctionNoReply(func, ...args);
   }
 
   evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle<any>, values: any[], objectIds: ObjectId[]): Promise<any> {
@@ -149,10 +144,6 @@ export class JSHandle<T = any> extends SdkObject {
     this._preview = this._objectId ? preview || `JSHandle@${this._objectType}` : String(value);
     if (this._objectId && (globalThis as any).leakedJSHandles)
       (globalThis as any).leakedJSHandles.set(this, new Error('Leaked JSHandle'));
-  }
-
-  callFunctionNoReply(func: Function, arg: any) {
-    this._context.rawCallFunctionNoReply(func, this, arg);
   }
 
   async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg?: Arg): Promise<R> {

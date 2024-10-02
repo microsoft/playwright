@@ -776,6 +776,8 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
     await expect(page.locator('text=t6')).toHaveText(/t6/i);
     await expect(page.locator('text=multi')).toHaveText(['a', 'b'], { timeout: 1000 }).catch(() => {});
     await page.mouse.move(123, 234);
+    await page.getByText(/^t\d$/).click().catch(() => {});
+    await expect(page.getByText(/t3|t4/)).toBeVisible().catch(() => {});
   });
 
   async function highlightedDivs(frameLocator: FrameLocator) {
@@ -817,6 +819,12 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
 
   const frameMouseMove = await traceViewer.snapshotFrame('mouse.move');
   await expect(frameMouseMove.locator('x-pw-pointer')).toBeVisible();
+
+  const frameClickStrictViolation = await traceViewer.snapshotFrame('locator.click');
+  await expect.poll(() => highlightedDivs(frameClickStrictViolation)).toEqual(['t1', 't2', 't3', 't4', 't5', 't6']);
+
+  const frameExpectStrictViolation = await traceViewer.snapshotFrame('expect.toBeVisible');
+  await expect.poll(() => highlightedDivs(frameExpectStrictViolation)).toEqual(['t3', 't4']);
 });
 
 test('should highlight target element in shadow dom', async ({ page, server, runAndTrace }) => {

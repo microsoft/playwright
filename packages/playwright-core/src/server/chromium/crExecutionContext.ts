@@ -53,16 +53,6 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     return remoteObject.objectId!;
   }
 
-  rawCallFunctionNoReply(func: Function, ...args: any[]) {
-    this._client.send('Runtime.callFunctionOn', {
-      functionDeclaration: func.toString(),
-      arguments: args.map(a => a instanceof js.JSHandle ? { objectId: a._objectId } : { value: a }),
-      returnByValue: true,
-      executionContextId: this._contextId,
-      userGesture: true
-    }).catch(() => {});
-  }
-
   async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
     const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
       functionDeclaration: expression,
