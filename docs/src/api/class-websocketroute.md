@@ -255,10 +255,17 @@ By default, closing one side of the connection, either in the page or on the ser
 
 ### param: WebSocketRoute.onClose.handler
 * since: v1.48
+* langs: js, python
 - `handler` <[function]\([number]|[undefined], [string]|[undefined]\): [Promise<any>|any]>
 
 Function that will handle WebSocket closure. Received an optional [close code](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#code) and an optional [close reason](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#reason).
 
+### param: WebSocketRoute.onClose.handler
+* since: v1.48
+* langs: java, csharp
+- `handler` <[function]\([null]|[number], [null]|[string]\)>
+
+Function that will handle WebSocket closure. Received an optional [close code](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#code) and an optional [close reason](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close#reason).
 
 
 ## async method: WebSocketRoute.onMessage
