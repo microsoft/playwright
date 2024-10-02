@@ -13,7 +13,6 @@ on:
 
 env:
   FORCE_COLOR: 1
-  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
 jobs:
   test_bidi:
@@ -44,5 +43,3 @@ jobs:
       run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run biditest -- --project=${{ matrix.channel }}*
       env:
         PWTEST_USE_BIDI_EXPECTATIONS: '1'
-        DEBUG: ${{ matrix.channel == 'bidi-firefox-nightly' && 'pw:browser' || null }}
-        PWTEST_FIREFOX_USER_PREFS: '{"remote.log.level": "Trace", "remote.log.truncate": false}'
