@@ -34,7 +34,7 @@ function isJsxComponent(component) {
 
 /**
  * @param {any} type
- * @returns type is Playwright's mock JSX.Fragment
+ * @returns {boolean} type is Playwright's mock JSX.Fragment
  */
 function isJsxFragment(type) {
   return typeof type === 'object' && type?.__pw_jsx_fragment;
