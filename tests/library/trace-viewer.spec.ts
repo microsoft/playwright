@@ -761,7 +761,7 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
     await page.setContent(`
       <div>t1</div>
       <div>t2</div>
-      <div>t3</div>
+      <div id=div3>t3</div>
       <div>t4</div>
       <div>t5</div>
       <div>t6</div>
@@ -778,6 +778,11 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
     await page.mouse.move(123, 234);
     await page.getByText(/^t\d$/).click().catch(() => {});
     await expect(page.getByText(/t3|t4/)).toBeVisible().catch(() => {});
+
+    const expectPromise = expect(page.getByText(/t3|t4/)).toHaveText(['t4']);
+    await page.waitForTimeout(1000);
+    await page.evaluate(() => document.querySelector('#div3').textContent = 'changed');
+    await expectPromise;
   });
 
   async function highlightedDivs(frameLocator: FrameLocator) {
@@ -825,6 +830,9 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
 
   const frameExpectStrictViolation = await traceViewer.snapshotFrame('expect.toBeVisible');
   await expect.poll(() => highlightedDivs(frameExpectStrictViolation)).toEqual(['t3', 't4']);
+
+  const frameUpdatedListOfTargets = await traceViewer.snapshotFrame('expect.toHaveText', 2);
+  await expect.poll(() => highlightedDivs(frameUpdatedListOfTargets)).toEqual(['t4']);
 });
 
 test('should highlight target element in shadow dom', async ({ page, server, runAndTrace }) => {
