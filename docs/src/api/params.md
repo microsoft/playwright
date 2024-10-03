@@ -1488,19 +1488,19 @@ page.get_by_text(re.compile("^hello$", re.IGNORECASE))
 
 ```java
 // Matches <span>
-page.getByText("world")
+page.getByText("world");
 
 // Matches first <div>
-page.getByText("Hello world")
+page.getByText("Hello world");
 
 // Matches second <div>
-page.getByText("Hello", new Page.GetByTextOptions().setExact(true))
+page.getByText("Hello", new Page.GetByTextOptions().setExact(true));
 
 // Matches both <div>s
-page.getByText(Pattern.compile("Hello"))
+page.getByText(Pattern.compile("Hello"));
 
 // Matches second <div>
-page.getByText(Pattern.compile("^hello$", Pattern.CASE_INSENSITIVE))
+page.getByText(Pattern.compile("^hello$", Pattern.CASE_INSENSITIVE));
 ```
 
 ```csharp

@@ -122,7 +122,7 @@ await locator.click();
 
 ```java
 Locator locator = page.getByRole(AriaRole.BUTTON,
-                                 new Page.GetByRoleOptions().setName("Sign in"))
+                                 new Page.GetByRoleOptions().setName("Sign in"));
 
 locator.hover();
 locator.click();
@@ -946,7 +946,7 @@ page.getByRole(AriaRole.LISTITEM)
         .setName("Product 2"))))
     .getByRole(AriaRole.BUTTON,
                new Page.GetByRoleOptions().setName("Add to cart"))
-    .click()
+    .click();
 ```
 
 ```python async
@@ -987,7 +987,7 @@ assertThat(page
     .getByRole(AriaRole.LISTITEM)
     .filter(new Locator.FilterOptions()
         .setHas(page.GetByRole(AriaRole.HEADING,
-                               new Page.GetByRoleOptions().setName("Product 2"))))
+                               new Page.GetByRoleOptions().setName("Product 2")))))
     .hasCount(1);
 ```
 
@@ -1033,7 +1033,7 @@ assertThat(page
     .filter(new Locator.FilterOptions()
         .setHas(page.GetByRole(AriaRole.LIST)
                     .GetByRole(AriaRole.HEADING,
-                               new Page.GetByRoleOptions().setName("Product 2"))))
+                               new Page.GetByRoleOptions().setName("Product 2")))))
     .hasCount(1);
 ```
 
@@ -1079,7 +1079,7 @@ await expect(page
 ```java
 assertThat(page
     .getByRole(AriaRole.LISTITEM)
-    .filter(new Locator.FilterOptions().setHasNot(page.getByText("Product 2")))
+    .filter(new Locator.FilterOptions().setHasNot(page.getByText("Product 2"))))
     .hasCount(1);
 ```
 
@@ -1356,7 +1356,7 @@ expect(page.get_by_role("listitem")).to_have_count(3)
 ```
 
 ```java
-assertThat(page.getByRole(AriaRole.LISTITEM).hasCount(3);
+assertThat(page.getByRole(AriaRole.LISTITEM)).hasCount(3);
 ```
 
 ```csharp

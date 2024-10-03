@@ -18,15 +18,15 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 import com.microsoft.playwright.*;
 
 public class Example {
-  public static void main(String[] args) {
-    try (Playwright playwright = Playwright.create()) {
-      BrowserType firefox = playwright.firefox()
-      Browser browser = firefox.launch();
-      Page page = browser.newPage();
-      page.navigate('https://example.com');
-      browser.close();
-    }
-  }
+ public static void main(String[] args) {
+   try (Playwright playwright = Playwright.create()) {
+     BrowserType firefox = playwright.firefox();
+     Browser browser = firefox.launch();
+     Page page = browser.newPage();
+     page.navigate("https://example.com");
+     browser.close();
+   }
+ }
 }
 ```
 
@@ -202,7 +202,7 @@ Browser browser = playwright.firefox().launch();  // Or 'chromium' or 'webkit'.
 BrowserContext context = browser.newContext();
 // Create a new page in a pristine context.
 Page page = context.newPage();
-page.navigate('https://example.com');
+page.navigate("https://example.com");
 
 // Graceful close up everything
 context.close();
@@ -331,7 +331,7 @@ await browser.stopTracing();
 ```java
 browser.startTracing(page, new Browser.StartTracingOptions()
   .setPath(Paths.get("trace.json")));
-page.goto('https://www.google.com');
+page.navigate("https://www.google.com");
 browser.stopTracing();
 ```
 

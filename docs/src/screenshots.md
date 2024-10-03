@@ -21,7 +21,7 @@ page.screenshot(path="screenshot.png")
 
 ```java
 page.screenshot(new Page.ScreenshotOptions()
-      .setPath(Paths.get("screenshot.png")))
+      .setPath(Paths.get("screenshot.png")));
 ```
 
 ```csharp
