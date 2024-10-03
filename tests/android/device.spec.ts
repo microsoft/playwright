@@ -15,7 +15,6 @@
  */
 
 import fs from 'fs';
-import { join } from 'path';
 import { PNG } from 'playwright-core/lib/utilsBundle';
 import { androidTest as test, expect } from './androidTest';
 
@@ -55,40 +54,7 @@ test('androidDevice.push', async function({ androidDevice }) {
 });
 
 test('androidDevice.fill', async function({ androidDevice }) {
-  test.fixme(true, 'Hangs on the bots');
-
   await androidDevice.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
   await androidDevice.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'Hello');
   expect((await androidDevice.info({ res: 'org.chromium.webview_shell:id/url_field' })).text).toBe('Hello');
-});
-
-test('androidDevice.options.omitDriverInstall', async function({ playwright }) {
-  test.skip(true, 'Android._driverPromise gets cached and is in a closed state. Its stored inside the androidDevice worker fixture.');
-  const devices = await playwright._android.devices({ omitDriverInstall: true });
-
-  const androidDevice = devices[0];
-  await androidDevice.shell(`cmd package uninstall com.microsoft.playwright.androiddriver`);
-  await androidDevice.shell(`cmd package uninstall com.microsoft.playwright.androiddriver.test`);
-
-  await androidDevice.shell('am start -a android.intent.action.VIEW -d about:blank com.android.chrome');
-
-  let fillStatus = '';
-  androidDevice.fill({ res: 'com.android.chrome:id/url_bar' }, 'Hello').then(() => {
-    fillStatus = 'success';
-  }).catch(() => {
-    fillStatus = 'error';
-  });
-
-  // install and start driver
-  for (const file of ['android-driver.apk', 'android-driver-target.apk']) {
-    const filePath =  join(require.resolve('playwright-core'), '..', 'bin', file);
-    await androidDevice.installApk(await fs.promises.readFile(filePath));
-  }
-  androidDevice.shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner').catch(e => console.error(e));
-
-  // wait for finishing fill operation
-  while (!fillStatus)
-    await new Promise(f => setTimeout(f, 200));
-
-  expect(fillStatus).toBe('success');
 });
