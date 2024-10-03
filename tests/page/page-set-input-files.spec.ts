@@ -52,8 +52,8 @@ it('should upload a folder', async ({ page, server, browserName, headless, brows
   }
   await input.setInputFiles(dir);
   expect(new Set(await page.evaluate(e => [...e.files].map(f => f.webkitRelativePath), input))).toEqual(new Set([
-    // https://issues.chromium.org/issues/345393164
-    ...((browserName === 'chromium' && headless && !process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW && browserMajorVersion < 127) ? [] : ['file-upload-test/sub-dir/really.txt']),
+    // Note: this did not work before Chrome 127, see https://issues.chromium.org/issues/345393164.
+    'file-upload-test/sub-dir/really.txt',
     'file-upload-test/file1.txt',
     'file-upload-test/file2',
   ]));
