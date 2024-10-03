@@ -289,8 +289,7 @@ it('should not crash on mouse drag with any button', async ({ page }) => {
 
 it('should dispatch mouse move after context menu was opened', async ({ page, browserName, isWindows }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20823' });
-  it.fixme(browserName === 'firefox');
-  it.skip(browserName === 'chromium' && isWindows, 'context menu support is best-effort for Linux and MacOS');
+  it.fixme(browserName === 'chromium' && isWindows, 'context menu support is best-effort for Linux and MacOS');
   await page.evaluate(() => {
     window['contextMenuPromise'] = new Promise(x => {
       window.addEventListener('contextmenu', x, false);

@@ -254,7 +254,7 @@ it('should be able to navigate after disabling javascript', async ({ browser, se
 });
 
 it('should not hang on promises after disabling javascript', async ({ browserName, contextFactory }) => {
-  it.fixme(browserName === 'webkit' || browserName === 'firefox');
+  it.fixme(browserName === 'firefox');
   const context = await contextFactory({ javaScriptEnabled: false });
   const page = await context.newPage();
   expect(await page.evaluate(() => 1)).toBe(1);

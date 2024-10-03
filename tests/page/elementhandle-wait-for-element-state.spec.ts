@@ -113,8 +113,6 @@ it('should wait for button with an aria-disabled parent', async ({ page }) => {
 });
 
 it('should wait for stable position', async ({ page, server, browserName, platform }) => {
-  it.fixme(browserName === 'firefox' && platform === 'linux');
-
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');
   await page.$eval('button', button => {

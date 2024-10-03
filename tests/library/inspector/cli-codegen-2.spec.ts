@@ -106,7 +106,6 @@ await page.CloseAsync();`);
   });
 
   test('should upload a single file', async ({ openRecorder, browserName, asset, isLinux }) => {
-    test.fixme(browserName === 'firefox' && isLinux, 'https://bugzilla.mozilla.org/show_bug.cgi?id=1827551');
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
@@ -137,7 +136,6 @@ await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-uplo
   });
 
   test('should upload multiple files', async ({ openRecorder, browserName, asset, isLinux }) => {
-    test.fixme(browserName === 'firefox' && isLinux, 'https://bugzilla.mozilla.org/show_bug.cgi?id=1827551');
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
@@ -168,7 +166,6 @@ await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-uplo
   });
 
   test('should clear files', async ({ openRecorder, browserName, asset, isLinux }) => {
-    test.fixme(browserName === 'firefox' && isLinux, 'https://bugzilla.mozilla.org/show_bug.cgi?id=1827551');
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
     <form>

@@ -275,7 +275,6 @@ it('should work with :nth-child', async ({ page, server }) => {
 });
 
 it('should work with :nth-child(of) notation with nested functions', async ({ page, browserName, browserMajorVersion }) => {
-  it.fixme(browserName === 'firefox', 'Should enable once Firefox supports this syntax');
   it.skip(browserName === 'chromium' && browserMajorVersion < 111, 'https://caniuse.com/css-nth-child-of');
 
   await page.setContent(`

@@ -1452,18 +1452,18 @@ test.skip('should handle case where neither snapshots nor screenshots exist', as
 });
 
 test('should show only one pointer with multilevel iframes', async ({ page, runAndTrace, server, browserName }) => {
-  test.fixme(browserName !== 'chromium', 'Elements in iframe are not marked');
+  test.fixme(browserName === 'firefox', 'Elements in iframe are not marked');
 
   server.setRoute('/level-0.html', (req, res) => {
-    res.writeHead(200);
+    res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`<iframe src="/level-1.html" style="position: absolute; left: 100px"></iframe>`);
   });
   server.setRoute('/level-1.html', (req, res) => {
-    res.writeHead(200);
+    res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`<iframe src="/level-2.html"></iframe>`);
   });
   server.setRoute('/level-2.html', (req, res) => {
-    res.writeHead(200);
+    res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`<button>Click me</button>`);
   });
 

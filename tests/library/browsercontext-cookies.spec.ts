@@ -406,7 +406,6 @@ it('should support requestStorageAccess', async ({ page, server, channel, browse
 
 it('should parse cookie with large Max-Age correctly', async ({ server, page, defaultSameSiteCookieValue, browserName, platform }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30305' });
-  it.fixme(browserName === 'webkit' && platform === 'linux', 'https://github.com/microsoft/playwright/issues/30305');
 
   server.setRoute('/foobar', (req, res) => {
     res.setHeader('set-cookie', [

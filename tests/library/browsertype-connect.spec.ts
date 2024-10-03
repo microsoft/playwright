@@ -761,7 +761,6 @@ for (const kind of ['launchServer', 'run-server'] as const) {
     });
 
     test.describe('socks proxy', () => {
-      test.fixme(({ platform, browserName }) => browserName === 'webkit' && platform === 'win32');
       test.skip(({ mode }) => mode !== 'default');
       test.skip(kind === 'launchServer', 'not supported yet');
 
