@@ -336,7 +336,7 @@ it('should click the button inside an iframe', async ({ page, server }) => {
 });
 
 it('should click the button with fixed position inside an iframe', async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'chromium' || browserName === 'webkit');
+  it.fixme(browserName === 'chromium');
 
   // @see https://github.com/GoogleChrome/puppeteer/issues/4110
   // @see https://bugs.chromium.org/p/chromium/issues/detail?id=986390

@@ -728,8 +728,7 @@ test.describe('browser', () => {
   });
 
   test('should return target connection errors when using http2', async ({ browser, startCCServer, asset, browserName, isMac, isLinux }) => {
-    test.skip(browserName === 'webkit' && isMac, 'WebKit on macOS doesn\n proxy localhost');
-    test.fixme(browserName === 'webkit' && isLinux, 'WebKit on Linux does not support http2 https://bugs.webkit.org/show_bug.cgi?id=276990');
+    test.skip(browserName === 'webkit' && isMac, 'WebKit on macOS does not proxy localhost');
     test.skip(+process.versions.node.split('.')[0] < 20, 'http2.performServerHandshake is not supported in older Node.js versions');
 
     const serverURL = await startCCServer({ http2: true });

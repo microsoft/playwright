@@ -305,10 +305,8 @@ it.describe('download event', () => {
   });
 
   it('should report alt-click downloads', async ({ browser, server, browserName }) => {
-    it.fixme(browserName === 'firefox');
+    it.skip(browserName === 'firefox', 'Firefox does not download on alt-click.');
 
-    // Firefox does not download on alt-click by default.
-    // Our WebKit embedder does not download on alt-click, although Safari does.
     server.setRoute('/download', (req, res) => {
       res.setHeader('Content-Type', 'application/octet-stream');
       res.end(`Hello world`);

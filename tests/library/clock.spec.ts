@@ -1155,7 +1155,7 @@ it.describe('stubTimers', () => {
     });
   });
 
-  it.fixme('deletes global property on uninstall if it was inherited onto the global object', ({}) => {
+  it('restores global property on uninstall if it was inherited onto the global object', ({}) => {
     // Give the global object an inherited 'setTimeout' method
     const proto = { Date,
       setTimeout: () => {},
@@ -1167,8 +1167,10 @@ it.describe('stubTimers', () => {
 
     const { clock } = rawInstall(myGlobal, { now: 0, toFake: ['setTimeout'] });
     expect(myGlobal.hasOwnProperty('setTimeout')).toBeTruthy();
+    expect(myGlobal.setTimeout).not.toBe(proto.setTimeout);
     clock.uninstall();
-    expect(myGlobal.hasOwnProperty('setTimeout')).toBeFalsy();
+    expect(myGlobal.hasOwnProperty('setTimeout')).toBeTruthy();
+    expect(myGlobal.setTimeout).toBe(proto.setTimeout);
   });
 
   it('fakes Date constructor', ({ installEx }) => {

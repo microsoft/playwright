@@ -262,14 +262,17 @@ it('should not throttle rAF in the opener page', async ({ page, server }) => {
 });
 
 it('should not throw when click closes popup', async ({ browserName, page, server }) => {
-  it.fixme(browserName === 'firefox');
+  it.fixme(browserName === 'firefox', 'locator.click: Target page, context or browser has been closed');
+
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(() => {
+    page.evaluate(async browserName => {
       const w = window.open('about:blank');
+      if (browserName === 'firefox')
+        await new Promise(x => w.onload = x);
       w.document.body.innerHTML = `<button onclick="window.close()">close</button>`;
-    }),
+    }, browserName),
   ]);
   await popup.getByRole('button').click();
 });

@@ -349,7 +349,6 @@ test.describe('toBeInViewport', () => {
   });
 
   test('should respect ratio option', async ({ page, isAndroid }) => {
-    test.fixme(isAndroid, 'fails due an upstream bug in Chrome, updating Chrome will fix it.');
     await page.setContent(`
       <style>body, div, html { padding: 0; margin: 0; }</style>
       <div id=big style="height: 400vh;"></div>
