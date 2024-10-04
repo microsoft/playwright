@@ -49,6 +49,12 @@
   overflow: hidden;
 }
 
+.network-request-details-copy {
+  display: flex;
+  margin: 8px 10px;
+  gap: 8px;
+}
+
 .network-font-preview {
   font-family: font-preview;
   font-size: 30px;

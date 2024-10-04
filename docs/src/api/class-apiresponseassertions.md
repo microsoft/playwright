@@ -14,15 +14,15 @@ test('navigates to login', async ({ page }) => {
 ```
 
 ```java
-...
+// ...
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 public class TestPage {
-  ...
+  // ...
   @Test
   void navigatesToLoginPage() {
-    ...
-    APIResponse response = page.request().get('https://playwright.dev');
+    // ...
+    APIResponse response = page.request().get("https://playwright.dev");
     assertThat(response).isOK();
   }
 }

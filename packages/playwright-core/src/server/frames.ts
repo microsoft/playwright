@@ -248,6 +248,11 @@ export class FrameManager {
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
+    const pending = frame.pendingDocument();
+    if (pending && pending.documentId === undefined && pending.request === undefined) {
+      // WebKit has notified about the same-document navigation being requested, so clear it.
+      frame.setPendingDocument(undefined);
+    }
     frame._url = url;
     const navigationEvent: NavigationEvent = { url, name: frame._name, isPublic: true };
     this._fireInternalFrameNavigation(frame, navigationEvent);
@@ -782,13 +787,16 @@ export class Frame extends SdkObject {
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
     return controller.run(async progress => {
       progress.log(`waiting for ${this._asLocator(selector)}${state === 'attached' ? '' : ' to be ' + state}`);
-      return await this.waitForSelectorInternal(progress, selector, options, scope);
+      return await this.waitForSelectorInternal(progress, selector, true, options, scope);
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async waitForSelectorInternal(progress: Progress, selector: string, options: types.WaitForElementOptions, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
+  async waitForSelectorInternal(progress: Progress, selector: string, performLocatorHandlersCheckpoint: boolean, options: types.WaitForElementOptions, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
     const { state = 'visible' } = options;
     const promise = this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async continuePolling => {
+      if (performLocatorHandlersCheckpoint)
+        await this._page.performLocatorHandlersCheckpoint(progress);
+
       const resolved = await this.selectors.resolveInjectedForSelector(selector, options, scope);
       progress.throwIfAborted();
       if (!resolved) {
@@ -1121,8 +1129,10 @@ export class Frame extends SdkObject {
       progress.throwIfAborted();
       if (!resolved)
         return continuePolling;
-      const result = await resolved.injected.evaluateHandle((injected, { info }) => {
+      const result = await resolved.injected.evaluateHandle((injected, { info, callId }) => {
         const elements = injected.querySelectorAll(info.parsed, document);
+        if (callId)
+          injected.markTargetElements(new Set(elements), callId);
         const element = elements[0] as Element | undefined;
         let log = '';
         if (elements.length > 1) {
@@ -1133,7 +1143,7 @@ export class Frame extends SdkObject {
           log = `  locator resolved to ${injected.previewNode(element)}`;
         }
         return { log, success: !!element, element };
-      }, { info: resolved.info });
+      }, { info: resolved.info, callId: progress.metadata.id });
       const { log, success } = await result.evaluate(r => ({ log: r.log, success: r.success }));
       if (log)
         progress.log(log);
@@ -1475,6 +1485,8 @@ export class Frame extends SdkObject {
 
     const { log, matches, received, missingReceived } = await injected.evaluate(async (injected, { info, options, callId }) => {
       const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
+      if (callId)
+        injected.markTargetElements(new Set(elements), callId);
       const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
       let log = '';
       if (isArray)
@@ -1483,8 +1495,6 @@ export class Frame extends SdkObject {
         throw injected.strictModeViolationError(info!.parsed, elements);
       else if (elements.length)
         log = `  locator resolved to ${injected.previewNode(elements[0])}`;
-      if (callId)
-        injected.markTargetElements(new Set(elements), callId);
       return { log, ...await injected.expect(elements[0], options, elements) };
     }, { info, options, callId: progress.metadata.id });
 

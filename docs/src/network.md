@@ -146,8 +146,8 @@ const browser = await chromium.launch({
 ```java
 Browser browser = chromium.launch(new BrowserType.LaunchOptions()
   .setProxy(new Proxy("http://myproxy.com:3128")
-  .setUsername('usr')
-  .setPassword('pwd')));
+  .setUsername("usr")
+  .setPassword("pwd")));
 ```
 
 ```python async
@@ -627,7 +627,7 @@ page.route("**/title.html", route -> {
   String body = response.text();
   body = body.replace("<title>", "<title>My prefix:");
   Map<String, String> headers = response.headers();
-  headers.put("content-type": "text/html");
+  headers.put("content-type", "text/html");
   route.fulfill(new Route.FulfillOptions()
     // Pass all fields from the response.
     .setResponse(response)
@@ -699,6 +699,27 @@ await Page.RouteAsync("**/title.html", async route =>
     });
 });
 ```
+
+## Glob URL patterns
+
+Playwright uses simplified glob patterns for URL matching in network interception methods like [`method: Page.route`] or [`method: Page.waitForResponse`]. These patterns support basic wildcards:
+
+1. Asterisks:
+  - A single `*` matches any characters except `/`
+  - A double `**` matches any characters including `/`
+1. Question mark `?` matches any single character except `/`
+1. Curly braces `{}` can be used to match a list of options separated by commas `,`
+
+Examples:
+- `https://example.com/*.js` matches `https://example.com/file.js` but not `https://example.com/path/file.js`
+- `**/*.js` matches both `https://example.com/file.js` and `https://example.com/path/file.js`
+- `**/*.{png,jpg,jpeg}` matches all image requests
+
+Important notes:
+
+- The glob pattern must match the entire URL, not just a part of it.
+- When using globs for URL matching, consider the full URL structure, including the protocol and path separators.
+- For more complex matching requirements, consider using [RegExp] instead of glob patterns.
 
 ## WebSockets
 

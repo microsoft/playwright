@@ -20,9 +20,10 @@ import fs from 'fs';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
+  test.skip(({ trace, codegenMode }) => trace === 'on' && codegenMode === 'trace-events');
 
   test('should contain open page', async ({ openRecorder }) => {
-    const recorder = await openRecorder();
+    const { recorder } = await openRecorder();
 
     await recorder.setContentAndWait(``);
     const sources = await recorder.waitForOutput('JavaScript', `page.goto`);
@@ -43,8 +44,8 @@ test.describe('cli codegen', () => {
 var page = await context.NewPageAsync();`);
   });
 
-  test('should contain second page', async ({ openRecorder, page }) => {
-    const recorder = await openRecorder();
+  test('should contain second page', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(``);
     await page.context().newPage();
@@ -66,8 +67,8 @@ var page = await context.NewPageAsync();`);
 var page1 = await context.NewPageAsync();`);
   });
 
-  test('should contain close page', async ({ openRecorder, page }) => {
-    const recorder = await openRecorder();
+  test('should contain close page', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(``);
     await page.context().newPage();
@@ -90,8 +91,8 @@ var page1 = await context.NewPageAsync();`);
 await page.CloseAsync();`);
   });
 
-  test('should not lead to an error if html gets clicked', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
+  test('should not lead to an error if html gets clicked', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait('');
     await page.context().newPage();
@@ -104,9 +105,9 @@ await page.CloseAsync();`);
     expect(errors.length).toBe(0);
   });
 
-  test('should upload a single file', async ({ page, openRecorder, browserName, asset, isLinux }) => {
+  test('should upload a single file', async ({ openRecorder, browserName, asset, isLinux }) => {
     test.fixme(browserName === 'firefox' && isLinux, 'https://bugzilla.mozilla.org/show_bug.cgi?id=1827551');
-    const recorder = await openRecorder();
+    const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
       <input type="file">
@@ -135,9 +136,9 @@ await page.CloseAsync();`);
 await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-upload.txt\" });`);
   });
 
-  test('should upload multiple files', async ({ page, openRecorder, browserName, asset, isLinux }) => {
+  test('should upload multiple files', async ({ openRecorder, browserName, asset, isLinux }) => {
     test.fixme(browserName === 'firefox' && isLinux, 'https://bugzilla.mozilla.org/show_bug.cgi?id=1827551');
-    const recorder = await openRecorder();
+    const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
       <input type="file" multiple>
@@ -166,9 +167,9 @@ await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-uplo
 await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-upload.txt\", \"file-to-upload-2.txt\" });`);
   });
 
-  test('should clear files', async ({ page, openRecorder, browserName, asset, isLinux }) => {
+  test('should clear files', async ({ openRecorder, browserName, asset, isLinux }) => {
     test.fixme(browserName === 'firefox' && isLinux, 'https://bugzilla.mozilla.org/show_bug.cgi?id=1827551');
-    const recorder = await openRecorder();
+    const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`
     <form>
       <input type="file" multiple>
@@ -197,8 +198,8 @@ await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] { \"file-to-uplo
 await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] {  });`);
   });
 
-  test('should download files', async ({ page, openRecorder, server }) => {
-    const recorder = await openRecorder();
+  test('should download files', async ({ openRecorder, server }) => {
+    const { page, recorder } = await openRecorder();
 
     server.setRoute('/download', (req, res) => {
       const pathName = url.parse(req.url!).path;
@@ -219,27 +220,15 @@ await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] {  });`);
       page.waitForEvent('download'),
       page.click('a')
     ]);
-    await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    const sources = await recorder.waitForOutput('JavaScript', 'download1Promise');
+    const sources = await recorder.waitForOutput('JavaScript', 'downloadPromise');
 
     expect.soft(sources.get('JavaScript')!.text).toContain(`
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('link', { name: 'Download' }).click();
   const download = await downloadPromise;`);
-    expect.soft(sources.get('JavaScript')!.text).toContain(`
-  const download1Promise = page.waitForEvent('download');
-  await page.getByRole('link', { name: 'Download' }).click();
-  const download1 = await download1Promise;`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
       Download download = page.waitForDownload(() -> {
-        page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Download")).click();
-      });`);
-    expect.soft(sources.get('Java')!.text).toContain(`
-      Download download1 = page.waitForDownload(() -> {
         page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("Download")).click();
       });`);
 
@@ -247,34 +236,21 @@ await page.GetByRole(AriaRole.Textbox).SetInputFilesAsync(new[] {  });`);
     with page.expect_download() as download_info:
         page.get_by_role("link", name="Download").click()
     download = download_info.value`);
-    expect.soft(sources.get('Python')!.text).toContain(`
-    with page.expect_download() as download1_info:
-        page.get_by_role("link", name="Download").click()
-    download1 = download1_info.value`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
     async with page.expect_download() as download_info:
         await page.get_by_role("link", name="Download").click()
     download = await download_info.value`);
-    expect.soft(sources.get('Python Async')!.text).toContain(`
-    async with page.expect_download() as download1_info:
-        await page.get_by_role("link", name="Download").click()
-    download1 = await download1_info.value`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
 var download = await page.RunAndWaitForDownloadAsync(async () =>
 {
     await page.GetByRole(AriaRole.Link, new() { Name = "Download" }).ClickAsync();
 });`);
-    expect.soft(sources.get('C#')!.text).toContain(`
-var download1 = await page.RunAndWaitForDownloadAsync(async () =>
-{
-    await page.GetByRole(AriaRole.Link, new() { Name = "Download" }).ClickAsync();
-});`);
   });
 
-  test('should handle dialogs', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
+  test('should handle dialogs', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
     <button onclick="alert()">click me</button>
@@ -321,8 +297,8 @@ await page.GetByRole(AriaRole.Button, new() { Name = "click me" }).ClickAsync();
 
   });
 
-  test('should handle history.postData', async ({ page, openRecorder, server }) => {
-    const recorder = await openRecorder();
+  test('should handle history.postData', async ({ openRecorder, server }) => {
+    const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
     <script>
@@ -337,8 +313,9 @@ await page.GetByRole(AriaRole.Button, new() { Name = "click me" }).ClickAsync();
     }
   });
 
-  test('should record open in a new tab with url', async ({ page, openRecorder, browserName }) => {
-    const recorder = await openRecorder();
+  test('should record open in a new tab with url', async ({ openRecorder, browserName, codegenMode }) => {
+    test.skip(codegenMode === 'trace-events');
+    const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`<a href="about:blank?foo">link</a>`);
 
     const locator = await recorder.hoverOverElement('a');
@@ -367,8 +344,8 @@ await page1.GotoAsync("about:blank?foo");`);
     }
   });
 
-  test('should not clash pages', async ({ page, openRecorder, browserName }) => {
-    const recorder = await openRecorder();
+  test('should not clash pages', async ({ openRecorder, browserName }) => {
+    const { page, recorder } = await openRecorder();
     const [popup1] = await Promise.all([
       page.context().waitForEvent('page'),
       page.evaluate(`window.open('about:blank')`)
@@ -404,8 +381,8 @@ await page1.GotoAsync("about:blank?foo");`);
     expect(sources.get('C#')!.text).toContain(`await page2.Locator("#name").FillAsync("TextB");`);
   });
 
-  test('click should emit events in order', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
+  test('click should emit events in order', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
       <button id=button>
@@ -425,11 +402,11 @@ await page1.GotoAsync("about:blank?foo");`);
       page.click('button'),
       recorder.waitForOutput('JavaScript', '.click(')
     ]);
-    expect(messages).toEqual(['mousedown', 'mouseup', 'click']);
+    await expect.poll(() => messages).toEqual(['mousedown', 'mouseup', 'click']);
   });
 
-  test('should update hover model on action', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
+  test('should update hover model on action', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name='updated'"></input>`);
     const [models] = await Promise.all([
@@ -439,8 +416,8 @@ await page1.GotoAsync("about:blank?foo");`);
     expect(models.hovered).toBe('#checkbox');
   });
 
-  test('should reset hover model on action when element detaches', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
+  test('should reset hover model on action when element detaches', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input id="checkbox" onclick="document.getElementById('checkbox').remove()">`);
     const [models] = await Promise.all([
@@ -450,10 +427,10 @@ await page1.GotoAsync("about:blank?foo");`);
     expect(models.hovered).toBe(null);
   });
 
-  test('should update active model on action', async ({ page, openRecorder, browserName, headless }) => {
+  test('should update active model on action', async ({ openRecorder, browserName, headless }) => {
     test.fixme(browserName === 'webkit');
 
-    const recorder = await openRecorder();
+    const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name='updated'"></input>`);
     const [models] = await Promise.all([
       recorder.waitForActionPerformed(),
@@ -462,8 +439,8 @@ await page1.GotoAsync("about:blank?foo");`);
     expect(models.active).toBe('#checkbox');
   });
 
-  test('should check input with chaining id', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
+  test('should check input with chaining id', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name = 'updated'"></input>`);
     await Promise.all([
       recorder.waitForActionPerformed(),
@@ -471,8 +448,8 @@ await page1.GotoAsync("about:blank?foo");`);
     ]);
   });
 
-  test('should record navigations after identical pushState', async ({ page, openRecorder, server }) => {
-    const recorder = await openRecorder();
+  test('should record navigations after identical pushState', async ({ openRecorder, server }) => {
+    const { page, recorder } = await openRecorder();
     server.setRoute('/page2.html', (req, res) => {
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       res.end('Hello world');
@@ -490,7 +467,8 @@ await page1.GotoAsync("about:blank?foo");`);
     await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/page2.html');`);
   });
 
-  test('should --save-trace', async ({ runCLI }, testInfo) => {
+  test('should --save-trace', async ({ runCLI, codegenMode }, testInfo) => {
+    test.skip(codegenMode === 'trace-events');
     const traceFileName = testInfo.outputPath('trace.zip');
     const cli = runCLI([`--save-trace=${traceFileName}`], {
       autoExitWhen: ' ',
@@ -499,7 +477,8 @@ await page1.GotoAsync("about:blank?foo");`);
     expect(fs.existsSync(traceFileName)).toBeTruthy();
   });
 
-  test('should save assets via SIGINT', async ({ runCLI, platform }, testInfo) => {
+  test('should save assets via SIGINT', async ({ runCLI, platform, codegenMode }, testInfo) => {
+    test.skip(codegenMode === 'trace-events');
     test.skip(platform === 'win32', 'SIGINT not supported on Windows');
 
     const traceFileName = testInfo.outputPath('trace.zip');
@@ -515,8 +494,8 @@ await page1.GotoAsync("about:blank?foo");`);
     expect(fs.existsSync(harFileName)).toBeTruthy();
   });
 
-  test('should fill tricky characters', async ({ page, openRecorder }) => {
-    const recorder = await openRecorder();
+  test('should fill tricky characters', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<textarea spellcheck=false id="textarea" name="name" oninput="console.log(textarea.value)"></textarea>`);
     const locator = await recorder.focusElement('textarea');
@@ -546,18 +525,17 @@ await page.Locator("#textarea").FillAsync(\"Hello'\\"\`\\nWorld\");`);
     expect(message.text()).toBe('Hello\'\"\`\nWorld');
   });
 
-});
+  test('should --test-id-attribute', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder({ testIdAttributeName: 'my-test-id' });
 
-test('should --test-id-attribute', async ({ page, openRecorder }) => {
-  const recorder = await openRecorder({ testIdAttributeName: 'my-test-id' });
+    await recorder.setContentAndWait(`<div my-test-id="foo">Hello</div>`);
+    await page.click('[my-test-id=foo]');
+    const sources = await recorder.waitForOutput('JavaScript', `page.getByTestId`);
 
-  await recorder.setContentAndWait(`<div my-test-id="foo">Hello</div>`);
-  await page.click('[my-test-id=foo]');
-  const sources = await recorder.waitForOutput('JavaScript', `page.getByTestId`);
-
-  expect.soft(sources.get('JavaScript')!.text).toContain(`await page.getByTestId('foo').click()`);
-  expect.soft(sources.get('Java')!.text).toContain(`page.getByTestId("foo").click()`);
-  expect.soft(sources.get('Python')!.text).toContain(`page.get_by_test_id("foo").click()`);
-  expect.soft(sources.get('Python Async')!.text).toContain(`await page.get_by_test_id("foo").click()`);
-  expect.soft(sources.get('C#')!.text).toContain(`await page.GetByTestId("foo").ClickAsync();`);
+    expect.soft(sources.get('JavaScript')!.text).toContain(`await page.getByTestId('foo').click()`);
+    expect.soft(sources.get('Java')!.text).toContain(`page.getByTestId("foo").click()`);
+    expect.soft(sources.get('Python')!.text).toContain(`page.get_by_test_id("foo").click()`);
+    expect.soft(sources.get('Python Async')!.text).toContain(`await page.get_by_test_id("foo").click()`);
+    expect.soft(sources.get('C#')!.text).toContain(`await page.GetByTestId("foo").ClickAsync();`);
+  });
 });

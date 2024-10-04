@@ -47,6 +47,7 @@
   flex: none;
   align-items: center;
   padding: 0 8px 8px;
+  line-height: 24px;
 }
 
 .test-case-path {
@@ -60,6 +61,7 @@
   align-items: center;
   padding: 0 8px;
   line-height: 24px;
+  white-space: pre-wrap;
 }
 
 @media only screen and (max-width: 600px) {

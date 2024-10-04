@@ -197,7 +197,7 @@ export class DebugController extends SdkObject {
     const contexts = new Set<BrowserContext>();
     for (const page of this._playwright.allPages())
       contexts.add(page.context());
-    const result = await Promise.all([...contexts].map(c => Recorder.show(c, () => Promise.resolve(new InspectingRecorderApp(this)), { omitCallTracking: true })));
+    const result = await Promise.all([...contexts].map(c => Recorder.showInspector(c, { omitCallTracking: true }, () => Promise.resolve(new InspectingRecorderApp(this)))));
     return result.filter(Boolean) as Recorder[];
   }
 

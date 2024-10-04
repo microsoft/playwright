@@ -15,7 +15,8 @@
  */
 
 import { asLocator } from '../../utils';
-import type { ActionInContext, Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
+import type * as actions from '@recorder/actions';
+import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
 
 export class JsonlLanguageGenerator implements LanguageGenerator {
   id = 'jsonl';
@@ -23,7 +24,7 @@ export class JsonlLanguageGenerator implements LanguageGenerator {
   name = 'JSONL';
   highlighter = 'javascript' as Language;
 
-  generateAction(actionInContext: ActionInContext): string {
+  generateAction(actionInContext: actions.ActionInContext): string {
     const locator = (actionInContext.action as any).selector ? JSON.parse(asLocator('jsonl', (actionInContext.action as any).selector)) : undefined;
     const entry = {
       ...actionInContext.action,

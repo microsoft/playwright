@@ -35,16 +35,25 @@ export class Download {
     this._suggestedFilename = suggestedFilename;
     page._browserContext._downloads.add(this);
     if (suggestedFilename !== undefined)
-      this._page.emit(Page.Events.Download, this);
+      this._fireDownloadEvent();
+  }
+
+  page(): Page {
+    return this._page;
   }
 
   _filenameSuggested(suggestedFilename: string) {
     assert(this._suggestedFilename === undefined);
     this._suggestedFilename = suggestedFilename;
-    this._page.emit(Page.Events.Download, this);
+    this._fireDownloadEvent();
   }
 
   suggestedFilename(): string {
     return this._suggestedFilename!;
+  }
+
+  private _fireDownloadEvent() {
+    this._page.instrumentation.onDownload(this._page, this);
+    this._page.emit(Page.Events.Download, this);
   }
 }

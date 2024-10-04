@@ -212,6 +212,20 @@ export class HarTracer {
     harEntry.response.statusText = event.statusMessage;
     harEntry.response.httpVersion = event.httpVersion;
     harEntry.response.redirectURL = event.headers.location || '';
+
+    if (!this._options.omitServerIP) {
+      harEntry.serverIPAddress = event.serverIPAddress;
+      harEntry._serverPort = event.serverPort;
+    }
+
+    if (!this._options.omitTiming) {
+      harEntry.timings = event.timings;
+      this._computeHarEntryTotalTime(harEntry);
+    }
+
+    if (!this._options.omitSecurityDetails)
+      harEntry._securityDetails = event.securityDetails;
+
     for (let i = 0; i < event.rawHeaders.length; i += 2) {
       harEntry.response.headers.push({
         name: event.rawHeaders[i],
@@ -230,6 +244,8 @@ export class HarTracer {
     if (contentType)
       content.mimeType = contentType;
     this._storeResponseContent(event.body, content, 'other');
+    if (!this._options.omitSizes)
+      harEntry.response.bodySize = event.body?.length ?? 0;
 
     if (this._started)
       this._delegate.onEntryFinished(harEntry);

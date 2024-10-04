@@ -50,7 +50,11 @@ export const TestCaseView: React.FC<{
     {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
     {test && <div className='test-case-title'>{test?.title}</div>}
     {test && <div className='hbox'>
-      <div className='test-case-location'>{test.location.file}:{test.location.line}</div>
+      <div className='test-case-location'>
+        <CopyToClipboardContainer value={`${test?.location.file}:${test?.location.line}`}>
+          {test.location.file}:{test.location.line}
+        </CopyToClipboardContainer>
+      </div>
       <div style={{ flex: 'auto' }}></div>
       <div className='test-case-duration'>{msToString(test.duration)}</div>
     </div>}

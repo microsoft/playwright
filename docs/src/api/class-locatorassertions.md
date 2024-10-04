@@ -14,14 +14,14 @@ test('status becomes submitted', async ({ page }) => {
 ```
 
 ```java
-...
+// ...
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 public class TestLocator {
-  ...
+  // ...
   @Test
   void statusBecomesSubmitted() {
-    ...
+    // ...
     page.getByRole(AriaRole.BUTTON).click();
     assertThat(page.locator(".status")).hasText("Submitted");
   }
@@ -2048,7 +2048,7 @@ await expect(locator).toHaveValues([/R/, /G/]);
 ```
 
 ```java
-page.locator("id=favorite-colors").selectOption(["R", "G"]);
+page.locator("id=favorite-colors").selectOption(new String[]{"R", "G"});
 assertThat(page.locator("id=favorite-colors")).hasValues(new Pattern[] { Pattern.compile("R"), Pattern.compile("G") });
 ```
 

@@ -120,7 +120,8 @@ class PageAgent {
           // After the dragStart event is dispatched and handled by Web,
           // it might or might not create a new drag session, depending on its preventing default.
           setTimeout(() => {
-            this._browserPage.emit('pageInputEvent', { type: 'juggler-drag-finalized', dragSessionStarted: !!dragService.getCurrentSession() });
+            const session = this._getCurrentDragSession();
+            this._browserPage.emit('pageInputEvent', { type: 'juggler-drag-finalized', dragSessionStarted: !!session });
           }, 0);
         }
       }),
@@ -526,8 +527,14 @@ class PageAgent {
     });
   }
 
+  _getCurrentDragSession() {
+    const frame = this._frameTree.mainFrame();
+    const domWindow = frame?.domWindow();
+    return domWindow ? dragService.getCurrentSession(domWindow) : undefined;
+  }
+
   async _dispatchDragEvent({type, x, y, modifiers}) {
-    const session = dragService.getCurrentSession();
+    const session = this._getCurrentDragSession();
     const dropEffect = session.dataTransfer.dropEffect;
 
     if ((type === 'drop' && dropEffect !== 'none') || type ===  'dragover') {
@@ -551,9 +558,8 @@ class PageAgent {
       return;
     }
     if (type === 'dragend') {
-      const session = dragService.getCurrentSession();
-      if (session)
-        dragService.endDragSession(true);
+      const session = this._getCurrentDragSession();
+      session?.endDragSession(true);
       return;
     }
   }

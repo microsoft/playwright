@@ -131,15 +131,15 @@ export abstract class BrowserContext extends SdkObject {
 
     // When PWDEBUG=1, show inspector for each context.
     if (debugMode() === 'inspector')
-      await Recorder.show(this, RecorderApp.factory(this), { pauseOnNextStatement: true });
+      await Recorder.show('actions', this, RecorderApp.factory(this), { pauseOnNextStatement: true });
 
     // When paused, show inspector.
     if (this._debugger.isPaused())
-      Recorder.showInspector(this, RecorderApp.factory(this));
+      Recorder.showInspectorNoReply(this, RecorderApp.factory(this));
 
     this._debugger.on(Debugger.Events.PausedStateChanged, () => {
       if (this._debugger.isPaused())
-        Recorder.showInspector(this, RecorderApp.factory(this));
+        Recorder.showInspectorNoReply(this, RecorderApp.factory(this));
     });
 
     if (debugMode() === 'console')
@@ -525,7 +525,7 @@ export abstract class BrowserContext extends SdkObject {
       const internalMetadata = serverSideCallMetadata();
       const page = await this.newPage(internalMetadata);
       await page._setServerRequestInterceptor(handler => {
-        handler.fulfill({ body: '<html></html>', requestUrl: handler.request().url() }).catch(() => {});
+        handler.fulfill({ body: '<html></html>' }).catch(() => {});
         return true;
       });
       for (const origin of originsToSave) {
@@ -559,7 +559,7 @@ export abstract class BrowserContext extends SdkObject {
       isServerSide: false,
     });
     await page._setServerRequestInterceptor(handler => {
-      handler.fulfill({ body: '<html></html>', requestUrl: handler.request().url() }).catch(() => {});
+      handler.fulfill({ body: '<html></html>' }).catch(() => {});
       return true;
     });
 
@@ -594,7 +594,7 @@ export abstract class BrowserContext extends SdkObject {
         const internalMetadata = serverSideCallMetadata();
         const page = await this.newPage(internalMetadata);
         await page._setServerRequestInterceptor(handler => {
-          handler.fulfill({ body: '<html></html>', requestUrl: handler.request().url() }).catch(() => {});
+          handler.fulfill({ body: '<html></html>' }).catch(() => {});
           return true;
         });
         for (const originState of state.origins) {

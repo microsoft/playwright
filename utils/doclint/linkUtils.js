@@ -20,7 +20,16 @@
 const toKebabCase = require('lodash/kebabCase.js')
 const Documentation = require('./documentation');
 
-function createMarkdownLink(languagePath, member, text) {
+/**
+ * @param {string} languagePath
+ * @param {Documentation.Member} member
+ * @param {string} text
+ * @param {string=} paramOrOption
+ * @returns {string}
+ */
+function createMarkdownLink(languagePath, member, text, paramOrOption) {
+  if (!member.clazz)
+    throw new Error('Member without a class!');
   const className = toKebabCase(member.clazz.name);
   const memberName = toKebabCase(member.name);
   let hash = null;
@@ -28,6 +37,8 @@ function createMarkdownLink(languagePath, member, text) {
     hash = `${className}-${memberName}`.toLowerCase();
   else if (member.kind === 'event')
     hash = `${className}-event-${memberName}`.toLowerCase();
+  if (paramOrOption)
+    hash += '-option-' + toKebabCase(paramOrOption).toLowerCase();
   return `[${text}](https://playwright.dev${languagePath}/docs/api/class-${member.clazz.name.toLowerCase()}#${hash})`;
 };
 
@@ -41,26 +52,21 @@ function createClassMarkdownLink(languagePath, clazz) {
 };
 
 /**
- * @param {string} language 
+ * @param {string} language
  * @param {OutputType} outputType
  * @returns {Documentation.Renderer}
  */
 function docsLinkRendererForLanguage(language, outputType) {
   const languagePath = languageToRelativeDocsPath(language);
   return ({ clazz, member, param, option }) => {
-    if (param)
-      return `\`${param}\``;
-    if (option)
-      return `\`${option}\``;
-    if (clazz) {
-      if (outputType === 'Types')
-        return `{@link ${clazz.name}}`;
-      if (outputType === 'ReleaseNotesMd')
-        return createClassMarkdownLink(languagePath, clazz);
-      throw new Error(`Unexpected output type ${outputType}`);
-    }
+    if (clazz)
+      return createClassMarkdownLink(languagePath, clazz);
     if (!member || !member.clazz)
       throw new Error('Internal error');
+    if (param)
+      return createMarkdownLink(languagePath, member, `\`${param.alias}\``, param.name);
+    if (option)
+      return createMarkdownLink(languagePath, member, `\`${option.alias}\``, option.name);
     const className = member.clazz.varName === 'playwrightAssertions' ? '' : member.clazz.varName + '.';
     if (member.kind === 'method') {
       const args = outputType === 'ReleaseNotesMd' ? '' : renderJSSignature(member.argsArray);

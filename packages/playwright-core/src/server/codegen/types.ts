@@ -15,7 +15,7 @@
  */
 
 import type { BrowserContextOptions, LaunchOptions } from '../../../types/types';
-import type * as actions from '../recorder/recorderActions';
+import type * as actions from '@recorder/actions';
 import type { Language } from '../../utils';
 export type { Language } from '../../utils';
 
@@ -27,24 +27,12 @@ export type LanguageGeneratorOptions = {
   saveStorage?: string;
 };
 
-export type FrameDescription = {
-  pageAlias: string;
-  framePath: string[];
-};
-
-export type ActionInContext = {
-  frame: FrameDescription;
-  description?: string;
-  action: actions.Action;
-  timestamp: number;
-};
-
 export interface LanguageGenerator {
   id: string;
   groupName: string;
   name: string;
   highlighter: Language;
   generateHeader(options: LanguageGeneratorOptions): string;
-  generateAction(actionInContext: ActionInContext): string;
+  generateAction(actionInContext: actions.ActionInContext): string;
   generateFooter(saveStorage: string | undefined): string;
 }

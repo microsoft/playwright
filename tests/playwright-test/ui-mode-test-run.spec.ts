@@ -444,3 +444,82 @@ test('should show proper total when using deps', async ({ runUITest }) => {
   `);
   await expect(page.getByTestId('status-line')).toHaveText('2/2 passed (100%)');
 });
+
+test('should respect --tsconfig option', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32797' }
+}, async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'playwright.config.ts': `
+      import { foo } from '~/foo';
+      export default {
+        testDir: './tests' + foo,
+      };
+    `,
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "~/*": ["./does-not-exist/*"],
+        },
+      },
+    }`,
+    'tsconfig.special.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "~/*": ["./mapped-from-root/*"],
+        },
+      },
+    }`,
+    'mapped-from-root/foo.ts': `
+      export const foo = 42;
+    `,
+    'tests42/tsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "~/*": ["../should-be-ignored/*"],
+        },
+      },
+    }`,
+    'tests42/a.test.ts': `
+      import { foo } from '~/foo';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}) => {
+        expect(foo).toBe(42);
+      });
+    `,
+    'should-be-ignored/foo.ts': `
+      export const foo = 43;
+    `,
+  }, undefined, { additionalArgs: ['--tsconfig=tsconfig.special.json'] });
+
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ a.test.ts
+        ✅ test
+  `);
+
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+});
+
+test('should respect --ignore-snapshots option', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32868' }
+}, async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('snapshot', () => {
+        expect('foo').toMatchSnapshot(); // fails because no snapshot is present
+      });
+    `,
+  }, undefined, { additionalArgs: ['--ignore-snapshots'] });
+
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ a.test.ts
+        ✅ snapshot
+  `);
+});

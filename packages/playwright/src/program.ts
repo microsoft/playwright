@@ -161,19 +161,14 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     if (opts.onlyChanged)
       throw new Error(`--only-changed is not supported in UI mode. If you'd like that to change, see https://github.com/microsoft/playwright/issues/15075 for more details.`);
 
-    const status = await testServer.runUIMode(opts.config, {
+    const status = await testServer.runUIMode(opts.config, cliOverrides, {
       host: opts.uiHost,
       port: opts.uiPort ? +opts.uiPort : undefined,
       args,
       grep: opts.grep as string | undefined,
       grepInvert: opts.grepInvert as string | undefined,
       project: opts.project || undefined,
-      headed: opts.headed,
       reporter: Array.isArray(opts.reporter) ? opts.reporter : opts.reporter ? [opts.reporter] : undefined,
-      workers: cliOverrides.workers,
-      timeout: cliOverrides.timeout,
-      outputDir: cliOverrides.outputDir,
-      updateSnapshots: cliOverrides.updateSnapshots,
     });
     await stopProfiling('runner');
     if (status === 'restarted')
@@ -227,7 +222,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 async function runTestServer(opts: { [key: string]: any }) {
   const host = opts.host || 'localhost';
   const port = opts.port ? +opts.port : 0;
-  const status = await testServer.runTestServer(opts.config, { host, port });
+  const status = await testServer.runTestServer(opts.config, { }, { host, port });
   if (status === 'restarted')
     return;
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);

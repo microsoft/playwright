@@ -112,7 +112,7 @@ public class App {
 }
 ```
 
-By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `setHeadless(false)` flag while launching the browser. You can also use [`option: slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
+By default, Playwright runs the browsers in headless mode. To see the browser UI, [`option: BrowserType.launch.headless`] option to `false`. You can also use [`option: BrowserType.launch.slowMo`] to slow down execution. Learn more in the debugging tools [section](./debug.md).
 
 ```java
 playwright.firefox().launch(new BrowserType.LaunchOptions().setHeadless(false).setSlowMo(50));

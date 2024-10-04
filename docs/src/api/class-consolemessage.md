@@ -44,8 +44,8 @@ ConsoleMessage msg = page.waitForConsoleMessage(() -> {
 });
 
 // Deconstruct console.log arguments
-msg.args().get(0).jsonValue() // hello
-msg.args().get(1).jsonValue() // 42
+msg.args().get(0).jsonValue(); // hello
+msg.args().get(1).jsonValue(); // 42
 ```
 
 ```python async

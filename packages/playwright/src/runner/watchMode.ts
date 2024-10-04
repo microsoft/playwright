@@ -75,7 +75,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   const options: WatchModeOptions = { ...initialOptions };
   let bufferMode = false;
 
-  const testServerDispatcher = new TestServerDispatcher(configLocation);
+  const testServerDispatcher = new TestServerDispatcher(configLocation, {});
   const transport = new InMemoryTransport(
       async data => {
         const { id, method, params } = JSON.parse(data);
@@ -144,11 +144,13 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     else
       printPrompt();
 
+    const waitForCommand = readCommand();
     const command = await Promise.race([
       onDirtyTests,
-      readCommand(),
+      waitForCommand.result,
     ]);
-
+    if (command === 'changed')
+      waitForCommand.cancel();
     if (bufferMode && command === 'changed')
       continue;
 
@@ -264,27 +266,32 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   return result === 'passed' ? teardown.status : result;
 }
 
-function readKeyPress<T extends string>(handler: (text: string, key: any) => T | undefined): Promise<T> {
-  return new Promise(resolve => {
-    const rl = readline.createInterface({ input: process.stdin, escapeCodeTimeout: 50 });
-    readline.emitKeypressEvents(process.stdin, rl);
+function readKeyPress<T extends string>(handler: (text: string, key: any) => T | undefined): { cancel(): void; result: Promise<T> } {
+  const promise = new ManualPromise<T>();
+
+  const rl = readline.createInterface({ input: process.stdin, escapeCodeTimeout: 50 });
+  readline.emitKeypressEvents(process.stdin, rl);
+  if (process.stdin.isTTY)
+    process.stdin.setRawMode(true);
+
+  const cancel = () => {
+    process.stdin.off('keypress', onKeypress);
+    rl.close();
     if (process.stdin.isTTY)
-      process.stdin.setRawMode(true);
+      process.stdin.setRawMode(false);
+  };
 
-    function onKeypress(text: string, key: any) {
-      const result = handler(text, key);
-      if (result) {
-        process.stdin.off('keypress', onKeypress);
-        rl.close();
-        if (process.stdin.isTTY)
-          process.stdin.setRawMode(false);
-
-        resolve(result);
-      }
+  function onKeypress(text: string, key: any) {
+    const result = handler(text, key);
+    if (result) {
+      cancel();
+      promise.resolve(result);
     }
+  }
 
-    process.stdin.on('keypress', onKeypress);
-  });
+  process.stdin.on('keypress', onKeypress);
+
+  return { result: promise, cancel };
 }
 
 const isInterrupt = (text: string, key: any) => text === '\x03' || text === '\x1B' || (key && key.name === 'escape') || (key && key.ctrl && key.name === 'c');
@@ -314,7 +321,7 @@ async function runTests(watchOptions: WatchModeOptions, testServerConnection: Te
   });
 }
 
-function readCommand(): Promise<Command> {
+function readCommand() {
   return readKeyPress<Command>((text: string, key: any) => {
     if (isInterrupt(text, key))
       return 'interrupted';

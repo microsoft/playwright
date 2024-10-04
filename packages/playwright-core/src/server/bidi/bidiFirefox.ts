@@ -26,6 +26,7 @@ import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import { BidiBrowser } from './bidiBrowser';
 import { kBrowserCloseMessageId } from './bidiConnection';
+import { createProfile } from './third_party/firefoxPrefs';
 
 export class BidiFirefox extends BrowserType {
   constructor(parent: SdkObject) {
@@ -51,6 +52,14 @@ export class BidiFirefox extends BrowserType {
   override amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
     if (!path.isAbsolute(os.homedir()))
       throw new Error(`Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
+
+    env = {
+      ...env,
+      'MOZ_CRASHREPORTER': '1',
+      'MOZ_CRASHREPORTER_NO_REPORT': '1',
+      'MOZ_CRASHREPORTER_SHUTDOWN': '1',
+    };
+
     if (os.platform() === 'linux') {
       // Always remove SNAP_NAME and SNAP_INSTANCE_NAME env variables since they
       // confuse Firefox: in our case, builds never come from SNAP.
@@ -62,6 +71,13 @@ export class BidiFirefox extends BrowserType {
 
   override attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
     transport.send({ method: 'browser.close', params: {}, id: kBrowserCloseMessageId });
+  }
+
+  override async prepareUserDataDir(options: types.LaunchOptions, userDataDir: string): Promise<void> {
+    await createProfile({
+      path: userDataDir,
+      preferences: options.firefoxUserPrefs || {},
+    });
   }
 
   override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {

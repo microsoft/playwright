@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription, FullConfig, FullProject } from './test';
-export type { FullConfig, FullProject, TestStatus } from './test';
+import type { TestStatus, Metadata, PlaywrightTestOptions, PlaywrightWorkerOptions, ReporterDescription, FullConfig, FullProject, Location } from './test';
+export type { FullConfig, FullProject, TestStatus, Location } from './test';
 
 /**
  * Result of the full test run.
@@ -94,18 +94,20 @@ export interface FullResult {
  *
  * Here is a typical order of reporter calls:
  * - [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin) is called
- *   once with a root suite that contains all other suites and tests. Learn more about [suites hierarchy]{@link
- *   Suite}.
+ *   once with a root suite that contains all other suites and tests. Learn more about
+ *   [suites hierarchy][Suite](https://playwright.dev/docs/api/class-suite).
  * - [reporter.onTestBegin(test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-test-begin) is
- *   called for each test run. It is given a {@link TestCase} that is executed, and a {@link TestResult} that is
- *   almost empty. Test result will be populated while the test runs (for example, with steps and stdio) and will
- *   get final `status` once the test finishes.
+ *   called for each test run. It is given a [TestCase](https://playwright.dev/docs/api/class-testcase) that is
+ *   executed, and a [TestResult](https://playwright.dev/docs/api/class-testresult) that is almost empty. Test
+ *   result will be populated while the test runs (for example, with steps and stdio) and will get final `status`
+ *   once the test finishes.
  * - [reporter.onStepBegin(test, result, step)](https://playwright.dev/docs/api/class-reporter#reporter-on-step-begin)
  *   and
  *   [reporter.onStepEnd(test, result, step)](https://playwright.dev/docs/api/class-reporter#reporter-on-step-end)
  *   are called for each executed step inside the test. When steps are executed, test run has not finished yet.
  * - [reporter.onTestEnd(test, result)](https://playwright.dev/docs/api/class-reporter#reporter-on-test-end) is
- *   called when test run has finished. By this time, {@link TestResult} is complete and you can use
+ *   called when test run has finished. By this time, [TestResult](https://playwright.dev/docs/api/class-testresult)
+ *   is complete and you can use
  *   [testResult.status](https://playwright.dev/docs/api/class-testresult#test-result-status),
  *   [testResult.error](https://playwright.dev/docs/api/class-testresult#test-result-error) and more.
  * - [reporter.onEnd(result)](https://playwright.dev/docs/api/class-reporter#reporter-on-end) is called once after
@@ -128,12 +130,13 @@ export interface FullResult {
  * **Merged report API notes**
  *
  * When merging multiple [`blob`](https://playwright.dev/docs/test-reporters#blob-reporter) reports via
- * [`merge-reports`](https://playwright.dev/docs/test-sharding#merge-reports-cli) CLI command, the same {@link Reporter} API is called to
- * produce final reports and all existing reporters should work without any changes. There some subtle differences
- * though which might affect some custom reporters.
- * - Projects from different shards are always kept as separate {@link TestProject} objects. E.g. if project
- *   'Desktop Chrome' was sharded across 5 machines then there will be 5 instances of projects with the same name in
- *   the config passed to
+ * [`merge-reports`](https://playwright.dev/docs/test-sharding#merge-reports-cli) CLI command, the same
+ * [Reporter](https://playwright.dev/docs/api/class-reporter) API is called to produce final reports and all existing
+ * reporters should work without any changes. There some subtle differences though which might affect some custom
+ * reporters.
+ * - Projects from different shards are always kept as separate
+ *   [TestProject](https://playwright.dev/docs/api/class-testproject) objects. E.g. if project 'Desktop Chrome' was
+ *   sharded across 5 machines then there will be 5 instances of projects with the same name in the config passed to
  *   [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin).
  */
 export interface Reporter {
@@ -151,8 +154,8 @@ export interface Reporter {
    */
   onEnd?(result: FullResult): Promise<{ status?: FullResult['status'] } | undefined | void> | void;
   /**
-   * Called once before running tests. All tests have been already discovered and put into a hierarchy of {@link
-   * Suite}s.
+   * Called once before running tests. All tests have been already discovered and put into a hierarchy of
+   * [Suite](https://playwright.dev/docs/api/class-suite)s.
    * @param config Resolved configuration.
    * @param suite The root suite that contains all projects, files and test cases.
    */
@@ -320,37 +323,17 @@ export {};
 
 
 /**
- * Represents a location in the source code where {@link TestCase} or {@link Suite} is defined.
- */
-export interface Location {
-  /**
-   * Column number in the source file.
-   */
-  column: number;
-
-  /**
-   * Path to the source file.
-   */
-  file: string;
-
-  /**
-   * Line number in the source file.
-   */
-  line: number;
-}
-
-/**
  * `Suite` is a group of tests. All tests in Playwright Test form the following hierarchy:
- * - Root suite has a child suite for each {@link FullProject}.
+ * - Root suite has a child suite for each [FullProject](https://playwright.dev/docs/api/class-fullproject).
  *   - Project suite #1. Has a child suite for each test file in the project.
  *     - File suite #1
- *       - {@link TestCase} #1
- *       - {@link TestCase} #2
+ *       - [TestCase](https://playwright.dev/docs/api/class-testcase) #1
+ *       - [TestCase](https://playwright.dev/docs/api/class-testcase) #2
  *       - Suite corresponding to a
  *         [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe)
  *         group
- *         - {@link TestCase} #1 in a group
- *         - {@link TestCase} #2 in a group
+ *         - [TestCase](https://playwright.dev/docs/api/class-testcase) #1 in a group
+ *         - [TestCase](https://playwright.dev/docs/api/class-testcase) #2 in a group
  *       - < more test cases ... >
  *     - File suite #2
  *     - < more file suites ... >
@@ -396,7 +379,7 @@ export interface Suite {
   parent?: Suite;
 
   /**
-   * Child suites. See {@link Suite} for the hierarchy of suites.
+   * Child suites. See [Suite](https://playwright.dev/docs/api/class-suite) for the hierarchy of suites.
    */
   suites: Array<Suite>;
 
@@ -598,7 +581,7 @@ export interface TestError {
 }
 
 /**
- * A result of a single {@link TestCase} run.
+ * A result of a single [TestCase](https://playwright.dev/docs/api/class-testcase) run.
  */
 export interface TestResult {
   /**

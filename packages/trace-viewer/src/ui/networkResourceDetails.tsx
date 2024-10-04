@@ -20,6 +20,8 @@ import './networkResourceDetails.css';
 import { TabbedPane } from '@web/components/tabbedPane';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { ToolbarButton } from '@web/components/toolbarButton';
+import { generateCurlCommand, generateFetchCall } from '../third_party/devtools';
+import { CopyToClipboardTextButton } from './copyToClipboard';
 
 export const NetworkResourceDetails: React.FunctionComponent<{
   resource: ResourceSnapshot;
@@ -90,6 +92,12 @@ const RequestTab: React.FunctionComponent<{
     </> : null}
     <div className='network-request-details-header'>Request Headers</div>
     <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
+
+    <div className='network-request-details-copy'>
+      <CopyToClipboardTextButton description='Copy as cURL' value={() => generateCurlCommand(resource)} />
+      <CopyToClipboardTextButton description='Copy as Fetch' value={() => generateFetchCall(resource)} />
+    </div>
+
     {requestBody && <div className='network-request-details-header'>Request Body</div>}
     {requestBody && <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>}
   </div>;

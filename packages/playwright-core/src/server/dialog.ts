@@ -39,6 +39,7 @@ export class Dialog extends SdkObject {
     this._onHandle = onHandle;
     this._defaultValue = defaultValue || '';
     this._page._frameManager.dialogDidOpen(this);
+    this.instrumentation.onDialog(this);
   }
 
   page() {

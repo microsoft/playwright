@@ -19,8 +19,8 @@ import url from 'url';
 import { contextTest as it, expect } from '../config/browserTest';
 import { hostPlatform } from '../../packages/playwright-core/src/utils/hostPlatform';
 
-it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer, isMac, browserName }) {
-  it.skip(browserName === 'webkit' && isMac && parseInt(os.release().split('.')[0], 10) <= 21, 'WebKit on macOS 12 is frozen and does not support SharedArrayBuffer');
+it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer, isMac, macVersion, browserName }) {
+  it.skip(browserName === 'webkit' && isMac && macVersion <= 12, 'WebKit on macOS 12 is frozen and does not support SharedArrayBuffer');
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   httpsServer.setRoute('/sharedarraybuffer', (req, res) => {
@@ -65,13 +65,13 @@ it('should respect CSP @smoke', async ({ page, server }) => {
   expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
-it('should play video @smoke', async ({ page, asset, browserName, platform, mode }) => {
+it('should play video @smoke', async ({ page, asset, browserName, platform, macVersion, mode }) => {
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
   // apparently due to a Media Pack issue in the Windows Server.
   // Also the test is very flaky on Linux WebKit.
   it.fixme(browserName === 'webkit' && platform !== 'darwin');
   it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/5721');
-  it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 20, 'Does not work on BigSur');
+  it.fixme(browserName === 'webkit' && platform === 'darwin' && macVersion === 11, 'Does not work on BigSur');
   it.skip(mode.startsWith('service'));
 
   // Safari only plays mp4 so we test WebKit with an .mp4 clip.
@@ -84,8 +84,8 @@ it('should play video @smoke', async ({ page, asset, browserName, platform, mode
   await page.$eval('video', v => v.pause());
 });
 
-it('should play webm video @smoke', async ({ page, asset, browserName, platform, mode }) => {
-  it.fixme(browserName === 'webkit' && platform === 'darwin' && parseInt(os.release(), 10) === 20, 'Does not work on BigSur');
+it('should play webm video @smoke', async ({ page, asset, browserName, platform, macVersion, mode }) => {
+  it.fixme(browserName === 'webkit' && platform === 'darwin' && macVersion === 11, 'Does not work on BigSur');
   it.fixme(browserName === 'webkit' && platform === 'win32');
   it.skip(mode.startsWith('service'));
 
@@ -143,6 +143,8 @@ it('should not crash on showDirectoryPicker', async ({ page, server, browserName
   it.skip(browserName === 'chromium' && browserMajorVersion < 99, 'Fixed in Chromium r956769');
   it.skip(browserName !== 'chromium', 'showDirectoryPicker is only available in Chromium');
   await page.goto(server.EMPTY_PAGE);
+  // "User activation is required to show a file picker." - so we click first.
+  await page.locator('body').click();
   page.evaluate(async () => {
     const dir = await (window as any).showDirectoryPicker();
     return dir.name;
@@ -240,9 +242,9 @@ it('make sure that XMLHttpRequest upload events are emitted correctly', async ({
   expect(events).toEqual(['loadstart', 'progress', 'load', 'loadend']);
 });
 
-it('loading in HTMLImageElement.prototype', async ({ page, server, browserName, isMac }) => {
+it('loading in HTMLImageElement.prototype', async ({ page, server, browserName, isMac, macVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22738' });
-  it.skip(browserName === 'webkit' && isMac && parseInt(os.release(), 10) < 21, 'macOS 11 is frozen');
+  it.skip(browserName === 'webkit' && isMac && macVersion < 12, 'macOS 11 is frozen');
   await page.goto(server.EMPTY_PAGE);
   const defined = await page.evaluate(() => 'loading' in HTMLImageElement.prototype);
   expect(defined).toBeTruthy();
@@ -398,4 +400,21 @@ it('service worker should register in an iframe', async ({ page, server }) => {
     return response.text();
   });
   expect(response).toBe('responseFromServiceWorker');
+});
+
+it('should be able to render avif images', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/32673',
+  }
+}, async ({ page, server, browserName, platform }) => {
+  it.fixme(browserName === 'webkit' && platform === 'win32');
+  it.fixme(browserName === 'webkit' && platform === 'linux', 'https://github.com/microsoft/playwright/issues/32673');
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<img src="${server.PREFIX}/rgb.avif" onerror="window.error = true">`);
+  await expect.poll(() => page.locator('img').boundingBox()).toEqual(expect.objectContaining({
+    width: 128,
+    height: 128,
+  }));
+  expect(await page.evaluate(() => (window as any).error)).toBe(undefined);
 });

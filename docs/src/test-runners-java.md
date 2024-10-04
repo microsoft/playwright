@@ -202,7 +202,7 @@ You can use a Gradle build configuration script, written in Groovy or Kotlin.
 }>
 <TabItem value="gradle">
 
-```java
+```groovy
 plugins {
   application
   id 'java'
@@ -234,7 +234,7 @@ test {
 </TabItem>
 <TabItem value="gradle-kotlin">
 
-```java
+```groovy
 plugins {
   application
   id("java")

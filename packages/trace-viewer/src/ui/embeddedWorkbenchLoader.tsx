@@ -15,7 +15,7 @@
 */
 
 import * as React from 'react';
-import type { ContextEntry } from '../entries';
+import type { ContextEntry } from '../types/entries';
 import { MultiTraceModel } from './modelUtil';
 import './embeddedWorkbenchLoader.css';
 import { Workbench } from './workbench';

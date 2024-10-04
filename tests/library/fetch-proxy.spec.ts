@@ -20,10 +20,15 @@ it.skip(({ mode }) => mode !== 'default');
 
 it('context request should pick up proxy credentials', async ({ browserType, server, proxyServer }) => {
   proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
-  let auth;
-  proxyServer.setAuthHandler(req => {
-    auth = req.headers['proxy-authorization'];
-    return !!auth;
+  const authPromise = new Promise<string>(resolve => {
+    proxyServer.setAuthHandler(req => {
+      const header = req.headers['proxy-authorization'];
+      // Browser can issue various unrelated requests over the proxy,
+      // but we are only interested in our own request.
+      if (proxyServer.connectHosts.includes('non-existent.com:80'))
+        resolve(header);
+      return !!header;
+    });
   });
   const browser = await browserType.launch({
     proxy: { server: `localhost:${proxyServer.PORT}`, username: 'user', password: 'secret' }
@@ -31,6 +36,7 @@ it('context request should pick up proxy credentials', async ({ browserType, ser
   const context = await browser.newContext();
   const response = await context.request.get('http://non-existent.com/simple.json');
   expect(proxyServer.connectHosts).toContain('non-existent.com:80');
+  const auth = await authPromise;
   expect(auth).toBe('Basic ' + Buffer.from('user:secret').toString('base64'));
   expect(await response.json()).toEqual({ foo: 'bar' });
   await browser.close();

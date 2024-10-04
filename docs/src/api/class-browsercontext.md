@@ -655,7 +655,7 @@ import com.microsoft.playwright.*;
 public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
-      BrowserType webkit = playwright.webkit()
+      BrowserType webkit = playwright.webkit();
       Browser browser = webkit.launch(new BrowserType.LaunchOptions().setHeadless(false));
       BrowserContext context = browser.newContext();
       context.exposeBinding("pageURL", (source, args) -> source.page().url());
@@ -813,8 +813,9 @@ import java.util.Base64;
 public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
-      BrowserType webkit = playwright.webkit()
+      BrowserType webkit = playwright.webkit();
       Browser browser = webkit.launch(new BrowserType.LaunchOptions().setHeadless(false));
+      BrowserContext context = browser.newContext();
       context.exposeFunction("sha256", args -> {
         String text = (String) args[0];
         MessageDigest crypto;
@@ -1198,7 +1199,7 @@ Enabling routing disables http cache.
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
-When a [`option: baseURL`] via the context options was provided and the passed URL is a path,
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
 it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: BrowserContext.route.handler
@@ -1265,6 +1266,99 @@ When set to `minimal`, only record information necessary for routing from HAR. T
 - `updateContent` <[RouteFromHarUpdateContentPolicy]<"embed"|"attach">>
 
 Optional setting to control resource content management. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
+
+
+## async method: BrowserContext.routeWebSocket
+* since: v1.48
+
+This method allows to modify websocket connections that are made by any page in the browser context.
+
+Note that only `WebSocket`s created after this method was called will be routed. It is recommended to call this method before creating any pages.
+
+**Usage**
+
+Below is an example of a simple handler that blocks some websocket messages.
+See [WebSocketRoute] for more details and examples.
+
+```js
+await context.routeWebSocket('/ws', async ws => {
+  ws.routeSend(message => {
+    if (message === 'to-be-blocked')
+      return;
+    ws.send(message);
+  });
+  await ws.connect();
+});
+```
+
+```java
+context.routeWebSocket("/ws", ws -> {
+  ws.routeSend(message -> {
+    if ("to-be-blocked".equals(message))
+      return;
+    ws.send(message);
+  });
+  ws.connect();
+});
+```
+
+```python async
+def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
+  if message == "to-be-blocked":
+    return
+  ws.send(message)
+
+async def handler(ws: WebSocketRoute):
+  ws.route_send(lambda message: message_handler(ws, message))
+  await ws.connect()
+
+await context.route_web_socket("/ws", handler)
+```
+
+```python sync
+def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
+  if message == "to-be-blocked":
+    return
+  ws.send(message)
+
+def handler(ws: WebSocketRoute):
+  ws.route_send(lambda message: message_handler(ws, message))
+  ws.connect()
+
+context.route_web_socket("/ws", handler)
+```
+
+```csharp
+await context.RouteWebSocketAsync("/ws", async ws => {
+  ws.RouteSend(message => {
+    if (message == "to-be-blocked")
+      return;
+    ws.Send(message);
+  });
+  await ws.ConnectAsync();
+});
+```
+
+### param: BrowserContext.routeWebSocket.url
+* since: v1.48
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+
+Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the [`option: Browser.newContext.baseURL`] context option.
+
+### param: BrowserContext.routeWebSocket.handler
+* since: v1.48
+* langs: js, python
+- `handler` <[function]\([WebSocketRoute]\): [Promise<any>|any]>
+
+Handler function to route the WebSocket.
+
+### param: BrowserContext.routeWebSocket.handler
+* since: v1.48
+* langs: csharp, java
+- `handler` <[function]\([WebSocketRoute]\)>
+
+Handler function to route the WebSocket.
+
 
 ## method: BrowserContext.serviceWorkers
 * since: v1.11

@@ -18,7 +18,6 @@ import { TimeoutError } from './errors';
 import { assert, monotonicTime } from '../utils';
 import type { LogName } from '../utils/debugLogger';
 import type { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
-import type { ElementHandle } from './dom';
 import { ManualPromise } from '../utils/manualPromise';
 
 export interface Progress {
@@ -27,7 +26,6 @@ export interface Progress {
   isRunning(): boolean;
   cleanupWhenAborted(cleanup: () => any): void;
   throwIfAborted(): void;
-  beforeInputAction(element: ElementHandle): Promise<void>;
   metadata: CallMetadata;
 }
 
@@ -88,9 +86,6 @@ export class ProgressController {
       throwIfAborted: () => {
         if (this._state === 'aborted')
           throw new AbortedError();
-      },
-      beforeInputAction: async (element: ElementHandle) => {
-        await this.instrumentation.onBeforeInputAction(this.sdkObject, this.metadata, element);
       },
       metadata: this.metadata
     };

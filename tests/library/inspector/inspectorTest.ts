@@ -27,7 +27,7 @@ export { expect } from '@playwright/test';
 type CLITestArgs = {
   recorderPageGetter: () => Promise<Page>;
   closeRecorder: () => Promise<void>;
-  openRecorder: (options?: { testIdAttributeName: string }) => Promise<Recorder>;
+  openRecorder: (options?: { testIdAttributeName: string }) => Promise<{ recorder: Recorder, page: Page }>;
   runCLI: (args: string[], options?: { autoExitWhen?: string }) => CLIMock;
 };
 
@@ -50,12 +50,11 @@ const playwrightToAutomateInspector = require('../../../packages/playwright-core
 
 export const test = contextTest.extend<CLITestArgs>({
   recorderPageGetter: async ({ context, toImpl, mode }, run, testInfo) => {
-    process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
     testInfo.skip(mode.startsWith('service'));
     await run(async () => {
       while (!toImpl(context).recorderAppForTest)
         await new Promise(f => setTimeout(f, 100));
-      const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpoint;
+      const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpointForTest;
       const browser = await playwrightToAutomateInspector.chromium.connectOverCDP({ wsEndpoint });
       const c = browser.contexts()[0];
       return c.pages()[0] || await c.waitForEvent('page');
@@ -68,24 +67,37 @@ export const test = contextTest.extend<CLITestArgs>({
     });
   },
 
-  runCLI: async ({ childProcess, browserName, channel, headless, mode, launchOptions }, run, testInfo) => {
-    process.env.PWTEST_RECORDER_PORT = String(10907 + testInfo.workerIndex);
+  runCLI: async ({ childProcess, browserName, channel, headless, mode, launchOptions, codegenMode }, run, testInfo) => {
     testInfo.skip(mode.startsWith('service'));
 
     await run((cliArgs, { autoExitWhen } = {}) => {
-      return new CLIMock(childProcess, browserName, channel, headless, cliArgs, launchOptions.executablePath, autoExitWhen);
+      return new CLIMock(childProcess, {
+        browserName,
+        channel,
+        headless,
+        args: cliArgs,
+        executablePath: launchOptions.executablePath,
+        autoExitWhen,
+        codegenMode
+      });
     });
   },
 
-  openRecorder: async ({ page, recorderPageGetter }, run) => {
+  openRecorder: async ({ context, recorderPageGetter, codegenMode }, run) => {
     await run(async (options?: { testIdAttributeName?: string }) => {
-      await (page.context() as any)._enableRecorder({ language: 'javascript', mode: 'recording', ...options });
-      return new Recorder(page, await recorderPageGetter());
+      await (context as any)._enableRecorder({
+        language: 'javascript',
+        mode: 'recording',
+        codegenMode,
+        ...options
+      });
+      const page = await context.newPage();
+      return { page, recorder: new Recorder(page, await recorderPageGetter()) };
     });
   },
 });
 
-class Recorder {
+export class Recorder {
   page: Page;
   _highlightCallback: Function;
   _highlightInstalled: boolean;
@@ -206,23 +218,24 @@ class Recorder {
 class CLIMock {
   process: TestChildProcess;
 
-  constructor(childProcess: CommonFixtures['childProcess'], browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined, autoExitWhen: string | undefined) {
+  constructor(childProcess: CommonFixtures['childProcess'], options: { browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined, autoExitWhen: string | undefined, codegenMode?: 'trace-events' | 'actions'}) {
     const nodeArgs = [
       'node',
       path.join(__dirname, '..', '..', '..', 'packages', 'playwright-core', 'cli.js'),
       'codegen',
-      ...args,
-      `--browser=${browserName}`,
+      ...options.args,
+      `--browser=${options.browserName}`,
     ];
-    if (channel)
-      nodeArgs.push(`--channel=${channel}`);
+    if (options.channel)
+      nodeArgs.push(`--channel=${options.channel}`);
     this.process = childProcess({
       command: nodeArgs,
       env: {
-        PWTEST_CLI_AUTO_EXIT_WHEN: autoExitWhen,
+        PW_RECORDER_IS_TRACE_VIEWER: options.codegenMode === 'trace-events' ? '1' : undefined,
+        PWTEST_CLI_AUTO_EXIT_WHEN: options.autoExitWhen,
         PWTEST_CLI_IS_UNDER_TEST: '1',
-        PWTEST_CLI_HEADLESS: headless ? '1' : undefined,
-        PWTEST_CLI_EXECUTABLE_PATH: executablePath,
+        PWTEST_CLI_HEADLESS: options.headless ? '1' : undefined,
+        PWTEST_CLI_EXECUTABLE_PATH: options.executablePath,
         DEBUG: (process.env.DEBUG ?? '') + ',pw:browser*',
       },
     });

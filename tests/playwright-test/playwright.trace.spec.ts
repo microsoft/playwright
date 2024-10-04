@@ -1216,7 +1216,6 @@ test('should not nest top level expect into unfinished api calls ', {
     '    browserContext.newPage',
     'page.route',
     'page.goto',
-    'route.fetch',
     'expect.toBeVisible',
     'page.unrouteAll',
     'After Hooks',

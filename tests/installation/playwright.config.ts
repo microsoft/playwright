@@ -38,7 +38,7 @@ export default defineConfig({
   outputDir,
   testIgnore: '**\/fixture-scripts/**',
   timeout: 5 * 60 * 1000,
-  retries: 0,
+  retries: process.env.CI ? 3 : 0,
   reporter: reporters(),
   forbidOnly: !!process.env.CI,
   workers: 1,

@@ -17,11 +17,10 @@
 import type { BrowserContext } from '../../browserContext';
 import type { Page } from '../../page';
 import type { FrameSnapshot } from '@trace/snapshot';
-import type { SnapshotRenderer } from '../../../../../trace-viewer/src/snapshotRenderer';
-import { SnapshotStorage } from '../../../../../trace-viewer/src/snapshotStorage';
+import type { SnapshotRenderer } from '../../../../../trace-viewer/src/sw/snapshotRenderer';
+import { SnapshotStorage } from '../../../../../trace-viewer/src/sw/snapshotStorage';
 import type { SnapshotterBlob, SnapshotterDelegate } from '../recorder/snapshotter';
 import { Snapshotter } from '../recorder/snapshotter';
-import type { ElementHandle } from '../../dom';
 import type { HarTracerDelegate } from '../../har/harTracer';
 import { HarTracer } from '../../har/harTracer';
 import type * as har from '@trace/har';
@@ -59,11 +58,11 @@ export class InMemorySnapshotter implements SnapshotterDelegate, HarTracerDelega
     this._harTracer.stop();
   }
 
-  async captureSnapshot(page: Page, callId: string, snapshotName: string, element?: ElementHandle): Promise<SnapshotRenderer> {
+  async captureSnapshot(page: Page, callId: string, snapshotName: string): Promise<SnapshotRenderer> {
     if (this._snapshotReadyPromises.has(snapshotName))
       throw new Error('Duplicate snapshot name: ' + snapshotName);
 
-    this._snapshotter.captureSnapshot(page, callId, snapshotName, element).catch(() => {});
+    this._snapshotter.captureSnapshot(page, callId, snapshotName).catch(() => {});
     const promise = new ManualPromise<SnapshotRenderer>();
     this._snapshotReadyPromises.set(snapshotName, promise);
     return promise;

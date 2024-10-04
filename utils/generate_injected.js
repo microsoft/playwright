@@ -45,13 +45,19 @@ const injectedScripts = [
     true,
   ],
   [
-    path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'recorder', 'recorder.ts'),
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'recorder', 'pollingRecorder.ts'),
     path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
     true,
   ],
   [
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'clock.ts'),
+    path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed'),
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
+    true,
+  ],
+  [
+    path.join(ROOT, 'packages', 'playwright-core', 'src', 'server', 'injected', 'webSocketMock.ts'),
     path.join(ROOT, 'packages', 'playwright-core', 'lib', 'server', 'injected', 'packed'),
     path.join(ROOT, 'packages', 'playwright-core', 'src', 'generated'),
     true,

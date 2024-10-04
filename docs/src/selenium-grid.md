@@ -10,8 +10,6 @@ Playwright can connect to [Selenium Grid Hub](https://www.selenium.dev/documenta
 :::warning
 There is a risk of Playwright integration with Selenium Grid Hub breaking in the future. Make sure you weight risks against benefits before using it.
 
-<br />
-<br />
 <details>
 <summary>
 <span style={{textTransform:'uppercase',fontSize:'smaller',fontWeight:'bold',opacity:'0.6'}}>More details</span>
@@ -79,19 +77,19 @@ SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_CAPABILITIES="
 If your grid requires additional headers to be set (for example, you should provide authorization token to use browsers in your cloud), you can set `SELENIUM_REMOTE_HEADERS` environment variable to provide JSON-serialized headers.
 
 ```bash js
-SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_HEADERS="{'Authorization':'OAuth 12345'}" npx playwright test
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_HEADERS="{'Authorization':'Basic b64enc'}" npx playwright test
 ```
 
 ```bash python
-SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_HEADERS="{'Authorization':'OAuth 12345'}" pytest --browser chromium
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_HEADERS="{'Authorization':'Basic b64enc'}" pytest --browser chromium
 ```
 
 ```bash java
-SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_HEADERS="{'Authorization':'OAuth 12345'}" mvn test
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_HEADERS="{'Authorization':'Basic b64enc'}" mvn test
 ```
 
 ```bash csharp
-SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_HEADERS="{'Authorization':'OAuth 12345'}" dotnet test
+SELENIUM_REMOTE_URL=http://<selenium-hub-ip>:4444 SELENIUM_REMOTE_HEADERS="{'Authorization':'Basic b64enc'}" dotnet test
 ```
 
 ### Detailed logs
@@ -120,7 +118,7 @@ If you file an issue, please include this log.
 
 ## Using Selenium Docker
 
-One easy way to use Selenium Grid is to run official docker containers. Read more in [selenium docker images](https://github.com/SeleniumHQ/docker-selenium) documentation. For experimental arm images, see [docker-seleniarm](https://github.com/seleniumhq-community/docker-seleniarm).
+One easy way to use Selenium Grid is to run official docker containers. Read more in [selenium docker images](https://github.com/SeleniumHQ/docker-selenium) documentation. For image tagging convention, [read more](https://github.com/SeleniumHQ/docker-selenium/wiki/Tagging-Convention#selenium-grid-4x-and-above).
 
 ### Standalone mode
 
@@ -129,10 +127,7 @@ Here is an example of running selenium standalone and connecting Playwright to i
 First start Selenium.
 
 ```bash
-docker run -d -p 4444:4444 --shm-size="2g" -e SE_NODE_GRID_URL="http://localhost:4444" selenium/standalone-chrome:4.3.0-20220726
-
-# Alternatively for arm architecture
-docker run -d -p 4444:4444 --shm-size="2g" -e SE_NODE_GRID_URL="http://localhost:4444" seleniarm/standalone-chromium:103.0
+docker run -d -p 4444:4444 --shm-size="2g" -e SE_NODE_GRID_URL="http://localhost:4444" selenium/standalone-chromium:latest
 ```
 
 Then run Playwright.
@@ -160,24 +155,14 @@ Here is an example of running selenium hub and a single selenium node, and conne
 First start the hub container and one or more node containers.
 
 ```bash
-docker run -d -p 4442-4444:4442-4444 --name selenium-hub selenium/hub:4.3.0-20220726
+docker run -d -p 4442-4444:4442-4444 --name selenium-hub selenium/hub:4.25.0
 docker run -d -p 5555:5555 \
     --shm-size="2g" \
     -e SE_EVENT_BUS_HOST=<selenium-hub-ip> \
     -e SE_EVENT_BUS_PUBLISH_PORT=4442 \
     -e SE_EVENT_BUS_SUBSCRIBE_PORT=4443 \
     -e SE_NODE_GRID_URL="http://<selenium-hub-ip>:4444"
-    selenium/node-chrome:4.3.0-20220726
-
-# Alternatively for arm architecture
-docker run -d -p 4442-4444:4442-4444 --name selenium-hub seleniarm/hub:4.3.0-20220728
-docker run -d -p 5555:5555 \
-    --shm-size="2g" \
-    -e SE_EVENT_BUS_HOST=<selenium-hub-ip> \
-    -e SE_EVENT_BUS_PUBLISH_PORT=4442 \
-    -e SE_EVENT_BUS_SUBSCRIBE_PORT=4443 \
-    -e SE_NODE_GRID_URL="http://<selenium-hub-ip>:4444"
-    seleniarm/node-chromium:103.0
+    selenium/node-chromium:4.25.0
 ```
 
 Then run Playwright.

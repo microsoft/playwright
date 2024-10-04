@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import type * as actions from '@recorder/actions';
 import type { CallLog, Mode, Source } from '@recorder/recorderTypes';
 import type { EventEmitter } from 'events';
 
@@ -23,6 +24,7 @@ export interface IRecorder {
 }
 
 export interface IRecorderApp extends EventEmitter {
+  readonly wsEndpointForTest: string | undefined;
   close(): Promise<void>;
   setPaused(paused: boolean): Promise<void>;
   setMode(mode: Mode): Promise<void>;
@@ -30,6 +32,7 @@ export interface IRecorderApp extends EventEmitter {
   setSelector(selector: string, userGesture?: boolean): Promise<void>;
   updateCallLogs(callLogs: CallLog[]): Promise<void>;
   setSources(sources: Source[]): Promise<void>;
+  setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void>;
 }
 
 export type IRecorderAppFactory = (recorder: IRecorder) => Promise<IRecorderApp>;

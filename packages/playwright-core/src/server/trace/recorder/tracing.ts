@@ -23,7 +23,6 @@ import { commandsWithTracingSnapshots } from '../../../protocol/debug';
 import { assert, createGuid, monotonicTime, SerializedFS, removeFolders, eventsHelper, type RegisteredListener } from '../../../utils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
-import type { ElementHandle } from '../../dom';
 import type { APIRequestContext } from '../../fetch';
 import type { CallMetadata, InstrumentationListener } from '../../instrumentation';
 import { SdkObject } from '../../instrumentation';
@@ -38,6 +37,8 @@ import { Snapshotter } from './snapshotter';
 import type { ConsoleMessage } from '../../console';
 import { Dispatcher } from '../../dispatchers/dispatcher';
 import { serializeError } from '../../errors';
+import type { Dialog } from '../../dialog';
+import type { Download } from '../../download';
 
 const version: trace.VERSION = 7;
 
@@ -179,7 +180,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       wallTime: Date.now(),
       monotonicTime: monotonicTime()
     };
-    this._fs.appendFile(this._state.traceFile, JSON.stringify(event) + '\n');
+    this._appendTraceEvent(event);
 
     this._context.instrumentation.addListener(this, this._context);
     this._eventListeners.push(
@@ -339,7 +340,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return { artifact };
   }
 
-  async _captureSnapshot(snapshotName: string, sdkObject: SdkObject, metadata: CallMetadata, element?: ElementHandle): Promise<void> {
+  async _captureSnapshot(snapshotName: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (!this._snapshotter)
       return;
     if (!sdkObject.attribution.page)
@@ -348,7 +349,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       return;
     if (!shouldCaptureSnapshot(metadata))
       return;
-    await this._snapshotter.captureSnapshot(sdkObject.attribution.page, metadata.id, snapshotName, element).catch(() => {});
+    await this._snapshotter.captureSnapshot(sdkObject.attribution.page, metadata.id, snapshotName).catch(() => {});
   }
 
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
@@ -363,7 +364,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return this._captureSnapshot(event.beforeSnapshot, sdkObject, metadata);
   }
 
-  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata, element: ElementHandle) {
+  onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {
     if (!this._state?.callIds.has(metadata.id))
       return Promise.resolve();
     // IMPORTANT: no awaits before this._appendTraceEvent in this method.
@@ -373,7 +374,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     sdkObject.attribution.page?.temporarilyDisableTracingScreencastThrottling();
     event.inputSnapshot = `input@${metadata.id}`;
     this._appendTraceEvent(event);
-    return this._captureSnapshot(event.inputSnapshot, sdkObject, metadata, element);
+    return this._captureSnapshot(event.inputSnapshot, sdkObject, metadata);
   }
 
   onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string) {
@@ -443,6 +444,50 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       location: message.location(),
       time: monotonicTime(),
       pageId: message.page()?.guid,
+    };
+    this._appendTraceEvent(event);
+  }
+
+  onDialog(dialog: Dialog) {
+    const event: trace.EventTraceEvent = {
+      type: 'event',
+      time: monotonicTime(),
+      class: 'BrowserContext',
+      method: 'dialog',
+      params: { pageId: dialog.page().guid, type: dialog.type(), message: dialog.message(), defaultValue: dialog.defaultValue() },
+    };
+    this._appendTraceEvent(event);
+  }
+
+  onDownload(page: Page, download: Download) {
+    const event: trace.EventTraceEvent = {
+      type: 'event',
+      time: monotonicTime(),
+      class: 'BrowserContext',
+      method: 'download',
+      params: { pageId: page.guid, url: download.url, suggestedFilename: download.suggestedFilename() },
+    };
+    this._appendTraceEvent(event);
+  }
+
+  onPageOpen(page: Page) {
+    const event: trace.EventTraceEvent = {
+      type: 'event',
+      time: monotonicTime(),
+      class: 'BrowserContext',
+      method: 'page',
+      params: { pageId: page.guid, openerPageId: page.opener()?.guid },
+    };
+    this._appendTraceEvent(event);
+  }
+
+  onPageClose(page: Page) {
+    const event: trace.EventTraceEvent = {
+      type: 'event',
+      time: monotonicTime(),
+      class: 'BrowserContext',
+      method: 'pageClosed',
+      params: { pageId: page.guid },
     };
     this._appendTraceEvent(event);
   }

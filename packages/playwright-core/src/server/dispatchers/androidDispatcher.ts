@@ -103,7 +103,9 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   async info(params: channels.AndroidDeviceTapParams): Promise<channels.AndroidDeviceInfoResult> {
-    return { info: await this._object.send('info', params) };
+    const info = await this._object.send('info', params);
+    fixupAndroidElementInfo(info);
+    return { info };
   }
 
   async inputType(params: channels.AndroidDeviceInputTypeParams) {
@@ -305,3 +307,14 @@ const keyMap = new Map<string, number>([
   ['Copy', 278],
   ['Paste', 279],
 ]);
+
+function fixupAndroidElementInfo(info: channels.AndroidElementInfo) {
+  // Some of the properties are nullable, see https://developer.android.com/reference/androidx/test/uiautomator/UiObject2.
+  info.clazz = info.clazz || '';
+  info.pkg = info.pkg || '';
+  info.res = info.res || '';
+  info.desc = info.desc || '';
+  info.text = info.text || '';
+  for (const child of info.children || [])
+    fixupAndroidElementInfo(child);
+}

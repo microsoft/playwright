@@ -80,7 +80,7 @@ If there is no listener for [`event: Page.dialog`], all dialogs are automaticall
 
 ## beforeunload dialog
 
-When [`method: Page.close`] is invoked with the truthy [`option: runBeforeUnload`] value, the page runs its unload handlers. This is the only case when [`method: Page.close`] does not wait for the page to actually close, because it might be that the page stays open in the end of the operation.
+When [`method: Page.close`] is invoked with the truthy [`option: Page.close.runBeforeUnload`] value, the page runs its unload handlers. This is the only case when [`method: Page.close`] does not wait for the page to actually close, because it might be that the page stays open in the end of the operation.
 
 You can register a dialog handler to handle the `beforeunload` dialog yourself:
 

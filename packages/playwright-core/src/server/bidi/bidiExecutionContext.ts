@@ -23,7 +23,7 @@ import { BidiSerializer } from './third_party/bidiSerializer';
 
 export class BidiExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: BidiSession;
-  private readonly _target: bidi.Script.Target;
+  readonly _target: bidi.Script.Target;
 
   constructor(session: BidiSession, realmInfo: bidi.Script.RealmInfo) {
     this._session = session;
@@ -77,10 +77,6 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 
-  rawCallFunctionNoReply(func: Function, ...args: any[]) {
-    throw new Error('Method not implemented.');
-  }
-
   async evaluateWithArguments(functionDeclaration: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
     const response = await this._session.send('script.callFunction', {
       functionDeclaration,
@@ -120,10 +116,6 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       target: this._target,
       handles: [objectId],
     });
-  }
-
-  objectCount(objectId: js.ObjectId): Promise<number> {
-    throw new Error('Method not implemented.');
   }
 
   async rawCallFunction(functionDeclaration: string, arg: bidi.Script.LocalValue): Promise<bidi.Script.RemoteValue> {

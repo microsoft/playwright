@@ -50,10 +50,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Intel: macos-13, macos-14-large
-        # Arm64: macos-13-xlarge, macos-14
-        os: [macos-13, macos-13-xlarge, macos-14-large, macos-14]
+        # Intel: *-large
+        # Arm64: *-xlarge
+        os: [macos-13-large, macos-13-xlarge, macos-14-large, macos-14-xlarge]
         browser: [chromium, firefox, webkit]
+        include:
+          - os: macos-15-large
+            browser: webkit
+          - os: macos-15-xlarge
+            browser: webkit
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -118,7 +123,13 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-        os: [ubuntu-20.04, ubuntu-22.04, ubuntu-24.04, macos-14, windows-latest]
+        os: [ubuntu-24.04, macos-14-xlarge, windows-latest]
+        include:
+          # We have different binaries per Ubuntu version for WebKit.
+          - browser: webkit
+            os: ubuntu-20.04
+          - browser: webkit
+            os: ubuntu-22.04
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
@@ -179,355 +190,70 @@ jobs:
         PWTEST_TRACE: 1
         PWTEST_CHANNEL: ${{ matrix.channel }}
 
-  chrome_stable_linux:
-    name: "Chrome Stable (Linux)"
+  test_chromium_channels:
+    name: Test ${{ matrix.channel }} on ${{ matrix.runs-on }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: [chrome, chrome-beta, msedge, msedge-beta, msedge-dev]
+        runs-on: [ubuntu-20.04, macos-latest, windows-latest]
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test
       with:
-        browsers-to-install: chrome
+        browsers-to-install: ${{ matrix.channel }}
         command: npm run ctest
-        bot-name: "chrome-stable-linux"
+        bot-name: ${{ matrix.channel }}-${{ matrix.runs-on }}
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
-        PWTEST_CHANNEL: chrome
-
-  chrome_stable_win:
-    name: "Chrome Stable (Win)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: chrome
-        command: npm run ctest
-        bot-name: "chrome-stable-windows"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: chrome
-
-  chrome_stable_mac:
-    name: "Chrome Stable (Mac)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: chrome
-        command: npm run ctest
-        bot-name: "chrome-stable-mac"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: chrome
+        PWTEST_CHANNEL: ${{ matrix.channel }}
 
   chromium_tot:
-    name: Chromium tip-of-tree ${{ matrix.os }}
+    name: Chromium tip-of-tree ${{ matrix.os }}${{ matrix.headed }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-20.04, macos-13, windows-latest]
+        headed: ['--headed', '']
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: chromium-tip-of-tree
-        command: npm run ctest
-        bot-name: "tip-of-tree-${{ matrix.os }}"
+        command: npm run ctest -- ${{ matrix.headed }}
+        bot-name: "chromium-tip-of-tree-${{ matrix.os }}${{ matrix.headed }}"
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: chromium-tip-of-tree
 
-  chromium_tot_headed:
-    name: Chromium tip-of-tree headed ${{ matrix.os }}
+  firefox_beta:
+    name: Firefox Beta ${{ matrix.os }}
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: chromium-tip-of-tree
-        command: npm run ctest -- --headed
-        bot-name: "tip-of-tree-headed-${{ matrix.os }}"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: chromium-tip-of-tree
-
-  firefox_beta_linux:
-    name: "Firefox Beta (Linux)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: ubuntu-20.04
+        os: [ubuntu-20.04, windows-latest, macos-latest]
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: firefox-beta chromium
         command: npm run ftest
-        bot-name: "firefox-beta-linux"
+        bot-name: "firefox-beta-${{ matrix.os }}"
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: firefox-beta
-
-  firefox_beta_win:
-    name: "Firefox Beta (Win)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: firefox-beta chromium
-        command: npm run ftest -- --workers=1
-        bot-name: "firefox-beta-windows"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: firefox-beta
-
-  firefox_beta_mac:
-    name: "Firefox Beta (Mac)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    # Stick with macos-latest-large for now which is Intel-based until
-    # https://github.com/microsoft/playwright/issues/30705 is fixed.
-    runs-on: macos-latest-large
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: firefox-beta chromium
-        command: npm run ftest
-        bot-name: "firefox-beta-mac"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: firefox-beta
-
-  edge_stable_mac:
-    name: "Edge Stable (Mac)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: msedge
-        command: npm run ctest
-        bot-name: "edge-stable-mac"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: msedge
-
-  edge_stable_win:
-    name: "Edge Stable (Win)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: msedge
-        command: npm run ctest
-        bot-name: "edge-stable-windows"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: msedge
-
-  edge_stable_linux:
-    name: "Edge Stable (Linux)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: msedge
-        command: npm run ctest
-        bot-name: "edge-stable-linux"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: msedge
-
-  edge_beta_mac:
-    name: "Edge Beta (Mac)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: msedge-beta
-        command: npm run ctest
-        bot-name: "edge-beta-mac"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: msedge-beta
-
-  edge_beta_win:
-    name: "Edge Beta (Win)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: msedge-beta
-        command: npm run ctest
-        bot-name: "edge-beta-windows"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: msedge-beta
-
-  edge_beta_linux:
-    name: "Edge Beta (Linux)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: msedge-beta
-        command: npm run ctest
-        bot-name: "edge-beta-linux"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: msedge-beta
-
-  edge_dev_mac:
-    name: "Edge Dev (Mac)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: msedge-dev
-        command: npm run ctest
-        bot-name: "edge-dev-mac"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: msedge-dev
-
-  edge_dev_win:
-    name: "Edge Dev (Win)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: msedge-dev
-        command: npm run ctest
-        bot-name: "edge-dev-windows"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: msedge-dev
-
-  edge_dev_linux:
-    name: "Edge Dev (Linux)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: msedge-dev
-        command: npm run ctest
-        bot-name: "edge-dev-linux"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: msedge-dev
-
-  chrome_beta_linux:
-    name: "Chrome Beta (Linux)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: chrome-beta
-        command: npm run ctest
-        bot-name: "chrome-beta-linux"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: chrome-beta
-
-  chrome_beta_win:
-    name: "Chrome Beta (Win)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: chrome-beta
-        command: npm run ctest
-        bot-name: "chrome-beta-windows"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: chrome-beta
-
-  chrome_beta_mac:
-    name: "Chrome Beta (Mac)"
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: chrome-beta
-        command: npm run ctest
-        bot-name: "chrome-beta-mac"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: chrome-beta
 
   build-playwright-driver:
     name: "build-playwright-driver"

@@ -17,16 +17,16 @@
 import type * as channels from '@protocol/channels';
 import type { Source } from '@recorder/recorderTypes';
 import { EventEmitter } from 'events';
-import * as recorderSource from '../../generated/recorderSource';
+import * as recorderSource from '../../generated/pollingRecorderSource';
 import { eventsHelper, monotonicTime, quoteCSSAttributeValue, type RegisteredListener } from '../../utils';
 import { raceAgainstDeadline } from '../../utils/timeoutRunner';
 import { BrowserContext } from '../browserContext';
-import type { ActionInContext, FrameDescription, LanguageGeneratorOptions, Language, LanguageGenerator } from '../codegen/types';
+import type { LanguageGeneratorOptions, Language, LanguageGenerator } from '../codegen/types';
 import { languageSet } from '../codegen/languages';
 import type { Dialog } from '../dialog';
 import { Frame } from '../frames';
 import { Page } from '../page';
-import type * as actions from './recorderActions';
+import type * as actions from '@recorder/actions';
 import { ThrottledFile } from './throttledFile';
 import { RecorderCollection } from './recorderCollection';
 import { generateCode } from '../codegen/language';
@@ -34,7 +34,7 @@ import { generateCode } from '../codegen/language';
 type BindingSource = { frame: Frame, page: Page };
 
 export interface ContextRecorderDelegate {
-  rewriteActionInContext?(pageAliases: Map<Page, string>, actionInContext: ActionInContext): Promise<void>;
+  rewriteActionInContext?(pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext): Promise<void>;
 }
 
 export class ContextRecorder extends EventEmitter {
@@ -48,15 +48,17 @@ export class ContextRecorder extends EventEmitter {
   private _lastDialogOrdinal = -1;
   private _lastDownloadOrdinal = -1;
   private _context: BrowserContext;
-  private _params: channels.BrowserContextRecorderSupplementEnableParams;
+  private _params: channels.BrowserContextEnableRecorderParams;
   private _delegate: ContextRecorderDelegate;
   private _recorderSources: Source[];
   private _throttledOutputFile: ThrottledFile | null = null;
   private _orderedLanguages: LanguageGenerator[] = [];
   private _listeners: RegisteredListener[] = [];
+  private _codegenMode: 'actions' | 'trace-events';
 
-  constructor(context: BrowserContext, params: channels.BrowserContextRecorderSupplementEnableParams, delegate: ContextRecorderDelegate) {
+  constructor(codegenMode: 'actions' | 'trace-events', context: BrowserContext, params: channels.BrowserContextEnableRecorderParams, delegate: ContextRecorderDelegate) {
     super();
+    this._codegenMode = codegenMode;
     this._context = context;
     this._params = params;
     this._delegate = delegate;
@@ -73,11 +75,11 @@ export class ContextRecorder extends EventEmitter {
       saveStorage: params.saveStorage,
     };
 
-    const collection = new RecorderCollection(this._pageAliases, params.mode === 'recording');
-    collection.on('change', () => {
+    this._collection = new RecorderCollection(this._pageAliases);
+    this._collection.on('change', (actions: actions.ActionInContext[]) => {
       this._recorderSources = [];
       for (const languageGenerator of this._orderedLanguages) {
-        const { header, footer, actionTexts, text } = generateCode(collection.actions(), languageGenerator, languageGeneratorOptions);
+        const { header, footer, actionTexts, text } = generateCode(actions, languageGenerator, languageGeneratorOptions);
         const source: Source = {
           isRecorded: true,
           label: languageGenerator.name,
@@ -95,7 +97,10 @@ export class ContextRecorder extends EventEmitter {
         if (languageGenerator === this._orderedLanguages[0])
           this._throttledOutputFile?.setContent(source.text);
       }
-      this.emit(ContextRecorder.Events.Change, { sources: this._recorderSources });
+      this.emit(ContextRecorder.Events.Change, {
+        sources: this._recorderSources,
+        actions
+      });
     });
     context.on(BrowserContext.Events.BeforeClose, () => {
       this._throttledOutputFile?.flush();
@@ -103,7 +108,7 @@ export class ContextRecorder extends EventEmitter {
     this._listeners.push(eventsHelper.addEventListener(process, 'exit', () => {
       this._throttledOutputFile?.flush();
     }));
-    this._collection = collection;
+    this.setEnabled(true);
   }
 
   setOutput(codegenId: string, outputFile?: string) {
@@ -145,6 +150,12 @@ export class ContextRecorder extends EventEmitter {
 
   setEnabled(enabled: boolean) {
     this._collection.setEnabled(enabled);
+    if (this._codegenMode === 'trace-events') {
+      if (enabled)
+        this._context.tracing.startChunk({ name: 'trace', title: 'trace' }).catch(() => {});
+      else
+        this._context.tracing.stopChunk({ mode: 'discard' }).catch(() => {});
+    }
   }
 
   dispose() {
@@ -161,7 +172,7 @@ export class ContextRecorder extends EventEmitter {
           name: 'closePage',
           signals: [],
         },
-        timestamp: monotonicTime()
+        startTime: monotonicTime()
       });
       this._pageAliases.delete(page);
     });
@@ -184,7 +195,7 @@ export class ContextRecorder extends EventEmitter {
           url: page.mainFrame().url(),
           signals: [],
         },
-        timestamp: monotonicTime()
+        startTime: monotonicTime()
       });
     }
   }
@@ -197,14 +208,14 @@ export class ContextRecorder extends EventEmitter {
     }
   }
 
-  private _describeMainFrame(page: Page): FrameDescription {
+  private _describeMainFrame(page: Page): actions.FrameDescription {
     return {
       pageAlias: this._pageAliases.get(page)!,
       framePath: [],
     };
   }
 
-  private async _describeFrame(frame: Frame): Promise<FrameDescription> {
+  private async _describeFrame(frame: Frame): Promise<actions.FrameDescription> {
     return {
       pageAlias: this._pageAliases.get(frame._page)!,
       framePath: await generateFrameSelector(frame),
@@ -215,13 +226,13 @@ export class ContextRecorder extends EventEmitter {
     return this._params.testIdAttributeName || this._context.selectors().testIdAttributeName() || 'data-testid';
   }
 
-  private async _createActionInContext(frame: Frame, action: actions.Action): Promise<ActionInContext> {
+  private async _createActionInContext(frame: Frame, action: actions.Action): Promise<actions.ActionInContext> {
     const frameDescription = await this._describeFrame(frame);
-    const actionInContext: ActionInContext = {
+    const actionInContext: actions.ActionInContext = {
       frame: frameDescription,
       action,
       description: undefined,
-      timestamp: monotonicTime()
+      startTime: monotonicTime()
     };
     await this._delegate.rewriteActionInContext?.(this._pageAliases, actionInContext);
     return actionInContext;

@@ -165,7 +165,7 @@ class ApiParser {
     if (!name)
       throw new Error('Invalid member name ' + spec.text);
     if (match[1] === 'param') {
-      const arg = this.parseProperty(spec);
+      const arg = this.parseProperty(spec, match[2]);
       if (!arg)
         return;
       arg.name = name;
@@ -182,7 +182,7 @@ class ApiParser {
       }
     } else {
       // match[1] === 'option'
-      const p = this.parseProperty(spec);
+      const p = this.parseProperty(spec, match[2]);
       if (!p)
         return;
       let options = method.argsArray.find(o => o.name === 'options');
@@ -192,18 +192,20 @@ class ApiParser {
         method.argsArray.push(options);
       }
       p.required = false;
-      // @ts-ignore
-      options.type.properties.push(p);
+      options.type?.properties?.push(p);
     }
   }
 
   /**
    * @param {MarkdownHeaderNode} spec
+   * @param {string} memberName
    * @returns {docs.Member | null}
    */
-  parseProperty(spec) {
+  parseProperty(spec, memberName) {
     const param = childrenWithoutProperties(spec)[0];
     const text = /** @type {string}*/(param.text);
+    if (text.substring(text.lastIndexOf('>') + 1).trim())
+      throw new Error(`Extra information after type while processing "${memberName}".\nYou probably need an extra empty line before the description.\n================\n${text}`);
     let typeStart = text.indexOf('<');
     while ('?e'.includes(text[typeStart - 1]))
       typeStart--;

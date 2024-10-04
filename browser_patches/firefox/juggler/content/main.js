@@ -45,10 +45,6 @@ function initialize(browsingContext, docShell) {
       docShell.languageOverride = locale;
     },
 
-    scrollbarsHidden: (hidden) => {
-      data.frameTree.setScrollbarsHidden(hidden);
-    },
-
     javaScriptDisabled: (javaScriptDisabled) => {
       data.frameTree.setJavaScriptDisabled(javaScriptDisabled);
     },

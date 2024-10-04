@@ -19,7 +19,7 @@ import * as React from 'react';
 import './consoleTab.css';
 import type * as modelUtil from './modelUtil';
 import { ListView } from '@web/components/listView';
-import type { Boundaries } from '../geometry';
+import type { Boundaries } from './geometry';
 import { clsx, msToString } from '@web/uiUtils';
 import { ansi2html } from '@web/ansi2html';
 import { PlaceholderPanel } from './placeholderPanel';
@@ -106,9 +106,9 @@ export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined,
 export const ConsoleTab: React.FunctionComponent<{
   boundaries: Boundaries,
   consoleModel: ConsoleTabModel,
-  selectedTime: Boundaries | undefined,
-  onEntryHovered: (entry: ConsoleEntry | undefined) => void,
-  onAccepted: (entry: ConsoleEntry) => void,
+  selectedTime?: Boundaries | undefined,
+  onEntryHovered?: (entry: ConsoleEntry | undefined) => void,
+  onAccepted?: (entry: ConsoleEntry) => void,
 }> = ({ consoleModel, boundaries, onEntryHovered, onAccepted }) => {
   if (!consoleModel.entries.length)
     return <PlaceholderPanel text='No console entries' />;

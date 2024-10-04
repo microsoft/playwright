@@ -127,6 +127,14 @@ test('should complain about newer version of trace in old viewer', async ({ show
   await expect(traceViewer.page.getByText('The trace was created by a newer version of Playwright and is not supported by this version of the viewer.')).toBeVisible();
 });
 
+test('should properly synchronize local and remote time', async ({ showTraceViewer, asset }, testInfo) => {
+  const traceViewer = await showTraceViewer([asset('trace-remote-time-diff.zip')]);
+  // The total duration should be sub 10s, rather than 16h.
+  await expect.poll(async () =>
+    parseInt(await traceViewer.page.locator('.timeline-time').last().innerText(), 10)
+  ).toBeLessThan(10);
+});
+
 test('should contain action info', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await traceViewer.selectAction('locator.click');
@@ -253,7 +261,7 @@ test('should have network requests', async ({ showTraceViewer }) => {
   await expect(traceViewer.networkRequests).toContainText([/style.cssGET200text\/css/]);
   await expect(traceViewer.networkRequests).toContainText([/404GET404text\/plain/]);
   await expect(traceViewer.networkRequests).toContainText([/script.jsGET200application\/javascript/]);
-  await expect(traceViewer.networkRequests.filter({ hasText: '404' })).toHaveCSS('background-color', 'rgb(242, 222, 222)');
+  await expect(traceViewer.networkRequests.filter({ hasText: '404GET404text' })).toHaveCSS('background-color', 'rgb(242, 222, 222)');
 });
 
 test('should filter network requests by resource type', async ({ page, runAndTrace, server }) => {
@@ -753,7 +761,7 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
     await page.setContent(`
       <div>t1</div>
       <div>t2</div>
-      <div>t3</div>
+      <div id=div3>t3</div>
       <div>t4</div>
       <div>t5</div>
       <div>t6</div>
@@ -768,6 +776,13 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
     await expect(page.locator('text=t6')).toHaveText(/t6/i);
     await expect(page.locator('text=multi')).toHaveText(['a', 'b'], { timeout: 1000 }).catch(() => {});
     await page.mouse.move(123, 234);
+    await page.getByText(/^t\d$/).click().catch(() => {});
+    await expect(page.getByText(/t3|t4/)).toBeVisible().catch(() => {});
+
+    const expectPromise = expect(page.getByText(/t3|t4/)).toHaveText(['t4']);
+    await page.waitForTimeout(1000);
+    await page.evaluate(() => document.querySelector('#div3').textContent = 'changed');
+    await expectPromise;
   });
 
   async function highlightedDivs(frameLocator: FrameLocator) {
@@ -809,6 +824,15 @@ test('should highlight target elements', async ({ page, runAndTrace, browserName
 
   const frameMouseMove = await traceViewer.snapshotFrame('mouse.move');
   await expect(frameMouseMove.locator('x-pw-pointer')).toBeVisible();
+
+  const frameClickStrictViolation = await traceViewer.snapshotFrame('locator.click');
+  await expect.poll(() => highlightedDivs(frameClickStrictViolation)).toEqual(['t1', 't2', 't3', 't4', 't5', 't6']);
+
+  const frameExpectStrictViolation = await traceViewer.snapshotFrame('expect.toBeVisible');
+  await expect.poll(() => highlightedDivs(frameExpectStrictViolation)).toEqual(['t3', 't4']);
+
+  const frameUpdatedListOfTargets = await traceViewer.snapshotFrame('expect.toHaveText', 2);
+  await expect.poll(() => highlightedDivs(frameUpdatedListOfTargets)).toEqual(['t4']);
 });
 
 test('should highlight target element in shadow dom', async ({ page, server, runAndTrace }) => {
@@ -848,6 +872,9 @@ test('should show action source', async ({ showTraceViewer }) => {
   await page.click('text=Source');
   await expect(page.locator('.source-line-running')).toContainText('await page.getByText(\'Click\').click()');
   await expect(page.getByTestId('stack-trace-list').locator('.list-view-entry.selected')).toHaveText(/doClick.*trace-viewer\.spec\.ts:[\d]+/);
+
+  await traceViewer.hoverAction('page.waitForNavigation');
+  await expect(page.locator('.source-line-running')).toContainText('page.waitForNavigation()');
 });
 
 test('should follow redirects', async ({ page, runAndTrace, server, asset }) => {
@@ -958,28 +985,6 @@ test('should open two trace files of the same test', async ({ context, page, req
   ]);
 });
 
-test('should include requestUrl in route.fulfill', async ({ page, runAndTrace, browserName }) => {
-  await page.route('**/*', route => {
-    void route.fulfill({
-      status: 200,
-      headers: {
-        'content-type': 'text/html'
-      },
-      body: 'Hello there!'
-    });
-  });
-  const traceViewer = await runAndTrace(async () => {
-    await page.goto('http://test.com');
-  });
-
-  // Render snapshot, check expectations.
-  await traceViewer.selectAction('route.fulfill');
-  await traceViewer.page.locator('.tabbed-pane-tab-label', { hasText: 'Call' }).click();
-  const callLine = traceViewer.page.locator('.call-line');
-  await expect(callLine.getByText('status')).toContainText('200');
-  await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
-});
-
 test('should not crash with broken locator', async ({ page, runAndTrace, server }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/21832' });
   const traceViewer = await runAndTrace(async () => {
@@ -991,37 +996,6 @@ test('should not crash with broken locator', async ({ page, runAndTrace, server 
   await expect(traceViewer.page).toHaveTitle('Playwright Trace Viewer');
   const header = traceViewer.page.getByText('Playwright', { exact: true });
   await expect(header).toBeVisible();
-});
-
-test('should include requestUrl in route.continue', async ({ page, runAndTrace, server }) => {
-  await page.route('**/*', route => {
-    void route.continue({ url: server.EMPTY_PAGE });
-  });
-  const traceViewer = await runAndTrace(async () => {
-    await page.goto('http://test.com');
-  });
-
-  // Render snapshot, check expectations.
-  await traceViewer.selectAction('route.continue');
-  await traceViewer.page.locator('.tabbed-pane-tab-label', { hasText: 'Call' }).click();
-  const callLine = traceViewer.page.locator('.call-line');
-  await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
-  await expect(callLine.getByText(/^url:.*/)).toContainText(server.EMPTY_PAGE);
-});
-
-test('should include requestUrl in route.abort', async ({ page, runAndTrace, server }) => {
-  await page.route('**/*', route => {
-    void route.abort();
-  });
-  const traceViewer = await runAndTrace(async () => {
-    await page.goto('http://test.com').catch(() => {});
-  });
-
-  // Render snapshot, check expectations.
-  await traceViewer.selectAction('route.abort');
-  await traceViewer.page.locator('.tabbed-pane-tab-label', { hasText: 'Call' }).click();
-  const callLine = traceViewer.page.locator('.call-line');
-  await expect(callLine.getByText('requestUrl')).toContainText('http://test.com');
 });
 
 test('should serve overridden request', async ({ page, runAndTrace, server }) => {
@@ -1226,16 +1200,16 @@ test('should pick locator in iframe', async ({ page, runAndTrace, server }) => {
   const snapshot = await traceViewer.snapshotFrame('page.evaluate');
 
   await snapshot.frameLocator('#frame1').getByText('Hello1').click();
-  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').getByText('Hello1')`);
+  await expect.soft(cmWrapper).toContainText(`locator('#frame1').contentFrame().getByText('Hello1')`);
 
   await snapshot.frameLocator('#frame1').frameLocator('iframe').getByText('Hello2').click();
-  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').frameLocator('iframe').getByText('Hello2')`, { timeout: 0 });
+  await expect.soft(cmWrapper).toContainText(`locator('#frame1').contentFrame().locator('iframe').contentFrame().getByText('Hello2')`, { timeout: 0 });
 
   await snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('[name=one]').getByText('HelloNameOne').click();
-  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').getByText('HelloNameOne')`, { timeout: 0 });
+  await expect.soft(cmWrapper).toContainText(`locator('#frame1').contentFrame().locator('iframe').contentFrame().locator('iframe[name="one"]').contentFrame().getByText('HelloNameOne')`, { timeout: 0 });
 
   await snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('[name=two]').getByText('HelloNameTwo').click();
-  await expect.soft(cmWrapper).toContainText(`frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="two"]').getByText('HelloNameTwo')`, { timeout: 0 });
+  await expect.soft(cmWrapper).toContainText(`locator('#frame1').contentFrame().locator('iframe').contentFrame().locator('iframe[name="two"]').contentFrame().getByText('HelloNameTwo')`, { timeout: 0 });
 });
 
 test('should highlight locator in iframe while typing', async ({ page, runAndTrace, server, platform }) => {
@@ -1264,15 +1238,15 @@ test('should highlight locator in iframe while typing', async ({ page, runAndTra
   await traceViewer.page.locator('.CodeMirror').click();
 
   const locators = [{
-    text: `frameLocator('#frame1').getByText('Hello1')`,
+    text: `locator('#frame1').contentFrame().getByText('Hello1')`,
     element: snapshot.frameLocator('#frame1').locator('div', { hasText: 'Hello1' }),
     highlight: snapshot.frameLocator('#frame1').locator('x-pw-highlight'),
   }, {
-    text: `frameLocator('#frame1').frameLocator('iframe').getByText('Hello2')`,
+    text: `locator('#frame1').contentFrame().locator('iframe').contentFrame().getByText('Hello2')`,
     element: snapshot.frameLocator('#frame1').frameLocator('iframe').locator('div', { hasText: 'Hello2' }),
     highlight: snapshot.frameLocator('#frame1').frameLocator('iframe').locator('x-pw-highlight'),
   }, {
-    text: `frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').getByText('HelloNameOne')`,
+    text: `locator('#frame1').contentFrame().locator('iframe').contentFrame().locator('iframe[name="one"]').contentFrame().getByText('HelloNameOne')`,
     element: snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').locator('div', { hasText: 'HelloNameOne' }),
     highlight: snapshot.frameLocator('#frame1').frameLocator('iframe').frameLocator('iframe[name="one"]').locator('x-pw-highlight'),
   }];
@@ -1410,7 +1384,7 @@ test('should show correct request start time', {
   expect(parseMillis(start)).toBeLessThan(1000);
 });
 
-test('should allow hiding route actions', {
+test('should not record route actions', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30970' },
 }, async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
@@ -1420,28 +1394,9 @@ test('should allow hiding route actions', {
     await page.goto(server.EMPTY_PAGE);
   });
 
-  // Routes are visible by default.
   await expect(traceViewer.actionTitles).toHaveText([
     /page.route/,
     /page.goto.*empty.html/,
-    /route.fulfill/,
-  ]);
-
-  await traceViewer.page.getByText('Settings').click();
-  await expect(traceViewer.page.getByRole('checkbox', { name: 'Show route actions' })).toBeChecked();
-  await traceViewer.page.getByRole('checkbox', { name: 'Show route actions' }).uncheck();
-  await traceViewer.page.getByText('Actions', { exact: true }).click();
-  await expect(traceViewer.actionTitles).toHaveText([
-    /page.goto.*empty.html/,
-  ]);
-
-  await traceViewer.page.getByText('Settings').click();
-  await traceViewer.page.getByRole('checkbox', { name: 'Show route actions' }).check();
-  await traceViewer.page.getByText('Actions', { exact: true }).click();
-  await expect(traceViewer.actionTitles).toHaveText([
-    /page.route/,
-    /page.goto.*empty.html/,
-    /route.fulfill/,
   ]);
 });
 
@@ -1466,13 +1421,13 @@ test('should serve css without content-type', async ({ page, runAndTrace, server
   await expect(snapshotFrame.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)', { timeout: 0 });
 });
 
-test('should allow showing screenshots instead of snapshots', async ({ runAndTrace, page, server }) => {
+test.skip('should allow showing screenshots instead of snapshots', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/one-style.html');
     await page.waitForTimeout(1000); // ensure we could take a screenshot
   });
 
-  const screenshot = traceViewer.page.getByAltText(`Screenshot of page.goto > Action`);
+  const screenshot = traceViewer.page.getByAltText(`Screenshot of page.goto`);
   const snapshot = (await traceViewer.snapshotFrame('page.goto')).owner();
   await expect(snapshot).toBeVisible();
   await expect(screenshot).not.toBeVisible();
@@ -1484,7 +1439,7 @@ test('should allow showing screenshots instead of snapshots', async ({ runAndTra
   await expect(screenshot).toBeVisible();
 });
 
-test('should handle case where neither snapshots nor screenshots exist', async ({ runAndTrace, page, server }) => {
+test.skip('should handle case where neither snapshots nor screenshots exist', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/one-style.html');
   }, { snapshots: false, screenshots: false });

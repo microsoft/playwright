@@ -17,12 +17,10 @@
 import type { CallMetadata } from '../instrumentation';
 import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
 import type { Page } from '../page';
-import type { ActionInContext } from '../codegen/types';
 import type { Frame } from '../frames';
-import type * as actions from './recorderActions';
-import { toKeyboardModifiers } from '../codegen/language';
-import { serializeExpectedTextValues } from '../../utils/expectUtils';
-import { createGuid, monotonicTime } from '../../utils';
+import type * as actions from '@recorder/actions';
+import { createGuid } from '../../utils';
+import { buildFullSelector, traceParamsForAction } from '../../utils/isomorphic/recorderUtils';
 
 export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {
   let title = metadata.apiName || metadata.method;
@@ -52,11 +50,7 @@ export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus)
   return callLog;
 }
 
-export function buildFullSelector(framePath: string[], selector: string) {
-  return [...framePath, selector].join(' >> internal:control=enter-frame >> ');
-}
-
-export function mainFrameForAction(pageAliases: Map<Page, string>, actionInContext: ActionInContext): Frame {
+export function mainFrameForAction(pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext): Frame {
   const pageAlias = actionInContext.frame.pageAlias;
   const page = [...pageAliases.entries()].find(([, alias]) => pageAlias === alias)?.[0];
   if (!page)
@@ -64,7 +58,7 @@ export function mainFrameForAction(pageAliases: Map<Page, string>, actionInConte
   return page.mainFrame();
 }
 
-export async function frameForAction(pageAliases: Map<Page, string>, actionInContext: ActionInContext, action: actions.ActionWithSelector): Promise<Frame> {
+export async function frameForAction(pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext, action: actions.ActionWithSelector): Promise<Frame> {
   const pageAlias = actionInContext.frame.pageAlias;
   const page = [...pageAliases.entries()].find(([, alias]) => pageAlias === alias)?.[0];
   if (!page)
@@ -76,76 +70,40 @@ export async function frameForAction(pageAliases: Map<Page, string>, actionInCon
   return result.frame;
 }
 
-export function traceParamsForAction(actionInContext: ActionInContext) {
-  const { action } = actionInContext;
-
-  switch (action.name) {
-    case 'navigate': return { url: action.url };
-    case 'openPage': return {};
-    case 'closePage': return {};
-  }
-
-  const selector = buildFullSelector(actionInContext.frame.framePath, action.selector);
-  switch (action.name) {
-    case 'click': return { selector, clickCount: action.clickCount };
-    case 'press': {
-      const modifiers = toKeyboardModifiers(action.modifiers);
-      const shortcut = [...modifiers, action.key].join('+');
-      return { selector, key: shortcut };
-    }
-    case 'fill': return { selector, text: action.text };
-    case 'setInputFiles': return { selector, files: action.files };
-    case 'check': return { selector };
-    case 'uncheck': return { selector };
-    case 'select': return { selector, values: action.options.map(value => ({ value })) };
-    case 'assertChecked': {
-      return {
-        selector,
-        expression: 'to.be.checked',
-        isNot: !action.checked,
-      };
-    }
-    case 'assertText': {
-      return {
-        selector,
-        expression: 'to.have.text',
-        expectedText: serializeExpectedTextValues([action.text], { matchSubstring: true, normalizeWhiteSpace: true }),
-        isNot: false,
-      };
-    }
-    case 'assertValue': {
-      return {
-        selector,
-        expression: 'to.have.value',
-        expectedValue: action.value,
-        isNot: false,
-      };
-    }
-    case 'assertVisible': {
-      return {
-        selector,
-        expression: 'to.be.visible',
-        isNot: false,
-      };
-    }
-  }
-}
-
-export function callMetadataForAction(pageAliases: Map<Page, string>, actionInContext: ActionInContext): { callMetadata: CallMetadata, mainFrame: Frame } {
+export function callMetadataForAction(pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext): { callMetadata: CallMetadata, mainFrame: Frame } {
   const mainFrame = mainFrameForAction(pageAliases, actionInContext);
-  const { action } = actionInContext;
+  const { method, params } = traceParamsForAction(actionInContext);
+
   const callMetadata: CallMetadata = {
     id: `call@${createGuid()}`,
-    apiName: 'frame.' + action.name,
+    apiName: 'page.' + method,
     objectId: mainFrame.guid,
     pageId: mainFrame._page.guid,
     frameId: mainFrame.guid,
-    startTime: monotonicTime(),
+    startTime: actionInContext.startTime,
     endTime: 0,
     type: 'Frame',
-    method: action.name,
-    params: traceParamsForAction(actionInContext),
+    method,
+    params,
     log: [],
   };
   return { callMetadata, mainFrame };
+}
+
+export function collapseActions(actions: actions.ActionInContext[]): actions.ActionInContext[] {
+  const result: actions.ActionInContext[] = [];
+  for (const action of actions) {
+    const lastAction = result[result.length - 1];
+    const isSameAction = lastAction && lastAction.action.name === action.action.name && lastAction.frame.pageAlias === action.frame.pageAlias && lastAction.frame.framePath.join('|') === action.frame.framePath.join('|');
+    const isSameSelector = lastAction && 'selector' in lastAction.action && 'selector' in action.action && action.action.selector === lastAction.action.selector;
+    const shouldMerge = isSameAction && (action.action.name === 'navigate' || (action.action.name === 'fill' && isSameSelector));
+    if (!shouldMerge) {
+      result.push(action);
+      continue;
+    }
+    const startTime = result[result.length - 1].startTime;
+    result[result.length - 1] = action;
+    result[result.length - 1].startTime = startTime;
+  }
+  return result;
 }

@@ -41,14 +41,34 @@ function leakedJSHandles(): string {
   return lines.join('\n');
 }
 
-async function objectCounts(pageImpl, constructorName: string): Promise<{ main: number, utility: number }> {
-  const result = { main: 0, utility: 0 };
+async function weakRefObjects(pageImpl: any, selector: string) {
   for (const world of ['main', 'utility']) {
     const context = await pageImpl.mainFrame()._context(world);
-    const prototype = await context.evaluateHandle(name => (window as any)[name].prototype, constructorName);
-    result[world] = await prototype.objectCount();
+    await context.evaluate(selector => {
+      const elements = document.querySelectorAll(selector);
+      globalThis.weakRefs = globalThis.weakRefs || [];
+      for (const element of elements)
+        globalThis.weakRefs.push(new WeakRef(element));
+    }, selector);
+  }
+}
+
+async function weakRefCount(pageImpl): Promise<{ main: number, utility: number }> {
+  const result = { main: 0, utility: 0 };
+  for (const world of ['main', 'utility']) {
+    await pageImpl.requestGC();
+    const context = await pageImpl.mainFrame()._context(world);
+    result[world] = await context.evaluate(() => globalThis.weakRefs.filter(r => !!r.deref()).length);
   }
   return result;
+}
+
+async function checkWeakRefs(pageImpl, from: number, to: number) {
+  await expect(async () => {
+    const counts = await weakRefCount(pageImpl);
+    expect(counts.main + counts.utility).toBeGreaterThanOrEqual(from);
+    expect(counts.main + counts.utility).toBeLessThan(to);
+  }).toPass();
 }
 
 test.beforeEach(() => {
@@ -59,14 +79,12 @@ test.afterEach(() => {
   (globalThis as any).leakedJSHandles = null;
 });
 
-test('click should not leak', async ({ page, browserName, toImpl }) => {
+test('click should not leak', async ({ page, toImpl }) => {
   await page.setContent(`
     <button>static button 1</button>
     <button>static button 2</button>
     <div id="buttons"></div>
   `);
-  // Create JS wrappers for static elements.
-  await page.evaluate(() => document.querySelectorAll('button'));
 
   for (let i = 0; i < 25; ++i) {
     await page.evaluate(i => {
@@ -74,22 +92,19 @@ test('click should not leak', async ({ page, browserName, toImpl }) => {
       element.textContent = 'dynamic ' + i;
       document.getElementById('buttons').appendChild(element);
     }, i);
-    await page.locator('#buttons > button').click();
-    await page.evaluate(() => {
-      document.getElementById('buttons').textContent = '';
-    });
+    await page.locator('#buttons > button').last().click();
   }
+
+  await weakRefObjects(toImpl(page), 'button');
+  await page.evaluate(() => {
+    document.getElementById('buttons').textContent = '';
+  });
 
   expect(leakedJSHandles()).toBeFalsy();
-
-  if (browserName === 'chromium') {
-    const counts = await objectCounts(toImpl(page), 'HTMLButtonElement');
-    expect(counts.main + counts.utility).toBeGreaterThanOrEqual(2);
-    expect(counts.main + counts.utility).toBeLessThan(25);
-  }
+  await checkWeakRefs(toImpl(page), 2, 25);
 });
 
-test('fill should not leak', async ({ page, mode, browserName, toImpl }) => {
+test('fill should not leak', async ({ page, mode, toImpl }) => {
   test.skip(mode !== 'default');
 
   await page.setContent(`
@@ -97,30 +112,53 @@ test('fill should not leak', async ({ page, mode, browserName, toImpl }) => {
     <input value="static input 2"</input>
     <div id="inputs"></div>
   `);
-  // Create JS wrappers for static elements.
-  await page.evaluate(() => document.querySelectorAll('input'));
 
   for (let i = 0; i < 25; ++i) {
-    await page.evaluate(i => {
+    await page.evaluate(() => {
       const element = document.createElement('input');
       document.getElementById('inputs').appendChild(element);
-    }, i);
-    await page.locator('#inputs > input').fill('input ' + i);
-    await page.evaluate(() => {
-      document.getElementById('inputs').textContent = '';
     });
+    await page.locator('#inputs > input').last().fill('input ' + i);
   }
+
+  await weakRefObjects(toImpl(page), 'input');
+  await page.evaluate(() => {
+    document.getElementById('inputs').textContent = '';
+  });
 
   expect(leakedJSHandles()).toBeFalsy();
-
-  if (browserName === 'chromium') {
-    const counts = await objectCounts(toImpl(page), 'HTMLInputElement');
-    expect(counts.main + counts.utility).toBeGreaterThanOrEqual(2);
-    expect(counts.main + counts.utility).toBeLessThan(25);
-  }
+  await checkWeakRefs(toImpl(page), 2, 25);
 });
 
-test('expect should not leak', async ({ page, mode, browserName, toImpl }) => {
+test('expect should not leak', async ({ page, mode, toImpl }) => {
+  test.skip(mode !== 'default');
+
+  await page.setContent(`
+    <button>static button 1</button>
+    <button>static button 2</button>
+    <div id="buttons"></div>
+  `);
+  await weakRefObjects(toImpl(page), 'button');
+
+  for (let i = 0; i < 25; ++i) {
+    await page.evaluate(i => {
+      const element = document.createElement('button');
+      element.textContent = 'dynamic ' + i;
+      document.getElementById('buttons').appendChild(element);
+    }, i);
+    await expect(page.locator('#buttons > button').last()).toBeVisible();
+  }
+
+  await weakRefObjects(toImpl(page), 'button');
+  await page.evaluate(() => {
+    document.getElementById('buttons').textContent = '';
+  });
+
+  expect(leakedJSHandles()).toBeFalsy();
+  await checkWeakRefs(toImpl(page), 2, 25);
+});
+
+test('waitFor should not leak', async ({ page, mode, toImpl }) => {
   test.skip(mode !== 'default');
 
   await page.setContent(`
@@ -135,47 +173,14 @@ test('expect should not leak', async ({ page, mode, browserName, toImpl }) => {
       element.textContent = 'dynamic ' + i;
       document.getElementById('buttons').appendChild(element);
     }, i);
-    await expect(page.locator('#buttons > button')).toBeVisible();
-    await page.evaluate(() => {
-      document.getElementById('buttons').textContent = '';
-    });
+    await page.locator('#buttons > button').last().waitFor();
   }
+
+  await weakRefObjects(toImpl(page), 'button');
+  await page.evaluate(() => {
+    document.getElementById('buttons').textContent = '';
+  });
 
   expect(leakedJSHandles()).toBeFalsy();
-
-  if (browserName === 'chromium') {
-    const counts = await objectCounts(toImpl(page), 'HTMLButtonElement');
-    expect(counts.main + counts.utility).toBeGreaterThanOrEqual(2);
-    expect(counts.main + counts.utility).toBeLessThan(25);
-  }
-});
-
-test('waitFor should not leak', async ({ page, mode, browserName, toImpl }) => {
-  test.skip(mode !== 'default');
-
-  await page.setContent(`
-    <button>static button 1</button>
-    <button>static button 2</button>
-    <div id="buttons"></div>
-  `);
-
-  for (let i = 0; i < 25; ++i) {
-    await page.evaluate(i => {
-      const element = document.createElement('button');
-      element.textContent = 'dynamic ' + i;
-      document.getElementById('buttons').appendChild(element);
-    }, i);
-    await page.locator('#buttons > button').waitFor();
-    await page.evaluate(() => {
-      document.getElementById('buttons').textContent = '';
-    });
-  }
-
-  expect(leakedJSHandles()).toBeFalsy();
-
-  if (browserName === 'chromium') {
-    const counts = await objectCounts(toImpl(page), 'HTMLButtonElement');
-    expect(counts.main + counts.utility).toBeGreaterThanOrEqual(2);
-    expect(counts.main + counts.utility).toBeLessThan(25);
-  }
+  await checkWeakRefs(toImpl(page), 2, 25);
 });

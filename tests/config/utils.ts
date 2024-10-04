@@ -16,10 +16,10 @@
 
 import type { Frame, Page } from 'playwright-core';
 import { ZipFile } from '../../packages/playwright-core/lib/utils/zipFile';
-import type { TraceModelBackend } from '../../packages/trace-viewer/src/traceModel';
+import type { TraceModelBackend } from '../../packages/trace-viewer/src/sw/traceModel';
 import type { StackFrame } from '../../packages/protocol/src/channels';
 import { parseClientSideCallMetadata } from '../../packages/playwright-core/lib/utils/isomorphic/traceUtils';
-import { TraceModel } from '../../packages/trace-viewer/src/traceModel';
+import { TraceModel } from '../../packages/trace-viewer/src/sw/traceModel';
 import type { ActionTreeItem } from '../../packages/trace-viewer/src/ui/modelUtil';
 import { buildActionTree, MultiTraceModel } from '../../packages/trace-viewer/src/ui/modelUtil';
 import type { ActionTraceEvent, ConsoleMessageTraceEvent, EventTraceEvent, TraceEvent } from '@trace/trace';

@@ -247,7 +247,7 @@ export class CRPage implements PageDelegate {
     return this._go(+1);
   }
 
-  async forceGarbageCollection(): Promise<void> {
+  async requestGC(): Promise<void> {
     await this._mainFrameSession._client.send('HeapProfiler.collectGarbage');
   }
 
@@ -364,6 +364,8 @@ export class CRPage implements PageDelegate {
   }
 
   async resetForReuse(): Promise<void> {
+    // See https://github.com/microsoft/playwright/issues/22432.
+    await this.rawMouse.move(-1, -1, 'none', new Set(), new Set(), true);
   }
 
   async pdf(options: channels.PagePdfParams): Promise<Buffer> {
@@ -694,16 +696,15 @@ class FrameSession {
     if (!frame || this._eventBelongsToStaleFrame(frame._id))
       return;
     const delegate = new CRExecutionContext(this._client, contextPayload);
-    let worldName: types.World;
+    let worldName: types.World|null = null;
     if (contextPayload.auxData && !!contextPayload.auxData.isDefault)
       worldName = 'main';
     else if (contextPayload.name === UTILITY_WORLD_NAME)
       worldName = 'utility';
-    else
-      return;
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
     (context as any)[contextDelegateSymbol] = delegate;
-    frame._contextCreated(worldName, context);
+    if (worldName)
+      frame._contextCreated(worldName, context);
     this._contextIdToContext.set(contextPayload.id, context);
   }
 

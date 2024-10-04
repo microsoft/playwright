@@ -21,7 +21,9 @@ import type * as accessibility from '../accessibility';
 import * as dom from '../dom';
 import * as dialog from '../dialog';
 import type * as frames from '../frames';
-import { type InitScript, Page, type PageDelegate } from '../page';
+import { Page } from '../page';
+import type * as channels from '@protocol/channels';
+import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
 import type { BidiBrowserContext } from './bidiBrowser';
@@ -31,8 +33,10 @@ import * as bidi from './third_party/bidiProtocol';
 import { BidiExecutionContext } from './bidiExecutionContext';
 import { BidiNetworkManager } from './bidiNetworkManager';
 import { BrowserContext } from '../browserContext';
+import { BidiPDF } from './bidiPdf';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
+const kPlaywrightBindingChannel = 'playwrightChannel';
 
 export class BidiPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -46,6 +50,7 @@ export class BidiPage implements PageDelegate {
   private _sessionListeners: RegisteredListener[] = [];
   readonly _browserContext: BidiBrowserContext;
   readonly _networkManager: BidiNetworkManager;
+  private readonly _pdf: BidiPDF;
   _initializedPage: Page | null = null;
   private _initScriptIds: string[] = [];
 
@@ -59,9 +64,11 @@ export class BidiPage implements PageDelegate {
     this._page = new Page(this, browserContext);
     this._browserContext = browserContext;
     this._networkManager = new BidiNetworkManager(this._session, this._page, this._onNavigationResponseStarted.bind(this));
+    this._pdf = new BidiPDF(this._session);
     this._page.on(Page.Events.FrameDetached, (frame: frames.Frame) => this._removeContextsForFrame(frame, false));
     this._sessionListeners = [
       eventsHelper.addEventListener(bidiSession, 'script.realmCreated', this._onRealmCreated.bind(this)),
+      eventsHelper.addEventListener(bidiSession, 'script.message', this._onScriptMessage.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.contextDestroyed', this._onBrowsingContextDestroyed.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.navigationStarted', this._onNavigationStarted.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.navigationAborted', this._onNavigationAborted.bind(this)),
@@ -93,6 +100,7 @@ export class BidiPage implements PageDelegate {
       this.updateHttpCredentials(),
       this.updateRequestInterception(),
       this._updateViewport(),
+      this._installMainBinding(),
       this._addAllInitScripts(),
     ]);
   }
@@ -275,6 +283,9 @@ export class BidiPage implements PageDelegate {
   }
 
   async bringToFront(): Promise<void> {
+    await this._session.send('browsingContext.activate', {
+      context: this._session.sessionId,
+    });
   }
 
   private async _updateViewport(): Promise<void> {
@@ -315,16 +326,61 @@ export class BidiPage implements PageDelegate {
     });
   }
 
-  goBack(): Promise<boolean> {
+  async goBack(): Promise<boolean> {
+    return await this._session.send('browsingContext.traverseHistory', {
+      context: this._session.sessionId,
+      delta: -1,
+    }).then(() => true).catch(() => false);
+  }
+
+  async goForward(): Promise<boolean> {
+    return await this._session.send('browsingContext.traverseHistory', {
+      context: this._session.sessionId,
+      delta: +1,
+    }).then(() => true).catch(() => false);
+  }
+
+  async requestGC(): Promise<void> {
     throw new Error('Method not implemented.');
   }
 
-  goForward(): Promise<boolean> {
-    throw new Error('Method not implemented.');
+  // TODO: consider calling this only when bindings are added.
+  private async _installMainBinding() {
+    const functionDeclaration = addMainBinding.toString();
+    const args: bidi.Script.ChannelValue[] = [{
+      type: 'channel',
+      value: {
+        channel: kPlaywrightBindingChannel,
+        ownership: bidi.Script.ResultOwnership.Root,
+      }
+    }];
+    const promises = [];
+    promises.push(this._session.send('script.addPreloadScript', {
+      functionDeclaration,
+      arguments: args,
+    }));
+    promises.push(this._session.send('script.callFunction', {
+      functionDeclaration,
+      arguments: args,
+      target: toBidiExecutionContext(await this._page.mainFrame()._mainContext())._target,
+      awaitPromise: false,
+      userActivation: false,
+    }));
+    await Promise.all(promises);
   }
 
-  async forceGarbageCollection(): Promise<void> {
-    throw new Error('Method not implemented.');
+  private async _onScriptMessage(event: bidi.Script.MessageParameters) {
+    if (event.channel !== kPlaywrightBindingChannel)
+      return;
+    const pageOrError = await this.pageOrError();
+    if (pageOrError instanceof Error)
+      return;
+    const context = this._realmToContext.get(event.source.realm);
+    if (!context)
+      return;
+    if (event.data.type !== 'string')
+      return;
+    await this._page._onBindingCalled(event.data.value, context);
   }
 
   async addInitScript(initScript: InitScript): Promise<void> {
@@ -355,7 +411,20 @@ export class BidiPage implements PageDelegate {
   }
 
   async takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer> {
-    throw new Error('Method not implemented.');
+    const rect = (documentRect || viewportRect)!;
+    const { data } = await this._session.send('browsingContext.captureScreenshot', {
+      context: this._session.sessionId,
+      format: {
+        type: `image/${format === 'png' ? 'png' : 'jpeg'}`,
+        quality: quality || 80,
+      },
+      origin: documentRect ? 'document' : 'viewport',
+      clip: {
+        type: 'box',
+        ...rect,
+      }
+    });
+    return Buffer.from(data, 'base64');
   }
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
@@ -493,6 +562,10 @@ export class BidiPage implements PageDelegate {
   async resetForReuse(): Promise<void> {
   }
 
+  async pdf(options: channels.PagePdfParams): Promise<Buffer> {
+    return this._pdf.generate(options);
+  }
+
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
     const parent = frame.parentFrame();
     if (!parent)
@@ -520,6 +593,10 @@ export class BidiPage implements PageDelegate {
   shouldToggleStyleSheetToSyncAnimations(): boolean {
     return true;
   }
+}
+
+function addMainBinding(callback: (arg: any) => void) {
+  (globalThis as any)['__playwright__binding__'] = callback;
 }
 
 function toBidiExecutionContext(executionContext: dom.FrameExecutionContext): BidiExecutionContext {

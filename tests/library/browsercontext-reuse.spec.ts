@@ -203,10 +203,10 @@ test('should ignore binding from beforeunload', async ({ reusedContext }) => {
   expect(called).toBe(false);
 });
 
-test('should reset mouse position', async ({ reusedContext, browserName, platform }) => {
+test('should reset mouse position', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22432' },
+}, async ({ reusedContext, browserName, platform }) => {
   // Note: this test only reproduces the issue locally when run with --repeat-each=20.
-  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22432' });
-  test.fixme(browserName === 'chromium' && platform !== 'darwin', 'chromium keeps hover on linux/win');
 
   const pageContent = `
     <style>
@@ -214,6 +214,7 @@ test('should reset mouse position', async ({ reusedContext, browserName, platfor
       div:hover { background: red; }
       html, body { margin: 0; padding: 0; }
     </style>
+    <div id=filler>one</div>
     <div id=one>one</div>
     <div id=two>two</div>
   `;
@@ -224,7 +225,7 @@ test('should reset mouse position', async ({ reusedContext, browserName, platfor
   await expect(page.locator('#one')).toHaveCSS('background-color', 'rgb(0, 0, 255)');
   await expect(page.locator('#two')).toHaveCSS('background-color', 'rgb(0, 0, 255)');
 
-  await page.mouse.move(10, 45);
+  await page.mouse.move(10, 75);
   await expect(page.locator('#one')).toHaveCSS('background-color', 'rgb(0, 0, 255)');
   await expect(page.locator('#two')).toHaveCSS('background-color', 'rgb(255, 0, 0)');
 

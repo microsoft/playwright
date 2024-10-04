@@ -487,10 +487,6 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       test('with env var should create relative to cwd', async ({ runInlineTest }, testInfo) => {
         const result = await runInlineTest({
           'foo/package.json': `{ "name": "foo" }`,
-          // unused config along "search path"
-          'foo/bar/playwright.config.js': `
-            module.exports = { projects: [ {} ] };
-          `,
           'foo/bar/baz/tests/a.spec.js': `
             import { test, expect } from '@playwright/test';
             const fs = require('fs');
@@ -508,10 +504,6 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       test('support PLAYWRIGHT_JUNIT_OUTPUT_FILE', async ({ runInlineTest }, testInfo) => {
         const result = await runInlineTest({
           'foo/package.json': `{ "name": "foo" }`,
-          // unused config along "search path"
-          'foo/bar/playwright.config.js': `
-            module.exports = { projects: [ {} ] };
-          `,
           'foo/bar/baz/tests/a.spec.js': `
             import { test, expect } from '@playwright/test';
             const fs = require('fs');
@@ -524,6 +516,27 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         expect(result.exitCode).toBe(0);
         expect(result.passed).toBe(1);
         expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report.xml'))).toBe(true);
+      });
+
+      test('PLAYWRIGHT_JUNIT_OUTPUT_FILE should take precedence over config', async ({ runInlineTest }, testInfo) => {
+        const result = await runInlineTest({
+          'package.json': `{ "name": "foo" }`,
+          'bar/playwright.config.js': `
+            module.exports = {
+              reporter: [['junit', { outputFile: 'results.xml' }], ['line', {}]],
+              projects: [ {} ]
+            };
+          `,
+          'bar/baz/tests/a.spec.js': `
+            import { test, expect } from '@playwright/test';
+            const fs = require('fs');
+            test('pass', ({}, testInfo) => {
+            });
+          `
+        }, { 'config': 'bar/playwright.config.js' }, { 'PLAYWRIGHT_JUNIT_OUTPUT_FILE': 'bar/my-report.xml' });
+        expect(result.exitCode).toBe(0);
+        expect(result.passed).toBe(1);
+        expect(fs.existsSync(testInfo.outputPath('bar', 'my-report.xml'))).toBe(true);
       });
 
       test('support PLAYWRIGHT_JUNIT_OUTPUT_DIR and PLAYWRIGHT_JUNIT_OUTPUT_NAME', async ({ runInlineTest }, testInfo) => {
@@ -541,6 +554,27 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         expect(result.exitCode).toBe(0);
         expect(result.passed).toBe(1);
         expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report.xml'))).toBe(true);
+      });
+
+      test('PLAYWRIGHT_JUNIT_OUTPUT_NAME should take precedence over config', async ({ runInlineTest }, testInfo) => {
+        const result = await runInlineTest({
+          'package.json': `{ "name": "foo" }`,
+          'bar/playwright.config.js': `
+            module.exports = {
+              reporter: [['junit', {}], ['line', {}]],
+              projects: [ {} ]
+            };
+          `,
+          'bar/baz/tests/a.spec.js': `
+            import { test, expect } from '@playwright/test';
+            const fs = require('fs');
+            test('pass', ({}, testInfo) => {
+            });
+          `
+        }, { 'config': 'bar/playwright.config.js' }, { 'PLAYWRIGHT_JUNIT_OUTPUT_NAME': 'foo/my-report.xml' });
+        expect(result.exitCode).toBe(0);
+        expect(result.passed).toBe(1);
+        expect(fs.existsSync(testInfo.outputPath('bar', 'foo', 'my-report.xml'))).toBe(true);
       });
     });
 

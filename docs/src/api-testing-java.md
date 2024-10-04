@@ -194,6 +194,7 @@ public class TestGitHubAPI {
 These tests assume that repository exists. You probably want to create a new one before running tests and delete it afterwards. Use `@BeforeAll` and `@AfterAll` hooks for that.
 
 ```java
+public class TestGitHubAPI {
   // ...
 
   void createTestRepository() {
@@ -223,6 +224,7 @@ These tests assume that repository exists. You probably want to create a new one
     disposeAPIRequestContext();
     closePlaywright();
   }
+}
 ```
 
 ### Complete test example
@@ -381,18 +383,20 @@ The following test creates a new issue via API and then navigates to the list of
 project to check that it appears at the top of the list. The check is performed using [LocatorAssertions].
 
 ```java
-@Test
-void lastCreatedIssueShouldBeFirstInTheList() {
-  Map<String, String> data = new HashMap<>();
-  data.put("title", "[Feature] request 1");
-  data.put("body", "Feature description");
-  APIResponse newIssue = request.post("/repos/" + USER + "/" + REPO + "/issues",
-    RequestOptions.create().setData(data));
-  assertTrue(newIssue.ok());
+public class TestGitHubAPI {
+  @Test
+  void lastCreatedIssueShouldBeFirstInTheList() {
+    Map<String, String> data = new HashMap<>();
+    data.put("title", "[Feature] request 1");
+    data.put("body", "Feature description");
+    APIResponse newIssue = request.post("/repos/" + USER + "/" + REPO + "/issues",
+      RequestOptions.create().setData(data));
+    assertTrue(newIssue.ok());
 
-  page.navigate("https://github.com/" + USER + "/" + REPO + "/issues");
-  Locator firstIssue = page.locator("a[data-hovercard-type='issue']").first();
-  assertThat(firstIssue).hasText("[Feature] request 1");
+    page.navigate("https://github.com/" + USER + "/" + REPO + "/issues");
+    Locator firstIssue = page.locator("a[data-hovercard-type='issue']").first();
+    assertThat(firstIssue).hasText("[Feature] request 1");
+  }
 }
 ```
 
@@ -402,18 +406,20 @@ The following test creates a new issue via user interface in the browser and the
 it was created:
 
 ```java
-@Test
-void lastCreatedIssueShouldBeOnTheServer() {
-  page.navigate("https://github.com/" + USER + "/" + REPO + "/issues");
-  page.locator("text=New Issue").click();
-  page.locator("[aria-label='Title']").fill("Bug report 1");
-  page.locator("[aria-label='Comment body']").fill("Bug description");
-  page.locator("text=Submit new issue").click();
-  String issueId = page.url().substring(page.url().lastIndexOf('/'));
+public class TestGitHubAPI {
+  @Test
+  void lastCreatedIssueShouldBeOnTheServer() {
+    page.navigate("https://github.com/" + USER + "/" + REPO + "/issues");
+    page.locator("text=New Issue").click();
+    page.locator("[aria-label='Title']").fill("Bug report 1");
+    page.locator("[aria-label='Comment body']").fill("Bug description");
+    page.locator("text=Submit new issue").click();
+    String issueId = page.url().substring(page.url().lastIndexOf('/'));
 
-  APIResponse newIssue = request.get("https://github.com/" + USER + "/" + REPO + "/issues/" + issueId);
-  assertThat(newIssue).isOK();
-  assertTrue(newIssue.text().contains("Bug report 1"));
+    APIResponse newIssue = request.get("https://github.com/" + USER + "/" + REPO + "/issues/" + issueId);
+    assertThat(newIssue).isOK();
+    assertTrue(newIssue.text().contains("Bug report 1"));
+  }
 }
 ```
 

@@ -289,7 +289,7 @@ Page objects can then be used inside a test.
 ```java
 import models.SearchPage;
 import com.microsoft.playwright.*;
-...
+// ...
 
 // In the test
 Page page = browser.newPage();

@@ -38,7 +38,7 @@ for li in page.get_by_role('listitem').all():
 ```
 
 ```java
-for (Locator li : page.getByRole('listitem').all())
+for (Locator li : page.getByRole("listitem").all())
   li.click();
 ```
 
@@ -54,7 +54,7 @@ foreach (var li in await page.GetByRole("listitem").AllAsync())
 Returns an array of `node.innerText` values for all matching nodes.
 
 :::warning[Asserting text]
-If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: LocatorAssertions.toHaveText.useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
 **Usage**
@@ -433,7 +433,7 @@ await page.Locator("canvas").ClickAsync(new() {
 ### option: Locator.click.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-### option: Locator.click.trial = %%-input-trial-%%
+### option: Locator.click.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
 
 ## async method: Locator.count
@@ -516,7 +516,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.dblclick.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-### option: Locator.dblclick.trial = %%-input-trial-%%
+### option: Locator.dblclick.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
 
 ## async method: Locator.dispatchEvent
@@ -1266,7 +1266,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.hover.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-### option: Locator.hover.trial = %%-input-trial-%%
+### option: Locator.hover.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
 
 ### option: Locator.hover.noWaitAfter = %%-input-no-wait-after-removed-%%
@@ -1291,7 +1291,7 @@ Returns the [`element.innerHTML`](https://developer.mozilla.org/en-US/docs/Web/A
 Returns the [`element.innerText`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/innerText).
 
 :::warning[Asserting text]
-If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
+If you need to assert text on the page, prefer [`method: LocatorAssertions.toHaveText`] with [`option: LocatorAssertions.toHaveText.useInnerText`] option to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.
 :::
 
 ### option: Locator.innerText.timeout = %%-input-timeout-%%
@@ -2331,7 +2331,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.tap.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-### option: Locator.tap.trial = %%-input-trial-%%
+### option: Locator.tap.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
 
 ## async method: Locator.textContent

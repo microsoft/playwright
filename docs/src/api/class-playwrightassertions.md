@@ -35,14 +35,13 @@ def test_status_becomes_submitted(page: Page) -> None:
 ```
 
 ```java
-...
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 public class TestExample {
-  ...
+  // ...
   @Test
   void statusBecomesSubmitted() {
-    ...
+    // ...
     page.locator("#submit-button").click();
     assertThat(page.locator(".status")).hasText("Submitted");
   }

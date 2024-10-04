@@ -38,7 +38,7 @@ jobs:
       run: npm audit --omit dev
   lint-snippets:
     name: "Lint snippets"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -50,6 +50,12 @@ jobs:
     - uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '21'
     - run: npm ci
     - run: pip install -r utils/doclint/linting-code-snippets/python/requirements.txt
+    - run: mvn package
+      working-directory: utils/doclint/linting-code-snippets/java
     - run: node utils/doclint/linting-code-snippets/cli.js

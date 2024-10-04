@@ -19,6 +19,7 @@ import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { SplitView } from '@web/components/splitView';
 import { TabbedPane } from '@web/components/tabbedPane';
 import { Toolbar } from '@web/components/toolbar';
+import { emptySource, SourceChooser } from '@web/components/sourceChooser';
 import { ToolbarButton, ToolbarSeparator } from '@web/components/toolbarButton';
 import * as React from 'react';
 import { CallLogView } from './callLog';
@@ -54,15 +55,7 @@ export const Recorder: React.FC<RecorderProps> = ({
       if (source)
         return source;
     }
-    const source: Source = {
-      id: 'default',
-      isRecorded: false,
-      text: '',
-      language: 'javascript',
-      label: '',
-      highlight: []
-    };
-    return source;
+    return emptySource();
   }, [sources, fileId]);
 
   const [locator, setLocator] = React.useState('');
@@ -152,10 +145,10 @@ export const Recorder: React.FC<RecorderProps> = ({
       }}></ToolbarButton>
       <div style={{ flex: 'auto' }}></div>
       <div>Target:</div>
-      <select className='recorder-chooser' hidden={!sources.length} value={fileId} onChange={event => {
-        setFileId(event.target.selectedOptions[0].value);
-        window.dispatch({ event: 'fileChanged', params: { file: event.target.selectedOptions[0].value } });
-      }}>{renderSourceOptions(sources)}</select>
+      <SourceChooser fileId={fileId} sources={sources} setFileId={fileId => {
+        setFileId(fileId);
+        window.dispatch({ event: 'fileChanged', params: { file: fileId } });
+      }} />
       <ToolbarButton icon='clear-all' title='Clear' disabled={!source || !source.text} onClick={() => {
         window.dispatch({ event: 'clear' });
       }}></ToolbarButton>
@@ -184,22 +177,3 @@ export const Recorder: React.FC<RecorderProps> = ({
     />
   </div>;
 };
-
-function renderSourceOptions(sources: Source[]): React.ReactNode {
-  const transformTitle = (title: string): string => title.replace(/.*[/\\]([^/\\]+)/, '$1');
-  const renderOption = (source: Source): React.ReactNode => (
-    <option key={source.id} value={source.id}>{transformTitle(source.label)}</option>
-  );
-
-  const hasGroup = sources.some(s => s.group);
-  if (hasGroup) {
-    const groups = new Set(sources.map(s => s.group));
-    return [...groups].filter(Boolean).map(group => (
-      <optgroup label={group} key={group}>
-        {sources.filter(s => s.group === group).map(source => renderOption(source))}
-      </optgroup>
-    ));
-  }
-
-  return sources.map(source => renderOption(source));
-}

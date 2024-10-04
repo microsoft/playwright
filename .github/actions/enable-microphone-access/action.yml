@@ -14,12 +14,12 @@ runs:
         fi
         echo "Allowing microphone access to all apps"
         version=$(sw_vers -productVersion | cut -d. -f1)
-        if [[ "$version" == "14" ]]; then
+        if [[ "$version" == "14" || "$version" == "15" ]]; then
           sqlite3 $HOME/Library/Application\ Support/com.apple.TCC/TCC.db "INSERT OR IGNORE INTO access VALUES ('kTCCServiceMicrophone','/usr/local/opt/runner/provisioner/provisioner',1,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,1687786159,NULL,NULL,'UNUSED',1687786159);"
         elif [[ "$version" == "12" || "$version" == "13" ]]; then
           sqlite3 $HOME/Library/Application\ Support/com.apple.TCC/TCC.db "INSERT OR REPLACE INTO access VALUES('kTCCServiceMicrophone','/usr/local/opt/runner/provisioner/provisioner',1,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,1687786159);"
         else
-          echo "macOS version is unsupported. Version is $version, exiting"
-          exit 1
+          echo "Skipping unsupported macOS version $version"
+          exit 0
         fi
         echo "Successfully allowed microphone access"

@@ -21,11 +21,12 @@ const test = baseTest.extend<{ git(command: string): void }>({
   git: async ({}, use, testInfo) => {
     const baseDir = testInfo.outputPath();
 
-    const git = (command: string) => execSync(`git ${command}`, { cwd: baseDir });
+    const git = (command: string) => execSync(`git ${command}`, { cwd: baseDir, stdio: process.env.PWTEST_DEBUG ? 'inherit' : 'ignore' });
 
     git(`init --initial-branch=main`);
     git(`config --local user.name "Robert Botman"`);
     git(`config --local user.email "botty@mcbotface.com"`);
+    git(`config --local core.autocrlf false`);
 
     await use((command: string) => git(command));
   },
@@ -203,7 +204,7 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
 
       test('pass', async ({ mount }) => {
         const component = await mount(<Button></Button>);
-        await expect(component).toHaveText('Button');
+        await expect(component).toHaveText('Button', { timeout: 1000 });
       });
     `,
     'src/button2.test.tsx': `
@@ -212,7 +213,7 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
 
       test('pass', async ({ mount }) => {
         const component = await mount(<Button></Button>);
-        await expect(component).toHaveText('Button');
+        await expect(component).toHaveText('Button', { timeout: 1000 });
       });
     `,
     'src/button3.test.tsx': `
@@ -228,7 +229,7 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
   git(`add .`);
   git(`commit -m "init"`);
 
-  const result = await runInlineTest({}, { 'workers': 1, 'only-changed': true });
+  const result = await runInlineTest({}, { 'only-changed': true });
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(0);
@@ -241,10 +242,10 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
 
       test('pass', async ({ mount }) => {
         const component = await mount(<Button></Button>);
-        await expect(component).toHaveText('Different Button');
+        await expect(component).toHaveText('Different Button', { timeout: 1000 });
       });
     `
-  }, { 'workers': 1, 'only-changed': true });
+  }, { 'only-changed': true });
 
   expect(result2.exitCode).toBe(1);
   expect(result2.failed).toBe(1);
@@ -259,7 +260,7 @@ test('should suppport component tests', async ({ runInlineTest, git, writeFiles 
     'src/contents.ts': `
       export const content = 'Changed Content';
     `
-  }, { 'workers': 1, 'only-changed': true });
+  }, { 'only-changed': true });
 
   expect(result3.exitCode).toBe(1);
   expect(result3.failed).toBe(2);

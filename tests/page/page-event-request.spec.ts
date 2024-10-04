@@ -241,3 +241,20 @@ it('main resource xhr should have type xhr', async ({ page, server }) => {
   expect(request.isNavigationRequest()).toBe(false);
   expect(request.resourceType()).toBe('xhr');
 });
+
+it('should finish 204 request', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32752' }
+}, async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'chromium');
+  server.setRoute('/204', (req, res) => {
+    res.writeHead(204, { 'Content-type': 'text/plain' });
+    res.end();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const reqPromise = Promise.race([
+    page.waitForEvent('requestfailed', r => r.url().endsWith('/204')).then(() => 'requestfailed'),
+    page.waitForEvent('requestfinished', r => r.url().endsWith('/204')).then(() => 'requestfinished'),
+  ]);
+  page.evaluate(async url => { await fetch(url); }, server.PREFIX + '/204').catch(() => {});
+  expect(await reqPromise).toBe('requestfinished');
+});

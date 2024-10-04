@@ -53,12 +53,10 @@ export type SmartHandle<T> = T extends Node ? dom.ElementHandle<T> : JSHandle<T>
 export interface ExecutionContextDelegate {
   rawEvaluateJSON(expression: string): Promise<any>;
   rawEvaluateHandle(expression: string): Promise<ObjectId>;
-  rawCallFunctionNoReply(func: Function, ...args: any[]): void;
   evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle<any>, values: any[], objectIds: ObjectId[]): Promise<any>;
   getProperties(context: ExecutionContext, objectId: ObjectId): Promise<Map<string, JSHandle>>;
   createHandle(context: ExecutionContext, remoteObject: RemoteObject): JSHandle;
   releaseHandle(objectId: ObjectId): Promise<void>;
-  objectCount(objectId: ObjectId): Promise<number>;
 }
 
 export class ExecutionContext extends SdkObject {
@@ -87,10 +85,6 @@ export class ExecutionContext extends SdkObject {
 
   rawEvaluateHandle(expression: string): Promise<ObjectId> {
     return this._raceAgainstContextDestroyed(this._delegate.rawEvaluateHandle(expression));
-  }
-
-  rawCallFunctionNoReply(func: Function, ...args: any[]): void {
-    this._delegate.rawCallFunctionNoReply(func, ...args);
   }
 
   evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle<any>, values: any[], objectIds: ObjectId[]): Promise<any> {
@@ -126,10 +120,6 @@ export class ExecutionContext extends SdkObject {
     return this._utilityScriptPromise;
   }
 
-  async objectCount(objectId: ObjectId): Promise<number> {
-    return this._delegate.objectCount(objectId);
-  }
-
   async doSlowMo() {
     // overridden in FrameExecutionContext
   }
@@ -154,10 +144,6 @@ export class JSHandle<T = any> extends SdkObject {
     this._preview = this._objectId ? preview || `JSHandle@${this._objectType}` : String(value);
     if (this._objectId && (globalThis as any).leakedJSHandles)
       (globalThis as any).leakedJSHandles.set(this, new Error('Leaked JSHandle'));
-  }
-
-  callFunctionNoReply(func: Function, arg: any) {
-    this._context.rawCallFunctionNoReply(func, this, arg);
   }
 
   async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg?: Arg): Promise<R> {
@@ -245,12 +231,6 @@ export class JSHandle<T = any> extends SdkObject {
     this._preview = preview;
     if (this._previewCallback)
       this._previewCallback(preview);
-  }
-
-  async objectCount(): Promise<number> {
-    if (!this._objectId)
-      throw new Error('Can only count objects for a handle that points to the constructor prototype');
-    return this._context.objectCount(this._objectId);
   }
 }
 

@@ -16,17 +16,7 @@
 
 import { androidTest as test, expect } from './androidTest';
 
-test.beforeEach(async ({ androidDevice }) => {
-  await androidDevice.shell('am force-stop com.google.android.googlequicksearchbox');
-});
-
-test.afterEach(async ({ androidDevice }) => {
-  await androidDevice.shell('am force-stop org.chromium.webview_shell');
-  await androidDevice.shell('am force-stop com.android.chrome');
-});
-
 test('androidDevice.webView', async function({ androidDevice }) {
-  test.slow();
   expect(androidDevice.webViews().length).toBe(0);
   await androidDevice.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
   const webview = await androidDevice.webView({ pkg: 'org.chromium.webview_shell' });
@@ -52,8 +42,6 @@ test('should navigate page internally', async function({ androidDevice }) {
 });
 
 test('should navigate page externally', async function({ androidDevice }) {
-  test.fixme(true, 'Hangs on the bots');
-
   expect(androidDevice.webViews().length).toBe(0);
   await androidDevice.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
   const webview = await androidDevice.webView({ pkg: 'org.chromium.webview_shell' });
@@ -68,7 +56,6 @@ test('should navigate page externally', async function({ androidDevice }) {
 });
 
 test('select webview from socketName', async function({ androidDevice }) {
-  test.slow();
   const context = await androidDevice.launchBrowser();
   const newPage = await context.newPage();
   await newPage.goto('about:blank');

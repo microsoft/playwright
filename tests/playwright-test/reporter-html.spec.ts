@@ -2258,10 +2258,19 @@ for (const useIntermediateMergeReport of [false] as const) {
 
       const searchInput = page.locator('.subnav-search-input');
 
-      await searchInput.fill('annot:key=value');
-      await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
-      await expect(page.getByText('non-annotated test')).not.toBeVisible();
-      await expect(page.getByText('annotated test')).toBeVisible();
+      await test.step('filter by type and value', async () => {
+        await searchInput.fill('annot:key=value');
+        await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
+        await expect(page.getByText('non-annotated test')).not.toBeVisible();
+        await expect(page.getByText('annotated test')).toBeVisible();
+      });
+
+      await test.step('filter by type', async () => {
+        await searchInput.fill('annot:key');
+        await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
+        await expect(page.getByText('non-annotated test')).not.toBeVisible();
+        await expect(page.getByText('annotated test')).toBeVisible();
+      });
     });
 
     test('tests should filter by fileName:line/column', async ({ runInlineTest, showReport, page }) => {

@@ -17,67 +17,70 @@
 import { EventEmitter } from 'events';
 import type { Frame } from '../frames';
 import type { Page } from '../page';
-import type { Signal } from './recorderActions';
-import type { ActionInContext } from '../codegen/types';
+import type { Signal } from '../../../../recorder/src/actions';
+import type * as actions from '@recorder/actions';
 import { monotonicTime } from '../../utils/time';
-import { callMetadataForAction } from './recorderUtils';
+import { callMetadataForAction, collapseActions } from './recorderUtils';
 import { serializeError } from '../errors';
 import { performAction } from './recorderRunner';
 import type { CallMetadata } from '@protocol/callMetadata';
 import { isUnderTest } from '../../utils/debug';
 
 export class RecorderCollection extends EventEmitter {
-  private _actions: ActionInContext[] = [];
-  private _enabled: boolean;
+  private _actions: actions.ActionInContext[] = [];
+  private _enabled = false;
   private _pageAliases: Map<Page, string>;
 
-  constructor(pageAliases: Map<Page, string>, enabled: boolean) {
+  constructor(pageAliases: Map<Page, string>) {
     super();
-    this._enabled = enabled;
     this._pageAliases = pageAliases;
-    this.restart();
   }
 
   restart() {
     this._actions = [];
-    this.emit('change');
-  }
-
-  actions() {
-    return this._actions;
+    this._fireChange();
   }
 
   setEnabled(enabled: boolean) {
     this._enabled = enabled;
   }
 
-  async performAction(actionInContext: ActionInContext) {
+  async performAction(actionInContext: actions.ActionInContext) {
     await this._addAction(actionInContext, async callMetadata => {
       await performAction(callMetadata, this._pageAliases, actionInContext);
     });
   }
 
-  addRecordedAction(actionInContext: ActionInContext) {
+  addRecordedAction(actionInContext: actions.ActionInContext) {
     if (['openPage', 'closePage'].includes(actionInContext.action.name)) {
       this._actions.push(actionInContext);
-      this.emit('change');
+      this._fireChange();
       return;
     }
     this._addAction(actionInContext).catch(() => {});
   }
 
-  private async _addAction(actionInContext: ActionInContext, callback?: (callMetadata: CallMetadata) => Promise<void>) {
+  private async _addAction(actionInContext: actions.ActionInContext, callback?: (callMetadata: CallMetadata) => Promise<void>) {
     if (!this._enabled)
       return;
+    if (actionInContext.action.name === 'openPage' || actionInContext.action.name === 'closePage') {
+      this._actions.push(actionInContext);
+      this._fireChange();
+      return;
+    }
 
     const { callMetadata, mainFrame } = callMetadataForAction(this._pageAliases, actionInContext);
     await mainFrame.instrumentation.onBeforeCall(mainFrame, callMetadata);
     this._actions.push(actionInContext);
-    this.emit('change');
+    this._fireChange();
     const error = await callback?.(callMetadata).catch((e: Error) => e);
     callMetadata.endTime = monotonicTime();
+    actionInContext.endTime = callMetadata.endTime;
     callMetadata.error = error ? serializeError(error) : undefined;
-    await mainFrame.instrumentation.onAfterCall(mainFrame, callMetadata);
+    // Do not wait for onAfterCall so that performAction returned immediately after the action.
+    mainFrame.instrumentation.onAfterCall(mainFrame, callMetadata).then(() => {
+      this._fireChange();
+    }).catch(() => {});
   }
 
   signal(pageAlias: string, frame: Frame, signal: Signal) {
@@ -94,7 +97,7 @@ export class RecorderCollection extends EventEmitter {
         generateGoto = true;
       else if (lastAction.action.name !== 'click' && lastAction.action.name !== 'press')
         generateGoto = true;
-      else if (timestamp - lastAction.timestamp > signalThreshold)
+      else if (timestamp - lastAction.startTime > signalThreshold)
         generateGoto = true;
 
       if (generateGoto) {
@@ -108,7 +111,8 @@ export class RecorderCollection extends EventEmitter {
             url: frame.url(),
             signals: [],
           },
-          timestamp
+          startTime: timestamp,
+          endTime: timestamp,
         });
       }
       return;
@@ -116,8 +120,14 @@ export class RecorderCollection extends EventEmitter {
 
     if (this._actions.length) {
       this._actions[this._actions.length - 1].action.signals.push(signal);
-      this.emit('change');
+      this._fireChange();
       return;
     }
+  }
+
+  private _fireChange() {
+    if (!this._enabled)
+      return;
+    this.emit('change', collapseActions(this._actions));
   }
 }
