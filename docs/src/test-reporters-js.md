@@ -427,5 +427,5 @@ Here's a short list of open source reporter implementations that you can take a 
 * [Allure Reporter](https://github.com/allure-framework/allure-js/tree/main/packages/allure-playwright)
 * [Github Actions Reporter](https://github.com/estruyf/playwright-github-actions-reporter)
 * [Mail Reporter](https://github.com/estruyf/playwright-mail-reporter)
-* [Microsoft Teams Reporter](https://github.com/playwright-community/playwright-msteams-reporter)
+* [ReportPortal](https://github.com/reportportal/agent-js-playwright)
 * [Monocart](https://github.com/cenfun/monocart-reporter)
