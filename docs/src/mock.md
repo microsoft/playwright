@@ -196,8 +196,7 @@ page.route("*/**/api/v1/fruits", route -> {
   Response response = route.fetch();
   byte[] json = response.body();
   JsonObject parsed = new Gson().fromJson(new String(json), JsonObject.class);
-  parsed.add("name", new JsonPrimitive("Loquat"));
-  parsed.add("id", new JsonPrimitive(100));
+  parsed.add(new JsonObject().add("name", "Loquat").add("id", 100));
   // Fulfill using the original response, while patching the response body
   // with the given JSON object.
   route.fulfill(new Route.FulfillOptions().setResponse(response).setBody(parsed.toString()));
