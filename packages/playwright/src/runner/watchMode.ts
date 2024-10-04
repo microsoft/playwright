@@ -16,7 +16,7 @@
 
 import readline from 'readline';
 import path from 'path';
-import { createGuid, getPackageManagerExecCommand, ManualPromise } from 'playwright-core/lib/utils';
+import { createGuid, eventsHelper, getPackageManagerExecCommand, ManualPromise } from 'playwright-core/lib/utils';
 import type { ConfigLocation } from '../common/config';
 import type { FullResult } from '../../types/testReporter';
 import { colors } from 'playwright-core/lib/utilsBundle';
@@ -274,22 +274,20 @@ function readKeyPress<T extends string>(handler: (text: string, key: any) => T |
   if (process.stdin.isTTY)
     process.stdin.setRawMode(true);
 
+  const listener = eventsHelper.addEventListener(process.stdin, 'keypress', (text: string, key: any) => {
+    const result = handler(text, key);
+    if (result)
+      promise.resolve(result);
+  });
+
   const cancel = () => {
-    process.stdin.off('keypress', onKeypress);
+    eventsHelper.removeEventListeners([listener]);
     rl.close();
     if (process.stdin.isTTY)
       process.stdin.setRawMode(false);
   };
 
-  function onKeypress(text: string, key: any) {
-    const result = handler(text, key);
-    if (result) {
-      cancel();
-      promise.resolve(result);
-    }
-  }
-
-  process.stdin.on('keypress', onKeypress);
+  void promise.finally(cancel);
 
   return { result: promise, cancel };
 }
