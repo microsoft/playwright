@@ -188,7 +188,7 @@ function __pwWrapFunctions(slots) {
     for (const [key, value] of Object.entries(slots || {}))
       slotsWithRenderFunctions[key] = () => [value];
   } else if (slots?.length) {
-    slots['default'] = () => slots;
+    slotsWithRenderFunctions['default'] = () => slots;
   }
   return slotsWithRenderFunctions;
 }
