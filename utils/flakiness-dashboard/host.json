@@ -12,6 +12,9 @@
     "queues": {
       "batchSize": 1,
       "newBatchThreshold": 0
+    },
+    "blobs": {
+      "maxDegreeOfParallelism": 1
     }
   },
   "extensionBundle": {
