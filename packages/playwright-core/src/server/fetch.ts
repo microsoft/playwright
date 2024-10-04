@@ -312,8 +312,11 @@ export abstract class APIRequestContext extends SdkObject {
 
       let securityDetails: har.SecurityDetails | undefined;
 
+      const cleanup: (() => void)[] = [];
+
       const request = requestConstructor(url, requestOptions as any, async response => {
         const responseAt = monotonicTime();
+
         const notifyRequestFinished = (body?: Buffer) => {
           const endAt = monotonicTime();
           // spec: http://www.softwareishard.com/blog/har-12-spec/#timings
@@ -483,7 +486,8 @@ export abstract class APIRequestContext extends SdkObject {
         request.destroy();
       };
       this.on(APIRequestContext.Events.Dispose, disposeListener);
-      request.on('close', () => this.off(APIRequestContext.Events.Dispose, disposeListener));
+      cleanup.push(() => this.off(APIRequestContext.Events.Dispose, disposeListener));
+      request.on('close', () => cleanup.forEach(c => c()));
 
       request.on('socket', socket => {
         // happy eyeballs don't emit lookup and connect events, so we use our custom ones
@@ -493,9 +497,14 @@ export abstract class APIRequestContext extends SdkObject {
 
         // non-happy-eyeballs sockets
         socket.setMaxListeners(100); // default is 10. there might be more than 10 requests to the same server in parallel, and they all use the same socket
-        socket.once('lookup', () => { dnsLookupAt = monotonicTime(); });
-        socket.once('connect', () => { tcpConnectionAt = monotonicTime(); });
-        socket.once('secureConnect', () => {
+
+        const onLookup = () => { dnsLookupAt = monotonicTime(); };
+        socket.once('lookup', onLookup);
+        cleanup.push(() => socket.removeListener('lookup', onLookup));
+        const onConnect = () => { tcpConnectionAt = monotonicTime(); };
+        socket.once('connect', onConnect);
+        cleanup.push(() => socket.removeListener('connect', onConnect));
+        const onSecureConnect = () => {
           tlsHandshakeAt = monotonicTime();
 
           if (socket instanceof TLSSocket) {
@@ -508,7 +517,9 @@ export abstract class APIRequestContext extends SdkObject {
               issuer: peerCertificate.issuer.CN
             };
           }
-        });
+        };
+        socket.once('secureConnect', () => onSecureConnect);
+        cleanup.push(() => socket.removeListener('secureConnect', onSecureConnect));
 
         serverIPAddress = socket.remoteAddress;
         serverPort = socket.remotePort;
