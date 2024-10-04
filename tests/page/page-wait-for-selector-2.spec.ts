@@ -328,3 +328,31 @@ it('should fail when navigating while on handle', async ({ page, mode, server })
   const error = await body.waitForSelector('div', { __testHookBeforeAdoptNode } as any).catch(e => e);
   expect(error.message).toContain(`waiting for locator('div') to be visible`);
 });
+
+it('should fail if element handle was detached while waiting', async ({ page, server }) => {
+  await page.setContent(`<button>hello</button>`);
+  const button = await page.$('button');
+  const promise = button.waitForSelector('something').catch(e => e);
+  await page.waitForTimeout(100);
+  await page.evaluate(() => document.body.innerText = '');
+  const error = await promise;
+  expect(error.message).toContain('Element is not attached to the DOM');
+});
+
+it('should succeed if element handle was detached while waiting for hidden', async ({ page, server }) => {
+  await page.setContent(`<button>hello</button>`);
+  const button = await page.$('button');
+  const promise = button.waitForSelector('something', { state: 'hidden' });
+  await page.waitForTimeout(100);
+  await page.evaluate(() => document.body.innerText = '');
+  await promise;
+});
+
+it('should succeed if element handle was detached while waiting for detached', async ({ page, server }) => {
+  await page.setContent(`<button>hello</button>`);
+  const button = await page.$('button');
+  const promise = button.waitForSelector('something', { state: 'detached' });
+  await page.waitForTimeout(100);
+  await page.evaluate(() => document.body.innerText = '');
+  await promise;
+});
