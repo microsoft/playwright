@@ -189,7 +189,10 @@ it.describe('mobile viewport', () => {
   });
 
   it('should scroll mobile page with background-attachment: fixed', {
-    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31551' }
+    annotation: [
+      { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31551' },
+      { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23573' },
+    ]
   }, async ({ playwright, browser, server, browserName, isLinux, headless }) => {
     it.fixme(browserName === 'webkit' && isLinux && headless, 'Fails on WPE apparently due to accelerated compositing + fixed layout');
     const iPhone = playwright.devices['iPhone 12'];
