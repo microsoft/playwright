@@ -492,9 +492,10 @@ export abstract class APIRequestContext extends SdkObject {
         tcpConnectionAt = happyEyeBallsTimings.tcpConnectionAt;
 
         // non-happy-eyeballs sockets
-        socket.on('lookup', () => { dnsLookupAt = monotonicTime(); });
-        socket.on('connect', () => { tcpConnectionAt = monotonicTime(); });
-        socket.on('secureConnect', () => {
+        socket.setMaxListeners(100); // default is 10. there might be more than 10 requests to the same server in parallel, and they all use the same socket
+        socket.once('lookup', () => { dnsLookupAt = monotonicTime(); });
+        socket.once('connect', () => { tcpConnectionAt = monotonicTime(); });
+        socket.once('secureConnect', () => {
           tlsHandshakeAt = monotonicTime();
 
           if (socket instanceof TLSSocket) {
