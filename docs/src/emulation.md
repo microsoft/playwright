@@ -558,7 +558,7 @@ await context.SetGeolocationAsync(new Geolocation() { Longitude = 48.858455, Lat
 **Note** you can only change geolocation for all pages in the context.
 ## Color Scheme and Media
 
-Emulate the users `"colorScheme"`. Supported values are 'light', 'dark', 'no-preference'. You can also emulate the media type with [`method: Page.emulateMedia`].
+Emulate the users `"colorScheme"`. Supported values are 'light' and 'dark'. You can also emulate the media type with [`method: Page.emulateMedia`].
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
