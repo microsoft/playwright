@@ -52,7 +52,7 @@ test('render a component with a named slot', async ({ mount }) => {
 });
 
 
-test('updating slot should work', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32809' } }, async ({ mount }) => {
+test('updating default slot should work', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32809' } }, async ({ mount }) => {
   const slots = { default: 'foo' };
 
   const component = await mount(SlotDefaultValue, { slots });
