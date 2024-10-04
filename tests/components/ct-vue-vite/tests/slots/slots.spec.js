@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/experimental-ct-vue';
 import DefaultSlot from '@/components/DefaultSlot.vue';
 import NamedSlots from '@/components/NamedSlots.vue';
 import Button from '@/components/Button.vue';
-import HelloWorld from "@/components/HelloWorld.vue";
+import SlotDefaultValue from "@/components/SlotDefaultValue.vue";
 
 test('render a default slot', async ({ mount }) => {
   const component = await mount(DefaultSlot, {
@@ -55,7 +55,7 @@ test('render a component with a named slot', async ({ mount }) => {
 test('updating slot should work', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32809' } }, async ({ mount }) => {
   const slots = { default: 'foo' };
 
-  const component = await mount(HelloWorld, { slots });
+  const component = await mount(SlotDefaultValue, { slots });
   await expect(component).toHaveText('foo');
 
   await component.update({ slots });
