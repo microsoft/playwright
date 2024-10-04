@@ -308,17 +308,6 @@ it('click should survive navigation', async ({ page, server }) => {
   await promise;
 });
 
-it('should fail if element removed while waiting on element handle', async ({ page, server }) => {
-  it.fixme();
-  await routeIframe(page);
-  await page.goto(server.PREFIX + '/iframe.html');
-  const button = await page.$('button');
-  const promise = button.waitForSelector('something');
-  await page.waitForTimeout(100);
-  await page.evaluate(() => document.body.innerText = '');
-  await promise;
-});
-
 it('should non work for non-frame', async ({ page, server }) => {
   await routeIframe(page);
   await page.setContent('<div></div>');

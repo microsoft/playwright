@@ -805,6 +805,8 @@ export class Frame extends SdkObject {
         return continuePolling;
       }
       const result = await resolved.injected.evaluateHandle((injected, { info, root }) => {
+        if (root && !root.isConnected)
+          throw injected.createStacklessError('Element is not attached to the DOM');
         const elements = injected.querySelectorAll(info.parsed, root || document);
         const element: Element | undefined  = elements[0];
         const visible = element ? injected.utils.isElementVisible(element) : false;
