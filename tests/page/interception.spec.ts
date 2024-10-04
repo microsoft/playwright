@@ -125,7 +125,6 @@ it('should intercept worker requests when enabled after worker creation', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32355' }
 }, async ({ page, server, isAndroid, browserName }) => {
   it.skip(isAndroid);
-  it.fixme(browserName === 'chromium');
 
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/data_for_worker', (req, res) => res.end('failed to intercept'));
