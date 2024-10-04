@@ -302,7 +302,7 @@ async function runTests(watchOptions: WatchModeOptions, testServerConnection: Te
   }) {
   printConfiguration(watchOptions, options?.title);
 
-  void readKeyPress((text: string, key: any) => {
+  const waitForDone = readKeyPress((text: string, key: any) => {
     if (isInterrupt(text, key)) {
       testServerConnection.stopTestsNoReply({});
       return 'done';
@@ -318,7 +318,7 @@ async function runTests(watchOptions: WatchModeOptions, testServerConnection: Te
     reuseContext: connectWsEndpoint ? true : undefined,
     workers: connectWsEndpoint ? 1 : undefined,
     headed: connectWsEndpoint ? true : undefined,
-  });
+  }).finally(() => waitForDone.cancel());
 }
 
 function readCommand() {
