@@ -54,7 +54,7 @@ it.describe('mobile viewport', () => {
     }
   });
 
-  it('should be detectable', async ({ playwright, browser, server, browserName, platform }) => {
+  it('should be detectable', async ({ playwright, browser }) => {
     const iPhone = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
@@ -62,7 +62,7 @@ it.describe('mobile viewport', () => {
     await context.close();
   });
 
-  it('should detect touch when applying viewport with touches', async ({ browser, server, browserName, platform }) => {
+  it('should detect touch when applying viewport with touches', async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 800, height: 600 }, hasTouch: true });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
@@ -154,7 +154,7 @@ it.describe('mobile viewport', () => {
     await desktopPage.close();
   });
 
-  it('mouse should work with mobile viewports and cross process navigations', async ({ browser, server, browserName }) => {
+  it('mouse should work with mobile viewports and cross process navigations', async ({ browser, server }) => {
     // @see https://crbug.com/929806
     const context = await browser.newContext({ viewport: { width: 360, height: 640 }, isMobile: true });
     const page = await context.newPage();
@@ -193,8 +193,7 @@ it.describe('mobile viewport', () => {
       { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31551' },
       { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23573' },
     ]
-  }, async ({ playwright, browser, server, browserName, isLinux, headless }) => {
-    it.fixme(browserName === 'webkit' && isLinux && headless, 'Fails on WPE apparently due to accelerated compositing + fixed layout');
+  }, async ({ playwright, browser, server }) => {
     const iPhone = playwright.devices['iPhone 12'];
     const context = await browser.newContext({ ...iPhone });
     const page = await context.newPage();
@@ -204,7 +203,7 @@ it.describe('mobile viewport', () => {
     await context.close();
   });
 
-  it('view scale should reset after navigation', async ({ browser, browserName }) => {
+  it('view scale should reset after navigation', async ({ browser }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26876' });
     const context = await browser.newContext({
       viewport: { width: 390, height: 664 },
