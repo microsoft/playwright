@@ -51,7 +51,6 @@ test('render a component with a named slot', async ({ mount }) => {
   await expect(component).toContainText('Footer');
 });
 
-
 test('updating default slot should work', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32809' } }, async ({ mount }) => {
   const slots = { default: 'foo' };
 
