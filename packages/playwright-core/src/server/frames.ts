@@ -248,6 +248,11 @@ export class FrameManager {
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
+    const pending = frame.pendingDocument();
+    if (pending && pending.documentId === undefined && pending.request === undefined) {
+      // WebKit has notified about the same-document navigation being requested, so clear it.
+      frame.setPendingDocument(undefined);
+    }
     frame._url = url;
     const navigationEvent: NavigationEvent = { url, name: frame._name, isPublic: true };
     this._fireInternalFrameNavigation(frame, navigationEvent);
