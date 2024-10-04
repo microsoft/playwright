@@ -2559,8 +2559,9 @@ export interface Page {
    */
   emulateMedia(options?: {
     /**
-     * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'` and `'dark'`. Passing `null`
-     * disables color scheme emulation. `'no-preference'` is deprecated.
+     * Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+     * media feature, supported values are `'light'` and `'dark'`. Passing `null` disables color scheme emulation.
+     * `'no-preference'` is deprecated.
      */
     colorScheme?: null|"light"|"dark"|"no-preference";
 
