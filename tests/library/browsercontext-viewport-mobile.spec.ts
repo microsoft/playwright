@@ -188,6 +188,22 @@ it.describe('mobile viewport', () => {
     await context.close();
   });
 
+  it('should scroll mobile page with background-attachment: fixed', {
+    annotation: [
+      { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31551' },
+      { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/23573' },
+    ]
+  }, async ({ playwright, browser, server, browserName, isLinux, headless }) => {
+    it.fixme(browserName === 'webkit' && isLinux && headless, 'Fails on WPE apparently due to accelerated compositing + fixed layout');
+    const iPhone = playwright.devices['iPhone 12'];
+    const context = await browser.newContext({ ...iPhone });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/input/background-fixed.html');
+    await page.getByRole('button').click();
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(1000);
+    await context.close();
+  });
+
   it('view scale should reset after navigation', async ({ browser, browserName }) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26876' });
     const context = await browser.newContext({
