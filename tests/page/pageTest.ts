@@ -23,7 +23,7 @@ import { electronTest } from '../electron/electronTest';
 import { webView2Test } from '../webview2/webView2Test';
 import type { PageTestFixtures, PageWorkerFixtures } from './pageTestApi';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
-export { expect } from '@playwright/test';
+export { expect, role } from '@playwright/test';
 
 let impl: TestType<PageTestFixtures & ServerFixtures & TestModeTestFixtures, PageWorkerFixtures & PlatformWorkerFixtures & TestModeWorkerFixtures & TestModeWorkerOptions & ServerWorkerOptions> = browserTest;
 

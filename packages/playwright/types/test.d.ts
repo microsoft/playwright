@@ -6694,9 +6694,24 @@ type MergedExpect<List> = Expect<MergedExpectMatchers<List>>;
  */
 export function mergeExpects<List extends any[]>(...expects: List): MergedExpect<List>;
 
+/**
+ * Aria snapshots.
+ */
+type Role =
+  'alert' | 'alertdialog' | 'application' | 'article' | 'banner' | 'blockquote' | 'button' | 'caption' | 'cell' | 'checkbox' | 'code' | 'columnheader' | 'combobox' | 'command' |
+  'complementary' | 'composite' | 'contentinfo' | 'definition' | 'deletion' | 'dialog' | 'directory' | 'document' | 'emphasis' | 'feed' | 'figure' | 'form' | 'generic' | 'grid' |
+  'gridcell' | 'group' | 'heading' | 'img' | 'input' | 'insertion' | 'landmark' | 'link' | 'list' | 'listbox' | 'listitem' | 'log' | 'main' | 'marquee' | 'math' | 'meter' | 'menu' |
+  'menubar' | 'menuitem' | 'menuitemcheckbox' | 'menuitemradio' | 'navigation' | 'none' | 'note' | 'option' | 'paragraph' | 'presentation' | 'progressbar' | 'radio' | 'radiogroup' |
+  'range' | 'region' | 'roletype' | 'row' | 'rowgroup' | 'rowheader' | 'scrollbar' | 'search' | 'searchbox' | 'section' | 'sectionhead' | 'select' | 'separator' | 'slider' |
+  'spinbutton' | 'status' | 'strong' | 'structure' | 'subscript' | 'superscript' | 'switch' | 'tab' | 'table' | 'tablist' | 'tabpanel' | 'term' | 'textbox' | 'time' | 'timer' |
+  'toolbar' | 'tooltip' | 'tree' | 'treegrid' | 'treeitem' | 'widget' | 'window';
+
+export const role: Record<Role, React.FunctionComponent<React.PropsWithChildren<{ name?: string }>>> & {
+  match: (regex: RegExp) => JSX.Element;
+};
+
 // This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
 export { };
-
 
 
 /**
@@ -7612,6 +7627,31 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveValues(values: ReadonlyArray<string|RegExp>, options?: {
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Asserts that the target element matches the given accessibility snapshot.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.goto('https://demo.playwright.dev/todomvc/');
+   * await expect(page.locator('body')).toMatchAriaSnapshot(<>
+   *   This is just a demo of TodoMVC for testing, not the
+   *   <x.link>real TodoMVC app.</x.link>
+   *   <x.heading>todos</x.heading>
+   *   <x.textbox>What needs to be done?</x.textbox>
+   * </>);
+   * ```
+   *
+   * @param expected
+   * @param options
+   */
+  toMatchAriaSnapshot(expected: JSX.Element, options?: {
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */

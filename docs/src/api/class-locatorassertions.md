@@ -2103,3 +2103,30 @@ Expected options currently selected.
 ### option: LocatorAssertions.toHaveValues.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.23
 
+
+## async method: LocatorAssertions.toMatchAriaSnapshot
+* since: v1.49
+* langs: js
+
+Asserts that the target element matches the given accessibility snapshot.
+
+**Usage**
+
+```js
+await page.goto('https://demo.playwright.dev/todomvc/');
+await expect(page.locator('body')).toMatchAriaSnapshot(<>
+  This is just a demo of TodoMVC for testing, not the
+  <x.link>real TodoMVC app.</x.link>
+  <x.heading>todos</x.heading>
+  <x.textbox>What needs to be done?</x.textbox>
+</>);
+```
+
+### param: LocatorAssertions.toMatchAriaSnapshot.expected
+* since: v1.49
+* langs: js
+- `expected` <[JSX.Element]>
+
+### option: LocatorAssertions.toMatchAriaSnapshot.timeout = %%-js-assertions-timeout-%%
+* since: v1.49
+* langs: js
