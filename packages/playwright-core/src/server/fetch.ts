@@ -516,7 +516,7 @@ export abstract class APIRequestContext extends SdkObject {
             };
           }
         };
-        socket.once('secureConnect', () => onSecureConnect);
+        socket.once('secureConnect', onSecureConnect);
         cleanup.push(() => socket.removeListener('secureConnect', onSecureConnect));
 
         serverIPAddress = socket.remoteAddress;
