@@ -38,7 +38,7 @@ for li in page.get_by_role('listitem').all():
 ```
 
 ```java
-for (Locator li : page.getByRole('listitem').all())
+for (Locator li : page.getByRole("listitem").all())
   li.click();
 ```
 

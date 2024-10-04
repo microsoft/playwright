@@ -257,7 +257,7 @@ await browser.close();
 Page page = browser.newPage();
 page.navigate("https://keycode.info");
 page.keyboard().press("A");
-page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("A.png"));
+page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("A.png")));
 page.keyboard().press("ArrowLeft");
 page.screenshot(new Page.ScreenshotOptions().setPath(Paths.get("ArrowLeft.png")));
 page.keyboard().press("Shift+O");

@@ -146,8 +146,8 @@ const browser = await chromium.launch({
 ```java
 Browser browser = chromium.launch(new BrowserType.LaunchOptions()
   .setProxy(new Proxy("http://myproxy.com:3128")
-  .setUsername('usr')
-  .setPassword('pwd')));
+  .setUsername("usr")
+  .setPassword("pwd")));
 ```
 
 ```python async
@@ -627,7 +627,7 @@ page.route("**/title.html", route -> {
   String body = response.text();
   body = body.replace("<title>", "<title>My prefix:");
   Map<String, String> headers = response.headers();
-  headers.put("content-type": "text/html");
+  headers.put("content-type", "text/html");
   route.fulfill(new Route.FulfillOptions()
     // Pass all fields from the response.
     .setResponse(response)

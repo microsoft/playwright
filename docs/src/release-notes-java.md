@@ -378,7 +378,7 @@ New method [`method: Page.addLocatorHandler`] registers a callback that will be 
 // Setup the handler.
 page.addLocatorHandler(
     page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Hej! You are in control of your cookies.")),
-    () - > {
+    () -> {
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Accept all")).click();
     });
 // Write the test as usual.
@@ -1187,14 +1187,12 @@ Playwright for Java 1.18 introduces [Web-First Assertions](./test-assertions).
 Consider the following example:
 
 ```java
-...
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 public class TestExample {
-  ...
   @Test
   void statusBecomesSubmitted() {
-    ...
+    // ...
     page.locator("#submit-button").click();
     assertThat(page.locator(".status")).hasText("Submitted");
   }
@@ -1471,19 +1469,19 @@ button.click("button >> visible=true");
 Traces are recorded using the new [`property: BrowserContext.tracing`] API:
 
 ```java
-Browser browser = chromium.launch();
+Browser browser = playwright.chromium().launch();
 BrowserContext context = browser.newContext();
 
 // Start tracing before creating / navigating a page.
-context.tracing.start(new Tracing.StartOptions()
+context.tracing().start(new Tracing.StartOptions()
   .setScreenshots(true)
-  .setSnapshots(true);
+  .setSnapshots(true));
 
 Page page = context.newPage();
-page.goto("https://playwright.dev");
+page.navigate("https://playwright.dev");
 
 // Stop tracing and export it into a zip archive.
-context.tracing.stop(new Tracing.StopOptions()
+context.tracing().stop(new Tracing.StopOptions()
   .setPath(Paths.get("trace.zip")));
 ```
 

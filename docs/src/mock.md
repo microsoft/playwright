@@ -195,15 +195,15 @@ await Expect(page.GetByTextAsync("Loquat", new () { Exact = true })).ToBeVisible
 page.route("*/**/api/v1/fruits", route -> {
   Response response = route.fetch();
   byte[] json = response.body();
-  parsed = new Gson().fromJson(json, JsonObject.class)
+  JsonObject parsed = new Gson().fromJson(new String(json), JsonObject.class);
   parsed.add(new JsonObject().add("name", "Loquat").add("id", 100));
   // Fulfill using the original response, while patching the response body
   // with the given JSON object.
-  route.fulfill(new Route.FulfillOptions().setResponse(response).setBody(json.toString()));
+  route.fulfill(new Route.FulfillOptions().setResponse(response).setBody(parsed.toString()));
 });
 
 // Go to the page
-page.goto("https://demo.playwright.dev/api-mocking");
+page.navigate("https://demo.playwright.dev/api-mocking");
 
 // Assert that the Loquat fruit is visible
 assertThat(page.getByText("Loquat", new Page.GetByTextOptions().setExact(true))).isVisible();
@@ -294,7 +294,7 @@ page.routeFromHAR(Path.of("./hars/fruit.har"), new RouteFromHAROptions()
 );
 
 // Go to the page
-page.goto("https://demo.playwright.dev/api-mocking");
+page.navigate("https://demo.playwright.dev/api-mocking");
 
 // Assert that the fruit is visible
 assertThat(page.getByText("Strawberry")).isVisible();
@@ -392,10 +392,11 @@ page.routeFromHAR(Path.of("./hars/fruit.har"), new RouteFromHAROptions()
 );
 
 // Go to the page
-page.goto("https://demo.playwright.dev/api-mocking");
+page.navigate("https://demo.playwright.dev/api-mocking");
 
 // Assert that the Playwright fruit is visible
-assertThat(page.getByText("Playwright", new Page.GetByTextOptions().setExact(true))).isVisible();
+assertThat(page.getByText("Playwright", new Page.GetByTextOptions()
+  .setExact(true))).isVisible();
 ```
 In the trace of our test we can see that the route was fulfilled from the HAR file and the API was not called.
 ![trace showing the HAR file being used](https://github.com/microsoft/playwright/assets/13063165/1bd7ab66-ea4f-43c2-a4e5-ca17d4837ff1)

@@ -1041,9 +1041,9 @@ await page.dragAndDrop('#source', '#target', {
 ```
 
 ```java
-page.dragAndDrop("#source", '#target');
+page.dragAndDrop("#source", "#target");
 // or specify exact positions relative to the top-left corners of the elements:
-page.dragAndDrop("#source", '#target', new Page.DragAndDropOptions()
+page.dragAndDrop("#source", "#target", new Page.DragAndDropOptions()
   .setSourcePosition(34, 7).setTargetPosition(10, 20));
 ```
 
@@ -1716,7 +1716,7 @@ public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
       BrowserType webkit = playwright.webkit();
-      Browser browser = webkit.launch({ headless: false });
+      Browser browser = webkit.launch(new BrowserType.LaunchOptions().setHeadless(false));
       BrowserContext context = browser.newContext();
       Page page = context.newPage();
       page.exposeBinding("pageURL", (source, args) -> source.page().url());
@@ -1886,26 +1886,27 @@ public class Example {
   public static void main(String[] args) {
     try (Playwright playwright = Playwright.create()) {
       BrowserType webkit = playwright.webkit();
-      Browser browser = webkit.launch({ headless: false });
+      Browser browser = webkit.launch(new BrowserType.LaunchOptions().setHeadless(false));
       Page page = browser.newPage();
       page.exposeFunction("sha256", args -> {
-        String text = (String) args[0];
-        MessageDigest crypto;
         try {
-          crypto = MessageDigest.getInstance("SHA-256");
+          String text = (String) args[0];
+          MessageDigest crypto = MessageDigest.getInstance("SHA-256");
+          byte[] token = crypto.digest(text.getBytes(StandardCharsets.UTF_8));
+          return Base64.getEncoder().encodeToString(token);
         } catch (NoSuchAlgorithmException e) {
           return null;
         }
-        byte[] token = crypto.digest(text.getBytes(StandardCharsets.UTF_8));
-        return Base64.getEncoder().encodeToString(token);
       });
-      page.setContent("<script>\n" +
+      page.setContent(
+        "<script>\n" +
         "  async function onClick() {\n" +
         "    document.querySelector('div').textContent = await window.sha256('PLAYWRIGHT');\n" +
         "  }\n" +
         "</script>\n" +
         "<button onclick=\"onClick()\">Click me</button>\n" +
-        "<div></div>\n");
+        "<div></div>"
+      );
       page.click("button");
     }
   }
@@ -2106,7 +2107,7 @@ const frame = page.frame({ url: /.*domain.*/ });
 ```
 
 ```java
-Frame frame = page.frameByUrl(Pattern.compile(".*domain.*");
+Frame frame = page.frameByUrl(Pattern.compile(".*domain.*"));
 ```
 
 ```py
@@ -3161,12 +3162,12 @@ await page.getByRole('button', { name: 'Start here' }).click();
 
 ```java
 // Setup the handler.
-page.addLocatorHandler(page.getByText("Sign up to the newsletter"), () => {
+page.addLocatorHandler(page.getByText("Sign up to the newsletter"), () -> {
   page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("No thanks")).click();
 });
 
 // Write the test as usual.
-page.goto("https://example.com");
+page.navigate("https://example.com");
 page.getByRole("button", Page.GetByRoleOptions().setName("Start here")).click();
 ```
 
@@ -3218,12 +3219,12 @@ await page.getByRole('button', { name: 'Start here' }).click();
 
 ```java
 // Setup the handler.
-page.addLocatorHandler(page.getByText("Confirm your security details")), () => {
+page.addLocatorHandler(page.getByText("Confirm your security details"), () -> {
   page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Remind me later")).click();
 });
 
 // Write the test as usual.
-page.goto("https://example.com");
+page.navigate("https://example.com");
 page.getByRole("button", Page.GetByRoleOptions().setName("Start here")).click();
 ```
 
@@ -3275,12 +3276,12 @@ await page.getByRole('button', { name: 'Start here' }).click();
 
 ```java
 // Setup the handler.
-page.addLocatorHandler(page.locator("body")), () => {
+page.addLocatorHandler(page.locator("body"), () -> {
   page.evaluate("window.removeObstructionsForTestIfNeeded()");
-}, new Page.AddLocatorHandlerOptions.setNoWaitAfter(true));
+}, new Page.AddLocatorHandlerOptions().setNoWaitAfter(true));
 
 // Write the test as usual.
-page.goto("https://example.com");
+page.navigate("https://example.com");
 page.getByRole("button", Page.GetByRoleOptions().setName("Start here")).click();
 ```
 
@@ -3326,7 +3327,7 @@ await page.addLocatorHandler(page.getByLabel('Close'), async locator => {
 ```
 
 ```java
-page.addLocatorHandler(page.getByLabel("Close"), locator => {
+page.addLocatorHandler(page.getByLabel("Close"), locator -> {
   locator.click();
 }, new Page.AddLocatorHandlerOptions().setTimes(1));
 ```

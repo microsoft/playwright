@@ -188,7 +188,7 @@ page.setViewportSize(1600, 1200);
 // Emulate high-DPI
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
   .setViewportSize(2560, 1440)
-  .setDeviceScaleFactor(2);
+  .setDeviceScaleFactor(2));
 ```
 
 ```python async
@@ -378,7 +378,7 @@ const context = await browser.newContext({
 
 ```java
 BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-  .setPermissions(Arrays.asList("notifications"));
+  .setPermissions(Arrays.asList("notifications")));
 ```
 
 ```python async
