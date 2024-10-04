@@ -427,3 +427,26 @@ test('globalSetup should support multiple', async ({ runInlineTest }) => {
     'globalTeardown1',
   ]);
 });
+
+test('debug logs show index of setup/teardown', async ({ runInlineTest }) => {
+  const { output } = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        globalSetup: ['./globalSetup1.ts','./globalSetup2.ts'],
+        globalTeardown: ['./globalTeardown1.ts', './globalTeardown2.ts'],
+      };
+    `,
+    'globalSetup1.ts': `module.exports = () => console.log('globalSetup1');`,
+    'globalSetup2.ts': `module.exports = () => console.log('globalSetup2');`,
+    'globalTeardown1.ts': `module.exports = () => console.log('globalTeardown1');`,
+    'globalTeardown2.ts': `module.exports = () => console.log('globalTeardown2');`,
+
+    'a.test.js': `
+      import { test } from '@playwright/test';
+      test('a', () => console.log('test a'));
+    `,
+  }, { reporter: 'line' }, { DEBUG: 'pw:test:task' });
+
+  expect(output).toContain('pw:test:task "global setup #0" started');
+  expect(output).toContain('pw:test:task "teardown for global setup #0" started');
+});

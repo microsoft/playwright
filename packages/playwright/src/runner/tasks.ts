@@ -99,8 +99,9 @@ export function createGlobalSetupTasks(config: FullConfigInternal) {
     tasks.push(createRemoveOutputDirsTask());
   tasks.push(...createPluginSetupTasks(config));
   if (config.globalSetups.length || config.globalTeardowns.length) {
-    for (let i = 0; i < Math.max(config.globalSetups.length, config.globalTeardowns.length); i++)
-      tasks.push(createGlobalSetupTask(i, config));
+    const length = Math.max(config.globalSetups.length, config.globalTeardowns.length);
+    for (let i = 0; i < length; i++)
+      tasks.push(createGlobalSetupTask(i, length));
   }
   return tasks;
 }
@@ -163,19 +164,14 @@ function createPluginBeginTask(plugin: TestRunnerPluginRegistration): Task<TestR
   };
 }
 
-function createGlobalSetupTask(index: number, config: FullConfigInternal): Task<TestRun> {
+function createGlobalSetupTask(index: number, length: number): Task<TestRun> {
   let globalSetupResult: any;
   let globalSetupFinished = false;
   let teardownHook: any;
 
   let title = 'global setup';
-  if (config.globalSetups.length > 1 || config.globalSetups.length > 1) {
-    const files = [
-      config.globalSetups[index],
-      config.globalTeardowns[index],
-    ].filter(Boolean).join(', ');
-    title += ` (${files})`;
-  }
+  if (length)
+    title += ` #${index}`;
 
   return {
     title,
