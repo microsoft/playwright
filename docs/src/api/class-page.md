@@ -1272,7 +1272,7 @@ Passing `'Null'` disables CSS media emulation.
 * langs: js, java
 - `colorScheme` <null|[ColorScheme]<"light"|"dark"|"no-preference">>
 
-Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'` and `'dark'`. Passing
+Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) media feature, supported values are `'light'` and `'dark'`. Passing
 `null` disables color scheme emulation. `'no-preference'` is deprecated.
 
 ### option: Page.emulateMedia.colorScheme
@@ -1280,7 +1280,7 @@ Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`
 * langs: csharp, python
 - `colorScheme` <[ColorScheme]<"light"|"dark"|"no-preference"|"null">>
 
-Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'` and `'dark'`. Passing
+Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) media feature, supported values are `'light'` and `'dark'`. Passing
 `'Null'` disables color scheme emulation. `'no-preference'` is deprecated.
 
 ### option: Page.emulateMedia.reducedMotion
