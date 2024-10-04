@@ -496,8 +496,6 @@ export abstract class APIRequestContext extends SdkObject {
         tcpConnectionAt = happyEyeBallsTimings.tcpConnectionAt;
 
         // non-happy-eyeballs sockets
-        socket.setMaxListeners(100); // default is 10. there might be more than 10 requests to the same server in parallel, and they all use the same socket
-
         const onLookup = () => { dnsLookupAt = monotonicTime(); };
         socket.once('lookup', onLookup);
         cleanup.push(() => socket.removeListener('lookup', onLookup));
