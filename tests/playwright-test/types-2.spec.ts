@@ -206,3 +206,25 @@ test('step should inherit return type from its callback ', async ({ runTSC }) =>
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should only run the failing test', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('should not run this test', async () => {
+        // This test should be skipped because of test.fail.only
+        expect(true).toBe(true);
+      });
+
+      test.fail.only('should only run this failing test', async () => {
+        // This test is expected to fail
+        expect(true).toBe(false);
+      });
+
+      test('should also not run this test', async () => {
+        // This test should be skipped because of test.fail.only
+        expect(true).toBe(true);
+      });
+    `
+  });
+});
