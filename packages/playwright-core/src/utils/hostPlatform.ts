@@ -86,15 +86,20 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
         return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
       return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
     }
-    if (distroInfo?.id === 'debian' || distroInfo?.id === 'raspbian') {
+    if (distroInfo?.id === 'debian' || distroInfo?.id === 'raspbian' || distroInfo?.id === 'devuan') {
       const isOfficiallySupportedPlatform = distroInfo?.id === 'debian';
-      if (distroInfo?.version === '11')
+      let debianVersion = distroInfo?.version;
+      if (distroInfo.id === 'devuan') {
+        // Devuan is debian-based but it's always 7 versions behind
+        debianVersion = String(parseInt(distroInfo.version, 10) + 7);
+      }
+      if (debianVersion === '11')
         return { hostPlatform: ('debian11' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
-      if (distroInfo?.version === '12')
+      if (debianVersion === '12')
         return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
       // use most recent supported release for 'debian testing' and 'unstable'.
       // they never include a numeric version entry in /etc/os-release.
-      if (distroInfo?.version === '')
+      if (debianVersion === '')
         return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
     }
     return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
