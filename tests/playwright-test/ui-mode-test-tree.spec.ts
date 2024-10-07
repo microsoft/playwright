@@ -297,6 +297,32 @@ test('should collapse all', async ({ runUITest }) => {
   `);
 });
 
+test('should expand all', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32825' }
+}, async ({ runUITest }) => {
+  const { page } = await runUITest(basicTestTree);
+
+  await page.getByTestId('test-tree').getByText('suite').click();
+  await page.getByTitle('Collapse all').click();
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ► ◯ a.test.ts
+    ► ◯ b.test.ts
+  `);
+
+  await page.getByTitle('Expand all').click();
+  await expect.poll(dumpTestTree(page)).toContain(`
+    ▼ ◯ a.test.ts
+        ◯ passes
+        ◯ fails
+      ▼ ◯ suite
+          ◯ inner passes
+          ◯ inner fails
+    ▼ ◯ b.test.ts
+        ◯ passes
+        ◯ fails
+  `);
+});
+
 test('should resolve title conflicts', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `

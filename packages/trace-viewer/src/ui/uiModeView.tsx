@@ -90,6 +90,7 @@ export const UIModeView: React.FC<{}> = ({
   const commandQueue = React.useRef(Promise.resolve());
   const runTestBacklog = React.useRef<Set<string>>(new Set());
   const [collapseAllCount, setCollapseAllCount] = React.useState(0);
+  const [expandAllCount, setExpandAllCount] = React.useState(0);
   const [isDisconnected, setIsDisconnected] = React.useState(false);
   const [hasBrowsers, setHasBrowsers] = React.useState(true);
   const [testServerConnection, setTestServerConnection] = React.useState<TestServerConnection>();
@@ -473,6 +474,9 @@ export const UIModeView: React.FC<{}> = ({
           <ToolbarButton icon='collapse-all' title='Collapse all' onClick={() => {
             setCollapseAllCount(collapseAllCount + 1);
           }} />
+          <ToolbarButton icon='expand-all' title='Expand all' onClick={() => {
+            setExpandAllCount(expandAllCount + 1);
+          }} />
         </Toolbar>
         <TestListView
           filterText={filterText}
@@ -487,6 +491,7 @@ export const UIModeView: React.FC<{}> = ({
           setWatchedTreeIds={setWatchedTreeIds}
           isLoading={isLoading}
           requestedCollapseAllCount={collapseAllCount}
+          requestedExpandAllCount={expandAllCount}
           setFilterText={setFilterText}
           onRevealSource={onRevealSource}
         />
