@@ -391,15 +391,16 @@ test('globalSetup should support multiple', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
-        globalSetup: ['./globalSetup1.ts','./globalSetup2.ts','./globalSetup3.ts'],
-        globalTeardown: ['./globalTeardown1.ts', './globalTeardown2.ts'],
+        globalSetup: ['./globalSetup1.ts','./globalSetup2.ts','./globalSetup3.ts','./globalSetup4.ts'],
+        globalTeardown: ['./globalTeardown2.ts', './globalTeardown3.ts'],
       };
     `,
-    'globalSetup1.ts': `module.exports = () => console.log('%%globalSetup1');`,
+    'globalSetup1.ts': `module.exports = () => { console.log('%%globalSetup1'); return () => console.log('%%globalSetup1Function'); };`,
     'globalSetup2.ts': `module.exports = () => console.log('%%globalSetup2');`,
-    'globalSetup3.ts': `module.exports = () => console.log('%%globalSetup3');`,
-    'globalTeardown1.ts': `module.exports = () => console.log('%%globalTeardown1');`,
-    'globalTeardown2.ts': `module.exports = () => console.log('%%globalTeardown2');`,
+    'globalSetup3.ts': `module.exports = () => { console.log('%%globalSetup3'); return () => console.log('%%globalSetup3Function'); }`,
+    'globalSetup4.ts': `module.exports = () => console.log('%%globalSetup4');`,
+    'globalTeardown2.ts': `module.exports = () => { console.log('%%globalTeardown2'); throw new Error('kaboom'); }`,
+    'globalTeardown3.ts': `module.exports = () => console.log('%%globalTeardown3');`,
 
     'a.test.js': `
       import { test } from '@playwright/test';
@@ -407,15 +408,21 @@ test('globalSetup should support multiple', async ({ runInlineTest }) => {
       test('b', () => console.log('%%test b'));
     `,
   }, { reporter: 'line' });
-
   expect(result.passed).toBe(2);
+
+  // behaviour: setups in order, teardowns in reverse order.
+  // setup-returned functions inherit their position, and take precedence over `globalTeardown` scripts.
   expect(result.outputLines).toEqual([
     'globalSetup1',
     'globalSetup2',
     'globalSetup3',
+    'globalSetup4',
     'test a',
     'test b',
+    'globalSetup3Function',
+    'globalTeardown3',
     'globalTeardown2',
-    'globalTeardown1',
+    // 'globalSetup1Function' is missing, because globalTeardown2 errored out.
   ]);
+  expect(result.output).toContain('Error: kaboom');
 });
