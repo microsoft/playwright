@@ -24,9 +24,9 @@ import type { Log } from '../../packages/trace/src/har';
 import { parseHar } from '../config/utils';
 const { createHttp2Server } = require('../../packages/playwright-core/lib/utils');
 
-async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string, proxy?: BrowserContextOptions['proxy'] } & Partial<Pick<BrowserContextOptions['recordHar'], 'content' | 'omitContent' | 'mode'>> = {}) {
+async function pageWithHar(contextFactory: (options?: BrowserContextOptions) => Promise<BrowserContext>, testInfo: any, options: { outputPath?: string } & Partial<Pick<BrowserContextOptions['recordHar'], 'content' | 'omitContent' | 'mode'>> = {}) {
   const harPath = testInfo.outputPath(options.outputPath || 'test.har');
-  const context = await contextFactory({ recordHar: { path: harPath, ...options }, ignoreHTTPSErrors: true, proxy: options.proxy });
+  const context = await contextFactory({ recordHar: { path: harPath, ...options }, ignoreHTTPSErrors: true });
   const page = await context.newPage();
   return {
     page,
@@ -856,25 +856,6 @@ it('should respect minimal mode for API Requests', async ({ contextFactory, serv
   expect(entry.request.cookies).toEqual([]);
   expect(entry.request.bodySize).toBe(-1);
   expect(entry.response.bodySize).toBe(-1);
-});
-
-it('should include timings when using http proxy', async ({ contextFactory, server, proxyServer }, testInfo) => {
-  proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo, { proxy: { server: `localhost:${proxyServer.PORT}` } });
-  const response = await page.request.get(server.EMPTY_PAGE);
-  await response.body();
-  await expect(response).toBeOK();
-  const log = await getLog();
-  expect(log.entries[0].timings.connect).toBeGreaterThan(0);
-});
-
-it('should include timings when using socks proxy', async ({ contextFactory, server, socksPort }, testInfo) => {
-  const { page, getLog } = await pageWithHar(contextFactory, testInfo, { proxy: { server: `socks5://localhost:${socksPort}` } });
-  const response = await page.request.get(server.EMPTY_PAGE);
-  await response.body();
-  await expect(response).toBeOK();
-  const log = await getLog();
-  expect(log.entries[0].timings.connect).toBeGreaterThan(0);
 });
 
 it('should include redirects from API request', async ({ contextFactory, server }, testInfo) => {

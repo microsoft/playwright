@@ -50,7 +50,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
 
   const proxyURL = getProxyForUrl(params.url);
   if (proxyURL) {
-    const parsedProxyURL = new URL(proxyURL);
+    const parsedProxyURL = url.parse(proxyURL);
     if (params.url.startsWith('http:')) {
       options = {
         path: parsedUrl.href,
