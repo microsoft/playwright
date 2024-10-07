@@ -1217,8 +1217,6 @@ await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches);
 // → true
 await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches);
 // → false
-await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches);
-// → false
 ```
 
 ```java
@@ -1226,8 +1224,6 @@ page.emulateMedia(new Page.EmulateMediaOptions().setColorScheme(ColorScheme.DARK
 page.evaluate("() => matchMedia('(prefers-color-scheme: dark)').matches");
 // → true
 page.evaluate("() => matchMedia('(prefers-color-scheme: light)').matches");
-// → false
-page.evaluate("() => matchMedia('(prefers-color-scheme: no-preference)').matches");
 // → false
 ```
 
@@ -1237,8 +1233,6 @@ await page.evaluate("matchMedia('(prefers-color-scheme: dark)').matches")
 # → True
 await page.evaluate("matchMedia('(prefers-color-scheme: light)').matches")
 # → False
-await page.evaluate("matchMedia('(prefers-color-scheme: no-preference)').matches")
-# → False
 ```
 
 ```python sync
@@ -1247,7 +1241,6 @@ page.evaluate("matchMedia('(prefers-color-scheme: dark)').matches")
 # → True
 page.evaluate("matchMedia('(prefers-color-scheme: light)').matches")
 # → False
-page.evaluate("matchMedia('(prefers-color-scheme: no-preference)').matches")
 ```
 
 ```csharp
@@ -1255,8 +1248,6 @@ await page.EmulateMediaAsync(new() { ColorScheme = ColorScheme.Dark });
 await page.EvaluateAsync("matchMedia('(prefers-color-scheme: dark)').matches");
 // → true
 await page.EvaluateAsync("matchMedia('(prefers-color-scheme: light)').matches");
-// → false
-await page.EvaluateAsync("matchMedia('(prefers-color-scheme: no-preference)').matches");
 // → false
 ```
 
@@ -1281,16 +1272,16 @@ Passing `'Null'` disables CSS media emulation.
 * langs: js, java
 - `colorScheme` <null|[ColorScheme]<"light"|"dark"|"no-preference">>
 
-Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
-`null` disables color scheme emulation.
+Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) media feature, supported values are `'light'` and `'dark'`. Passing
+`null` disables color scheme emulation. `'no-preference'` is deprecated.
 
 ### option: Page.emulateMedia.colorScheme
 * since: v1.9
 * langs: csharp, python
 - `colorScheme` <[ColorScheme]<"light"|"dark"|"no-preference"|"null">>
 
-Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
-`'Null'` disables color scheme emulation.
+Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme) media feature, supported values are `'light'` and `'dark'`. Passing
+`'Null'` disables color scheme emulation. `'no-preference'` is deprecated.
 
 ### option: Page.emulateMedia.reducedMotion
 * since: v1.12

@@ -42,8 +42,8 @@ it('should scroll into view', async ({ page, server, isAndroid }) => {
   }
 });
 
-it('should scroll zero-sized element into view', async ({ page, isAndroid, isElectron, isWebView2, browserName, isMac, macVersion }) => {
-  it.fixme(isAndroid || isElectron || isWebView2);
+it('should scroll zero-sized element into view', async ({ page, isAndroid, isElectron, browserName, isMac, macVersion }) => {
+  it.fixme(isAndroid || isElectron);
   it.skip(browserName === 'webkit' && isMac && macVersion < 11, 'WebKit for macOS 10.15 is frozen.');
 
   await page.setContent(`
@@ -111,7 +111,6 @@ it('should take screenshot', async ({ page, server, browserName, headless, isAnd
 });
 
 it('should return bounding box', async ({ page, server, browserName, headless, isAndroid, isLinux }) => {
-  it.fixme(browserName === 'firefox' && !headless && !isLinux);
   it.skip(isAndroid);
 
   await page.setViewportSize({ width: 500, height: 500 });

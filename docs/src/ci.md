@@ -415,7 +415,7 @@ Large test suites can take very long to execute. By executing a preliminary test
 This will give you a faster feedback loop and slightly lower CI consumption while working on Pull Requests.
 To detect test files affected by your changeset, `--only-changed` analyses your suites' dependency graph. This is a heuristic and might miss tests, so it's important that you always run the full test suite after the preliminary test run.
 
-```yml js title=".github/workflows/playwright.yml"
+```yml js title=".github/workflows/playwright.yml" {24-26}
 name: Playwright Tests
 on:
   push:

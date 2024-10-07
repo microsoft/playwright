@@ -65,7 +65,9 @@ it('should use proxy', async ({ contextFactory, server, proxyServer }) => {
 });
 
 
-it('should set cookie for top-level domain', async ({ contextFactory, server, proxyServer, browserName, isLinux }) => {
+it('should set cookie for top-level domain', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18362' }
+}, async ({ contextFactory, server, proxyServer, browserName, isLinux }) => {
   it.fixme(browserName === 'webkit' && isLinux);
 
   proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });

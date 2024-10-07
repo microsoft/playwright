@@ -65,13 +65,9 @@ it('should respect CSP @smoke', async ({ page, server }) => {
   expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
-it('should play video @smoke', async ({ page, asset, browserName, platform, macVersion, mode }) => {
-  // TODO: the test passes on Windows locally but fails on GitHub Action bot,
-  // apparently due to a Media Pack issue in the Windows Server.
-  // Also the test is very flaky on Linux WebKit.
-  it.fixme(browserName === 'webkit' && platform !== 'darwin');
-  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/5721');
-  it.fixme(browserName === 'webkit' && platform === 'darwin' && macVersion === 11, 'Does not work on BigSur');
+it('should play video @smoke', async ({ page, asset, browserName, isWindows, isLinux, mode }) => {
+  it.skip(browserName === 'webkit' && isWindows, 'passes locally but fails on GitHub Action bot, apparently due to a Media Pack issue in the Windows Server');
+  it.fixme(browserName === 'firefox' && isLinux, 'https://github.com/microsoft/playwright/issues/5721');
   it.skip(mode.startsWith('service'));
 
   // Safari only plays mp4 so we test WebKit with an .mp4 clip.
@@ -85,8 +81,7 @@ it('should play video @smoke', async ({ page, asset, browserName, platform, macV
 });
 
 it('should play webm video @smoke', async ({ page, asset, browserName, platform, macVersion, mode }) => {
-  it.fixme(browserName === 'webkit' && platform === 'darwin' && macVersion === 11, 'Does not work on BigSur');
-  it.fixme(browserName === 'webkit' && platform === 'win32');
+  it.skip(browserName === 'webkit' && platform === 'win32', 'not supported');
   it.skip(mode.startsWith('service'));
 
   const absolutePath = asset('video_webm.html');
@@ -98,8 +93,6 @@ it('should play webm video @smoke', async ({ page, asset, browserName, platform,
 });
 
 it('should play audio @smoke', async ({ page, server, browserName, platform }) => {
-  it.fixme(browserName === 'firefox' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/10887');
-  it.fixme(browserName === 'firefox' && platform === 'linux', 'https://github.com/microsoft/playwright/issues/10887');
   it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/10892');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<audio src="${server.PREFIX}/example.mp3"></audio>`);
@@ -133,7 +126,6 @@ it('should support webgl 2 @smoke', async ({ page, browserName, headless, isWind
 
 it('should not crash on page with mp4 @smoke', async ({ page, server, platform, browserName }) => {
   it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/11009, times out in setContent');
-  it.fixme(browserName === 'firefox', 'https://bugzilla.mozilla.org/show_bug.cgi?id=1697004');
   await page.setContent(`<video><source src="${server.PREFIX}/movie.mp4"/></video>`);
   await page.waitForTimeout(1000);
 });
@@ -261,7 +253,6 @@ it('window.GestureEvent in WebKit', async ({ page, server, browserName }) => {
 
 it('requestFullscreen', async ({ page, server, browserName, headless, isLinux }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22832' });
-  it.fixme(browserName === 'chromium' && headless, 'fullscreenchange is not fired in headless Chromium');
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {
     const result = new Promise(resolve => document.addEventListener('fullscreenchange', resolve));

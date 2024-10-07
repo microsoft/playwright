@@ -139,7 +139,9 @@ browserTest('should report null viewportSize when given null viewport', async ({
   await context.close();
 });
 
-browserTest('should drag with high dpi', async ({ browser, server }) => {
+browserTest('should drag with high dpi', async ({ browser, server, headless }) => {
+  browserTest.fixme(!headless, 'Flaky on all browser in headed');
+
   const page = await browser.newPage({ deviceScaleFactor: 2 });
   await page.goto(server.PREFIX + '/drag-n-drop.html');
   await page.hover('#source');

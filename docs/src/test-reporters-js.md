@@ -422,18 +422,10 @@ Or just pass the reporter file path as `--reporter` command line option:
 npx playwright test --reporter="./myreporter/my-awesome-reporter.ts"
 ```
 
-## Third party reporter showcase
+Here's a short list of open source reporter implementations that you can take a look at when writing your own reporter:
 
-* [Allure](https://www.npmjs.com/package/allure-playwright)
-* [Argos Visual Testing](https://argos-ci.com/docs/playwright)
-* [Currents](https://www.npmjs.com/package/@currents/playwright)
-* [GitHub Actions Reporter](https://www.npmjs.com/package/@estruyf/github-actions-reporter)
-* [GitHub Pull Request Comment](https://github.com/marketplace/actions/playwright-report-comment)
-* [Mail Reporter](https://www.npmjs.com/package/playwright-mail-reporter)
-* [Microsoft Teams Reporter](https://www.npmjs.com/package/playwright-msteams-reporter)
-* [Monocart](https://github.com/cenfun/monocart-reporter)
+* [Allure Reporter](https://github.com/allure-framework/allure-js/tree/main/packages/allure-playwright)
+* [Github Actions Reporter](https://github.com/estruyf/playwright-github-actions-reporter)
+* [Mail Reporter](https://github.com/estruyf/playwright-mail-reporter)
 * [ReportPortal](https://github.com/reportportal/agent-js-playwright)
-* [Serenity/JS](https://serenity-js.org/handbook/test-runners/playwright-test)
-* [Testmo](https://github.com/jonasclaes/playwright-testmo-reporter)
-* [Testomat.io](https://github.com/testomatio/reporter/blob/master/docs/frameworks.md#playwright)
-* [Tesults](https://www.tesults.com/docs/playwright)
+* [Monocart](https://github.com/cenfun/monocart-reporter)

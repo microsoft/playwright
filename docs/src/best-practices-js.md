@@ -112,9 +112,39 @@ Playwright has a [test generator](./codegen.md) that can generate tests and pick
 
 To pick a locator run the `codegen` command followed by the URL that you would like to pick a locator from.
 
+<Tabs
+  defaultValue="npm"
+  values={[
+    {label: 'npm', value: 'npm'},
+    {label: 'yarn', value: 'yarn'},
+    {label: 'pnpm', value: 'pnpm'}
+  ]
+}>
+<TabItem value="npm">
+
 ```bash
 npx playwright codegen playwright.dev
 ```
+
+</TabItem>
+
+<TabItem value="yarn">
+
+```bash
+yarn playwright codegen playwright.dev
+```
+
+</TabItem>
+
+<TabItem value="pnpm">
+
+```bash
+pnpm exec playwright codegen playwright.dev
+```
+
+</TabItem>
+
+</Tabs>
 
 This will open a new browser window as well as the Playwright inspector. To pick a locator first click on the 'Record' button to stop the recording. By default when you run the `codegen` command it will start a new recording. Once you stop the recording the 'Pick Locator' button will be available to click.
 
@@ -170,9 +200,39 @@ You can live debug your test by clicking or editing the locators in your test in
 
 You can also debug your tests with the Playwright inspector by running your tests with the `--debug` flag.
 
+<Tabs
+  defaultValue="npm"
+  values={[
+    {label: 'npm', value: 'npm'},
+    {label: 'yarn', value: 'yarn'},
+    {label: 'pnpm', value: 'pnpm'}
+  ]
+}>
+<TabItem value="npm">
+
 ```bash
 npx playwright test --debug
 ```
+
+</TabItem>
+
+<TabItem value="yarn">
+
+```bash
+yarn playwright test --debug
+```
+
+</TabItem>
+
+<TabItem value="pnpm">
+
+```bash
+pnpm exec playwright test --debug
+```
+
+</TabItem>
+
+</Tabs>
 
 You can then step through your test, view actionability logs and edit the locator live and see it highlighted in the browser window. This will show you which locators match, how many of them there are.
 
@@ -182,9 +242,39 @@ You can then step through your test, view actionability logs and edit the locato
 
 To debug a specific test add the name of the test file and the line number of the test followed by the `--debug` flag.
 
+<Tabs
+  defaultValue="npm"
+  values={[
+    {label: 'npm', value: 'npm'},
+    {label: 'yarn', value: 'yarn'},
+    {label: 'pnpm', value: 'pnpm'}
+  ]
+}>
+<TabItem value="npm">
+
 ```bash
 npx playwright test example.spec.ts:9 --debug
 ```
+
+</TabItem>
+
+<TabItem value="yarn">
+
+```bash
+yarn playwright test example.spec.ts:9 --debug
+```
+
+</TabItem>
+
+<TabItem value="pnpm">
+
+```bash
+pnpm exec playwright test example.spec.ts:9 --debug
+```
+
+</TabItem>
+
+</Tabs>
 #### Debugging on CI
 
 For CI failures, use the Playwright [trace viewer](./trace-viewer.md) instead of videos and screenshots. The trace viewer gives you a full trace of your tests as a local Progressive Web App (PWA) that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action using dev tools, view network requests and more.
@@ -193,14 +283,75 @@ For CI failures, use the Playwright [trace viewer](./trace-viewer.md) instead of
 
 Traces are configured in the Playwright config file and are set to run on CI on the first retry of a failed test. We don't recommend setting this to `on` so that traces are run on every test as it's very performance heavy. However you can run a trace locally when developing with the `--trace` flag.
 
+<Tabs
+  defaultValue="npm"
+  values={[
+    {label: 'npm', value: 'npm'},
+    {label: 'yarn', value: 'yarn'},
+    {label: 'pnpm', value: 'pnpm'}
+  ]
+}>
+<TabItem value="npm">
+
 ```bash
 npx playwright test --trace on
 ```
+
+</TabItem>
+
+<TabItem value="yarn">
+
+```bash
+yarn playwright test --trace on
+```
+
+</TabItem>
+
+<TabItem value="pnpm">
+
+```bash
+pnpm exec playwright test --trace on
+```
+
+</TabItem>
+
+</Tabs>
+
 Once you run this command your traces will be recorded for each test and can be viewed directly from the HTML report.
+
+<Tabs
+  defaultValue="npm"
+  values={[
+    {label: 'npm', value: 'npm'},
+    {label: 'yarn', value: 'yarn'},
+    {label: 'pnpm', value: 'pnpm'}
+  ]
+}>
+<TabItem value="npm">
 
 ```bash
 npx playwright show-report
-````
+```
+
+</TabItem>
+
+<TabItem value="yarn">
+
+```bash
+yarn playwright show-report
+```
+
+</TabItem>
+
+<TabItem value="pnpm">
+
+```bash
+pnpm exec playwright show-report
+```
+
+</TabItem>
+
+</Tabs>
 
 <img width="1516" alt="Playwrights HTML report" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212279022-d929d4c0-2271-486a-a75f-166ac231d25f.png" />
 
@@ -246,16 +397,77 @@ export default defineConfig({
 
 By keeping your Playwright version up to date you will be able to test your app on the latest browser versions and catch failures before the latest browser version is released to the public.
 
+<Tabs
+  defaultValue="npm"
+  values={[
+    {label: 'npm', value: 'npm'},
+    {label: 'yarn', value: 'yarn'},
+    {label: 'pnpm', value: 'pnpm'}
+  ]
+}>
+<TabItem value="npm">
+
 ```bash
 npm install -D @playwright/test@latest
 ```
+
+</TabItem>
+
+<TabItem value="yarn">
+
+```bash
+yarn add --dev @playwright/test@latest
+```
+
+</TabItem>
+
+<TabItem value="pnpm">
+
+```bash
+pnpm install --save-dev @playwright/test@latest
+```
+
+</TabItem>
+
+</Tabs>
+
 Check the [release notes](./release-notes.md) to see what the latest version is and what changes have been released.
 
 You can see what version of Playwright you have by running the following command.
 
+<Tabs
+  defaultValue="npm"
+  values={[
+    {label: 'npm', value: 'npm'},
+    {label: 'yarn', value: 'yarn'},
+    {label: 'pnpm', value: 'pnpm'}
+  ]
+}>
+<TabItem value="npm">
+
 ```bash
 npx playwright --version
 ```
+
+</TabItem>
+
+<TabItem value="yarn">
+
+```bash
+yarn playwright --version
+```
+
+</TabItem>
+
+<TabItem value="pnpm">
+
+```bash
+pnpm exec playwright --version
+```
+
+</TabItem>
+
+</Tabs>
 
 ### Run tests on CI
 
@@ -282,9 +494,39 @@ test('runs in parallel 2', async ({ page }) => { /* ... */ });
 
 Playwright can [shard](./test-parallel.md#shard-tests-between-multiple-machines) a test suite, so that it can be executed on multiple machines.
 
+<Tabs
+  defaultValue="npm"
+  values={[
+    {label: 'npm', value: 'npm'},
+    {label: 'yarn', value: 'yarn'},
+    {label: 'pnpm', value: 'pnpm'}
+  ]
+}>
+<TabItem value="npm">
+
 ```bash
 npx playwright test --shard=1/3
 ```
+
+</TabItem>
+
+<TabItem value="yarn">
+
+```bash
+yarn playwright test --shard=1/3
+```
+
+</TabItem>
+
+<TabItem value="pnpm">
+
+```bash
+pnpm exec playwright test --shard=1/3
+```
+
+</TabItem>
+
+</Tabs>
 
 ## Productivity tips
 

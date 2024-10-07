@@ -133,8 +133,7 @@ it('should be isolated between frames', async ({ page, server }) => {
 });
 
 it('should work in iframes that failed initial navigation', async ({ page, browserName }) => {
-  it.fail(browserName === 'chromium');
-  it.fixme(browserName === 'firefox');
+  it.fixme(browserName !== 'webkit');
 
   // - Firefox does not report domcontentloaded for the iframe.
   // - Chromium and Firefox report empty url.

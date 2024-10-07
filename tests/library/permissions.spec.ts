@@ -176,7 +176,8 @@ it('should support clipboard read', async ({ page, context, server, browserName,
 it('storage access', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31227' }
 }, async ({ page, context, server, browserName }) => {
-  it.fixme(browserName !== 'chromium');
+  it.skip(browserName !== 'chromium', 'chromium-only api');
+
   await context.grantPermissions(['storage-access']);
   expect(await getPermission(page, 'storage-access')).toBe('granted');
   server.setRoute('/set-cookie.html', (req, res) => {

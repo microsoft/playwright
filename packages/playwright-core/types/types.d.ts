@@ -2553,16 +2553,15 @@ export interface Page {
    * // → true
    * await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches);
    * // → false
-   * await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').matches);
-   * // → false
    * ```
    *
    * @param options
    */
   emulateMedia(options?: {
     /**
-     * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`.
-     * Passing `null` disables color scheme emulation.
+     * Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+     * media feature, supported values are `'light'` and `'dark'`. Passing `null` disables color scheme emulation.
+     * `'no-preference'` is deprecated.
      */
     colorScheme?: null|"light"|"dark"|"no-preference";
 
@@ -9761,7 +9760,8 @@ export interface Browser {
     }>;
 
     /**
-     * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
+     * Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+     * media feature, supported values are `'light'` and `'dark'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
      * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
      */
@@ -14726,7 +14726,8 @@ export interface BrowserType<Unused = {}> {
     }>;
 
     /**
-     * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
+     * Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+     * media feature, supported values are `'light'` and `'dark'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
      * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
      */
@@ -16522,7 +16523,8 @@ export interface AndroidDevice {
     bypassCSP?: boolean;
 
     /**
-     * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
+     * Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+     * media feature, supported values are `'light'` and `'dark'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
      * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
      */
@@ -18542,6 +18544,10 @@ export interface Clock {
   /**
    * Makes `Date.now` and `new Date()` return fixed fake time at all times, keeps all the timers running.
    *
+   * Use this method for simple scenarios where you only need to test with a predefined time. For more advanced
+   * scenarios, use [clock.install([options])](https://playwright.dev/docs/api/class-clock#clock-install) instead. Read
+   * docs on [clock emulation](https://playwright.dev/docs/clock) to learn more.
+   *
    * **Usage**
    *
    * ```js
@@ -18555,7 +18561,8 @@ export interface Clock {
   setFixedTime(time: number|string|Date): Promise<void>;
 
   /**
-   * Sets current system time but does not trigger any timers.
+   * Sets system time, but does not trigger any timers. Use this to test how the web page reacts to a time shift, for
+   * example switching from summer to winter time, or changing time zones.
    *
    * **Usage**
    *
@@ -18998,7 +19005,8 @@ export interface Electron {
     bypassCSP?: boolean;
 
     /**
-     * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
+     * Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+     * media feature, supported values are `'light'` and `'dark'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
      * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
      */
@@ -21820,7 +21828,8 @@ export interface BrowserContextOptions {
   }>;
 
   /**
-   * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
+   * Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+   * media feature, supported values are `'light'` and `'dark'`. See
    * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
    * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
    */

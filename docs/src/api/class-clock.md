@@ -193,6 +193,8 @@ Resumes timers. Once this method is called, time resumes flowing, timers are fir
 Makes `Date.now` and `new Date()` return fixed fake time at all times,
 keeps all the timers running.
 
+Use this method for simple scenarios where you only need to test with a predefined time. For more advanced scenarios, use [`method: Clock.install`] instead. Read docs on [clock emulation](../clock.md) to learn more.
+
 **Usage**
 
 ```js
@@ -249,7 +251,7 @@ Time to be set.
 ## async method: Clock.setSystemTime
 * since: v1.45
 
-Sets current system time but does not trigger any timers.
+Sets system time, but does not trigger any timers. Use this to test how the web page reacts to a time shift, for example switching from summer to winter time, or changing time zones.
 
 **Usage**
 

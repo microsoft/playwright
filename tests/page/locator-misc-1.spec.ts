@@ -25,7 +25,9 @@ it('should hover @smoke', async ({ page, server }) => {
   expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
 });
 
-it('should hover when Node is removed', async ({ page, server }) => {
+it('should hover when Node is removed', async ({ page, server, headless }) => {
+  it.skip(!headless, 'headed messes up with hover');
+
   await page.goto(server.PREFIX + '/input/scrollable.html');
   await page.evaluate(() => delete window['Node']);
   const button = page.locator('#button-6');
