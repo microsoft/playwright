@@ -24,7 +24,7 @@ import zlib from 'zlib';
 import type { HTTPCredentials } from '../../types/types';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { getUserAgent } from '../utils/userAgent';
-import { assert, constructURLBasedOnBaseURL, createGuid, monotonicTime } from '../utils';
+import { assert, constructURLBasedOnBaseURL, createGuid, eventsHelper, monotonicTime, type RegisteredListener } from '../utils';
 import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 import { BrowserContext, verifyClientCertificates } from './browserContext';
 import { CookieStore, domainMatches, parseRawCookie } from './cookieStore';
@@ -311,8 +311,11 @@ export abstract class APIRequestContext extends SdkObject {
 
       let securityDetails: har.SecurityDetails | undefined;
 
+      const listeners: RegisteredListener[] = [];
+
       const request = requestConstructor(url, requestOptions as any, async response => {
         const responseAt = monotonicTime();
+
         const notifyRequestFinished = (body?: Buffer) => {
           const endAt = monotonicTime();
           // spec: http://www.softwareishard.com/blog/har-12-spec/#timings
@@ -477,12 +480,13 @@ export abstract class APIRequestContext extends SdkObject {
       });
       request.on('error', reject);
 
-      const disposeListener = () => {
-        reject(new Error('Request context disposed.'));
-        request.destroy();
-      };
-      this.on(APIRequestContext.Events.Dispose, disposeListener);
-      request.on('close', () => this.off(APIRequestContext.Events.Dispose, disposeListener));
+      listeners.push(
+          eventsHelper.addEventListener(this, APIRequestContext.Events.Dispose, () => {
+            reject(new Error('Request context disposed.'));
+            request.destroy();
+          })
+      );
+      request.on('close', () => eventsHelper.removeEventListeners(listeners));
 
       request.on('socket', socket => {
         // happy eyeballs don't emit lookup and connect events, so we use our custom ones
@@ -491,22 +495,24 @@ export abstract class APIRequestContext extends SdkObject {
         tcpConnectionAt ??= happyEyeBallsTimings.tcpConnectionAt;
 
         // non-happy-eyeballs sockets
-        socket.on('lookup', () => { dnsLookupAt = monotonicTime(); });
-        socket.on('connect', () => { tcpConnectionAt ??= monotonicTime(); });
-        socket.on('secureConnect', () => {
-          tlsHandshakeAt = monotonicTime();
+        listeners.push(
+            eventsHelper.addEventListener(socket, 'lookup', () => { dnsLookupAt = monotonicTime(); }),
+            eventsHelper.addEventListener(socket, 'connect', () => { tcpConnectionAt ??= monotonicTime(); }),
+            eventsHelper.addEventListener(socket, 'secureConnect', () => {
+              tlsHandshakeAt = monotonicTime();
 
-          if (socket instanceof TLSSocket) {
-            const peerCertificate = socket.getPeerCertificate();
-            securityDetails = {
-              protocol: socket.getProtocol() ?? undefined,
-              subjectName: peerCertificate.subject.CN,
-              validFrom: new Date(peerCertificate.valid_from).getTime() / 1000,
-              validTo: new Date(peerCertificate.valid_to).getTime() / 1000,
-              issuer: peerCertificate.issuer.CN
-            };
-          }
-        });
+              if (socket instanceof TLSSocket) {
+                const peerCertificate = socket.getPeerCertificate();
+                securityDetails = {
+                  protocol: socket.getProtocol() ?? undefined,
+                  subjectName: peerCertificate.subject.CN,
+                  validFrom: new Date(peerCertificate.valid_from).getTime() / 1000,
+                  validTo: new Date(peerCertificate.valid_to).getTime() / 1000,
+                  issuer: peerCertificate.issuer.CN
+                };
+              }
+            }),
+        );
 
         // when using socks proxy, having the socket means the connection got established
         if (agent instanceof SocksProxyAgent)
