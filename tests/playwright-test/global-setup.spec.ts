@@ -387,37 +387,29 @@ test('teardown after error', async ({ runInlineTest }) => {
   ]);
 });
 
-function expectInOrder(output: string, tokens: string[]) {
-  for (const token of tokens)
-    expect(output).toContain(token);
-
-  const positions = tokens.map(token => `${output.indexOf(token).toString().padStart(3, '0')} ${token}`);
-  expect(positions, 'order is correct').toEqual(positions.toSorted());
-}
-
 test('globalSetup should support multiple', async ({ runInlineTest }) => {
-  const { passed, output } = await runInlineTest({
+  const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
         globalSetup: ['./globalSetup1.ts','./globalSetup2.ts','./globalSetup3.ts'],
         globalTeardown: ['./globalTeardown1.ts', './globalTeardown2.ts'],
       };
     `,
-    'globalSetup1.ts': `module.exports = () => console.log('globalSetup1');`,
-    'globalSetup2.ts': `module.exports = () => console.log('globalSetup2');`,
-    'globalSetup3.ts': `module.exports = () => console.log('globalSetup3');`,
-    'globalTeardown1.ts': `module.exports = () => console.log('globalTeardown1');`,
-    'globalTeardown2.ts': `module.exports = () => console.log('globalTeardown2');`,
+    'globalSetup1.ts': `module.exports = () => console.log('%%globalSetup1');`,
+    'globalSetup2.ts': `module.exports = () => console.log('%%globalSetup2');`,
+    'globalSetup3.ts': `module.exports = () => console.log('%%globalSetup3');`,
+    'globalTeardown1.ts': `module.exports = () => console.log('%%globalTeardown1');`,
+    'globalTeardown2.ts': `module.exports = () => console.log('%%globalTeardown2');`,
 
     'a.test.js': `
       import { test } from '@playwright/test';
-      test('a', () => console.log('test a'));
-      test('b', () => console.log('test b'));
+      test('a', () => console.log('%%test a'));
+      test('b', () => console.log('%%test b'));
     `,
   }, { reporter: 'line' });
 
-  expect(passed).toBe(2);
-  expectInOrder(output, [
+  expect(result.passed).toBe(2);
+  expect(result.outputLines).toEqual([
     'globalSetup1',
     'globalSetup2',
     'globalSetup3',
