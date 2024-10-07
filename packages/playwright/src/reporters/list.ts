@@ -34,7 +34,7 @@ class ListReporter extends BaseReporter {
   private _needNewLine = false;
   private _printSteps: boolean;
 
-  constructor(options: { printSteps?: boolean;} = {}) {
+  constructor(options: { printSteps?: boolean } = {}) {
     super();
     this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options.printSteps);
   }
