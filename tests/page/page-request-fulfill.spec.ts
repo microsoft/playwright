@@ -309,8 +309,10 @@ it('should fetch original request and fulfill', async ({ page, server, isElectro
   expect(await page.title()).toEqual('Woof-Woof');
 });
 
-it('should fulfill with multiple set-cookie', async ({ page, server, isElectron, electronMajorVersion }) => {
+it('should fulfill with multiple set-cookie', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
   it.skip(isElectron && electronMajorVersion < 14, 'Electron 14+ is required');
+  it.skip(isAndroid, 'Android does not have an isolated context per test, so we get cookies from other tests');
+
   const cookies = ['a=b', 'c=d'];
   await page.route('**/multiple-set-cookie.html', async route => {
     void route.fulfill({
