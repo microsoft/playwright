@@ -18544,6 +18544,10 @@ export interface Clock {
   /**
    * Makes `Date.now` and `new Date()` return fixed fake time at all times, keeps all the timers running.
    *
+   * Use this method for simple scenarios where you only need to test with a predefined time. For more advanced
+   * scenarios, use [clock.install([options])](https://playwright.dev/docs/api/class-clock#clock-install) instead. Read
+   * docs on [clock emulation](https://playwright.dev/docs/clock) to learn more.
+   *
    * **Usage**
    *
    * ```js
@@ -18557,7 +18561,8 @@ export interface Clock {
   setFixedTime(time: number|string|Date): Promise<void>;
 
   /**
-   * Sets current system time but does not trigger any timers.
+   * Sets system time, but does not trigger any timers. Use this to test how the web page reacts to a time shift, for
+   * example switching from summer to winter time, or changing time zones.
    *
    * **Usage**
    *
