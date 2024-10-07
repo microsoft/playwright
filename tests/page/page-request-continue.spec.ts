@@ -499,19 +499,16 @@ it('propagate headers same origin redirect', {
     response.end('done');
   });
   await server.setRedirect('/redirect', '/something');
-  const [text, ] = await Promise.all([
-    page.evaluate(async url => {
-      const data = await fetch(url, {
-        headers: {
-          authorization: 'credentials',
-          custom: 'foo'
-        },
-        credentials: 'include',
-      });
-      return data.text();
-    }, server.PREFIX + '/redirect'),
-    server.waitForRequest('/something')
-  ]);
+  const text = await page.evaluate(async url => {
+    const data = await fetch(url, {
+      headers: {
+        authorization: 'credentials',
+        custom: 'foo'
+      },
+      credentials: 'include',
+    });
+    return data.text();
+  }, server.PREFIX + '/redirect');
   expect(text).toBe('done');
   const serverRequest = await serverRequestPromise;
   expect.soft(serverRequest.headers['authorization']).toBe('credentials');
@@ -545,19 +542,16 @@ it('propagate headers cross origin', {
     });
     response.end('done');
   });
-  const [text, ] = await Promise.all([
-    page.evaluate(async url => {
-      const data = await fetch(url, {
-        headers: {
-          authorization: 'credentials',
-          custom: 'foo'
-        },
-        credentials: 'include',
-      });
-      return data.text();
-    }, server.CROSS_PROCESS_PREFIX + '/something'),
-    server.waitForRequest('/something')
-  ]);
+  const text = await page.evaluate(async url => {
+    const data = await fetch(url, {
+      headers: {
+        authorization: 'credentials',
+        custom: 'foo'
+      },
+      credentials: 'include',
+    });
+    return data.text();
+  }, server.CROSS_PROCESS_PREFIX + '/something');
   expect(text).toBe('done');
   const serverRequest = await serverRequestPromise;
   expect.soft(serverRequest.headers['authorization']).toBe('credentials');
@@ -595,19 +589,16 @@ it('propagate headers cross origin redirect', {
     response.writeHead(301, { location: `${server.CROSS_PROCESS_PREFIX}/something` });
     response.end();
   });
-  const [text, ] = await Promise.all([
-    page.evaluate(async url => {
-      const data = await fetch(url, {
-        headers: {
-          authorization: 'credentials',
-          custom: 'foo'
-        },
-        credentials: 'include',
-      });
-      return data.text();
-    }, server.PREFIX + '/redirect'),
-    server.waitForRequest('/something')
-  ]);
+  const text = await page.evaluate(async url => {
+    const data = await fetch(url, {
+      headers: {
+        authorization: 'credentials',
+        custom: 'foo'
+      },
+      credentials: 'include',
+    });
+    return data.text();
+  }, server.PREFIX + '/redirect');
   expect(text).toBe('done');
   const serverRequest = await serverRequestPromise;
   // Authorization header not propagated to cross-origin redirect.
@@ -655,18 +646,15 @@ it('propagate headers cross origin redirect after interception', {
       }
     });
   });
-  const [text, ] = await Promise.all([
-    page.evaluate(async url => {
-      const data = await fetch(url, {
-        headers: {
-          authorization: 'none',
-        },
-        credentials: 'include',
-      });
-      return data.text();
-    }, server.PREFIX + '/redirect'),
-    server.waitForRequest('/something')
-  ]);
+  const text = await page.evaluate(async url => {
+    const data = await fetch(url, {
+      headers: {
+        authorization: 'none',
+      },
+      credentials: 'include',
+    });
+    return data.text();
+  }, server.PREFIX + '/redirect');
   expect(text).toBe('done');
   const serverRequest = await serverRequestPromise;
   if (browserName === 'webkit')
