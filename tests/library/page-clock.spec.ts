@@ -354,6 +354,7 @@ it.describe('popup', () => {
       page.waitForEvent('popup'),
       page.evaluate(url => window.open(url), server.PREFIX + '/popup.html'),
     ]);
+    await popup.waitForLoadState();
     const popupTime = await popup.evaluate('time');
     expect(popupTime).toBe(1000);
   });

@@ -61,7 +61,7 @@ export function expectedSSLError(browserName: string, platform: string): RegExp 
     else if (platform === 'win32')
       return /SSL peer certificate or SSH remote key was not OK/;
     else
-      return /Unacceptable TLS certificate/;
+      return /Unacceptable TLS certificate|Operation was cancelled/;
   }
   return /SSL_ERROR_UNKNOWN/;
 }

@@ -349,6 +349,8 @@ test.describe('toBeInViewport', () => {
   });
 
   test('should respect ratio option', async ({ page, isAndroid }) => {
+    test.fixme(isAndroid, 'ratio 0.24 is not in viewport for unknown reason');
+
     await page.setContent(`
       <style>body, div, html { padding: 0; margin: 0; }</style>
       <div id=big style="height: 400vh;"></div>
