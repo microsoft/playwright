@@ -691,7 +691,7 @@ export class GlobalAPIRequestContext extends APIRequestContext {
 export function createProxyAgent(proxy: types.ProxySettings) {
   const proxyURL = new URL(proxy.server);
   if (proxyURL.protocol?.startsWith('socks'))
-    return new SocksProxyAgent(proxyURL);
+    return new SocksProxyAgent({ host: proxyURL.hostname, port: proxyURL.port });
 
   if (proxy.username)
     proxyURL.username = proxy.username;

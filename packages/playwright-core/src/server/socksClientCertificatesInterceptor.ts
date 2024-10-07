@@ -28,6 +28,7 @@ import { debugLogger } from '../utils/debugLogger';
 import { createProxyAgent } from './fetch';
 import { EventEmitter } from 'events';
 import { verifyClientCertificates } from './browserContext';
+import { SocksProxyAgent } from '../utilsBundle';
 
 let dummyServerTlsOptions: tls.TlsOptions | undefined = undefined;
 function loadDummyServerCertsIfNeeded() {
@@ -97,8 +98,8 @@ class SocksProxyConnection {
   }
 
   async connect() {
-    if (this.socksProxy.proxyAgentFromOptions)
-      this.target = await this.socksProxy.proxyAgentFromOptions.connect(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
+    if (this.socksProxy.proxyAgentFromOptions instanceof SocksProxyAgent)
+      this.target = await this.socksProxy.proxyAgentFromOptions.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
     else
       this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
 
