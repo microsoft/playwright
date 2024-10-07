@@ -17,6 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 import type { Route } from 'playwright-core';
+import type * as http from 'http';
 
 it('should work', async ({ page, server }) => {
   await page.route('**/*', route => route.continue());
@@ -471,6 +472,196 @@ it('continue should delete headers on redirects', {
   ]);
   expect(text).toBe('done');
   expect(serverRequest.headers.foo).toBeFalsy();
+});
+
+it('propagate headers same origin redirect', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
+  ]
+}, async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/empty.html');
+  let resolve;
+  const serverRequestPromise = new Promise<http.IncomingMessage>(f => resolve = f);
+  server.setRoute('/something', (request, response) => {
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204, {
+        'Access-Control-Allow-Origin': server.PREFIX,
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
+        'Access-Control-Allow-Headers': 'authorization,custom',
+      });
+      response.end();
+      return;
+    }
+    resolve(request);
+    response.writeHead(200, { });
+    response.end('done');
+  });
+  await server.setRedirect('/redirect', '/something');
+  const text = await page.evaluate(async url => {
+    const data = await fetch(url, {
+      headers: {
+        authorization: 'credentials',
+        custom: 'foo'
+      },
+      credentials: 'include',
+    });
+    return data.text();
+  }, server.PREFIX + '/redirect');
+  expect(text).toBe('done');
+  const serverRequest = await serverRequestPromise;
+  expect.soft(serverRequest.headers['authorization']).toBe('credentials');
+  expect.soft(serverRequest.headers['custom']).toBe('foo');
+});
+
+it('propagate headers cross origin', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
+  ]
+}, async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/empty.html');
+  let resolve;
+  const serverRequestPromise = new Promise<http.IncomingMessage>(f => resolve = f);
+  server.setRoute('/something', (request, response) => {
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204, {
+        'Access-Control-Allow-Origin': server.PREFIX,
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
+        'Access-Control-Allow-Headers': 'authorization,custom',
+      });
+      response.end();
+      return;
+    }
+    resolve(request);
+    response.writeHead(200, {
+      'Access-Control-Allow-Origin': server.PREFIX,
+      'Access-Control-Allow-Credentials': 'true',
+    });
+    response.end('done');
+  });
+  const text = await page.evaluate(async url => {
+    const data = await fetch(url, {
+      headers: {
+        authorization: 'credentials',
+        custom: 'foo'
+      },
+      credentials: 'include',
+    });
+    return data.text();
+  }, server.CROSS_PROCESS_PREFIX + '/something');
+  expect(text).toBe('done');
+  const serverRequest = await serverRequestPromise;
+  expect.soft(serverRequest.headers['authorization']).toBe('credentials');
+  expect.soft(serverRequest.headers['custom']).toBe('foo');
+});
+
+it('propagate headers cross origin redirect', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
+  ]
+}, async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/empty.html');
+  let resolve;
+  const serverRequestPromise = new Promise<http.IncomingMessage>(f => resolve = f);
+  server.setRoute('/something', (request, response) => {
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204, {
+        'Access-Control-Allow-Origin': server.PREFIX,
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
+        'Access-Control-Allow-Headers': 'authorization,custom',
+      });
+      response.end();
+      return;
+    }
+    resolve(request);
+    response.writeHead(200, {
+      'Access-Control-Allow-Origin': server.PREFIX,
+      'Access-Control-Allow-Credentials': 'true',
+    });
+    response.end('done');
+  });
+  server.setRoute('/redirect', (request, response) => {
+    response.writeHead(301, { location: `${server.CROSS_PROCESS_PREFIX}/something` });
+    response.end();
+  });
+  const text = await page.evaluate(async url => {
+    const data = await fetch(url, {
+      headers: {
+        authorization: 'credentials',
+        custom: 'foo'
+      },
+      credentials: 'include',
+    });
+    return data.text();
+  }, server.PREFIX + '/redirect');
+  expect(text).toBe('done');
+  const serverRequest = await serverRequestPromise;
+  // Authorization header not propagated to cross-origin redirect.
+  expect.soft(serverRequest.headers['authorization']).toBeFalsy();
+  expect.soft(serverRequest.headers['custom']).toBe('foo');
+});
+
+it('propagate headers cross origin redirect after interception', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
+  ]
+}, async ({ page, server, browserName }) => {
+  await page.goto(server.PREFIX + '/empty.html');
+  let resolve;
+  const serverRequestPromise = new Promise<http.IncomingMessage>(f => resolve = f);
+  server.setRoute('/something', (request, response) => {
+    if (request.method === 'OPTIONS') {
+      response.writeHead(204, {
+        'Access-Control-Allow-Origin': server.PREFIX,
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE',
+        'Access-Control-Allow-Headers': 'authorization,custom',
+      });
+      response.end();
+      return;
+    }
+    resolve(request);
+    response.writeHead(200, {
+      'Access-Control-Allow-Origin': server.PREFIX,
+      'Access-Control-Allow-Credentials': 'true',
+    });
+    response.end('done');
+  });
+  server.setRoute('/redirect', (request, response) => {
+    response.writeHead(301, { location: `${server.CROSS_PROCESS_PREFIX}/something` });
+    response.end();
+  });
+  await page.route('**/redirect', async route => {
+    await route.continue({
+      headers: {
+        ...route.request().headers(),
+        authorization: 'credentials',
+        custom: 'foo'
+      }
+    });
+  });
+  const text = await page.evaluate(async url => {
+    const data = await fetch(url, {
+      headers: {
+        authorization: 'none',
+      },
+      credentials: 'include',
+    });
+    return data.text();
+  }, server.PREFIX + '/redirect');
+  expect(text).toBe('done');
+  const serverRequest = await serverRequestPromise;
+  if (browserName === 'webkit')
+    expect.soft(serverRequest.headers['authorization']).toBeFalsy();
+  else
+    expect.soft(serverRequest.headers['authorization']).toBe('credentials');
+  expect.soft(serverRequest.headers['custom']).toBe('foo');
 });
 
 it('should intercept css variable with background url', async ({ page, server }) => {
