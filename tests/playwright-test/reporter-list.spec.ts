@@ -258,20 +258,6 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(text).toContain('1) a.test.ts:3:15 › passes › outer 1.0 › inner 1.1 ──');
       expect(result.exitCode).toBe(1);
     });
-
-    test('append tags', async ({ runInlineTest }) => {
-      const result = await runInlineTest({
-        'a.test.ts': `
-          const { test, expect } = require('@playwright/test');
-          test('passes', { tag: ['@foo', '@bar'] }, async ({}) => {
-            expect(0).toBe(0);
-          });
-        `,
-      }, { reporter: 'list', workers: '1' }, { PLAYWRIGHT_LIST_APPEND_TAGS: '1' });
-      const text = result.output;
-
-      expect(text).toContain(`${POSITIVE_STATUS_MARK} 1 a.test.ts:3:11 › passes [@foo, @bar]`);
-    });
   });
 }
 

@@ -401,7 +401,7 @@ export function stepSuffix(step: TestStep | undefined) {
   return stepTitles.map(t => t.split('\n')[0]).map(t => ' › ' + t).join('');
 }
 
-export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestStep, omitLocation: boolean = false, appendTags: boolean = false): string {
+export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestStep, omitLocation: boolean = false): string {
   // root, project, file, ...describes, test
   const [, projectName, , ...titles] = test.titlePath();
   let location;
@@ -410,7 +410,7 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
   else
     location = `${relativeTestPath(config, test)}:${step?.location?.line ?? test.location.line}:${step?.location?.column ?? test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
-  const tags = appendTags && test.tags.length > 0 ? ` [${test.tags.join(', ')}]` : '';
+  const tags = test.tags.length > 0 ? ` ${test.tags.join(' ')}` : '';
   return `${projectTitle}${location} › ${titles.join(' › ')}${stepSuffix(step)}${tags}`;
 }
 
