@@ -102,7 +102,7 @@ await page.RouteAsync("**/*", async route =>
 
 **Details**
 
-Note that any overrides such as [`option: url`] or [`option: headers`] only apply to the request being routed. If this request results in a redirect, overrides will not be applied to the new redirected request. If you want to propagate a header through redirects, use the combination of [`method: Route.fetch`] and [`method: Route.fulfill`] instead.
+The [`option: headers`] option applies to both the routed request and any redirects it initiates. However, [`option: url`], [`option: method`], and [`option: postData`] only apply to the original request and are not carried over to redirected requests.
 
 [`method: Route.continue`] will immediately send the request to the network, other matching handlers won't be invoked. Use [`method: Route.fallback`] If you want next matching handler in the chain to be invoked.
 

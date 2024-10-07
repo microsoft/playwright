@@ -20614,12 +20614,12 @@ export interface Route {
    *
    * **Details**
    *
-   * Note that any overrides such as [`url`](https://playwright.dev/docs/api/class-route#route-continue-option-url) or
-   * [`headers`](https://playwright.dev/docs/api/class-route#route-continue-option-headers) only apply to the request
-   * being routed. If this request results in a redirect, overrides will not be applied to the new redirected request.
-   * If you want to propagate a header through redirects, use the combination of
-   * [route.fetch([options])](https://playwright.dev/docs/api/class-route#route-fetch) and
-   * [route.fulfill([options])](https://playwright.dev/docs/api/class-route#route-fulfill) instead.
+   * The [`headers`](https://playwright.dev/docs/api/class-route#route-continue-option-headers) option applies to both
+   * the routed request and any redirects it initiates. However,
+   * [`url`](https://playwright.dev/docs/api/class-route#route-continue-option-url),
+   * [`method`](https://playwright.dev/docs/api/class-route#route-continue-option-method), and
+   * [`postData`](https://playwright.dev/docs/api/class-route#route-continue-option-post-data) only apply to the
+   * original request and are not carried over to redirected requests.
    *
    * [route.continue([options])](https://playwright.dev/docs/api/class-route#route-continue) will immediately send the
    * request to the network, other matching handlers won't be invoked. Use
