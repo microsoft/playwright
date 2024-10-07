@@ -251,7 +251,7 @@ Time to be set.
 
 Sets system time, but does not trigger any timers. Use this to test how the web page reacts to a time shift, for example switching from summer to winter time, or changing time zones.
 
-Don't use together with [`method: Clock.install`]. Read docs on [clock emulation](../clock.md) to learn more.
+Use this method for simple scenarios where you only need to test with a predefined time. For more advanced scenarios, use [`method: Clock.install`] instead. Read docs on [clock emulation](../clock.md) to learn more.
 
 **Usage**
 
