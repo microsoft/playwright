@@ -78,9 +78,8 @@ it('should scroll into view display:contents with position', async ({ page, brow
   expect(await page.evaluate('window._clicked')).toBe(true);
 });
 
-it('should not crash when force-clicking hidden input', async ({ page, isWebView2 }) => {
+it('should not crash when force-clicking hidden input', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18183' });
-  it.fixme(isWebView2);
 
   await page.setContent(`<input type=hidden>`);
   const error = await page.locator('input').click({ force: true, timeout: 2000 }).catch(e => e);
