@@ -257,7 +257,6 @@ export class WorkerMain extends ProcessRunner {
           testInfo.expectedStatus = 'skipped';
           break;
         case 'fail':
-        case 'fail.only':
           if (testInfo.expectedStatus !== 'skipped')
             testInfo.expectedStatus = 'failed';
           break;
