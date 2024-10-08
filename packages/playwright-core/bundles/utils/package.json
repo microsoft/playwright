@@ -14,7 +14,7 @@
     "debug": "^4.3.4",
     "dotenv": "^16.4.5",
     "graceful-fs": "4.2.10",
-    "https-proxy-agent": "5.0.0",
+    "https-proxy-agent": "7.0.5",
     "jpeg-js": "0.4.4",
     "mime": "^3.0.0",
     "minimatch": "^3.1.2",
@@ -24,7 +24,7 @@
     "proxy-from-env": "1.1.0",
     "retry": "0.12.0",
     "signal-exit": "3.0.7",
-    "socks-proxy-agent": "6.1.1",
+    "socks-proxy-agent": "8.0.4",
     "stack-utils": "2.0.5",
     "ws": "8.17.1"
   },
