@@ -66,6 +66,7 @@ export const ImageDiffView: React.FC<{
   const [showSxsDiff, setShowSxsDiff] = React.useState<boolean>(false);
 
   const [expectedImage, setExpectedImage] = React.useState<HTMLImageElement | null>(null);
+  const [expectedImageTitle, setExpectedImageTitle] = React.useState<string>('Expected');
   const [actualImage, setActualImage] = React.useState<HTMLImageElement | null>(null);
   const [diffImage, setDiffImage] = React.useState<HTMLImageElement | null>(null);
   const [measure, ref] = useMeasure<HTMLDivElement>();
@@ -73,6 +74,7 @@ export const ImageDiffView: React.FC<{
   React.useEffect(() => {
     (async () => {
       setExpectedImage(await loadImage(diff.expected?.attachment.path));
+      setExpectedImageTitle(diff.expected?.title || 'Expected');
       setActualImage(await loadImage(diff.actual?.attachment.path));
       setDiffImage(await loadImage(diff.diff?.attachment.path));
     })();
@@ -98,23 +100,23 @@ export const ImageDiffView: React.FC<{
       <div data-testid='test-result-image-mismatch-tabs' style={{ display: 'flex', margin: '10px 0 20px' }}>
         {diff.diff && <div style={{ ...modeStyle, fontWeight: mode === 'diff' ? 600 : 'initial' }} onClick={() => setMode('diff')}>Diff</div>}
         <div style={{ ...modeStyle, fontWeight: mode === 'actual' ? 600 : 'initial' }} onClick={() => setMode('actual')}>Actual</div>
-        <div style={{ ...modeStyle, fontWeight: mode === 'expected' ? 600 : 'initial' }} onClick={() => setMode('expected')}>Expected</div>
+        <div style={{ ...modeStyle, fontWeight: mode === 'expected' ? 600 : 'initial' }} onClick={() => setMode('expected')}>{expectedImageTitle}</div>
         <div style={{ ...modeStyle, fontWeight: mode === 'sxs' ? 600 : 'initial' }} onClick={() => setMode('sxs')}>Side by side</div>
         <div style={{ ...modeStyle, fontWeight: mode === 'slider' ? 600 : 'initial' }} onClick={() => setMode('slider')}>Slider</div>
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', flex: 'auto', minHeight: fitHeight + 60 }}>
         {diff.diff && mode === 'diff' && <ImageWithSize image={diffImage} alt='Diff' canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
         {diff.diff && mode === 'actual' && <ImageWithSize image={actualImage}  alt='Actual' canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
-        {diff.diff && mode === 'expected' && <ImageWithSize image={expectedImage}  alt='Expected' canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
-        {diff.diff && mode === 'slider' && <ImageDiffSlider expectedImage={expectedImage} actualImage={actualImage} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale} />}
+        {diff.diff && mode === 'expected' && <ImageWithSize image={expectedImage}  alt={expectedImageTitle} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
+        {diff.diff && mode === 'slider' && <ImageDiffSlider expectedImage={expectedImage} actualImage={actualImage} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale} expectedTitle={expectedImageTitle} />}
         {diff.diff && mode === 'sxs' && <div style={{ display: 'flex' }}>
-          <ImageWithSize image={expectedImage} title='Expected' canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
+          <ImageWithSize image={expectedImage} title={expectedImageTitle} canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
           <ImageWithSize image={showSxsDiff ? diffImage : actualImage} title={showSxsDiff ? 'Diff' : 'Actual'} onClick={() => setShowSxsDiff(!showSxsDiff)} canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
         </div>}
         {!diff.diff && mode === 'actual' && <ImageWithSize image={actualImage} title='Actual' canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
-        {!diff.diff && mode === 'expected' && <ImageWithSize image={expectedImage} title='Expected' canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
+        {!diff.diff && mode === 'expected' && <ImageWithSize image={expectedImage} title={expectedImageTitle} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
         {!diff.diff && mode === 'sxs' && <div style={{ display: 'flex' }}>
-          <ImageWithSize image={expectedImage} title='Expected' canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
+          <ImageWithSize image={expectedImage} title={expectedImageTitle} canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
           <ImageWithSize image={actualImage} title='Actual' canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
         </div>}
       </div>
@@ -133,7 +135,8 @@ export const ImageDiffSlider: React.FC<{
   canvasWidth: number,
   canvasHeight: number,
   scale: number,
-}> = ({ expectedImage, actualImage, canvasWidth, canvasHeight, scale }) => {
+  expectedTitle: string,
+}> = ({ expectedImage, actualImage, canvasWidth, canvasHeight, scale, expectedTitle }) => {
   const absoluteStyle: React.CSSProperties = {
     position: 'absolute',
     top: 0,
@@ -161,7 +164,7 @@ export const ImageDiffSlider: React.FC<{
         setOffsets={offsets => setSlider(offsets[0])}
         resizerColor={'#57606a80'}
         resizerWidth={6}></ResizeView>
-      <img alt='Expected' style={{
+      <img alt={expectedTitle} style={{
         width: expectedImage.naturalWidth * scale,
         height: expectedImage.naturalHeight * scale,
       }} draggable='false' src={expectedImage.src} />

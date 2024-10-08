@@ -662,7 +662,7 @@ export class Page extends SdkObject {
         return {};
       }
 
-      if (areEqualScreenshots(actual, options.expected, previous)) {
+      if (areEqualScreenshots(actual, options.expected, undefined)) {
         progress.log(`screenshot matched expectation`);
         return {};
       }
