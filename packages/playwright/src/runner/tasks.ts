@@ -170,7 +170,7 @@ function createGlobalSetupTask(index: number, length: number): Task<TestRun> {
   let teardownHook: any;
 
   let title = 'global setup';
-  if (length)
+  if (length > 1)
     title += ` #${index}`;
 
   return {
