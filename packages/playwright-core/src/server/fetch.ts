@@ -20,7 +20,6 @@ import http from 'http';
 import https from 'https';
 import type { Readable, TransformCallback } from 'stream';
 import { pipeline, Transform } from 'stream';
-import url from 'url';
 import zlib from 'zlib';
 import type { HTTPCredentials } from '../../types/types';
 import { TimeoutSettings } from '../common/timeoutSettings';
@@ -493,12 +492,12 @@ export abstract class APIRequestContext extends SdkObject {
         // happy eyeballs don't emit lookup and connect events, so we use our custom ones
         const happyEyeBallsTimings = timingForSocket(socket);
         dnsLookupAt = happyEyeBallsTimings.dnsLookupAt;
-        tcpConnectionAt = happyEyeBallsTimings.tcpConnectionAt;
+        tcpConnectionAt ??= happyEyeBallsTimings.tcpConnectionAt;
 
         // non-happy-eyeballs sockets
         listeners.push(
             eventsHelper.addEventListener(socket, 'lookup', () => { dnsLookupAt = monotonicTime(); }),
-            eventsHelper.addEventListener(socket, 'connect', () => { tcpConnectionAt = monotonicTime(); }),
+            eventsHelper.addEventListener(socket, 'connect', () => { tcpConnectionAt ??= monotonicTime(); }),
             eventsHelper.addEventListener(socket, 'secureConnect', () => {
               tlsHandshakeAt = monotonicTime();
 
@@ -515,10 +514,20 @@ export abstract class APIRequestContext extends SdkObject {
             }),
         );
 
+        // when using socks proxy, having the socket means the connection got established
+        if (agent instanceof SocksProxyAgent)
+          tcpConnectionAt ??= monotonicTime();
+
         serverIPAddress = socket.remoteAddress;
         serverPort = socket.remotePort;
       });
       request.on('finish', () => { requestFinishAt = monotonicTime(); });
+
+      // http proxy
+      request.on('proxyConnect', () => {
+        tcpConnectionAt ??= monotonicTime();
+      });
+
 
       progress.log(`→ ${options.method} ${url.toString()}`);
       if (options.headers) {
@@ -686,17 +695,16 @@ export class GlobalAPIRequestContext extends APIRequestContext {
 }
 
 export function createProxyAgent(proxy: types.ProxySettings) {
-  const proxyOpts = url.parse(proxy.server);
-  if (proxyOpts.protocol?.startsWith('socks')) {
-    return new SocksProxyAgent({
-      host: proxyOpts.hostname,
-      port: proxyOpts.port || undefined,
-    });
-  }
+  const proxyURL = new URL(proxy.server);
+  if (proxyURL.protocol?.startsWith('socks'))
+    return new SocksProxyAgent(proxyURL);
+
   if (proxy.username)
-    proxyOpts.auth = `${proxy.username}:${proxy.password || ''}`;
-  // TODO: We should use HttpProxyAgent conditional on proxyOpts.protocol instead of always using CONNECT method.
-  return new HttpsProxyAgent(proxyOpts);
+    proxyURL.username = proxy.username;
+  if (proxy.password)
+    proxyURL.password = proxy.password;
+  // TODO: We should use HttpProxyAgent conditional on proxyURL.protocol instead of always using CONNECT method.
+  return new HttpsProxyAgent(proxyURL);
 }
 
 function toHeadersArray(rawHeaders: string[]): types.HeadersArray {
