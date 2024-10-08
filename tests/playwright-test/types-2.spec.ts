@@ -33,6 +33,7 @@ test('basics should work', async ({ runTSC }) => {
         test.skip('my test', async () => {});
         test.fixme('my test', async () => {});
         test.fail('my test', async () => {});
+        test.fail.only('my test', async () => {});
       });
       test.describe(() => {
         test('my test', () => {});
@@ -59,6 +60,7 @@ test('basics should work', async ({ runTSC }) => {
       test.fixme('title', { tag: '@foo' }, () => {});
       test.only('title', { tag: '@foo' }, () => {});
       test.fail('title', { tag: '@foo' }, () => {});
+      test.fail.only('title', { tag: '@foo' }, () => {});
       test.describe('title', { tag: '@foo' }, () => {});
       test.describe('title', { annotation: { type: 'issue' } }, () => {});
       // @ts-expect-error
@@ -66,6 +68,8 @@ test('basics should work', async ({ runTSC }) => {
       test.describe.skip('title', { tag: '@foo' }, () => {});
       test.describe.fixme('title', { tag: '@foo' }, () => {});
       test.describe.only('title', { tag: '@foo' }, () => {});
+      // @ts-expect-error
+      test.only.fail('my test', async () => {});
     `
   });
   expect(result.exitCode).toBe(0);
