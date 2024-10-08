@@ -323,7 +323,7 @@ for (const useIntermediateMergeReport of [false] as const) {
       await expect(page.getByTestId('test-result-image-mismatch-tabs').locator('div')).toHaveText([
         'Diff',
         'Actual',
-        'Expected',
+        'Previous',
         'Side by side',
         'Slider',
       ]);
