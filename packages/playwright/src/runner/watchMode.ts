@@ -16,7 +16,7 @@
 
 import readline from 'readline';
 import path from 'path';
-import { createGuid, getPackageManagerExecCommand, ManualPromise } from 'playwright-core/lib/utils';
+import { createGuid, eventsHelper, getPackageManagerExecCommand, ManualPromise } from 'playwright-core/lib/utils';
 import type { ConfigLocation } from '../common/config';
 import type { FullResult } from '../../types/testReporter';
 import { colors } from 'playwright-core/lib/utilsBundle';
@@ -266,11 +266,46 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   return result === 'passed' ? teardown.status : result;
 }
 
+function readKeyPress<T extends string>(handler: (text: string, key: any) => T | undefined): { cancel(): void; result: Promise<T> } {
+  const promise = new ManualPromise<T>();
+
+  const rl = readline.createInterface({ input: process.stdin, escapeCodeTimeout: 50 });
+  readline.emitKeypressEvents(process.stdin, rl);
+  if (process.stdin.isTTY)
+    process.stdin.setRawMode(true);
+
+  const listener = eventsHelper.addEventListener(process.stdin, 'keypress', (text: string, key: any) => {
+    const result = handler(text, key);
+    if (result)
+      promise.resolve(result);
+  });
+
+  const cancel = () => {
+    eventsHelper.removeEventListeners([listener]);
+    rl.close();
+    if (process.stdin.isTTY)
+      process.stdin.setRawMode(false);
+  };
+
+  void promise.finally(cancel);
+
+  return { result: promise, cancel };
+}
+
+const isInterrupt = (text: string, key: any) => text === '\x03' || text === '\x1B' || (key && key.name === 'escape') || (key && key.ctrl && key.name === 'c');
+
 async function runTests(watchOptions: WatchModeOptions, testServerConnection: TestServerConnection, options?: {
     title?: string,
     testIds?: string[],
   }) {
   printConfiguration(watchOptions, options?.title);
+
+  const waitForDone = readKeyPress((text: string, key: any) => {
+    if (isInterrupt(text, key)) {
+      testServerConnection.stopTestsNoReply({});
+      return 'done';
+    }
+  });
 
   await testServerConnection.runTests({
     grep: watchOptions.grep,
@@ -281,30 +316,21 @@ async function runTests(watchOptions: WatchModeOptions, testServerConnection: Te
     reuseContext: connectWsEndpoint ? true : undefined,
     workers: connectWsEndpoint ? 1 : undefined,
     headed: connectWsEndpoint ? true : undefined,
-  });
+  }).finally(() => waitForDone.cancel());
 }
 
-function readCommand(): { result: Promise<Command>, cancel: () => void } {
-  const result = new ManualPromise<Command>();
-  const rl = readline.createInterface({ input: process.stdin, escapeCodeTimeout: 50 });
-  readline.emitKeypressEvents(process.stdin, rl);
-  if (process.stdin.isTTY)
-    process.stdin.setRawMode(true);
-
-  const handler = (text: string, key: any) => {
-    if (text === '\x03' || text === '\x1B' || (key && key.name === 'escape') || (key && key.ctrl && key.name === 'c')) {
-      result.resolve('interrupted');
-      return;
-    }
+function readCommand() {
+  return readKeyPress<Command>((text: string, key: any) => {
+    if (isInterrupt(text, key))
+      return 'interrupted';
     if (process.platform !== 'win32' && key && key.ctrl && key.name === 'z') {
       process.kill(process.ppid, 'SIGTSTP');
       process.kill(process.pid, 'SIGTSTP');
     }
     const name = key?.name;
-    if (name === 'q') {
-      result.resolve('exit');
-      return;
-    }
+    if (name === 'q')
+      return 'exit';
+
     if (name === 'h') {
       process.stdout.write(`${separator()}
 Run tests
@@ -324,26 +350,16 @@ Change settings
     }
 
     switch (name) {
-      case 'return': result.resolve('run'); break;
-      case 'r': result.resolve('repeat'); break;
-      case 'c': result.resolve('project'); break;
-      case 'p': result.resolve('file'); break;
-      case 't': result.resolve('grep'); break;
-      case 'f': result.resolve('failed'); break;
-      case 's': result.resolve('toggle-show-browser'); break;
-      case 'b': result.resolve('toggle-buffer-mode'); break;
+      case 'return': return 'run';
+      case 'r': return 'repeat';
+      case 'c': return 'project';
+      case 'p': return 'file';
+      case 't': return 'grep';
+      case 'f': return 'failed';
+      case 's': return 'toggle-show-browser';
+      case 'b': return 'toggle-buffer-mode';
     }
-  };
-
-  process.stdin.on('keypress', handler);
-  const cancel = () => {
-    process.stdin.off('keypress', handler);
-    rl.close();
-    if (process.stdin.isTTY)
-      process.stdin.setRawMode(false);
-  };
-  void result.finally(cancel);
-  return { result, cancel };
+  });
 }
 
 let showBrowserServer: PlaywrightServer | undefined;

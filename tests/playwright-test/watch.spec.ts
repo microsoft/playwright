@@ -421,6 +421,7 @@ test('should re-run failed tests on F > R', async ({ runWatchTest }) => {
   await testProcess.waitForOutput('npx playwright test (running failed tests) #2');
   await testProcess.waitForOutput('c.test.ts:3:11 › fails');
   expect(testProcess.output).not.toContain('a.test.ts:3:11');
+  await testProcess.waitForOutput('Waiting for file changes.');
   testProcess.clearOutput();
   testProcess.write('r');
   await testProcess.waitForOutput('npx playwright test (re-running tests) #3');
@@ -834,6 +835,25 @@ test('should run global teardown before exiting', async ({ runWatchTest }) => {
   await testProcess.waitForOutput('Waiting for file changes.');
   testProcess.write('\x1B');
   await testProcess.waitForOutput('running teardown');
+});
+
+test('should stop testrun on pressing escape', async ({ runWatchTest }) => {
+  const testProcess = await runWatchTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('stalls', async () => {
+        console.log('test started')
+        await new Promise(() => {});
+      });
+    `,
+  });
+  await testProcess.waitForOutput('Waiting for file changes.');
+  testProcess.clearOutput();
+  testProcess.write('\r\n');
+
+  await testProcess.waitForOutput('test started');
+  testProcess.write('\x1B');
+  await testProcess.waitForOutput('1 interrupted');
 });
 
 test('buffer mode', async ({ runWatchTest, writeFiles }) => {
