@@ -28,6 +28,8 @@ export type SourceHighlight = {
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl' | 'html' | 'css' | 'markdown';
 
+export const lineHeight = 20;
+
 export interface SourceProps {
   text: string;
   language?: Language;
