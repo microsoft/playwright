@@ -842,6 +842,7 @@ test('should stop testrun on pressing escape', async ({ runWatchTest }) => {
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('stalls', async () => {
+        console.log('test started')
         await new Promise(() => {});
       });
     `,
@@ -850,8 +851,7 @@ test('should stop testrun on pressing escape', async ({ runWatchTest }) => {
   testProcess.clearOutput();
   testProcess.write('\r\n');
 
-  await testProcess.waitForOutput('Running 1 test');
-  await timers.setTimeout(500);
+  await testProcess.waitForOutput('test started');
   testProcess.write('\x1B');
   await testProcess.waitForOutput('1 interrupted');
 });
