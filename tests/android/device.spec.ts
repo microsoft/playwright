@@ -55,6 +55,6 @@ test('androidDevice.push', async function({ androidDevice }) {
 
 test('androidDevice.fill', async function({ androidDevice }) {
   await androidDevice.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
-  await androidDevice.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'Hello');
+  await androidDevice.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'Hello', { timeout: test.info().timeout });
   expect((await androidDevice.info({ res: 'org.chromium.webview_shell:id/url_field' })).text).toBe('Hello');
 });

@@ -18,7 +18,9 @@
 import { test as it, expect } from './pageTest';
 import path from 'path';
 
-it('should hover @smoke', async ({ page, server }) => {
+it('should hover @smoke', async ({ page, server, headless }) => {
+  it.skip(!headless, 'headed messes up with hover');
+
   await page.goto(server.PREFIX + '/input/scrollable.html');
   const button = page.locator('#button-6');
   await button.hover();

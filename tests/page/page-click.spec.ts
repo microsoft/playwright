@@ -85,8 +85,9 @@ it('should click on a span with an inline element inside', async ({ page }) => {
   expect(await page.evaluate('CLICKED')).toBe(42);
 });
 
-it('should not throw UnhandledPromiseRejection when page closes', async ({ page, isWebView2 }) => {
+it('should not throw UnhandledPromiseRejection when page closes', async ({ page, isWebView2, browserName, isWindows }) => {
   it.skip(isWebView2, 'Page.close() is not supported in WebView2');
+  it.fixme(browserName === 'firefox' && isWindows, 'makes the next test to always timeout');
 
   await Promise.all([
     page.close(),
@@ -94,9 +95,7 @@ it('should not throw UnhandledPromiseRejection when page closes', async ({ page,
   ]).catch(e => {});
 });
 
-it('should click the 1x1 div', async ({ page, browserName, isWindows }) => {
-  it.fixme(browserName === 'firefox' && isWindows, 'always times out');
-
+it('should click the 1x1 div', async ({ page }) => {
   await page.setContent(`<div style="width: 1px; height: 1px;" onclick="window.__clicked = true"></div>`);
   await page.click('div');
   expect(await page.evaluate('window.__clicked')).toBe(true);
