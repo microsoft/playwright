@@ -862,7 +862,7 @@ it('should include timings when using http proxy', async ({ contextFactory, serv
   proxyServer.forwardTo(server.PORT, { allowConnectRequests: true });
   const { page, getLog } = await pageWithHar(contextFactory, testInfo, { proxy: { server: `localhost:${proxyServer.PORT}` } });
   const response = await page.request.get(server.EMPTY_PAGE);
-  await response.body();
+  expect(proxyServer.connectHosts).toEqual([`localhost:${server.PORT}`]);
   await expect(response).toBeOK();
   const log = await getLog();
   expect(log.entries[0].timings.connect).toBeGreaterThan(0);
@@ -871,7 +871,7 @@ it('should include timings when using http proxy', async ({ contextFactory, serv
 it('should include timings when using socks proxy', async ({ contextFactory, server, socksPort }, testInfo) => {
   const { page, getLog } = await pageWithHar(contextFactory, testInfo, { proxy: { server: `socks5://localhost:${socksPort}` } });
   const response = await page.request.get(server.EMPTY_PAGE);
-  await response.body();
+  expect(await response.text()).toContain('Served by the SOCKS proxy');
   await expect(response).toBeOK();
   const log = await getLog();
   expect(log.entries[0].timings.connect).toBeGreaterThan(0);

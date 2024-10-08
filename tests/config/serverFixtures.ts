@@ -51,7 +51,7 @@ export const serverFixtures: Fixtures<ServerFixtures, ServerWorkerOptions> = {
 
     const socksServer = new MockSocksServer();
     const socksPort = port + 2;
-    await socksServer.listen(socksPort, 'localhost');
+    await socksServer.listen(socksPort, loopback);
 
     const proxyPort = port + 3;
     const proxyServer = await TestProxy.create(proxyPort);
