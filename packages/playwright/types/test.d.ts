@@ -3936,7 +3936,45 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
      */
     (): void;
     only: {
+      /**
+       * Focuses the test marked as "should fail". Playwright runs this test and ensures that it is actually failing.
+       * This is useful for debugging purposes to focus on a specific failing test.
+       *
+       * To declare a "failing" test and focus on it:
+       * - `test.fail.only(title, body)`
+       * - `test.fail.only(title, details, body)`
+       *
+       * **Usage**
+       *
+       * You can declare and focus on a failing test:
+       *
+       * ```js
+       * import { test, expect } from '@playwright/test';
+       *
+       * test.fail.only('focus on failing test', async ({ page }) => {
+       *   // Test code that is expected to fail
+       * });
+       * ```
+       *
+       * @param title Test title.
+       * @param body Test body.
+       */
       (title: string, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+      /**
+       * Focuses the test marked as "should fail" with additional details. Playwright runs this test and ensures that it is actually failing.
+       *
+       * ```js
+       * import { test, expect } from '@playwright/test';
+       *
+       * test.fail.only('focus on failing test', { timeout: 5000 }, async ({ page }) => {
+       *   // Test code that is expected to fail
+       * });
+       * ```
+       *
+       * @param title Test title.
+       * @param details See [test.(call)(title[, details, body])](https://playwright.dev/docs/api/class-test#test-fail) for test details description.
+       * @param body Test body.
+       */
       (title: string, details: TestDetails, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
     };
   }
