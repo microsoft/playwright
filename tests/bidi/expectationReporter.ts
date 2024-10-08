@@ -56,7 +56,8 @@ class ExpectationReporter implements Reporter {
       const outcome = getOutcome(test);
       // Strip root and project names.
       const key = test.titlePath().slice(2).join(' › ');
-      if (!expectations.has(key) || expectations.get(key) === 'unknown')
+      if (!expectations.has(key) || expectations.get(key) === 'unknown' ||
+          (expectations.get(key) === 'fail' && outcome === 'pass'))
         expectations.set(key, outcome);
     }
     const keys = Array.from(expectations.keys());
