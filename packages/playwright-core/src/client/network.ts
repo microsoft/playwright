@@ -462,6 +462,7 @@ export class WebSocketRoute extends ChannelOwner<channels.WebSocketRouteChannel>
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.WebSocketRouteInitializer) {
     super(parent, type, guid, initializer);
+    this.markAsInternalType();
 
     this._server = {
       onMessage: (handler: (message: string | Buffer) => any) => {
