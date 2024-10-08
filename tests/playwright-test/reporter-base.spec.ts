@@ -418,5 +418,19 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.passed).toBe(1);
       expect(result.output).toMatch(/\d+ passed \(\d+(\.\d)?(ms|s)\)/);
     });
+
+    test('should output tags', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.ts': `
+          const { test, expect } = require('@playwright/test');
+          test('passes', { tag: ['@foo', '@bar'] }, async ({}) => {
+            expect(0).toBe(0);
+          });
+        `,
+      });
+      const text = result.output;
+
+      expect(text).toContain('passes @foo @bar');
+    });
   });
 }

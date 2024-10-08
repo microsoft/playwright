@@ -410,7 +410,8 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
   else
     location = `${relativeTestPath(config, test)}:${step?.location?.line ?? test.location.line}:${step?.location?.column ?? test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
-  return `${projectTitle}${location} › ${titles.join(' › ')}${stepSuffix(step)}`;
+  const tags = test.tags.length > 0 ? ` ${test.tags.join(' ')}` : '';
+  return `${projectTitle}${location} › ${titles.join(' › ')}${stepSuffix(step)}${tags}`;
 }
 
 function formatTestHeader(config: FullConfig, test: TestCase, options: { indent?: string, index?: number, mode?: 'default' | 'error' } = {}): string {
