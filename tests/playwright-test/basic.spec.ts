@@ -550,22 +550,3 @@ test('should support describe.fixme', async ({ runInlineTest }) => {
   expect(result.skipped).toBe(3);
   expect(result.output).toContain('heytest4');
 });
-
-test('should not allow mixing test types', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'mixed.spec.ts': `
-      import { test } from '@playwright/test';
-
-      export const test2 = test.extend({
-        value: 42,
-      });
-
-      test.describe("test1 suite", () => {
-        test2("test 2", async () => {});
-      });
-    `
-  });
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Can't call test() inside a describe() suite of a different test type.`);
-  expect(result.output).toContain('>  9 |         test2(');
-});

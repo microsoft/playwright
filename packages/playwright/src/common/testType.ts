@@ -38,7 +38,7 @@ export class TestTypeImpl {
     test.only = wrapFunctionWithLocation(this._createTest.bind(this, 'only'));
     test.describe = wrapFunctionWithLocation(this._describe.bind(this, 'default'));
     test.describe.only = wrapFunctionWithLocation(this._describe.bind(this, 'only'));
-    test.describe.configure = this._configure.bind(this);
+    test.describe.configure = wrapFunctionWithLocation(this._configure.bind(this));
     test.describe.fixme = wrapFunctionWithLocation(this._describe.bind(this, 'fixme'));
     test.describe.parallel = wrapFunctionWithLocation(this._describe.bind(this, 'parallel'));
     test.describe.parallel.only = wrapFunctionWithLocation(this._describe.bind(this, 'parallel.only'));
@@ -53,7 +53,7 @@ export class TestTypeImpl {
     test.fixme = wrapFunctionWithLocation(this._modifier.bind(this, 'fixme'));
     test.fail = wrapFunctionWithLocation(this._modifier.bind(this, 'fail'));
     test.slow = wrapFunctionWithLocation(this._modifier.bind(this, 'slow'));
-    test.setTimeout = this._setTimeout.bind(this);
+    test.setTimeout = wrapFunctionWithLocation(this._setTimeout.bind(this));
     test.step = this._step.bind(this);
     test.use = wrapFunctionWithLocation(this._use.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
@@ -66,7 +66,7 @@ export class TestTypeImpl {
     this.test = test;
   }
 
-  private _currentSuite(title: string): Suite | undefined {
+  private _currentSuite(location: Location, title: string): Suite | undefined {
     const suite = currentlyLoadingFileSuite();
     if (!suite) {
       throw new Error([
@@ -78,18 +78,12 @@ export class TestTypeImpl {
         `  when one of the dependencies in your package.json depends on @playwright/test.`,
       ].join('\n'));
     }
-    if (suite._testTypeImpl && suite._testTypeImpl !== this) {
-      throw new Error([
-        `Can't call ${title} inside a describe() suite of a different test type.`,
-        `Make sure to use the same "test" function (created by the test.extend() call) for all declarations inside a suite.`,
-      ].join('\n'));
-    }
     return suite;
   }
 
   private _createTest(type: 'default' | 'only' | 'skip' | 'fixme' | 'fail', location: Location, title: string, fnOrDetails: Function | TestDetails, fn?: Function) {
     throwIfRunningInsideJest();
-    const suite = this._currentSuite('test()');
+    const suite = this._currentSuite(location, 'test()');
     if (!suite)
       return;
 
@@ -118,7 +112,7 @@ export class TestTypeImpl {
 
   private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, titleOrFn: string | Function, fnOrDetails?: TestDetails | Function, fn?: Function) {
     throwIfRunningInsideJest();
-    const suite = this._currentSuite('test.describe()');
+    const suite = this._currentSuite(location, 'test.describe()');
     if (!suite)
       return;
 
@@ -141,7 +135,7 @@ export class TestTypeImpl {
     }
 
     const validatedDetails = validateTestDetails(details);
-    const child = new Suite(title, 'describe', this);
+    const child = new Suite(title, 'describe');
     child._requireFile = suite._requireFile;
     child.location = location;
     child._staticAnnotations.push(...validatedDetails.annotations);
@@ -170,7 +164,7 @@ export class TestTypeImpl {
   }
 
   private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, title: string | Function, fn?: Function) {
-    const suite = this._currentSuite(`test.${name}()`);
+    const suite = this._currentSuite(location, `test.${name}()`);
     if (!suite)
       return;
     if (typeof title === 'function') {
@@ -181,9 +175,9 @@ export class TestTypeImpl {
     suite._hooks.push({ type: name, fn: fn!, title, location });
   }
 
-  private _configure(options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) {
+  private _configure(location: Location, options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) {
     throwIfRunningInsideJest();
-    const suite = this._currentSuite(`test.describe.configure()`);
+    const suite = this._currentSuite(location, `test.describe.configure()`);
     if (!suite)
       return;
 
@@ -239,7 +233,7 @@ export class TestTypeImpl {
     testInfo[type](...modifierArgs as [any, any]);
   }
 
-  private _setTimeout(timeout: number) {
+  private _setTimeout(location: Location, timeout: number) {
     const suite = currentlyLoadingFileSuite();
     if (suite) {
       suite._timeout = timeout;
@@ -253,7 +247,7 @@ export class TestTypeImpl {
   }
 
   private _use(location: Location, fixtures: Fixtures) {
-    const suite = this._currentSuite(`test.use()`);
+    const suite = this._currentSuite(location, `test.use()`);
     if (!suite)
       return;
     suite._use.push({ fixtures, location });
