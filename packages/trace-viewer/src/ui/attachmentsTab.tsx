@@ -20,7 +20,7 @@ import { ImageDiffView } from '@web/shared/imageDiffView';
 import type { MultiTraceModel } from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
-import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
+import { CodeMirrorWrapper, lineHeight } from '@web/components/codeMirrorWrapper';
 import { isTextualMimeType } from '@isomorphic/mimeType';
 import { Expandable } from '@web/components/expandable';
 import { linkifyText } from '@web/renderUtils';
@@ -51,6 +51,11 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
     }
   }, [expanded, attachmentText, placeholder, attachment]);
 
+  const snippetHeight = React.useMemo(() => {
+    const lineCount = attachmentText ? attachmentText.split('\n').length : 0;
+    return Math.min(Math.max(5, lineCount), 20) * lineHeight;
+  }, [attachmentText]);
+
   const title = <span style={{ marginLeft: 5 }}>
     {linkifyText(attachment.name)} {hasContent && <a style={{ marginLeft: 5 }} href={downloadURL(attachment)}>download</a>}
   </span>;
@@ -62,14 +67,16 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
     <Expandable title={title} expanded={expanded} setExpanded={setExpanded} expandOnTitleClick={true}>
       {placeholder && <i>{placeholder}</i>}
     </Expandable>
-    {expanded && attachmentText !== null && <CodeMirrorWrapper
-      text={attachmentText}
-      readOnly
-      mimeType={attachment.contentType}
-      linkify={true}
-      lineNumbers={true}
-      wrapLines={false}>
-    </CodeMirrorWrapper>}
+    {expanded && attachmentText !== null && <div className='vbox' style={{ height: snippetHeight }}>
+      <CodeMirrorWrapper
+        text={attachmentText}
+        readOnly
+        mimeType={attachment.contentType}
+        linkify={true}
+        lineNumbers={true}
+        wrapLines={false}>
+      </CodeMirrorWrapper>
+    </div>}
   </>;
 };
 
