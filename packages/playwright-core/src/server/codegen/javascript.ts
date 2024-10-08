@@ -138,7 +138,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
 
   generateTestHeader(options: LanguageGeneratorOptions): string {
     const formatter = new JavaScriptFormatter();
-    const useText = formatContextOptions(options.contextOptions, options.deviceName);
+    const useText = formatContextOptions(options.contextOptions, options.deviceName, this._isTest);
     formatter.add(`
       import { test, expect${options.deviceName ? ', devices' : ''} } from '@playwright/test';
 ${useText ? '\ntest.use(' + useText + ');\n' : ''}
@@ -157,7 +157,7 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
 
       (async () => {
         const browser = await ${options.browserName}.launch(${formatObjectOrVoid(options.launchOptions)});
-        const context = await browser.newContext(${formatContextOptions(options.contextOptions, options.deviceName)});`);
+        const context = await browser.newContext(${formatContextOptions(options.contextOptions, options.deviceName, false)});`);
     return formatter.format();
   }
 
@@ -199,8 +199,12 @@ function formatObjectOrVoid(value: any, indent = '  '): string {
   return result === '{}' ? '' : result;
 }
 
-function formatContextOptions(options: BrowserContextOptions, deviceName: string | undefined): string {
+function formatContextOptions(options: BrowserContextOptions, deviceName: string | undefined, isTest: boolean): string {
   const device = deviceName && deviceDescriptors[deviceName];
+  if (isTest) {
+    // No recordHAR fixture in test.
+    options = { ...options, recordHar: undefined };
+  }
   if (!device)
     return formatObjectOrVoid(options);
   // Filter out all the properties from the device descriptor.

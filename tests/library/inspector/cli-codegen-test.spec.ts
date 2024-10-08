@@ -85,13 +85,11 @@ test('test', async ({ page }) => {`;
   await cli.waitFor(expectedResult);
 });
 
-test('should work with --save-har', async ({ runCLI }, testInfo) => {
+test('should not generate recordHAR with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
-  const expectedResult = `
-  recordHar: {
-    mode: 'minimal',
-    path: '${harFileName.replace(/\\/g, '\\\\')}'
-  }`;
+  const expectedResult = `test.use({
+  serviceWorkers: 'block'
+});`;
   const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`], {
     autoExitWhen: expectedResult,
   });
