@@ -1096,6 +1096,27 @@ test('less readable', async ({ page }) => {
 });
 ```
 
+You can use `test.fail.only` to focus on a specific test that is expected to fail. This is particularly useful when debugging a failing test or working on a specific issue.
+
+To declare a "failing" test and run only that test:
+* `test.fail.only(title, body)`
+* `test.fail.only(title, details, body)`
+
+**Usage**
+
+You can declare and focus on a failing test:
+
+```js
+import { test, expect } from '@playwright/test';
+
+test.fail.only('focus on failing test', async ({ page }) => {
+  // Test code that is expected to fail
+  expect(1).toBe(2);
+});
+```
+
+In the example above, Playwright will run only the `'focus on failing test'` test and ensure that it fails. If the test fails as expected, the test run will be considered successful.
+
 ### param: Test.fail.title
 * since: v1.42
 - `title` ?<[string]>
