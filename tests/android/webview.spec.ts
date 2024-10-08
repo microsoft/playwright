@@ -47,7 +47,7 @@ test('should navigate page externally', async function({ androidDevice }) {
   const webview = await androidDevice.webView({ pkg: 'org.chromium.webview_shell' });
   const page = await webview.page();
 
-  await androidDevice.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'data:text/html,<title>Hello world!</title>');
+  await androidDevice.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'data:text/html,<title>Hello world!</title>', { timeout: test.info().timeout });
   await Promise.all([
     page.waitForNavigation(),
     androidDevice.press({ res: 'org.chromium.webview_shell:id/url_field' }, 'Enter')

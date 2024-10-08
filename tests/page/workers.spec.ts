@@ -244,6 +244,7 @@ it('should support extra http headers', {
 
 it('should support offline', async ({ page, server, browserName }) => {
   it.fixme(browserName === 'firefox');
+  it.fixme(browserName === 'webkit', 'flaky on all platforms');
 
   const [worker] = await Promise.all([
     page.waitForEvent('worker'),

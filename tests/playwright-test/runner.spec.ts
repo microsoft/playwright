@@ -145,13 +145,13 @@ test('should ignore subprocess creation error because of SIGINT', async ({ inter
   process.kill(-testProcess.process.pid!, 'SIGINT');
 
   const { exitCode } = await testProcess.exited;
-  expect(exitCode).toBe(130);
+  expect.soft(exitCode).toBe(130);
 
   const result = parseTestRunnerOutput(testProcess.output);
-  expect(result.passed).toBe(0);
-  expect(result.failed).toBe(0);
-  expect(result.didNotRun).toBe(2);
-  expect(result.output).not.toContain('worker process exited unexpectedly');
+  expect.soft(result.passed).toBe(0);
+  expect.soft(result.failed).toBe(0);
+  expect.soft(result.didNotRun).toBe(2);
+  expect.soft(result.output).not.toContain('worker process exited unexpectedly');
 });
 
 test('sigint should stop workers', async ({ interactWithTestRunner }) => {

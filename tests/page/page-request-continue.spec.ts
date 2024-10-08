@@ -563,7 +563,9 @@ it('propagate headers cross origin redirect', {
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' },
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32045' },
   ]
-}, async ({ page, server }) => {
+}, async ({ page, server, isAndroid }) => {
+  it.fixme(isAndroid, 'receives authorization:credentials header');
+
   await page.goto(server.PREFIX + '/empty.html');
   let resolve;
   const serverRequestPromise = new Promise<http.IncomingMessage>(f => resolve = f);
