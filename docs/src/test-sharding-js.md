@@ -26,6 +26,25 @@ Now, if you run these shards in parallel on different jobs, your test suite comp
 
 Note that Playwright can only shard tests that can be run in parallel. By default, this means Playwright will shard test files. Learn about other options in the [parallelism guide](./test-parallel.md).
 
+
+## Balancing Shards
+
+Sharding can be done at two levels of granularity depending on whether you use the [`property: TestProject.fullyParallel`] option or not. This affects how the tests are balanced across the shards.
+
+**Sharding with fullyParallel**
+
+When `fullyParallel: true` is enabled, Playwright Test runs individual tests in parallel across multiple shards, ensuring each shard receives an even distribution of tests. This allows for test-level granularity, meaning each shard will attempt to balance the number of individual tests it runs. This is the preferred mode for ensuring even load distribution when sharding, as Playwright can optimize shard execution based on the total number of tests.
+
+**Sharding without fullyParallel**
+
+Without the fullyParallel setting, Playwright Test defaults to file-level granularity, meaning entire test files are assigned to shards. In this case, the number of tests per file can greatly influence shard distribution. If your test files are not evenly sized (i.e., some files contain many more tests than others), certain shards may end up running significantly more tests, while others may run fewer or even none.
+
+**Key Takeaways:**
+
+- **With** `fullyParallel: true`: Tests are split at the individual test level, leading to more balanced shard execution.
+- **Without** `fullyParallel`: Tests are split at the file level, so to balance the shards, it's important to keep your test files small and evenly sized.
+- To ensure the most effective use of sharding, especially in CI environments, it is recommended to use `fullyParallel: true` when aiming for balanced distribution across shards. Otherwise, you may need to manually organize your test files to avoid imbalances.
+
 ## Merging reports from multiple shards
 
 In the previous example, each test shard has its own test report. If you want to have a combined report showing all the test results from all the shards, you can merge them.
