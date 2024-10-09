@@ -36,6 +36,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   workers: process.env.CI ? 2 : undefined,
   snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+  shardingMode: 'round-robin',
   projects: [
     {
       name: 'playwright-test',

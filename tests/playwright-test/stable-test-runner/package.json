@@ -1,6 +1,10 @@
 {
   "private": true,
+  "scripts": {
+    "postinstall": "patch-package"
+  },
   "dependencies": {
+    "patch-package": "8.0.0",
     "@playwright/test": "1.48.0-beta-1728384960000"
   }
 }

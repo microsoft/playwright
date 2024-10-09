@@ -1,0 +1,331 @@
+diff --git a/node_modules/playwright/lib/common/config.js b/node_modules/playwright/lib/common/config.js
+index dc2f6d7..2c81f2a 100644
+--- a/node_modules/playwright/lib/common/config.js
++++ b/node_modules/playwright/lib/common/config.js
+@@ -48,6 +48,8 @@ class FullConfigInternal {
+     this.cliLastFailed = void 0;
+     this.testIdMatcher = void 0;
+     this.defineConfigWasUsed = false;
++    this.shardingMode = void 0;
++    this.lastRunFile = void 0;
+     if (configCLIOverrides.projects && userConfig.projects) throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
+     const {
+       resolvedConfigFile,
+@@ -87,6 +89,8 @@ class FullConfigInternal {
+       workers: 0,
+       webServer: null
+     };
++    this.shardingMode = takeFirst(configCLIOverrides.shardingMode, userConfig.shardingMode, 'partition');
++    this.lastRunFile = configCLIOverrides.lastRunFile;
+     for (const key in userConfig) {
+       if (key.startsWith('@')) this.config[key] = userConfig[key];
+     }
+diff --git a/node_modules/playwright/lib/common/configLoader.js b/node_modules/playwright/lib/common/configLoader.js
+index 75fc987..177e249 100644
+--- a/node_modules/playwright/lib/common/configLoader.js
++++ b/node_modules/playwright/lib/common/configLoader.js
+@@ -192,6 +192,9 @@ function validateConfig(file, config) {
+     if (!('total' in config.shard) || typeof config.shard.total !== 'number' || config.shard.total < 1) throw (0, _util.errorWithFile)(file, `config.shard.total must be a positive number`);
+     if (!('current' in config.shard) || typeof config.shard.current !== 'number' || config.shard.current < 1 || config.shard.current > config.shard.total) throw (0, _util.errorWithFile)(file, `config.shard.current must be a positive number, not greater than config.shard.total`);
+   }
++  if ('shardingMode' in config && config.shardingMode !== undefined) {
++    if (typeof config.shardingMode !== 'string' || !['partition', 'round-robin', 'duration-round-robin'].includes(config.shardingMode)) throw (0, _util.errorWithFile)(file, `config.shardingMode must be one of "partition", "round-robin" or "duration-round-robin"`);
++  }
+   if ('updateSnapshots' in config && config.updateSnapshots !== undefined) {
+     if (typeof config.updateSnapshots !== 'string' || !['all', 'none', 'missing'].includes(config.updateSnapshots)) throw (0, _util.errorWithFile)(file, `config.updateSnapshots must be one of "all", "none" or "missing"`);
+   }
+@@ -272,11 +275,11 @@ async function loadConfigFromFileRestartIfNeeded(configFile, overrides, ignoreDe
+   if (restartWithExperimentalTsEsm(location.resolvedConfigFile)) return null;
+   return await loadConfig(location, overrides, ignoreDeps);
+ }
+-async function loadEmptyConfigForMergeReports() {
++async function loadEmptyConfigForMergeReports(overrides) {
+   // Merge reports is "different" for no good reason. It should not pick up local config from the cwd.
+   return await loadConfig({
+     configDir: process.cwd()
+-  });
++  }, overrides);
+ }
+ function restartWithExperimentalTsEsm(configFile, force = false) {
+   // Opt-out switch.
+diff --git a/node_modules/playwright/lib/program.js b/node_modules/playwright/lib/program.js
+index 19ebe36..642ab1f 100644
+--- a/node_modules/playwright/lib/program.js
++++ b/node_modules/playwright/lib/program.js
+@@ -156,6 +156,7 @@ function addMergeReportsCommand(program) {
+   });
+   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
+   command.option('--reporter <reporter>', `Reporter to use, comma-separated, can be ${_config.builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${_config.defaultReporter}")`);
++  command.option('--last-run-file <file>', `Path to a json file where the last run information is written to (default: test-results/.last-run.json)`);
+   command.addHelpText('afterAll', `
+ Arguments [dir]:
+   Directory containing blob reports.
+@@ -253,7 +254,8 @@ async function listTestFiles(opts) {
+ }
+ async function mergeReports(reportDir, opts) {
+   const configFile = opts.config;
+-  const config = configFile ? await (0, _configLoader.loadConfigFromFileRestartIfNeeded)(configFile) : await (0, _configLoader.loadEmptyConfigForMergeReports)();
++  const cliOverrides = overridesFromOptions(opts);
++  const config = configFile ? await (0, _configLoader.loadConfigFromFileRestartIfNeeded)(configFile, cliOverrides) : await (0, _configLoader.loadEmptyConfigForMergeReports)(cliOverrides);
+   if (!config) return;
+   const dir = _path.default.resolve(process.cwd(), reportDir || '');
+   const dirStat = await _fs.default.promises.stat(dir).catch(e => null);
+@@ -282,6 +284,8 @@ function overridesFromOptions(options) {
+       current: shardPair[0],
+       total: shardPair[1]
+     } : undefined,
++    shardingMode: options.shardingMode ? resolveShardingModeOption(options.shardingMode) : undefined,
++    lastRunFile: options.lastRunFile ? _path.default.resolve(process.cwd(), options.lastRunFile) : undefined,
+     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
+     tsconfig: options.tsconfig ? _path.default.resolve(process.cwd(), options.tsconfig) : undefined,
+     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
+@@ -315,6 +319,12 @@ function overridesFromOptions(options) {
+   }
+   return overrides;
+ }
++const shardingModes = ['partition', 'round-robin', 'duration-round-robin'];
++function resolveShardingModeOption(shardingMode) {
++  if (!shardingMode) return undefined;
++  if (!shardingModes.includes(shardingMode)) throw new Error(`Unsupported sharding mode "${shardingMode}", must be one of: ${shardingModes.map(mode => `"${mode}"`).join(', ')}`);
++  return shardingMode;
++}
+ function resolveReporterOption(reporter) {
+   if (!reporter || !reporter.length) return undefined;
+   return reporter.split(',').map(r => [resolveReporter(r)]);
+@@ -328,7 +338,7 @@ function resolveReporter(id) {
+   });
+ }
+ const kTraceModes = ['on', 'off', 'on-first-retry', 'on-all-retries', 'retain-on-failure', 'retain-on-first-failure'];
+-const testOptions = [['--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`], ['-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`], ['--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`], ['--fail-on-flaky-tests', `Fail if any test is flagged as flaky (default: false)`], ['--forbid-only', `Fail if test.only is called (default: false)`], ['--fully-parallel', `Run all tests in parallel (default: false)`], ['--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`], ['-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`], ['-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`], ['--headed', `Run tests in headed browsers (default: headless)`], ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`], ['--last-failed', `Only re-run the failures`], ['--list', `Collect all the tests and report them, but do not run`], ['--max-failures <N>', `Stop after the first N failures`], ['--no-deps', 'Do not run project dependencies'], ['--output <dir>', `Folder for output artifacts (default: "test-results")`], ['--only-changed [ref]', `Only run test files that have been changed between 'HEAD' and 'ref'. Defaults to running all uncommitted changes. Only supports Git.`], ['--pass-with-no-tests', `Makes test run succeed even if no tests were found`], ['--project <project-name...>', `Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects)`], ['--quiet', `Suppress stdio`], ['--repeat-each <N>', `Run each test N times (default: 1)`], ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${_config.builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${_config.defaultReporter}")`], ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`], ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`], ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${_config.defaultTimeout})`], ['--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`], ['--tsconfig <path>', `Path to a single tsconfig applicable to all imported files (default: look up tsconfig for each imported file separately)`], ['--ui', `Run tests in interactive UI mode`], ['--ui-host <host>', 'Host to serve UI on; specifying this option opens UI in a browser tab'], ['--ui-port <port>', 'Port to serve UI on, 0 for any free port; specifying this option opens UI in a browser tab'], ['-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`], ['-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`], ['-x', `Stop after the first failure`]];
++const testOptions = [['--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`], ['-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`], ['--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`], ['--fail-on-flaky-tests', `Fail if any test is flagged as flaky (default: false)`], ['--forbid-only', `Fail if test.only is called (default: false)`], ['--fully-parallel', `Run all tests in parallel (default: false)`], ['--global-timeout <timeout>', `Maximum time this test suite can run in milliseconds (default: unlimited)`], ['-g, --grep <grep>', `Only run tests matching this regular expression (default: ".*")`], ['-gv, --grep-invert <grep>', `Only run tests that do not match this regular expression`], ['--headed', `Run tests in headed browsers (default: headless)`], ['--ignore-snapshots', `Ignore screenshot and snapshot expectations`], ['--last-failed', `Only re-run the failures`], ['--last-run-file <file>', `Path to a json file where the last run information is read from and written to (default: test-results/.last-run.json)`], ['--list', `Collect all the tests and report them, but do not run`], ['--max-failures <N>', `Stop after the first N failures`], ['--no-deps', 'Do not run project dependencies'], ['--output <dir>', `Folder for output artifacts (default: "test-results")`], ['--only-changed [ref]', `Only run test files that have been changed between 'HEAD' and 'ref'. Defaults to running all uncommitted changes. Only supports Git.`], ['--pass-with-no-tests', `Makes test run succeed even if no tests were found`], ['--project <project-name...>', `Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects)`], ['--quiet', `Suppress stdio`], ['--repeat-each <N>', `Run each test N times (default: 1)`], ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${_config.builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${_config.defaultReporter}")`], ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`], ['--shard <shard>', `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"`], ['--sharding-mode <mode>', `Sharding algorithm to use; "partition", "round-robin" or "duration-round-robin". Defaults to "partition".`], ['--timeout <timeout>', `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${_config.defaultTimeout})`], ['--trace <mode>', `Force tracing mode, can be ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`], ['--tsconfig <path>', `Path to a single tsconfig applicable to all imported files (default: look up tsconfig for each imported file separately)`], ['--ui', `Run tests in interactive UI mode`], ['--ui-host <host>', 'Host to serve UI on; specifying this option opens UI in a browser tab'], ['--ui-port <port>', 'Port to serve UI on, 0 for any free port; specifying this option opens UI in a browser tab'], ['-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`], ['-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`], ['-x', `Stop after the first failure`]];
+ addTestCommand(_program.program);
+ addShowReportCommand(_program.program);
+ addListFilesCommand(_program.program);
+diff --git a/node_modules/playwright/lib/reporters/merge.js b/node_modules/playwright/lib/reporters/merge.js
+index fca737b..d16141e 100644
+--- a/node_modules/playwright/lib/reporters/merge.js
++++ b/node_modules/playwright/lib/reporters/merge.js
+@@ -13,6 +13,7 @@ var _multiplexer = require("./multiplexer");
+ var _utils = require("playwright-core/lib/utils");
+ var _blob = require("./blob");
+ var _util = require("../util");
++var _lastRun = require("../runner/lastRun");
+ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+ /**
+  * Copyright (c) Microsoft Corporation.
+@@ -33,7 +34,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
+ async function createMergedReport(config, dir, reporterDescriptions, rootDirOverride) {
+   var _eventData$pathSepara;
+   const reporters = await (0, _reporters.createReporters)(config, 'merge', false, reporterDescriptions);
+-  const multiplexer = new _multiplexer.Multiplexer(reporters);
++  const lastRun = new _lastRun.LastRunReporter(config);
++  const multiplexer = new _multiplexer.Multiplexer([...reporters, lastRun]);
+   const stringPool = new _stringInternPool.StringInternPool();
+   let printStatus = () => {};
+   if (!multiplexer.printsToStdio()) {
+diff --git a/node_modules/playwright/lib/runner/lastRun.js b/node_modules/playwright/lib/runner/lastRun.js
+index d84abea..440a96b 100644
+--- a/node_modules/playwright/lib/runner/lastRun.js
++++ b/node_modules/playwright/lib/runner/lastRun.js
+@@ -30,16 +30,25 @@ class LastRunReporter {
+     this._lastRunFile = void 0;
+     this._suite = void 0;
+     this._config = config;
+-    const [project] = (0, _projectUtils.filterProjects)(config.projects, config.cliProjectFilter);
+-    if (project) this._lastRunFile = _path.default.join(project.project.outputDir, '.last-run.json');
++    if (config.lastRunFile) {
++      // specified via command line argument
++      this._lastRunFile = config.lastRunFile;
++    } else {
++      const [project] = (0, _projectUtils.filterProjects)(config.projects, config.cliProjectFilter);
++      if (project) this._lastRunFile = _path.default.join(project.project.outputDir, '.last-run.json');
++    }
+   }
+-  async filterLastFailed() {
++  async lastRunInfo() {
+     if (!this._lastRunFile) return;
+     try {
+-      const lastRunInfo = JSON.parse(await _fs.default.promises.readFile(this._lastRunFile, 'utf8'));
+-      this._config.testIdMatcher = id => lastRunInfo.failedTests.includes(id);
++      return JSON.parse(await _fs.default.promises.readFile(this._lastRunFile, 'utf8'));
+     } catch {}
+   }
++  async filterLastFailed() {
++    const lastRunInfo = await this.lastRunInfo();
++    if (!lastRunInfo) return;
++    this._config.testIdMatcher = id => lastRunInfo.failedTests.includes(id);
++  }
+   version() {
+     return 'v2';
+   }
+@@ -50,15 +59,20 @@ class LastRunReporter {
+     this._suite = suite;
+   }
+   async onEnd(result) {
+-    var _this$_suite;
++    var _this$_suite, _this$_suite2;
+     if (!this._lastRunFile || this._config.cliListOnly) return;
+     await _fs.default.promises.mkdir(_path.default.dirname(this._lastRunFile), {
+       recursive: true
+     });
+     const failedTests = (_this$_suite = this._suite) === null || _this$_suite === void 0 ? void 0 : _this$_suite.allTests().filter(t => !t.ok()).map(t => t.id);
++    const testDurations = (_this$_suite2 = this._suite) === null || _this$_suite2 === void 0 ? void 0 : _this$_suite2.allTests().reduce((map, t) => {
++      map[t.id] = t.results.map(r => r.duration).reduce((a, b) => a + b, 0);
++      return map;
++    }, {});
+     const lastRunReport = JSON.stringify({
+       status: result.status,
+-      failedTests
++      failedTests,
++      testDurations
+     }, undefined, 2);
+     await _fs.default.promises.writeFile(this._lastRunFile, lastRunReport);
+   }
+diff --git a/node_modules/playwright/lib/runner/loadUtils.js b/node_modules/playwright/lib/runner/loadUtils.js
+index 8404253..e85d86c 100644
+--- a/node_modules/playwright/lib/runner/loadUtils.js
++++ b/node_modules/playwright/lib/runner/loadUtils.js
+@@ -182,7 +182,7 @@ async function createRootSuite(testRun, errors, shouldFilterOnly, additionalFile
+     for (const projectSuite of rootSuite.suites) testGroups.push(...(0, _testGroups.createTestGroups)(projectSuite, config.config.workers));
+ 
+     // Shard test groups.
+-    const testGroupsInThisShard = (0, _testGroups.filterForShard)(config.config.shard, testGroups);
++    const testGroupsInThisShard = await (0, _testGroups.filterForShard)(config, testGroups);
+     const testsInThisShard = new Set();
+     for (const group of testGroupsInThisShard) {
+       for (const test of group.tests) testsInThisShard.add(test);
+diff --git a/node_modules/playwright/lib/runner/testGroups.js b/node_modules/playwright/lib/runner/testGroups.js
+index 952aafe..58d8d31 100644
+--- a/node_modules/playwright/lib/runner/testGroups.js
++++ b/node_modules/playwright/lib/runner/testGroups.js
+@@ -5,6 +5,7 @@ Object.defineProperty(exports, "__esModule", {
+ });
+ exports.createTestGroups = createTestGroups;
+ exports.filterForShard = filterForShard;
++var _lastRun = require("./lastRun");
+ /**
+  * Copyright Microsoft Corporation. All rights reserved.
+  *
+@@ -106,14 +107,36 @@ function createTestGroups(projectSuite, workers) {
+   }
+   return result;
+ }
+-function filterForShard(shard, testGroups) {
++async function filterForShard(config, testGroups) {
+   // Note that sharding works based on test groups.
+   // This means parallel files will be sharded by single tests,
+   // while non-parallel files will be sharded by the whole file.
+   //
+   // Shards are still balanced by the number of tests, not files,
+   // even in the case of non-paralleled files.
++  const mode = config.shardingMode;
++  const shard = config.config.shard;
++  if (mode === 'round-robin') return filterForShardRoundRobin(shard, testGroups);
++  if (mode === 'duration-round-robin') {
++    const lastRun = new _lastRun.LastRunReporter(config);
++    const lastRunInfo = await lastRun.lastRunInfo();
++    return filterForShardRoundRobin(shard, testGroups, lastRunInfo);
++  }
++  return filterForShardPartition(shard, testGroups);
++}
+ 
++/**
++ * Shards tests by partitioning them into equal parts.
++ *
++ * ```
++ *        [  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12]
++ * Shard 1:  ^---------^                                      : [  1, 2, 3 ]
++ * Shard 2:              ^---------^                          : [  4, 5, 6 ]
++ * Shard 3:                          ^---------^              : [  7, 8, 9 ]
++ * Shard 4:                                      ^---------^  : [ 10,11,12 ]
++ * ```
++ */
++function filterForShardPartition(shard, testGroups) {
+   let shardableTotal = 0;
+   for (const group of testGroups) shardableTotal += group.tests.length;
+ 
+@@ -134,3 +157,41 @@ function filterForShard(shard, testGroups) {
+   }
+   return result;
+ }
++
++/**
++ * Shards tests by round-robin.
++ *
++ * ```
++ *          [  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12]
++ * Shard 1:    ^               ^               ^              : [  1, 5, 9 ]
++ * Shard 2:        ^               ^               ^          : [  2, 6,10 ]
++ * Shard 3:            ^               ^               ^      : [  3, 7,11 ]
++ * Shard 4:                ^               ^               ^  : [  4, 8,12 ]
++ * ```
++ */
++function filterForShardRoundRobin(shard, testGroups, lastRunInfo) {
++  const weights = new Array(shard.total).fill(0);
++  const shardSet = new Array(shard.total).fill(0).map(() => new Set());
++  const averageDuration = lastRunInfo ? Object.values((lastRunInfo === null || lastRunInfo === void 0 ? void 0 : lastRunInfo.testDurations) || {}).reduce((a, b) => a + b, 1) / Math.max(1, Object.values((lastRunInfo === null || lastRunInfo === void 0 ? void 0 : lastRunInfo.testDurations) || {}).length) : 0;
++  const weight = group => {
++    if (!lastRunInfo)
++      // If we don't have last run info, we just count the number of tests.
++      return group.tests.length;
++    // If we have last run info, we use the duration of the tests.
++    return group.tests.reduce((sum, test) => {
++      var _lastRunInfo$testDura;
++      return sum + Math.max(1, ((_lastRunInfo$testDura = lastRunInfo.testDurations) === null || _lastRunInfo$testDura === void 0 ? void 0 : _lastRunInfo$testDura[test.id]) || averageDuration);
++    }, 0);
++  };
++
++  // We sort the test groups by group duration in descending order.
++  const sortedTestGroups = testGroups.slice().sort((a, b) => weight(b) - weight(a));
++
++  // Then we add each group to the shard with the smallest number of tests.
++  for (const group of sortedTestGroups) {
++    const index = weights.reduce((minIndex, currentLength, currentIndex) => currentLength < weights[minIndex] ? currentIndex : minIndex, 0);
++    weights[index] += weight(group);
++    shardSet[index].add(group);
++  }
++  return shardSet[shard.current - 1];
++}
+diff --git a/node_modules/playwright/types/test.d.ts b/node_modules/playwright/types/test.d.ts
+index 400d7cb..c30ef7a 100644
+--- a/node_modules/playwright/types/test.d.ts
++++ b/node_modules/playwright/types/test.d.ts
+@@ -1407,7 +1407,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
+   /**
+    * Shard tests and execute only the selected shard. Specify in the one-based form like `{ total: 5, current: 2 }`.
+    *
+-   * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
++   * Learn more about [parallelism](https://playwright.dev/docs/test-parallel) and [sharding](https://playwright.dev/docs/test-sharding) with Playwright Test.
+    *
+    * **Usage**
+    *
+@@ -1433,6 +1433,21 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
+     total: number;
+   };
+ 
++  /**
++   * Defines the algorithm to be used for sharding. Defaults to `'partition'`.
++   * - `'partition'` - divide the set of test groups by number of shards. e.g. first half goes to shard 1/2 and
++   *   seconds half to shard 2/2.
++   * - `'round-robin'` - spread test groups to shards in a round-robin way. e.g. loop over test groups and always
++   *   assign to the shard that has the lowest number of tests.
++   * - `'duration-round-robin'` - use duration info from `.last-run.json` to spread test groups to shards in a
++   *   round-robin way. e.g. loop over test groups and always assign to the shard that has the lowest duration of
++   *   tests. new tests which were not present in the last run will use an average duration time. When no
++   *   `.last-run.json` could be found the behavior is identical to `'round-robin'`.
++   *
++   * Learn more about [sharding](https://playwright.dev/docs/test-sharding) with Playwright Test.
++   */
++  shardingMode?: "partition"|"round-robin"|"duration-round-robin";
++
+   /**
+    * **NOTE** Use
+    * [testConfig.snapshotPathTemplate](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-path-template)
+@@ -5145,6 +5160,7 @@ export interface PlaywrightWorkerOptions {
+   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
+ }
+ 
++export type ShardingMode = Exclude<PlaywrightTestConfig['shardingMode'], undefined>;
+ export type ScreenshotMode = 'off' | 'on' | 'only-on-failure';
+ export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure';
+ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
