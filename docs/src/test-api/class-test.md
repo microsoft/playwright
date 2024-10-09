@@ -1096,8 +1096,6 @@ test('less readable', async ({ page }) => {
 });
 ```
 
-You can use `test.fail.only` to focus on a specific test that is expected to fail. This is particularly useful when debugging a failing test or working on a specific issue.
-
 To declare a "failing" test and run only that test:
 * `test.fail.only(title, body)`
 * `test.fail.only(title, details, body)`
