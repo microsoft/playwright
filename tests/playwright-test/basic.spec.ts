@@ -153,6 +153,10 @@ test('should respect focused tests', async ({ runInlineTest }) => {
         });
       });
 
+      test.fail.only('focused fail.only test', () => {
+        expect(1 + 1).toBe(3);
+      });
+
       test.describe('non-focused describe', () => {
         test('describe test', () => {
           expect(1 + 1).toBe(3);
@@ -172,11 +176,44 @@ test('should respect focused tests', async ({ runInlineTest }) => {
         test.only('test4', () => {
           expect(1 + 1).toBe(2);
         });
+        test.fail.only('test5', () => {
+          expect(1 + 1).toBe(3);
+        });
       });
     `
   });
-  expect(passed).toBe(5);
+  expect(passed).toBe(7);
   expect(exitCode).toBe(0);
+});
+
+test('should respect focused tests with test.fail', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'fail-only.spec.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('test1', () => {
+        console.log('test1 should not run');
+        expect(1 + 1).toBe(2);
+      });
+
+      test.fail.only('test2', () => {
+        console.log('test2 should run and fail');
+        expect(1 + 1).toBe(3);
+      });
+
+      test('test3', () => {
+        console.log('test3 should not run');
+        expect(1 + 1).toBe(2);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(0);
+  expect(result.skipped).toBe(0);
+  expect(result.output).toContain('test2 should run and fail');
+  expect(result.output).not.toContain('test1 should not run');
+  expect(result.output).not.toContain('test3 should not run');
 });
 
 test('skip should take priority over fail', async ({ runInlineTest }) => {
@@ -549,4 +586,53 @@ test('should support describe.fixme', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
   expect(result.skipped).toBe(3);
   expect(result.output).toContain('heytest4');
+});
+
+test('should not allow mixing test types', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'mixed.spec.ts': `
+      import { test } from '@playwright/test';
+
+      export const test2 = test.extend({
+        value: 42,
+      });
+
+      test.describe("test1 suite", () => {
+        test2("test 2", async () => {});
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Can't call test() inside a describe() suite of a different test type.`);
+  expect(result.output).toContain('>  9 |         test2(');
+});
+
+test('should fail when test.fail.only passes unexpectedly', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'fail-only-pass.spec.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('test1', () => {
+        console.log('test1 should not run');
+        expect(1 + 1).toBe(2);
+      });
+
+      test.fail.only('test2', () => {
+        console.log('test2 should run and pass unexpectedly');
+        expect(1 + 1).toBe(2);
+      });
+
+      test('test3', () => {
+        console.log('test3 should not run');
+        expect(1 + 1).toBe(2);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(result.skipped).toBe(0);
+  expect(result.output).toContain('should run and pass unexpectedly');
+  expect(result.output).not.toContain('test1 should not run');
+  expect(result.output).not.toContain('test3 should not run');
 });
