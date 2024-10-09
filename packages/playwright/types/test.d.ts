@@ -4105,8 +4105,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *   });
    *   ```
    *
-   * - Changing timeout from a slow `beforeEach` or `afterEach` hook. Note that this affects the test timeout that is
-   *   shared with `beforeEach`/`afterEach` hooks.
+   * - Changing timeout from a slow `beforeEach` hook. Note that this affects the test timeout that is shared with
+   *   `beforeEach` hooks.
    *
    *   ```js
    *   test.beforeEach(async ({ page }, testInfo) => {
