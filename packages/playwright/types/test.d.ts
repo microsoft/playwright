@@ -1643,6 +1643,25 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   timeout?: number;
 
   /**
+   * Path to a single `tsconfig` applicable to all imported files. By default, `tsconfig` for each imported file is
+   * looked up separately. Note that `tsconfig` property has no effect while the configuration file or any of its
+   * dependencies are loaded. Ignored when `--tsconfig` command line option is specified.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   tsconfig: './tsconfig.test.json',
+   * });
+   * ```
+   *
+   */
+  tsconfig?: string;
+
+  /**
    * Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
    * - `'all'` - All tests that are executed will update snapshots that did not match. Matching snapshots will not be
    *   updated.

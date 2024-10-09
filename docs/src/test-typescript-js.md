@@ -90,6 +90,16 @@ Alternatively, you can specify a single tsconfig file to use in the command line
 npx playwright test --tsconfig=tsconfig.test.json
 ```
 
+You can specify a single tsconfig file in the config file, that will be used for loading test files, reporters, etc. However, it will not be used while loading the playwright config itself or any files imported from it.
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  tsconfig: './tsconfig.test.json',
+});
+```
+
 ## Manually compile tests with TypeScript
 
 Sometimes, Playwright Test will not be able to transform your TypeScript code correctly, for example when you are using experimental or very recent features of TypeScript, usually configured in `tsconfig.json`.
