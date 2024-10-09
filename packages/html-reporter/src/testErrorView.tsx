@@ -17,20 +17,38 @@
 import ansi2html from 'ansi-to-html';
 import * as React from 'react';
 import './testErrorView.css';
+import type { ImageDiff } from '@web/shared/imageDiffView';
+import { ImageDiffView } from '@web/shared/imageDiffView';
 
 export const TestErrorView: React.FC<{
   error: string;
 }> = ({ error }) => {
-  const html = React.useMemo(() => {
-    const config: any = {
-      bg: 'var(--color-canvas-subtle)',
-      fg: 'var(--color-fg-default)',
-    };
-    config.colors = ansiColors;
-    return new ansi2html(config).toHtml(escapeHTML(error));
-  }, [error]);
+  const html = React.useMemo(() => ansiErrorToHtml(error), [error]);
   return <div className='test-error-message' dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
 };
+
+export const TestScreenshotErrorView: React.FC<{
+  errorPrefix?: string,
+  diff: ImageDiff,
+  errorSuffix?: string,
+}> = ({ errorPrefix, diff, errorSuffix }) => {
+  const prefixHtml = React.useMemo(() => ansiErrorToHtml(errorPrefix), [errorPrefix]);
+  const suffixHtml = React.useMemo(() => ansiErrorToHtml(errorSuffix), [errorSuffix]);
+  return <div className='test-error-message'>
+      <div dangerouslySetInnerHTML={{ __html: prefixHtml || '' }}></div>
+      <ImageDiffView key='image-diff' diff={diff} hideDetails={true} ></ImageDiffView>
+      <div dangerouslySetInnerHTML={{ __html: suffixHtml || '' }}></div>
+    </div>
+};
+
+function ansiErrorToHtml(text?: string): string {
+  const config: any = {
+    bg: 'var(--color-canvas-subtle)',
+    fg: 'var(--color-fg-default)',
+  };
+  config.colors = ansiColors;
+  return new ansi2html(config).toHtml(escapeHTML(text || ''));
+}
 
 const ansiColors = {
   0: '#000',

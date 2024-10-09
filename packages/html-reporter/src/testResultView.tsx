@@ -24,7 +24,7 @@ import { AttachmentLink, generateTraceUrl } from './links';
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import { TestErrorView } from './testErrorView';
+import { TestErrorView, TestScreenshotErrorView } from './testErrorView';
 import './testResultView.css';
 
 function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
@@ -67,7 +67,7 @@ export const TestResultView: React.FC<{
   anchor: 'video' | 'diff' | '',
 }> = ({ result, anchor }) => {
 
-  const { screenshots, videos, traces, otherAttachments, diffs, htmls } = React.useMemo(() => {
+  const { screenshots, videos, traces, otherAttachments, diffs, errors, htmls } = React.useMemo(() => {
     const attachments = result?.attachments || [];
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
     const videos = attachments.filter(a => a.name === 'video');
@@ -76,7 +76,8 @@ export const TestResultView: React.FC<{
     const otherAttachments = new Set<TestAttachment>(attachments);
     [...screenshots, ...videos, ...traces, ...htmls].forEach(a => otherAttachments.delete(a));
     const diffs = groupImageDiffs(screenshots);
-    return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, htmls };
+    const errors = classifyErrors(result.errors, diffs);
+    return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, htmls };
   }, [result]);
 
   const videoRef = React.useRef<HTMLDivElement>(null);
@@ -94,8 +95,12 @@ export const TestResultView: React.FC<{
   }, [scrolled, anchor, setScrolled, videoRef]);
 
   return <div className='test-result'>
-    {!!result.errors.length && <AutoChip header='Errors'>
-      {result.errors.map((error, index) => <TestErrorView key={'test-result-error-message-' + index} error={error}></TestErrorView>)}
+    {!!errors.length && <AutoChip header='Errors'>
+      {errors.map((error, index) => {
+        if (error.type === 'screenshot')
+          return <TestScreenshotErrorView errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
+        return <TestErrorView key={'test-result-error-message-' + index} error={error.error!}></TestErrorView>
+        })}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
       {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
@@ -144,6 +149,38 @@ export const TestResultView: React.FC<{
     </AutoChip>}
   </div>;
 };
+
+function classifyErrors(testErrors: string[], diffs: ImageDiff[]) {
+  const errors = [];
+  for (const error of testErrors) {
+    let screenshotError;
+    if (error.includes('Screenshot comparison failed:')) {
+      for (const diff of diffs) {
+          if (!diff.actual?.attachment.name)
+            continue;
+        if (!error.includes(diff.actual!.attachment.name))
+          continue;
+        const index = error.search(/Expected:|Previous:|Received:/);
+        let errorPrefix;
+        if (index !== -1)
+          errorPrefix = error.slice(0, index);
+        else
+          errorPrefix = error.split('\n')[0];
+
+        const callLog = error.indexOf('Call log:');
+        let errorSuffix;
+        if (callLog !== -1)
+          errorSuffix = error.slice(callLog);
+        screenshotError = { type: 'screenshot', diff, errorPrefix, errorSuffix };
+      }
+    }
+    if (screenshotError)
+      errors.push(screenshotError);
+    else
+      errors.push({ type: 'regular', error });
+  }
+  return errors;
+}
 
 const StepTreeItem: React.FC<{
   step: TestStep;

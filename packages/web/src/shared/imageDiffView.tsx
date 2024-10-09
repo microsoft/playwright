@@ -61,7 +61,9 @@ const checkerboardStyle: React.CSSProperties = {
 export const ImageDiffView: React.FC<{
   diff: ImageDiff,
   noTargetBlank?: boolean,
-}> = ({ diff, noTargetBlank }) => {
+  hideDetails?: boolean,
+}> = ({ diff, noTargetBlank, hideDetails }) => {
+  console.log('hideDetails', hideDetails);
   const [mode, setMode] = React.useState<'diff' | 'actual' | 'expected' | 'slider' | 'sxs'>(diff.diff ? 'diff' : 'actual');
   const [showSxsDiff, setShowSxsDiff] = React.useState<boolean>(false);
 
@@ -105,26 +107,26 @@ export const ImageDiffView: React.FC<{
         <div style={{ ...modeStyle, fontWeight: mode === 'slider' ? 600 : 'initial' }} onClick={() => setMode('slider')}>Slider</div>
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', flex: 'auto', minHeight: fitHeight + 60 }}>
-        {diff.diff && mode === 'diff' && <ImageWithSize image={diffImage} alt='Diff' canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
-        {diff.diff && mode === 'actual' && <ImageWithSize image={actualImage}  alt='Actual' canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
-        {diff.diff && mode === 'expected' && <ImageWithSize image={expectedImage}  alt={expectedImageTitle} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
-        {diff.diff && mode === 'slider' && <ImageDiffSlider expectedImage={expectedImage} actualImage={actualImage} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale} expectedTitle={expectedImageTitle} />}
+        {diff.diff && mode === 'diff' && <ImageWithSize image={diffImage} alt='Diff' hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
+        {diff.diff && mode === 'actual' && <ImageWithSize image={actualImage}  alt='Actual' hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
+        {diff.diff && mode === 'expected' && <ImageWithSize image={expectedImage}  alt={expectedImageTitle} hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
+        {diff.diff && mode === 'slider' && <ImageDiffSlider expectedImage={expectedImage} actualImage={actualImage} hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale} expectedTitle={expectedImageTitle} />}
         {diff.diff && mode === 'sxs' && <div style={{ display: 'flex' }}>
-          <ImageWithSize image={expectedImage} title={expectedImageTitle} canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
-          <ImageWithSize image={showSxsDiff ? diffImage : actualImage} title={showSxsDiff ? 'Diff' : 'Actual'} onClick={() => setShowSxsDiff(!showSxsDiff)} canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
+          <ImageWithSize image={expectedImage} title={expectedImageTitle} hideSize={hideDetails} canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
+          <ImageWithSize image={showSxsDiff ? diffImage : actualImage} title={showSxsDiff ? 'Diff' : 'Actual'} onClick={() => setShowSxsDiff(!showSxsDiff)} hideSize={hideDetails} canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
         </div>}
-        {!diff.diff && mode === 'actual' && <ImageWithSize image={actualImage} title='Actual' canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
-        {!diff.diff && mode === 'expected' && <ImageWithSize image={expectedImage} title={expectedImageTitle} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
+        {!diff.diff && mode === 'actual' && <ImageWithSize image={actualImage} title='Actual' hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
+        {!diff.diff && mode === 'expected' && <ImageWithSize image={expectedImage} title={expectedImageTitle} hideSize={hideDetails} canvasWidth={fitWidth} canvasHeight={fitHeight} scale={scale}/>}
         {!diff.diff && mode === 'sxs' && <div style={{ display: 'flex' }}>
           <ImageWithSize image={expectedImage} title={expectedImageTitle} canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
           <ImageWithSize image={actualImage} title='Actual' canvasWidth={sxsScale * imageWidth} canvasHeight={sxsScale * imageHeight} scale={sxsScale} />
         </div>}
       </div>
-      <div style={{ alignSelf: 'start', lineHeight: '18px', marginLeft: '15px' }}>
+      {!hideDetails && <div style={{ alignSelf: 'start', lineHeight: '18px', marginLeft: '15px' }}>
         <div>{diff.diff && <a target='_blank' href={diff.diff.attachment.path} rel='noreferrer'>{diff.diff.attachment.name}</a>}</div>
         <div><a target={noTargetBlank ? '' : '_blank'} href={diff.actual!.attachment.path} rel='noreferrer'>{diff.actual!.attachment.name}</a></div>
         <div><a target={noTargetBlank ? '' : '_blank'} href={diff.expected!.attachment.path} rel='noreferrer'>{diff.expected!.attachment.name}</a></div>
-      </div>
+      </div>}
     </>}
   </div>;
 };
@@ -136,7 +138,8 @@ export const ImageDiffSlider: React.FC<{
   canvasHeight: number,
   scale: number,
   expectedTitle: string,
-}> = ({ expectedImage, actualImage, canvasWidth, canvasHeight, scale, expectedTitle }) => {
+  hideSize?: boolean, 
+}> = ({ expectedImage, actualImage, canvasWidth, canvasHeight, scale, expectedTitle, hideSize }) => {
   const absoluteStyle: React.CSSProperties = {
     position: 'absolute',
     top: 0,
@@ -147,7 +150,7 @@ export const ImageDiffSlider: React.FC<{
   const sameSize = expectedImage.naturalWidth === actualImage.naturalWidth && expectedImage.naturalHeight === actualImage.naturalHeight;
 
   return <div style={{ flex: 'none', display: 'flex', alignItems: 'center', flexDirection: 'column', userSelect: 'none' }}>
-    <div style={{ margin: 5 }}>
+    {!hideSize && <div style={{ margin: 5 }}>
       {!sameSize && <span style={{ flex: 'none', margin: '0 5px' }}>Expected </span>}
       <span>{expectedImage.naturalWidth}</span>
       <span style={{ flex: 'none', margin: '0 5px' }}>x</span>
@@ -156,7 +159,7 @@ export const ImageDiffSlider: React.FC<{
       {!sameSize && <span>{actualImage.naturalWidth}</span>}
       {!sameSize && <span style={{ flex: 'none', margin: '0 5px' }}>x</span>}
       {!sameSize && <span>{actualImage.naturalHeight}</span>}
-    </div>
+    </div>}
     <div style={{ position: 'relative', width: canvasWidth, height: canvasHeight, margin: 15, ...checkerboardStyle }}>
       <ResizeView
         orientation={'horizontal'}
@@ -182,18 +185,19 @@ const ImageWithSize: React.FunctionComponent<{
   image: HTMLImageElement,
   title?: string,
   alt?: string,
+  hideSize?: boolean,
   canvasWidth: number,
   canvasHeight: number,
   scale: number,
   onClick?: () => void;
-}> = ({ image, title, alt, canvasWidth, canvasHeight, scale, onClick }) => {
+}> = ({ image, title, alt, hideSize, canvasWidth, canvasHeight, scale, onClick }) => {
   return <div style={{ flex: 'none', display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
-    <div style={{ margin: 5 }}>
+    {!hideSize && <div style={{ margin: 5 }}>
       {title && <span style={{ flex: 'none', margin: '0 5px' }}>{title}</span>}
       <span>{image.naturalWidth}</span>
       <span style={{ flex: 'none', margin: '0 5px' }}>x</span>
       <span>{image.naturalHeight}</span>
-    </div>
+    </div>}
     <div style={{ display: 'flex', flex: 'none', width: canvasWidth, height: canvasHeight, margin: 15, ...checkerboardStyle }}>
       <img
         width={image.naturalWidth * scale}
