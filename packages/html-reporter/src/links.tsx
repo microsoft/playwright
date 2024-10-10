@@ -87,7 +87,7 @@ export const AttachmentLink: React.FunctionComponent<{
         : <span>{linkifyText(attachment.name)}</span>
     )}
   </span>} loadChildren={attachment.body ? () => {
-    return [<div key={1} className='attachment-body' style={{ marginLeft: 24 + (depth ?? 0) * 22 + 4 }}><CopyToClipboard value={attachment.body!}/>{linkifyText(attachment.body!)}</div>];
+    return [<div key={1} className='attachment-body' style={{ marginLeft: 24 + (depth ?? 0) * 22 }}><CopyToClipboard value={attachment.body!}/>{linkifyText(attachment.body!)}</div>];
   } : undefined} depth={depth ?? 0} style={{ lineHeight: '32px' }}></TreeItem>;
 };
 
