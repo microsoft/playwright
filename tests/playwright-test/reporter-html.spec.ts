@@ -876,7 +876,7 @@ for (const useIntermediateMergeReport of [false] as const) {
       ]));
     });
 
-    test('should show stwep ID', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32748' } }, async ({ runInlineTest, page, showReport }) => {
+    test('should show attachments in step lsit', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32748' } }, async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `
           import { test, expect } from '@playwright/test';
@@ -884,11 +884,11 @@ for (const useIntermediateMergeReport of [false] as const) {
             testInfo.attachments.push({
                 name: 'top-level.txt',
                 contentType: 'text/plain',
-                body: Buffer.from('foo'),
+                body: Buffer.from('body of top-level'),
             });
-            await test.step('step', async () => {
+            await test.step('step with attachment', async () => {
               testInfo.attachments.push({
-                name: 'step-attachment.txt',
+                name: 'step-attachment.html',
                 contentType: 'text/html',
                 body: Buffer.from('<h1>step attachment</h1>'),
               });
@@ -900,7 +900,21 @@ for (const useIntermediateMergeReport of [false] as const) {
 
       await showReport();
 
-      await page.pause();
+      await page.getByText('passing').click();
+
+      const testSteps = page.getByTestId('test-steps-chip');
+      await testSteps.getByText('top-level.txt').click();
+      await expect(testSteps).toContainText('body of top-level');
+
+      await testSteps.getByText('step with attachment').click();
+
+      const [newTab] = await Promise.all([
+        page.waitForEvent('popup'),
+        testSteps.getByText('step-attachment.html').click(),
+      ]);
+
+      await expect(newTab).toHaveURL(/^blob:/);
+      await expect(newTab.getByText('step attachment')).toBeVisible();
     });
 
     test('should strikethrough textual diff', async ({ runInlineTest, showReport, page }) => {

@@ -108,7 +108,7 @@ export const TestResultView: React.FC<{
     {!!result.errors.length && <AutoChip header='Errors'>
       {result.errors.map((error, index) => <TestErrorView key={'test-result-error-message-' + index} error={error}></TestErrorView>)}
     </AutoChip>}
-    {!!result.steps.length && <AutoChip header='Test Steps'>
+    {!!result.steps.length && <AutoChip header='Test Steps' dataTestId='test-steps-chip'>
       {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} attachments={result.attachments} depth={0}></StepTreeItem>)}
     </AutoChip>}
 
