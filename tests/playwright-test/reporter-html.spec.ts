@@ -889,8 +889,8 @@ for (const useIntermediateMergeReport of [false] as const) {
             await test.step('step', async () => {
               testInfo.attachments.push({
                 name: 'step-attachment.txt',
-                contentType: 'text/plain',
-                body: Buffer.from('foo'),
+                contentType: 'text/html',
+                body: Buffer.from('<h1>step attachment</h1>'),
               });
             });
           });
