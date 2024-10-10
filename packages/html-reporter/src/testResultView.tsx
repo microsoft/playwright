@@ -80,7 +80,7 @@ export const TestResultView: React.FC<{
 }> = ({ result, anchor }) => {
 
   const { screenshots, videos, traces, otherAttachments, diffs, htmls } = React.useMemo(() => {
-    const attachments = result?.attachments || [];
+    const attachments = result.attachments;
     const screenshots = new Set(attachments.filter(a => getAttachmentCategory(a) === 'screenshot'));
     const videos = attachments.filter(a => getAttachmentCategory(a) === 'video');
     const traces = attachments.filter(a => getAttachmentCategory(a) === 'trace');
@@ -88,7 +88,7 @@ export const TestResultView: React.FC<{
     const otherAttachments = attachments.filter(a => getAttachmentCategory(a) === 'other');
     const diffs = groupImageDiffs(screenshots);
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, htmls };
-  }, [result]);
+  }, [result.attachments]);
 
   const videoRef = React.useRef<HTMLDivElement>(null);
   const imageDiffRef = React.useRef<HTMLDivElement>(null);
