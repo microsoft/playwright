@@ -30,6 +30,10 @@ export type ReporterDescription = Readonly<
   [string] | [string, any]
 >;
 
+type DeepPartial<T> = {
+  [P in keyof T]?: DeepPartial<T[P]>
+}
+
 type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
 
 interface TestProject<TestArgs = {}, WorkerArgs = {}> {
@@ -289,6 +293,7 @@ interface GenericAssertions<R> {
   toHaveLength(expected: number): R;
   toHaveProperty(keyPath: string | Array<string>, value?: unknown): R;
   toMatch(expected: RegExp | string): R;
+  toMatchObject<K extends Record<string, unknown>>(expected: DeepPartial<K> | Array<DeepPartial<K>>): R;
   toMatchObject(expected: Record<string, unknown> | Array<unknown>): R;
   toStrictEqual(expected: unknown): R;
   toThrow(error?: unknown): R;

@@ -31,6 +31,10 @@ export type ReporterDescription = Readonly<
   [string] | [string, any]
 >;
 
+type PartialDeep<T> = {
+  [P in keyof T]?: PartialDeep<T[P]>
+}
+
 type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
 
 /**
@@ -6423,6 +6427,32 @@ interface GenericAssertions<R> {
    * @param expected Regular expression to match against.
    */
   toMatch(expected: RegExp | string): R;
+  /**
+   * Compares contents of the value with contents of
+   * [`expected`](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-match-object-option-expected),
+   * performing "deep equality" check. Allows extra properties to be present in the value, unlike
+   * [expect(value).toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal),
+   * so you can check just a subset of object properties.
+   *
+   * When comparing arrays, the number of items must match, and each item is checked recursively.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = {
+   *   a: 1,
+   *   b: 2,
+   *   c: true,
+   * };
+   * expect(value).toMatchObject({ a: 1, c: true });
+   * expect(value).toMatchObject({ b: 2, c: true });
+   *
+   * expect([{ a: 1, b: 2 }]).toMatchObject([{ a: 1 }]);
+   * ```
+   *
+   * @param expected The expected object value to match against.
+   */
+  toMatchObject<K extends Record<string, unknown>>(expected: DeepPartial<K> | Array<DeepPartial<K>>): R;
   /**
    * Compares contents of the value with contents of
    * [`expected`](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-match-object-option-expected),
