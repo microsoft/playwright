@@ -98,9 +98,9 @@ export const TestResultView: React.FC<{
     {!!errors.length && <AutoChip header='Errors'>
       {errors.map((error, index) => {
         if (error.type === 'screenshot')
-          return <TestScreenshotErrorView errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
-        return <TestErrorView key={'test-result-error-message-' + index} error={error.error!}></TestErrorView>
-        })}
+          return <TestScreenshotErrorView key={'test-result-error-message-' + index} errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
+        return <TestErrorView key={'test-result-error-message-' + index} error={error.error!}></TestErrorView>;
+      })}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
       {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
@@ -156,8 +156,8 @@ function classifyErrors(testErrors: string[], diffs: ImageDiff[]) {
     let screenshotError;
     if (error.includes('Screenshot comparison failed:')) {
       for (const diff of diffs) {
-          if (!diff.actual?.attachment.name)
-            continue;
+        if (!diff.actual?.attachment.name)
+          continue;
         if (!error.includes(diff.actual!.attachment.name))
           continue;
         const index = error.search(/Expected:|Previous:|Received:/);

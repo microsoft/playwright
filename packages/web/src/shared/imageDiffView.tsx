@@ -63,7 +63,6 @@ export const ImageDiffView: React.FC<{
   noTargetBlank?: boolean,
   hideDetails?: boolean,
 }> = ({ diff, noTargetBlank, hideDetails }) => {
-  console.log('hideDetails', hideDetails);
   const [mode, setMode] = React.useState<'diff' | 'actual' | 'expected' | 'slider' | 'sxs'>(diff.diff ? 'diff' : 'actual');
   const [showSxsDiff, setShowSxsDiff] = React.useState<boolean>(false);
 
@@ -138,7 +137,7 @@ export const ImageDiffSlider: React.FC<{
   canvasHeight: number,
   scale: number,
   expectedTitle: string,
-  hideSize?: boolean, 
+  hideSize?: boolean,
 }> = ({ expectedImage, actualImage, canvasWidth, canvasHeight, scale, expectedTitle, hideSize }) => {
   const absoluteStyle: React.CSSProperties = {
     position: 'absolute',
