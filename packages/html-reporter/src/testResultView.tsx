@@ -98,7 +98,7 @@ export const TestResultView: React.FC<{
       {result.errors.map((error, index) => <TestErrorView key={'test-result-error-message-' + index} error={error}></TestErrorView>)}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
-      {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
+      {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} attachments={result.attachments} depth={0}></StepTreeItem>)}
     </AutoChip>}
 
     {diffs.map((diff, index) =>
@@ -148,7 +148,15 @@ export const TestResultView: React.FC<{
 const StepTreeItem: React.FC<{
   step: TestStep;
   depth: number,
-}> = ({ step, depth }) => {
+  attachments: TestAttachment[],
+}> = ({ step, depth, attachments }) => {
+  if (step.category === 'attach') {
+    const attachmentName = step.title.match(/^attach "(.*)"$/)?.[1];
+    const attachment = attachments.find(a => a.name === attachmentName);
+    if (attachment)
+      return <AttachmentLink attachment={attachment} depth={depth} />;
+  }
+
   return <TreeItem title={<span>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
     {statusIcon(step.error || step.duration === -1 ? 'failed' : 'passed')}
@@ -156,7 +164,7 @@ const StepTreeItem: React.FC<{
     {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
     {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
   </span>} loadChildren={step.steps.length + (step.snippet ? 1 : 0) ? () => {
-    const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
+    const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} attachments={attachments}></StepTreeItem>);
     if (step.snippet)
       children.unshift(<TestErrorView key='line' error={step.snippet}></TestErrorView>);
     return children;

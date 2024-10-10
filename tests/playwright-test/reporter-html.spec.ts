@@ -876,6 +876,33 @@ for (const useIntermediateMergeReport of [false] as const) {
       ]));
     });
 
+    test('should show stwep ID', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32748' } }, async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passing', async ({ page }, testInfo) => {
+            testInfo.attachments.push({
+                name: 'top-level.txt',
+                contentType: 'text/plain',
+                body: Buffer.from('foo'),
+            });
+            await test.step('step', async () => {
+              testInfo.attachments.push({
+                name: 'step-attachment.txt',
+                contentType: 'text/plain',
+                body: Buffer.from('foo'),
+              });
+            });
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+
+      await showReport();
+
+      await page.pause();
+    });
+
     test('should strikethrough textual diff', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'helper.ts': `

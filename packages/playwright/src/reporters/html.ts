@@ -498,7 +498,9 @@ class HtmlBuilder {
     const { step, duration, count } = dedupedStep;
     const result: TestStep = {
       title: step.title,
+      category: step.category,
       startTime: step.startTime.toISOString(),
+      params: step.params,
       duration,
       steps: dedupeSteps(step.steps).map(s => this._createTestStep(s)),
       location: this._relativeLocation(step.location),
