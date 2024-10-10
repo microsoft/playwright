@@ -151,41 +151,26 @@ export const TestResultView: React.FC<{
 };
 
 function classifyErrors(testErrors: string[], diffs: ImageDiff[]) {
-  const errors = [];
-  for (const error of testErrors) {
-    let screenshotError;
+  return testErrors.map(error => {
     if (error.includes('Screenshot comparison failed:')) {
-      for (const diff of diffs) {
-        if (!diff.actual?.attachment.name)
-          continue;
-        if (!error.includes(diff.actual!.attachment.name))
-          continue;
+      const matchingDiff = diffs.find(diff => {
+        const attachmentName = diff.actual?.attachment.name;
+        return attachmentName && error.includes(attachmentName);
+      });
 
+      if (matchingDiff) {
         const lines = error.split('\n');
-        const index = lines.findIndex(line => line.match(/Expected:|Previous:|Received:/));
-        let errorPrefix;
-        if (index !== -1)
-          errorPrefix = lines.slice(0, index).join('\n');
-        else
-          errorPrefix = lines[0];
+        const index = lines.findIndex(line => /Expected:|Previous:|Received:/.test(line));
+        const errorPrefix = index !== -1 ? lines.slice(0, index).join('\n') : lines[0];
 
-        let errorSuffix;
-        const diffIndex = lines.findIndex(line => line.match(/ +Diff:/));
-        // Skip one empty line after the diff too.
-        if (diffIndex !== -1)
-          errorSuffix = lines.slice(diffIndex + 2).join('\n');
-        else
-          errorSuffix = lines.slice(1).join('\n');
+        const diffIndex = lines.findIndex(line => / +Diff:/.test(line));
+        const errorSuffix = diffIndex !== -1 ? lines.slice(diffIndex + 2).join('\n') : lines.slice(1).join('\n');
 
-        screenshotError = { type: 'screenshot', diff, errorPrefix, errorSuffix };
+        return { type: 'screenshot', diff: matchingDiff, errorPrefix, errorSuffix };
       }
     }
-    if (screenshotError)
-      errors.push(screenshotError);
-    else
-      errors.push({ type: 'regular', error });
-  }
-  return errors;
+    return { type: 'regular', error };
+  });
 }
 
 const StepTreeItem: React.FC<{
