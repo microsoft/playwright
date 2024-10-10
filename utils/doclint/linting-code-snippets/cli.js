@@ -152,6 +152,7 @@ class JSLintingService extends LintingService {
           'notice/notice': 'off',
           '@typescript-eslint/no-unused-vars': 'off',
           'max-len': ['error', { code: 100 }],
+          'react/react-in-jsx-scope': 'off',
         },
       }
     });

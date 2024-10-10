@@ -20,6 +20,7 @@ import { escapeForTextSelector } from '../../utils/isomorphic/stringUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import type { InjectedScript } from './injectedScript';
+import { renderedAriaTree } from './ariaSnapshot';
 
 const selectorSymbol = Symbol('selector');
 
@@ -85,6 +86,7 @@ class ConsoleAPI {
       inspect: (selector: string) => this._inspect(selector),
       selector: (element: Element) => this._selector(element),
       generateLocator: (element: Element, language?: Language) => this._generateLocator(element, language),
+      ariaSnapshot: (element?: Element) => renderedAriaTree(element || this._injectedScript.document.body),
       resume: () => this._resume(),
       ...new Locator(injectedScript, ''),
     };
