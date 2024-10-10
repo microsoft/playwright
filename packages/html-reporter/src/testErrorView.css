@@ -14,9 +14,8 @@
   limitations under the License.
 */
 
-.test-error-message {
+.test-error-view {
   white-space: pre;
-  font-family: monospace;
   overflow: auto;
   flex: none;
   padding: 0;
@@ -25,4 +24,8 @@
   padding: 16px;
   line-height: initial;
   margin-bottom: 6px;
+}
+
+.test-error-text {
+  font-family: monospace;
 }

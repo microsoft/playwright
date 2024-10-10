@@ -24,7 +24,7 @@ import { AttachmentLink, generateTraceUrl } from './links';
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import { TestErrorView } from './testErrorView';
+import { TestErrorView, TestScreenshotErrorView } from './testErrorView';
 import './testResultView.css';
 
 function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
@@ -67,7 +67,7 @@ export const TestResultView: React.FC<{
   anchor: 'video' | 'diff' | '',
 }> = ({ result, anchor }) => {
 
-  const { screenshots, videos, traces, otherAttachments, diffs, htmls } = React.useMemo(() => {
+  const { screenshots, videos, traces, otherAttachments, diffs, errors, htmls } = React.useMemo(() => {
     const attachments = result?.attachments || [];
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
     const videos = attachments.filter(a => a.name === 'video');
@@ -76,7 +76,8 @@ export const TestResultView: React.FC<{
     const otherAttachments = new Set<TestAttachment>(attachments);
     [...screenshots, ...videos, ...traces, ...htmls].forEach(a => otherAttachments.delete(a));
     const diffs = groupImageDiffs(screenshots);
-    return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, htmls };
+    const errors = classifyErrors(result.errors, diffs);
+    return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, htmls };
   }, [result]);
 
   const videoRef = React.useRef<HTMLDivElement>(null);
@@ -94,15 +95,19 @@ export const TestResultView: React.FC<{
   }, [scrolled, anchor, setScrolled, videoRef]);
 
   return <div className='test-result'>
-    {!!result.errors.length && <AutoChip header='Errors'>
-      {result.errors.map((error, index) => <TestErrorView key={'test-result-error-message-' + index} error={error}></TestErrorView>)}
+    {!!errors.length && <AutoChip header='Errors'>
+      {errors.map((error, index) => {
+        if (error.type === 'screenshot')
+          return <TestScreenshotErrorView key={'test-result-error-message-' + index} errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
+        return <TestErrorView key={'test-result-error-message-' + index} error={error.error!}></TestErrorView>;
+      })}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
       {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
     </AutoChip>}
 
     {diffs.map((diff, index) =>
-      <AutoChip key={`diff-${index}`} header={`Image mismatch: ${diff.name}`} targetRef={imageDiffRef}>
+      <AutoChip key={`diff-${index}`} dataTestId='test-results-image-diff' header={`Image mismatch: ${diff.name}`} targetRef={imageDiffRef}>
         <ImageDiffView key='image-diff' diff={diff}></ImageDiffView>
       </AutoChip>
     )}
@@ -144,6 +149,29 @@ export const TestResultView: React.FC<{
     </AutoChip>}
   </div>;
 };
+
+function classifyErrors(testErrors: string[], diffs: ImageDiff[]) {
+  return testErrors.map(error => {
+    if (error.includes('Screenshot comparison failed:')) {
+      const matchingDiff = diffs.find(diff => {
+        const attachmentName = diff.actual?.attachment.name;
+        return attachmentName && error.includes(attachmentName);
+      });
+
+      if (matchingDiff) {
+        const lines = error.split('\n');
+        const index = lines.findIndex(line => /Expected:|Previous:|Received:/.test(line));
+        const errorPrefix = index !== -1 ? lines.slice(0, index).join('\n') : lines[0];
+
+        const diffIndex = lines.findIndex(line => / +Diff:/.test(line));
+        const errorSuffix = diffIndex !== -1 ? lines.slice(diffIndex + 2).join('\n') : lines.slice(1).join('\n');
+
+        return { type: 'screenshot', diff: matchingDiff, errorPrefix, errorSuffix };
+      }
+    }
+    return { type: 'regular', error };
+  });
+}
 
 const StepTreeItem: React.FC<{
   step: TestStep;

@@ -43,7 +43,7 @@ import type { TimeoutOptions } from '../common/types';
 import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSerializers';
 import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
-import { TargetClosedError } from './errors';
+import { TargetClosedError, TimeoutError } from './errors';
 import { asLocator } from '../utils';
 import { helper } from './helper';
 
@@ -662,7 +662,7 @@ export class Page extends SdkObject {
         return {};
       }
 
-      if (areEqualScreenshots(actual, options.expected, previous)) {
+      if (areEqualScreenshots(actual, options.expected, undefined)) {
         progress.log(`screenshot matched expectation`);
         return {};
       }
@@ -672,10 +672,13 @@ export class Page extends SdkObject {
       // A: We want user to receive a friendly diff between actual and expected/previous.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
         throw e;
+      let errorMessage = e.message;
+      if (e instanceof TimeoutError && intermediateResult?.previous)
+        errorMessage = `Failed to take two consecutive stable screenshots. ${e.message}`;
       return {
         log: e.message ? [...metadata.log, e.message] : metadata.log,
         ...intermediateResult,
-        errorMessage: e.message,
+        errorMessage,
       };
     });
   }

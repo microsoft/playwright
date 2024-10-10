@@ -179,7 +179,7 @@ for (const useIntermediateMergeReport of [false] as const) {
       await expect(page.locator('text=Image mismatch')).toBeVisible();
       await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
 
-      await expect(page.getByTestId('test-result-image-mismatch-tabs').locator('div')).toHaveText([
+      await expect(page.getByTestId('test-screenshot-error-view').getByTestId('test-result-image-mismatch-tabs').locator('div')).toHaveText([
         'Diff',
         'Actual',
         'Expected',
@@ -187,36 +187,40 @@ for (const useIntermediateMergeReport of [false] as const) {
         'Slider',
       ]);
 
-      const imageDiff = page.getByTestId('test-result-image-mismatch');
-      await test.step('Diff', async () => {
-        await expect(imageDiff.locator('img')).toHaveAttribute('alt', 'Diff');
-      });
+      for (const testId of ['test-results-image-diff', 'test-screenshot-error-view']) {
+        await test.step(testId, async () => {
+          const imageDiff = page.getByTestId(testId).getByTestId('test-result-image-mismatch');
+          await test.step('Diff', async () => {
+            await expect(imageDiff.locator('img')).toHaveAttribute('alt', 'Diff');
+          });
 
-      await test.step('Actual', async () => {
-        await imageDiff.getByText('Actual', { exact: true }).click();
-        await expect(imageDiff.locator('img')).toHaveAttribute('alt', 'Actual');
-      });
+          await test.step('Actual', async () => {
+            await imageDiff.getByText('Actual', { exact: true }).click();
+            await expect(imageDiff.locator('img')).toHaveAttribute('alt', 'Actual');
+          });
 
-      await test.step('Expected', async () => {
-        await imageDiff.getByText('Expected', { exact: true }).click();
-        await expect(imageDiff.locator('img')).toHaveAttribute('alt', 'Expected');
-      });
+          await test.step('Expected', async () => {
+            await imageDiff.getByText('Expected', { exact: true }).click();
+            await expect(imageDiff.locator('img')).toHaveAttribute('alt', 'Expected');
+          });
 
-      await test.step('Side by side', async () => {
-        await imageDiff.getByText('Side by side').click();
-        await expect(imageDiff.locator('img')).toHaveCount(2);
-        await expect(imageDiff.locator('img').first()).toHaveAttribute('alt', 'Expected');
-        await expect(imageDiff.locator('img').last()).toHaveAttribute('alt', 'Actual');
-        await imageDiff.locator('img').last().click();
-        await expect(imageDiff.locator('img').last()).toHaveAttribute('alt', 'Diff');
-      });
+          await test.step('Side by side', async () => {
+            await imageDiff.getByText('Side by side').click();
+            await expect(imageDiff.locator('img')).toHaveCount(2);
+            await expect(imageDiff.locator('img').first()).toHaveAttribute('alt', 'Expected');
+            await expect(imageDiff.locator('img').last()).toHaveAttribute('alt', 'Actual');
+            await imageDiff.locator('img').last().click();
+            await expect(imageDiff.locator('img').last()).toHaveAttribute('alt', 'Diff');
+          });
 
-      await test.step('Slider', async () => {
-        await imageDiff.getByText('Slider', { exact: true }).click();
-        await expect(imageDiff.locator('img')).toHaveCount(2);
-        await expect(imageDiff.locator('img').first()).toHaveAttribute('alt', 'Expected');
-        await expect(imageDiff.locator('img').last()).toHaveAttribute('alt', 'Actual');
-      });
+          await test.step('Slider', async () => {
+            await imageDiff.getByText('Slider', { exact: true }).click();
+            await expect(imageDiff.locator('img')).toHaveCount(2);
+            await expect(imageDiff.locator('img').first()).toHaveAttribute('alt', 'Expected');
+            await expect(imageDiff.locator('img').last()).toHaveAttribute('alt', 'Actual');
+          });
+        });
+      }
     });
 
     test('should include multiple image diffs', async ({ runInlineTest, page, showReport }) => {
@@ -285,8 +289,14 @@ for (const useIntermediateMergeReport of [false] as const) {
 
       await showReport();
       await page.click('text=fails');
-      await expect(page.locator('data-testid=test-result-image-mismatch')).toHaveCount(3);
-      await expect(page.locator('text=Image mismatch:')).toHaveText([
+      await expect(page.getByTestId('test-screenshot-error-view').getByTestId('error-suffix')).toContainText([
+        `> 6 |             await expect.soft(screenshot).toMatchSnapshot('expected.png');`,
+        `>  7 |             await expect.soft(screenshot).toMatchSnapshot('expected.png');`,
+        `>  8 |             await expect.soft(screenshot).toMatchSnapshot('expected.png');`,
+      ]);
+      const imageDiffs = page.getByTestId('test-results-image-diff');
+      await expect(imageDiffs.getByTestId('test-result-image-mismatch')).toHaveCount(3);
+      await expect(imageDiffs.getByText('Image mismatch:')).toHaveText([
         'Image mismatch: expected.png',
         'Image mismatch: expected-1.png',
         'Image mismatch: expected-2.png',
@@ -323,7 +333,7 @@ for (const useIntermediateMergeReport of [false] as const) {
       await expect(page.getByTestId('test-result-image-mismatch-tabs').locator('div')).toHaveText([
         'Diff',
         'Actual',
-        'Expected',
+        'Previous',
         'Side by side',
         'Slider',
       ]);
@@ -460,7 +470,7 @@ for (const useIntermediateMergeReport of [false] as const) {
 
       await showReport();
       await page.click('text=fails');
-      await expect(page.locator('.test-error-message span:has-text("received")').nth(1)).toHaveCSS('color', 'rgb(204, 0, 0)');
+      await expect(page.locator('.test-error-view span:has-text("received")').nth(1)).toHaveCSS('color', 'rgb(204, 0, 0)');
     });
 
     test('should show trace source', async ({ runInlineTest, page, showReport }) => {
