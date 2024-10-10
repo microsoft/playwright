@@ -165,7 +165,7 @@ const StepTreeItem: React.FC<{
     const attachmentName = step.title.match(/^attach "(.*)"$/)?.[1];
     const attachment = attachments.find(a => a.name === attachmentName);
     if (attachment)
-      return <AttachmentLink attachment={attachment} depth={depth} />;
+      return <AttachmentLink attachment={attachment} depth={depth} openInNewTab={getAttachmentCategory(attachment) === 'html'} />;
   }
 
   return <TreeItem title={<span>
