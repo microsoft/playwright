@@ -18,6 +18,8 @@
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
+import type { TestCase } from './testReporter';
+
 export type ReporterDescription = Readonly<
   ['blob'] | ['blob', { outputDir?: string, fileName?: string }] |
   ['dot'] |
@@ -1035,6 +1037,11 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   };
 
   /**
+   * Filter tests by passing a function.
+   */
+  filter?: TestFilter|Array<TestFilter>;
+
+  /**
    * Whether to exit with an error if any tests or groups are marked as
    * [test.only(title[, details, body])](https://playwright.dev/docs/api/class-test#test-only) or
    * [test.describe.only([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe-only).
@@ -1721,6 +1728,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   configFile?: string;
 
   /**
+   * See [testConfig.filter](https://playwright.dev/docs/api/class-testconfig#test-config-filter).
+   */
+  filter: null|TestFilter|Array<TestFilter>;
+
+  /**
    * See [testConfig.forbidOnly](https://playwright.dev/docs/api/class-testconfig#test-config-forbid-only).
    */
   forbidOnly: boolean;
@@ -1837,6 +1849,8 @@ export type TestDetails = {
   tag?: string | string[];
   annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
 }
+
+export type TestFilter = (tests: TestCase[]) => TestCase[];
 
 interface SuiteFunction {
   /**

@@ -16,6 +16,7 @@
 
 import path from 'path';
 import type { FullConfig, Reporter, TestError } from '../../types/testReporter';
+import type * as reporterTypes from '../../types/testReporter';
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
 import { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
@@ -173,22 +174,36 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   }
 
   // Shard only the top-level projects.
-  if (config.config.shard) {
+  if (config.config.shard || config.config.filter) {
     // Create test groups for top-level projects.
     const testGroups: TestGroup[] = [];
     for (const projectSuite of rootSuite.suites)
       testGroups.push(...createTestGroups(projectSuite, config.config.workers));
 
+    if (config.config.filter) {
+      const filters = Array.isArray(config.config.filter) ? config.config.filter : [config.config.filter];
+
+      const allTests = new Set<reporterTypes.TestCase>(testGroups.flatMap(group => group.tests));
+
+      let filteredTests = [...allTests.values()];
+      for (const filter of filters)
+        filteredTests = filter(filteredTests);
+
+      const filteredTestSet = new Set(filteredTests);
+      for (const group of testGroups)
+        group.tests = group.tests.filter(test => filteredTestSet.has(test));
+    }
+
     // Shard test groups.
-    const testGroupsInThisShard = filterForShard(config.config.shard, testGroups);
-    const testsInThisShard = new Set<TestCase>();
+    const testGroupsInThisShard = config.config.shard ? filterForShard(config.config.shard, testGroups) : new Set(testGroups);
+    const testsInThisRun = new Set<TestCase>();
     for (const group of testGroupsInThisShard) {
       for (const test of group.tests)
-        testsInThisShard.add(test);
+        testsInThisRun.add(test);
     }
 
     // Update project suites, removing empty ones.
-    filterTestsRemoveEmptySuites(rootSuite, test => testsInThisShard.has(test));
+    filterTestsRemoveEmptySuites(rootSuite, test => testsInThisRun.has(test));
   }
 
   // Now prepend dependency projects without filtration.

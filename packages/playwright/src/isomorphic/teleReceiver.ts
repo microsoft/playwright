@@ -581,6 +581,7 @@ export const baseFullConfig: reporterTypes.FullConfig = {
   globalSetup: null,
   globalTeardown: null,
   globalTimeout: 0,
+  filter: null,
   grep: /.*/,
   grepInvert: null,
   maxFailures: 0,

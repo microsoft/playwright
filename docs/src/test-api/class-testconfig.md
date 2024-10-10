@@ -160,6 +160,13 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.filter
+* since: v1.49
+- type: ?<[TestFilter]|[Array]<[TestFilter]>>
+
+Filter tests by passing a function.
+
+
 ## property: TestConfig.grep
 * since: v1.10
 - type: ?<[RegExp]|[Array]<[RegExp]>>

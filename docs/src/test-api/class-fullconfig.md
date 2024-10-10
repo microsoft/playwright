@@ -40,6 +40,12 @@ See [`property: TestConfig.globalTeardown`].
 
 See [`property: TestConfig.globalTimeout`].
 
+## property: FullConfig.filter
+* since: v1.49
+- type: <[null]|[TestFilter]|[Array]<[TestFilter]>>
+
+See [`property: TestConfig.filter`].
+
 ## property: FullConfig.grep
 * since: v1.10
 - type: <[RegExp]|[Array]<[RegExp]>>

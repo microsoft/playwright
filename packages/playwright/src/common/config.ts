@@ -78,6 +78,7 @@ export class FullConfigInternal {
       globalSetup: takeFirst(resolveScript(userConfig.globalSetup, configDir), null),
       globalTeardown: takeFirst(resolveScript(userConfig.globalTeardown, configDir), null),
       globalTimeout: takeFirst(configCLIOverrides.globalTimeout, userConfig.globalTimeout, 0),
+      filter: takeFirst(userConfig.filter, undefined),
       grep: takeFirst(userConfig.grep, defaultGrep),
       grepInvert: takeFirst(userConfig.grepInvert, null),
       maxFailures: takeFirst(configCLIOverrides.debug ? 1 : undefined, configCLIOverrides.maxFailures, userConfig.maxFailures, 0),

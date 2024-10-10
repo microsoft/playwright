@@ -17,6 +17,8 @@
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
+import type { TestCase } from './testReporter';
+
 export type ReporterDescription = Readonly<
   ['blob'] | ['blob', { outputDir?: string, fileName?: string }] |
   ['dot'] |
@@ -74,6 +76,8 @@ export type TestDetails = {
   tag?: string | string[];
   annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
 }
+
+export type TestFilter = (tests: TestCase[]) => TestCase[];
 
 interface SuiteFunction {
   (title: string, callback: () => void): void;
