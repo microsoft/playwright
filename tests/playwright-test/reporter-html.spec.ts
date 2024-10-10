@@ -892,6 +892,9 @@ for (const useIntermediateMergeReport of [false] as const) {
                 contentType: 'text/html',
                 body: Buffer.from('<h1>step attachment</h1>'),
               });
+
+              await testInfo.attach('foo', { body: 'a' });
+              await testInfo.attach('foo', { body: 'b' });
             });
           });
         `,
@@ -907,6 +910,8 @@ for (const useIntermediateMergeReport of [false] as const) {
       await expect(testSteps).toContainText('body of top-level');
 
       await testSteps.getByText('step with attachment').click();
+
+      await expect(testSteps.getByText('attach "foo"'), 'uses normal rendering when it cannot correlate by name').toHaveCount(2);
 
       const [newTab] = await Promise.all([
         page.waitForEvent('popup'),
