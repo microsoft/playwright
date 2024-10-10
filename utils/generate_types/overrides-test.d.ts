@@ -295,6 +295,7 @@ interface GenericAssertions<R> {
   toMatch(expected: RegExp | string): R;
   toMatchObject<K extends Record<string, unknown>>(expected: DeepPartial<K> | Array<DeepPartial<K>>): R;
   toMatchObject(expected: Record<string, unknown> | Array<unknown>): R;
+  toStrictEqual<K>(expected: K): R;
   toStrictEqual(expected: unknown): R;
   toThrow(error?: unknown): R;
   toThrowError(error?: unknown): R;

@@ -31,8 +31,8 @@ export type ReporterDescription = Readonly<
   [string] | [string, any]
 >;
 
-type PartialDeep<T> = {
-  [P in keyof T]?: PartialDeep<T[P]>
+type DeepPartial<T> = {
+  [P in keyof T]?: DeepPartial<T[P]>
 }
 
 type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
@@ -6479,6 +6479,28 @@ interface GenericAssertions<R> {
    * @param expected The expected object value to match against.
    */
   toMatchObject(expected: Record<string, unknown> | Array<unknown>): R;
+  /**
+   * Compares contents of the value with contents of
+   * [`expected`](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-strict-equal-option-expected)
+   * **and** their types.
+   *
+   * Differences from
+   * [expect(value).toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal):
+   * - Keys with undefined properties are checked. For example, `{ a: undefined, b: 2 }` does not match `{ b: 2 }`.
+   * - Array sparseness is checked. For example, `[, 1]` does not match `[undefined, 1]`.
+   * - Object types are checked to be equal. For example, a class instance with fields `a` and `b` will not equal a
+   *   literal object with fields `a` and `b`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = { prop: 1 };
+   * expect(value).toStrictEqual({ prop: 1 });
+   * ```
+   *
+   * @param expected Expected value.
+   */
+  toStrictEqual<K>(expected: K): R;
   /**
    * Compares contents of the value with contents of
    * [`expected`](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-strict-equal-option-expected)

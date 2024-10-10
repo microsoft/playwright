@@ -360,3 +360,41 @@ test.fixme('should check types of overloaded toMatchObject with generic paramete
   });
   expect(result.exitCode).toBe(0);
 });
+
+test.fixme('should check types of overloaded toStrictEqual with generic parameter', async ({ runTSC }) => {
+  const result = await runTSC({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+
+      export default defineConfig({
+      });
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('my test', async () => {
+        const value = { a: 1, b: 'foo', c: { d: 2, e: 'bar' } };
+
+        expect.soft(value).toStrictEqual<typeof value>({ a: 1, b: 'foo', c: { d: 2, e: 'bar' } });
+        expect.soft([value]).toStrictEqual<Array<typeof value>>([{ a: 1, b: 'foo', c: { d: 2, e: 'bar' } }]);
+
+        expect.soft(new Date()).toStrictEqual<Date>(new Date());
+
+        // @ts-expect-error
+        expect.soft(value).toStrictEqual<typeof value>({ a: 1 });
+
+        // @ts-expect-error
+        expect.soft(value).toStrictEqual<typeof value>({ a: 'a' });
+
+        // @ts-expect-error
+        expect.soft(value).toStrictEqual<typeof value>({ c: { e: 2 } });
+        
+        // @ts-expect-error
+        expect.soft([value]).toStrictEqual<typeof value>([{ a: 'a' }]);
+
+        // @ts-expect-error
+        expect.soft([value]).toStrictEqual<typeof value>([{ c: { e: 2 } }]);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
