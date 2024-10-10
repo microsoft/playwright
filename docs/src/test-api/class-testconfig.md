@@ -552,6 +552,22 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.tsconfig
+* since: v1.49
+- type: ?<[string]>
+
+Path to a single `tsconfig` applicable to all imported files. By default, `tsconfig` for each imported file is looked up separately. Note that `tsconfig` property has no effect while the configuration file or any of its dependencies are loaded. Ignored when `--tsconfig` command line option is specified.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  tsconfig: './tsconfig.test.json',
+});
+```
+
 ## property: TestConfig.updateSnapshots
 * since: v1.10
 - type: ?<[UpdateSnapshots]<"all"|"none"|"missing">>
