@@ -470,7 +470,7 @@ for (const useIntermediateMergeReport of [false] as const) {
 
       await showReport();
       await page.click('text=fails');
-      await expect(page.locator('.test-error-message span:has-text("received")').nth(1)).toHaveCSS('color', 'rgb(204, 0, 0)');
+      await expect(page.locator('.test-error-view span:has-text("received")').nth(1)).toHaveCSS('color', 'rgb(204, 0, 0)');
     });
 
     test('should show trace source', async ({ runInlineTest, page, showReport }) => {
