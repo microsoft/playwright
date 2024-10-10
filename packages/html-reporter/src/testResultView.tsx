@@ -61,6 +61,18 @@ function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
   return [...snapshotNameToImageDiff.values()];
 }
 
+function getAttachmentCategory(attachment: TestAttachment) {
+  if (attachment.contentType.startsWith('image/'))
+    return 'screenshot';
+  if (attachment.name === 'video')
+    return 'video';
+  if (attachment.name === 'trace')
+    return 'trace';
+  if (attachment.contentType.startsWith('text/html'))
+    return 'html';
+  return 'other';
+}
+
 export const TestResultView: React.FC<{
   test: TestCase,
   result: TestResult,
@@ -69,12 +81,11 @@ export const TestResultView: React.FC<{
 
   const { screenshots, videos, traces, otherAttachments, diffs, htmls } = React.useMemo(() => {
     const attachments = result?.attachments || [];
-    const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
-    const videos = attachments.filter(a => a.name === 'video');
-    const traces = attachments.filter(a => a.name === 'trace');
-    const htmls = attachments.filter(a => a.contentType.startsWith('text/html'));
-    const otherAttachments = new Set<TestAttachment>(attachments);
-    [...screenshots, ...videos, ...traces, ...htmls].forEach(a => otherAttachments.delete(a));
+    const screenshots = new Set(attachments.filter(a => getAttachmentCategory(a) === 'screenshot'));
+    const videos = attachments.filter(a => getAttachmentCategory(a) === 'video');
+    const traces = attachments.filter(a => getAttachmentCategory(a) === 'trace');
+    const htmls = attachments.filter(a => getAttachmentCategory(a) === 'html');
+    const otherAttachments = attachments.filter(a => getAttachmentCategory(a) === 'other');
     const diffs = groupImageDiffs(screenshots);
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, htmls };
   }, [result]);
@@ -136,7 +147,7 @@ export const TestResultView: React.FC<{
       </div>)}
     </AutoChip>}
 
-    {!!(otherAttachments.size + htmls.length) && <AutoChip header='Attachments'>
+    {!!(otherAttachments.length + htmls.length) && <AutoChip header='Attachments'>
       {[...htmls].map((a, i) => (
         <AttachmentLink key={`html-link-${i}`} attachment={a} openInNewTab />)
       )}
