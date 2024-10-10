@@ -500,7 +500,6 @@ class HtmlBuilder {
       title: step.title,
       category: step.category,
       startTime: step.startTime.toISOString(),
-      params: step.params,
       duration,
       steps: dedupeSteps(step.steps).map(s => this._createTestStep(s)),
       location: this._relativeLocation(step.location),
