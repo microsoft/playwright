@@ -34,10 +34,10 @@ export const TestScreenshotErrorView: React.FC<{
 }> = ({ errorPrefix, diff, errorSuffix }) => {
   const prefixHtml = React.useMemo(() => ansiErrorToHtml(errorPrefix), [errorPrefix]);
   const suffixHtml = React.useMemo(() => ansiErrorToHtml(errorSuffix), [errorSuffix]);
-  return <div className='test-error-message'>
+  return <div data-testid='test-screenshot-error-view' className='test-error-message'>
     <div dangerouslySetInnerHTML={{ __html: prefixHtml || '' }}></div>
     <ImageDiffView key='image-diff' diff={diff} hideDetails={true} ></ImageDiffView>
-    <div dangerouslySetInnerHTML={{ __html: suffixHtml || '' }}></div>
+    <div data-testid='error-suffix' dangerouslySetInnerHTML={{ __html: suffixHtml || '' }}></div>
   </div>;
 };
 

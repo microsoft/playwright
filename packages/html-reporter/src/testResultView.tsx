@@ -107,7 +107,7 @@ export const TestResultView: React.FC<{
     </AutoChip>}
 
     {diffs.map((diff, index) =>
-      <AutoChip key={`diff-${index}`} header={`Image mismatch: ${diff.name}`} targetRef={imageDiffRef}>
+      <AutoChip key={`diff-${index}`} dataTestId='test-results-image-diff' header={`Image mismatch: ${diff.name}`} targetRef={imageDiffRef}>
         <ImageDiffView key='image-diff' diff={diff}></ImageDiffView>
       </AutoChip>
     )}
@@ -160,17 +160,23 @@ function classifyErrors(testErrors: string[], diffs: ImageDiff[]) {
           continue;
         if (!error.includes(diff.actual!.attachment.name))
           continue;
-        const index = error.search(/Expected:|Previous:|Received:/);
+
+        const lines = error.split('\n');
+        const index = lines.findIndex(line => line.match(/Expected:|Previous:|Received:/));
         let errorPrefix;
         if (index !== -1)
-          errorPrefix = error.slice(0, index);
+          errorPrefix = lines.slice(0, index).join('\n');
         else
-          errorPrefix = error.split('\n')[0];
+          errorPrefix = lines[0];
 
-        const callLog = error.indexOf('Call log:');
         let errorSuffix;
-        if (callLog !== -1)
-          errorSuffix = error.slice(callLog);
+        const diffIndex = lines.findIndex(line => line.match(/ +Diff:/));
+        // Skip one empty line after the diff too.
+        if (diffIndex !== -1)
+          errorSuffix = lines.slice(diffIndex + 2).join('\n');
+        else
+          errorSuffix = lines.slice(1).join('\n');
+
         screenshotError = { type: 'screenshot', diff, errorPrefix, errorSuffix };
       }
     }
