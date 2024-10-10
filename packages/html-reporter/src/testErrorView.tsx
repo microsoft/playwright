@@ -24,7 +24,7 @@ export const TestErrorView: React.FC<{
   error: string;
 }> = ({ error }) => {
   const html = React.useMemo(() => ansiErrorToHtml(error), [error]);
-  return <div className='test-error-message' dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
+  return <div className='test-error-view test-error-text' dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
 };
 
 export const TestScreenshotErrorView: React.FC<{
@@ -34,10 +34,10 @@ export const TestScreenshotErrorView: React.FC<{
 }> = ({ errorPrefix, diff, errorSuffix }) => {
   const prefixHtml = React.useMemo(() => ansiErrorToHtml(errorPrefix), [errorPrefix]);
   const suffixHtml = React.useMemo(() => ansiErrorToHtml(errorSuffix), [errorSuffix]);
-  return <div data-testid='test-screenshot-error-view' className='test-error-message'>
-    <div dangerouslySetInnerHTML={{ __html: prefixHtml || '' }}></div>
-    <ImageDiffView key='image-diff' diff={diff} hideDetails={true} ></ImageDiffView>
-    <div data-testid='error-suffix' dangerouslySetInnerHTML={{ __html: suffixHtml || '' }}></div>
+  return <div data-testid='test-screenshot-error-view' className='test-error-view'>
+    <div dangerouslySetInnerHTML={{ __html: prefixHtml || '' }} className='test-error-text' style={{ marginBottom: 20 }}></div>
+    <ImageDiffView key='image-diff' diff={diff} hideDetails={true}></ImageDiffView>
+    <div data-testid='error-suffix' dangerouslySetInnerHTML={{ __html: suffixHtml || '' }} className='test-error-text'></div>
   </div>;
 };
 
