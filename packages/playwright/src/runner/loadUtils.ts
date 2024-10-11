@@ -218,11 +218,12 @@ async function filterTestGroups(config: FullConfigInternal, testGroups: TestGrou
   let filteredTestGroups = testGroups.map(group => ({ tests: group.tests.map(test => test as reporterTypes.TestCase) }));
   const allTests = new Set(filteredTestGroups.flatMap(group => group.tests));
   for (const filter of filters) {
+    const filterThis = { config: config.config };
     if ('filterTestGroups' in filter) {
-      const result = filter.filterTestGroups(filteredTestGroups, config.config);
+      const result = filter.filterTestGroups.call(filterThis, filteredTestGroups);
       filteredTestGroups = result instanceof Promise ? await result : result;
     } else if ('filterTests' in filter) {
-      const result = filter.filterTests(filteredTestGroups.flatMap(group => group.tests), config.config);
+      const result = filter.filterTests.call(filterThis, filteredTestGroups.flatMap(group => group.tests), config.config);
       const filteredTests = result instanceof Promise ? await result : result;
       if (!Array.isArray(filteredTests))
         throw new Error('Invalid filter result: tests should be an array');
@@ -236,7 +237,7 @@ async function filterTestGroups(config: FullConfigInternal, testGroups: TestGrou
       filteredTestGroups = filteredTestGroups.map(group => {
         return {
           tests: group.tests.filter(test => {
-            const result = filter(test);
+            const result = filter.call(filterThis, test);
             if (typeof result !== 'boolean')
               throw new Error('Invalid filter result: filter function should return a boolean');
             return result;

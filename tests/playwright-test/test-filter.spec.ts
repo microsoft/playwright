@@ -138,6 +138,85 @@ test('config.filter async filterTestGroups should work', async ({ runInlineTest 
   ]);
 });
 
+test('config.filter function should have access to config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...testFiles,
+    'playwright.config.ts': `
+      module.exports = {
+        filter(test) {
+          console.log('\\n%% .config.workers: '+this.config.workers);
+          return test.title === 'a2-test2'
+        },
+      };
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  result.outputLines.sort();
+  expect(result.outputLines).toEqual([
+    // filter function is called once per test...
+    '.config.workers: 2',
+    '.config.workers: 2',
+    '.config.workers: 2',
+    '.config.workers: 2',
+    '.config.workers: 2',
+    '.config.workers: 2',
+    'a2-test2',
+  ]);
+});
+
+test('config.filter filterTests should have access to config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...testFiles,
+    'playwright.config.ts': `
+      module.exports = {
+        filter: {
+          filterTests(tests) {
+            console.log('\\n%% .config.workers: '+this.config.workers);
+            return tests.filter((test, index) => index % 2 === 0)
+          },
+        },
+      };
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  result.outputLines.sort();
+  expect(result.outputLines).toEqual([
+    // filterTests is only called once...
+    '.config.workers: 2',
+    'a1-test1',
+    'a2-test1',
+    'a3-test1',
+  ]);
+});
+
+test('config.filter filterTestGroups should have access to config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...testFiles,
+    'playwright.config.ts': `
+      module.exports = {
+        filter: {
+          filterTestGroups(testgroups) {
+            console.log('\\n%% .config.workers: '+this.config.workers);
+            return testgroups.filter((testgroup, index) => index % 2 === 1);
+          },
+        },
+      };
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  result.outputLines.sort(); // Due to parallel execution, the order of output lines is not deterministic.
+  expect(result.outputLines).toEqual([
+    // filterTestGroups is only called once...
+    '.config.workers: 2',
+    'a2-test1',
+    'a2-test2',
+    'a4-test1',
+  ]);
+});
+
 test('config.filter invalid function should throw', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     ...testFiles,
