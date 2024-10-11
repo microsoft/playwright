@@ -196,10 +196,10 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     const allTests = new Set(filteredTestGroups.flatMap(group => group.tests));
     for (const filter of filters) {
       if ('filterTestGroups' in filter) {
-        filteredTestGroups = filter.filterTestGroups(filteredTestGroups);
+        filteredTestGroups = filter.filterTestGroups(filteredTestGroups, config.config);
       } else if ('filterTests' in filter) {
         filteredTestGroups = filteredTestGroups.map(group => {
-          return { tests: filter.filterTests(group.tests) };
+          return { tests: filter.filterTests(group.tests, config.config) };
         });
       } else if (typeof filter === 'function') {
         filteredTestGroups = filteredTestGroups.map(group => {
