@@ -15,6 +15,7 @@
  */
 
 import path from 'path';
+import type { TestFilter } from '../../types/test';
 import type { FullConfig, Reporter, TestError } from '../../types/testReporter';
 import type * as reporterTypes from '../../types/testReporter';
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
@@ -173,34 +174,58 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     }
   }
 
-  // Shard only the top-level projects.
-  if (config.config.shard || config.config.filter) {
+  const filters: TestFilter[] = [];
+
+  if (config.config.filter) {
+    if (Array.isArray(config.config.filter))
+      filters.push(...config.config.filter);
+    else
+      filters.push(config.config.filter);
+  }
+
+  if (config.config.shard)
+    filters.push(createShardFilter(config.config.shard));
+
+  if (filters.length > 0) {
     // Create test groups for top-level projects.
     const testGroups: TestGroup[] = [];
     for (const projectSuite of rootSuite.suites)
       testGroups.push(...createTestGroups(projectSuite, config.config.workers));
 
-    if (config.config.filter) {
-      const filters = Array.isArray(config.config.filter) ? config.config.filter : [config.config.filter];
-
-      const allTests = new Set<reporterTypes.TestCase>(testGroups.flatMap(group => group.tests));
-
-      let filteredTests = [...allTests.values()];
-      for (const filter of filters)
-        filteredTests = filter(filteredTests);
-
-      const filteredTestSet = new Set(filteredTests);
-      for (const group of testGroups)
-        group.tests = group.tests.filter(test => filteredTestSet.has(test));
+    let filteredTestGroups = testGroups.map(group => ({ tests: group.tests.map(test => test as reporterTypes.TestCase) }));
+    const allTests = new Set(filteredTestGroups.flatMap(group => group.tests));
+    for (const filter of filters) {
+      if ('filterTestGroups' in filter) {
+        filteredTestGroups = filter.filterTestGroups(filteredTestGroups);
+      } else if ('filterTests' in filter) {
+        filteredTestGroups = filteredTestGroups.map(group => {
+          return { tests: filter.filterTests(group.tests) };
+        });
+      } else if (typeof filter === 'function') {
+        filteredTestGroups = filteredTestGroups.map(group => {
+          return {
+            tests: group.tests.filter(test => {
+              const result = filter(test);
+              if (typeof result !== 'boolean')
+                throw new Error('Invalid filter result: filter function should return a boolean');
+              return result;
+            })
+          };
+        });
+      }
+      // check if filtered groups are still valid
+      if (!Array.isArray(filteredTestGroups))
+        throw new Error('Invalid filter result: test groups should be an array');
+      for (const group of filteredTestGroups) {
+        if (!Array.isArray(group.tests))
+          throw new Error('Invalid filter result: tests should be an array');
+        for (const test of group.tests) {
+          if (!allTests.has(test))
+            throw new Error('Invalid filter result: test is not in the original list');
+        }
+      }
     }
-
-    // Shard test groups.
-    const testGroupsInThisShard = config.config.shard ? filterForShard(config.config.shard, testGroups) : new Set(testGroups);
-    const testsInThisRun = new Set<TestCase>();
-    for (const group of testGroupsInThisShard) {
-      for (const test of group.tests)
-        testsInThisRun.add(test);
-    }
+    const testsInThisRun = new Set(filteredTestGroups.flatMap(group => group.tests));
 
     // Update project suites, removing empty ones.
     filterTestsRemoveEmptySuites(rootSuite, test => testsInThisRun.has(test));
@@ -220,6 +245,12 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   }
 
   return rootSuite;
+}
+
+function createShardFilter(shard: { total: number, current: number }): TestFilter {
+  return {
+    filterTestGroups: (testGroups: TestGroup[]) => [...filterForShard(shard, testGroups).values()],
+  };
 }
 
 function createProjectSuite(project: FullProjectInternal, fileSuites: Suite[]): Suite {

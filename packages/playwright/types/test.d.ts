@@ -1037,7 +1037,24 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   };
 
   /**
-   * Filter tests by passing a function.
+   * Filter test cases by function. `TestFilter` can either be predicate function or an object with `filterTests` or
+   * `filterTestGroups` methods.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   filter: (test) => test.title === 'some test',
+   *   // or
+   *   filter: { filterTests: (tests) => tests.filter((test, index) => index % 2 === 0) },
+   *   // or
+   *   filter: { filterTestGroups: (testgroups) => testgroups.filter((testgroups, index) => index % 2 === 0) },
+   * });
+   * ```
+   *
    */
   filter?: TestFilter|Array<TestFilter>;
 
@@ -1850,7 +1867,10 @@ export type TestDetails = {
   annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
 }
 
-export type TestFilter = (tests: TestCase[]) => TestCase[];
+type TestFilterFunction = (test: TestCase) => boolean;
+type TestsFilter = { filterTests(tests: TestCase[]): TestCase[] }
+type TestGroupsFilter = { filterTestGroups(testGroups: { tests: TestCase[] }[]): { tests: TestCase[] }[] }
+export type TestFilter = TestFilterFunction | TestsFilter | TestGroupsFilter;
 
 interface SuiteFunction {
   /**

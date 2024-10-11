@@ -77,7 +77,10 @@ export type TestDetails = {
   annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
 }
 
-export type TestFilter = (tests: TestCase[]) => TestCase[];
+type TestFilterFunction = (test: TestCase) => boolean;
+type TestsFilter = { filterTests(tests: TestCase[]): TestCase[] }
+type TestGroupsFilter = { filterTestGroups(testGroups: { tests: TestCase[] }[]): { tests: TestCase[] }[] }
+export type TestFilter = TestFilterFunction | TestsFilter | TestGroupsFilter;
 
 interface SuiteFunction {
   (title: string, callback: () => void): void;

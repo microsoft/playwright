@@ -164,7 +164,21 @@ export default defineConfig({
 * since: v1.49
 - type: ?<[TestFilter]|[Array]<[TestFilter]>>
 
-Filter tests by passing a function.
+Filter test cases by function. `TestFilter` can either be predicate function or an object with `filterTests` or `filterTestGroups` methods.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  filter: (test) => test.title === 'some test',
+  // or
+  filter: { filterTests: (tests) => tests.filter((test, index) => index % 2 === 0) },
+  // or
+  filter: { filterTestGroups: (testgroups) => testgroups.filter((testgroups, index) => index % 2 === 0) },
+});
+```
 
 
 ## property: TestConfig.grep
