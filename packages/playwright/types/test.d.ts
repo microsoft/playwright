@@ -1048,9 +1048,21 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * export default defineConfig({
    *   filter: test => test.title === 'some test',
-   *   // or
+   * });
+   * ```
+   *
+   * Or...
+   *
+   * ```js
+   * export default defineConfig({
    *   filter: { filterTests: tests => tests.filter((test, index) => index % 2 === 0) },
-   *   // or
+   * });
+   * ```
+   *
+   * Or...
+   *
+   * ```js
+   * export default defineConfig({
    *   filter: { filterTestGroups: testgroups => testgroups.filter((testgroups, index) => index % 2 === 0) },
    * });
    * ```
