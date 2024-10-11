@@ -192,40 +192,7 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     for (const projectSuite of rootSuite.suites)
       testGroups.push(...createTestGroups(projectSuite, config.config.workers));
 
-    let filteredTestGroups = testGroups.map(group => ({ tests: group.tests.map(test => test as reporterTypes.TestCase) }));
-    const allTests = new Set(filteredTestGroups.flatMap(group => group.tests));
-    for (const filter of filters) {
-      if ('filterTestGroups' in filter) {
-        filteredTestGroups = filter.filterTestGroups(filteredTestGroups, config.config);
-      } else if ('filterTests' in filter) {
-        filteredTestGroups = filteredTestGroups.map(group => {
-          return { tests: filter.filterTests(group.tests, config.config) };
-        });
-      } else if (typeof filter === 'function') {
-        filteredTestGroups = filteredTestGroups.map(group => {
-          return {
-            tests: group.tests.filter(test => {
-              const result = filter(test);
-              if (typeof result !== 'boolean')
-                throw new Error('Invalid filter result: filter function should return a boolean');
-              return result;
-            })
-          };
-        });
-      }
-      // check if filtered groups are still valid
-      if (!Array.isArray(filteredTestGroups))
-        throw new Error('Invalid filter result: test groups should be an array');
-      for (const group of filteredTestGroups) {
-        if (!Array.isArray(group.tests))
-          throw new Error('Invalid filter result: tests should be an array');
-        for (const test of group.tests) {
-          if (!allTests.has(test))
-            throw new Error('Invalid filter result: test is not in the original list');
-        }
-      }
-    }
-    const testsInThisRun = new Set(filteredTestGroups.flatMap(group => group.tests));
+    const testsInThisRun = await filterTestGroups(config, testGroups, filters);
 
     // Update project suites, removing empty ones.
     filterTestsRemoveEmptySuites(rootSuite, test => testsInThisRun.has(test));
@@ -245,6 +212,51 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   }
 
   return rootSuite;
+}
+
+async function filterTestGroups(config: FullConfigInternal, testGroups: TestGroup[], filters: TestFilter[]): Promise<Set<TestCase>> {
+  let filteredTestGroups = testGroups.map(group => ({ tests: group.tests.map(test => test as reporterTypes.TestCase) }));
+  const allTests = new Set(filteredTestGroups.flatMap(group => group.tests));
+  for (const filter of filters) {
+    if ('filterTestGroups' in filter) {
+      const result = filter.filterTestGroups(filteredTestGroups, config.config);
+      filteredTestGroups = result instanceof Promise ? await result : result;
+    } else if ('filterTests' in filter) {
+      const result = filter.filterTests(filteredTestGroups.flatMap(group => group.tests), config.config);
+      const filteredTests = result instanceof Promise ? await result : result;
+      if (!Array.isArray(filteredTests))
+        throw new Error('Invalid filter result: tests should be an array');
+      const filteredTestsSet = new Set(filteredTests);
+      filteredTestGroups = filteredTestGroups.map(group => {
+        return {
+          tests: group.tests.filter(test => filteredTestsSet.has(test))
+        };
+      });
+    } else if (typeof filter === 'function') {
+      filteredTestGroups = filteredTestGroups.map(group => {
+        return {
+          tests: group.tests.filter(test => {
+            const result = filter(test);
+            if (typeof result !== 'boolean')
+              throw new Error('Invalid filter result: filter function should return a boolean');
+            return result;
+          })
+        };
+      });
+    }
+    // check if filtered groups are still valid
+    if (!Array.isArray(filteredTestGroups))
+      throw new Error('Invalid filter result: test groups should be an array');
+    for (const group of filteredTestGroups) {
+      if (!Array.isArray(group.tests))
+        throw new Error('Invalid filter result: tests should be an array');
+      for (const test of group.tests) {
+        if (!allTests.has(test))
+          throw new Error('Invalid filter result: test is not in the original list');
+      }
+    }
+  }
+  return new Set(filteredTestGroups.flatMap(group => group.tests).map(test => test as TestCase));
 }
 
 function createShardFilter(shard: { total: number, current: number }): TestFilter {

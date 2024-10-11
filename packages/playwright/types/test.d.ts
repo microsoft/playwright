@@ -1886,8 +1886,8 @@ export type TestDetails = {
 }
 
 type TestFilterFunction = (test: TestCase) => boolean;
-type TestsFilter = { filterTests(tests: TestCase[], config: FullConfig): TestCase[] };
-type TestGroupsFilter = { filterTestGroups(testGroups: { tests: TestCase[] }[], config: FullConfig): { tests: TestCase[] }[] }
+type TestsFilter = { filterTests(tests: TestCase[], config: FullConfig): Promise<TestCase[]> | TestCase[] };
+type TestGroupsFilter = { filterTestGroups(testGroups: { tests: TestCase[] }[], config: FullConfig): Promise<{ tests: TestCase[] }[]> | { tests: TestCase[] }[] };
 export type TestFilter = TestFilterFunction | TestsFilter | TestGroupsFilter;
 
 interface SuiteFunction {

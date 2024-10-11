@@ -16,29 +16,47 @@
 
 import { test, expect } from './playwright-test-fixtures';
 
+const testFiles = {
+  'a1.test.ts': `
+    import { test, expect } from '@playwright/test';
+    test('a1-test1', async () => { console.log('\\n%% a1-test1'); });
+    test('a1-test2', async () => { console.log('\\n%% a1-test2'); });
+  `,
+  'a2.test.ts': `
+    import { test, expect } from '@playwright/test';
+    test('a2-test1', async () => { console.log('\\n%% a2-test1'); });
+    test('a2-test2', async () => { console.log('\\n%% a2-test2'); });
+  `,
+  'a3.test.ts': `
+    import { test, expect } from '@playwright/test';
+    test('a3-test1', async () => { console.log('\\n%% a3-test1'); });
+  `,
+  'a4.test.ts': `
+    import { test, expect } from '@playwright/test';
+    test('a4-test1', async () => { console.log('\\n%% a4-test1'); });
+  `,
+};
+
 test('config.filter function should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    ...testFiles,
     'playwright.config.ts': `
       module.exports = {
-        filter: (test) => test.title === 'test1',
+        filter: (test) => test.title === 'a2-test2',
       };
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('test1', async () => { console.log('\\n%% test1'); });
-      test('test2', async () => { console.log('\\n%% test2'); });
     `,
   }, { workers: 2 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   result.outputLines.sort();
   expect(result.outputLines).toEqual([
-    'test1',
+    'a2-test2',
   ]);
 });
 
 test('config.filter filterTests should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    ...testFiles,
     'playwright.config.ts': `
       module.exports = {
         filter: {
@@ -46,72 +64,87 @@ test('config.filter filterTests should work', async ({ runInlineTest }) => {
         },
       };
     `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('test1', async () => { console.log('\\n%% test1'); });
-      test('test2', async () => { console.log('\\n%% test2'); });
-      test('test3', async () => { console.log('\\n%% test3'); });
-      test('test4', async () => { console.log('\\n%% test4'); });
-    `,
   }, { workers: 2 });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(2);
+  expect(result.passed).toBe(3);
   result.outputLines.sort();
   expect(result.outputLines).toEqual([
-    'test1',
-    'test3',
+    'a1-test1',
+    'a2-test1',
+    'a3-test1',
   ]);
 });
 
 test('config.filter filterTestGroups should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    ...testFiles,
     'playwright.config.ts': `
       module.exports = {
         filter: {
-          filterTestGroups: (testgroups) => testgroups.filter((testgroup, index) => index % 2 === 0),
+          filterTestGroups: (testgroups) => testgroups.filter((testgroup, index) => index % 2 === 1),
         },
       };
-    `,
-    'a1.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('a1-test1', async () => { console.log('\\n%% a1-test1'); });
-      test('a1-test2', async () => { console.log('\\n%% a1-test2'); });
-    `,
-    'a2.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('a2-test1', async () => { console.log('\\n%% a2-test1'); });
-      test('a2-test2', async () => { console.log('\\n%% a2-test2'); });
-    `,
-    'a3.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('a3-test1', async () => { console.log('\\n%% a3-test1'); });
-    `,
-    'a4.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('a4-test1', async () => { console.log('\\n%% a4-test1'); });
     `,
   }, { workers: 2 });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(3);
   result.outputLines.sort(); // Due to parallel execution, the order of output lines is not deterministic.
   expect(result.outputLines).toEqual([
+    'a2-test1',
+    'a2-test2',
+    'a4-test1',
+  ]);
+});
+
+test('config.filter async filterTests should work', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...testFiles,
+    'playwright.config.ts': `
+      module.exports = {
+        filter: {
+          filterTests: (tests) => Promise.resolve(tests.filter((test, index) => index % 2 === 0)),
+        },
+      };
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  result.outputLines.sort();
+  expect(result.outputLines).toEqual([
     'a1-test1',
-    'a1-test2',
+    'a2-test1',
     'a3-test1',
+  ]);
+});
+
+test('config.filter async filterTestGroups should work', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    ...testFiles,
+    'playwright.config.ts': `
+      module.exports = {
+        filter: {
+          filterTestGroups: (testgroups) => Promise.resolve(testgroups.filter((testgroup, index) => index % 2 === 1)),
+        },
+      };
+    `,
+  }, { workers: 2 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  result.outputLines.sort(); // Due to parallel execution, the order of output lines is not deterministic.
+  expect(result.outputLines).toEqual([
+    'a2-test1',
+    'a2-test2',
+    'a4-test1',
   ]);
 });
 
 test('config.filter invalid function should throw', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    ...testFiles,
     'playwright.config.ts': `
       module.exports = {
         filter: (test) => undefined,
       };
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('test1', async () => { console.log('\\n%% test1'); });
-      test('test2', async () => { console.log('\\n%% test2'); });
     `,
   }, { workers: 2 });
   expect(result.exitCode).toBe(1);
@@ -120,19 +153,13 @@ test('config.filter invalid function should throw', async ({ runInlineTest }) =>
 
 test('config.filter invalid filterTests should throw', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    ...testFiles,
     'playwright.config.ts': `
       module.exports = {
         filter: {
           filterTests: (tests) => undefined,
         },
       };
-    `,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('test1', async () => { console.log('\\n%% test1'); });
-      test('test2', async () => { console.log('\\n%% test2'); });
-      test('test3', async () => { console.log('\\n%% test3'); });
-      test('test4', async () => { console.log('\\n%% test4'); });
     `,
   }, { workers: 2 });
   expect(result.exitCode).toBe(1);
@@ -141,30 +168,13 @@ test('config.filter invalid filterTests should throw', async ({ runInlineTest })
 
 test('config.filter invalid filterTestGroups should throw', async ({ runInlineTest }) => {
   const result = await runInlineTest({
+    ...testFiles,
     'playwright.config.ts': `
       module.exports = {
         filter: {
           filterTestGroups: (testgroups) => undefined,
         },
       };
-    `,
-    'a1.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('a1-test1', async () => { console.log('\\n%% a1-test1'); });
-      test('a1-test2', async () => { console.log('\\n%% a1-test2'); });
-    `,
-    'a2.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('a2-test1', async () => { console.log('\\n%% a2-test1'); });
-      test('a2-test2', async () => { console.log('\\n%% a2-test2'); });
-    `,
-    'a3.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('a3-test1', async () => { console.log('\\n%% a3-test1'); });
-    `,
-    'a4.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('a4-test1', async () => { console.log('\\n%% a4-test1'); });
     `,
   }, { workers: 2 });
   expect(result.exitCode).toBe(1);
