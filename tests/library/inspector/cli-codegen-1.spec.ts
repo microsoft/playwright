@@ -15,7 +15,7 @@
  */
 
 import { test, expect } from './inspectorTest';
-import type { ConsoleMessage, Locator } from 'playwright';
+import type { ConsoleMessage } from 'playwright';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
@@ -682,28 +682,6 @@ await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
     expect(message.text()).toBe('2');
   });
 
-  const clickMultipleSelectOption = async (locator: Locator, withCtrlOrMeta = false) => {
-    const page = locator.page();
-
-    // Webkit can't click multiple select options
-    // https://github.com/microsoft/playwright/issues/32126
-    if (page.context().browser().browserType().name() === 'webkit') {
-      const elem = await locator.elementHandle();
-      const rect = await elem!.evaluate(e => {
-        return e.getBoundingClientRect()!;
-      });
-      if (withCtrlOrMeta)
-        await page.keyboard.down('ControlOrMeta');
-
-      await page.mouse.click(rect.x + rect.width / 2, rect.y + rect.height / 2);
-      if (withCtrlOrMeta)
-        await page.keyboard.up('ControlOrMeta');
-
-    } else {
-      await locator.click({ modifiers: withCtrlOrMeta ? ['ControlOrMeta'] : [] });
-    }
-  };
-
   test('should select with multiple attribute', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
@@ -711,12 +689,13 @@ await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
 
     const locator = await recorder.hoverOverElement('select');
     expect(locator).toBe(`locator('#age')`);
-    await clickMultipleSelectOption(page.getByRole('option', { name: '1' }));
+    await page.locator('select').focus();
+    await page.selectOption('select', ['1']);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error' && msg.text().includes('2')),
       recorder.waitForOutput('JavaScript', 'selectOption(['),
-      clickMultipleSelectOption(page.getByRole('option', { name: '2' }), true)
+      page.selectOption('select', ['1', '2']),
     ]);
 
     expect(sources.get('JavaScript')!.text).toContain(`
@@ -743,12 +722,13 @@ await page.Locator("#age").SelectOptionAsync(new[] { "1", "2" });`);
     await recorder.setContentAndWait(`<select id="age" multiple onchange="console.log('[' + [...age.selectedOptions].map(x => x.value).join(',') + ']')"><option value="1">1</option><option value="2">2</option></select>`);
     const locator = await recorder.hoverOverElement('select');
     expect(locator).toBe(`locator('#age')`);
-    await clickMultipleSelectOption(page.getByRole('option', { name: '1' }));
+    await page.locator('select').focus();
+    await page.selectOption('select', ['1']);
 
     const [message, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error' && msg.text() === '[]'),
       recorder.waitForOutput('JavaScript', 'selectOption(['),
-      clickMultipleSelectOption(page.getByRole('option', { name: '1' }), true)
+      page.selectOption('select', []),
     ]);
 
     expect(sources.get('JavaScript')!.text).toContain(`
