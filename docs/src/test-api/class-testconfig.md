@@ -188,7 +188,7 @@ Or...
 export default defineConfig({
   filter: {
     filterTestGroups: testgroups => {
-      return testgroups.filter((testgroups, index) => index % 2 === 0)
+      return testgroups.filter((testgroups, index) => index % 2 === 0);
     },
   },
 });
