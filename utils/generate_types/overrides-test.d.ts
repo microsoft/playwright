@@ -77,10 +77,24 @@ export type TestDetails = {
   annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
 }
 
-type TestFilterThis = { config: FullConfig };
-type TestFilterFunction = (this: TestFilterThis, test: TestCase) => boolean;
-type TestsFilter = { filterTests(this: TestFilterThis, tests: TestCase[]): Promise<TestCase[]> | TestCase[] };
-type TestGroupsFilter = { filterTestGroups(this: TestFilterThis, testGroups: { tests: TestCase[] }[]): Promise<{ tests: TestCase[] }[]> | { tests: TestCase[] }[] };
+type TestFilterThis = {
+  config: FullConfig
+}
+
+export type TestFilterFunction = (this: TestFilterThis, test: TestCase) => boolean;
+
+export type TestsFilter = {
+  filterTests(this: TestFilterThis, tests: TestCase[]): Promise<TestCase[]> | TestCase[]
+}
+
+export type TestGroup = {
+  tests: TestCase[]
+};
+
+export type TestGroupsFilter = {
+  filterTestGroups(this: TestFilterThis, testGroups: TestGroup[]): Promise<TestGroup[]> | TestGroup[]
+}
+
 export type TestFilter = TestFilterFunction | TestsFilter | TestGroupsFilter;
 
 interface SuiteFunction {

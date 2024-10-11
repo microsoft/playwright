@@ -223,7 +223,7 @@ async function filterTestGroups(config: FullConfigInternal, testGroups: TestGrou
       const result = filter.filterTestGroups.call(filterThis, filteredTestGroups);
       filteredTestGroups = result instanceof Promise ? await result : result;
     } else if ('filterTests' in filter) {
-      const result = filter.filterTests.call(filterThis, filteredTestGroups.flatMap(group => group.tests), config.config);
+      const result = filter.filterTests.call(filterThis, filteredTestGroups.flatMap(group => group.tests));
       const filteredTests = result instanceof Promise ? await result : result;
       if (!Array.isArray(filteredTests))
         throw new Error('Invalid filter result: tests should be an array');
