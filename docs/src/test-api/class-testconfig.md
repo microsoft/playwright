@@ -172,11 +172,11 @@ Filter test cases by function. `TestFilter` can either be predicate function or 
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  filter: (test) => test.title === 'some test',
+  filter: test => test.title === 'some test',
   // or
-  filter: { filterTests: (tests) => tests.filter((test, index) => index % 2 === 0) },
+  filter: { filterTests: tests => tests.filter((test, index) => index % 2 === 0) },
   // or
-  filter: { filterTestGroups: (testgroups) => testgroups.filter((testgroups, index) => index % 2 === 0) },
+  filter: { filterTestGroups: testgroups => testgroups.filter((testgroups, index) => index % 2 === 0) },
 });
 ```
 
