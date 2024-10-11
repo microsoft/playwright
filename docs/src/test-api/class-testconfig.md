@@ -178,13 +178,19 @@ export default defineConfig({
 Or...
 ```js
 export default defineConfig({
-  filter: { filterTests: tests => tests.filter((test, index) => index % 2 === 0) },
+  filter: {
+    filterTests: tests => tests.filter((test, index) => index % 2 === 0)
+  },
 });
 ```
 Or...
 ```js
 export default defineConfig({
-  filter: { filterTestGroups: testgroups => testgroups.filter((testgroups, index) => index % 2 === 0) },
+  filter: {
+    filterTestGroups: testgroups => {
+      return testgroups.filter((testgroups, index) => index % 2 === 0)
+    },
+  },
 });
 ```
 
