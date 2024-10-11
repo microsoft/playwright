@@ -35,3 +35,4 @@ test-results
 .cache/
 .eslintcache
 playwright.env
+firefox

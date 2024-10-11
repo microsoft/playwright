@@ -423,7 +423,7 @@ export async function toHaveScreenshot(
   // - regular matcher (i.e. not a `.not`)
   // - perhaps an 'all' flag to update non-matching screenshots
   expectScreenshotOptions.expected = await fs.promises.readFile(helper.expectedPath);
-  const { actual, diff, errorMessage, log } = await page._expectScreenshot(expectScreenshotOptions);
+  const { actual, previous, diff, errorMessage, log } = await page._expectScreenshot(expectScreenshotOptions);
 
   if (!errorMessage)
     return helper.handleMatching();
@@ -436,7 +436,7 @@ export async function toHaveScreenshot(
     return helper.createMatcherResult(helper.expectedPath + ' running with --update-snapshots, writing actual.', true);
   }
 
-  return helper.handleDifferent(actual, expectScreenshotOptions.expected, undefined, diff, errorMessage, log);
+  return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, errorMessage, log);
 }
 
 function writeFileSync(aPath: string, content: Buffer | string) {

@@ -118,6 +118,8 @@ export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLI
   const babelPlugins = (userConfig as any)['@playwright/test']?.babelPlugins || [];
   const external = userConfig.build?.external || [];
   setTransformConfig({ babelPlugins, external });
+  if (!overrides?.tsconfig)
+    setSingleTSConfig(fullConfig?.singleTSConfigPath);
 
   // 4. Send transform options to ESM loader.
   await configureESMLoaderTransformConfig();
