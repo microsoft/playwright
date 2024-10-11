@@ -689,7 +689,7 @@ await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
 
     const locator = await recorder.hoverOverElement('select');
     expect(locator).toBe(`locator('#age')`);
-    await page.locator('select').focus();
+    await page.locator('select').click();
     await page.selectOption('select', ['1']);
 
     const [message, sources] = await Promise.all([
@@ -722,7 +722,7 @@ await page.Locator("#age").SelectOptionAsync(new[] { "1", "2" });`);
     await recorder.setContentAndWait(`<select id="age" multiple onchange="console.log('[' + [...age.selectedOptions].map(x => x.value).join(',') + ']')"><option value="1">1</option><option value="2">2</option></select>`);
     const locator = await recorder.hoverOverElement('select');
     expect(locator).toBe(`locator('#age')`);
-    await page.locator('select').focus();
+    await page.locator('select').click();
     await page.selectOption('select', ['1']);
 
     const [message, sources] = await Promise.all([
