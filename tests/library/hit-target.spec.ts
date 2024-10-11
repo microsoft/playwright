@@ -15,7 +15,7 @@
  */
 
 import { contextTest as it, expect } from '../config/browserTest';
-import type { ElementHandle } from 'playwright-core';
+import type { ElementHandle, Page } from 'playwright-core';
 
 declare const renderComponent;
 declare const e;
@@ -464,3 +464,41 @@ it('should click in custom element', async ({ page }) => {
   await page.locator('input').click();
   expect(await page.evaluate('window.__clicked')).toBe(true);
 });
+
+for (const mode of ['same-context', 'different-context'] as const) {
+  it(`concurrent selectOption in ${mode} should work`, async ({ browser, browserName, isLinux }) => {
+    it.fixme(browserName === 'webkit' && isLinux, 'https://github.com/microsoft/playwright/issues/33064');
+
+    const concurrentSelectOption = async (page: Page) => {
+      const result = [];
+      await page.exposeFunction('log', (value: string) => result.push(value));
+      await page.setContent(`
+        <select id="age" multiple onchange="window.log([...age.selectedOptions].map(x => x.value))">
+          <option value="1">1</option>
+          <option value="2">2</option>
+        </select>
+      `);
+      await page.locator('select').click();
+      await page.selectOption('select', ['1']);
+      await page.selectOption('select', ['2']);
+      await page.selectOption('select', []);
+      await page.selectOption('select', ['1', '2']);
+      return result;
+    };
+    const context = mode === 'same-context' ? await browser.newContext() : null;
+    const getPage = () => {
+      if (mode === 'different-context')
+        return browser.newPage();
+      return context.newPage();
+    };
+    const [result1, result2] = await Promise.all([concurrentSelectOption(await getPage()), concurrentSelectOption(await getPage())]);
+    const expected = [
+      ['1'],
+      ['2'],
+      [],
+      ['1', '2'],
+    ];
+    expect(result1).toEqual(expected);
+    expect(result2).toEqual(expected);
+  });
+}

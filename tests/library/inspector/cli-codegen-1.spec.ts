@@ -682,7 +682,9 @@ await page.Locator(\"#age\").SelectOptionAsync(new[] { \"2\" });`);
     expect(message.text()).toBe('2');
   });
 
-  test('should select with multiple attribute', async ({ openRecorder }) => {
+  test('should select with multiple attribute', async ({ openRecorder, browserName, isLinux }) => {
+    test.fixme(browserName === 'webkit' && isLinux, 'https://github.com/microsoft/playwright/issues/33064');
+
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<select id="age" multiple onchange="console.log('[' + [...age.selectedOptions].map(x => x.value).join(',') + ']')"><option value="1">1</option><option value="2">2</option></select>`);
@@ -716,7 +718,9 @@ await page.Locator("#age").SelectOptionAsync(new[] { "1", "2" });`);
     expect(message.text()).toBe('[1,2]');
   });
 
-  test('should unselect with multiple attribute', async ({ openRecorder }) => {
+  test('should unselect with multiple attribute', async ({ openRecorder, browserName, isLinux }) => {
+    test.fixme(browserName === 'webkit' && isLinux, 'https://github.com/microsoft/playwright/issues/33064');
+
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<select id="age" multiple onchange="console.log('[' + [...age.selectedOptions].map(x => x.value).join(',') + ']')"><option value="1">1</option><option value="2">2</option></select>`);
