@@ -122,7 +122,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       case 'navigate':
         return `${subject}.navigate(${quote(action.url)});`;
       case 'select':
-        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.selectOption(${formatSelectOption(action.options.length === 1 ? action.options[0] : action.options)});`;
+        return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.selectOption(${formatSelectOption(action.options.length > 1 ? action.options : action.options[0])});`;
       case 'assertText':
         return `assertThat(${subject}.${this._asLocator(action.selector, inFrameLocator)}).${action.substring ? 'containsText' : 'hasText'}(${quote(action.text)});`;
       case 'assertChecked':
