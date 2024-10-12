@@ -4022,7 +4022,6 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * To conditionally focus a "failing" test:
    * - `test.fail.only(condition, description)`
    * - `test.fail.only(callback, description)`
-   * - `test.fail.only()`
    *
    * **Usage**
    *
@@ -4033,22 +4032,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * test.fail.only('focused failing test', async ({ page }) => {
    *   // This test is expected to fail
-   *   expect(1).toBe(2);
    * });
    * test('not in the focused group', async ({ page }) => {
    *   // This test will not run
-   * });
-   * ```
-   *
-   * If your focused failing test fails in some configurations, but not all, you can mark it as failing based on some
-   * condition. We recommend passing a `description` argument in this case.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('fail in WebKit with focus', async ({ page, browserName }) => {
-   *   test.fail.only(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
    * });
    * ```
    *
@@ -4062,23 +4048,10 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * test.fail.only(({ browserName }) => browserName === 'webkit', 'not implemented yet');
    *
    * test('fail in WebKit 1', async ({ page }) => {
-   *   // ...
+   *   // This test will not run
    * });
    * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * You can also call `test.fail.only()` without arguments inside the test body to always mark the test as failed and
-   * focused. We recommend declaring a focused failing test with `test.fail.only(title, body)` instead.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('focused and always failing test', async ({ page }) => {
-   *   test.fail.only();
-   *   // This test is expected to fail
-   *   expect(1).toBe(2);
+   *   // This test will not run
    * });
    * ```
    *
@@ -4104,7 +4077,6 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * To conditionally focus a "failing" test:
    * - `test.fail.only(condition, description)`
    * - `test.fail.only(callback, description)`
-   * - `test.fail.only()`
    *
    * **Usage**
    *
@@ -4115,22 +4087,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * test.fail.only('focused failing test', async ({ page }) => {
    *   // This test is expected to fail
-   *   expect(1).toBe(2);
    * });
    * test('not in the focused group', async ({ page }) => {
    *   // This test will not run
-   * });
-   * ```
-   *
-   * If your focused failing test fails in some configurations, but not all, you can mark it as failing based on some
-   * condition. We recommend passing a `description` argument in this case.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('fail in WebKit with focus', async ({ page, browserName }) => {
-   *   test.fail.only(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
    * });
    * ```
    *
@@ -4144,23 +4103,10 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * test.fail.only(({ browserName }) => browserName === 'webkit', 'not implemented yet');
    *
    * test('fail in WebKit 1', async ({ page }) => {
-   *   // ...
+   *   // This test will not run
    * });
    * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * You can also call `test.fail.only()` without arguments inside the test body to always mark the test as failed and
-   * focused. We recommend declaring a focused failing test with `test.fail.only(title, body)` instead.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('focused and always failing test', async ({ page }) => {
-   *   test.fail.only();
-   *   // This test is expected to fail
-   *   expect(1).toBe(2);
+   *   // This test will not run
    * });
    * ```
    *
@@ -4186,7 +4132,6 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * To conditionally focus a "failing" test:
    * - `test.fail.only(condition, description)`
    * - `test.fail.only(callback, description)`
-   * - `test.fail.only()`
    *
    * **Usage**
    *
@@ -4197,22 +4142,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * test.fail.only('focused failing test', async ({ page }) => {
    *   // This test is expected to fail
-   *   expect(1).toBe(2);
    * });
    * test('not in the focused group', async ({ page }) => {
    *   // This test will not run
-   * });
-   * ```
-   *
-   * If your focused failing test fails in some configurations, but not all, you can mark it as failing based on some
-   * condition. We recommend passing a `description` argument in this case.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('fail in WebKit with focus', async ({ page, browserName }) => {
-   *   test.fail.only(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
    * });
    * ```
    *
@@ -4226,23 +4158,10 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * test.fail.only(({ browserName }) => browserName === 'webkit', 'not implemented yet');
    *
    * test('fail in WebKit 1', async ({ page }) => {
-   *   // ...
+   *   // This test will not run
    * });
    * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * You can also call `test.fail.only()` without arguments inside the test body to always mark the test as failed and
-   * focused. We recommend declaring a focused failing test with `test.fail.only(title, body)` instead.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('focused and always failing test', async ({ page }) => {
-   *   test.fail.only();
-   *   // This test is expected to fail
-   *   expect(1).toBe(2);
+   *   // This test will not run
    * });
    * ```
    *
@@ -4268,7 +4187,6 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * To conditionally focus a "failing" test:
    * - `test.fail.only(condition, description)`
    * - `test.fail.only(callback, description)`
-   * - `test.fail.only()`
    *
    * **Usage**
    *
@@ -4279,22 +4197,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * test.fail.only('focused failing test', async ({ page }) => {
    *   // This test is expected to fail
-   *   expect(1).toBe(2);
    * });
    * test('not in the focused group', async ({ page }) => {
    *   // This test will not run
-   * });
-   * ```
-   *
-   * If your focused failing test fails in some configurations, but not all, you can mark it as failing based on some
-   * condition. We recommend passing a `description` argument in this case.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('fail in WebKit with focus', async ({ page, browserName }) => {
-   *   test.fail.only(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
    * });
    * ```
    *
@@ -4308,23 +4213,10 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * test.fail.only(({ browserName }) => browserName === 'webkit', 'not implemented yet');
    *
    * test('fail in WebKit 1', async ({ page }) => {
-   *   // ...
+   *   // This test will not run
    * });
    * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * You can also call `test.fail.only()` without arguments inside the test body to always mark the test as failed and
-   * focused. We recommend declaring a focused failing test with `test.fail.only(title, body)` instead.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('focused and always failing test', async ({ page }) => {
-   *   test.fail.only();
-   *   // This test is expected to fail
-   *   expect(1).toBe(2);
+   *   // This test will not run
    * });
    * ```
    *
@@ -4350,7 +4242,6 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * To conditionally focus a "failing" test:
    * - `test.fail.only(condition, description)`
    * - `test.fail.only(callback, description)`
-   * - `test.fail.only()`
    *
    * **Usage**
    *
@@ -4361,22 +4252,9 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    *
    * test.fail.only('focused failing test', async ({ page }) => {
    *   // This test is expected to fail
-   *   expect(1).toBe(2);
    * });
    * test('not in the focused group', async ({ page }) => {
    *   // This test will not run
-   * });
-   * ```
-   *
-   * If your focused failing test fails in some configurations, but not all, you can mark it as failing based on some
-   * condition. We recommend passing a `description` argument in this case.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('fail in WebKit with focus', async ({ page, browserName }) => {
-   *   test.fail.only(browserName === 'webkit', 'This feature is not implemented for Mac yet');
-   *   // ...
    * });
    * ```
    *
@@ -4390,23 +4268,10 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * test.fail.only(({ browserName }) => browserName === 'webkit', 'not implemented yet');
    *
    * test('fail in WebKit 1', async ({ page }) => {
-   *   // ...
+   *   // This test will not run
    * });
    * test('fail in WebKit 2', async ({ page }) => {
-   *   // ...
-   * });
-   * ```
-   *
-   * You can also call `test.fail.only()` without arguments inside the test body to always mark the test as failed and
-   * focused. We recommend declaring a focused failing test with `test.fail.only(title, body)` instead.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('focused and always failing test', async ({ page }) => {
-   *   test.fail.only();
-   *   // This test is expected to fail
-   *   expect(1).toBe(2);
+   *   // This test will not run
    * });
    * ```
    *
