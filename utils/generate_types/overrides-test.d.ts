@@ -110,11 +110,20 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   fixme(): void;
   fixme(condition: boolean, description?: string): void;
   fixme(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
-  fail(title: string, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
-  fail(title: string, details: TestDetails, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
-  fail(condition: boolean, description?: string): void;
-  fail(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
-  fail(): void;
+  fail: {
+    (title: string, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+    (title: string, details: TestDetails, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+    (condition: boolean, description?: string): void;
+    (callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
+    (): void;
+    only: {
+      (title: string, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+      (title: string, details: TestDetails, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+      (condition: boolean, description?: string): void;
+      (callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
+      (): void;
+    }
+  }
   slow(): void;
   slow(condition: boolean, description?: string): void;
   slow(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
