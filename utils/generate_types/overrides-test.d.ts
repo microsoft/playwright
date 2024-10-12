@@ -121,7 +121,6 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
       (title: string, details: TestDetails, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
       (condition: boolean, description?: string): void;
       (callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
-      (): void;
     }
   }
   slow(): void;
