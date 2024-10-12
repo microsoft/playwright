@@ -68,8 +68,6 @@ test('basics should work', async ({ runTSC }) => {
       test.describe.skip('title', { tag: '@foo' }, () => {});
       test.describe.fixme('title', { tag: '@foo' }, () => {});
       test.describe.only('title', { tag: '@foo' }, () => {});
-      // @ts-expect-error
-      test.only.fail('my test', async () => {});
     `
   });
   expect(result.exitCode).toBe(0);
