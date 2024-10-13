@@ -18,7 +18,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import type { NameValue } from '../../../common/types';
-import type { TracingTracingStopChunkParams } from '@protocol/channels';
+import type { TracingTracingStopChunkParams, StackFrame } from '@protocol/channels';
 import { commandsWithTracingSnapshots } from '../../../protocol/debug';
 import { assert, createGuid, monotonicTime, SerializedFS, removeFolders, eventsHelper, type RegisteredListener } from '../../../utils';
 import { Artifact } from '../../artifact';
@@ -196,9 +196,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return { traceName: this._state.traceName };
   }
 
-  async group(name: string, options: { location?: string } = {}): Promise<void> {
-    const location = options.location?.split(':', 2);
-    const file = location?.[0], line = location?.[1];
+  async group(name: string, options: { location?: { file: string, line?: number, column?: number } } = {}): Promise<void> {
+    const stackFrame: StackFrame = {
+      file: options.location?.file || '',
+      line: options.location?.line || 0,
+      column: options.location?.column || 0,
+    };
     const event: trace.BeforeActionTraceEvent = {
       type: 'before',
       callId: `group-${this._groupId++}`,
@@ -207,7 +210,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       class: 'Tracing',
       method: 'group',
       params: { },
-      stack: [{ file: file || '', line: line ? parseInt(line, 10) : 0, column: 0 }],
+      stack: [stackFrame],
     };
     this._groupStack.push(event.callId);
     this._appendTraceEvent(event);

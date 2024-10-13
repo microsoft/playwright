@@ -26,12 +26,13 @@ scheme.StackFrame = tObject({
   column: tNumber,
   function: tOptional(tString),
 });
+scheme.Location = tObject({
+  file: tString,
+  line: tOptional(tNumber),
+  column: tOptional(tNumber),
+});
 scheme.Metadata = tObject({
-  location: tOptional(tObject({
-    file: tString,
-    line: tOptional(tNumber),
-    column: tOptional(tNumber),
-  })),
+  location: tOptional(tType('Location')),
   apiName: tOptional(tString),
   internal: tOptional(tBoolean),
   stepId: tOptional(tString),
@@ -2281,7 +2282,7 @@ scheme.DialogAcceptResult = tOptional(tObject({}));
 scheme.DialogDismissParams = tOptional(tObject({}));
 scheme.DialogDismissResult = tOptional(tObject({}));
 scheme.TracingGroupOptions = tObject({
-  location: tString,
+  location: tOptional(tType('Location')),
 });
 scheme.TracingInitializer = tOptional(tObject({}));
 scheme.TracingTracingStartParams = tObject({

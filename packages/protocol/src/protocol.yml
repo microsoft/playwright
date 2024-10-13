@@ -20,17 +20,19 @@ StackFrame:
     column: number
     function: string?
 
+Location:
+  type: object
+  properties:
+    file: string
+    line: number?
+    column: number?
+
 # This object can be send with any rpc call in the "metadata" field.
 
 Metadata:
   type: object
   properties:
-    location:
-      type: object?
-      properties:
-        file: string
-        line: number?
-        column: number?
+    location: Location?
     apiName: string?
     internal: boolean?
     # Test runner step id.
@@ -3180,7 +3182,7 @@ Dialog:
 TracingGroupOptions:
   type: object
   properties:
-    location: string
+    location: Location?
 
 Tracing:
   type: interface
