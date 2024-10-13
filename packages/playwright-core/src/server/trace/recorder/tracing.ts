@@ -80,6 +80,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _allResources = new Set<string>();
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
   private _pendingHarEntries = new Set<har.Entry>();
+  private _groupStack: string[] = [];
+  private _groupId = 0;
 
   constructor(context: BrowserContext | APIRequestContext, tracesDir: string | undefined) {
     super(context, 'tracing');
@@ -192,6 +194,34 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (this._state.options.snapshots)
       await this._snapshotter?.start();
     return { traceName: this._state.traceName };
+  }
+
+  async group(name: string, options: { location?: string } = {}): Promise<void> {
+    const location = options.location?.split(':', 2);
+    const file = location?.[0], line = location?.[1];
+    const event: trace.BeforeActionTraceEvent = {
+      type: 'before',
+      callId: `group-${this._groupId++}`,
+      startTime: monotonicTime(),
+      apiName: name,
+      class: 'Tracing',
+      method: 'group',
+      params: { },
+      stack: [{ file: file || '', line: line ? parseInt(line, 10) : 0, column: 0 }],
+    };
+    this._groupStack.push(event.callId);
+    this._appendTraceEvent(event);
+  }
+
+  async groupEnd(): Promise<void> {
+    const callId = this._groupStack.pop();
+    assert(callId, 'Cannot end group that has not started');
+    const event: trace.AfterActionTraceEvent = {
+      type: 'after',
+      callId,
+      endTime: monotonicTime(),
+    };
+    this._appendTraceEvent(event);
   }
 
   private _startScreencast() {
@@ -357,6 +387,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const event = createBeforeActionTraceEvent(metadata);
     if (!event)
       return Promise.resolve();
+    if (event.parentId === undefined && this._groupStack.length)
+      event.parentId = this._groupStack[this._groupStack.length - 1];
     sdkObject.attribution.page?.temporarilyDisableTracingScreencastThrottling();
     event.beforeSnapshot = `before@${metadata.id}`;
     this._state?.callIds.add(metadata.id);

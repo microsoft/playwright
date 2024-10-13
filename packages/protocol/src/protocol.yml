@@ -3177,6 +3177,11 @@ Dialog:
     dismiss:
 
 
+TracingGroupOptions:
+  type: object
+  properties:
+    location: string
+
 Tracing:
   type: interface
 
@@ -3195,6 +3200,13 @@ Tracing:
         title: string?
       returns:
         traceName: string
+
+    tracingGroup:
+      parameters:
+        name: string
+        options: TracingGroupOptions
+
+    tracingGroupEnd:
 
     tracingStopChunk:
       parameters:
