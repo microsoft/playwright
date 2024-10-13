@@ -144,12 +144,14 @@ export type StackFrame = {
   function?: string,
 };
 
+export type Location = {
+  file: string,
+  line?: number,
+  column?: number,
+};
+
 export type Metadata = {
-  location?: {
-    file: string,
-    line?: number,
-    column?: number,
-  },
+  location?: Location,
   apiName?: string,
   internal?: boolean,
   stepId?: string,
@@ -4078,7 +4080,7 @@ export interface DialogEvents {
 }
 
 export type TracingGroupOptions = {
-  location: string,
+  location?: Location,
 };
 
 // ----------- Tracing -----------
