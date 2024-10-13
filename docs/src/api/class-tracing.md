@@ -281,6 +281,29 @@ given name prefix inside the [`option: BrowserType.launch.tracesDir`] directory 
 To specify the final trace zip file name, you need to pass `path` option to
 [`method: Tracing.stopChunk`] instead.
 
+## async method: Tracing.group
+* since: v1.49
+
+Creates a new inline group in the trace log, causing any subsequent calls to be indented by an additional level, until [`method: Tracing.groupEnd`] is called.
+
+### param: Tracing.group.name
+* since: v1.49
+- `name` <[string]>
+
+Group name shown in the trace viewer.
+
+### option: Tracing.group.location
+* since: v1.49
+- `location` ?<[Object]>
+  - `file` <[string]> Source file path to be shown in the trace viewer source tab.
+  - `line` ?<[int]> Line number in the source file.
+  - `column` ?<[int]> Column number in the source file
+
+## async method: Tracing.groupEnd
+* since: v1.49
+
+Closes the last opened inline group in the trace log.
+
 ## async method: Tracing.stop
 * since: v1.12
 

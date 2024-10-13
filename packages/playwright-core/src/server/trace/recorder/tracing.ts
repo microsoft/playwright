@@ -61,6 +61,8 @@ type RecordingState = {
   traceSha1s: Set<string>,
   recording: boolean;
   callIds: Set<string>;
+  groupStack: string[];
+  groupId: number;
 };
 
 const kScreencastOptions = { width: 800, height: 600, quality: 90 };
@@ -80,8 +82,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _allResources = new Set<string>();
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
   private _pendingHarEntries = new Set<har.Entry>();
-  private _groupStack: string[] = [];
-  private _groupId = 0;
 
   constructor(context: BrowserContext | APIRequestContext, tracesDir: string | undefined) {
     super(context, 'tracing');
@@ -150,6 +150,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       networkSha1s: new Set(),
       recording: false,
       callIds: new Set(),
+      groupStack: [],
+      groupId: 0,
     };
     this._fs.mkdir(this._state.resourcesDir);
     this._fs.writeFile(this._state.networkFile, '');
@@ -197,6 +199,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   async group(name: string, options: { location?: { file: string, line?: number, column?: number } } = {}): Promise<void> {
+    if (!this._state)
+      return;
     const stackFrame: StackFrame = {
       file: options.location?.file || '',
       line: options.location?.line || 0,
@@ -204,7 +208,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     };
     const event: trace.BeforeActionTraceEvent = {
       type: 'before',
-      callId: `group-${this._groupId++}`,
+      callId: `group-${this._state.groupId++}`,
       startTime: monotonicTime(),
       apiName: name,
       class: 'Tracing',
@@ -212,13 +216,18 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       params: { },
       stack: [stackFrame],
     };
-    this._groupStack.push(event.callId);
+    if (this._state.groupStack.length)
+      event.parentId = this._state.groupStack[this._state.groupStack.length - 1];
+    this._state.groupStack.push(event.callId);
     this._appendTraceEvent(event);
   }
 
   async groupEnd(): Promise<void> {
-    const callId = this._groupStack.pop();
-    assert(callId, 'Cannot end group that has not started');
+    if (!this._state)
+      return;
+    const callId = this._state.groupStack.pop();
+    if (!callId)
+      return;
     const event: trace.AfterActionTraceEvent = {
       type: 'after',
       callId,
@@ -297,6 +306,11 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     await this._fs.syncAndGetError();
   }
 
+  async _closeAllGroups() {
+    while (this._state?.groupStack.length)
+      await this.groupEnd();
+  }
+
   async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact?: Artifact, entries?: NameValue[] }> {
     if (this._isStopping)
       throw new Error(`Tracing is already stopping`);
@@ -308,6 +322,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
         throw new Error(`Must start tracing before stopping`);
       return {};
     }
+
+    await this._closeAllGroups();
 
     this._context.instrumentation.removeListener(this);
     eventsHelper.removeEventListeners(this._eventListeners);
@@ -390,13 +406,17 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const event = createBeforeActionTraceEvent(metadata);
     if (!event)
       return Promise.resolve();
-    if (event.parentId === undefined && this._groupStack.length)
-      event.parentId = this._groupStack[this._groupStack.length - 1];
+    this._applyOpenGroup(event);
     sdkObject.attribution.page?.temporarilyDisableTracingScreencastThrottling();
     event.beforeSnapshot = `before@${metadata.id}`;
     this._state?.callIds.add(metadata.id);
     this._appendTraceEvent(event);
     return this._captureSnapshot(event.beforeSnapshot, sdkObject, metadata);
+  }
+
+  private _applyOpenGroup(event: trace.BeforeActionTraceEvent) {
+    if (event.parentId === undefined && this._state?.groupStack.length)
+      event.parentId = this._state?.groupStack[this._state.groupStack.length - 1];
   }
 
   onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {
