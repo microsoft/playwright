@@ -2280,6 +2280,9 @@ scheme.DialogAcceptParams = tObject({
 scheme.DialogAcceptResult = tOptional(tObject({}));
 scheme.DialogDismissParams = tOptional(tObject({}));
 scheme.DialogDismissResult = tOptional(tObject({}));
+scheme.TracingGroupOptions = tObject({
+  location: tString,
+});
 scheme.TracingInitializer = tOptional(tObject({}));
 scheme.TracingTracingStartParams = tObject({
   name: tOptional(tString),
@@ -2295,6 +2298,13 @@ scheme.TracingTracingStartChunkParams = tObject({
 scheme.TracingTracingStartChunkResult = tObject({
   traceName: tString,
 });
+scheme.TracingTracingGroupParams = tObject({
+  name: tString,
+  options: tType('TracingGroupOptions'),
+});
+scheme.TracingTracingGroupResult = tOptional(tObject({}));
+scheme.TracingTracingGroupEndParams = tOptional(tObject({}));
+scheme.TracingTracingGroupEndResult = tOptional(tObject({}));
 scheme.TracingTracingStopChunkParams = tObject({
   mode: tEnum(['archive', 'discard', 'entries']),
 });
