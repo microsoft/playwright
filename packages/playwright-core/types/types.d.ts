@@ -21059,6 +21059,36 @@ export interface Touchscreen {
  */
 export interface Tracing {
   /**
+   * Creates a new inline group in the trace log, causing any subsequent calls to be indented by an additional level,
+   * until [tracing.groupEnd()](https://playwright.dev/docs/api/class-tracing#tracing-group-end) is called.
+   * @param name Group name shown in the trace viewer.
+   * @param options
+   */
+  group(name: string, options?: {
+    location?: {
+      /**
+       * Source file path to be shown in the trace viewer source tab.
+       */
+      file: string;
+
+      /**
+       * Line number in the source file.
+       */
+      line?: number;
+
+      /**
+       * Column number in the source file
+       */
+      column?: number;
+    };
+  }): Promise<void>;
+
+  /**
+   * Closes the last opened inline group in the trace log.
+   */
+  groupEnd(): Promise<void>;
+
+  /**
    * Start tracing.
    *
    * **Usage**
