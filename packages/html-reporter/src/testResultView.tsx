@@ -70,7 +70,7 @@ export const TestResultView: React.FC<{
   const { screenshots, videos, traces, otherAttachments, diffs, errors, htmls } = React.useMemo(() => {
     const attachments = result?.attachments || [];
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
-    const videos = attachments.filter(a => a.name === 'video');
+    const videos = attachments.filter(a => a.contentType.startsWith('video/'));
     const traces = attachments.filter(a => a.name === 'trace');
     const htmls = attachments.filter(a => a.contentType.startsWith('text/html'));
     const otherAttachments = new Set<TestAttachment>(attachments);
