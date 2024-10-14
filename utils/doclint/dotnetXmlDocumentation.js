@@ -16,7 +16,7 @@
 
 // @ts-check
 const Documentation = require('./documentation');
-const { visitAll } = require('../markdown');
+const { visitAll, render } = require('../markdown');
 /**
  * @param {Documentation.MarkdownNode[]} nodes
  * @param {number} maxColumns
@@ -64,7 +64,10 @@ function _innerRenderNodes(nodes, maxColumns = 80, wrapParagraphs = true) {
     } else if (node.type === 'li') {
       _wrapInNode('item><description', _wrapAndEscape(node, maxColumns), summary, '/description></item');
     } else if (node.type === 'note') {
-      _wrapInNode('para', _wrapAndEscape(node, maxColumns), remarks);
+      _wrapInNode('para', _wrapAndEscape({
+        type: 'text',
+        text: render(node.children ?? []).replaceAll('\n', '↵'),
+      }, maxColumns), remarks);
     }
     lastNode = node;
   });
@@ -75,11 +78,11 @@ function _innerRenderNodes(nodes, maxColumns = 80, wrapParagraphs = true) {
 
 function _wrapCode(lines) {
   let i = 0;
-  let out = [];
+  const out = [];
   for (let line of lines) {
     line = line.replace(/[&]/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     if (i < lines.length - 1)
-      line = line + "<br/>";
+      line = line + '<br/>';
     out.push(line);
     i++;
   }
@@ -163,4 +166,4 @@ function renderTextOnly(nodes, maxColumns = 80) {
   return result.summary;
 }
 
-module.exports = { renderXmlDoc, renderTextOnly }
+module.exports = { renderXmlDoc, renderTextOnly };

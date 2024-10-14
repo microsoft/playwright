@@ -363,7 +363,7 @@ Target URL.
 
 ## js-fetch-option-params
 * langs: js
-- `params` <[Object]<[string], [string]|[number]|[boolean]>|[URLSearchParams]|[string]>
+- `params` <[Object]<[string], [string]|[float]|[boolean]>|[URLSearchParams]|[string]>
 
 Query parameters to be sent with the URL.
 
