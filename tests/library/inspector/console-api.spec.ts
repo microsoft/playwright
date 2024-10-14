@@ -107,6 +107,7 @@ it('expected properties on playwright object', async ({ page }) => {
     'inspect',
     'selector',
     'generateLocator',
+    'ariaSnapshot',
     'resume',
     'locator',
     'getByTestId',

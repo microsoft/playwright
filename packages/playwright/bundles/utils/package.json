@@ -14,7 +14,8 @@
     "json5": "2.2.3",
     "pirates": "4.0.4",
     "source-map-support": "0.5.21",
-    "stoppable": "1.1.0"
+    "stoppable": "1.1.0",
+    "yaml": "^2.5.1"
   },
   "devDependencies": {
     "@types/source-map-support": "^0.5.4",

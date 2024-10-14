@@ -31,3 +31,6 @@ export const enquirer = enquirerLibrary;
 
 import chokidarLibrary from 'chokidar';
 export const chokidar = chokidarLibrary;
+
+import yamlLibrary from 'yaml';
+export const yaml = yamlLibrary;

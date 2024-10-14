@@ -7639,6 +7639,31 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
+   * Asserts that the target element matches the given accessibility snapshot.
+   *
+   * **Usage**
+   *
+   * ```js
+   * import { role as x } from '@playwright/test';
+   * // ...
+   * await page.goto('https://demo.playwright.dev/todomvc/');
+   * await expect(page.locator('body')).toMatchAriaSnapshot(`
+   *   - heading "todos"
+   *   - textbox "What needs to be done?"
+   * `);
+   * ```
+   *
+   * @param expected
+   * @param options
+   */
+  toMatchAriaSnapshot(expected: string, options?: {
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * Makes the assertion check for the opposite condition. For example, this code tests that the Locator doesn't contain
    * text `"error"`:
    *

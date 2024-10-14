@@ -29,13 +29,12 @@ import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector, type GenerateSelectorOptions } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription, beginAriaCaches, endAriaCaches } from './roleUtils';
+import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
-import { cacheNormalizedWhitespaces, escapeHTML, escapeHTMLAttribute, normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
-import { selectorForSimpleDomNodeId, generateSimpleDomNode } from './simpleDom';
-import type { SimpleDomNode } from './simpleDom';
+import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
+import { matchesAriaTree } from './ariaSnapshot';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
 
@@ -75,12 +74,8 @@ export class InjectedScript {
   // module-level globals will be duplicated, which leads to subtle bugs.
   readonly utils = {
     asLocator,
-    beginAriaCaches,
     cacheNormalizedWhitespaces,
     elementText,
-    endAriaCaches,
-    escapeHTML,
-    escapeHTMLAttribute,
     getAriaRole,
     getElementAccessibleDescription,
     getElementAccessibleName,
@@ -1256,6 +1251,11 @@ export class InjectedScript {
     }
 
     {
+      if (expression === 'to.match.aria')
+        return matchesAriaTree(element, options.expectedValue);
+    }
+
+    {
       // Single text value.
       let received: string | undefined;
       if (expression === 'to.have.attribute.value') {
@@ -1331,17 +1331,6 @@ export class InjectedScript {
       return { received, matches: mIndex === matchers.length };
     }
     throw this.createStacklessError('Unknown expect matcher: ' + expression);
-  }
-
-  generateSimpleDomNode(selector: string): SimpleDomNode | undefined {
-    const element = this.querySelector(this.parseSelector(selector), this.document.documentElement, true);
-    if (!element)
-      return;
-    return generateSimpleDomNode(this, element);
-  }
-
-  selectorForSimpleDomNodeId(nodeId: string) {
-    return selectorForSimpleDomNodeId(this, nodeId);
   }
 }
 
