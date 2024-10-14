@@ -18,8 +18,7 @@ import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 import { Artifact } from './artifact';
 import { ChannelOwner } from './channelOwner';
-import { captureRawStack } from '../utils';
-import { filteredStackTrace } from 'playwright/lib/util';
+import { captureRawStack, filteredStackTrace } from '../utils';
 
 export class Tracing extends ChannelOwner<channels.TracingChannel> implements api.Tracing {
   private _includeSources = false;

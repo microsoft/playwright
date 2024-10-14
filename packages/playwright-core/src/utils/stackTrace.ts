@@ -47,6 +47,25 @@ export function captureRawStack(): RawStack {
   return stack.split('\n');
 }
 
+export function filterStackFile(file: string) {
+  if (!process.env.PWDEBUGIMPL && file.startsWith(CORE_DIR))
+    return false;
+  return true;
+}
+
+export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
+  const frames: StackFrame[] = [];
+  for (const line of rawStack) {
+    const frame = parseStackTraceLine(line);
+    if (!frame || !frame.file)
+      continue;
+    if (!filterStackFile(frame.file))
+      continue;
+    frames.push(frame);
+  }
+  return frames;
+}
+
 export function captureLibraryStackTrace(): { frames: StackFrame[], apiName: string } {
   const stack = captureRawStack();
 
