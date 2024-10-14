@@ -302,7 +302,7 @@ Group name shown in the trace viewer.
 ## async method: Tracing.groupEnd
 * since: v1.49
 
-Closes the last opened inline group in the trace log.
+Closes the last opened inline group in the trace.
 
 ## async method: Tracing.stop
 * since: v1.12
