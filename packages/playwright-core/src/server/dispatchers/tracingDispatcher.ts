@@ -15,6 +15,7 @@
  */
 
 import type * as channels from '@protocol/channels';
+import type { CallMetadata } from '@protocol/callMetadata';
 import type { Tracing } from '../trace/recorder/tracing';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
@@ -41,9 +42,9 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
     return await this._object.startChunk(params);
   }
 
-  async tracingGroup(params: channels.TracingTracingGroupParams): Promise<channels.TracingTracingGroupResult> {
+  async tracingGroup(params: channels.TracingTracingGroupParams, metadata: CallMetadata): Promise<channels.TracingTracingGroupResult> {
     const { name, options } = params;
-    await this._object.group(name, options);
+    await this._object.group(name, options, metadata);
   }
 
   async tracingGroupEnd(params: channels.TracingTracingGroupEndParams): Promise<channels.TracingTracingGroupEndResult> {

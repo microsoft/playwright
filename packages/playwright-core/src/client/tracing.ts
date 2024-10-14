@@ -18,7 +18,6 @@ import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 import { Artifact } from './artifact';
 import { ChannelOwner } from './channelOwner';
-import { captureRawStack, filteredStackTrace } from '../utils';
 
 export class Tracing extends ChannelOwner<channels.TracingChannel> implements api.Tracing {
   private _includeSources = false;
@@ -53,10 +52,6 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   }
 
   async group(name: string, options: { location?: { file: string, line?: number, column?: number } } = {}) {
-    if (!options.location) {
-      const filteredStack = filteredStackTrace(captureRawStack());
-      options.location = filteredStack[0];
-    }
     await this._channel.tracingGroup({ name, options });
   }
 
