@@ -887,6 +887,7 @@ it('should not have connect and dns timings when socket is reused', async ({ con
   const request2 = log.entries[1];
   expect.soft(request2.timings.connect).toBe(-1);
   expect.soft(request2.timings.dns).toBe(-1);
+  expect.soft(request2.timings.blocked).toBeGreaterThan(0);
 });
 
 it('should include redirects from API request', async ({ contextFactory, server }, testInfo) => {
