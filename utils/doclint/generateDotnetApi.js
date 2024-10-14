@@ -520,7 +520,8 @@ function renderMethod(member, parent, name, options, out) {
     && !name.startsWith('Get')
     && name !== 'CreateFormData'
     && !name.startsWith('PostDataJSON')
-    && !name.startsWith('As')) {
+    && !name.startsWith('As')
+    && name !== 'ConnectToServer') {
     if (!member.async) {
       if (member.spec && !options.nodocs)
         out.push(...XmlDoc.renderXmlDoc(member.spec, maxDocumentationColumnWidth));
@@ -718,7 +719,7 @@ function translateType(type, parent, generateNameCallback = t => t.name, optiona
   if (type.expression === '[null]|[Error]')
     return 'void';
 
-  if (type.name == 'Promise' && type.templates?.[0].name === 'any')
+  if (type.name === 'Promise' && type.templates?.[0].name === 'any')
     return 'Task';
 
   if (type.union) {
