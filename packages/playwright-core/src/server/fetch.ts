@@ -329,6 +329,11 @@ export abstract class APIRequestContext extends SdkObject {
             blocked: -1,
           };
 
+          if (request.reusedSocket) {
+            timings.connect = -1;
+            timings.dns = -1;
+          }
+
           const requestFinishedEvent: APIRequestFinishedEvent = {
             requestEvent,
             httpVersion: response.httpVersion,
@@ -491,8 +496,13 @@ export abstract class APIRequestContext extends SdkObject {
       request.on('socket', socket => {
         // happy eyeballs don't emit lookup and connect events, so we use our custom ones
         const happyEyeBallsTimings = timingForSocket(socket);
-        dnsLookupAt = happyEyeBallsTimings.dnsLookupAt;
-        tcpConnectionAt ??= happyEyeBallsTimings.tcpConnectionAt;
+        if (request.reusedSocket) {
+          dnsLookupAt = startAt;
+          tcpConnectionAt = startAt;
+        } else {
+          dnsLookupAt = happyEyeBallsTimings.dnsLookupAt;
+          tcpConnectionAt ??= happyEyeBallsTimings.tcpConnectionAt;
+        }
 
         // non-happy-eyeballs sockets
         listeners.push(
