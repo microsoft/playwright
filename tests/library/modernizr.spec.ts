@@ -57,7 +57,7 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless }
     expected.publickeycredential = false;
     expected.mediastream = false;
     if (headless)
-      expected.todataurljpeg = false;
+      expected.todataurlwebp = true;
 
     // GHA
     delete actual.variablefonts;
@@ -124,7 +124,7 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, server,
     expected.publickeycredential = false;
     expected.mediastream = false;
     if (headless)
-      expected.todataurljpeg = false;
+      expected.todataurlwebp = true;
 
     // GHA
     delete actual.variablefonts;
