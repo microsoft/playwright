@@ -1139,3 +1139,77 @@ test('custom asymmetric matchers should work with expect.extend', async ({ runIn
   expect(result.passed).toBe(1);
   expect(result.output).not.toContain('should not run');
 });
+
+test('should check types of overloaded toMatchObject with generic parameter', async ({ runTSC }) => {
+  const result = await runTSC({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+
+      export default defineConfig({
+      });
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('my test', async () => {
+        const value = { a: 1, b: 'foo', c: { d: 2, e: 'bar' } };
+
+        expect.soft(value).toMatchObject<typeof value>({});
+        expect.soft(value).toMatchObject<typeof value>({ a: 1 });
+        expect.soft(value).toMatchObject<typeof value>({ a: 1, c: { e: 'bar' } });
+        expect.soft([value]).toMatchObject<typeof value>([{ a: 1 }]);
+        expect.soft([value]).toMatchObject<typeof value>([{ a: 1, c: { e: 'bar' } }]);
+
+        // @ts-expect-error
+        expect.soft(value).toMatchObject<typeof value>({ a: 'a' });
+
+        // @ts-expect-error
+        expect.soft(value).toMatchObject<typeof value>({ c: { e: 2 } });
+        
+        // @ts-expect-error
+        expect.soft([value]).toMatchObject<typeof value>([{ a: 'a' }]);
+
+        // @ts-expect-error
+        expect.soft([value]).toMatchObject<typeof value>([{ c: { e: 2 } }]);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should check types of overloaded toStrictEqual with generic parameter', async ({ runTSC }) => {
+  const result = await runTSC({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+
+      export default defineConfig({
+      });
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('my test', async () => {
+        const value = { a: 1, b: 'foo', c: { d: 2, e: 'bar' } };
+
+        expect.soft(value).toStrictEqual<typeof value>({ a: 1, b: 'foo', c: { d: 2, e: 'bar' } });
+        expect.soft([value]).toStrictEqual<Array<typeof value>>([{ a: 1, b: 'foo', c: { d: 2, e: 'bar' } }]);
+
+        expect.soft(new Date()).toStrictEqual<Date>(new Date());
+
+        // @ts-expect-error
+        expect.soft(value).toStrictEqual<typeof value>({ a: 1 });
+
+        // @ts-expect-error
+        expect.soft(value).toStrictEqual<typeof value>({ a: 'a' });
+
+        // @ts-expect-error
+        expect.soft(value).toStrictEqual<typeof value>({ c: { e: 2 } });
+        
+        // @ts-expect-error
+        expect.soft([value]).toStrictEqual<typeof value>([{ a: 'a' }]);
+
+        // @ts-expect-error
+        expect.soft([value]).toStrictEqual<typeof value>([{ c: { e: 2 } }]);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
