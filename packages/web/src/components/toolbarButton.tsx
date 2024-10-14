@@ -28,6 +28,7 @@ export interface ToolbarButtonProps {
   style?: React.CSSProperties,
   testId?: string,
   className?: string,
+  ariaLabel?: string,
 }
 
 export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>> = ({
@@ -40,6 +41,7 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
   style,
   testId,
   className,
+  ariaLabel,
 }) => {
   return <button
     className={clsx(className, 'toolbar-button', icon, toggled && 'toggled')}
@@ -50,6 +52,7 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
     disabled={!!disabled}
     style={style}
     data-testid={testId}
+    aria-label={ariaLabel}
   >
     {icon && <span className={`codicon codicon-${icon}`} style={children ? { marginRight: 5 } : {}}></span>}
     {children}

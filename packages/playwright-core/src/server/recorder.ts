@@ -140,6 +140,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
     this._contextRecorder.on(ContextRecorder.Events.Change, (data: { sources: Source[], actions: actions.ActionInContext[] }) => {
       this._recorderSources = data.sources;
       recorderApp.setActions(data.actions, data.sources);
+      recorderApp.setRunningFile(undefined);
       this._pushAllSources();
     });
 
@@ -299,7 +300,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
     }
     this._pushAllSources();
     if (fileToSelect)
-      this._recorderApp?.setFile(fileToSelect);
+      this._recorderApp?.setRunningFile(fileToSelect);
   }
 
   private _pushAllSources() {

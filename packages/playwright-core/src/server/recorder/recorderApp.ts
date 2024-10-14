@@ -34,7 +34,7 @@ export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   async close(): Promise<void> {}
   async setPaused(paused: boolean): Promise<void> {}
   async setMode(mode: Mode): Promise<void> {}
-  async setFile(file: string): Promise<void> {}
+  async setRunningFile(file: string | undefined): Promise<void> {}
   async setSelector(selector: string, userGesture?: boolean): Promise<void> {}
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
   async setSources(sources: Source[]): Promise<void> {}
@@ -131,9 +131,9 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     }).toString(), { isFunction: true }, mode).catch(() => {});
   }
 
-  async setFile(file: string): Promise<void> {
+  async setRunningFile(file: string | undefined): Promise<void> {
     await this._page.mainFrame().evaluateExpression(((file: string) => {
-      window.playwrightSetFile(file);
+      window.playwrightSetRunningFile(file);
     }).toString(), { isFunction: true }, file).catch(() => {});
   }
 
