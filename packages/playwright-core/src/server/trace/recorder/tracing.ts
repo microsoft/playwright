@@ -62,7 +62,6 @@ type RecordingState = {
   recording: boolean;
   callIds: Set<string>;
   groupStack: string[];
-  groupId: number;
 };
 
 const kScreencastOptions = { width: 800, height: 600, quality: 90 };
@@ -151,7 +150,6 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       recording: false,
       callIds: new Set(),
       groupStack: [],
-      groupId: 0,
     };
     this._fs.mkdir(this._state.resourcesDir);
     this._fs.writeFile(this._state.networkFile, '');
@@ -198,23 +196,27 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return { traceName: this._state.traceName };
   }
 
-  async group(name: string, options: { location?: { file: string, line?: number, column?: number } } = {}): Promise<void> {
+  async group(name: string, options: { location?: { file: string, line?: number, column?: number } } = {}, metadata: CallMetadata): Promise<void> {
     if (!this._state)
       return;
-    const stackFrame: StackFrame = {
-      file: options.location?.file || '',
-      line: options.location?.line || 0,
-      column: options.location?.column || 0,
-    };
+    const stackFrames: StackFrame[] = [];
+    const { file, line, column } = options.location ?? metadata.location ?? {};
+    if (file) {
+      stackFrames.push({
+        file,
+        line: line ?? 0,
+        column: column ?? 0,
+      });
+    }
     const event: trace.BeforeActionTraceEvent = {
       type: 'before',
-      callId: `group-${this._state.groupId++}`,
-      startTime: monotonicTime(),
+      callId: metadata.id,
+      startTime: metadata.startTime,
       apiName: name,
       class: 'Tracing',
       method: 'group',
       params: { },
-      stack: [stackFrame],
+      stack: stackFrames,
     };
     if (this._state.groupStack.length)
       event.parentId = this._state.groupStack[this._state.groupStack.length - 1];
@@ -403,20 +405,17 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
     // IMPORTANT: no awaits before this._appendTraceEvent in this method.
-    const event = createBeforeActionTraceEvent(metadata);
+    const event = createBeforeActionTraceEvent(
+        metadata,
+        this._state?.groupStack.length ? this._state.groupStack[this._state.groupStack.length - 1] : undefined
+    );
     if (!event)
       return Promise.resolve();
-    this._applyOpenGroup(event);
     sdkObject.attribution.page?.temporarilyDisableTracingScreencastThrottling();
     event.beforeSnapshot = `before@${metadata.id}`;
     this._state?.callIds.add(metadata.id);
     this._appendTraceEvent(event);
     return this._captureSnapshot(event.beforeSnapshot, sdkObject, metadata);
-  }
-
-  private _applyOpenGroup(event: trace.BeforeActionTraceEvent) {
-    if (event.parentId === undefined && this._state?.groupStack.length)
-      event.parentId = this._state?.groupStack[this._state.groupStack.length - 1];
   }
 
   onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {
@@ -626,10 +625,10 @@ export function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
   return commandsWithTracingSnapshots.has(metadata.type + '.' + metadata.method);
 }
 
-function createBeforeActionTraceEvent(metadata: CallMetadata): trace.BeforeActionTraceEvent | null {
+function createBeforeActionTraceEvent(metadata: CallMetadata, parentId?: string): trace.BeforeActionTraceEvent | null {
   if (metadata.internal || metadata.method.startsWith('tracing'))
     return null;
-  return {
+  const event: trace.BeforeActionTraceEvent = {
     type: 'before',
     callId: metadata.id,
     startTime: metadata.startTime,
@@ -640,6 +639,9 @@ function createBeforeActionTraceEvent(metadata: CallMetadata): trace.BeforeActio
     stepId: metadata.stepId,
     pageId: metadata.pageId,
   };
+  if (parentId)
+    event.parentId = parentId;
+  return event;
 }
 
 function createInputActionTraceEvent(metadata: CallMetadata): trace.InputActionTraceEvent | null {
