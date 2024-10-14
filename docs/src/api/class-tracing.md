@@ -284,7 +284,7 @@ To specify the final trace zip file name, you need to pass `path` option to
 ## async method: Tracing.group
 * since: v1.49
 
-Creates a new inline group in the trace log, causing any subsequent calls to be indented by an additional level, until [`method: Tracing.groupEnd`] is called.
+Creates a new inline group in the trace, causing any subsequent calls to belong to this group, until [`method: Tracing.groupEnd`] is called.
 
 ### param: Tracing.group.name
 * since: v1.49
