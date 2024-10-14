@@ -30,6 +30,8 @@ expect(value).not.toBe(2);
 
 Compares value with [`param: expected`] by calling `Object.is`. This method compares objects by reference instead of their contents, similarly to the strict equality operator `===`.
 
+Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring expected objects have the right structure.
+
 **Usage**
 
 ```js
@@ -143,6 +145,8 @@ The value to compare to.
 * since: v1.9
 
 Ensures that value is an instance of a class. Uses `instanceof` operator.
+
+Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring expected objects have the right structure.
 
 **Usage**
 
@@ -280,6 +284,8 @@ Expected substring.
 
 Ensures that value is an `Array` or `Set` and contains an expected item.
 
+Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring expected objects have the right structure.
+
 **Usage**
 
 ```js
@@ -304,6 +310,8 @@ Ensures that value is an `Array` or `Set` and contains an item equal to the expe
 For objects, this method recursively checks equality of all fields, rather than comparing objects by reference as performed by [`method: GenericAssertions.toContain#2`].
 
 For primitive values, this method is equivalent to [`method: GenericAssertions.toContain#2`].
+
+Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring expected objects have the right structure.
 
 **Usage**
 
@@ -333,6 +341,8 @@ Compares contents of the value with contents of [`param: expected`], performing 
 For objects, this method recursively checks equality of all fields, rather than comparing objects by reference as performed by [`method: GenericAssertions.toBe`].
 
 For primitive values, this method is equivalent to [`method: GenericAssertions.toBe`].
+
+Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring expected objects have the right structure.
 
 **Usage**
 
@@ -404,6 +414,8 @@ Expected length.
 
 Ensures that property at provided `keyPath` exists on the object and optionally checks that property is equal to the [`param: expected`]. Equality is checked recursively, similarly to [`method: GenericAssertions.toEqual`].
 
+Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring expected objects have the right structure.
+
 **Usage**
 
 ```js
@@ -461,6 +473,8 @@ Compares contents of the value with contents of [`param: expected`], performing 
 
 When comparing arrays, the number of items must match, and each item is checked recursively.
 
+Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring expected objects have the right structure.
+
 **Usage**
 
 ```js
@@ -493,6 +507,8 @@ Differences from [`method: GenericAssertions.toEqual`]:
 * Keys with undefined properties are checked. For example, `{ a: undefined, b: 2 }` does not match `{ b: 2 }`.
 * Array sparseness is checked. For example, `[, 1]` does not match `[undefined, 1]`.
 * Object types are checked to be equal. For example, a class instance with fields `a` and `b` will not equal a literal object with fields `a` and `b`.
+
+Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring expected objects have the right structure.
 
 **Usage**
 

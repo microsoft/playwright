@@ -6088,6 +6088,9 @@ interface GenericAssertions<R> {
    * calling `Object.is`. This method compares objects by reference instead of their contents, similarly to the strict
    * equality operator `===`.
    *
+   * Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring
+   * expected objects have the right structure.
+   *
    * **Usage**
    *
    * ```js
@@ -6099,7 +6102,7 @@ interface GenericAssertions<R> {
    *
    * @param expected Expected value.
    */
-  toBe(expected: unknown): R;
+  toBe<E = unknown>(expected: E): R;
   /**
    * Compares floating point numbers for approximate equality. Use this method instead of
    * [expect(value).toBe(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-be)
@@ -6170,6 +6173,9 @@ interface GenericAssertions<R> {
   /**
    * Ensures that value is an instance of a class. Uses `instanceof` operator.
    *
+   * Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring
+   * expected objects have the right structure.
+   *
    * **Usage**
    *
    * ```js
@@ -6181,7 +6187,7 @@ interface GenericAssertions<R> {
    *
    * @param expected The class or constructor function.
    */
-  toBeInstanceOf(expected: Function): R;
+  toBeInstanceOf<E extends Function = Function>(expected: E): R;
   /**
    * Ensures that `value < expected` for number or big integer values.
    *
@@ -6274,6 +6280,9 @@ interface GenericAssertions<R> {
   /**
    * Ensures that value is an `Array` or `Set` and contains an expected item.
    *
+   * Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring
+   * expected objects have the right structure.
+   *
    * **Usage**
    *
    * ```js
@@ -6284,7 +6293,7 @@ interface GenericAssertions<R> {
    *
    * @param expected Expected value in the collection.
    */
-  toContain(expected: unknown): R;
+  toContain<E = unknown>(expected: E): R;
   /**
    * Ensures that value is an `Array` or `Set` and contains an item equal to the expected.
    *
@@ -6294,6 +6303,9 @@ interface GenericAssertions<R> {
    *
    * For primitive values, this method is equivalent to
    * [expect(value).toContain(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-contain-2).
+   *
+   * Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring
+   * expected objects have the right structure.
    *
    * **Usage**
    *
@@ -6309,7 +6321,7 @@ interface GenericAssertions<R> {
    *
    * @param expected Expected value in the collection.
    */
-  toContainEqual(expected: unknown): R;
+  toContainEqual<E = unknown>(expected: E): R;
   /**
    * Compares contents of the value with contents of
    * [`expected`](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal-option-expected),
@@ -6321,6 +6333,9 @@ interface GenericAssertions<R> {
    *
    * For primitive values, this method is equivalent to
    * [expect(value).toBe(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-be).
+   *
+   * Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring
+   * expected objects have the right structure.
    *
    * **Usage**
    *
@@ -6370,7 +6385,7 @@ interface GenericAssertions<R> {
    *
    * @param expected Expected value.
    */
-  toEqual(expected: unknown): R;
+  toEqual<E = unknown>(expected: E): R;
   /**
    * Ensures that value has a `.length` property equal to
    * [`expected`](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-have-length-option-expected).
@@ -6393,6 +6408,9 @@ interface GenericAssertions<R> {
    * Equality is checked recursively, similarly to
    * [expect(value).toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal).
    *
+   * Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring
+   * expected objects have the right structure.
+   *
    * **Usage**
    *
    * ```js
@@ -6413,7 +6431,7 @@ interface GenericAssertions<R> {
    * array items.
    * @param expected Optional expected value to compare the property to.
    */
-  toHaveProperty(keyPath: string | Array<string>, value?: unknown): R;
+  toHaveProperty<E = unknown>(propertyPath: string | readonly any[], value?: E): R;
   /**
    * Ensures that string value matches a regular expression.
    *
@@ -6436,31 +6454,8 @@ interface GenericAssertions<R> {
    *
    * When comparing arrays, the number of items must match, and each item is checked recursively.
    *
-   * **Usage**
-   *
-   * ```js
-   * const value = {
-   *   a: 1,
-   *   b: 2,
-   *   c: true,
-   * };
-   * expect(value).toMatchObject({ a: 1, c: true });
-   * expect(value).toMatchObject({ b: 2, c: true });
-   *
-   * expect([{ a: 1, b: 2 }]).toMatchObject([{ a: 1 }]);
-   * ```
-   *
-   * @param expected The expected object value to match against.
-   */
-  toMatchObject<K extends Record<string, unknown>>(expected: DeepPartial<K> | Array<DeepPartial<K>>): R;
-  /**
-   * Compares contents of the value with contents of
-   * [`expected`](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-match-object-option-expected),
-   * performing "deep equality" check. Allows extra properties to be present in the value, unlike
-   * [expect(value).toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal),
-   * so you can check just a subset of object properties.
-   *
-   * When comparing arrays, the number of items must match, and each item is checked recursively.
+   * Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring
+   * expected objects have the right structure.
    *
    * **Usage**
    *
@@ -6478,7 +6473,7 @@ interface GenericAssertions<R> {
    *
    * @param expected The expected object value to match against.
    */
-  toMatchObject(expected: Record<string, unknown> | Array<unknown>): R;
+  toMatchObject<E extends {} | Array<any> = Record<string, unknown> | Array<unknown>>(expected: E): R;
   /**
    * Compares contents of the value with contents of
    * [`expected`](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-strict-equal-option-expected)
@@ -6491,27 +6486,8 @@ interface GenericAssertions<R> {
    * - Object types are checked to be equal. For example, a class instance with fields `a` and `b` will not equal a
    *   literal object with fields `a` and `b`.
    *
-   * **Usage**
-   *
-   * ```js
-   * const value = { prop: 1 };
-   * expect(value).toStrictEqual({ prop: 1 });
-   * ```
-   *
-   * @param expected Expected value.
-   */
-  toStrictEqual<K>(expected: K): R;
-  /**
-   * Compares contents of the value with contents of
-   * [`expected`](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-strict-equal-option-expected)
-   * **and** their types.
-   *
-   * Differences from
-   * [expect(value).toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal):
-   * - Keys with undefined properties are checked. For example, `{ a: undefined, b: 2 }` does not match `{ b: 2 }`.
-   * - Array sparseness is checked. For example, `[, 1]` does not match `[undefined, 1]`.
-   * - Object types are checked to be equal. For example, a class instance with fields `a` and `b` will not equal a
-   *   literal object with fields `a` and `b`.
+   * Optionally, you can provide a type for the expected value via a generic. This is particularly useful for ensuring
+   * expected objects have the right structure.
    *
    * **Usage**
    *
@@ -6522,7 +6498,7 @@ interface GenericAssertions<R> {
    *
    * @param expected Expected value.
    */
-  toStrictEqual(expected: unknown): R;
+  toStrictEqual<E = unknown>(expected: E): R;
   /**
    * Calls the function and ensures it throws an error.
    *

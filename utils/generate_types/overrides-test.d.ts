@@ -273,13 +273,13 @@ interface AsymmetricMatchers {
 
 interface GenericAssertions<R> {
   not: GenericAssertions<R>;
-  toBe(expected: unknown): R;
+  toBe<E = unknown>(expected: E): R;
   toBeCloseTo(expected: number, numDigits?: number): R;
   toBeDefined(): R;
   toBeFalsy(): R;
   toBeGreaterThan(expected: number | bigint): R;
   toBeGreaterThanOrEqual(expected: number | bigint): R;
-  toBeInstanceOf(expected: Function): R;
+  toBeInstanceOf<E extends Function = Function>(expected: E): R;
   toBeLessThan(expected: number | bigint): R;
   toBeLessThanOrEqual(expected: number | bigint): R;
   toBeNaN(): R;
@@ -287,16 +287,14 @@ interface GenericAssertions<R> {
   toBeTruthy(): R;
   toBeUndefined(): R;
   toContain(expected: string): R;
-  toContain(expected: unknown): R;
-  toContainEqual(expected: unknown): R;
-  toEqual(expected: unknown): R;
+  toContain<E = unknown>(expected: E): R;
+  toContainEqual<E = unknown>(expected: E): R;
+  toEqual<E = unknown>(expected: E): R;
   toHaveLength(expected: number): R;
-  toHaveProperty(keyPath: string | Array<string>, value?: unknown): R;
+  toHaveProperty<E = unknown>(propertyPath: string | readonly any[], value?: E): R;
   toMatch(expected: RegExp | string): R;
-  toMatchObject<K extends Record<string, unknown>>(expected: DeepPartial<K> | Array<DeepPartial<K>>): R;
-  toMatchObject(expected: Record<string, unknown> | Array<unknown>): R;
-  toStrictEqual<K>(expected: K): R;
-  toStrictEqual(expected: unknown): R;
+  toMatchObject<E extends {} | Array<any> = Record<string, unknown> | Array<unknown>>(expected: E): R;
+  toStrictEqual<E = unknown>(expected: E): R;
   toThrow(error?: unknown): R;
   toThrowError(error?: unknown): R;
 }

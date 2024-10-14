@@ -1140,76 +1140,49 @@ test('custom asymmetric matchers should work with expect.extend', async ({ runIn
   expect(result.output).not.toContain('should not run');
 });
 
-test('should check types of overloaded toMatchObject with generic parameter', async ({ runTSC }) => {
+test('should compile matchers with generic parameters', async ({ runTSC }) => {
   const result = await runTSC({
-    'playwright.config.ts': `
-      import { defineConfig } from '@playwright/test';
-
-      export default defineConfig({
-      });
-    `,
     'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('my test', async () => {
-        const value = { a: 1, b: 'foo', c: { d: 2, e: 'bar' } };
+      import { expect } from '@playwright/test';
 
-        expect.soft(value).toMatchObject<typeof value>({});
-        expect.soft(value).toMatchObject<typeof value>({ a: 1 });
-        expect.soft(value).toMatchObject<typeof value>({ a: 1, c: { e: 'bar' } });
-        expect.soft([value]).toMatchObject<typeof value>([{ a: 1 }]);
-        expect.soft([value]).toMatchObject<typeof value>([{ a: 1, c: { e: 'bar' } }]);
+      expect(42).toBe<number>(42);
+      // @ts-expect-error
+      expect(42).toBe<number>('forty-two');
 
-        // @ts-expect-error
-        expect.soft(value).toMatchObject<typeof value>({ a: 'a' });
+      class A {}
+      expect(new A()).toBeInstanceOf<typeof A>(A);
+      // @ts-expect-error
+      expect(new A()).toBeInstanceOf<typeof Object>(A);
 
-        // @ts-expect-error
-        expect.soft(value).toMatchObject<typeof value>({ c: { e: 2 } });
-        
-        // @ts-expect-error
-        expect.soft([value]).toMatchObject<typeof value>([{ a: 'a' }]);
+      expect([42]).toContain<number>(42);
+      // @ts-expect-error
+      expect([42]).toContain<number>('forty-two');
 
-        // @ts-expect-error
-        expect.soft([value]).toMatchObject<typeof value>([{ c: { e: 2 } }]);
-      });
+      expect(42).toContainEqual<number>(42);
+      // @ts-expect-error
+      expect([42]).toContainEqual<number>('forty-two');
+
+      expect(42).toEqual<number>(42);
+      // @ts-expect-error
+      expect(42).toEqual<number>('forty-two');
+
+      expect({ a: 42 }).toHaveProperty<number>('a', 42);
+      // @ts-expect-error
+      expect({ a: 42 }).toHaveProperty<number>('a', 'forty-two');
+
+      expect({ 'a': 42 }).toMatchObject<{ a: number }>({ 'a': 42 });
+      // @ts-expect-error
+      expect({ 'a': 42 }).toMatchObject<{ a: number }>({ 'b': 42 });
+
+      expect([{ a: 42 }]).toMatchObject<Array<{ a: number }>>([{ 'a': 42 }]);
+      // @ts-expect-error
+      expect([{ a: 42 }]).toMatchObject<{ a: number }>([{ 'a': 42 }]);
+
+      expect(42).toStrictEqual<number>(42);
+      // @ts-expect-error
+      expect(42).toStrictEqual<number>('forty-two');
     `
   });
-  expect(result.exitCode).toBe(0);
-});
 
-test('should check types of overloaded toStrictEqual with generic parameter', async ({ runTSC }) => {
-  const result = await runTSC({
-    'playwright.config.ts': `
-      import { defineConfig } from '@playwright/test';
-
-      export default defineConfig({
-      });
-    `,
-    'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('my test', async () => {
-        const value = { a: 1, b: 'foo', c: { d: 2, e: 'bar' } };
-
-        expect.soft(value).toStrictEqual<typeof value>({ a: 1, b: 'foo', c: { d: 2, e: 'bar' } });
-        expect.soft([value]).toStrictEqual<Array<typeof value>>([{ a: 1, b: 'foo', c: { d: 2, e: 'bar' } }]);
-
-        expect.soft(new Date()).toStrictEqual<Date>(new Date());
-
-        // @ts-expect-error
-        expect.soft(value).toStrictEqual<typeof value>({ a: 1 });
-
-        // @ts-expect-error
-        expect.soft(value).toStrictEqual<typeof value>({ a: 'a' });
-
-        // @ts-expect-error
-        expect.soft(value).toStrictEqual<typeof value>({ c: { e: 2 } });
-        
-        // @ts-expect-error
-        expect.soft([value]).toStrictEqual<typeof value>([{ a: 'a' }]);
-
-        // @ts-expect-error
-        expect.soft([value]).toStrictEqual<typeof value>([{ c: { e: 2 } }]);
-      });
-    `
-  });
   expect(result.exitCode).toBe(0);
 });
