@@ -1147,10 +1147,6 @@ To declare a focused "failing" test:
 * `test.fail.only(title, body)`
 * `test.fail.only(title, details, body)`
 
-To conditionally focus a "failing" test:
-* `test.fail.only(condition, description)`
-* `test.fail.only(callback, description)`
-
 **Usage**
 
 You can declare a focused failing test, so that Playwright runs only this test and ensures it actually fails.
@@ -1162,21 +1158,6 @@ test.fail.only('focused failing test', async ({ page }) => {
   // This test is expected to fail
 });
 test('not in the focused group', async ({ page }) => {
-  // This test will not run
-});
-```
-
-You can mark all tests within a file or [`method: Test.describe`] group as focused "should fail" based on some condition with a single `test.fail.only(callback, description)` call.
-
-```js
-import { test, expect } from '@playwright/test';
-
-test.fail.only(({ browserName }) => browserName === 'webkit', 'not implemented yet');
-
-test('fail in WebKit 1', async ({ page }) => {
-  // This test will not run
-});
-test('fail in WebKit 2', async ({ page }) => {
   // This test will not run
 });
 ```
@@ -1205,27 +1186,6 @@ See [`method: Test.describe`] for test details description.
 - `body` ?<[function]\([Fixtures], [TestInfo]\)>
 
 Test body that takes one or two arguments: an object with fixtures and optional [TestInfo].
-
-### param: Test.fail.only.condition
-* since: v1.49
-
-- `condition` ?<[boolean]>
-
-Test is marked as "should fail" and focused when the condition is `true`.
-
-### param: Test.fail.only.callback
-* since: v1.49
-
-- `callback` ?<[function]\([Fixtures]\):[boolean]>
-
-A function that returns whether to mark as "should fail" and focused, based on test fixtures. Test or tests are marked as "should fail" and focused when the return value is `true`.
-
-### param: Test.fail.only.description
-* since: v1.49
-
-- `description` ?<[string]>
-
-Optional description that will be reflected in a test report.
 
 
 
