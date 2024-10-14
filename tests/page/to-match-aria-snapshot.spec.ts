@@ -94,8 +94,20 @@ test('should allow text nodes', async ({ page }) => {
   `);
 });
 
+test('details visibility', async ({ page, browserName }) => {
+  await page.setContent(`
+    <details>
+      <summary>Summary</summary>
+      <div>Details</div>
+    </details>
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - group: Summary
+  `);
+});
+
 test('integration test', async ({ page, browserName }) => {
-  test.fixme(browserName === 'webkit');
   await page.setContent(`
     <h1>Microsoft</h1>
     <div>Open source projects and samples from Microsoft</div>
