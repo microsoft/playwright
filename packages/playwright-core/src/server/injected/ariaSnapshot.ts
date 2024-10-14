@@ -16,7 +16,7 @@
 
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import { beginAriaCaches, endAriaCaches, getAriaRole, getElementAccessibleName, isElementIgnoredForAria } from './roleUtils';
-import { isElementVisible } from './domUtils';
+import { isElementVisible, isElementStyleVisibilityVisible } from './domUtils';
 
 type AriaNode = {
   role: string;
@@ -59,11 +59,7 @@ export function generateAriaTree(rootElement: Element): AriaNode {
       return;
 
     const visible = isElementVisible(element);
-    const hasVisibleChildren = element.checkVisibility({
-      opacityProperty: true,
-      visibilityProperty: true,
-      contentVisibilityAuto: true
-    });
+    const hasVisibleChildren = isElementStyleVisibilityVisible(element);
 
     if (!hasVisibleChildren)
       return;
