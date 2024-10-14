@@ -41,13 +41,11 @@ export const Recorder: React.FC<RecorderProps> = ({
   log,
   mode,
 }) => {
-  const [fileId, setFileId] = React.useState<string | undefined>();
+  const [selectedFileId, setSelectedFileId] = React.useState<string | undefined>();
+  const [runningFileId, setRunningFileId] = React.useState<string | undefined>();
   const [selectedTab, setSelectedTab] = React.useState<string>('log');
 
-  React.useEffect(() => {
-    if (!fileId && sources.length > 0)
-      setFileId(sources[0].id);
-  }, [fileId, sources]);
+  const fileId = selectedFileId || runningFileId || sources[0]?.id;
 
   const source = React.useMemo(() => {
     if (fileId) {
@@ -66,7 +64,7 @@ export const Recorder: React.FC<RecorderProps> = ({
     setLocator(asLocator(language, selector));
   };
 
-  window.playwrightSetFile = setFileId;
+  window.playwrightSetRunningFile = setRunningFileId;
 
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   React.useLayoutEffect(() => {
@@ -134,19 +132,19 @@ export const Recorder: React.FC<RecorderProps> = ({
       <ToolbarButton icon='files' title='Copy' disabled={!source || !source.text} onClick={() => {
         copy(source.text);
       }}></ToolbarButton>
-      <ToolbarButton icon='debug-continue' title='Resume (F8)' disabled={!paused} onClick={() => {
+      <ToolbarButton icon='debug-continue' title='Resume (F8)' ariaLabel='Resume' disabled={!paused} onClick={() => {
         window.dispatch({ event: 'resume' });
       }}></ToolbarButton>
-      <ToolbarButton icon='debug-pause' title='Pause (F8)' disabled={paused} onClick={() => {
+      <ToolbarButton icon='debug-pause' title='Pause (F8)' ariaLabel='Pause' disabled={paused} onClick={() => {
         window.dispatch({ event: 'pause' });
       }}></ToolbarButton>
-      <ToolbarButton icon='debug-step-over' title='Step over (F10)' disabled={!paused} onClick={() => {
+      <ToolbarButton icon='debug-step-over' title='Step over (F10)' ariaLabel='Step over' disabled={!paused} onClick={() => {
         window.dispatch({ event: 'step' });
       }}></ToolbarButton>
       <div style={{ flex: 'auto' }}></div>
       <div>Target:</div>
       <SourceChooser fileId={fileId} sources={sources} setFileId={fileId => {
-        setFileId(fileId);
+        setSelectedFileId(fileId);
         window.dispatch({ event: 'fileChanged', params: { file: fileId } });
       }} />
       <ToolbarButton icon='clear-all' title='Clear' disabled={!source || !source.text} onClick={() => {
