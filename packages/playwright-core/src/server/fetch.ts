@@ -302,6 +302,7 @@ export abstract class APIRequestContext extends SdkObject {
       const requestOptions = { ...options, agent };
 
       const startAt = monotonicTime();
+      let reusedSocketAt: number | undefined;
       let dnsLookupAt: number | undefined;
       let tcpConnectionAt: number | undefined;
       let tlsHandshakeAt: number | undefined;
@@ -319,14 +320,15 @@ export abstract class APIRequestContext extends SdkObject {
         const notifyRequestFinished = (body?: Buffer) => {
           const endAt = monotonicTime();
           // spec: http://www.softwareishard.com/blog/har-12-spec/#timings
+          const connectEnd = tlsHandshakeAt ?? tcpConnectionAt;
           const timings: har.Timings = {
             send: requestFinishAt! - startAt,
             wait: responseAt - requestFinishAt!,
             receive: endAt - responseAt,
             dns: dnsLookupAt ? dnsLookupAt - startAt : -1,
-            connect: (tlsHandshakeAt ?? tcpConnectionAt!) - startAt, // "If [ssl] is defined then the time is also included in the connect field "
+            connect: connectEnd ? connectEnd - startAt : -1, // "If [ssl] is defined then the time is also included in the connect field "
             ssl: tlsHandshakeAt ? tlsHandshakeAt - tcpConnectionAt! : -1,
-            blocked: -1,
+            blocked: reusedSocketAt ? reusedSocketAt - startAt : -1,
           };
 
           const requestFinishedEvent: APIRequestFinishedEvent = {
@@ -489,6 +491,11 @@ export abstract class APIRequestContext extends SdkObject {
       request.on('close', () => eventsHelper.removeEventListeners(listeners));
 
       request.on('socket', socket => {
+        if (request.reusedSocket) {
+          reusedSocketAt = monotonicTime();
+          return;
+        }
+
         // happy eyeballs don't emit lookup and connect events, so we use our custom ones
         const happyEyeBallsTimings = timingForSocket(socket);
         dnsLookupAt = happyEyeBallsTimings.dnsLookupAt;

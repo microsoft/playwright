@@ -877,6 +877,19 @@ it('should include timings when using socks proxy', async ({ contextFactory, ser
   expect(log.entries[0].timings.connect).toBeGreaterThan(0);
 });
 
+it('should not have connect and dns timings when socket is reused', async ({ contextFactory, server }, testInfo) => {
+  const { page, getLog } = await pageWithHar(contextFactory, testInfo);
+  await page.request.get(server.EMPTY_PAGE);
+  await page.request.get(server.EMPTY_PAGE);
+
+  const log = await getLog();
+  expect(log.entries).toHaveLength(2);
+  const request2 = log.entries[1];
+  expect.soft(request2.timings.connect).toBe(-1);
+  expect.soft(request2.timings.dns).toBe(-1);
+  expect.soft(request2.timings.blocked).toBeGreaterThan(0);
+});
+
 it('should include redirects from API request', async ({ contextFactory, server }, testInfo) => {
   server.setRedirect('/redirect-me', '/simple.json');
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
