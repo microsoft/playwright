@@ -31,10 +31,6 @@ export type ReporterDescription = Readonly<
   [string] | [string, any]
 >;
 
-type DeepPartial<T> = {
-  [P in keyof T]?: DeepPartial<T[P]>
-}
-
 type UseOptions<TestArgs, WorkerArgs> = Partial<WorkerArgs> & Partial<TestArgs>;
 
 /**
