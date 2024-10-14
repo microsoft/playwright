@@ -33,24 +33,19 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
     super(scope, tracing, 'Tracing', {});
   }
 
-  // async start(options: TracerOptions) {
   async tracingStart(params: channels.TracingTracingStartParams): Promise<channels.TracingTracingStartResult> {
     await this._object.start(params);
   }
 
-  // async startChunk(options: { name?: string, title?: string } = {}): Promise<{ traceName: string }> {
   async tracingStartChunk(params: channels.TracingTracingStartChunkParams): Promise<channels.TracingTracingStartChunkResult> {
     return await this._object.startChunk(params);
   }
 
-
-  // async group(name: string, options: { location?: string } = {}): Promise<void> {
   async tracingGroup(params: channels.TracingTracingGroupParams): Promise<channels.TracingTracingGroupResult> {
     const { name, options } = params;
     await this._object.group(name, options);
   }
 
-  // async groupEnd(): Promise<void> {
   async tracingGroupEnd(params: channels.TracingTracingGroupEndParams): Promise<channels.TracingTracingGroupEndResult> {
     await this._object.groupEnd();
   }
