@@ -219,7 +219,7 @@ export const ScreenshotView: React.FunctionComponent<{
     {screencastFrame && (
       <>
         {point && <ClickPointer point={point} />}
-        <img alt={`Screenshot of ${action?.apiName}`} src={`sha1/${screencastFrame.sha1}`} width={screencastFrame.width} height={screencastFrame.height} />
+        <img alt={`Screenshot of ${action?.apiName}`} src={`sha1/${screencastFrame.sha1}`} width={screencastFrame.width} height={screencastFrame.height} draggable={false} />
       </>
     )}
   </SnapshotWrapper>;
