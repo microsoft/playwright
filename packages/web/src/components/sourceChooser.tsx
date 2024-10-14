@@ -22,7 +22,7 @@ export const SourceChooser: React.FC<{
   fileId: string | undefined,
   setFileId: (fileId: string) => void,
 }> = ({ sources, fileId, setFileId }) => {
-  return <select className='source-chooser' hidden={!sources.length} value={fileId} onChange={event => {
+  return <select className='source-chooser' hidden={!sources.length} title='Source chooser' value={fileId} onChange={event => {
     setFileId(event.target.selectedOptions[0].value);
   }}>{renderSourceOptions(sources)}</select>;
 };
@@ -33,17 +33,21 @@ function renderSourceOptions(sources: Source[]): React.ReactNode {
     <option key={source.id} value={source.id}>{transformTitle(source.label)}</option>
   );
 
-  const hasGroup = sources.some(s => s.group);
-  if (hasGroup) {
-    const groups = new Set(sources.map(s => s.group));
-    return [...groups].filter(Boolean).map(group => (
-      <optgroup label={group} key={group}>
-        {sources.filter(s => s.group === group).map(source => renderOption(source))}
-      </optgroup>
-    ));
+  const sourcesByGroups = new Map<string, Source[]>();
+  for (const source of sources) {
+    let list = sourcesByGroups.get(source.group || 'Debugger');
+    if (!list) {
+      list = [];
+      sourcesByGroups.set(source.group || 'Debugger', list);
+    }
+    list.push(source);
   }
 
-  return sources.map(source => renderOption(source));
+  return [...sourcesByGroups.entries()].map(([group, sources]) => (
+    <optgroup label={group} key={group}>
+      {sources.filter(s => (s.group || 'Debugger') === group).map(source => renderOption(source))}
+    </optgroup>
+  ));
 }
 
 export function emptySource(): Source {
