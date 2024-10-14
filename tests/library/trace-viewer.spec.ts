@@ -62,6 +62,15 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   }
   await doClick();
 
+  await context.tracing.group('High-level Group');
+  await context.tracing.group('First Mid-level Group', { location: { file: `${__dirname}/tracing.spec.ts`, line: 100, column: 10 } });
+  await page.locator('button >> nth=0').click();
+  await context.tracing.groupEnd();
+  await context.tracing.group('Second Mid-level Group', { location: { file: __filename } });
+  await expect(page.getByText('Click')).toBeVisible();
+  await context.tracing.groupEnd();
+  await context.tracing.groupEnd();
+
   await Promise.all([
     page.waitForNavigation(),
     page.waitForResponse(server.PREFIX + '/frames/frame.html'),
@@ -102,6 +111,67 @@ test('should open trace viewer on specific host', async ({ showTraceViewer }, te
   await expect(traceViewer.page).toHaveURL(/127.0.0.1/);
 });
 
+test('should show groups as tree in trace viewer', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer([traceFile]);
+  await expect(traceViewer.actionTitles).toHaveText([
+    /browserContext.newPage/,
+    /page.gotodata:text\/html,<!DOCTYPE html><html>Hello world<\/html>/,
+    /page.setContent/,
+    /expect.toHaveTextlocator\('button'\)/,
+    /expect.toBeHiddengetByTestId\('amazing-btn'\)/,
+    /expect.toBeHiddengetByTestId\(\/amazing-btn-regex\/\)/,
+    /page.evaluate/,
+    /page.evaluate/,
+    /locator.clickgetByText\('Click'\)/,
+    /High-level Group/,
+    /page.waitForNavigation/,
+    /page.waitForResponse/,
+    /page.waitForTimeout/,
+    /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html/,
+    /page.setViewportSize/,
+  ]);
+  await traceViewer.actionsTree.locator('.list-view-entry:has-text("High-level Group") .codicon-chevron-right').click();
+  await traceViewer.actionsTree.locator('.list-view-entry:has-text("First Mid-level Group") .codicon-chevron-right').click();
+  await traceViewer.actionsTree.locator('.list-view-entry:has-text("Second Mid-level Group") .codicon-chevron-right').click();
+  await expect(traceViewer.actionTitles).toHaveText([
+    /browserContext.newPage/,
+    /page.gotodata:text\/html,<!DOCTYPE html><html>Hello world<\/html>/,
+    /page.setContent/,
+    /expect.toHaveTextlocator\('button'\)/,
+    /expect.toBeHiddengetByTestId\('amazing-btn'\)/,
+    /expect.toBeHiddengetByTestId\(\/amazing-btn-regex\/\)/,
+    /page.evaluate/,
+    /page.evaluate/,
+    /locator.clickgetByText\('Click'\)/,
+    /High-level Group/,
+    /First Mid-level Group/,
+    /locator\.clicklocator\('button'\)\.first\(\)/,
+    /Second Mid-level Group/,
+    /expect\.toBeVisiblegetByText\('Click'\)/,
+    /page.waitForNavigation/,
+    /page.waitForResponse/,
+    /page.waitForTimeout/,
+    /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html/,
+    /page.setViewportSize/,
+  ]);
+  await expect(traceViewer.actionsTree.locator('.list-view-entry:has-text("First Mid-level Group") > .list-view-indent')).toHaveCount(1);
+  await expect(traceViewer.actionsTree.locator('.list-view-entry:has-text("Second Mid-level Group") > .list-view-indent')).toHaveCount(1);
+  await expect(traceViewer.actionsTree.locator('.list-view-entry:has-text("locator.clicklocator(\'button\').first()") > .list-view-indent')).toHaveCount(2);
+  await expect(traceViewer.actionsTree.locator('.list-view-entry:has-text("expect.toBeVisiblegetByText(\'Click\')") > .list-view-indent')).toHaveCount(2);
+
+  await traceViewer.showSourceTab();
+  await traceViewer.selectAction('High-level Group');
+  await expect(traceViewer.sourceCodeTab.locator('.source-tab-file-name')).toHaveAttribute('title', __filename);
+  await expect(traceViewer.sourceCodeTab.locator('.source-line-running')).toHaveText(/\d+\s+await context.tracing.group\('High-level Group'\);/);
+
+  await traceViewer.selectAction('First Mid-level Group');
+  await expect(traceViewer.sourceCodeTab.locator('.source-tab-file-name')).toHaveAttribute('title', `${__dirname}/tracing.spec.ts`);
+
+  await traceViewer.selectAction('Second Mid-level Group');
+  await expect(traceViewer.sourceCodeTab.getByText(/Licensed under the Apache License/)).toBeVisible();
+});
+
+
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
   await expect(traceViewer.actionTitles).toHaveText([
@@ -114,6 +184,7 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /page.evaluate/,
     /page.evaluate/,
     /locator.clickgetByText\('Click'\)/,
+    /High-level Group/,
     /page.waitForNavigation/,
     /page.waitForResponse/,
     /page.waitForTimeout/,
