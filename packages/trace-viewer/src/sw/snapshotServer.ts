@@ -43,7 +43,7 @@ export class SnapshotServer {
     this._pages = new Map(contextEntries.flatMap(c => c.pages.map(p => [p.pageId, p])));
   }
 
-  serveSnapshot(pathname: string, searchParams: URLSearchParams, snapshotUrl: string, swScope: string, traceUrl: string): Response {
+  serveSnapshot(pathname: string, searchParams: URLSearchParams, snapshotUrl: string, swScope: string): Response {
     const snapshot = this._snapshot(pathname.substring('/snapshot'.length), searchParams);
     if (!snapshot)
       return new Response(null, { status: 404 });

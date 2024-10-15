@@ -123,7 +123,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
       if (!snapshotServer)
         return new Response(null, { status: 404 });
-      const response = snapshotServer.serveSnapshot(relativePath, url.searchParams, url.href, self.registration.scope, traceUrl!);
+      const response = snapshotServer.serveSnapshot(relativePath, url.searchParams, url.href, self.registration.scope);
       if (isDeployedAsHttps)
         response.headers.set('Content-Security-Policy', 'upgrade-insecure-requests');
       return response;
