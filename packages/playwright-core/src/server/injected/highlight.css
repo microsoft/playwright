@@ -220,6 +220,11 @@ x-pw-tool-item.value > x-div {
   clip-path: url(#icon-symbol-constant);
 }
 
+x-pw-tool-item.snapshot > x-div {
+  /* codicon: eye */
+  clip-path: url(#icon-gist);
+}
+
 x-pw-tool-item.accept > x-div {
   clip-path: url(#icon-check);
 }

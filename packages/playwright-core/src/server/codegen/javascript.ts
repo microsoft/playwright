@@ -117,6 +117,8 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         const assertion = action.value ? `toHaveValue(${quote(action.value)})` : `toBeEmpty()`;
         return `${this._isTest ? '' : '// '}await expect(${subject}.${this._asLocator(action.selector)}).${assertion};`;
       }
+      case 'assertSnapshot':
+        return `${this._isTest ? '' : '// '}await expect(${subject}.${this._asLocator(action.selector)}).toMatchAriaSnapshot(${quoteMultiline(action.snapshot)});`;
     }
   }
 
@@ -228,11 +230,13 @@ export class JavaScriptFormatter {
   }
 
   prepend(text: string) {
-    this._lines = text.trim().split('\n').map(line => line.trim()).concat(this._lines);
+    const trim = isMultilineString(text) ? (line: string) => line : (line: string) => line.trim();
+    this._lines = text.trim().split('\n').map(trim).concat(this._lines);
   }
 
   add(text: string) {
-    this._lines.push(...text.trim().split('\n').map(line => line.trim()));
+    const trim = isMultilineString(text) ? (line: string) => line : (line: string) => line.trim();
+    this._lines.push(...text.trim().split('\n').map(trim));
   }
 
   newLine() {
@@ -268,4 +272,15 @@ function wrapWithStep(description: string | undefined, body: string) {
   return description ? `await test.step(\`${description}\`, async () => {
 ${body}
 });` : body;
+}
+
+export function quoteMultiline(text: string, indent = '  ') {
+  const lines = text.split('\n');
+  if (lines.length === 1)
+    return '`' + text.replace(/`/g, '\\`').replace(/\${/g, '\\${') + '`';
+  return '`\n' + lines.map(line => indent + line.replace(/`/g, '\\`').replace(/\${/g, '\\${')).join('\n') + `\n${indent}\``;
+}
+
+function isMultilineString(text: string) {
+  return text.match(/`[\S\s]*`/)?.[0].includes('\n');
 }
