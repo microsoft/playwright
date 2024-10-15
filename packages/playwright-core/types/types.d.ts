@@ -3501,13 +3501,31 @@ export interface Page {
      * element, the call throws an exception.
      */
     strict?: boolean;
+  }): Promise<boolean>;
+  /**
+   * **NOTE** Use locator-based [locator.isHidden([options])](https://playwright.dev/docs/api/class-locator#locator-is-hidden)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
+   *
+   * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).
+   * [`selector`](https://playwright.dev/docs/api/class-page#page-is-hidden-option-selector) that does not match any
+   * elements is considered hidden.
+   * @deprecated The `timeout` option is ignored.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
+   * used.
+   * @param options
+   */
+  isHidden(selector: string, options: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
 
     /**
-     * @deprecated This option is ignored.
      * [page.isHidden(selector[, options])](https://playwright.dev/docs/api/class-page#page-is-hidden) does not wait for
      * the element to become hidden and returns immediately.
      */
-    timeout?: number;
+    timeout: number;
   }): Promise<boolean>;
 
   /**
@@ -3527,13 +3545,30 @@ export interface Page {
      * element, the call throws an exception.
      */
     strict?: boolean;
-
+  }) 
+   /**
+   * **NOTE** Use locator-based [locator.isVisible([options])](https://playwright.dev/docs/api/class-locator#locator-is-visible)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
+   *
+   * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible).
+   * [`selector`](https://playwright.dev/docs/api/class-page#page-is-visible-option-selector) that does not match any
+   * elements is considered not visible.
+   * @deprecated The `timeout` option is ignored.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
+   * used.
+   * @param options
+   */
+  isVisible(selector: string, options: {
     /**
-     * @deprecated This option is ignored.
-     * [page.isVisible(selector[, options])](https://playwright.dev/docs/api/class-page#page-is-visible) does not wait for
-     * the element to become visible and returns immediately.
-     */
-    timeout?: number;
+      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+      * element, the call throws an exception.
+      */
+    strict?: boolean;
+    /**
+      * [page.isVisible(selector[, options])](https://playwright.dev/docs/api/class-page#page-is-visible) does not wait for
+      * the element to become visible and returns immediately.
+      */
+    timeout: number;
   }): Promise<boolean>;
 
   /**
@@ -7197,13 +7232,31 @@ export interface Frame {
      * element, the call throws an exception.
      */
     strict?: boolean;
+  }): Promise<boolean>;
+  /**
+   * **NOTE** Use locator-based [locator.isHidden([options])](https://playwright.dev/docs/api/class-locator#locator-is-hidden)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
+   *
+   * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).
+   * [`selector`](https://playwright.dev/docs/api/class-frame#frame-is-hidden-option-selector) that does not match any
+   * elements is considered hidden.
+   * @deprecated The `timeout` option is ignored.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
+   * used.
+   * @param options
+   */
+  isHidden(selector: string, options: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
 
     /**
-     * @deprecated This option is ignored.
      * [frame.isHidden(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-is-hidden) does not wait
      * for the element to become hidden and returns immediately.
      */
-    timeout?: number;
+    timeout: number;
   }): Promise<boolean>;
 
   /**
@@ -7223,13 +7276,31 @@ export interface Frame {
      * element, the call throws an exception.
      */
     strict?: boolean;
+  }): Promise<boolean>;
+  /**
+   * **NOTE** Use locator-based [locator.isVisible([options])](https://playwright.dev/docs/api/class-locator#locator-is-visible)
+   * instead. Read more about [locators](https://playwright.dev/docs/locators).
+   *
+   * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible).
+   * [`selector`](https://playwright.dev/docs/api/class-frame#frame-is-visible-option-selector) that does not match any
+   * elements is considered not visible.
+   * @deprecated The `timeout` option is ignored.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
+   * used.
+   * @param options
+   */
+  isVisible(selector: string, options: {
+    /**
+     * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
+     * element, the call throws an exception.
+     */
+    strict?: boolean;
 
     /**
-     * @deprecated This option is ignored.
      * [frame.isVisible(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-is-visible) does not wait
      * for the element to become visible and returns immediately.
      */
-    timeout?: number;
+    timeout: number;
   }): Promise<boolean>;
 
   /**
@@ -13689,13 +13760,29 @@ export interface Locator {
    *
    * @param options
    */
-  isHidden(options?: {
+  isHidden(): Promise<boolean>;
+  /**
+   * Returns whether the element is hidden, the opposite of [visible](https://playwright.dev/docs/actionability#visible).
+   *
+   * **NOTE** If you need to assert that element is hidden, prefer
+   * [expect(locator).toBeHidden([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-hidden)
+   * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const hidden = await page.getByRole('button').isHidden();
+   * ```
+   *
+   * @deprecated The `timeout` option is ignored.
+   * @param options
+   */
+  isHidden(options: {
     /**
-     * @deprecated This option is ignored.
      * [locator.isHidden([options])](https://playwright.dev/docs/api/class-locator#locator-is-hidden) does not wait for
      * the element to become hidden and returns immediately.
      */
-    timeout?: number;
+    timeout: number;
   }): Promise<boolean>;
 
   /**
@@ -13713,13 +13800,28 @@ export interface Locator {
    *
    * @param options
    */
-  isVisible(options?: {
+  isVisible(): Promise<boolean>;
+  /**
+   * Returns whether the element is [visible](https://playwright.dev/docs/actionability#visible).
+   *
+   * **NOTE** If you need to assert that element is visible, prefer
+   * [expect(locator).toBeVisible([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-visible)
+   * to avoid flakiness. See [assertions guide](https://playwright.dev/docs/test-assertions) for more details.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const visible = await page.getByRole('button').isVisible();
+   * ```
+   * @deprecated The `timeout` option is ignored.
+   * @param options
+   */
+  isVisible(options: {
     /**
-     * @deprecated This option is ignored.
      * [locator.isVisible([options])](https://playwright.dev/docs/api/class-locator#locator-is-visible) does not wait for
      * the element to become visible and returns immediately.
      */
-    timeout?: number;
+    timeout: number;
   }): Promise<boolean>;
 
   /**
