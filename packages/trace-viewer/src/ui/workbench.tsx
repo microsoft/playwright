@@ -351,8 +351,7 @@ export const Workbench: React.FunctionComponent<{
           openPage={openPage} />}
         sidebar={
           <TabbedPane
-            // Hide settings tab for now, it only includes screenshots as snapshots option which is not ready yet.
-            tabs={(showSettings && false) ? [actionsTab, metadataTab, settingsTab] : [actionsTab, metadataTab]}
+            tabs={showSettings ? [actionsTab, metadataTab, settingsTab] : [actionsTab, metadataTab]}
             selectedTab={selectedNavigatorTab}
             setSelectedTab={setSelectedNavigatorTab}
           />

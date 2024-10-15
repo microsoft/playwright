@@ -1421,7 +1421,7 @@ test('should serve css without content-type', async ({ page, runAndTrace, server
   await expect(snapshotFrame.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)', { timeout: 0 });
 });
 
-test.skip('should allow showing screenshots instead of snapshots', async ({ runAndTrace, page, server }) => {
+test('should allow showing screenshots instead of snapshots', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/one-style.html');
     await page.waitForTimeout(1000); // ensure we could take a screenshot
@@ -1439,7 +1439,7 @@ test.skip('should allow showing screenshots instead of snapshots', async ({ runA
   await expect(screenshot).toBeVisible();
 });
 
-test.skip('should handle case where neither snapshots nor screenshots exist', async ({ runAndTrace, page, server }) => {
+test('should handle case where neither snapshots nor screenshots exist', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/one-style.html');
   }, { snapshots: false, screenshots: false });

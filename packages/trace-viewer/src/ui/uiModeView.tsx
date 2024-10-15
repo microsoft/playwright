@@ -105,6 +105,8 @@ export const UIModeView: React.FC<{}> = ({
   const [showBrowser, setShowBrowser] = React.useState(false);
   const [updateSnapshots, setUpdateSnapshots] = React.useState(false);
   const [darkMode, setDarkMode] = useDarkModeSetting();
+  const [showScreenshot, setShowScreenshot] = useSetting('screenshot-instead-of-snapshot', false);
+
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -520,6 +522,7 @@ export const UIModeView: React.FC<{}> = ({
         </Toolbar>
         {settingsVisible && <SettingsView settings={[
           { value: darkMode, set: setDarkMode, title: 'Dark mode' },
+          { value: showScreenshot, set: setShowScreenshot, title: 'Show screenshot instead of snapshot' },
         ]} />}
       </div>
       }
