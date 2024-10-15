@@ -1439,6 +1439,15 @@ test.skip('should allow showing screenshots instead of snapshots', async ({ runA
   await expect(screenshot).toBeVisible();
 });
 
+test('canvas clipping', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/screenshots/canvas.html');
+    await page.waitForTimeout(1000); // ensure we could take a screenshot
+  });
+
+  await traceViewer.page.pause();
+});
+
 test.skip('should handle case where neither snapshots nor screenshots exist', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/one-style.html');

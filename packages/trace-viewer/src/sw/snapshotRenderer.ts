@@ -299,6 +299,28 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
         }
       }
 
+      const canvases = root.querySelectorAll('canvas');
+      if (canvases.length > 0) {
+        const sha1 = 'page@52b251b4d0b1412c19639922d9b22cb9-1728986751380.jpeg';
+        fetch(`http://[::1]:58477/trace/sha1/${sha1}`).then(response => response.blob()).then(blob => {
+          const img = new Image();
+          img.onload = () => {
+            for (const canvas of canvases) {
+              const context = canvas.getContext('2d')!;
+
+              const boundingRect = canvas.getBoundingClientRect();
+              const xStart = boundingRect.left / window.innerWidth;
+              const yStart = boundingRect.top / window.innerHeight;
+              const xEnd = boundingRect.right / window.innerWidth;
+              const yEnd = boundingRect.bottom / window.innerHeight;
+
+              context.drawImage(img, xStart * img.width, yStart * img.height, (xEnd - xStart) * img.width, (yEnd - yStart) * img.height, 0, 0, canvas.width, canvas.height);
+            }
+          };
+          img.src = URL.createObjectURL(blob);
+        });
+      }
+
       {
         const body = root.querySelector(`body[__playwright_custom_elements__]`);
         if (body && window.customElements) {
