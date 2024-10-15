@@ -8,7 +8,7 @@ Whenever a [`WebSocket`](https://developer.mozilla.org/en-US/docs/Web/API/WebSoc
 By default, the routed WebSocket will not connect to the server. This way, you can mock entire communcation over the WebSocket. Here is an example that responds to a `"request"` with a `"response"`.
 
 ```js
-await page.routeWebSocket('/ws', ws => {
+await page.routeWebSocket('wss://example.com/ws', ws => {
   ws.onMessage(message => {
     if (message === 'request')
       ws.send('response');
@@ -17,7 +17,7 @@ await page.routeWebSocket('/ws', ws => {
 ```
 
 ```java
-page.routeWebSocket("/ws", ws -> {
+page.routeWebSocket("wss://example.com/ws", ws -> {
   ws.onMessage(message -> {
     if ("request".equals(message))
       ws.send("response");
@@ -30,7 +30,7 @@ def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
   if message == "request":
     ws.send("response")
 
-await page.route_web_socket("/ws", lambda ws: ws.on_message(
+await page.route_web_socket("wss://example.com/ws", lambda ws: ws.on_message(
     lambda message: message_handler(ws, message)
 ))
 ```
@@ -40,13 +40,13 @@ def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
   if message == "request":
     ws.send("response")
 
-page.route_web_socket("/ws", lambda ws: ws.on_message(
+page.route_web_socket("wss://example.com/ws", lambda ws: ws.on_message(
     lambda message: message_handler(ws, message)
 ))
 ```
 
 ```csharp
-await page.RouteWebSocketAsync("/ws", ws => {
+await page.RouteWebSocketAsync("wss://example.com/ws", ws => {
   ws.OnMessage(message => {
     if (message == "request")
       ws.Send("response");
@@ -55,6 +55,69 @@ await page.RouteWebSocketAsync("/ws", ws => {
 ```
 
 Since we do not call [`method: WebSocketRoute.connectToServer`] inside the WebSocket route handler, Playwright assumes that WebSocket will be mocked, and opens the WebSocket inside the page automatically.
+
+Here is another example that handles JSON messages:
+
+```js
+await page.routeWebSocket('wss://example.com/ws', ws => {
+  ws.onMessage(message => {
+    const json = JSON.parse(message);
+    if (json.request === 'question')
+      ws.send(JSON.stringify({ response: 'answer' }));
+  });
+});
+```
+
+```java
+page.routeWebSocket("wss://example.com/ws", ws -> {
+  ws.onMessage(message -> {
+    JsonObject json = new JsonParser().parse(message).getAsJsonObject();
+    if ("question".equals(json.get("request").getAsString())) {
+      Map<String, String> result = new HashMap();
+      result.put("response", "answer");
+      ws.send(gson.toJson(result));
+    }
+  });
+});
+```
+
+```python async
+def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
+  json_message = json.loads(message)
+  if json_message["request"] == "question":
+    ws.send(json.dumps({ "response": "answer" }))
+
+await page.route_web_socket("wss://example.com/ws", lambda ws: ws.on_message(
+    lambda message: message_handler(ws, message)
+))
+```
+
+```python sync
+def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
+  json_message = json.loads(message)
+  if json_message["request"] == "question":
+    ws.send(json.dumps({ "response": "answer" }))
+
+page.route_web_socket("wss://example.com/ws", lambda ws: ws.on_message(
+    lambda message: message_handler(ws, message)
+))
+```
+
+```csharp
+await page.RouteWebSocketAsync("wss://example.com/ws", ws => {
+  ws.OnMessage(message => {
+    using var jsonDoc = JsonDocument.Parse(message);
+    JsonElement root = jsonDoc.RootElement;
+    if (root.TryGetProperty("request", out JsonElement requestElement) && requestElement.GetString() == "question")
+    {
+      var response = new Dictionary<string, string> { ["response"] = "answer" };
+      string jsonResponse = JsonSerializer.Serialize(response);
+      ws.Send(jsonResponse);
+    }
+  });
+});
+```
+
 
 **Intercepting**
 
