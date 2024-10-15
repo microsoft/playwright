@@ -508,3 +508,27 @@ test('should throw when connecting twice', async ({ page, server }) => {
   const error = await promise;
   expect(error.message).toContain('Already connected to the server');
 });
+
+test('should work with no trailing slash', async ({ page, server }) => {
+  const log: string[] = [];
+  // No trailing slash!
+  await page.routeWebSocket('ws://localhost:' + server.PORT, ws => {
+    ws.onMessage(message => {
+      log.push(message as string);
+      ws.send('response');
+    });
+  });
+
+  await page.goto('about:blank');
+  await page.evaluate(({ port }) => {
+    window.log = [];
+    // No trailing slash!
+    window.ws = new WebSocket('ws://localhost:' + port);
+    window.ws.addEventListener('message', event => window.log.push(event.data));
+  }, { port: server.PORT });
+
+  await expect.poll(() => page.evaluate(() => window.ws.readyState)).toBe(1);
+  await page.evaluate(() => window.ws.send('query'));
+  await expect.poll(() => log).toEqual(['query']);
+  expect(await page.evaluate(() => window.log)).toEqual(['response']);
+});
