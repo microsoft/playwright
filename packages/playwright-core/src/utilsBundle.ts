@@ -31,6 +31,7 @@ export const PNG: typeof import('../bundles/utils/node_modules/@types/pngjs').PN
 export const program: typeof import('../bundles/utils/node_modules/commander').program = require('./utilsBundleImpl').program;
 export const progress: typeof import('../bundles/utils/node_modules/@types/progress') = require('./utilsBundleImpl').progress;
 export const SocksProxyAgent: typeof import('../bundles/utils/node_modules/socks-proxy-agent').SocksProxyAgent = require('./utilsBundleImpl').SocksProxyAgent;
+export const yaml: typeof import('../bundles/utils/node_modules/yaml') = require('./utilsBundleImpl').yaml;
 export const ws: typeof import('../bundles/utils/node_modules/@types/ws') = require('./utilsBundleImpl').ws;
 export const wsServer: typeof import('../bundles/utils/node_modules/@types/ws').WebSocketServer = require('./utilsBundleImpl').wsServer;
 export const wsReceiver = require('./utilsBundleImpl').wsReceiver;
