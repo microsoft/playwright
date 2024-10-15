@@ -18,6 +18,16 @@ import type { URLSearchParams } from 'url';
 import type { SnapshotRenderer } from './snapshotRenderer';
 import type { SnapshotStorage } from './snapshotStorage';
 import type { ResourceSnapshot } from '@trace/snapshot';
+import type { ContextEntry, PageEntry } from '../types/entries';
+
+function findClosest<T>(items: T[], metric: (v: T) => number, target: number) {
+  return items.find((item, index) => {
+    if (index === items.length - 1)
+      return true;
+    const next = items[index + 1];
+    return Math.abs(metric(item) - target) < Math.abs(metric(next) - target);
+  });
+}
 
 type Point = { x: number, y: number };
 
@@ -25,19 +35,46 @@ export class SnapshotServer {
   private _snapshotStorage: SnapshotStorage;
   private _resourceLoader: (sha1: string) => Promise<Blob | undefined>;
   private _snapshotIds = new Map<string, SnapshotRenderer>();
+  private _pages: Map<string, PageEntry>;
 
-  constructor(snapshotStorage: SnapshotStorage, resourceLoader: (sha1: string) => Promise<Blob | undefined>) {
+  constructor(snapshotStorage: SnapshotStorage, resourceLoader: (sha1: string) => Promise<Blob | undefined>, contextEntries: ContextEntry[]) {
     this._snapshotStorage = snapshotStorage;
     this._resourceLoader = resourceLoader;
+    this._pages = new Map(contextEntries.flatMap(c => c.pages.map(p => [p.pageId, p])));
   }
 
-  serveSnapshot(pathname: string, searchParams: URLSearchParams, snapshotUrl: string): Response {
+  serveSnapshot(pathname: string, searchParams: URLSearchParams, snapshotUrl: string, swScope: string, traceUrl: string): Response {
     const snapshot = this._snapshot(pathname.substring('/snapshot'.length), searchParams);
     if (!snapshot)
       return new Response(null, { status: 404 });
-    const renderedSnapshot = snapshot.render();
+    const renderedSnapshot = snapshot.render(swScope, traceUrl);
     this._snapshotIds.set(snapshotUrl, snapshot);
     return new Response(renderedSnapshot.html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  }
+
+  async serveClosestScreenshot(pathname: string, searchParams: URLSearchParams): Promise<Response> {
+    const snapshotRenderer = this._snapshot(pathname.substring('/screenshot'.length), searchParams);
+    if (!snapshotRenderer)
+      return new Response(undefined, { status: 404 });
+
+    const { wallTime, timestamp, pageId } = snapshotRenderer.snapshot();
+    const page = this._pages.get(pageId);
+    if (!page)
+      return new Response(undefined, { status: 404 });
+
+    let sha1 = undefined;
+    if (wallTime && page.screencastFrames[0]?.frameSwapWallTime)
+      sha1 = findClosest(page.screencastFrames, frame => frame.frameSwapWallTime!, wallTime)?.sha1;
+    sha1 ??= findClosest(page.screencastFrames, frame => frame.timestamp, timestamp)?.sha1;
+
+    if (!sha1)
+      return new Response(undefined, { status: 404 });
+
+    const blob = await this._resourceLoader(sha1);
+    if (!blob)
+      return new Response(undefined, { status: 404 });
+
+    return new Response(blob);
   }
 
   serveSnapshotInfo(pathname: string, searchParams: URLSearchParams): Response {

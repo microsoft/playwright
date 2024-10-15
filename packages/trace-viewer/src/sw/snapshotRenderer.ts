@@ -78,7 +78,7 @@ export class SnapshotRenderer {
     return this._snapshots[this._index].viewport;
   }
 
-  render(): RenderedFrameSnapshot {
+  render(swScope: string, traceURL: string): RenderedFrameSnapshot {
     const result: string[] = [];
     const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined, parentAttrs: [string, string][] | undefined) => {
       // Text node.
@@ -154,12 +154,16 @@ export class SnapshotRenderer {
     const html = lruCache(this, () => {
       visit(snapshot.html, this._index, undefined, undefined);
 
+      const screenshotURL = new URL(`./screenshot/${snapshot.pageId}`, swScope);
+      screenshotURL.searchParams.set('trace', traceURL);
+      screenshotURL.searchParams.set('name', this.snapshotName!);
+
       const html = result.join('');
       // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
       const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` : '';
       return prefix + [
         '<style>*,*::before,*::after { visibility: hidden }</style>',
-        `<script>${snapshotScript(this._callId, this.snapshotName)}</script>`
+        `<script>${snapshotScript(screenshotURL.toString(), this._callId, this.snapshotName)}</script>`
       ].join('') + html;
     });
 
@@ -242,8 +246,8 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
   return (snapshot as any)._nodes;
 }
 
-function snapshotScript(...targetIds: (string | undefined)[]) {
-  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, ...targetIds: (string | undefined)[]) {
+function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string | undefined)[]) {
+  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, screenshotURL: string | undefined, ...targetIds: (string | undefined)[]) {
     const kPointerWarningTitle = 'Recorded click position in absolute coordinates did not' +
         ' match the center of the clicked element. This is likely due to a difference between' +
         ' the test runner and the trace viewer operating systems.';
@@ -300,9 +304,8 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
       }
 
       const canvases = root.querySelectorAll('canvas');
-      if (canvases.length > 0) {
-        const sha1 = 'page@52b251b4d0b1412c19639922d9b22cb9-1728986751380.jpeg';
-        fetch(`http://[::1]:58477/trace/sha1/${sha1}`).then(response => response.blob()).then(blob => {
+      if (canvases.length > 0 && screenshotURL) {
+        fetch(screenshotURL).then(response => response.blob()).then(blob => {
           const img = new Image();
           img.onload = () => {
             for (const canvas of canvases) {
@@ -423,7 +426,7 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
     window.addEventListener('DOMContentLoaded', onDOMContentLoaded);
   }
 
-  return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()}${targetIds.map(id => `, "${id}"`).join('')})`;
+  return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()}, ${JSON.stringify(screenshotURL)}${targetIds.map(id => `, "${id}"`).join('')})`;
 }
 
 

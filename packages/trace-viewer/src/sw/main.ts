@@ -64,7 +64,7 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
       throw new Error(`Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.`);
     throw new Error(`Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`);
   }
-  const snapshotServer = new SnapshotServer(traceModel.storage(), sha1 => traceModel.resourceForSha1(sha1));
+  const snapshotServer = new SnapshotServer(traceModel.storage(), sha1 => traceModel.resourceForSha1(sha1), traceModel.contextEntries);
   loadedTraces.set(traceUrl, { traceModel, snapshotServer });
   return traceModel;
 }
@@ -123,10 +123,17 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
       if (!snapshotServer)
         return new Response(null, { status: 404 });
-      const response = snapshotServer.serveSnapshot(relativePath, url.searchParams, url.href);
+      const response = snapshotServer.serveSnapshot(relativePath, url.searchParams, url.href, self.registration.scope, traceUrl!);
       if (isDeployedAsHttps)
         response.headers.set('Content-Security-Policy', 'upgrade-insecure-requests');
       return response;
+    }
+
+    if (relativePath.startsWith('/screenshot/')) {
+      const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
+      if (!snapshotServer)
+        return new Response(null, { status: 404 });
+      return snapshotServer.serveClosestScreenshot(relativePath, url.searchParams);
     }
 
     if (relativePath.startsWith('/sha1/')) {
