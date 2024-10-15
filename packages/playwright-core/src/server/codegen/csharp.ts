@@ -146,6 +146,8 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
         const assertion = action.value ? `ToHaveValueAsync(${quote(action.value)})` : `ToBeEmptyAsync()`;
         return `await Expect(${subject}.${this._asLocator(action.selector)}).${assertion};`;
       }
+      case 'assertSnapshot':
+        return `await Expect(${subject}.${this._asLocator(action.selector)}).ToMatchAriaSnapshotAsync(${quote(action.snapshot)});`;
     }
   }
 

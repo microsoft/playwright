@@ -78,7 +78,7 @@ test('should match complex', async ({ page }) => {
 test('should match regex', async ({ page }) => {
   await page.setContent(`<h1>Issues 12</h1>`);
   await expect(page.locator('body')).toMatchAriaSnapshot(`
-    - heading /Issues \\d+/
+    - heading ${/Issues \d+/}
   `);
 });
 
@@ -178,14 +178,17 @@ test('expected formatter', async ({ page }) => {
     - heading "todos"
     - textbox "Wrong text"
   `, { timeout: 1 }).catch(e => e);
-  expect(stripAnsi(error.message)).toContain(`- Expected         - 3
+
+  expect(stripAnsi(error.message)).toContain(`
+Locator: locator('body')
+- Expected         - 4
 + Received string  + 3
 
 -
-+ - :
-+   - banner:
-      - heading "todos"
++ - banner:
+-     - heading "todos"
++   - heading "todos"
 -     - textbox "Wrong text"
 -   
-+     - textbox "What needs to be done?"`);
++   - textbox "What needs to be done?"`);
 });

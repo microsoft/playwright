@@ -90,8 +90,7 @@ export function generateAriaTree(rootElement: Element): AriaNode {
   }
 
   beginAriaCaches();
-  const result = toAriaNode(rootElement);
-  const ariaRoot = result?.ariaNode || { role: '' };
+  const ariaRoot: AriaNode = { role: '' };
   try {
     visit(ariaRoot, rootElement);
   } finally {
@@ -218,7 +217,11 @@ function nodeMatches(root: AriaNode, template: AriaTemplateNode): boolean {
 
 export function renderAriaTree(ariaNode: AriaNode): string {
   const lines: string[] = [];
-  const visit = (ariaNode: AriaNode, indent: string) => {
+  const visit = (ariaNode: AriaNode | string, indent: string) => {
+    if (typeof ariaNode === 'string') {
+      lines.push(indent + '- text: ' + escapeYamlString(ariaNode));
+      return;
+    }
     let line = `${indent}- ${ariaNode.role}`;
     if (ariaNode.name)
       line += ` ${escapeWithQuotes(ariaNode.name, '"')}`;
@@ -231,14 +234,16 @@ export function renderAriaTree(ariaNode: AriaNode): string {
       return;
     }
     lines.push(line + (ariaNode.children ? ':' : ''));
-    for (const child of ariaNode.children || []) {
-      if (typeof child === 'string')
-        lines.push(indent + '  - text: ' + escapeYamlString(child));
-      else
-        visit(child, indent + '  ');
-    }
+    for (const child of ariaNode.children || [])
+      visit(child, indent + '  ');
   };
-  visit(ariaNode, '');
+  if (ariaNode.role === '') {
+    // Render fragment.
+    for (const child of ariaNode.children || [])
+      visit(child, '');
+  } else {
+    visit(ariaNode, '');
+  }
   return lines.join('\n');
 }
 
