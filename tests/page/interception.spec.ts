@@ -126,6 +126,7 @@ it('should intercept worker requests when enabled after worker creation', {
 }, async ({ page, server, isAndroid, browserName, browserMajorVersion }) => {
   it.skip(isAndroid);
   it.skip(browserName === 'chromium' && browserMajorVersion < 130, 'fixed in Chromium 130');
+  it.fixme(browserName === 'chromium', 'requires PlzDedicatedWorker to be enabled');
 
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/data_for_worker', (req, res) => res.end('failed to intercept'));
