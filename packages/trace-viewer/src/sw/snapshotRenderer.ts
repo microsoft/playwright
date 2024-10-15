@@ -78,7 +78,7 @@ export class SnapshotRenderer {
     return this._snapshots[this._index].viewport;
   }
 
-  render(swScope: string, traceURL: string): RenderedFrameSnapshot {
+  render(screenshotUrl: string | undefined): RenderedFrameSnapshot {
     const result: string[] = [];
     const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined, parentAttrs: [string, string][] | undefined) => {
       // Text node.
@@ -154,16 +154,12 @@ export class SnapshotRenderer {
     const html = lruCache(this, () => {
       visit(snapshot.html, this._index, undefined, undefined);
 
-      const screenshotURL = new URL(`./screenshot/${snapshot.pageId}`, swScope);
-      screenshotURL.searchParams.set('trace', traceURL);
-      screenshotURL.searchParams.set('name', this.snapshotName!);
-
       const html = result.join('');
       // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
       const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` : '';
       return prefix + [
         '<style>*,*::before,*::after { visibility: hidden }</style>',
-        `<script>${snapshotScript(screenshotURL.toString(), this._callId, this.snapshotName)}</script>`
+        `<script>${snapshotScript(screenshotUrl, this._callId, this.snapshotName)}</script>`
       ].join('') + html;
     });
 

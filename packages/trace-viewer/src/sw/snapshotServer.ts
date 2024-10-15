@@ -47,34 +47,19 @@ export class SnapshotServer {
     const snapshot = this._snapshot(pathname.substring('/snapshot'.length), searchParams);
     if (!snapshot)
       return new Response(null, { status: 404 });
-    const renderedSnapshot = snapshot.render(swScope, traceUrl);
+
+    let screenshotUrl: URL | undefined;
+    const { wallTime, timestamp, pageId } = snapshot.snapshot();
+    const page = this._pages.get(pageId);
+    if (page) {
+      const closestFrame = (wallTime && page.screencastFrames[0]?.frameSwapWallTime) ? findClosest(page.screencastFrames, frame => frame.frameSwapWallTime!, wallTime) : findClosest(page.screencastFrames, frame => frame.timestamp, timestamp);
+      if (closestFrame)
+        screenshotUrl = new URL(`./sha1/${closestFrame.sha1}`, swScope);
+    }
+
+    const renderedSnapshot = snapshot.render(screenshotUrl?.toString());
     this._snapshotIds.set(snapshotUrl, snapshot);
     return new Response(renderedSnapshot.html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
-  }
-
-  async serveClosestScreenshot(pathname: string, searchParams: URLSearchParams): Promise<Response> {
-    const snapshotRenderer = this._snapshot(pathname.substring('/screenshot'.length), searchParams);
-    if (!snapshotRenderer)
-      return new Response(undefined, { status: 404 });
-
-    const { wallTime, timestamp, pageId } = snapshotRenderer.snapshot();
-    const page = this._pages.get(pageId);
-    if (!page)
-      return new Response(undefined, { status: 404 });
-
-    let sha1 = undefined;
-    if (wallTime && page.screencastFrames[0]?.frameSwapWallTime)
-      sha1 = findClosest(page.screencastFrames, frame => frame.frameSwapWallTime!, wallTime)?.sha1;
-    sha1 ??= findClosest(page.screencastFrames, frame => frame.timestamp, timestamp)?.sha1;
-
-    if (!sha1)
-      return new Response(undefined, { status: 404 });
-
-    const blob = await this._resourceLoader(sha1);
-    if (!blob)
-      return new Response(undefined, { status: 404 });
-
-    return new Response(blob);
   }
 
   serveSnapshotInfo(pathname: string, searchParams: URLSearchParams): Response {
