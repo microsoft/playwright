@@ -305,23 +305,21 @@ function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string
 
       const canvases = root.querySelectorAll('canvas');
       if (canvases.length > 0 && screenshotURL) {
-        fetch(screenshotURL).then(response => response.blob()).then(blob => {
-          const img = new Image();
-          img.onload = () => {
-            for (const canvas of canvases) {
-              const context = canvas.getContext('2d')!;
+        const img = new Image();
+        img.onload = () => {
+          for (const canvas of canvases) {
+            const context = canvas.getContext('2d')!;
 
-              const boundingRect = canvas.getBoundingClientRect();
-              const xStart = boundingRect.left / window.innerWidth;
-              const yStart = boundingRect.top / window.innerHeight;
-              const xEnd = boundingRect.right / window.innerWidth;
-              const yEnd = boundingRect.bottom / window.innerHeight;
+            const boundingRect = canvas.getBoundingClientRect();
+            const xStart = boundingRect.left / window.innerWidth;
+            const yStart = boundingRect.top / window.innerHeight;
+            const xEnd = boundingRect.right / window.innerWidth;
+            const yEnd = boundingRect.bottom / window.innerHeight;
 
-              context.drawImage(img, xStart * img.width, yStart * img.height, (xEnd - xStart) * img.width, (yEnd - yStart) * img.height, 0, 0, canvas.width, canvas.height);
-            }
-          };
-          img.src = URL.createObjectURL(blob);
-        });
+            context.drawImage(img, xStart * img.width, yStart * img.height, (xEnd - xStart) * img.width, (yEnd - yStart) * img.height, 0, 0, canvas.width, canvas.height);
+          }
+        };
+        img.src = screenshotURL;
       }
 
       {
