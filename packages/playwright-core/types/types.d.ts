@@ -15356,7 +15356,7 @@ export interface CDPSession {
  * the WebSocket. Here is an example that responds to a `"request"` with a `"response"`.
  *
  * ```js
- * await page.routeWebSocket('/ws', ws => {
+ * await page.routeWebSocket('wss://example.com/ws', ws => {
  *   ws.onMessage(message => {
  *     if (message === 'request')
  *       ws.send('response');
@@ -15368,6 +15368,18 @@ export interface CDPSession {
  * [webSocketRoute.connectToServer()](https://playwright.dev/docs/api/class-websocketroute#web-socket-route-connect-to-server)
  * inside the WebSocket route handler, Playwright assumes that WebSocket will be mocked, and opens the WebSocket
  * inside the page automatically.
+ *
+ * Here is another example that handles JSON messages:
+ *
+ * ```js
+ * await page.routeWebSocket('wss://example.com/ws', ws => {
+ *   ws.onMessage(message => {
+ *     const json = JSON.parse(message);
+ *     if (json.request === 'question')
+ *       ws.send(JSON.stringify({ response: 'answer' }));
+ *   });
+ * });
+ * ```
  *
  * **Intercepting**
  *
