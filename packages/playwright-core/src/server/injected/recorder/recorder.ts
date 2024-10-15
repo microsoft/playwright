@@ -714,7 +714,7 @@ class TextAssertionTool implements RecorderTool {
         name: 'assertSnapshot',
         selector: this._hoverHighlight.selector,
         signals: [],
-        snapshot: this._recorder.injectedScript.renderedAriaTree(target),
+        snapshot: this._recorder.injectedScript.ariaSnapshot(target),
       };
     } else {
       this._hoverHighlight = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true });

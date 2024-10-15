@@ -789,6 +789,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._delegate.getBoundingBox(this);
   }
 
+  async ariaSnapshot(): Promise<string> {
+    return await this.evaluateInUtility(([injected, element]) => injected.ariaSnapshot(element), {});
+  }
+
   async screenshot(metadata: CallMetadata, options: ScreenshotOptions & TimeoutOptions = {}): Promise<Buffer> {
     const controller = new ProgressController(metadata, this);
     return controller.run(

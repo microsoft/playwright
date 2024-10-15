@@ -1424,6 +1424,13 @@ scheme.FrameAddStyleTagParams = tObject({
 scheme.FrameAddStyleTagResult = tObject({
   element: tChannel(['ElementHandle']),
 });
+scheme.FrameAriaSnapshotParams = tObject({
+  selector: tString,
+  timeout: tOptional(tNumber),
+});
+scheme.FrameAriaSnapshotResult = tObject({
+  snapshot: tString,
+});
 scheme.FrameBlurParams = tObject({
   selector: tString,
   strict: tOptional(tBoolean),
