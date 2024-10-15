@@ -483,6 +483,7 @@ it.describe('pause', () => {
   });
 
   it('should record from debugger', async ({ page, recorderPageGetter }) => {
+    await page.setContent('<body style="width: 100%; height: 100%"></body>');
     const scriptPromise = (async () => {
       await page.pause();
     })();
