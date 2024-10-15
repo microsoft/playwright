@@ -20,4 +20,3 @@ export const sourceMapSupport: typeof import('../bundles/utils/node_modules/@typ
 export const stoppable: typeof import('../bundles/utils/node_modules/@types/stoppable') = require('./utilsBundleImpl').stoppable;
 export const enquirer: typeof import('../bundles/utils/node_modules/enquirer') = require('./utilsBundleImpl').enquirer;
 export const chokidar: typeof import('../bundles/utils/node_modules/chokidar') = require('./utilsBundleImpl').chokidar;
-export const yaml: typeof import('../bundles/utils/node_modules/yaml') = require('./utilsBundleImpl').yaml;

@@ -160,6 +160,15 @@ export class Recorder {
     return this._sources;
   }
 
+  async text(file: string): Promise<string> {
+    const sources: Source[] = await this.recorderPage.evaluate(() => (window as any).playwrightSourcesEchoForTest || []);
+    for (const source of sources) {
+      if (codegenLangId2lang.get(source.id) === file)
+        return source.text;
+    }
+    return '';
+  }
+
   async waitForHighlight(action: () => Promise<void>): Promise<string> {
     await this.page.$$eval('x-pw-highlight', els => els.forEach(e => e.remove()));
     await this.page.$$eval('x-pw-tooltip', els => els.forEach(e => e.remove()));

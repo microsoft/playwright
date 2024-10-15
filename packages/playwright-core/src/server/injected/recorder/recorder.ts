@@ -704,7 +704,7 @@ class TextAssertionTool implements RecorderTool {
           value: (target as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)).value,
         };
       }
-    } if (this._kind === 'snapshot') {
+    } else if (this._kind === 'snapshot') {
       this._hoverHighlight = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true });
       this._hoverHighlight.color = '#8acae480';
       // forTextExpect can update the target, re-highlight it.

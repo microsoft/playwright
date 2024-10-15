@@ -26,6 +26,7 @@ import type { CallMetadata } from '../instrumentation';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
 import { debugAssert } from '../../utils';
+import { parseAriaSnapshot } from '../ariaSnapshot';
 
 export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, BrowserContextDispatcher | PageDispatcher> implements channels.FrameChannel {
   _type_Frame = true;
@@ -258,7 +259,9 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
 
   async expect(params: channels.FrameExpectParams, metadata: CallMetadata): Promise<channels.FrameExpectResult> {
     metadata.potentiallyClosesScope = true;
-    const expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
+    let expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
+    if (params.expression === 'to.match.aria' && expectedValue)
+      expectedValue = parseAriaSnapshot(expectedValue);
     const result = await this._frame.expect(metadata, params.selector, { ...params, expectedValue });
     if (result.received !== undefined)
       result.received = serializeResult(result.received);

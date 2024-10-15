@@ -7644,8 +7644,6 @@ interface LocatorAssertions {
    * **Usage**
    *
    * ```js
-   * import { role as x } from '@playwright/test';
-   * // ...
    * await page.goto('https://demo.playwright.dev/todomvc/');
    * await expect(page.locator('body')).toMatchAriaSnapshot(`
    *   - heading "todos"
