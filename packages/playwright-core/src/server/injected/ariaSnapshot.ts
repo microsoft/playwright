@@ -15,13 +15,13 @@
  */
 
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
-import { beginAriaCaches, endAriaCaches, getAriaRole, getElementAccessibleName, isElementIgnoredForAria } from './roleUtils';
-import { isElementVisible, isElementStyleVisibilityVisible } from './domUtils';
+import { accumulatedElementText, beginAriaCaches, endAriaCaches, getAriaRole, getElementAccessibleName, getPseudoContent, isElementIgnoredForAria } from './roleUtils';
+import { isElementVisible, isElementStyleVisibilityVisible, getElementComputedStyle } from './domUtils';
 
 type AriaNode = {
   role: string;
   name?: string;
-  children?: (AriaNode | string)[];
+  children: (AriaNode | string)[];
 };
 
 export type AriaTemplateNode = {
@@ -38,16 +38,20 @@ export function generateAriaTree(rootElement: Element): AriaNode {
 
     const name = role ? getElementAccessibleName(element, false) || undefined : undefined;
     const isLeaf = leafRoles.has(role);
-    const result: AriaNode = { role, name };
-    if (isLeaf && !name && element.textContent)
-      result.children = [element.textContent];
+    const result: AriaNode = { role, name, children: [] };
+    if (isLeaf && !name) {
+      const text = accumulatedElementText(element);
+      if (text)
+        result.children = [text];
+    }
     return { isLeaf, ariaNode: result };
   };
 
   const visit = (ariaNode: AriaNode, node: Node) => {
     if (node.nodeType === Node.TEXT_NODE && node.nodeValue) {
-      ariaNode.children = ariaNode.children || [];
-      ariaNode.children.push(node.nodeValue);
+      const text = node.nodeValue;
+      if (text)
+        ariaNode.children.push(node.nodeValue || '');
       return;
     }
 
@@ -67,10 +71,8 @@ export function generateAriaTree(rootElement: Element): AriaNode {
     if (visible) {
       const childAriaNode = toAriaNode(element);
       const isHiddenContainer = childAriaNode && hiddenContainerRoles.has(childAriaNode.ariaNode.role);
-      if (childAriaNode && !isHiddenContainer) {
-        ariaNode.children = ariaNode.children || [];
+      if (childAriaNode && !isHiddenContainer)
         ariaNode.children.push(childAriaNode.ariaNode);
-      }
       if (isHiddenContainer || !childAriaNode?.isLeaf)
         processChildNodes(childAriaNode?.ariaNode || ariaNode, element);
     } else {
@@ -79,18 +81,36 @@ export function generateAriaTree(rootElement: Element): AriaNode {
   };
 
   function processChildNodes(ariaNode: AriaNode, element: Element) {
-    // Process light DOM children
-    for (let child = element.firstChild; child; child = child.nextSibling)
-      visit(ariaNode, child);
-    // Process shadow DOM children, if any
-    if (element.shadowRoot) {
-      for (let child = element.shadowRoot.firstChild; child; child = child.nextSibling)
+    // Surround every element with spaces for the sake of concatenated text nodes.
+    const display = getElementComputedStyle(element)?.display || 'inline';
+    const treatAsBlock = (display !== 'inline' || element.nodeName === 'BR') ? ' ' : '';
+    if (treatAsBlock)
+      ariaNode.children.push(treatAsBlock);
+
+    ariaNode.children.push(getPseudoContent(element, '::before'));
+    const assignedNodes = element.nodeName === 'SLOT' ? (element as HTMLSlotElement).assignedNodes() : [];
+    if (assignedNodes.length) {
+      for (const child of assignedNodes)
         visit(ariaNode, child);
+    } else {
+      for (let child = element.firstChild; child; child = child.nextSibling) {
+        if (!(child as Element | Text).assignedSlot)
+          visit(ariaNode, child);
+      }
+      if (element.shadowRoot) {
+        for (let child = element.shadowRoot.firstChild; child; child = child.nextSibling)
+          visit(ariaNode, child);
+      }
     }
+
+    ariaNode.children.push(getPseudoContent(element, '::after'));
+
+    if (treatAsBlock)
+      ariaNode.children.push(treatAsBlock);
   }
 
   beginAriaCaches();
-  const ariaRoot: AriaNode = { role: '' };
+  const ariaRoot: AriaNode = { role: '', children: [] };
   try {
     visit(ariaRoot, rootElement);
   } finally {
@@ -128,7 +148,7 @@ function normalizeStringChildren(rootA11yNode: AriaNode) {
       }
     }
     flushChildren(buffer, normalizedChildren);
-    ariaNode.children = normalizedChildren.length ? normalizedChildren : undefined;
+    ariaNode.children = normalizedChildren.length ? normalizedChildren : [];
   };
   visit(rootA11yNode);
 }
@@ -144,7 +164,7 @@ const leafRoles = new Set([
   'textbox', 'time', 'tooltip'
 ]);
 
-const normalizeWhitespaceWithin = (text: string) => text.replace(/[\s\n]+/g, ' ');
+const normalizeWhitespaceWithin = (text: string) => text.replace(/[\s\t\r\n]+/g, ' ');
 
 function matchesText(text: string | undefined, template: RegExp | string | undefined) {
   if (!template)
@@ -233,7 +253,7 @@ export function renderAriaTree(ariaNode: AriaNode): string {
       lines.push(line);
       return;
     }
-    lines.push(line + (ariaNode.children ? ':' : ''));
+    lines.push(line + (ariaNode.children.length ? ':' : ''));
     for (const child of ariaNode.children || [])
       visit(child, indent + '  ');
   };
