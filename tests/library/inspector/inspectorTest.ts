@@ -180,6 +180,13 @@ export class Recorder {
     return this.page.locator('x-pw-tooltip').textContent();
   }
 
+  async waitForHighlightNoTooltip(action: () => Promise<void>): Promise<string> {
+    await this.page.$$eval('x-pw-highlight', els => els.forEach(e => e.remove()));
+    await action();
+    await this.page.locator('x-pw-highlight').waitFor();
+    return '';
+  }
+
   async waitForActionPerformed(): Promise<{ hovered: string | null, active: string | null }> {
     let callback;
     const listener = async msg => {
@@ -194,8 +201,8 @@ export class Recorder {
     return new Promise(f => callback = f);
   }
 
-  async hoverOverElement(selector: string, options?: { position?: { x: number, y: number }}): Promise<string> {
-    return this.waitForHighlight(async () => {
+  async hoverOverElement(selector: string, options?: { position?: { x: number, y: number }, omitTooltip?: boolean }): Promise<string> {
+    return (options?.omitTooltip ? this.waitForHighlightNoTooltip : this.waitForHighlight).call(this, async () => {
       const box = await this.page.locator(selector).first().boundingBox();
       const offset = options?.position || { x: box.width / 2, y: box.height / 2 };
       await this.page.mouse.move(box.x + offset.x, box.y + offset.y);
