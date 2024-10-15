@@ -15,7 +15,7 @@
  */
 
 import type { Page } from 'playwright-core';
-import { test as it, expect } from './inspectorTest';
+import { test as it, expect, Recorder } from './inspectorTest';
 import { waitForTestLog } from '../../config/utils';
 
 
@@ -491,7 +491,11 @@ it.describe('pause', () => {
     await expect(recorderPage.getByRole('combobox', { name: 'Source chooser' })).toHaveValue(/pause\.spec\.ts/);
     await expect(recorderPage.locator('.source-line-paused')).toHaveText(/await page\.pause\(\)/);
     await recorderPage.getByRole('button', { name: 'Record' }).click();
-    await page.locator('body').click();
+
+    const recorder = new Recorder(page, recorderPage);
+    await recorder.hoverOverElement('body', { omitTooltip: true });
+    await recorder.trustedClick();
+
     await expect(recorderPage.getByRole('combobox', { name: 'Source chooser' })).toHaveValue('javascript');
     await expect(recorderPage.locator('.cm-wrapper')).toContainText(`await page.locator('body').click();`);
     await recorderPage.getByRole('button', { name: 'Resume' }).click();
