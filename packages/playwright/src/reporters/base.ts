@@ -34,6 +34,16 @@ type ErrorDetails = {
   location?: Location;
 };
 
+type TestResultErrorDetails = ErrorDetails & {
+  timeout?: number;
+  matcherName?: string;
+  locator?: string;
+  expected?: string;
+  received?: string;
+  log?: string[];
+  snippet?: string;
+};
+
 type TestSummary = {
   didNotRun: number;
   skipped: number;
@@ -364,8 +374,8 @@ function quotePathIfNeeded(path: string): string {
   return path;
 }
 
-export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string, highlightCode: boolean): ErrorDetails[] {
-  const errorDetails: ErrorDetails[] = [];
+export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string, highlightCode: boolean): TestResultErrorDetails[] {
+  const errorDetails: TestResultErrorDetails[] = [];
 
   if (result.status === 'passed' && test.expectedStatus === 'failed') {
     errorDetails.push({
@@ -383,6 +393,13 @@ export function formatResultFailure(test: TestCase, result: TestResult, initialI
     errorDetails.push({
       message: indent(formattedError.message, initialIndent),
       location: formattedError.location,
+      timeout: error.timeout,
+      matcherName: error.matcherName,
+      locator: error.locator,
+      expected: error.expected,
+      received: error.received,
+      log: error.log,
+      snippet: error.snippet,
     });
   }
   return errorDetails;

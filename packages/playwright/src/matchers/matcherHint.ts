@@ -39,6 +39,10 @@ export type MatcherResult<E, A> = {
   actual?: A;
   log?: string[];
   timeout?: number;
+  locator?: string;
+  printedReceived?: string;
+  printedExpected?: string;
+  printedDiff?: string;
 };
 
 export class ExpectError extends Error {

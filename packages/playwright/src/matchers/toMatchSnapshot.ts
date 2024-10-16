@@ -186,6 +186,7 @@ class SnapshotHelper {
   }
 
   createMatcherResult(message: string, pass: boolean, log?: string[]): ImageMatcherResult {
+
     const unfiltered: ImageMatcherResult = {
       name: this.matcherName,
       expected: this.expectedPath,
@@ -194,6 +195,9 @@ class SnapshotHelper {
       pass,
       message: () => message,
       log,
+      ...(this.locator ? { locator: this.locator.toString() } : {}),
+      printedExpected: this.expectedPath,
+      printedReceived: this.actualPath,
     };
     return Object.fromEntries(Object.entries(unfiltered).filter(([_, v]) => v !== undefined)) as ImageMatcherResult;
   }
