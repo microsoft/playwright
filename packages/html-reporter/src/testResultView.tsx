@@ -19,6 +19,7 @@ import * as React from 'react';
 import { TreeItem } from './treeItem';
 import { msToString } from './utils';
 import { AutoChip } from './chip';
+import * as icons from './icons';
 import { traceImage } from './images';
 import { AttachmentLink, generateTraceUrl } from './links';
 import { statusIcon } from './statusIcon';
@@ -188,23 +189,19 @@ const StepTreeItem: React.FC<{
   depth: number,
   attachments: TestAttachment[],
 }> = ({ step, depth, attachments }) => {
-  if (step.category === 'attach') {
-    const attachmentName = step.title.match(/^attach "(.*)"$/)?.[1];
-    const matchingAttachments = attachments.filter(a => a.name === attachmentName);
-    if (matchingAttachments.length === 1) {
-      const [attachment] = matchingAttachments;
-      return <AttachmentLink attachment={attachment} depth={depth} openInNewTab={getAttachmentCategory(attachment) === 'html'} />;
-    }
-  }
-
   return <TreeItem title={<span>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
     {statusIcon(step.error || step.duration === -1 ? 'failed' : 'passed')}
     <span>{step.title}</span>
     {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
     {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
-  </span>} loadChildren={step.steps.length + (step.snippet ? 1 : 0) ? () => {
+    {step.attachments.length > 0 && <span className='attachments-icon' title={`${step.attachments} attachment${step.attachments.length > 1 ? 's' : ''}`}>{icons.paperclip()}</span>}
+  </span>} loadChildren={step.steps.length + step.attachments.length + (step.snippet ? 1 : 0) ? () => {
     const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} attachments={attachments}></StepTreeItem>);
+    children.unshift(...step.attachments.map(a => {
+      const attachment = attachments[a];
+      return <AttachmentLink key={`attachment-${a}`} attachment={attachment} depth={depth + 1} openInNewTab={getAttachmentCategory(attachment) === 'html'}/>;
+    }));
     if (step.snippet)
       children.unshift(<TestErrorView key='line' error={step.snippet}></TestErrorView>);
     return children;
