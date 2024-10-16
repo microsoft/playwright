@@ -84,12 +84,19 @@ export const TestResultView: React.FC<{
     const screenshots = new Set(attachments.filter(a => getAttachmentCategory(a) === 'screenshot'));
     const videos = attachments.filter(a => getAttachmentCategory(a) === 'video');
     const traces = attachments.filter(a => getAttachmentCategory(a) === 'trace');
-    const htmls = attachments.filter(a => getAttachmentCategory(a) === 'html');
-    const otherAttachments = attachments.filter(a => getAttachmentCategory(a) === 'other');
+
     const diffs = groupImageDiffs(screenshots);
     const errors = classifyErrors(result.errors, diffs);
+
+    const collectAttachments = (step: TestStep): number[] => step.attachments.concat(...step.steps.map(collectAttachments));
+    const stepAttachments = result.steps.flatMap(collectAttachments);
+
+    const topLevelAttachments = result.attachments.filter((_, index) => !stepAttachments.includes(index));
+    const htmls = topLevelAttachments.filter(a => getAttachmentCategory(a) === 'html');
+    const otherAttachments = topLevelAttachments.filter(a => getAttachmentCategory(a) === 'other');
+
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, htmls };
-  }, [result.attachments, result.errors]);
+  }, [result]);
 
   const videoRef = React.useRef<HTMLDivElement>(null);
   const imageDiffRef = React.useRef<HTMLDivElement>(null);
@@ -115,6 +122,8 @@ export const TestResultView: React.FC<{
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps' dataTestId='test-steps-chip'>
       {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} attachments={result.attachments} depth={0}></StepTreeItem>)}
+      {htmls.map((a, i) => <AttachmentLink key={`html-link-${i}`} attachment={a} openInNewTab />)}
+      {otherAttachments.map((a, i) => <AttachmentLink key={`attachment-link-${i}`} attachment={a}/>)}
     </AutoChip>}
 
     {diffs.map((diff, index) =>
@@ -152,7 +161,7 @@ export const TestResultView: React.FC<{
       </div>)}
     </AutoChip>}
 
-    {!!(otherAttachments.length + htmls.length) && <AutoChip header='Attachments'>
+    {!result.steps.length && !!(otherAttachments.length + htmls.length) && <AutoChip header='Attachments'>
       {[...htmls].map((a, i) => (
         <AttachmentLink key={`html-link-${i}`} attachment={a} openInNewTab />)
       )}
@@ -189,6 +198,9 @@ const StepTreeItem: React.FC<{
   depth: number,
   attachments: TestAttachment[],
 }> = ({ step, depth, attachments }) => {
+  if (step.category === 'attach')
+    return;
+
   return <TreeItem title={<span>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
     {statusIcon(step.error || step.duration === -1 ? 'failed' : 'passed')}
@@ -198,7 +210,7 @@ const StepTreeItem: React.FC<{
     {step.attachments.length > 0 && <span className='attachments-icon' title={`${step.attachments} attachment${step.attachments.length > 1 ? 's' : ''}`}>{icons.paperclip()}</span>}
   </span>} loadChildren={step.steps.length + step.attachments.length + (step.snippet ? 1 : 0) ? () => {
     const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} attachments={attachments}></StepTreeItem>);
-    children.unshift(...step.attachments.map(a => {
+    children.push(...step.attachments.map(a => {
       const attachment = attachments[a];
       return <AttachmentLink key={`attachment-${a}`} attachment={attachment} depth={depth + 1} openInNewTab={getAttachmentCategory(attachment) === 'html'}/>;
     }));
