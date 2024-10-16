@@ -347,8 +347,8 @@ export async function loadEmptyConfigForMergeReports() {
 }
 
 export function restartWithExperimentalTsEsm(configFile: string | undefined, force: boolean = false): boolean {
-  // Opt-out switch.
-  if (process.env.PW_DISABLE_TS_ESM)
+  // Opt-out switch. Default to disabled if running in Deno, which supports TS and ESM natively.
+  if (process.env.PW_DISABLE_TS_ESM || typeof process.versions.deno === 'string')
     return false;
 
   // There are two esm loader APIs:
