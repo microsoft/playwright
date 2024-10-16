@@ -21062,16 +21062,17 @@ export interface Tracing {
    * Creates a new inline group in the trace, causing any subsequent calls to belong to this group, until
    * [tracing.groupEnd()](https://playwright.dev/docs/api/class-tracing#tracing-group-end) is called.
    *
-   * Groups can be nested and are similar to [test.step()](https://playwright.dev/docs/api/class-test#test-step) in trace.
-   * However, groups are only visualized in the trace viewer and, unlike test.step, have no effect on the test reports.
+   * Groups can be nested and are similar to `test.step` in trace. However, groups are only visualized in the trace
+   * viewer and, unlike test.step, have no effect on the test reports.
    *
-   * **NOTE** Groups should not be used with Playwright Test! This API is intended for Playwright API users that can not use [test.step()](https://playwright.dev/docs/api/class-test#test-step).
-   *
+   * **NOTE** This API is intended for Playwright API users that can not use `test.step`.
    *
    * **Usage**
+   *
    * ```js
    * await context.tracing.start({ screenshots: true, snapshots: true });
    * await context.tracing.group('Open Playwright.dev');
+   * // All actions between group and groupEnd will be shown in the trace viewer as a group.
    * const page = await context.newPage();
    * await page.goto('https://playwright.dev/');
    * await context.tracing.groupEnd();
@@ -21079,6 +21080,7 @@ export interface Tracing {
    * await page.getByRole('link', { name: 'API' }).click();
    * await page.getByRole('link', { name: 'Tracing' }).click();
    * await context.tracing.groupEnd();
+   * // This Trace will have two groups: 'Open Playwright.dev' and 'Open API Docs of Tracing'.
    * ```
    *
    * @param name Group name shown in the actions tree in trace viewer.
@@ -21086,8 +21088,8 @@ export interface Tracing {
    */
   group(name: string, options?: {
     /**
-     * Specifies a custom location for the group start to be shown in source tab in trace viewer.
-     * By default, location of the tracing.group() call is shown.
+     * Specifies a custom location for the group start to be shown in source tab in trace viewer. By default, location of
+     * the tracing.group() call is shown.
      */
     location?: {
       /**
@@ -21109,7 +21111,6 @@ export interface Tracing {
 
   /**
    * Closes the currently open inline group in the trace.
-   *
    */
   groupEnd(): Promise<void>;
 
