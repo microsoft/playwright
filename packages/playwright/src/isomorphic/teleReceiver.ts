@@ -512,6 +512,7 @@ class TeleTestStep implements reporterTypes.TestStep {
   parent: reporterTypes.TestStep | undefined;
   duration: number = -1;
   steps: reporterTypes.TestStep[] = [];
+  attachments = [];
 
   private _startTime: number = 0;
 

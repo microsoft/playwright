@@ -72,6 +72,7 @@ export type AttachmentPayload = {
   path?: string;
   body?: string;
   contentType: string;
+  stepId?: string;
 };
 
 export type TestEndPayload = {
