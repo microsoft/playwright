@@ -289,10 +289,16 @@ export function fileIsModule(file: string): boolean {
 
 function folderIsModule(folder: string): boolean {
   const packageJsonPath = getPackageJsonPath(folder);
+  // deno is ESM unless package.json specifies otherwise
+  const isDeno = typeof process.versions.deno === 'string';
   if (!packageJsonPath)
+    return isDeno;
+  const type = require(packageJsonPath).type;
+  if (type === 'module')
+    return true;
+  if (type === 'commonjs')
     return false;
-  // Rely on `require` internal caching logic.
-  return require(packageJsonPath).type === 'module';
+  return isDeno;
 }
 
 const packageJsonMainFieldCache = new Map<string, string | undefined>();
