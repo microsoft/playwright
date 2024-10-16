@@ -627,9 +627,10 @@ class ArtifactsRecorder {
 
   private _createScreenshotAttachmentPath() {
     const testFailed = this._testInfo._isFailure();
+    const sanitizedTestName = this._testInfo._fsSanitizedTestName();
     const index = this._screenshotOrdinal + 1;
     ++this._screenshotOrdinal;
-    const screenshotPath = this._testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${index}.png`);
+    const screenshotPath = this._testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${sanitizedTestName}-${index}.png`);
     return screenshotPath;
   }
 
