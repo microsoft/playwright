@@ -40,6 +40,7 @@ export const matcherUtils = {
 };
 
 export {
+  EXPECTED_COLOR,
   INVERTED_COLOR,
   RECEIVED_COLOR,
   printReceived,

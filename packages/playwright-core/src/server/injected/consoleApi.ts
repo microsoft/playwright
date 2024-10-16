@@ -85,6 +85,7 @@ class ConsoleAPI {
       inspect: (selector: string) => this._inspect(selector),
       selector: (element: Element) => this._selector(element),
       generateLocator: (element: Element, language?: Language) => this._generateLocator(element, language),
+      ariaSnapshot: (element?: Element) => this._injectedScript.ariaSnapshot(element || this._injectedScript.document.body),
       resume: () => this._resume(),
       ...new Locator(injectedScript, ''),
     };

@@ -140,6 +140,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
     this._contextRecorder.on(ContextRecorder.Events.Change, (data: { sources: Source[], actions: actions.ActionInContext[] }) => {
       this._recorderSources = data.sources;
       recorderApp.setActions(data.actions, data.sources);
+      recorderApp.setRunningFile(undefined);
       this._pushAllSources();
     });
 
@@ -215,7 +216,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
     this._highlightedSelector = '';
     this._mode = mode;
     this._recorderApp?.setMode(this._mode);
-    this._contextRecorder.setEnabled(this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility' || this._mode === 'assertingValue');
+    this._contextRecorder.setEnabled(this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility' || this._mode === 'assertingValue' || this._mode === 'assertingSnapshot');
     this._debugger.setMuted(this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility' || this._mode === 'assertingValue');
     if (this._mode !== 'none' && this._mode !== 'standby' && this._context.pages().length === 1)
       this._context.pages()[0].bringToFront().catch(() => {});
@@ -299,7 +300,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
     }
     this._pushAllSources();
     if (fileToSelect)
-      this._recorderApp?.setFile(fileToSelect);
+      this._recorderApp?.setRunningFile(fileToSelect);
   }
 
   private _pushAllSources() {

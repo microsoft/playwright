@@ -1643,6 +1643,25 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   timeout?: number;
 
   /**
+   * Path to a single `tsconfig` applicable to all imported files. By default, `tsconfig` for each imported file is
+   * looked up separately. Note that `tsconfig` property has no effect while the configuration file or any of its
+   * dependencies are loaded. Ignored when `--tsconfig` command line option is specified.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   tsconfig: './tsconfig.test.json',
+   * });
+   * ```
+   *
+   */
+  tsconfig?: string;
+
+  /**
    * Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
    * - `'all'` - All tests that are executed will update snapshots that did not match. Matching snapshots will not be
    *   updated.
@@ -7613,6 +7632,29 @@ interface LocatorAssertions {
    * @param options
    */
   toHaveValues(values: ReadonlyArray<string|RegExp>, options?: {
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Asserts that the target element matches the given accessibility snapshot.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.goto('https://demo.playwright.dev/todomvc/');
+   * await expect(page.locator('body')).toMatchAriaSnapshot(`
+   *   - heading "todos"
+   *   - textbox "What needs to be done?"
+   * `);
+   * ```
+   *
+   * @param expected
+   * @param options
+   */
+  toMatchAriaSnapshot(expected: string, options?: {
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */

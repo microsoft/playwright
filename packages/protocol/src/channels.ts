@@ -2509,6 +2509,7 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   evalOnSelectorAll(params: FrameEvalOnSelectorAllParams, metadata?: CallMetadata): Promise<FrameEvalOnSelectorAllResult>;
   addScriptTag(params: FrameAddScriptTagParams, metadata?: CallMetadata): Promise<FrameAddScriptTagResult>;
   addStyleTag(params: FrameAddStyleTagParams, metadata?: CallMetadata): Promise<FrameAddStyleTagResult>;
+  ariaSnapshot(params: FrameAriaSnapshotParams, metadata?: CallMetadata): Promise<FrameAriaSnapshotResult>;
   blur(params: FrameBlurParams, metadata?: CallMetadata): Promise<FrameBlurResult>;
   check(params: FrameCheckParams, metadata?: CallMetadata): Promise<FrameCheckResult>;
   click(params: FrameClickParams, metadata?: CallMetadata): Promise<FrameClickResult>;
@@ -2612,6 +2613,16 @@ export type FrameAddStyleTagOptions = {
 };
 export type FrameAddStyleTagResult = {
   element: ElementHandleChannel,
+};
+export type FrameAriaSnapshotParams = {
+  selector: string,
+  timeout?: number,
+};
+export type FrameAriaSnapshotOptions = {
+  timeout?: number,
+};
+export type FrameAriaSnapshotResult = {
+  snapshot: string,
 };
 export type FrameBlurParams = {
   selector: string,

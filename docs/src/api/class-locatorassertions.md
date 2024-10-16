@@ -2103,3 +2103,59 @@ Expected options currently selected.
 ### option: LocatorAssertions.toHaveValues.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.23
 
+
+## async method: LocatorAssertions.toMatchAriaSnapshot
+* since: v1.49
+* langs:
+  - alias-java: matchesAriaSnapshot
+
+Asserts that the target element matches the given accessibility snapshot.
+
+**Usage**
+
+```js
+await page.goto('https://demo.playwright.dev/todomvc/');
+await expect(page.locator('body')).toMatchAriaSnapshot(`
+  - heading "todos"
+  - textbox "What needs to be done?"
+`);
+```
+
+```python async
+await page.goto('https://demo.playwright.dev/todomvc/')
+await expect(page.locator('body')).to_match_aria_snapshot('''
+  - heading "todos"
+  - textbox "What needs to be done?"
+''')
+```
+
+```python sync
+page.goto('https://demo.playwright.dev/todomvc/')
+expect(page.locator('body')).to_match_aria_snapshot('''
+  - heading "todos"
+  - textbox "What needs to be done?"
+''')
+```
+
+```csharp
+await page.GotoAsync("https://demo.playwright.dev/todomvc/");
+await Expect(page.Locator("body")).ToMatchAriaSnapshotAsync(@"
+  - heading ""todos""
+  - textbox ""What needs to be done?""
+");
+```
+
+```java
+page.navigate("https://demo.playwright.dev/todomvc/");
+assertThat(page.locator("body")).matchesAriaSnapshot("""
+  - heading "todos"
+  - textbox "What needs to be done?"
+""");
+```
+
+### param: LocatorAssertions.toMatchAriaSnapshot.expected
+* since: v1.49
+- `expected` <string>
+
+### option: LocatorAssertions.toMatchAriaSnapshot.timeout = %%-js-assertions-timeout-%%
+* since: v1.49

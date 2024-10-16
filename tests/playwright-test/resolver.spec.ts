@@ -675,6 +675,65 @@ test('should respect --tsconfig option', async ({ runInlineTest }) => {
   expect(result.output).not.toContain(`Could not`);
 });
 
+test('should respect config.tsconfig option', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export { configFoo } from '~/foo';
+      export default {
+        testDir: './tests',
+        tsconfig: './tsconfig.tests.json',
+      };
+    `,
+    'tsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "~/*": ["./mapped-from-config/*"],
+        },
+      },
+    }`,
+    'mapped-from-config/foo.ts': `
+      export const configFoo = 17;
+    `,
+    'tsconfig.tests.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "~/*": ["./mapped-from-tests/*"],
+        },
+      },
+    }`,
+    'mapped-from-tests/foo.ts': `
+      export const testFoo = 42;
+    `,
+    'tests/tsconfig.json': `{
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "~/*": ["../should-be-ignored/*"],
+        },
+      },
+    }`,
+    'tests/a.test.ts': `
+      import { testFoo } from '~/foo';
+      import { configFoo } from '../playwright.config';
+      import { test, expect } from '@playwright/test';
+      test('test', ({}) => {
+        expect(testFoo).toBe(42);
+        expect(configFoo).toBe(17);
+      });
+    `,
+    'should-be-ignored/foo.ts': `
+      export const testFoo = 43;
+      export const configFoo = 18;
+    `,
+  });
+
+  expect(result.passed).toBe(1);
+  expect(result.exitCode).toBe(0);
+  expect(result.output).not.toContain(`Could not`);
+});
+
 test.describe('directory imports', () => {
   test('should resolve index.js without path mapping in CJS', async ({ runInlineTest, runTSC }) => {
     const files = {

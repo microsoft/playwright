@@ -258,7 +258,8 @@ it('should work with subframes return 204 with domcontentloaded', async ({ page,
   await page.goto(server.PREFIX + '/frames/one-frame.html', { waitUntil: 'domcontentloaded' });
 });
 
-it('should fail when server returns 204', async ({ page, server, browserName }) => {
+it('should fail when server returns 204', async ({ page, server, browserName, isLinux }) => {
+  it.fixme(browserName === 'webkit' && isLinux, 'Regressed in https://github.com/microsoft/playwright-browsers/pull/1297');
   // WebKit just loads an empty page.
   server.setRoute('/empty.html', (req, res) => {
     res.statusCode = 204;

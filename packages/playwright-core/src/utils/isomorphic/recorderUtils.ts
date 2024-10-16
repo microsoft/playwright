@@ -130,6 +130,15 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
       };
       return { method: 'expect', params };
     }
+    case 'assertSnapshot': {
+      const params: channels.FrameExpectParams = {
+        selector,
+        expression: 'to.match.snapshot',
+        expectedText: [],
+        isNot: false,
+      };
+      return { method: 'expect', params };
+    }
   }
 }
 

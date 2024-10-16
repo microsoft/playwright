@@ -77,5 +77,6 @@ export async function configureESMLoader() {
 export async function configureESMLoaderTransformConfig() {
   if (!loaderChannel)
     return;
+  await loaderChannel.send('setSingleTSConfig', { tsconfig: singleTSConfig() });
   await loaderChannel.send('setTransformConfig', { config: transformConfig() });
 }

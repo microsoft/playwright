@@ -24,7 +24,7 @@ export type TestGroup = {
   tests: TestCase[];
 };
 
-export function createTestGroups(projectSuite: Suite, workers: number): TestGroup[] {
+export function createTestGroups(projectSuite: Suite, expectedParallelism: number): TestGroup[] {
   // This function groups tests that can be run together.
   // Tests cannot be run together when:
   // - They belong to different projects - requires different workers.
@@ -116,7 +116,7 @@ export function createTestGroups(projectSuite: Suite, workers: number): TestGrou
       result.push(...withRequireFile.parallel.values());
 
       // Tests with beforeAll/afterAll should try to share workers as much as possible.
-      const parallelWithHooksGroupSize = Math.ceil(withRequireFile.parallelWithHooks.tests.length / workers);
+      const parallelWithHooksGroupSize = Math.ceil(withRequireFile.parallelWithHooks.tests.length / expectedParallelism);
       let lastGroup: TestGroup | undefined;
       for (const test of withRequireFile.parallelWithHooks.tests) {
         if (!lastGroup || lastGroup.tests.length >= parallelWithHooksGroupSize) {

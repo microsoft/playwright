@@ -143,6 +143,7 @@ export function inject(globalThis: GlobalThis) {
 
       this.url = typeof url === 'string' ? url : url.href;
       try {
+        this.url = new URL(url).href;
         this._origin = new URL(url).origin;
       } catch {
       }

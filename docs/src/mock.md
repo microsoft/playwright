@@ -435,3 +435,122 @@ pwsh bin/Debug/netX/playwright.ps1 open --save-har=example.har --save-har-glob="
 ```
 
 Read more about [advanced networking](./network.md).
+
+## Mock WebSockets
+
+The following code will intercept WebSocket connections and mock entire communcation over the WebSocket, instead of connecting to the server. This example responds to a `"request"` with a `"response"`.
+
+```js
+await page.routeWebSocket('wss://example.com/ws', ws => {
+  ws.onMessage(message => {
+    if (message === 'request')
+      ws.send('response');
+  });
+});
+```
+
+```java
+page.routeWebSocket("wss://example.com/ws", ws -> {
+  ws.onMessage(message -> {
+    if ("request".equals(message))
+      ws.send("response");
+  });
+});
+```
+
+```python async
+def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
+  if message == "request":
+    ws.send("response")
+
+await page.route_web_socket("wss://example.com/ws", lambda ws: ws.on_message(
+    lambda message: message_handler(ws, message)
+))
+```
+
+```python sync
+def message_handler(ws: WebSocketRoute, message: Union[str, bytes]):
+  if message == "request":
+    ws.send("response")
+
+page.route_web_socket("wss://example.com/ws", lambda ws: ws.on_message(
+    lambda message: message_handler(ws, message)
+))
+```
+
+```csharp
+await page.RouteWebSocketAsync("wss://example.com/ws", ws => {
+  ws.OnMessage(message => {
+    if (message == "request")
+      ws.Send("response");
+  });
+});
+```
+
+Alternatively, you may want to connect to the actual server, but intercept messages in-between and modify or block them. Here is an example that modifies some of the messages sent by the page to the server, and leaves the rest unmodified.
+
+```js
+await page.routeWebSocket('wss://example.com/ws', ws => {
+  const server = ws.connectToServer();
+  ws.onMessage(message => {
+    if (message === 'request')
+      server.send('request2');
+    else
+      server.send(message);
+  });
+});
+```
+
+```java
+page.routeWebSocket("wss://example.com/ws", ws -> {
+  WebSocketRoute server = ws.connectToServer();
+  ws.onMessage(message -> {
+    if ("request".equals(message))
+      server.send("request2");
+    else
+      server.send(message);
+  });
+});
+```
+
+```python async
+def message_handler(server: WebSocketRoute, message: Union[str, bytes]):
+  if message == "request":
+    server.send("request2")
+  else:
+    server.send(message)
+
+def handler(ws: WebSocketRoute):
+  server = ws.connect_to_server()
+  ws.on_message(lambda message: message_handler(server, message))
+
+await page.route_web_socket("wss://example.com/ws", handler)
+```
+
+```python sync
+def message_handler(server: WebSocketRoute, message: Union[str, bytes]):
+  if message == "request":
+    server.send("request2")
+  else:
+    server.send(message)
+
+def handler(ws: WebSocketRoute):
+  server = ws.connect_to_server()
+  ws.on_message(lambda message: message_handler(server, message))
+
+page.route_web_socket("wss://example.com/ws", handler)
+```
+
+```csharp
+await page.RouteWebSocketAsync("wss://example.com/ws", ws => {
+  var server = ws.ConnectToServer();
+  ws.OnMessage(message => {
+    if (message == "request")
+      server.Send("request2");
+    else
+      server.Send(message);
+  });
+});
+```
+
+For more details, see [WebSocketRoute].

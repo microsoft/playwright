@@ -261,7 +261,7 @@ function getAriaBoolean(attr: string | null) {
   return attr === null ? undefined : attr.toLowerCase() === 'true';
 }
 
-function isElementIgnoredForAria(element: Element) {
+export function isElementIgnoredForAria(element: Element) {
   return ['STYLE', 'SCRIPT', 'NOSCRIPT', 'TEMPLATE'].includes(elementSafeTagName(element));
 }
 

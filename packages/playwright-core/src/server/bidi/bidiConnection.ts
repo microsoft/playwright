@@ -15,7 +15,6 @@
  */
 
 import { EventEmitter } from 'events';
-import { assert } from '../../utils';
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import type { RecentLogsCollector } from '../../utils/debugLogger';
 import { debugLogger } from '../../utils/debugLogger';
@@ -224,7 +223,6 @@ export class BidiSession extends EventEmitter {
       }
     } else if (object.id) {
       // Response might come after session has been disposed and rejected all callbacks.
-      assert(this.isDisposed());
     } else {
       Promise.resolve().then(() => this.emit(object.method, object.params));
     }

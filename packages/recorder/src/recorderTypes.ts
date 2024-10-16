@@ -26,7 +26,8 @@ export type Mode =
   | 'recording-inspecting'
   | 'standby'
   | 'assertingVisibility'
-  | 'assertingValue';
+  | 'assertingValue'
+  | 'assertingSnapshot';
 
 export type EventData = {
   event:
@@ -96,7 +97,7 @@ declare global {
     playwrightSetSources: (sources: Source[]) => void;
     playwrightSetOverlayVisible: (visible: boolean) => void;
     playwrightUpdateLogs: (callLogs: CallLog[]) => void;
-    playwrightSetFile: (file: string) => void;
+    playwrightSetRunningFile: (file: string | undefined) => void;
     playwrightSetSelector: (selector: string, focus?: boolean) => void;
     playwrightSourcesEchoForTest: Source[];
     dispatch(data: any): Promise<void>;

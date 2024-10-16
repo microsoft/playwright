@@ -1,4 +1,5 @@
 [*]
 ../common/
 ../util.ts
+../utilsBundle.ts
 ../worker/testInfo.ts
