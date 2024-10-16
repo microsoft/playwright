@@ -293,6 +293,7 @@ function folderIsModule(folder: string): boolean {
   const isDeno = typeof process.versions.deno === 'string';
   if (!packageJsonPath)
     return isDeno;
+  // Rely on `require` internal caching logic.
   const type = require(packageJsonPath).type;
   if (type === 'module')
     return true;
