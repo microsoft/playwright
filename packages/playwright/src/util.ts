@@ -30,26 +30,25 @@ import type { MatcherResult } from './matchers/matcherHint';
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
 
-export function filterStackTrace(e: Error): { message: string, stack: string, matcherResult: TestInfoError['matcherResult'] } {
+export function filterStackTrace(e: Error): Omit<TestInfoError, 'value'> {
   const name = e.name ? e.name + ': ' : '';
   if (process.env.PWDEBUGIMPL)
-    return { message: name + e.message, stack: e.stack || '', matcherResult: filterMatcherResult(e) };
+    return { message: name + e.message, stack: e.stack || '', ...filterExpectDetails(e) };
 
   const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || []));
   return {
-    matcherResult: filterMatcherResult(e),
+    ...filterExpectDetails(e),
     message: name + e.message,
     stack: `${name}${e.message}${stackLines.map(line => '\n' + line).join('')}`
   };
 }
 
-function filterMatcherResult(e: Error): TestInfoError['matcherResult'] | undefined {
+function filterExpectDetails(e: Error): Pick<TestInfoError, 'shortMessage'|'log'|'expected'|'actual'> {
   const matcherResult = (e as any).matcherResult as MatcherResult<unknown, unknown>;
   if (!matcherResult)
-    return undefined;
+    return {};
   return {
-    name: matcherResult.name,
-    message: matcherResult.shortMessage,
+    shortMessage: matcherResult.shortMessage,
     log: matcherResult.log,
     expected: matcherResult.expected,
     actual: matcherResult.actual,
