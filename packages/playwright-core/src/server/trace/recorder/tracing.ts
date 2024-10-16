@@ -280,6 +280,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       throw new Error(`Tracing is already stopping`);
     if (this._state.recording)
       throw new Error(`Must stop trace file before stopping tracing`);
+    await this._closeAllGroups();
     this._harTracer.stop();
     this.flushHarEntries();
     await this._fs.syncAndGetError();
