@@ -196,11 +196,11 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return { traceName: this._state.traceName };
   }
 
-  async group(name: string, options: { location?: { file: string, line?: number, column?: number } } = {}, metadata: CallMetadata): Promise<void> {
+  async group(name: string, location: { file: string, line?: number, column?: number } | undefined, metadata: CallMetadata): Promise<void> {
     if (!this._state)
       return;
     const stackFrames: StackFrame[] = [];
-    const { file, line, column } = options.location ?? metadata.location ?? {};
+    const { file, line, column } = location ?? metadata.location ?? {};
     if (file) {
       stackFrames.push({
         file,
