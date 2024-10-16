@@ -903,8 +903,8 @@ for (const useIntermediateMergeReport of [false] as const) {
                 body: Buffer.from('<h1>step attachment</h1>'),
               });
 
-              await testInfo.attach('foo', { body: 'a' });
-              await testInfo.attach('foo', { body: 'b' });
+              await testInfo.attach('foo', { body: 'body-a' });
+              await testInfo.attach('foo', { body: 'body-b' });
             });
           });
         `,
@@ -921,7 +921,13 @@ for (const useIntermediateMergeReport of [false] as const) {
 
       await testSteps.getByText('step with attachment').click();
 
-      await expect(testSteps.getByText('attach "foo"'), 'uses normal rendering when it cannot correlate by name').toHaveCount(2);
+      await expect(testSteps).not.toContainText('body-a');
+      await testSteps.getByText('foo').nth(0).click();
+      await expect(testSteps).toContainText('body-a');
+
+      await expect(testSteps).not.toContainText('body-b');
+      await testSteps.getByText('foo').nth(1).click();
+      await expect(testSteps).toContainText('body-b');
 
       const [newTab] = await Promise.all([
         page.waitForEvent('popup'),
