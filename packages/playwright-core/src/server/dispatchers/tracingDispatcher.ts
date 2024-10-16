@@ -43,8 +43,8 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
   }
 
   async tracingGroup(params: channels.TracingTracingGroupParams, metadata: CallMetadata): Promise<channels.TracingTracingGroupResult> {
-    const { name, options } = params;
-    await this._object.group(name, options, metadata);
+    const { name, location } = params;
+    await this._object.group(name, location, metadata);
   }
 
   async tracingGroupEnd(params: channels.TracingTracingGroupEndParams): Promise<channels.TracingTracingGroupEndResult> {

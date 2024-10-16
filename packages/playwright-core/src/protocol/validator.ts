@@ -26,13 +26,12 @@ scheme.StackFrame = tObject({
   column: tNumber,
   function: tOptional(tString),
 });
-scheme.Location = tObject({
-  file: tString,
-  line: tOptional(tNumber),
-  column: tOptional(tNumber),
-});
 scheme.Metadata = tObject({
-  location: tOptional(tType('Location')),
+  location: tOptional(tObject({
+    file: tString,
+    line: tOptional(tNumber),
+    column: tOptional(tNumber),
+  })),
   apiName: tOptional(tString),
   internal: tOptional(tBoolean),
   stepId: tOptional(tString),
@@ -2281,9 +2280,6 @@ scheme.DialogAcceptParams = tObject({
 scheme.DialogAcceptResult = tOptional(tObject({}));
 scheme.DialogDismissParams = tOptional(tObject({}));
 scheme.DialogDismissResult = tOptional(tObject({}));
-scheme.TracingGroupOptions = tObject({
-  location: tOptional(tType('Location')),
-});
 scheme.TracingInitializer = tOptional(tObject({}));
 scheme.TracingTracingStartParams = tObject({
   name: tOptional(tString),
@@ -2301,7 +2297,11 @@ scheme.TracingTracingStartChunkResult = tObject({
 });
 scheme.TracingTracingGroupParams = tObject({
   name: tString,
-  options: tType('TracingGroupOptions'),
+  location: tOptional(tObject({
+    file: tString,
+    line: tOptional(tNumber),
+    column: tOptional(tNumber),
+  })),
 });
 scheme.TracingTracingGroupResult = tOptional(tObject({}));
 scheme.TracingTracingGroupEndParams = tOptional(tObject({}));

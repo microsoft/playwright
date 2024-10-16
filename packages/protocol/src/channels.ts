@@ -144,14 +144,12 @@ export type StackFrame = {
   function?: string,
 };
 
-export type Location = {
-  file: string,
-  line?: number,
-  column?: number,
-};
-
 export type Metadata = {
-  location?: Location,
+  location?: {
+    file: string,
+    line?: number,
+    column?: number,
+  },
   apiName?: string,
   internal?: boolean,
   stepId?: string,
@@ -4079,10 +4077,6 @@ export type DialogDismissResult = void;
 export interface DialogEvents {
 }
 
-export type TracingGroupOptions = {
-  location?: Location,
-};
-
 // ----------- Tracing -----------
 export type TracingInitializer = {};
 export interface TracingEventTarget {
@@ -4122,10 +4116,18 @@ export type TracingTracingStartChunkResult = {
 };
 export type TracingTracingGroupParams = {
   name: string,
-  options: TracingGroupOptions,
+  location?: {
+    file: string,
+    line?: number,
+    column?: number,
+  },
 };
 export type TracingTracingGroupOptions = {
-
+  location?: {
+    file: string,
+    line?: number,
+    column?: number,
+  },
 };
 export type TracingTracingGroupResult = void;
 export type TracingTracingGroupEndParams = {};
