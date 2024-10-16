@@ -247,10 +247,34 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
     const kPointerWarningTitle = 'Recorded click position in absolute coordinates did not' +
         ' match the center of the clicked element. This is likely due to a difference between' +
         ' the test runner and the trace viewer operating systems.';
+    const kCanvasWarningTitle = 'Canvas contents aren\'t recorded in Snapshot. Enable "Show screenshot instead of snapshot" in Settings to see contents.';
 
     const scrollTops: Element[] = [];
     const scrollLefts: Element[] = [];
     const targetElements: Element[] = [];
+
+    const drawCanvasWarning = (canvas: HTMLCanvasElement) => {
+      const context = canvas.getContext('2d')!;
+
+      context.fillStyle = '#f3f3f3';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      context.beginPath();
+      context.arc(canvas.width / 2, canvas.height / 2, 40, 0, 2 * Math.PI);
+      context.fillStyle = '#e51400';
+      context.fill();
+
+      context.lineWidth = 5;
+      context.strokeStyle = '#e51400';
+      context.strokeRect(0, 0, canvas.width, canvas.height);
+      context.font = '50px serif';
+
+      context.fillStyle = 'white';
+      context.textAlign = 'center';
+      context.fillText('⚠', canvas.width / 2, canvas.height / 2 + 20);
+
+      canvas.setAttribute('title', kCanvasWarningTitle);
+    };
 
     const visit = (root: Document | ShadowRoot) => {
       // Collect all scrolled elements for later use.
@@ -298,6 +322,9 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
           iframe.setAttribute('src', url.toString());
         }
       }
+
+      for (const canvas of root.querySelectorAll('canvas'))
+        drawCanvasWarning(canvas);
 
       {
         const body = root.querySelector(`body[__playwright_custom_elements__]`);
