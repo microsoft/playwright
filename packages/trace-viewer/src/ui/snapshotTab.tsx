@@ -369,10 +369,14 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
   return { action: actionSnapshot, before: beforeSnapshot, after: afterSnapshot };
 }
 
+const isUnderTest = new URLSearchParams(window.location.search).has('isUnderTest');
+
 export function extendSnapshot(snapshot: Snapshot): SnapshotUrls {
   const params = new URLSearchParams();
   params.set('trace', context(snapshot.action).traceUrl);
   params.set('name', snapshot.snapshotName);
+  if (isUnderTest)
+    params.set('isUnderTest', 'true');
   if (snapshot.point) {
     params.set('pointX', String(snapshot.point.x));
     params.set('pointY', String(snapshot.point.y));

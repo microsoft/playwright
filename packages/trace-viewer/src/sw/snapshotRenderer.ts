@@ -244,6 +244,8 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
 
 function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string | undefined)[]) {
   function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, screenshotURL: string | undefined, ...targetIds: (string | undefined)[]) {
+    const isUnderTest = new URLSearchParams(location.search).has('isUnderTest');
+
     const kPointerWarningTitle = 'Recorded click position in absolute coordinates did not' +
         ' match the center of the clicked element. This is likely due to a difference between' +
         ' the test runner and the trace viewer operating systems.';
@@ -301,7 +303,6 @@ function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string
 
       const canvases = root.querySelectorAll('canvas');
       if (canvases.length > 0 && screenshotURL) {
-
         function drawCanvasWarning(canvas: HTMLCanvasElement, partial: boolean) {
           function createStripedPattern(lineWidth: number, spacing: number, slope: number, color: string) {
             const can = document.createElement('canvas');
@@ -354,6 +355,10 @@ function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string
               drawCanvasWarning(canvas, xStart < 1 && yStart < 1);
 
             context.drawImage(img, xStart * img.width, yStart * img.height, (xEnd - xStart) * img.width, (yEnd - yStart) * img.height, 0, 0, canvas.width, canvas.height);
+
+            if (isUnderTest)
+              // eslint-disable-next-line no-console
+              console.log(`canvas drawn:`, JSON.stringify([xStart, yStart, xEnd, yEnd].map(v => Math.floor(v * 100))));
           }
         };
         img.onerror = () => {
