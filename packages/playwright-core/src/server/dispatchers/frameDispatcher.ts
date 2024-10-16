@@ -267,4 +267,8 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
       result.received = serializeResult(result.received);
     return result;
   }
+
+  async ariaSnapshot(params: channels.FrameAriaSnapshotParams, metadata: CallMetadata): Promise<channels.FrameAriaSnapshotResult> {
+    return { snapshot: await this._frame.ariaSnapshot(metadata, params.selector, params) };
+  }
 }

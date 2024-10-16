@@ -150,6 +150,63 @@ var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
 
 Additional locator to match.
 
+## async method: Locator.ariaSnapshot
+* since: v1.49
+- returns: <[string]>
+
+Captures the aria snapshot of the given element. See [`method: LocatorAssertions.toMatchAriaSnapshot`] for the corresponding assertion.
+
+**Usage**
+
+```js
+await page.getByRole('link').ariaSnapshot();
+```
+
+```java
+page.getByRole(AriaRole.LINK).ariaSnapshot();
+```
+
+```python async
+await page.get_by_role("link").aria_snapshot()
+```
+
+```python sync
+page.get_by_role("link").aria_snapshot()
+```
+
+```csharp
+await page.GetByRole(AriaRole.Link).AriaSnapshotAsync();
+```
+
+**Details**
+
+This method captures the aria snapshot of the given element. The snapshot is a string that represents the state of the element and its children.
+The snapshot can be used to assert the state of the element in the test, or to compare it to state in the future.
+
+The ARIA snapshot is represented using [YAML](https://yaml.org/spec/1.2.2/) markup language:
+* The keys of the objects are the roles and optional accessible names of the elements.
+* The values are either text content or an array of child elements.
+* Generic static text can be represented with the `text` key.
+
+Below is the HTML markup and the respective ARIA snapshot:
+
+```html
+<ul aria-label="Links">
+  <li><a href="/">Home</a></li>
+  <li><a href="/about">About</a></li>
+<ul>
+```
+
+```yml
+- list "Links":
+  - listitem:
+    - link "Home"
+  - listitem:
+    - link "About"
+```
+
+### option: Locator.ariaSnapshot.timeout = %%-input-timeout-js-%%
+* since: v1.49
 
 ## async method: Locator.blur
 * since: v1.28

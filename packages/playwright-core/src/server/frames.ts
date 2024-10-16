@@ -1405,6 +1405,13 @@ export class Frame extends SdkObject {
     });
   }
 
+  async ariaSnapshot(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<string> {
+    const controller = new ProgressController(metadata, this);
+    return controller.run(async progress => {
+      return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, handle => handle.ariaSnapshot());
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
   async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
     const result = await this._expectImpl(metadata, selector, options);
     // Library mode special case for the expect errors which are return values, not exceptions.
