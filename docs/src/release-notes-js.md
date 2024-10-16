@@ -10,7 +10,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 <LiteYouTube
   id="VGlkSBkMVCQ"
-  title="Playwright 1.46"
+  title="Playwright 1.48"
 />
 
 ### WebSocket routing
