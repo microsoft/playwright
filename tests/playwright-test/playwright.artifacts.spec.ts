@@ -138,29 +138,29 @@ test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     '.last-run.json',
     'artifacts-failing',
-    '  test-failed-1.png',
+    '  test-failed-failing-1.png',
     'artifacts-own-context-failing',
-    '  test-failed-1.png',
+    '  test-failed-own-context-failing-1.png',
     'artifacts-own-context-passing',
-    '  test-finished-1.png',
+    '  test-finished-own-context-passing-1.png',
     'artifacts-passing',
-    '  test-finished-1.png',
+    '  test-finished-passing-1.png',
     'artifacts-persistent-failing',
-    '  test-failed-1.png',
+    '  test-failed-persistent-failing-1.png',
     'artifacts-persistent-passing',
-    '  test-finished-1.png',
+    '  test-finished-persistent-passing-1.png',
     'artifacts-shared-shared-failing',
-    '  test-failed-1.png',
-    '  test-failed-2.png',
+    '  test-failed-shared-shared-failing-1.png',
+    '  test-failed-shared-shared-failing-2.png',
     'artifacts-shared-shared-passing',
-    '  test-finished-1.png',
-    '  test-finished-2.png',
+    '  test-finished-shared-shared-passing-1.png',
+    '  test-finished-shared-shared-passing-2.png',
     'artifacts-two-contexts',
-    '  test-finished-1.png',
-    '  test-finished-2.png',
+    '  test-finished-two-contexts-1.png',
+    '  test-finished-two-contexts-2.png',
     'artifacts-two-contexts-failing',
-    '  test-failed-1.png',
-    '  test-failed-2.png',
+    '  test-failed-two-contexts-failing-1.png',
+    '  test-failed-two-contexts-failing-2.png',
   ]);
 });
 
@@ -178,17 +178,17 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     '.last-run.json',
     'artifacts-failing',
-    '  test-failed-1.png',
+    '  test-failed-failing-1.png',
     'artifacts-own-context-failing',
-    '  test-failed-1.png',
+    '  test-failed-own-context-failing-1.png',
     'artifacts-persistent-failing',
-    '  test-failed-1.png',
+    '  test-failed-persistent-failing-1.png',
     'artifacts-shared-shared-failing',
-    '  test-failed-1.png',
-    '  test-failed-2.png',
+    '  test-failed-shared-shared-failing-1.png',
+    '  test-failed-shared-shared-failing-2.png',
     'artifacts-two-contexts-failing',
-    '  test-failed-1.png',
-    '  test-failed-2.png',
+    '  test-failed-two-contexts-failing-1.png',
+    '  test-failed-two-contexts-failing-2.png',
   ]);
 });
 
@@ -213,10 +213,10 @@ test('should work with screenshot: only-on-failure & fullPage', async ({ runInli
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     '.last-run.json',
     'artifacts-should-fail-and-take-fullPage-screenshots',
-    '  test-failed-1.png',
+    '  test-failed-should-fail-and-take-fullPage-screenshots-1.png',
   ]);
   const screenshotFailure = fs.readFileSync(
-      testInfo.outputPath('test-results', 'artifacts-should-fail-and-take-fullPage-screenshots', 'test-failed-1.png')
+      testInfo.outputPath('test-results', 'artifacts-should-fail-and-take-fullPage-screenshots', 'test-failed-should-fail-and-take-fullPage-screenshots-1.png')
   );
   expect.soft(screenshotFailure).toMatchSnapshot('screenshot-grid-fullpage.png');
 });
@@ -391,5 +391,12 @@ test('should take screenshot when page is closed in afterEach', async ({ runInli
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fails', 'test-failed-1.png'))).toBeTruthy();
+
+  expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    '.last-run.json',
+    'a-fails',
+    '  test-failed-fails-1.png',
+  ]);
+
+  expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fails', 'test-failed-fails-1.png'))).toBeTruthy();
 });
