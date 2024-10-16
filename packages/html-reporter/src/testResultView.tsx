@@ -152,21 +152,23 @@ export const TestResultView: React.FC<{
 
 function classifyErrors(testErrors: ErrorDetails[], diffs: ImageDiff[]) {
   return testErrors.map(error => {
-    if (error.matcherResult?.name === 'toHaveScreenshot' && error.matcherResult?.actual && error.matcherResult?.expected) {
+    if (error.shortMessage?.includes('Screenshot comparison failed:') && error.actual && error.expected) {
       const matchingDiff = diffs.find(diff => {
         const attachmentName = diff.actual?.attachment.name;
-        return attachmentName && error.matcherResult?.actual.endsWith(attachmentName);
+        return attachmentName && error.actual.endsWith(attachmentName);
       });
       const errorSuffix = ['Call log:',
-        ...(error.matcherResult.log?.map(line => '  - ' + line) || []),
+        ...(error.log?.map(line => '  - ' + line) || []),
         '',
         error.snippet,
+        '',
+        error.callStack,
       ].join('\n');
       if (matchingDiff) {
         return {
           type: 'screenshot',
           diff: matchingDiff,
-          errorPrefix: error.matcherResult?.message,
+          errorPrefix: error.shortMessage,
           errorSuffix
         };
       }

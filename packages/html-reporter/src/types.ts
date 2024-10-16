@@ -83,19 +83,15 @@ export type TestCase = Omit<TestCaseSummary, 'results'> & {
   results: TestResult[];
 };
 
-type MatcherResult = {
-  name: string;
-  message?: string;
-  log?: string[];
-  expected?: any;
-  actual?: any;
-};
-
 export type ErrorDetails = {
   message: string;
   location?: Location;
-  matcherResult?: MatcherResult;
+  shortMessage?: string;
+  log?: string[];
+  expected?: any;
+  actual?: any;
   snippet?: string;
+  callStack?: string;
 };
 
 export type TestAttachment = {

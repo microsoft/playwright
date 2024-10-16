@@ -29,19 +29,20 @@ type Annotation = {
   location?: Location;
 };
 
-type MatcherResult = {
-  name: string;
-  message?: string;
-  log?: string[];
-  expected?: any;
-  actual?: any;
-};
-
 type ErrorDetails = {
   message: string;
   location?: Location;
-  matcherResult?: MatcherResult;
+  callStack?: string;
+};
+
+type TestResultErrorDetails = ErrorDetails & {
+  shortMessage?: string;
+  log?: string[];
+  expected?: any;
+  actual?: any;
+
   snippet?: string;
+  stack?: string;
 };
 
 type TestSummary = {
@@ -374,8 +375,8 @@ function quotePathIfNeeded(path: string): string {
   return path;
 }
 
-export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string, highlightCode: boolean): ErrorDetails[] {
-  const errorDetails: ErrorDetails[] = [];
+export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string, highlightCode: boolean): TestResultErrorDetails[] {
+  const errorDetails: TestResultErrorDetails[] = [];
 
   if (result.status === 'passed' && test.expectedStatus === 'failed') {
     errorDetails.push({
@@ -393,8 +394,12 @@ export function formatResultFailure(test: TestCase, result: TestResult, initialI
     errorDetails.push({
       message: indent(formattedError.message, initialIndent),
       location: formattedError.location,
-      matcherResult: error.matcherResult,
+      shortMessage: error.shortMessage,
+      log: error.log,
+      expected: error.expected,
+      actual: error.actual,
       snippet: error.snippet,
+      callStack: formattedError.callStack,
     });
   }
   return errorDetails;
@@ -474,9 +479,12 @@ export function formatError(error: TestError, highlightCode: boolean): ErrorDeta
     tokens.push(snippet);
   }
 
+  let callStack;
   if (parsedStack && parsedStack.stackLines.length) {
     tokens.push('');
     tokens.push(colors.dim(parsedStack.stackLines.join('\n')));
+    // TODO: pass raw lines.
+    callStack = colors.dim(parsedStack.stackLines.join('\n'));
   }
 
   let location = error.location;
@@ -486,6 +494,7 @@ export function formatError(error: TestError, highlightCode: boolean): ErrorDeta
   return {
     location,
     message: tokens.join('\n'),
+    callStack,
   };
 }
 

@@ -9150,30 +9150,29 @@ export interface TestInfo {
  */
 export interface TestInfoError {
   /**
-   * Expect matcher result.
+   * Actual value.
    */
-  matcherResult?: {
-    name: string;
+  actual?: any;
 
-    /**
-     * Failure message
-     */
-    message?: string;
+  /**
+   * Expected value.
+   */
+  expected?: any;
 
-    /**
-     * Call log
-     */
-    log?: Array<string>;
-
-    expected?: any;
-
-    actual?: any;
-  };
+  /**
+   * Call log.
+   */
+  log?: Array<string>;
 
   /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */
   message?: string;
+
+  /**
+   * Failure message.
+   */
+  shortMessage?: string;
 
   /**
    * Error stack. Set when [Error] (or its subclass) has been thrown.

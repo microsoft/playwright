@@ -222,7 +222,8 @@ class JSONReporter implements ReporterV2 {
   }
 
   private _serializeError(error: TestError): JSONReportError {
-    return formatError(error, true);
+    const { message, location } = formatError(error, true);
+    return { message, location };
   }
 
   private _serializeTestStep(step: TestStep): JSONReportTestStep {
