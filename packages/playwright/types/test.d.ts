@@ -8380,6 +8380,27 @@ export interface TestInfo {
  */
 export interface TestInfoError {
   /**
+   * Expect matcher result.
+   */
+  matcherResult?: {
+    name: string;
+
+    /**
+     * Failure message
+     */
+    message?: string;
+
+    /**
+     * Call log
+     */
+    log?: Array<string>;
+
+    expected?: any;
+
+    actual?: any;
+  };
+
+  /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */
   message?: string;

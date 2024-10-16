@@ -485,7 +485,7 @@ class HtmlBuilder {
       startTime: result.startTime.toISOString(),
       retry: result.retry,
       steps: dedupeSteps(result.steps).map(s => this._createTestStep(s)),
-      errors: formatResultFailure(test, result, '', true).map(error => error.message),
+      errors: formatResultFailure(test, result, '', true),
       status: result.status,
       attachments: this._serializeAttachments([
         ...result.attachments,
