@@ -16,6 +16,17 @@ Error message. Set when [Error] (or its subclass) has been thrown.
 
 Error stack. Set when [Error] (or its subclass) has been thrown.
 
+## property: TestInfoError.matcherResult
+* since: v1.49
+- type: ?<[Object]>
+  - `name` <[string]>
+  - `message` ?<[string]> Failure message
+  - `log` ?<[Array]<[string]>> Call log
+  - `expected` ?<[any]>
+  - `actual` ?<[any]>
+
+Expect matcher result.
+
 ## property: TestInfoError.value
 * since: v1.10
 - type: ?<[string]>

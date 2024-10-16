@@ -28,6 +28,17 @@ The value that was thrown. Set when anything except the [Error] (or its subclass
 
 Error location in the source code.
 
+## property: TestError.matcherResult
+* since: v1.49
+- type: ?<[Object]>
+  - `name` <[string]>
+  - `message` ?<[string]> Failure message
+  - `log` ?<[Array]<[string]>> Call log
+  - `expected` ?<[any]>
+  - `actual` ?<[any]>
+
+Expect matcher result.
+
 ## property: TestError.snippet
 * since: v1.33
 - type: ?<[string]>

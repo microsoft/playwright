@@ -185,8 +185,9 @@ class SnapshotHelper {
     this.kind = this.mimeType.startsWith('image/') ? 'Screenshot' : 'Snapshot';
   }
 
-  createMatcherResult(message: string, pass: boolean, log?: string[]): ImageMatcherResult {
+  createMatcherResult(message: string, pass: boolean, log?: string[], shortMessage?: string): ImageMatcherResult {
     const unfiltered: ImageMatcherResult = {
+      shortMessage,
       name: this.matcherName,
       expected: this.expectedPath,
       actual: this.actualPath,
@@ -202,7 +203,7 @@ class SnapshotHelper {
     const isWriteMissingMode = this.updateSnapshots === 'all' || this.updateSnapshots === 'missing';
     const message = `A snapshot doesn't exist at ${this.expectedPath}${isWriteMissingMode ? ', matchers using ".not" won\'t write them automatically.' : '.'}`;
     // NOTE: 'isNot' matcher implies inversed value.
-    return this.createMatcherResult(message, true);
+    return this.createMatcherResult(message, true, undefined, message);
   }
 
   handleDifferentNegated(): ImageMatcherResult {
@@ -217,7 +218,7 @@ class SnapshotHelper {
       indent('Expected result should be different from the actual one.', '  '),
     ].join('\n');
     // NOTE: 'isNot' matcher implies inversed value.
-    return this.createMatcherResult(message, true);
+    return this.createMatcherResult(message, true, undefined, message);
   }
 
   handleMissing(actual: Buffer | string): ImageMatcherResult {
@@ -231,14 +232,14 @@ class SnapshotHelper {
     if (this.updateSnapshots === 'all') {
       /* eslint-disable no-console */
       console.log(message);
-      return this.createMatcherResult(message, true);
+      return this.createMatcherResult(message, true, undefined, message);
     }
     if (this.updateSnapshots === 'missing') {
       this.testInfo._hasNonRetriableError = true;
       this.testInfo._failWithError(new Error(message));
       return this.createMatcherResult('', true);
     }
-    return this.createMatcherResult(message, false);
+    return this.createMatcherResult(message, false, undefined, message);
   }
 
   handleDifferent(
@@ -255,6 +256,8 @@ class SnapshotHelper {
     ];
     if (diffError)
       output.push(indent(diffError, '  '));
+
+    const shortMessage = output.join('\n');
 
     if (expected !== undefined) {
       // Copy the expectation inside the `test-results/` folder for backwards compatibility,
@@ -284,7 +287,7 @@ class SnapshotHelper {
     else
       output.push('');
 
-    return this.createMatcherResult(output.join('\n'), false, log);
+    return this.createMatcherResult(output.join('\n'), false, log, shortMessage);
   }
 
   handleMatching(): ImageMatcherResult {

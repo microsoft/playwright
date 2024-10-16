@@ -29,9 +29,19 @@ type Annotation = {
   location?: Location;
 };
 
+type MatcherResult = {
+  name: string;
+  message?: string;
+  log?: string[];
+  expected?: any;
+  actual?: any;
+};
+
 type ErrorDetails = {
   message: string;
   location?: Location;
+  matcherResult?: MatcherResult;
+  snippet?: string;
 };
 
 type TestSummary = {
@@ -383,6 +393,8 @@ export function formatResultFailure(test: TestCase, result: TestResult, initialI
     errorDetails.push({
       message: indent(formattedError.message, initialIndent),
       location: formattedError.location,
+      matcherResult: error.matcherResult,
+      snippet: error.snippet,
     });
   }
   return errorDetails;
