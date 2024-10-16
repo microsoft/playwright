@@ -1441,11 +1441,12 @@ test.skip('should allow showing screenshots instead of snapshots', async ({ runA
 
 test('canvas clipping', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
-    await page.goto(server.PREFIX + '/screenshots/canvas.html');
+    await page.goto(server.PREFIX + '/screenshots/canvas.html#canvas-on-edge');
     await page.waitForTimeout(1000); // ensure we could take a screenshot
   });
 
-  await traceViewer.page.pause();
+  const snapshot = await traceViewer.snapshotFrame('page.goto');
+  await expect(snapshot.locator('canvas')).toHaveAttribute('title', `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`);
 });
 
 test.skip('should handle case where neither snapshots nor screenshots exist', async ({ runAndTrace, page, server }) => {
