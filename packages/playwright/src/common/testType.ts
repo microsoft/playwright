@@ -52,6 +52,7 @@ export class TestTypeImpl {
     test.skip = wrapFunctionWithLocation(this._modifier.bind(this, 'skip'));
     test.fixme = wrapFunctionWithLocation(this._modifier.bind(this, 'fixme'));
     test.fail = wrapFunctionWithLocation(this._modifier.bind(this, 'fail'));
+    test.fail.only = wrapFunctionWithLocation(this._createTest.bind(this, 'fail.only'));
     test.slow = wrapFunctionWithLocation(this._modifier.bind(this, 'slow'));
     test.setTimeout = wrapFunctionWithLocation(this._setTimeout.bind(this));
     test.step = this._step.bind(this);
@@ -81,7 +82,7 @@ export class TestTypeImpl {
     return suite;
   }
 
-  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme' | 'fail', location: Location, title: string, fnOrDetails: Function | TestDetails, fn?: Function) {
+  private _createTest(type: 'default' | 'only' | 'skip' | 'fixme' | 'fail' | 'fail.only', location: Location, title: string, fnOrDetails: Function | TestDetails, fn?: Function) {
     throwIfRunningInsideJest();
     const suite = this._currentSuite(location, 'test()');
     if (!suite)
@@ -104,10 +105,12 @@ export class TestTypeImpl {
     test._tags.push(...validatedDetails.tags);
     suite._addTest(test);
 
-    if (type === 'only')
+    if (type === 'only' || type === 'fail.only')
       test._only = true;
     if (type === 'skip' || type === 'fixme' || type === 'fail')
       test._staticAnnotations.push({ type });
+    else if (type === 'fail.only')
+      test._staticAnnotations.push({ type: 'fail' });
   }
 
   private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, titleOrFn: string | Function, fnOrDetails?: TestDetails | Function, fn?: Function) {

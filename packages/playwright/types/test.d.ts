@@ -3625,8 +3625,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * "should fail" when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
-  fail(title: string, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
-  /**
+  fail: {
+    /**
    * Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful
    * for documentation purposes to acknowledge that some functionality is broken until it is fixed.
    *
@@ -3702,8 +3702,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * "should fail" when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
-  fail(title: string, details: TestDetails, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
-  /**
+  (title: string, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+    /**
    * Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful
    * for documentation purposes to acknowledge that some functionality is broken until it is fixed.
    *
@@ -3779,8 +3779,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * "should fail" when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
-  fail(condition: boolean, description?: string): void;
-  /**
+  (title: string, details: TestDetails, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+    /**
    * Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful
    * for documentation purposes to acknowledge that some functionality is broken until it is fixed.
    *
@@ -3856,8 +3856,8 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * "should fail" when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
-  fail(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
-  /**
+  (condition: boolean, description?: string): void;
+    /**
    * Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful
    * for documentation purposes to acknowledge that some functionality is broken until it is fixed.
    *
@@ -3933,7 +3933,115 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * "should fail" when the return value is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
-  fail(): void;
+  (callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
+    /**
+   * Marks a test as "should fail". Playwright runs this test and ensures that it is actually failing. This is useful
+   * for documentation purposes to acknowledge that some functionality is broken until it is fixed.
+   *
+   * To declare a "failing" test:
+   * - `test.fail(title, body)`
+   * - `test.fail(title, details, body)`
+   *
+   * To annotate test as "failing" at runtime:
+   * - `test.fail(condition, description)`
+   * - `test.fail(callback, description)`
+   * - `test.fail()`
+   *
+   * **Usage**
+   *
+   * You can declare a test as failing, so that Playwright ensures it actually fails.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fail('not yet ready', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * If your test fails in some configurations, but not all, you can mark the test as failing inside the test body based
+   * on some condition. We recommend passing a `description` argument in this case.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('fail in WebKit', async ({ page, browserName }) => {
+   *   test.fail(browserName === 'webkit', 'This feature is not implemented for Mac yet');
+   *   // ...
+   * });
+   * ```
+   *
+   * You can mark all tests in a file or
+   * [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe) group as
+   * "should fail" based on some condition with a single `test.fail(callback, description)` call.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fail(({ browserName }) => browserName === 'webkit', 'not implemented yet');
+   *
+   * test('fail in WebKit 1', async ({ page }) => {
+   *   // ...
+   * });
+   * test('fail in WebKit 2', async ({ page }) => {
+   *   // ...
+   * });
+   * ```
+   *
+   * You can also call `test.fail()` without arguments inside the test body to always mark the test as failed. We
+   * recommend declaring a failing test with `test.fail(title, body)` instead.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('less readable', async ({ page }) => {
+   *   test.fail();
+   *   // ...
+   * });
+   * ```
+   *
+   * @param title Test title.
+   * @param details See [test.(call)(title[, details, body])](https://playwright.dev/docs/api/class-test#test-call) for test details
+   * description.
+   * @param body Test body that takes one or two arguments: an object with fixtures and optional
+   * [TestInfo](https://playwright.dev/docs/api/class-testinfo).
+   * @param condition Test is marked as "should fail" when the condition is `true`.
+   * @param callback A function that returns whether to mark as "should fail", based on test fixtures. Test or tests are marked as
+   * "should fail" when the return value is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  (): void;
+    /**
+   * You can use `test.fail.only` to focus on a specific test that is expected to fail. This is particularly useful when
+   * debugging a failing test or working on a specific issue.
+   *
+   * To declare a focused "failing" test:
+   * - `test.fail.only(title, body)`
+   * - `test.fail.only(title, details, body)`
+   *
+   * **Usage**
+   *
+   * You can declare a focused failing test, so that Playwright runs only this test and ensures it actually fails.
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test.fail.only('focused failing test', async ({ page }) => {
+   *   // This test is expected to fail
+   * });
+   * test('not in the focused group', async ({ page }) => {
+   *   // This test will not run
+   * });
+   * ```
+   *
+   * @param title Test title.
+   * @param details See [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe) for test
+   * details description.
+   * @param body Test body that takes one or two arguments: an object with fixtures and optional
+   * [TestInfo](https://playwright.dev/docs/api/class-testinfo).
+   */
+  only: TestFunction<TestArgs & WorkerArgs>;
+  }
   /**
    * Marks a test as "slow". Slow test will be given triple the default timeout.
    *
