@@ -75,52 +75,83 @@ export type TestDetails = {
   annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
 }
 
-interface SuiteFunction {
-  (title: string, callback: () => void): void;
-  (callback: () => void): void;
-  (title: string, details: TestDetails, callback: () => void): void;
-}
+type TestBody<TestArgs> = (args: TestArgs, testInfo: TestInfo) => Promise<void> | void;
+type ConditionBody<TestArgs> = (args: TestArgs) => boolean;
 
-interface TestFunction<TestArgs> {
-  (title: string, body: (args: TestArgs, testInfo: TestInfo) => Promise<void> | void): void;
-  (title: string, details: TestDetails, body: (args: TestArgs, testInfo: TestInfo) => Promise<void> | void): void;
-}
+export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue> {
+  (title: string, body: TestBody<TestArgs & WorkerArgs>): void;
+  (title: string, details: TestDetails, body: TestBody<TestArgs & WorkerArgs>): void;
 
-export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue> extends TestFunction<TestArgs & WorkerArgs> {
-  only: TestFunction<TestArgs & WorkerArgs>;
-  describe: SuiteFunction & {
-    only: SuiteFunction;
-    skip: SuiteFunction;
-    fixme: SuiteFunction;
-    serial: SuiteFunction & {
-      only: SuiteFunction;
+  only(title: string, body: TestBody<TestArgs & WorkerArgs>): void;
+  only(title: string, details: TestDetails, body: TestBody<TestArgs & WorkerArgs>): void;
+
+  describe: {
+    (title: string, callback: () => void): void;
+    (callback: () => void): void;
+    (title: string, details: TestDetails, callback: () => void): void;
+
+    only(title: string, callback: () => void): void;
+    only(callback: () => void): void;
+    only(title: string, details: TestDetails, callback: () => void): void;
+
+    skip(title: string, callback: () => void): void;
+    skip(callback: () => void): void;
+    skip(title: string, details: TestDetails, callback: () => void): void;
+
+    fixme(title: string, callback: () => void): void;
+    fixme(callback: () => void): void;
+    fixme(title: string, details: TestDetails, callback: () => void): void;
+
+    serial: {
+      (title: string, callback: () => void): void;
+      (callback: () => void): void;
+      (title: string, details: TestDetails, callback: () => void): void;
+
+      only(title: string, callback: () => void): void;
+      only(callback: () => void): void;
+      only(title: string, details: TestDetails, callback: () => void): void;
     };
-    parallel: SuiteFunction & {
-      only: SuiteFunction;
+
+    parallel: {
+      (title: string, callback: () => void): void;
+      (callback: () => void): void;
+      (title: string, details: TestDetails, callback: () => void): void;
+
+      only(title: string, callback: () => void): void;
+      only(callback: () => void): void;
+      only(title: string, details: TestDetails, callback: () => void): void;
     };
+
     configure: (options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) => void;
   };
-  skip(title: string, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
-  skip(title: string, details: TestDetails, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+
+  skip(title: string, body: TestBody<TestArgs & WorkerArgs>): void;
+  skip(title: string, details: TestDetails, body: TestBody<TestArgs & WorkerArgs>): void;
   skip(): void;
   skip(condition: boolean, description?: string): void;
-  skip(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
-  fixme(title: string, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
-  fixme(title: string, details: TestDetails, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+  skip(callback: ConditionBody<TestArgs & WorkerArgs>, description?: string): void;
+
+  fixme(title: string, body: TestBody<TestArgs & WorkerArgs>): void;
+  fixme(title: string, details: TestDetails, body: TestBody<TestArgs & WorkerArgs>): void;
   fixme(): void;
   fixme(condition: boolean, description?: string): void;
-  fixme(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
+  fixme(callback: ConditionBody<TestArgs & WorkerArgs>, description?: string): void;
+
   fail: {
-    (title: string, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
-    (title: string, details: TestDetails, body: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<void> | void): void;
+    (title: string, body: TestBody<TestArgs & WorkerArgs>): void;
+    (title: string, details: TestDetails, body: TestBody<TestArgs & WorkerArgs>): void;
     (condition: boolean, description?: string): void;
-    (callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
+    (callback: ConditionBody<TestArgs & WorkerArgs>, description?: string): void;
     (): void;
-    only: TestFunction<TestArgs & WorkerArgs>;
+
+    only(title: string, body: TestBody<TestArgs & WorkerArgs>): void;
+    only(title: string, details: TestDetails, body: TestBody<TestArgs & WorkerArgs>): void;
   }
+
   slow(): void;
   slow(condition: boolean, description?: string): void;
-  slow(callback: (args: TestArgs & WorkerArgs) => boolean, description?: string): void;
+  slow(callback: ConditionBody<TestArgs & WorkerArgs>, description?: string): void;
+
   setTimeout(timeout: number): void;
   beforeEach(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   beforeEach(title: string, inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
