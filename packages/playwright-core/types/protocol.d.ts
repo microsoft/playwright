@@ -695,7 +695,7 @@ percentage [0 - 100] for scroll driven animations
       frameId: Page.FrameId;
     }
     export type CookieExclusionReason = "ExcludeSameSiteUnspecifiedTreatedAsLax"|"ExcludeSameSiteNoneInsecure"|"ExcludeSameSiteLax"|"ExcludeSameSiteStrict"|"ExcludeInvalidSameParty"|"ExcludeSamePartyCrossPartyContext"|"ExcludeDomainNonASCII"|"ExcludeThirdPartyCookieBlockedInFirstPartySet"|"ExcludeThirdPartyPhaseout";
-    export type CookieWarningReason = "WarnSameSiteUnspecifiedCrossSiteContext"|"WarnSameSiteNoneInsecure"|"WarnSameSiteUnspecifiedLaxAllowUnsafe"|"WarnSameSiteStrictLaxDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeLax"|"WarnSameSiteLaxCrossDowngradeStrict"|"WarnSameSiteLaxCrossDowngradeLax"|"WarnAttributeValueExceedsMaxSize"|"WarnDomainNonASCII"|"WarnThirdPartyPhaseout"|"WarnCrossSiteRedirectDowngradeChangesInclusion";
+    export type CookieWarningReason = "WarnSameSiteUnspecifiedCrossSiteContext"|"WarnSameSiteNoneInsecure"|"WarnSameSiteUnspecifiedLaxAllowUnsafe"|"WarnSameSiteStrictLaxDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeLax"|"WarnSameSiteLaxCrossDowngradeStrict"|"WarnSameSiteLaxCrossDowngradeLax"|"WarnAttributeValueExceedsMaxSize"|"WarnDomainNonASCII"|"WarnThirdPartyPhaseout"|"WarnCrossSiteRedirectDowngradeChangesInclusion"|"WarnDeprecationTrialMetadata"|"WarnThirdPartyCookieHeuristic";
     export type CookieOperation = "SetCookie"|"ReadCookie";
     /**
      * This information is currently necessary, as the front-end has a difficult
@@ -934,7 +934,7 @@ Should be updated alongside RequestIdTokenStatus in
 third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
 all cases except for success.
      */
-    export type FederatedAuthRequestIssueReason = "ShouldEmbargo"|"TooManyRequests"|"WellKnownHttpNotFound"|"WellKnownNoResponse"|"WellKnownInvalidResponse"|"WellKnownListEmpty"|"WellKnownInvalidContentType"|"ConfigNotInWellKnown"|"WellKnownTooBig"|"ConfigHttpNotFound"|"ConfigNoResponse"|"ConfigInvalidResponse"|"ConfigInvalidContentType"|"ClientMetadataHttpNotFound"|"ClientMetadataNoResponse"|"ClientMetadataInvalidResponse"|"ClientMetadataInvalidContentType"|"IdpNotPotentiallyTrustworthy"|"DisabledInSettings"|"DisabledInFlags"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"AccountsListEmpty"|"AccountsInvalidContentType"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenInvalidResponse"|"IdTokenIdpErrorResponse"|"IdTokenCrossSiteIdpErrorResponse"|"IdTokenInvalidRequest"|"IdTokenInvalidContentType"|"ErrorIdToken"|"Canceled"|"RpPageNotVisible"|"SilentMediationFailure"|"ThirdPartyCookiesBlocked"|"NotSignedInWithIdp"|"MissingTransientUserActivation"|"ReplacedByButtonMode"|"InvalidFieldsSpecified"|"RelyingPartyOriginIsOpaque"|"TypeNotMatching";
+    export type FederatedAuthRequestIssueReason = "ShouldEmbargo"|"TooManyRequests"|"WellKnownHttpNotFound"|"WellKnownNoResponse"|"WellKnownInvalidResponse"|"WellKnownListEmpty"|"WellKnownInvalidContentType"|"ConfigNotInWellKnown"|"WellKnownTooBig"|"ConfigHttpNotFound"|"ConfigNoResponse"|"ConfigInvalidResponse"|"ConfigInvalidContentType"|"ClientMetadataHttpNotFound"|"ClientMetadataNoResponse"|"ClientMetadataInvalidResponse"|"ClientMetadataInvalidContentType"|"IdpNotPotentiallyTrustworthy"|"DisabledInSettings"|"DisabledInFlags"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"AccountsListEmpty"|"AccountsInvalidContentType"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenInvalidResponse"|"IdTokenIdpErrorResponse"|"IdTokenCrossSiteIdpErrorResponse"|"IdTokenInvalidRequest"|"IdTokenInvalidContentType"|"ErrorIdToken"|"Canceled"|"RpPageNotVisible"|"SilentMediationFailure"|"ThirdPartyCookiesBlocked"|"NotSignedInWithIdp"|"MissingTransientUserActivation"|"ReplacedByActiveMode"|"InvalidFieldsSpecified"|"RelyingPartyOriginIsOpaque"|"TypeNotMatching";
     export interface FederatedAuthUserInfoRequestIssueDetails {
       federatedAuthUserInfoRequestIssueReason: FederatedAuthUserInfoRequestIssueReason;
     }
@@ -5989,7 +5989,7 @@ Missing optional values will be filled in by the target with what it would norma
      * Used to specify sensor types to emulate.
 See https://w3c.github.io/sensors/#automation for more information.
      */
-    export type SensorType = "absolute-orientation"|"accelerometer"|"ambient-light"|"gravity"|"gyroscope"|"linear-acceleration"|"magnetometer"|"proximity"|"relative-orientation";
+    export type SensorType = "absolute-orientation"|"accelerometer"|"ambient-light"|"gravity"|"gyroscope"|"linear-acceleration"|"magnetometer"|"relative-orientation";
     export interface SensorMetadata {
       available?: boolean;
       minimumFrequency?: number;
@@ -11397,7 +11397,7 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
     export type setShowHitTestBordersReturnValue = {
     }
     /**
-     * Request that backend shows an overlay with web vital metrics.
+     * Deprecated, no longer has any effect.
      */
     export type setShowWebVitalsParameters = {
       show: boolean;
@@ -11498,7 +11498,7 @@ as an ad.
      * All Permissions Policy features. This enum should match the one defined
 in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"digital-credentials-get"|"direct-sockets"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"local-fonts"|"magnetometer"|"media-playback-while-not-visible"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"popins"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-autofill"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"sync-xhr"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"web-printing"|"web-share"|"window-management"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-private"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"local-fonts"|"magnetometer"|"media-playback-while-not-visible"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"popins"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-autofill"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"sync-xhr"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"web-printing"|"web-share"|"window-management"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -12086,7 +12086,7 @@ https://github.com/WICG/manifest-incubations/blob/gh-pages/scope_extensions-expl
     /**
      * List of not restored reasons for back-forward cache.
      */
-    export type BackForwardCacheNotRestoredReason = "NotPrimaryMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"UnloadHandlerExistsInMainFrame"|"UnloadHandlerExistsInSubFrame"|"ServiceWorkerUnregistration"|"CacheControlNoStore"|"CacheControlNoStoreCookieModified"|"CacheControlNoStoreHTTPOnlyCookieModified"|"NoResponseHead"|"Unknown"|"ActivationNavigationsDisallowedForBug1234857"|"ErrorDocument"|"FencedFramesEmbedder"|"CookieDisabled"|"HTTPAuthRequired"|"CookieFlushed"|"BroadcastChannelOnMessage"|"WebViewSettingsChanged"|"WebViewJavaScriptObjectChanged"|"WebViewMessageListenerInjected"|"WebViewSafeBrowsingAllowlistChanged"|"WebViewDocumentStartJavascriptChanged"|"WebSocket"|"WebTransport"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"ContainsPlugins"|"DocumentLoaded"|"OutstandingNetworkRequestOthers"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"WebXR"|"SharedWorker"|"WebLocks"|"WebHID"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"InjectedJavascript"|"InjectedStyleSheet"|"KeepaliveRequest"|"IndexedDBEvent"|"Dummy"|"JsNetworkRequestReceivedCacheControlNoStoreResource"|"WebRTCSticky"|"WebTransportSticky"|"WebSocketSticky"|"SmartCard"|"LiveMediaStreamTrack"|"UnloadHandler"|"ParserAborted"|"ContentSecurityHandler"|"ContentWebAuthenticationAPI"|"ContentFileChooser"|"ContentSerial"|"ContentFileSystemAccess"|"ContentMediaDevicesDispatcherHost"|"ContentWebBluetooth"|"ContentWebUSB"|"ContentMediaSessionService"|"ContentScreenReader"|"ContentDiscarded"|"EmbedderPopupBlockerTabHelper"|"EmbedderSafeBrowsingTriggeredPopupBlocker"|"EmbedderSafeBrowsingThreatDetails"|"EmbedderAppBannerManager"|"EmbedderDomDistillerViewerSource"|"EmbedderDomDistillerSelfDeletingRequestDelegate"|"EmbedderOomInterventionTabHelper"|"EmbedderOfflinePage"|"EmbedderChromePasswordManagerClientBindCredentialManager"|"EmbedderPermissionRequestManager"|"EmbedderModalDialog"|"EmbedderExtensions"|"EmbedderExtensionMessaging"|"EmbedderExtensionMessagingForOpenPort"|"EmbedderExtensionSentMessageToCachedFrame"|"RequestedByWebViewClient";
+    export type BackForwardCacheNotRestoredReason = "NotPrimaryMainFrame"|"BackForwardCacheDisabled"|"RelatedActiveContentsExist"|"HTTPStatusNotOK"|"SchemeNotHTTPOrHTTPS"|"Loading"|"WasGrantedMediaAccess"|"DisableForRenderFrameHostCalled"|"DomainNotAllowed"|"HTTPMethodNotGET"|"SubframeIsNavigating"|"Timeout"|"CacheLimit"|"JavaScriptExecution"|"RendererProcessKilled"|"RendererProcessCrashed"|"SchedulerTrackedFeatureUsed"|"ConflictingBrowsingInstance"|"CacheFlushed"|"ServiceWorkerVersionActivation"|"SessionRestored"|"ServiceWorkerPostMessage"|"EnteredBackForwardCacheBeforeServiceWorkerHostAdded"|"RenderFrameHostReused_SameSite"|"RenderFrameHostReused_CrossSite"|"ServiceWorkerClaim"|"IgnoreEventAndEvict"|"HaveInnerContents"|"TimeoutPuttingInCache"|"BackForwardCacheDisabledByLowMemory"|"BackForwardCacheDisabledByCommandLine"|"NetworkRequestDatapipeDrainedAsBytesConsumer"|"NetworkRequestRedirected"|"NetworkRequestTimeout"|"NetworkExceedsBufferLimit"|"NavigationCancelledWhileRestoring"|"NotMostRecentNavigationEntry"|"BackForwardCacheDisabledForPrerender"|"UserAgentOverrideDiffers"|"ForegroundCacheLimit"|"BrowsingInstanceNotSwapped"|"BackForwardCacheDisabledForDelegate"|"UnloadHandlerExistsInMainFrame"|"UnloadHandlerExistsInSubFrame"|"ServiceWorkerUnregistration"|"CacheControlNoStore"|"CacheControlNoStoreCookieModified"|"CacheControlNoStoreHTTPOnlyCookieModified"|"NoResponseHead"|"Unknown"|"ActivationNavigationsDisallowedForBug1234857"|"ErrorDocument"|"FencedFramesEmbedder"|"CookieDisabled"|"HTTPAuthRequired"|"CookieFlushed"|"BroadcastChannelOnMessage"|"WebViewSettingsChanged"|"WebViewJavaScriptObjectChanged"|"WebViewMessageListenerInjected"|"WebViewSafeBrowsingAllowlistChanged"|"WebViewDocumentStartJavascriptChanged"|"WebSocket"|"WebTransport"|"WebRTC"|"MainResourceHasCacheControlNoStore"|"MainResourceHasCacheControlNoCache"|"SubresourceHasCacheControlNoStore"|"SubresourceHasCacheControlNoCache"|"ContainsPlugins"|"DocumentLoaded"|"OutstandingNetworkRequestOthers"|"RequestedMIDIPermission"|"RequestedAudioCapturePermission"|"RequestedVideoCapturePermission"|"RequestedBackForwardCacheBlockedSensors"|"RequestedBackgroundWorkPermission"|"BroadcastChannel"|"WebXR"|"SharedWorker"|"WebLocks"|"WebHID"|"WebShare"|"RequestedStorageAccessGrant"|"WebNfc"|"OutstandingNetworkRequestFetch"|"OutstandingNetworkRequestXHR"|"AppBanner"|"Printing"|"WebDatabase"|"PictureInPicture"|"SpeechRecognizer"|"IdleManager"|"PaymentManager"|"SpeechSynthesis"|"KeyboardLock"|"WebOTPService"|"OutstandingNetworkRequestDirectSocket"|"InjectedJavascript"|"InjectedStyleSheet"|"KeepaliveRequest"|"IndexedDBEvent"|"Dummy"|"JsNetworkRequestReceivedCacheControlNoStoreResource"|"WebRTCSticky"|"WebTransportSticky"|"WebSocketSticky"|"SmartCard"|"LiveMediaStreamTrack"|"UnloadHandler"|"ParserAborted"|"ContentSecurityHandler"|"ContentWebAuthenticationAPI"|"ContentFileChooser"|"ContentSerial"|"ContentFileSystemAccess"|"ContentMediaDevicesDispatcherHost"|"ContentWebBluetooth"|"ContentWebUSB"|"ContentMediaSessionService"|"ContentScreenReader"|"ContentDiscarded"|"EmbedderPopupBlockerTabHelper"|"EmbedderSafeBrowsingTriggeredPopupBlocker"|"EmbedderSafeBrowsingThreatDetails"|"EmbedderAppBannerManager"|"EmbedderDomDistillerViewerSource"|"EmbedderDomDistillerSelfDeletingRequestDelegate"|"EmbedderOomInterventionTabHelper"|"EmbedderOfflinePage"|"EmbedderChromePasswordManagerClientBindCredentialManager"|"EmbedderPermissionRequestManager"|"EmbedderModalDialog"|"EmbedderExtensions"|"EmbedderExtensionMessaging"|"EmbedderExtensionMessagingForOpenPort"|"EmbedderExtensionSentMessageToCachedFrame"|"RequestedByWebViewClient"|"PostMessageByWebViewClient";
     /**
      * Types of not restored reasons for back-forward cache.
      */
@@ -16634,12 +16634,39 @@ flag set to this value. Defaults to the authenticator's
 defaultBackupState value.
        */
       backupState?: boolean;
+      /**
+       * The credential's user.name property. Equivalent to empty if not set.
+https://w3c.github.io/webauthn/#dom-publickeycredentialentity-name
+       */
+      userName?: string;
+      /**
+       * The credential's user.displayName property. Equivalent to empty if
+not set.
+https://w3c.github.io/webauthn/#dom-publickeycredentialuserentity-displayname
+       */
+      userDisplayName?: string;
     }
     
     /**
      * Triggered when a credential is added to an authenticator.
      */
     export type credentialAddedPayload = {
+      authenticatorId: AuthenticatorId;
+      credential: Credential;
+    }
+    /**
+     * Triggered when a credential is deleted, e.g. through
+PublicKeyCredential.signalUnknownCredential().
+     */
+    export type credentialDeletedPayload = {
+      authenticatorId: AuthenticatorId;
+      credentialId: binary;
+    }
+    /**
+     * Triggered when a credential is updated, e.g. through
+PublicKeyCredential.signalCurrentUserDetails().
+     */
+    export type credentialUpdatedPayload = {
       authenticatorId: AuthenticatorId;
       credential: Credential;
     }
@@ -17076,7 +17103,7 @@ possible for multiple rule sets and links to trigger a single attempt.
     /**
      * List of FinalStatus reasons for Prerender2.
      */
-    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"NavigationRequestBlockedByCsp"|"MainFrameNavigation"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"MemoryLimitExceeded"|"DataSaverEnabled"|"TriggerUrlHasEffectiveUrl"|"ActivatedBeforeStarted"|"InactivePageRestriction"|"StartFailed"|"TimeoutBackgrounded"|"CrossSiteRedirectInInitialNavigation"|"CrossSiteNavigationInInitialNavigation"|"SameSiteCrossOriginRedirectNotOptInInInitialNavigation"|"SameSiteCrossOriginNavigationNotOptInInInitialNavigation"|"ActivationNavigationParameterMismatch"|"ActivatedInBackground"|"EmbedderHostDisallowed"|"ActivationNavigationDestroyedBeforeSuccess"|"TabClosedByUserGesture"|"TabClosedWithoutUserGesture"|"PrimaryMainFrameRendererProcessCrashed"|"PrimaryMainFrameRendererProcessKilled"|"ActivationFramePolicyNotCompatible"|"PreloadingDisabled"|"BatterySaverEnabled"|"ActivatedDuringMainFrameNavigation"|"PreloadingUnsupportedByWebContents"|"CrossSiteRedirectInMainFrameNavigation"|"CrossSiteNavigationInMainFrameNavigation"|"SameSiteCrossOriginRedirectNotOptInInMainFrameNavigation"|"SameSiteCrossOriginNavigationNotOptInInMainFrameNavigation"|"MemoryPressureOnTrigger"|"MemoryPressureAfterTriggered"|"PrerenderingDisabledByDevTools"|"SpeculationRuleRemoved"|"ActivatedWithAuxiliaryBrowsingContexts"|"MaxNumOfRunningEagerPrerendersExceeded"|"MaxNumOfRunningNonEagerPrerendersExceeded"|"MaxNumOfRunningEmbedderPrerendersExceeded"|"PrerenderingUrlHasEffectiveUrl"|"RedirectedPrerenderingUrlHasEffectiveUrl"|"ActivationUrlHasEffectiveUrl"|"JavaScriptInterfaceAdded"|"JavaScriptInterfaceRemoved"|"AllPrerenderingCanceled"|"WindowClosed"|"SlowNetwork"|"OtherPrerenderedPageActivated";
+    export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"NavigationRequestBlockedByCsp"|"MainFrameNavigation"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"MemoryLimitExceeded"|"DataSaverEnabled"|"TriggerUrlHasEffectiveUrl"|"ActivatedBeforeStarted"|"InactivePageRestriction"|"StartFailed"|"TimeoutBackgrounded"|"CrossSiteRedirectInInitialNavigation"|"CrossSiteNavigationInInitialNavigation"|"SameSiteCrossOriginRedirectNotOptInInInitialNavigation"|"SameSiteCrossOriginNavigationNotOptInInInitialNavigation"|"ActivationNavigationParameterMismatch"|"ActivatedInBackground"|"EmbedderHostDisallowed"|"ActivationNavigationDestroyedBeforeSuccess"|"TabClosedByUserGesture"|"TabClosedWithoutUserGesture"|"PrimaryMainFrameRendererProcessCrashed"|"PrimaryMainFrameRendererProcessKilled"|"ActivationFramePolicyNotCompatible"|"PreloadingDisabled"|"BatterySaverEnabled"|"ActivatedDuringMainFrameNavigation"|"PreloadingUnsupportedByWebContents"|"CrossSiteRedirectInMainFrameNavigation"|"CrossSiteNavigationInMainFrameNavigation"|"SameSiteCrossOriginRedirectNotOptInInMainFrameNavigation"|"SameSiteCrossOriginNavigationNotOptInInMainFrameNavigation"|"MemoryPressureOnTrigger"|"MemoryPressureAfterTriggered"|"PrerenderingDisabledByDevTools"|"SpeculationRuleRemoved"|"ActivatedWithAuxiliaryBrowsingContexts"|"MaxNumOfRunningEagerPrerendersExceeded"|"MaxNumOfRunningNonEagerPrerendersExceeded"|"MaxNumOfRunningEmbedderPrerendersExceeded"|"PrerenderingUrlHasEffectiveUrl"|"RedirectedPrerenderingUrlHasEffectiveUrl"|"ActivationUrlHasEffectiveUrl"|"JavaScriptInterfaceAdded"|"JavaScriptInterfaceRemoved"|"AllPrerenderingCanceled"|"WindowClosed"|"SlowNetwork"|"OtherPrerenderedPageActivated"|"V8OptimizerDisabled"|"PrerenderFailedDuringPrefetch";
     /**
      * Preloading status values, see also PreloadingTriggeringOutcome. This
 status is shared by prefetchStatusUpdated and prerenderStatusUpdated.
@@ -17751,7 +17778,7 @@ variables as its properties.
       /**
        * Type of the debug symbols.
        */
-      type: "None"|"SourceMap"|"EmbeddedDWARF"|"ExternalDWARF";
+      type: "SourceMap"|"EmbeddedDWARF"|"ExternalDWARF";
       /**
        * URL of the external symbol source.
        */
@@ -17955,9 +17982,9 @@ scripts upon enabling debugger.
        */
       scriptLanguage?: Debugger.ScriptLanguage;
       /**
-       * If the scriptLanguage is WebASsembly, the source of debug symbols for the module.
+       * If the scriptLanguage is WebAssembly, the source of debug symbols for the module.
        */
-      debugSymbols?: Debugger.DebugSymbols;
+      debugSymbols?: Debugger.DebugSymbols[];
       /**
        * The name the embedder supplied for this script.
        */
@@ -18281,6 +18308,19 @@ call stacks (default).
     export type setAsyncCallStackDepthReturnValue = {
     }
     /**
+     * Replace previous blackbox execution contexts with passed ones. Forces backend to skip
+stepping/pausing in scripts in these execution contexts. VM will try to leave blackboxed script by
+performing 'step in' several times, finally resorting to 'step out' if unsuccessful.
+     */
+    export type setBlackboxExecutionContextsParameters = {
+      /**
+       * Array of execution context unique ids for the debugger to ignore.
+       */
+      uniqueIds: string[];
+    }
+    export type setBlackboxExecutionContextsReturnValue = {
+    }
+    /**
      * Replace previous blackbox patterns with passed ones. Forces backend to skip stepping/pausing in
 scripts with url matching one of the patterns. VM will try to leave blackboxed script by
 performing 'step in' several times, finally resorting to 'step out' if unsuccessful.
@@ -18290,6 +18330,10 @@ performing 'step in' several times, finally resorting to 'step out' if unsuccess
        * Array of regexps that will be used to check script url for blackbox state.
        */
       patterns: string[];
+      /**
+       * If true, also ignore scripts with no source url.
+       */
+      skipAnonymous?: boolean;
     }
     export type setBlackboxPatternsReturnValue = {
     }
@@ -20310,6 +20354,8 @@ Error was thrown.
     "WebAudio.nodeParamConnected": WebAudio.nodeParamConnectedPayload;
     "WebAudio.nodeParamDisconnected": WebAudio.nodeParamDisconnectedPayload;
     "WebAuthn.credentialAdded": WebAuthn.credentialAddedPayload;
+    "WebAuthn.credentialDeleted": WebAuthn.credentialDeletedPayload;
+    "WebAuthn.credentialUpdated": WebAuthn.credentialUpdatedPayload;
     "WebAuthn.credentialAsserted": WebAuthn.credentialAssertedPayload;
     "Media.playerPropertiesChanged": Media.playerPropertiesChangedPayload;
     "Media.playerEventsAdded": Media.playerEventsAddedPayload;
@@ -20897,6 +20943,7 @@ Error was thrown.
     "Debugger.resume": Debugger.resumeParameters;
     "Debugger.searchInContent": Debugger.searchInContentParameters;
     "Debugger.setAsyncCallStackDepth": Debugger.setAsyncCallStackDepthParameters;
+    "Debugger.setBlackboxExecutionContexts": Debugger.setBlackboxExecutionContextsParameters;
     "Debugger.setBlackboxPatterns": Debugger.setBlackboxPatternsParameters;
     "Debugger.setBlackboxedRanges": Debugger.setBlackboxedRangesParameters;
     "Debugger.setBreakpoint": Debugger.setBreakpointParameters;
@@ -21507,6 +21554,7 @@ Error was thrown.
     "Debugger.resume": Debugger.resumeReturnValue;
     "Debugger.searchInContent": Debugger.searchInContentReturnValue;
     "Debugger.setAsyncCallStackDepth": Debugger.setAsyncCallStackDepthReturnValue;
+    "Debugger.setBlackboxExecutionContexts": Debugger.setBlackboxExecutionContextsReturnValue;
     "Debugger.setBlackboxPatterns": Debugger.setBlackboxPatternsReturnValue;
     "Debugger.setBlackboxedRanges": Debugger.setBlackboxedRangesReturnValue;
     "Debugger.setBreakpoint": Debugger.setBreakpointReturnValue;
