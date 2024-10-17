@@ -51,7 +51,7 @@ test('should report matcherResults for generic matchers', async ({ runInlineTest
   expect(result.exitCode).toBe(1);
 
   const { errors } = result.report.suites[0].specs[0].tests[0].results[0];
-  expect( errors).toEqual([
+  expect(errors).toEqual([
     { expected: 2, actual: 1 },
     { },
     { },

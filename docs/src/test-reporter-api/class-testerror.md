@@ -28,11 +28,6 @@ Call log.
 
 Error message. Set when [Error] (or its subclass) has been thrown.
 
-## property: TestError.message
-* since: v1.10
-- type: ?<[string]>
-
-Error message. Set when [Error] (or its subclass) has been thrown.
 ## property: TestError.shortMessage
 * since: v1.49
 - type: ?<[string]>
