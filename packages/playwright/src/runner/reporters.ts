@@ -25,7 +25,6 @@ import JSONReporter from '../reporters/json';
 import JUnitReporter from '../reporters/junit';
 import LineReporter from '../reporters/line';
 import ListReporter from '../reporters/list';
-import MarkdownReporter from '../reporters/markdown';
 import type { Suite } from '../common/test';
 import type { BuiltInReporter, FullConfigInternal } from '../common/config';
 import { loadReporter } from './loadUtils';
@@ -45,7 +44,6 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
     junit: JUnitReporter,
     null: EmptyReporter,
     html: HtmlReporter,
-    markdown: MarkdownReporter,
   };
   const reporters: ReporterV2[] = [];
   descriptions ??= config.config.reporter;
