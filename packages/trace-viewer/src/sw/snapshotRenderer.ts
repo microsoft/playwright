@@ -253,6 +253,7 @@ function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string
     const scrollTops: Element[] = [];
     const scrollLefts: Element[] = [];
     const targetElements: Element[] = [];
+    const canvasElements: HTMLCanvasElement[] = [];
 
     const visit = (root: Document | ShadowRoot) => {
       // Collect all scrolled elements for later use.
@@ -301,72 +302,6 @@ function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string
         }
       }
 
-      const canvases = root.querySelectorAll('canvas');
-      if (canvases.length > 0 && screenshotURL) {
-        function drawWarningBackground(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
-          function createCheckerboardPattern() {
-            const pattern = document.createElement('canvas');
-            pattern.width = pattern.width / Math.floor(pattern.width / 24);
-            pattern.height = pattern.height / Math.floor(pattern.height / 24);
-            const context = pattern.getContext('2d')!;
-            context.fillStyle = 'lightgray';
-            context.fillRect(0, 0, pattern.width, pattern.height);
-            context.fillStyle = 'black';
-            context.fillRect(0, 0, pattern.width / 2, pattern.height / 2);
-            context.fillRect(pattern.width / 2, pattern.height / 2, pattern.width, pattern.height);
-            return context.createPattern(pattern, 'repeat')!;
-          }
-
-          context.fillStyle = createCheckerboardPattern();
-          context.fillRect(0, 0, canvas.width, canvas.height);
-        }
-
-        function drawWarningIcon(context: CanvasRenderingContext2D) {
-          context.fillStyle = 'red';
-          context.font = '24px serif';
-          context.textBaseline = 'top';
-          context.fillText('⚠', 0, 0);
-        }
-
-        const img = new Image();
-        img.onload = () => {
-          for (const canvas of canvases) {
-            const context = canvas.getContext('2d')!;
-
-            const boundingRect = canvas.getBoundingClientRect();
-            const xStart = boundingRect.left / window.innerWidth;
-            const yStart = boundingRect.top / window.innerHeight;
-            const xEnd = boundingRect.right / window.innerWidth;
-            const yEnd = boundingRect.bottom / window.innerHeight;
-
-            drawWarningBackground(context, canvas);
-            context.drawImage(img, xStart * img.width, yStart * img.height, (xEnd - xStart) * img.width, (yEnd - yStart) * img.height, 0, 0, canvas.width, canvas.height);
-            drawWarningIcon(context);
-            if (isUnderTest)
-              // eslint-disable-next-line no-console
-              console.log(`canvas drawn:`, JSON.stringify([xStart, yStart, xEnd, yEnd].map(v => Math.floor(v * 100))));
-
-            if (xEnd > 1 || yEnd > 1) {
-              if (xStart > 1 || yStart > 1)
-                canvas.title = `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`;
-              else
-                canvas.title = `Playwright couldn't capture canvas contents because it's located outside the viewport.`;
-            } else {
-              canvas.title = `Canvas contents are displayed on a best-effort basis based on viewport screenshots taken during test execution.`;
-            }
-          }
-        };
-        img.onerror = () => {
-          for (const canvas of canvases) {
-            const context = canvas.getContext('2d')!;
-            drawWarningBackground(context, canvas);
-            drawWarningIcon(context);
-            canvas.title = `Playwright couldn't show canvas contents because the screenshot failed to load.`;
-          }
-        };
-        img.src = screenshotURL;
-      }
-
       {
         const body = root.querySelector(`body[__playwright_custom_elements__]`);
         if (body && window.customElements) {
@@ -394,6 +329,8 @@ function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string
         }
         (root as any).adoptedStyleSheets = adoptedSheets;
       }
+
+      canvasElements.push(...root.querySelectorAll('canvas'));
     };
 
     const onLoad = () => {
@@ -460,6 +397,71 @@ function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string
             document.documentElement.appendChild(pointElement);
           }
         }
+      }
+
+      if (canvasElements.length > 0 && screenshotURL) {
+        function drawWarningBackground(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
+          function createCheckerboardPattern() {
+            const pattern = document.createElement('canvas');
+            pattern.width = pattern.width / Math.floor(pattern.width / 24);
+            pattern.height = pattern.height / Math.floor(pattern.height / 24);
+            const context = pattern.getContext('2d')!;
+            context.fillStyle = 'lightgray';
+            context.fillRect(0, 0, pattern.width, pattern.height);
+            context.fillStyle = 'black';
+            context.fillRect(0, 0, pattern.width / 2, pattern.height / 2);
+            context.fillRect(pattern.width / 2, pattern.height / 2, pattern.width, pattern.height);
+            return context.createPattern(pattern, 'repeat')!;
+          }
+
+          context.fillStyle = createCheckerboardPattern();
+          context.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function drawWarningIcon(context: CanvasRenderingContext2D) {
+          context.fillStyle = 'red';
+          context.font = '24px serif';
+          context.textBaseline = 'top';
+          context.fillText('⚠', 0, 0);
+        }
+
+        const img = new Image();
+        img.onload = () => {
+          for (const canvas of canvasElements) {
+            const context = canvas.getContext('2d')!;
+
+            const boundingRect = canvas.getBoundingClientRect();
+            const xStart = boundingRect.left / window.innerWidth;
+            const yStart = boundingRect.top / window.innerHeight;
+            const xEnd = boundingRect.right / window.innerWidth;
+            const yEnd = boundingRect.bottom / window.innerHeight;
+
+            drawWarningBackground(context, canvas);
+            context.drawImage(img, xStart * img.width, yStart * img.height, (xEnd - xStart) * img.width, (yEnd - yStart) * img.height, 0, 0, canvas.width, canvas.height);
+            drawWarningIcon(context);
+            if (isUnderTest)
+              // eslint-disable-next-line no-console
+              console.log(`canvas drawn:`, JSON.stringify([xStart, yStart, xEnd, yEnd].map(v => Math.floor(v * 100))));
+
+            if (xEnd > 1 || yEnd > 1) {
+              if (xStart > 1 || yStart > 1)
+                canvas.title = `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`;
+              else
+                canvas.title = `Playwright couldn't capture canvas contents because it's located outside the viewport.`;
+            } else {
+              canvas.title = `Canvas contents are displayed on a best-effort basis based on viewport screenshots taken during test execution.`;
+            }
+          }
+        };
+        img.onerror = () => {
+          for (const canvas of canvasElements) {
+            const context = canvas.getContext('2d')!;
+            drawWarningBackground(context, canvas);
+            drawWarningIcon(context);
+            canvas.title = `Playwright couldn't show canvas contents because the screenshot failed to load.`;
+          }
+        };
+        img.src = screenshotURL;
       }
     };
 
