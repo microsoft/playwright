@@ -49,17 +49,19 @@ export async function toMatchAriaSnapshot(
 
   const messagePrefix = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
   const notFound = received === kNoElementsFoundError;
+  const escapedExpected = escapePrivateUsePoints(expected);
+  const escapedReceived = escapePrivateUsePoints(received);
   const message = () => {
     if (pass) {
       if (notFound)
-        return messagePrefix + `Expected: not ${this.utils.printExpected(expected)}\nReceived: ${received}` + callLogText(log);
-      const printedReceived = printReceivedStringContainExpectedSubstring(received, received.indexOf(expected), expected.length);
-      return messagePrefix + `Expected: not ${this.utils.printExpected(expected)}\nReceived string: ${printedReceived}` + callLogText(log);
+        return messagePrefix + `Expected: not ${this.utils.printExpected(escapedExpected)}\nReceived: ${escapedReceived}` + callLogText(log);
+      const printedReceived = printReceivedStringContainExpectedSubstring(escapedReceived, escapedReceived.indexOf(escapedExpected), escapedExpected.length);
+      return messagePrefix + `Expected: not ${this.utils.printExpected(escapedExpected)}\nReceived string: ${printedReceived}` + callLogText(log);
     } else {
       const labelExpected = `Expected`;
       if (notFound)
-        return messagePrefix + `${labelExpected}: ${this.utils.printExpected(expected)}\nReceived: ${received}` + callLogText(log);
-      return messagePrefix + this.utils.printDiffOrStringify(expected, received, labelExpected, 'Received string', false) + callLogText(log);
+        return messagePrefix + `${labelExpected}: ${this.utils.printExpected(escapedExpected)}\nReceived: ${escapedReceived}` + callLogText(log);
+      return messagePrefix + this.utils.printDiffOrStringify(escapedExpected, escapedReceived, labelExpected, 'Received string', false) + callLogText(log);
     }
   };
 
@@ -72,4 +74,8 @@ export async function toMatchAriaSnapshot(
     log,
     timeout: timedOut ? timeout : undefined,
   };
+}
+
+function escapePrivateUsePoints(str: string) {
+  return str.replace(/[\uE000-\uF8FF]/g, char => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }

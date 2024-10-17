@@ -363,7 +363,7 @@ function queryInAriaOwned(element: Element, selector: string): Element[] {
   return result;
 }
 
-function getPseudoContent(element: Element, pseudo: '::before' | '::after') {
+export function getPseudoContent(element: Element, pseudo: '::before' | '::after') {
   const cache = pseudo === '::before' ? cachePseudoContentBefore : cachePseudoContentAfter;
   if (cache?.has(element))
     return cache?.get(element) || '';
@@ -430,10 +430,6 @@ export function getElementAccessibleName(element: Element, includeHidden: boolea
       accessibleName = asFlatString(getTextAlternativeInternal(element, {
         includeHidden,
         visitedElements: new Set(),
-        embeddedInDescribedBy: undefined,
-        embeddedInLabelledBy: undefined,
-        embeddedInLabel: undefined,
-        embeddedInNativeTextAlternative: undefined,
         embeddedInTargetElement: 'self',
       }));
     }
@@ -458,10 +454,6 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
       accessibleDescription = asFlatString(describedBy.map(ref => getTextAlternativeInternal(ref, {
         includeHidden,
         visitedElements: new Set(),
-        embeddedInLabelledBy: undefined,
-        embeddedInLabel: undefined,
-        embeddedInNativeTextAlternative: undefined,
-        embeddedInTargetElement: 'none',
         embeddedInDescribedBy: { element: ref, hidden: isElementHiddenForAria(ref) },
       })).join(' '));
     } else if (element.hasAttribute('aria-description')) {
@@ -480,13 +472,13 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
 }
 
 type AccessibleNameOptions = {
-  includeHidden: boolean,
   visitedElements: Set<Element>,
-  embeddedInDescribedBy: { element: Element, hidden: boolean } | undefined,
-  embeddedInLabelledBy: { element: Element, hidden: boolean } | undefined,
-  embeddedInLabel: { element: Element, hidden: boolean } | undefined,
-  embeddedInNativeTextAlternative: { element: Element, hidden: boolean } | undefined,
-  embeddedInTargetElement: 'none' | 'self' | 'descendant',
+  includeHidden?: boolean,
+  embeddedInDescribedBy?: { element: Element, hidden: boolean },
+  embeddedInLabelledBy?: { element: Element, hidden: boolean },
+  embeddedInLabel?: { element: Element, hidden: boolean },
+  embeddedInNativeTextAlternative?: { element: Element, hidden: boolean },
+  embeddedInTargetElement?: 'self' | 'descendant',
 };
 
 function getTextAlternativeInternal(element: Element, options: AccessibleNameOptions): string {
@@ -525,7 +517,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       ...options,
       embeddedInLabelledBy: { element: ref, hidden: isElementHiddenForAria(ref) },
       embeddedInDescribedBy: undefined,
-      embeddedInTargetElement: 'none',
+      embeddedInTargetElement: undefined,
       embeddedInLabel: undefined,
       embeddedInNativeTextAlternative: undefined,
     })).join(' ');
@@ -778,42 +770,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       !!options.embeddedInLabelledBy || !!options.embeddedInDescribedBy ||
       !!options.embeddedInLabel || !!options.embeddedInNativeTextAlternative) {
     options.visitedElements.add(element);
-    const tokens: string[] = [];
-    const visit = (node: Node, skipSlotted: boolean) => {
-      if (skipSlotted && (node as Element | Text).assignedSlot)
-        return;
-      if (node.nodeType === 1 /* Node.ELEMENT_NODE */) {
-        const display = getElementComputedStyle(node as Element)?.display || 'inline';
-        let token = getTextAlternativeInternal(node as Element, childOptions);
-        // SPEC DIFFERENCE.
-        // Spec says "append the result to the accumulated text", assuming "with space".
-        // However, multiple tests insist that inline elements do not add a space.
-        // Additionally, <br> insists on a space anyway, see "name_file-label-inline-block-elements-manual.html"
-        if (display !== 'inline' || node.nodeName === 'BR')
-          token = ' ' + token + ' ';
-        tokens.push(token);
-      } else if (node.nodeType === 3 /* Node.TEXT_NODE */) {
-        // step 2g.
-        tokens.push(node.textContent || '');
-      }
-    };
-    tokens.push(getPseudoContent(element, '::before'));
-    const assignedNodes = element.nodeName === 'SLOT' ? (element as HTMLSlotElement).assignedNodes() : [];
-    if (assignedNodes.length) {
-      for (const child of assignedNodes)
-        visit(child, false);
-    } else {
-      for (let child = element.firstChild; child; child = child.nextSibling)
-        visit(child, true);
-      if (element.shadowRoot) {
-        for (let child = element.shadowRoot.firstChild; child; child = child.nextSibling)
-          visit(child, true);
-      }
-      for (const owned of getIdRefs(element, element.getAttribute('aria-owns')))
-        visit(owned, true);
-    }
-    tokens.push(getPseudoContent(element, '::after'));
-    const accessibleName = tokens.join('');
+    const accessibleName = innerAccumulatedElementText(element, childOptions);
     // Spec says "Return the accumulated text if it is not the empty string". However, that is not really
     // compatible with the real browser behavior and wpt tests, where an element with empty contents will fallback to the title.
     // So we follow the spec everywhere except for the target element itself. This can probably be improved.
@@ -832,6 +789,50 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
 
   options.visitedElements.add(element);
   return '';
+}
+
+function innerAccumulatedElementText(element: Element, options: AccessibleNameOptions): string {
+  const tokens: string[] = [];
+  const visit = (node: Node, skipSlotted: boolean) => {
+    if (skipSlotted && (node as Element | Text).assignedSlot)
+      return;
+    if (node.nodeType === 1 /* Node.ELEMENT_NODE */) {
+      const display = getElementComputedStyle(node as Element)?.display || 'inline';
+      let token = getTextAlternativeInternal(node as Element, options);
+      // SPEC DIFFERENCE.
+      // Spec says "append the result to the accumulated text", assuming "with space".
+      // However, multiple tests insist that inline elements do not add a space.
+      // Additionally, <br> insists on a space anyway, see "name_file-label-inline-block-elements-manual.html"
+      if (display !== 'inline' || node.nodeName === 'BR')
+        token = ' ' + token + ' ';
+      tokens.push(token);
+    } else if (node.nodeType === 3 /* Node.TEXT_NODE */) {
+      // step 2g.
+      tokens.push(node.textContent || '');
+    }
+  };
+  tokens.push(getPseudoContent(element, '::before'));
+  const assignedNodes = element.nodeName === 'SLOT' ? (element as HTMLSlotElement).assignedNodes() : [];
+  if (assignedNodes.length) {
+    for (const child of assignedNodes)
+      visit(child, false);
+  } else {
+    for (let child = element.firstChild; child; child = child.nextSibling)
+      visit(child, true);
+    if (element.shadowRoot) {
+      for (let child = element.shadowRoot.firstChild; child; child = child.nextSibling)
+        visit(child, true);
+    }
+    for (const owned of getIdRefs(element, element.getAttribute('aria-owns')))
+      visit(owned, true);
+  }
+  tokens.push(getPseudoContent(element, '::after'));
+  return tokens.join('');
+}
+
+export function accumulatedElementText(element: Element): string {
+  const visitedElements = new Set<Element>();
+  return asFlatString(innerAccumulatedElementText(element, { visitedElements })).trim();
 }
 
 export const kAriaSelectedRoles = ['gridcell', 'option', 'row', 'tab', 'rowheader', 'columnheader', 'treeitem'];
@@ -958,7 +959,7 @@ function getAccessibleNameFromAssociatedLabels(labels: Iterable<HTMLLabelElement
     embeddedInNativeTextAlternative: undefined,
     embeddedInLabelledBy: undefined,
     embeddedInDescribedBy: undefined,
-    embeddedInTargetElement: 'none',
+    embeddedInTargetElement: undefined,
   })).filter(accessibleName => !!accessibleName).join(' ');
 }
 

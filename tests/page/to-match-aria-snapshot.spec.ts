@@ -94,7 +94,7 @@ test('should allow text nodes', async ({ page }) => {
   `);
 });
 
-test('details visibility', async ({ page, browserName }) => {
+test('details visibility', async ({ page }) => {
   await page.setContent(`
     <details>
       <summary>Summary</summary>
@@ -107,7 +107,7 @@ test('details visibility', async ({ page, browserName }) => {
   `);
 });
 
-test('integration test', async ({ page, browserName }) => {
+test('integration test', async ({ page }) => {
   await page.setContent(`
     <h1>Microsoft</h1>
     <div>Open source projects and samples from Microsoft</div>
