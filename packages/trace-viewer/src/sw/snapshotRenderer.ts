@@ -445,9 +445,9 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
 
             if (xEnd > 1 || yEnd > 1) {
               if (xStart > 1 || yStart > 1)
-                canvas.title = `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`;
-              else
                 canvas.title = `Playwright couldn't capture canvas contents because it's located outside the viewport.`;
+              else
+                canvas.title = `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`;
             } else {
               canvas.title = `Canvas contents are displayed on a best-effort basis based on viewport screenshots taken during test execution.`;
             }

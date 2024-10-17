@@ -1445,8 +1445,6 @@ test('canvas clipping', async ({ runAndTrace, page, server }) => {
     await page.waitForTimeout(1000); // ensure we could take a screenshot
   });
 
-  await traceViewer.page.pause();
-
   const msg = await traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') });
   expect(msg.text()).toEqual('canvas drawn: [0,91,12,111]');
 
