@@ -211,7 +211,7 @@ test('should run part of the setup only', async ({ runUITest }) => {
   await page.getByLabel('test').setChecked(true);
 
   await page.getByText('setup.ts').hover();
-  await page.getByRole('listitem').filter({ hasText: 'setup.ts' }).getByTitle('Run').click();
+  await page.getByRole('treeitem').filter({ hasText: 'setup.ts' }).getByTitle('Run').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ setup.ts <=
