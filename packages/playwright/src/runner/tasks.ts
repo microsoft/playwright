@@ -98,8 +98,11 @@ export function createGlobalSetupTasks(config: FullConfigInternal) {
   if (!config.configCLIOverrides.preserveOutputDir && !process.env.PW_TEST_NO_REMOVE_OUTPUT_DIRS)
     tasks.push(createRemoveOutputDirsTask());
   tasks.push(...createPluginSetupTasks(config));
-  if (config.config.globalSetup || config.config.globalTeardown)
-    tasks.push(createGlobalSetupTask());
+  if (config.globalSetups.length || config.globalTeardowns.length) {
+    const length = Math.max(config.globalSetups.length, config.globalTeardowns.length);
+    for (let i = 0; i < length; i++)
+      tasks.push(createGlobalSetupTask(i, length));
+  }
   return tasks;
 }
 
@@ -161,15 +164,20 @@ function createPluginBeginTask(plugin: TestRunnerPluginRegistration): Task<TestR
   };
 }
 
-function createGlobalSetupTask(): Task<TestRun> {
+function createGlobalSetupTask(index: number, length: number): Task<TestRun> {
   let globalSetupResult: any;
   let globalSetupFinished = false;
   let teardownHook: any;
+
+  let title = 'global setup';
+  if (length > 1)
+    title += ` #${index}`;
+
   return {
-    title: 'global setup',
+    title,
     setup: async ({ config }) => {
-      const setupHook = config.config.globalSetup ? await loadGlobalHook(config, config.config.globalSetup) : undefined;
-      teardownHook = config.config.globalTeardown ? await loadGlobalHook(config, config.config.globalTeardown) : undefined;
+      const setupHook = config.globalSetups[index] ? await loadGlobalHook(config, config.globalSetups[index]) : undefined;
+      teardownHook = config.globalTeardowns[index] ? await loadGlobalHook(config, config.globalTeardowns[index]) : undefined;
       globalSetupResult = setupHook ? await setupHook(config.config) : undefined;
       globalSetupFinished = true;
     },

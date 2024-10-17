@@ -139,13 +139,25 @@ function validateConfig(file: string, config: Config) {
   }
 
   if ('globalSetup' in config && config.globalSetup !== undefined) {
-    if (typeof config.globalSetup !== 'string')
+    if (Array.isArray(config.globalSetup)) {
+      config.globalSetup.forEach((item, index) => {
+        if (typeof item !== 'string')
+          throw errorWithFile(file, `config.globalSetup[${index}] must be a string`);
+      });
+    } else if (typeof config.globalSetup !== 'string') {
       throw errorWithFile(file, `config.globalSetup must be a string`);
+    }
   }
 
   if ('globalTeardown' in config && config.globalTeardown !== undefined) {
-    if (typeof config.globalTeardown !== 'string')
+    if (Array.isArray(config.globalTeardown)) {
+      config.globalTeardown.forEach((item, index) => {
+        if (typeof item !== 'string')
+          throw errorWithFile(file, `config.globalTeardown[${index}] must be a string`);
+      });
+    } else if (typeof config.globalTeardown !== 'string') {
       throw errorWithFile(file, `config.globalTeardown must be a string`);
+    }
   }
 
   if ('globalTimeout' in config && config.globalTimeout !== undefined) {

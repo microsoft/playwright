@@ -110,9 +110,9 @@ export default defineConfig({
 
 ## property: TestConfig.globalSetup
 * since: v1.10
-- type: ?<[string]>
+- type: ?<[string]|[Array]<[string]>>
 
-Path to the global setup file. This file will be required and run before all the tests. It must export a single function that takes a [FullConfig] argument.
+Path to the global setup file. This file will be required and run before all the tests. It must export a single function that takes a [FullConfig] argument. Pass an array of paths to specify multiple global setup files.
 
 Learn more about [global setup and teardown](../test-global-setup-teardown.md).
 
@@ -128,9 +128,9 @@ export default defineConfig({
 
 ## property: TestConfig.globalTeardown
 * since: v1.10
-- type: ?<[string]>
+- type: ?<[string]|[Array]<[string]>>
 
-Path to the global teardown file. This file will be required and run after all the tests. It must export a single function. See also [`property: TestConfig.globalSetup`].
+Path to the global teardown file. This file will be required and run after all the tests. It must export a single function. See also [`property: TestConfig.globalSetup`]. Pass an array of paths to specify multiple global teardown files.
 
 Learn more about [global setup and teardown](../test-global-setup-teardown.md).
 
