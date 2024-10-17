@@ -46,7 +46,6 @@ npx playwright install
 You can optionally install only selected browsers, see [install browsers](https://playwright.dev/docs/cli#install-browsers) for more details. Or you can install no browsers at all and use existing [browser channels](https://playwright.dev/docs/browsers).
 
 * [Getting started](https://playwright.dev/docs/intro)
-* [Installation configuration](https://playwright.dev/docs/installation)
 * [API reference](https://playwright.dev/docs/api/class-playwright)
 
 ## Capabilities
