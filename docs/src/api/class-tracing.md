@@ -284,7 +284,7 @@ To specify the final trace zip file name, you need to pass `path` option to
 ## async method: Tracing.group
 * since: v1.49
 
-Creates a new inline group in the trace, causing any subsequent calls to belong to this group, until [`method: Tracing.groupEnd`] is called.
+Creates a new inline group within the trace, assigning any subsequent calls to this group until [method: Tracing.groupEnd] is invoked.
 
 Groups can be nested and are similar to `test.step` in trace.
 However, groups are only visualized in the trace viewer and, unlike test.step, have no effect on the test reports.
