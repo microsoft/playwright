@@ -19,6 +19,7 @@ import * as React from 'react';
 import { TreeItem } from './treeItem';
 import { msToString } from './utils';
 import { AutoChip } from './chip';
+import * as icons from './icons';
 import { traceImage } from './images';
 import { AttachmentLink, generateTraceUrl } from './links';
 import { statusIcon } from './statusIcon';
@@ -61,22 +62,39 @@ function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
   return [...snapshotNameToImageDiff.values()];
 }
 
+function getAttachmentCategory(attachment: TestAttachment) {
+  if (attachment.contentType.startsWith('image/'))
+    return 'screenshot';
+  if (attachment.name === 'video')
+    return 'video';
+  if (attachment.name === 'trace')
+    return 'trace';
+  if (attachment.contentType.startsWith('text/html'))
+    return 'html';
+  return 'other';
+}
+
 export const TestResultView: React.FC<{
   test: TestCase,
   result: TestResult,
   anchor: 'video' | 'diff' | '',
 }> = ({ result, anchor }) => {
-
   const { screenshots, videos, traces, otherAttachments, diffs, errors, htmls } = React.useMemo(() => {
-    const attachments = result?.attachments || [];
-    const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
-    const videos = attachments.filter(a => a.contentType.startsWith('video/'));
-    const traces = attachments.filter(a => a.name === 'trace');
-    const htmls = attachments.filter(a => a.contentType.startsWith('text/html'));
-    const otherAttachments = new Set<TestAttachment>(attachments);
-    [...screenshots, ...videos, ...traces, ...htmls].forEach(a => otherAttachments.delete(a));
+    const attachments = result.attachments;
+    const screenshots = new Set(attachments.filter(a => getAttachmentCategory(a) === 'screenshot'));
+    const videos = attachments.filter(a => getAttachmentCategory(a) === 'video');
+    const traces = attachments.filter(a => getAttachmentCategory(a) === 'trace');
+
     const diffs = groupImageDiffs(screenshots);
     const errors = classifyErrors(result.errors, diffs);
+
+    const collectAttachments = (step: TestStep): number[] => step.attachments.concat(...step.steps.map(collectAttachments));
+    const stepAttachments = result.steps.flatMap(collectAttachments);
+
+    const topLevelAttachments = result.attachments.filter((_, index) => !stepAttachments.includes(index));
+    const htmls = topLevelAttachments.filter(a => getAttachmentCategory(a) === 'html');
+    const otherAttachments = topLevelAttachments.filter(a => getAttachmentCategory(a) === 'other');
+
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, htmls };
   }, [result]);
 
@@ -102,8 +120,10 @@ export const TestResultView: React.FC<{
         return <TestErrorView key={'test-result-error-message-' + index} error={error.error!}></TestErrorView>;
       })}
     </AutoChip>}
-    {!!result.steps.length && <AutoChip header='Test Steps'>
-      {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} depth={0}></StepTreeItem>)}
+    {!!result.steps.length && <AutoChip header='Test Steps' dataTestId='test-steps-chip'>
+      {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} attachments={result.attachments} depth={0}></StepTreeItem>)}
+      {htmls.map((a, i) => <AttachmentLink key={`html-link-${i}`} attachment={a} openInNewTab />)}
+      {otherAttachments.map((a, i) => <AttachmentLink key={`attachment-link-${i}`} attachment={a}/>)}
     </AutoChip>}
 
     {diffs.map((diff, index) =>
@@ -141,7 +161,7 @@ export const TestResultView: React.FC<{
       </div>)}
     </AutoChip>}
 
-    {!!(otherAttachments.size + htmls.length) && <AutoChip header='Attachments'>
+    {!result.steps.length && !!(otherAttachments.length + htmls.length) && <AutoChip header='Attachments'>
       {[...htmls].map((a, i) => (
         <AttachmentLink key={`html-link-${i}`} attachment={a} openInNewTab />)
       )}
@@ -176,15 +196,24 @@ function classifyErrors(testErrors: string[], diffs: ImageDiff[]) {
 const StepTreeItem: React.FC<{
   step: TestStep;
   depth: number,
-}> = ({ step, depth }) => {
+  attachments: TestAttachment[],
+}> = ({ step, depth, attachments }) => {
+  if (step.category === 'attach')
+    return;
+
   return <TreeItem title={<span>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
     {statusIcon(step.error || step.duration === -1 ? 'failed' : 'passed')}
     <span>{step.title}</span>
     {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
     {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
-  </span>} loadChildren={step.steps.length + (step.snippet ? 1 : 0) ? () => {
-    const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
+    {step.attachments.length > 0 && <span className='attachments-icon' title={`${step.attachments} attachment${step.attachments.length > 1 ? 's' : ''}`}>{icons.paperclip()}</span>}
+  </span>} loadChildren={step.steps.length + step.attachments.length + (step.snippet ? 1 : 0) ? () => {
+    const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} attachments={attachments}></StepTreeItem>);
+    children.push(...step.attachments.map(a => {
+      const attachment = attachments[a];
+      return <AttachmentLink key={`attachment-${a}`} attachment={attachment} depth={depth + 1} openInNewTab={getAttachmentCategory(attachment) === 'html'}/>;
+    }));
     if (step.snippet)
       children.unshift(<TestErrorView key='line' error={step.snippet}></TestErrorView>);
     return children;

@@ -886,6 +886,58 @@ for (const useIntermediateMergeReport of [false] as const) {
       ]));
     });
 
+    test('should show attachments in step lsit', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32748' } }, async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passing', async ({ page }, testInfo) => {
+            testInfo.attachments.push({
+                name: 'top-level.txt',
+                contentType: 'text/plain',
+                body: Buffer.from('body of top-level'),
+            });
+            await test.step('step with attachment', async () => {
+              testInfo.attachments.push({
+                name: 'step-attachment.html',
+                contentType: 'text/html',
+                body: Buffer.from('<h1>step attachment</h1>'),
+              });
+
+              await testInfo.attach('foo', { body: 'body-a' });
+              await testInfo.attach('foo', { body: 'body-b' });
+            });
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+
+      await showReport();
+
+      await page.getByText('passing').click();
+
+      const testSteps = page.getByTestId('test-steps-chip');
+      await testSteps.getByText('top-level.txt').click();
+      await expect(testSteps).toContainText('body of top-level');
+
+      await testSteps.getByText('step with attachment').click();
+
+      await expect(testSteps).not.toContainText('body-a');
+      await testSteps.getByText('foo').nth(0).click();
+      await expect(testSteps).toContainText('body-a');
+
+      await expect(testSteps).not.toContainText('body-b');
+      await testSteps.getByText('foo').nth(1).click();
+      await expect(testSteps).toContainText('body-b');
+
+      const [newTab] = await Promise.all([
+        page.waitForEvent('popup'),
+        testSteps.getByText('step-attachment.html').click(),
+      ]);
+
+      await expect(newTab).toHaveURL(/^blob:/);
+      await expect(newTab.getByText('step attachment')).toBeVisible();
+    });
+
     test('should strikethrough textual diff', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'helper.ts': `

@@ -192,7 +192,7 @@ export class TestInfoImpl implements TestInfo {
     this._attachmentsPush = this.attachments.push.bind(this.attachments);
     this.attachments.push = (...attachments: TestInfo['attachments']) => {
       for (const a of attachments)
-        this._attach(a.name, a);
+        this._attach(a);
       return this.attachments.length;
     };
 
@@ -237,20 +237,21 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
+  _parentStep(isStage?: boolean) {
+    if (isStage) {
+      // Predefined stages form a fixed hierarchy - use the current one as parent.
+      return this._findLastStageStep(this._steps);
+    }
+    return (
+      zones.zoneData<TestStepInternal>('stepZone')
+        ?? this._findLastStageStep(this._steps) // If no parent step on stack, assume the current stage as parent.
+    );
+  }
+
   _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
 
-    let parentStep: TestStepInternal | undefined;
-    if (data.isStage) {
-      // Predefined stages form a fixed hierarchy - use the current one as parent.
-      parentStep = this._findLastStageStep(this._steps);
-    } else {
-      parentStep = zones.zoneData<TestStepInternal>('stepZone');
-      if (!parentStep) {
-        // If no parent step on stack, assume the current stage as parent.
-        parentStep = this._findLastStageStep(this._steps);
-      }
-    }
+    const parentStep = this._parentStep(data.isStage);
 
     const filteredStack = filteredStackTrace(captureRawStack());
     data.boxedStack = parentStep?.boxedStack;
@@ -398,23 +399,25 @@ export class TestInfoImpl implements TestInfo {
   // ------------ TestInfo methods ------------
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
-    this._attach(name, await normalizeAndSaveAttachment(this.outputPath(), name, options));
-  }
-
-  private _attach(name: string, attachment: TestInfo['attachments'][0]) {
     const step = this._addStep({
       title: `attach "${name}"`,
       category: 'attach',
     });
+    const attachment = await normalizeAndSaveAttachment(this.outputPath(), name, options);
+    this._attach(attachment);
+    step.complete({ attachments: [attachment] });
+  }
+
+  private _attach(attachment: TestInfo['attachments'][0]) {
     this._attachmentsPush(attachment);
     this._onAttach({
       testId: this.testId,
       name: attachment.name,
       contentType: attachment.contentType,
       path: attachment.path,
-      body: attachment.body?.toString('base64')
+      body: attachment.body?.toString('base64'),
+      stepId: this._parentStep()?.stepId,
     });
-    step.complete({ attachments: [attachment] });
   }
 
   outputPath(...pathSegments: string[]){

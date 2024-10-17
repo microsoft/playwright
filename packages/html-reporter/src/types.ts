@@ -102,11 +102,13 @@ export type TestResult = {
 
 export type TestStep = {
   title: string;
+  category: 'hook' | 'fixture' | 'test.step' | 'expect' | 'attach' | string;
   startTime: string;
   duration: number;
   location?: Location;
   snippet?: string;
   error?: string;
   steps: TestStep[];
+  attachments: number[];
   count: number;
 };
