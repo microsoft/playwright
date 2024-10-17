@@ -303,7 +303,7 @@ function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string
 
       const canvases = root.querySelectorAll('canvas');
       if (canvases.length > 0 && screenshotURL) {
-        function drawCanvasWarning(canvas: HTMLCanvasElement, partial: boolean) {
+        function drawWarningBackground(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
           function createCheckerboardPattern() {
             const pattern = document.createElement('canvas');
             pattern.width = pattern.width / Math.floor(pattern.width / 24);
@@ -317,14 +317,15 @@ function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string
             return context.createPattern(pattern, 'repeat')!;
           }
 
-          const ctx = canvas.getContext('2d')!;
-          ctx.fillStyle = 'red';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          context.fillStyle = createCheckerboardPattern();
+          context.fillRect(0, 0, canvas.width, canvas.height);
+        }
 
-          ctx.fillStyle = createCheckerboardPattern();
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-          canvas.title = `Playwright couldn't capture ${partial ? 'full ' : ''}canvas contents because it's located ${partial ? 'partially ' : ''}outside the viewport.`;
+        function drawWarningIcon(context: CanvasRenderingContext2D) {
+          context.fillStyle = 'red';
+          context.font = '24px serif';
+          context.textBaseline = 'top';
+          context.fillText('⚠', 0, 0);
         }
 
         const img = new Image();
@@ -338,19 +339,30 @@ function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string
             const xEnd = boundingRect.right / window.innerWidth;
             const yEnd = boundingRect.bottom / window.innerHeight;
 
-            if (xStart > 1 || yStart > 1 || xEnd > 1 || yEnd > 1)
-              drawCanvasWarning(canvas, xStart < 1 && yStart < 1);
-
+            drawWarningBackground(context, canvas);
             context.drawImage(img, xStart * img.width, yStart * img.height, (xEnd - xStart) * img.width, (yEnd - yStart) * img.height, 0, 0, canvas.width, canvas.height);
-
+            drawWarningIcon(context);
             if (isUnderTest)
               // eslint-disable-next-line no-console
               console.log(`canvas drawn:`, JSON.stringify([xStart, yStart, xEnd, yEnd].map(v => Math.floor(v * 100))));
+
+            if (xEnd > 1 || yEnd > 1) {
+              if (xStart > 1 || yStart > 1)
+                canvas.title = `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`;
+              else
+                canvas.title = `Playwright couldn't capture canvas contents because it's located outside the viewport.`;
+            } else {
+              canvas.title = `Canvas contents are displayed on a best-effort basis based on viewport screenshots taken during test execution.`;
+            }
           }
         };
         img.onerror = () => {
-          for (const canvas of canvases)
-            drawCanvasWarning(canvas, false);
+          for (const canvas of canvases) {
+            const context = canvas.getContext('2d')!;
+            drawWarningBackground(context, canvas);
+            drawWarningIcon(context);
+            canvas.title = `Playwright couldn't show canvas contents because the screenshot failed to load.`;
+          }
         };
         img.src = screenshotURL;
       }
