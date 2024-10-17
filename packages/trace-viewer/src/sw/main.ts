@@ -64,7 +64,7 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
       throw new Error(`Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.`);
     throw new Error(`Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`);
   }
-  const snapshotServer = new SnapshotServer(traceModel.storage(), sha1 => traceModel.resourceForSha1(sha1), traceModel.contextEntries);
+  const snapshotServer = new SnapshotServer(traceModel.storage(), sha1 => traceModel.resourceForSha1(sha1));
   loadedTraces.set(traceUrl, { traceModel, snapshotServer });
   return traceModel;
 }

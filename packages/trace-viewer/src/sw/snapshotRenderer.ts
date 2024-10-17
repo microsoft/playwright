@@ -16,6 +16,16 @@
 
 import { escapeHTMLAttribute, escapeHTML } from '@isomorphic/stringUtils';
 import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from '@trace/snapshot';
+import type { PageEntry } from '../types/entries';
+
+function findClosest<T>(items: T[], metric: (v: T) => number, target: number) {
+  return items.find((item, index) => {
+    if (index === items.length - 1)
+      return true;
+    const next = items[index + 1];
+    return Math.abs(metric(item) - target) < Math.abs(metric(next) - target);
+  });
+}
 
 function isNodeNameAttributesChildNodesSnapshot(n: NodeSnapshot): n is NodeNameAttributesChildNodesSnapshot {
   return Array.isArray(n) && typeof n[0] === 'string';
@@ -60,13 +70,15 @@ export class SnapshotRenderer {
   private _resources: ResourceSnapshot[];
   private _snapshot: FrameSnapshot;
   private _callId: string;
+  private _screencastFrames: PageEntry['screencastFrames'];
 
-  constructor(resources: ResourceSnapshot[], snapshots: FrameSnapshot[], index: number) {
+  constructor(resources: ResourceSnapshot[], snapshots: FrameSnapshot[], screencastFrames: PageEntry['screencastFrames'], index: number) {
     this._resources = resources;
     this._snapshots = snapshots;
     this._index = index;
     this._snapshot = snapshots[index];
     this._callId = snapshots[index].callId;
+    this._screencastFrames = screencastFrames;
     this.snapshotName = snapshots[index].snapshotName;
   }
 
@@ -76,6 +88,14 @@ export class SnapshotRenderer {
 
   viewport(): { width: number, height: number } {
     return this._snapshots[this._index].viewport;
+  }
+
+  closestScreenshot(): string | undefined {
+    const { wallTime, timestamp } = this.snapshot();
+    const closestFrame = (wallTime && this._screencastFrames[0]?.frameSwapWallTime)
+      ? findClosest(this._screencastFrames, frame => frame.frameSwapWallTime!, wallTime)
+      : findClosest(this._screencastFrames, frame => frame.timestamp, timestamp);
+    return closestFrame?.sha1;
   }
 
   render(): RenderedFrameSnapshot {
@@ -437,6 +457,8 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
             const yEnd = boundingRect.bottom / window.innerHeight;
 
             drawWarningBackground(context, canvas);
+
+            // todo: don't show the image if we're in an iframe - we know it's not going to be accurate
             context.drawImage(img, xStart * img.width, yStart * img.height, (xEnd - xStart) * img.width, (yEnd - yStart) * img.height, 0, 0, canvas.width, canvas.height);
             drawWarningIcon(context);
             if (isUnderTest)

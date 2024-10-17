@@ -18,16 +18,6 @@ import type { URLSearchParams } from 'url';
 import type { SnapshotRenderer } from './snapshotRenderer';
 import type { SnapshotStorage } from './snapshotStorage';
 import type { ResourceSnapshot } from '@trace/snapshot';
-import type { ContextEntry, PageEntry } from '../types/entries';
-
-function findClosest<T>(items: T[], metric: (v: T) => number, target: number) {
-  return items.find((item, index) => {
-    if (index === items.length - 1)
-      return true;
-    const next = items[index + 1];
-    return Math.abs(metric(item) - target) < Math.abs(metric(next) - target);
-  });
-}
 
 type Point = { x: number, y: number };
 
@@ -35,12 +25,10 @@ export class SnapshotServer {
   private _snapshotStorage: SnapshotStorage;
   private _resourceLoader: (sha1: string) => Promise<Blob | undefined>;
   private _snapshotIds = new Map<string, SnapshotRenderer>();
-  private _pages: Map<string, PageEntry>;
 
-  constructor(snapshotStorage: SnapshotStorage, resourceLoader: (sha1: string) => Promise<Blob | undefined>, contextEntries: ContextEntry[]) {
+  constructor(snapshotStorage: SnapshotStorage, resourceLoader: (sha1: string) => Promise<Blob | undefined>) {
     this._snapshotStorage = snapshotStorage;
     this._resourceLoader = resourceLoader;
-    this._pages = new Map(contextEntries.flatMap(c => c.pages.map(p => [p.pageId, p])));
   }
 
   serveSnapshot(pathname: string, searchParams: URLSearchParams, snapshotUrl: string): Response {
@@ -55,23 +43,10 @@ export class SnapshotServer {
 
   async serveClosestScreenshot(pathname: string, searchParams: URLSearchParams): Promise<Response> {
     const snapshot = this._snapshot(pathname.substring('/closest-screenshot'.length), searchParams);
-    if (!snapshot)
+    const sha1 = snapshot?.closestScreenshot();
+    if (!sha1)
       return new Response(null, { status: 404 });
-
-    const { wallTime, timestamp, pageId } = snapshot.snapshot();
-    const page = this._pages.get(pageId);
-    if (!page)
-      return new Response(null, { status: 404 });
-
-    const closestFrame = (wallTime && page.screencastFrames[0]?.frameSwapWallTime) ? findClosest(page.screencastFrames, frame => frame.frameSwapWallTime!, wallTime) : findClosest(page.screencastFrames, frame => frame.timestamp, timestamp);
-    if (!closestFrame)
-      return new Response(null, { status: 404 });
-
-    const blob = await this._resourceLoader(closestFrame.sha1);
-    if (!blob)
-      return new Response(null, { status: 404 });
-
-    return new Response(blob);
+    return new Response(await this._resourceLoader(sha1));
   }
 
   serveSnapshotInfo(pathname: string, searchParams: URLSearchParams): Response {
