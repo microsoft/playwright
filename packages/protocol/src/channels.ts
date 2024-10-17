@@ -4085,6 +4085,8 @@ export interface TracingChannel extends TracingEventTarget, Channel {
   _type_Tracing: boolean;
   tracingStart(params: TracingTracingStartParams, metadata?: CallMetadata): Promise<TracingTracingStartResult>;
   tracingStartChunk(params: TracingTracingStartChunkParams, metadata?: CallMetadata): Promise<TracingTracingStartChunkResult>;
+  tracingGroup(params: TracingTracingGroupParams, metadata?: CallMetadata): Promise<TracingTracingGroupResult>;
+  tracingGroupEnd(params?: TracingTracingGroupEndParams, metadata?: CallMetadata): Promise<TracingTracingGroupEndResult>;
   tracingStopChunk(params: TracingTracingStopChunkParams, metadata?: CallMetadata): Promise<TracingTracingStopChunkResult>;
   tracingStop(params?: TracingTracingStopParams, metadata?: CallMetadata): Promise<TracingTracingStopResult>;
 }
@@ -4112,6 +4114,25 @@ export type TracingTracingStartChunkOptions = {
 export type TracingTracingStartChunkResult = {
   traceName: string,
 };
+export type TracingTracingGroupParams = {
+  name: string,
+  location?: {
+    file: string,
+    line?: number,
+    column?: number,
+  },
+};
+export type TracingTracingGroupOptions = {
+  location?: {
+    file: string,
+    line?: number,
+    column?: number,
+  },
+};
+export type TracingTracingGroupResult = void;
+export type TracingTracingGroupEndParams = {};
+export type TracingTracingGroupEndOptions = {};
+export type TracingTracingGroupEndResult = void;
 export type TracingTracingStopChunkParams = {
   mode: 'archive' | 'discard' | 'entries',
 };

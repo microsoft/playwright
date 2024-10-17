@@ -18,7 +18,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import type { NameValue } from '../../../common/types';
-import type { TracingTracingStopChunkParams } from '@protocol/channels';
+import type { TracingTracingStopChunkParams, StackFrame } from '@protocol/channels';
 import { commandsWithTracingSnapshots } from '../../../protocol/debug';
 import { assert, createGuid, monotonicTime, SerializedFS, removeFolders, eventsHelper, type RegisteredListener } from '../../../utils';
 import { Artifact } from '../../artifact';
@@ -61,6 +61,7 @@ type RecordingState = {
   traceSha1s: Set<string>,
   recording: boolean;
   callIds: Set<string>;
+  groupStack: string[];
 };
 
 const kScreencastOptions = { width: 800, height: 600, quality: 90 };
@@ -148,6 +149,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       networkSha1s: new Set(),
       recording: false,
       callIds: new Set(),
+      groupStack: [],
     };
     this._fs.mkdir(this._state.resourcesDir);
     this._fs.writeFile(this._state.networkFile, '');
@@ -194,6 +196,48 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return { traceName: this._state.traceName };
   }
 
+  async group(name: string, location: { file: string, line?: number, column?: number } | undefined, metadata: CallMetadata): Promise<void> {
+    if (!this._state)
+      return;
+    const stackFrames: StackFrame[] = [];
+    const { file, line, column } = location ?? metadata.location ?? {};
+    if (file) {
+      stackFrames.push({
+        file,
+        line: line ?? 0,
+        column: column ?? 0,
+      });
+    }
+    const event: trace.BeforeActionTraceEvent = {
+      type: 'before',
+      callId: metadata.id,
+      startTime: metadata.startTime,
+      apiName: name,
+      class: 'Tracing',
+      method: 'group',
+      params: { },
+      stack: stackFrames,
+    };
+    if (this._state.groupStack.length)
+      event.parentId = this._state.groupStack[this._state.groupStack.length - 1];
+    this._state.groupStack.push(event.callId);
+    this._appendTraceEvent(event);
+  }
+
+  async groupEnd(): Promise<void> {
+    if (!this._state)
+      return;
+    const callId = this._state.groupStack.pop();
+    if (!callId)
+      return;
+    const event: trace.AfterActionTraceEvent = {
+      type: 'after',
+      callId,
+      endTime: monotonicTime(),
+    };
+    this._appendTraceEvent(event);
+  }
+
   private _startScreencast() {
     if (!(this._context instanceof BrowserContext))
       return;
@@ -236,6 +280,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       throw new Error(`Tracing is already stopping`);
     if (this._state.recording)
       throw new Error(`Must stop trace file before stopping tracing`);
+    await this._closeAllGroups();
     this._harTracer.stop();
     this.flushHarEntries();
     await this._fs.syncAndGetError();
@@ -264,6 +309,11 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     await this._fs.syncAndGetError();
   }
 
+  async _closeAllGroups() {
+    while (this._state?.groupStack.length)
+      await this.groupEnd();
+  }
+
   async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact?: Artifact, entries?: NameValue[] }> {
     if (this._isStopping)
       throw new Error(`Tracing is already stopping`);
@@ -275,6 +325,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
         throw new Error(`Must start tracing before stopping`);
       return {};
     }
+
+    await this._closeAllGroups();
 
     this._context.instrumentation.removeListener(this);
     eventsHelper.removeEventListeners(this._eventListeners);
@@ -354,7 +406,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
     // IMPORTANT: no awaits before this._appendTraceEvent in this method.
-    const event = createBeforeActionTraceEvent(metadata);
+    const event = createBeforeActionTraceEvent(
+        metadata,
+        this._state?.groupStack.length ? this._state.groupStack[this._state.groupStack.length - 1] : undefined
+    );
     if (!event)
       return Promise.resolve();
     sdkObject.attribution.page?.temporarilyDisableTracingScreencastThrottling();
@@ -571,10 +626,10 @@ export function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
   return commandsWithTracingSnapshots.has(metadata.type + '.' + metadata.method);
 }
 
-function createBeforeActionTraceEvent(metadata: CallMetadata): trace.BeforeActionTraceEvent | null {
+function createBeforeActionTraceEvent(metadata: CallMetadata, parentId?: string): trace.BeforeActionTraceEvent | null {
   if (metadata.internal || metadata.method.startsWith('tracing'))
     return null;
-  return {
+  const event: trace.BeforeActionTraceEvent = {
     type: 'before',
     callId: metadata.id,
     startTime: metadata.startTime,
@@ -585,6 +640,9 @@ function createBeforeActionTraceEvent(metadata: CallMetadata): trace.BeforeActio
     stepId: metadata.stepId,
     pageId: metadata.pageId,
   };
+  if (parentId)
+    event.parentId = parentId;
+  return event;
 }
 
 function createInputActionTraceEvent(metadata: CallMetadata): trace.InputActionTraceEvent | null {
