@@ -33,6 +33,7 @@ export function matcherHint(state: ExpectMatcherState, locator: Locator | undefi
 
 export type MatcherResult<E, A> = {
   name: string;
+  shortMessage?: string;
   expected: E;
   message: () => string;
   pass: boolean;

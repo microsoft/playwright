@@ -32,6 +32,10 @@ type Annotation = {
 type ErrorDetails = {
   message: string;
   location?: Location;
+  actual?: any;
+  expected?: any;
+  log?: string[];
+  shortMessage?: string;
 };
 
 type TestSummary = {
@@ -471,9 +475,11 @@ export function formatError(error: TestError, highlightCode: boolean): ErrorDeta
   if (parsedStack && !location)
     location = parsedStack.location;
 
+  const { actual, expected, log, shortMessage } = error;
   return {
     location,
     message: tokens.join('\n'),
+    actual, expected, log, shortMessage
   };
 }
 

@@ -105,6 +105,11 @@ export interface JSONReportTest {
 export interface JSONReportError {
   message: string;
   location?: Location;
+
+  actual?: any;
+  expected?: any;
+  log?: Array<string>;
+  shortMessage?: string;
 }
 
 export interface JSONReportTestResult {

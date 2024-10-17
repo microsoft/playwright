@@ -15,7 +15,7 @@
  */
 
 import { colors } from 'playwright-core/lib/utilsBundle';
-import { debugTest, relativeFilePath, serializeError } from '../util';
+import { debugTest, relativeFilePath } from '../util';
 import { type TestBeginPayload, type TestEndPayload, type RunPayload, type DonePayload, type WorkerInitParams, type TeardownErrorsPayload, stdioChunkToParams } from '../common/ipc';
 import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
 import { deserializeConfig } from '../common/configLoader';
@@ -32,6 +32,7 @@ import type { TestInfoError } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import { inheritFixtureNames } from '../common/fixtures';
 import { type TimeSlot } from './timeoutManager';
+import { serializeWorkerError } from './util';
 
 export class WorkerMain extends ProcessRunner {
   private _params: WorkerInitParams;
@@ -112,7 +113,7 @@ export class WorkerMain extends ProcessRunner {
       await fakeTestInfo._runAsStage({ title: 'worker cleanup', runnable }, () => gracefullyCloseAll()).catch(() => {});
       this._fatalErrors.push(...fakeTestInfo.errors);
     } catch (e) {
-      this._fatalErrors.push(serializeError(e));
+      this._fatalErrors.push(serializeWorkerError(e));
     }
 
     if (this._fatalErrors.length) {
@@ -153,7 +154,7 @@ export class WorkerMain extends ProcessRunner {
     // No current test - fatal error.
     if (!this._currentTest) {
       if (!this._fatalErrors.length)
-        this._fatalErrors.push(serializeError(error));
+        this._fatalErrors.push(serializeWorkerError(error));
       void this._stop();
       return;
     }
@@ -224,7 +225,7 @@ export class WorkerMain extends ProcessRunner {
       // In theory, we should run above code without any errors.
       // However, in the case we screwed up, or loadTestFile failed in the worker
       // but not in the runner, let's do a fatal error.
-      this._fatalErrors.push(serializeError(e));
+      this._fatalErrors.push(serializeWorkerError(e));
       void this._stop();
     } finally {
       const donePayload: DonePayload = {

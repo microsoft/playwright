@@ -287,6 +287,11 @@ export interface JSONReportTest {
 export interface JSONReportError {
   message: string;
   location?: Location;
+
+  actual?: any;
+  expected?: any;
+  log?: Array<string>;
+  shortMessage?: string;
 }
 
 export interface JSONReportTestResult {
@@ -555,14 +560,34 @@ export interface TestCase {
  */
 export interface TestError {
   /**
+   * Actual value.
+   */
+  actual?: any;
+
+  /**
+   * Expected value.
+   */
+  expected?: any;
+
+  /**
    * Error location in the source code.
    */
   location?: Location;
 
   /**
+   * Call log.
+   */
+  log?: Array<string>;
+
+  /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */
   message?: string;
+
+  /**
+   * Failure message.
+   */
+  shortMessage?: string;
 
   /**
    * Source code snippet with highlighted error.
