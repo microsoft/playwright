@@ -163,7 +163,7 @@ test('Intercept network requests', async ({ page }) => {
 
 ## Resources
 
-* [Documentation](https://playwright.dev/docs/intro)
+* [Documentation](https://playwright.dev)
 * [API reference](https://playwright.dev/docs/api/class-playwright/)
 * [Contribution guide](CONTRIBUTING.md)
 * [Changelog](https://github.com/microsoft/playwright/releases)
