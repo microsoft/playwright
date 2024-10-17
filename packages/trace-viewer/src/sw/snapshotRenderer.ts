@@ -304,37 +304,24 @@ function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string
       const canvases = root.querySelectorAll('canvas');
       if (canvases.length > 0 && screenshotURL) {
         function drawCanvasWarning(canvas: HTMLCanvasElement, partial: boolean) {
-          function createStripedPattern(lineWidth: number, spacing: number, slope: number, color: string) {
-            const can = document.createElement('canvas');
-            const len = Math.hypot(1, slope);
-
-            const w = can.width = 1 / len + spacing + 0.5 | 0; // round to nearest pixel
-            const h = can.height = slope / len + spacing * slope + 0.5 | 0;
-
-            const ctx = can.getContext('2d')!;
-            ctx.strokeStyle = color;
-            ctx.lineWidth = lineWidth;
-            ctx.beginPath();
-
-            // Line through top left and bottom right corners
-            ctx.moveTo(0, 0);
-            ctx.lineTo(w, h);
-            // Line through top right corner to add missing pixels
-            ctx.moveTo(0, -h);
-            ctx.lineTo(w * 2, h);
-            // Line through bottom left corner to add missing pixels
-            ctx.moveTo(-w, 0);
-            ctx.lineTo(w, h * 2);
-
-            ctx.stroke();
-            return ctx.createPattern(can, 'repeat')!;
+          function createCheckerboardPattern() {
+            const pattern = document.createElement('canvas');
+            pattern.width = pattern.width / Math.floor(pattern.width / 24);
+            pattern.height = pattern.height / Math.floor(pattern.height / 24);
+            const context = pattern.getContext('2d')!;
+            context.fillStyle = 'lightgray';
+            context.fillRect(0, 0, pattern.width, pattern.height);
+            context.fillStyle = 'black';
+            context.fillRect(0, 0, pattern.width / 2, pattern.height / 2);
+            context.fillRect(pattern.width / 2, pattern.height / 2, pattern.width, pattern.height);
+            return context.createPattern(pattern, 'repeat')!;
           }
 
           const ctx = canvas.getContext('2d')!;
           ctx.fillStyle = 'red';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-          ctx.fillStyle = createStripedPattern(4, 8, 1, 'orange');
+          ctx.fillStyle = createCheckerboardPattern();
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
           canvas.title = `Playwright couldn't capture ${partial ? 'full ' : ''}canvas contents because it's located ${partial ? 'partially ' : ''}outside the viewport.`;
