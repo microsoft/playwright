@@ -21059,8 +21059,8 @@ export interface Touchscreen {
  */
 export interface Tracing {
   /**
-   * Creates a new inline group in the trace, causing any subsequent calls to belong to this group, until
-   * [tracing.groupEnd()](https://playwright.dev/docs/api/class-tracing#tracing-group-end) is called.
+   * Creates a new inline group within the trace, assigning any subsequent calls to this group until
+   * [method: Tracing.groupEnd] is invoked.
    *
    * Groups can be nested and are similar to `test.step` in trace. However, groups are only visualized in the trace
    * viewer and, unlike test.step, have no effect on the test reports.
