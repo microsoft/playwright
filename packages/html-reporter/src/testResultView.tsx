@@ -186,7 +186,7 @@ const StepTreeItem: React.FC<{
   </span>} loadChildren={step.steps.length + (step.snippet ? 1 : 0) ? () => {
     const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1}></StepTreeItem>);
     if (step.snippet)
-      children.unshift(<TestErrorView key='line' error={step.snippet}></TestErrorView>);
+      children.unshift(<TestErrorView testId='test-snippet' key='line' error={step.snippet}></TestErrorView>);
     return children;
   } : undefined} depth={depth}></TreeItem>;
 };
