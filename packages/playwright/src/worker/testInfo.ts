@@ -24,10 +24,11 @@ import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutMana
 import type { RunnableDescription } from './timeoutManager';
 import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { FullConfig, Location } from '../../types/testReporter';
-import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, serializeError, trimLongString, windowsFilesystemFriendlyLength } from '../util';
+import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import type { Attachment } from './testTracing';
 import type { StackFrame } from '@protocol/channels';
+import { serializeWorkerError } from './util';
 
 export interface TestStepInternal {
   complete(result: { error?: Error | unknown, attachments?: Attachment[] }): void;
@@ -272,7 +273,7 @@ export class TestInfoImpl implements TestInfo {
         if (result.error) {
           if (typeof result.error === 'object' && !(result.error as any)?.[stepSymbol])
             (result.error as any)[stepSymbol] = step;
-          const error = serializeError(result.error);
+          const error = serializeWorkerError(result.error);
           if (data.boxedStack)
             error.stack = `${error.message}\n${stringifyStackFrames(data.boxedStack).join('\n')}`;
           step.error = error;
@@ -330,7 +331,7 @@ export class TestInfoImpl implements TestInfo {
   _failWithError(error: Error | unknown) {
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = error instanceof TimeoutManagerError ? 'timedOut' : 'failed';
-    const serialized = serializeError(error);
+    const serialized = serializeWorkerError(error);
     const step: TestStepInternal | undefined = typeof error === 'object' ? (error as any)?.[stepSymbol] : undefined;
     if (step && step.boxedStack)
       serialized.stack = `${(error as Error).name}: ${(error as Error).message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
