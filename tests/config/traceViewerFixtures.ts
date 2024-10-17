@@ -62,13 +62,13 @@ class TraceViewerPage {
   }
 
   async actionIconsText(action: string) {
-    const entry = await this.page.waitForSelector(`.list-view-entry:has-text("${action}")`);
+    const entry = await this.page.waitForSelector(`.tree-view-entry:has-text("${action}")`);
     await entry.waitForSelector('.action-icon-value:visible');
     return await entry.$$eval('.action-icon-value:visible', ee => ee.map(e => e.textContent));
   }
 
   async actionIcons(action: string) {
-    return await this.page.waitForSelector(`.list-view-entry:has-text("${action}") .action-icons`);
+    return await this.page.waitForSelector(`.tree-view-entry:has-text("${action}") .action-icons`);
   }
 
   @step

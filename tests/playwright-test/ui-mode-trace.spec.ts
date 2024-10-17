@@ -34,7 +34,7 @@ test('should merge trace events', async ({ runUITest }) => {
 
   await page.getByText('trace test').dblclick();
 
-  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'
@@ -61,7 +61,7 @@ test('should merge web assertion events', async ({  runUITest }, testInfo) => {
 
   await page.getByText('trace test').dblclick();
 
-  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'
@@ -86,7 +86,7 @@ test('should merge screenshot assertions', async ({  runUITest }, testInfo) => {
 
   await page.getByText('trace test').dblclick();
 
-  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'
@@ -134,7 +134,7 @@ test('should show snapshots for sync assertions', async ({ runUITest }) => {
 
   await page.getByText('trace test').dblclick();
 
-  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'
@@ -214,7 +214,7 @@ test('should not fail on internal page logs', async ({ runUITest, server }) => {
   });
 
   await page.getByText('pass').dblclick();
-  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
 
   await expect(
       listItem,
@@ -241,7 +241,7 @@ test('should not show caught errors in the errors tab', async ({ runUITest }, te
   });
 
   await page.getByText('pass').dblclick();
-  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
 
   await expect(
       listItem,
@@ -272,7 +272,7 @@ test('should reveal errors in the sourcetab', async ({ runUITest }) => {
   });
 
   await page.getByText('pass').dblclick();
-  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
 
   await expect(
       listItem,
