@@ -43,23 +43,35 @@ export class SnapshotServer {
     this._pages = new Map(contextEntries.flatMap(c => c.pages.map(p => [p.pageId, p])));
   }
 
-  serveSnapshot(pathname: string, searchParams: URLSearchParams, snapshotUrl: string, swScope: string): Response {
+  serveSnapshot(pathname: string, searchParams: URLSearchParams, snapshotUrl: string): Response {
     const snapshot = this._snapshot(pathname.substring('/snapshot'.length), searchParams);
     if (!snapshot)
       return new Response(null, { status: 404 });
 
-    let screenshotUrl: URL | undefined;
-    const { wallTime, timestamp, pageId } = snapshot.snapshot();
-    const page = this._pages.get(pageId);
-    if (page) {
-      const closestFrame = (wallTime && page.screencastFrames[0]?.frameSwapWallTime) ? findClosest(page.screencastFrames, frame => frame.frameSwapWallTime!, wallTime) : findClosest(page.screencastFrames, frame => frame.timestamp, timestamp);
-      if (closestFrame)
-        screenshotUrl = new URL(`./sha1/${closestFrame.sha1}`, swScope);
-    }
-
-    const renderedSnapshot = snapshot.render(screenshotUrl?.toString());
+    const renderedSnapshot = snapshot.render();
     this._snapshotIds.set(snapshotUrl, snapshot);
     return new Response(renderedSnapshot.html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  }
+
+  async serveClosestScreenshot(pathname: string, searchParams: URLSearchParams): Promise<Response> {
+    const snapshot = this._snapshot(pathname.substring('/closest-screenshot'.length), searchParams);
+    if (!snapshot)
+      return new Response(null, { status: 404 });
+
+    const { wallTime, timestamp, pageId } = snapshot.snapshot();
+    const page = this._pages.get(pageId);
+    if (!page)
+      return new Response(null, { status: 404 });
+
+    const closestFrame = (wallTime && page.screencastFrames[0]?.frameSwapWallTime) ? findClosest(page.screencastFrames, frame => frame.frameSwapWallTime!, wallTime) : findClosest(page.screencastFrames, frame => frame.timestamp, timestamp);
+    if (!closestFrame)
+      return new Response(null, { status: 404 });
+
+    const blob = await this._resourceLoader(closestFrame.sha1);
+    if (!blob)
+      return new Response(null, { status: 404 });
+
+    return new Response(blob);
   }
 
   serveSnapshotInfo(pathname: string, searchParams: URLSearchParams): Response {

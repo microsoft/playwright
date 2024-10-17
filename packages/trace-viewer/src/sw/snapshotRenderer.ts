@@ -78,7 +78,7 @@ export class SnapshotRenderer {
     return this._snapshots[this._index].viewport;
   }
 
-  render(screenshotUrl: string | undefined): RenderedFrameSnapshot {
+  render(): RenderedFrameSnapshot {
     const result: string[] = [];
     const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined, parentAttrs: [string, string][] | undefined) => {
       // Text node.
@@ -159,7 +159,7 @@ export class SnapshotRenderer {
       const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` : '';
       return prefix + [
         '<style>*,*::before,*::after { visibility: hidden }</style>',
-        `<script>${snapshotScript(screenshotUrl, this._callId, this.snapshotName)}</script>`
+        `<script>${snapshotScript(this._callId, this.snapshotName)}</script>`
       ].join('') + html;
     });
 
@@ -242,8 +242,8 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
   return (snapshot as any)._nodes;
 }
 
-function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string | undefined)[]) {
-  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, screenshotURL: string | undefined, ...targetIds: (string | undefined)[]) {
+function snapshotScript(...targetIds: (string | undefined)[]) {
+  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, ...targetIds: (string | undefined)[]) {
     const isUnderTest = new URLSearchParams(location.search).has('isUnderTest');
 
     const kPointerWarningTitle = 'Recorded click position in absolute coordinates did not' +
@@ -399,7 +399,7 @@ function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string
         }
       }
 
-      if (canvasElements.length > 0 && screenshotURL) {
+      if (canvasElements.length > 0) {
         function drawWarningBackground(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
           function createCheckerboardPattern() {
             const pattern = document.createElement('canvas');
@@ -461,7 +461,7 @@ function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string
             canvas.title = `Playwright couldn't show canvas contents because the screenshot failed to load.`;
           }
         };
-        img.src = screenshotURL;
+        img.src = location.href.replace('/snapshot', '/closest-screenshot');
       }
     };
 
@@ -471,7 +471,7 @@ function snapshotScript(screenshotURL: string | undefined, ...targetIds: (string
     window.addEventListener('DOMContentLoaded', onDOMContentLoaded);
   }
 
-  return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()}, ${JSON.stringify(screenshotURL)}${targetIds.map(id => `, "${id}"`).join('')})`;
+  return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()}${targetIds.map(id => `, "${id}"`).join('')})`;
 }
 
 

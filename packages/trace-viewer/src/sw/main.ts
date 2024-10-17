@@ -123,10 +123,17 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
       if (!snapshotServer)
         return new Response(null, { status: 404 });
-      const response = snapshotServer.serveSnapshot(relativePath, url.searchParams, url.href, self.registration.scope);
+      const response = snapshotServer.serveSnapshot(relativePath, url.searchParams, url.href);
       if (isDeployedAsHttps)
         response.headers.set('Content-Security-Policy', 'upgrade-insecure-requests');
       return response;
+    }
+
+    if (relativePath.startsWith('/closest-screenshot/')) {
+      const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
+      if (!snapshotServer)
+        return new Response(null, { status: 404 });
+      return snapshotServer.serveClosestScreenshot(relativePath, url.searchParams);
     }
 
     if (relativePath.startsWith('/sha1/')) {
