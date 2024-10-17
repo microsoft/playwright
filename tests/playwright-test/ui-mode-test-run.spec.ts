@@ -93,7 +93,7 @@ test('should run on hover', async ({ runUITest }) => {
   });
 
   await page.getByText('passes').hover();
-  await page.getByRole('listitem').filter({ hasText: 'passes' }).getByTitle('Run').click();
+  await page.getByRole('treeitem').filter({ hasText: 'passes' }).getByTitle('Run').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
@@ -275,7 +275,7 @@ test('should run folder', async ({ runUITest }) => {
   });
 
   await page.getByText('folder-b').hover();
-  await page.getByRole('listitem').filter({ hasText: 'folder-b' }).getByTitle('Run').click();
+  await page.getByRole('treeitem').filter({ hasText: 'folder-b' }).getByTitle('Run').click();
 
   await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ✅ folder-b <=

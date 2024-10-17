@@ -28,14 +28,14 @@ test('should watch files', async ({ runUITest, writeFiles }) => {
   });
 
   await page.getByText('fails').click();
-  await page.getByRole('listitem').filter({ hasText: 'fails' }).getByTitle('Watch').click();
+  await page.getByRole('treeitem').filter({ hasText: 'fails' }).getByTitle('Watch').click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ◯ passes
         ◯ fails 👁 <=
   `);
 
-  await page.getByRole('listitem').filter({ hasText: 'fails' }).getByTitle('Run').click();
+  await page.getByRole('treeitem').filter({ hasText: 'fails' }).getByTitle('Run').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ a.test.ts
@@ -75,7 +75,7 @@ test('should watch e2e deps', async ({ runUITest, writeFiles }) => {
   });
 
   await page.getByText('answer').click();
-  await page.getByRole('listitem').filter({ hasText: 'answer' }).getByTitle('Watch').click();
+  await page.getByRole('treeitem').filter({ hasText: 'answer' }).getByTitle('Watch').click();
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ◯ answer 👁 <=
@@ -102,13 +102,13 @@ test('should batch watch updates', async ({ runUITest, writeFiles }) => {
   });
 
   await page.getByText('a.test.ts').click();
-  await page.getByRole('listitem').filter({ hasText: 'a.test.ts' }).getByTitle('Watch').click();
+  await page.getByRole('treeitem').filter({ hasText: 'a.test.ts' }).getByTitle('Watch').click();
   await page.getByText('b.test.ts').click();
-  await page.getByRole('listitem').filter({ hasText: 'b.test.ts' }).getByTitle('Watch').click();
+  await page.getByRole('treeitem').filter({ hasText: 'b.test.ts' }).getByTitle('Watch').click();
   await page.getByText('c.test.ts').click();
-  await page.getByRole('listitem').filter({ hasText: 'c.test.ts' }).getByTitle('Watch').click();
+  await page.getByRole('treeitem').filter({ hasText: 'c.test.ts' }).getByTitle('Watch').click();
   await page.getByText('d.test.ts').click();
-  await page.getByRole('listitem').filter({ hasText: 'd.test.ts' }).getByTitle('Watch').click();
+  await page.getByRole('treeitem').filter({ hasText: 'd.test.ts' }).getByTitle('Watch').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts 👁
@@ -229,7 +229,7 @@ test('should run added test in watched file', async ({ runUITest, writeFiles }) 
   });
 
   await page.getByText('a.test.ts').click();
-  await page.getByRole('listitem').filter({ hasText: 'a.test.ts' }).getByTitle('Watch').click();
+  await page.getByRole('treeitem').filter({ hasText: 'a.test.ts' }).getByTitle('Watch').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts 👁 <=

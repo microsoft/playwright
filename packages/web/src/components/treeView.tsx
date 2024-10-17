@@ -15,7 +15,8 @@
 */
 
 import * as React from 'react';
-import { ListView } from './listView';
+import { clsx, scrollIntoViewIfNeeded } from '@web/uiUtils';
+import './treeView.css';
 
 export type TreeItem = {
   id: string,
@@ -45,7 +46,7 @@ export type TreeViewProps<T> = {
   autoExpandDepth?: number,
 };
 
-const TreeListView = ListView<TreeItem>;
+const scrollPositions = new Map<string, number>();
 
 export function TreeView<T extends TreeItem>({
   name,
@@ -97,61 +98,185 @@ export function TreeView<T extends TreeItem>({
     return result;
   }, [treeItems, isVisible]);
 
-  return <TreeListView
-    name={name}
-    items={visibleItems}
-    id={item => item.id}
-    dataTestId={dataTestId || (name + '-tree')}
-    render={item => {
-      const rendered = render(item as T);
-      return <>
-        {icon && <div className={'codicon ' + (icon(item as T) || 'blank')} style={{ minWidth: 16, marginRight: 4 }}></div>}
-        {typeof rendered === 'string' ? <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>{rendered}</div> : rendered}
-      </>;
-    }}
-    icon={item => {
-      const expanded = treeItems.get(item as T)!.expanded;
-      if (typeof expanded === 'boolean')
-        return expanded ? 'codicon-chevron-down' : 'codicon-chevron-right';
-    }}
-    isError={item => isError?.(item as T) || false}
-    indent={item => treeItems.get(item as T)!.depth}
-    selectedItem={selectedItem}
-    onAccepted={item => onAccepted?.(item as T)}
-    onSelected={item => onSelected?.(item as T)}
-    onHighlighted={item => onHighlighted?.(item as T)}
-    onLeftArrow={item => {
-      const { expanded, parent } = treeItems.get(item as T)!;
-      if (expanded) {
-        treeState.expandedItems.set(item.id, false);
-        setTreeState({ ...treeState });
-      } else if (parent) {
-        onSelected?.(parent as T);
-      }
-    }}
-    onRightArrow={item => {
-      if (item.children.length) {
-        treeState.expandedItems.set(item.id, true);
-        setTreeState({ ...treeState });
-      }
-    }}
-    onIconClicked={item => {
-      const { expanded } = treeItems.get(item as T)!;
-      if (expanded) {
-        // Move nested selection up.
-        for (let i: TreeItem | undefined = selectedItem; i; i = i.parent) {
-          if (i === item) {
-            onSelected?.(item as T);
-            break;
-          }
+  const itemListRef = React.useRef<HTMLDivElement>(null);
+  const [highlightedItem, setHighlightedItem] = React.useState<any>();
+
+  React.useEffect(() => {
+    onHighlighted?.(highlightedItem);
+  }, [onHighlighted, highlightedItem]);
+
+  React.useEffect(() => {
+    const treeElem = itemListRef.current;
+    if (!treeElem)
+      return;
+    const saveScrollPosition = () => {
+      scrollPositions.set(name, treeElem.scrollTop);
+    };
+    treeElem.addEventListener('scroll', saveScrollPosition, { passive: true });
+    return () => treeElem.removeEventListener('scroll', saveScrollPosition);
+  }, [name]);
+
+  React.useEffect(() => {
+    if (itemListRef.current)
+      itemListRef.current.scrollTop = scrollPositions.get(name) || 0;
+  }, [name]);
+
+  const toggleExpanded = React.useCallback((item: T) => {
+    const { expanded } = treeItems.get(item)!;
+    if (expanded) {
+      // Move nested selection up.
+      for (let i: TreeItem | undefined = selectedItem; i; i = i.parent) {
+        if (i === item) {
+          onSelected?.(item as T);
+          break;
         }
-        treeState.expandedItems.set(item.id, false);
-      } else {
-        treeState.expandedItems.set(item.id, true);
       }
-      setTreeState({ ...treeState });
-    }}
-    noItemsMessage={noItemsMessage} />;
+      treeState.expandedItems.set(item.id, false);
+    } else {
+      treeState.expandedItems.set(item.id, true);
+    }
+    setTreeState({ ...treeState });
+  }, [treeItems, selectedItem, onSelected, treeState, setTreeState]);
+
+  return <div className={clsx(`tree-view vbox`, name + '-tree-view')} role={'tree'} data-testid={dataTestId || (name + '-tree')}>
+    <div
+      className={clsx('tree-view-content')}
+      tabIndex={0}
+      onKeyDown={event => {
+        if (selectedItem && event.key === 'Enter') {
+          onAccepted?.(selectedItem);
+          return;
+        }
+        if (event.key !== 'ArrowDown' &&  event.key !== 'ArrowUp' && event.key !== 'ArrowLeft' &&  event.key !== 'ArrowRight')
+          return;
+
+        event.stopPropagation();
+        event.preventDefault();
+
+        if (selectedItem && event.key === 'ArrowLeft') {
+          const { expanded, parent } = treeItems.get(selectedItem)!;
+          if (expanded) {
+            treeState.expandedItems.set(selectedItem.id, false);
+            setTreeState({ ...treeState });
+          } else if (parent) {
+            onSelected?.(parent as T);
+          }
+          return;
+        }
+        if (selectedItem && event.key === 'ArrowRight') {
+          if (selectedItem.children.length) {
+            treeState.expandedItems.set(selectedItem.id, true);
+            setTreeState({ ...treeState });
+          }
+          return;
+        }
+
+        const index = selectedItem ? visibleItems.indexOf(selectedItem) : -1;
+        let newIndex = index;
+        if (event.key === 'ArrowDown') {
+          if (index === -1)
+            newIndex = 0;
+          else
+            newIndex = Math.min(index + 1, visibleItems.length - 1);
+        }
+        if (event.key === 'ArrowUp') {
+          if (index === -1)
+            newIndex = visibleItems.length - 1;
+          else
+            newIndex = Math.max(index - 1, 0);
+        }
+
+        const element = itemListRef.current?.children.item(newIndex);
+        scrollIntoViewIfNeeded(element || undefined);
+        onHighlighted?.(undefined);
+        onSelected?.(visibleItems[newIndex]);
+        setHighlightedItem(undefined);
+      }}
+      ref={itemListRef}
+    >
+      {noItemsMessage && visibleItems.length === 0 && <div className='tree-view-empty'>{noItemsMessage}</div>}
+      {visibleItems.map(item => {
+        return <div key={item.id} role='treeitem' aria-selected={item === selectedItem}>
+          <TreeItemHeader
+            item={item}
+            itemData={treeItems.get(item)!}
+            selectedItem={selectedItem}
+            onSelected={onSelected}
+            onAccepted={onAccepted}
+            isError={isError}
+            toggleExpanded={toggleExpanded}
+            highlightedItem={highlightedItem}
+            setHighlightedItem={setHighlightedItem}
+            render={render}
+            icon={icon} />
+        </div>;
+      })}
+    </div>
+  </div>;
+}
+
+type TreeItemHeaderProps<T> = {
+  item: T,
+  itemData: TreeItemData,
+  selectedItem: T | undefined,
+  onSelected?: (item: T) => void,
+  toggleExpanded: (item: T) => void,
+  highlightedItem: T | undefined,
+  isError?: (item: T) => boolean,
+  onAccepted?: (item: T) => void,
+  setHighlightedItem: (item: T | undefined) => void,
+  render: (item: T) => React.ReactNode,
+  icon?: (item: T) => string | undefined,
+};
+
+export function TreeItemHeader<T extends TreeItem>({
+  item,
+  itemData,
+  selectedItem,
+  onSelected,
+  highlightedItem,
+  setHighlightedItem,
+  isError,
+  onAccepted,
+  toggleExpanded,
+  render,
+  icon }: TreeItemHeaderProps<T>) {
+
+  const indentation = itemData.depth;
+  const expanded = itemData.expanded;
+  let expandIcon = 'codicon-blank';
+  if (typeof expanded === 'boolean')
+    expandIcon = expanded ? 'codicon-chevron-down' : 'codicon-chevron-right';
+  const rendered = render(item);
+
+  return <div
+    onDoubleClick={() => onAccepted?.(item)}
+    className={clsx(
+        'tree-view-entry',
+        selectedItem === item && 'selected',
+        highlightedItem === item && 'highlighted',
+        isError?.(item) && 'error')}
+    onClick={() => onSelected?.(item)}
+    onMouseEnter={() => setHighlightedItem(item)}
+    onMouseLeave={() => setHighlightedItem(undefined)}
+  >
+    {indentation ? new Array(indentation).fill(0).map((_, i) => <div key={'indent-' + i} className='tree-view-indent'></div>) : undefined}
+    <div
+      className={'codicon ' + expandIcon}
+      style={{ minWidth: 16, marginRight: 4 }}
+      onDoubleClick={e => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onClick={e => {
+        e.stopPropagation();
+        e.preventDefault();
+        toggleExpanded(item);
+      }}
+    />
+    {icon && <div className={'codicon ' + (icon(item) || 'codicon-blank')} style={{ minWidth: 16, marginRight: 4 }}></div>}
+    {typeof rendered === 'string' ? <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>{rendered}</div> : rendered}
+  </div>;
 }
 
 type TreeItemData = {
@@ -160,7 +285,12 @@ type TreeItemData = {
   parent: TreeItem | null,
 };
 
-function flattenTree<T extends TreeItem>(rootItem: T, selectedItem: T | undefined, expandedItems: Map<string, boolean | undefined>, autoExpandDepth: number): Map<T, TreeItemData> {
+function flattenTree<T extends TreeItem>(
+  rootItem: T,
+  selectedItem: T | undefined,
+  expandedItems: Map<string, boolean | undefined>,
+  autoExpandDepth: number): Map<T, TreeItemData> {
+
   const result = new Map<T, TreeItemData>();
   const temporaryExpanded = new Set<string>();
   for (let item: TreeItem | undefined = selectedItem?.parent; item; item = item.parent)

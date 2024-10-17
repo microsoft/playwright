@@ -1,0 +1,91 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.tree-view-content {
+  display: flex;
+  flex-direction: column;
+  flex: auto;
+  position: relative;
+  user-select: none;
+  overflow: hidden auto;
+  outline: 1px solid transparent;
+}
+
+.tree-view-entry {
+  display: flex;
+  flex: none;
+  cursor: pointer;
+  align-items: center;
+  white-space: nowrap;
+  line-height: 28px;
+  padding-left: 5px;
+}
+
+.tree-view-content.not-selectable > .tree-view-entry {
+  cursor: inherit;
+}
+
+.tree-view-entry.highlighted:not(.selected) {
+  background-color: var(--vscode-list-inactiveSelectionBackground) !important;
+}
+
+.tree-view-entry.selected {
+  z-index: 10;
+}
+
+.tree-view-indent {
+  min-width: 16px;
+}
+
+.tree-view-content:focus .tree-view-entry.selected {
+  background-color: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+  outline: 1px solid var(--vscode-focusBorder);
+}
+
+.tree-view-content .tree-view-entry.selected {
+  background-color: var(--vscode-list-inactiveSelectionBackground);
+}
+
+.tree-view-content:focus .tree-view-entry.selected * {
+  color: var(--vscode-list-activeSelectionForeground) !important;
+  background-color: transparent !important;
+}
+
+.tree-view-content:focus .tree-view-entry.selected .codicon {
+  color: var(--vscode-list-activeSelectionForeground) !important;
+}
+
+.tree-view-empty {
+  flex: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tree-view-entry.error {
+  color: var(--vscode-list-errorForeground);
+  background-color: var(--vscode-inputValidation-errorBackground);
+}
+
+.tree-view-entry.warning {
+  color: var(--vscode-list-warningForeground);
+  background-color: var(--vscode-inputValidation-warningBackground);
+}
+
+.tree-view-entry.info {
+  background-color: var(--vscode-inputValidation-infoBackground);
+}
