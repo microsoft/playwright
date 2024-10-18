@@ -836,7 +836,7 @@ page.get_by_role("listitem").filter(has_text="Product 2").get_by_role(
 ```
 
 ```csharp
-await page
+await Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() { HasText = "Product 2" })
     .GetByRole(AriaRole.Button, new() { Name = "Add to cart" })
@@ -875,7 +875,7 @@ page.get_by_role("listitem").filter(has_text=re.compile("Product 2")).get_by_rol
 ```
 
 ```csharp
-await page
+await Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() { HasTextRegex = new Regex("Product 2") })
     .GetByRole(AriaRole.Button, new() { Name = "Add to cart" })
@@ -962,10 +962,10 @@ page.get_by_role("listitem").filter(
 ```
 
 ```csharp
-await page
+await Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
-        Has = page.GetByRole(AriaRole.Heading, new() {
+        Has = Page.GetByRole(AriaRole.Heading, new() {
             Name = "Product 2"
         })
     })
@@ -1011,7 +1011,7 @@ expect(
 await Expect(Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
-        Has = page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
+        Has = Page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
     }))
     .ToHaveCountAsync(1);
 ```
@@ -1060,7 +1060,7 @@ expect(
 await Expect(Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
-        Has = page.GetByRole(AriaRole.List).GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
+        Has = Page.GetByRole(AriaRole.List).GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
     }))
     .ToHaveCountAsync(1);
 ```
@@ -1103,7 +1103,7 @@ expect(
 await Expect(Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
-        HasNot = page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
+        HasNot = Page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
     }))
     .ToHaveCountAsync(1);
 ```
