@@ -1150,7 +1150,7 @@ product
 ```
 
 ```csharp
-var product = page
+var product = Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() { HasText = "Product 2" });
 
@@ -1191,9 +1191,9 @@ dialog.locator(saveButton).click();
 ```
 
 ```csharp
-var saveButton = page.GetByRole(AriaRole.Button, new() { Name = "Save" });
+var saveButton = Page.GetByRole(AriaRole.Button, new() { Name = "Save" });
 // ...
-var dialog = page.GetByTestId("settings-dialog");
+var dialog = Page.GetByTestId("settings-dialog");
 await dialog.Locator(saveButton).ClickAsync();
 ```
 
@@ -1213,7 +1213,7 @@ button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
 button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
 ```
 ```csharp
-var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
+var button = Page.GetByRole(AriaRole.Button).And(Page.GetByTitle("Subscribe"));
 ```
 
 ### Matching one of the two alternative locators
@@ -1264,11 +1264,11 @@ new_email.click()
 ```
 
 ```csharp
-var newEmail = page.GetByRole(AriaRole.Button, new() { Name = "New" });
-var dialog = page.GetByText("Confirm security settings");
+var newEmail = Page.GetByRole(AriaRole.Button, new() { Name = "New" });
+var dialog = Page.GetByText("Confirm security settings");
 await Expect(newEmail.Or(dialog).First).ToBeVisibleAsync();
 if (await dialog.IsVisibleAsync())
-  await page.GetByRole(AriaRole.Button, new() { Name = "Dismiss" }).ClickAsync();
+  await Page.GetByRole(AriaRole.Button, new() { Name = "Dismiss" }).ClickAsync();
 await newEmail.ClickAsync();
 ```
 
@@ -1304,7 +1304,7 @@ Consider a page with two buttons, the first invisible and the second [visible](.
   ```
 
   ```csharp
-  await page.Locator("button").ClickAsync();
+  await Page.Locator("button").ClickAsync();
   ```
 
 * This will only find a second button, because it is visible, and then click it.
@@ -1322,7 +1322,7 @@ Consider a page with two buttons, the first invisible and the second [visible](.
   page.locator("button").locator("visible=true").click()
   ```
   ```csharp
-  await page.Locator("button").Locator("visible=true").ClickAsync();
+  await Page.Locator("button").Locator("visible=true").ClickAsync();
   ```
 
 ## Lists
