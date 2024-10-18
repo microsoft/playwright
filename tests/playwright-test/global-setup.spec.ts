@@ -400,7 +400,7 @@ test('globalSetup should support multiple', async ({ runInlineTest }) => {
     'globalSetup3.ts': `module.exports = () => { console.log('%%globalSetup3'); return () => console.log('%%globalSetup3Function'); }`,
     'globalSetup4.ts': `module.exports = () => console.log('%%globalSetup4');`,
     'globalTeardown1.ts': `module.exports = () => console.log('%%globalTeardown1')`,
-    'globalTeardown2.ts': `module.exports = () => console.log('%%globalTeardown2');`,
+    'globalTeardown2.ts': `module.exports = () => { console.log('%%globalTeardown2'); throw new Error('kaboom'); }`,
 
     'a.test.js': `
       import { test } from '@playwright/test';
