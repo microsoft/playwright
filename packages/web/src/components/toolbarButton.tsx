@@ -52,7 +52,7 @@ export const ToolbarButton: React.FC<React.PropsWithChildren<ToolbarButtonProps>
     disabled={!!disabled}
     style={style}
     data-testid={testId}
-    aria-label={ariaLabel}
+    aria-label={ariaLabel || title}
   >
     {icon && <span className={`codicon codicon-${icon}`} style={children ? { marginRight: 5 } : {}}></span>}
     {children}

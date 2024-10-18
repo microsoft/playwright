@@ -140,9 +140,9 @@ const testsWithSetup = {
 test('should run setup and teardown projects (1)', async ({ runUITest }) => {
   const { page } = await runUITest(testsWithSetup);
   await page.getByText('Status:').click();
-  await page.getByLabel('setup').setChecked(false);
-  await page.getByLabel('teardown').setChecked(false);
-  await page.getByLabel('test').setChecked(false);
+  await page.getByRole('checkbox', { name: 'setup' }).setChecked(false);
+  await page.getByRole('checkbox', { name: 'teardown' }).setChecked(false);
+  await page.getByRole('checkbox', { name: 'test' }).setChecked(false);
 
   await page.getByTitle('Run all').click();
 
@@ -164,9 +164,9 @@ test('should run setup and teardown projects (1)', async ({ runUITest }) => {
 test('should run setup and teardown projects (2)', async ({ runUITest }) => {
   const { page } = await runUITest(testsWithSetup);
   await page.getByText('Status:').click();
-  await page.getByLabel('setup').setChecked(false);
-  await page.getByLabel('teardown').setChecked(true);
-  await page.getByLabel('test').setChecked(true);
+  await page.getByRole('checkbox', { name: 'setup' }).setChecked(false);
+  await page.getByRole('checkbox', { name: 'teardown' }).setChecked(true);
+  await page.getByRole('checkbox', { name: 'test' }).setChecked(true);
 
   await page.getByTitle('Run all').click();
 
@@ -186,9 +186,9 @@ test('should run setup and teardown projects (2)', async ({ runUITest }) => {
 test('should run setup and teardown projects (3)', async ({ runUITest }) => {
   const { page } = await runUITest(testsWithSetup);
   await page.getByText('Status:').click();
-  await page.getByLabel('setup').setChecked(false);
-  await page.getByLabel('teardown').setChecked(false);
-  await page.getByLabel('test').setChecked(true);
+  await page.getByRole('checkbox', { name: 'setup' }).setChecked(false);
+  await page.getByRole('checkbox', { name: 'teardown' }).setChecked(false);
+  await page.getByRole('checkbox', { name: 'test' }).setChecked(true);
 
   await page.getByTitle('Run all').click();
 
@@ -206,12 +206,12 @@ test('should run setup and teardown projects (3)', async ({ runUITest }) => {
 test('should run part of the setup only', async ({ runUITest }) => {
   const { page } = await runUITest(testsWithSetup);
   await page.getByText('Status:').click();
-  await page.getByLabel('setup').setChecked(true);
-  await page.getByLabel('teardown').setChecked(true);
-  await page.getByLabel('test').setChecked(true);
+  await page.getByRole('checkbox', { name: 'setup' }).setChecked(true);
+  await page.getByRole('checkbox', { name: 'teardown' }).setChecked(true);
+  await page.getByRole('checkbox', { name: 'test' }).setChecked(true);
 
   await page.getByText('setup.ts').hover();
-  await page.getByRole('treeitem').filter({ hasText: 'setup.ts' }).getByTitle('Run').click();
+  await page.getByRole('treeitem', { name: 'setup.ts' }).getByRole('button', { name: 'Run' }).click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ✅ setup.ts <=

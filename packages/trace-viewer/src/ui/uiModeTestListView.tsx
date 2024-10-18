@@ -161,7 +161,7 @@ export const TestListView: React.FC<{
     render={treeItem => {
       return <div className='hbox ui-mode-tree-item'>
         <div className='ui-mode-tree-item-title'>
-          <span title={treeItem.title}>{treeItem.title}</span>
+          <span>{treeItem.title}</span>
           {treeItem.kind === 'case' ? treeItem.tags.map(tag => <TagView key={tag} tag={tag.slice(1)} onClick={e => handleTagClick(e, tag)} />) : null}
         </div>
         {!!treeItem.duration && treeItem.status !== 'skipped' && <div className='ui-mode-tree-item-time'>{msToString(treeItem.duration)}</div>}
@@ -179,6 +179,7 @@ export const TestListView: React.FC<{
       </div>;
     }}
     icon={treeItem => testStatusIcon(treeItem.status)}
+    title={treeItem => treeItem.title}
     selectedItem={selectedTreeItem}
     onAccepted={runTreeItem}
     onSelected={treeItem => {
