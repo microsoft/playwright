@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestAttachment, TestCase, TestResult, TestStep } from './types';
+import type { ErrorDetails, TestAttachment, TestCase, TestResult, TestStep } from './types';
 import * as React from 'react';
 import { TreeItem } from './treeItem';
 import { msToString } from './utils';
@@ -150,26 +150,30 @@ export const TestResultView: React.FC<{
   </div>;
 };
 
-function classifyErrors(testErrors: string[], diffs: ImageDiff[]) {
+function classifyErrors(testErrors: ErrorDetails[], diffs: ImageDiff[]) {
   return testErrors.map(error => {
-    if (error.includes('Screenshot comparison failed:')) {
+    if (error.shortMessage?.includes('Screenshot comparison failed:') && error.actual && error.expected) {
       const matchingDiff = diffs.find(diff => {
         const attachmentName = diff.actual?.attachment.name;
-        return attachmentName && error.includes(attachmentName);
+        return attachmentName && error.actual.endsWith(attachmentName);
       });
-
+      const errorSuffix = ['Call log:',
+        ...(error.log?.map(line => '  - ' + line) || []),
+        '',
+        error.snippet,
+        '',
+        error.callStack,
+      ].join('\n');
       if (matchingDiff) {
-        const lines = error.split('\n');
-        const index = lines.findIndex(line => /Expected:|Previous:|Received:/.test(line));
-        const errorPrefix = index !== -1 ? lines.slice(0, index).join('\n') : lines[0];
-
-        const diffIndex = lines.findIndex(line => / +Diff:/.test(line));
-        const errorSuffix = diffIndex !== -1 ? lines.slice(diffIndex + 2).join('\n') : lines.slice(1).join('\n');
-
-        return { type: 'screenshot', diff: matchingDiff, errorPrefix, errorSuffix };
+        return {
+          type: 'screenshot',
+          diff: matchingDiff,
+          errorPrefix: error.shortMessage,
+          errorSuffix
+        };
       }
     }
-    return { type: 'regular', error };
+    return { type: 'regular', error: error.message };
   });
 }
 
