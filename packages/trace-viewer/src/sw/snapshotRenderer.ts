@@ -438,6 +438,16 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
           context.fillRect(0, 0, canvas.width, canvas.height);
         }
 
+
+        if (window.parent.parent !== window.parent) {
+          for (const canvas of canvasElements) {
+            const context = canvas.getContext('2d')!;
+            drawWarningBackground(context, canvas);
+            canvas.title = `Playwright displays canvas contents on a best-effort basis. It doesn't support canvas elements inside an iframe yet. If this impacts your workflow, please open an issue so we can prioritize.`;
+          }
+          return;
+        }
+
         const img = new Image();
         img.onload = () => {
           for (const canvas of canvasElements) {
@@ -451,7 +461,6 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
 
             drawWarningBackground(context, canvas);
 
-            // todo: don't show the image if we're in an iframe - we know it's not going to be accurate
             context.drawImage(img, xStart * img.width, yStart * img.height, (xEnd - xStart) * img.width, (yEnd - yStart) * img.height, 0, 0, canvas.width, canvas.height);
             if (isUnderTest)
               // eslint-disable-next-line no-console

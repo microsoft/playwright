@@ -1452,6 +1452,19 @@ test('canvas clipping', async ({ runAndTrace, page, server }) => {
   await expect(snapshot.locator('canvas')).toHaveAttribute('title', `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`);
 });
 
+test('canvas clipping in iframe', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent(`
+      <iframe src="${server.PREFIX}/screenshots/canvas.html#canvas-on-edge"></iframe>
+    `);
+    await page.waitForTimeout(1000); // ensure we could take a screenshot
+  });
+
+  const snapshot = await traceViewer.snapshotFrame('page.waitForTimeout');
+  const canvas = snapshot.locator('iframe').contentFrame().locator('canvas');
+  await expect(canvas).toHaveAttribute('title', `Playwright displays canvas contents on a best-effort basis. It doesn't support canvas elements inside an iframe yet. If this impacts your workflow, please open an issue so we can prioritize.`);
+});
+
 test.skip('should handle case where neither snapshots nor screenshots exist', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/one-style.html');
