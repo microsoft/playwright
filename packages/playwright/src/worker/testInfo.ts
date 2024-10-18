@@ -30,7 +30,8 @@ import type { Attachment } from './testTracing';
 import type { StackFrame } from '@protocol/channels';
 
 export interface TestStepInternal {
-  complete(result: { error?: Error | unknown, attachments?: Attachment[] }): void;
+  complete(result: { error?: Error | unknown }): void;
+  attachments: Attachment[];
   stepId: string;
   title: string;
   category: 'hook' | 'fixture' | 'test.step' | 'expect' | 'attach' | string;
@@ -248,7 +249,7 @@ export class TestInfoImpl implements TestInfo {
     );
   }
 
-  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>): TestStepInternal {
+  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps' | 'attachments'>): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
 
     const parentStep = this._parentStep(data.isStage);
@@ -261,10 +262,12 @@ export class TestInfoImpl implements TestInfo {
     }
     data.location = data.location || filteredStack[0];
 
+    const attachments: Attachment[] = [];
     const step: TestStepInternal = {
       stepId,
       ...data,
       steps: [],
+      attachments,
       complete: result => {
         if (step.endWallTime)
           return;
@@ -292,7 +295,7 @@ export class TestInfoImpl implements TestInfo {
           }
         }
 
-        for (const attachment of result.attachments ?? [])
+        for (const attachment of attachments ?? [])
           this._attach(attachment, stepId);
 
         const payload: StepEndPayload = {
@@ -303,7 +306,7 @@ export class TestInfoImpl implements TestInfo {
         };
         this._onStepEnd(payload);
         const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
-        this._tracing.appendAfterActionForStep(stepId, errorForTrace, result.attachments);
+        this._tracing.appendAfterActionForStep(stepId, errorForTrace, attachments);
       }
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
@@ -407,7 +410,8 @@ export class TestInfoImpl implements TestInfo {
       category: 'attach',
     });
     const attachment = await normalizeAndSaveAttachment(this.outputPath(), name, options);
-    step.complete({ attachments: [attachment] });
+    step.attachments.push(attachment);
+    step.complete({});
   }
 
   private _attach(attachment: TestInfo['attachments'][0], stepId: string | undefined) {
