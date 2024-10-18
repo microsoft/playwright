@@ -130,9 +130,9 @@ test('should show groups as tree in trace viewer', async ({ showTraceViewer }) =
     /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html/,
     /page.setViewportSize/,
   ]);
-  await traceViewer.actionsTree.locator('.list-view-entry:has-text("High-level Group") .codicon-chevron-right').click();
-  await traceViewer.actionsTree.locator('.list-view-entry:has-text("First Mid-level Group") .codicon-chevron-right').click();
-  await traceViewer.actionsTree.locator('.list-view-entry:has-text("Second Mid-level Group") .codicon-chevron-right').click();
+  await traceViewer.actionsTree.locator('.tree-view-entry:has-text("High-level Group") .codicon-chevron-right').click();
+  await traceViewer.actionsTree.locator('.tree-view-entry:has-text("First Mid-level Group") .codicon-chevron-right').click();
+  await traceViewer.actionsTree.locator('.tree-view-entry:has-text("Second Mid-level Group") .codicon-chevron-right').click();
   await expect(traceViewer.actionTitles).toHaveText([
     /browserContext.newPage/,
     /page.gotodata:text\/html,<!DOCTYPE html><html>Hello world<\/html>/,
@@ -154,10 +154,10 @@ test('should show groups as tree in trace viewer', async ({ showTraceViewer }) =
     /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html/,
     /page.setViewportSize/,
   ]);
-  await expect(traceViewer.actionsTree.locator('.list-view-entry:has-text("First Mid-level Group") > .list-view-indent')).toHaveCount(1);
-  await expect(traceViewer.actionsTree.locator('.list-view-entry:has-text("Second Mid-level Group") > .list-view-indent')).toHaveCount(1);
-  await expect(traceViewer.actionsTree.locator('.list-view-entry:has-text("locator.clicklocator(\'button\').first()") > .list-view-indent')).toHaveCount(2);
-  await expect(traceViewer.actionsTree.locator('.list-view-entry:has-text("expect.toBeVisiblegetByText(\'Click\')") > .list-view-indent')).toHaveCount(2);
+  await expect(traceViewer.actionsTree.locator('.tree-view-entry:has-text("First Mid-level Group") > .tree-view-indent')).toHaveCount(1);
+  await expect(traceViewer.actionsTree.locator('.tree-view-entry:has-text("Second Mid-level Group") > .tree-view-indent')).toHaveCount(1);
+  await expect(traceViewer.actionsTree.locator('.tree-view-entry:has-text("locator.clicklocator(\'button\').first()") > .tree-view-indent')).toHaveCount(2);
+  await expect(traceViewer.actionsTree.locator('.tree-view-entry:has-text("expect.toBeVisiblegetByText(\'Click\')") > .tree-view-indent')).toHaveCount(2);
 
   await traceViewer.showSourceTab();
   await traceViewer.selectAction('High-level Group');
