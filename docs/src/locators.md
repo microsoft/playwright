@@ -1441,7 +1441,7 @@ page.getByText("orange").click();
 ```
 
 ```csharp
-await page.GetByText("orange").ClickAsync();
+await Page.GetByText("orange").ClickAsync();
 ```
 
 #### Filter by text
@@ -1481,7 +1481,7 @@ page.getByRole(AriaRole.LISTITEM)
 ```
 
 ```csharp
-await page
+await Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() { HasText = "orange" })
     .ClickAsync();
@@ -1520,7 +1520,7 @@ page.getByTestId("orange").click();
 ```
 
 ```csharp
-await page.GetByTestId("orange").ClickAsync();
+await Page.GetByTestId("orange").ClickAsync();
 ```
 
 #### Get by nth item
@@ -1544,7 +1544,7 @@ Locator banana = page.getByRole(AriaRole.LISTITEM).nth(1);
 ```
 
 ```csharp
-var banana = await page.GetByRole(AriaRole.Listitem).Nth(1);
+var banana = await Page.GetByRole(AriaRole.Listitem).Nth(1);
 ```
 However, use this method with caution. Often times, the page might change, and the locator will point to a completely different element from the one you expected. Instead, try to come up with a unique locator that will pass the [strictness criteria](#strictness).
 
@@ -1615,12 +1615,12 @@ rowLocator
 ```
 
 ```csharp
-var rowLocator = page.GetByRole(AriaRole.Listitem);
+var rowLocator = Page.GetByRole(AriaRole.Listitem);
 
 await rowLocator
     .Filter(new() { HasText = "Mary" })
     .Filter(new() {
-        Has = page.GetByRole(AriaRole.Button, new() { Name = "Say goodbye" })
+        Has = Page.GetByRole(AriaRole.Button, new() { Name = "Say goodbye" })
     })
     .ScreenshotAsync(new() { Path = "screenshot.png" });
 ```
@@ -1654,7 +1654,7 @@ for (Locator row : page.getByRole(AriaRole.LISTITEM).all())
 ```
 
 ```csharp
-foreach (var row in await page.GetByRole(AriaRole.Listitem).AllAsync())
+foreach (var row in await Page.GetByRole(AriaRole.Listitem).AllAsync())
   Console.WriteLine(await row.TextContentAsync());
 ```
 
@@ -1689,7 +1689,7 @@ for (int i = 0; i < count; ++i)
 ```
 
 ```csharp
-var rows = page.GetByRole(AriaRole.Listitem);
+var rows = Page.GetByRole(AriaRole.Listitem);
 var count = await rows.CountAsync();
 for (int i = 0; i < count; ++i)
   Console.WriteLine(await rows.Nth(i).TextContentAsync());
@@ -1721,7 +1721,7 @@ Object texts = rows.evaluateAll(
     "list => list.map(element => element.textContent)");
 ```
 ```csharp
-var rows = page.GetByRole(AriaRole.Listitem);
+var rows = Page.GetByRole(AriaRole.Listitem);
 var texts = await rows.EvaluateAllAsync(
     "list => list.map(element => element.textContent)");
 ```
