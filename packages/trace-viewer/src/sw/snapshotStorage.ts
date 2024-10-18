@@ -16,6 +16,7 @@
 
 import type { FrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
 import { rewriteURLForCustomProtocol, SnapshotRenderer } from './snapshotRenderer';
+import type { PageEntry } from '../types/entries';
 
 export class SnapshotStorage {
   private _resources: ResourceSnapshot[] = [];
@@ -29,7 +30,7 @@ export class SnapshotStorage {
     this._resources.push(resource);
   }
 
-  addFrameSnapshot(snapshot: FrameSnapshot) {
+  addFrameSnapshot(snapshot: FrameSnapshot, screencastFrames: PageEntry['screencastFrames']) {
     for (const override of snapshot.resourceOverrides)
       override.url = rewriteURLForCustomProtocol(override.url);
     let frameSnapshots = this._frameSnapshots.get(snapshot.frameId);
@@ -43,7 +44,7 @@ export class SnapshotStorage {
         this._frameSnapshots.set(snapshot.pageId, frameSnapshots);
     }
     frameSnapshots.raw.push(snapshot);
-    const renderer = new SnapshotRenderer(this._resources, frameSnapshots.raw, frameSnapshots.raw.length - 1);
+    const renderer = new SnapshotRenderer(this._resources, frameSnapshots.raw, screencastFrames, frameSnapshots.raw.length - 1);
     frameSnapshots.renderers.push(renderer);
     return renderer;
   }

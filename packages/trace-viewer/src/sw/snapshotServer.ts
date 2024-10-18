@@ -35,9 +35,18 @@ export class SnapshotServer {
     const snapshot = this._snapshot(pathname.substring('/snapshot'.length), searchParams);
     if (!snapshot)
       return new Response(null, { status: 404 });
+
     const renderedSnapshot = snapshot.render();
     this._snapshotIds.set(snapshotUrl, snapshot);
     return new Response(renderedSnapshot.html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  }
+
+  async serveClosestScreenshot(pathname: string, searchParams: URLSearchParams): Promise<Response> {
+    const snapshot = this._snapshot(pathname.substring('/closest-screenshot'.length), searchParams);
+    const sha1 = snapshot?.closestScreenshot();
+    if (!sha1)
+      return new Response(null, { status: 404 });
+    return new Response(await this._resourceLoader(sha1));
   }
 
   serveSnapshotInfo(pathname: string, searchParams: URLSearchParams): Response {
