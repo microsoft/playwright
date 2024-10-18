@@ -730,7 +730,7 @@ await page.get_by_text("Details").click()
 page.get_by_text("Details").click()
 ```
 ```csharp
-await page.GetByText("Details").ClickAsync();
+await Page.GetByText("Details").ClickAsync();
 ```
 
 ```html
@@ -757,7 +757,7 @@ await page.locator("x-details", has_text="Details" ).click()
 page.locator("x-details", has_text="Details" ).click()
 ```
 ```csharp
-await page
+await Page
     .Locator("x-details", new() { HasText = "Details" })
     .ClickAsync();
 ```
