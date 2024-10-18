@@ -18,12 +18,14 @@ import fs from 'fs';
 import path from 'path';
 import { expect, test } from './playwright-test-fixtures';
 
+const markdownReporter = require.resolve('../../packages/playwright/lib/reporters/markdown');
+
 test('simple report', async ({ runInlineTest }) => {
   const files = {
     'playwright.config.ts': `
       module.exports = {
         retries: 1,
-        reporter: 'markdown',
+        reporter: ${JSON.stringify(markdownReporter)},
       };
     `,
     'dir1/a.test.js': `
@@ -83,7 +85,7 @@ test('custom report file', async ({ runInlineTest }) => {
   const files = {
     'playwright.config.ts': `
       module.exports = {
-        reporter: [['markdown', { outputFile: 'my-report.md' }]],
+        reporter: [[${JSON.stringify(markdownReporter)}, { outputFile: 'my-report.md' }]],
       };
     `,
     'a.test.js': `
@@ -107,7 +109,7 @@ test('report error without snippet', async ({ runInlineTest }) => {
     'playwright.config.ts': `
       module.exports = {
         retries: 1,
-        reporter: 'markdown',
+        reporter: ${JSON.stringify(markdownReporter)},
       };
     `,
     'a.test.js': `
@@ -135,7 +137,7 @@ test('report with worker error', async ({ runInlineTest }) => {
     'playwright.config.ts': `
       module.exports = {
         retries: 1,
-        reporter: 'markdown',
+        reporter: ${JSON.stringify(markdownReporter)},
       };
     `,
     'a.test.js': `
