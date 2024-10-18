@@ -367,12 +367,12 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
       document.styleSheets[0].disabled = true;
 
       const search = new URL(window.location.href).searchParams;
+      const isTopFrame = window.location.pathname.match(/\/page@[a-z0-9]+$/);
 
       if (search.get('pointX') && search.get('pointY')) {
         const pointX = +search.get('pointX')!;
         const pointY = +search.get('pointY')!;
         const hasInputTarget = search.has('hasInputTarget');
-        const isTopFrame = window.location.pathname.match(/\/page@[a-z0-9]+$/);
         const hasTargetElements = targetElements.length > 0;
         const roots = document.documentElement ? [document.documentElement] : [];
         for (const target of (hasTargetElements ? targetElements : roots)) {
@@ -439,7 +439,7 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
         }
 
 
-        if (window.parent.parent !== window.parent) {
+        if (isTopFrame) {
           for (const canvas of canvasElements) {
             const context = canvas.getContext('2d')!;
             drawCheckerboard(context, canvas);
