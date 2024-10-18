@@ -93,7 +93,7 @@ test('should run on hover', async ({ runUITest }) => {
   });
 
   await page.getByText('passes').hover();
-  await page.getByRole('treeitem').filter({ hasText: 'passes' }).getByTitle('Run').click();
+  await page.getByRole('treeitem', { name: 'passes' }).getByRole('button', { name: 'Run' }).click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
@@ -275,7 +275,7 @@ test('should run folder', async ({ runUITest }) => {
   });
 
   await page.getByText('folder-b').hover();
-  await page.getByRole('treeitem').filter({ hasText: 'folder-b' }).getByTitle('Run').click();
+  await page.getByRole('treeitem', { name: 'folder-b' }).getByRole('button', { name: 'Run' }).click();
 
   await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ✅ folder-b <=
@@ -421,8 +421,8 @@ test('should show proper total when using deps', async ({ runUITest }) => {
 
 
   await page.getByText('Status:').click();
-  await page.getByLabel('setup').setChecked(true);
-  await page.getByLabel('chromium').setChecked(true);
+  await page.getByRole('checkbox', { name: 'setup' }).setChecked(true);
+  await page.getByRole('checkbox', { name: 'chromium' }).setChecked(true);
 
   await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts

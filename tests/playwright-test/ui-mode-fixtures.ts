@@ -68,14 +68,15 @@ export function dumpTestTree(page: Page, options: { time?: boolean } = {}): () =
     const result: string[] = [];
     const treeItems = treeElement.querySelectorAll('[role=treeitem]');
     for (const treeItem of treeItems) {
-      const iconElements = treeItem.querySelectorAll('.codicon');
+      const treeItemHeader = treeItem.querySelector('.tree-view-entry');
+      const iconElements = treeItemHeader.querySelectorAll('.codicon');
       const treeIcon = iconName(iconElements[0]);
       const statusIcon = iconName(iconElements[1]);
-      const indent = treeItem.querySelectorAll('.tree-view-indent').length;
-      const watch = treeItem.querySelector('.toolbar-button.eye.toggled') ? ' 👁' : '';
+      const indent = treeItemHeader.querySelectorAll('.tree-view-indent').length;
+      const watch = treeItemHeader.querySelector('.toolbar-button.eye.toggled') ? ' 👁' : '';
       const selected = treeItem.getAttribute('aria-selected') === 'true' ? ' <=' : '';
-      const title = treeItem.querySelector('.ui-mode-tree-item-title').childNodes[0].textContent;
-      const timeElement = options.time ? treeItem.querySelector('.ui-mode-tree-item-time') : undefined;
+      const title = treeItemHeader.querySelector('.ui-mode-tree-item-title').childNodes[0].textContent;
+      const timeElement = options.time ? treeItemHeader.querySelector('.ui-mode-tree-item-time') : undefined;
       const time = timeElement ? ' ' + timeElement.textContent.replace(/[.\d]+m?s/, 'XXms') : '';
       result.push('    ' + '  '.repeat(indent) + treeIcon + ' ' + statusIcon + ' ' + title + time + watch + selected);
     }

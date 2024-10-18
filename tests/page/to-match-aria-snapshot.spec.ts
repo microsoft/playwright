@@ -181,14 +181,12 @@ test('expected formatter', async ({ page }) => {
 
   expect(stripAnsi(error.message)).toContain(`
 Locator: locator('body')
-- Expected         - 4
+- Expected         - 2
 + Received string  + 3
 
--
+- - heading "todos"
 + - banner:
--     - heading "todos"
 +   - heading "todos"
--     - textbox "Wrong text"
--   
+- - textbox "Wrong text"
 +   - textbox "What needs to be done?"`);
 });

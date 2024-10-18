@@ -59,6 +59,30 @@ export const ActionList: React.FC<ActionListProps> = ({
     return { selectedItem };
   }, [itemMap, selectedAction]);
 
+  const isError = React.useCallback((item: ActionTreeItem) => {
+    return !!item.action?.error?.message;
+  }, []);
+
+  const onAccepted = React.useCallback((item: ActionTreeItem) => {
+    return setSelectedTime({ minimum: item.action!.startTime, maximum: item.action!.endTime });
+  }, [setSelectedTime]);
+
+  const render = React.useCallback((item: ActionTreeItem) => {
+    return renderAction(item.action!, { sdkLanguage, revealConsole, isLive, showDuration: true, showBadges: true });
+  }, [isLive, revealConsole, sdkLanguage]);
+
+  const isVisible = React.useCallback((item: ActionTreeItem) => {
+    return !selectedTime || !item.action || (item.action!.startTime <= selectedTime.maximum && item.action!.endTime >= selectedTime.minimum);
+  }, [selectedTime]);
+
+  const onSelectedAction = React.useCallback((item: ActionTreeItem) => {
+    onSelected?.(item.action!);
+  }, [onSelected]);
+
+  const onHighlightedAction = React.useCallback((item: ActionTreeItem | undefined) => {
+    onHighlighted?.(item?.action);
+  }, [onHighlighted]);
+
   return <div className='vbox'>
     {selectedTime && <div className='action-list-show-all' onClick={() => setSelectedTime(undefined)}><span className='codicon codicon-triangle-left'></span>Show all</div>}
     <ActionTreeView
@@ -67,12 +91,12 @@ export const ActionList: React.FC<ActionListProps> = ({
       treeState={treeState}
       setTreeState={setTreeState}
       selectedItem={selectedItem}
-      onSelected={item => onSelected?.(item.action!)}
-      onHighlighted={item => onHighlighted?.(item?.action)}
-      onAccepted={item => setSelectedTime({ minimum: item.action!.startTime, maximum: item.action!.endTime })}
-      isError={item => !!item.action?.error?.message}
-      isVisible={item => !selectedTime || (item.action!.startTime <= selectedTime.maximum && item.action!.endTime >= selectedTime.minimum)}
-      render={item => renderAction(item.action!, { sdkLanguage, revealConsole, isLive, showDuration: true, showBadges: true })}
+      onSelected={onSelectedAction}
+      onHighlighted={onHighlightedAction}
+      onAccepted={onAccepted}
+      isError={isError}
+      isVisible={isVisible}
+      render={render}
     />
   </div>;
 };

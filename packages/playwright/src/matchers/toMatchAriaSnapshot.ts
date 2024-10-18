@@ -49,8 +49,8 @@ export async function toMatchAriaSnapshot(
 
   const messagePrefix = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
   const notFound = received === kNoElementsFoundError;
-  const escapedExpected = escapePrivateUsePoints(expected);
-  const escapedReceived = escapePrivateUsePoints(received);
+  const escapedExpected = unshift(escapePrivateUsePoints(expected));
+  const escapedReceived = unshift(escapePrivateUsePoints(received));
   const message = () => {
     if (pass) {
       if (notFound)
@@ -78,4 +78,18 @@ export async function toMatchAriaSnapshot(
 
 function escapePrivateUsePoints(str: string) {
   return str.replace(/[\uE000-\uF8FF]/g, char => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
+}
+
+function unshift(snapshot: string): string {
+  const lines = snapshot.split('\n');
+  let whitespacePrefixLength = 100;
+  for (const line of lines) {
+    if (!line.trim())
+      continue;
+    const match = line.match(/^(\s*)/);
+    if (match && match[1].length < whitespacePrefixLength)
+      whitespacePrefixLength = match[1].length;
+    break;
+  }
+  return lines.filter(t => t.trim()).map(line => line.substring(whitespacePrefixLength)).join('\n');
 }

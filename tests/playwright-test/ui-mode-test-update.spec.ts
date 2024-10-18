@@ -215,7 +215,7 @@ test('should update test locations', async ({ runUITest, writeFiles }) => {
   const messages: any[] = [];
   await page.exposeBinding('__logForTest', (source, arg) => messages.push(arg));
 
-  const passesItemLocator = page.getByRole('treeitem').filter({ hasText: 'passes' });
+  const passesItemLocator = page.getByRole('treeitem', { name: 'passes' });
   await passesItemLocator.hover();
   await passesItemLocator.getByTitle('Show source').click();
   await page.getByTitle('Open in VS Code').click();
