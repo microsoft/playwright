@@ -182,10 +182,15 @@ function createGlobalSetupTask(index: number, length: number): Task<TestRun> {
       globalSetupFinished = true;
     },
     teardown: async ({ config }) => {
+      let firstError: any;
       if (typeof globalSetupResult === 'function')
-        await globalSetupResult();
+        try { await globalSetupResult(); } catch (error) { firstError = error; }
+
       if (globalSetupFinished)
         await teardownHook?.(config.config);
+
+      if (firstError)
+        throw firstError;
     },
   };
 }

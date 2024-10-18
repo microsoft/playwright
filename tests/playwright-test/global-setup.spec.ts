@@ -422,7 +422,7 @@ test('globalSetup should support multiple', async ({ runInlineTest }) => {
     'globalSetup3Function',
     'globalTeardown2',
     'globalSetup1Function',
-    // 'globalTeardown1' is missing, because globalSetup1Function errored out.
+    'globalTeardown1',
   ]);
   expect(result.output).toContain('Error: kaboom');
 });
