@@ -51,6 +51,14 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     await this._startCollectingStacks(traceName);
   }
 
+  async group(name: string, options: { location?: { file: string, line?: number, column?: number } } = {}) {
+    await this._channel.tracingGroup({ name, location: options.location });
+  }
+
+  async groupEnd() {
+    await this._channel.tracingGroupEnd();
+  }
+
   private async _startCollectingStacks(traceName: string) {
     if (!this._isTracing) {
       this._isTracing = true;
