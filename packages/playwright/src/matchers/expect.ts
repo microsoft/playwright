@@ -60,7 +60,7 @@ import {
   printReceived,
 } from '../common/expectBundle';
 import { zones } from 'playwright-core/lib/utils';
-import { TestInfoImpl, type TestStepInternal } from '../worker/testInfo';
+import { TestInfoImpl } from '../worker/testInfo';
 import { ExpectError, isExpectError } from './matcherHint';
 import { toMatchAriaSnapshot } from './toMatchAriaSnapshot';
 
@@ -116,8 +116,6 @@ function qualifiedMatcherName(qualifier: string[], matcherName: string) {
   return qualifier.join(':') + '$' + matcherName;
 }
 
-export const testStepInternalSymbol = Symbol('TestStepInternal');
-
 function createExpect(info: ExpectMetaInfo, prefix: string[], customMatchers: Record<string, Function>) {
   const expectInstance: Expect<{}> = new Proxy(expectLibrary, {
     apply: function(target: any, thisArg: any, argumentsList: [unknown, ExpectMessage?]) {
@@ -143,7 +141,7 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], customMatchers: Re
           const wrappedMatchers: any = {};
           const extendedMatchers: any = { ...customMatchers };
           for (const [name, matcher] of Object.entries(matchers)) {
-            wrappedMatchers[name] = function(actual: any, step: TestStepInternal, ...args: any[]) {
+            wrappedMatchers[name] = function(...args: any[]) {
               const { isNot, promise, utils } = this;
               const newThis: ExpectMatcherState = {
                 isNot,
@@ -151,9 +149,8 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], customMatchers: Re
                 utils,
                 timeout: currentExpectTimeout()
               };
-              (newThis as any)[testStepInternalSymbol] = step;
               (newThis as any).equals = throwUnsupportedExpectMatcherError;
-              return (matcher as any).call(newThis, actual, ...args);
+              return (matcher as any).call(newThis, ...args);
             };
             const key = qualifiedMatcherName(qualifier, name);
             wrappedMatchers[key] = wrappedMatchers[name];
@@ -304,7 +301,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       // We assume that the matcher will read the current expect timeout the first thing.
       setCurrentExpectConfigureTimeout(this._info.timeout);
       if (!testInfo)
-        return matcher.call(target, undefined, ...args);
+        return matcher.call(target, ...args);
 
       const customMessage = this._info.message || '';
       const argsSuffix = computeArgsSuffix(matcherName, args);
@@ -340,7 +337,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       };
 
       try {
-        const callback = () => matcher.call(target, step, ...args);
+        const callback = () => matcher.call(target, ...args);
         // toPass and poll matchers can contain other steps, expects and API calls,
         // so they behave like a retriable step.
         const result = (matcherName === 'toPass' || this._info.poll) ?
