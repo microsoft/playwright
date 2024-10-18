@@ -21,6 +21,7 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 import { expect, playwrightTest } from '../config/browserTest';
 import type { FrameLocator } from '@playwright/test';
+import { rafraf } from 'tests/page/pageTest';
 
 const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
@@ -1442,7 +1443,7 @@ test.skip('should allow showing screenshots instead of snapshots', async ({ runA
 test('canvas clipping', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/screenshots/canvas.html#canvas-on-edge');
-    await page.waitForTimeout(1000); // ensure we could take a screenshot
+    await rafraf(page, 5);
   });
 
   const msg = await traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') });
@@ -1457,7 +1458,7 @@ test('canvas clipping in iframe', async ({ runAndTrace, page, server }) => {
     await page.setContent(`
       <iframe src="${server.PREFIX}/screenshots/canvas.html#canvas-on-edge"></iframe>
     `);
-    await page.waitForTimeout(1000); // ensure we could take a screenshot
+    await rafraf(page, 5);
   });
 
   const snapshot = await traceViewer.snapshotFrame('page.waitForTimeout');
