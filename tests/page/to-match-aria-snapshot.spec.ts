@@ -107,6 +107,17 @@ test('details visibility', async ({ page }) => {
   `);
 });
 
+test('checked state', async ({ page }) => {
+  await page.setContent(`
+    <input type='checkbox' checked />
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - checkbox:
+      - checked: true
+  `);
+});
+
 test('integration test', async ({ page }) => {
   await page.setContent(`
     <h1>Microsoft</h1>
@@ -182,11 +193,12 @@ test('expected formatter', async ({ page }) => {
   expect(stripAnsi(error.message)).toContain(`
 Locator: locator('body')
 - Expected         - 2
-+ Received string  + 3
++ Received string  + 4
 
 - - heading "todos"
-+ - banner:
-+   - heading "todos"
 - - textbox "Wrong text"
++ - banner:
++   - heading "todos":
++     - level: 1
 +   - textbox "What needs to be done?"`);
 });
