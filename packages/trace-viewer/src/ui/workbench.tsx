@@ -300,6 +300,7 @@ export const Workbench: React.FunctionComponent<{
         onSelected={onActionSelected}
         onHighlighted={setHighlightedAction}
         revealConsole={() => selectPropertiesTab('console')}
+        revealAttachment={() => selectPropertiesTab('attachments')}
         isLive={isLive}
       />
     </div>
