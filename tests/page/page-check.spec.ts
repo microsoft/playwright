@@ -19,8 +19,9 @@ import { test as it, expect } from './pageTest';
 
 it('should check the box @smoke', async ({ page }) => {
   await page.setContent(`<div>foo</div>`);
-  // expect(['fobao', 'bar']).toBe(expect.arrayContaining([expect.stringContaining('oba'), expect.stringContaining('bar')]));
-  expect('fobaro').toBe('bar');
+  expect(['fobao', 'bar']).toBe(expect.arrayContaining([expect.stringContaining('oba'), expect.stringContaining('bar')]));
+  // expect('fobaro').toBe('bar');
+  // await expect(page.locator('div')).toBeChecked({ timeout: 500 });
   await expect(page.locator('div')).toHaveText('fobaro', { timeout: 500 });
   await page.check('input');
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);

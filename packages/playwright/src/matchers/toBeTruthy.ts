@@ -42,12 +42,22 @@ export async function toBeTruthy(
   const { matches, log, timedOut, received } = await query(!!this.isNot, timeout);
   const notFound = received === kNoElementsFoundError ? received : undefined;
   const actual = matches ? expected : unexpected;
+
+  let printedExpected = `${matches ? 'not ' : ''}${expected}`
+  let printedReceived = notFound
+    ? kNoElementsFoundError
+    : (matches ? expected : unexpected);
+  
+  console.log('printedReceived:', printedReceived);
+
   const message = () => {
     const header = matcherHint(this, receiver, matcherName, 'locator', arg, matcherOptions, timedOut ? timeout : undefined);
     const logText = callLogText(log);
-    return matches ? `${header}Expected: not ${expected}\nReceived: ${notFound ? kNoElementsFoundError : expected}${logText}` :
-      `${header}Expected: ${expected}\nReceived: ${notFound ? kNoElementsFoundError : unexpected}${logText}`;
+    return `${header}Expected: ${printedExpected}\nReceived: ${printedReceived}${logText}`;
   };
+
+  const header = matcherHint(this, undefined, matcherName, 'locator', arg, matcherOptions, timedOut ? timeout : undefined);
+
   return {
     message,
     pass: matches,
@@ -56,5 +66,10 @@ export async function toBeTruthy(
     expected,
     log,
     timeout: timedOut ? timeout : undefined,
+
+    locator: receiver.toString(),
+    header,
+    printedReceived,
+    printedExpected,
   };
 }

@@ -185,9 +185,8 @@ class SnapshotHelper {
     this.kind = this.mimeType.startsWith('image/') ? 'Screenshot' : 'Snapshot';
   }
 
-  createMatcherResult(message: string, pass: boolean, log?: string[], shortMessage?: string): ImageMatcherResult {
+  createMatcherResult(message: string, pass: boolean, log?: string[], header?: string): ImageMatcherResult {
     const unfiltered: ImageMatcherResult = {
-      shortMessage,
       name: this.matcherName,
       expected: this.expectedPath,
       actual: this.actualPath,
@@ -195,6 +194,9 @@ class SnapshotHelper {
       pass,
       message: () => message,
       log,
+      header,
+      printedExpected: this.expectedPath,
+      printedReceived: this.actualPath,
     };
     return Object.fromEntries(Object.entries(unfiltered).filter(([_, v]) => v !== undefined)) as ImageMatcherResult;
   }
