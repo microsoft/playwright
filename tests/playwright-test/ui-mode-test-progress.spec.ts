@@ -47,7 +47,7 @@ test('should update trace live', async ({ runUITest, server }) => {
   await page.getByText('live test').dblclick();
 
   // It should halt on loading one.html.
-  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'
@@ -57,11 +57,11 @@ test('should update trace live', async ({ runUITest, server }) => {
   ]);
 
   await expect(
-      listItem.locator(':scope.selected'),
+      listItem.locator(':scope[aria-selected="true"]'),
       'last action to be selected'
   ).toHaveText(/page.goto/);
   await expect(
-      listItem.locator(':scope.selected .codicon.codicon-loading'),
+      listItem.locator(':scope[aria-selected="true"] .codicon.codicon-loading'),
       'spinner'
   ).toBeVisible();
 
@@ -83,11 +83,11 @@ test('should update trace live', async ({ runUITest, server }) => {
     /page.gotohttp:\/\/localhost:\d+\/two.html/
   ]);
   await expect(
-      listItem.locator(':scope.selected'),
+      listItem.locator(':scope[aria-selected="true"]'),
       'last action to be selected'
   ).toHaveText(/page.goto/);
   await expect(
-      listItem.locator(':scope.selected .codicon.codicon-loading'),
+      listItem.locator(':scope[aria-selected="true"] .codicon.codicon-loading'),
       'spinner'
   ).toBeVisible();
 
@@ -132,7 +132,7 @@ test('should preserve action list selection upon live trace update', async ({ ru
   await page.getByText('live test').dblclick();
 
   // It should wait on the latch.
-  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'
@@ -157,7 +157,7 @@ test('should preserve action list selection upon live trace update', async ({ ru
     /page.setContent[\d.]+m?s/,
   ]);
   await expect(
-      listItem.locator(':scope.selected'),
+      listItem.locator(':scope[aria-selected="true"]'),
       'selected action stays the same'
   ).toHaveText(/page.goto/);
 });
@@ -193,7 +193,7 @@ test('should update tracing network live', async ({ runUITest, server }) => {
   await page.getByText('live test').dblclick();
 
   // It should wait on the latch.
-  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'
@@ -233,7 +233,7 @@ test('should show trace w/ multiple contexts', async ({ runUITest, server, creat
   await page.getByText('live test').dblclick();
 
   // It should wait on the latch.
-  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'
@@ -278,7 +278,7 @@ test('should show live trace for serial', async ({ runUITest, server, createLatc
   await page.getByText('two', { exact: true }).click();
   await page.getByTitle('Run all').click();
 
-  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'
@@ -318,7 +318,7 @@ test('should show live trace from hooks', async ({ runUITest, createLatch }) => 
   `);
   await page.getByText('test one').dblclick();
 
-  const listItem = page.getByTestId('actions-tree').getByRole('listitem');
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
   await expect(
       listItem,
       'action list'

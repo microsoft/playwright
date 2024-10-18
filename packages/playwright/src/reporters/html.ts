@@ -512,8 +512,8 @@ class HtmlBuilder {
       error: step.error?.message,
       count
     };
-    if (testStep.location)
-      this._stepsInFile.set(testStep.location.file, testStep);
+    if (step.location)
+      this._stepsInFile.set(step.location.file, testStep);
     return testStep;
   }
 

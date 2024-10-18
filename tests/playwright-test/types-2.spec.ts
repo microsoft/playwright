@@ -33,6 +33,7 @@ test('basics should work', async ({ runTSC }) => {
         test.skip('my test', async () => {});
         test.fixme('my test', async () => {});
         test.fail('my test', async () => {});
+        test.fail.only('my test', async () => {});
       });
       test.describe(() => {
         test('my test', () => {});
@@ -59,6 +60,7 @@ test('basics should work', async ({ runTSC }) => {
       test.fixme('title', { tag: '@foo' }, () => {});
       test.only('title', { tag: '@foo' }, () => {});
       test.fail('title', { tag: '@foo' }, () => {});
+      test.fail.only('title', { tag: '@foo' }, () => {});
       test.describe('title', { tag: '@foo' }, () => {});
       test.describe('title', { annotation: { type: 'issue' } }, () => {});
       // @ts-expect-error

@@ -1138,6 +1138,57 @@ Optional description that will be reflected in a test report.
 
 
 
+## method: Test.fail.only
+* since: v1.49
+
+You can use `test.fail.only` to focus on a specific test that is expected to fail. This is particularly useful when debugging a failing test or working on a specific issue.
+
+To declare a focused "failing" test:
+* `test.fail.only(title, body)`
+* `test.fail.only(title, details, body)`
+
+**Usage**
+
+You can declare a focused failing test, so that Playwright runs only this test and ensures it actually fails.
+
+```js
+import { test, expect } from '@playwright/test';
+
+test.fail.only('focused failing test', async ({ page }) => {
+  // This test is expected to fail
+});
+test('not in the focused group', async ({ page }) => {
+  // This test will not run
+});
+```
+
+### param: Test.fail.only.title
+* since: v1.49
+
+- `title` ?<[string]>
+
+Test title.
+
+### param: Test.fail.only.details
+* since: v1.49
+
+- `details` ?<[Object]>
+  - `tag` ?<[string]|[Array]<[string]>>
+  - `annotation` ?<[Object]|[Array]<[Object]>>
+    - `type` <[string]>
+    - `description` ?<[string]>
+
+See [`method: Test.describe`] for test details description.
+
+### param: Test.fail.only.body
+* since: v1.49
+
+- `body` ?<[function]\([Fixtures], [TestInfo]\)>
+
+Test body that takes one or two arguments: an object with fixtures and optional [TestInfo].
+
+
+
 ## method: Test.fixme
 * since: v1.10
 

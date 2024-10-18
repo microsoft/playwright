@@ -215,7 +215,7 @@ const StepTreeItem: React.FC<{
       return <AttachmentLink key={`attachment-${a}`} attachment={attachment} depth={depth + 1} openInNewTab={getAttachmentCategory(attachment) === 'html'}/>;
     }));
     if (step.snippet)
-      children.unshift(<TestErrorView key='line' error={step.snippet}></TestErrorView>);
+      children.unshift(<TestErrorView testId='test-snippet' key='line' error={step.snippet}></TestErrorView>);
     return children;
   } : undefined} depth={depth}></TreeItem>;
 };
