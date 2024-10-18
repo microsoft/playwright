@@ -555,14 +555,39 @@ export interface TestCase {
  */
 export interface TestError {
   /**
+   * Actual value.
+   */
+  actual?: string;
+
+  /**
+   * Expected value.
+   */
+  expected?: string;
+
+  /**
    * Error location in the source code.
    */
   location?: Location;
 
   /**
+   * Receiver's locator.
+   */
+  locator?: string;
+
+  /**
+   * Call log.
+   */
+  log?: Array<string>;
+
+  /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */
   message?: string;
+
+  /**
+   * Failure message.
+   */
+  shortMessage?: string;
 
   /**
    * Source code snippet with highlighted error.

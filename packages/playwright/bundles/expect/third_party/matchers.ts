@@ -135,10 +135,18 @@ const matchers: MatchersObject = {
         );
       };
 
+      const header = matcherHint(matcherName, undefined, undefined, options) + '\n';
+      const printedExpected = `${pass ? 'not ' : ''}${printExpected(expected)}`
+      const printedReceived = printReceived(received);
+
     // Passing the actual and expected objects so that a custom reporter
     // could access them, for example in order to display a custom visual diff,
     // or create a different error message
-    return { actual: received, expected, message, name: matcherName, pass };
+    return { actual: received, expected, message, name: matcherName, pass,
+      header,
+      printedReceived,
+      printedExpected,
+    };
   },
 
   toBeCloseTo(received: number, expected: number, precision = 2) {
