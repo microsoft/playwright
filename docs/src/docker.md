@@ -111,7 +111,6 @@ We currently publish images with the following tags:
 - `:v%%VERSION%%` - Playwright v%%VERSION%% release docker image based on Ubuntu 24.04 LTS (Noble Numbat).
 - `:v%%VERSION%%-noble` - Playwright v%%VERSION%% release docker image based on Ubuntu 24.04 LTS (Noble Numbat).
 - `:v%%VERSION%%-jammy` - Playwright v%%VERSION%% release docker image based on Ubuntu 22.04 LTS (Jammy Jellyfish).
-- `:v%%VERSION%%-focal` - Playwright v%%VERSION%% release docker image based on Ubuntu 20.04 LTS (Focal Fossa).
 
 :::note
 It is recommended to always pin your Docker image to a specific version if possible. If the Playwright version in your Docker image does not match the version in your project/tests, Playwright will be unable to locate browser executables.
@@ -122,7 +121,6 @@ It is recommended to always pin your Docker image to a specific version if possi
 We currently publish images based on the following [Ubuntu](https://hub.docker.com/_/ubuntu) versions:
 - **Ubuntu 24.04 LTS** (Noble Numbat), image tags include `noble`
 - **Ubuntu 22.04 LTS** (Jammy Jellyfish), image tags include `jammy`
-- **Ubuntu 20.04 LTS** (Focal Fossa), image tags include `focal`
 
 #### Alpine
 
