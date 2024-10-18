@@ -40,8 +40,12 @@ export function parseAriaSnapshot(text: string): AriaTemplateNode {
     return { role };
   };
 
+  const normalizeWhitespace = (text: string) => {
+    return text.replace(/[\r\n\s\t]+/g, ' ').trim();
+  };
+
   const valueOrRegex = (value: string): string | RegExp => {
-    return value.startsWith('/') && value.endsWith('/') ? new RegExp(value.slice(1, -1)) : value;
+    return value.startsWith('/') && value.endsWith('/') ? new RegExp(value.slice(1, -1)) : normalizeWhitespace(value);
   };
 
   const convert = (object: YamlNode | string): AriaTemplateNode | RegExp | string => {
