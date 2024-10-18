@@ -192,7 +192,7 @@ export class TestInfoImpl implements TestInfo {
     this._attachmentsPush = this.attachments.push.bind(this.attachments);
     this.attachments.push = (...attachments: TestInfo['attachments']) => {
       for (const a of attachments)
-        this._attach(a);
+        this._attach(a, undefined);
       return this.attachments.length;
     };
 
@@ -291,6 +291,9 @@ export class TestInfoImpl implements TestInfo {
             }
           }
         }
+
+        for (const attachment of result.attachments ?? [])
+          this._attach(attachment, stepId);
 
         const payload: StepEndPayload = {
           testId: this.testId,
@@ -404,11 +407,10 @@ export class TestInfoImpl implements TestInfo {
       category: 'attach',
     });
     const attachment = await normalizeAndSaveAttachment(this.outputPath(), name, options);
-    this._attach(attachment);
     step.complete({ attachments: [attachment] });
   }
 
-  private _attach(attachment: TestInfo['attachments'][0]) {
+  private _attach(attachment: TestInfo['attachments'][0], stepId: string | undefined) {
     this._attachmentsPush(attachment);
     this._onAttach({
       testId: this.testId,
@@ -416,7 +418,7 @@ export class TestInfoImpl implements TestInfo {
       contentType: attachment.contentType,
       path: attachment.path,
       body: attachment.body?.toString('base64'),
-      stepId: this._parentStep()?.stepId,
+      stepId,
     });
   }
 
