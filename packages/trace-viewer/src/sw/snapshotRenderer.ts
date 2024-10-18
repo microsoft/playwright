@@ -428,7 +428,7 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
             const context = pattern.getContext('2d')!;
             context.fillStyle = 'lightgray';
             context.fillRect(0, 0, pattern.width, pattern.height);
-            context.fillStyle = 'black';
+            context.fillStyle = 'white';
             context.fillRect(0, 0, pattern.width / 2, pattern.height / 2);
             context.fillRect(pattern.width / 2, pattern.height / 2, pattern.width, pattern.height);
             return context.createPattern(pattern, 'repeat')!;
@@ -436,13 +436,6 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
 
           context.fillStyle = createCheckerboardPattern();
           context.fillRect(0, 0, canvas.width, canvas.height);
-        }
-
-        function drawWarningIcon(context: CanvasRenderingContext2D) {
-          context.fillStyle = 'red';
-          context.font = '24px serif';
-          context.textBaseline = 'top';
-          context.fillText('⚠', 0, 0);
         }
 
         const img = new Image();
@@ -460,7 +453,6 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
 
             // todo: don't show the image if we're in an iframe - we know it's not going to be accurate
             context.drawImage(img, xStart * img.width, yStart * img.height, (xEnd - xStart) * img.width, (yEnd - yStart) * img.height, 0, 0, canvas.width, canvas.height);
-            drawWarningIcon(context);
             if (isUnderTest)
               // eslint-disable-next-line no-console
               console.log(`canvas drawn:`, JSON.stringify([xStart, yStart, xEnd, yEnd].map(v => Math.floor(v * 100))));
@@ -479,7 +471,6 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
           for (const canvas of canvasElements) {
             const context = canvas.getContext('2d')!;
             drawWarningBackground(context, canvas);
-            drawWarningIcon(context);
             canvas.title = `Playwright couldn't show canvas contents because the screenshot failed to load.`;
           }
         };
