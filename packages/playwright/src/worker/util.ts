@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
+import type { TestError } from '../../types/testReporter';
 import type { TestInfoError } from '../../types/test';
 import type { MatcherResult } from '../matchers/matcherHint';
 import { serializeError } from '../util';
 
-export function serializeWorkerError(error: Error | any): TestInfoError {
+export function serializeWorkerError(error: Error | any): TestInfoError & Pick<TestError, 'shortMessage'|'log'|'expected'|'actual'|'locator'> {
   return {
     ...serializeError(error),
     ...serializeExpectDetails(error),
   };
 }
 
-function serializeExpectDetails(e: Error): Pick<TestInfoError, 'shortMessage'|'log'|'expected'|'actual'|'locator'> {
+function serializeExpectDetails(e: Error): Pick<TestError, 'shortMessage'|'log'|'expected'|'actual'|'locator'> {
   const matcherResult = (e as any).matcherResult as MatcherResult<unknown, unknown>;
   if (!matcherResult)
     return {};
