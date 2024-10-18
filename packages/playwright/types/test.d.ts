@@ -1077,7 +1077,8 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
 
   /**
    * Path to the global setup file. This file will be required and run before all the tests. It must export a single
-   * function that takes a [FullConfig](https://playwright.dev/docs/api/class-fullconfig) argument.
+   * function that takes a [FullConfig](https://playwright.dev/docs/api/class-fullconfig) argument. Pass an array of
+   * paths to specify multiple global setup files.
    *
    * Learn more about [global setup and teardown](https://playwright.dev/docs/test-global-setup-teardown).
    *
@@ -1093,12 +1094,13 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * ```
    *
    */
-  globalSetup?: string;
+  globalSetup?: string|Array<string>;
 
   /**
    * Path to the global teardown file. This file will be required and run after all the tests. It must export a single
    * function. See also
-   * [testConfig.globalSetup](https://playwright.dev/docs/api/class-testconfig#test-config-global-setup).
+   * [testConfig.globalSetup](https://playwright.dev/docs/api/class-testconfig#test-config-global-setup). Pass an array
+   * of paths to specify multiple global teardown files.
    *
    * Learn more about [global setup and teardown](https://playwright.dev/docs/test-global-setup-teardown).
    *
@@ -1114,7 +1116,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * ```
    *
    */
-  globalTeardown?: string;
+  globalTeardown?: string|Array<string>;
 
   /**
    * Maximum time in milliseconds the whole test suite can run. Zero timeout (default) disables this behavior. Useful on
