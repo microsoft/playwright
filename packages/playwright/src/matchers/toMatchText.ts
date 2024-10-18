@@ -58,30 +58,35 @@ export async function toMatchText(
   const timeout = options.timeout ?? this.timeout;
 
   const { matches: pass, received, log, timedOut } = await query(!!this.isNot, timeout);
+  if (pass === !this.isNot) {
+    return {
+      name: matcherName,
+      message: () => '',
+      pass,
+      expected
+    };
+  }
+
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
-  const receivedString = received || '';
-  const messagePrefix = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
+  const headerWithLocator = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
+  // Pass timeout and locator as fields on the error?
+  const header = matcherHint(this, undefined, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
   const notFound = received === kNoElementsFoundError;
-  const message = () => {
-    if (pass) {
-      if (typeof expected === 'string') {
-        if (notFound)
-          return messagePrefix + `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}\nReceived: ${received}` + callLogText(log);
-        const printedReceived = printReceivedStringContainExpectedSubstring(receivedString, receivedString.indexOf(expected), expected.length);
-        return messagePrefix + `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}\nReceived string: ${printedReceived}` + callLogText(log);
-      } else {
-        if (notFound)
-          return messagePrefix + `Expected pattern: not ${this.utils.printExpected(expected)}\nReceived: ${received}` + callLogText(log);
-        const printedReceived = printReceivedStringContainExpectedResult(receivedString, typeof expected.exec === 'function' ? expected.exec(receivedString) : null);
-        return messagePrefix + `Expected pattern: not ${this.utils.printExpected(expected)}\nReceived string: ${printedReceived}` + callLogText(log);
-      }
-    } else {
-      const labelExpected = `Expected ${typeof expected === 'string' ? stringSubstring : 'pattern'}`;
-      if (notFound)
-        return messagePrefix + `${labelExpected}: ${this.utils.printExpected(expected)}\nReceived: ${received}` + callLogText(log);
-      return messagePrefix + this.utils.printDiffOrStringify(expected, receivedString, labelExpected, 'Received string', false) + callLogText(log);
-    }
-  };
+  let printedReceived;
+  // {not} {string/substring/pattern} {formatted}
+  let printedExpected = `${typeof expected === 'string' ? stringSubstring : 'pattern'} ${this.utils.printExpected(expected)}`;
+  if (pass) {
+    printedExpected = `not ${printedExpected}`;
+    const receivedString = received || '';
+    printedReceived = notFound
+      ? received
+      : typeof expected === 'string'
+        ? printReceivedStringContainExpectedSubstring(receivedString, receivedString.indexOf(expected), expected.length)
+        : printReceivedStringContainExpectedResult(receivedString, typeof expected.exec === 'function' ? expected.exec(receivedString) : null);
+  } else {
+    printedReceived = notFound ? received : `string ${this.utils.printReceived(received)}`;
+  }
+  const message = () => `${headerWithLocator}Expected: ${printedExpected}\nReceived: ${printedReceived}` + callLogText(log);
 
   return {
     name: matcherName,
@@ -91,5 +96,10 @@ export async function toMatchText(
     actual: received,
     log,
     timeout: timedOut ? timeout : undefined,
+
+    locator: receiver.toString(),
+    header,
+    printedReceived,
+    printedExpected,
   };
 }

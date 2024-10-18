@@ -25,15 +25,16 @@ export function serializeWorkerError(error: Error | any): TestInfoError {
   };
 }
 
-function serializeExpectDetails(e: Error): Pick<TestInfoError, 'shortMessage'|'log'|'expected'|'actual'> {
+function serializeExpectDetails(e: Error): Pick<TestInfoError, 'shortMessage'|'log'|'expected'|'actual'|'locator'> {
   const matcherResult = (e as any).matcherResult as MatcherResult<unknown, unknown>;
   if (!matcherResult)
     return {};
   return {
-    shortMessage: matcherResult.shortMessage,
+    shortMessage: matcherResult.header,
     log: matcherResult.log,
-    expected: matcherResult.expected,
-    actual: matcherResult.actual,
+    expected: matcherResult.printedExpected,
+    actual: matcherResult.printedReceived,
+    locator: matcherResult.locator,
   };
 }
 

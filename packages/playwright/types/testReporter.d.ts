@@ -557,17 +557,22 @@ export interface TestError {
   /**
    * Actual value.
    */
-  actual?: any;
+  actual?: string;
 
   /**
    * Expected value.
    */
-  expected?: any;
+  expected?: string;
 
   /**
    * Error location in the source code.
    */
   location?: Location;
+
+  /**
+   * Receiver's locator.
+   */
+  locator?: string;
 
   /**
    * Call log.

@@ -19,22 +19,50 @@ import * as React from 'react';
 import './testErrorView.css';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
+import { ErrorDetails } from './types';
 
 export const TestErrorView: React.FC<{
-  error: string;
+  error: ErrorDetails;
   testId?: string;
 }> = ({ error, testId }) => {
-  const html = React.useMemo(() => ansiErrorToHtml(error), [error]);
+  const html = React.useMemo(() => {
+    const formattedError = [];
+    if (error.shortMessage)
+      formattedError.push('Error: ' + error.shortMessage);
+    if (error.locator)
+      formattedError.push(`Locator: ${error.locator}`);
+    if (error.expected)
+      formattedError.push(`Expected: ${error.expected}`);
+    if (error.actual)
+      formattedError.push(`Received: ${error.actual}`);
+    // if (error.diff)
+    if (error.log) {
+      formattedError.push('Call log:');
+      formattedError.push(...(error.log?.map(line => '  - ' + line) || []));
+    }
+    if (error.snippet)
+      formattedError.push('', error.snippet);
+    return ansiErrorToHtml(formattedError.join('\n'));
+  }, [error]);
+
   return <div className='test-error-view test-error-text' data-testId={testId} dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
 };
 
 export const TestScreenshotErrorView: React.FC<{
-  errorPrefix?: string,
+  error: ErrorDetails,
   diff: ImageDiff,
-  errorSuffix?: string,
-}> = ({ errorPrefix, diff, errorSuffix }) => {
-  const prefixHtml = React.useMemo(() => ansiErrorToHtml(errorPrefix), [errorPrefix]);
-  const suffixHtml = React.useMemo(() => ansiErrorToHtml(errorSuffix), [errorSuffix]);
+}> = ({ error, diff }) => {
+  const prefixHtml = React.useMemo(() => ansiErrorToHtml(error.shortMessage), [error]);
+  const suffixHtml = React.useMemo(() => {
+    const errorSuffix = ['Call log:',
+      ...(error.log?.map(line => '  - ' + line) || []),
+      '',
+      error.snippet,
+      '',
+      error.callStack,
+    ].join('\n');
+    return ansiErrorToHtml(errorSuffix)
+  }, [error]);
   return <div data-testid='test-screenshot-error-view' className='test-error-view'>
     <div dangerouslySetInnerHTML={{ __html: prefixHtml || '' }} className='test-error-text' style={{ marginBottom: 20 }}></div>
     <ImageDiffView key='image-diff' diff={diff} hideDetails={true}></ImageDiffView>
@@ -73,3 +101,13 @@ const ansiColors = {
 function escapeHTML(text: string): string {
   return text.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
 }
+
+export function formatCallLog(log: string[] | undefined): string {
+  if (!log || !log.some(l => !!l))
+    return '';
+  return `
+Call log:
+  ${'- ' + (log || []).join('\n  - ')}
+`;
+}
+

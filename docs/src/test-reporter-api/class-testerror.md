@@ -6,15 +6,21 @@ Information about an error thrown during test execution.
 
 ## property: TestError.actual
 * since: v1.49
-- type: ?<[any]>
+- type: ?<[string]>
 
 Actual value.
 
 ## property: TestError.expected
 * since: v1.49
-- type: ?<[any]>
+- type: ?<[string]>
 
 Expected value.
+
+## property: TestError.locator
+* since: v1.49
+- type: ?<[string]>
+
+Receiver's locator.
 
 ## property: TestError.log
 * since: v1.49

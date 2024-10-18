@@ -87,9 +87,10 @@ export type ErrorDetails = {
   message: string;
   location?: Location;
   shortMessage?: string;
+  locator?: string;
   log?: string[];
-  expected?: any;
-  actual?: any;
+  expected?: string;
+  actual?: string;
   snippet?: string;
   callStack?: string;
 };

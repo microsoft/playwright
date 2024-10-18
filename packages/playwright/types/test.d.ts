@@ -9152,12 +9152,17 @@ export interface TestInfoError {
   /**
    * Actual value.
    */
-  actual?: any;
+  actual?: string;
 
   /**
    * Expected value.
    */
-  expected?: any;
+  expected?: string;
+
+  /**
+   * Receiver's locator.
+   */
+  locator?: string;
 
   /**
    * Call log.

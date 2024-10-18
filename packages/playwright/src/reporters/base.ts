@@ -38,9 +38,9 @@ type ErrorDetails = {
 type TestResultErrorDetails = ErrorDetails & {
   shortMessage?: string;
   log?: string[];
-  expected?: any;
-  actual?: any;
-
+  locator?: string;
+  expected?: string;
+  actual?: string;
   snippet?: string;
   stack?: string;
 };
@@ -396,6 +396,7 @@ export function formatResultFailure(test: TestCase, result: TestResult, initialI
       location: formattedError.location,
       shortMessage: error.shortMessage,
       log: error.log,
+      locator: error.locator,
       expected: error.expected,
       actual: error.actual,
       snippet: error.snippet,

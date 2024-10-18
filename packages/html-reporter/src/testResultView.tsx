@@ -98,7 +98,7 @@ export const TestResultView: React.FC<{
     {!!errors.length && <AutoChip header='Errors'>
       {errors.map((error, index) => {
         if (error.type === 'screenshot')
-          return <TestScreenshotErrorView key={'test-result-error-message-' + index} errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
+          return <TestScreenshotErrorView key={'test-result-error-message-' + index} error={error.error} diff={error.diff!}></TestScreenshotErrorView>;
         return <TestErrorView key={'test-result-error-message-' + index} error={error.error!}></TestErrorView>;
       })}
     </AutoChip>}
@@ -155,25 +155,18 @@ function classifyErrors(testErrors: ErrorDetails[], diffs: ImageDiff[]) {
     if (error.shortMessage?.includes('Screenshot comparison failed:') && error.actual && error.expected) {
       const matchingDiff = diffs.find(diff => {
         const attachmentName = diff.actual?.attachment.name;
-        return attachmentName && error.actual.endsWith(attachmentName);
+        return attachmentName && error.actual?.endsWith(attachmentName);
       });
-      const errorSuffix = ['Call log:',
-        ...(error.log?.map(line => '  - ' + line) || []),
-        '',
-        error.snippet,
-        '',
-        error.callStack,
-      ].join('\n');
-      if (matchingDiff) {
-        return {
-          type: 'screenshot',
-          diff: matchingDiff,
-          errorPrefix: error.shortMessage,
-          errorSuffix
-        };
-      }
+      return {
+        type: 'screenshot',
+        diff: matchingDiff,
+        error,
+      };
     }
-    return { type: 'regular', error: error.message };
+    return {
+      type: 'regular',
+      error
+    };
   });
 }
 

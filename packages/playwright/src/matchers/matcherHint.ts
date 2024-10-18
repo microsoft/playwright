@@ -40,6 +40,12 @@ export type MatcherResult<E, A> = {
   actual?: A;
   log?: string[];
   timeout?: number;
+
+  locator?: string;
+  header?: string;
+  printedReceived?: string;
+  printedExpected?: string;
+
 };
 
 export class ExpectError extends Error {
