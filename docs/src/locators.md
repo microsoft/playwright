@@ -1748,7 +1748,7 @@ page.getByRole(AriaRole.BUTTON).click();
 ```
 
 ```csharp
-await page.GetByRole(AriaRole.Button).ClickAsync();
+await Page.GetByRole(AriaRole.Button).ClickAsync();
 ```
 
 On the other hand, Playwright understands when you perform a multiple-element operation,
@@ -1773,7 +1773,7 @@ page.getByRole(AriaRole.BUTTON).count();
 ```
 
 ```csharp
-await page.GetByRole(AriaRole.Button).CountAsync();
+await Page.GetByRole(AriaRole.Button).CountAsync();
 ```
 
 You can explicitly opt-out from strictness check by telling Playwright which element to use when multiple elements match, through [`method: Locator.first`], [`method: Locator.last`], and [`method: Locator.nth`]. These methods are **not recommended** because when your page changes, Playwright may click on an element you did not intend. Instead, follow best practices above to create a locator that uniquely identifies the target element.
