@@ -62,3 +62,8 @@
     padding: 0 !important;
   }
 }
+
+.attachments-icon {
+  color: var(--color-fg-muted);
+  margin-left: 4px;
+}

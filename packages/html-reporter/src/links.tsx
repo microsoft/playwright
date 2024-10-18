@@ -76,7 +76,8 @@ export const AttachmentLink: React.FunctionComponent<{
   href?: string,
   linkName?: string,
   openInNewTab?: boolean,
-}> = ({ attachment, href, linkName, openInNewTab }) => {
+  depth?: number,
+}> = ({ attachment, href, linkName, openInNewTab, depth }) => {
   return <TreeItem title={<span>
     {attachment.contentType === kMissingContentType ? icons.warning() : icons.attachment()}
     {attachment.path && <a href={href || attachment.path} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>}
@@ -86,8 +87,8 @@ export const AttachmentLink: React.FunctionComponent<{
         : <span>{linkifyText(attachment.name)}</span>
     )}
   </span>} loadChildren={attachment.body ? () => {
-    return [<div key={1} className='attachment-body'><CopyToClipboard value={attachment.body!}/>{linkifyText(attachment.body!)}</div>];
-  } : undefined} depth={0} style={{ lineHeight: '32px' }}></TreeItem>;
+    return [<div key={1} className='attachment-body' style={{ marginLeft: 24 + (depth ?? 0) * 22 }}><CopyToClipboard value={attachment.body!}/>{linkifyText(attachment.body!)}</div>];
+  } : undefined} depth={depth ?? 0} style={{ lineHeight: '32px' }}></TreeItem>;
 };
 
 function downloadFileNameForAttachment(attachment: TestAttachment): string {
