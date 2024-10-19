@@ -129,6 +129,13 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       return response;
     }
 
+    if (relativePath.startsWith('/closest-screenshot/')) {
+      const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
+      if (!snapshotServer)
+        return new Response(null, { status: 404 });
+      return snapshotServer.serveClosestScreenshot(relativePath, url.searchParams);
+    }
+
     if (relativePath.startsWith('/sha1/')) {
       // Sha1 for sources is based on the file path, can't load it of a random model.
       const sha1 = relativePath.slice('/sha1/'.length);
