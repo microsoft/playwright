@@ -107,15 +107,219 @@ test('details visibility', async ({ page }) => {
   `);
 });
 
-test('checked state', async ({ page }) => {
+test('checked attribute', async ({ page }) => {
   await page.setContent(`
     <input type='checkbox' checked />
   `);
 
   await expect(page.locator('body')).toMatchAriaSnapshot(`
-    - checkbox:
-      - checked: true
+    - checkbox
   `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - checkbox [checked]
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - checkbox [checked=true]
+  `);
+
+  {
+    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - checkbox [checked=false]
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(e.message)).toContain('Timed out 1000ms waiting for expect');
+  }
+
+  {
+    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - checkbox [checked=mixed]
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(e.message)).toContain('Timed out 1000ms waiting for expect');
+  }
+
+  {
+    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - checkbox [checked=5]
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(e.message)).toContain(' attribute must be a boolean or "mixed"');
+  }
+});
+
+test('disabled attribute', async ({ page }) => {
+  await page.setContent(`
+    <button disabled>Click me</button>
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - button
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - button [disabled]
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - button [disabled=true]
+  `);
+
+  {
+    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button [disabled=false]
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(e.message)).toContain('Timed out 1000ms waiting for expect');
+  }
+
+  {
+    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button [disabled=invalid]
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(e.message)).toContain(' attribute must be a boolean');
+  }
+});
+
+test('expanded attribute', async ({ page }) => {
+  await page.setContent(`
+    <button aria-expanded="true">Toggle</button>
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - button
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - button [expanded]
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - button [expanded=true]
+  `);
+
+  {
+    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button [expanded=false]
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(e.message)).toContain('Timed out 1000ms waiting for expect');
+  }
+
+  {
+    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button [expanded=invalid]
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(e.message)).toContain(' attribute must be a boolean');
+  }
+});
+
+test('level attribute', async ({ page }) => {
+  await page.setContent(`
+    <h2>Section Title</h2>
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - heading
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - heading [level=2]
+  `);
+
+  {
+    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading [level=3]
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(e.message)).toContain('Timed out 1000ms waiting for expect');
+  }
+
+  {
+    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading [level=two]
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(e.message)).toContain(' attribute must be a number');
+  }
+});
+
+test('pressed attribute', async ({ page }) => {
+  await page.setContent(`
+    <button aria-pressed="true">Like</button>
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - button
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - button [pressed]
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - button [pressed=true]
+  `);
+
+  {
+    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button [pressed=false]
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(e.message)).toContain('Timed out 1000ms waiting for expect');
+  }
+
+  // Test for 'mixed' state
+  await page.setContent(`
+    <button aria-pressed="mixed">Like</button>
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - button [pressed=mixed]
+  `);
+
+  {
+    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button [pressed=true]
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(e.message)).toContain('Timed out 1000ms waiting for expect');
+  }
+
+  {
+    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button [pressed=5]
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(e.message)).toContain(' attribute must be a boolean or "mixed"');
+  }
+});
+
+test('selected attribute', async ({ page }) => {
+  await page.setContent(`
+    <table>
+      <tr aria-selected="true">
+        <td>Row</td>
+      </tr>
+    </table>
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - row
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - row [selected]
+  `);
+
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - row [selected=true]
+  `);
+
+  {
+    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - row [selected=false]
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(e.message)).toContain('Timed out 1000ms waiting for expect');
+  }
+
+  {
+    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - row [selected=invalid]
+    `, { timeout: 1000 }).catch(e => e);
+    expect(stripAnsi(e.message)).toContain(' attribute must be a boolean');
+  }
 });
 
 test('integration test', async ({ page }) => {
@@ -193,12 +397,11 @@ test('expected formatter', async ({ page }) => {
   expect(stripAnsi(error.message)).toContain(`
 Locator: locator('body')
 - Expected         - 2
-+ Received string  + 4
++ Received string  + 3
 
 - - heading "todos"
 - - textbox "Wrong text"
 + - banner:
-+   - heading "todos":
-+     - level: 1
++   - heading "todos" [level=1]
 +   - textbox "What needs to be done?"`);
 });
