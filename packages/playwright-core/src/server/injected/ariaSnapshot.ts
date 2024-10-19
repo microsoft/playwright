@@ -22,8 +22,8 @@ import type { AriaRole } from './roleUtils';
 type AriaProps = {
   checked?: boolean | 'mixed';
   disabled?: boolean;
-  expanded?: boolean | 'none',
-  level?: number,
+  expanded?: boolean;
+  level?: number;
   pressed?: boolean | 'mixed';
   selected?: boolean;
 };
@@ -286,13 +286,23 @@ export function renderAriaTree(ariaNode: AriaNode): string {
     let line = `${indent}- ${ariaNode.role}`;
     if (ariaNode.name)
       line += ` ${escapeWithQuotes(ariaNode.name, '"')}`;
-    const stringValue = !ariaNode.checked
-      && !ariaNode.disabled
-      && (!ariaNode.expanded || ariaNode.expanded === 'none')
-      && !ariaNode.level
-      && !ariaNode.pressed
-      && !ariaNode.selected
-      && (!ariaNode.children.length || (ariaNode.children?.length === 1 && typeof ariaNode.children[0] === 'string'));
+
+    if (ariaNode.checked === 'mixed')
+      line += ` [checked=mixed]`;
+    if (ariaNode.checked === true)
+      line += ` [checked]`;
+    if (ariaNode.disabled)
+      line += ` [disabled]`;
+    if (ariaNode.expanded)
+      line += ` [expanded]`;
+    if (ariaNode.level)
+      line += ` [level=${ariaNode.level}]`;
+    if (ariaNode.pressed === 'mixed')
+      line += ` [pressed=mixed]`;
+    if (ariaNode.pressed === true)
+      line += ` [pressed]`;
+
+    const stringValue = !ariaNode.children.length || (ariaNode.children?.length === 1 && typeof ariaNode.children[0] === 'string');
     if (stringValue) {
       if (ariaNode.children.length)
         line += ': ' + escapeYamlString(ariaNode.children?.[0] as string);
@@ -301,16 +311,6 @@ export function renderAriaTree(ariaNode: AriaNode): string {
     }
 
     lines.push(line + ':');
-    if (ariaNode.checked)
-      lines.push(`${indent}  - checked: ${ariaNode.checked}`);
-    if (ariaNode.disabled)
-      lines.push(`${indent}  - disabled: ${ariaNode.disabled}`);
-    if (ariaNode.expanded && ariaNode.expanded !== 'none')
-      lines.push(`${indent}  - expanded: ${ariaNode.expanded}`);
-    if (ariaNode.level)
-      lines.push(`${indent}  - level: ${ariaNode.level}`);
-    if (ariaNode.pressed)
-      lines.push(`${indent}  - pressed: ${ariaNode.pressed}`);
     for (const child of ariaNode.children || [])
       visit(child, indent + '  ');
   };

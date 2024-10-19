@@ -61,6 +61,23 @@ test('should run visible', async ({ runUITest }) => {
         ⊘ skipped
   `);
 
+  // await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+  //   - tree:
+  //     - treeitem "a.test.ts" [expanded]:
+  //       - treeitem "passes"
+  //       - treeitem "fails" [selected]:
+  //         - button "Run"
+  //         - button "Show source"
+  //         - button "Watch"
+  //       - treeitem "suite"
+  //     - treeitem "b.test.ts" [expanded]:
+  //       - treeitem "passes"
+  //       - treeitem "fails"
+  //     - treeitem "c.test.ts" [expanded]:
+  //       - treeitem "passes"
+  //       - treeitem "skipped"
+  // `);
+
   await expect(page.getByTestId('status-line')).toHaveText('4/8 passed (50%)');
 });
 

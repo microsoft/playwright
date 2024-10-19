@@ -40,8 +40,7 @@ async function checkAndMatchSnapshot(locator: Locator, snapshot: string) {
 it('should snapshot', async ({ page }) => {
   await page.setContent(`<h1>title</h1>`);
   await checkAndMatchSnapshot(page.locator('body'), `
-    - heading "title":
-      - level: 1
+    - heading "title" [level=1]
   `);
 });
 
@@ -51,10 +50,8 @@ it('should snapshot list', async ({ page }) => {
     <h1>title 2</h1>
   `);
   await checkAndMatchSnapshot(page.locator('body'), `
-    - heading "title":
-      - level: 1
-    - heading "title 2":
-      - level: 1
+    - heading "title" [level=1]
+    - heading "title 2" [level=1]
   `);
 });
 
@@ -94,8 +91,7 @@ it('should allow text nodes', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - heading "Microsoft":
-      - level: 1
+    - heading "Microsoft" [level=1]
     - text: Open source projects and samples from Microsoft
   `);
 });
@@ -148,8 +144,7 @@ it('should snapshot integration', async ({ page }) => {
     </ul>`);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - heading "Microsoft":
-      - level: 1
+    - heading "Microsoft" [level=1]
     - text: Open source projects and samples from Microsoft
     - list:
       - listitem:
