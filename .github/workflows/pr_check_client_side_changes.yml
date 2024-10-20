@@ -27,7 +27,7 @@ jobs:
               repo: context.repo.repo,
               commit_sha: context.sha,
             });
-            const commitHeader = data.message.split('\n')[0];
+            const commitHeader = data.message.split('\n')[0].replace(/#(\d+)/g, 'https://github.com/microsoft/playwright/pull/$1');
 
             const title = '[Ports]: Backport client side changes for ' + currentPlaywrightVersion;
             for (const repo of ['playwright-python', 'playwright-java', 'playwright-dotnet']) {
