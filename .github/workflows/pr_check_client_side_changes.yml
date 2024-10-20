@@ -50,7 +50,7 @@ jobs:
                 issueBody = issueCreateData.body;
               }
               const newBody = issueBody.trimEnd() + `
-              - [ ] https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.sha} (https://github.com/microsoft/playwright/pull/${commitHeader})`;
+              - [ ] https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.sha} (${commitHeader})`;
               const data = await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: repo,
