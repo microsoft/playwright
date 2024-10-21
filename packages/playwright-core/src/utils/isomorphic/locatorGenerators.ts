@@ -478,6 +478,8 @@ export class JavaLocatorFactory implements LocatorFactory {
         if (options.hasNotText !== undefined)
           return `locator(${this.quote(body as string)}, new ${clazz}.LocatorOptions().setHasNotText(${this.toHasText(options.hasNotText)}))`;
         return `locator(${this.quote(body as string)})`;
+      case 'frame-locator':
+        return `frameLocator(${this.quote(body as string)})`;
       case 'frame':
         return `contentFrame()`;
       case 'nth':

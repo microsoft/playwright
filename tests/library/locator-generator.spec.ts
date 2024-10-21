@@ -596,4 +596,7 @@ it('parseLocator frames', async () => {
 
   expect.soft(parseLocator('csharp', `Locator("iframe").ContentFrame.GetByText("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
   expect.soft(parseLocator('csharp', `FrameLocator("iframe").GetByText("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+
+  expect.soft(parseLocator('java', `locator("iframe").contentFrame().getByText("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+  expect.soft(parseLocator('java', `frameLocator("iframe").getByText("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
 });
