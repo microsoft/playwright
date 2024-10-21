@@ -168,7 +168,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     return channel;
   }
 
-  async _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, isInternal = false): Promise<R> {
+  async _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, isInternal?: boolean): Promise<R> {
     const logger = this._logger;
     const apiZone = zones.zoneData<ApiZone>('apiZone');
     if (apiZone)
@@ -178,7 +178,8 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     let apiName: string | undefined = stackTrace.apiName;
     const frames: channels.StackFrame[] = stackTrace.frames;
 
-    isInternal = isInternal || this._isInternalType;
+    if (isInternal === undefined)
+      isInternal = this._isInternalType;
     if (isInternal)
       apiName = undefined;
 

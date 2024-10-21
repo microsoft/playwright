@@ -3196,6 +3196,18 @@ Tracing:
       returns:
         traceName: string
 
+    tracingGroup:
+      parameters:
+        name: string
+        location:
+          type: object?
+          properties:
+            file: string
+            line: number?
+            column: number?
+
+    tracingGroupEnd:
+
     tracingStopChunk:
       parameters:
         mode:
