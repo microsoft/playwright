@@ -214,8 +214,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       startTime: metadata.startTime,
       apiName: name,
       class: 'Tracing',
-      method: 'group',
+      method: 'tracingGroup',
       params: { },
+      stepId: metadata.stepId,
       stack: stackFrames,
     };
     if (this._state.groupStack.length)
