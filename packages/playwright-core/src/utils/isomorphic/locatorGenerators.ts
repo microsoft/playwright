@@ -197,13 +197,25 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
     const locatorParts = [locatorPart, locatorPartWithEngine].filter(Boolean) as string[];
 
     if (nextPart && nextPart.name === 'internal:control' && (nextPart.body as string) === 'enter-frame') {
-      // Two options:
+      // two options plus engine name:
       // - locator('iframe').contentFrame()
+      // - locator('css|xpath=iframe').contentFrame()
       // - frameLocator('iframe')
-      tokens.push([
-        ...locatorParts.map(p => factory.chainLocators([p, factory.generateLocator(base, 'frame', '')])),
+      // - frameLocator('css|xpath=iframe')
+
+      const contentFrame = factory.generateLocator(base, 'frame', '')
+      const options = [
+        factory.chainLocators([locatorPart, contentFrame]),
         factory.generateLocator(base, 'frame-locator', selectorPart),
-      ]);
+      ]
+
+      if (locatorPartWithEngine)
+        options.push(
+          factory.chainLocators([locatorPartWithEngine, contentFrame]),
+          factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [part] }, /* forceEngineName */ true)),
+        )
+
+      tokens.push(options);
       nextBase = 'frame-locator';
       index++;
       continue;
