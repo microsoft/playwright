@@ -27,7 +27,7 @@
     },
     {
       "name": "webkit",
-      "revision": "2092",
+      "revision": "2094",
       "installByDefault": true,
       "revisionOverrides": {
         "mac10.14": "1446",
@@ -35,7 +35,9 @@
         "mac11": "1816",
         "mac11-arm64": "1816",
         "mac12": "2009",
-        "mac12-arm64": "2009"
+        "mac12-arm64": "2009",
+        "ubuntu20.04-x64": "2092",
+        "ubuntu20.04-arm64": "2092"
       },
       "browserVersion": "18.0"
     },
