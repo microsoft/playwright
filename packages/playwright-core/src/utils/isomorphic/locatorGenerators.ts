@@ -194,7 +194,6 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       const selectorPart = stringifySelector({ parts: [part] }, /* forceEngineName */ true);
       locatorPartWithEngine = factory.generateLocator(base, 'default', selectorPart);
     }
-    const locatorParts = [locatorPart, locatorPartWithEngine].filter(Boolean) as string[];
 
     if (nextPart && nextPart.name === 'internal:control' && (nextPart.body as string) === 'enter-frame') {
       // two options plus engine name:
@@ -221,7 +220,7 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       continue;
     }
 
-    tokens.push(locatorParts);
+    tokens.push([locatorPart, locatorPartWithEngine].filter(Boolean) as string[]);
   }
 
   return combineTokens(factory, tokens, maxOutputSize);
