@@ -9152,9 +9152,29 @@ export interface TestInfo {
  */
 export interface TestInfoError {
   /**
+   * Actual value.
+   */
+  actual?: any;
+
+  /**
+   * Expected value.
+   */
+  expected?: any;
+
+  /**
+   * Call log.
+   */
+  log?: Array<string>;
+
+  /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */
   message?: string;
+
+  /**
+   * Failure message.
+   */
+  shortMessage?: string;
 
   /**
    * Error stack. Set when [Error] (or its subclass) has been thrown.

@@ -271,6 +271,7 @@ test('toHaveScreenshot should populate matcherResult', async ({ page, server, is
     name: 'toHaveScreenshot',
     pass: false,
     log: expect.any(Array),
+    shortMessage: expect.any(String),
   });
 
   expect.soft(stripAnsi(e.toString())).toContain(`Error: Screenshot comparison failed:
