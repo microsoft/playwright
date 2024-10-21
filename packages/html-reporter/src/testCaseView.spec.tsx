@@ -27,6 +27,7 @@ const result: TestResult = {
   errors: [],
   steps: [{
     title: 'Outer step',
+    category: 'test.step',
     startTime: new Date(100).toUTCString(),
     duration: 10,
     location: { file: 'test.spec.ts', line: 62, column: 0 },
@@ -34,11 +35,14 @@ const result: TestResult = {
     steps: [{
       title: 'Inner step',
       startTime: new Date(200).toUTCString(),
+      category: 'test.step',
       duration: 10,
       location: { file: 'test.spec.ts', line: 82, column: 0 },
       steps: [],
       count: 1,
+      attachments: [],
     }],
+    attachments: [],
   }],
   attachments: [],
   status: 'passed',
@@ -134,11 +138,13 @@ const resultWithAttachment: TestResult = {
   errors: [],
   steps: [{
     title: 'Outer step',
+    category: 'test.step',
     startTime: new Date(100).toUTCString(),
     duration: 10,
     location: { file: 'test.spec.ts', line: 62, column: 0 },
     count: 1,
     steps: [],
+    attachments: [1],
   }],
   attachments: [{
     name: 'first attachment',
@@ -179,4 +185,12 @@ test('should correctly render links in attachment name', async ({ mount }) => {
   const link = component.getByText('attachment with inline link').locator('a');
   await expect(link).toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/31284');
   await expect(link).toHaveText('https://github.com/microsoft/playwright/issues/31284');
+});
+
+test('should render attachments in step view', async ({ mount }) => {
+  const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} run={0} anchor=''></TestCaseView>);
+  const steps = component.getByTestId('test-steps-chip');
+  await expect(steps).not.toContainText('attachment with inline link');
+  await steps.getByTitle('1 attachment').click();
+  await expect(steps).toContainText('attachment with inline link');
 });
