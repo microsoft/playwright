@@ -39,20 +39,21 @@ export async function toBeTruthy(
   };
 
   const timeout = options.timeout ?? this.timeout;
-  const { matches, log, timedOut, received } = await query(!!this.isNot, timeout);
-  if (matches === !this.isNot) {
+  const { matches: pass, log, timedOut, received } = await query(!!this.isNot, timeout);
+  if (pass === !this.isNot) {
     return {
       name: matcherName,
       message: () => '',
-      pass: matches,
+      pass,
       expected
     };
   }
+
   const notFound = received === kNoElementsFoundError ? received : undefined;
-  const actual = matches ? expected : unexpected;
+  const actual = pass ? expected : unexpected;
   let printedReceived: string | undefined;
   let printedExpected: string | undefined;
-  if (matches) {
+  if (pass) {
     printedExpected = `Expected: not ${expected}`;
     printedReceived = `Received: ${notFound ? kNoElementsFoundError : expected}`;
   } else {
@@ -66,7 +67,7 @@ export async function toBeTruthy(
   };
   return {
     message,
-    pass: matches,
+    pass,
     actual,
     name: matcherName,
     expected,

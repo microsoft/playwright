@@ -186,7 +186,6 @@ class SnapshotHelper {
   }
 
   createMatcherResult(message: string, pass: boolean, log?: string[]): ImageMatcherResult {
-
     const unfiltered: ImageMatcherResult = {
       name: this.matcherName,
       expected: this.expectedPath,
@@ -195,6 +194,7 @@ class SnapshotHelper {
       pass,
       message: () => message,
       log,
+      // eslint-disable-next-line @typescript-eslint/no-base-to-string
       ...(this.locator ? { locator: this.locator.toString() } : {}),
       printedExpected: this.expectedPath,
       printedReceived: this.actualPath,

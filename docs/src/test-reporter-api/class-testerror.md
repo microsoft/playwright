@@ -22,17 +22,17 @@ Receiver's locator.
 
 Call log.
 
-## property: TestError.message
-* since: v1.10
-- type: ?<[string]>
-
-Error message. Set when [Error] (or its subclass) has been thrown.
-
 ## property: TestError.matcherName
 * since: v1.49
 - type: ?<[string]>
 
 Expect matcher name.
+
+## property: TestError.message
+* since: v1.10
+- type: ?<[string]>
+
+Error message. Set when [Error] (or its subclass) has been thrown.
 
 ## property: TestError.received
 * since: v1.49
@@ -50,7 +50,7 @@ Error stack. Set when [Error] (or its subclass) has been thrown.
 * since: v1.49
 - type: ?<[int]>
 
-Timeout in milliseconds, if the error was caused by a timeout..
+Timeout in milliseconds, if the error was caused by a timeout.
 
 ## property: TestError.value
 * since: v1.10

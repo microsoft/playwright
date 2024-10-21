@@ -56,11 +56,9 @@ export async function toEqual<T>(
   let printedReceived: string | undefined;
   let printedExpected: string | undefined;
   let printedDiff: string | undefined;
-
   if (pass) {
     printedExpected = `Expected: not ${this.utils.printExpected(expected)}`;
     printedReceived = `Received: ${this.utils.printReceived(received)}`;
-
   } else {
     printedDiff = this.utils.printDiffOrStringify(
         expected,
@@ -69,14 +67,12 @@ export async function toEqual<T>(
         RECEIVED_LABEL,
         false,
     );
-}
-
+  }
   const message = () => {
     const header = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
     const details = printedDiff || `${printedExpected}\n${printedReceived}`;
     return `${header}${details}${callLogText(log)}`;
-  }
-
+  };
   // Passing the actual and expected objects so that a custom reporter
   // could access them, for example in order to display a custom visual diff,
   // or create a different error message

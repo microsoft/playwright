@@ -66,6 +66,7 @@ export async function toMatchText(
       expected
     };
   }
+
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const receivedString = received || '';
   const messagePrefix = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
@@ -117,6 +118,7 @@ export async function toMatchText(
     actual: received,
     log,
     timeout: timedOut ? timeout : undefined,
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     locator: receiver.toString(),
     ...(printedReceived ? { printedReceived } : {}),
     ...(printedExpected ? { printedExpected } : {}),

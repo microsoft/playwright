@@ -31,7 +31,7 @@ test('toMatchText-based assertions should have matcher result', async ({ page })
       message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).toHaveText(expected)`),
       name: 'toHaveText',
       pass: false,
-      locator:`locator('#node')`,
+      locator: `locator('#node')`,
       printedDiff: `Expected pattern: /Text2/
 Received string:  \"Text content\"`,
       log: expect.any(Array),
@@ -58,7 +58,7 @@ Call log`);
       message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).not.toHaveText(expected)`),
       name: 'toHaveText',
       pass: true,
-      locator:`locator('#node')`,
+      locator: `locator('#node')`,
       printedExpected: 'Expected pattern: not /Text/',
       printedReceived: `Received string: \"Text content\"`,
       log: expect.any(Array),

@@ -32,9 +32,6 @@ type Annotation = {
 type ErrorDetails = {
   message: string;
   location?: Location;
-};
-
-type TestResultErrorDetails = ErrorDetails & {
   timeout?: number;
   matcherName?: string;
   locator?: string;
@@ -374,8 +371,8 @@ function quotePathIfNeeded(path: string): string {
   return path;
 }
 
-export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string, highlightCode: boolean): TestResultErrorDetails[] {
-  const errorDetails: TestResultErrorDetails[] = [];
+export function formatResultFailure(test: TestCase, result: TestResult, initialIndent: string, highlightCode: boolean): ErrorDetails[] {
+  const errorDetails: ErrorDetails[] = [];
 
   if (result.status === 'passed' && test.expectedStatus === 'failed') {
     errorDetails.push({

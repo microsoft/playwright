@@ -600,7 +600,7 @@ export interface TestError {
   stack?: string;
 
   /**
-   * Timeout in milliseconds, if the error was caused by a timeout..
+   * Timeout in milliseconds, if the error was caused by a timeout.
    */
   timeout?: number;
 
