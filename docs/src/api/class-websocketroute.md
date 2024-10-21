@@ -18,8 +18,8 @@ await page.routeWebSocket('wss://example.com/ws', ws => {
 
 ```java
 page.routeWebSocket("wss://example.com/ws", ws -> {
-  ws.onMessage(message -> {
-    if ("request".equals(message))
+  ws.onMessage(frame -> {
+    if ("request".equals(frame.text()))
       ws.send("response");
   });
 });
@@ -47,8 +47,8 @@ page.route_web_socket("wss://example.com/ws", lambda ws: ws.on_message(
 
 ```csharp
 await page.RouteWebSocketAsync("wss://example.com/ws", ws => {
-  ws.OnMessage(message => {
-    if (message == "request")
+  ws.OnMessage(frame => {
+    if (frame.Text == "request")
       ws.Send("response");
   });
 });
@@ -70,8 +70,8 @@ await page.routeWebSocket('wss://example.com/ws', ws => {
 
 ```java
 page.routeWebSocket("wss://example.com/ws", ws -> {
-  ws.onMessage(message -> {
-    JsonObject json = new JsonParser().parse(message).getAsJsonObject();
+  ws.onMessage(frame -> {
+    JsonObject json = new JsonParser().parse(frame.text()).getAsJsonObject();
     if ("question".equals(json.get("request").getAsString())) {
       Map<String, String> result = new HashMap();
       result.put("response", "answer");
@@ -105,8 +105,8 @@ page.route_web_socket("wss://example.com/ws", lambda ws: ws.on_message(
 
 ```csharp
 await page.RouteWebSocketAsync("wss://example.com/ws", ws => {
-  ws.OnMessage(message => {
-    using var jsonDoc = JsonDocument.Parse(message);
+  ws.OnMessage(frame => {
+    using var jsonDoc = JsonDocument.Parse(frame.Text);
     JsonElement root = jsonDoc.RootElement;
     if (root.TryGetProperty("request", out JsonElement requestElement) && requestElement.GetString() == "question")
     {
@@ -140,11 +140,11 @@ await page.routeWebSocket('/ws', ws => {
 ```java
 page.routeWebSocket("/ws", ws -> {
   WebSocketRoute server = ws.connectToServer();
-  ws.onMessage(message -> {
-    if ("request".equals(message))
+  ws.onMessage(frame -> {
+    if ("request".equals(frame.text()))
       server.send("request2");
     else
-      server.send(message);
+      server.send(frame.text());
   });
 });
 ```
@@ -180,11 +180,11 @@ page.route_web_socket("/ws", handler)
 ```csharp
 await page.RouteWebSocketAsync("/ws", ws => {
   var server = ws.ConnectToServer();
-  ws.OnMessage(message => {
-    if (message == "request")
+  ws.OnMessage(frame => {
+    if (frame.Text == "request")
       server.Send("request2");
     else
-      server.Send(message);
+      server.Send(frame.Text);
   });
 });
 ```
@@ -215,13 +215,13 @@ await page.routeWebSocket('/ws', ws => {
 ```java
 page.routeWebSocket("/ws", ws -> {
   WebSocketRoute server = ws.connectToServer();
-  ws.onMessage(message -> {
-    if (!"blocked-from-the-page".equals(message))
-      server.send(message);
+  ws.onMessage(frame -> {
+    if (!"blocked-from-the-page".equals(frame.text()))
+      server.send(frame.text());
   });
-  server.onMessage(message -> {
-    if (!"blocked-from-the-server".equals(message))
-      ws.send(message);
+  server.onMessage(frame -> {
+    if (!"blocked-from-the-server".equals(frame.text()))
+      ws.send(frame.text());
   });
 });
 ```
@@ -263,13 +263,13 @@ page.route_web_socket("/ws", handler)
 ```csharp
 await page.RouteWebSocketAsync("/ws", ws => {
   var server = ws.ConnectToServer();
-  ws.OnMessage(message => {
-    if (message != "blocked-from-the-page")
-      server.Send(message);
+  ws.OnMessage(frame => {
+    if (frame.Text != "blocked-from-the-page")
+      server.Send(frame.Text);
   });
-  server.OnMessage(message => {
-    if (message != "blocked-from-the-server")
-      ws.Send(message);
+  server.OnMessage(frame => {
+    if (frame.Text != "blocked-from-the-server")
+      ws.Send(frame.Text);
   });
 });
 ```

@@ -12,8 +12,8 @@ New methods [`method: Page.routeWebSocket`] and [`method: BrowserContext.routeWe
 
 ```java
 page.routeWebSocket("/ws", ws -> {
-  ws.onMessage(message -> {
-    if ("request".equals(message))
+  ws.onMessage(frame -> {
+    if ("request".equals(frame.text()))
       ws.send("response");
   });
 });
