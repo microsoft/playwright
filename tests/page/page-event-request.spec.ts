@@ -258,3 +258,18 @@ it('should finish 204 request', {
   page.evaluate(async url => { await fetch(url); }, server.PREFIX + '/204').catch(() => {});
   expect(await reqPromise).toBe('requestfinished');
 });
+
+it('<picture> resource should have type image', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33148' });
+  const [request] = await Promise.all([
+    page.waitForEvent('request'),
+    page.setContent(`
+      <picture>
+        <source>
+          <img src="https://www.wikipedia.org/portal/wikipedia.org/assets/img/Wikipedia-logo-v2@2x.png">
+        </source>
+      </picture>
+    `)
+  ]);
+  expect(request.resourceType()).toBe('image');
+});
