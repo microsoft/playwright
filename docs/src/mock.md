@@ -451,8 +451,8 @@ await page.routeWebSocket('wss://example.com/ws', ws => {
 
 ```java
 page.routeWebSocket("wss://example.com/ws", ws -> {
-  ws.onMessage(message -> {
-    if ("request".equals(message))
+  ws.onMessage(frame -> {
+    if ("request".equals(frame.text()))
       ws.send("response");
   });
 });
@@ -480,8 +480,8 @@ page.route_web_socket("wss://example.com/ws", lambda ws: ws.on_message(
 
 ```csharp
 await page.RouteWebSocketAsync("wss://example.com/ws", ws => {
-  ws.OnMessage(message => {
-    if (message == "request")
+  ws.OnMessage(frame => {
+    if (frame.Text == "request")
       ws.Send("response");
   });
 });
@@ -504,11 +504,11 @@ await page.routeWebSocket('wss://example.com/ws', ws => {
 ```java
 page.routeWebSocket("wss://example.com/ws", ws -> {
   WebSocketRoute server = ws.connectToServer();
-  ws.onMessage(message -> {
-    if ("request".equals(message))
+  ws.onMessage(frame -> {
+    if ("request".equals(frame.text()))
       server.send("request2");
     else
-      server.send(message);
+      server.send(frame.text());
   });
 });
 ```
@@ -544,11 +544,11 @@ page.route_web_socket("wss://example.com/ws", handler)
 ```csharp
 await page.RouteWebSocketAsync("wss://example.com/ws", ws => {
   var server = ws.ConnectToServer();
-  ws.OnMessage(message => {
-    if (message == "request")
+  ws.OnMessage(frame => {
+    if (frame.Text == "request")
       server.Send("request2");
     else
-      server.Send(message);
+      server.Send(frame.Text);
   });
 });
 ```
