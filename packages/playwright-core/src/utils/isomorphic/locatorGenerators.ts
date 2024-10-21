@@ -573,6 +573,8 @@ export class CSharpLocatorFactory implements LocatorFactory {
         if (options.hasNotText !== undefined)
           return `Locator(${this.quote(body as string)}, new() { ${this.toHasNotText(options.hasNotText)} })`;
         return `Locator(${this.quote(body as string)})`;
+      case 'frame-locator':
+        return `FrameLocator(${this.quote(body as string)})`;
       case 'frame':
         return `ContentFrame`;
       case 'nth':

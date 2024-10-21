@@ -593,4 +593,7 @@ it('parseLocator frames', async () => {
   expect.soft(parseLocator('python', `locator("iframe").content_frame.get_by_text("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
   expect.soft(parseLocator('python', `frame_locator("iframe").get_by_text("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
   expect.soft(parseLocator('python', `frame_locator("css=iframe").get_by_text("foo")`, '')).toBe(`css=iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+
+  expect.soft(parseLocator('csharp', `Locator("iframe").ContentFrame.GetByText("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+  expect.soft(parseLocator('csharp', `FrameLocator("iframe").GetByText("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
 });
