@@ -957,3 +957,11 @@ it('should capture css box-shadow', async ({ page, isElectron, isAndroid }) => {
   await page.setContent(`<div style="box-shadow: red 10px 10px 10px; width: 50px; height: 50px;"></div>`);
   await expect(page).toHaveScreenshot();
 });
+
+it('capture changing image', async ({ page, server }) => {
+  await page.setViewportSize({ width: 500, height: 500 });
+  await page.setContent(`<div id='counter'></div>
+    <script>let value = 99000; setInterval(() => window.counter.innerHTML = String(++value), 10)</script>`);
+    // <script>let value = 99000; window.counter.innerHTML = String(++value);</script>`);
+    await expect(page).toHaveScreenshot({ timeout: 2000 });
+});

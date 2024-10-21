@@ -83,6 +83,18 @@ export type TestCase = Omit<TestCaseSummary, 'results'> & {
   results: TestResult[];
 };
 
+export type ErrorDetails = {
+  message: string;
+  location?: Location;
+  shortMessage?: string;
+  locator?: string;
+  log?: string[];
+  expected?: string;
+  actual?: string;
+  snippet?: string;
+  callStack?: string;
+};
+
 export type TestAttachment = {
   name: string;
   body?: string;
@@ -95,7 +107,7 @@ export type TestResult = {
   startTime: string;
   duration: number;
   steps: TestStep[];
-  errors: string[];
+  errors: ErrorDetails[];
   attachments: TestAttachment[];
   status: 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
 };
