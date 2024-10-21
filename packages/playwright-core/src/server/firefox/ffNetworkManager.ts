@@ -183,7 +183,7 @@ const causeToResourceType: {[key: string]: string} = {
   TYPE_XSLT: 'other',
   TYPE_BEACON: 'other',
   TYPE_FETCH: 'fetch',
-  TYPE_IMAGESET: 'images',
+  TYPE_IMAGESET: 'image',
   TYPE_WEB_MANIFEST: 'manifest',
 };
 
