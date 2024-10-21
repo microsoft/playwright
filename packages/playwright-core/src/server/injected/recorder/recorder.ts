@@ -825,7 +825,6 @@ class Overlay {
     this._recorder = recorder;
     const document = this._recorder.document;
     this._overlayElement = document.createElement('x-pw-overlay');
-    this._overlayElement.appendChild(createSvgElement(this._recorder.document, clipPaths));
     const toolsListElement = document.createElement('x-pw-tools-list');
     this._overlayElement.appendChild(toolsListElement);
 
@@ -1094,6 +1093,7 @@ export class Recorder {
     recreationInterval = this.injectedScript.builtinSetTimeout(recreate, 500);
     this._listeners.push(() => clearInterval(recreationInterval));
 
+    this.highlight.appendChild(createSvgElement(this.document, clipPaths));
     this.overlay?.install();
     this.document.adoptedStyleSheets.push(this._stylesheet);
   }

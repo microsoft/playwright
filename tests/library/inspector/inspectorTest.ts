@@ -15,7 +15,7 @@
  */
 
 import { contextTest } from '../../config/browserTest';
-import type { Page } from 'playwright-core';
+import type { Locator, Page } from 'playwright-core';
 import { step } from '../../config/baseTest';
 import * as path from 'path';
 import type { Source } from '../../../packages/recorder/src/recorderTypes';
@@ -209,8 +209,9 @@ export class Recorder {
     });
   }
 
-  async trustedMove(selector: string) {
-    const box = await this.page.locator(selector).first().boundingBox();
+  async trustedMove(selector: string | Locator) {
+    const locator = typeof selector === 'string' ? this.page.locator(selector).first() : selector;
+    const box = await locator.boundingBox();
     await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   }
 
