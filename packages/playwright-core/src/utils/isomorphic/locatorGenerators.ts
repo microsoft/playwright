@@ -163,14 +163,12 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       continue;
     }
 
-    let locatorType: LocatorType = 'default';
-
     const nextPart = parts[index + 1];
 
     const selectorPart = stringifySelector({ parts: [part] });
-    const locatorPart = factory.generateLocator(base, locatorType, selectorPart);
+    const locatorPart = factory.generateLocator(base, 'default', selectorPart);
 
-    if (locatorType === 'default' && nextPart && ['internal:has-text', 'internal:has-not-text'].includes(nextPart.name)) {
+    if (nextPart && ['internal:has-text', 'internal:has-not-text'].includes(nextPart.name)) {
       const { exact, text } = detectExact(nextPart.body as string);
       // There is no locator equivalent for strict has-text and has-not-text, leave it as is.
       if (!exact) {
@@ -194,7 +192,7 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
     let locatorPartWithEngine: string | undefined;
     if (['xpath', 'css'].includes(part.name)) {
       const selectorPart = stringifySelector({ parts: [part] }, /* forceEngineName */ true);
-      locatorPartWithEngine = factory.generateLocator(base, locatorType, selectorPart);
+      locatorPartWithEngine = factory.generateLocator(base, 'default', selectorPart);
     }
 
     tokens.push([locatorPart, locatorPartWithEngine].filter(Boolean) as string[]);
