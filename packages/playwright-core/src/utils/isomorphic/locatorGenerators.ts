@@ -19,7 +19,7 @@ import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringi
 import type { ParsedSelector } from './selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
-export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'and' | 'or' | 'chain';
+export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'frame-locator' | 'and' | 'or' | 'chain';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 export type Quote = '\'' | '"' | '`';
 
@@ -194,8 +194,22 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       const selectorPart = stringifySelector({ parts: [part] }, /* forceEngineName */ true);
       locatorPartWithEngine = factory.generateLocator(base, 'default', selectorPart);
     }
+    const locatorParts = [locatorPart, locatorPartWithEngine].filter(Boolean) as string[];
 
-    tokens.push([locatorPart, locatorPartWithEngine].filter(Boolean) as string[]);
+    if (nextPart && nextPart.name === 'internal:control' && (nextPart.body as string) === 'enter-frame') {
+      // Two options:
+      // - locator('iframe').contentFrame()
+      // - frameLocator('iframe')
+      tokens.push([
+        ...locatorParts.map(p => factory.chainLocators([p, factory.generateLocator(base, 'frame', '')])),
+        factory.generateLocator(base, 'frame-locator', selectorPart),
+      ]);
+      nextBase = 'frame-locator';
+      index++;
+      continue;
+    }
+
+    tokens.push(locatorParts);
   }
 
   return combineTokens(factory, tokens, maxOutputSize);
@@ -251,6 +265,8 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
         if (options.hasNotText !== undefined)
           return `locator(${this.quote(body as string)}, { hasNotText: ${this.toHasText(options.hasNotText)} })`;
         return `locator(${this.quote(body as string)})`;
+      case 'frame-locator':
+        return `frameLocator(${this.quote(body as string)})`;
       case 'frame':
         return `contentFrame()`;
       case 'nth':
@@ -343,6 +359,8 @@ export class PythonLocatorFactory implements LocatorFactory {
         if (options.hasNotText !== undefined)
           return `locator(${this.quote(body as string)}, has_not_text=${this.toHasText(options.hasNotText)})`;
         return `locator(${this.quote(body as string)})`;
+        case 'frame-locator':
+          return `frame_locator(${this.quote(body as string)})`;
       case 'frame':
         return `content_frame`;
       case 'nth':
