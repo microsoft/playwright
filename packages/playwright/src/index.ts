@@ -256,7 +256,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
-    let tracingGroupSteps: TestStepInternal[] = [];
+    const tracingGroupSteps: TestStepInternal[] = [];
     const csiListener: ClientInstrumentationListener = {
       onApiCallBegin: (apiName: string, params: Record<string, any>, frames: StackFrame[], userData: any, out: { stepId?: string }) => {
         const testInfo = currentTestInfo();

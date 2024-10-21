@@ -196,6 +196,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return { traceName: this._state.traceName };
   }
 
+  private _currentGroupId(): string | undefined {
+    return this._state?.groupStack.length ? this._state.groupStack[this._state.groupStack.length - 1] : undefined;
+  }
+
   async group(name: string, location: { file: string, line?: number, column?: number } | undefined, metadata: CallMetadata): Promise<void> {
     if (!this._state)
       return;
@@ -219,8 +223,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       stepId: metadata.stepId,
       stack: stackFrames,
     };
-    if (this._state.groupStack.length)
-      event.parentId = this._state.groupStack[this._state.groupStack.length - 1];
+    if (this._currentGroupId())
+      event.parentId = this._currentGroupId();
     this._state.groupStack.push(event.callId);
     this._appendTraceEvent(event);
   }
@@ -311,7 +315,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   async _closeAllGroups() {
-    while (this._state?.groupStack.length)
+    while (this._currentGroupId())
       await this.groupEnd();
   }
 
@@ -407,10 +411,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
 
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
     // IMPORTANT: no awaits before this._appendTraceEvent in this method.
-    const event = createBeforeActionTraceEvent(
-        metadata,
-        this._state?.groupStack.length ? this._state.groupStack[this._state.groupStack.length - 1] : undefined
-    );
+    const event = createBeforeActionTraceEvent(metadata, this._currentGroupId());
     if (!event)
       return Promise.resolve();
     sdkObject.attribution.page?.temporarilyDisableTracingScreencastThrottling();

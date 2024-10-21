@@ -62,15 +62,6 @@ test.beforeAll(async function recordTrace({ browser, browserName, browserType, s
   }
   await doClick();
 
-  await context.tracing.group('High-level Group');
-  await context.tracing.group('First Mid-level Group', { location: { file: `${__dirname}/tracing.spec.ts`, line: 100, column: 10 } });
-  await page.locator('button >> nth=0').click();
-  await context.tracing.groupEnd();
-  await context.tracing.group('Second Mid-level Group', { location: { file: __filename } });
-  await expect(page.getByText('Click')).toBeVisible();
-  await context.tracing.groupEnd();
-  await context.tracing.groupEnd();
-
   await Promise.all([
     page.waitForNavigation(),
     page.waitForResponse(server.PREFIX + '/frames/frame.html'),
@@ -111,64 +102,103 @@ test('should open trace viewer on specific host', async ({ showTraceViewer }, te
   await expect(traceViewer.page).toHaveURL(/127.0.0.1/);
 });
 
-test('should show groups as tree in trace viewer', async ({ showTraceViewer }) => {
-  const traceViewer = await showTraceViewer([traceFile]);
-  await expect(traceViewer.actionTitles).toHaveText([
-    /browserContext.newPage/,
-    /page.gotodata:text\/html,<!DOCTYPE html><html>Hello world<\/html>/,
-    /page.setContent/,
-    /expect.toHaveTextlocator\('button'\)/,
-    /expect.toBeHiddengetByTestId\('amazing-btn'\)/,
-    /expect.toBeHiddengetByTestId\(\/amazing-btn-regex\/\)/,
-    /page.evaluate/,
-    /page.evaluate/,
-    /locator.clickgetByText\('Click'\)/,
-    /High-level Group/,
-    /page.waitForNavigation/,
-    /page.waitForResponse/,
-    /page.waitForTimeout/,
-    /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html/,
-    /page.setViewportSize/,
-  ]);
-  await traceViewer.actionsTree.locator('.tree-view-entry:has-text("High-level Group") .codicon-chevron-right').click();
-  await traceViewer.actionsTree.locator('.tree-view-entry:has-text("First Mid-level Group") .codicon-chevron-right').click();
-  await traceViewer.actionsTree.locator('.tree-view-entry:has-text("Second Mid-level Group") .codicon-chevron-right').click();
-  await expect(traceViewer.actionTitles).toHaveText([
-    /browserContext.newPage/,
-    /page.gotodata:text\/html,<!DOCTYPE html><html>Hello world<\/html>/,
-    /page.setContent/,
-    /expect.toHaveTextlocator\('button'\)/,
-    /expect.toBeHiddengetByTestId\('amazing-btn'\)/,
-    /expect.toBeHiddengetByTestId\(\/amazing-btn-regex\/\)/,
-    /page.evaluate/,
-    /page.evaluate/,
-    /locator.clickgetByText\('Click'\)/,
-    /High-level Group/,
-    /First Mid-level Group/,
-    /locator\.clicklocator\('button'\)\.first\(\)/,
-    /Second Mid-level Group/,
-    /expect\.toBeVisiblegetByText\('Click'\)/,
-    /page.waitForNavigation/,
-    /page.waitForResponse/,
-    /page.waitForTimeout/,
-    /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html/,
-    /page.setViewportSize/,
-  ]);
-  await expect(traceViewer.actionsTree.locator('.tree-view-entry:has-text("First Mid-level Group") > .tree-view-indent')).toHaveCount(1);
-  await expect(traceViewer.actionsTree.locator('.tree-view-entry:has-text("Second Mid-level Group") > .tree-view-indent')).toHaveCount(1);
-  await expect(traceViewer.actionsTree.locator('.tree-view-entry:has-text("locator.clicklocator(\'button\').first()") > .tree-view-indent')).toHaveCount(2);
-  await expect(traceViewer.actionsTree.locator('.tree-view-entry:has-text("expect.toBeVisiblegetByText(\'Click\')") > .tree-view-indent')).toHaveCount(2);
+test('should show groups as tree in trace viewer', async ({ runAndTrace, page, context }) => {
+  const outerGroup = 'Outer Group';
+  const outerGroupContent = 'locator.clickgetByText(\'Click\')';
+  const firstInnerGroup = 'First Inner Group';
+  const firstInnerGroupContent = 'locator.clicklocator(\'button\').first()';
+  const secondInnerGroup = 'Second Inner Group';
+  const secondInnerGroupContent = 'expect.toBeVisiblegetByText(\'Click\')';
+  const expandedFailure = 'Expanded Failure';
 
-  await traceViewer.showSourceTab();
-  await traceViewer.selectAction('High-level Group');
-  await expect(traceViewer.sourceCodeTab.locator('.source-tab-file-name')).toHaveAttribute('title', __filename);
-  await expect(traceViewer.sourceCodeTab.locator('.source-line-running')).toHaveText(/\d+\s+await context.tracing.group\('High-level Group'\);/);
+  const traceViewer = await test.step('create trace with groups', async () => {
+    return await runAndTrace(async () => {
+      try {
+        await page.goto(`data:text/html,<!DOCTYPE html><html>Hello world</html>`);
+        await page.setContent('<!DOCTYPE html><button>Click</button>');
+        async function doClick() {
+          await page.getByText('Click').click();
+        }
+        await context.tracing.group(outerGroup);  // Outer group
+        await doClick();
+        await context.tracing.group(firstInnerGroup, { location: { file: `${__dirname}/tracing.spec.ts`, line: 100, column: 10 } });
+        await page.locator('button >> nth=0').click();
+        await context.tracing.groupEnd();
+        await context.tracing.group(secondInnerGroup, { location: { file: __filename } });
+        await expect(page.getByText('Click')).toBeVisible();
+        await context.tracing.groupEnd();
+        await context.tracing.groupEnd();
+        await context.tracing.group(expandedFailure);
+        try {
+          await expect(page.getByText('Click')).toBeHidden({ timeout: 1 });
+        } catch (e) {}
+        await context.tracing.groupEnd();
+        await page.evaluate(() => console.log('ungrouped'), null);
+      } catch (e) {}
+    });
+  }, { box: true });
+  const treeViewEntries = traceViewer.actionsTree.locator('.tree-view-entry');
 
-  await traceViewer.selectAction('First Mid-level Group');
-  await expect(traceViewer.sourceCodeTab.locator('.source-tab-file-name')).toHaveAttribute('title', `${__dirname}/tracing.spec.ts`);
-
-  await traceViewer.selectAction('Second Mid-level Group');
-  await expect(traceViewer.sourceCodeTab.getByText(/Licensed under the Apache License/)).toBeVisible();
+  await test.step('check automatic expansion of groups on failure', async () => {
+    await expect(traceViewer.actionTitles).toHaveText([
+      /page.gotodata:text\/html,<!DOCTYPE html><html>Hello world<\/html>/,
+      /page.setContent/,
+      outerGroup,
+      expandedFailure,
+      /expect.toBeHiddengetByText\('Click'\)/,
+      /page.evaluate/,
+    ]);
+    await expect(traceViewer.actionsTree.locator('.tree-view-entry.selected > .tree-view-indent')).toHaveCount(1);
+    await expect(traceViewer.actionsTree.locator('.tree-view-entry.selected')).toHaveText(/expect.toBeHiddengetByText\('Click'\)/);
+    await treeViewEntries.filter({ hasText: expandedFailure }).locator('.codicon-chevron-down').click();
+  });
+  await test.step('check outer group', async () => {
+    await treeViewEntries.filter({ hasText: outerGroup }).locator('.codicon-chevron-right').click();
+    await expect(traceViewer.actionTitles).toHaveText([
+      /page.gotodata:text\/html,<!DOCTYPE html><html>Hello world<\/html>/,
+      /page.setContent/,
+      outerGroup,
+      outerGroupContent,
+      firstInnerGroup,
+      secondInnerGroup,
+      expandedFailure,
+      /page.evaluate/,
+    ]);
+    await expect(treeViewEntries.filter({ hasText: firstInnerGroup }).locator(' > .tree-view-indent')).toHaveCount(1);
+    await expect(treeViewEntries.filter({ hasText: secondInnerGroup }).locator(' > .tree-view-indent')).toHaveCount(1);
+    await test.step('check automatic location of groups', async () => {
+      await traceViewer.showSourceTab();
+      await traceViewer.selectAction(outerGroup);
+      await expect(traceViewer.sourceCodeTab.locator('.source-tab-file-name')).toHaveAttribute('title', __filename);
+      await expect(traceViewer.sourceCodeTab.locator('.source-line-running')).toHaveText(/\d+\s+await context.tracing.group\(outerGroup\);  \/\/ Outer group/);
+    });
+  });
+  await test.step('check inner groups', async () => {
+    await treeViewEntries.filter({ hasText: firstInnerGroup }).locator('.codicon-chevron-right').click();
+    await treeViewEntries.filter({ hasText: secondInnerGroup }).locator('.codicon-chevron-right').click();
+    await expect(traceViewer.actionTitles).toHaveText([
+      /page.gotodata:text\/html,<!DOCTYPE html><html>Hello world<\/html>/,
+      /page.setContent/,
+      outerGroup,
+      outerGroupContent,
+      firstInnerGroup,
+      firstInnerGroupContent,
+      secondInnerGroup,
+      secondInnerGroupContent,
+      expandedFailure,
+      /page.evaluate/,
+    ]);
+    await expect(treeViewEntries.filter({ hasText: firstInnerGroupContent }).locator(' > .tree-view-indent')).toHaveCount(2);
+    await expect(treeViewEntries.filter({ hasText: secondInnerGroupContent }).locator(' > .tree-view-indent')).toHaveCount(2);
+    await test.step('check location with file, line, column', async () => {
+      await traceViewer.selectAction(firstInnerGroup);
+      await expect(traceViewer.sourceCodeTab.locator('.source-tab-file-name')).toHaveAttribute('title', `${__dirname}/tracing.spec.ts`);
+    });
+    await test.step('check location with file', async () => {
+      await traceViewer.selectAction(secondInnerGroup);
+      await expect(traceViewer.sourceCodeTab.getByText(/Licensed under the Apache License/)).toBeVisible();
+    });
+  });
 });
 
 
@@ -184,7 +214,6 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
     /page.evaluate/,
     /page.evaluate/,
     /locator.clickgetByText\('Click'\)/,
-    /High-level Group/,
     /page.waitForNavigation/,
     /page.waitForResponse/,
     /page.waitForTimeout/,
