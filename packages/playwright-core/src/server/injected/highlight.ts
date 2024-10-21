@@ -287,7 +287,7 @@ export class Highlight {
     return this._injectedScript.document.createElement('x-pw-highlight');
   }
 
-  appendChild(element: HTMLElement) {
+  appendChild(element: Element) {
     this._glassPaneShadow.appendChild(element);
   }
 }
