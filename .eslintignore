@@ -8,14 +8,11 @@ test/assets/modernizr.js
 /packages/playwright-ct-core/src/generated/*
 /index.d.ts
 node_modules/
-browser_patches/*/checkout/
-browser_patches/chromium/output/
 **/*.d.ts
 output/
 test-results/
-tests/components/
-tests/installation/fixture-scripts/
-examples/
+/tests/components/
+/tests/installation/fixture-scripts/
 DEPS
 .cache/
-utils/
+/utils/

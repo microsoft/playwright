@@ -163,7 +163,7 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       continue;
     }
 
-    let locatorType: LocatorType = 'default';
+    const locatorType: LocatorType = 'default';
 
     const nextPart = parts[index + 1];
 

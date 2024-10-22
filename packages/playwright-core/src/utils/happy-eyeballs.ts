@@ -29,8 +29,8 @@ import { monotonicTime } from './time';
 // Same as in Chromium (https://source.chromium.org/chromium/chromium/src/+/5666ff4f5077a7e2f72902f3a95f5d553ea0d88d:net/socket/transport_connect_job.cc;l=102)
 const connectionAttemptDelayMs = 300;
 
-const kDNSLookupAt = Symbol('kDNSLookupAt')
-const kTCPConnectionAt = Symbol('kTCPConnectionAt')
+const kDNSLookupAt = Symbol('kDNSLookupAt');
+const kTCPConnectionAt = Symbol('kTCPConnectionAt');
 
 class HttpHappyEyeballsAgent extends http.Agent {
   createConnection(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket?: net.Socket) => void): net.Socket | undefined {
@@ -75,7 +75,7 @@ export async function createTLSSocket(options: tls.ConnectionOptions): Promise<t
   return new Promise((resolve, reject) => {
     assert(options.host, 'host is required');
     if (net.isIP(options.host)) {
-      const socket = tls.connect(options)
+      const socket = tls.connect(options);
       socket.on('secureConnect', () => resolve(socket));
       socket.on('error', error => reject(error));
     } else {
@@ -92,20 +92,20 @@ export async function createTLSSocket(options: tls.ConnectionOptions): Promise<t
 }
 
 export async function createConnectionAsync(
-  options: http.ClientRequestArgs, 
-  oncreate: ((err: Error | null, socket?: tls.TLSSocket) => void) | undefined, 
+  options: http.ClientRequestArgs,
+  oncreate: ((err: Error | null, socket?: tls.TLSSocket) => void) | undefined,
   useTLS: true
 ): Promise<void>;
 
 export async function createConnectionAsync(
-  options: http.ClientRequestArgs, 
-  oncreate: ((err: Error | null, socket?: net.Socket) => void) | undefined, 
+  options: http.ClientRequestArgs,
+  oncreate: ((err: Error | null, socket?: net.Socket) => void) | undefined,
   useTLS: false
 ): Promise<void>;
 
 export async function createConnectionAsync(
-  options: http.ClientRequestArgs, 
-  oncreate: ((err: Error | null, socket?: any) => void) | undefined, 
+  options: http.ClientRequestArgs,
+  oncreate: ((err: Error | null, socket?: any) => void) | undefined,
   useTLS: boolean
 ): Promise<void> {
   const lookup = (options as any).__testHookLookup || lookupAddresses;
@@ -202,5 +202,5 @@ export function timingForSocket(socket: net.Socket | tls.TLSSocket) {
   return {
     dnsLookupAt: (socket as any)[kDNSLookupAt] as number | undefined,
     tcpConnectionAt: (socket as any)[kTCPConnectionAt] as number | undefined,
-  }
+  };
 }
