@@ -1421,36 +1421,6 @@ test('should serve css without content-type', async ({ page, runAndTrace, server
   await expect(snapshotFrame.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)', { timeout: 0 });
 });
 
-test.skip('should allow showing screenshots instead of snapshots', async ({ runAndTrace, page, server }) => {
-  const traceViewer = await runAndTrace(async () => {
-    await page.goto(server.PREFIX + '/one-style.html');
-    await page.waitForTimeout(1000); // ensure we could take a screenshot
-  });
-
-  const screenshot = traceViewer.page.getByAltText(`Screenshot of page.goto`);
-  const snapshot = (await traceViewer.snapshotFrame('page.goto')).owner();
-  await expect(snapshot).toBeVisible();
-  await expect(screenshot).not.toBeVisible();
-
-  await traceViewer.page.getByTitle('Settings').click();
-  await traceViewer.page.getByText('Show screenshot instead of snapshot').setChecked(true);
-
-  await expect(snapshot).not.toBeVisible();
-  await expect(screenshot).toBeVisible();
-});
-
-test.skip('should handle case where neither snapshots nor screenshots exist', async ({ runAndTrace, page, server }) => {
-  const traceViewer = await runAndTrace(async () => {
-    await page.goto(server.PREFIX + '/one-style.html');
-  }, { snapshots: false, screenshots: false });
-
-  await traceViewer.page.getByTitle('Settings').click();
-  await traceViewer.page.getByText('Show screenshot instead of snapshot').setChecked(true);
-
-  const screenshot = traceViewer.page.getByAltText(`Screenshot of page.goto > Action`);
-  await expect(screenshot).not.toBeVisible();
-});
-
 test('should show only one pointer with multilevel iframes', async ({ page, runAndTrace, server, browserName }) => {
   test.fixme(browserName === 'firefox', 'Elements in iframe are not marked');
 

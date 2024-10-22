@@ -213,7 +213,6 @@ const PropertiesView: React.FunctionComponent<{
     id: 'inspector',
     title: 'Locator',
     render: () => <InspectorTab
-      showScreenshot={false}
       sdkLanguage={sdkLanguage}
       setIsInspecting={setIsInspecting}
       highlightedLocator={highlightedLocator}

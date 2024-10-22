@@ -22,7 +22,6 @@ import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
 import type { StackFrame } from '@protocol/channels';
 
 const contextSymbol = Symbol('context');
-const pageSymbol = Symbol('page');
 const nextInContextSymbol = Symbol('next');
 const prevInListSymbol = Symbol('prev');
 const eventsSymbol = Symbol('events');
@@ -148,7 +147,6 @@ function indexModel(context: ContextEntry) {
   for (let i = 0; i < context.actions.length; ++i) {
     const action = context.actions[i] as any;
     action[contextSymbol] = context;
-    action[pageSymbol] = context.pages.find(page => page.pageId === action.pageId);
   }
   let lastNonRouteAction = undefined;
   for (let i = context.actions.length - 1; i >= 0; i--) {
@@ -351,10 +349,6 @@ function nextInContext(action: ActionTraceEvent): ActionTraceEvent {
 
 export function prevInList(action: ActionTraceEvent): ActionTraceEvent {
   return (action as any)[prevInListSymbol];
-}
-
-export function pageForAction(action: ActionTraceEvent): PageEntry {
-  return (action as any)[pageSymbol];
 }
 
 export function stats(action: ActionTraceEvent): { errors: number, warnings: number } {

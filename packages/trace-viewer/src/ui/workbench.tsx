@@ -68,7 +68,6 @@ export const Workbench: React.FunctionComponent<{
   const [highlightedLocator, setHighlightedLocator] = React.useState<string>('');
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
-  const showScreenshot = false;
 
   const setSelectedAction = React.useCallback((action: modelUtil.ActionTraceEventInContext | undefined) => {
     setSelectedCallId(action?.callId);
@@ -164,7 +163,6 @@ export const Workbench: React.FunctionComponent<{
     id: 'inspector',
     title: 'Locator',
     render: () => <InspectorTab
-      showScreenshot={showScreenshot}
       sdkLanguage={sdkLanguage}
       setIsInspecting={setIsInspecting}
       highlightedLocator={highlightedLocator}
