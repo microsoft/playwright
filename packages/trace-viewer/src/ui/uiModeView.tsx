@@ -48,8 +48,10 @@ const xtermDataSource: XtermDataSource = {
 
 const searchParams = new URLSearchParams(window.location.search);
 const guid = searchParams.get('ws');
+const testServerPort = searchParams.get('testServerPort') ?? window.location.port;
 const wsURL = new URL(`../${guid}`, window.location.toString());
 wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
+wsURL.port = testServerPort;
 const queryParams = {
   args: searchParams.getAll('arg'),
   grep: searchParams.get('grep') || undefined,
@@ -440,7 +442,7 @@ export const UIModeView: React.FC<{}> = ({
       sidebar={<div className='vbox ui-mode-sidebar'>
         <Toolbar noShadow={true} noMinHeight={true}>
           <img src='playwright-logo.svg' alt='Playwright logo' />
-          <div className='section-title'>Playwright</div>
+          <div className='section-title'>Claywright</div>
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
           <div style={{ position: 'relative' }}>
             <ToolbarButton icon={'terminal'} title={'Toggle output — ' + (isMac ? '⌃`' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
