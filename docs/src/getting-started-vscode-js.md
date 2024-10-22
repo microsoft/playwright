@@ -202,7 +202,7 @@ To run the **setup** test only once, deselect it from the projects section in th
 
 ## Global Setup
 
-**Global setup** tests are run when you execute your first test. This runs only once and is useful for setting up a database or starting a server. You can manually run a **global setup** test by clicking the `Run global setup` option from the **Setup** section in the Playwright sidebar. You can also run **global teardown** tests by clicking the `Run global teardown` option.
+**Global setup** runs when you execute your first test. It runs only once and is useful for setting up a database or starting a server. You can manually run **global setup** by clicking the `Run global setup` option from the **Setup** section in the Playwright sidebar. **Global teardown** does not run by default; you need to manually initiate it by clicking the `Run global teardown` option.
 
 Global setup will re-run when you debug tests as this ensures an isolated environment and dedicated setup for the test.
 
