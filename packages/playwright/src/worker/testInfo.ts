@@ -193,7 +193,7 @@ export class TestInfoImpl implements TestInfo {
     this._attachmentsPush = this.attachments.push.bind(this.attachments);
     this.attachments.push = (...attachments: TestInfo['attachments']) => {
       for (const a of attachments)
-        this._attach(a, undefined);
+        this._attach(a, this._parentStep()?.stepId);
       return this.attachments.length;
     };
 
