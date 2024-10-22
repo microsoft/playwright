@@ -39,22 +39,41 @@ export async function toBeTruthy(
   };
 
   const timeout = options.timeout ?? this.timeout;
-  const { matches, log, timedOut, received } = await query(!!this.isNot, timeout);
+  const { matches: pass, log, timedOut, received } = await query(!!this.isNot, timeout);
+  if (pass === !this.isNot) {
+    return {
+      name: matcherName,
+      message: () => '',
+      pass,
+      expected
+    };
+  }
+
   const notFound = received === kNoElementsFoundError ? received : undefined;
-  const actual = matches ? expected : unexpected;
+  const actual = pass ? expected : unexpected;
+  let printedReceived: string | undefined;
+  let printedExpected: string | undefined;
+  if (pass) {
+    printedExpected = `Expected: not ${expected}`;
+    printedReceived = `Received: ${notFound ? kNoElementsFoundError : expected}`;
+  } else {
+    printedExpected = `Expected: ${expected}`;
+    printedReceived = `Received: ${notFound ? kNoElementsFoundError : unexpected}`;
+  }
   const message = () => {
     const header = matcherHint(this, receiver, matcherName, 'locator', arg, matcherOptions, timedOut ? timeout : undefined);
     const logText = callLogText(log);
-    return matches ? `${header}Expected: not ${expected}\nReceived: ${notFound ? kNoElementsFoundError : expected}${logText}` :
-      `${header}Expected: ${expected}\nReceived: ${notFound ? kNoElementsFoundError : unexpected}${logText}`;
+    return `${header}${printedExpected}\n${printedReceived}${logText}`;
   };
   return {
     message,
-    pass: matches,
+    pass,
     actual,
     name: matcherName,
     expected,
     log,
     timeout: timedOut ? timeout : undefined,
+    ...(printedReceived ? { printedReceived } : {}),
+    ...(printedExpected ? { printedExpected } : {}),
   };
 }

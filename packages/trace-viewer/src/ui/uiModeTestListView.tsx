@@ -159,12 +159,15 @@ export const TestListView: React.FC<{
     rootItem={testTree.rootItem}
     dataTestId='test-tree'
     render={treeItem => {
-      return <div className='hbox ui-mode-tree-item'>
-        <div className='ui-mode-tree-item-title'>
+      const prefixId = treeItem.id.replace(/[^\w\d-_]/g, '-');
+      const labelId = prefixId + '-label';
+      const timeId = prefixId + '-time';
+      return <div className='hbox ui-mode-tree-item' aria-labelledby={`${labelId} ${timeId}`}>
+        <div id={labelId} className='ui-mode-tree-item-title'>
           <span>{treeItem.title}</span>
           {treeItem.kind === 'case' ? treeItem.tags.map(tag => <TagView key={tag} tag={tag.slice(1)} onClick={e => handleTagClick(e, tag)} />) : null}
         </div>
-        {!!treeItem.duration && treeItem.status !== 'skipped' && <div className='ui-mode-tree-item-time'>{msToString(treeItem.duration)}</div>}
+        {!!treeItem.duration && treeItem.status !== 'skipped' && <div id={timeId} className='ui-mode-tree-item-time'>{msToString(treeItem.duration)}</div>}
         <Toolbar noMinHeight={true} noShadow={true}>
           <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState && !runningState.completed}></ToolbarButton>
           <ToolbarButton icon='go-to-file' title='Show source' onClick={onRevealSource} style={(treeItem.kind === 'group' && treeItem.subKind === 'folder') ? { visibility: 'hidden' } : {}}></ToolbarButton>

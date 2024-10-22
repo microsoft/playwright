@@ -249,8 +249,9 @@ export function TreeItemHeader<T extends TreeItem>({
   const rendered = render(item);
   const children = expanded && item.children.length ? item.children as T[] : [];
   const titled = title?.(item);
+  const iconed = icon?.(item) || 'codicon-blank';
 
-  return <div ref={itemRef} role='treeitem' aria-selected={item === selectedItem} aria-expanded={expanded} aria-label={titled} title={titled} className='vbox' style={{ flex: 'none' }}>
+  return <div ref={itemRef} role='treeitem' aria-selected={item === selectedItem} aria-expanded={expanded} title={titled} className='vbox' style={{ flex: 'none' }}>
     <div
       onDoubleClick={() => onAccepted?.(item)}
       className={clsx(
@@ -277,10 +278,10 @@ export function TreeItemHeader<T extends TreeItem>({
           toggleExpanded(item);
         }}
       />
-      {icon && <div className={'codicon ' + (icon(item) || 'codicon-blank')} style={{ minWidth: 16, marginRight: 4 }} aria-hidden='true'></div>}
+      {icon && <div className={'codicon ' + iconed} style={{ minWidth: 16, marginRight: 4 }} aria-label={'[' + iconed.replace('codicon', 'icon') + ']'}></div>}
       {typeof rendered === 'string' ? <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>{rendered}</div> : rendered}
     </div>
-    {!!children.length && <div aria-label='group'>
+    {!!children.length && <div role='group'>
       {children.map(child => {
         const itemData = treeItems.get(child);
         return itemData && <TreeItemHeader

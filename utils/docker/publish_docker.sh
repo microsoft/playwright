@@ -21,11 +21,6 @@ else
   exit 1
 fi
 
-# Ubuntu 20.04
-FOCAL_TAGS=(
-  "v${PW_VERSION}-focal"
-)
-
 # Ubuntu 22.04
 JAMMY_TAGS=(
   "v${PW_VERSION}-jammy"
@@ -69,14 +64,12 @@ install_oras_if_needed() {
 publish_docker_images_with_arch_suffix() {
   local FLAVOR="$1"
   local TAGS=()
-  if [[ "$FLAVOR" == "focal" ]]; then
-    TAGS=("${FOCAL_TAGS[@]}")
-  elif [[ "$FLAVOR" == "jammy" ]]; then
+  if [[ "$FLAVOR" == "jammy" ]]; then
     TAGS=("${JAMMY_TAGS[@]}")
   elif [[ "$FLAVOR" == "noble" ]]; then
     TAGS=("${NOBLE_TAGS[@]}")
   else
-    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'focal', 'jammy', or 'noble'"
+    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'jammy', or 'noble'"
     exit 1
   fi
   local ARCH="$2"
@@ -97,14 +90,12 @@ publish_docker_images_with_arch_suffix() {
 publish_docker_manifest () {
   local FLAVOR="$1"
   local TAGS=()
-  if [[ "$FLAVOR" == "focal" ]]; then
-    TAGS=("${FOCAL_TAGS[@]}")
-  elif [[ "$FLAVOR" == "jammy" ]]; then
+  if [[ "$FLAVOR" == "jammy" ]]; then
     TAGS=("${JAMMY_TAGS[@]}")
   elif [[ "$FLAVOR" == "noble" ]]; then
     TAGS=("${NOBLE_TAGS[@]}")
   else
-    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'focal', 'jammy', or 'noble'"
+    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'jammy', or 'noble'"
     exit 1
   fi
 
@@ -122,11 +113,6 @@ publish_docker_manifest () {
     docker manifest push "${BASE_IMAGE_TAG}"
   done
 }
-
-# Ubuntu 20.04
-publish_docker_images_with_arch_suffix focal amd64
-publish_docker_images_with_arch_suffix focal arm64
-publish_docker_manifest focal amd64 arm64
 
 # Ubuntu 22.04
 publish_docker_images_with_arch_suffix jammy amd64
