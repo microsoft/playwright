@@ -16,6 +16,16 @@
 
 import { escapeHTMLAttribute, escapeHTML } from '@isomorphic/stringUtils';
 import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from '@trace/snapshot';
+import type { PageEntry } from '../types/entries';
+
+function findClosest<T>(items: T[], metric: (v: T) => number, target: number) {
+  return items.find((item, index) => {
+    if (index === items.length - 1)
+      return true;
+    const next = items[index + 1];
+    return Math.abs(metric(item) - target) < Math.abs(metric(next) - target);
+  });
+}
 
 function isNodeNameAttributesChildNodesSnapshot(n: NodeSnapshot): n is NodeNameAttributesChildNodesSnapshot {
   return Array.isArray(n) && typeof n[0] === 'string';
@@ -60,13 +70,15 @@ export class SnapshotRenderer {
   private _resources: ResourceSnapshot[];
   private _snapshot: FrameSnapshot;
   private _callId: string;
+  private _screencastFrames: PageEntry['screencastFrames'];
 
-  constructor(resources: ResourceSnapshot[], snapshots: FrameSnapshot[], index: number) {
+  constructor(resources: ResourceSnapshot[], snapshots: FrameSnapshot[], screencastFrames: PageEntry['screencastFrames'], index: number) {
     this._resources = resources;
     this._snapshots = snapshots;
     this._index = index;
     this._snapshot = snapshots[index];
     this._callId = snapshots[index].callId;
+    this._screencastFrames = screencastFrames;
     this.snapshotName = snapshots[index].snapshotName;
   }
 
@@ -76,6 +88,14 @@ export class SnapshotRenderer {
 
   viewport(): { width: number, height: number } {
     return this._snapshots[this._index].viewport;
+  }
+
+  closestScreenshot(): string | undefined {
+    const { wallTime, timestamp } = this.snapshot();
+    const closestFrame = (wallTime && this._screencastFrames[0]?.frameSwapWallTime)
+      ? findClosest(this._screencastFrames, frame => frame.frameSwapWallTime!, wallTime)
+      : findClosest(this._screencastFrames, frame => frame.timestamp, timestamp);
+    return closestFrame?.sha1;
   }
 
   render(): RenderedFrameSnapshot {
@@ -244,6 +264,8 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
 
 function snapshotScript(...targetIds: (string | undefined)[]) {
   function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, ...targetIds: (string | undefined)[]) {
+    const isUnderTest = new URLSearchParams(location.search).has('isUnderTest');
+
     const kPointerWarningTitle = 'Recorded click position in absolute coordinates did not' +
         ' match the center of the clicked element. This is likely due to a difference between' +
         ' the test runner and the trace viewer operating systems.';
@@ -251,6 +273,7 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
     const scrollTops: Element[] = [];
     const scrollLefts: Element[] = [];
     const targetElements: Element[] = [];
+    const canvasElements: HTMLCanvasElement[] = [];
 
     const visit = (root: Document | ShadowRoot) => {
       // Collect all scrolled elements for later use.
@@ -326,6 +349,8 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
         }
         (root as any).adoptedStyleSheets = adoptedSheets;
       }
+
+      canvasElements.push(...root.querySelectorAll('canvas'));
     };
 
     const onLoad = () => {
@@ -342,12 +367,12 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
       document.styleSheets[0].disabled = true;
 
       const search = new URL(window.location.href).searchParams;
+      const isTopFrame = window.location.pathname.match(/\/page@[a-z0-9]+$/);
 
       if (search.get('pointX') && search.get('pointY')) {
         const pointX = +search.get('pointX')!;
         const pointY = +search.get('pointY')!;
         const hasInputTarget = search.has('hasInputTarget');
-        const isTopFrame = window.location.pathname.match(/\/page@[a-z0-9]+$/);
         const hasTargetElements = targetElements.length > 0;
         const roots = document.documentElement ? [document.documentElement] : [];
         for (const target of (hasTargetElements ? targetElements : roots)) {
@@ -392,6 +417,76 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
             document.documentElement.appendChild(pointElement);
           }
         }
+      }
+
+      if (canvasElements.length > 0) {
+        function drawCheckerboard(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
+          function createCheckerboardPattern() {
+            const pattern = document.createElement('canvas');
+            pattern.width = pattern.width / Math.floor(pattern.width / 24);
+            pattern.height = pattern.height / Math.floor(pattern.height / 24);
+            const context = pattern.getContext('2d')!;
+            context.fillStyle = 'lightgray';
+            context.fillRect(0, 0, pattern.width, pattern.height);
+            context.fillStyle = 'white';
+            context.fillRect(0, 0, pattern.width / 2, pattern.height / 2);
+            context.fillRect(pattern.width / 2, pattern.height / 2, pattern.width, pattern.height);
+            return context.createPattern(pattern, 'repeat')!;
+          }
+
+          context.fillStyle = createCheckerboardPattern();
+          context.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+
+        if (!isTopFrame) {
+          for (const canvas of canvasElements) {
+            const context = canvas.getContext('2d')!;
+            drawCheckerboard(context, canvas);
+            canvas.title = `Playwright displays canvas contents on a best-effort basis. It doesn't support canvas elements inside an iframe yet. If this impacts your workflow, please open an issue so we can prioritize.`;
+          }
+          return;
+        }
+
+        const img = new Image();
+        img.onload = () => {
+          for (const canvas of canvasElements) {
+            const context = canvas.getContext('2d')!;
+
+            const boundingRect = canvas.getBoundingClientRect();
+            const xStart = boundingRect.left / window.innerWidth;
+            const yStart = boundingRect.top / window.innerHeight;
+            const xEnd = boundingRect.right / window.innerWidth;
+            const yEnd = boundingRect.bottom / window.innerHeight;
+
+            const partiallyUncaptured = xEnd > 1 || yEnd > 1;
+            const fullyUncaptured = xStart > 1 || yStart > 1;
+            if (fullyUncaptured) {
+              canvas.title = `Playwright couldn't capture canvas contents because it's located outside the viewport.`;
+              continue;
+            }
+
+            drawCheckerboard(context, canvas);
+
+            context.drawImage(img, xStart * img.width, yStart * img.height, (xEnd - xStart) * img.width, (yEnd - yStart) * img.height, 0, 0, canvas.width, canvas.height);
+            if (isUnderTest)
+              // eslint-disable-next-line no-console
+              console.log(`canvas drawn:`, JSON.stringify([xStart, yStart, xEnd, yEnd].map(v => Math.floor(v * 100))));
+
+            if (partiallyUncaptured)
+              canvas.title = `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`;
+            else
+              canvas.title = `Canvas contents are displayed on a best-effort basis based on viewport screenshots taken during test execution.`;
+          }
+        };
+        img.onerror = () => {
+          for (const canvas of canvasElements) {
+            const context = canvas.getContext('2d')!;
+            drawCheckerboard(context, canvas);
+            canvas.title = `Playwright couldn't show canvas contents because the screenshot failed to load.`;
+          }
+        };
+        img.src = location.href.replace('/snapshot', '/closest-screenshot');
       }
     };
 

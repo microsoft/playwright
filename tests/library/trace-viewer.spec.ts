@@ -21,6 +21,7 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 import { expect, playwrightTest } from '../config/browserTest';
 import type { FrameLocator } from '@playwright/test';
+import { rafraf } from 'tests/page/pageTest';
 
 const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
@@ -1437,6 +1438,32 @@ test.skip('should allow showing screenshots instead of snapshots', async ({ runA
 
   await expect(snapshot).not.toBeVisible();
   await expect(screenshot).toBeVisible();
+});
+
+test('canvas clipping', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/screenshots/canvas.html#canvas-on-edge');
+    await rafraf(page, 5);
+  });
+
+  const msg = await traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') });
+  expect(msg.text()).toEqual('canvas drawn: [0,91,12,111]');
+
+  const snapshot = await traceViewer.snapshotFrame('page.goto');
+  await expect(snapshot.locator('canvas')).toHaveAttribute('title', `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`);
+});
+
+test('canvas clipping in iframe', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent(`
+      <iframe src="${server.PREFIX}/screenshots/canvas.html#canvas-on-edge"></iframe>
+    `);
+    await rafraf(page, 5);
+  });
+
+  const snapshot = await traceViewer.snapshotFrame('page.evaluate');
+  const canvas = snapshot.locator('iframe').contentFrame().locator('canvas');
+  await expect(canvas).toHaveAttribute('title', `Playwright displays canvas contents on a best-effort basis. It doesn't support canvas elements inside an iframe yet. If this impacts your workflow, please open an issue so we can prioritize.`);
 });
 
 test.skip('should handle case where neither snapshots nor screenshots exist', async ({ runAndTrace, page, server }) => {
