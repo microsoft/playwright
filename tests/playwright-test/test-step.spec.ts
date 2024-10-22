@@ -1267,3 +1267,61 @@ hook      |After Hooks
   });
   expect(exitCode).toBe(0);
 });
+
+test('should teardown necessary worker fixtures when switching pools', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' }`,
+    'a.spec.ts': `
+      import { test as original, expect } from '@playwright/test';
+      const base = original.extend({
+        base: [async ({}, use) => {
+          await use('base');
+        }, { scope: 'worker' }],
+      });
+
+      const worker1 = base.extend({
+        worker1: [async ({ base }, use) => {
+          await use(base + '1');
+        }, { scope: 'worker' }],
+      });
+
+      const worker2 = base.extend({
+        worker2: [async ({ base }, use) => {
+          await use(base + '2');
+        }, { scope: 'worker' }],
+      });
+
+      worker1('test1', async ({ base, worker1 }) => {
+        expect(base).toBe('base');
+        expect(worker1).toBe('base1');
+      });
+
+      worker2('test2', async ({ base, worker2 }) => {
+        expect(base).toBe('base');
+        expect(worker2).toBe('failure');
+      });
+    `,
+  }, { reporter: '' });
+  expect(result.exitCode).toBe(1);
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+fixture   |  fixture: base @ a.spec.ts:3
+fixture   |  fixture: worker1 @ a.spec.ts:9
+expect    |expect.toBe @ a.spec.ts:22
+expect    |expect.toBe @ a.spec.ts:23
+hook      |After Hooks
+hook      |Before Hooks
+hook      |  Reset Fixtures
+fixture   |    fixture: worker1 @ a.spec.ts:9
+fixture   |  fixture: worker2 @ a.spec.ts:15
+expect    |expect.toBe @ a.spec.ts:27
+expect    |expect.toBe @ a.spec.ts:28
+expect    |↪ error: Error: expect(received).toBe(expected) // Object.is equality
+hook      |After Hooks
+hook      |Worker Cleanup
+fixture   |  fixture: worker2 @ a.spec.ts:15
+fixture   |  fixture: base @ a.spec.ts:3
+          |Error: expect(received).toBe(expected) // Object.is equality
+`);
+});

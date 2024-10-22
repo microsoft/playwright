@@ -119,12 +119,12 @@ test('should run tests with different worker options', async ({ runInlineTest })
 
       test('test1', ({ foo }, testInfo) => {
         expect(foo).toBe('bar');
-        expect(testInfo.workerIndex).toBe(1);
+        expect(testInfo.workerIndex).toBe(0);
       });
 
       test('test2', ({ foo }, testInfo) => {
         expect(foo).toBe('bar');
-        expect(testInfo.workerIndex).toBe(1);
+        expect(testInfo.workerIndex).toBe(0);
       });
     `,
     'c.test.ts': `
@@ -132,7 +132,7 @@ test('should run tests with different worker options', async ({ runInlineTest })
       test.use({ foo: 'baz' });
       test('test2', ({ foo }, testInfo) => {
         expect(foo).toBe('baz');
-        expect(testInfo.workerIndex).toBe(2);
+        expect(testInfo.workerIndex).toBe(0);
       });
     `
   }, { workers: 1 });

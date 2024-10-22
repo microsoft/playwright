@@ -77,10 +77,7 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     // Skip annotations imply skipped expectedStatus.
     if (test.annotations.some(a => a.type === 'skip' || a.type === 'fixme'))
       test.expectedStatus = 'skipped';
-
-    // We only compute / set digest in the runner.
-    if (test._poolDigest)
-      test._workerHash = `${project.id}-${test._poolDigest}-0`;
+    test._workerHash = `${project.id}-0`;
   });
 
   return result;
@@ -95,9 +92,7 @@ export function applyRepeatEachIndex(project: FullProjectInternal, fileSuite: Su
       const testId = suite._fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
       test.id = testId;
       test.repeatEachIndex = repeatEachIndex;
-
-      if (test._poolDigest)
-        test._workerHash = `${project.id}-${test._poolDigest}-${repeatEachIndex}`;
+      test._workerHash = `${project.id}-${repeatEachIndex}`;
     }
   });
 }

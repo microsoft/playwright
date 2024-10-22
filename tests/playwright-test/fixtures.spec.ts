@@ -664,7 +664,7 @@ test('should not create a new worker for test fixtures', async ({ runInlineTest 
   expect(result.passed).toBe(3);
 });
 
-test('should create a new worker for worker fixtures', async ({ runInlineTest }) => {
+test('should not create a new worker for worker fixtures', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -699,7 +699,7 @@ test('should create a new worker for worker fixtures', async ({ runInlineTest })
   expect(result.output).toContain('bar-b');
   const baseWorker = +result.output.match(/%%base-(\d)/)![1];
   expect(result.output).toContain(`%%base-${baseWorker}`);
-  expect(result.output).toContain(`%%a-${1 - baseWorker}`);
+  expect(result.output).toContain(`%%a-${baseWorker}`);
   expect(result.output).toContain(`%%b-${baseWorker}`);
   expect(result.passed).toBe(3);
 });
@@ -814,5 +814,56 @@ test('automatic worker fixtures should start before automatic test fixtures', as
     'TEST',
     'TEST FIXTURE 2',
     'WORKER FIXTURE 2',
+  ]);
+});
+
+test('should teardown necessary worker fixtures when switching pools', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as original, expect } from '@playwright/test';
+      const base = original.extend({
+        base: [async ({}, use) => {
+          console.log('\\n%%base-setup');
+          await use('base');
+          console.log('\\n%%base-teardown');
+        }, { scope: 'worker' }],
+      });
+
+      const worker1 = base.extend({
+        worker1: [async ({ base }, use) => {
+          console.log('\\n%%worker1-setup');
+          await use(base + '1');
+          console.log('\\n%%worker1-teardown');
+        }, { scope: 'worker' }],
+      });
+
+      const worker2 = base.extend({
+        worker2: [async ({ base }, use) => {
+          console.log('\\n%%worker2-setup');
+          await use(base + '2');
+          console.log('\\n%%worker2-teardown');
+        }, { scope: 'worker' }],
+      });
+
+      worker1('test1', async ({ base, worker1 }) => {
+        console.log('\\n%%test1-' + base + '-' + worker1);
+      });
+
+      worker2('test2', async ({ base, worker2 }) => {
+        console.log('\\n%%test2-' + base + '-' + worker2);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2);
+  expect(result.outputLines).toEqual([
+    'base-setup',
+    'worker1-setup',
+    'test1-base-base1',
+    'worker1-teardown',
+    'worker2-setup',
+    'test2-base-base2',
+    'worker2-teardown',
+    'base-teardown',
   ]);
 });

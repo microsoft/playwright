@@ -29,6 +29,7 @@ export class WorkerHost extends ProcessHost {
   readonly parallelIndex: number;
   readonly workerIndex: number;
   private _hash: string;
+  poolDigest: string;
   private _params: WorkerInitParams;
   private _didFail = false;
 
@@ -42,6 +43,7 @@ export class WorkerHost extends ProcessHost {
     this.workerIndex = workerIndex;
     this.parallelIndex = parallelIndex;
     this._hash = testGroup.workerHash;
+    this.poolDigest = testGroup.firstPoolDigest;
 
     this._params = {
       workerIndex: this.workerIndex,

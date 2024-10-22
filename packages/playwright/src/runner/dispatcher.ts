@@ -56,8 +56,10 @@ export class Dispatcher {
       return;
     const job = this._queue[0];
 
-    // 2. Find a worker with the same hash, or just some free worker.
-    let index = this._workerSlots.findIndex(w => !w.busy && w.worker && w.worker.hash() === job.workerHash && !w.worker.didSendStop());
+    // 2. Find a worker with the same hash, preferably with the same digest, or just some free worker.
+    let index = this._workerSlots.findIndex(w => !w.busy && w.worker && !w.worker.didSendStop() && w.worker.hash() === job.workerHash && w.worker.poolDigest === job.firstPoolDigest);
+    if (index === -1)
+      index = this._workerSlots.findIndex(w => !w.busy && w.worker && !w.worker.didSendStop() && w.worker.hash() === job.workerHash);
     if (index === -1)
       index = this._workerSlots.findIndex(w => !w.busy);
     // No workers available, bail out.
@@ -113,6 +115,7 @@ export class Dispatcher {
     const result = await jobDispatcher.jobResult;
     this._workerSlots[index].jobDispatcher = undefined;
     this._updateCounterForWorkerHash(job.workerHash, -1);
+    worker.poolDigest = result.lastTestPoolDigest || worker.poolDigest;
 
     // 4. When worker encounters error, we stop it and create a new one.
     //    We also do not keep the worker alive if it cannot serve any more jobs.
@@ -231,7 +234,7 @@ export class Dispatcher {
 }
 
 class JobDispatcher {
-  jobResult = new ManualPromise<{ newJob?: TestGroup, didFail: boolean }>();
+  jobResult = new ManualPromise<{ newJob?: TestGroup, didFail: boolean, lastTestPoolDigest?: string }>();
 
   private _listeners: RegisteredListener[] = [];
   private _failedTests = new Set<TestCase>();
@@ -402,7 +405,7 @@ class JobDispatcher {
     // - we are here not because something failed
     // - no unrecoverable worker error
     if (!this._remainingByTestId.size && !this._failedTests.size && !params.fatalErrors.length && !params.skipTestsDueToSetupFailure.length && !params.fatalUnknownTestIds && !params.unexpectedExitError) {
-      this._finished({ didFail: false });
+      this._finished({ didFail: false, lastTestPoolDigest: params.lastTestPoolDigest });
       return;
     }
 
@@ -476,7 +479,7 @@ class JobDispatcher {
 
     // This job is over, we will schedule another one.
     const newJob = remaining.length ? { ...this._job, tests: remaining } : undefined;
-    this._finished({ didFail: true, newJob });
+    this._finished({ didFail: true, newJob, lastTestPoolDigest: params.lastTestPoolDigest });
   }
 
   onExit(data: ProcessExitData) {
@@ -486,7 +489,7 @@ class JobDispatcher {
     this._onDone({ skipTestsDueToSetupFailure: [], fatalErrors: [], unexpectedExitError });
   }
 
-  private _finished(result: { newJob?: TestGroup, didFail: boolean }) {
+  private _finished(result: { newJob?: TestGroup, didFail: boolean, lastTestPoolDigest?: string }) {
     eventsHelper.removeEventListeners(this._listeners);
     this.jobResult.resolve(result);
   }

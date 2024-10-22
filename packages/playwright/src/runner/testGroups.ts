@@ -18,6 +18,7 @@ import type { Suite, TestCase } from '../common/test';
 
 export type TestGroup = {
   workerHash: string;
+  firstPoolDigest: string;
   requireFile: string;
   repeatEachIndex: number;
   projectId: string;
@@ -25,13 +26,10 @@ export type TestGroup = {
 };
 
 export function createTestGroups(projectSuite: Suite, expectedParallelism: number): TestGroup[] {
-  // This function groups tests that can be run together.
-  // Tests cannot be run together when:
-  // - They belong to different projects - requires different workers.
-  // - They have a different repeatEachIndex - requires different workers.
-  // - They have a different set of worker fixtures in the pool - requires different workers.
-  // - They have a different requireFile - reuses the worker, but runs each requireFile separately.
-  // - They belong to a parallel suite.
+  // This function groups tests that must be run together:
+  // - in default mode - all tests in a single requireFile;
+  // - in serial mode - all test from the serial suite.
+  // Otherwise, tests will be put into separate test groups, that may or may not run in the same worker.
 
   // Using the map "workerHash -> requireFile -> group" makes us preserve the natural order
   // of worker hashes and require files for the simple cases.
@@ -54,6 +52,7 @@ export function createTestGroups(projectSuite: Suite, expectedParallelism: numbe
   const createGroup = (test: TestCase): TestGroup => {
     return {
       workerHash: test._workerHash,
+      firstPoolDigest: test._poolDigest,
       requireFile: test._requireFile,
       repeatEachIndex: test.repeatEachIndex,
       projectId: test._projectId,

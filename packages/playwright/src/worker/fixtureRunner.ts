@@ -179,15 +179,30 @@ export class FixtureRunner {
   setPool(pool: FixturePool) {
     if (!this.testScopeClean)
       throw new Error('Did not teardown test scope');
-    if (this.pool && pool.digest !== this.pool.digest) {
-      throw new Error([
-        `Playwright detected inconsistent test.use() options.`,
-        `Most common mistakes that lead to this issue:`,
-        `  - Calling test.use() outside of the test file, for example in a common helper.`,
-        `  - One test file imports from another test file.`,
-      ].join('\n'));
+    if (!this.pool) {
+      this.pool = pool;
+      return;
     }
-    this.pool = pool;
+
+    // Teardown fixtures in the reverse order.
+    const fixtures = Array.from(this.instanceForId.values()).reverse();
+    const collector = new Set<Fixture>();
+    for (const fixture of fixtures) {
+      // Note: compare id instead of instances to allow identical registrations to be reused,
+      // for example from a single test.use() applied to multiple tests.
+      if (pool.resolve(fixture.registration.name)?.id !== fixture.registration.id)
+        fixture._collectFixturesInTeardownOrder('worker', collector);
+    }
+
+    if (!collector.size) {
+      this.pool = pool;
+      return;
+    }
+
+    return async (testInfo: TestInfoImpl, runnable: RunnableDescription) => {
+      await this._teardownFixtureList(collector, testInfo, runnable);
+      this.pool = pool;
+    };
   }
 
   private _collectFixturesInSetupOrder(registration: FixtureRegistration, collector: Set<FixtureRegistration>) {
@@ -200,24 +215,31 @@ export class FixtureRunner {
     collector.add(registration);
   }
 
-  async teardownScope(scope: FixtureScope, testInfo: TestInfoImpl, runnable: RunnableDescription) {
-    // Teardown fixtures in the reverse order.
-    const fixtures = Array.from(this.instanceForId.values()).reverse();
-    const collector = new Set<Fixture>();
-    for (const fixture of fixtures)
-      fixture._collectFixturesInTeardownOrder(scope, collector);
+  private async _teardownFixtureList(fixtures: Set<Fixture>, testInfo: TestInfoImpl, runnable: RunnableDescription) {
     let firstError: Error | undefined;
-    for (const fixture of collector) {
+    for (const fixture of fixtures) {
       try {
         await fixture.teardown(testInfo, runnable);
       } catch (error) {
         firstError = firstError ?? error;
       }
     }
-    if (scope === 'test')
-      this.testScopeClean = true;
     if (firstError)
       throw firstError;
+  }
+
+  async teardownScope(scope: FixtureScope, testInfo: TestInfoImpl, runnable: RunnableDescription) {
+    // Teardown fixtures in the reverse order.
+    const fixtures = Array.from(this.instanceForId.values()).reverse();
+    const collector = new Set<Fixture>();
+    for (const fixture of fixtures)
+      fixture._collectFixturesInTeardownOrder(scope, collector);
+    try {
+      await this._teardownFixtureList(collector, testInfo, runnable);
+    } finally {
+      if (scope === 'test')
+        this.testScopeClean = true;
+    }
   }
 
   async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only', runnable: RunnableDescription): Promise<object | null> {

@@ -54,6 +54,7 @@ export class WorkerMain extends ProcessRunner {
   private _currentTest: TestInfoImpl | null = null;
   private _lastRunningTests: TestCase[] = [];
   private _totalRunningTests = 0;
+  private _lastTestPoolDigest = '';
   // Suites that had their beforeAll hooks, but not afterAll hooks executed.
   // These suites still need afterAll hooks to be executed for the proper cleanup.
   // Contains dynamic annotations originated by modifiers with a callback, e.g. `test.skip(() => true)`.
@@ -230,7 +231,8 @@ export class WorkerMain extends ProcessRunner {
       const donePayload: DonePayload = {
         fatalErrors: this._fatalErrors,
         skipTestsDueToSetupFailure: [],
-        fatalUnknownTestIds
+        fatalUnknownTestIds,
+        lastTestPoolDigest: this._lastTestPoolDigest,
       };
       for (const test of this._skipRemainingTestsInSuite?.allTests() || []) {
         if (entries.has(test.id))
@@ -265,9 +267,6 @@ export class WorkerMain extends ProcessRunner {
           break;
       }
     };
-
-    if (!this._isStopped)
-      this._fixtureRunner.setPool(test._pool!);
 
     const suites = getSuites(test);
     const reversedSuites = suites.slice().reverse();
@@ -333,6 +332,18 @@ export class WorkerMain extends ProcessRunner {
 
       let testFunctionParams: object | null = null;
       await testInfo._runAsStage({ title: 'Before Hooks', stepInfo: { category: 'hook' } }, async () => {
+        const resetFixturesCallback = this._fixtureRunner.setPool(test._pool!);
+        if (resetFixturesCallback) {
+          await testInfo._runAsStage({ title: 'Reset Fixtures', stepInfo: { category: 'hook' } }, async () => {
+            // Tear down worker fixtures from the previous test that are incompatible with this test.
+            // Unfortunately, we do not know about new worker fixtures at the end of previous test.
+            // Give it a separate timeout - not sure what else could it be.
+            const fixturesResetSlot = { timeout: this._project.project.timeout, elapsed: 0 };
+            await resetFixturesCallback(testInfo, { type: 'test', slot: fixturesResetSlot });
+          });
+        }
+        this._lastTestPoolDigest = test._pool!.digest;
+
         // Run "beforeAll" hooks, unless already run during previous tests.
         for (const suite of suites)
           await this._runBeforeAllHooksForSuite(suite, testInfo);

@@ -116,6 +116,7 @@ export type DonePayload = {
   fatalErrors: TestInfoError[];
   skipTestsDueToSetupFailure: string[];  // test ids
   fatalUnknownTestIds?: string[];
+  lastTestPoolDigest?: string;
 };
 
 export type TestOutputPayload = {

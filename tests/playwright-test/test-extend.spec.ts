@@ -46,8 +46,11 @@ test('test.extend should work', async ({ runInlineTest }) => {
           global.logs.push('beforeAll-' + suffix);
           await run();
           global.logs.push('afterAll-' + suffix);
-          if (suffix.includes('base'))
+          if (suffix.includes('base')) {
+            global.logs.push('end of worker');
             console.log(global.logs.join('\\n'));
+            global.logs = [];
+          }
         }, { scope: 'worker' }],
 
         baseTest: async ({ suffix, derivedWorker }, run) => {
@@ -85,10 +88,6 @@ test('test.extend should work', async ({ runInlineTest }) => {
     'afterEach-e1',
     'afterEach-base1',
     'afterAll-e1',
-    'afterAll-base1',
-  ].join('\n'));
-  expect(output).toContain([
-    'beforeAll-base1',
     'beforeAll-e2',
     'beforeEach-base1',
     'beforeEach-e2',
@@ -97,6 +96,7 @@ test('test.extend should work', async ({ runInlineTest }) => {
     'afterEach-base1',
     'afterAll-e2',
     'afterAll-base1',
+    'end of worker',
   ].join('\n'));
   expect(output).toContain([
     'beforeAll-base2',
@@ -107,10 +107,6 @@ test('test.extend should work', async ({ runInlineTest }) => {
     'afterEach-e1',
     'afterEach-base2',
     'afterAll-e1',
-    'afterAll-base2',
-  ].join('\n'));
-  expect(output).toContain([
-    'beforeAll-base2',
     'beforeAll-e2',
     'beforeEach-base2',
     'beforeEach-e2',
@@ -119,6 +115,7 @@ test('test.extend should work', async ({ runInlineTest }) => {
     'afterEach-base2',
     'afterAll-e2',
     'afterAll-base2',
+    'end of worker',
   ].join('\n'));
 });
 
