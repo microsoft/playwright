@@ -44,22 +44,35 @@ export async function toEqual<T>(
   const timeout = options.timeout ?? this.timeout;
 
   const { matches: pass, received, log, timedOut } = await query(!!this.isNot, timeout);
+  if (pass === !this.isNot) {
+    return {
+      name: matcherName,
+      message: () => '',
+      pass,
+      expected
+    };
+  }
 
-  const message = pass
-    ? () =>
-      matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined) +
-      `Expected: not ${this.utils.printExpected(expected)}\n` +
-      `Received: ${this.utils.printReceived(received)}` + callLogText(log)
-    : () =>
-      matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined) +
-      this.utils.printDiffOrStringify(
-          expected,
-          received,
-          EXPECTED_LABEL,
-          RECEIVED_LABEL,
-          false,
-      ) + callLogText(log);
-
+  let printedReceived: string | undefined;
+  let printedExpected: string | undefined;
+  let printedDiff: string | undefined;
+  if (pass) {
+    printedExpected = `Expected: not ${this.utils.printExpected(expected)}`;
+    printedReceived = `Received: ${this.utils.printReceived(received)}`;
+  } else {
+    printedDiff = this.utils.printDiffOrStringify(
+        expected,
+        received,
+        EXPECTED_LABEL,
+        RECEIVED_LABEL,
+        false,
+    );
+  }
+  const message = () => {
+    const header = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
+    const details = printedDiff || `${printedExpected}\n${printedReceived}`;
+    return `${header}${details}${callLogText(log)}`;
+  };
   // Passing the actual and expected objects so that a custom reporter
   // could access them, for example in order to display a custom visual diff,
   // or create a different error message
@@ -70,5 +83,8 @@ export async function toEqual<T>(
     pass,
     log,
     timeout: timedOut ? timeout : undefined,
+    ...(printedReceived ? { printedReceived } : {}),
+    ...(printedExpected ? { printedExpected } : {}),
+    ...(printedDiff ? { printedDiff } : {}),
   };
 }

@@ -279,6 +279,33 @@ test.describe('test modifier annotations', () => {
     expectTest('focused fixme by suite', 'skipped', 'skipped', ['fixme']);
   });
 
+  test('should work with fail.only inside describe.only', async ({ runInlineTest }) => {
+    const result = await runInlineTest({
+      'a.test.ts': `
+        import { test, expect } from '@playwright/test';
+  
+        test.describe.only("suite", () => {
+          test.skip('focused skip by suite', () => {});
+          test.fixme('focused fixme by suite', () => {});
+          test.fail.only('focused fail by suite', () => { expect(1).toBe(2); });
+        });
+  
+        test.describe.skip('not focused', () => {
+          test('no marker', () => {});
+        });
+      `,
+    });
+    const expectTest = expectTestHelper(result);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.passed).toBe(1);
+    expect(result.failed).toBe(0);
+    expect(result.skipped).toBe(0);
+    expectTest('focused skip by suite', 'skipped', 'skipped', ['skip']);
+    expectTest('focused fixme by suite', 'skipped', 'skipped', ['fixme']);
+    expectTest('focused fail by suite', 'failed', 'expected', ['fail']);
+  });
+
   test('should not multiple on retry', async ({ runInlineTest }) => {
     const result = await runInlineTest({
       'a.test.ts': `

@@ -18,8 +18,6 @@
 import type { LocatorEx } from './matchers';
 import type { ExpectMatcherState } from '../../types/test';
 import { kNoElementsFoundError, matcherHint, type MatcherResult } from './matcherHint';
-import type { AriaTemplateNode } from 'playwright-core/lib/server/injected/ariaSnapshot';
-import { yaml } from '../utilsBundle';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { EXPECTED_COLOR } from '../common/expectBundle';
 import { callLogText } from '../util';
@@ -46,23 +44,24 @@ export async function toMatchAriaSnapshot(
     ].join('\n\n'));
   }
 
-  const ariaTree = toAriaTree(expected) as AriaTemplateNode;
   const timeout = options.timeout ?? this.timeout;
-  const { matches: pass, received, log, timedOut } = await receiver._expect('to.match.aria', { expectedValue: ariaTree, isNot: this.isNot, timeout });
+  const { matches: pass, received, log, timedOut } = await receiver._expect('to.match.aria', { expectedValue: expected, isNot: this.isNot, timeout });
 
   const messagePrefix = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
   const notFound = received === kNoElementsFoundError;
+  const escapedExpected = unshift(escapePrivateUsePoints(expected));
+  const escapedReceived = unshift(escapePrivateUsePoints(received));
   const message = () => {
     if (pass) {
       if (notFound)
-        return messagePrefix + `Expected: not ${this.utils.printExpected(expected)}\nReceived: ${received}` + callLogText(log);
-      const printedReceived = printReceivedStringContainExpectedSubstring(received, received.indexOf(expected), expected.length);
-      return messagePrefix + `Expected: not ${this.utils.printExpected(expected)}\nReceived string: ${printedReceived}` + callLogText(log);
+        return messagePrefix + `Expected: not ${this.utils.printExpected(escapedExpected)}\nReceived: ${escapedReceived}` + callLogText(log);
+      const printedReceived = printReceivedStringContainExpectedSubstring(escapedReceived, escapedReceived.indexOf(escapedExpected), escapedExpected.length);
+      return messagePrefix + `Expected: not ${this.utils.printExpected(escapedExpected)}\nReceived string: ${printedReceived}` + callLogText(log);
     } else {
       const labelExpected = `Expected`;
       if (notFound)
-        return messagePrefix + `${labelExpected}: ${this.utils.printExpected(expected)}\nReceived: ${received}` + callLogText(log);
-      return messagePrefix + this.utils.printDiffOrStringify(expected, received, labelExpected, 'Received string', false) + callLogText(log);
+        return messagePrefix + `${labelExpected}: ${this.utils.printExpected(escapedExpected)}\nReceived: ${escapedReceived}` + callLogText(log);
+      return messagePrefix + this.utils.printDiffOrStringify(escapedExpected, escapedReceived, labelExpected, 'Received string', false) + callLogText(log);
     }
   };
 
@@ -77,58 +76,20 @@ export async function toMatchAriaSnapshot(
   };
 }
 
-function parseKey(key: string): AriaTemplateNode {
-  if (!key)
-    return { role: '' };
-
-  const match = key.match(/^([a-z]+)(?:\s+(?:"([^"]*)"|\/([^\/]*)\/))?$/);
-
-  if (!match)
-    throw new Error(`Invalid key ${key}`);
-
-  const role = match[1];
-  if (role && role !== 'text' && !allRoles.includes(role))
-    throw new Error(`Invalid role ${role}`);
-
-  if (match[2])
-    return { role, name: match[2] };
-  if (match[3])
-    return { role, name: new RegExp(match[3]) };
-  return { role };
+function escapePrivateUsePoints(str: string) {
+  return str.replace(/[\uE000-\uF8FF]/g, char => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
 
-function valueOrRegex(value: string): string | RegExp {
-  return value.startsWith('/') && value.endsWith('/') ? new RegExp(value.slice(1, -1)) : value;
+function unshift(snapshot: string): string {
+  const lines = snapshot.split('\n');
+  let whitespacePrefixLength = 100;
+  for (const line of lines) {
+    if (!line.trim())
+      continue;
+    const match = line.match(/^(\s*)/);
+    if (match && match[1].length < whitespacePrefixLength)
+      whitespacePrefixLength = match[1].length;
+    break;
+  }
+  return lines.filter(t => t.trim()).map(line => line.substring(whitespacePrefixLength)).join('\n');
 }
-
-type YamlNode = Record<string, Array<YamlNode> | string>;
-
-function toAriaTree(text: string): AriaTemplateNode {
-  const convert = (object: YamlNode | string): AriaTemplateNode | RegExp | string => {
-    const key = typeof object === 'string' ? object : Object.keys(object)[0];
-    const value = typeof object === 'string' ? undefined : object[key];
-    const parsed = parseKey(key);
-    if (parsed.role === 'text') {
-      if (typeof value !== 'string')
-        throw new Error(`Generic role must have a text value`);
-      return valueOrRegex(value as string);
-    }
-    if (Array.isArray(value))
-      parsed.children = value.map(convert);
-    else if (value)
-      parsed.children = [valueOrRegex(value)];
-    return parsed;
-  };
-  const fragment = yaml.parse(text) as YamlNode[];
-  return convert({ '': fragment }) as AriaTemplateNode;
-}
-
-const allRoles = [
-  'alert', 'alertdialog', 'application', 'article', 'banner', 'blockquote', 'button', 'caption', 'cell', 'checkbox', 'code', 'columnheader', 'combobox', 'command',
-  'complementary', 'composite', 'contentinfo', 'definition', 'deletion', 'dialog', 'directory', 'document', 'emphasis', 'feed', 'figure', 'form', 'generic', 'grid',
-  'gridcell', 'group', 'heading', 'img', 'input', 'insertion', 'landmark', 'link', 'list', 'listbox', 'listitem', 'log', 'main', 'marquee', 'math', 'meter', 'menu',
-  'menubar', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'navigation', 'none', 'note', 'option', 'paragraph', 'presentation', 'progressbar', 'radio', 'radiogroup',
-  'range', 'region', 'roletype', 'row', 'rowgroup', 'rowheader', 'scrollbar', 'search', 'searchbox', 'section', 'sectionhead', 'select', 'separator', 'slider',
-  'spinbutton', 'status', 'strong', 'structure', 'subscript', 'superscript', 'switch', 'tab', 'table', 'tablist', 'tabpanel', 'term', 'textbox', 'time', 'timer',
-  'toolbar', 'tooltip', 'tree', 'treegrid', 'treeitem', 'widget', 'window'
-];

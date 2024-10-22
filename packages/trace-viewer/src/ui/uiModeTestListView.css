@@ -14,28 +14,28 @@
   limitations under the License.
 */
 
-.ui-mode-list-item {
+.ui-mode-tree-item {
   flex: auto;
 }
 
-.ui-mode-list-item-title {
+.ui-mode-tree-item-title {
   flex: auto;
   text-overflow: ellipsis;
   overflow: hidden;
 }
 
-.ui-mode-list-item-time {
+.ui-mode-tree-item-time {
   flex: none;
   color: var(--vscode-editorCodeLens-foreground);
   margin: 0 4px;
   user-select: none;
 }
 
-.tests-list-view .list-view-entry.selected .ui-mode-list-item-time,
-.tests-list-view .list-view-entry.highlighted .ui-mode-list-item-time {
+.tests-tree-view .tree-view-entry.selected .ui-mode-tree-item-time,
+.tests-tree-view .tree-view-entry.highlighted .ui-mode-tree-item-time {
   display: none;
 }
 
-.tests-list-view .list-view-entry:not(.highlighted):not(.selected) .toolbar-button:not(.toggled) {
+.tests-tree-view .tree-view-entry:not(.highlighted):not(.selected) .toolbar-button:not(.toggled) {
   display: none;
 }

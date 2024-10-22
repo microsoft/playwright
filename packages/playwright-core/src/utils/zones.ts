@@ -46,8 +46,9 @@ class ZoneManager {
       if (zone.type === 'apiZone')
         str += `(${(zone.data as any).apiName})`;
       zones.push(str);
-      
+
     }
+    // eslint-disable-next-line no-console
     console.log('zones: ', zones.join(' -> '));
   }
 }

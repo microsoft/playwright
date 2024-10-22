@@ -608,9 +608,9 @@ class TextAssertionTool implements RecorderTool {
   private _action: actions.AssertAction | null = null;
   private _dialog: Dialog;
   private _textCache = new Map<Element | ShadowRoot, ElementText>();
-  private _kind: 'text' | 'value';
+  private _kind: 'text' | 'value' | 'snapshot';
 
-  constructor(recorder: Recorder, kind: 'text' | 'value') {
+  constructor(recorder: Recorder, kind: 'text' | 'value' | 'snapshot') {
     this._recorder = recorder;
     this._kind = kind;
     this._dialog = new Dialog(recorder);
@@ -656,7 +656,7 @@ class TextAssertionTool implements RecorderTool {
     const target = this._recorder.deepEventTarget(event);
     if (this._hoverHighlight?.elements[0] === target)
       return;
-    if (this._kind === 'text')
+    if (this._kind === 'text' || this._kind === 'snapshot')
       this._hoverHighlight = this._recorder.injectedScript.utils.elementText(this._textCache, target).full ? { elements: [target], selector: '' } : null;
     else
       this._hoverHighlight = this._elementHasValue(target) ? this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : null;
@@ -704,6 +704,18 @@ class TextAssertionTool implements RecorderTool {
           value: (target as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)).value,
         };
       }
+    } else if (this._kind === 'snapshot') {
+      this._hoverHighlight = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true });
+      this._hoverHighlight.color = '#8acae480';
+      // forTextExpect can update the target, re-highlight it.
+      this._recorder.updateHighlight(this._hoverHighlight, true);
+
+      return {
+        name: 'assertSnapshot',
+        selector: this._hoverHighlight.selector,
+        signals: [],
+        snapshot: this._recorder.injectedScript.ariaSnapshot(target),
+      };
     } else {
       this._hoverHighlight = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true });
       this._hoverHighlight.color = '#8acae480';
@@ -727,6 +739,8 @@ class TextAssertionTool implements RecorderTool {
       return String(action.checked);
     if (action?.name === 'assertValue')
       return action.value;
+    if (action?.name === 'assertSnapshot')
+      return action.snapshot;
     return '';
   }
 
@@ -742,13 +756,19 @@ class TextAssertionTool implements RecorderTool {
     if (!this._hoverHighlight?.elements[0])
       return;
     this._action = this._generateAction();
-    if (!this._action || this._action.name !== 'assertText')
-      return;
+    if (this._action?.name === 'assertText') {
+      this._showTextDialog(this._action);
+    } else if (this._action?.name === 'assertSnapshot') {
+      this._recorder.recordAction(this._action);
+      this._recorder.setMode('recording');
+      this._recorder.overlay?.flashToolSucceeded('assertingSnapshot');
+    }
+  }
 
-    const action = this._action;
+  private _showTextDialog(action: actions.AssertTextAction) {
     const textElement = this._recorder.document.createElement('textarea');
     textElement.setAttribute('spellcheck', 'false');
-    textElement.value = this._renderValue(this._action);
+    textElement.value = this._renderValue(action);
     textElement.classList.add('text-editor');
 
     const updateAndValidate = () => {
@@ -796,6 +816,7 @@ class Overlay {
   private _assertVisibilityToggle: HTMLElement;
   private _assertTextToggle: HTMLElement;
   private _assertValuesToggle: HTMLElement;
+  private _assertSnapshotToggle: HTMLElement;
   private _offsetX = 0;
   private _dragState: { offsetX: number, dragStart: { x: number, y: number } } | undefined;
   private _measure: { width: number, height: number } = { width: 0, height: 0 };
@@ -842,6 +863,12 @@ class Overlay {
     this._assertValuesToggle.appendChild(this._recorder.document.createElement('x-div'));
     toolsListElement.appendChild(this._assertValuesToggle);
 
+    this._assertSnapshotToggle = this._recorder.document.createElement('x-pw-tool-item');
+    this._assertSnapshotToggle.title = 'Assert snapshot';
+    this._assertSnapshotToggle.classList.add('snapshot');
+    this._assertSnapshotToggle.appendChild(this._recorder.document.createElement('x-div'));
+    toolsListElement.appendChild(this._assertSnapshotToggle);
+
     this._updateVisualPosition();
     this._refreshListeners();
   }
@@ -865,6 +892,7 @@ class Overlay {
           'assertingText': 'recording-inspecting',
           'assertingVisibility': 'recording-inspecting',
           'assertingValue': 'recording-inspecting',
+          'assertingSnapshot': 'recording-inspecting',
         };
         this._recorder.setMode(newMode[this._recorder.state.mode]);
       }),
@@ -879,6 +907,10 @@ class Overlay {
       addEventListener(this._assertValuesToggle, 'click', () => {
         if (!this._assertValuesToggle.classList.contains('disabled'))
           this._recorder.setMode(this._recorder.state.mode === 'assertingValue' ? 'recording' : 'assertingValue');
+      }),
+      addEventListener(this._assertSnapshotToggle, 'click', () => {
+        if (!this._assertSnapshotToggle.classList.contains('disabled'))
+          this._recorder.setMode(this._recorder.state.mode === 'assertingSnapshot' ? 'recording' : 'assertingSnapshot');
       }),
     ];
   }
@@ -902,6 +934,8 @@ class Overlay {
     this._assertTextToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
     this._assertValuesToggle.classList.toggle('active', state.mode === 'assertingValue');
     this._assertValuesToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
+    this._assertSnapshotToggle.classList.toggle('active', state.mode === 'assertingSnapshot');
+    this._assertSnapshotToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
     if (this._offsetX !== state.overlay.offsetX) {
       this._offsetX = state.overlay.offsetX;
       this._updateVisualPosition();
@@ -912,8 +946,14 @@ class Overlay {
       this._showOverlay();
   }
 
-  flashToolSucceeded(tool: 'assertingVisibility' | 'assertingValue') {
-    const element = tool === 'assertingVisibility' ? this._assertVisibilityToggle : this._assertValuesToggle;
+  flashToolSucceeded(tool: 'assertingVisibility' | 'assertingSnapshot' | 'assertingValue') {
+    let element: Element;
+    if (tool === 'assertingVisibility')
+      element = this._assertVisibilityToggle;
+    else if (tool === 'assertingSnapshot')
+      element = this._assertSnapshotToggle;
+    else
+      element = this._assertValuesToggle;
     element.classList.add('succeeded');
     this._recorder.injectedScript.builtinSetTimeout(() => element.classList.remove('succeeded'), 2000);
   }
@@ -1004,6 +1044,7 @@ export class Recorder {
       'assertingText': new TextAssertionTool(this, 'text'),
       'assertingVisibility': new InspectTool(this, true),
       'assertingValue': new TextAssertionTool(this, 'value'),
+      'assertingSnapshot': new TextAssertionTool(this, 'snapshot'),
     };
     this._currentTool = this._tools.none;
     if (injectedScript.window.top === injectedScript.window) {

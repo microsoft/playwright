@@ -54,6 +54,9 @@ export { SocksProxyAgent } from 'socks-proxy-agent';
 import StackUtilsLibrary from 'stack-utils';
 export const StackUtils = StackUtilsLibrary;
 
+import yamlLibrary from 'yaml';
+export const yaml = yamlLibrary;
+
 // @ts-ignore
 import wsLibrary, { WebSocketServer, Receiver, Sender } from 'ws';
 export const ws = wsLibrary;

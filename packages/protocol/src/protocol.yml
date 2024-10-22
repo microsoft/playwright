@@ -1875,6 +1875,13 @@ Frame:
       flags:
         snapshot: true
 
+    ariaSnapshot:
+      parameters:
+        selector: string
+        timeout: number?
+      returns:
+        snapshot: string
+
     blur:
       parameters:
         selector: string

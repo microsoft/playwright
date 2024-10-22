@@ -58,29 +58,56 @@ export async function toMatchText(
   const timeout = options.timeout ?? this.timeout;
 
   const { matches: pass, received, log, timedOut } = await query(!!this.isNot, timeout);
+  if (pass === !this.isNot) {
+    return {
+      name: matcherName,
+      message: () => '',
+      pass,
+      expected
+    };
+  }
+
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const receivedString = received || '';
   const messagePrefix = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
   const notFound = received === kNoElementsFoundError;
-  const message = () => {
-    if (pass) {
-      if (typeof expected === 'string') {
-        if (notFound)
-          return messagePrefix + `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}\nReceived: ${received}` + callLogText(log);
-        const printedReceived = printReceivedStringContainExpectedSubstring(receivedString, receivedString.indexOf(expected), expected.length);
-        return messagePrefix + `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}\nReceived string: ${printedReceived}` + callLogText(log);
+
+  let printedReceived: string | undefined;
+  let printedExpected: string | undefined;
+  let printedDiff: string | undefined;
+  if (pass) {
+    if (typeof expected === 'string') {
+      if (notFound) {
+        printedExpected = `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}`;
+        printedReceived = `Received: ${received}`;
       } else {
-        if (notFound)
-          return messagePrefix + `Expected pattern: not ${this.utils.printExpected(expected)}\nReceived: ${received}` + callLogText(log);
-        const printedReceived = printReceivedStringContainExpectedResult(receivedString, typeof expected.exec === 'function' ? expected.exec(receivedString) : null);
-        return messagePrefix + `Expected pattern: not ${this.utils.printExpected(expected)}\nReceived string: ${printedReceived}` + callLogText(log);
+        printedExpected = `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}`;
+        const formattedReceived = printReceivedStringContainExpectedSubstring(receivedString, receivedString.indexOf(expected), expected.length);
+        printedReceived = `Received string: ${formattedReceived}`;
       }
     } else {
-      const labelExpected = `Expected ${typeof expected === 'string' ? stringSubstring : 'pattern'}`;
-      if (notFound)
-        return messagePrefix + `${labelExpected}: ${this.utils.printExpected(expected)}\nReceived: ${received}` + callLogText(log);
-      return messagePrefix + this.utils.printDiffOrStringify(expected, receivedString, labelExpected, 'Received string', false) + callLogText(log);
+      if (notFound) {
+        printedExpected = `Expected pattern: not ${this.utils.printExpected(expected)}`;
+        printedReceived = `Received: ${received}`;
+      } else {
+        printedExpected = `Expected pattern: not ${this.utils.printExpected(expected)}`;
+        const formattedReceived = printReceivedStringContainExpectedResult(receivedString, typeof expected.exec === 'function' ? expected.exec(receivedString) : null);
+        printedReceived = `Received string: ${formattedReceived}`;
+      }
     }
+  } else {
+    const labelExpected = `Expected ${typeof expected === 'string' ? stringSubstring : 'pattern'}`;
+    if (notFound) {
+      printedExpected = `${labelExpected}: ${this.utils.printExpected(expected)}`;
+      printedReceived = `Received: ${received}`;
+    } else {
+      printedDiff = this.utils.printDiffOrStringify(expected, receivedString, labelExpected, 'Received string', false);
+    }
+  }
+
+  const message = () => {
+    const resultDetails = printedDiff ? printedDiff : printedExpected + '\n' + printedReceived;
+    return messagePrefix + resultDetails + callLogText(log);
   };
 
   return {
@@ -91,5 +118,10 @@ export async function toMatchText(
     actual: received,
     log,
     timeout: timedOut ? timeout : undefined,
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
+    locator: receiver.toString(),
+    ...(printedReceived ? { printedReceived } : {}),
+    ...(printedExpected ? { printedExpected } : {}),
+    ...(printedDiff ? { printedDiff } : {}),
   };
 }

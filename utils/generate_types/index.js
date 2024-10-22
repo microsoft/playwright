@@ -93,25 +93,8 @@ class TypesGenerator {
       handledClasses.add(className);
       return this.writeComment(docClass.comment, '') + '\n';
     }, (className, methodName, overloadIndex) => {
-      if (className === 'SuiteFunction' && methodName === '__call') {
-        const cls = this.documentation.classes.get('Test');
-        if (!cls)
-          throw new Error(`Unknown class "Test"`);
-        const method = cls.membersArray.find(m => m.alias === 'describe');
-        if (!method)
-          throw new Error(`Unknown method "Test.describe"`);
-        return this.memberJSDOC(method, '  ').trimLeft();
-      }
-      if (className === 'TestFunction' && methodName === '__call') {
-        const cls = this.documentation.classes.get('Test');
-        if (!cls)
-          throw new Error(`Unknown class "Test"`);
-        const method = cls.membersArray.find(m => m.alias === '(call)');
-        if (!method)
-          throw new Error(`Unknown method "Test.(call)"`);
-        return this.memberJSDOC(method, '  ').trimLeft();
-      }
-
+      if (methodName === '__call')
+        methodName = '(call)';
       const docClass = this.docClassForName(className);
       let method;
       if (docClass) {
@@ -591,8 +574,6 @@ class TypesGenerator {
         'PlaywrightWorkerArgs.playwright',
         'PlaywrightWorkerOptions.defaultBrowserType',
         'Project',
-        'SuiteFunction',
-        'TestFunction',
       ]),
       doNotExportClassNames: assertionClasses,
     });

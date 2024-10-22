@@ -64,7 +64,7 @@ test('should display native tags and filter by them on click', async ({ runUITes
       test('pwt', { tag: '@smoke' }, () => {});
   `,
   });
-  await page.locator('.ui-mode-list-item-title').getByText('smoke').click();
+  await page.locator('.ui-mode-tree-item-title').getByText('smoke').click();
   await expect(page.getByPlaceholder('Filter')).toHaveValue('@smoke');
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts

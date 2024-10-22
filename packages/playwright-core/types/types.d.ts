@@ -12425,6 +12425,57 @@ export interface Locator {
   and(locator: Locator): Locator;
 
   /**
+   * Captures the aria snapshot of the given element. See
+   * [expect(locator).toMatchAriaSnapshot(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-match-aria-snapshot)
+   * for the corresponding assertion.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.getByRole('link').ariaSnapshot();
+   * ```
+   *
+   * **Details**
+   *
+   * This method captures the aria snapshot of the given element. The snapshot is a string that represents the state of
+   * the element and its children. The snapshot can be used to assert the state of the element in the test, or to
+   * compare it to state in the future.
+   *
+   * The ARIA snapshot is represented using [YAML](https://yaml.org/spec/1.2.2/) markup language:
+   * - The keys of the objects are the roles and optional accessible names of the elements.
+   * - The values are either text content or an array of child elements.
+   * - Generic static text can be represented with the `text` key.
+   *
+   * Below is the HTML markup and the respective ARIA snapshot:
+   *
+   * ```html
+   * <ul aria-label="Links">
+   *   <li><a href="/">Home</a></li>
+   *   <li><a href="/about">About</a></li>
+   * <ul>
+   * ```
+   *
+   * ```yml
+   * - list "Links":
+   *   - listitem:
+   *     - link "Home"
+   *   - listitem:
+   *     - link "About"
+   * ```
+   *
+   * @param options
+   */
+  ariaSnapshot(options?: {
+    /**
+     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+     * option in the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<string>;
+
+  /**
    * Calls [blur](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/blur) on the element.
    * @param options
    */

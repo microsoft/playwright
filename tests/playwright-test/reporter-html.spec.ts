@@ -43,7 +43,7 @@ const expect = baseExpect.configure({ timeout: process.env.CI ? 75000 : 25000 })
 
 test.describe.configure({ mode: 'parallel' });
 
-for (const useIntermediateMergeReport of [false] as const) {
+for (const useIntermediateMergeReport of [true, false] as const) {
   test.describe(`${useIntermediateMergeReport ? 'merged' : 'created'}`, () => {
     test.use({ useIntermediateMergeReport });
 
@@ -612,7 +612,7 @@ for (const useIntermediateMergeReport of [false] as const) {
             ]);
           });
         `,
-      }, { reporter: 'html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      }, { reporter: 'html,dot' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
 
@@ -724,6 +724,34 @@ for (const useIntermediateMergeReport of [false] as const) {
       await expect(page.locator('.tree-item:has-text("After Hooks") .tree-item')).toContainText([
         /afterEach hook/,
         /afterAll hook/,
+      ]);
+    });
+
+    test('should show step snippets from non-root', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'playwright.config.js': `
+          export default { testDir: './tests' };
+        `,
+        'tests/a.test.ts': `
+          import { test, expect } from '@playwright/test';
+
+          test('example', async ({}) => {
+            await test.step('step title', async () => {
+              expect(1).toBe(1);
+            });
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.click('text=example');
+      await page.click('text=step title');
+      await page.click('text=expect.toBe');
+      await expect(page.getByTestId('test-snippet')).toContainText([
+        `await test.step('step title', async () => {`,
+        'expect(1).toBe(1);',
       ]);
     });
 

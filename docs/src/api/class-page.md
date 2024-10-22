@@ -3691,8 +3691,8 @@ await page.routeWebSocket('/ws', ws => {
 
 ```java
 page.routeWebSocket("/ws", ws -> {
-  ws.onMessage(message -> {
-    if ("request".equals(message))
+  ws.onMessage(frame -> {
+    if ("request".equals(frame.text()))
       ws.send("response");
   });
 });
@@ -3722,8 +3722,8 @@ page.route_web_socket("/ws", handler)
 
 ```csharp
 await page.RouteWebSocketAsync("/ws", ws => {
-  ws.OnMessage(message => {
-    if (message == "request")
+  ws.OnMessage(frame => {
+    if (frame.Text == "request")
       ws.Send("response");
   });
 });

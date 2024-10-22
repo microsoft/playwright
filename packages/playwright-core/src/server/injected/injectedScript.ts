@@ -34,7 +34,7 @@ import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } fr
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
-import { matchesAriaTree } from './ariaSnapshot';
+import { matchesAriaTree, renderedAriaTree } from './ariaSnapshot';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
 
@@ -204,6 +204,12 @@ export class InjectedScript {
     }
     result.sort((a, b) => a.score - b.score);
     return new Set<Element>(result.map(r => r.element));
+  }
+
+  ariaSnapshot(node: Node): string {
+    if (node.nodeType !== Node.ELEMENT_NODE)
+      throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
+    return renderedAriaTree(node as Element);
   }
 
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {

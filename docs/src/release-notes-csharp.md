@@ -13,8 +13,8 @@ New methods [`method: Page.routeWebSocket`] and [`method: BrowserContext.routeWe
 
 ```csharp
 await page.RouteWebSocketAsync("/ws", ws => {
-  ws.OnMessage(message => {
-    if (message == "request")
+  ws.OnMessage(frame => {
+    if (frame.Text == "request")
       ws.Send("response");
   });
 });

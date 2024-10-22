@@ -26,7 +26,8 @@ export type Mode =
   | 'recording-inspecting'
   | 'standby'
   | 'assertingVisibility'
-  | 'assertingValue';
+  | 'assertingValue'
+  | 'assertingSnapshot';
 
 export type EventData = {
   event:

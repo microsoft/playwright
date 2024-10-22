@@ -33,11 +33,12 @@ function encodeBase128(value: number): Buffer {
   do {
     let byte = value & 0x7f;
     value >>>= 7;
-    if (bytes.length > 0) byte |= 0x80;
+    if (bytes.length > 0)
+      byte |= 0x80;
     bytes.push(byte);
   } while (value > 0);
   return Buffer.from(bytes.reverse());
-};
+}
 
 // ASN1/DER Speficiation:   https://www.itu.int/rec/T-REC-X.680-X.693-202102-I/en
 class DER {
@@ -49,13 +50,13 @@ class DER {
     return this._encode(0x02, Buffer.from([data]));
   }
   static encodeObjectIdentifier(oid: string): Buffer {
-    const parts = oid.split('.').map((v) => Number(v));
+    const parts = oid.split('.').map(v => Number(v));
     // Encode the second part, which could be large, using base-128 encoding if necessary
     const output = [encodeBase128(40 * parts[0] + parts[1])];
 
-    for (let i = 2; i < parts.length; i++) {
+    for (let i = 2; i < parts.length; i++)
       output.push(encodeBase128(parts[i]));
-    }
+
 
     return this._encode(0x06, Buffer.concat(output));
   }
