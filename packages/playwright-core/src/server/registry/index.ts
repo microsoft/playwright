@@ -372,6 +372,7 @@ type BrowsersJSON = {
 type BrowsersJSONDescriptor = {
   name: string,
   revision: string,
+  hasRevisionOverride: boolean
   browserVersion?: string,
   installByDefault: boolean,
   dir: string,
@@ -386,6 +387,7 @@ function readDescriptors(browsersJSON: BrowsersJSON): BrowsersJSONDescriptor[] {
     const descriptor: BrowsersJSONDescriptor = {
       name,
       revision,
+      hasRevisionOverride: !!revisionOverride,
       // We only put browser version for the supported operating systems.
       browserVersion: revisionOverride ? undefined : obj.browserVersion,
       installByDefault: !!obj.installByDefault,
@@ -492,7 +494,8 @@ export class Registry {
       revision: chromium.revision,
       browserVersion: chromium.browserVersion,
       dir: chromium.dir.replace(/(.*)(-\d+)$/, '$1-headless-shell$2'),
-      installByDefault: false
+      installByDefault: false,
+      hasRevisionOverride: false,
     };
     const chromiumHeadlessShellExecutable = findExecutablePath(chromiumHeadlessShellDescriptor.dir, 'chromium-headless-shell');
     this._executables.push({
@@ -1069,6 +1072,13 @@ export class Registry {
       throw new Error(`ERROR: Playwright does not support ${descriptor.name} on ${hostPlatform}`);
     if (!isOfficiallySupportedPlatform)
       logPolitely(`BEWARE: your OS is not officially supported by Playwright; downloading fallback build for ${hostPlatform}.`);
+    if (descriptor.hasRevisionOverride) {
+      const message = `You are using a frozen ${descriptor.name} browser which does not receive updates anymore on ${hostPlatform}. Please update to the latest version of your operating system to test up-to-date browsers.`;
+      if (process.env.GITHUB_ACTIONS)
+        console.log(`::warning title=Playwright::${message}`);  // eslint-disable-line no-console
+      else
+        logPolitely(message);
+    }
 
     const displayName = descriptor.name.split('-').map(word => {
       return word === 'ffmpeg' ? 'FFMPEG' : word.charAt(0).toUpperCase() + word.slice(1);
