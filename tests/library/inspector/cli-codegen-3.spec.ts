@@ -810,6 +810,19 @@ await page.GetByLabel("Coun\\"try").ClickAsync();`);
     await expect(recorder.page.getByText('Post-Hydration Content')).toBeVisible();
     await expect(recorder.page.locator('x-pw-glass')).toBeVisible();
   });
+
+  test('should display inline svg icons on text assertion dialog inside iframe', async ({ openRecorder, server }) => {
+    const { page, recorder } = await openRecorder();
+    await recorder.page.click('x-pw-tool-item.text');
+
+    const { frameHello1 } = await createFrameHierarchy(page, recorder, server);
+    await recorder.trustedMove(frameHello1.locator('div'));
+    await recorder.trustedClick();
+
+    const glassPane = frameHello1.locator('x-pw-glass');
+    await expect(glassPane.locator('> x-pw-dialog .accept > x-div').evaluate(elem => getComputedStyle(elem).clipPath)).resolves.toBe('url("#icon-check")');
+    await expect(glassPane.locator('> svg > defs > clipPath#icon-check')).toBeAttached();
+  });
 });
 
 async function createFrameHierarchy(page: Page, recorder: Recorder, server: TestServer) {
