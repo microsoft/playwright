@@ -29,6 +29,11 @@ export type Mode =
   | 'assertingValue'
   | 'assertingSnapshot';
 
+export type ElementInfo = {
+  selector: string;
+  ariaSnapshot: string;
+};
+
 export type EventData = {
   event:
     | 'clear'
@@ -98,7 +103,7 @@ declare global {
     playwrightSetOverlayVisible: (visible: boolean) => void;
     playwrightUpdateLogs: (callLogs: CallLog[]) => void;
     playwrightSetRunningFile: (file: string | undefined) => void;
-    playwrightSetSelector: (selector: string, focus?: boolean) => void;
+    playwrightElementPicked: (elementInfo: ElementInfo, userGesture?: boolean) => void;
     playwrightSourcesEchoForTest: Source[];
     dispatch(data: any): Promise<void>;
   }

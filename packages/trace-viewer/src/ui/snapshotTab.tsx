@@ -30,6 +30,7 @@ import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { TabbedPaneTab } from '@web/components/tabbedPane';
 import { BrowserFrame } from './browserFrame';
 import { ClickPointer } from './clickPointer';
+import type { ElementInfo } from '@recorder/recorderTypes';
 
 function findClosest<T>(items: T[], metric: (v: T) => number, target: number) {
   return items.find((item, index) => {
@@ -291,8 +292,8 @@ export const InspectModeController: React.FunctionComponent<{
         testIdAttributeName,
         overlay: { offsetX: 0 },
       }, {
-        async setSelector(selector: string) {
-          setHighlightedLocator(asLocator(sdkLanguage, frameSelector + selector));
+        async elementPicked(elementInfo: ElementInfo) {
+          setHighlightedLocator(asLocator(sdkLanguage, frameSelector + elementInfo.selector));
         },
         highlightUpdated() {
           for (const r of recorders) {

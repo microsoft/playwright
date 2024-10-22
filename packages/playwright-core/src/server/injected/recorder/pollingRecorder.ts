@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Mode, OverlayState, UIState } from '@recorder/recorderTypes';
+import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
 import type * as actions from '@recorder/actions';
 import type { InjectedScript } from '../injectedScript';
 import { Recorder } from './recorder';
@@ -24,7 +24,7 @@ interface Embedder {
   __pw_recorderPerformAction(action: actions.PerformOnRecordAction): Promise<void>;
   __pw_recorderRecordAction(action: actions.Action): Promise<void>;
   __pw_recorderState(): Promise<UIState>;
-  __pw_recorderSetSelector(selector: string): Promise<void>;
+  __pw_recorderElementPicked(element: { selector: string, ariaSnapshot?: string }): Promise<void>;
   __pw_recorderSetMode(mode: Mode): Promise<void>;
   __pw_recorderSetOverlayState(state: OverlayState): Promise<void>;
   __pw_refreshOverlay(): void;
@@ -75,8 +75,8 @@ export class PollingRecorder implements RecorderDelegate {
     await this._embedder.__pw_recorderRecordAction(action);
   }
 
-  async setSelector(selector: string): Promise<void> {
-    await this._embedder.__pw_recorderSetSelector(selector);
+  async elementPicked(elementInfo: ElementInfo): Promise<void> {
+    await this._embedder.__pw_recorderElementPicked(elementInfo);
   }
 
   async setMode(mode: Mode): Promise<void> {

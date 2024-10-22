@@ -15,7 +15,7 @@
  */
 
 import type * as channels from '@protocol/channels';
-import type { CallLog, CallLogStatus, EventData, Mode, OverlayState, Source, UIState } from '@recorder/recorderTypes';
+import type { CallLog, CallLogStatus, ElementInfo, EventData, Mode, OverlayState, Source, UIState } from '@recorder/recorderTypes';
 import * as fs from 'fs';
 import type { Point } from '../common/types';
 import * as consoleApiSource from '../generated/consoleApiSource';
@@ -168,9 +168,9 @@ export class Recorder implements InstrumentationListener, IRecorder {
       return uiState;
     });
 
-    await this._context.exposeBinding('__pw_recorderSetSelector', false, async ({ frame }, selector: string) => {
+    await this._context.exposeBinding('__pw_recorderElementPicked', false, async ({ frame }, elementInfo: ElementInfo) => {
       const selectorChain = await generateFrameSelector(frame);
-      await this._recorderApp?.setSelector(buildFullSelector(selectorChain, selector), true);
+      await this._recorderApp?.elementPicked({ selector: buildFullSelector(selectorChain, elementInfo.selector), ariaSnapshot: elementInfo.ariaSnapshot }, true);
     });
 
     await this._context.exposeBinding('__pw_recorderSetMode', false, async ({ frame }, mode: Mode) => {
@@ -256,12 +256,10 @@ export class Recorder implements InstrumentationListener, IRecorder {
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._updateUserSources();
     this.updateCallLog([metadata]);
-    if (isScreenshotCommand(metadata)) {
+    if (isScreenshotCommand(metadata))
       this.hideHighlightedSelector();
-    } else if (metadata.params && metadata.params.selector) {
+    else if (metadata.params && metadata.params.selector)
       this._highlightedSelector = metadata.params.selector;
-      this._recorderApp?.setSelector(this._highlightedSelector).catch(() => {});
-    }
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
