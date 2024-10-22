@@ -157,11 +157,6 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
         continue;
       }
     }
-    if (part.name === 'internal:control' && (part.body as string) === 'enter-frame') {
-      tokens.push([factory.generateLocator(base, 'frame', '')]);
-      nextBase = 'frame-locator';
-      continue;
-    }
 
     const nextPart = parts[index + 1];
 
@@ -208,11 +203,12 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
         factory.generateLocator(base, 'frame-locator', selectorPart),
       ]
 
-      if (locatorPartWithEngine)
+      if (locatorPartWithEngine) {
         options.push(
           factory.chainLocators([locatorPartWithEngine, contentFrame]),
           factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [part] }, /* forceEngineName */ true)),
         )
+      }
 
       tokens.push(options);
       nextBase = 'frame-locator';
