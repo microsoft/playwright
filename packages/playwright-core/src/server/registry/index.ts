@@ -487,7 +487,13 @@ export class Registry {
       _isHermeticInstallation: true,
     });
 
-    const chromiumHeadlessShellDescriptor = { ...chromium, name: 'chromium-headless-shell', dir: chromium.dir.replace(/(.*)(-\d+)$/, '$1-headless-shell$2') };
+    const chromiumHeadlessShellDescriptor: BrowsersJSONDescriptor = {
+      name: 'chromium-headless-shell',
+      revision: chromium.revision,
+      browserVersion: chromium.browserVersion,
+      dir: chromium.dir.replace(/(.*)(-\d+)$/, '$1-headless-shell$2'),
+      installByDefault: false
+    };
     const chromiumHeadlessShellExecutable = findExecutablePath(chromiumHeadlessShellDescriptor.dir, 'chromium-headless-shell');
     this._executables.push({
       type: 'browser',
