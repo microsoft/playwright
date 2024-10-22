@@ -23,6 +23,9 @@ const zipjs = zipImport as typeof zip;
 
 type Progress = (done: number, total: number) => undefined;
 
+const searchParams = new URL(self.location.href).searchParams;
+const testServerPort = searchParams.get('testServerPort');
+
 export class ZipTraceModelBackend implements TraceModelBackend {
   private _zipReader: zip.ZipReader<unknown>;
   private _entriesPromise: Promise<Map<string, zip.Entry>>;
@@ -32,9 +35,9 @@ export class ZipTraceModelBackend implements TraceModelBackend {
     this._traceURL = traceURL;
 
     const baseURL = new URL(self.location.href);
-    if (baseURL.searchParams.has('testServerPort')) {
+    if (testServerPort) {
       baseURL.pathname = '/trace/';
-      baseURL.port = baseURL.searchParams.get('testServerPort')!;
+      baseURL.port = testServerPort;
     }
 
     const url = new URL(formatUrl(traceURL), baseURL);
@@ -94,7 +97,7 @@ export class FetchTraceModelBackend implements TraceModelBackend {
 
   constructor(traceURL: string) {
     this._traceURL = traceURL;
-    this._entriesPromise = fetch('/trace/file?path=' + encodeURIComponent(traceURL)).then(async response => {
+    this._entriesPromise = this._fetchFile(traceURL).then(async response => {
       const json = JSON.parse(await response.text());
       const entries = new Map<string, string>();
       for (const entry of json.entries)
@@ -136,7 +139,16 @@ export class FetchTraceModelBackend implements TraceModelBackend {
     const fileName = entries.get(entryName);
     if (!fileName)
       return;
-    return fetch('/trace/file?path=' + encodeURIComponent(fileName));
+
+    return this._fetchFile(fileName);
+  }
+
+  private async _fetchFile(path: string) {
+    const url = new URL('/trace/file', self.location.href);
+    url.searchParams.set('path', path);
+    if (testServerPort)
+      url.port = testServerPort;
+    return fetch(url);
   }
 }
 
