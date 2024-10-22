@@ -306,6 +306,16 @@ steps.push({
   concurrent: true,
 });
 
+// web packages dev server
+if (watchMode) {
+  steps.push({
+    command: 'npx',
+    args: ['vite', '--port', '5781'],
+    shell: true,
+    cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
+    concurrent: true,
+  });
+}
 
 // Generate injected.
 onChanges.push({
