@@ -439,7 +439,7 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
         }
 
 
-        if (isTopFrame) {
+        if (!isTopFrame) {
           for (const canvas of canvasElements) {
             const context = canvas.getContext('2d')!;
             drawCheckerboard(context, canvas);

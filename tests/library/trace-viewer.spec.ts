@@ -1461,7 +1461,7 @@ test('canvas clipping in iframe', async ({ runAndTrace, page, server }) => {
     await rafraf(page, 5);
   });
 
-  const snapshot = await traceViewer.snapshotFrame('page.waitForTimeout');
+  const snapshot = await traceViewer.snapshotFrame('page.evaluate');
   const canvas = snapshot.locator('iframe').contentFrame().locator('canvas');
   await expect(canvas).toHaveAttribute('title', `Playwright displays canvas contents on a best-effort basis. It doesn't support canvas elements inside an iframe yet. If this impacts your workflow, please open an issue so we can prioritize.`);
 });
