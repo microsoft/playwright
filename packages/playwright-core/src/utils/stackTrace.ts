@@ -16,7 +16,6 @@
 
 import path from 'path';
 import { parseStackTraceLine } from '../utilsBundle';
-import { isUnderTest } from './';
 import type { StackFrame } from '@protocol/channels';
 import { colors } from '../utilsBundle';
 import { findRepeatedSubsequences } from './sequence';
