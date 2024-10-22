@@ -56,6 +56,11 @@ const EXECUTABLE_PATHS = {
     'mac': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
     'win': ['chrome-win', 'chrome.exe'],
   },
+  'chromium-headless-shell': {
+    'linux': ['chrome-linux', 'headless_shell'],
+    'mac': ['chrome-mac', 'headless_shell'],
+    'win': ['chrome-win', 'headless_shell.exe'],
+  },
   'firefox': {
     'linux': ['firefox', 'firefox'],
     'mac': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
@@ -103,6 +108,35 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
     'mac15': 'builds/chromium/%s/chromium-mac.zip',
     'mac15-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
     'win64': 'builds/chromium/%s/chromium-win64.zip',
+  },
+  'chromium-headless-shell': {
+    '<unknown>': undefined,
+    'ubuntu18.04-x64': undefined,
+    'ubuntu20.04-x64': 'builds/chromium/%s/chromium-headless-shell-linux.zip',
+    'ubuntu22.04-x64': 'builds/chromium/%s/chromium-headless-shell-linux.zip',
+    'ubuntu24.04-x64': 'builds/chromium/%s/chromium-headless-shell-linux.zip',
+    'ubuntu18.04-arm64': undefined,
+    'ubuntu20.04-arm64': 'builds/chromium/%s/chromium-headless-shell-linux-arm64.zip',
+    'ubuntu22.04-arm64': 'builds/chromium/%s/chromium-headless-shell-linux-arm64.zip',
+    'ubuntu24.04-arm64': 'builds/chromium/%s/chromium-headless-shell-linux-arm64.zip',
+    'debian11-x64': 'builds/chromium/%s/chromium-headless-shell-linux.zip',
+    'debian11-arm64': 'builds/chromium/%s/chromium-headless-shell-linux-arm64.zip',
+    'debian12-x64': 'builds/chromium/%s/chromium-headless-shell-linux.zip',
+    'debian12-arm64': 'builds/chromium/%s/chromium-headless-shell-linux-arm64.zip',
+    'mac10.13': 'builds/chromium/%s/chromium-headless-shell-mac.zip',
+    'mac10.14': 'builds/chromium/%s/chromium-headless-shell-mac.zip',
+    'mac10.15': 'builds/chromium/%s/chromium-headless-shell-mac.zip',
+    'mac11': 'builds/chromium/%s/chromium-headless-shell-mac.zip',
+    'mac11-arm64': 'builds/chromium/%s/chromium-headless-shell-mac-arm64.zip',
+    'mac12': 'builds/chromium/%s/chromium-headless-shell-mac.zip',
+    'mac12-arm64': 'builds/chromium/%s/chromium-headless-shell-mac-arm64.zip',
+    'mac13': 'builds/chromium/%s/chromium-headless-shell-mac.zip',
+    'mac13-arm64': 'builds/chromium/%s/chromium-headless-shell-mac-arm64.zip',
+    'mac14': 'builds/chromium/%s/chromium-headless-shell-mac.zip',
+    'mac14-arm64': 'builds/chromium/%s/chromium-headless-shell-mac-arm64.zip',
+    'mac15': 'builds/chromium/%s/chromium-headless-shell-mac.zip',
+    'mac15-arm64': 'builds/chromium/%s/chromium-headless-shell-mac-arm64.zip',
+    'win64': 'builds/chromium/%s/chromium-headless-shell-win64.zip',
   },
   'chromium-tip-of-tree': {
     '<unknown>': undefined,
@@ -367,7 +401,7 @@ function readDescriptors(browsersJSON: BrowsersJSON) {
 }
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit' | 'bidi';
-type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-tip-of-tree' | 'android';
+type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-tip-of-tree' | 'chromium-headless-shell' |'android';
 type BidiChannel = 'bidi-firefox-stable' | 'bidi-firefox-beta' | 'bidi-firefox-nightly' | 'bidi-chrome-canary' | 'bidi-chrome-stable' | 'bidi-chromium';
 type ChromiumChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
 const allDownloadable = ['chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-tip-of-tree'];
@@ -449,6 +483,24 @@ export class Registry {
       downloadURLs: this._downloadURLs(chromium),
       browserVersion: chromium.browserVersion,
       _install: () => this._downloadExecutable(chromium, chromiumExecutable),
+      _dependencyGroup: 'chromium',
+      _isHermeticInstallation: true,
+    });
+
+    const chromiumHeadlessShell = descriptors.find(d => d.name === 'chromium')!;
+    const chromiumHeadlessShellExecutable = findExecutablePath(chromiumHeadlessShell.dir, 'chromium-headless-shell');
+    this._executables.push({
+      type: 'browser',
+      name: 'chromium-headless-shell',
+      browserName: 'chromium',
+      directory: chromiumHeadlessShell.dir,
+      executablePath: () => chromiumHeadlessShellExecutable,
+      executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium', chromiumHeadlessShellExecutable, chromium.installByDefault, sdkLanguage),
+      installType: chromium.installByDefault ? 'download-by-default' : 'download-on-demand',
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, 'chromium', chromium.dir, ['chrome-linux'], [], ['chrome-win']),
+      downloadURLs: this._downloadURLs(chromium),
+      browserVersion: chromium.browserVersion,
+      _install: () => this._downloadExecutable(chromium, chromiumHeadlessShellExecutable),
       _dependencyGroup: 'chromium',
       _isHermeticInstallation: true,
     });
