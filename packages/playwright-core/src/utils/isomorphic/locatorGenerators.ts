@@ -160,17 +160,17 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
     if (part.name === 'internal:control' && (part.body as string) === 'enter-frame') {
       const lastTokens = tokens[tokens.length - 1];
       const lastPart = parts[index - 1];
-  
+
       const extendedTokens = lastTokens.map(token =>
         factory.chainLocators([token, factory.generateLocator(base, 'frame', '')])
       );
       extendedTokens.push(
-        factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [lastPart] }))
+          factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [lastPart] }))
       );
       if (['xpath', 'css'].includes(lastPart.name))
         extendedTokens.push(factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [lastPart] }, true)));
 
-      lastTokens.splice(0, lastTokens.length, ...extendedTokens)
+      lastTokens.splice(0, lastTokens.length, ...extendedTokens);
       nextBase = 'frame-locator';
       continue;
     }
@@ -357,8 +357,8 @@ export class PythonLocatorFactory implements LocatorFactory {
         if (options.hasNotText !== undefined)
           return `locator(${this.quote(body as string)}, has_not_text=${this.toHasText(options.hasNotText)})`;
         return `locator(${this.quote(body as string)})`;
-        case 'frame-locator':
-          return `frame_locator(${this.quote(body as string)})`;
+      case 'frame-locator':
+        return `frame_locator(${this.quote(body as string)})`;
       case 'frame':
         return `content_frame`;
       case 'nth':
