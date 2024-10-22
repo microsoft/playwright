@@ -157,6 +157,23 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
         continue;
       }
     }
+    if (part.name === 'internal:control' && (part.body as string) === 'enter-frame') {
+      const lastTokens = tokens[tokens.length - 1];
+      const lastPart = parts[index - 1];
+  
+      const extendedTokens = lastTokens.map(token =>
+        factory.chainLocators([token, factory.generateLocator(base, 'frame', '')])
+      );
+      extendedTokens.push(
+        factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [lastPart] }))
+      );
+      if (['xpath', 'css'].includes(lastPart.name))
+        extendedTokens.push(factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [lastPart] }, true)));
+
+      lastTokens.splice(0, lastTokens.length, ...extendedTokens)
+      nextBase = 'frame-locator';
+      continue;
+    }
 
     const nextPart = parts[index + 1];
 
@@ -188,32 +205,6 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
     if (['xpath', 'css'].includes(part.name)) {
       const selectorPart = stringifySelector({ parts: [part] }, /* forceEngineName */ true);
       locatorPartWithEngine = factory.generateLocator(base, 'default', selectorPart);
-    }
-
-    if (nextPart && nextPart.name === 'internal:control' && (nextPart.body as string) === 'enter-frame') {
-      // two options plus engine name:
-      // - locator('iframe').contentFrame()
-      // - locator('css|xpath=iframe').contentFrame()
-      // - frameLocator('iframe')
-      // - frameLocator('css|xpath=iframe')
-
-      const contentFrame = factory.generateLocator(base, 'frame', '')
-      const options = [
-        factory.chainLocators([locatorPart, contentFrame]),
-        factory.generateLocator(base, 'frame-locator', selectorPart),
-      ]
-
-      if (locatorPartWithEngine) {
-        options.push(
-          factory.chainLocators([locatorPartWithEngine, contentFrame]),
-          factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [part] }, /* forceEngineName */ true)),
-        )
-      }
-
-      tokens.push(options);
-      nextBase = 'frame-locator';
-      index++;
-      continue;
     }
 
     tokens.push([locatorPart, locatorPartWithEngine].filter(Boolean) as string[]);
