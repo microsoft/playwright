@@ -23,12 +23,6 @@ import { resolveReporterOutputPath } from '../util';
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
 
-type Annotation = {
-  title: string;
-  message: string;
-  location?: Location;
-};
-
 type ErrorDetails = {
   message: string;
   location?: Location;
@@ -260,9 +254,7 @@ export class BaseReporter implements ReporterV2 {
   private _printFailures(failures: TestCase[]) {
     console.log('');
     failures.forEach((test, index) => {
-      console.log(formatFailure(this.config, test, {
-        index: index + 1,
-      }).message);
+      console.log(formatFailure(this.config, test, index + 1));
     });
   }
 
@@ -285,14 +277,8 @@ export class BaseReporter implements ReporterV2 {
   }
 }
 
-export function formatFailure(config: FullConfig, test: TestCase, options: {index?: number, includeStdio?: boolean, includeAttachments?: boolean} = {}): {
-  message: string,
-  annotations: Annotation[]
-} {
-  const { index, includeStdio, includeAttachments = true } = options;
+export function formatFailure(config: FullConfig, test: TestCase, index?: number): string {
   const lines: string[] = [];
-  const title = formatTestTitle(config, test);
-  const annotations: Annotation[] = [];
   const header = formatTestHeader(config, test, { indent: '  ', index, mode: 'error' });
   lines.push(colors.red(header));
   for (const result of test.results) {
@@ -307,62 +293,48 @@ export function formatFailure(config: FullConfig, test: TestCase, options: {inde
     }
     resultLines.push(...retryLines);
     resultLines.push(...errors.map(error => '\n' + error.message));
-    if (includeAttachments) {
-      for (let i = 0; i < result.attachments.length; ++i) {
-        const attachment = result.attachments[i];
-        const hasPrintableContent = attachment.contentType.startsWith('text/');
-        if (!attachment.path && !hasPrintableContent)
-          continue;
-        resultLines.push('');
-        resultLines.push(colors.cyan(separator(`    attachment #${i + 1}: ${attachment.name} (${attachment.contentType})`)));
-        if (attachment.path) {
-          const relativePath = path.relative(process.cwd(), attachment.path);
-          resultLines.push(colors.cyan(`    ${relativePath}`));
-          // Make this extensible
-          if (attachment.name === 'trace') {
-            const packageManagerCommand = getPackageManagerExecCommand();
-            resultLines.push(colors.cyan(`    Usage:`));
-            resultLines.push('');
-            resultLines.push(colors.cyan(`        ${packageManagerCommand} playwright show-trace ${quotePathIfNeeded(relativePath)}`));
-            resultLines.push('');
-          }
-        } else {
-          if (attachment.contentType.startsWith('text/') && attachment.body) {
-            let text = attachment.body.toString();
-            if (text.length > 300)
-              text = text.slice(0, 300) + '...';
-            for (const line of text.split('\n'))
-              resultLines.push(colors.cyan(`    ${line}`));
-          }
-        }
-        resultLines.push(colors.cyan(separator('   ')));
-      }
-    }
-    const output = ((result as any)[kOutputSymbol] || []) as TestResultOutput[];
-    if (includeStdio && output.length) {
-      const outputText = output.map(({ chunk, type }) => {
-        const text = chunk.toString('utf8');
-        if (type === 'stderr')
-          return colors.red(stripAnsiEscapes(text));
-        return text;
-      }).join('');
+    for (let i = 0; i < result.attachments.length; ++i) {
+      const attachment = result.attachments[i];
+      const hasPrintableContent = attachment.contentType.startsWith('text/');
+      if (!attachment.path && !hasPrintableContent)
+        continue;
       resultLines.push('');
-      resultLines.push(colors.gray(separator('--- Test output')) + '\n\n' + outputText + '\n' + separator());
-    }
-    for (const error of errors) {
-      annotations.push({
-        location: error.location,
-        title,
-        message: [header, ...retryLines, error.message].join('\n'),
-      });
+      resultLines.push(colors.cyan(separator(`    attachment #${i + 1}: ${attachment.name} (${attachment.contentType})`)));
+      if (attachment.path) {
+        const relativePath = path.relative(process.cwd(), attachment.path);
+        resultLines.push(colors.cyan(`    ${relativePath}`));
+        // Make this extensible
+        if (attachment.name === 'trace') {
+          const packageManagerCommand = getPackageManagerExecCommand();
+          resultLines.push(colors.cyan(`    Usage:`));
+          resultLines.push('');
+          resultLines.push(colors.cyan(`        ${packageManagerCommand} playwright show-trace ${quotePathIfNeeded(relativePath)}`));
+          resultLines.push('');
+        }
+      } else {
+        if (attachment.contentType.startsWith('text/') && attachment.body) {
+          let text = attachment.body.toString();
+          if (text.length > 300)
+            text = text.slice(0, 300) + '...';
+          for (const line of text.split('\n'))
+            resultLines.push(colors.cyan(`    ${line}`));
+        }
+      }
+      resultLines.push(colors.cyan(separator('   ')));
     }
     lines.push(...resultLines);
   }
   lines.push('');
-  return {
-    message: lines.join('\n'),
-    annotations
-  };
+  return lines.join('\n');
+}
+
+export function formatRetry(result: TestResult) {
+  const retryLines = [];
+  if (result.retry) {
+    retryLines.push('');
+    retryLines.push(colors.gray(separator(`    Retry #${result.retry}`)));
+  }
+  return retryLines;
 }
 
 function quotePathIfNeeded(path: string): string {
@@ -428,7 +400,7 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
   return `${projectTitle}${location} › ${titles.join(' › ')}${stepSuffix(step)}${tags}`;
 }
 
-function formatTestHeader(config: FullConfig, test: TestCase, options: { indent?: string, index?: number, mode?: 'default' | 'error' } = {}): string {
+export function formatTestHeader(config: FullConfig, test: TestCase, options: { indent?: string, index?: number, mode?: 'default' | 'error' } = {}): string {
   const title = formatTestTitle(config, test);
   const header = `${options.indent || ''}${options.index ? options.index + ') ' : ''}${title}`;
   let fullHeader = header;

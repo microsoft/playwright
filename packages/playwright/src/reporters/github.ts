@@ -16,7 +16,7 @@
 
 import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import path from 'path';
-import { BaseReporter, formatError, formatFailure, stripAnsiEscapes } from './base';
+import { BaseReporter, colors, formatError, formatResultFailure, formatRetry, formatTestHeader, formatTestTitle, stripAnsiEscapes } from './base';
 import type { TestCase, FullResult, TestError } from '../../types/testReporter';
 
 type GitHubLogType = 'debug' | 'notice' | 'warning' | 'error';
@@ -100,22 +100,23 @@ export class GitHubReporter extends BaseReporter {
 
   private _printFailureAnnotations(failures: TestCase[]) {
     failures.forEach((test, index) => {
-      const { annotations } = formatFailure(this.config, test, {
-        index: index + 1,
-        includeStdio: true,
-        includeAttachments: false,
-      });
-      annotations.forEach(({ location, title, message }) => {
-        const options: GitHubLogOptions = {
-          file: workspaceRelativePath(location?.file || test.location.file),
-          title,
-        };
-        if (location) {
-          options.line = location.line;
-          options.col = location.column;
+      const title = formatTestTitle(this.config, test);
+      const header = formatTestHeader(this.config, test, { indent: '  ', index: index + 1, mode: 'error' });
+      for (const result of test.results) {
+        const errors = formatResultFailure(test, result, '    ', colors.enabled);
+        for (const error of errors) {
+          const options: GitHubLogOptions = {
+            file: workspaceRelativePath(error.location?.file || test.location.file),
+            title,
+          };
+          if (error.location) {
+            options.line = error.location.line;
+            options.col = error.location.column;
+          }
+          const message = [header, ...formatRetry(result), error.message].join('\n');
+          this.githubLogger.error(message, options);
         }
-        this.githubLogger.error(message, options);
-      });
+      }
     });
   }
 }
