@@ -359,8 +359,10 @@ export const deps: any = {
       'libx264-163',
       'libatomic1',
       'libevent-2.1-7',
+      'libavif13',
     ],
     lib2package: {
+      'libavif.so.13': 'libavif13',
       'libsoup-3.0.so.0': 'libsoup-3.0-0',
       'libasound.so.2': 'libasound2',
       'libatk-1.0.so.0': 'libatk1.0-0',
@@ -566,9 +568,11 @@ export const deps: any = {
       'libxkbcommon0',
       'libxml2',
       'libxslt1.1',
-      'libx264-164'
+      'libx264-164',
+      'libavif16',
     ],
     lib2package: {
+      'libavif.so.16': 'libavif16',
       'libasound.so.2': 'libasound2t64',
       'libatk-1.0.so.0': 'libatk1.0-0t64',
       'libatk-bridge-2.0.so.0': 'libatk-bridge2.0-0t64',
@@ -994,8 +998,10 @@ export const deps: any = {
       'libxslt1.1',
       'libatomic1',
       'libevent-2.1-7',
+      'libavif15',
     ],
     lib2package: {
+      'libavif.so.15': 'libavif15',
       'libsoup-3.0.so.0': 'libsoup-3.0-0',
       'libasound.so.2': 'libasound2',
       'libatk-1.0.so.0': 'libatk1.0-0',

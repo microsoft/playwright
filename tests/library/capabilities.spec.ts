@@ -400,7 +400,7 @@ it('should be able to render avif images', {
   }
 }, async ({ page, server, browserName, platform }) => {
   it.fixme(browserName === 'webkit' && platform === 'win32');
-  it.fixme(browserName === 'webkit' && platform === 'linux', 'https://github.com/microsoft/playwright/issues/32673');
+  it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'Ubuntu 20.04 is frozen');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<img src="${server.PREFIX}/rgb.avif" onerror="window.error = true">`);
   await expect.poll(() => page.locator('img').boundingBox()).toEqual(expect.objectContaining({
