@@ -27,7 +27,7 @@ import { WorkbenchLoader } from './ui/workbenchLoader';
       await new Promise(f => setTimeout(f, 1000));
     if (!navigator.serviceWorker)
       throw new Error(`Service workers are not supported.\nMake sure to serve the Trace Viewer (${window.location}) via HTTPS or localhost.`);
-    navigator.serviceWorker.register('sw.bundle.js');
+    navigator.serviceWorker.register('sw.bundle.js' + window.location.search);
     if (!navigator.serviceWorker.controller) {
       await new Promise<void>(f => {
         navigator.serviceWorker.oncontrollerchange = () => f();
