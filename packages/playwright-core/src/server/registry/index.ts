@@ -496,7 +496,7 @@ export class Registry {
     };
     const chromiumHeadlessShellExecutable = findExecutablePath(chromiumHeadlessShellDescriptor.dir, 'chromium-headless-shell');
     this._executables.push({
-      type: 'browser',
+      type: 'tool',
       name: 'chromium-headless-shell',
       browserName: 'chromium',
       directory: chromiumHeadlessShellDescriptor.dir,
