@@ -124,7 +124,7 @@ export function createHttpsServer(...args: any[]): https.Server {
   return server;
 }
 
-export function createHttp2Server(  onRequestHandler?: (request: http2.Http2ServerRequest, response: http2.Http2ServerResponse) => void,): http2.Http2SecureServer;
+export function createHttp2Server(onRequestHandler?: (request: http2.Http2ServerRequest, response: http2.Http2ServerResponse) => void,): http2.Http2SecureServer;
 export function createHttp2Server(options: http2.SecureServerOptions, onRequestHandler?: (request: http2.Http2ServerRequest, response: http2.Http2ServerResponse) => void,): http2.Http2SecureServer;
 export function createHttp2Server(...args: any[]): http2.Http2SecureServer {
   const server = http2.createSecureServer(...args);

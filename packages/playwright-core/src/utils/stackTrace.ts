@@ -51,7 +51,6 @@ export function captureRawStack(): RawStack {
 export function captureLibraryStackTrace(): { frames: StackFrame[], apiName: string } {
   const stack = captureRawStack();
 
-  const isTesting = isUnderTest();
   type ParsedFrame = {
     frame: StackFrame;
     frameText: string;
