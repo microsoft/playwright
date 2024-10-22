@@ -25,6 +25,7 @@ import 'codemirror-shadow-1/mode/python/python';
 import 'codemirror-shadow-1/mode/clike/clike';
 import 'codemirror-shadow-1/mode/markdown/markdown';
 import 'codemirror-shadow-1/addon/mode/simple';
+import 'codemirror-shadow-1/mode/yaml/yaml';
 
 export type CodeMirror = typeof codemirrorType;
 export default codemirror;

@@ -53,7 +53,7 @@ export function generateAriaTree(rootElement: Element): AriaNode {
       return;
 
     const element = node as Element;
-    if (roleUtils.isElementIgnoredForAria(element))
+    if (roleUtils.isElementHiddenForAria(element))
       return;
 
     const visible = isElementVisible(element);
@@ -281,7 +281,7 @@ export function renderAriaTree(ariaNode: AriaNode, options?: { noText?: boolean 
   const visit = (ariaNode: AriaNode | string, indent: string) => {
     if (typeof ariaNode === 'string') {
       if (!options?.noText)
-        lines.push(indent + '- text: ' + escapeYamlString(ariaNode));
+        lines.push(indent + '- text: ' + quoteYamlString(ariaNode));
       return;
     }
     let line = `${indent}- ${ariaNode.role}`;
@@ -308,7 +308,7 @@ export function renderAriaTree(ariaNode: AriaNode, options?: { noText?: boolean 
     const stringValue = !ariaNode.children.length || (ariaNode.children?.length === 1 && typeof ariaNode.children[0] === 'string');
     if (stringValue) {
       if (!options?.noText && ariaNode.children.length)
-        line += ': ' + escapeYamlString(ariaNode.children?.[0] as string);
+        line += ': ' + quoteYamlString(ariaNode.children?.[0] as string);
       lines.push(line);
       return;
     }
@@ -328,36 +328,10 @@ export function renderAriaTree(ariaNode: AriaNode, options?: { noText?: boolean 
   return lines.join('\n');
 }
 
-function escapeYamlString(str: string) {
-  if (str === '')
-    return '""';
-
-  const needQuotes = (
-    // Starts or ends with whitespace
-    /^\s|\s$/.test(str) ||
-    // Contains control characters
-    /[\x00-\x1f]/.test(str) ||
-    // Contains special YAML characters that could cause parsing issues
-    /[\[\]{}&*!,|>%@`]/.test(str) ||
-    // Contains a colon followed by a space (could be interpreted as a key-value pair)
-    /:\s/.test(str) ||
-    // Is a YAML boolean or null value
-    /^(?:y|Y|yes|Yes|YES|n|N|no|No|NO|true|True|TRUE|false|False|FALSE|null|Null|NULL|~)$/.test(str) ||
-    // Could be interpreted as a number
-    /^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/.test(str) ||
-    // Contains a newline character
-    /\n/.test(str) ||
-    // Starts with a special character
-    /^[\-?:,>|%@"`]/.test(str)
-  );
-
-  if (needQuotes) {
-    return `"${str
-        .replace(/\\/g, '\\\\')
-        .replace(/"/g, '\\"')
-        .replace(/\n/g, '\\n')
-        .replace(/\r/g, '\\r')}"`;
-  }
-
-  return str;
+function quoteYamlString(str: string) {
+  return `"${str
+      .replace(/\\/g, '\\\\')
+      .replace(/"/g, '\\"')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r')}"`;
 }

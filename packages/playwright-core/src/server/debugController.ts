@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Mode, Source } from '@recorder/recorderTypes';
+import type { ElementInfo, Mode, Source } from '@recorder/recorderTypes';
 import { gracefullyProcessExitDoNotHang } from '../utils/processLauncher';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
@@ -221,9 +221,9 @@ class InspectingRecorderApp extends EmptyRecorderApp {
     this._debugController = debugController;
   }
 
-  override async setSelector(selector: string): Promise<void> {
-    const locator: string = asLocator(this._debugController._sdkLanguage, selector);
-    this._debugController.emit(DebugController.Events.InspectRequested, { selector, locator });
+  override async elementPicked(elementInfo: ElementInfo): Promise<void> {
+    const locator: string = asLocator(this._debugController._sdkLanguage, elementInfo.selector);
+    this._debugController.emit(DebugController.Events.InspectRequested, { selector: elementInfo.selector, locator });
   }
 
   override async setSources(sources: Source[]): Promise<void> {
