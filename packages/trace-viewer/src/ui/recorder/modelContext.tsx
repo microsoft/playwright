@@ -58,6 +58,7 @@ export const ModelProvider: React.FunctionComponent<React.PropsWithChildren<{
 async function loadSingleTraceFile(url: string): Promise<{ model: MultiTraceModel, sha1: string }> {
   const params = new URLSearchParams();
   params.set('trace', url);
+  params.set('limit', '1');
   const response = await fetch(`contexts?${params.toString()}`);
   const contextEntries = await response.json() as ContextEntry[];
 
