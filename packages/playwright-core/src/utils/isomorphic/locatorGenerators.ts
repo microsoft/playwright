@@ -164,11 +164,12 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       const extendedTokens = lastTokens.map(token =>
         factory.chainLocators([token, factory.generateLocator(base, 'frame', '')])
       );
-      extendedTokens.push(
-          factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [lastPart] }))
-      );
-      if (['xpath', 'css'].includes(lastPart.name))
-        extendedTokens.push(factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [lastPart] }, true)));
+      if (['xpath', 'css'].includes(lastPart.name)) {
+        extendedTokens.push(
+            factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [lastPart] })),
+            factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [lastPart] }, true))
+        );
+      }
 
       lastTokens.splice(0, lastTokens.length, ...extendedTokens);
       nextBase = 'frame-locator';
