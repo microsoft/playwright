@@ -145,5 +145,5 @@ function formatUrl(trace: string) {
 
   const url = new URL('/trace/file', baseURL);
   url.searchParams.set('path', trace);
-  return url;
+  return url.toString();
 }
