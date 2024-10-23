@@ -55,8 +55,7 @@ export const Workbench: React.FunctionComponent<{
   openPage?: (url: string, target?: string) => Window | any,
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
-  showSettings?: boolean,
-}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, openPage, onOpenExternally, revealSource, showSettings }) => {
+}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, openPage, onOpenExternally, revealSource }) => {
   const [selectedCallId, setSelectedCallId] = React.useState<string | undefined>(undefined);
   const [revealedError, setRevealedError] = React.useState<ErrorDescription | undefined>(undefined);
   const [highlightedCallId, setHighlightedCallId] = React.useState<string | undefined>();
