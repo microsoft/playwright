@@ -442,7 +442,7 @@ export const UIModeView: React.FC<{}> = ({
       sidebar={<div className='vbox ui-mode-sidebar'>
         <Toolbar noShadow={true} noMinHeight={true}>
           <img src='playwright-logo.svg' alt='Playwright logo' />
-          <div className='section-title'>Playwright</div>
+          <div className='section-title'>Claywright</div>
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
           <div style={{ position: 'relative' }}>
             <ToolbarButton icon={'terminal'} title={'Toggle output — ' + (isMac ? '⌃`' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
@@ -518,10 +518,11 @@ export const UIModeView: React.FC<{}> = ({
             style={{ marginLeft: 5 }}
             title={settingsVisible ? 'Hide Settings' : 'Show Settings'}
           />
-          <div className='section-title'>Settings</div>
+          <div className='section-title'>Schmettings</div>
         </Toolbar>
         {settingsVisible && <SettingsView settings={[
           { value: darkMode, set: setDarkMode, title: 'Dark mode' },
+          { value: darkMode, set: setDarkMode, title: 'Art mode' },
         ]} />}
       </div>
       }
