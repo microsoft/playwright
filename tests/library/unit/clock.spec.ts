@@ -15,8 +15,8 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { createClock as rawCreateClock, install as rawInstall } from '../../packages/playwright-core/src/server/injected/clock';
-import type { InstallConfig, ClockController, ClockMethods } from '../../packages/playwright-core/src/server/injected/clock';
+import { createClock as rawCreateClock, install as rawInstall } from '../../../packages/playwright-core/src/server/injected/clock';
+import type { InstallConfig, ClockController, ClockMethods } from '../../../packages/playwright-core/src/server/injected/clock';
 
 const createClock = (now?: number): ClockController & ClockMethods => {
   const { clock, api } = rawCreateClock(globalThis);
