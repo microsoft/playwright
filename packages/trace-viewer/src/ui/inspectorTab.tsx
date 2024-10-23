@@ -22,16 +22,15 @@ import * as React from 'react';
 import './sourceTab.css';
 
 export const InspectorTab: React.FunctionComponent<{
-  showScreenshot: boolean,
   sdkLanguage: Language,
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedLocator: string,
   setHighlightedLocator: (locator: string) => void,
-}> = ({ showScreenshot, sdkLanguage, setIsInspecting, highlightedLocator, setHighlightedLocator }) => {
+}> = ({ sdkLanguage, setIsInspecting, highlightedLocator, setHighlightedLocator }) => {
   return <div className='vbox' style={{ backgroundColor: 'var(--vscode-sideBar-background)' }}>
     <div style={{ margin: '10px 0px 10px 10px', color: 'var(--vscode-editorCodeLens-foreground)', flex: 'none' }}>Locator</div>
     <div style={{ margin: '0 10px 10px', flex: 'auto' }}>
-      <CodeMirrorWrapper text={showScreenshot ? '/* disable "show screenshot" setting to pick locator */' : highlightedLocator} language={sdkLanguage} focusOnChange={true} isFocused={true} wrapLines={true} onChange={text => {
+      <CodeMirrorWrapper text={highlightedLocator} language={sdkLanguage} focusOnChange={true} isFocused={true} wrapLines={true} onChange={text => {
         // Updating text needs to go first - react can squeeze a render between the state updates.
         setHighlightedLocator(text);
         setIsInspecting(false);

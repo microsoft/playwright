@@ -17,7 +17,7 @@
 import './snapshotTab.css';
 import * as React from 'react';
 import type { ActionTraceEvent } from '@trace/trace';
-import { context, type MultiTraceModel, pageForAction, prevInList } from './modelUtil';
+import { context, type MultiTraceModel, prevInList } from './modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { clsx, useMeasure } from '@web/uiUtils';
@@ -29,17 +29,7 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { TabbedPaneTab } from '@web/components/tabbedPane';
 import { BrowserFrame } from './browserFrame';
-import { ClickPointer } from './clickPointer';
 import type { ElementInfo } from '@recorder/recorderTypes';
-
-function findClosest<T>(items: T[], metric: (v: T) => number, target: number) {
-  return items.find((item, index) => {
-    if (index === items.length - 1)
-      return true;
-    const next = items[index + 1];
-    return Math.abs(metric(item) - target) < Math.abs(metric(next) - target);
-  });
-}
 
 export const SnapshotTabsView: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
@@ -53,7 +43,6 @@ export const SnapshotTabsView: React.FunctionComponent<{
   openPage?: (url: string, target?: string) => Window | any,
 }> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator, openPage }) => {
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
-  const showScreenshotInsteadOfSnapshot = false;
 
   const snapshots = React.useMemo(() => {
     return collectSnapshots(action);
@@ -65,7 +54,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
 
   return <div className='snapshot-tab vbox'>
     <Toolbar>
-      <ToolbarButton className='pick-locator' title={showScreenshotInsteadOfSnapshot ? 'Disable "screenshots instead of snapshots" to pick a locator' : 'Pick locator'} icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} disabled={showScreenshotInsteadOfSnapshot} />
+      <ToolbarButton className='pick-locator' title='Pick locator' icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} />
       {['action', 'before', 'after'].map(tab => {
         return <TabbedPaneTab
           key={tab}
@@ -76,7 +65,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
         ></TabbedPaneTab>;
       })}
       <div style={{ flex: 'auto' }}></div>
-      <ToolbarButton icon='link-external' title={showScreenshotInsteadOfSnapshot ? 'Not available when showing screenshot' : 'Open snapshot in a new tab'} disabled={!snapshotUrls?.popoutUrl || showScreenshotInsteadOfSnapshot} onClick={() => {
+      <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!snapshotUrls?.popoutUrl} onClick={() => {
         if (!openPage)
           openPage = window.open;
         const win = openPage(snapshotUrls?.popoutUrl || '', '_blank');
@@ -86,7 +75,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
         });
       }} />
     </Toolbar>
-    {!showScreenshotInsteadOfSnapshot && <SnapshotView
+    <SnapshotView
       snapshotUrls={snapshotUrls}
       sdkLanguage={sdkLanguage}
       testIdAttributeName={testIdAttributeName}
@@ -94,11 +83,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
       setIsInspecting={setIsInspecting}
       highlightedLocator={highlightedLocator}
       setHighlightedLocator={setHighlightedLocator}
-    />}
-    {showScreenshotInsteadOfSnapshot && <ScreenshotView
-      action={action}
-      snapshotUrls={snapshotUrls}
-      snapshot={snapshots[snapshotTab]} />}
+    />
   </div>;
 };
 
@@ -192,38 +177,6 @@ export const SnapshotView: React.FunctionComponent<{
       </div>
     </SnapshotWrapper>
   </div>;
-};
-
-export const ScreenshotView: React.FunctionComponent<{
-  action: ActionTraceEvent | undefined,
-  snapshotUrls: SnapshotUrls | undefined,
-  snapshot: Snapshot | undefined,
-}> = ({ action, snapshotUrls, snapshot }) => {
-  const [snapshotInfo, setSnapshotInfo] = React.useState<SnapshotInfo>({ viewport: kDefaultViewport, url: '' });
-  React.useEffect(() => {
-    fetchSnapshotInfo(snapshotUrls?.snapshotInfoUrl).then(setSnapshotInfo);
-  }, [snapshotUrls?.snapshotInfoUrl]);
-
-  const page = action ? pageForAction(action) : undefined;
-  const screencastFrame = React.useMemo(() => {
-    if (snapshotInfo.wallTime && page?.screencastFrames[0]?.frameSwapWallTime)
-      return findClosest(page.screencastFrames, frame => frame.frameSwapWallTime!, snapshotInfo.wallTime);
-
-    if (snapshotInfo.timestamp && page?.screencastFrames)
-      return findClosest(page.screencastFrames, frame => frame.timestamp, snapshotInfo.timestamp);
-  },
-  [page?.screencastFrames, snapshotInfo.timestamp, snapshotInfo.wallTime]);
-
-  const point = snapshot?.point;
-
-  return <SnapshotWrapper snapshotInfo={snapshotInfo}>
-    {screencastFrame && (
-      <>
-        {point && <ClickPointer point={point} />}
-        <img alt={`Screenshot of ${action?.apiName}`} src={`sha1/${screencastFrame.sha1}`} width={screencastFrame.width} height={screencastFrame.height} />
-      </>
-    )}
-  </SnapshotWrapper>;
 };
 
 const SnapshotWrapper: React.FunctionComponent<React.PropsWithChildren<{
