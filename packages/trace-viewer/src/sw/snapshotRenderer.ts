@@ -17,6 +17,7 @@
 import { escapeHTMLAttribute, escapeHTML } from '@isomorphic/stringUtils';
 import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from '@trace/snapshot';
 import type { PageEntry } from '../types/entries';
+import type { LRUCache } from './lruCache';
 
 function findClosest<T>(items: T[], metric: (v: T) => number, target: number) {
   return items.find((item, index) => {
@@ -35,35 +36,8 @@ function isSubtreeReferenceSnapshot(n: NodeSnapshot): n is SubtreeReferenceSnaps
   return Array.isArray(n) && Array.isArray(n[0]);
 }
 
-let cacheSize = 0;
-const cache = new Map<SnapshotRenderer, string>();
-const CACHE_SIZE = 300_000_000; // 300mb
-
-function lruCache(key: SnapshotRenderer, compute: () => string): string {
-  if (cache.has(key)) {
-    const value = cache.get(key)!;
-    // reinserting makes this the least recently used entry
-    cache.delete(key);
-    cache.set(key, value);
-    return value;
-  }
-
-
-  const result = compute();
-
-  while (cache.size && cacheSize + result.length > CACHE_SIZE) {
-    const [firstKey, firstValue] = cache.entries().next().value;
-    cacheSize -= firstValue.length;
-    cache.delete(firstKey);
-  }
-
-  cache.set(key, result);
-  cacheSize += result.length;
-
-  return result;
-}
-
 export class SnapshotRenderer {
+  private _htmlCache: LRUCache<SnapshotRenderer, string>;
   private _snapshots: FrameSnapshot[];
   private _index: number;
   readonly snapshotName: string | undefined;
@@ -72,7 +46,8 @@ export class SnapshotRenderer {
   private _callId: string;
   private _screencastFrames: PageEntry['screencastFrames'];
 
-  constructor(resources: ResourceSnapshot[], snapshots: FrameSnapshot[], screencastFrames: PageEntry['screencastFrames'], index: number) {
+  constructor(htmlCache: LRUCache<SnapshotRenderer, string>, resources: ResourceSnapshot[], snapshots: FrameSnapshot[], screencastFrames: PageEntry['screencastFrames'], index: number) {
+    this._htmlCache = htmlCache;
     this._resources = resources;
     this._snapshots = snapshots;
     this._index = index;
@@ -171,16 +146,15 @@ export class SnapshotRenderer {
     };
 
     const snapshot = this._snapshot;
-    const html = lruCache(this, () => {
+    const html = this._htmlCache.getOrCompute(this, () => {
       visit(snapshot.html, this._index, undefined, undefined);
-
-      const html = result.join('');
-      // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
       const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` : '';
-      return prefix + [
+      const html = prefix + [
+        // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
         '<style>*,*::before,*::after { visibility: hidden }</style>',
         `<script>${snapshotScript(this._callId, this.snapshotName)}</script>`
-      ].join('') + html;
+      ].join('') + result.join('');
+      return { value: html, size: html.length };
     });
 
     return { html, pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
