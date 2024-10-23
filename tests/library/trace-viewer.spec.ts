@@ -1410,6 +1410,33 @@ test('should show baseURL in metadata pane', {
   await expect(traceViewer.metadataTab).toContainText('baseURL:https://example.com');
 });
 
+test('should not leak recorders', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33086' },
+}, async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer([traceFile]);
+
+  const counts = async () => {
+    return await traceViewer.page.evaluate(() => {
+      const weakSet = (window as any)._weakRecordersForTest || new Set();
+      const weakList = [...weakSet];
+      const aliveList = weakList.filter(r => !!r.deref());
+      return { total: weakList.length, alive: aliveList.length };
+    });
+  };
+
+  await traceViewer.snapshotFrame('page.goto');
+  await traceViewer.snapshotFrame('page.evaluate');
+  await traceViewer.page.requestGC();
+  await expect.poll(() => counts()).toEqual({ total: 4, alive: 1 });
+
+  await traceViewer.snapshotFrame('page.setContent');
+  await traceViewer.snapshotFrame('page.goto');
+  await traceViewer.snapshotFrame('page.evaluate');
+  await traceViewer.snapshotFrame('page.setContent');
+  await traceViewer.page.requestGC();
+  await expect.poll(() => counts()).toEqual({ total: 8, alive: 1 });
+});
+
 test('should serve css without content-type', async ({ page, runAndTrace, server }) => {
   server.setRoute('/one-style.css', (req, res) => {
     res.writeHead(200);

@@ -143,13 +143,19 @@ export class InjectedScript {
   builtinSetTimeout(callback: Function, timeout: number) {
     if (this.window.__pwClock?.builtin)
       return this.window.__pwClock.builtin.setTimeout(callback, timeout);
-    return setTimeout(callback, timeout);
+    return this.window.setTimeout(callback, timeout);
+  }
+
+  builtinClearTimeout(timeout: number | undefined) {
+    if (this.window.__pwClock?.builtin)
+      return this.window.__pwClock.builtin.clearTimeout(timeout);
+    return this.window.clearTimeout(timeout);
   }
 
   builtinRequestAnimationFrame(callback: FrameRequestCallback) {
     if (this.window.__pwClock?.builtin)
       return this.window.__pwClock.builtin.requestAnimationFrame(callback);
-    return requestAnimationFrame(callback);
+    return this.window.requestAnimationFrame(callback);
   }
 
   eval(expression: string): any {
@@ -1558,6 +1564,7 @@ declare global {
     __pwClock?: {
       builtin: {
         setTimeout: Window['setTimeout'],
+        clearTimeout: Window['clearTimeout'],
         requestAnimationFrame: Window['requestAnimationFrame'],
       }
     }
