@@ -36,16 +36,16 @@ const scopePath = new URL(self.registration.scope).pathname;
 
 const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: SnapshotServer }>();
 
-const clientIdToTraceUrls = new Map<string, Set<string>>();
+const clientIdToTraceUrls = new Map<string, { limit: number | undefined, traceUrls: Set<string> }>();
 
-async function loadTrace(traceUrl: string, traceFileName: string | null, clientId: string, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
+async function loadTrace(traceUrl: string, traceFileName: string | null, clientId: string, limit: number | undefined, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
   await gc();
-  let set = clientIdToTraceUrls.get(clientId);
-  if (!set) {
-    set = new Set();
-    clientIdToTraceUrls.set(clientId, set);
+  let data = clientIdToTraceUrls.get(clientId);
+  if (!data) {
+    data = { limit, traceUrls: new Set() };
+    clientIdToTraceUrls.set(clientId, data);
   }
-  set.add(traceUrl);
+  data.traceUrls.add(traceUrl);
 
   const traceModel = new TraceModel();
   try {
@@ -97,7 +97,8 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 
     if (relativePath === '/contexts') {
       try {
-        const traceModel = await loadTrace(traceUrl!, url.searchParams.get('traceFileName'), event.clientId, (done: number, total: number) => {
+        const limit = url.searchParams.has('limit') ? +url.searchParams.get('limit')! : undefined;
+        const traceModel = await loadTrace(traceUrl!, url.searchParams.get('traceFileName'), event.clientId, limit, (done: number, total: number) => {
           client.postMessage({ method: 'progress', params: { done, total } });
         });
         return new Response(JSON.stringify(traceModel!.contextEntries), {
@@ -179,12 +180,18 @@ async function gc() {
   const clients = await self.clients.matchAll();
   const usedTraces = new Set<string>();
 
-  for (const [clientId, traceUrls] of clientIdToTraceUrls) {
+  for (const [clientId, data] of clientIdToTraceUrls) {
     // @ts-ignore
-    if (!clients.find(c => c.id === clientId))
+    if (!clients.find(c => c.id === clientId)) {
       clientIdToTraceUrls.delete(clientId);
-    else
-      traceUrls.forEach(url => usedTraces.add(url));
+      continue;
+    }
+    if (data.limit !== undefined) {
+      const ordered = [...data.traceUrls];
+      // Leave the newest requested traces.
+      data.traceUrls = new Set(ordered.slice(ordered.length - data.limit));
+    }
+    data.traceUrls.forEach(url => usedTraces.add(url));
   }
 
   for (const traceUrl of loadedTraces.keys()) {
