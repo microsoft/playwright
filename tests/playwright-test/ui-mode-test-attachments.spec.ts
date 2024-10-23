@@ -148,6 +148,30 @@ test('should linkify string attachments', async ({ runUITest, server }) => {
   }
 });
 
+test('should link from attachment step to attachments view', async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('attach test', async () => {
+        for (let i = 0; i < 100; i++)
+          await test.info().attach('spacer-' + i);
+        await test.info().attach('my-attachment', { body: 'bar' });
+      });
+    `,
+  });
+
+  await page.getByText('attach test').click();
+  await page.getByTitle('Run all').click();
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await page.getByRole('tab', { name: 'Attachments' }).click();
+
+  const panel = page.getByRole('tabpanel', { name: 'Attachments' });
+  const attachment = panel.getByTitle('my-attachment');
+  await expect(attachment).not.toBeInViewport();
+  await page.getByText('attach "my-attachment"').click();
+  await expect(attachment).toBeInViewport();
+});
+
 function readAllFromStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
   return new Promise(resolve => {
     const chunks: Buffer[] = [];

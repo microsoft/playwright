@@ -17,7 +17,7 @@
 import * as React from 'react';
 import './attachmentsTab.css';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import type { MultiTraceModel } from './modelUtil';
+import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import { CodeMirrorWrapper, lineHeight } from '@web/components/codeMirrorWrapper';
@@ -29,15 +29,22 @@ type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
 
 type ExpandableAttachmentProps = {
   attachment: Attachment;
+  highlight?: boolean;
 };
 
-const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> = ({ attachment }) => {
+const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> = ({ attachment, highlight }) => {
   const [expanded, setExpanded] = React.useState(false);
   const [attachmentText, setAttachmentText] = React.useState<string | null>(null);
   const [placeholder, setPlaceholder] = React.useState<string | null>(null);
+  const ref = React.useRef<HTMLSpanElement>(null);
 
   const isTextAttachment = isTextualMimeType(attachment.contentType);
   const hasContent = !!attachment.sha1 || !!attachment.path;
+
+  React.useEffect(() => {
+    if (highlight)
+      ref.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [highlight]);
 
   React.useEffect(() => {
     if (expanded && attachmentText === null && placeholder === null) {
@@ -56,8 +63,9 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
     return Math.min(Math.max(5, lineCount), 20) * lineHeight;
   }, [attachmentText]);
 
-  const title = <span style={{ marginLeft: 5 }}>
-    {linkifyText(attachment.name)} {hasContent && <a style={{ marginLeft: 5 }} href={downloadURL(attachment)}>download</a>}
+  const title = <span style={{ marginLeft: 5 }} ref={ref} title={attachment.name}>
+    <span style={highlight ? { textDecoration: 'underline var(--vscode-terminal-findMatchBackground)', textDecorationThickness: 1.5 } : {}}>{linkifyText(attachment.name)}</span>
+    {hasContent && <a style={{ marginLeft: 5 }} href={downloadURL(attachment)}>download</a>}
   </span>;
 
   if (!isTextAttachment || !hasContent)
@@ -82,7 +90,8 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
 
 export const AttachmentsTab: React.FunctionComponent<{
   model: MultiTraceModel | undefined,
-}> = ({ model }) => {
+  selectedAction: ActionTraceEventInContext | undefined,
+}> = ({ model, selectedAction }) => {
   const { diffMap, screenshots, attachments } = React.useMemo(() => {
     const attachments = new Set<Attachment>();
     const screenshots = new Set<Attachment>();
@@ -139,11 +148,15 @@ export const AttachmentsTab: React.FunctionComponent<{
     {attachments.size ? <div className='attachments-section'>Attachments</div> : undefined}
     {[...attachments.values()].map((a, i) => {
       return <div className='attachment-item' key={attachmentKey(a, i)}>
-        <ExpandableAttachment attachment={a} />
+        <ExpandableAttachment attachment={a} highlight={isActiveAttachment(a, selectedAction)} />
       </div>;
     })}
   </div>;
 };
+
+function isActiveAttachment(attachment: Attachment, activeAction: ActionTraceEventInContext | undefined): boolean {
+  return activeAction?.attachments?.some(a => a.name === attachment.name && a.path === attachment.path && a.sha1 === attachment.sha1) ?? false;
+}
 
 function attachmentURL(attachment: Attachment, queryParams: Record<string, string> = {}) {
   const params = new URLSearchParams(queryParams);

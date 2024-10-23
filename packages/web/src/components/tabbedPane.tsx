@@ -47,7 +47,7 @@ export const TabbedPane: React.FunctionComponent<{
         { leftToolbar && <div style={{ flex: 'none', display: 'flex', margin: '0 4px', alignItems: 'center' }}>
           {...leftToolbar}
         </div>}
-        {mode === 'default' && <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }}>
+        {mode === 'default' && <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }} role='tablist'>
           {[...tabs.map(tab => (
             <TabbedPaneTab
               key={tab.id}
@@ -57,10 +57,10 @@ export const TabbedPane: React.FunctionComponent<{
               errorCount={tab.errorCount}
               selected={selectedTab === tab.id}
               onSelect={setSelectedTab}
-            ></TabbedPaneTab>)),
+            />)),
           ]}
         </div>}
-        {mode === 'select' && <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }}>
+        {mode === 'select' && <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }} role='tablist'>
           <select style={{ width: '100%', background: 'none', cursor: 'pointer' }} onChange={e => {
             setSelectedTab?.(tabs[e.currentTarget.selectedIndex].id);
           }}>
@@ -70,7 +70,7 @@ export const TabbedPane: React.FunctionComponent<{
                 suffix = ` (${tab.count})`;
               if (tab.errorCount)
                 suffix = ` (${tab.errorCount})`;
-              return <option key={tab.id} value={tab.id} selected={tab.id === selectedTab}>{tab.title}{suffix}</option>;
+              return <option key={tab.id} value={tab.id} selected={tab.id === selectedTab} role='tab' aria-controls={`tab-${tab.id}`}>{tab.title}{suffix}</option>;
             })}
           </select>
         </div>}
@@ -82,9 +82,9 @@ export const TabbedPane: React.FunctionComponent<{
         tabs.map(tab => {
           const className = 'tab-content tab-' + tab.id;
           if (tab.component)
-            return <div key={tab.id} className={className} style={{ display: selectedTab === tab.id ? 'inherit' : 'none' }}>{tab.component}</div>;
+            return <div key={tab.id} id={`tab-${tab.id}`} role='tabpanel' title={tab.title} className={className} style={{ display: selectedTab === tab.id ? 'inherit' : 'none' }}>{tab.component}</div>;
           if (selectedTab === tab.id)
-            return <div key={tab.id} className={className}>{tab.render!()}</div>;
+            return <div key={tab.id} id={`tab-${tab.id}`} role='tabpanel' title={tab.title} className={className}>{tab.render!()}</div>;
         })
       }
     </div>
@@ -101,6 +101,8 @@ export const TabbedPaneTab: React.FunctionComponent<{
 }> = ({ id, title, count, errorCount, selected, onSelect }) => {
   return <div className={clsx('tabbed-pane-tab', selected && 'selected')}
     onClick={() => onSelect?.(id)}
+    role='tab'
+    aria-controls={`tab-${id}`}
     title={title}
     key={id}>
     <div className='tabbed-pane-tab-label'>{title}</div>
