@@ -158,20 +158,19 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       }
     }
     if (part.name === 'internal:control' && (part.body as string) === 'enter-frame') {
+      // transform last tokens from `${selector}` into `${selector}.contentFrame()` and `frameLocator(${selector})`
       const lastTokens = tokens[tokens.length - 1];
       const lastPart = parts[index - 1];
 
-      const extendedTokens = lastTokens.map(token =>
-        factory.chainLocators([token, factory.generateLocator(base, 'frame', '')])
-      );
+      const transformed = lastTokens.map(token => factory.chainLocators([token, factory.generateLocator(base, 'frame', '')]));
       if (['xpath', 'css'].includes(lastPart.name)) {
-        extendedTokens.push(
+        transformed.push(
             factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [lastPart] })),
             factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [lastPart] }, true))
         );
       }
 
-      lastTokens.splice(0, lastTokens.length, ...extendedTokens);
+      lastTokens.splice(0, lastTokens.length, ...transformed);
       nextBase = 'frame-locator';
       continue;
     }
