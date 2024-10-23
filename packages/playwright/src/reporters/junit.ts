@@ -188,7 +188,7 @@ class JUnitReporter implements ReporterV2 {
           message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
           type: 'FAILURE',
         },
-        text: stripAnsiEscapes(formatFailure(this.config, test).message)
+        text: stripAnsiEscapes(formatFailure(this.config, test))
       });
     }
 

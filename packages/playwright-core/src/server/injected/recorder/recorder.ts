@@ -17,7 +17,7 @@
 import type * as actions from '@recorder/actions';
 import type { InjectedScript } from '../injectedScript';
 import type { Point } from '../../../common/types';
-import type { Mode, OverlayState, UIState } from '@recorder/recorderTypes';
+import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
 import type { ElementText } from '../selectorUtils';
 import type { Highlight, HighlightOptions } from '../highlight';
 import clipPaths from './clipPaths';
@@ -25,7 +25,7 @@ import clipPaths from './clipPaths';
 export interface RecorderDelegate {
   performAction?(action: actions.PerformOnRecordAction): Promise<void>;
   recordAction?(action: actions.Action): Promise<void>;
-  setSelector?(selector: string): Promise<void>;
+  elementPicked?(elementInfo: ElementInfo): Promise<void>;
   setMode?(mode: Mode): Promise<void>;
   setOverlayState?(state: OverlayState): Promise<void>;
   highlightUpdated?(): void;
@@ -85,7 +85,7 @@ class InspectTool implements RecorderTool {
     if (event.button !== 0)
       return;
     if (this._hoveredModel?.selector)
-      this._commit(this._hoveredModel.selector);
+      this._commit(this._hoveredModel.selector, this._hoveredModel);
   }
 
   onContextMenu(event: MouseEvent) {
@@ -93,13 +93,14 @@ class InspectTool implements RecorderTool {
         && this._hoveredSelectors && this._hoveredSelectors.length > 1) {
       consumeEvent(event);
       const selectors = this._hoveredSelectors;
+      const hoveredModel = this._hoveredModel;
       this._hoveredModel.tooltipFooter = undefined;
       this._hoveredModel.tooltipList = selectors.map(selector => this._recorder.injectedScript.utils.asLocator(this._recorder.state.language, selector));
       this._hoveredModel.tooltipListItemSelected = (index: number | undefined) => {
         if (index === undefined)
           this._reset(true);
         else
-          this._commit(selectors[index]);
+          this._commit(selectors[index], hoveredModel);
       };
       this._recorder.updateHighlight(this._hoveredModel, true);
     }
@@ -181,7 +182,7 @@ class InspectTool implements RecorderTool {
     this._reset(false);
   }
 
-  private _commit(selector: string) {
+  private _commit(selector: string, model: HighlightModel) {
     if (this._assertVisibility) {
       this._recorder.recordAction({
         name: 'assertVisible',
@@ -191,7 +192,7 @@ class InspectTool implements RecorderTool {
       this._recorder.setMode('recording');
       this._recorder.overlay?.flashToolSucceeded('assertingVisibility');
     } else {
-      this._recorder.setSelector(selector);
+      this._recorder.elementPicked(selector, model);
     }
   }
 
@@ -1314,8 +1315,9 @@ export class Recorder {
     void this._delegate.setOverlayState?.(state);
   }
 
-  setSelector(selector: string) {
-    void this._delegate.setSelector?.(selector);
+  elementPicked(selector: string, model: HighlightModel) {
+    const ariaSnapshot = this.injectedScript.ariaSnapshot(model.elements[0]);
+    void this._delegate.elementPicked?.({ selector, ariaSnapshot });
   }
 }
 

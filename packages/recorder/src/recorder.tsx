@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { CallLog, Mode, Source } from './recorderTypes';
+import type { CallLog, ElementInfo, Mode, Source } from './recorderTypes';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { SplitView } from '@web/components/splitView';
 import { TabbedPane } from '@web/components/tabbedPane';
@@ -44,6 +44,7 @@ export const Recorder: React.FC<RecorderProps> = ({
   const [selectedFileId, setSelectedFileId] = React.useState<string | undefined>();
   const [runningFileId, setRunningFileId] = React.useState<string | undefined>();
   const [selectedTab, setSelectedTab] = React.useState<string>('log');
+  const [ariaSnapshot, setAriaSnapshot] = React.useState<string | undefined>();
 
   const fileId = selectedFileId || runningFileId || sources[0]?.id;
 
@@ -57,11 +58,18 @@ export const Recorder: React.FC<RecorderProps> = ({
   }, [sources, fileId]);
 
   const [locator, setLocator] = React.useState('');
-  window.playwrightSetSelector = (selector: string, focus?: boolean) => {
+  window.playwrightElementPicked = (elementInfo: ElementInfo, userGesture?: boolean) => {
     const language = source.language;
-    if (focus)
+    setLocator(asLocator(language, elementInfo.selector));
+    setAriaSnapshot(elementInfo.ariaSnapshot);
+    if (userGesture && selectedTab !== 'locator' && selectedTab !== 'aria')
       setSelectedTab('locator');
-    setLocator(asLocator(language, selector));
+
+    if (mode === 'inspecting' && selectedTab === 'aria') {
+      // Keep exploring aria.
+    } else {
+      window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'standby' : 'recording' } }).catch(() => { });
+    }
   };
 
   window.playwrightSetRunningFile = setRunningFileId;
@@ -94,7 +102,7 @@ export const Recorder: React.FC<RecorderProps> = ({
   }, [paused]);
 
   const onEditorChange = React.useCallback((selector: string) => {
-    if (mode === 'none')
+    if (mode === 'none' || mode === 'inspecting')
       window.dispatch({ event: 'setMode', params: { mode: 'standby' } });
     setLocator(selector);
     window.dispatch({ event: 'selectorUpdated', params: { selector } });
@@ -157,7 +165,7 @@ export const Recorder: React.FC<RecorderProps> = ({
       sidebarSize={200}
       main={<CodeMirrorWrapper text={source.text} language={source.language} highlight={source.highlight} revealLine={source.revealLine} readOnly={true} lineNumbers={true} />}
       sidebar={<TabbedPane
-        rightToolbar={selectedTab === 'locator' ? [<ToolbarButton key={1} icon='files' title='Copy' onClick={() => copy(locator)} />] : []}
+        rightToolbar={selectedTab === 'locator' || selectedTab === 'aria' ? [<ToolbarButton key={1} icon='files' title='Copy' onClick={() => copy((selectedTab === 'locator' ? locator : ariaSnapshot) || '')} />] : []}
         tabs={[
           {
             id: 'locator',
@@ -168,6 +176,11 @@ export const Recorder: React.FC<RecorderProps> = ({
             id: 'log',
             title: 'Log',
             render: () => <CallLogView language={source.language} log={Array.from(log.values())} />
+          },
+          {
+            id: 'aria',
+            title: 'Accessibility',
+            render: () => <CodeMirrorWrapper text={ariaSnapshot || ''} language={'python'} readOnly={true} wrapLines={true} />
           },
         ]}
         selectedTab={selectedTab}

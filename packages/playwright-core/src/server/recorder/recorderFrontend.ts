@@ -15,7 +15,7 @@
  */
 
 import type * as actions from '@recorder/actions';
-import type { CallLog, Mode, Source } from '@recorder/recorderTypes';
+import type { CallLog, Mode, Source, ElementInfo } from '@recorder/recorderTypes';
 import type { EventEmitter } from 'events';
 
 export interface IRecorder {
@@ -29,7 +29,7 @@ export interface IRecorderApp extends EventEmitter {
   setPaused(paused: boolean): Promise<void>;
   setMode(mode: Mode): Promise<void>;
   setRunningFile(file: string | undefined): Promise<void>;
-  setSelector(selector: string, userGesture?: boolean): Promise<void>;
+  elementPicked(elementInfo: ElementInfo, userGesture?: boolean): Promise<void>;
   updateCallLogs(callLogs: CallLog[]): Promise<void>;
   setSources(sources: Source[]): Promise<void>;
   setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void>;

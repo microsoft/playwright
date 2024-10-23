@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import type { CallLog, Mode, Source } from '@recorder/recorderTypes';
+import type { CallLog, ElementInfo, Mode, Source } from '@recorder/recorderTypes';
 import { EventEmitter } from 'events';
 import type { IRecorder, IRecorderApp, IRecorderAppFactory } from './recorderFrontend';
 import { installRootRedirect, openTraceViewerApp, startTraceViewerServer } from '../trace/viewer/traceViewer';
@@ -70,8 +70,8 @@ export class RecorderInTraceViewer extends EventEmitter implements IRecorderApp 
     this._transport.deliverEvent('setRunningFile', { file });
   }
 
-  async setSelector(selector: string, userGesture?: boolean): Promise<void> {
-    this._transport.deliverEvent('setSelector', { selector, userGesture });
+  async elementPicked(elementInfo: ElementInfo, userGesture?: boolean): Promise<void> {
+    this._transport.deliverEvent('elementPicked', { elementInfo, userGesture });
   }
 
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {
