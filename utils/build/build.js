@@ -310,7 +310,7 @@ steps.push({
 if (watchMode) {
   steps.push({
     command: 'npx',
-    args: ['vite', '--port', '44223'],
+    args: ['vite', '--port', '44223', '--base', '/trace/'],
     shell: true,
     cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
     concurrent: true,
