@@ -1051,7 +1051,7 @@ export class Recorder {
       recreationInterval = this.injectedScript.builtinSetTimeout(recreate, 500);
     };
     recreationInterval = this.injectedScript.builtinSetTimeout(recreate, 500);
-    this._listeners.push(() => clearInterval(recreationInterval));
+    this._listeners.push(() => this.injectedScript.builtinClearTimeout(recreationInterval));
 
     this.overlay?.install();
     this.document.adoptedStyleSheets.push(this._stylesheet);
