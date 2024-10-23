@@ -1092,7 +1092,7 @@ export class Recorder {
       recreationInterval = this.injectedScript.builtinSetTimeout(recreate, 500);
     };
     recreationInterval = this.injectedScript.builtinSetTimeout(recreate, 500);
-    this._listeners.push(() => clearInterval(recreationInterval));
+    this._listeners.push(() => this.injectedScript.builtinClearTimeout(recreationInterval));
 
     this.highlight.appendChild(createSvgElement(this.document, clipPaths));
     this.overlay?.install();

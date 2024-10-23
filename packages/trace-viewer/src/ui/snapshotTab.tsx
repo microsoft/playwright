@@ -269,6 +269,10 @@ function createRecorders(recorders: { recorder: Recorder, frameSelector: string 
     const recorder = new Recorder(injectedScript);
     win._injectedScript = injectedScript;
     win._recorder = { recorder, frameSelector: parentFrameSelector };
+    if (isUnderTest) {
+      (window as any)._weakRecordersForTest = (window as any)._weakRecordersForTest || new Set();
+      (window as any)._weakRecordersForTest.add(new WeakRef(recorder));
+    }
   }
   recorders.push(win._recorder);
 
