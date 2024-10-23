@@ -131,6 +131,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
           params.set('trace', url);
           if (uploadedTraceNames.length)
             params.set('traceFileName', uploadedTraceNames[i]);
+          params.set('limit', String(traceURLs.length));
           const response = await fetch(`contexts?${params.toString()}`);
           if (!response.ok) {
             if (!isServer)
