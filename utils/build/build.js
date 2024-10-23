@@ -307,10 +307,10 @@ steps.push({
 });
 
 // web packages dev server
-if (process.env.PW_WEB_DEV_SERVER) {
+if (watchMode) {
   steps.push({
     command: 'npx',
-    args: ['vite', '--port', process.env.PW_WEB_DEV_SERVER],
+    args: ['vite', '--port', '44223'],
     shell: true,
     cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
     concurrent: true,
