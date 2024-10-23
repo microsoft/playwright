@@ -69,6 +69,7 @@ const isMac = navigator.platform === 'MacIntel';
 
 export const UIModeView: React.FC<{}> = ({
 }) => {
+  const isJokesDay = new Date().getMonth() === 3 && new Date().getDate() === 1;
   const [filterText, setFilterText] = React.useState<string>('');
   const [isShowingOutput, setIsShowingOutput] = React.useState<boolean>(false);
   const [outputContainsError, setOutputContainsError] = React.useState(false);
@@ -441,7 +442,7 @@ export const UIModeView: React.FC<{}> = ({
       sidebar={<div className='vbox ui-mode-sidebar'>
         <Toolbar noShadow={true} noMinHeight={true}>
           <img src='playwright-logo.svg' alt='Playwright logo' />
-          <div className='section-title'>Claywright</div>
+          <div className='section-title'>{isJokesDay ? 'Claywright' : 'Playwright'}</div>
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
           <div style={{ position: 'relative' }}>
             <ToolbarButton icon={'terminal'} title={'Toggle output — ' + (isMac ? '⌃`' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
@@ -517,11 +518,11 @@ export const UIModeView: React.FC<{}> = ({
             style={{ marginLeft: 5 }}
             title={settingsVisible ? 'Hide Settings' : 'Show Settings'}
           />
-          <div className='section-title'>Schmettings</div>
+          <div className='section-title' data-testid='settings-title'>{isJokesDay ? 'Schmettings' : 'Settings'}</div>
         </Toolbar>
         {settingsVisible && <SettingsView settings={[
           { value: darkMode, set: setDarkMode, title: 'Dark mode' },
-          { value: darkMode, set: setDarkMode, title: 'Art mode' },
+          ...(isJokesDay ? [{ value: darkMode, set: setDarkMode, title: 'Fart mode' }] : [])
         ]} />}
       </div>
       }
