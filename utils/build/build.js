@@ -275,6 +275,22 @@ for (const bundle of bundles) {
   });
 }
 
+// Build/watch trace viewer service worker.
+steps.push({
+  command: 'npx',
+  args: [
+    'vite',
+    '--config',
+    'vite.sw.config.ts',
+    'build',
+    ...(watchMode ? ['--watch', '--minify=false'] : []),
+    ...(withSourceMaps ? ['--sourcemap=inline'] : []),
+  ],
+  shell: true,
+  cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
+  concurrent: !watchMode,
+});
+
 // Build/watch web packages.
 for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
   steps.push({
@@ -290,21 +306,6 @@ for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
     concurrent: true,
   });
 }
-// Build/watch trace viewer service worker.
-steps.push({
-  command: 'npx',
-  args: [
-    'vite',
-    '--config',
-    'vite.sw.config.ts',
-    'build',
-    ...(watchMode ? ['--watch', '--minify=false'] : []),
-    ...(withSourceMaps ? ['--sourcemap=inline'] : []),
-  ],
-  shell: true,
-  cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
-  concurrent: true,
-});
 
 // web packages dev server
 if (watchMode) {
