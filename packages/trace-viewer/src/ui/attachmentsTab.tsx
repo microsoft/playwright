@@ -63,7 +63,7 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
     return Math.min(Math.max(5, lineCount), 20) * lineHeight;
   }, [attachmentText]);
 
-  const title = <span style={{ marginLeft: 5 }} ref={ref} title={attachment.name}>
+  const title = <span style={{ marginLeft: 5 }} ref={ref} aria-label={attachment.name}>
     <span style={highlight ? { textDecoration: 'underline var(--vscode-terminal-findMatchBackground)', textDecorationThickness: 1.5 } : {}}>{linkifyText(attachment.name)}</span>
     {hasContent && <a style={{ marginLeft: 5 }} href={downloadURL(attachment)}>download</a>}
   </span>;

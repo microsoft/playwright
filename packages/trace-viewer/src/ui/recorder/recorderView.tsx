@@ -151,7 +151,7 @@ export const Workbench: React.FunctionComponent = () => {
     <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
   </Toolbar>;
 
-  const sidebarTabbedPane = <TabbedPane tabs={[actionsTab]} />;
+  const sidebarTabbedPane = <TabbedPane id='recorder-actions-tab' tabs={[actionsTab]} />;
   const traceView = <TraceView
     sdkLanguage={sdkLanguage}
     callId={traceCallId}
@@ -249,6 +249,7 @@ const PropertiesView: React.FunctionComponent<{
   ];
 
   return <TabbedPane
+    id='properties-tabs'
     tabs={tabs}
     selectedTab={selectedPropertiesTab}
     setSelectedTab={setSelectedPropertiesTab}
