@@ -1539,6 +1539,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   clockRunFor(params: BrowserContextClockRunForParams, metadata?: CallMetadata): Promise<BrowserContextClockRunForResult>;
   clockSetFixedTime(params: BrowserContextClockSetFixedTimeParams, metadata?: CallMetadata): Promise<BrowserContextClockSetFixedTimeResult>;
   clockSetSystemTime(params: BrowserContextClockSetSystemTimeParams, metadata?: CallMetadata): Promise<BrowserContextClockSetSystemTimeResult>;
+  disableDebugger(params?: BrowserContextDisableDebuggerParams, metadata?: CallMetadata): Promise<BrowserContextDisableDebuggerResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -1902,6 +1903,9 @@ export type BrowserContextClockSetSystemTimeOptions = {
   timeString?: string,
 };
 export type BrowserContextClockSetSystemTimeResult = void;
+export type BrowserContextDisableDebuggerParams = {};
+export type BrowserContextDisableDebuggerOptions = {};
+export type BrowserContextDisableDebuggerResult = void;
 
 export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;

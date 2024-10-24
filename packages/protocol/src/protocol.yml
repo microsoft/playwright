@@ -1291,6 +1291,8 @@ BrowserContext:
         timeNumber: number?
         timeString: string?
 
+    disableDebugger:
+
   events:
 
     bindingCall:

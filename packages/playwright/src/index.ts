@@ -595,11 +595,15 @@ class ArtifactsRecorder {
   }
 
   async didFinishTestFunction() {
+    this._disableDebugger();
+
     if (this._shouldCaptureScreenshotUponFinish())
       await this._screenshotOnTestFailure();
   }
 
   async didFinishTest() {
+    this._disableDebugger();
+
     const captureScreenshots = this._shouldCaptureScreenshotUponFinish();
     if (captureScreenshots)
       await this._screenshotOnTestFailure();
@@ -658,6 +662,13 @@ class ArtifactsRecorder {
 
   private _attachScreenshot(screenshotPath: string) {
     this._testInfo.attachments.push({ name: 'screenshot', path: screenshotPath, contentType: 'image/png' });
+  }
+
+  private _disableDebugger() {
+    for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit]) {
+      for (const context of (browserType as any)._contexts)
+        context._disableDebugger();
+    }
   }
 
   private async _screenshotOnTestFailure() {

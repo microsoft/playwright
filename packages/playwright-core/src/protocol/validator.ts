@@ -1047,6 +1047,8 @@ scheme.BrowserContextClockSetSystemTimeParams = tObject({
   timeString: tOptional(tString),
 });
 scheme.BrowserContextClockSetSystemTimeResult = tOptional(tObject({}));
+scheme.BrowserContextDisableDebuggerParams = tOptional(tObject({}));
+scheme.BrowserContextDisableDebuggerResult = tOptional(tObject({}));
 scheme.PageInitializer = tObject({
   mainFrame: tChannel(['Frame']),
   viewportSize: tOptional(tObject({
