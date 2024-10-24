@@ -511,13 +511,13 @@ test('should support toHaveURL with baseURL from webServer', async ({ runInlineT
       import { test, expect } from '@playwright/test';
 
       test('pass', async ({ page }) => {
-        await page.goto('/foobar');
-        await expect(page).toHaveURL('/foobar');
-        await expect(page).toHaveURL('http://localhost:${port}/foobar');
+        await page.goto('/hello');
+        await expect(page).toHaveURL('/hello');
+        await expect(page).toHaveURL('http://localhost:${port}/hello');
       });
 
       test('fail', async ({ page }) => {
-        await page.goto('/foobar');
+        await page.goto('/hello');
         await expect(page).toHaveURL('/kek', { timeout: 1000 });
       });
       `,
