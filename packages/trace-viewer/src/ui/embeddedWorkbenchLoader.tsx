@@ -65,6 +65,7 @@ export const EmbeddedWorkbenchLoader: React.FunctionComponent = () => {
           const url = traceURLs[i];
           const params = new URLSearchParams();
           params.set('trace', url);
+          params.set('limit', String(traceURLs.length));
           const response = await fetch(`contexts?${params.toString()}`);
           if (!response.ok) {
             setProcessingErrorMessage((await response.json()).error);
