@@ -21,7 +21,6 @@ import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorde
 import type { ElementText } from '../selectorUtils';
 import type { Highlight, HighlightOptions } from '../highlight';
 import clipPaths from './clipPaths';
-import { parseSelector, splitSelectorByFrame } from '@isomorphic/selectorParser';
 
 export interface RecorderDelegate {
   performAction?(action: actions.PerformOnRecordAction): Promise<void>;
