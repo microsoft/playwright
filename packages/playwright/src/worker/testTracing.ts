@@ -224,9 +224,16 @@ export class TestTracing {
     const stack = rawStack ? filteredStackTrace(rawStack) : [];
     this._appendTraceEvent({
       type: 'error',
-      message: error.message || String(error.value),
+      message: this._formatError(error),
       stack,
     });
+  }
+
+  _formatError(error: TestInfoErrorImpl) {
+    const parts: string[] = [error.message || String(error.value)];
+    if (error.cause)
+      parts.push('[cause]: ' + this._formatError(error.cause));
+    return parts.join('\n');
   }
 
   appendStdioToTrace(type: 'stdout' | 'stderr', chunk: string | Buffer) {
