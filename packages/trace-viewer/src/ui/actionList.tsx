@@ -134,8 +134,8 @@ export const renderAction = (
       {action.class === 'APIRequestContext' && action.params.url && <div className='action-url' title={action.params.url}>{excludeOrigin(action.params.url)}</div>}
     </div>
     {(showDuration || showBadges || showAttachments) && <div className='spacer'></div>}
-    {showDuration && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
     {showAttachments && <ToolbarButton icon='attach' title='Open Attachment' onClick={revealAttachments} />}
+    {showDuration && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
     {showBadges && <div className='action-icons' onClick={() => revealConsole?.()}>
       {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className='action-icon-value'>{errors}</span></div>}
       {!!warnings && <div className='action-icon'><span className='codicon codicon-warning'></span><span className='action-icon-value'>{warnings}</span></div>}
