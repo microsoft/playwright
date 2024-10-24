@@ -16,7 +16,8 @@
 
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { debugTest, relativeFilePath } from '../util';
-import { type TestBeginPayload, type TestEndPayload, type RunPayload, type DonePayload, type WorkerInitParams, type TeardownErrorsPayload, stdioChunkToParams } from '../common/ipc';
+import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, TestInfoErrorImpl } from '../common/ipc';
+import { stdioChunkToParams } from '../common/ipc';
 import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
 import { deserializeConfig } from '../common/configLoader';
 import type { Suite, TestCase } from '../common/test';
@@ -28,11 +29,10 @@ import { ProcessRunner } from '../common/process';
 import { loadTestFile } from '../common/testLoader';
 import { applyRepeatEachIndex, bindFileSuiteToProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { PoolBuilder } from '../common/poolBuilder';
-import type { TestInfoError } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import { inheritFixtureNames } from '../common/fixtures';
 import { type TimeSlot } from './timeoutManager';
-import { serializeWorkerError } from './util';
+import { testInfoError } from './util';
 
 export class WorkerMain extends ProcessRunner {
   private _params: WorkerInitParams;
@@ -42,7 +42,7 @@ export class WorkerMain extends ProcessRunner {
   private _fixtureRunner: FixtureRunner;
 
   // Accumulated fatal errors that cannot be attributed to a test.
-  private _fatalErrors: TestInfoError[] = [];
+  private _fatalErrors: TestInfoErrorImpl[] = [];
   // Whether we should skip running remaining tests in this suite because
   // of a setup error, usually beforeAll hook.
   private _skipRemainingTestsInSuite: Suite | undefined;
@@ -113,7 +113,7 @@ export class WorkerMain extends ProcessRunner {
       await fakeTestInfo._runAsStage({ title: 'worker cleanup', runnable }, () => gracefullyCloseAll()).catch(() => {});
       this._fatalErrors.push(...fakeTestInfo.errors);
     } catch (e) {
-      this._fatalErrors.push(serializeWorkerError(e));
+      this._fatalErrors.push(testInfoError(e));
     }
 
     if (this._fatalErrors.length) {
@@ -123,7 +123,7 @@ export class WorkerMain extends ProcessRunner {
     }
   }
 
-  private _appendProcessTeardownDiagnostics(error: TestInfoError) {
+  private _appendProcessTeardownDiagnostics(error: TestInfoErrorImpl) {
     if (!this._lastRunningTests.length)
       return;
     const count = this._totalRunningTests === 1 ? '1 test' : `${this._totalRunningTests} tests`;
@@ -154,7 +154,7 @@ export class WorkerMain extends ProcessRunner {
     // No current test - fatal error.
     if (!this._currentTest) {
       if (!this._fatalErrors.length)
-        this._fatalErrors.push(serializeWorkerError(error));
+        this._fatalErrors.push(testInfoError(error));
       void this._stop();
       return;
     }
@@ -225,7 +225,7 @@ export class WorkerMain extends ProcessRunner {
       // In theory, we should run above code without any errors.
       // However, in the case we screwed up, or loadTestFile failed in the worker
       // but not in the runner, let's do a fatal error.
-      this._fatalErrors.push(serializeWorkerError(e));
+      this._fatalErrors.push(testInfoError(e));
       void this._stop();
     } finally {
       const donePayload: DonePayload = {
