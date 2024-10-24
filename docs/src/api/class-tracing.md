@@ -281,6 +281,56 @@ given name prefix inside the [`option: BrowserType.launch.tracesDir`] directory 
 To specify the final trace zip file name, you need to pass `path` option to
 [`method: Tracing.stopChunk`] instead.
 
+## async method: Tracing.group
+* since: v1.49
+
+Creates a new inline group within the trace, assigning any subsequent calls to this group until [method: Tracing.groupEnd] is invoked.
+
+Groups can be nested and are similar to `test.step` in trace.
+However, groups are only visualized in the trace viewer and, unlike test.step, have no effect on the test reports.
+
+:::note Groups should not be used with Playwright Test!
+
+This API is intended for Playwright API users that can not use `test.step`.
+:::
+
+**Usage**
+
+```js
+await context.tracing.start({ screenshots: true, snapshots: true });
+await context.tracing.group('Open Playwright.dev');
+// All actions between group and groupEnd will be shown in the trace viewer as a group.
+const page = await context.newPage();
+await page.goto('https://playwright.dev/');
+await context.tracing.groupEnd();
+await context.tracing.group('Open API Docs of Tracing');
+await page.getByRole('link', { name: 'API' }).click();
+await page.getByRole('link', { name: 'Tracing' }).click();
+await context.tracing.groupEnd();
+// This Trace will have two groups: 'Open Playwright.dev' and 'Open API Docs of Tracing'.
+```
+
+### param: Tracing.group.name
+* since: v1.49
+- `name` <[string]>
+
+Group name shown in the actions tree in trace viewer.
+
+### option: Tracing.group.location
+* since: v1.49
+- `location` ?<[Object]>
+  - `file` <[string]> Source file path to be shown in the trace viewer source tab.
+  - `line` ?<[int]> Line number in the source file.
+  - `column` ?<[int]> Column number in the source file
+
+Specifies a custom location for the group start to be shown in source tab in trace viewer.
+By default, location of the tracing.group() call is shown.
+
+## async method: Tracing.groupEnd
+* since: v1.49
+
+Closes the currently open inline group in the trace.
+
 ## async method: Tracing.stop
 * since: v1.12
 
