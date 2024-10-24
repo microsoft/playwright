@@ -1390,6 +1390,44 @@ test('should show baseURL in metadata pane', {
   await expect(traceViewer.metadataTab).toContainText('baseURL:https://example.com');
 });
 
+test('should not leak recorders', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33086' },
+}, async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer([traceFile]);
+
+  const aliveCount = async () => {
+    return await traceViewer.page.evaluate(() => {
+      const weakSet = (window as any)._weakRecordersForTest || new Set();
+      const weakList = [...weakSet];
+      const aliveList = weakList.filter(r => !!r.deref());
+      return aliveList.length;
+    });
+  };
+
+  await expect(traceViewer.snapshotContainer.contentFrame().locator('body')).toContainText(`Hi, I'm frame`);
+
+  const frame1 = await traceViewer.snapshotFrame('page.goto');
+  await expect(frame1.locator('body')).toContainText('Hello world');
+
+  const frame2 = await traceViewer.snapshotFrame('page.evaluate');
+  await expect(frame2.locator('button')).toBeVisible();
+
+  await traceViewer.page.requestGC();
+  await expect.poll(() => aliveCount()).toBeLessThanOrEqual(2); // two snapshot iframes
+
+  const frame3 = await traceViewer.snapshotFrame('page.setViewportSize');
+  await expect(frame3.locator('body')).toContainText(`Hi, I'm frame`);
+
+  const frame4 = await traceViewer.snapshotFrame('page.goto');
+  await expect(frame4.locator('body')).toContainText('Hello world');
+
+  const frame5 = await traceViewer.snapshotFrame('page.evaluate');
+  await expect(frame5.locator('button')).toBeVisible();
+
+  await traceViewer.page.requestGC();
+  await expect.poll(() => aliveCount()).toBeLessThanOrEqual(2); // two snapshot iframes
+});
+
 test('should serve css without content-type', async ({ page, runAndTrace, server }) => {
   server.setRoute('/one-style.css', (req, res) => {
     res.writeHead(200);
