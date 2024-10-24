@@ -43,6 +43,7 @@ export type MatcherResult<E, A> = {
   printedReceived?: string;
   printedExpected?: string;
   printedDiff?: string;
+  suggestedRebaseline?: string;
 };
 
 export type MatcherResultProperty = Omit<MatcherResult<unknown, unknown>, 'message'> & {
@@ -69,6 +70,6 @@ export class ExpectError extends Error {
   }
 }
 
-export function isExpectError(e: unknown): e is ExpectError {
+export function isJestError(e: unknown): e is JestError {
   return e instanceof Error && 'matcherResult' in e;
 }
