@@ -34,6 +34,7 @@ import { buildFullSelector } from '../utils/isomorphic/recorderUtils';
 const recorderSymbol = Symbol('recorderSymbol');
 
 export class Recorder implements InstrumentationListener, IRecorder {
+  readonly handleSIGINT: boolean | undefined;
   private _context: BrowserContext;
   private _mode: Mode;
   private _highlightedSelector = '';
@@ -75,6 +76,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
 
   constructor(codegenMode: 'actions' | 'trace-events', context: BrowserContext, params: channels.BrowserContextEnableRecorderParams) {
     this._mode = params.mode || 'none';
+    this.handleSIGINT = params.handleSIGINT;
     this._contextRecorder = new ContextRecorder(codegenMode, context, params, {});
     this._context = context;
     this._omitCallTracking = !!params.omitCallTracking;
