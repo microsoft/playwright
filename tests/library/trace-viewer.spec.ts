@@ -1415,26 +1415,37 @@ test('should not leak recorders', {
 }, async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);
 
-  const counts = async () => {
+  const aliveCount = async () => {
     return await traceViewer.page.evaluate(() => {
       const weakSet = (window as any)._weakRecordersForTest || new Set();
       const weakList = [...weakSet];
       const aliveList = weakList.filter(r => !!r.deref());
-      return { total: weakList.length, alive: aliveList.length };
+      return aliveList.length;
     });
   };
 
-  await traceViewer.snapshotFrame('page.goto');
-  await traceViewer.snapshotFrame('page.evaluate');
-  await traceViewer.page.requestGC();
-  await expect.poll(() => counts()).toEqual({ total: 4, alive: 1 });
+  await expect(traceViewer.snapshotContainer.contentFrame().locator('body')).toContainText(`Hi, I'm frame`);
 
-  await traceViewer.snapshotFrame('page.setContent');
-  await traceViewer.snapshotFrame('page.goto');
-  await traceViewer.snapshotFrame('page.evaluate');
-  await traceViewer.snapshotFrame('page.setContent');
+  const frame1 = await traceViewer.snapshotFrame('page.goto');
+  await expect(frame1.locator('body')).toContainText('Hello world');
+
+  const frame2 = await traceViewer.snapshotFrame('page.evaluate');
+  await expect(frame2.locator('button')).toBeVisible();
+
   await traceViewer.page.requestGC();
-  await expect.poll(() => counts()).toEqual({ total: 8, alive: 1 });
+  await expect.poll(() => aliveCount()).toBeLessThanOrEqual(2); // two snapshot iframes
+
+  const frame3 = await traceViewer.snapshotFrame('page.setViewportSize');
+  await expect(frame3.locator('body')).toContainText(`Hi, I'm frame`);
+
+  const frame4 = await traceViewer.snapshotFrame('page.goto');
+  await expect(frame4.locator('body')).toContainText('Hello world');
+
+  const frame5 = await traceViewer.snapshotFrame('page.evaluate');
+  await expect(frame5.locator('button')).toBeVisible();
+
+  await traceViewer.page.requestGC();
+  await expect.poll(() => aliveCount()).toBeLessThanOrEqual(2); // two snapshot iframes
 });
 
 test('should serve css without content-type', async ({ page, runAndTrace, server }) => {
