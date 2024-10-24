@@ -27,12 +27,14 @@ const result: TestResult = {
   errors: [],
   steps: [{
     title: 'Outer step',
+    category: 'test.step',
     startTime: new Date(100).toUTCString(),
     duration: 10,
     location: { file: 'test.spec.ts', line: 62, column: 0 },
     count: 1,
     steps: [{
       title: 'Inner step',
+      category: 'test.step',
       startTime: new Date(200).toUTCString(),
       duration: 10,
       location: { file: 'test.spec.ts', line: 82, column: 0 },
@@ -134,6 +136,7 @@ const resultWithAttachment: TestResult = {
   errors: [],
   steps: [{
     title: 'Outer step',
+    category: 'test.step',
     startTime: new Date(100).toUTCString(),
     duration: 10,
     location: { file: 'test.spec.ts', line: 62, column: 0 },

@@ -845,7 +845,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         'a.test.js': `
           import { test, expect } from '@playwright/test';
           test('passing', async ({ page }, testInfo) => {
-            testInfo.attach('axe-report.html', {
+            await testInfo.attach('axe-report.html', {
               contentType: 'text/html',
               body: '<h1>Axe Report</h1>',
             });
@@ -912,6 +912,27 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         '84a516841ba77a5b4648de2cd0dfcb30ea46dbb4.png', // screenshot-that-already-has-an-extension-with-correct-contentType.png
         'e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98.ext-with-spaces', // example.ext with spaces
       ]));
+    });
+
+    test('should link from attach step to attachment view', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passing', async ({ page }, testInfo) => {
+            await testInfo.attach('foo', { body: 'bar' });
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+
+      await showReport();
+      await page.getByRole('link', { name: 'passing' }).click();
+      await page.getByLabel('attach "foo"').getByTitle('link to attachment').click();
+
+      await page.waitForURL(url => {
+        const navState = new URLSearchParams(url.hash.slice(1));
+        return navState.get('attachment') === 'foo';
+      });
     });
 
     test('should strikethrough textual diff', async ({ runInlineTest, showReport, page }) => {
