@@ -31,7 +31,7 @@ export class ZipTraceModelBackend implements TraceModelBackend {
   constructor(traceURL: string, progress: Progress) {
     this._traceURL = traceURL;
     this._zipReader = new zipjs.ZipReader(
-        new zipjs.HttpReader(formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true } as any),
+        new zipjs.HttpReader(formatTraceFileUrl(traceURL), { mode: 'cors', preventHeadRequest: true } as any),
         { useWebWorkers: false });
     this._entriesPromise = this._zipReader.getEntries({ onprogress: progress }).then(entries => {
       const map = new Map<string, zip.Entry>();
@@ -86,7 +86,7 @@ export class FetchTraceModelBackend implements TraceModelBackend {
 
   constructor(traceURL: string) {
     this._traceURL = traceURL;
-    this._entriesPromise = fetch(formatUrl(traceURL)).then(async response => {
+    this._entriesPromise = fetch(formatTraceFileUrl(traceURL)).then(async response => {
       const json = JSON.parse(await response.text());
       const entries = new Map<string, string>();
       for (const entry of json.entries)
@@ -129,14 +129,14 @@ export class FetchTraceModelBackend implements TraceModelBackend {
     if (!fileName)
       return;
 
-    return fetch(formatUrl(fileName));
+    return fetch(formatTraceFileUrl(fileName));
   }
 }
 
 const baseURL = new URL(self.location.href);
 baseURL.port = baseURL.searchParams.get('testServerPort') ?? baseURL.port;
 
-function formatUrl(trace: string) {
+function formatTraceFileUrl(trace: string) {
   if (trace.startsWith('https://www.dropbox.com/'))
     return 'https://dl.dropboxusercontent.com/' + trace.substring('https://www.dropbox.com/'.length);
 
