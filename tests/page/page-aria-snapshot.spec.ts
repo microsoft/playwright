@@ -64,10 +64,8 @@ it('should snapshot list with accessible name', async ({ page }) => {
   `);
   await checkAndMatchSnapshot(page.locator('body'), `
     - list "my list":
-      - listitem:
-        - text: "one"
-      - listitem:
-        - text: "two"
+      - listitem: "one"
+      - listitem: "two"
   `);
 });
 
@@ -107,8 +105,7 @@ it('should snapshot details visibility', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - group:
-      - text: "Summary"
+    - group: "Summary"
   `);
 });
 
@@ -151,8 +148,7 @@ it('should snapshot integration', async ({ page }) => {
     - text: "Open source projects and samples from Microsoft"
     - list:
       - listitem:
-        - group:
-          - text: "Verified"
+        - group: "Verified"
       - listitem:
         - link "Sponsor"
   `);
@@ -168,12 +164,10 @@ it('should support multiline text', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - paragraph:
-      - text: "Line 1 Line 2 Line 3"
+    - paragraph: "Line 1 Line 2 Line 3"
   `);
   await expect(page.locator('body')).toMatchAriaSnapshot(`
-    - paragraph:
-      - text: |
+    - paragraph: |
           Line 1
           Line 2
           Line 3
@@ -388,8 +382,7 @@ it('should include pseudo codepoints', async ({ page, server }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - paragraph:
-      - text: "\ueab2hello"
+    - paragraph: "\ueab2hello"
   `);
 });
 
@@ -403,7 +396,6 @@ it('check aria-hidden text', async ({ page, server }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - paragraph:
-      - text: "hello"
+    - paragraph: "hello"
   `);
 });

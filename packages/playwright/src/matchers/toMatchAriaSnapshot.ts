@@ -22,6 +22,7 @@ import { colors } from 'playwright-core/lib/utilsBundle';
 import { EXPECTED_COLOR } from '../common/expectBundle';
 import { callLogText } from '../util';
 import { printReceivedStringContainExpectedSubstring } from './expect';
+import { currentTestInfo } from '../common/globals';
 
 export async function toMatchAriaSnapshot(
   this: ExpectMatcherState,
@@ -30,6 +31,15 @@ export async function toMatchAriaSnapshot(
   options: { timeout?: number, matchSubstring?: boolean } = {},
 ): Promise<MatcherResult<string | RegExp, string>> {
   const matcherName = 'toMatchAriaSnapshot';
+
+  const testInfo = currentTestInfo();
+  if (!testInfo)
+    throw new Error(`toMatchSnapshot() must be called during the test`);
+
+  if (testInfo._projectInternal.ignoreSnapshots)
+    return { pass: !this.isNot, message: () => '', name: 'toMatchSnapshot', expected };
+
+  const updateSnapshots = testInfo.config.updateSnapshots;
 
   const matcherOptions = {
     isNot: this.isNot,
@@ -65,6 +75,12 @@ export async function toMatchAriaSnapshot(
     }
   };
 
+  let suggestedRebaseline: string | undefined;
+  if (!this.isNot && pass === this.isNot) {
+    if (updateSnapshots === 'all' || (updateSnapshots === 'missing' && !expected.trim()))
+      suggestedRebaseline = `toMatchAriaSnapshot(\`\n${unshift(received, '${indent}  ')}\n\${indent}\`)`;
+  }
+
   return {
     name: matcherName,
     expected,
@@ -72,6 +88,7 @@ export async function toMatchAriaSnapshot(
     pass,
     actual: received,
     log,
+    suggestedRebaseline,
     timeout: timedOut ? timeout : undefined,
   };
 }
@@ -80,7 +97,7 @@ function escapePrivateUsePoints(str: string) {
   return str.replace(/[\uE000-\uF8FF]/g, char => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
 
-function unshift(snapshot: string): string {
+function unshift(snapshot: string, indent: string = ''): string {
   const lines = snapshot.split('\n');
   let whitespacePrefixLength = 100;
   for (const line of lines) {
@@ -91,5 +108,5 @@ function unshift(snapshot: string): string {
       whitespacePrefixLength = match[1].length;
     break;
   }
-  return lines.filter(t => t.trim()).map(line => line.substring(whitespacePrefixLength)).join('\n');
+  return lines.filter(t => t.trim()).map(line => indent + line.substring(whitespacePrefixLength)).join('\n');
 }
