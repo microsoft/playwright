@@ -584,3 +584,22 @@ it('parse locators strictly', () => {
   expect.soft(parseLocator('javascript', `locator('div').filter({ hasText: 'Goodbye world' }}).locator('span')`)).not.toBe(selector);
   expect.soft(parseLocator('python', `locator("div").filter(has_text=="Goodbye world").locator("span")`)).not.toBe(selector);
 });
+
+it('parseLocator frames', async () => {
+  expect.soft(parseLocator('javascript', `locator('iframe').contentFrame().getByText('foo')`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+  expect.soft(parseLocator('javascript', `frameLocator('iframe').getByText('foo')`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+  expect.soft(parseLocator('javascript', `frameLocator('css=iframe').getByText('foo')`, '')).toBe(`css=iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+  expect.soft(parseLocator('javascript', `getByTitle('iframe title').contentFrame()`)).toBe(`internal:attr=[title=\"iframe title\"i] >> internal:control=enter-frame`);
+
+  expect.soft(asLocators('javascript', 'internal:attr=[title=\"iframe title\"i] >> internal:control=enter-frame')).toEqual([`getByTitle('iframe title').contentFrame()`]);
+
+  expect.soft(parseLocator('python', `locator("iframe").content_frame.get_by_text("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+  expect.soft(parseLocator('python', `frame_locator("iframe").get_by_text("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+  expect.soft(parseLocator('python', `frame_locator("css=iframe").get_by_text("foo")`, '')).toBe(`css=iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+
+  expect.soft(parseLocator('csharp', `Locator("iframe").ContentFrame.GetByText("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+  expect.soft(parseLocator('csharp', `FrameLocator("iframe").GetByText("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+
+  expect.soft(parseLocator('java', `locator("iframe").contentFrame().getByText("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+  expect.soft(parseLocator('java', `frameLocator("iframe").getByText("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+});
