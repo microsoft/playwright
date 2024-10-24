@@ -21,6 +21,7 @@ import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorde
 import type { ElementText } from '../selectorUtils';
 import type { Highlight, HighlightOptions } from '../highlight';
 import clipPaths from './clipPaths';
+import { parseSelector, splitSelectorByFrame } from '@isomorphic/selectorParser';
 
 export interface RecorderDelegate {
   performAction?(action: actions.PerformOnRecordAction): Promise<void>;
@@ -1471,18 +1472,29 @@ function removeEventListeners(listeners: (() => void)[]) {
   listeners.splice(0, listeners.length);
 }
 
+function frameDepth() {
+  let depth = 0;
+  // eslint-disable-next-line no-restricted-globals
+  let w: Window = window;
+  while (w.parent !== w) {
+    w = w.parent;
+    depth++;
+  }
+  return depth;
+}
+
 function querySelector(injectedScript: InjectedScript, selector: string, ownerDocument: Document): { selector: string, elements: Element[] } {
+  const empty = { selector, elements: [] };
   try {
-    const parsedSelector = injectedScript.parseSelector(selector);
-    return {
-      selector,
-      elements: injectedScript.querySelectorAll(parsedSelector, ownerDocument)
-    };
+    // selector starts from the root frame, we need to figure out if this frame is the right one
+    // as a cheap heuristic, we check if it targets the right depth
+    const parts = injectedScript.splitSelectorByFrame(selector);
+    const selectorTargetsFrameDepth = parts.length - 1 === frameDepth();
+    if (selectorTargetsFrameDepth)
+      return { selector, elements: injectedScript.querySelectorAll(parts[parts.length - 1], ownerDocument) };
+    return empty;
   } catch (e) {
-    return {
-      selector,
-      elements: [],
-    };
+    return empty;
   }
 }
 
