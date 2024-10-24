@@ -19,6 +19,7 @@ import { PNG } from 'playwright-core/lib/utilsBundle';
 import { expect, playwrightTest as it } from '../config/browserTest';
 
 it.use({ headless: false });
+it.skip(({ channel }) => channel === 'chromium-headless-shell');
 
 it('should have default url when launching browser @smoke', async ({ launchPersistent }) => {
   const { context } = await launchPersistent();
