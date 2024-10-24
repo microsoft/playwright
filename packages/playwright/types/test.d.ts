@@ -5863,6 +5863,7 @@ export interface PlaywrightWorkerOptions {
    * - `'off'`: Do not capture screenshots.
    * - `'on'`: Capture screenshot after each test.
    * - `'only-on-failure'`: Capture screenshot after each test failure.
+   * - `'on-first-failure'`: Capture screenshot after each test's first failure.
    *
    * **Usage**
    *
@@ -5938,7 +5939,7 @@ export interface PlaywrightWorkerOptions {
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
 }
 
-export type ScreenshotMode = 'off' | 'on' | 'only-on-failure';
+export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 

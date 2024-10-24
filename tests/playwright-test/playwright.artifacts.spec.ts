@@ -192,6 +192,33 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
   ]);
 });
 
+test('should work with screenshot: on-first-failure', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fails', async ({ page }) => {
+        await page.setContent('I am the page');
+        expect(1).toBe(2);
+      });
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        retries: 1,
+        use: { screenshot: 'on-first-failure' }
+      };
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    '.last-run.json',
+    'a-fails',
+    '  test-failed-1.png',
+  ]);
+});
+
 test('should work with screenshot: only-on-failure & fullPage', async ({ runInlineTest, server }, testInfo) => {
   const result = await runInlineTest({
     'artifacts.spec.ts': `
