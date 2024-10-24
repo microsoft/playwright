@@ -16,7 +16,7 @@
 
 import { escapeWithQuotes } from '@isomorphic/stringUtils';
 import * as roleUtils from './roleUtils';
-import { isElementVisible, isElementStyleVisibilityVisible, getElementComputedStyle } from './domUtils';
+import { getElementComputedStyle } from './domUtils';
 import type { AriaRole } from './roleUtils';
 
 type AriaProps = {
@@ -29,7 +29,7 @@ type AriaProps = {
 };
 
 type AriaNode = AriaProps & {
-  role: AriaRole | 'fragment' | 'text';
+  role: AriaRole | 'fragment';
   name: string;
   children: (AriaNode | string)[];
 };
@@ -56,22 +56,10 @@ export function generateAriaTree(rootElement: Element): AriaNode {
     if (roleUtils.isElementHiddenForAria(element))
       return;
 
-    const visible = isElementVisible(element);
-    const hasVisibleChildren = isElementStyleVisibilityVisible(element);
-
-    if (!hasVisibleChildren)
-      return;
-
-    if (visible) {
-      const childAriaNode = toAriaNode(element);
-      const isHiddenContainer = childAriaNode && hiddenContainerRoles.has(childAriaNode.ariaNode.role);
-      if (childAriaNode && !isHiddenContainer)
-        ariaNode.children.push(childAriaNode.ariaNode);
-      if (isHiddenContainer || !childAriaNode?.isLeaf)
-        processChildNodes(childAriaNode?.ariaNode || ariaNode, element);
-    } else {
-      processChildNodes(ariaNode, element);
-    }
+    const childAriaNode = toAriaNode(element);
+    if (childAriaNode)
+      ariaNode.children.push(childAriaNode);
+    processChildNodes(childAriaNode || ariaNode, element);
   };
 
   function processChildNodes(ariaNode: AriaNode, element: Element) {
@@ -101,6 +89,9 @@ export function generateAriaTree(rootElement: Element): AriaNode {
 
     if (treatAsBlock)
       ariaNode.children.push(treatAsBlock);
+
+    if (ariaNode.children.length === 1  && ariaNode.name === ariaNode.children[0])
+      ariaNode.children = [];
   }
 
   roleUtils.beginAriaCaches();
@@ -115,19 +106,13 @@ export function generateAriaTree(rootElement: Element): AriaNode {
   return ariaRoot;
 }
 
-function toAriaNode(element: Element): { ariaNode: AriaNode, isLeaf: boolean } | null {
+function toAriaNode(element: Element): AriaNode | null {
   const role = roleUtils.getAriaRole(element);
   if (!role)
     return null;
 
   const name = roleUtils.getElementAccessibleName(element, false) || '';
-  const isLeaf = leafRoles.has(role);
   const result: AriaNode = { role, name, children: [] };
-  if (isLeaf && !name) {
-    const text = roleUtils.accumulatedElementText(element);
-    if (text)
-      result.children = [text];
-  }
 
   if (roleUtils.kAriaCheckedRoles.includes(role))
     result.checked = roleUtils.getAriaChecked(element);
@@ -147,7 +132,7 @@ function toAriaNode(element: Element): { ariaNode: AriaNode, isLeaf: boolean } |
   if (roleUtils.kAriaSelectedRoles.includes(role))
     result.selected = roleUtils.getAriaSelected(element);
 
-  return { isLeaf, ariaNode: result };
+  return result;
 }
 
 export function renderedAriaTree(rootElement: Element): string {
@@ -178,20 +163,11 @@ function normalizeStringChildren(rootA11yNode: AriaNode) {
     }
     flushChildren(buffer, normalizedChildren);
     ariaNode.children = normalizedChildren.length ? normalizedChildren : [];
+    if (ariaNode.children.length === 1 && ariaNode.children[0] === ariaNode.name)
+      ariaNode.children = [];
   };
   visit(rootA11yNode);
 }
-
-const hiddenContainerRoles = new Set(['none', 'presentation']);
-
-const leafRoles = new Set<AriaRole>([
-  'alert', 'blockquote', 'button', 'caption', 'checkbox', 'code', 'columnheader',
-  'definition', 'deletion', 'emphasis', 'generic', 'heading', 'img', 'insertion',
-  'link', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'meter', 'option',
-  'progressbar', 'radio', 'rowheader', 'scrollbar', 'searchbox', 'separator',
-  'slider', 'spinbutton', 'strong', 'subscript', 'superscript', 'switch', 'tab', 'term',
-  'textbox', 'time', 'tooltip'
-]);
 
 const normalizeWhitespaceWithin = (text: string) => text.replace(/[\s\t\r\n]+/g, ' ');
 
@@ -305,15 +281,7 @@ export function renderAriaTree(ariaNode: AriaNode, options?: { noText?: boolean 
     if (ariaNode.selected === true)
       line += ` [selected]`;
 
-    const stringValue = !ariaNode.children.length || (ariaNode.children?.length === 1 && typeof ariaNode.children[0] === 'string');
-    if (stringValue) {
-      if (!options?.noText && ariaNode.children.length)
-        line += ': ' + quoteYamlString(ariaNode.children?.[0] as string);
-      lines.push(line);
-      return;
-    }
-
-    lines.push(line + ':');
+    lines.push(line + (ariaNode.children.length ? ':' : ''));
     for (const child of ariaNode.children || [])
       visit(child, indent + '  ');
   };
