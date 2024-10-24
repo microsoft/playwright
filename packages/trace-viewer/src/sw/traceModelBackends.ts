@@ -30,9 +30,8 @@ export class ZipTraceModelBackend implements TraceModelBackend {
 
   constructor(traceURL: string, progress: Progress) {
     this._traceURL = traceURL;
-    zipjs.configure({ baseURL: self.location.href } as any);
     this._zipReader = new zipjs.ZipReader(
-        new zipjs.HttpReader(formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true } as any),
+        new zipjs.HttpReader(formatTraceFileUrl(traceURL), { mode: 'cors', preventHeadRequest: true } as any),
         { useWebWorkers: false });
     this._entriesPromise = this._zipReader.getEntries({ onprogress: progress }).then(entries => {
       const map = new Map<string, zip.Entry>();
@@ -87,7 +86,7 @@ export class FetchTraceModelBackend implements TraceModelBackend {
 
   constructor(traceURL: string) {
     this._traceURL = traceURL;
-    this._entriesPromise = fetch('/trace/file?path=' + encodeURIComponent(traceURL)).then(async response => {
+    this._entriesPromise = fetch(formatTraceFileUrl(traceURL)).then(async response => {
       const json = JSON.parse(await response.text());
       const entries = new Map<string, string>();
       for (const entry of json.entries)
@@ -129,14 +128,22 @@ export class FetchTraceModelBackend implements TraceModelBackend {
     const fileName = entries.get(entryName);
     if (!fileName)
       return;
-    return fetch('/trace/file?path=' + encodeURIComponent(fileName));
+
+    return fetch(formatTraceFileUrl(fileName));
   }
 }
 
-function formatUrl(trace: string) {
-  let url = trace.startsWith('http') || trace.startsWith('blob') ? trace : `file?path=${encodeURIComponent(trace)}`;
-  // Dropbox does not support cors.
-  if (url.startsWith('https://www.dropbox.com/'))
-    url = 'https://dl.dropboxusercontent.com/' + url.substring('https://www.dropbox.com/'.length);
-  return url;
+const baseURL = new URL(self.location.href);
+baseURL.port = baseURL.searchParams.get('testServerPort') ?? baseURL.port;
+
+function formatTraceFileUrl(trace: string) {
+  if (trace.startsWith('https://www.dropbox.com/'))
+    return 'https://dl.dropboxusercontent.com/' + trace.substring('https://www.dropbox.com/'.length);
+
+  if (trace.startsWith('http') || trace.startsWith('blob'))
+    return trace;
+
+  const url = new URL('/trace/file', baseURL);
+  url.searchParams.set('path', trace);
+  return url.toString();
 }
