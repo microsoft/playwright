@@ -16,6 +16,7 @@
 
 import type { FrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
 import { rewriteURLForCustomProtocol, SnapshotRenderer } from './snapshotRenderer';
+import { LRUCache } from './lruCache';
 
 export class SnapshotStorage {
   private _resources: ResourceSnapshot[] = [];
@@ -23,6 +24,7 @@ export class SnapshotStorage {
     raw: FrameSnapshot[],
     renderers: SnapshotRenderer[]
   }>();
+  private _cache = new LRUCache<SnapshotRenderer, string>(100_000_000);  // 100MB per each trace
 
   addResource(resource: ResourceSnapshot): void {
     resource.request.url = rewriteURLForCustomProtocol(resource.request.url);
@@ -43,7 +45,7 @@ export class SnapshotStorage {
         this._frameSnapshots.set(snapshot.pageId, frameSnapshots);
     }
     frameSnapshots.raw.push(snapshot);
-    const renderer = new SnapshotRenderer(this._resources, frameSnapshots.raw, frameSnapshots.raw.length - 1);
+    const renderer = new SnapshotRenderer(this._cache, this._resources, frameSnapshots.raw, frameSnapshots.raw.length - 1);
     frameSnapshots.renderers.push(renderer);
     return renderer;
   }
