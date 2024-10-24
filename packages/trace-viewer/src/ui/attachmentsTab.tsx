@@ -24,6 +24,7 @@ import { CodeMirrorWrapper, lineHeight } from '@web/components/codeMirrorWrapper
 import { isTextualMimeType } from '@isomorphic/mimeType';
 import { Expandable } from '@web/components/expandable';
 import { linkifyText } from '@web/renderUtils';
+import { clsx } from '@web/uiUtils';
 
 type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
 
@@ -64,7 +65,7 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
   }, [attachmentText]);
 
   const title = <span style={{ marginLeft: 5 }} ref={ref} aria-label={attachment.name}>
-    <span style={highlight ? { textDecoration: 'underline var(--vscode-terminal-findMatchBackground)', textDecorationThickness: 1.5 } : {}}>{linkifyText(attachment.name)}</span>
+    <span className={clsx(highlight && 'attachment-title-highlight')}>{linkifyText(attachment.name)}</span>
     {hasContent && <a style={{ marginLeft: 5 }} href={downloadURL(attachment)}>download</a>}
   </span>;
 
