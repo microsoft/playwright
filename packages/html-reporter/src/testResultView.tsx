@@ -25,6 +25,7 @@ import { statusIcon } from './statusIcon';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
 import { TestErrorView, TestScreenshotErrorView } from './testErrorView';
+import * as icons from './icons';
 import './testResultView.css';
 
 function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
@@ -173,12 +174,20 @@ function classifyErrors(testErrors: string[], diffs: ImageDiff[]) {
   });
 }
 
+export function componentID(cb: (params: URLSearchParams) => void) {
+  const searchParams = new URLSearchParams(window.location.hash.slice(1));
+  cb(searchParams);
+  return '?' + searchParams;
+}
+
 const StepTreeItem: React.FC<{
   step: TestStep;
   depth: number,
 }> = ({ step, depth }) => {
-  return <TreeItem title={<span>
+  const attachmentName = step.category === 'attach' ? step.title.match(/^attach "(.*)"$/)?.[1] : undefined;
+  return <TreeItem title={<span aria-label={step.title}>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
+    {attachmentName && <a style={{ float: 'right' }} title='link to attachment' href={'#' + componentID(params => params.set('attachment', attachmentName))} onClick={(evt) => { evt.stopPropagation(); }}>{icons.attachment()}</a>}
     {statusIcon(step.error || step.duration === -1 ? 'failed' : 'passed')}
     <span>{step.title}</span>
     {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
