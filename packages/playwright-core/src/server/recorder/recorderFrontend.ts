@@ -21,6 +21,7 @@ import type { EventEmitter } from 'events';
 export interface IRecorder {
   setMode(mode: Mode): void;
   mode(): Mode;
+  readonly handleSIGINT: boolean | undefined;
 }
 
 export interface IRecorderApp extends EventEmitter {
