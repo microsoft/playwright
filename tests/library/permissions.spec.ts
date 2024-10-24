@@ -150,7 +150,7 @@ it('should support clipboard read', async ({ page, context, server, browserName,
   it.fail(browserName === 'firefox', 'No such permissions (requires flag) in Firefox');
   it.fixme(browserName === 'webkit' && isWindows, 'WebPasteboardProxy::allPasteboardItemInfo not implemented for Windows.');
   it.fixme(browserName === 'webkit' && isLinux && headless, 'WebPasteboardProxy::allPasteboardItemInfo not implemented for WPE.');
-  const isChromiumHeadedLike = browserName === 'chromium' && (!headless || !!process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW);
+  const isChromiumHeadedLike = browserName === 'chromium' && (!headless || !process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_OLD);
 
   await page.goto(server.EMPTY_PAGE);
   // There is no 'clipboard-read' permission in WebKit Web API.
