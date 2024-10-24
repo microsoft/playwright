@@ -730,7 +730,7 @@ await page.get_by_text("Details").click()
 page.get_by_text("Details").click()
 ```
 ```csharp
-await page.GetByText("Details").ClickAsync();
+await Page.GetByText("Details").ClickAsync();
 ```
 
 ```html
@@ -757,7 +757,7 @@ await page.locator("x-details", has_text="Details" ).click()
 page.locator("x-details", has_text="Details" ).click()
 ```
 ```csharp
-await page
+await Page
     .Locator("x-details", new() { HasText = "Details" })
     .ClickAsync();
 ```
@@ -836,7 +836,7 @@ page.get_by_role("listitem").filter(has_text="Product 2").get_by_role(
 ```
 
 ```csharp
-await page
+await Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() { HasText = "Product 2" })
     .GetByRole(AriaRole.Button, new() { Name = "Add to cart" })
@@ -875,7 +875,7 @@ page.get_by_role("listitem").filter(has_text=re.compile("Product 2")).get_by_rol
 ```
 
 ```csharp
-await page
+await Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() { HasTextRegex = new Regex("Product 2") })
     .GetByRole(AriaRole.Button, new() { Name = "Add to cart" })
@@ -962,10 +962,10 @@ page.get_by_role("listitem").filter(
 ```
 
 ```csharp
-await page
+await Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
-        Has = page.GetByRole(AriaRole.Heading, new() {
+        Has = Page.GetByRole(AriaRole.Heading, new() {
             Name = "Product 2"
         })
     })
@@ -1011,7 +1011,7 @@ expect(
 await Expect(Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
-        Has = page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
+        Has = Page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
     }))
     .ToHaveCountAsync(1);
 ```
@@ -1060,7 +1060,7 @@ expect(
 await Expect(Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
-        Has = page.GetByRole(AriaRole.List).GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
+        Has = Page.GetByRole(AriaRole.List).GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
     }))
     .ToHaveCountAsync(1);
 ```
@@ -1103,7 +1103,7 @@ expect(
 await Expect(Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() {
-        HasNot = page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
+        HasNot = Page.GetByRole(AriaRole.Heading, new() { Name = "Product 2" })
     }))
     .ToHaveCountAsync(1);
 ```
@@ -1150,7 +1150,7 @@ product
 ```
 
 ```csharp
-var product = page
+var product = Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() { HasText = "Product 2" });
 
@@ -1191,9 +1191,9 @@ dialog.locator(saveButton).click();
 ```
 
 ```csharp
-var saveButton = page.GetByRole(AriaRole.Button, new() { Name = "Save" });
+var saveButton = Page.GetByRole(AriaRole.Button, new() { Name = "Save" });
 // ...
-var dialog = page.GetByTestId("settings-dialog");
+var dialog = Page.GetByTestId("settings-dialog");
 await dialog.Locator(saveButton).ClickAsync();
 ```
 
@@ -1213,7 +1213,7 @@ button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
 button = page.get_by_role("button").and_(page.getByTitle("Subscribe"))
 ```
 ```csharp
-var button = page.GetByRole(AriaRole.Button).And(page.GetByTitle("Subscribe"));
+var button = Page.GetByRole(AriaRole.Button).And(Page.GetByTitle("Subscribe"));
 ```
 
 ### Matching one of the two alternative locators
@@ -1264,11 +1264,11 @@ new_email.click()
 ```
 
 ```csharp
-var newEmail = page.GetByRole(AriaRole.Button, new() { Name = "New" });
-var dialog = page.GetByText("Confirm security settings");
+var newEmail = Page.GetByRole(AriaRole.Button, new() { Name = "New" });
+var dialog = Page.GetByText("Confirm security settings");
 await Expect(newEmail.Or(dialog).First).ToBeVisibleAsync();
 if (await dialog.IsVisibleAsync())
-  await page.GetByRole(AriaRole.Button, new() { Name = "Dismiss" }).ClickAsync();
+  await Page.GetByRole(AriaRole.Button, new() { Name = "Dismiss" }).ClickAsync();
 await newEmail.ClickAsync();
 ```
 
@@ -1304,7 +1304,7 @@ Consider a page with two buttons, the first invisible and the second [visible](.
   ```
 
   ```csharp
-  await page.Locator("button").ClickAsync();
+  await Page.Locator("button").ClickAsync();
   ```
 
 * This will only find a second button, because it is visible, and then click it.
@@ -1322,7 +1322,7 @@ Consider a page with two buttons, the first invisible and the second [visible](.
   page.locator("button").locator("visible=true").click()
   ```
   ```csharp
-  await page.Locator("button").Locator("visible=true").ClickAsync();
+  await Page.Locator("button").Locator("visible=true").ClickAsync();
   ```
 
 ## Lists
@@ -1441,7 +1441,7 @@ page.getByText("orange").click();
 ```
 
 ```csharp
-await page.GetByText("orange").ClickAsync();
+await Page.GetByText("orange").ClickAsync();
 ```
 
 #### Filter by text
@@ -1481,7 +1481,7 @@ page.getByRole(AriaRole.LISTITEM)
 ```
 
 ```csharp
-await page
+await Page
     .GetByRole(AriaRole.Listitem)
     .Filter(new() { HasText = "orange" })
     .ClickAsync();
@@ -1520,7 +1520,7 @@ page.getByTestId("orange").click();
 ```
 
 ```csharp
-await page.GetByTestId("orange").ClickAsync();
+await Page.GetByTestId("orange").ClickAsync();
 ```
 
 #### Get by nth item
@@ -1544,7 +1544,7 @@ Locator banana = page.getByRole(AriaRole.LISTITEM).nth(1);
 ```
 
 ```csharp
-var banana = await page.GetByRole(AriaRole.Listitem).Nth(1);
+var banana = await Page.GetByRole(AriaRole.Listitem).Nth(1);
 ```
 However, use this method with caution. Often times, the page might change, and the locator will point to a completely different element from the one you expected. Instead, try to come up with a unique locator that will pass the [strictness criteria](#strictness).
 
@@ -1615,12 +1615,12 @@ rowLocator
 ```
 
 ```csharp
-var rowLocator = page.GetByRole(AriaRole.Listitem);
+var rowLocator = Page.GetByRole(AriaRole.Listitem);
 
 await rowLocator
     .Filter(new() { HasText = "Mary" })
     .Filter(new() {
-        Has = page.GetByRole(AriaRole.Button, new() { Name = "Say goodbye" })
+        Has = Page.GetByRole(AriaRole.Button, new() { Name = "Say goodbye" })
     })
     .ScreenshotAsync(new() { Path = "screenshot.png" });
 ```
@@ -1654,7 +1654,7 @@ for (Locator row : page.getByRole(AriaRole.LISTITEM).all())
 ```
 
 ```csharp
-foreach (var row in await page.GetByRole(AriaRole.Listitem).AllAsync())
+foreach (var row in await Page.GetByRole(AriaRole.Listitem).AllAsync())
   Console.WriteLine(await row.TextContentAsync());
 ```
 
@@ -1689,7 +1689,7 @@ for (int i = 0; i < count; ++i)
 ```
 
 ```csharp
-var rows = page.GetByRole(AriaRole.Listitem);
+var rows = Page.GetByRole(AriaRole.Listitem);
 var count = await rows.CountAsync();
 for (int i = 0; i < count; ++i)
   Console.WriteLine(await rows.Nth(i).TextContentAsync());
@@ -1721,7 +1721,7 @@ Object texts = rows.evaluateAll(
     "list => list.map(element => element.textContent)");
 ```
 ```csharp
-var rows = page.GetByRole(AriaRole.Listitem);
+var rows = Page.GetByRole(AriaRole.Listitem);
 var texts = await rows.EvaluateAllAsync(
     "list => list.map(element => element.textContent)");
 ```
@@ -1748,7 +1748,7 @@ page.getByRole(AriaRole.BUTTON).click();
 ```
 
 ```csharp
-await page.GetByRole(AriaRole.Button).ClickAsync();
+await Page.GetByRole(AriaRole.Button).ClickAsync();
 ```
 
 On the other hand, Playwright understands when you perform a multiple-element operation,
@@ -1773,7 +1773,7 @@ page.getByRole(AriaRole.BUTTON).count();
 ```
 
 ```csharp
-await page.GetByRole(AriaRole.Button).CountAsync();
+await Page.GetByRole(AriaRole.Button).CountAsync();
 ```
 
 You can explicitly opt-out from strictness check by telling Playwright which element to use when multiple elements match, through [`method: Locator.first`], [`method: Locator.last`], and [`method: Locator.nth`]. These methods are **not recommended** because when your page changes, Playwright may click on an element you did not intend. Instead, follow best practices above to create a locator that uniquely identifies the target element.
