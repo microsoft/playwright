@@ -231,7 +231,7 @@ export const Workbench: React.FunctionComponent<{
     id: 'attachments',
     title: 'Attachments',
     count: attachments.length,
-    render: () => <AttachmentsTab model={model} />
+    render: () => <AttachmentsTab model={model} selectedAction={selectedAction} />
   };
 
   const tabs: TabbedPaneTabModel[] = [
@@ -296,6 +296,7 @@ export const Workbench: React.FunctionComponent<{
         setSelectedTime={setSelectedTime}
         onSelected={onActionSelected}
         onHighlighted={setHighlightedAction}
+        revealAttachments={() => selectPropertiesTab('attachments')}
         revealConsole={() => selectPropertiesTab('console')}
         isLive={isLive}
       />
@@ -340,6 +341,7 @@ export const Workbench: React.FunctionComponent<{
           openPage={openPage} />}
         sidebar={
           <TabbedPane
+            id='actionlist-sidebar'
             tabs={[actionsTab, metadataTab]}
             selectedTab={selectedNavigatorTab}
             setSelectedTab={setSelectedNavigatorTab}
@@ -347,6 +349,7 @@ export const Workbench: React.FunctionComponent<{
         }
       />}
       sidebar={<TabbedPane
+        id='workbench-sidebar'
         tabs={tabs}
         selectedTab={selectedPropertiesTab}
         setSelectedTab={selectPropertiesTab}
