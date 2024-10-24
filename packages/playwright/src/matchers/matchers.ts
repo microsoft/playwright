@@ -194,12 +194,12 @@ export function toHaveAccessibleName(
 ) {
   if (Array.isArray(expected)) {
     return toEqual.call(this, 'toHaveAccessibleName', locator, 'Locator', async (isNot, timeout) => {
-      const expectedText = serializeExpectedTextValues(expected, { normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
+      const expectedText = serializeExpectedTextValues(expected, { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
       return await locator._expect('to.have.accessible.name.array', { expectedText, isNot, timeout });
     }, expected, options);
   } else {
     return toMatchText.call(this, 'toHaveAccessibleName', locator, 'Locator', async (isNot, timeout) => {
-      const expectedText = serializeExpectedTextValues([expected], { normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
+      const expectedText = serializeExpectedTextValues([expected], { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
       return await locator._expect('to.have.accessible.name', { expectedText, isNot, timeout });
     }, expected, options);
   }
