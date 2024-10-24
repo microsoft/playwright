@@ -17,8 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 import { captureRawStack, monotonicTime, zones, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
-import type { TestInfoError, TestInfo, TestStatus, FullProject } from '../../types/test';
-import type { AttachmentPayload, StepBeginPayload, StepEndPayload, WorkerInitParams } from '../common/ipc';
+import type { TestInfo, TestStatus, FullProject } from '../../types/test';
+import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
 import type { RunnableDescription } from './timeoutManager';
@@ -28,7 +28,7 @@ import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normal
 import { TestTracing } from './testTracing';
 import type { Attachment } from './testTracing';
 import type { StackFrame } from '@protocol/channels';
-import { serializeWorkerError } from './util';
+import { testInfoError } from './util';
 
 export interface TestStepInternal {
   complete(result: { error?: Error | unknown, attachments?: Attachment[] }): void;
@@ -41,7 +41,7 @@ export interface TestStepInternal {
   endWallTime?: number;
   apiName?: string;
   params?: Record<string, any>;
-  error?: TestInfoError;
+  error?: TestInfoErrorImpl;
   infectParentStepsWithError?: boolean;
   box?: boolean;
   isStage?: boolean;
@@ -97,14 +97,14 @@ export class TestInfoImpl implements TestInfo {
   snapshotSuffix: string = '';
   readonly outputDir: string;
   readonly snapshotDir: string;
-  errors: TestInfoError[] = [];
+  errors: TestInfoErrorImpl[] = [];
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
 
-  get error(): TestInfoError | undefined {
+  get error(): TestInfoErrorImpl | undefined {
     return this.errors[0];
   }
 
-  set error(e: TestInfoError | undefined) {
+  set error(e: TestInfoErrorImpl | undefined) {
     if (e === undefined)
       throw new Error('Cannot assign testInfo.error undefined value!');
     this.errors[0] = e;
@@ -273,7 +273,7 @@ export class TestInfoImpl implements TestInfo {
         if (result.error) {
           if (typeof result.error === 'object' && !(result.error as any)?.[stepSymbol])
             (result.error as any)[stepSymbol] = step;
-          const error = serializeWorkerError(result.error);
+          const error = testInfoError(result.error);
           if (data.boxedStack)
             error.stack = `${error.message}\n${stringifyStackFrames(data.boxedStack).join('\n')}`;
           step.error = error;
@@ -331,7 +331,7 @@ export class TestInfoImpl implements TestInfo {
   _failWithError(error: Error | unknown) {
     if (this.status === 'passed' || this.status === 'skipped')
       this.status = error instanceof TimeoutManagerError ? 'timedOut' : 'failed';
-    const serialized = serializeWorkerError(error);
+    const serialized = testInfoError(error);
     const step: TestStepInternal | undefined = typeof error === 'object' ? (error as any)?.[stepSymbol] : undefined;
     if (step && step.boxedStack)
       serialized.stack = `${(error as Error).name}: ${(error as Error).message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;

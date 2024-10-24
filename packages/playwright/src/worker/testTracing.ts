@@ -21,10 +21,10 @@ import fs from 'fs';
 import path from 'path';
 import { ManualPromise, calculateSha1, monotonicTime, createGuid, SerializedFS } from 'playwright-core/lib/utils';
 import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
-import type { TestInfo, TestInfoError } from '../../types/test';
 import { filteredStackTrace } from '../util';
-import type { TraceMode, PlaywrightWorkerOptions } from '../../types/test';
+import type { TestInfo, TraceMode, PlaywrightWorkerOptions } from '../../types/test';
 import type { TestInfoImpl } from './testInfo';
+import type { TestInfoErrorImpl } from '../common/ipc';
 
 export type Attachment = TestInfo['attachments'][0];
 export const testTraceEntryName = 'test.trace';
@@ -219,7 +219,7 @@ export class TestTracing {
     this._testInfo.attachments.push({ name: 'trace', path: tracePath, contentType: 'application/zip' });
   }
 
-  appendForError(error: TestInfoError) {
+  appendForError(error: TestInfoErrorImpl) {
     const rawStack = error.stack?.split('\n') || [];
     const stack = rawStack ? filteredStackTrace(rawStack) : [];
     this._appendTraceEvent({
