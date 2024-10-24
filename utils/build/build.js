@@ -275,7 +275,7 @@ for (const bundle of bundles) {
   });
 }
 
-// Build/watch trace viewer service worker.
+// initial service worker build.
 steps.push({
   command: 'npx',
   args: [
@@ -283,12 +283,11 @@ steps.push({
     '--config',
     'vite.sw.config.ts',
     'build',
-    ...(watchMode ? ['--watch', '--minify=false'] : []),
     ...(withSourceMaps ? ['--sourcemap=inline'] : []),
   ],
   shell: true,
   cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
-  concurrent: !watchMode,
+  concurrent: false,
 });
 
 // Build/watch web packages.
