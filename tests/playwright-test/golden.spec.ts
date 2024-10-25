@@ -223,7 +223,7 @@ test('should write detailed failure result to an output folder', async ({ runInl
 
   expect(result.exitCode).toBe(1);
   const outputText = result.output;
-  expect(outputText).toContain('Snapshot comparison failed:');
+  expect(outputText).toContain('Error: expect(string).toMatchSnapshot(expected)');
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.txt');
   const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.txt');
   expect(outputText).toMatch(/Expected:.*a\.spec\.js-snapshots.snapshot\.txt/);
@@ -635,7 +635,8 @@ test('should compare different PNG images', async ({ runInlineTest }, testInfo) 
 
   const outputText = result.output;
   expect(result.exitCode).toBe(1);
-  expect(outputText).toContain('Screenshot comparison failed:');
+  expect(outputText).toContain('Error: expect(Buffer).toMatchSnapshot(expected)');
+  expect(outputText).toContain('1 pixels (ratio 1.00 of all image pixels) are different.');
   const expectedSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-expected.png');
   const actualSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-actual.png');
   const diffSnapshotArtifactPath = testInfo.outputPath('test-results', 'a-is-a-test', 'snapshot-diff.png');

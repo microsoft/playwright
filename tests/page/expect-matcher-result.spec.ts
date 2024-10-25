@@ -295,7 +295,7 @@ test('toHaveScreenshot should populate matcherResult', async ({ page, server, is
     actual: expect.stringContaining('screenshot-sanity-actual'),
     expected: expect.stringContaining('screenshot-sanity-'),
     diff: expect.stringContaining('screenshot-sanity-diff'),
-    message: expect.stringContaining(`Screenshot comparison failed`),
+    message: expect.stringContaining(`expect(page).toHaveScreenshot(expected)`),
     name: 'toHaveScreenshot',
     pass: false,
     log: expect.any(Array),
@@ -303,7 +303,7 @@ test('toHaveScreenshot should populate matcherResult', async ({ page, server, is
     printedReceived: expect.stringContaining('screenshot-sanity-actual'),
   });
 
-  expect.soft(stripAnsi(e.toString())).toContain(`Error: Screenshot comparison failed:
+  expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(page).toHaveScreenshot(expected)
 
   23362 pixels (ratio 0.10 of all image pixels) are different.
 

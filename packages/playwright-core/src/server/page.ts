@@ -674,11 +674,12 @@ export class Page extends SdkObject {
         throw e;
       let errorMessage = e.message;
       if (e instanceof TimeoutError && intermediateResult?.previous)
-        errorMessage = `Failed to take two consecutive stable screenshots. ${e.message}`;
+        errorMessage = `Failed to take two consecutive stable screenshots.`;
       return {
         log: e.message ? [...metadata.log, e.message] : metadata.log,
         ...intermediateResult,
         errorMessage,
+        timedOut: (e instanceof TimeoutError),
       };
     });
   }

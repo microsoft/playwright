@@ -330,7 +330,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('text=Image mismatch')).toHaveCount(1);
       await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
       await expect(page.locator('.chip-header', { hasText: 'Screenshots' })).toHaveCount(0);
-      await expect(page.getByTestId('test-result-image-mismatch-tabs').locator('div')).toHaveText([
+      const errorChip = page.getByTestId('test-screenshot-error-view');
+      await expect(errorChip).toContainText('Failed to take two consecutive stable screenshots.');
+      await expect(errorChip.getByTestId('test-result-image-mismatch-tabs').locator('div')).toHaveText([
         'Diff',
         'Actual',
         'Previous',
