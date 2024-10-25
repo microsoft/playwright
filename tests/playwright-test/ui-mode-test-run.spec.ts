@@ -778,14 +778,3 @@ test('should respect --ignore-snapshots option', {
           - treeitem ${/\[icon-check\] snapshot/}
   `);
 });
-
-test('should show funny messages', async ({ runUITest }) => {
-  const { page } = await runUITest(basicTestTree);
-  await page.clock.setFixedTime('2025-04-01');
-
-  await expect(page.getByText('Claywright')).toBeVisible();
-  const schmettingsHeader = page.getByText('Schmettings');
-  await expect(schmettingsHeader).toBeVisible();
-  await schmettingsHeader.click();
-  await expect(page.getByRole('checkbox', { name: 'Fart mode' })).toBeVisible();
-});
