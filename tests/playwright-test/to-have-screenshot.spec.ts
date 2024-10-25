@@ -551,7 +551,7 @@ test('should fail when screenshot is different pixels', async ({ runInlineTest }
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Screenshot comparison failed');
+  expect(result.output).toContain('Error: expect(page).toHaveScreenshot(expected)');
   expect(result.output).toContain('12345 pixels');
   expect(result.output).toContain('Call log');
   expect(result.output).toContain('ratio 0.02');
