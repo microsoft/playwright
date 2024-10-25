@@ -86,6 +86,13 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
         return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
       return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
     }
+    // Zorin is ubuntu-based but does not have the same versions
+    if (distroInfo?.id === 'zorin') {
+      const zorinMajor = parseInt(distroInfo.version, 10);
+      if (zorinMajor < 17)
+        return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+      return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+    }
     if (distroInfo?.id === 'debian' || distroInfo?.id === 'raspbian' || distroInfo?.id === 'devuan') {
       const isOfficiallySupportedPlatform = distroInfo?.id === 'debian';
       let debianVersion = distroInfo?.version;
