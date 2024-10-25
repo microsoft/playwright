@@ -99,7 +99,7 @@ See [Running Tests](./running-tests.md) for general information on `pytest` opti
 
 ## Examples
 
-### Configure Mypy typings for auto-completion
+### Configure typings for auto-completion
 
 ```py title="test_my_application.py"
 from playwright.sync_api import Page
@@ -108,6 +108,8 @@ def test_visit_admin_dashboard(page: Page):
     page.goto("/admin")
     # ...
 ```
+
+If you're using VSCode with Pylance, these types can be inferred by enabling the `python.testing.pytestEnabled` setting so you don't need the type annotation.
 
 ### Configure slow mo
 
