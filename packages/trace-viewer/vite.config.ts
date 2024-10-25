@@ -26,9 +26,6 @@ export default defineConfig({
     react(),
     bundle()
   ],
-  define: {
-    'process.env': {},
-  },
   resolve: {
     alias: {
       '@injected': path.resolve(__dirname, '../playwright-core/src/server/injected'),
