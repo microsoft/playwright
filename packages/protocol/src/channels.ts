@@ -3162,7 +3162,7 @@ export type FrameExpectParams = {
   expectedValue?: SerializedArgument,
   useInnerText?: boolean,
   isNot: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameExpectOptions = {
   expressionArg?: any,
@@ -3170,7 +3170,6 @@ export type FrameExpectOptions = {
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
   useInnerText?: boolean,
-  timeout?: number,
 };
 export type FrameExpectResult = {
   matches: boolean,

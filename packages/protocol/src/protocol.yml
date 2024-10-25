@@ -2388,7 +2388,7 @@ Frame:
         expectedValue: SerializedArgument?
         useInnerText: boolean?
         isNot: boolean
-        timeout: number?
+        timeout: number
       returns:
         matches: boolean
         received: SerializedValue?
