@@ -21,7 +21,7 @@ test('generatePlaywrightRequestCall', () => {
   expect(generatePlaywrightRequestCall({
     url: 'http://example.com/foo?bar=baz',
     method: 'GET',
-    headers: [{ name: 'User-Agent', value: 'Mozilla/5.0' }],
+    headers: [{ name: 'User-Agent', value: 'Mozilla/5.0' }, { name: 'Date', value: '2021-01-01' }],
     httpVersion: '1.1',
     cookies: [],
     queryString: [],
@@ -29,9 +29,32 @@ test('generatePlaywrightRequestCall', () => {
     bodySize: 0,
     comment: '',
   }, 'foo')).toEqual(`
-await page.request.GET("http://example.com/foo", {
-  headers: {
-    "User-Agent": "Mozilla/5.0"
+await page.request.get('http://example.com/foo', {
+  params: {
+    bar: 'baz'
   },
-);`.trim());
+  data: 'foo',
+  headers: {
+    'User-Agent': 'Mozilla/5.0',
+    Date: '2021-01-01'
+  }
+});`.trim());
+
+  expect(generatePlaywrightRequestCall({
+    url: 'http://example.com/foo?bar=baz',
+    method: 'OPTIONS',
+    headers: [],
+    httpVersion: '1.1',
+    cookies: [],
+    queryString: [],
+    headersSize: 0,
+    bodySize: 0,
+    comment: '',
+  }, undefined)).toEqual(`
+await page.request.fetch('http://example.com/foo', {
+  method: 'options',
+  params: {
+    bar: 'baz'
+  }
+});`.trim());
 });

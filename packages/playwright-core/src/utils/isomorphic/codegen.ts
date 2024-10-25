@@ -17,17 +17,65 @@
 import type * as har from '@trace/har';
 
 export function generatePlaywrightRequestCall(request: har.Request, body: string | undefined): string {
-  const method = request.method;
-  const headers = request.headers.map(header => {
-    const name = JSON.stringify(header.name);
-    const value = JSON.stringify(header.value);
-    return `    ${name}: ${value}`;
-  }).join(',\n');
-
+  let method = request.method.toLowerCase();
   const url = new URL(request.url);
   const urlParam = `${url.origin}${url.pathname}`;
-  let result = `await page.request.${method}(${JSON.stringify(urlParam)}, {\n`;
-  result += `  headers: {\n${headers}\n  },\n`;
-  result += `);`;
-  return result;
+  const options: any = {};
+  if (!['delete', 'get', 'head', 'post', 'put', 'patch'].includes(method)) {
+    options.method = method;
+    method = 'fetch';
+  }
+  if (url.searchParams.size)
+    options.params = Object.fromEntries(url.searchParams.entries());
+  if (body)
+    options.data = body;
+  if (request.headers.length)
+    options.headers = Object.fromEntries(request.headers.map(header => [header.name, header.value]));
+  return `await page.request.${method}('${urlParam}', ${prettyPrintObject(options)});`;
+}
+
+function prettyPrintObject(obj: any, indent = 2, level = 0): string {
+  // Handle null and undefined
+  if (obj === null)
+    return 'null';
+  if (obj === undefined)
+    return 'undefined';
+
+  // Handle primitive types
+  if (typeof obj !== 'object') {
+    if (typeof obj === 'string')
+      return `'${obj}'`;
+    return String(obj);
+  }
+
+  // Handle arrays
+  if (Array.isArray(obj)) {
+    if (obj.length === 0)
+      return '[]';
+    const spaces = ' '.repeat(level * indent);
+    const nextSpaces = ' '.repeat((level + 1) * indent);
+
+    const items = obj.map(item =>
+      `${nextSpaces}${prettyPrintObject(item, indent, level + 1)}`
+    ).join(',\n');
+
+    return `[\n${items}\n${spaces}]`;
+  }
+
+  // Handle regular objects
+  if (Object.keys(obj).length === 0)
+    return '{}';
+  const spaces = ' '.repeat(level * indent);
+  const nextSpaces = ' '.repeat((level + 1) * indent);
+
+  const entries = Object.entries(obj).map(([key, value]) => {
+    const formattedValue = prettyPrintObject(value, indent, level + 1);
+    // Handle keys that need quotes
+    const formattedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ?
+      key :
+      `'${key}'`;
+    return `${nextSpaces}${formattedKey}: ${formattedValue}`;
+  }).join(',\n');
+
+  return `{\n${entries}\n${spaces}}`;
 }
