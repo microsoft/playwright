@@ -370,6 +370,7 @@ export async function toHaveScreenshot(
     throw new Error(`Screenshot name "${path.basename(helper.expectedPath)}" must have '.png' extension`);
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
   const style = await loadScreenshotStyles(helper.options.stylePath);
+  const timeout = helper.options.timeout ?? this.timeout;
   const expectScreenshotOptions: ExpectScreenshotOptions = {
     locator,
     animations: helper.options.animations ?? 'disabled',
@@ -382,7 +383,7 @@ export async function toHaveScreenshot(
     scale: helper.options.scale ?? 'css',
     style,
     isNot: !!this.isNot,
-    timeout: helper.options.timeout ?? this.timeout,
+    timeout,
     comparator: helper.options.comparator,
     maxDiffPixels: helper.options.maxDiffPixels,
     maxDiffPixelRatio: helper.options.maxDiffPixelRatio,
@@ -409,11 +410,11 @@ export async function toHaveScreenshot(
   const receiver = locator ? 'locator' : 'page';
   if (!hasSnapshot) {
     // Regenerate a new screenshot by waiting until two screenshots are the same.
-    const { actual, previous, diff, errorMessage, log, timeout } = await page._expectScreenshot(expectScreenshotOptions);
+    const { actual, previous, diff, errorMessage, log, timedOut } = await page._expectScreenshot(expectScreenshotOptions);
     // We tried re-generating new snapshot but failed.
     // This can be due to e.g. spinning animation, so we want to show it as a diff.
     if (errorMessage) {
-      const header = matcherHint(this, locator, 'toHaveScreenshot', receiver, undefined, undefined, timeout);
+      const header = matcherHint(this, locator, 'toHaveScreenshot', receiver, undefined, undefined, timedOut ? timeout : undefined);
       return helper.handleDifferent(actual, undefined, previous, diff, header, errorMessage, log);
     }
 
@@ -426,7 +427,7 @@ export async function toHaveScreenshot(
   // - regular matcher (i.e. not a `.not`)
   // - perhaps an 'all' flag to update non-matching screenshots
   expectScreenshotOptions.expected = await fs.promises.readFile(helper.expectedPath);
-  const { actual, previous, diff, errorMessage, log, timeout } = await page._expectScreenshot(expectScreenshotOptions);
+  const { actual, previous, diff, errorMessage, log, timedOut } = await page._expectScreenshot(expectScreenshotOptions);
 
   if (!errorMessage)
     return helper.handleMatching();
@@ -439,7 +440,7 @@ export async function toHaveScreenshot(
     return helper.createMatcherResult(helper.expectedPath + ' running with --update-snapshots, writing actual.', true);
   }
 
-  const header = matcherHint(this, undefined, 'toHaveScreenshot', receiver, undefined, undefined, timeout);
+  const header = matcherHint(this, undefined, 'toHaveScreenshot', receiver, undefined, undefined, timedOut ? timeout : undefined);
   return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log);
 }
 

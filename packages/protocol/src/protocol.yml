@@ -1482,7 +1482,7 @@ Page:
     expectScreenshot:
       parameters:
         expected: binary?
-        timeout: number?
+        timeout: number
         isNot: boolean
         locator:
           type: object?
@@ -1501,7 +1501,7 @@ Page:
         errorMessage: string?
         actual: binary?
         previous: binary?
-        timeout: number?
+        timedOut: boolean?
         log:
           type: array?
           items: string

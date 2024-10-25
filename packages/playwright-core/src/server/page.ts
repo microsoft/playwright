@@ -679,7 +679,7 @@ export class Page extends SdkObject {
         log: e.message ? [...metadata.log, e.message] : metadata.log,
         ...intermediateResult,
         errorMessage,
-        ...((e instanceof TimeoutError) ? { timeout: callTimeout } : {}),
+        timedOut: (e instanceof TimeoutError),
       };
     });
   }

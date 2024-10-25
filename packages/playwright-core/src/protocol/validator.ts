@@ -1165,7 +1165,7 @@ scheme.PageReloadResult = tObject({
 });
 scheme.PageExpectScreenshotParams = tObject({
   expected: tOptional(tBinary),
-  timeout: tOptional(tNumber),
+  timeout: tNumber,
   isNot: tBoolean,
   locator: tOptional(tObject({
     frame: tChannel(['Frame']),
@@ -1193,7 +1193,7 @@ scheme.PageExpectScreenshotResult = tObject({
   errorMessage: tOptional(tString),
   actual: tOptional(tBinary),
   previous: tOptional(tBinary),
-  timeout: tOptional(tNumber),
+  timedOut: tOptional(tBoolean),
   log: tOptional(tArray(tString)),
 });
 scheme.PageScreenshotParams = tObject({
