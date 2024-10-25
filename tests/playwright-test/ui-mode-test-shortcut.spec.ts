@@ -48,6 +48,16 @@ test('should run tests', async ({ runUITest }) => {
         ◯ test 2
         ✅ test 3
   `);
+
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] test 0"
+          - treeitem "[icon-circle-outline] test 1"
+          - treeitem "[icon-circle-outline] test 2"
+          - treeitem ${/\[icon-check\] test 3/}
+  `);
 });
 
 test('should stop tests', async ({ runUITest }) => {
@@ -64,6 +74,16 @@ test('should stop tests', async ({ runUITest }) => {
         ✅ test 1
         ↻ test 2
         🕦 test 3
+  `);
+
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-loading] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-slash] test 0"
+          - treeitem ${/\[icon-check\] test 1/}
+          - treeitem ${/\[icon-loading\] test 2/}
+          - treeitem ${/\[icon-clock\] test 3/}
   `);
 
   await expect(page.getByTitle('Run all')).toBeDisabled();

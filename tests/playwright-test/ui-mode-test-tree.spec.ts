@@ -46,6 +46,19 @@ test('should list tests', async ({ runUITest }) => {
         ◯ passes
         ◯ fails
   `);
+
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [expanded=false]
+      - treeitem "[icon-circle-outline] b.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+  `);
 });
 
 test('should list all tests from projects with clashing names', async ({ runUITest }) => {
@@ -100,6 +113,22 @@ test('should list all tests from projects with clashing names', async ({ runUITe
           ◯ one
           ◯ two
   `);
+
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] bar" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] b.test.ts" [expanded]:
+            - group:
+              - treeitem "[icon-circle-outline] three"
+              - treeitem "[icon-circle-outline] four"
+      - treeitem "[icon-circle-outline] foo" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] a.test.ts" [expanded] [selected]:
+            - group:
+              - treeitem "[icon-circle-outline] one"
+              - treeitem "[icon-circle-outline] two"
+  `);
 });
 
 test('should traverse up/down', async ({ runUITest }) => {
@@ -111,6 +140,14 @@ test('should traverse up/down', async ({ runUITest }) => {
         ◯ fails
       ► ◯ suite
   `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded] [selected]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [expanded=false]
+  `);
 
   await page.keyboard.press('ArrowDown');
   await expect.poll(dumpTestTree(page)).toContain(`
@@ -119,12 +156,29 @@ test('should traverse up/down', async ({ runUITest }) => {
         ◯ fails
       ► ◯ suite
   `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes" [selected]
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [expanded=false]
+  `);
+
   await page.keyboard.press('ArrowDown');
   await expect.poll(dumpTestTree(page)).toContain(`
     ▼ ◯ a.test.ts
         ◯ passes
         ◯ fails <=
       ► ◯ suite
+  `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails" [selected]
+          - treeitem "[icon-circle-outline] suite" [expanded=false]
   `);
 
   await page.keyboard.press('ArrowUp');
@@ -133,6 +187,14 @@ test('should traverse up/down', async ({ runUITest }) => {
         ◯ passes <=
         ◯ fails
       ► ◯ suite
+  `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes" [selected]
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [expanded=false]
   `);
 });
 
@@ -149,6 +211,17 @@ test('should expand / collapse groups', async ({ runUITest }) => {
           ◯ inner passes
           ◯ inner fails
   `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [expanded] [selected]:
+            - group:
+              - treeitem "[icon-circle-outline] inner passes"
+              - treeitem "[icon-circle-outline] inner fails"
+  `);
 
   await page.keyboard.press('ArrowLeft');
   await expect.poll(dumpTestTree(page)).toContain(`
@@ -156,6 +229,14 @@ test('should expand / collapse groups', async ({ runUITest }) => {
         ◯ passes
         ◯ fails
       ► ◯ suite <=
+  `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [selected] [expanded=false]
   `);
 
   await page.getByTestId('test-tree').getByText('passes').first().click();
@@ -165,10 +246,21 @@ test('should expand / collapse groups', async ({ runUITest }) => {
         ◯ passes
         ◯ fails
   `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded] [selected]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+  `);
 
   await page.keyboard.press('ArrowLeft');
   await expect.poll(dumpTestTree(page)).toContain(`
     ► ◯ a.test.ts <=
+  `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [selected] [expanded=false]
   `);
 });
 
@@ -194,6 +286,16 @@ test('should merge folder trees', async ({ runUITest }) => {
       ► ◯ in-b.test.ts
     ▼ ◯ in-a.test.ts
         ◯ passes
+  `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] b" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] c" [expanded=false]
+          - treeitem "[icon-circle-outline] in-b.test.ts" [expanded=false]
+      - treeitem "[icon-circle-outline] in-a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
   `);
 });
 
@@ -224,6 +326,18 @@ test('should list parametrized tests', async ({ runUITest }) => {
             ◯ test DE
             ◯ test LT
   `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] cookies" [expanded]:
+            - group:
+              - treeitem "[icon-circle-outline] <anonymous>" [expanded] [selected]:
+                - group:
+                  - treeitem "[icon-circle-outline] test FR"
+                  - treeitem "[icon-circle-outline] test DE"
+                  - treeitem "[icon-circle-outline] test LT"
+  `);
 });
 
 test('should update parametrized tests', async ({ runUITest, writeFiles }) => {
@@ -253,6 +367,18 @@ test('should update parametrized tests', async ({ runUITest, writeFiles }) => {
             ◯ test DE
             ◯ test LT
   `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] cookies" [expanded]:
+            - group:
+              - treeitem "[icon-circle-outline] <anonymous>" [expanded] [selected]:
+                - group:
+                  - treeitem "[icon-circle-outline] test FR"
+                  - treeitem "[icon-circle-outline] test DE"
+                  - treeitem "[icon-circle-outline] test LT"
+  `);
 
   await writeFiles({
     'a.test.ts': `
@@ -275,6 +401,17 @@ test('should update parametrized tests', async ({ runUITest, writeFiles }) => {
             ◯ test FR
             ◯ test LT
   `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] cookies" [expanded]:
+            - group:
+              - treeitem "[icon-circle-outline] <anonymous>" [expanded] [selected]:
+                - group:
+                  - treeitem "[icon-circle-outline] test FR"
+                  - treeitem "[icon-circle-outline] test LT"
+  `);
 });
 
 test('should collapse all', async ({ runUITest }) => {
@@ -290,10 +427,25 @@ test('should collapse all', async ({ runUITest }) => {
           ◯ inner passes
           ◯ inner fails
   `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [expanded] [selected]:
+            - group:
+              - treeitem "[icon-circle-outline] inner passes"
+              - treeitem "[icon-circle-outline] inner fails"
+  `);
 
   await page.getByTitle('Collapse all').click();
   await expect.poll(dumpTestTree(page)).toContain(`
     ► ◯ a.test.ts
+  `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded=false]
   `);
 });
 
@@ -320,6 +472,21 @@ test('should expand all', {
     ▼ ◯ b.test.ts
         ◯ passes
         ◯ fails
+  `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
+          - treeitem "[icon-circle-outline] suite" [expanded]:
+            - group:
+              - treeitem "[icon-circle-outline] inner passes"
+              - treeitem "[icon-circle-outline] inner fails"
+      - treeitem "[icon-circle-outline] b.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] passes"
+          - treeitem "[icon-circle-outline] fails"
   `);
 });
 
@@ -348,5 +515,15 @@ test('should resolve title conflicts', async ({ runUITest }) => {
       ▼ ◯ foo <=
           ◯ bar
           ◯ bar 2
+  `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] foo"
+          - treeitem "[icon-circle-outline] foo" [expanded] [selected]:
+            - group:
+              - treeitem "[icon-circle-outline] bar"
+              - treeitem "[icon-circle-outline] bar 2"
   `);
 });

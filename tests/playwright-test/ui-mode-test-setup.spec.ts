@@ -144,6 +144,16 @@ test('should run setup and teardown projects (1)', async ({ runUITest }) => {
   await page.getByRole('checkbox', { name: 'teardown' }).setChecked(false);
   await page.getByRole('checkbox', { name: 'test' }).setChecked(false);
 
+  await expect(page.getByTestId('project-filters')).toMatchAriaSnapshot(`
+    - list:
+      - listitem:
+        - checkbox "teardown"
+      - listitem:
+        - checkbox "setup"
+      - listitem:
+        - checkbox "test"
+  `);
+
   await page.getByTitle('Run all').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
@@ -155,10 +165,27 @@ test('should run setup and teardown projects (1)', async ({ runUITest }) => {
         ✅ test
   `);
 
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-check] setup.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] setup/}
+      - treeitem "[icon-check] teardown.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] teardown/}
+      - treeitem "[icon-check] test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] test/}
+  `);
+
   await page.getByTitle('Toggle output').click();
   await expect(page.getByTestId('output')).toContainText(`from-setup`);
   await expect(page.getByTestId('output')).toContainText(`from-test`);
   await expect(page.getByTestId('output')).toContainText(`from-teardown`);
+
+  await expect(page.getByTestId('output')).toMatchAriaSnapshot(`
+    - textbox "Terminal input"
+  `);
 });
 
 test('should run setup and teardown projects (2)', async ({ runUITest }) => {
@@ -167,6 +194,16 @@ test('should run setup and teardown projects (2)', async ({ runUITest }) => {
   await page.getByRole('checkbox', { name: 'setup' }).setChecked(false);
   await page.getByRole('checkbox', { name: 'teardown' }).setChecked(true);
   await page.getByRole('checkbox', { name: 'test' }).setChecked(true);
+
+  await expect(page.getByTestId('project-filters')).toMatchAriaSnapshot(`
+    - list:
+      - listitem:
+        - checkbox "teardown" [checked]
+      - listitem:
+        - checkbox "setup"
+      - listitem:
+        - checkbox "test" [checked]
+  `);
 
   await page.getByTitle('Run all').click();
 
@@ -177,10 +214,24 @@ test('should run setup and teardown projects (2)', async ({ runUITest }) => {
         ✅ test
   `);
 
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-check] teardown.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] teardown/}
+      - treeitem "[icon-check] test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] test/}
+  `);
+
   await page.getByTitle('Toggle output').click();
   await expect(page.getByTestId('output')).toContainText(`from-test`);
   await expect(page.getByTestId('output')).toContainText(`from-teardown`);
   await expect(page.getByTestId('output')).not.toContainText(`from-setup`);
+
+  await expect(page.getByTestId('output')).toMatchAriaSnapshot(`
+    - textbox "Terminal input"
+  `);
 });
 
 test('should run setup and teardown projects (3)', async ({ runUITest }) => {
@@ -190,6 +241,16 @@ test('should run setup and teardown projects (3)', async ({ runUITest }) => {
   await page.getByRole('checkbox', { name: 'teardown' }).setChecked(false);
   await page.getByRole('checkbox', { name: 'test' }).setChecked(true);
 
+  await expect(page.getByTestId('project-filters')).toMatchAriaSnapshot(`
+    - list:
+      - listitem:
+        - checkbox "teardown"
+      - listitem:
+        - checkbox "setup"
+      - listitem:
+        - checkbox "test" [checked]
+  `);
+
   await page.getByTitle('Run all').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
@@ -197,10 +258,21 @@ test('should run setup and teardown projects (3)', async ({ runUITest }) => {
         ✅ test
   `);
 
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-check] test.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] test/}
+  `);
+
   await page.getByTitle('Toggle output').click();
   await expect(page.getByTestId('output')).toContainText(`from-test`);
   await expect(page.getByTestId('output')).not.toContainText(`from-setup`);
   await expect(page.getByTestId('output')).not.toContainText(`from-teardown`);
+
+  await expect(page.getByTestId('output')).toMatchAriaSnapshot(`
+    - textbox "Terminal input"
+  `);
 });
 
 test('should run part of the setup only', async ({ runUITest }) => {
@@ -209,6 +281,16 @@ test('should run part of the setup only', async ({ runUITest }) => {
   await page.getByRole('checkbox', { name: 'setup' }).setChecked(true);
   await page.getByRole('checkbox', { name: 'teardown' }).setChecked(true);
   await page.getByRole('checkbox', { name: 'test' }).setChecked(true);
+
+  await expect(page.getByTestId('project-filters')).toMatchAriaSnapshot(`
+    - list:
+      - listitem:
+        - checkbox "teardown" [checked]
+      - listitem:
+        - checkbox "setup" [checked]
+      - listitem:
+        - checkbox "test" [checked]
+  `);
 
   await page.getByText('setup.ts').hover();
   await page.getByRole('treeitem', { name: 'setup.ts' }).getByRole('button', { name: 'Run' }).click();
@@ -220,6 +302,22 @@ test('should run part of the setup only', async ({ runUITest }) => {
         ✅ teardown
     ▼ ◯ test.ts
         ◯ test
+  `);
+
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-check] setup.ts" [expanded] [selected]:
+        - button "Run"
+        - button "Show source"
+        - button "Watch"
+        - group:
+          - treeitem ${/\[icon-check\] setup/}
+      - treeitem "[icon-check] teardown.ts" [expanded]:
+        - group:
+          - treeitem ${/\[icon-check\] teardown/}
+      - treeitem "[icon-circle-outline] test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] test"
   `);
 });
 

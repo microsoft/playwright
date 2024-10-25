@@ -399,3 +399,17 @@ it('check aria-hidden text', async ({ page, server }) => {
     - paragraph: "hello"
   `);
 });
+
+it('should ignore presentation and none roles', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <ul>
+      <li role='presentation'>hello</li>
+      <li role='none'>world</li>
+    </ul>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - list: "hello world"
+  `);
+});
