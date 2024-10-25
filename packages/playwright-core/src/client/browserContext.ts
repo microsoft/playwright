@@ -495,6 +495,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   async _enableRecorder(params: channels.BrowserContextEnableRecorderParams) {
     await this._channel.enableRecorder(params);
   }
+
+  _disableDebugger() {
+    this._wrapApiCall(async () => {
+      this._channel.disableDebugger();
+    }, true).catch(() => {});
+  }
 }
 
 async function prepareStorageState(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams['storageState']> {
