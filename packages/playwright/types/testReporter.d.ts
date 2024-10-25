@@ -555,39 +555,14 @@ export interface TestCase {
  */
 export interface TestError {
   /**
-   * Expected value formatted as a human-readable string.
-   */
-  expected?: string;
-
-  /**
    * Error location in the source code.
    */
   location?: Location;
 
   /**
-   * Receiver's locator.
-   */
-  locator?: string;
-
-  /**
-   * Call log.
-   */
-  log?: Array<string>;
-
-  /**
-   * Expect matcher name.
-   */
-  matcherName?: string;
-
-  /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */
   message?: string;
-
-  /**
-   * Received value formatted as a human-readable string.
-   */
-  received?: string;
 
   /**
    * Source code snippet with highlighted error.
@@ -598,11 +573,6 @@ export interface TestError {
    * Error stack. Set when [Error] (or its subclass) has been thrown.
    */
   stack?: string;
-
-  /**
-   * Timeout in milliseconds, if the error was caused by a timeout.
-   */
-  timeout?: number;
 
   /**
    * The value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.

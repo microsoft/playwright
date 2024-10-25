@@ -26,13 +26,6 @@ export const kOutputSymbol = Symbol('output');
 type ErrorDetails = {
   message: string;
   location?: Location;
-  timeout?: number;
-  matcherName?: string;
-  locator?: string;
-  expected?: string;
-  received?: string;
-  log?: string[];
-  snippet?: string;
 };
 
 type TestSummary = {
@@ -362,13 +355,6 @@ export function formatResultFailure(test: TestCase, result: TestResult, initialI
     errorDetails.push({
       message: indent(formattedError.message, initialIndent),
       location: formattedError.location,
-      timeout: error.timeout,
-      matcherName: error.matcherName,
-      locator: error.locator,
-      expected: error.expected,
-      received: error.received,
-      log: error.log,
-      snippet: error.snippet,
     });
   }
   return errorDetails;
