@@ -280,6 +280,6 @@ export async function generateFetchCall(resource: Entry, style: FetchStyle = Fet
   return `fetch(${url}, ${options});`;
 }
 
-async function fetchRequestPostData(resource: Entry) {
+export async function fetchRequestPostData(resource: Entry) {
   return resource.request.postData?._sha1 ? await fetch(`sha1/${resource.request.postData._sha1}`).then(r => r.text()) : resource.request.postData?.text;
 }

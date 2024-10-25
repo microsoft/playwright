@@ -20,8 +20,9 @@ import './networkResourceDetails.css';
 import { TabbedPane } from '@web/components/tabbedPane';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { generateCurlCommand, generateFetchCall } from '../third_party/devtools';
+import { fetchRequestPostData, generateCurlCommand, generateFetchCall } from '../third_party/devtools';
 import { CopyToClipboardTextButton } from './copyToClipboard';
+import { generatePlaywrightRequestCall } from '@isomorphic/codegen';
 
 export const NetworkResourceDetails: React.FunctionComponent<{
   resource: ResourceSnapshot;
@@ -57,6 +58,8 @@ const RequestTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
   const [requestBody, setRequestBody] = React.useState<{ text: string, mimeType?: string } | null>(null);
+
+  const isJavascript = true; // TODO
 
   React.useEffect(() => {
     const readResources = async  () => {
@@ -96,6 +99,7 @@ const RequestTab: React.FunctionComponent<{
     <div className='network-request-details-copy'>
       <CopyToClipboardTextButton description='Copy as cURL' value={() => generateCurlCommand(resource)} />
       <CopyToClipboardTextButton description='Copy as Fetch' value={() => generateFetchCall(resource)} />
+      {isJavascript && <CopyToClipboardTextButton description='Copy as Playwright' value={async () => generatePlaywrightRequestCall(resource.request, requestBody?.text)} />}
     </div>
 
     {requestBody && <div className='network-request-details-header'>Request Body</div>}
