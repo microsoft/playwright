@@ -130,7 +130,7 @@ test('should linkify string attachments', async ({ runUITest, server }) => {
   }
 
   {
-    await attachmentsPane.getByText('Second download').click();
+    await attachmentsPane.getByLabel('Second').click();
     const url = server.PREFIX + '/two.html';
     const promise = page.waitForEvent('popup');
     await attachmentsPane.getByText(url).click();
@@ -139,7 +139,7 @@ test('should linkify string attachments', async ({ runUITest, server }) => {
   }
 
   {
-    await attachmentsPane.getByText('Third download').click();
+    await attachmentsPane.getByLabel('Third').click();
     const url = server.PREFIX + '/three.html';
     const promise = page.waitForEvent('popup');
     await attachmentsPane.getByText('[markdown link]').click();
@@ -148,7 +148,7 @@ test('should linkify string attachments', async ({ runUITest, server }) => {
   }
 });
 
-test('should link from attachment step to attachments view', async ({ runUITest, server }) => {
+test('should link from attachment step to attachments view', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `
       import { test } from '@playwright/test';
