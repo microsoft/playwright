@@ -1,6 +1,6 @@
 {
   "name": "@playwright/test",
-  "version": "1.48.1",
+  "version": "1.48.2",
   "description": "A high-level API to automate web browsers",
   "repository": {
     "type": "git",
@@ -30,6 +30,6 @@
   },
   "scripts": {},
   "dependencies": {
-    "playwright": "1.48.1"
+    "playwright": "1.48.2"
   }
 }
