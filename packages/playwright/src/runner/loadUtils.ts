@@ -30,7 +30,7 @@ import { applyRepeatEachIndex, bindFileSuiteToProject, filterByFocusedLine, filt
 import { createTestGroups, filterForShard, type TestGroup } from './testGroups';
 import { dependenciesForTestFile } from '../transform/compilationCache';
 import { sourceMapSupport } from '../utilsBundle';
-import type { RawSourceMap } from 'source-map';
+import type { RawSourceMap } from '../utilsBundle';
 
 
 export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTestsOutsideProjectFilter: boolean) {
