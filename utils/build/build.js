@@ -275,7 +275,7 @@ for (const bundle of bundles) {
   });
 }
 
-// initial service worker build.
+// Build/watch trace viewer service worker.
 steps.push({
   command: 'npx',
   args: [
@@ -283,11 +283,12 @@ steps.push({
     '--config',
     'vite.sw.config.ts',
     'build',
+    ...(watchMode ? ['--watch', '--minify=false'] : []),
     ...(withSourceMaps ? ['--sourcemap=inline'] : []),
   ],
   shell: true,
   cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
-  concurrent: false,
+  concurrent: watchMode,
 });
 
 // Build/watch web packages.
@@ -305,22 +306,6 @@ for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
     concurrent: true,
   });
 }
-
-// Build/watch trace viewer service worker.
-steps.push({
-  command: 'npx',
-  args: [
-    'vite',
-    '--config',
-    'vite.sw.config.ts',
-    'build',
-    ...(watchMode ? ['--watch', '--minify=false'] : []),
-    ...(withSourceMaps ? ['--sourcemap=inline'] : []),
-  ],
-  shell: true,
-  cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
-  concurrent: true,
-});
 
 // web packages dev server
 if (watchMode) {
