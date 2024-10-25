@@ -276,7 +276,7 @@ test('should restart webserver on reload', async ({ runUITest }) => {
     'a.test.js': `
       import { test, expect } from '@playwright/test';
       test('should work', async ({ page }) => {
-        await page.goto('http://localhost:${port}');
+        await page.goto('http://localhost:${port}/hello');
       });
     `
   }, { DEBUG: 'pw:webserver' });

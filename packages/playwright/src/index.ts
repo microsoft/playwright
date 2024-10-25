@@ -571,7 +571,7 @@ class ArtifactsRecorder {
     if (this._reusedContexts.has(context))
       return;
     await this._stopTracing(context.tracing);
-    if (this._screenshotMode === 'on' || this._screenshotMode === 'only-on-failure') {
+    if (this._screenshotMode === 'on' || this._screenshotMode === 'only-on-failure' || (this._screenshotMode === 'on-first-failure' && this._testInfo.retry === 0)) {
       // Capture screenshot for now. We'll know whether we have to preserve them
       // after the test finishes.
       await Promise.all(context.pages().map(page => this._screenshotPage(page, true)));
@@ -588,14 +588,19 @@ class ArtifactsRecorder {
     await this._stopTracing(tracing);
   }
 
+  private _shouldCaptureScreenshotUponFinish() {
+    return this._screenshotMode === 'on' ||
+        (this._screenshotMode === 'only-on-failure' && this._testInfo._isFailure()) ||
+        (this._screenshotMode === 'on-first-failure' && this._testInfo._isFailure() && this._testInfo.retry === 0);
+  }
+
   async didFinishTestFunction() {
-    const captureScreenshots = this._screenshotMode === 'on' || (this._screenshotMode === 'only-on-failure' && this._testInfo._isFailure());
-    if (captureScreenshots)
+    if (this._shouldCaptureScreenshotUponFinish())
       await this._screenshotOnTestFailure();
   }
 
   async didFinishTest() {
-    const captureScreenshots = this._screenshotMode === 'on' || (this._screenshotMode === 'only-on-failure' && this._testInfo._isFailure());
+    const captureScreenshots = this._shouldCaptureScreenshotUponFinish();
     if (captureScreenshots)
       await this._screenshotOnTestFailure();
 

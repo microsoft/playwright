@@ -21,10 +21,10 @@ import path from 'path';
 import url from 'url';
 import { debug, mime, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
 import { formatCallLog } from 'playwright-core/lib/utils';
-import type { TestInfoError } from './../types/test';
 import type { Location } from './../types/testReporter';
 import { calculateSha1, isRegExp, isString, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
 import type { RawStack } from 'playwright-core/lib/utils';
+import type { TestInfoErrorImpl } from './common/ipc';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
@@ -62,7 +62,7 @@ export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
   return frames;
 }
 
-export function serializeError(error: Error | any): TestInfoError {
+export function serializeError(error: Error | any): TestInfoErrorImpl {
   if (error instanceof Error)
     return filterStackTrace(error);
   return {

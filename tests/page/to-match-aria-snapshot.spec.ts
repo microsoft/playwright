@@ -43,8 +43,8 @@ test('should match list with accessible name', async ({ page }) => {
   `);
   await expect(page.locator('body')).toMatchAriaSnapshot(`
     - list "my list":
-      - listitem: one
-      - listitem: two
+      - listitem: "one"
+      - listitem: "two"
   `);
 });
 
@@ -90,7 +90,7 @@ test('should allow text nodes', async ({ page }) => {
 
   await expect(page.locator('body')).toMatchAriaSnapshot(`
     - heading "Microsoft"
-    - text: Open source projects and samples from Microsoft
+    - text: "Open source projects and samples from Microsoft"
   `);
 });
 
@@ -103,7 +103,7 @@ test('details visibility', async ({ page }) => {
   `);
 
   await expect(page.locator('body')).toMatchAriaSnapshot(`
-    - group: Summary
+    - group: "Summary"
   `);
 });
 

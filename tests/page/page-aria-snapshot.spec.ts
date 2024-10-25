@@ -168,9 +168,9 @@ it('should support multiline text', async ({ page }) => {
   `);
   await expect(page.locator('body')).toMatchAriaSnapshot(`
     - paragraph: |
-        Line 1
-        Line 2
-        Line 3
+          Line 1
+          Line 2
+          Line 3
   `);
 });
 
@@ -383,5 +383,19 @@ it('should include pseudo codepoints', async ({ page, server }) => {
 
   await checkAndMatchSnapshot(page.locator('body'), `
     - paragraph: "\ueab2hello"
+  `);
+});
+
+it('check aria-hidden text', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <p>
+      <span>hello</span>
+      <span aria-hidden="true">world</span>
+    </p>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - paragraph: "hello"
   `);
 });

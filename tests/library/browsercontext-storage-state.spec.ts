@@ -204,13 +204,13 @@ it('should handle missing file', async ({ contextFactory }, testInfo) => {
   expect(error.message).toContain(`Error reading storage state from ${file}:\nENOENT`);
 });
 
-it('should handle malformed file', async ({ contextFactory }, testInfo) => {
+it('should handle malformed file', async ({ contextFactory, nodeVersion }, testInfo) => {
   const file = testInfo.outputPath('state.json');
   fs.writeFileSync(file, 'not-json', 'utf-8');
   const error = await contextFactory({
     storageState: file,
   }).catch(e => e);
-  if (+process.versions.node.split('.')[0] > 18)
+  if (nodeVersion.major > 18)
     expect(error.message).toContain(`Error reading storage state from ${file}:\nUnexpected token 'o', \"not-json\" is not valid JSON`);
   else
     expect(error.message).toContain(`Error reading storage state from ${file}:\nUnexpected token o in JSON at position 1`);

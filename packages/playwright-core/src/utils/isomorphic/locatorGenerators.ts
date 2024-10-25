@@ -19,7 +19,7 @@ import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringi
 import type { ParsedSelector } from './selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
-export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'and' | 'or' | 'chain';
+export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'frame-locator' | 'and' | 'or' | 'chain';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 export type Quote = '\'' | '"' | '`';
 
@@ -158,19 +158,29 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       }
     }
     if (part.name === 'internal:control' && (part.body as string) === 'enter-frame') {
-      tokens.push([factory.generateLocator(base, 'frame', '')]);
+      // transform last tokens from `${selector}` into `${selector}.contentFrame()` and `frameLocator(${selector})`
+      const lastTokens = tokens[tokens.length - 1];
+      const lastPart = parts[index - 1];
+
+      const transformed = lastTokens.map(token => factory.chainLocators([token, factory.generateLocator(base, 'frame', '')]));
+      if (['xpath', 'css'].includes(lastPart.name)) {
+        transformed.push(
+            factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [lastPart] })),
+            factory.generateLocator(base, 'frame-locator', stringifySelector({ parts: [lastPart] }, true))
+        );
+      }
+
+      lastTokens.splice(0, lastTokens.length, ...transformed);
       nextBase = 'frame-locator';
       continue;
     }
 
-    const locatorType: LocatorType = 'default';
-
     const nextPart = parts[index + 1];
 
     const selectorPart = stringifySelector({ parts: [part] });
-    const locatorPart = factory.generateLocator(base, locatorType, selectorPart);
+    const locatorPart = factory.generateLocator(base, 'default', selectorPart);
 
-    if (locatorType === 'default' && nextPart && ['internal:has-text', 'internal:has-not-text'].includes(nextPart.name)) {
+    if (nextPart && ['internal:has-text', 'internal:has-not-text'].includes(nextPart.name)) {
       const { exact, text } = detectExact(nextPart.body as string);
       // There is no locator equivalent for strict has-text and has-not-text, leave it as is.
       if (!exact) {
@@ -194,7 +204,7 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
     let locatorPartWithEngine: string | undefined;
     if (['xpath', 'css'].includes(part.name)) {
       const selectorPart = stringifySelector({ parts: [part] }, /* forceEngineName */ true);
-      locatorPartWithEngine = factory.generateLocator(base, locatorType, selectorPart);
+      locatorPartWithEngine = factory.generateLocator(base, 'default', selectorPart);
     }
 
     tokens.push([locatorPart, locatorPartWithEngine].filter(Boolean) as string[]);
@@ -253,6 +263,8 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
         if (options.hasNotText !== undefined)
           return `locator(${this.quote(body as string)}, { hasNotText: ${this.toHasText(options.hasNotText)} })`;
         return `locator(${this.quote(body as string)})`;
+      case 'frame-locator':
+        return `frameLocator(${this.quote(body as string)})`;
       case 'frame':
         return `contentFrame()`;
       case 'nth':
@@ -345,6 +357,8 @@ export class PythonLocatorFactory implements LocatorFactory {
         if (options.hasNotText !== undefined)
           return `locator(${this.quote(body as string)}, has_not_text=${this.toHasText(options.hasNotText)})`;
         return `locator(${this.quote(body as string)})`;
+      case 'frame-locator':
+        return `frame_locator(${this.quote(body as string)})`;
       case 'frame':
         return `content_frame`;
       case 'nth':
@@ -450,6 +464,8 @@ export class JavaLocatorFactory implements LocatorFactory {
         if (options.hasNotText !== undefined)
           return `locator(${this.quote(body as string)}, new ${clazz}.LocatorOptions().setHasNotText(${this.toHasText(options.hasNotText)}))`;
         return `locator(${this.quote(body as string)})`;
+      case 'frame-locator':
+        return `frameLocator(${this.quote(body as string)})`;
       case 'frame':
         return `contentFrame()`;
       case 'nth':
@@ -545,6 +561,8 @@ export class CSharpLocatorFactory implements LocatorFactory {
         if (options.hasNotText !== undefined)
           return `Locator(${this.quote(body as string)}, new() { ${this.toHasNotText(options.hasNotText)} })`;
         return `Locator(${this.quote(body as string)})`;
+      case 'frame-locator':
+        return `FrameLocator(${this.quote(body as string)})`;
       case 'frame':
         return `ContentFrame`;
       case 'nth':

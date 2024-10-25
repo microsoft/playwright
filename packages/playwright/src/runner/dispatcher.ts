@@ -27,6 +27,7 @@ import type { FullConfigInternal } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import type { FailureTracker } from './failureTracker';
 import { colors } from 'playwright-core/lib/utilsBundle';
+import { addSuggestedRebaseline } from './rebase';
 
 export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
 
@@ -341,6 +342,8 @@ class JobDispatcher {
     step.duration = params.wallTime - step.startTime.getTime();
     if (params.error)
       step.error = params.error;
+    if (params.suggestedRebaseline)
+      addSuggestedRebaseline(step.location!, params.suggestedRebaseline);
     steps.delete(params.stepId);
     this._reporter.onStepEnd?.(test, result, step);
   }

@@ -14,32 +14,13 @@
  * limitations under the License.
  */
 
-import type { TestError } from '../../types/testReporter';
-import type { TestInfoError } from '../../types/test';
-import type { MatcherResult } from '../matchers/matcherHint';
+import type { TestInfoErrorImpl } from '../common/ipc';
+import { ExpectError } from '../matchers/matcherHint';
 import { serializeError } from '../util';
 
-
-type MatcherResultDetails = Pick<TestError, 'timeout'|'matcherName'|'locator'|'expected'|'received'|'log'>;
-
-export function serializeWorkerError(error: Error | any): TestInfoError & MatcherResultDetails {
-  return {
-    ...serializeError(error),
-    ...serializeExpectDetails(error),
-  };
+export function testInfoError(error: Error | any): TestInfoErrorImpl {
+  const result = serializeError(error);
+  if (error instanceof ExpectError)
+    result.matcherResult = error.matcherResult;
+  return result;
 }
-
-function serializeExpectDetails(e: Error): MatcherResultDetails {
-  const matcherResult = (e as any).matcherResult as MatcherResult<unknown, unknown>;
-  if (!matcherResult)
-    return {};
-  return {
-    timeout: matcherResult.timeout,
-    matcherName: matcherResult.name,
-    locator: matcherResult.locator,
-    expected: matcherResult.printedExpected,
-    received: matcherResult.printedReceived,
-    log: matcherResult.log,
-  };
-}
-

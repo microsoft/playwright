@@ -554,6 +554,7 @@ async function open(options: Options, url: string | undefined, language: string)
     contextOptions,
     device: options.device,
     saveStorage: options.saveStorage,
+    handleSIGINT: false,
   });
   await openPage(context, url);
 }
@@ -577,6 +578,7 @@ async function codegen(options: Options & { target: string, output?: string, tes
     codegenMode: process.env.PW_RECORDER_IS_TRACE_VIEWER ? 'trace-events' : 'actions',
     testIdAttributeName,
     outputFile: outputFile ? path.resolve(outputFile) : undefined,
+    handleSIGINT: false,
   });
   await openPage(context, url);
 }

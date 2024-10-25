@@ -36,6 +36,7 @@ export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserType: BrowserType;
   isAndroid: boolean;
   isElectron: boolean;
+  nodeVersion: { major: number, minor: number, patch: number };
   bidiTestSkipPredicate: (info: TestInfo) => boolean;
 };
 
@@ -94,6 +95,11 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
 
   browserMajorVersion: [async ({ browserVersion }, run) => {
     await run(Number(browserVersion.split('.')[0]));
+  }, { scope: 'worker' }],
+
+  nodeVersion: [async ({}, use) => {
+    const [major, minor, patch] = process.versions.node.split('.');
+    await use({ major: +major, minor: +minor, patch: +patch });
   }, { scope: 'worker' }],
 
   isAndroid: [false, { scope: 'worker' }],

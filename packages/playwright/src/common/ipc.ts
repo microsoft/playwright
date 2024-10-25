@@ -15,9 +15,11 @@
  */
 
 import util from 'util';
-import { type SerializedCompilationCache, serializeCompilationCache } from '../transform/compilationCache';
+import { serializeCompilationCache } from '../transform/compilationCache';
+import type { SerializedCompilationCache  } from '../transform/compilationCache';
 import type { ConfigLocation, FullConfigInternal } from './config';
 import type { ReporterDescription, TestInfoError, TestStatus } from '../../types/test';
+import type { MatcherResultProperty } from '../matchers/matcherHint';
 
 export type ConfigCLIOverrides = {
   debug?: boolean;
@@ -74,11 +76,15 @@ export type AttachmentPayload = {
   contentType: string;
 };
 
+export type TestInfoErrorImpl = TestInfoError & {
+  matcherResult?: MatcherResultProperty;
+};
+
 export type TestEndPayload = {
   testId: string;
   duration: number;
   status: TestStatus;
-  errors: TestInfoError[];
+  errors: TestInfoErrorImpl[];
   hasNonRetriableError: boolean;
   expectedStatus: TestStatus;
   annotations: { type: string, description?: string }[];
@@ -99,7 +105,8 @@ export type StepEndPayload = {
   testId: string;
   stepId: string;
   wallTime: number;  // milliseconds since unix epoch
-  error?: TestInfoError;
+  error?: TestInfoErrorImpl;
+  suggestedRebaseline?: string;
 };
 
 export type TestEntry = {
@@ -113,7 +120,7 @@ export type RunPayload = {
 };
 
 export type DonePayload = {
-  fatalErrors: TestInfoError[];
+  fatalErrors: TestInfoErrorImpl[];
   skipTestsDueToSetupFailure: string[];  // test ids
   fatalUnknownTestIds?: string[];
 };
@@ -124,7 +131,7 @@ export type TestOutputPayload = {
 };
 
 export type TeardownErrorsPayload = {
-  fatalErrors: TestInfoError[];
+  fatalErrors: TestInfoErrorImpl[];
 };
 
 export type EnvProducedPayload = [string, string | null][];

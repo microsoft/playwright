@@ -43,20 +43,21 @@ export type MatcherResult<E, A> = {
   printedReceived?: string;
   printedExpected?: string;
   printedDiff?: string;
+  suggestedRebaseline?: string;
+};
+
+export type MatcherResultProperty = Omit<MatcherResult<unknown, unknown>, 'message'> & {
+  message: string;
+};
+
+type JestError = Error & {
+  matcherResult: MatcherResultProperty;
 };
 
 export class ExpectError extends Error {
-  matcherResult: {
-    message: string;
-    pass: boolean;
-    name?: string;
-    expected?: any;
-    actual?: any;
-    log?: string[];
-    timeout?: number;
-  };
+  matcherResult: MatcherResultProperty;
 
-  constructor(jestError: ExpectError, customMessage: string, stackFrames: StackFrame[]) {
+  constructor(jestError: JestError, customMessage: string, stackFrames: StackFrame[]) {
     super('');
     // Copy to erase the JestMatcherError constructor name from the console.log(error).
     this.name = jestError.name;
@@ -69,6 +70,6 @@ export class ExpectError extends Error {
   }
 }
 
-export function isExpectError(e: unknown): e is ExpectError {
+export function isJestError(e: unknown): e is JestError {
   return e instanceof Error && 'matcherResult' in e;
 }

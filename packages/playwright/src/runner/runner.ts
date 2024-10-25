@@ -24,6 +24,7 @@ import type { FullConfigInternal } from '../common/config';
 import { affectedTestFiles } from '../transform/compilationCache';
 import { InternalReporter } from '../reporters/internalReporter';
 import { LastRunReporter } from './lastRun';
+import { applySuggestedRebaselines } from './rebase';
 
 type ProjectConfigWithFiles = {
   name: string;
@@ -87,6 +88,8 @@ export class Runner {
       ...createRunTestsTasks(config),
     ];
     const status = await runTasks(new TestRun(config, reporter), tasks, config.config.globalTimeout);
+
+    await applySuggestedRebaselines(config);
 
     // Calling process.exit() might truncate large stdout/stderr output.
     // See https://github.com/nodejs/node/issues/6456.

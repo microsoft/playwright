@@ -378,11 +378,6 @@ export function restartWithExperimentalTsEsm(configFile: string | undefined, for
 
   // Now check for the newer API presence.
   if (!require('node:module').register) {
-    // Older API is experimental, only supported on Node 16+.
-    const nodeVersion = +process.versions.node.split('.')[0];
-    if (nodeVersion < 16)
-      return false;
-
     // With older API requiring a process restart, do so conditionally on the config.
     const configIsModule = !!configFile && fileIsModule(configFile);
     if (!force && !configIsModule)

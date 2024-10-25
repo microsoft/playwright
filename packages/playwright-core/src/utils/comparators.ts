@@ -18,7 +18,7 @@
 import { colors, jpegjs } from '../utilsBundle';
 const pixelmatch = require('../third_party/pixelmatch');
 import { compare } from '../image_tools/compare';
-const { diff_match_patch, DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } = require('../third_party/diff_match_patch');
+const { diffMatchPatch } = require('../utilsBundle');
 import { PNG } from '../utilsBundle';
 
 export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, comparator?: string };
@@ -106,6 +106,7 @@ function validateBuffer(buffer: Buffer, mimeType: string): void {
 }
 
 function compareText(actual: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
+  const { diff_match_patch } = diffMatchPatch;
   if (typeof actual !== 'string')
     return { errorMessage: 'Actual result should be a string' };
   const expected = expectedBuffer.toString('utf-8');
@@ -120,6 +121,7 @@ function compareText(actual: Buffer | string, expectedBuffer: Buffer): Comparato
 }
 
 function diff_prettyTerminal(diffs: [number, string][]) {
+  const { DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } = diffMatchPatch;
   const html = [];
   for (let x = 0; x < diffs.length; x++) {
     const op = diffs[x][0];    // Operation (insert, delete, equal)
