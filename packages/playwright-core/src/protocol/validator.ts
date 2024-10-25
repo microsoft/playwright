@@ -1770,7 +1770,7 @@ scheme.FrameExpectParams = tObject({
   expectedValue: tOptional(tType('SerializedArgument')),
   useInnerText: tOptional(tBoolean),
   isNot: tBoolean,
-  timeout: tOptional(tNumber),
+  timeout: tNumber,
 });
 scheme.FrameExpectResult = tObject({
   matches: tBoolean,
