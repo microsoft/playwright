@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestAttachment, TestCase, TestResult, TestStep } from './types';
+import type { TestAttachment, TestResult, TestStep } from './types';
 import * as React from 'react';
 import { TreeItem } from './treeItem';
 import { msToString } from './utils';
@@ -61,10 +61,24 @@ function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
   return [...snapshotNameToImageDiff.values()];
 }
 
+function getDiffAttachmentRepresentative(diff: ImageDiff, result: TestResult): TestAttachment {
+  let representative: TestAttachment | undefined = undefined;
+  let min = Number.MAX_VALUE;
+  for (const attachment of [diff.actual?.attachment, diff.diff?.attachment, diff.expected?.attachment]) {
+    if (!attachment)
+      continue;
+    const index = result.attachments.indexOf(attachment);
+    if (index < min) {
+      min = index;
+      representative = attachment;
+    }
+  }
+  return representative!;
+}
+
 export const TestResultView: React.FC<{
-  test: TestCase,
   result: TestResult,
-  anchor: 'video' | 'diff' | '',
+  anchor?: number,
 }> = ({ result, anchor }) => {
 
   const { screenshots, videos, traces, otherAttachments, diffs, errors, htmls } = React.useMemo(() => {
@@ -80,19 +94,24 @@ export const TestResultView: React.FC<{
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, htmls };
   }, [result]);
 
-  const videoRef = React.useRef<HTMLDivElement>(null);
-  const imageDiffRef = React.useRef<HTMLDivElement>(null);
-
-  const [scrolled, setScrolled] = React.useState(false);
+  const attachmentRefs = React.useRef<HTMLElement[]>([]);
   React.useEffect(() => {
-    if (scrolled)
+    if (anchor === undefined)
       return;
-    setScrolled(true);
-    if (anchor === 'video')
-      videoRef.current?.scrollIntoView({ block: 'start', inline: 'start' });
-    if (anchor === 'diff')
-      imageDiffRef.current?.scrollIntoView({ block: 'start', inline: 'start' });
-  }, [scrolled, anchor, setScrolled, videoRef]);
+
+    const attachmentRef = attachmentRefs.current[anchor];
+    if (!attachmentRef)
+      return;
+
+    attachmentRef.scrollIntoView({ block: 'start', inline: 'start' });
+  }, [attachmentRefs, anchor]);
+  const targetRef = (attachment: TestAttachment): React.RefCallback<HTMLElement> => el => {
+    const index = result.attachments.indexOf(attachment);
+    if (el)
+      attachmentRefs.current[index] = el;
+    else
+      delete attachmentRefs.current[index];
+  };
 
   return <div className='test-result'>
     {!!errors.length && <AutoChip header='Errors'>
@@ -107,7 +126,7 @@ export const TestResultView: React.FC<{
     </AutoChip>}
 
     {diffs.map((diff, index) =>
-      <AutoChip key={`diff-${index}`} dataTestId='test-results-image-diff' header={`Image mismatch: ${diff.name}`} targetRef={imageDiffRef}>
+      <AutoChip key={`diff-${index}`} dataTestId='test-results-image-diff' header={`Image mismatch: ${diff.name}`} targetRef={targetRef(getDiffAttachmentRepresentative(diff, result))}>
         <ImageDiffView key='image-diff' diff={diff}></ImageDiffView>
       </AutoChip>
     )}
@@ -118,7 +137,7 @@ export const TestResultView: React.FC<{
           <a href={a.path}>
             <img className='screenshot' src={a.path} />
           </a>
-          <AttachmentLink attachment={a}></AttachmentLink>
+          <AttachmentLink attachment={a} targetRef={targetRef(a)}></AttachmentLink>
         </div>;
       })}
     </AutoChip>}
@@ -132,12 +151,12 @@ export const TestResultView: React.FC<{
       </div>}
     </AutoChip>}
 
-    {!!videos.length && <AutoChip header='Videos' targetRef={videoRef}>
+    {!!videos.length && <AutoChip header='Videos'>
       {videos.map((a, i) => <div key={`video-${i}`}>
         <video controls>
           <source src={a.path} type={a.contentType}/>
         </video>
-        <AttachmentLink attachment={a}></AttachmentLink>
+        <AttachmentLink attachment={a} targetRef={targetRef(a)}/>
       </div>)}
     </AutoChip>}
 
@@ -145,7 +164,7 @@ export const TestResultView: React.FC<{
       {[...htmls].map((a, i) => (
         <AttachmentLink key={`html-link-${i}`} attachment={a} openInNewTab />)
       )}
-      {[...otherAttachments].map((a, i) => <AttachmentLink key={`attachment-link-${i}`} attachment={a}></AttachmentLink>)}
+      {[...otherAttachments].map((a, i) => <AttachmentLink key={`attachment-link-${i}`} attachment={a} targetRef={targetRef(a)}></AttachmentLink>)}
     </AutoChip>}
   </div>;
 };

@@ -175,8 +175,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.failed).toBe(1);
 
       await showReport();
-      await page.click('text=fails');
-      await expect(page.locator('text=Image mismatch')).toBeVisible();
+
+      await page.locator('.test-file-test').filter({ hasText: 'fails' }).getByTitle('View images').click();
+      await expect(page.locator('text=Image mismatch')).toBeInViewport();
       await expect(page.locator('text=Snapshot mismatch')).toHaveCount(0);
 
       await expect(page.getByTestId('test-screenshot-error-view').getByTestId('test-result-image-mismatch-tabs').locator('div')).toHaveText([

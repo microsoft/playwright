@@ -76,8 +76,9 @@ export const AttachmentLink: React.FunctionComponent<{
   href?: string,
   linkName?: string,
   openInNewTab?: boolean,
-}> = ({ attachment, href, linkName, openInNewTab }) => {
-  return <TreeItem title={<span>
+  targetRef?: React.RefCallback<HTMLDivElement>,
+}> = ({ attachment, href, targetRef, linkName, openInNewTab }) => {
+  return <TreeItem title={<span ref={targetRef}>
     {attachment.contentType === kMissingContentType ? icons.warning() : icons.attachment()}
     {attachment.path && <a href={href || attachment.path} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>}
     {!attachment.path && (

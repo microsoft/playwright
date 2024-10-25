@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { HTMLReport, TestCaseSummary, TestFileSummary } from './types';
+import type { HTMLReport, TestAttachment, TestCaseSummary, TestFileSummary, TestResultSummary } from './types';
 import * as React from 'react';
 import { hashStringToInt, msToString } from './utils';
 import { Chip } from './chip';
@@ -70,16 +70,25 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
   </Chip>;
 };
 
-function imageDiffBadge(test: TestCaseSummary): JSX.Element | undefined {
-  const resultWithImageDiff = test.results.find(result => result.attachments.some(attachment => {
-    return attachment.contentType.startsWith('image/') && !!attachment.name.match(/-(expected|actual|diff)/);
+function findResultWithAttachment(test: TestCaseSummary, predicate: (attachment: TestAttachment) => boolean): { index: number, anchor: number } | undefined {
+  let anchor = 0;
+  const index = test.results.findIndex(result => result.attachments.some((attachment, i) => {
+    if (predicate(attachment)) {
+      anchor = i;
+      return true;
+    }
   }));
-  return resultWithImageDiff ? <Link href={`#?testId=${test.testId}&anchor=diff&run=${test.results.indexOf(resultWithImageDiff)}`} title='View images' className='test-file-badge'>{image()}</Link> : undefined;
+  return index === -1 ? undefined : { index, anchor };
+}
+
+function imageDiffBadge(test: TestCaseSummary): JSX.Element | undefined {
+  const resultWithImageDiff = findResultWithAttachment(test, attachment => attachment.contentType.startsWith('image/') && !!attachment.name.match(/-(expected|actual|diff)/));
+  return resultWithImageDiff ? <Link href={`#?testId=${test.testId}&anchor=${resultWithImageDiff.anchor}&run=${resultWithImageDiff.index}`} title='View images' className='test-file-badge'>{image()}</Link> : undefined;
 }
 
 function videoBadge(test: TestCaseSummary): JSX.Element | undefined {
-  const resultWithVideo = test.results.find(result => result.attachments.some(attachment => attachment.name === 'video'));
-  return resultWithVideo ? <Link href={`#?testId=${test.testId}&anchor=video&run=${test.results.indexOf(resultWithVideo)}`} title='View video' className='test-file-badge'>{video()}</Link> : undefined;
+  const resultWithVideo = findResultWithAttachment(test, attachment => attachment.name === 'video');
+  return resultWithVideo ? <Link href={`#?testId=${test.testId}&anchor=${resultWithVideo.anchor}&run=${resultWithVideo.index}`} title='View video' className='test-file-badge'>{video()}</Link> : undefined;
 }
 
 function traceBadge(test: TestCaseSummary): JSX.Element | undefined {

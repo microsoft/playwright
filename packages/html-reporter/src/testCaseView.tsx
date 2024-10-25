@@ -31,7 +31,7 @@ import { CopyToClipboardContainer } from './copyToClipboard';
 export const TestCaseView: React.FC<{
   projectNames: string[],
   test: TestCase | undefined,
-  anchor: 'video' | 'diff' | '',
+  anchor?: number,
   run: number,
 }> = ({ projectNames, test, run, anchor }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
@@ -69,7 +69,7 @@ export const TestCaseView: React.FC<{
       test.results.map((result, index) => ({
         id: String(index),
         title: <div style={{ display: 'flex', alignItems: 'center' }}>{statusIcon(result.status)} {retryLabel(index)}</div>,
-        render: () => <TestResultView test={test!} result={result} anchor={anchor}></TestResultView>
+        render: () => <TestResultView result={result} anchor={anchor}></TestResultView>
       })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
   </div>;
 };

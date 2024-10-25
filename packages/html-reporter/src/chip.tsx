@@ -28,7 +28,7 @@ export const Chip: React.FC<{
   setExpanded?: (expanded: boolean) => void,
   children?: any,
   dataTestId?: string,
-  targetRef?: React.RefObject<HTMLDivElement>,
+  targetRef?: React.RefCallback<HTMLDivElement>,
 }> = ({ header, expanded, setExpanded, children, noInsets, dataTestId, targetRef }) => {
   return <div className='chip' data-testid={dataTestId} ref={targetRef}>
     <div
@@ -49,7 +49,7 @@ export const AutoChip: React.FC<{
   noInsets?: boolean,
   children?: any,
   dataTestId?: string,
-  targetRef?: React.RefObject<HTMLDivElement>,
+  targetRef?: React.RefCallback<HTMLDivElement>,
 }> = ({ header, initialExpanded, noInsets, children, dataTestId, targetRef }) => {
   const [expanded, setExpanded] = React.useState(initialExpanded || initialExpanded === undefined);
   return <Chip

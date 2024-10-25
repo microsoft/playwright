@@ -76,7 +76,7 @@ const TestCaseViewLoader: React.FC<{
   const searchParams = new URLSearchParams(window.location.hash.slice(1));
   const [test, setTest] = React.useState<TestCase | undefined>();
   const testId = searchParams.get('testId');
-  const anchor = (searchParams.get('anchor') || '') as 'video' | 'diff' | '';
+  const anchor = searchParams.has('anchor') ? Number(searchParams.get('anchor')!) : undefined;
   const run = +(searchParams.get('run') || '0');
 
   const testIdToFileIdMap = React.useMemo(() => {
