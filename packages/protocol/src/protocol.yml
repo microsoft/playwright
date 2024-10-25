@@ -1501,6 +1501,7 @@ Page:
         errorMessage: string?
         actual: binary?
         previous: binary?
+        timeout: number?
         log:
           type: array?
           items: string

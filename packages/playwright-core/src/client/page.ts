@@ -589,7 +589,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.binary;
   }
 
-  async _expectScreenshot(options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[]}> {
+  async _expectScreenshot(options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[], timeout?: number}> {
     const mask = options?.mask ? options?.mask.map(locator => ({
       frame: (locator as Locator)._frame._channel,
       selector: (locator as Locator)._selector,

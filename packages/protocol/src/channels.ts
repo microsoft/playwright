@@ -2193,6 +2193,7 @@ export type PageExpectScreenshotResult = {
   errorMessage?: string,
   actual?: Binary,
   previous?: Binary,
+  timeout?: number,
   log?: string[],
 };
 export type PageScreenshotParams = {
