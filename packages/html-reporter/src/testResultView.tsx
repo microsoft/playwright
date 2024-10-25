@@ -184,7 +184,7 @@ const StepTreeItem: React.FC<{
   step: TestStep;
   depth: number,
 }> = ({ step, depth }) => {
-  const attachmentName = step.category === 'attach' ? step.title.match(/^attach "(.*)"$/)?.[1] : undefined;
+  const attachmentName = step.title.match(/^attach "(.*)"$/)?.[1];
   return <TreeItem title={<span aria-label={step.title}>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
     {attachmentName && <a style={{ float: 'right' }} title='link to attachment' href={'#' + componentID(params => params.set('attachment', attachmentName))} onClick={(evt) => { evt.stopPropagation(); }}>{icons.attachment()}</a>}
