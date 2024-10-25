@@ -37,7 +37,6 @@ import { FiltersView } from './uiModeFiltersView';
 import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
-import { testServerWebSocketURL, searchParams } from '../searchParams';
 
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
@@ -47,6 +46,10 @@ const xtermDataSource: XtermDataSource = {
   resize: () => {},
 };
 
+const searchParams = new URLSearchParams(window.location.search);
+const guid = searchParams.get('ws');
+const wsURL = new URL(`../${guid}`, window.location.toString());
+wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
 const queryParams = {
   args: searchParams.getAll('arg'),
   grep: searchParams.get('grep') || undefined,
@@ -65,7 +68,6 @@ const isMac = navigator.platform === 'MacIntel';
 
 export const UIModeView: React.FC<{}> = ({
 }) => {
-  const isJokesDay = new Date().getMonth() === 3 && new Date().getDate() === 1;
   const [filterText, setFilterText] = React.useState<string>('');
   const [isShowingOutput, setIsShowingOutput] = React.useState<boolean>(false);
   const [outputContainsError, setOutputContainsError] = React.useState(false);
@@ -107,7 +109,7 @@ export const UIModeView: React.FC<{}> = ({
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const reloadTests = React.useCallback(() => {
-    setTestServerConnection(new TestServerConnection(new WebSocketTestServerTransport(testServerWebSocketURL)));
+    setTestServerConnection(new TestServerConnection(new WebSocketTestServerTransport(wsURL)));
   }, []);
 
   // Load tests on startup.
@@ -438,7 +440,7 @@ export const UIModeView: React.FC<{}> = ({
       sidebar={<div className='vbox ui-mode-sidebar'>
         <Toolbar noShadow={true} noMinHeight={true}>
           <img src='playwright-logo.svg' alt='Playwright logo' />
-          <div className='section-title'>{isJokesDay ? 'Claywright' : 'Playwright'}</div>
+          <div className='section-title'>Playwright</div>
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
           <div style={{ position: 'relative' }}>
             <ToolbarButton icon={'terminal'} title={'Toggle output — ' + (isMac ? '⌃`' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
@@ -514,11 +516,10 @@ export const UIModeView: React.FC<{}> = ({
             style={{ marginLeft: 5 }}
             title={settingsVisible ? 'Hide Settings' : 'Show Settings'}
           />
-          <div className='section-title' data-testid='settings-title'>{isJokesDay ? 'Schmettings' : 'Settings'}</div>
+          <div className='section-title'>Settings</div>
         </Toolbar>
         {settingsVisible && <SettingsView settings={[
           { value: darkMode, set: setDarkMode, title: 'Dark mode' },
-          ...(isJokesDay ? [{ value: darkMode, set: setDarkMode, title: 'Fart mode' }] : [])
         ]} />}
       </div>
       }
