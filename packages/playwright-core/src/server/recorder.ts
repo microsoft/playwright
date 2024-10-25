@@ -30,6 +30,8 @@ import type { IRecorderAppFactory, IRecorderApp, IRecorder } from './recorder/re
 import { metadataToCallLog } from './recorder/recorderUtils';
 import type * as actions from '@recorder/actions';
 import { buildFullSelector } from '../utils/isomorphic/recorderUtils';
+import { splitSelectorByFrame, stringifySelector } from '../utils/isomorphic/selectorParser';
+import type { Frame } from './frames';
 
 const recorderSymbol = Symbol('recorderSymbol');
 
@@ -149,7 +151,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
       let actionPoint: Point | undefined;
       const hasActiveScreenshotCommand = [...this._currentCallsMetadata.keys()].some(isScreenshotCommand);
       if (!hasActiveScreenshotCommand) {
-        actionSelector = this._highlightedSelector;
+        actionSelector = this._scopeHighlightedSelectorToFrame(source.frame);
         for (const [metadata, sdkObject] of this._currentCallsMetadata) {
           if (source.page === sdkObject.attribution.page) {
             actionPoint = metadata.point || actionPoint;
@@ -239,6 +241,17 @@ export class Recorder implements InstrumentationListener, IRecorder {
   hideHighlightedSelector() {
     this._highlightedSelector = '';
     this._refreshOverlay();
+  }
+
+  private _scopeHighlightedSelectorToFrame(frame: Frame): string  {
+    if (this._highlightedSelector === '')
+      return '';
+    const parts = splitSelectorByFrame(this._highlightedSelector);
+    const selectorDepth = parts.length - 1;
+    const frameDepth = frame._depth();
+    if (frameDepth < selectorDepth)
+      return '';
+    return stringifySelector(parts[parts.length - 1]);
   }
 
   setOutput(codegenId: string, outputFile: string | undefined) {

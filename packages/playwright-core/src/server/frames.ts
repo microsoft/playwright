@@ -948,6 +948,12 @@ export class Frame extends SdkObject {
     return this._parentFrame;
   }
 
+  _depth(): number {
+    if (!this._parentFrame)
+      return 0;
+    return this._parentFrame._depth() + 1;
+  }
+
   childFrames(): Frame[] {
     return Array.from(this._childFrames);
   }

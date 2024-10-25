@@ -259,7 +259,7 @@ test('should highlight inside iframe', async ({ backend, connectedBrowser }, tes
 
   const context = await connectedBrowser._newContextForReuse();
   const page = await context.newPage();
-  await backend.navigate({ url: `data:text/html,<iframe srcdoc="<div>bar</div>"/>` });
+  await backend.navigate({ url: `data:text/html,<div>bar</div><iframe srcdoc="<div>bar</div>"/>` });
 
 
   await page.frameLocator('iframe').getByText('bar').highlight();
@@ -271,4 +271,11 @@ test('should highlight inside iframe', async ({ backend, connectedBrowser }, tes
 
   await backend.highlight({ selector: `frameLocator('iframe').getByText('bar')` });
   await expect(highlight).not.toHaveCount(0);
+
+  await backend.highlight({ selector: `frameLocator('iframe').frameLocator('iframe').getByText('bar')` });
+  await expect(highlight).toHaveCount(0);
+
+  await backend.highlight({ selector: `getByText('bar')` });
+  await expect(highlight).toHaveCount(1);
+  await expect(page.locator('x-pw-highlight')).toHaveCount(1);
 });
