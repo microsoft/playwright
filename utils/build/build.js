@@ -288,7 +288,7 @@ steps.push({
   ],
   shell: true,
   cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
-  concurrent: watchMode,
+  concurrent: watchMode, // feeds into trace-viewer's `public` directory, so it needs to be finished before trace-viewer build starts
 });
 
 // Build/watch web packages.
