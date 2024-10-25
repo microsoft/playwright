@@ -184,3 +184,8 @@ it('should not create pages automatically', async ({ browserType }) => {
   await browser.close();
   expect(targets.length).toBe(0);
 });
+
+it('should throw helpful error when launching chromium-headless-shell channel as headed', async ({ browserType, channel }) => {
+  it.skip(channel !== 'chromium-headless-shell');
+  await expect(browserType.launch({ channel: 'chromium-headless-shell', headless: false })).rejects.toThrow('Cannot launch headed Chromium via headless-shell. Consider using normal Chromium instead.');
+});
