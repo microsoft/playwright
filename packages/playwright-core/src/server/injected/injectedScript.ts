@@ -19,7 +19,7 @@ import { XPathEngine } from './xpathSelectorEngine';
 import { ReactEngine } from './reactSelectorEngine';
 import { VueEngine } from './vueSelectorEngine';
 import { createRoleEngine } from './roleSelectorEngine';
-import { parseAttributeSelector } from '../../utils/isomorphic/selectorParser';
+import { parseAttributeSelector, splitSelectorByFrame } from '../../utils/isomorphic/selectorParser';
 import type { NestedSelectorBody, ParsedSelector, ParsedSelectorPart } from '../../utils/isomorphic/selectorParser';
 import { visitAllSelectorParts, parseSelector, stringifySelector } from '../../utils/isomorphic/selectorParser';
 import { type TextMatcher, elementMatchesText, elementText, type ElementText, getElementLabels } from './selectorUtils';
@@ -166,12 +166,23 @@ export class InjectedScript {
     return this._testIdAttributeNameForStrictErrorAndConsoleCodegen;
   }
 
-  parseSelector(selector: string): ParsedSelector {
-    const result = parseSelector(selector);
-    visitAllSelectorParts(result, part => {
+  private _checkForUnknownEngine(parsed: ParsedSelector, selector: string) {
+    visitAllSelectorParts(parsed, part => {
       if (!this._engines.has(part.name))
         throw this.createStacklessError(`Unknown engine "${part.name}" while parsing selector ${selector}`);
     });
+  }
+
+  parseSelector(selector: string): ParsedSelector {
+    const result = parseSelector(selector);
+    this._checkForUnknownEngine(result, selector);
+    return result;
+  }
+
+  splitSelectorByFrame(selector: string): ParsedSelector[] {
+    const result = splitSelectorByFrame(selector);
+    for (const part of result)
+      this._checkForUnknownEngine(part, selector);
     return result;
   }
 

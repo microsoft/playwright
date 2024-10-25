@@ -248,8 +248,10 @@ export class Recorder implements InstrumentationListener, IRecorder {
   }
 
   private _refreshOverlay() {
-    for (const page of this._context.pages())
-      page.mainFrame().evaluateExpression('window.__pw_refreshOverlay()').catch(() => {});
+    for (const page of this._context.pages()) {
+      for (const frame of page.frames())
+        frame.evaluateExpression('window.__pw_refreshOverlay()').catch(() => {});
+    }
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
