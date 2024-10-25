@@ -112,10 +112,10 @@ export class BidiChromium extends BrowserType {
     if (options.devtools)
       chromeArguments.push('--auto-open-devtools-for-tabs');
     if (options.headless) {
-      if (process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW)
-        chromeArguments.push('--headless=new');
-      else
+      if (process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_OLD)
         chromeArguments.push('--headless=old');
+      else
+        chromeArguments.push('--headless=new');
 
       chromeArguments.push(
           '--hide-scrollbars',

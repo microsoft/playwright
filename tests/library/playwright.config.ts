@@ -127,8 +127,8 @@ for (const browserName of browserNames) {
       platform: process.platform,
       docker: !!process.env.INSIDE_DOCKER,
       headless: (() => {
-        if (process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW)
-          return 'headless-new';
+        if (process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_OLD)
+          return 'headless-old';
         if (headed)
           return 'headed';
         return 'headless';
