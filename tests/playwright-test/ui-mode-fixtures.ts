@@ -20,7 +20,8 @@ import * as path from 'path';
 import type { TestChildProcess } from '../config/commonFixtures';
 import { cleanEnv, cliEntrypoint, test as base, writeFiles, removeFolders } from './playwright-test-fixtures';
 import type { Files, RunOptions } from './playwright-test-fixtures';
-import type { Browser, BrowserType, Page, TestInfo } from './stable-test-runner';
+import type { Browser, Page, TestInfo } from './stable-test-runner';
+import { chromium } from './stable-test-runner';
 import { createGuid } from '../../packages/playwright-core/src/utils/crypto';
 
 type Latch = {
@@ -106,14 +107,13 @@ export const test = base
             cwd: options.cwd ? path.resolve(baseDir, options.cwd) : baseDir,
           });
           let page: Page;
-          // We want to have ToT playwright-core here, since we install it's browsers and otherwise
-          // don't have the right browser revision (ToT revisions != stable-test-runner revisions).
-          const chromium: BrowserType = require('../../packages/playwright-core').chromium;
+          // Use the browser from ToT so that we don't need to install a stable test runner one.
+          const executablePath = require('../../packages/playwright-core').chromium.executablePath();
           if (options.useWeb) {
             await testProcess.waitForOutput('Listening on');
             const line = testProcess.output.split('\n').find(l => l.includes('Listening on'));
             const uiAddress = line!.split(' ')[2];
-            browser = await chromium.launch();
+            browser = await chromium.launch({ executablePath });
             page = await browser.newPage();
             await page.goto(uiAddress);
           } else {
