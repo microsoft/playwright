@@ -70,11 +70,25 @@ export async function toMatchAriaSnapshot(
   const timeout = options.timeout ?? this.timeout;
   expected = unshift(expected);
   const { matches: pass, received, log, timedOut } = await receiver._expect('to.match.aria', { expectedValue: expected, isNot: this.isNot, timeout });
+  const typedReceived = received as {
+    raw: string;
+    noText: string;
+    regex: string;
+  } | typeof kNoElementsFoundError;
 
   const messagePrefix = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
-  const notFound = received === kNoElementsFoundError;
+  const notFound = typedReceived === kNoElementsFoundError;
+  if (notFound) {
+    return {
+      pass: this.isNot,
+      message: () => messagePrefix + `Expected: ${this.utils.printExpected(expected)}\nReceived: ${EXPECTED_COLOR('not found')}` + callLogText(log),
+      name: 'toMatchAriaSnapshot',
+      expected,
+    };
+  }
+
   const escapedExpected = escapePrivateUsePoints(expected);
-  const escapedReceived = escapePrivateUsePoints(received);
+  const escapedReceived = escapePrivateUsePoints(typedReceived.raw);
   const message = () => {
     if (pass) {
       if (notFound)
@@ -91,7 +105,7 @@ export async function toMatchAriaSnapshot(
 
   if (!this.isNot && pass === this.isNot && generateNewBaseline) {
     // Only rebaseline failed snapshots.
-    const suggestedRebaseline = `toMatchAriaSnapshot(\`\n${indent(received, '${indent}  ')}\n\${indent}\`)`;
+    const suggestedRebaseline = `toMatchAriaSnapshot(\`\n${indent(typedReceived.regex, '${indent}  ')}\n\${indent}\`)`;
     return { pass: this.isNot, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline };
   }
 
