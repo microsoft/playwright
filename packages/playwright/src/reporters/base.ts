@@ -489,43 +489,51 @@ export function stripAnsiEscapes(str: string): string {
   return str.replace(ansiRegex, '');
 }
 
+function characterWidth(c: string) {
+  return /[\u4e00-\u9fff]/.test(c) ? 2 : 1;
+}
+
+function stringWidth(v: string) {
+  let width = 0;
+  for (let i = 0; i < v.length; ++i)
+    width += characterWidth(v[i]);
+  return width;
+}
+
+function suffixOfWidth(v: string, width: number) {
+  let i = v.length - 1;
+  for (; i > 0; --i) {
+    const c = v[i];
+    const cWidth = characterWidth(c);
+    if (cWidth >= width)
+      break;
+    width -= cWidth;
+  }
+  return v.substring(i);
+}
+
 // Leaves enough space for the "prefix" to also fit.
 export function fitToWidth(line: string, width: number, prefix?: string): string {
   const prefixLength = prefix ? stripAnsiEscapes(prefix).length : 0;
   width -= prefixLength;
-  if (line.length <= width)
+  if (stringWidth(line) <= width)
     return line;
 
   // Even items are plain text, odd items are control sequences.
   const parts = line.split(ansiRegex);
   const taken: string[] = [];
-
   for (let i = parts.length - 1; i >= 0; i--) {
     if (i % 2) {
       // Include all control sequences to preserve formatting.
       taken.push(parts[i]);
     } else {
-      let part = parts[i];
-      let partLength = 0;
-      for (let j = part.length - 1; j >= 0; j--) {
-        const char = part[j];
-        // Check if the character is a Chinese character
-        if (/[\u4e00-\u9fff]/.test(char))
-          partLength += 2; // Chinese characters take 2 spaces
-        else
-          partLength += 1;
-
-        if (partLength > width) {
-          part = part.substring(j + 1);
-          if (part.length > 0) {
-            // Add ellipsis if we are truncating.
-            part = '\u2026' + part.substring(1);
-          }
-          break;
-        }
+      let part = suffixOfWidth(parts[i], width);
+      if (part.length < parts[i].length && part.length > 0) {
+        // Add ellipsis if we are truncating.
+        part = '\u2026' + part.substring(1);
       }
       taken.push(part);
-      width -= partLength;
+      width -= stringWidth(part);
     }
   }
   return taken.reverse().join('');
