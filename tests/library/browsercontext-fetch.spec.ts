@@ -1244,7 +1244,7 @@ it('should work with connectOverCDP', async ({ browserName, browserType, server 
   }
 });
 
-it('should support SameSite cookie attribute over https', async ({ contextFactory, httpsServer, browserName, isWindows, sameSiteStoredValueForNone }) => {
+it('should support SameSite cookie attribute over https', async ({ contextFactory, httpsServer, browserName, isWindows }) => {
   // Cookies with SameSite=None must also specify the Secure attribute. WebKit navigation
   // to HTTP url will fail if the response contains a cookie with Secure attribute, so
   // we do HTTPS navigation.
@@ -1260,8 +1260,6 @@ it('should support SameSite cookie attribute over https', async ({ contextFactor
       const [cookie] = await page.context().cookies();
       if (browserName === 'webkit' && isWindows)
         expect(cookie.sameSite).toBe('None');
-      else if (value === 'None')
-        expect(cookie.sameSite).toBe(sameSiteStoredValueForNone);
       else
         expect(cookie.sameSite).toBe(value);
     });
@@ -1291,7 +1289,7 @@ it('fetch should not throw on long set-cookie value', async ({ context, server }
   expect(cookies.map(c => c.name)).toContain('bar');
 });
 
-it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows, isLinux, sameSiteStoredValueForNone }) => {
+it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows, isLinux }) => {
   for (const value of ['None', 'Lax', 'Strict']) {
     await it.step(`SameSite=${value}`, async () => {
       server.setRoute('/empty.html', (req, res) => {
@@ -1306,8 +1304,6 @@ it('should support set-cookie with SameSite and without Secure attribute over HT
         expect(cookie).toBeFalsy();
       else if (browserName === 'webkit' && isWindows)
         expect(cookie.sameSite).toBe('None');
-      else if (value === 'None')
-        expect(cookie.sameSite).toBe(sameSiteStoredValueForNone);
       else
         expect(cookie.sameSite).toBe(value);
     });
