@@ -18,7 +18,6 @@ import type zip from '@zip.js/zip.js';
 // @ts-ignore
 import * as zipImport from '@zip.js/zip.js/lib/zip-no-worker-inflate.js';
 import type { TraceModelBackend } from './traceModel';
-import { testServerBaseURL } from '../searchParams';
 
 const zipjs = zipImport as typeof zip;
 
@@ -31,6 +30,7 @@ export class ZipTraceModelBackend implements TraceModelBackend {
 
   constructor(traceURL: string, progress: Progress) {
     this._traceURL = traceURL;
+    zipjs.configure({ baseURL: self.location.href } as any);
     this._zipReader = new zipjs.ZipReader(
         new zipjs.HttpReader(traceURL, { mode: 'cors', preventHeadRequest: true } as any),
         { useWebWorkers: false });
