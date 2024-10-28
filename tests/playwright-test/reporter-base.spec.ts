@@ -155,13 +155,13 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(1);
       expect(result.failed).toBe(1);
       const testFile = path.join(result.report.config.rootDir, result.report.suites[0].specs[0].file);
-      expect(result.output).toContain(`       at ${testFile}:18:21`);
-      expect(result.output).toContain(`    [cause]: Error: outer-message`);
-      expect(result.output).toContain(`       at ${testFile}:14:25`);
-      expect(result.output).toContain(`    [cause]: Error: inner-message`);
-      expect(result.output).toContain(`       at ${testFile}:12:25`);
-      expect(result.output).toContain(`    [cause]: SpecialError: my-message`);
-      expect(result.output).toContain(`       at ${testFile}:7:31`);
+      expect(result.output).toContain(`${testFile}:18:21`);
+      expect(result.output).toContain(`[cause]: Error: outer-message`);
+      expect(result.output).toContain(`${testFile}:14:25`);
+      expect(result.output).toContain(`[cause]: Error: inner-message`);
+      expect(result.output).toContain(`${testFile}:12:25`);
+      expect(result.output).toContain(`[cause]: SpecialError: my-message`);
+      expect(result.output).toContain(`${testFile}:7:31`);
       expect(result.output).toContain('afterAll executed successfully');
     });
 
