@@ -107,13 +107,11 @@ export const test = base
             cwd: options.cwd ? path.resolve(baseDir, options.cwd) : baseDir,
           });
           let page: Page;
-          // Use the browser from ToT so that we don't need to install a stable test runner one.
-          const executablePath = require('../../packages/playwright-core').chromium.executablePath();
           if (options.useWeb) {
             await testProcess.waitForOutput('Listening on');
             const line = testProcess.output.split('\n').find(l => l.includes('Listening on'));
             const uiAddress = line!.split(' ')[2];
-            browser = await chromium.launch({ executablePath });
+            browser = await chromium.launch({ channel: 'chrome' });
             page = await browser.newPage();
             await page.goto(uiAddress);
           } else {
