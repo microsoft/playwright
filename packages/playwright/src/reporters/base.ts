@@ -434,14 +434,15 @@ export function formatError(error: TestError, highlightCode: boolean): ErrorDeta
     tokens.push(snippet);
   }
 
-  if (parsedStack && parsedStack.stackLines.length) {
-    tokens.push('');
+  if (parsedStack && parsedStack.stackLines.length)
     tokens.push(colors.dim(parsedStack.stackLines.join('\n')));
-  }
 
   let location = error.location;
   if (parsedStack && !location)
     location = parsedStack.location;
+
+  if (error.cause)
+    tokens.push(colors.dim('[cause]: ') + formatError(error.cause, highlightCode).message);
 
   return {
     location,

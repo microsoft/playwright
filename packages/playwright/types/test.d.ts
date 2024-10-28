@@ -9153,6 +9153,13 @@ export interface TestInfo {
  */
 export interface TestInfoError {
   /**
+   * Error cause. Set when there is a
+   * [cause](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause) for the
+   * error. Will be `undefined` if there is no cause or if the cause is not an instance of [Error].
+   */
+  cause?: TestInfoError;
+
+  /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */
   message?: string;
