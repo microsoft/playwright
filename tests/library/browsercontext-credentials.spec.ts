@@ -18,8 +18,8 @@
 import { browserTest as base, expect } from '../config/browserTest';
 
 const it = base.extend<{ isChromiumHeadedLike: boolean }>({
-  isChromiumHeadedLike: async ({ browserName, headless }, use) => {
-    const isChromiumHeadedLike = browserName === 'chromium' && (!headless || !process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_OLD);
+  isChromiumHeadedLike: async ({ browserName, headless, channel }, use) => {
+    const isChromiumHeadedLike = browserName === 'chromium' && (!headless || !process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_OLD) && channel !== 'chromium-headless-shell';
     await use(isChromiumHeadedLike);
   },
 });
