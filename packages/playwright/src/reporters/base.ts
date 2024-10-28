@@ -492,73 +492,43 @@ export function stripAnsiEscapes(str: string): string {
 // Leaves enough space for the "prefix" to also fit.
 export function fitToWidth(line: string, width: number, prefix?: string): string {
   const prefixLength = prefix ? stripAnsiEscapes(prefix).length : 0;
-  return wrapText(line, width - prefixLength);
-}
+  width -= prefixLength;
+  if (line.length <= width)
+    return line;
 
-export function wrapText(text: string, width: number) {
-  // Handle edge cases
-  if (!text)
-    return '';
-  if (width <= 0)
-    return text;
+  // Even items are plain text, odd items are control sequences.
+  const parts = line.split(ansiRegex);
+  const taken: string[] = [];
 
-  const lines = [];
-  let currentLine = '';
-  let currentWidth = 0;
+  for (let i = parts.length - 1; i >= 0; i--) {
+    if (i % 2) {
+      // Include all control sequences to preserve formatting.
+      taken.push(parts[i]);
+    } else {
+      let part = parts[i];
+      let partLength = 0;
+      for (let j = part.length - 1; j >= 0; j--) {
+        const char = part[j];
+        // Check if the character is a Chinese character
+        if (/[\u4e00-\u9fff]/.test(char))
+          partLength += 2; // Chinese characters take 2 spaces
+        else
+          partLength += 1;
 
-  const segments = text.split(' ');
-
-  for (const segment of segments) {
-    // Calculate segment width (Chinese characters count as 2, others as 1)
-    const segmentWidth = segment
-        .split('')
-        .reduce((width, char) => {
-          return width + (/[\u4e00-\u9fff]/.test(char) ? 2 : 1);
-        }, 0);
-
-    // Check if adding this segment would exceed the line width
-    if (currentWidth + segmentWidth > width && currentLine) {
-      // If current line isn't empty, start a new line
-      lines.push(currentLine.trim());
-      currentLine = '';
-      currentWidth = 0;
-    }
-
-    // Special handling for long segments that exceed width on their own
-    if (segmentWidth > width) {
-      if (currentLine) {
-        lines.push(currentLine.trim());
-        currentLine = '';
-      }
-      // Split long segment into chunks
-      let remaining = segment;
-      while (remaining) {
-        let chunk = '';
-        let chunkWidth = 0;
-        for (const char of remaining) {
-          const charWidth = /[\u4e00-\u9fff]/.test(char) ? 2 : 1;
-          if (chunkWidth + charWidth > width)
-            break;
-          chunk += char;
-          chunkWidth += charWidth;
+        if (partLength > width) {
+          part = part.substring(j + 1);
+          if (part.length > 0) {
+            // Add ellipsis if we are truncating.
+            part = '\u2026' + part.substring(1);
+          }
+          break;
         }
-        lines.push(chunk);
-        remaining = remaining.slice(chunk.length);
       }
-      continue;
+      taken.push(part);
+      width -= partLength;
     }
-
-    // Add segment to current line
-    currentLine += segment;
-    currentWidth += segmentWidth;
   }
-
-  // Add the last line if it's not empty
-  if (currentLine.trim())
-    lines.push(currentLine.trim());
-
-
-  return lines.join('\n');
+  return taken.reverse().join('');
 }
 
 function belongsToNodeModules(file: string) {
