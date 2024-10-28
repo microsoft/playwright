@@ -441,10 +441,8 @@ export function formatError(error: TestError, highlightCode: boolean): ErrorDeta
   if (parsedStack && !location)
     location = parsedStack.location;
 
-  if (error.cause) {
-    tokens.push();
-    tokens.push(indent(colors.dim('[cause]: ') + formatError(error.cause, highlightCode).message, '  '));
-  }
+  if (error.cause)
+    tokens.push(colors.dim('[cause]: ') + formatError(error.cause, highlightCode).message);
 
   return {
     location,
