@@ -495,21 +495,22 @@ function characterWidth(c: string) {
 
 function stringWidth(v: string) {
   let width = 0;
-  for (let i = 0; i < v.length; ++i)
-    width += characterWidth(v[i]);
+  for (const { segment } of new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(v))
+    width += characterWidth(segment);
   return width;
 }
 
 function suffixOfWidth(v: string, width: number) {
-  let i = v.length - 1;
-  for (; i > 0; --i) {
-    const c = v[i];
-    const cWidth = characterWidth(c);
-    if (cWidth >= width)
+  const segments = [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(v)];
+  let suffixBegin = v.length;
+  for (const { segment, index } of segments.reverse()) {
+    const segmentWidth = stringWidth(segment);
+    if (segmentWidth > width)
       break;
-    width -= cWidth;
+    width -= segmentWidth;
+    suffixBegin = index;
   }
-  return v.substring(i);
+  return v.substring(suffixBegin);
 }
 
 // Leaves enough space for the "prefix" to also fit.
@@ -528,9 +529,10 @@ export function fitToWidth(line: string, width: number, prefix?: string): string
       taken.push(parts[i]);
     } else {
       let part = suffixOfWidth(parts[i], width);
-      if (part.length < parts[i].length && part.length > 0) {
+      const wasTruncated = part.length < parts[i].length;
+      if (wasTruncated && part.length > 0) {
         // Add ellipsis if we are truncating.
-        part = '\u2026' + part.substring(1);
+        part = '\u2026' + suffixOfWidth(parts[i], width - 1);
       }
       taken.push(part);
       width -= stringWidth(part);

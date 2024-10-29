@@ -21,3 +21,10 @@ test('chinese characters', () => {
   expect(fitToWidth('你你好', 3)).toBe('…好');
   expect(fitToWidth('你好你好', 4)).toBe('…好');
 });
+
+test('surrogate pairs', () => {
+  expect(fitToWidth('🫣🤗', 2)).toBe('🫣🤗');
+  expect(fitToWidth('🚄🚄', 1)).toBe('…');
+  expect(fitToWidth('🚄🚄🚄', 2)).toBe('…🚄');
+  expect(fitToWidth('🚄🚄', 2)).toBe('🚄🚄');
+});
