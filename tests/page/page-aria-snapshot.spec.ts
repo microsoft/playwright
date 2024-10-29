@@ -64,8 +64,8 @@ it('should snapshot list with accessible name', async ({ page }) => {
   `);
   await checkAndMatchSnapshot(page.locator('body'), `
     - list "my list":
-      - listitem: "one"
-      - listitem: "two"
+      - listitem: one
+      - listitem: two
   `);
 });
 
@@ -92,7 +92,7 @@ it('should allow text nodes', async ({ page }) => {
 
   await checkAndMatchSnapshot(page.locator('body'), `
     - heading "Microsoft" [level=1]
-    - text: "Open source projects and samples from Microsoft"
+    - text: Open source projects and samples from Microsoft
   `);
 });
 
@@ -105,7 +105,7 @@ it('should snapshot details visibility', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - group: "Summary"
+    - group: Summary
   `);
 });
 
@@ -145,10 +145,10 @@ it('should snapshot integration', async ({ page }) => {
 
   await checkAndMatchSnapshot(page.locator('body'), `
     - heading "Microsoft" [level=1]
-    - text: "Open source projects and samples from Microsoft"
+    - text: Open source projects and samples from Microsoft
     - list:
       - listitem:
-        - group: "Verified"
+        - group: Verified
       - listitem:
         - link "Sponsor"
   `);
@@ -164,7 +164,7 @@ it('should support multiline text', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - paragraph: "Line 1 Line 2 Line 3"
+    - paragraph: Line 1 Line 2 Line 3
   `);
   await expect(page.locator('body')).toMatchAriaSnapshot(`
     - paragraph: |
@@ -180,7 +180,7 @@ it('should concatenate span text', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - text: "One Two Three"
+    - text: One Two Three
   `);
 });
 
@@ -190,7 +190,7 @@ it('should concatenate span text 2', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - text: "One Two Three"
+    - text: One Two Three
   `);
 });
 
@@ -200,7 +200,7 @@ it('should concatenate div text with spaces', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - text: "One Two Three"
+    - text: One Two Three
   `);
 });
 
@@ -362,12 +362,12 @@ it('should snapshot inner text', async ({ page }) => {
 
   await checkAndMatchSnapshot(page.locator('body'), `
     - listitem:
-      - text: "a.test.ts"
+      - text: a.test.ts
       - button "Run"
       - button "Show source"
       - button "Watch"
     - listitem:
-      - text: "snapshot 30ms"
+      - text: snapshot 30ms
       - button "Run"
       - button "Show source"
       - button "Watch"
@@ -382,7 +382,7 @@ it('should include pseudo codepoints', async ({ page, server }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - paragraph: "\ueab2hello"
+    - paragraph: \ueab2hello
   `);
 });
 
@@ -396,7 +396,7 @@ it('check aria-hidden text', async ({ page, server }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - paragraph: "hello"
+    - paragraph: hello
   `);
 });
 
@@ -410,6 +410,6 @@ it('should ignore presentation and none roles', async ({ page, server }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - list: "hello world"
+    - list: hello world
   `);
 });

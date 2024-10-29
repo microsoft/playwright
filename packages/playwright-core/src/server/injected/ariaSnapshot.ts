@@ -17,6 +17,8 @@
 import * as roleUtils from './roleUtils';
 import { getElementComputedStyle } from './domUtils';
 import type { AriaRole } from './roleUtils';
+import { escapeRegExp, longestCommonSubstring } from '@isomorphic/stringUtils';
+import { yamlEscapeStringIfNeeded, yamlQuoteFragment } from './yaml';
 
 type AriaProps = {
   checked?: boolean | 'mixed';
@@ -89,7 +91,7 @@ export function generateAriaTree(rootElement: Element): AriaNode {
     if (treatAsBlock)
       ariaNode.children.push(treatAsBlock);
 
-    if (ariaNode.children.length === 1  && ariaNode.name === ariaNode.children[0])
+    if (ariaNode.children.length === 1 && ariaNode.name === ariaNode.children[0])
       ariaNode.children = [];
   }
 
@@ -180,10 +182,19 @@ function matchesText(text: string | undefined, template: RegExp | string | undef
   return !!text.match(template);
 }
 
-export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode): { matches: boolean, received: string } {
+export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode): { matches: boolean, received: { raw: string, regex: string } } {
   const root = generateAriaTree(rootElement);
   const matches = matchesNodeDeep(root, template);
-  return { matches, received: renderAriaTree(root) };
+  return {
+    matches,
+    received: {
+      raw: renderAriaTree(root),
+      regex: renderAriaTree(root, {
+        includeText,
+        renderString: convertToBestGuessRegex
+      }),
+    }
+  };
 }
 
 function matchesNode(node: AriaNode | string, template: AriaTemplateNode | RegExp | string, depth: number): boolean {
@@ -251,62 +262,111 @@ function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode): boolean {
   return !!results.length;
 }
 
-export function renderAriaTree(ariaNode: AriaNode, options?: { noText?: boolean }): string {
+type RenderAriaTreeOptions = {
+  includeText?: (node: AriaNode, text: string) => boolean;
+  renderString?: (text: string) => string | null;
+};
+
+export function renderAriaTree(ariaNode: AriaNode, options?: RenderAriaTreeOptions): string {
   const lines: string[] = [];
-  const visit = (ariaNode: AriaNode | string, indent: string) => {
+  const includeText = options?.includeText || (() => true);
+  const renderString = options?.renderString || (str => str);
+  const visit = (ariaNode: AriaNode | string, parentAriaNode: AriaNode | null, indent: string) => {
     if (typeof ariaNode === 'string') {
-      if (!options?.noText)
-        lines.push(indent + '- text: ' + quoteYamlString(ariaNode));
+      if (parentAriaNode && !includeText(parentAriaNode, ariaNode))
+        return;
+      const text = renderString(ariaNode);
+      if (text)
+        lines.push(indent + '- text: ' + text);
       return;
     }
-    let line = `${indent}- ${ariaNode.role}`;
-    if (ariaNode.name)
-      line += ` ${quoteYamlString(ariaNode.name)}`;
 
+    let key = ariaNode.role;
+    if (ariaNode.name) {
+      const name = renderString(ariaNode.name);
+      if (name)
+        key += ' ' + yamlQuoteFragment(name);
+    }
     if (ariaNode.checked === 'mixed')
-      line += ` [checked=mixed]`;
+      key += ` [checked=mixed]`;
     if (ariaNode.checked === true)
-      line += ` [checked]`;
+      key += ` [checked]`;
     if (ariaNode.disabled)
-      line += ` [disabled]`;
+      key += ` [disabled]`;
     if (ariaNode.expanded)
-      line += ` [expanded]`;
+      key += ` [expanded]`;
     if (ariaNode.level)
-      line += ` [level=${ariaNode.level}]`;
+      key += ` [level=${ariaNode.level}]`;
     if (ariaNode.pressed === 'mixed')
-      line += ` [pressed=mixed]`;
+      key += ` [pressed=mixed]`;
     if (ariaNode.pressed === true)
-      line += ` [pressed]`;
+      key += ` [pressed]`;
     if (ariaNode.selected === true)
-      line += ` [selected]`;
+      key += ` [selected]`;
 
+    const escapedKey = indent + '- ' + yamlEscapeStringIfNeeded(key, '\'');
     if (!ariaNode.children.length) {
-      lines.push(line);
+      lines.push(escapedKey);
     } else if (ariaNode.children.length === 1 && typeof ariaNode.children[0] === 'string') {
-      if (!options?.noText)
-        line += ': ' + quoteYamlString(ariaNode.children[0]);
-      lines.push(line);
+      const text = includeText(ariaNode, ariaNode.children[0]) ? renderString(ariaNode.children[0] as string) : null;
+      if (text)
+        lines.push(escapedKey + ': ' + yamlEscapeStringIfNeeded(text, '"'));
+      else
+        lines.push(escapedKey);
     } else {
-      lines.push(line + ':');
+      lines.push(escapedKey + ':');
       for (const child of ariaNode.children || [])
-        visit(child, indent + '  ');
+        visit(child, ariaNode, indent + '  ');
     }
   };
 
   if (ariaNode.role === 'fragment') {
     // Render fragment.
     for (const child of ariaNode.children || [])
-      visit(child, '');
+      visit(child, ariaNode, '');
   } else {
-    visit(ariaNode, '');
+    visit(ariaNode, null, '');
   }
   return lines.join('\n');
 }
 
-function quoteYamlString(str: string) {
-  return `"${str
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/\n/g, '\\n')
-      .replace(/\r/g, '\\r')}"`;
+function convertToBestGuessRegex(text: string): string {
+  const dynamicContent = [
+    // Do not replace single digits with regex by default.
+    // 2+ digits: [Issue 22, 22.3, 2.33, 2,333]
+    { regex: /\b\d{2,}\b/g, replacement: '\\d+' },
+    { regex: /\b\{2,}\.\d+\b/g, replacement: '\\d+\\.\\d+' },
+    { regex: /\b\d+\.\d{2,}\b/g, replacement: '\\d+\\.\\d+' },
+    { regex: /\b\d+,\d+\b/g, replacement: '\\d+,\\d+' },
+    // 2ms, 20s
+    { regex: /\b\d+[hms]+\b/g, replacement: '\\d+[hms]+' },
+    { regex: /\b[\d,.]+[hms]+\b/g, replacement: '[\\d,.]+[hms]+' },
+  ];
+
+  let result = escapeRegExp(text);
+  let hasDynamicContent = false;
+
+  for (const { regex, replacement } of dynamicContent) {
+    if (regex.test(result)) {
+      result = result.replace(regex, replacement);
+      hasDynamicContent = true;
+    }
+  }
+
+  return hasDynamicContent ? String(new RegExp(result)) : text;
+}
+
+function includeText(node: AriaNode, text: string): boolean {
+  if (!text.length)
+    return false;
+
+  if (!node.name)
+    return true;
+
+  // Figure out if text adds any value.
+  const substr = longestCommonSubstring(text, node.name);
+  let filtered = text;
+  while (substr && filtered.includes(substr))
+    filtered = filtered.replace(substr, '');
+  return filtered.trim().length / text.length > 0.1;
 }
