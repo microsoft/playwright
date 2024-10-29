@@ -54,7 +54,7 @@ export const TraceView: React.FC<{
     // Test finished.
     const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
-      loadSingleTraceFile(attachment.path).then(model => setModel({ model, isLive: false }));
+      loadSingleTraceFile(new URL(attachment.path, 'file://')).then(model => setModel({ model, isLive: false }));
       return;
     }
 
@@ -72,7 +72,7 @@ export const TraceView: React.FC<{
     // Start polling running test.
     pollTimer.current = setTimeout(async () => {
       try {
-        const model = await loadSingleTraceFile(traceLocation);
+        const model = await loadSingleTraceFile(new URL(traceLocation, 'file://'));
         setModel({ model, isLive: true });
       } catch {
         setModel(undefined);
@@ -108,11 +108,24 @@ const outputDirForTestCase = (testCase: reporterTypes.TestCase): string | undefi
   return undefined;
 };
 
-async function loadSingleTraceFile(url: string): Promise<MultiTraceModel> {
+async function loadSingleTraceFile(tracePathOrURL: URL): Promise<MultiTraceModel> {
   const params = new URLSearchParams();
-  params.set('trace', url);
+  params.set('trace', formatUrl(tracePathOrURL).toString());
   params.set('limit', '1');
   const response = await fetch(`contexts?${params.toString()}`);
   const contextEntries = await response.json() as ContextEntry[];
   return new MultiTraceModel(contextEntries);
+}
+
+function formatUrl(tracePathOrURL: URL) {
+  if (tracePathOrURL.protocol === 'file:') {
+    const url = new URL('/trace/file', location.href);
+    url.searchParams.set('path', tracePathOrURL.pathname);
+    return url;
+  }
+
+  if (tracePathOrURL.hostname === 'dropbox.com')
+    tracePathOrURL.hostname = 'dl.dropboxusercontent.com';
+
+  return tracePathOrURL;
 }

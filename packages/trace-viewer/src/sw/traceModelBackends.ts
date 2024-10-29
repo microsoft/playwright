@@ -31,7 +31,7 @@ export class ZipTraceModelBackend implements TraceModelBackend {
   constructor(traceURL: string, progress: Progress) {
     this._traceURL = traceURL;
     this._zipReader = new zipjs.ZipReader(
-        new zipjs.HttpReader(formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true } as any),
+        new zipjs.HttpReader(traceURL, { mode: 'cors', preventHeadRequest: true } as any),
         { useWebWorkers: false });
     this._entriesPromise = this._zipReader.getEntries({ onprogress: progress }).then(entries => {
       const map = new Map<string, zip.Entry>();
@@ -133,12 +133,4 @@ export class FetchTraceModelBackend implements TraceModelBackend {
       return;
     return fetch(fileURL);
   }
-}
-
-function formatUrl(trace: string) {
-  let url = trace;
-  // Dropbox does not support cors.
-  if (url.startsWith('https://www.dropbox.com/'))
-    url = 'https://dl.dropboxusercontent.com/' + url.substring('https://www.dropbox.com/'.length);
-  return url;
 }
