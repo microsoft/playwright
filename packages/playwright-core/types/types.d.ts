@@ -19819,10 +19819,7 @@ export interface FrameLocator {
  * An example to trigger select-all with the keyboard
  *
  * ```js
- * // on Windows and Linux
- * await page.keyboard.press('Control+A');
- * // on macOS
- * await page.keyboard.press('Meta+A');
+ * await page.keyboard.press('ControlOrMeta+A');
  * ```
  *
  */
