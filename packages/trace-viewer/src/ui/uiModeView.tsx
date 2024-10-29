@@ -37,6 +37,7 @@ import { FiltersView } from './uiModeFiltersView';
 import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
+import { testServerWebSocketURL, searchParams } from '../searchParams';
 
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
@@ -46,10 +47,6 @@ const xtermDataSource: XtermDataSource = {
   resize: () => {},
 };
 
-const searchParams = new URLSearchParams(window.location.search);
-const guid = searchParams.get('ws');
-const wsURL = new URL(`../${guid}`, window.location.toString());
-wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
 const queryParams = {
   args: searchParams.getAll('arg'),
   grep: searchParams.get('grep') || undefined,
@@ -109,7 +106,7 @@ export const UIModeView: React.FC<{}> = ({
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const reloadTests = React.useCallback(() => {
-    setTestServerConnection(new TestServerConnection(new WebSocketTestServerTransport(wsURL)));
+    setTestServerConnection(new TestServerConnection(new WebSocketTestServerTransport(testServerWebSocketURL)));
   }, []);
 
   // Load tests on startup.

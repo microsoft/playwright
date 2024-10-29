@@ -147,6 +147,7 @@ export const AttachmentsTab: React.FunctionComponent<{
 
 function attachmentURL(attachment: Attachment, queryParams: Record<string, string> = {}) {
   const params = new URLSearchParams(queryParams);
+  // TODO: put in testServerURL here
   if (attachment.sha1) {
     params.set('trace', attachment.traceUrl);
     return 'sha1/' + attachment.sha1 + '?' + params.toString();
