@@ -30,7 +30,6 @@ export class ZipTraceModelBackend implements TraceModelBackend {
 
   constructor(traceURL: string, progress: Progress) {
     this._traceURL = traceURL;
-    zipjs.configure({ baseURL: self.location.href } as any);
     this._zipReader = new zipjs.ZipReader(
         new zipjs.HttpReader(formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true } as any),
         { useWebWorkers: false });
@@ -82,16 +81,19 @@ export class ZipTraceModelBackend implements TraceModelBackend {
 }
 
 export class FetchTraceModelBackend implements TraceModelBackend {
-  private _entriesPromise: Promise<Map<string, string>>;
+  private _entriesPromise: Promise<Map<string, URL>>;
   private _traceURL: string;
 
   constructor(traceURL: string) {
     this._traceURL = traceURL;
-    this._entriesPromise = fetch('/trace/file?path=' + encodeURIComponent(traceURL)).then(async response => {
+    this._entriesPromise = fetch(traceURL).then(async response => {
       const json = JSON.parse(await response.text());
-      const entries = new Map<string, string>();
-      for (const entry of json.entries)
-        entries.set(entry.name, entry.path);
+      const entries = new Map<string, URL>();
+      for (const entry of json.entries) {
+        const entryURL = new URL(traceURL);
+        entryURL.searchParams.set('path', entry.path);
+        entries.set(entry.name, entryURL);
+      }
       return entries;
     });
   }
@@ -126,15 +128,15 @@ export class FetchTraceModelBackend implements TraceModelBackend {
 
   private async _readEntry(entryName: string): Promise<Response | undefined> {
     const entries = await this._entriesPromise;
-    const fileName = entries.get(entryName);
-    if (!fileName)
+    const fileURL = entries.get(entryName);
+    if (!fileURL)
       return;
-    return fetch('/trace/file?path=' + encodeURIComponent(fileName));
+    return fetch(fileURL);
   }
 }
 
 function formatUrl(trace: string) {
-  let url = trace.startsWith('http') || trace.startsWith('blob') ? trace : `file?path=${encodeURIComponent(trace)}`;
+  let url = trace;
   // Dropbox does not support cors.
   if (url.startsWith('https://www.dropbox.com/'))
     url = 'https://dl.dropboxusercontent.com/' + url.substring('https://www.dropbox.com/'.length);
