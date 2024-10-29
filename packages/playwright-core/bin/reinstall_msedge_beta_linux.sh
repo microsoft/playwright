@@ -14,6 +14,9 @@ if [[ ! -f "/etc/os-release" ]]; then
 fi
 
 ID=$(bash -c 'source /etc/os-release && echo $ID')
+if [[ "${ID}" == "devuan" ]]; then
+  ID="debian"
+fi
 if [[ "${ID}" != "ubuntu" && "${ID}" != "debian" ]]; then
   echo "ERROR: cannot install on $ID distribution - only Ubuntu and Debian are supported"
   exit 1
