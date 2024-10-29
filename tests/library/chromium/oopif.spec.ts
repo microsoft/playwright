@@ -235,7 +235,7 @@ it('should click a button when it overlays oopif', async function({ page, browse
 it('should report google.com frame with headed', async ({ browserType, server }) => {
   // @see https://github.com/GoogleChrome/puppeteer/issues/2548
   // https://google.com is isolated by default in Chromium embedder.
-  const browser = await browserType.launch({ headless: false });
+  const browser = await browserType.launch();
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/*', route => {

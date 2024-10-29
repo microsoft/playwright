@@ -169,8 +169,9 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
     });
 
-    test('should ignore page.pause when headed', async ({ connect, startRemoteServer, browserType }) => {
-      const headless = (browserType as any)._defaultLaunchOptions.headless;
+    test('should ignore page.pause when headed', async ({ connect, startRemoteServer, browserType, headless }) => {
+      test.skip(headless, 'This test is only relevant in headed mode');
+      const originalHeadlessValue = (browserType as any)._defaultLaunchOptions.headless;
       (browserType as any)._defaultLaunchOptions.headless = false;
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
@@ -178,7 +179,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       const page = await browserContext.newPage();
       await page.pause();
       await browser.close();
-      (browserType as any)._defaultLaunchOptions.headless = headless;
+      (browserType as any)._defaultLaunchOptions.headless = originalHeadlessValue;
     });
 
     test('should be able to visit ipv6 through localhost', async ({ connect, startRemoteServer, ipV6ServerPort }) => {
