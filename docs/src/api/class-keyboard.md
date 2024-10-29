@@ -104,47 +104,22 @@ await page.Keyboard.PressAsync("Shift+A");
 An example to trigger select-all with the keyboard
 
 ```js
-// on Windows and Linux
-await page.keyboard.press('Control+A');
-// on macOS
-await page.keyboard.press('Meta+A');
-// cross-platform
 await page.keyboard.press('ControlOrMeta+A');
 ```
 
 ```java
-// on Windows and Linux
-page.keyboard().press("Control+A");
-// on macOS
-page.keyboard().press("Meta+A");
-// cross-platform
 page.keyboard().press("ControlOrMeta+A");
 ```
 
 ```python async
-# on windows and linux
-await page.keyboard.press("Control+A")
-# on mac_os
-await page.keyboard.press("Meta+A")
-# cross-platform
 await page.keyboard.press("ControlOrMeta+A")
 ```
 
 ```python sync
-# on windows and linux
-page.keyboard.press("Control+A")
-# on mac_os
-page.keyboard.press("Meta+A")
-# cross-platform
 page.keyboard.press("ControlOrMeta+A")
 ```
 
 ```csharp
-// on Windows and Linux
-await page.Keyboard.PressAsync("Control+A");
-// on macOS
-await page.Keyboard.PressAsync("Meta+A");
-// cross-platform
 await page.Keyboard.PressAsync("ControlOrMeta+A");
 ```
 
