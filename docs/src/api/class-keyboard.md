@@ -108,6 +108,8 @@ An example to trigger select-all with the keyboard
 await page.keyboard.press('Control+A');
 // on macOS
 await page.keyboard.press('Meta+A');
+// cross-platform
+await page.keyboard.press('ControlOrMeta+A');
 ```
 
 ```java
@@ -115,6 +117,8 @@ await page.keyboard.press('Meta+A');
 page.keyboard().press("Control+A");
 // on macOS
 page.keyboard().press("Meta+A");
+// cross-platform
+page.keyboard().press("ControlOrMeta+A");
 ```
 
 ```python async
@@ -122,6 +126,8 @@ page.keyboard().press("Meta+A");
 await page.keyboard.press("Control+A")
 # on mac_os
 await page.keyboard.press("Meta+A")
+# cross-platform
+await page.keyboard.press("ControlOrMeta+A")
 ```
 
 ```python sync
@@ -129,6 +135,8 @@ await page.keyboard.press("Meta+A")
 page.keyboard.press("Control+A")
 # on mac_os
 page.keyboard.press("Meta+A")
+# cross-platform
+page.keyboard.press("ControlOrMeta+A")
 ```
 
 ```csharp
@@ -136,6 +144,8 @@ page.keyboard.press("Meta+A")
 await page.Keyboard.PressAsync("Control+A");
 // on macOS
 await page.Keyboard.PressAsync("Meta+A");
+// cross-platform
+await page.Keyboard.PressAsync("ControlOrMeta+A");
 ```
 
 ## async method: Keyboard.down

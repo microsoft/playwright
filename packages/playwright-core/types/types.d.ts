@@ -19823,6 +19823,8 @@ export interface FrameLocator {
  * await page.keyboard.press('Control+A');
  * // on macOS
  * await page.keyboard.press('Meta+A');
+ * // cross-platform
+ * await page.keyboard.press('ControlOrMeta+A');
  * ```
  *
  */
