@@ -18,6 +18,7 @@ import { colors as realColors, ms as milliseconds, parseStackTraceLine } from 'p
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
 import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
+import { getEastAsianWidth } from '../utilsBundle';
 import type { ReporterV2 } from './reporterV2';
 import { resolveReporterOutputPath } from '../util';
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
@@ -490,7 +491,7 @@ export function stripAnsiEscapes(str: string): string {
 }
 
 function characterWidth(c: string) {
-  return /[\u4e00-\u9fff]/.test(c) ? 2 : 1;
+  return getEastAsianWidth.eastAsianWidth(c.codePointAt(0)!);
 }
 
 function stringWidth(v: string) {
@@ -530,7 +531,7 @@ export function fitToWidth(line: string, width: number, prefix?: string): string
     } else {
       let part = suffixOfWidth(parts[i], width);
       const wasTruncated = part.length < parts[i].length;
-      if (wasTruncated && part.length > 0) {
+      if (wasTruncated && parts[i].length > 0) {
         // Add ellipsis if we are truncating.
         part = '\u2026' + suffixOfWidth(parts[i], width - 1);
       }

@@ -23,8 +23,10 @@ test('chinese characters', () => {
 });
 
 test('surrogate pairs', () => {
-  expect(fitToWidth('🫣🤗', 2)).toBe('🫣🤗');
+  expect(fitToWidth('🫣🤗', 2)).toBe('…');
+  expect(fitToWidth('🫣🤗', 3)).toBe('…🤗');
   expect(fitToWidth('🚄🚄', 1)).toBe('…');
-  expect(fitToWidth('🚄🚄🚄', 2)).toBe('…🚄');
-  expect(fitToWidth('🚄🚄', 2)).toBe('🚄🚄');
+  expect(fitToWidth('🚄🚄', 2)).toBe('…');
+  expect(fitToWidth('🚄🚄', 3)).toBe('…🚄');
+  expect(fitToWidth('🚄🚄', 4)).toBe('🚄🚄');
 });
