@@ -26,6 +26,7 @@ import type { StackFrame } from '@protocol/channels';
 import { CopyToClipboard } from './copyToClipboard';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
+import { testServerBaseURL } from '../settings';
 
 export const SourceTab: React.FunctionComponent<{
   stack?: StackFrame[],
@@ -73,7 +74,7 @@ export const SourceTab: React.FunctionComponent<{
       try {
         let response = await fetch(`sha1/src@${sha1}.txt`);
         if (response.status === 404)
-          response = await fetch(`file?path=${encodeURIComponent(file)}`);
+          response = await fetch(new URL(`/trace/file?path=${encodeURIComponent(file)}`, testServerBaseURL));
         if (response.status >= 400)
           source.content = `<Unable to read "${file}">`;
         else

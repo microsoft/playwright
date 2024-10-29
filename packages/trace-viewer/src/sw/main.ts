@@ -85,7 +85,8 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   // the https urls.
   const isDeployedAsHttps = self.registration.scope.startsWith('https://');
 
-  if (request.url.startsWith(self.registration.scope)) {
+  // test server runs on a different port in HMR mode, so we only look at the hostname
+  if (new URL(request.url).hostname === new URL(self.registration.scope).hostname) {
     const url = new URL(unwrapPopoutUrl(request.url));
     const relativePath = url.pathname.substring(scopePath.length - 1);
     if (relativePath === '/ping') {

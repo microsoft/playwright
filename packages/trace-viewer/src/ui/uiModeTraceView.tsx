@@ -24,7 +24,7 @@ import type { ContextEntry } from '../types/entries';
 import type { SourceLocation } from './modelUtil';
 import { MultiTraceModel } from './modelUtil';
 import { Workbench } from './workbench';
-import { testServerBaseURL } from './uiModeView';
+import { testServerBaseURL } from '../settings';
 
 export const TraceView: React.FC<{
   item: { treeItem?: TreeItem, testFile?: SourceLocation, testCase?: reporterTypes.TestCase },
