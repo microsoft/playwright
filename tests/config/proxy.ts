@@ -21,6 +21,10 @@ import net from 'net';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../../packages/playwright-core/src/common/socksProxy';
 import { SocksProxy } from '../../packages/playwright-core/lib/common/socksProxy';
 
+const kConnectHostsToIgnore = new Set([
+  'www.bing.com:443',
+]);
+
 export class TestProxy {
   readonly PORT: number;
   readonly URL: string;
@@ -62,6 +66,8 @@ export class TestProxy {
     });
     this._prependHandler('connect', (req: IncomingMessage) => {
       if (!options?.allowConnectRequests)
+        return;
+      if (kConnectHostsToIgnore.has(req.url))
         return;
       this.connectHosts.push(req.url);
       req.url = `127.0.0.1:${port}`;
