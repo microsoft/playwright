@@ -24,7 +24,7 @@ import type { ContextEntry } from '../types/entries';
 import type { SourceLocation } from './modelUtil';
 import { MultiTraceModel } from './modelUtil';
 import { Workbench } from './workbench';
-import { testServerBaseURL } from '../searchParams';
+import { testServerBaseURL } from './uiModeView';
 
 export const TraceView: React.FC<{
   item: { treeItem?: TreeItem, testFile?: SourceLocation, testCase?: reporterTypes.TestCase },
@@ -120,7 +120,7 @@ async function loadSingleTraceFile(tracePathOrURL: URL): Promise<MultiTraceModel
 
 function formatUrl(tracePathOrURL: URL) {
   if (tracePathOrURL.protocol === 'file:') {
-    const url = new URL('/trace/file', location.href);
+    const url = new URL('/trace/file', testServerBaseURL);
     url.searchParams.set('path', tracePathOrURL.pathname);
     return url;
   }
