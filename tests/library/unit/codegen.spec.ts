@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
-import { generatePlaywrightRequestCall } from '../../packages/playwright-core/src/utils/isomorphic/codegen';
+import { test, expect } from '@playwright/test';
+import { generatePlaywrightRequestCall } from "../../../packages/trace-viewer/src/ui/codegen";
 
 test('generatePlaywrightRequestCall', () => {
   expect(generatePlaywrightRequestCall({
