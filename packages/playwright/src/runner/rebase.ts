@@ -17,7 +17,7 @@
 import path from 'path';
 import fs from 'fs';
 import type { T } from '../transform/babelBundle';
-import { types, traverse, parse } from '../transform/babelBundle';
+import { types, traverse, babelParse } from '../transform/babelBundle';
 import { MultiMap } from 'playwright-core/lib/utils';
 import { generateUnifiedDiff } from 'playwright-core/lib/utils';
 import type { FullConfigInternal } from '../common/config';
@@ -53,7 +53,7 @@ export async function applySuggestedRebaselines(config: FullConfigInternal) {
     const source = await fs.promises.readFile(fileName, 'utf8');
     const lines = source.split('\n');
     const replacements = suggestedRebaselines.get(fileName);
-    const fileNode = parse(source, { sourceType: 'module' });
+    const fileNode = babelParse(source, fileName, true);
     const ranges: { start: number, end: number, oldText: string, newText: string }[] = [];
 
     traverse(fileNode, {
