@@ -636,8 +636,8 @@ it('should be able to download a inline PDF file via response interception', asy
   await page.close();
 });
 
-it('should be able to download a inline PDF file via navigation', async ({ browser, server, asset, browserName, headless }) => {
-  it.fixme(((!headless || !process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_OLD) && browserName === 'chromium'));
+it('should be able to download a inline PDF file via navigation', async ({ browser, server, asset, browserName, channel }) => {
+  it.fixme(browserName === 'chromium' && channel !== 'chromium-headless-shell');
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
