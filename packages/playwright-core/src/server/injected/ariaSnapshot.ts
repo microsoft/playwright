@@ -35,11 +35,19 @@ type AriaNode = AriaProps & {
   children: (AriaNode | string)[];
 };
 
-export type AriaTemplateNode = AriaProps & {
-  role: AriaRole | 'fragment' | 'text';
-  name?: RegExp | string;
-  children?: (AriaTemplateNode | string | RegExp)[];
+export type AriaTemplateTextNode = {
+  kind: 'text';
+  text: RegExp | string;
 };
+
+export type AriaTemplateRoleNode = AriaProps & {
+  kind: 'role';
+  role: AriaRole | 'fragment';
+  name?: RegExp | string;
+  children?: AriaTemplateNode[];
+};
+
+export type AriaTemplateNode = AriaTemplateRoleNode | AriaTemplateTextNode;
 
 export function generateAriaTree(rootElement: Element): AriaNode {
   const visit = (ariaNode: AriaNode, node: Node) => {
@@ -172,7 +180,7 @@ function normalizeStringChildren(rootA11yNode: AriaNode) {
 
 const normalizeWhitespaceWithin = (text: string) => text.replace(/[\u200b\s\t\r\n]+/g, ' ');
 
-function matchesText(text: string | undefined, template: RegExp | string | undefined) {
+function matchesText(text: string, template: RegExp | string | undefined): boolean {
   if (!template)
     return true;
   if (!text)
@@ -182,7 +190,20 @@ function matchesText(text: string | undefined, template: RegExp | string | undef
   return !!text.match(template);
 }
 
-export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode): { matches: boolean, received: { raw: string, regex: string } } {
+function matchesTextNode(text: string, template: AriaTemplateTextNode) {
+  return matchesText(text, template.text);
+}
+
+function matchesName(text: string, template: AriaTemplateRoleNode) {
+  return matchesText(text, template.name);
+}
+
+export type MatcherReceived = {
+  raw: string;
+  regex: string;
+};
+
+export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode): { matches: boolean, received: MatcherReceived } {
   const root = generateAriaTree(rootElement);
   const matches = matchesNodeDeep(root, template);
   return {
@@ -197,11 +218,11 @@ export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode
   };
 }
 
-function matchesNode(node: AriaNode | string, template: AriaTemplateNode | RegExp | string, depth: number): boolean {
-  if (typeof node === 'string' && (typeof template === 'string' || template instanceof RegExp))
-    return matchesText(node, template);
+function matchesNode(node: AriaNode | string, template: AriaTemplateNode, depth: number): boolean {
+  if (typeof node === 'string' && template.kind === 'text')
+    return matchesTextNode(node, template);
 
-  if (typeof node === 'object' && typeof template === 'object' && !(template instanceof RegExp)) {
+  if (typeof node === 'object' && template.kind === 'role') {
     if (template.role !== 'fragment' && template.role !== node.role)
       return false;
     if (template.checked !== undefined && template.checked !== node.checked)
@@ -216,7 +237,7 @@ function matchesNode(node: AriaNode | string, template: AriaTemplateNode | RegEx
       return false;
     if (template.selected !== undefined && template.selected !== node.selected)
       return false;
-    if (!matchesText(node.name, template.name))
+    if (!matchesName(node.name, template))
       return false;
     if (!containsList(node.children || [], template.children || [], depth))
       return false;
@@ -225,7 +246,7 @@ function matchesNode(node: AriaNode | string, template: AriaTemplateNode | RegEx
   return false;
 }
 
-function containsList(children: (AriaNode | string)[], template: (AriaTemplateNode | RegExp | string)[], depth: number): boolean {
+function containsList(children: (AriaNode | string)[], template: AriaTemplateNode[], depth: number): boolean {
   if (template.length > children.length)
     return false;
   const cc = children.slice();
@@ -362,6 +383,9 @@ function includeText(node: AriaNode, text: string): boolean {
 
   if (!node.name)
     return true;
+
+  if (node.name.length > text.length)
+    return false;
 
   // Figure out if text adds any value.
   const substr = longestCommonSubstring(text, node.name);
