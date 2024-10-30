@@ -148,7 +148,7 @@ it('should emit error', async ({ page, server, browserName, channel }) => {
   if (browserName === 'firefox')
     expect(message).toBe('CLOSE_ABNORMAL');
   else
-    expect(message).toContain(channel.includes('msedge') ? '' : ': 400');
+    expect(message).toContain(channel?.includes('msedge') ? '' : ': 400');
 });
 
 it('should not have stray error events', async ({ page, server }) => {

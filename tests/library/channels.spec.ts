@@ -262,7 +262,7 @@ it('should work with the domain module', async ({ browserType, server, browserNa
   if (browserName === 'firefox')
     expect(message).toBe('CLOSE_ABNORMAL');
   else
-    expect(message).toContain(channel.includes('msedge') ? '' : ': 400');
+    expect(message).toContain(channel?.includes('msedge') ? '' : ': 400');
 
   await browser.close();
 

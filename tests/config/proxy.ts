@@ -21,6 +21,7 @@ import net from 'net';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../../packages/playwright-core/src/common/socksProxy';
 import { SocksProxy } from '../../packages/playwright-core/lib/common/socksProxy';
 
+// Certain browsers perform telemetry requests which we want to ignore.
 const kConnectHostsToIgnore = new Set([
   'www.bing.com:443',
 ]);
