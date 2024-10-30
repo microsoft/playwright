@@ -14,12 +14,12 @@
   limitations under the License.
 */
 
-import type { TestCase, TestCaseAnnotation } from './types';
+import type { TestCase, TestCaseAnnotation, TestCaseSummary } from './types';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
 import './common.css';
-import { ProjectLink } from './links';
+import { Link, ProjectLink, SearchParamsContext } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
@@ -31,10 +31,14 @@ import { CopyToClipboardContainer } from './copyToClipboard';
 export const TestCaseView: React.FC<{
   projectNames: string[],
   test: TestCase | undefined,
+  next: TestCaseSummary | undefined,
+  prev: TestCaseSummary | undefined,
   anchor: 'video' | 'diff' | '',
   run: number,
-}> = ({ projectNames, test, run, anchor }) => {
+}> = ({ projectNames, test, run, anchor, next, prev }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
+  const searchParams = React.useContext(SearchParamsContext);
+  const filterParam = searchParams.has('q') ? '&q=' + searchParams.get('q') : '';
 
   const labels = React.useMemo(() => {
     if (!test)
@@ -47,6 +51,11 @@ export const TestCaseView: React.FC<{
   }, [test?.annotations]);
 
   return <div className='test-case-column vbox'>
+    <div className='hbox'>
+      {prev && <Link href={`#?testId=${prev.testId}${filterParam}`}>« previous</Link>}
+      <div style={{ flex: 'auto' }}></div>
+      {next && <Link href={`#?testId=${next.testId}${filterParam}`}>next »</Link>}
+    </div>
     {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
     {test && <div className='test-case-title'>{test?.title}</div>}
     {test && <div className='hbox'>
