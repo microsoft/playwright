@@ -250,7 +250,7 @@ var page = await context.NewPageAsync();
 await page.GotoAsync("https://playwright.dev");
 
 await context.Tracing.StartChunkAsync();
-await page.GetByText("Get Started").ClickAsync();
+await Page.GetByText("Get Started").ClickAsync();
 // Everything between StartChunkAsync and StopChunkAsync will be recorded in the trace.
 await context.Tracing.StopChunkAsync(new()
 {

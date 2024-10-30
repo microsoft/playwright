@@ -184,7 +184,7 @@ print(new_page.title())
 // Get page after a specific action (e.g. clicking a link)
 var newPage = await context.RunAndWaitForPageAsync(async () =>
 {
-    await page.GetByText("open new tab").ClickAsync();
+    await Page.GetByText("open new tab").ClickAsync();
 });
 // Interact with the new page normally
 await newPage.GetByRole(AriaRole.Button).ClickAsync();
@@ -288,7 +288,7 @@ print(popup.title())
 // Get popup after a specific action (e.g., click)
 var popup = await page.RunAndWaitForPopupAsync(async () =>
 {
-    await page.GetByText("open the popup").ClickAsync();
+    await Page.GetByText("open the popup").ClickAsync();
 });
 // Interact with the popup normally
 await popup.GetByRole(AriaRole.Button).ClickAsync();

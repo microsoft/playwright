@@ -464,7 +464,7 @@ parent = page.get_by_role("listitem").filter(has=child)
 ```
 
 ```csharp
-var child = page.GetByText("Hello");
+var child = Page.GetByText("Hello");
 var parent = page.GetByRole(AriaRole.Listitem).Filter(new () { Has = child });
 ```
 
@@ -487,7 +487,7 @@ parent = page.get_by_text("Hello").locator('xpath=..')
 ```
 
 ```csharp
-var parent = page.GetByText("Hello").Locator("xpath=..");
+var parent = Page.GetByText("Hello").Locator("xpath=..");
 ```
 
 ## React locator
@@ -698,7 +698,7 @@ page.get_by_text("Password").fill("secret")
 
 ```csharp
 // Fill the input by targeting the label.
-await page.GetByText("Password").FillAsync("secret");
+await Page.GetByText("Password").FillAsync("secret");
 ```
 
 However, other methods will target the label itself, for example [`method: LocatorAssertions.toHaveText`] will assert the text content of the label, not the input field.

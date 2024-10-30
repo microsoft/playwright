@@ -774,7 +774,7 @@ var page1 = await page.RunAndWaitForPopupAsync(async () =>
 
     expect.soft(sources.get('C#')!.text).toContain(`
 await page.GotoAsync("about:blank");
-await page.GetByText("link").ClickAsync();`);
+await Page.GetByText("link").ClickAsync();`);
 
     expect(page.url()).toContain('about:blank#foo');
   });
@@ -819,7 +819,7 @@ await page.GetByText("link").ClickAsync();`);
         .setButton(MouseButton.MIDDLE));`);
 
     expect(sources.get('C#')!.text).toContain(`
-await page.GetByText("Click me").ClickAsync(new LocatorClickOptions
+await Page.GetByText("Click me").ClickAsync(new LocatorClickOptions
 {
     Button = MouseButton.Middle,
 });`);

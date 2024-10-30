@@ -1505,19 +1505,19 @@ page.getByText(Pattern.compile("^hello$", Pattern.CASE_INSENSITIVE));
 
 ```csharp
 // Matches <span>
-page.GetByText("world");
+Page.GetByText("world");
 
 // Matches first <div>
-page.GetByText("Hello world");
+Page.GetByText("Hello world");
 
 // Matches second <div>
-page.GetByText("Hello", new() { Exact = true });
+Page.GetByText("Hello", new() { Exact = true });
 
 // Matches both <div>s
-page.GetByText(new Regex("Hello"));
+Page.GetByText(new Regex("Hello"));
 
 // Matches second <div>
-page.GetByText(new Regex("^hello$", RegexOptions.IgnoreCase));
+Page.GetByText(new Regex("^hello$", RegexOptions.IgnoreCase));
 ```
 
 **Details**

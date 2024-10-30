@@ -76,7 +76,7 @@ await page.RouteAsync("*/**/api/v1/fruits", async route => {
 await page.GotoAsync("https://demo.playwright.dev/api-mocking");
 
 // Assert that the Strawberry fruit is visible
-await Expect(page.GetByTextAsync("Strawberry")).ToBeVisibleAsync();
+await Expect(Page.GetByTextAsync("Strawberry")).ToBeVisibleAsync();
 ```
 
 ```java
@@ -188,7 +188,7 @@ await page.RouteAsync("*/**/api/v1/fruits", async (route) => {
 await page.GotoAsync("https://demo.playwright.dev/api-mocking");
 
 // Assert that the Loquat fruit is visible
-await Expect(page.GetByTextAsync("Loquat", new () { Exact = true })).ToBeVisibleAsync();
+await Expect(Page.GetByTextAsync("Loquat", new () { Exact = true })).ToBeVisibleAsync();
 ```
 
 ```java
@@ -283,7 +283,7 @@ await page.RouteFromHARAsync("./hars/fruit.har", new () {
 await page.GotoAsync("https://demo.playwright.dev/api-mocking");
 
 // Assert that the fruit is visible
-await Expect(page.GetByText("Strawberry")).ToBeVisibleAsync();
+await Expect(Page.GetByText("Strawberry")).ToBeVisibleAsync();
 ```
 
 ```java

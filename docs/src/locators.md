@@ -730,7 +730,7 @@ await page.get_by_text("Details").click()
 page.get_by_text("Details").click()
 ```
 ```csharp
-await page.GetByText("Details").ClickAsync();
+await Page.GetByText("Details").ClickAsync();
 ```
 
 ```html
@@ -1265,7 +1265,7 @@ new_email.click()
 
 ```csharp
 var newEmail = page.GetByRole(AriaRole.Button, new() { Name = "New" });
-var dialog = page.GetByText("Confirm security settings");
+var dialog = Page.GetByText("Confirm security settings");
 await Expect(newEmail.Or(dialog).First).ToBeVisibleAsync();
 if (await dialog.IsVisibleAsync())
   await page.GetByRole(AriaRole.Button, new() { Name = "Dismiss" }).ClickAsync();
@@ -1441,7 +1441,7 @@ page.getByText("orange").click();
 ```
 
 ```csharp
-await page.GetByText("orange").ClickAsync();
+await Page.GetByText("orange").ClickAsync();
 ```
 
 #### Filter by text

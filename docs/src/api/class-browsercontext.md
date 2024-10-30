@@ -256,7 +256,7 @@ print(page.evaluate("location.href"))
 ```csharp
 var popup = await context.RunAndWaitForPageAsync(async =>
 {
-    await page.GetByText("open new page").ClickAsync();
+    await Page.GetByText("open new page").ClickAsync();
 });
 Console.WriteLine(await popup.EvaluateAsync<string>("location.href"));
 ```

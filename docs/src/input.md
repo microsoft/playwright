@@ -301,23 +301,23 @@ page.get_by_text("Item").click(position={ "x": 0, "y": 0})
 await page.GetByRole(AriaRole.Button).ClickAsync();
 
 // Double click
-await page.GetByText("Item").DblClickAsync();
+await Page.GetByText("Item").DblClickAsync();
 
 // Right click
-await page.GetByText("Item").ClickAsync(new() { Button = MouseButton.Right });
+await Page.GetByText("Item").ClickAsync(new() { Button = MouseButton.Right });
 
 // Shift + click
-await page.GetByText("Item").ClickAsync(new() { Modifiers = new[] { KeyboardModifier.Shift } });
+await Page.GetByText("Item").ClickAsync(new() { Modifiers = new[] { KeyboardModifier.Shift } });
 
 // Ctrl + click or Windows and Linux
 // Meta + click on macOS
-await page.GetByText("Item").ClickAsync(new() { Modifiers = new[] { KeyboardModifier.ControlOrMeta } });
+await Page.GetByText("Item").ClickAsync(new() { Modifiers = new[] { KeyboardModifier.ControlOrMeta } });
 
 // Hover over element
-await page.GetByText("Item").HoverAsync();
+await Page.GetByText("Item").HoverAsync();
 
 // Click the top left corner
-await page.GetByText("Item").ClickAsync(new() { position = new Position { X = 0, Y = 0 } });
+await Page.GetByText("Item").ClickAsync(new() { position = new Position { X = 0, Y = 0 } });
 ```
 
 Under the hood, this and other pointer-related methods:
@@ -460,7 +460,7 @@ page.get_by_role("textbox").press("$")
 
 ```csharp
 // Hit Enter
-await page.GetByText("Submit").PressAsync("Enter");
+await Page.GetByText("Submit").PressAsync("Enter");
 
 // Dispatch Control+Right
 await page.GetByRole(AriaRole.Textbox).PressAsync("Control+ArrowRight");
@@ -826,7 +826,7 @@ page.get_by_text("Footer text").scroll_into_view_if_needed()
 
 ```csharp
 // Scroll the footer into view, forcing an "infinite list" to load more content
-await page.GetByText("Footer text").ScrollIntoViewIfNeededAsync();
+await Page.GetByText("Footer text").ScrollIntoViewIfNeededAsync();
 ```
 
 If you would like to control the scrolling more precisely, use [`method: Mouse.wheel`] or [`method: Locator.evaluate`]:

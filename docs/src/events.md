@@ -85,7 +85,7 @@ popup.value.goto("https://wikipedia.org")
 ```csharp
 var popup = await page.RunAndWaitForPopupAsync(async =>
 {
-    await page.GetByText("open the popup").ClickAsync();
+    await Page.GetByText("open the popup").ClickAsync();
 });
 await popup.GotoAsync("https://wikipedia.org");
 ```

@@ -89,7 +89,7 @@ page.get_by_text("example domain").click()
 // Navigate and click element
 // Click will auto-wait for the element
 await page.GotoAsync("https://example.com");
-await page.GetByText("Example Domain").ClickAsync();
+await Page.GetByText("Example Domain").ClickAsync();
 ```
 
 For the scenario above, Playwright will wait for the text to become visible,
@@ -146,7 +146,7 @@ page.wait_for_url("**/login")
 ```
 
 ```csharp
-await page.GetByText("Click me").ClickAsync();
+await Page.GetByText("Click me").ClickAsync();
 await page.WaitForURL("**/login");
 ```
 
