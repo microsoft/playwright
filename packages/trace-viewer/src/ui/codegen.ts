@@ -31,7 +31,12 @@ export function generatePlaywrightRequestCall(request: har.Request, body: string
     options.data = body;
   if (request.headers.length)
     options.headers = Object.fromEntries(request.headers.map(header => [header.name, header.value]));
-  return `await page.request.${method}('${urlParam}', ${prettyPrintObject(options)});`;
+
+  const params = [`'${urlParam}'`];
+  const hasOptions = Object.keys(options).length > 0;
+  if (hasOptions)
+    params.push(prettyPrintObject(options));
+  return `await page.request.${method}(${params.join(', ')});`;
 }
 
 function prettyPrintObject(obj: any, indent = 2, level = 0): string {

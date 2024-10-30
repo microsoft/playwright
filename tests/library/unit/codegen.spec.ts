@@ -15,7 +15,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { generatePlaywrightRequestCall } from "../../../packages/trace-viewer/src/ui/codegen";
+import { generatePlaywrightRequestCall } from '../../../packages/trace-viewer/src/ui/codegen';
 
 test('generatePlaywrightRequestCall', () => {
   expect(generatePlaywrightRequestCall({
@@ -132,6 +132,66 @@ test('generatePlaywrightRequestCall with DELETE method and custom header', () =>
   }, undefined)).toEqual(`
 await page.request.delete('http://example.com/foo', {
   headers: {
+    Authorization: 'Bearer token'
+  }
+});`.trim());
+});
+
+test('generatePlaywrightRequestCall with HEAD method', () => {
+  expect(generatePlaywrightRequestCall({
+    url: 'http://example.com/foo',
+    method: 'HEAD',
+    headers: [],
+    httpVersion: '1.1',
+    cookies: [],
+    queryString: [],
+    headersSize: 0,
+    bodySize: 0,
+    comment: '',
+  }, undefined)).toEqual(`
+await page.request.head('http://example.com/foo');`.trim());
+});
+
+test('generatePlaywrightRequestCall with complex query parameters', () => {
+  expect(generatePlaywrightRequestCall({
+    url: 'http://example.com/foo?bar=baz&qux=quux',
+    method: 'GET',
+    headers: [],
+    httpVersion: '1.1',
+    cookies: [],
+    queryString: [],
+    headersSize: 0,
+    bodySize: 0,
+    comment: '',
+  }, undefined)).toEqual(`
+await page.request.get('http://example.com/foo', {
+  params: {
+    bar: 'baz',
+    qux: 'quux'
+  }
+});`.trim());
+});
+
+test('generatePlaywrightRequestCall with multiple headers', () => {
+  expect(generatePlaywrightRequestCall({
+    url: 'http://example.com/foo',
+    method: 'GET',
+    headers: [
+      { name: 'User-Agent', value: 'Mozilla/5.0' },
+      { name: 'Accept', value: 'application/json' },
+      { name: 'Authorization', value: 'Bearer token' }
+    ],
+    httpVersion: '1.1',
+    cookies: [],
+    queryString: [],
+    headersSize: 0,
+    bodySize: 0,
+    comment: '',
+  }, undefined)).toEqual(`
+await page.request.get('http://example.com/foo', {
+  headers: {
+    'User-Agent': 'Mozilla/5.0',
+    Accept: 'application/json',
     Authorization: 'Bearer token'
   }
 });`.trim());
