@@ -58,3 +58,81 @@ await page.request.fetch('http://example.com/foo', {
   }
 });`.trim());
 });
+
+test('generatePlaywrightRequestCall with POST method and no body', () => {
+  expect(generatePlaywrightRequestCall({
+    url: 'http://example.com/foo',
+    method: 'POST',
+    headers: [{ name: 'Content-Type', value: 'application/json' }],
+    httpVersion: '1.1',
+    cookies: [],
+    queryString: [],
+    headersSize: 0,
+    bodySize: 0,
+    comment: '',
+  }, undefined)).toEqual(`
+await page.request.post('http://example.com/foo', {
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});`.trim());
+});
+
+test('generatePlaywrightRequestCall with PUT method and JSON body', () => {
+  expect(generatePlaywrightRequestCall({
+    url: 'http://example.com/foo',
+    method: 'PUT',
+    headers: [{ name: 'Content-Type', value: 'application/json' }],
+    httpVersion: '1.1',
+    cookies: [],
+    queryString: [],
+    headersSize: 0,
+    bodySize: 0,
+    comment: '',
+  }, '{"key":"value"}')).toEqual(`
+await page.request.put('http://example.com/foo', {
+  data: '{"key":"value"}',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});`.trim());
+});
+
+test('generatePlaywrightRequestCall with PATCH method and form data', () => {
+  expect(generatePlaywrightRequestCall({
+    url: 'http://example.com/foo',
+    method: 'PATCH',
+    headers: [{ name: 'Content-Type', value: 'application/x-www-form-urlencoded' }],
+    httpVersion: '1.1',
+    cookies: [],
+    queryString: [],
+    headersSize: 0,
+    bodySize: 0,
+    comment: '',
+  }, 'key=value')).toEqual(`
+await page.request.patch('http://example.com/foo', {
+  data: 'key=value',
+  headers: {
+    'Content-Type': 'application/x-www-form-urlencoded'
+  }
+});`.trim());
+});
+
+test('generatePlaywrightRequestCall with DELETE method and custom header', () => {
+  expect(generatePlaywrightRequestCall({
+    url: 'http://example.com/foo',
+    method: 'DELETE',
+    headers: [{ name: 'Authorization', value: 'Bearer token' }],
+    httpVersion: '1.1',
+    cookies: [],
+    queryString: [],
+    headersSize: 0,
+    bodySize: 0,
+    comment: '',
+  }, undefined)).toEqual(`
+await page.request.delete('http://example.com/foo', {
+  headers: {
+    Authorization: 'Bearer token'
+  }
+});`.trim());
+});
