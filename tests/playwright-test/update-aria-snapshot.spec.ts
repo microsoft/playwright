@@ -15,7 +15,7 @@
  */
 
 import * as fs from 'fs';
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
 
 test.describe.configure({ mode: 'parallel' });
 
@@ -158,6 +158,45 @@ test('should generate baseline with special characters', async ({ runInlineTest 
 +            - 'button "Click: me"'
 +            - listitem: \"Item: 1\"
 +            - listitem: \"Item {a: b}\"
++        \`);
+       });
+     
+`);
+});
+
+test('should update missing snapshots in tsx', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightCtConfigText,
+    'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
+    'playwright/index.ts': ``,
+
+    'src/button.tsx': `
+      export const Button = () => <button>Button</button>;
+    `,
+
+    'src/button.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button.tsx';
+
+      test('pass', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toMatchAriaSnapshot(\`\`);
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
+  const data = fs.readFileSync(patchPath, 'utf-8');
+  expect(data).toBe(`--- a/src/button.test.tsx
++++ b/src/button.test.tsx
+@@ -4,6 +4,8 @@
+ 
+       test('pass', async ({ mount }) => {
+         const component = await mount(<Button></Button>);
+-        await expect(component).toMatchAriaSnapshot(\`\`);
++        await expect(component).toMatchAriaSnapshot(\`
++          - button \"Button\"
 +        \`);
        });
      
