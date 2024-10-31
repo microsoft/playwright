@@ -15,6 +15,7 @@
  */
 import path from 'path';
 import net from 'net';
+import timers from 'timers/promises';
 
 import { colors, debug } from 'playwright-core/lib/utilsBundle';
 import { raceAgainstDeadline, launchProcess, monotonicTime, isURLAvailable } from 'playwright-core/lib/utils';
@@ -92,7 +93,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
     }
 
     debugWebServer(`Starting WebServer process ${this._options.command}...`);
-    const { launchedProcess, kill } = await launchProcess({
+    const { launchedProcess, gracefullyClose } = await launchProcess({
       command: this._options.command,
       env: {
         ...DEFAULT_ENVIRONMENT_VARIABLES,
@@ -102,14 +103,24 @@ export class WebServerPlugin implements TestRunnerPlugin {
       cwd: this._options.cwd,
       stdio: 'stdin',
       shell: true,
-      // Reject to indicate that we cannot close the web server gracefully
-      // and should fallback to non-graceful shutdown.
-      attemptToGracefullyClose: () => Promise.reject(),
+      attemptToGracefullyClose: async () => {
+        const success = launchedProcess.kill('SIGINT');
+        if (!success)
+          throw new Error(`SIGINT didn't succeed, fall back to non-graceful shutdown`);
+        await Promise.race([
+          timers.setTimeout(1000).then(() => {
+            // @ts-expect-error. SIGINT didn't kill the process, but `processLauncher` will only attempt killing it if this is false
+            launchedProcess.killed = false;
+            return Promise.reject(new Error(`server didn't close gracefully within a second, falling back to non-graceful shutdown`))
+          }),
+          new Promise(f => launchedProcess.once('exit', f)),
+        ]);
+      },
       log: () => {},
       onExit: code => processExitedReject(new Error(code ? `Process from config.webServer was not able to start. Exit code: ${code}` : 'Process from config.webServer exited early.')),
       tempDirectories: [],
     });
-    this._killProcess = kill;
+    this._killProcess = gracefullyClose;
 
     debugWebServer(`Process started`);
 

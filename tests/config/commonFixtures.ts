@@ -151,9 +151,17 @@ export class TestChildProcess {
     this.exitCode = this.exited.then(r => r.exitCode);
   }
 
-  outputLines(): string[] {
+  outputLines(options: { prefix?: string } = {}): string[] {
     const strippedOutput = stripAnsi(this.output);
-    return strippedOutput.split('\n').filter(line => line.startsWith('%%')).map(line => line.substring(2).trim());
+    return strippedOutput
+        .split('\n')
+        .map(line => {
+          if (options.prefix && line.startsWith(options.prefix))
+            return line.substring(options.prefix.length);
+          return line;
+        })
+        .filter(line => line.startsWith('%%'))
+        .map(line => line.substring(2).trim());
   }
 
   async kill(signal: 'SIGINT' | 'SIGKILL' = 'SIGKILL') {
