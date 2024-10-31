@@ -276,12 +276,12 @@ export const expect = baseExpect.extend({
     }
 
     const message = pass
-      ? () => this.utils.matcherHint(assertionName, undefined, undefined, { isNot: true }) +
+      ? () => this.utils.matcherHint(assertionName, undefined, undefined, { isNot: this.isNot }) +
           '\n\n' +
           `Locator: ${locator}\n` +
           `Expected: not ${this.utils.printExpected(expected)}\n` +
           (matcherResult ? `Received: ${this.utils.printReceived(matcherResult.actual)}` : '')
-      : () =>  this.utils.matcherHint(assertionName, undefined, undefined, { isNot: false }) +
+      : () =>  this.utils.matcherHint(assertionName, undefined, undefined, { isNot: this.isNot }) +
           '\n\n' +
           `Locator: ${locator}\n` +
           `Expected: ${this.utils.printExpected(expected)}\n` +
