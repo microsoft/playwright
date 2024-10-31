@@ -86,7 +86,7 @@ export async function applySuggestedRebaselines(config: FullConfigInternal) {
     for (const range of ranges)
       result = result.substring(0, range.start) + range.newText + result.substring(range.end);
 
-    const relativeName = path.relative(process.cwd(), fileName);
+    const relativeName = path.relative(process.cwd(), fileName).replace(/\\/g, '/');
 
     const patchFile = path.join(project.project.outputDir, 'rebaselines.patch');
     await fs.promises.mkdir(path.dirname(patchFile), { recursive: true });

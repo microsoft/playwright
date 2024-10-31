@@ -116,12 +116,12 @@ test('should generate baseline with regex', async ({ runInlineTest }, testInfo) 
 +            - listitem: Item 2
 +            - listitem: /Time \\d+:\\d+/
 +            - listitem: /Year \\d+/
-+            - listitem: /Duration \\d+[hms]+/
++            - listitem: /Duration \\d+[hmsp]+/
 +            - listitem: /\\d+,\\d+/
-+            - listitem: /2,\\d+\\.\\d+/
++            - listitem: /\\d+,\\d+\\.\\d+/
 +            - listitem: /Total \\d+/
 +            - listitem: /Regex 1/
-+            - listitem: /\\/Regex \\d+[hms]+\\//
++            - listitem: /\\/Regex \\d+[hmsp]+\\//
 +        \`);
        });
      
@@ -135,6 +135,7 @@ test('should generate baseline with special characters', async ({ runInlineTest 
       test('test', async ({ page }) => {
         await page.setContent(\`<ul>
           <button>Click: me</button>
+          <button>Click: 123</button>
           <li>Item: 1</li>
           <li>Item {a: b}</li>
         </ul>\`);
@@ -148,7 +149,7 @@ test('should generate baseline with special characters', async ({ runInlineTest 
   const data = fs.readFileSync(patchPath, 'utf-8');
   expect(data).toBe(`--- a/a.spec.ts
 +++ b/a.spec.ts
-@@ -6,6 +6,11 @@
+@@ -7,6 +7,12 @@
            <li>Item: 1</li>
            <li>Item {a: b}</li>
          </ul>\`);
@@ -156,6 +157,7 @@ test('should generate baseline with special characters', async ({ runInlineTest 
 +        await expect(page.locator('body')).toMatchAriaSnapshot(\`
 +          - list:
 +            - 'button "Click: me"'
++            - 'button /Click: \\\\d+/'
 +            - listitem: \"Item: 1\"
 +            - listitem: \"Item {a: b}\"
 +        \`);
