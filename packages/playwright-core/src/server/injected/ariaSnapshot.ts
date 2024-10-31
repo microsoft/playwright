@@ -144,8 +144,8 @@ function toAriaNode(element: Element): AriaNode | null {
   return result;
 }
 
-export function renderedAriaTree(rootElement: Element): string {
-  return renderAriaTree(generateAriaTree(rootElement));
+export function renderedAriaTree(rootElement: Element, options?: { mode?: 'raw' | 'regex' }): string {
+  return renderAriaTree(generateAriaTree(rootElement), options);
 }
 
 function normalizeStringChildren(rootA11yNode: AriaNode) {
@@ -209,11 +209,8 @@ export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode
   return {
     matches,
     received: {
-      raw: renderAriaTree(root),
-      regex: renderAriaTree(root, {
-        includeText,
-        renderString: convertToBestGuessRegex
-      }),
+      raw: renderAriaTree(root, { mode: 'raw' }),
+      regex: renderAriaTree(root, { mode: 'regex' }),
     }
   };
 }
@@ -283,15 +280,10 @@ function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode): boolean {
   return !!results.length;
 }
 
-type RenderAriaTreeOptions = {
-  includeText?: (node: AriaNode, text: string) => boolean;
-  renderString?: (text: string) => string | null;
-};
-
-export function renderAriaTree(ariaNode: AriaNode, options?: RenderAriaTreeOptions): string {
+export function renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'regex' }): string {
   const lines: string[] = [];
-  const includeText = options?.includeText || (() => true);
-  const renderString = options?.renderString || (str => str);
+  const includeText = options?.mode === 'regex' ? textContributesInfo : () => true;
+  const renderString = options?.mode === 'regex' ? convertToBestGuessRegex : (str: string) => str;
   const visit = (ariaNode: AriaNode | string, parentAriaNode: AriaNode | null, indent: string) => {
     if (typeof ariaNode === 'string') {
       if (parentAriaNode && !includeText(parentAriaNode, ariaNode))
@@ -306,7 +298,7 @@ export function renderAriaTree(ariaNode: AriaNode, options?: RenderAriaTreeOptio
     if (ariaNode.name) {
       const name = renderString(ariaNode.name);
       if (name)
-        key += ' ' + yamlQuoteFragment(name);
+        key += ' ' + (name.startsWith('/') && name.endsWith('/') ? name : yamlQuoteFragment(name));
     }
     if (ariaNode.checked === 'mixed')
       key += ` [checked=mixed]`;
@@ -353,31 +345,45 @@ export function renderAriaTree(ariaNode: AriaNode, options?: RenderAriaTreeOptio
 
 function convertToBestGuessRegex(text: string): string {
   const dynamicContent = [
+    // 2mb
+    { regex: /\b[\d,.]+[bkmBKM]+\b/, replacement: '[\\d,.]+[bkmBKM]+' },
+    // 2ms, 20s
+    { regex: /\b\d+[hmsp]+\b/, replacement: '\\d+[hmsp]+' },
+    { regex: /\b[\d,.]+[hmsp]+\b/, replacement: '[\\d,.]+[hmsp]+' },
     // Do not replace single digits with regex by default.
     // 2+ digits: [Issue 22, 22.3, 2.33, 2,333]
-    { regex: /\b\d{2,}\b/g, replacement: '\\d+' },
-    { regex: /\b\{2,}\.\d+\b/g, replacement: '\\d+\\.\\d+' },
-    { regex: /\b\d+\.\d{2,}\b/g, replacement: '\\d+\\.\\d+' },
-    { regex: /\b\d+,\d+\b/g, replacement: '\\d+,\\d+' },
-    // 2ms, 20s
-    { regex: /\b\d+[hms]+\b/g, replacement: '\\d+[hms]+' },
-    { regex: /\b[\d,.]+[hms]+\b/g, replacement: '[\\d,.]+[hms]+' },
+    { regex: /\b\d+,\d+\b/, replacement: '\\d+,\\d+' },
+    { regex: /\b\d+\.\d{2,}\b/, replacement: '\\d+\\.\\d+' },
+    { regex: /\b\d{2,}\.\d+\b/, replacement: '\\d+\\.\\d+' },
+    { regex: /\b\d{2,}\b/, replacement: '\\d+' },
   ];
 
-  let result = escapeRegExp(text);
-  let hasDynamicContent = false;
+  let pattern = '';
+  let lastIndex = 0;
 
-  for (const { regex, replacement } of dynamicContent) {
-    if (regex.test(result)) {
-      result = result.replace(regex, replacement);
-      hasDynamicContent = true;
+  const combinedRegex = new RegExp(dynamicContent.map(r => '(' + r.regex.source + ')').join('|'), 'g');
+  text.replace(combinedRegex, (match, ...args) => {
+    const offset = args[args.length - 2];
+    const groups = args.slice(0, -2);
+    pattern += escapeRegExp(text.slice(lastIndex, offset));
+    for (let i = 0; i < groups.length; i++) {
+      if (groups[i]) {
+        const { replacement } = dynamicContent[i];
+        pattern += replacement;
+        break;
+      }
     }
-  }
+    lastIndex = offset + match.length;
+    return match;
+  });
+  if (!pattern)
+    return text;
 
-  return hasDynamicContent ? String(new RegExp(result)) : text;
+  pattern += escapeRegExp(text.slice(lastIndex));
+  return String(new RegExp(pattern));
 }
 
-function includeText(node: AriaNode, text: string): boolean {
+function textContributesInfo(node: AriaNode, text: string): boolean {
   if (!text.length)
     return false;
 
