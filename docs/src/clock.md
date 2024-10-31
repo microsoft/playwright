@@ -266,7 +266,7 @@ assertThat(page.getByText("You have been logged out due to inactivity.")).isVisi
 ```csharp
 // Initial time does not matter for the test, so we can pick current time.
 await Page.Clock.InstallAsync();
-await page.GotoAsync("http://localhost:3333");
+await Page.GotoAsync("http://localhost:3333");
 
 // Interact with the page
 await page.GetByRole("button").ClickAsync();
@@ -375,7 +375,7 @@ await Page.Clock.InstallAsync(new()
 {
   TimeDate = new DateTime(2024, 2, 2, 8, 0, 0, DateTimeKind.Pst)
 });
-await page.GotoAsync("http://localhost:3333");
+await Page.GotoAsync("http://localhost:3333");
 var locator = page.GetByTestId("current-time");
 
 // Pause the time flow, stop the timers, you now have manual control

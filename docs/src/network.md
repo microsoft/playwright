@@ -476,7 +476,7 @@ page.goto("https://example.com")
 await page.RouteAsync("**/api/fetch_data", async route => {
   await route.FulfillAsync(new() { Status = 200, Body = testData });
 });
-await page.GotoAsync("https://example.com");
+await Page.GotoAsync("https://example.com");
 ```
 
 ## Modify requests

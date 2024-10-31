@@ -3191,7 +3191,7 @@ await page.AddLocatorHandlerAsync(Page.GetByText("Sign up to the newsletter"), a
 });
 
 // Write the test as usual.
-await page.GotoAsync("https://example.com");
+await Page.GotoAsync("https://example.com");
 await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
 ```
 
@@ -3248,7 +3248,7 @@ await page.AddLocatorHandlerAsync(Page.GetByText("Confirm your security details"
 });
 
 // Write the test as usual.
-await page.GotoAsync("https://example.com");
+await Page.GotoAsync("https://example.com");
 await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
 ```
 
@@ -3305,7 +3305,7 @@ await page.AddLocatorHandlerAsync(page.Locator("body"), async () => {
 }, new() { NoWaitAfter = true });
 
 // Write the test as usual.
-await page.GotoAsync("https://example.com");
+await Page.GotoAsync("https://example.com");
 await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
 ```
 

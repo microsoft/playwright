@@ -33,7 +33,7 @@ page.goto("https://example.com")
 
 ```csharp
 // Navigate the page
-await page.GotoAsync("https://example.com");
+await Page.GotoAsync("https://example.com");
 ```
 
 The code above loads the page and waits for the web page to fire the
@@ -88,7 +88,7 @@ page.get_by_text("example domain").click()
 ```csharp
 // Navigate and click element
 // Click will auto-wait for the element
-await page.GotoAsync("https://example.com");
+await Page.GotoAsync("https://example.com");
 await Page.GetByText("Example Domain").ClickAsync();
 ```
 

@@ -45,7 +45,7 @@ print(first.value.url)
 
 ```csharp
 var waitForRequestTask = page.WaitForRequestAsync("**/*logo*.png");
-await page.GotoAsync("https://wikipedia.org");
+await Page.GotoAsync("https://wikipedia.org");
 var request = await waitForRequestTask;
 Console.WriteLine(request.Url);
 ```
@@ -152,11 +152,11 @@ void listener(object sender, IRequest request)
     Console.WriteLine("Request finished: " + request.Url);
 };
 page.RequestFinished += listener;
-await page.GotoAsync("https://wikipedia.org");
+await Page.GotoAsync("https://wikipedia.org");
 
 // Remove previously added listener.
 page.RequestFinished -= listener;
-await page.GotoAsync("https://www.openstreetmap.org/");
+await Page.GotoAsync("https://www.openstreetmap.org/");
 ```
 
 ## Adding one-off listeners

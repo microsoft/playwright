@@ -2138,7 +2138,7 @@ expect(page.locator('body')).to_match_aria_snapshot('''
 ```
 
 ```csharp
-await page.GotoAsync("https://demo.playwright.dev/todomvc/");
+await Page.GotoAsync("https://demo.playwright.dev/todomvc/");
 await Expect(page.Locator("body")).ToMatchAriaSnapshotAsync(@"
   - heading ""todos""
   - textbox ""What needs to be done?""
