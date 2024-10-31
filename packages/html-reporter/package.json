@@ -7,8 +7,5 @@
     "dev": "vite",
     "build": "vite build && tsc",
     "preview": "vite preview"
-  },
-  "dependencies": {
-    "ansi-to-html": "^0.7.2"
   }
 }

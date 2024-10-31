@@ -472,7 +472,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await page.click('text=fails');
-      await expect(page.locator('.test-error-view span:has-text("received")').nth(1)).toHaveCSS('color', 'rgb(204, 0, 0)');
+      await expect(page.locator('.test-error-view span:has-text("true")').first()).toHaveCSS('color', 'rgb(205, 49, 49)');
     });
 
     test('should show trace source', async ({ runInlineTest, page, showReport }) => {
@@ -939,8 +939,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.exitCode).toBe(1);
       await showReport();
       await page.click('text="is a test"');
-      const stricken = await page.locator('css=strike').innerText();
-      expect(stricken).toBe('old');
+
+      await expect(page.locator('.test-error-view').getByText('old')).toHaveCSS('text-decoration', 'line-through solid rgb(205, 49, 49)');
+      await expect(page.locator('.test-error-view').getByText('new', { exact: true })).toHaveCSS('text-decoration', 'none solid rgb(0, 188, 0)');
     });
 
     test('should strikethrough textual diff with commonalities', async ({ runInlineTest, showReport, page }) => {
@@ -966,8 +967,32 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.exitCode).toBe(1);
       await showReport();
       await page.click('text="is a test"');
-      const stricken = await page.locator('css=strike').innerText();
-      expect(stricken).toBe('old');
+      await expect(page.locator('.test-error-view').getByText('old')).toHaveCSS('text-decoration', 'line-through solid rgb(205, 49, 49)');
+      await expect(page.locator('.test-error-view').getByText('new', { exact: true })).toHaveCSS('text-decoration', 'none solid rgb(0, 188, 0)');
+      await expect(page.locator('.test-error-view').getByText('common Expected:')).toHaveCSS('text-decoration', 'none solid rgb(36, 41, 47)');
+    });
+
+    test('should highlight inline textual diff in toHaveText', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('is a test', async ({ page }) => {
+            await page.setContent('<div>begin inner end</div>');
+            await expect(page.locator('div')).toHaveText('inner', { timeout: 500 });
+          });
+        `
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(1);
+      await showReport();
+      await page.click('text="is a test"');
+      await expect(page.locator('.test-error-view').getByText('begin ', { exact: true })).toHaveCSS('color', 'rgb(246, 248, 250)');
+      await expect(page.locator('.test-error-view').getByText('begin ', { exact: true })).toHaveCSS('background-color', 'rgb(205, 49, 49)');
+
+      await expect(page.locator('.test-error-view').getByText('inner', { exact: true })).toHaveCSS('color', 'rgb(205, 49, 49)');
+      await expect(page.locator('.test-error-view').getByText('inner', { exact: true })).toHaveCSS('background-color', 'rgb(246, 248, 250)');
+
+      await expect(page.locator('.test-error-view').getByText('end ', { exact: true })).toHaveCSS('color', 'rgb(246, 248, 250)');
+      await expect(page.locator('.test-error-view').getByText('end ', { exact: true })).toHaveCSS('background-color', 'rgb(205, 49, 49)');
     });
 
     test('should differentiate repeat-each test cases', async ({ runInlineTest, showReport, page }) => {
@@ -984,13 +1009,13 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.exitCode).toBe(1);
       await showReport();
 
-      await page.locator('text=sample').first().click();
-      await expect(page.locator('text=ouch')).toHaveCount(1);
-      await page.locator('text=All').first().click();
+      await page.getByText('sample').first().click();
+      await expect(page.getByText('ouch')).toHaveCount(2);
+      await page.getByText('All').first().click();
 
-      await page.locator('text=sample').nth(1).click();
-      await expect(page.locator('text=Before Hooks')).toBeVisible();
-      await expect(page.locator('text=ouch')).toBeHidden();
+      await page.getByText('sample').nth(1).click();
+      await expect(page.getByText('Before Hooks')).toBeVisible();
+      await expect(page.getByText('ouch')).toBeHidden();
     });
 
     test('should group similar / loop steps', async ({ runInlineTest, showReport, page }) => {
