@@ -54,7 +54,7 @@ export const TraceView: React.FC<{
     // Test finished.
     const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
-      loadSingleTraceFile(new URL(attachment.path, 'file://')).then(model => setModel({ model, isLive: false }));
+      loadSingleTraceFile(filePathToTraceURL(attachment.path)).then(model => setModel({ model, isLive: false }));
       return;
     }
 
@@ -72,7 +72,7 @@ export const TraceView: React.FC<{
     // Start polling running test.
     pollTimer.current = setTimeout(async () => {
       try {
-        const model = await loadSingleTraceFile(new URL(traceLocation, 'file://'));
+        const model = await loadSingleTraceFile(filePathToTraceURL(traceLocation));
         setModel({ model, isLive: true });
       } catch {
         setModel(undefined);
@@ -117,15 +117,15 @@ async function loadSingleTraceFile(tracePathOrURL: URL): Promise<MultiTraceModel
   return new MultiTraceModel(contextEntries);
 }
 
-function formatUrl(tracePathOrURL: URL) {
-  if (tracePathOrURL.protocol === 'file:') {
-    const url = new URL('/trace/file', location.href);
-    url.searchParams.set('path', tracePathOrURL.pathname);
-    return url;
-  }
+function formatUrl(traceURL: URL) {
+  if (traceURL.hostname === 'dropbox.com')
+    traceURL.hostname = 'dl.dropboxusercontent.com';
 
-  if (tracePathOrURL.hostname === 'dropbox.com')
-    tracePathOrURL.hostname = 'dl.dropboxusercontent.com';
+  return traceURL;
+}
 
-  return tracePathOrURL;
+function filePathToTraceURL(path: string) {
+  const url = new URL('/trace/file', location.href);
+  url.searchParams.set('path', path);
+  return url;
 }
