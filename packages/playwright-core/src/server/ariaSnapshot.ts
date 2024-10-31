@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-import type { AriaTemplateNode } from './injected/ariaSnapshot';
+import type { AriaTemplateNode, AriaTemplateRoleNode } from './injected/ariaSnapshot';
 import { yaml } from '../utilsBundle';
 import type { AriaRole } from '@injected/roleUtils';
 import { assert } from '../utils';
 
 export function parseAriaSnapshot(text: string): AriaTemplateNode {
   const fragment = yaml.parse(text) as any[];
-  const result: AriaTemplateNode = { role: 'fragment' };
+  const result: AriaTemplateNode = { kind: 'role', role: 'fragment' };
   populateNode(result, fragment);
   return result;
 }
 
-function populateNode(node: AriaTemplateNode, container: any[]) {
+function populateNode(node: AriaTemplateRoleNode, container: any[]) {
   for (const object of container) {
     if (typeof object === 'string') {
       const childNode = parseKey(object);
@@ -36,17 +36,33 @@ function populateNode(node: AriaTemplateNode, container: any[]) {
     }
 
     for (const key of Object.keys(object)) {
-      const childNode = parseKey(key);
-      const value = object[key];
       node.children = node.children || [];
+      const value = object[key];
 
-      if (childNode.role === 'text') {
-        node.children.push(valueOrRegex(value));
+      if (key === 'text') {
+        node.children.push({
+          kind: 'text',
+          text: valueOrRegex(value)
+        });
+        continue;
+      }
+
+      const childNode = parseKey(key);
+      if (childNode.kind === 'text') {
+        node.children.push({
+          kind: 'text',
+          text: valueOrRegex(value)
+        });
         continue;
       }
 
       if (typeof value === 'string') {
-        node.children.push({ ...childNode, children: [valueOrRegex(value)] });
+        node.children.push({
+          ...childNode, children: [{
+            kind: 'text',
+            text: valueOrRegex(value)
+          }]
+        });
         continue;
       }
 
@@ -56,7 +72,7 @@ function populateNode(node: AriaTemplateNode, container: any[]) {
   }
 }
 
-function applyAttribute(node: AriaTemplateNode, key: string, value: string) {
+function applyAttribute(node: AriaTemplateRoleNode, key: string, value: string) {
   if (key === 'checked') {
     assert(value === 'true' || value === 'false' || value === 'mixed', 'Value of "disabled" attribute must be a boolean or "mixed"');
     node.checked = value === 'true' ? true : value === 'false' ? false : 'mixed';
@@ -100,7 +116,7 @@ function parseKey(key: string): AriaTemplateNode {
   if (tokens.length === 0)
     throw new Error(`Invalid key ${key}`);
 
-  const role = tokens[0] as AriaRole | 'text';
+  const role = tokens[0] as AriaRole;
 
   let name: string | RegExp = '';
   let index = 1;
@@ -115,7 +131,7 @@ function parseKey(key: string): AriaTemplateNode {
     index = 2;
   }
 
-  const result: AriaTemplateNode = { role, name };
+  const result: AriaTemplateRoleNode = { kind: 'role', role, name };
   for (; index < tokens.length; index++) {
     const attrToken = tokens[index];
     if (attrToken.startsWith('[') && attrToken.endsWith(']')) {
