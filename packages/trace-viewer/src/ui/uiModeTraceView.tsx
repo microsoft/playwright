@@ -108,9 +108,9 @@ const outputDirForTestCase = (testCase: reporterTypes.TestCase): string | undefi
   return undefined;
 };
 
-async function loadSingleTraceFile(tracePathOrURL: URL): Promise<MultiTraceModel> {
+async function loadSingleTraceFile(traceURL: URL): Promise<MultiTraceModel> {
   const params = new URLSearchParams();
-  params.set('trace', formatUrl(tracePathOrURL).toString());
+  params.set('trace', formatUrl(traceURL).toString());
   params.set('limit', '1');
   const response = await fetch(`contexts?${params.toString()}`);
   const contextEntries = await response.json() as ContextEntry[];
