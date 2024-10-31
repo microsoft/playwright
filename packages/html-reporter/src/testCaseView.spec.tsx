@@ -187,6 +187,10 @@ test('should correctly render links in attachments', async ({ mount }) => {
   await expect(body).toBeVisible();
   await expect(body.locator('a').filter({ hasText: 'playwright.dev' })).toHaveAttribute('href', 'https://playwright.dev/docs/intro');
   await expect(body.locator('a').filter({ hasText: 'github.com' })).toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/31284');
+  await expect(component).toMatchAriaSnapshot(`
+    - link "https://playwright.dev/docs/intro"
+    - link "https://github.com/microsoft/playwright/issues/31284"
+  `);
 });
 
 test('should correctly render links in attachment name', async ({ mount }) => {
@@ -194,6 +198,9 @@ test('should correctly render links in attachment name', async ({ mount }) => {
   const link = component.getByText('attachment with inline link').locator('a');
   await expect(link).toHaveAttribute('href', 'https://github.com/microsoft/playwright/issues/31284');
   await expect(link).toHaveText('https://github.com/microsoft/playwright/issues/31284');
+  await expect(component).toMatchAriaSnapshot(`
+    - link /https:\\/\\/github\\.com\\/microsoft\\/playwright\\/issues\\/\\d+/
+  `);
 });
 
 test('should correctly render prev and next', async ({ mount }) => {

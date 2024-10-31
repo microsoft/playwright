@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-export function yamlEscapeStringIfNeeded(str: string, quote = '"'): string {
+export function yamlEscapeKeyIfNeeded(str: string): string {
   if (!yamlStringNeedsQuotes(str))
     return str;
-  return yamlEscapeString(str, quote);
+  return `'` + str.replace(/'/g, `''`) + `'`;
 }
 
-export function yamlEscapeString(str: string, quote = '"'): string {
-  return quote + str.replace(/[\\"\x00-\x1f\x7f-\x9f]/g, c => {
+export function yamlEscapeValueIfNeeded(str: string): string {
+  if (!yamlStringNeedsQuotes(str))
+    return str;
+  return '"' + str.replace(/[\\"\x00-\x1f\x7f-\x9f]/g, c => {
     switch (c) {
       case '\\':
         return '\\\\';
       case '"':
-        return quote === '"' ? '\\"' : '"';
-      case '\'':
-        return quote === '\''  ? '\\\'' : '\'';
+        return '\\"';
       case '\b':
         return '\\b';
       case '\f':
@@ -43,7 +43,7 @@ export function yamlEscapeString(str: string, quote = '"'): string {
         const code = c.charCodeAt(0);
         return '\\x' + code.toString(16).padStart(2, '0');
     }
-  }) + quote;
+  }) + '"';
 }
 
 export function yamlQuoteFragment(str: string, quote = '"'): string {

@@ -81,7 +81,7 @@ export async function applySuggestedRebaselines(config: FullConfigInternal) {
           if (matcher.loc!.start.column + 1 !== replacement.location.column)
             continue;
           const indent = lines[matcher.loc!.start.line - 1].match(/^\s*/)![0];
-          const newText = replacement.code.replace(/\$\{indent\}/g, indent);
+          const newText = replacement.code.replace(/\{indent\}/g, indent);
           ranges.push({ start: matcher.start!, end: node.end!, oldText: source.substring(matcher.start!, node.end!), newText });
         }
       }

@@ -114,14 +114,14 @@ test('should generate baseline with regex', async ({ runInlineTest }, testInfo) 
 +          - list:
 +            - listitem: Item 1
 +            - listitem: Item 2
-+            - listitem: /Time \\d+:\\d+/
-+            - listitem: /Year \\d+/
-+            - listitem: /Duration \\d+[hmsp]+/
-+            - listitem: /\\d+,\\d+/
-+            - listitem: /\\d+,\\d+\\.\\d+/
-+            - listitem: /Total \\d+/
++            - listitem: /Time \\\\d+:\\\\d+/
++            - listitem: /Year \\\\d+/
++            - listitem: /Duration \\\\d+[hmsp]+/
++            - listitem: /\\\\d+,\\\\d+/
++            - listitem: /\\\\d+,\\\\d+\\\\.\\\\d+/
++            - listitem: /Total \\\\d+/
 +            - listitem: /Regex 1/
-+            - listitem: /\\/Regex \\d+[hmsp]+\\//
++            - listitem: /\\\\/Regex \\\\d+[hmsp]+\\\\//
 +        \`);
        });
      
@@ -136,6 +136,8 @@ test('should generate baseline with special characters', async ({ runInlineTest 
         await page.setContent(\`<ul>
           <button>Click: me</button>
           <button>Click: 123</button>
+          <button>Click ' me</button>
+          <button>Click: ' me</button>
           <li>Item: 1</li>
           <li>Item {a: b}</li>
         </ul>\`);
@@ -149,7 +151,7 @@ test('should generate baseline with special characters', async ({ runInlineTest 
   const data = fs.readFileSync(patchPath, 'utf-8');
   expect(data).toBe(`--- a/a.spec.ts
 +++ b/a.spec.ts
-@@ -7,6 +7,12 @@
+@@ -9,6 +9,14 @@
            <li>Item: 1</li>
            <li>Item {a: b}</li>
          </ul>\`);
@@ -158,6 +160,8 @@ test('should generate baseline with special characters', async ({ runInlineTest 
 +          - list:
 +            - 'button "Click: me"'
 +            - 'button /Click: \\\\d+/'
++            - button "Click ' me"
++            - 'button "Click: '' me"'
 +            - listitem: \"Item: 1\"
 +            - listitem: \"Item {a: b}\"
 +        \`);

@@ -386,8 +386,7 @@ it('should include pseudo codepoints', async ({ page, server }) => {
   `);
 });
 
-it('check aria-hidden text', async ({ page, server }) => {
-  await page.goto(server.EMPTY_PAGE);
+it('check aria-hidden text', async ({ page }) => {
   await page.setContent(`
     <p>
       <span>hello</span>
@@ -400,8 +399,7 @@ it('check aria-hidden text', async ({ page, server }) => {
   `);
 });
 
-it('should ignore presentation and none roles', async ({ page, server }) => {
-  await page.goto(server.EMPTY_PAGE);
+it('should ignore presentation and none roles', async ({ page }) => {
   await page.setContent(`
     <ul>
       <li role='presentation'>hello</li>

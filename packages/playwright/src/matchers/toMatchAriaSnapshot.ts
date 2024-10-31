@@ -24,6 +24,7 @@ import { callLogText } from '../util';
 import { printReceivedStringContainExpectedSubstring } from './expect';
 import { currentTestInfo } from '../common/globals';
 import type { MatcherReceived } from '@injected/ariaSnapshot';
+import { escapeTemplateString } from 'playwright-core/lib/utils';
 
 export async function toMatchAriaSnapshot(
   this: ExpectMatcherState,
@@ -102,7 +103,7 @@ export async function toMatchAriaSnapshot(
 
   if (!this.isNot && pass === this.isNot && generateNewBaseline) {
     // Only rebaseline failed snapshots.
-    const suggestedRebaseline = `toMatchAriaSnapshot(\`\n${indent(typedReceived.regex, '${indent}  ')}\n\${indent}\`)`;
+    const suggestedRebaseline = `toMatchAriaSnapshot(\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\`)`;
     return { pass: this.isNot, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline };
   }
 
@@ -118,7 +119,7 @@ export async function toMatchAriaSnapshot(
 }
 
 function escapePrivateUsePoints(str: string) {
-  return str.replace(/[\uE000-\uF8FF]/g, char => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
+  return escapeTemplateString(str).replace(/[\uE000-\uF8FF]/g, char => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
 
 function unshift(snapshot: string): string {
