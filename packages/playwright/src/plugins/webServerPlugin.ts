@@ -104,6 +104,9 @@ export class WebServerPlugin implements TestRunnerPlugin {
       stdio: 'stdin',
       shell: true,
       attemptToGracefullyClose: async () => {
+        if (process.platform === 'win32')
+          throw new Error('Graceful shutdown is not supported on Windows');
+
         const success = launchedProcess.kill('SIGINT');
         if (!success)
           throw new Error(`SIGINT didn't succeed, fall back to non-graceful shutdown`);
