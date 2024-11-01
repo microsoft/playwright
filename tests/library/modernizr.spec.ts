@@ -52,7 +52,6 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless }
   actual.video = !!actual.video;
 
   if (platform === 'linux') {
-    expected.subpixelfont = false;
     expected.speechrecognition = false;
     expected.publickeycredential = false;
     expected.mediastream = false;
@@ -119,7 +118,6 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, server,
   }
 
   if (platform === 'linux') {
-    expected.subpixelfont = false;
     expected.speechrecognition = false;
     expected.publickeycredential = false;
     expected.mediastream = false;
