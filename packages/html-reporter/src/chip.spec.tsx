@@ -48,3 +48,14 @@ test('setExpanded is called', async ({ mount }) => {
   await component.getByText('Title').click();
   expect(expandedValues).toEqual([true]);
 });
+
+test('setExpanded should work', async ({ mount }) => {
+  const component = await mount(<AutoChip header='Title' initialExpanded={false}>
+    Body
+  </AutoChip>);
+  await component.getByText('Title').click();
+  await expect(component).toMatchAriaSnapshot(`
+    - button "Title" [expanded]
+    - region: Body
+  `);
+});
