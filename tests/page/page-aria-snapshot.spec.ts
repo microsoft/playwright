@@ -411,3 +411,13 @@ it('should ignore presentation and none roles', async ({ page }) => {
     - list: hello world
   `);
 });
+
+it('should treat input value as text in templates', async ({ page }) => {
+  await page.setContent(`
+    <input value='hello world'>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - textbox: hello world
+  `);
+});

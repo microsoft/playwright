@@ -270,3 +270,32 @@ test('should update multiple files', async ({ runInlineTest }, testInfo) => {
      
 `);
 });
+
+test('should generate baseline for input values', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<input value="hello world">\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+  const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
+  const data = fs.readFileSync(patchPath, 'utf-8');
+  expect(data).toBe(`--- a/a.spec.ts
++++ b/a.spec.ts
+@@ -2,6 +2,8 @@
+       import { test, expect } from '@playwright/test';
+       test('test', async ({ page }) => {
+         await page.setContent(\`<input value="hello world">\`);
+-        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
++        await expect(page.locator('body')).toMatchAriaSnapshot(\`
++          - textbox: hello world
++        \`);
+       });
+     
+`);
+});
