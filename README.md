@@ -16,6 +16,44 @@ Headless execution is supported for all browsers on all platforms. Check out [sy
 
 Looking for Playwright for [Python](https://playwright.dev/python/docs/intro), [.NET](https://playwright.dev/dotnet/docs/intro), or [Java](https://playwright.dev/java/docs/intro)?
 
+## Overview
+
+Playwright is a powerful tool for browser automation and testing. It provides a unified API for automating browsers, making it easy to write tests that work across different browsers and platforms. With Playwright, you can automate tasks such as navigating web pages, interacting with elements, capturing screenshots, and more. It is designed to be reliable, fast, and capable of handling complex web applications.
+
+## Getting Started
+
+To get started with Playwright, follow these steps:
+
+1. Install Playwright:
+   ```Shell
+   npm install playwright
+   ```
+
+2. Install the browsers:
+   ```Shell
+   npx playwright install
+   ```
+
+3. Write your first test:
+   ```JavaScript
+   const { chromium } = require('playwright');
+
+   (async () => {
+     const browser = await chromium.launch();
+     const page = await browser.newPage();
+     await page.goto('https://example.com');
+     await page.screenshot({ path: 'example.png' });
+     await browser.close();
+   })();
+   ```
+
+4. Run the test:
+   ```Shell
+   node test.js
+   ```
+
+For more detailed instructions and examples, refer to the [Playwright documentation](https://playwright.dev/docs/intro).
+
 ## Installation
 
 Playwright has its own test runner for end-to-end tests, we call it Playwright Test.
@@ -47,6 +85,38 @@ You can optionally install only selected browsers, see [install browsers](https:
 
 * [Getting started](https://playwright.dev/docs/intro)
 * [API reference](https://playwright.dev/docs/api/class-playwright)
+
+## Running Tests and Checks
+
+To run the tests and checks for your Playwright project, follow these steps:
+
+1. Run the tests:
+   ```Shell
+   npx playwright test
+   ```
+
+2. Run the linter:
+   ```Shell
+   npm run lint
+   ```
+
+3. Run the type checker:
+   ```Shell
+   npm run tsc
+   ```
+
+For more information on running tests and checks, refer to the [Playwright documentation](https://playwright.dev/docs/running-tests).
+
+## Contributing
+
+We welcome contributions to the Playwright project! If you would like to contribute, please follow these guidelines:
+
+1. Fork the repository and create a new branch for your contribution.
+2. Make your changes and ensure that the tests and checks pass.
+3. Write clear and concise commit messages.
+4. Submit a pull request with a detailed description of your changes.
+
+For more information on contributing, refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file.
 
 ## Capabilities
 

@@ -149,3 +149,41 @@ provided by the bot. You will only need to do this once across all repos using o
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+## Coding Standards
+
+To ensure consistency and maintainability of the codebase, please follow these coding standards:
+
+1. Use camelCase for variable and function names.
+2. Use PascalCase for class names.
+3. Use 2 spaces for indentation.
+4. Use single quotes for strings, except to avoid escaping.
+5. Use semicolons at the end of statements.
+6. Use trailing commas where possible.
+7. Write clear and concise comments where necessary.
+8. Keep functions and classes small and focused.
+9. Write unit tests for new code and ensure existing tests pass.
+
+## Pull Request Process
+
+To submit a pull request, follow these steps:
+
+1. Fork the repository and create a new branch for your contribution.
+2. Make your changes and ensure that the tests and checks pass.
+3. Write clear and concise commit messages.
+4. Push your changes to your forked repository.
+5. Submit a pull request to the main repository.
+6. Ensure that your pull request passes all checks and reviews.
+7. Address any feedback or requested changes from reviewers.
+8. Once approved, your pull request will be merged by a maintainer.
+
+## Issue Reporting
+
+To report an issue, follow these guidelines:
+
+1. Search the issue tracker to see if the issue has already been reported.
+2. If the issue has not been reported, create a new issue with a clear and descriptive title.
+3. Provide a detailed description of the issue, including steps to reproduce, expected behavior, and actual behavior.
+4. Include any relevant logs, screenshots, or code snippets.
+5. Label the issue appropriately (e.g., bug, enhancement, question).
+6. Be responsive to any questions or requests for additional information from maintainers or other contributors.

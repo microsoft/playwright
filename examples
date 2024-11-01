@@ -1,0 +1,75 @@
+# Examples
+
+This directory contains various examples and use cases to help users understand how to use the Playwright project effectively.
+
+## Example 1: Page Screenshot
+
+This code snippet navigates to the Playwright homepage and saves a screenshot.
+
+```typescript
+import { test } from '@playwright/test';
+
+test('Page Screenshot', async ({ page }) => {
+  await page.goto('https://playwright.dev/');
+  await page.screenshot({ path: `example.png` });
+});
+```
+
+## Example 2: Mobile and Geolocation
+
+This snippet emulates Mobile Safari on a device at a given geolocation, navigates to maps.google.com, performs the action, and takes a screenshot.
+
+```typescript
+import { test, devices } from '@playwright/test';
+
+test.use({
+  ...devices['iPhone 13 Pro'],
+  locale: 'en-US',
+  geolocation: { longitude: 12.492507, latitude: 41.889938 },
+  permissions: ['geolocation'],
+});
+
+test('Mobile and Geolocation', async ({ page }) => {
+  await page.goto('https://maps.google.com');
+  await page.getByText('Your location').click();
+  await page.waitForRequest(/.*preview\/pwa/);
+  await page.screenshot({ path: 'colosseum-iphone.png' });
+});
+```
+
+## Example 3: Evaluate in Browser Context
+
+This code snippet navigates to example.com and executes a script in the page context.
+
+```typescript
+import { test } from '@playwright/test';
+
+test('Evaluate in Browser Context', async ({ page }) => {
+  await page.goto('https://www.example.com/');
+  const dimensions = await page.evaluate(() => {
+    return {
+      width: document.documentElement.clientWidth,
+      height: document.documentElement.clientHeight,
+      deviceScaleFactor: window.devicePixelRatio,
+    };
+  });
+  console.log(dimensions);
+});
+```
+
+## Example 4: Intercept Network Requests
+
+This code snippet sets up request routing for a page to log all network requests.
+
+```typescript
+import { test } from '@playwright/test';
+
+test('Intercept Network Requests', async ({ page }) => {
+  // Log and continue all network requests
+  await page.route('**', (route) => {
+    console.log(route.request().url());
+    route.continue();
+  });
+  await page.goto('http://todomvc.com');
+});
+```
