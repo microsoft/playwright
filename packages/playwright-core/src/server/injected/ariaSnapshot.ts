@@ -141,6 +141,9 @@ function toAriaNode(element: Element): AriaNode | null {
   if (roleUtils.kAriaSelectedRoles.includes(role))
     result.selected = roleUtils.getAriaSelected(element);
 
+  if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement)
+    result.children = [element.value];
+
   return result;
 }
 

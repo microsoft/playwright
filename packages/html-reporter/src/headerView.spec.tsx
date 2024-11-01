@@ -33,6 +33,11 @@ test('should render counters', async ({ mount }) => {
   await expect(component.locator('a', { hasText: 'Failed' }).locator('.counter')).toHaveText('31');
   await expect(component.locator('a', { hasText: 'Flaky' }).locator('.counter')).toHaveText('17');
   await expect(component.locator('a', { hasText: 'Skipped' }).locator('.counter')).toHaveText('10');
+  await expect(component).toMatchAriaSnapshot(`
+    - navigation:
+      - link "All 90"
+      - text: Passed 42 Failed 31 Flaky 17 Skipped 10
+  `);
 });
 
 test('should toggle filters', async ({ page, mount }) => {
