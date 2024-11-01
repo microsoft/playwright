@@ -16,6 +16,7 @@
 
 import * as fs from 'fs';
 import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
+import { execSync } from 'child_process';
 
 test.describe.configure({ mode: 'parallel' });
 
@@ -47,6 +48,10 @@ test('should update snapshot with the update-snapshots flag', async ({ runInline
        });
      
 `);
+
+  execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
+  const result2 = await runInlineTest({});
+  expect(result2.exitCode).toBe(0);
 });
 
 test('should update missing snapshots', async ({ runInlineTest }, testInfo) => {
@@ -76,6 +81,10 @@ test('should update missing snapshots', async ({ runInlineTest }, testInfo) => {
        });
      
 `);
+
+  execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
+  const result2 = await runInlineTest({});
+  expect(result2.exitCode).toBe(0);
 });
 
 test('should generate baseline with regex', async ({ runInlineTest }, testInfo) => {
@@ -126,6 +135,10 @@ test('should generate baseline with regex', async ({ runInlineTest }, testInfo) 
        });
      
 `);
+
+  execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
+  const result2 = await runInlineTest({});
+  expect(result2.exitCode).toBe(0);
 });
 
 test('should generate baseline with special characters', async ({ runInlineTest }, testInfo) => {
@@ -168,6 +181,10 @@ test('should generate baseline with special characters', async ({ runInlineTest 
        });
      
 `);
+
+  execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
+  const result2 = await runInlineTest({});
+  expect(result2.exitCode).toBe(0);
 });
 
 test('should update missing snapshots in tsx', async ({ runInlineTest }, testInfo) => {
@@ -207,6 +224,10 @@ test('should update missing snapshots in tsx', async ({ runInlineTest }, testInf
        });
      
 `);
+
+  execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
+  const result2 = await runInlineTest({});
+  expect(result2.exitCode).toBe(0);
 });
 
 test('should update multiple files', async ({ runInlineTest }, testInfo) => {
@@ -269,6 +290,10 @@ test('should update multiple files', async ({ runInlineTest }, testInfo) => {
        });
      
 `);
+
+  execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
+  const result2 = await runInlineTest({});
+  expect(result2.exitCode).toBe(0);
 });
 
 test('should generate baseline for input values', async ({ runInlineTest }, testInfo) => {
@@ -298,4 +323,8 @@ test('should generate baseline for input values', async ({ runInlineTest }, test
        });
      
 `);
+
+  execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
+  const result2 = await runInlineTest({});
+  expect(result2.exitCode).toBe(0);
 });
