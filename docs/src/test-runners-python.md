@@ -203,7 +203,7 @@ def browser_context_args(browser_context_args):
     }
 ```
 
-### Device emulation / Overriding context options
+### Device emulation / BrowserContext option overrides
 
 ```py title="conftest.py"
 import pytest
