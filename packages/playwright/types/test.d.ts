@@ -8414,7 +8414,7 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Asserts that the target element matches the given accessibility snapshot.
+   * Asserts that the target element matches the given [accessibility snapshot](https://playwright.dev/docs/aria-snapshot).
    *
    * **Usage**
    *
