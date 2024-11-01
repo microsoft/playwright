@@ -440,7 +440,6 @@ export class CRBrowserContext extends BrowserContext {
       ['local-fonts', 'localFonts'],
       ['midi-sysex', 'midiSysex'],
       ['storage-access', 'storageAccess'],
-      ['usb', 'usb'],
       ['window-management', 'windowManagement'],
     ]);
     const filtered = permissions.map(permission => {

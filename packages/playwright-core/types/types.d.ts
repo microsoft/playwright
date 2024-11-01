@@ -8981,7 +8981,6 @@ export interface BrowserContext {
    * - `'notifications'`
    * - `'payment-handler'`
    * - `'storage-access'`
-   * - `'usb'`
    * - `'window-management'`
    * @param options
    */
