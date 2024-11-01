@@ -405,3 +405,56 @@ Locator: locator('body')
 +   - heading "todos" [level=1]
 +   - textbox "What needs to be done?"`);
 });
+
+test('should unpack escaped names', async ({ page }) => {
+  {
+    await page.setContent(`
+      <button>Click: me</button>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - 'button "Click: me"'
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - 'button /Click: me/'
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <button>Click / me</button>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button "Click / me"
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button /Click \\/ me/
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - 'button /Click \\/ me/'
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <button>Click \\ me</button>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button "Click \\ me"
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button /Click \\\\ me/
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - 'button /Click \\\\ me/'
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <button>Click ' me</button>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - 'button "Click '' me"'
+    `);
+  }
+});

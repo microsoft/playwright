@@ -27,6 +27,13 @@ export function escapeWithQuotes(text: string, char: string = '\'') {
   throw new Error('Invalid escape char');
 }
 
+export function escapeTemplateString(text: string): string {
+  return text
+      .replace(/\\/g, '\\\\')
+      .replace(/`/g, '\\`')
+      .replace(/\$\{/g, '\\${');
+}
+
 export function isString(obj: any): obj is string {
   return typeof obj === 'string' || obj instanceof String;
 }

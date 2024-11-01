@@ -18,7 +18,7 @@ import * as roleUtils from './roleUtils';
 import { getElementComputedStyle } from './domUtils';
 import type { AriaRole } from './roleUtils';
 import { escapeRegExp, longestCommonSubstring } from '@isomorphic/stringUtils';
-import { yamlEscapeStringIfNeeded, yamlQuoteFragment } from './yaml';
+import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded, yamlQuoteFragment } from './yaml';
 
 type AriaProps = {
   checked?: boolean | 'mixed';
@@ -317,13 +317,13 @@ export function renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'r
     if (ariaNode.selected === true)
       key += ` [selected]`;
 
-    const escapedKey = indent + '- ' + yamlEscapeStringIfNeeded(key, '\'');
+    const escapedKey = indent + '- ' + yamlEscapeKeyIfNeeded(key);
     if (!ariaNode.children.length) {
       lines.push(escapedKey);
     } else if (ariaNode.children.length === 1 && typeof ariaNode.children[0] === 'string') {
       const text = includeText(ariaNode, ariaNode.children[0]) ? renderString(ariaNode.children[0] as string) : null;
       if (text)
-        lines.push(escapedKey + ': ' + yamlEscapeStringIfNeeded(text, '"'));
+        lines.push(escapedKey + ': ' + yamlEscapeValueIfNeeded(text));
       else
         lines.push(escapedKey);
     } else {

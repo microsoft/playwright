@@ -275,7 +275,9 @@ ${body}
 }
 
 export function quoteMultiline(text: string, indent = '  ') {
-  const escape = (text: string) => text.replace(/`/g, '\\`').replace(/\\/g, '\\\\');
+  const escape = (text: string) => text.replace(/\\/g, '\\\\')
+      .replace(/`/g, '\\`')
+      .replace(/\$\{/g, '\\${');
   const lines = text.split('\n');
   if (lines.length === 1)
     return '`' + escape(text) + '`';
