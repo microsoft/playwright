@@ -31,7 +31,7 @@ import * as accessibility from './accessibility';
 import { FileChooser } from './fileChooser';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
-import { LongStandingScope, assert, createGuid, trimStringWithEllipsis } from '../utils';
+import { LongStandingScope, assert, compressCallLog, createGuid, trimStringWithEllipsis } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../utils/debugLogger';
 import type { ImageComparatorOptions } from '../utils/comparators';
@@ -676,7 +676,7 @@ export class Page extends SdkObject {
       if (e instanceof TimeoutError && intermediateResult?.previous)
         errorMessage = `Failed to take two consecutive stable screenshots.`;
       return {
-        log: e.message ? [...metadata.log, e.message] : metadata.log,
+        log: compressCallLog(e.message ? [...metadata.log, e.message] : metadata.log),
         ...intermediateResult,
         errorMessage,
         timedOut: (e instanceof TimeoutError),

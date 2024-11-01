@@ -131,7 +131,13 @@ export function splitErrorMessage(message: string): { name: string, message: str
 export function formatCallLog(log: string[] | undefined): string {
   if (!log || !log.some(l => !!l))
     return '';
+  return `
+Call log:
+${colors.dim(log.join('\n'))}
+`;
+}
 
+export function compressCallLog(log: string[]): string[] {
   const lines: string[] = [];
 
   for (const block of findRepeatedSubsequences(log)) {
@@ -148,10 +154,7 @@ export function formatCallLog(log: string[] | undefined): string {
         lines.push(whitespacePrefix + '- ' + line.trim());
     }
   }
-  return `
-Call log:
-${colors.dim(lines.join('\n'))}
-`;
+  return lines;
 }
 
 export type ExpectZone = {
