@@ -39,9 +39,20 @@ export function ansi2html(text: string, defaultColors?: { bg: string, fg: string
           break;
         case 8: style.display = 'none'; break;
         case 9: style['text-decoration'] = 'line-through'; break;
-        case 22: style = { ...style, 'font-weight': undefined, 'font-style': undefined, 'opacity': undefined, 'text-decoration': undefined }; break;
-        case 23: style = { ...style, 'font-weight': undefined, 'font-style': undefined, 'opacity': undefined }; break;
-        case 24: style = { ...style, 'text-decoration': undefined }; break;
+        case 22:
+          delete style['font-weight'];
+          delete style['font-style'];
+          delete style['opacity'];
+          delete style['text-decoration'];
+          break;
+        case 23:
+          delete style['font-weight'];
+          delete style['font-style'];
+          delete style['opacity'];
+          break;
+        case 24:
+          delete style['text-decoration'];
+          break;
         case 27:
           reverse = false;
           break;
