@@ -421,3 +421,41 @@ it('should treat input value as text in templates', async ({ page }) => {
     - textbox: hello world
   `);
 });
+
+it('should respect aria-owns', async ({ page }) => {
+  await page.setContent(`
+    <a href='about:blank' aria-owns='input p'>
+      <div role='region'>Link 1</div>
+    </a>
+    <a href='about:blank' aria-owns='input p'>
+      <div role='region'>Link 2</div>
+    </a>
+    <input id='input' value='Value'>
+    <p id='p'>Paragraph</p>
+  `);
+
+  // - Different from Chrome DevTools which attributes ownership to the last element.
+  // - CDT also does not include non-owned children in accessible name.
+  // - Disregarding these as aria-owns can't suggest multiple parts by spec.
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - link "Link 1 Value Paragraph":
+      - region: Link 1
+      - textbox: Value
+      - paragraph: Paragraph
+    - link "Link 2 Value Paragraph":
+      - region: Link 2
+  `);
+});
+
+it('should be ok with circular ownership', async ({ page }) => {
+  await page.setContent(`
+    <a href='about:blank' id='parent'>
+      <div role='region' aria-owns='parent'>Hello</div>
+    </a>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - link "Hello":
+      - region: Hello
+  `);
+});

@@ -50,7 +50,12 @@ export type AriaTemplateRoleNode = AriaProps & {
 export type AriaTemplateNode = AriaTemplateRoleNode | AriaTemplateTextNode;
 
 export function generateAriaTree(rootElement: Element): AriaNode {
+  const visited = new Set<Node>();
   const visit = (ariaNode: AriaNode, node: Node) => {
+    if (visited.has(node))
+      return;
+    visited.add(node);
+
     if (node.nodeType === Node.TEXT_NODE && node.nodeValue) {
       const text = node.nodeValue;
       if (text)
@@ -65,13 +70,23 @@ export function generateAriaTree(rootElement: Element): AriaNode {
     if (roleUtils.isElementHiddenForAria(element))
       return;
 
+    const ariaChildren: Element[] = [];
+    if (element.hasAttribute('aria-owns')) {
+      const ids = element.getAttribute('aria-owns')!.split(/\s+/);
+      for (const id of ids) {
+        const ownedElement = rootElement.ownerDocument.getElementById(id);
+        if (ownedElement)
+          ariaChildren.push(ownedElement);
+      }
+    }
+
     const childAriaNode = toAriaNode(element);
     if (childAriaNode)
       ariaNode.children.push(childAriaNode);
-    processChildNodes(childAriaNode || ariaNode, element);
+    processElement(childAriaNode || ariaNode, element, ariaChildren);
   };
 
-  function processChildNodes(ariaNode: AriaNode, element: Element) {
+  function processElement(ariaNode: AriaNode, element: Element, ariaChildren: Element[] = []) {
     // Surround every element with spaces for the sake of concatenated text nodes.
     const display = getElementComputedStyle(element)?.display || 'inline';
     const treatAsBlock = (display !== 'inline' || element.nodeName === 'BR') ? ' ' : '';
@@ -93,6 +108,9 @@ export function generateAriaTree(rootElement: Element): AriaNode {
           visit(ariaNode, child);
       }
     }
+
+    for (const child of ariaChildren)
+      visit(ariaNode, child);
 
     ariaNode.children.push(roleUtils.getPseudoContent(element, '::after'));
 
