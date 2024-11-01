@@ -418,23 +418,30 @@ export class CRBrowserContext extends BrowserContext {
 
   async doGrantPermissions(origin: string, permissions: string[]) {
     const webPermissionToProtocol = new Map<string, Protocol.Browser.PermissionType>([
-      ['geolocation', 'geolocation'],
-      ['midi', 'midi'],
-      ['notifications', 'notifications'],
-      ['camera', 'videoCapture'],
-      ['microphone', 'audioCapture'],
-      ['background-sync', 'backgroundSync'],
-      ['ambient-light-sensor', 'sensors'],
+      // General permissions
       ['accelerometer', 'sensors'],
-      ['gyroscope', 'sensors'],
-      ['magnetometer', 'sensors'],
       ['accessibility-events', 'accessibilityEvents'],
+      ['ambient-light-sensor', 'sensors'],
+      ['background-sync', 'backgroundSync'],
+      ['camera', 'videoCapture'],
       ['clipboard-read', 'clipboardReadWrite'],
       ['clipboard-write', 'clipboardSanitizedWrite'],
+      ['display-capture', 'displayCapture'],
+      ['geolocation', 'geolocation'],
+      ['gyroscope', 'sensors'],
+      ['magnetometer', 'sensors'],
+      ['microphone', 'audioCapture'],
+      ['midi', 'midi'],
+      ['notifications', 'notifications'],
       ['payment-handler', 'paymentHandler'],
-      // chrome-specific permissions we have.
+
+      // Chrome-specific permissions we have.
+      ['idle-detection', 'idleDetection'],
+      ['local-fonts', 'localFonts'],
       ['midi-sysex', 'midiSysex'],
       ['storage-access', 'storageAccess'],
+      ['usb', 'usb'],
+      ['window-management', 'windowManagement'],
     ]);
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);

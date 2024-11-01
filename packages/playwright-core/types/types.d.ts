@@ -8969,8 +8969,11 @@ export interface BrowserContext {
    * - `'camera'`
    * - `'clipboard-read'`
    * - `'clipboard-write'`
+   * - `'display-capture'`
    * - `'geolocation'`
    * - `'gyroscope'`
+   * - `'idle-detection'`
+   * - `'local-fonts'`
    * - `'magnetometer'`
    * - `'microphone'`
    * - `'midi-sysex'` (system-exclusive midi)
@@ -8978,6 +8981,8 @@ export interface BrowserContext {
    * - `'notifications'`
    * - `'payment-handler'`
    * - `'storage-access'`
+   * - `'usb'`
+   * - `'window-management'`
    * @param options
    */
   grantPermissions(permissions: ReadonlyArray<string>, options?: {

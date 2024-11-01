@@ -971,8 +971,11 @@ A permission or an array of permissions to grant. Permissions can be one of the 
 * `'camera'`
 * `'clipboard-read'`
 * `'clipboard-write'`
+* `'display-capture'`
 * `'geolocation'`
 * `'gyroscope'`
+* `'idle-detection'`
+* `'local-fonts'`
 * `'magnetometer'`
 * `'microphone'`
 * `'midi-sysex'` (system-exclusive midi)
@@ -980,6 +983,8 @@ A permission or an array of permissions to grant. Permissions can be one of the 
 * `'notifications'`
 * `'payment-handler'`
 * `'storage-access'`
+* `'usb'`
+* `'window-management'`
 
 ### option: BrowserContext.grantPermissions.origin
 * since: v1.8
