@@ -17,7 +17,7 @@
 import type { EventEmitter } from 'events';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { TimeoutError } from './errors';
-import { createGuid } from '../utils';
+import { createGuid, ZoneReference, zones } from '../utils';
 import type * as channels from '@protocol/channels';
 import type { ChannelOwner } from './channelOwner';
 
@@ -29,10 +29,14 @@ export class Waiter {
   private _channelOwner: ChannelOwner<channels.EventTargetChannel>;
   private _waitId: string;
   private _error: string | undefined;
+  private _savedZone: ZoneReference;
 
   constructor(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
     this._waitId = createGuid();
     this._channelOwner = channelOwner;
+    // Save current chain before the wait for event API call (we don't nest API calls)
+    // and restore it later to find proper parent for the event listener.
+    this._savedZone = zones.currentZoneBefore('apiZone');
     this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'before', event } }).catch(() => {});
     this._dispose = [
       () => this._channelOwner._wrapApiCall(async () => {
@@ -41,17 +45,17 @@ export class Waiter {
     ];
   }
 
-  static createForEvent(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
+  static createForEvent(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string): Waiter {
     return new Waiter(channelOwner, event);
   }
 
   async waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean | Promise<boolean>): Promise<T> {
-    const { promise, dispose } = waitForEvent(emitter, event, predicate);
+    const { promise, dispose } = waitForEvent(emitter, event, this._savedZone, predicate);
     return await this.waitForPromise(promise, dispose);
   }
 
   rejectOnEvent<T = void>(emitter: EventEmitter, event: string, error: Error | (() => Error), predicate?: (arg: T) => boolean | Promise<boolean>) {
-    const { promise, dispose } = waitForEvent(emitter, event, predicate);
+    const { promise, dispose } = waitForEvent(emitter, event, this._savedZone, predicate);
     this._rejectOn(promise.then(() => { throw (typeof error === 'function' ? error() : error); }), dispose);
   }
 
@@ -103,19 +107,21 @@ export class Waiter {
   }
 }
 
-function waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?: (arg: T) => boolean | Promise<boolean>): { promise: Promise<T>, dispose: () => void } {
+function waitForEvent<T = void>(emitter: EventEmitter, event: string, savedZone: ZoneReference, predicate?: (arg: T) => boolean | Promise<boolean>): { promise: Promise<T>, dispose: () => void } {
   let listener: (eventArg: any) => void;
   const promise = new Promise<T>((resolve, reject) => {
     listener = async (eventArg: any) => {
-      try {
-        if (predicate && !(await predicate(eventArg)))
-          return;
-        emitter.removeListener(event, listener);
-        resolve(eventArg);
-      } catch (e) {
-        emitter.removeListener(event, listener);
-        reject(e);
-      }
+      savedZone.runInZone(async () => {
+        try {
+          if (predicate && !(await predicate(eventArg)))
+            return;
+          emitter.removeListener(event, listener);
+          resolve(eventArg);
+        } catch (e) {
+          emitter.removeListener(event, listener);
+          reject(e);
+        }
+      });
     };
     emitter.addListener(event, listener);
   });

@@ -22,7 +22,7 @@ import type * as api from '../../types/types';
 import { serializeError, isTargetClosedError, TargetClosedError } from './errors';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import type * as channels from '@protocol/channels';
-import { assert, headersObjectToArray, isObject, isRegExp, isString, LongStandingScope, urlMatches, urlMatchesEqual, mkdirIfNeeded, trimStringWithEllipsis, type URLMatch } from '../utils';
+import { assert, headersObjectToArray, isObject, isRegExp, isString, LongStandingScope, urlMatches, urlMatchesEqual, mkdirIfNeeded, trimStringWithEllipsis, type URLMatch, zones } from '../utils';
 import { Accessibility } from './accessibility';
 import { Artifact } from './artifact';
 import type { BrowserContext } from './browserContext';
