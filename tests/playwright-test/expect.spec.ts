@@ -71,6 +71,18 @@ test('should include custom expect message with web-first assertions', async ({ 
   expect(result.output).toContain('Call log:');
 });
 
+test('should include a timestamp of when expectation failed', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('custom expect message', async ({page}) => {
+        await expect(page.locator('x-foo'), { message: 'x-foo must be visible' }).toBeVisible({timeout: 1});
+      });
+    `
+  });
+  expect(result.output).toMatch(/Timestamp: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/);
+});
+
 test('should work with generic matchers', async ({ runTSC }) => {
   const result = await runTSC({
     'a.spec.ts': `

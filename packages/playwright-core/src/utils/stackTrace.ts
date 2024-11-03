@@ -132,6 +132,7 @@ export function formatCallLog(log: string[] | undefined): string {
   if (!log || !log.some(l => !!l))
     return '';
   return `
+Timestamp: ${new Date().toISOString()}
 Call log:
 ${colors.dim(log.join('\n'))}
 `;
