@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { ActionTraceEvent } from '@trace/trace';
+import type { ActionTraceEvent, AfterActionTraceEventAttachment } from '@trace/trace';
 import { msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './actionList.css';
@@ -36,7 +36,7 @@ export interface ActionListProps {
   onSelected?: (action: ActionTraceEventInContext) => void,
   onHighlighted?: (action: ActionTraceEventInContext | undefined) => void,
   revealConsole?: () => void,
-  revealAttachments(): void,
+  revealAttachment(attachment: AfterActionTraceEventAttachment): void,
   isLive?: boolean,
 }
 
@@ -51,7 +51,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   onSelected,
   onHighlighted,
   revealConsole,
-  revealAttachments,
+  revealAttachment,
   isLive,
 }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
@@ -71,8 +71,8 @@ export const ActionList: React.FC<ActionListProps> = ({
   }, [setSelectedTime]);
 
   const render = React.useCallback((item: ActionTreeItem) => {
-    return renderAction(item.action!, { sdkLanguage, revealConsole, revealAttachments, isLive, showDuration: true, showBadges: true });
-  }, [isLive, revealConsole, revealAttachments, sdkLanguage]);
+    return renderAction(item.action!, { sdkLanguage, revealConsole, revealAttachment, isLive, showDuration: true, showBadges: true });
+  }, [isLive, revealConsole, revealAttachment, sdkLanguage]);
 
   const isVisible = React.useCallback((item: ActionTreeItem) => {
     return !selectedTime || !item.action || (item.action!.startTime <= selectedTime.maximum && item.action!.endTime >= selectedTime.minimum);
@@ -109,15 +109,15 @@ export const renderAction = (
   options: {
     sdkLanguage?: Language,
     revealConsole?: () => void,
-    revealAttachments?(): void,
+    revealAttachment?(attachment: AfterActionTraceEventAttachment): void,
     isLive?: boolean,
     showDuration?: boolean,
     showBadges?: boolean,
   }) => {
-  const { sdkLanguage, revealConsole, revealAttachments, isLive, showDuration, showBadges } = options;
+  const { sdkLanguage, revealConsole, revealAttachment, isLive, showDuration, showBadges } = options;
   const { errors, warnings } = modelUtil.stats(action);
   const locator = action.params.selector ? asLocator(sdkLanguage || 'javascript', action.params.selector) : undefined;
-  const showAttachments = !!action.attachments?.length && !!revealAttachments;
+  const showAttachments = !!action.attachments?.length && !!revealAttachment;
 
   let time: string = '';
   if (action.endTime)
@@ -134,7 +134,7 @@ export const renderAction = (
       {action.class === 'APIRequestContext' && action.params.url && <div className='action-url' title={action.params.url}>{excludeOrigin(action.params.url)}</div>}
     </div>
     {(showDuration || showBadges || showAttachments) && <div className='spacer'></div>}
-    {showAttachments && <ToolbarButton icon='attach' title='Open Attachment' onClick={revealAttachments} />}
+    {showAttachments && <ToolbarButton icon='attach' title='Open Attachment' onClick={() => revealAttachment(action.attachments![0])} />}
     {showDuration && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
     {showBadges && <div className='action-icons' onClick={() => revealConsole?.()}>
       {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className='action-icon-value'>{errors}</span></div>}

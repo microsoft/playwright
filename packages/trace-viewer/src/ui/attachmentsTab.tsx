@@ -30,10 +30,11 @@ type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
 
 type ExpandableAttachmentProps = {
   attachment: Attachment;
-  highlight?: boolean;
+  reveal: boolean;
+  highlight: boolean;
 };
 
-const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> = ({ attachment, highlight }) => {
+const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> = ({ attachment, reveal, highlight }) => {
   const [expanded, setExpanded] = React.useState(false);
   const [attachmentText, setAttachmentText] = React.useState<string | null>(null);
   const [placeholder, setPlaceholder] = React.useState<string | null>(null);
@@ -43,9 +44,9 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
   const hasContent = !!attachment.sha1 || !!attachment.path;
 
   React.useEffect(() => {
-    if (highlight)
+    if (reveal)
       ref.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [highlight]);
+  }, [reveal]);
 
   React.useEffect(() => {
     if (expanded && attachmentText === null && placeholder === null) {
@@ -92,7 +93,8 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
 export const AttachmentsTab: React.FunctionComponent<{
   model: MultiTraceModel | undefined,
   selectedAction: ActionTraceEventInContext | undefined,
-}> = ({ model, selectedAction }) => {
+  revealedAttachment?: AfterActionTraceEventAttachment,
+}> = ({ model, selectedAction, revealedAttachment }) => {
   const { diffMap, screenshots, attachments } = React.useMemo(() => {
     const attachments = new Set<Attachment>();
     const screenshots = new Set<Attachment>();
@@ -149,14 +151,18 @@ export const AttachmentsTab: React.FunctionComponent<{
     {attachments.size ? <div className='attachments-section'>Attachments</div> : undefined}
     {[...attachments.values()].map((a, i) => {
       return <div className='attachment-item' key={attachmentKey(a, i)}>
-        <ExpandableAttachment attachment={a} highlight={isActiveAttachment(a, selectedAction)} />
+        <ExpandableAttachment
+          attachment={a}
+          highlight={selectedAction?.attachments?.some(selected => isEqualAttachment(a, selected)) ?? false}
+          reveal={!!revealedAttachment && isEqualAttachment(a, revealedAttachment)}
+        />
       </div>;
     })}
   </div>;
 };
 
-function isActiveAttachment(attachment: Attachment, activeAction: ActionTraceEventInContext | undefined): boolean {
-  return activeAction?.attachments?.some(a => a.name === attachment.name && a.path === attachment.path && a.sha1 === attachment.sha1) ?? false;
+function isEqualAttachment(a: Attachment, b: AfterActionTraceEventAttachment): boolean {
+  return a.name === b.name && a.path === b.path && a.sha1 === b.sha1;
 }
 
 function attachmentURL(attachment: Attachment, queryParams: Record<string, string> = {}) {
