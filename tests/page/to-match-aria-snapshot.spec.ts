@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { stripAnsi } from 'tests/config/utils';
+import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
 test('should match', async ({ page }) => {
