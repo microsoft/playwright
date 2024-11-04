@@ -454,6 +454,7 @@ export class TestInfoImpl implements TestInfo {
         .replace(/\{(.)?projectName\}/g, projectNamePathSegment ? '$1' + projectNamePathSegment : '')
         .replace(/\{(.)?testName\}/g, '$1' + this._fsSanitizedTestName())
         .replace(/\{(.)?testFileName\}/g, '$1' + parsedRelativeTestFilePath.base)
+        .replace(/\{(.)?testFileNameWithoutExtension\}/g, '$1' + parsedRelativeTestFilePath.base.replace('.spec', '').replace('.ts', ''))
         .replace(/\{(.)?testFilePath\}/g, '$1' + relativeTestFilePath)
         .replace(/\{(.)?arg\}/g, '$1' + path.join(parsedSubPath.dir, parsedSubPath.name))
         .replace(/\{(.)?ext\}/g, parsedSubPath.ext ? '$1' + parsedSubPath.ext : '');

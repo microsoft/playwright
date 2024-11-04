@@ -80,6 +80,9 @@ test('tokens should expand property', async ({ runInlineTest }, testInfo) => {
       name: 'testFileName',
       snapshotPathTemplate: '{testFileName}',
     }, {
+      name: 'testFileNameWithoutExtension',
+      snapshotPathTemplate: '{testFileNameWithoutExtension}',
+    }, {
       name: 'snapshotDir',
       snapshotDir: './a-snapshot-dir',
       snapshotPathTemplate: '{snapshotDir}.png',

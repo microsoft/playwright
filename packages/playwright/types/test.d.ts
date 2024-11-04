@@ -467,6 +467,8 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
    *   - Value: `page`
    * - `{testFileName}` - Test file name with extension.
    *   - Value: `page-click.spec.ts`
+   * - `{testFileNameWithoutExtension}` - Test file name without extension.
+   *   - Value: `page-click`
    * - `{testFilePath}` - Relative path from `testDir` to **test file**
    *   - Value: `page/page-click.spec.ts`
    * - `{testName}` - File-system-sanitized test title, including parent describes but excluding file name.
@@ -1531,6 +1533,8 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *   - Value: `page`
    * - `{testFileName}` - Test file name with extension.
    *   - Value: `page-click.spec.ts`
+   * - `{testFileNameWithoutExtension}` - Test file name without extension.
+   *   - Value: `page-click`
    * - `{testFilePath}` - Relative path from `testDir` to **test file**
    *   - Value: `page/page-click.spec.ts`
    * - `{testName}` - File-system-sanitized test title, including parent describes but excluding file name.
