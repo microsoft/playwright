@@ -30,6 +30,8 @@ import type { IRecorderAppFactory, IRecorderApp, IRecorder } from './recorder/re
 import { metadataToCallLog } from './recorder/recorderUtils';
 import type * as actions from '@recorder/actions';
 import { buildFullSelector } from '../utils/isomorphic/recorderUtils';
+import { stringifySelector } from '../utils/isomorphic/selectorParser';
+import type { Frame } from './frames';
 
 const recorderSymbol = Symbol('recorderSymbol');
 
@@ -146,12 +148,12 @@ export class Recorder implements InstrumentationListener, IRecorder {
       this._pushAllSources();
     });
 
-    await this._context.exposeBinding('__pw_recorderState', false, source => {
+    await this._context.exposeBinding('__pw_recorderState', false, async source => {
       let actionSelector = '';
       let actionPoint: Point | undefined;
       const hasActiveScreenshotCommand = [...this._currentCallsMetadata.keys()].some(isScreenshotCommand);
       if (!hasActiveScreenshotCommand) {
-        actionSelector = this._highlightedSelector;
+        actionSelector = await this._scopeHighlightedSelectorToFrame(source.frame);
         for (const [metadata, sdkObject] of this._currentCallsMetadata) {
           if (source.page === sdkObject.attribution.page) {
             actionPoint = metadata.point || actionPoint;
@@ -243,13 +245,38 @@ export class Recorder implements InstrumentationListener, IRecorder {
     this._refreshOverlay();
   }
 
+  private async _scopeHighlightedSelectorToFrame(frame: Frame): Promise<string> {
+    try {
+      const mainFrame = frame._page.mainFrame();
+      const resolved = await mainFrame.selectors.resolveFrameForSelector(this._highlightedSelector);
+      // selector couldn't be found, don't highlight anything
+      if (!resolved)
+        return '';
+
+      // selector points to no specific frame, highlight in all frames
+      if (resolved?.frame === mainFrame)
+        return stringifySelector(resolved.info.parsed);
+
+      // selector points to this frame, highlight it
+      if (resolved?.frame === frame)
+        return stringifySelector(resolved.info.parsed);
+
+      // selector points to a different frame, highlight nothing
+      return '';
+    } catch {
+      return '';
+    }
+  }
+
   setOutput(codegenId: string, outputFile: string | undefined) {
     this._contextRecorder.setOutput(codegenId, outputFile);
   }
 
   private _refreshOverlay() {
-    for (const page of this._context.pages())
-      page.mainFrame().evaluateExpression('window.__pw_refreshOverlay()').catch(() => {});
+    for (const page of this._context.pages()) {
+      for (const frame of page.frames())
+        frame.evaluateExpression('window.__pw_refreshOverlay()').catch(() => {});
+    }
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
