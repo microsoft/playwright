@@ -33,6 +33,7 @@ export const TraceView: React.FC<{
   pathSeparator: string,
 }> = ({ item, rootDir, onOpenExternally, revealSource, pathSeparator }) => {
   const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean } | undefined>();
+  const [rerender, setRerender] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
 
   const { outputDir } = React.useMemo(() => {
@@ -79,13 +80,15 @@ export const TraceView: React.FC<{
           setModel({ model, isLive: true });
       } catch {
         setModel(undefined);
+      } finally {
+        setRerender(rerender + 1);
       }
     }, 500);
     return () => {
       if (pollTimer.current)
         clearTimeout(pollTimer.current);
     };
-  }, [outputDir, item, setModel, pathSeparator]);
+  }, [outputDir, item, setModel, rerender, setRerender, pathSeparator]);
 
   return <Workbench
     key='workbench'
