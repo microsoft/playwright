@@ -268,23 +268,6 @@ jobs:
     - run: npx playwright install-deps
     - run: utils/build/build-playwright-driver.sh
 
-  test_linux_chromium_headless_new:
-    name: Linux Chromium Headless New
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: chromium
-        command: npm run ctest
-        bot-name: "headless-new"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW: 1
-
   test_linux_chromium_headless_shell:
     name: Chromium Headless Shell
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}

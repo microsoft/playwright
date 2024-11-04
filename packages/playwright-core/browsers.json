@@ -3,15 +3,15 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1145",
+      "revision": "1146",
       "installByDefault": true,
-      "browserVersion": "131.0.6778.13"
+      "browserVersion": "131.0.6778.24"
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1271",
+      "revision": "1274",
       "installByDefault": false,
-      "browserVersion": "132.0.6791.0"
+      "browserVersion": "132.0.6809.0"
     },
     {
       "name": "firefox",
@@ -27,7 +27,7 @@
     },
     {
       "name": "webkit",
-      "revision": "2097",
+      "revision": "2102",
       "installByDefault": true,
       "revisionOverrides": {
         "mac10.14": "1446",

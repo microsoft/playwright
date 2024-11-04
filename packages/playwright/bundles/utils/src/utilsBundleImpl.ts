@@ -31,3 +31,6 @@ export const enquirer = enquirerLibrary;
 
 import chokidarLibrary from 'chokidar';
 export const chokidar = chokidarLibrary;
+
+import * as getEastAsianWidthLibrary from 'get-east-asian-width';
+export const getEastAsianWidth = getEastAsianWidthLibrary;

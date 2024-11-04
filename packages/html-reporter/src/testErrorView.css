@@ -14,6 +14,8 @@
   limitations under the License.
 */
 
+@import '@web/third_party/vscode/colors.css';
+
 .test-error-view {
   white-space: pre;
   overflow: auto;

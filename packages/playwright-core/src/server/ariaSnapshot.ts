@@ -14,39 +14,54 @@
  * limitations under the License.
  */
 
-import type { AriaTemplateNode } from './injected/ariaSnapshot';
+import type { AriaTemplateNode, AriaTemplateRoleNode } from './injected/ariaSnapshot';
 import { yaml } from '../utilsBundle';
-import type { AriaRole } from '@injected/roleUtils';
 import { assert } from '../utils';
 
 export function parseAriaSnapshot(text: string): AriaTemplateNode {
   const fragment = yaml.parse(text) as any[];
-  const result: AriaTemplateNode = { role: 'fragment' };
+  const result: AriaTemplateNode = { kind: 'role', role: 'fragment' };
   populateNode(result, fragment);
   return result;
 }
 
-function populateNode(node: AriaTemplateNode, container: any[]) {
+function populateNode(node: AriaTemplateRoleNode, container: any[]) {
   for (const object of container) {
     if (typeof object === 'string') {
-      const childNode = parseKey(object);
+      const childNode = KeyParser.parse(object);
       node.children = node.children || [];
       node.children.push(childNode);
       continue;
     }
 
     for (const key of Object.keys(object)) {
-      const childNode = parseKey(key);
-      const value = object[key];
       node.children = node.children || [];
+      const value = object[key];
 
-      if (childNode.role === 'text') {
-        node.children.push(valueOrRegex(value));
+      if (key === 'text') {
+        node.children.push({
+          kind: 'text',
+          text: valueOrRegex(value)
+        });
+        continue;
+      }
+
+      const childNode = KeyParser.parse(key);
+      if (childNode.kind === 'text') {
+        node.children.push({
+          kind: 'text',
+          text: valueOrRegex(value)
+        });
         continue;
       }
 
       if (typeof value === 'string') {
-        node.children.push({ ...childNode, children: [valueOrRegex(value)] });
+        node.children.push({
+          ...childNode, children: [{
+            kind: 'text',
+            text: valueOrRegex(value)
+          }]
+        });
         continue;
       }
 
@@ -56,7 +71,7 @@ function populateNode(node: AriaTemplateNode, container: any[]) {
   }
 }
 
-function applyAttribute(node: AriaTemplateNode, key: string, value: string) {
+function applyAttribute(node: AriaTemplateRoleNode, key: string, value: string) {
   if (key === 'checked') {
     assert(value === 'true' || value === 'false' || value === 'mixed', 'Value of "disabled" attribute must be a boolean or "mixed"');
     node.checked = value === 'true' ? true : value === 'false' ? false : 'mixed';
@@ -90,51 +105,155 @@ function applyAttribute(node: AriaTemplateNode, key: string, value: string) {
   throw new Error(`Unsupported attribute [${key}] `);
 }
 
-function parseKey(key: string): AriaTemplateNode {
-  const tokenRegex = /\s*([a-z]+|"(?:[^"]*)"|\/(?:[^\/]*)\/|\[.*?\])/g;
-  let match;
-  const tokens = [];
-  while ((match = tokenRegex.exec(key)) !== null)
-    tokens.push(match[1]);
-
-  if (tokens.length === 0)
-    throw new Error(`Invalid key ${key}`);
-
-  const role = tokens[0] as AriaRole | 'text';
-
-  let name: string | RegExp = '';
-  let index = 1;
-  if (tokens.length > 1 && (tokens[1].startsWith('"') || tokens[1].startsWith('/'))) {
-    const nameToken = tokens[1];
-    if (nameToken.startsWith('"')) {
-      name = nameToken.slice(1, -1);
-    } else {
-      const pattern = nameToken.slice(1, -1);
-      name = new RegExp(pattern);
-    }
-    index = 2;
-  }
-
-  const result: AriaTemplateNode = { role, name };
-  for (; index < tokens.length; index++) {
-    const attrToken = tokens[index];
-    if (attrToken.startsWith('[') && attrToken.endsWith(']')) {
-      const attrContent = attrToken.slice(1, -1).trim();
-      const [attrName, attrValue] = attrContent.split('=', 2);
-      const value = attrValue !== undefined ? attrValue.trim() : 'true';
-      applyAttribute(result, attrName, value);
-    } else {
-      throw new Error(`Invalid attribute token ${attrToken} in key ${key}`);
-    }
-  }
-
-  return result;
-}
-
 function normalizeWhitespace(text: string) {
   return text.replace(/[\r\n\s\t]+/g, ' ').trim();
 }
 
 function valueOrRegex(value: string): string | RegExp {
   return value.startsWith('/') && value.endsWith('/') ? new RegExp(value.slice(1, -1)) : normalizeWhitespace(value);
+}
+
+export class KeyParser {
+  private _input: string;
+  private _pos: number;
+  private _length: number;
+
+  static parse(input: string): AriaTemplateNode {
+    return new KeyParser(input)._parse();
+  }
+
+  constructor(input: string) {
+    this._input = input;
+    this._pos = 0;
+    this._length = input.length;
+  }
+
+  private _peek() {
+    return this._input[this._pos] || '';
+  }
+
+  private _next() {
+    if (this._pos < this._length)
+      return this._input[this._pos++];
+    return null;
+  }
+
+  private _eof() {
+    return this._pos >= this._length;
+  }
+
+  private _skipWhitespace() {
+    while (!this._eof() && /\s/.test(this._peek()))
+      this._pos++;
+  }
+
+  private _readIdentifier(): string {
+    if (this._eof())
+      throw new Error('Unexpected end of input when expecting identifier');
+    const start = this._pos;
+    while (!this._eof() && /[a-zA-Z]/.test(this._peek()))
+      this._pos++;
+    return this._input.slice(start, this._pos);
+  }
+
+  private _readString(): string {
+    let result = '';
+    let escaped = false;
+    while (!this._eof()) {
+      const ch = this._next();
+      if (escaped) {
+        result += ch;
+        escaped = false;
+      } else if (ch === '\\') {
+        escaped = true;
+        result += ch;
+      } else if (ch === '"') {
+        return result;
+      } else {
+        result += ch;
+      }
+    }
+    throw new Error('Unterminated string starting at position ' + this._pos);
+  }
+
+  private _readRegex(): string {
+    let result = '';
+    let escaped = false;
+    while (!this._eof()) {
+      const ch = this._next();
+      if (escaped) {
+        result += ch;
+        escaped = false;
+      } else if (ch === '\\') {
+        escaped = true;
+        result += ch;
+      } else if (ch === '/') {
+        return result;
+      } else {
+        result += ch;
+      }
+    }
+    throw new Error('Unterminated regex starting at position ' + this._pos);
+  }
+
+  private _readStringOrRegex(): string | RegExp | null {
+    const ch = this._peek();
+    if (ch === '"') {
+      this._next();
+      return this._readString();
+    }
+
+    if (ch === '/') {
+      this._next();
+      return new RegExp(this._readRegex());
+    }
+
+    return null;
+  }
+
+  private _readFlags(): Map<string, string> {
+    const flags = new Map<string, string>();
+    while (true) {
+      this._skipWhitespace();
+      if (this._peek() === '[') {
+        this._next();
+        this._skipWhitespace();
+        const flagName = this._readIdentifier();
+        this._skipWhitespace();
+        let flagValue = '';
+        if (this._peek() === '=') {
+          this._next();
+          this._skipWhitespace();
+          while (this._peek() !== ']' && !this._eof())
+            flagValue += this._next();
+        }
+        this._skipWhitespace();
+        if (this._peek() !== ']')
+          throw new Error('Expected ] at position ' + this._pos);
+
+        this._next(); // Consume ']'
+        flags.set(flagName, flagValue || 'true');
+      } else {
+        break;
+      }
+    }
+    return flags;
+  }
+
+  _parse(): AriaTemplateNode {
+    this._skipWhitespace();
+
+    const role = this._readIdentifier() as AriaTemplateRoleNode['role'];
+    this._skipWhitespace();
+    const name = this._readStringOrRegex() || '';
+    const result: AriaTemplateRoleNode = { kind: 'role', role, name };
+    const flags = this._readFlags();
+    for (const [name, value] of flags)
+      applyAttribute(result, name, value);
+    this._skipWhitespace();
+    if (!this._eof())
+      throw new Error('Unexpected input at position ' + this._pos);
+
+    return result;
+  }
 }

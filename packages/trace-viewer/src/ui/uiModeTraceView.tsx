@@ -55,7 +55,7 @@ export const TraceView: React.FC<{
     // Test finished.
     const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
-      loadSingleTraceFile(new URL(attachment.path, 'file://')).then(model => setModel({ model, isLive: false }));
+      loadSingleTraceFile(filePathToTraceURL(attachment.path)).then(model => setModel({ model, isLive: false }));
       return;
     }
 
@@ -73,7 +73,7 @@ export const TraceView: React.FC<{
     // Start polling running test.
     pollTimer.current = setTimeout(async () => {
       try {
-        const model = await loadSingleTraceFile(new URL(traceLocation, 'file://'));
+        const model = await loadSingleTraceFile(filePathToTraceURL(traceLocation));
         setModel({ model, isLive: true });
       } catch {
         setModel(undefined);
@@ -109,24 +109,25 @@ const outputDirForTestCase = (testCase: reporterTypes.TestCase): string | undefi
   return undefined;
 };
 
-async function loadSingleTraceFile(tracePathOrURL: URL): Promise<MultiTraceModel> {
+async function loadSingleTraceFile(traceURL: URL): Promise<MultiTraceModel> {
   const params = new URLSearchParams();
-  params.set('trace', formatUrl(tracePathOrURL).toString());
+  params.set('trace', formatUrl(traceURL).toString());
   params.set('limit', '1');
   const response = await fetch(`contexts?${params.toString()}`);
   const contextEntries = await response.json() as ContextEntry[];
   return new MultiTraceModel(contextEntries);
 }
 
-function formatUrl(tracePathOrURL: URL) {
-  if (tracePathOrURL.protocol === 'file:') {
-    const url = new URL('/trace/file', testServerBaseURL);
-    url.searchParams.set('path', tracePathOrURL.pathname);
-    return url;
-  }
+function formatUrl(traceURL: URL) {
+  // Dropbox does not support cors.
+  if (traceURL.hostname === 'dropbox.com')
+    traceURL.hostname = 'dl.dropboxusercontent.com';
 
-  if (tracePathOrURL.hostname === 'dropbox.com')
-    tracePathOrURL.hostname = 'dl.dropboxusercontent.com';
+  return traceURL;
+}
 
-  return tracePathOrURL;
+export function filePathToTraceURL(path: string) {
+  const url = new URL('file', testServerBaseURL);
+  url.searchParams.set('path', path);
+  return url;
 }

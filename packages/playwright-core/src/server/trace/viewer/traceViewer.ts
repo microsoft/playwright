@@ -112,6 +112,7 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
       continue;
     }
 
+    // <testServerOrigin>/trace/file?path=/path/to/trace.zip
     const url = new URL('/trace/file', server.urlPrefix('precise'));
     url.searchParams.set('path', traceUrl);
     params.append('trace', url.toString());
@@ -178,6 +179,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
       ...options?.persistentContextOptions,
       useWebSocket: isUnderTest(),
       headless: !!options?.headless,
+      colorScheme: isUnderTest() ? 'light' : undefined,
     },
   });
 

@@ -30,7 +30,6 @@ export class ZipTraceModelBackend implements TraceModelBackend {
 
   constructor(traceURL: string, progress: Progress) {
     this._traceURL = traceURL;
-    zipjs.configure({ baseURL: self.location.href } as any);
     this._zipReader = new zipjs.ZipReader(
         new zipjs.HttpReader(traceURL, { mode: 'cors', preventHeadRequest: true } as any),
         { useWebWorkers: false });
@@ -82,19 +81,16 @@ export class ZipTraceModelBackend implements TraceModelBackend {
 }
 
 export class FetchTraceModelBackend implements TraceModelBackend {
-  private _entriesPromise: Promise<Map<string, URL>>;
+  private _entriesPromise: Promise<Map<string, string>>;
   private _traceURL: string;
 
   constructor(traceURL: string) {
     this._traceURL = traceURL;
     this._entriesPromise = fetch(traceURL).then(async response => {
-      const json = JSON.parse(await response.text());
-      const entries = new Map<string, URL>();
-      for (const entry of json.entries) {
-        const entryURL = new URL(traceURL);
-        entryURL.searchParams.set('path', entry.path);
-        entries.set(entry.name, entryURL);
-      }
+      const json = await response.json();
+      const entries = new Map<string, string>();
+      for (const entry of json.entries)
+        entries.set(entry.name, entry.path);
       return entries;
     });
   }
@@ -129,9 +125,12 @@ export class FetchTraceModelBackend implements TraceModelBackend {
 
   private async _readEntry(entryName: string): Promise<Response | undefined> {
     const entries = await this._entriesPromise;
-    const fileURL = entries.get(entryName);
-    if (!fileURL)
+    const filePath = entries.get(entryName);
+    if (!filePath)
       return;
-    return fetch(fileURL);
+
+    const url = new URL(this.traceURL());
+    url.searchParams.set('path', filePath);
+    return fetch(url);
   }
 }

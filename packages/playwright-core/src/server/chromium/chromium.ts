@@ -309,10 +309,7 @@ export class Chromium extends BrowserType {
     if (options.devtools)
       chromeArguments.push('--auto-open-devtools-for-tabs');
     if (options.headless) {
-      if (process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW)
-        chromeArguments.push('--headless=new');
-      else
-        chromeArguments.push('--headless=old');
+      chromeArguments.push('--headless');
 
       chromeArguments.push(
           '--hide-scrollbars',
