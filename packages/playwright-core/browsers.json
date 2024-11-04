@@ -8,6 +8,12 @@
       "browserVersion": "131.0.6778.24"
     },
     {
+      "name": "chromium-headless-shell",
+      "revision": "1146",
+      "installByDefault": false,
+      "browserVersion": "131.0.6778.24"
+    },
+    {
       "name": "chromium-tip-of-tree",
       "revision": "1271",
       "installByDefault": false,
