@@ -250,7 +250,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
       return '';
     const parts = splitSelectorByFrame(this._highlightedSelector);
     const selectorDepth = parts.length - 1;
-    const frameDepth = frame._depth();
+    const frameDepth = frame.depth();
     if (frameDepth < selectorDepth)
       return '';
     return stringifySelector(parts[parts.length - 1]);
