@@ -146,6 +146,11 @@ export const Workbench: React.FunctionComponent<{
     selectPropertiesTab('inspector');
   }, [selectPropertiesTab]);
 
+  const revealAttachment = React.useCallback((attachment: AfterActionTraceEventAttachment) => {
+    selectPropertiesTab('attachments');
+    setRevealedAttachment(attachment);
+  }, [selectPropertiesTab]);
+
   React.useEffect(() => {
     if (revealSource)
       selectPropertiesTab('source');
@@ -298,10 +303,7 @@ export const Workbench: React.FunctionComponent<{
         setSelectedTime={setSelectedTime}
         onSelected={onActionSelected}
         onHighlighted={setHighlightedAction}
-        revealAttachment={attachment => {
-          selectPropertiesTab('attachments');
-          setRevealedAttachment(attachment);
-        }}
+        revealAttachment={revealAttachment}
         revealConsole={() => selectPropertiesTab('console')}
         isLive={isLive}
       />
