@@ -37,7 +37,6 @@ import { FiltersView } from './uiModeFiltersView';
 import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
-import { testServerBaseURL } from '../settings';
 
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
@@ -47,7 +46,9 @@ const xtermDataSource: XtermDataSource = {
   resize: () => {},
 };
 
-const searchParams = new URLSearchParams(window.location.search);
+export const testServerBaseURL = new URL(window.location.href);
+const searchParams = testServerBaseURL.searchParams;
+testServerBaseURL.port = searchParams.get('testServerPort') ?? testServerBaseURL.port;
 const wsURL = new URL(`/${searchParams.get('ws')}`, testServerBaseURL);
 wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
 const queryParams = {
