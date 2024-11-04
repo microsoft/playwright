@@ -104,7 +104,8 @@ it('should change document.activeElement', async ({ page, server }) => {
 it('should not affect screenshots', async ({ page, server, browserName, headless, isWindows, channel }) => {
   it.skip(browserName === 'webkit' && isWindows && !headless, 'WebKit/Windows/headed has a larger minimal viewport. See https://github.com/microsoft/playwright/issues/22616');
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image');
-  it.fixme(browserName === 'chromium' && channel !== 'chromium-headless-shell', 'https://github.com/microsoft/playwright/issues/33330');
+  // TODO: We want to see test results
+  // it.fixme(browserName === 'chromium' && channel !== 'chromium-headless-shell', 'https://github.com/microsoft/playwright/issues/33330');
 
   const page2 = await page.context().newPage();
   await Promise.all([

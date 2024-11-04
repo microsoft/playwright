@@ -637,7 +637,7 @@ it('should be able to download a inline PDF file via response interception', asy
 });
 
 it('should be able to download a inline PDF file via navigation', async ({ browser, server, asset, browserName, channel }) => {
-  it.skip(browserName === 'chromium' && channel !== 'chromium-headless-shell');
+  it.skip(browserName === 'chromium' && channel !== 'chromium-headless-shell', 'We expect PDF Viewer to open up in Chromium');
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
