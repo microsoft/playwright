@@ -167,6 +167,7 @@ test('should link from attachment step to attachments view', async ({ runUITest 
 
   const panel = page.getByRole('tabpanel', { name: 'Attachments' });
   const attachment = panel.getByLabel('my-attachment');
+  await page.getByText('attach "spacer-1"').click();
   await expect(attachment).not.toBeInViewport();
   await page.getByText('attach "my-attachment"').click();
   await expect(attachment).toBeInViewport();
