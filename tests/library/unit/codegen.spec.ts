@@ -395,3 +395,88 @@ await page.request.get(
   });
 
 });
+
+test.describe('csharp', () => {
+  const impl = getAPIRequestCodeGen('csharp');
+
+  test('generatePlaywrightRequestCall', () => {
+    expect(impl.generatePlaywrightRequestCall({
+      url: 'http://example.com/foo?bar=baz',
+      method: 'GET',
+      headers: [{ name: 'User-Agent', value: 'Mozilla/5.0' }, { name: 'Date', value: '2021-01-01' }],
+      httpVersion: '1.1',
+      cookies: [],
+      queryString: [],
+      headersSize: 0,
+      bodySize: 0,
+      comment: '',
+    }, 'foo')).toEqual(`
+await request.GetAsync("http://example.com/foo", new() {
+  Params = new() {
+    ["bar"] = "baz"
+  },
+  Data = "foo",
+  Headers = new() {
+    ["User-Agent"] = "Mozilla/5.0",
+    ["Date"] = "2021-01-01"
+  }
+});`.trim());
+
+    expect(impl.generatePlaywrightRequestCall({
+      url: 'http://example.com/foo?bar=baz',
+      method: 'OPTIONS',
+      headers: [],
+      httpVersion: '1.1',
+      cookies: [],
+      queryString: [],
+      headersSize: 0,
+      bodySize: 0,
+      comment: '',
+    }, undefined)).toEqual(`
+await request.FetchAsync("http://example.com/foo", new() {
+  Method = "options",
+  Params = new() {
+    ["bar"] = "baz"
+  }
+});`.trim());
+  });
+
+  test('generatePlaywrightRequestCall with POST method and no body', () => {
+    expect(impl.generatePlaywrightRequestCall({
+      url: 'http://example.com/foo',
+      method: 'POST',
+      headers: [{ name: 'Content-Type', value: 'application/json' }],
+      httpVersion: '1.1',
+      cookies: [],
+      queryString: [],
+      headersSize: 0,
+      bodySize: 0,
+      comment: '',
+    }, undefined)).toEqual(`
+await request.PostAsync("http://example.com/foo", new() {
+  Headers = new() {
+    ["Content-Type"] = "application/json"
+  }
+});`.trim());
+  });
+
+  test('generatePlaywrightRequestCall with PUT method and JSON body', () => {
+    expect(impl.generatePlaywrightRequestCall({
+      url: 'http://example.com/foo',
+      method: 'PUT',
+      headers: [{ name: 'Content-Type', value: 'application/json' }],
+      httpVersion: '1.1',
+      cookies: [],
+      queryString: [],
+      headersSize: 0,
+      bodySize: 0,
+      comment: '',
+    }, '{"key":"value"}')).toEqual(`
+await request.PutAsync("http://example.com/foo", new() {
+  Data = "{\\"key\\":\\"value\\"}",
+  Headers = new() {
+    ["Content-Type"] = "application/json"
+  }
+});`.trim());
+  });
+});

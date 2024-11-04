@@ -165,10 +165,95 @@ class PythonCodeGen implements APIRequestCodegen {
   }
 }
 
+class CSharpCodeGen implements APIRequestCodegen {
+  generatePlaywrightRequestCall(request: har.Request, body: string | undefined): string {
+    const url = new URL(request.url);
+    const urlParam = `${url.origin}${url.pathname}`;
+    const options: any = {};
+
+    const initLines: string[] = [];
+
+    let method = request.method.toLowerCase();
+    if (!['delete', 'get', 'head', 'post', 'put', 'patch'].includes(method)) {
+      options.Method = method;
+      method = 'fetch';
+    }
+
+    if (url.searchParams.size)
+      options.Params = Object.fromEntries(url.searchParams.entries());
+    if (body)
+      options.Data = body;
+    if (request.headers.length)
+      options.Headers = Object.fromEntries(request.headers.map(header => [header.name, header.value]));
+
+    const params = [`"${urlParam}"`];
+    const hasOptions = Object.keys(options).length > 0;
+    if (hasOptions)
+      params.push(this.prettyPrintObject(options));
+
+    return `${initLines.join('\n')}${initLines.length ? '\n' : ''}await request.${this.toFunctionName(method)}(${params.join(', ')});`;
+  }
+
+  private toFunctionName(method: string): string {
+    return method[0].toUpperCase() + method.slice(1) + 'Async';
+  }
+
+  private indent(v: string, level: number): string {
+    return v.split('\n').map(s => ' '.repeat(level) + s).join('\n');
+  }
+
+  private prettyPrintObject(obj: any, indent = 2, level = 0): string {
+    // Handle null and undefined
+    if (obj === null)
+      return 'null';
+    if (obj === undefined)
+      return 'null';
+
+    // Handle primitive types
+    if (typeof obj !== 'object') {
+      if (typeof obj === 'string')
+        return `"${obj.replace(/"/g, '\\"')}"`;
+      if (typeof obj === 'boolean')
+        return obj ? 'true' : 'false';
+      return String(obj);
+    }
+
+    // Handle arrays
+    if (Array.isArray(obj)) {
+      if (obj.length === 0)
+        return 'new object[] {}';
+      const spaces = ' '.repeat(level * indent);
+      const nextSpaces = ' '.repeat((level + 1) * indent);
+
+      const items = obj.map(item =>
+        `${nextSpaces}${this.prettyPrintObject(item, indent, level + 1)}`
+      ).join(',\n');
+
+      return `new object[] {\n${items}\n${spaces}}`;
+    }
+
+    // Handle regular objects
+    if (Object.keys(obj).length === 0)
+      return 'new {}';
+    const spaces = ' '.repeat(level * indent);
+    const nextSpaces = ' '.repeat((level + 1) * indent);
+
+    const entries = Object.entries(obj).map(([key, value]) => {
+      const formattedValue = this.prettyPrintObject(value, indent, level + 1);
+      const formattedKey = level === 0 ? key : `["${key}"]`;
+      return `${nextSpaces}${formattedKey} = ${formattedValue}`;
+    }).join(',\n');
+
+    return `new() {\n${entries}\n${spaces}}`;
+  }
+}
+
 export function getAPIRequestCodeGen(language: Language): APIRequestCodegen {
   if (language === 'javascript')
     return new JSCodeGen();
   if (language === 'python')
     return new PythonCodeGen();
+  if (language === 'csharp')
+    return new CSharpCodeGen();
   throw new Error('Unsupported language: ' + language);
 }
