@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import ansi2html from 'ansi-to-html';
+import { ansi2html } from '@web/ansi2html';
 import * as React from 'react';
 import './testErrorView.css';
 import type { ImageDiff } from '@web/shared/imageDiffView';
@@ -43,33 +43,9 @@ export const TestScreenshotErrorView: React.FC<{
 };
 
 function ansiErrorToHtml(text?: string): string {
-  const config: any = {
+  const defaultColors = {
     bg: 'var(--color-canvas-subtle)',
     fg: 'var(--color-fg-default)',
   };
-  config.colors = ansiColors;
-  return new ansi2html(config).toHtml(escapeHTML(text || ''));
-}
-
-const ansiColors = {
-  0: '#000',
-  1: '#C00',
-  2: '#0C0',
-  3: '#C50',
-  4: '#00C',
-  5: '#C0C',
-  6: '#0CC',
-  7: '#CCC',
-  8: '#555',
-  9: '#F55',
-  10: '#5F5',
-  11: '#FF5',
-  12: '#55F',
-  13: '#F5F',
-  14: '#5FF',
-  15: '#FFF'
-};
-
-function escapeHTML(text: string): string {
-  return text.replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]!));
+  return ansi2html(text || '', defaultColors);
 }

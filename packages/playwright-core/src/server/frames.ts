@@ -29,7 +29,7 @@ import * as types from './types';
 import { BrowserContext } from './browserContext';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
-import { LongStandingScope, assert, constructURLBasedOnBaseURL, makeWaitForNextTask, monotonicTime, asLocator } from '../utils';
+import { LongStandingScope, assert, constructURLBasedOnBaseURL, makeWaitForNextTask, monotonicTime, asLocator, compressCallLog } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { debugLogger } from '../utils/debugLogger';
 import type { CallMetadata } from './instrumentation';
@@ -1452,7 +1452,7 @@ export class Frame extends SdkObject {
         timeout -= elapsed;
       }
       if (timeout < 0)
-        return { matches: options.isNot, log: metadata.log, timedOut: true, received: lastIntermediateResult.received };
+        return { matches: options.isNot, log: compressCallLog(metadata.log), timedOut: true, received: lastIntermediateResult.received };
 
       // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
       return await (new ProgressController(metadata, this)).run(async progress => {
@@ -1473,7 +1473,7 @@ export class Frame extends SdkObject {
       // A: We want user to receive a friendly message containing the last intermediate result.
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
         throw e;
-      const result: { matches: boolean, received?: any, log?: string[], timedOut?: boolean } = { matches: options.isNot, log: metadata.log };
+      const result: { matches: boolean, received?: any, log?: string[], timedOut?: boolean } = { matches: options.isNot, log: compressCallLog(metadata.log) };
       if (lastIntermediateResult.isSet)
         result.received = lastIntermediateResult.received;
       if (e instanceof TimeoutError)

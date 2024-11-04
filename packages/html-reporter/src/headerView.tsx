@@ -20,7 +20,7 @@ import './colors.css';
 import './common.css';
 import './headerView.css';
 import * as icons from './icons';
-import { Link, navigate } from './links';
+import { Link, navigate, SearchParamsContext } from './links';
 import { statusIcon } from './statusIcon';
 import { filterWithToken } from './filter';
 
@@ -65,7 +65,7 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
 const StatsNavView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
-  const searchParams = new URLSearchParams(window.location.hash.slice(1));
+  const searchParams = React.useContext(SearchParamsContext);
   const q = searchParams.get('q')?.toString() || '';
   const tokens = q.split(' ');
   return <nav>

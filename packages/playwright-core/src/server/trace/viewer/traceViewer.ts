@@ -172,6 +172,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
       ...options?.persistentContextOptions,
       useWebSocket: isUnderTest(),
       headless: !!options?.headless,
+      colorScheme: isUnderTest() ? 'light' : undefined,
     },
   });
 

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { hostPlatform } from '../../packages/playwright-core/src/utils/hostPlatform';
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
 import os from 'os';
@@ -33,6 +34,7 @@ async function checkFeatures(name: string, context: any, server: any) {
 it('Safari Desktop', async ({ browser, browserName, platform, server, headless }) => {
   it.skip(browserName !== 'webkit');
   it.skip(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64', 'Modernizr uses WebGL which is not available on Intel macOS - https://bugs.webkit.org/show_bug.cgi?id=278277');
+  it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'Ubuntu 20.04 is frozen');
   const context = await browser.newContext({
     deviceScaleFactor: 2
   });
@@ -52,7 +54,6 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless }
   actual.video = !!actual.video;
 
   if (platform === 'linux') {
-    expected.subpixelfont = false;
     expected.speechrecognition = false;
     expected.publickeycredential = false;
     expected.mediastream = false;
@@ -96,6 +97,7 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless }
 it('Mobile Safari', async ({ playwright, browser, browserName, platform, server, headless }) => {
   it.skip(browserName !== 'webkit');
   it.skip(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64', 'Modernizr uses WebGL which is not available on Intel macOS - https://bugs.webkit.org/show_bug.cgi?id=278277');
+  it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'Ubuntu 20.04 is frozen');
   const iPhone = playwright.devices['iPhone 12'];
   const context = await browser.newContext(iPhone);
   const { actual, expected } = await checkFeatures('mobile-safari-18', context, server);
@@ -119,7 +121,6 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, server,
   }
 
   if (platform === 'linux') {
-    expected.subpixelfont = false;
     expected.speechrecognition = false;
     expected.publickeycredential = false;
     expected.mediastream = false;

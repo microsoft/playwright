@@ -275,10 +275,13 @@ ${body}
 }
 
 export function quoteMultiline(text: string, indent = '  ') {
+  const escape = (text: string) => text.replace(/\\/g, '\\\\')
+      .replace(/`/g, '\\`')
+      .replace(/\$\{/g, '\\${');
   const lines = text.split('\n');
   if (lines.length === 1)
-    return '`' + text.replace(/`/g, '\\`').replace(/\${/g, '\\${') + '`';
-  return '`\n' + lines.map(line => indent + line.replace(/`/g, '\\`').replace(/\${/g, '\\${')).join('\n') + `\n${indent}\``;
+    return '`' + escape(text) + '`';
+  return '`\n' + lines.map(line => indent + escape(line).replace(/\${/g, '\\${')).join('\n') + `\n${indent}\``;
 }
 
 function isMultilineString(text: string) {

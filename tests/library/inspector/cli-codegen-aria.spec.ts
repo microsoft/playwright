@@ -39,4 +39,24 @@ test.describe(() => {
     await expect.poll(() =>
       recorder.text('C#')).toContain(`await Expect(page.GetByRole(AriaRole.Button)).ToMatchAriaSnapshotAsync("- button \\"Submit\\"");`);
   });
+
+  test('should generate regex in aria snapshot', async ({ openRecorder }) => {
+    const { recorder } = await openRecorder();
+    await recorder.setContentAndWait(`<main><button>Submit 123</button></main>`);
+
+    await recorder.page.click('x-pw-tool-item.snapshot');
+    await recorder.page.hover('button');
+    await recorder.trustedClick();
+
+    await expect.poll(() =>
+      recorder.text('JavaScript')).toContain(`await expect(page.getByRole('button')).toMatchAriaSnapshot(\`- button /Submit \\\\d+/\`);`);
+    await expect.poll(() =>
+      recorder.text('Python')).toContain(`expect(page.get_by_role("button")).to_match_aria_snapshot("- button /Submit \\\\d+/")`);
+    await expect.poll(() =>
+      recorder.text('Python Async')).toContain(`await expect(page.get_by_role(\"button\")).to_match_aria_snapshot("- button /Submit \\\\d+/")`);
+    await expect.poll(() =>
+      recorder.text('Java')).toContain(`assertThat(page.getByRole(AriaRole.BUTTON)).matchesAriaSnapshot("- button /Submit \\\\d+/");`);
+    await expect.poll(() =>
+      recorder.text('C#')).toContain(`await Expect(page.GetByRole(AriaRole.Button)).ToMatchAriaSnapshotAsync("- button /Submit \\\\d+/");`);
+  });
 });

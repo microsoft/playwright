@@ -23,6 +23,8 @@ import { EXPECTED_COLOR } from '../common/expectBundle';
 import { callLogText } from '../util';
 import { printReceivedStringContainExpectedSubstring } from './expect';
 import { currentTestInfo } from '../common/globals';
+import type { MatcherReceived } from '@injected/ariaSnapshot';
+import { escapeTemplateString } from 'playwright-core/lib/utils';
 
 export async function toMatchAriaSnapshot(
   this: ExpectMatcherState,
@@ -70,28 +72,38 @@ export async function toMatchAriaSnapshot(
   const timeout = options.timeout ?? this.timeout;
   expected = unshift(expected);
   const { matches: pass, received, log, timedOut } = await receiver._expect('to.match.aria', { expectedValue: expected, isNot: this.isNot, timeout });
+  const typedReceived = received as MatcherReceived | typeof kNoElementsFoundError;
 
   const messagePrefix = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
-  const notFound = received === kNoElementsFoundError;
+  const notFound = typedReceived === kNoElementsFoundError;
+  if (notFound) {
+    return {
+      pass: this.isNot,
+      message: () => messagePrefix + `Expected: ${this.utils.printExpected(expected)}\nReceived: ${EXPECTED_COLOR('not found')}` + callLogText(log),
+      name: 'toMatchAriaSnapshot',
+      expected,
+    };
+  }
+
   const escapedExpected = escapePrivateUsePoints(expected);
-  const escapedReceived = escapePrivateUsePoints(received);
+  const escapedReceived = escapePrivateUsePoints(typedReceived.raw);
   const message = () => {
     if (pass) {
       if (notFound)
         return messagePrefix + `Expected: not ${this.utils.printExpected(escapedExpected)}\nReceived: ${escapedReceived}` + callLogText(log);
       const printedReceived = printReceivedStringContainExpectedSubstring(escapedReceived, escapedReceived.indexOf(escapedExpected), escapedExpected.length);
-      return messagePrefix + `Expected: not ${this.utils.printExpected(escapedExpected)}\nReceived string: ${printedReceived}` + callLogText(log);
+      return messagePrefix + `Expected: not ${this.utils.printExpected(escapedExpected)}\nReceived: ${printedReceived}` + callLogText(log);
     } else {
       const labelExpected = `Expected`;
       if (notFound)
         return messagePrefix + `${labelExpected}: ${this.utils.printExpected(escapedExpected)}\nReceived: ${escapedReceived}` + callLogText(log);
-      return messagePrefix + this.utils.printDiffOrStringify(escapedExpected, escapedReceived, labelExpected, 'Received string', false) + callLogText(log);
+      return messagePrefix + this.utils.printDiffOrStringify(escapedExpected, escapedReceived, labelExpected, 'Received', false) + callLogText(log);
     }
   };
 
   if (!this.isNot && pass === this.isNot && generateNewBaseline) {
     // Only rebaseline failed snapshots.
-    const suggestedRebaseline = `toMatchAriaSnapshot(\`\n${indent(received, '${indent}  ')}\n\${indent}\`)`;
+    const suggestedRebaseline = `toMatchAriaSnapshot(\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\`)`;
     return { pass: this.isNot, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline };
   }
 
@@ -107,7 +119,7 @@ export async function toMatchAriaSnapshot(
 }
 
 function escapePrivateUsePoints(str: string) {
-  return str.replace(/[\uE000-\uF8FF]/g, char => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
+  return escapeTemplateString(str).replace(/[\uE000-\uF8FF]/g, char => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
 
 function unshift(snapshot: string): string {
