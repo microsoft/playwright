@@ -14,24 +14,25 @@
   limitations under the License.
 */
 
-import type { HTMLReport, TestCaseSummary, TestFileSummary } from './types';
+import type { TestCaseSummary, TestFileSummary } from './types';
 import * as React from 'react';
 import { hashStringToInt, msToString } from './utils';
 import { Chip } from './chip';
-import { filterWithToken, type Filter } from './filter';
-import { generateTraceUrl, Link, navigate, ProjectLink } from './links';
+import { filterWithToken } from './filter';
+import { generateTraceUrl, Link, navigate, ProjectLink, SearchParamsContext } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
 import { video, image, trace } from './icons';
 import { clsx } from '@web/uiUtils';
 
 export const TestFileView: React.FC<React.PropsWithChildren<{
-  report: HTMLReport;
   file: TestFileSummary;
+  projectNames: string[];
   isFileExpanded: (fileId: string) => boolean;
   setFileExpanded: (fileId: string, expanded: boolean) => void;
-  filter: Filter;
-}>> = ({ file, report, isFileExpanded, setFileExpanded, filter }) => {
+}>> = ({ file, projectNames, isFileExpanded, setFileExpanded }) => {
+  const searchParams = React.useContext(SearchParamsContext);
+  const filterParam = searchParams.has('q') ? '&q=' + searchParams.get('q') : '';
   return <Chip
     expanded={isFileExpanded(file.fileId)}
     noInsets={true}
@@ -39,7 +40,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
     header={<span>
       {file.fileName}
     </span>}>
-    {file.tests.filter(t => filter.matches(t)).map(test =>
+    {file.tests.map(test =>
       <div key={`test-${test.testId}`} className={clsx('test-file-test', 'test-file-test-outcome-' + test.outcome)}>
         <div className='hbox' style={{ alignItems: 'flex-start' }}>
           <div className='hbox'>
@@ -47,11 +48,11 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
               {statusIcon(test.outcome)}
             </span>
             <span>
-              <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')}>
+              <Link href={`#?testId=${test.testId}${filterParam}`} title={[...test.path, test.title].join(' › ')}>
                 <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
               </Link>
-              {report.projectNames.length > 1 && !!test.projectName &&
-              <ProjectLink projectNames={report.projectNames} projectName={test.projectName} />}
+              {projectNames.length > 1 && !!test.projectName &&
+              <ProjectLink projectNames={projectNames} projectName={test.projectName} />}
               <LabelsClickView labels={test.tags} />
             </span>
           </div>
@@ -90,10 +91,10 @@ function traceBadge(test: TestCaseSummary): JSX.Element | undefined {
 const LabelsClickView: React.FC<React.PropsWithChildren<{
   labels: string[],
 }>> = ({ labels }) => {
+  const searchParams = React.useContext(SearchParamsContext);
 
   const onClickHandle = (e: React.MouseEvent, label: string) => {
     e.preventDefault();
-    const searchParams = new URLSearchParams(window.location.hash.slice(1));
     const q = searchParams.get('q')?.toString() || '';
     const tokens = q.split(' ');
     navigate(filterWithToken(tokens, label, e.metaKey || e.ctrlKey));

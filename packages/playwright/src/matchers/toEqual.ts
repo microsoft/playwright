@@ -83,8 +83,5 @@ export async function toEqual<T>(
     pass,
     log,
     timeout: timedOut ? timeout : undefined,
-    ...(printedReceived ? { printedReceived } : {}),
-    ...(printedExpected ? { printedExpected } : {}),
-    ...(printedDiff ? { printedDiff } : {}),
   };
 }

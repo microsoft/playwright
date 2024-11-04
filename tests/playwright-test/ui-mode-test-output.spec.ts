@@ -145,6 +145,17 @@ test('should format console messages in page', async ({ runUITest }, testInfo) =
     'Failed to load resource: net::ERR_CONNECTION_REFUSED',
   ]);
 
+  await expect(page.locator('.console-tab')).toMatchAriaSnapshot(`
+    - list:
+      - listitem: "/<anonymous>:1 Object {a: 1}/"
+      - listitem: "/<anonymous>:4 Date/"
+      - listitem: "/<anonymous>:5 Regex \/a\//"
+      - listitem: "/<anonymous>:6 Number 0 one 2/"
+      - listitem: "/<anonymous>:7 Download the React DevTools for a better development experience: https:\/\/fb\.me\/react-devtools/"
+      - listitem: "/<anonymous>:8 Array of values/"
+      - listitem: "/Failed to load resource: net::ERR_CONNECTION_REFUSED/"
+  `);
+
   const label = page.getByText('React DevTools');
   await expect(label).toHaveCSS('color', 'rgb(255, 0, 0)');
   await expect(label).toHaveCSS('font-weight', '700');

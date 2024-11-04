@@ -31,7 +31,7 @@ import type { StackFrame } from '@protocol/channels';
 import { testInfoError } from './util';
 
 export interface TestStepInternal {
-  complete(result: { error?: Error | unknown, attachments?: Attachment[] }): void;
+  complete(result: { error?: Error | unknown, attachments?: Attachment[], suggestedRebaseline?: string }): void;
   stepId: string;
   title: string;
   category: 'hook' | 'fixture' | 'test.step' | 'expect' | 'attach' | string;
@@ -297,6 +297,7 @@ export class TestInfoImpl implements TestInfo {
           stepId,
           wallTime: step.endWallTime,
           error: step.error,
+          suggestedRebaseline: result.suggestedRebaseline,
         };
         this._onStepEnd(payload);
         const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;

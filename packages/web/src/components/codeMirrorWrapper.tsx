@@ -44,6 +44,7 @@ export interface SourceProps {
   focusOnChange?: boolean;
   wrapLines?: boolean;
   onChange?: (text: string) => void;
+  dataTestId?: string;
 }
 
 export const CodeMirrorWrapper: React.FC<SourceProps> = ({
@@ -59,6 +60,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
   focusOnChange,
   wrapLines,
   onChange,
+  dataTestId,
 }) => {
   const [measure, codemirrorElement] = useMeasure<HTMLDivElement>();
   const [modulePromise] = React.useState<Promise<CodeMirror>>(import('./codeMirrorModule').then(m => m.default));
@@ -170,7 +172,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
     };
   }, [codemirror, text, highlight, revealLine, focusOnChange, onChange]);
 
-  return <div className='cm-wrapper' ref={codemirrorElement} onClick={onCodeMirrorClick}></div>;
+  return <div data-testid={dataTestId} className='cm-wrapper' ref={codemirrorElement} onClick={onCodeMirrorClick}></div>;
 };
 
 function onCodeMirrorClick(event: React.MouseEvent) {

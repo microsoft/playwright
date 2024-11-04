@@ -73,7 +73,5 @@ export async function toBeTruthy(
     expected,
     log,
     timeout: timedOut ? timeout : undefined,
-    ...(printedReceived ? { printedReceived } : {}),
-    ...(printedExpected ? { printedExpected } : {}),
   };
 }

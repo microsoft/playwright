@@ -299,7 +299,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
     while (progress.isRunning()) {
       if (retry) {
-        progress.log(`retrying ${actionName} action${options.trial ? ' (trial run)' : ''}, attempt #${retry}`);
+        progress.log(`retrying ${actionName} action${options.trial ? ' (trial run)' : ''}`);
         const timeout = waitTime[Math.min(retry - 1, waitTime.length - 1)];
         if (timeout) {
           progress.log(`  waiting ${timeout}ms`);

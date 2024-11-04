@@ -43,8 +43,8 @@ test('should match list with accessible name', async ({ page }) => {
   `);
   await expect(page.locator('body')).toMatchAriaSnapshot(`
     - list "my list":
-      - listitem: one
-      - listitem: two
+      - listitem: "one"
+      - listitem: "two"
   `);
 });
 
@@ -90,7 +90,7 @@ test('should allow text nodes', async ({ page }) => {
 
   await expect(page.locator('body')).toMatchAriaSnapshot(`
     - heading "Microsoft"
-    - text: Open source projects and samples from Microsoft
+    - text: "Open source projects and samples from Microsoft"
   `);
 });
 
@@ -103,7 +103,7 @@ test('details visibility', async ({ page }) => {
   `);
 
   await expect(page.locator('body')).toMatchAriaSnapshot(`
-    - group: Summary
+    - group: "Summary"
   `);
 });
 
@@ -396,12 +396,65 @@ test('expected formatter', async ({ page }) => {
 
   expect(stripAnsi(error.message)).toContain(`
 Locator: locator('body')
-- Expected         - 2
-+ Received string  + 3
+- Expected  - 2
++ Received  + 3
 
 - - heading "todos"
 - - textbox "Wrong text"
 + - banner:
 +   - heading "todos" [level=1]
 +   - textbox "What needs to be done?"`);
+});
+
+test('should unpack escaped names', async ({ page }) => {
+  {
+    await page.setContent(`
+      <button>Click: me</button>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - 'button "Click: me"'
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - 'button /Click: me/'
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <button>Click / me</button>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button "Click / me"
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button /Click \\/ me/
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - 'button /Click \\/ me/'
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <button>Click \\ me</button>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button "Click \\ me"
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button /Click \\\\ me/
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - 'button /Click \\\\ me/'
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <button>Click ' me</button>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - 'button "Click '' me"'
+    `);
+  }
 });

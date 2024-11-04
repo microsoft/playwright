@@ -58,9 +58,9 @@ export const FiltersView: React.FC<{
       <span className='filter-label'>Projects:</span> {projectsLine}
     </div>
     {expanded && <div className='hbox' style={{ marginLeft: 14, maxHeight: 200, overflowY: 'auto' }}>
-      <div className='filter-list'>
+      <div className='filter-list' role='list' data-testid='status-filters'>
         {[...statusFilters.entries()].map(([status, value]) => {
-          return <div className='filter-entry' key={status}>
+          return <div className='filter-entry' key={status} role='listitem'>
             <label>
               <input type='checkbox' checked={value} onClick={() => {
                 const copy = new Map(statusFilters);
@@ -72,9 +72,9 @@ export const FiltersView: React.FC<{
           </div>;
         })}
       </div>
-      <div className='filter-list'>
+      <div className='filter-list' role='list' data-testid='project-filters'>
         {[...projectFilters.entries()].map(([projectName, value]) => {
-          return <div className='filter-entry' key={projectName}>
+          return <div className='filter-entry' key={projectName}  role='listitem'>
             <label>
               <input type='checkbox' checked={value} onClick={() => {
                 const copy = new Map(projectFilters);

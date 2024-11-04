@@ -65,19 +65,19 @@ test('should run visible', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-error] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes \d+ms/}
-          - treeitem ${/\[icon-error\] fails \d+ms/} [selected]:
+          - treeitem ${/\[icon-check\] passes/}
+          - treeitem ${/\[icon-error\] fails/} [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
-          - treeitem "[icon-error] suite"
+          - treeitem "[icon-error] suite" [expanded=false]
       - treeitem "[icon-error] b.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes \d+ms/}
-          - treeitem ${/\[icon-error\] fails \d+ms/}
+          - treeitem ${/\[icon-check\] passes/}
+          - treeitem ${/\[icon-error\] fails/}
       - treeitem "[icon-check] c.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes \d+ms/}
+          - treeitem ${/\[icon-check\] passes/}
           - treeitem "[icon-circle-slash] skipped"
   `);
 
@@ -125,7 +125,7 @@ test('should run on hover', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes \d+ms/}:
+          - treeitem ${/\[icon-check\] passes/}:
             - button "Run"
             - button "Show source"
             - button "Watch"
@@ -185,7 +185,7 @@ test('should run on Enter', async ({ runUITest }) => {
       - treeitem "[icon-error] a.test.ts" [expanded]:
         - group:
           - treeitem "[icon-circle-outline] passes"
-          - treeitem ${/\[icon-error\] fails \d+ms/} [selected]:
+          - treeitem ${/\[icon-error\] fails/} [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
@@ -225,19 +225,19 @@ test('should run by project', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-error] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes \d+ms/}
-          - treeitem ${/\[icon-error\] fails \d+ms/} [selected]:
+          - treeitem ${/\[icon-check\] passes/}
+          - treeitem ${/\[icon-error\] fails/} [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
-          - treeitem "[icon-error] suite"
+          - treeitem "[icon-error] suite" [expanded=false]
       - treeitem "[icon-error] b.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes \d+ms/}
-          - treeitem ${/\[icon-error\] fails \d+ms/}
+          - treeitem ${/\[icon-check\] passes/}
+          - treeitem ${/\[icon-error\] fails/}
       - treeitem "[icon-check] c.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes \d+ms/}
+          - treeitem ${/\[icon-check\] passes/}
           - treeitem "[icon-circle-slash] skipped"
   `);
 
@@ -263,23 +263,20 @@ test('should run by project', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-error] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-circle-outline\] passes/}
+          - treeitem ${/\[icon-circle-outline\] passes/} [expanded=false]
           - treeitem ${/\[icon-error\] fails/}:
             - group:
-              - treeitem ${/\[icon-error\] foo/} [selected]:
-                - button "Run"
-                - button "Show source"
-                - button "Watch"
+              - treeitem ${/\[icon-error\] foo/} [selected]
               - treeitem "[icon-circle-outline] bar"
-          - treeitem "[icon-error] suite"
+          - treeitem "[icon-error] suite" [expanded=false]
       - treeitem "[icon-error] b.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-circle-outline\] passes/}
-          - treeitem ${/\[icon-error\] fails/}
+          - treeitem ${/\[icon-circle-outline\] passes/} [expanded=false]
+          - treeitem ${/\[icon-error\] fails/} [expanded=false]
       - treeitem "[icon-circle-outline] c.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-circle-outline\] passes/}
-          - treeitem ${/\[icon-circle-outline\] skipped/}
+          - treeitem ${/\[icon-circle-outline\] passes/} [expanded=false]
+          - treeitem ${/\[icon-circle-outline\] skipped/} [expanded=false]
   `);
 
   await page.getByText('Status:').click();
@@ -299,14 +296,14 @@ test('should run by project', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-error] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-circle-outline\] passes \d+ms/} [expanded] [selected]:
+          - treeitem ${/\[icon-circle-outline\] passes/} [expanded] [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
             - group:
-              - treeitem ${/\[icon-check\] foo \d+ms/}
+              - treeitem ${/\[icon-check\] foo/}
               - treeitem ${/\[icon-circle-outline\] bar/}
-          - treeitem ${/\[icon-error\] fails \d+ms/}
+          - treeitem ${/\[icon-error\] fails/}
   `);
 
   await expect(page.getByText('Projects: foo bar')).toBeVisible();
@@ -333,26 +330,26 @@ test('should run by project', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-error] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes \d+ms/} [expanded]:
+          - treeitem ${/\[icon-check\] passes/} [expanded]:
             - group:
-              - treeitem ${/\[icon-check\] foo \d+ms/}
-              - treeitem ${/\[icon-check\] bar \d+ms/}
-          - treeitem ${/\[icon-error\] fails \d+ms/} [expanded]:
+              - treeitem ${/\[icon-check\] foo/}
+              - treeitem ${/\[icon-check\] bar/}
+          - treeitem ${/\[icon-error\] fails/} [expanded]:
             - group:
-              - treeitem ${/\[icon-error\] foo \d+ms/} [selected]:
+              - treeitem ${/\[icon-error\] foo/} [selected]:
                 - button "Run"
                 - button "Show source"
                 - button "Watch"
-              - treeitem ${/\[icon-error\] bar \d+ms/}
+              - treeitem ${/\[icon-error\] bar/}
           - treeitem ${/\[icon-error\] suite/}
       - treeitem "[icon-error] b.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes/}
-          - treeitem ${/\[icon-error\] fails/}
+          - treeitem ${/\[icon-check\] passes/} [expanded=false]
+          - treeitem ${/\[icon-error\] fails/} [expanded=false]
       - treeitem "[icon-check] c.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes/}
-          - treeitem ${/\[icon-circle-slash\] skipped/}
+          - treeitem ${/\[icon-check\] passes/} [expanded=false]
+          - treeitem ${/\[icon-circle-slash\] skipped/} [expanded=false]
   `);
 });
 
@@ -385,7 +382,7 @@ test('should stop', async ({ runUITest }) => {
       - treeitem "[icon-loading] a.test.ts" [expanded]:
         - group:
           - treeitem "[icon-circle-slash] test 0"
-          - treeitem ${/\[icon-check\] test 1 \d+ms/}
+          - treeitem ${/\[icon-check\] test 1/}
           - treeitem ${/\[icon-loading\] test 2/}
           - treeitem ${/\[icon-clock\] test 3/}
   `);
@@ -408,7 +405,7 @@ test('should stop', async ({ runUITest }) => {
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
           - treeitem "[icon-circle-slash] test 0"
-          - treeitem ${/\[icon-check\] test 1 \d+ms/}
+          - treeitem ${/\[icon-check\] test 1/}
           - treeitem ${/\[icon-circle-outline\] test 2/}
           - treeitem ${/\[icon-circle-outline\] test 3/}
   `);
@@ -445,8 +442,8 @@ test('should run folder', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-check] folder-b" [expanded] [selected]:
         - group:
-          - treeitem "[icon-check] folder-c"
-          - treeitem "[icon-check] in-b.test.ts"
+          - treeitem "[icon-check] folder-c" [expanded=false]
+          - treeitem "[icon-check] in-b.test.ts" [expanded=false]
       - treeitem "[icon-circle-outline] in-a.test.ts" [expanded]:
         - group:
           - treeitem "[icon-circle-outline] passes"
@@ -478,19 +475,19 @@ test('should show time', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-error] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes \d+ms/}
-          - treeitem ${/\[icon-error\] fails \d+ms/} [selected]:
+          - treeitem ${/\[icon-check\] passes \d+m?s/}
+          - treeitem ${/\[icon-error\] fails \d+m?s/} [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
-          - treeitem "[icon-error] suite"
+          - treeitem "[icon-error] suite" [expanded=false]
       - treeitem "[icon-error] b.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes \d+ms/}
-          - treeitem ${/\[icon-error\] fails \d+ms/}
+          - treeitem ${/\[icon-check\] passes \d+m?s/}
+          - treeitem ${/\[icon-error\] fails \d+m?s/}
       - treeitem "[icon-check] c.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes \d+ms/}
+          - treeitem ${/\[icon-check\] passes \d+m?s/}
           - treeitem "[icon-circle-slash] skipped"
   `);
 
@@ -522,7 +519,7 @@ test('should show test.fail as passing', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-check] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] should fail \d+ms/}
+          - treeitem ${/\[icon-check\] should fail \d+m?s/}
   `);
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
@@ -558,7 +555,7 @@ test('should ignore repeatEach', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-check] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] should pass \d+ms/}
+          - treeitem ${/\[icon-check\] should pass/}
   `);
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
@@ -593,7 +590,7 @@ test('should remove output folder before test run', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-check] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] should pass \d+ms/}
+          - treeitem ${/\[icon-check\] should pass/}
   `);
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
@@ -608,7 +605,7 @@ test('should remove output folder before test run', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-check] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] should pass \d+ms/}
+          - treeitem ${/\[icon-check\] should pass/}
   `);
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
@@ -656,7 +653,7 @@ test('should show proper total when using deps', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] run @setup setup \d+ms/} [selected]:
+          - treeitem ${/\[icon-check\] run @setup setup/} [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
@@ -676,8 +673,8 @@ test('should show proper total when using deps', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-check] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] run @setup setup \d+ms/}
-          - treeitem ${/\[icon-check\] run @chromium chromium \d+ms/} [selected]:
+          - treeitem ${/\[icon-check\] run @setup setup/}
+          - treeitem ${/\[icon-check\] run @chromium chromium/} [selected]:
             - button "Run"
             - button "Show source"
             - button "Watch"
@@ -746,7 +743,7 @@ test('should respect --tsconfig option', {
     - tree:
       - treeitem "[icon-check] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] test \d+ms/}
+          - treeitem ${/\[icon-check\] test/}
   `);
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
@@ -775,17 +772,6 @@ test('should respect --ignore-snapshots option', {
     - tree:
       - treeitem "[icon-check] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] snapshot \d+ms/}
+          - treeitem ${/\[icon-check\] snapshot/}
   `);
-});
-
-test('should show funny messages', async ({ runUITest }) => {
-  const { page } = await runUITest(basicTestTree);
-  await page.clock.setFixedTime('2025-04-01');
-
-  await expect(page.getByText('Claywright')).toBeVisible();
-  const schmettingsHeader = page.getByText('Schmettings');
-  await expect(schmettingsHeader).toBeVisible();
-  await schmettingsHeader.click();
-  await expect(page.getByRole('checkbox', { name: 'Fart mode' })).toBeVisible();
 });

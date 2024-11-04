@@ -212,10 +212,10 @@ export class InjectedScript {
     return new Set<Element>(result.map(r => r.element));
   }
 
-  ariaSnapshot(node: Node): string {
+  ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex' }): string {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
-    return renderedAriaTree(node as Element);
+    return renderedAriaTree(node as Element, options);
   }
 
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {

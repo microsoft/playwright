@@ -27,6 +27,7 @@ import { ReportView } from './reportView';
 const zipjs = zipImport as typeof zip;
 
 import logo from '@web/assets/playwright-logo.svg';
+import { SearchParamsProvider } from './links';
 const link = document.createElement('link');
 link.rel = 'shortcut icon';
 link.href = logo;
@@ -40,7 +41,9 @@ const ReportLoader: React.FC = () => {
     const zipReport = new ZipReport();
     zipReport.load().then(() => setReport(zipReport));
   }, [report]);
-  return <ReportView report={report}></ReportView>;
+  return <SearchParamsProvider>
+    <ReportView report={report} />
+  </SearchParamsProvider>;
 };
 
 window.onload = () => {
