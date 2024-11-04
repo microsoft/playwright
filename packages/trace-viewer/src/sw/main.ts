@@ -54,6 +54,8 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
     const backend = traceUrl.endsWith('json') ? new FetchTraceModelBackend(traceUrl) : new ZipTraceModelBackend(traceUrl, fetchProgress);
     await traceModel.load(backend, unzipProgress);
   } catch (error: any) {
+    if (error?.message === 'trace not found')
+      throw error;
     // eslint-disable-next-line no-console
     console.error(error);
     if (error?.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html'))
@@ -106,6 +108,8 @@ async function doFetch(event: FetchEvent): Promise<Response> {
           headers: { 'Content-Type': 'application/json' }
         });
       } catch (error: any) {
+        if (error?.message === 'trace not found')
+          return new Response(null, { status: 404 });
         return new Response(JSON.stringify({ error: error?.message }), {
           status: 500,
           headers: { 'Content-Type': 'application/json' }

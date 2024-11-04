@@ -33,7 +33,6 @@ export const TraceView: React.FC<{
   pathSeparator: string,
 }> = ({ item, rootDir, onOpenExternally, revealSource, pathSeparator }) => {
   const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean } | undefined>();
-  const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
 
   const { outputDir } = React.useMemo(() => {
@@ -54,7 +53,10 @@ export const TraceView: React.FC<{
     // Test finished.
     const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
-      loadSingleTraceFile(attachment.path).then(model => setModel({ model, isLive: false }));
+      loadSingleTraceFile(attachment.path).then(model => {
+        if (model)
+          setModel({ model, isLive: false });
+      });
       return;
     }
 
@@ -73,18 +75,17 @@ export const TraceView: React.FC<{
     pollTimer.current = setTimeout(async () => {
       try {
         const model = await loadSingleTraceFile(traceLocation);
-        setModel({ model, isLive: true });
+        if (model)
+          setModel({ model, isLive: true });
       } catch {
         setModel(undefined);
-      } finally {
-        setCounter(counter + 1);
       }
     }, 500);
     return () => {
       if (pollTimer.current)
         clearTimeout(pollTimer.current);
     };
-  }, [outputDir, item, setModel, counter, setCounter, pathSeparator]);
+  }, [outputDir, item, setModel, pathSeparator]);
 
   return <Workbench
     key='workbench'
@@ -108,11 +109,13 @@ const outputDirForTestCase = (testCase: reporterTypes.TestCase): string | undefi
   return undefined;
 };
 
-async function loadSingleTraceFile(url: string): Promise<MultiTraceModel> {
+async function loadSingleTraceFile(url: string): Promise<MultiTraceModel | undefined> {
   const params = new URLSearchParams();
   params.set('trace', url);
   params.set('limit', '1');
   const response = await fetch(`contexts?${params.toString()}`);
+  if (response.status === 404)
+    return;
   const contextEntries = await response.json() as ContextEntry[];
   return new MultiTraceModel(contextEntries);
 }

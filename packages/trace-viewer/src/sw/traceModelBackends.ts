@@ -88,7 +88,10 @@ export class FetchTraceModelBackend implements TraceModelBackend {
   constructor(traceURL: string) {
     this._traceURL = traceURL;
     this._entriesPromise = fetch('/trace/file?path=' + encodeURIComponent(traceURL)).then(async response => {
-      const json = JSON.parse(await response.text());
+      if (response.status === 404)
+        throw new Error(`trace not found`);
+
+      const json = await response.json();
       const entries = new Map<string, string>();
       for (const entry of json.entries)
         entries.set(entry.name, entry.path);
