@@ -1208,6 +1208,7 @@ BrowserContext:
         device: string?
         saveStorage: string?
         outputFile: string?
+        handleSIGINT: boolean?
         omitCallTracking: boolean?
 
     newCDPSession:
@@ -1481,7 +1482,7 @@ Page:
     expectScreenshot:
       parameters:
         expected: binary?
-        timeout: number?
+        timeout: number
         isNot: boolean
         locator:
           type: object?
@@ -1500,6 +1501,7 @@ Page:
         errorMessage: string?
         actual: binary?
         previous: binary?
+        timedOut: boolean?
         log:
           type: array?
           items: string
@@ -2386,7 +2388,7 @@ Frame:
         expectedValue: SerializedArgument?
         useInnerText: boolean?
         isNot: boolean
-        timeout: number?
+        timeout: number
       returns:
         matches: boolean
         received: SerializedValue?

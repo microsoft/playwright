@@ -111,7 +111,7 @@ export const SourceTab: React.FunctionComponent<{
         <CopyToClipboard description='Copy filename' value={shortFileName}/>
         {location && <ToolbarButton icon='link-external' title='Open in VS Code' onClick={openExternally}></ToolbarButton>}
       </Toolbar> }
-      <CodeMirrorWrapper text={source.content || ''} language='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} />
+      <CodeMirrorWrapper text={source.content || ''} language='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} dataTestId='source-code-mirror'/>
     </div>}
     sidebar={<StackTraceView stack={stack} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame} />}
   />;

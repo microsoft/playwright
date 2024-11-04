@@ -43,12 +43,8 @@ import type { StackFrame } from '@protocol/channels';
 
 const StackUtils: typeof import('../bundles/utils/node_modules/@types/stack-utils') = require('./utilsBundleImpl').StackUtils;
 const stackUtils = new StackUtils({ internals: StackUtils.nodeInternals() });
-const nodeInternals = StackUtils.nodeInternals();
-const nodeMajorVersion = +process.versions.node.split('.')[0];
 
 export function parseStackTraceLine(line: string): StackFrame | null {
-  if (!process.env.PWDEBUGIMPL && nodeMajorVersion < 16 && nodeInternals.some(internal => internal.test(line)))
-    return null;
   const frame = stackUtils.parseLine(line);
   if (!frame)
     return null;

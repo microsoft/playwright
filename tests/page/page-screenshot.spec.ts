@@ -286,7 +286,7 @@ it.describe('page screenshot', () => {
     await page.goto(server.PREFIX + '/screenshots/canvas.html');
     const screenshot = await page.screenshot();
     if ((!headless && browserName === 'chromium' && isMac && os.arch() === 'arm64' && macVersion >= 14) ||
-        (browserName === 'webkit' && isLinux))
+        (browserName === 'webkit' && isLinux && os.arch() === 'x64'))
       expect(screenshot).toMatchSnapshot('screenshot-canvas-with-accurate-corners.png');
     else
       expect(screenshot).toMatchSnapshot('screenshot-canvas.png');

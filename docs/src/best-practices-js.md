@@ -90,7 +90,7 @@ await page
 
 #### Prefer user-facing attributes to XPath or CSS selectors
 
-Your DOM can easily change so having your tests depend on your DOM structure can lead to failing tests. For example consider selecting this button by its CSS classes. Should the designer change something then the class might change breaking your test.
+Your DOM can easily change so having your tests depend on your DOM structure can lead to failing tests. For example consider selecting this button by its CSS classes. Should the designer change something then the class might change, thus breaking your test.
 
 
 ```js

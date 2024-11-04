@@ -232,7 +232,8 @@ it('should click a button when it overlays oopif', async function({ page, browse
   expect(await page.evaluate(() => (window as any)['BUTTON_CLICKED'])).toBe(true);
 });
 
-it('should report google.com frame with headed', async ({ browserType, server }) => {
+it('should report google.com frame with headed', async ({ browserType, server, channel }) => {
+  it.skip(channel === 'chromium-headless-shell', 'Headless Shell does not support headed mode');
   // @see https://github.com/GoogleChrome/puppeteer/issues/2548
   // https://google.com is isolated by default in Chromium embedder.
   const browser = await browserType.launch({ headless: false });

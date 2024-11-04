@@ -61,7 +61,7 @@ import {
 } from '../common/expectBundle';
 import { zones } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from '../worker/testInfo';
-import { ExpectError, isExpectError } from './matcherHint';
+import { ExpectError, isJestError } from './matcherHint';
 import { toMatchAriaSnapshot } from './toMatchAriaSnapshot';
 
 // #region
@@ -323,8 +323,13 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
       const step = testInfo._addStep(stepInfo);
 
-      const reportStepError = (jestError: Error | unknown) => {
-        const error = isExpectError(jestError) ? new ExpectError(jestError, customMessage, stackFrames) : jestError;
+      const reportStepError = (e: Error | unknown) => {
+        const jestError = isJestError(e) ? e : null;
+        const error = jestError ? new ExpectError(jestError, customMessage, stackFrames) : e;
+        if (jestError?.matcherResult.suggestedRebaseline) {
+          step.complete({ suggestedRebaseline: jestError?.matcherResult.suggestedRebaseline });
+          return;
+        }
         step.complete({ error });
         if (this._info.isSoft)
           testInfo._failWithError(error);

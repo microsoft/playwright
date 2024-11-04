@@ -215,7 +215,6 @@ export function setTransformData(pluginName: string, value: any) {
 }
 
 export function transformHook(originalCode: string, filename: string, moduleUrl?: string): { code: string, serializedCache?: any } {
-  const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx') || filename.endsWith('.mts') || filename.endsWith('.cts');
   const hasPreprocessor =
       process.env.PW_TEST_SOURCE_TRANSFORM &&
       process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
@@ -233,7 +232,7 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
 
   const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
   transformData = new Map<string, any>();
-  const { code, map } = babelTransform(originalCode, filename, isTypeScript, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  const { code, map } = babelTransform(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
   if (!code)
     return { code: '', serializedCache };
   const added = addToCache!(code, map, transformData);

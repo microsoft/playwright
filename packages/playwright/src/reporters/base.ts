@@ -18,6 +18,7 @@ import { colors as realColors, ms as milliseconds, parseStackTraceLine } from 'p
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
 import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
+import { getEastAsianWidth } from '../utilsBundle';
 import type { ReporterV2 } from './reporterV2';
 import { resolveReporterOutputPath } from '../util';
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
@@ -26,13 +27,6 @@ export const kOutputSymbol = Symbol('output');
 type ErrorDetails = {
   message: string;
   location?: Location;
-  timeout?: number;
-  matcherName?: string;
-  locator?: string;
-  expected?: string;
-  received?: string;
-  log?: string[];
-  snippet?: string;
 };
 
 type TestSummary = {
@@ -362,13 +356,6 @@ export function formatResultFailure(test: TestCase, result: TestResult, initialI
     errorDetails.push({
       message: indent(formattedError.message, initialIndent),
       location: formattedError.location,
-      timeout: error.timeout,
-      matcherName: error.matcherName,
-      locator: error.locator,
-      expected: error.expected,
-      received: error.received,
-      log: error.log,
-      snippet: error.snippet,
     });
   }
   return errorDetails;
@@ -448,14 +435,15 @@ export function formatError(error: TestError, highlightCode: boolean): ErrorDeta
     tokens.push(snippet);
   }
 
-  if (parsedStack && parsedStack.stackLines.length) {
-    tokens.push('');
+  if (parsedStack && parsedStack.stackLines.length)
     tokens.push(colors.dim(parsedStack.stackLines.join('\n')));
-  }
 
   let location = error.location;
   if (parsedStack && !location)
     location = parsedStack.location;
+
+  if (error.cause)
+    tokens.push(colors.dim('[cause]: ') + formatError(error.cause, highlightCode).message);
 
   return {
     location,
@@ -503,11 +491,35 @@ export function stripAnsiEscapes(str: string): string {
   return str.replace(ansiRegex, '');
 }
 
+function characterWidth(c: string) {
+  return getEastAsianWidth.eastAsianWidth(c.codePointAt(0)!);
+}
+
+function stringWidth(v: string) {
+  let width = 0;
+  for (const { segment } of new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(v))
+    width += characterWidth(segment);
+  return width;
+}
+
+function suffixOfWidth(v: string, width: number) {
+  const segments = [...new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(v)];
+  let suffixBegin = v.length;
+  for (const { segment, index } of segments.reverse()) {
+    const segmentWidth = stringWidth(segment);
+    if (segmentWidth > width)
+      break;
+    width -= segmentWidth;
+    suffixBegin = index;
+  }
+  return v.substring(suffixBegin);
+}
+
 // Leaves enough space for the "prefix" to also fit.
-function fitToWidth(line: string, width: number, prefix?: string): string {
+export function fitToWidth(line: string, width: number, prefix?: string): string {
   const prefixLength = prefix ? stripAnsiEscapes(prefix).length : 0;
   width -= prefixLength;
-  if (line.length <= width)
+  if (stringWidth(line) <= width)
     return line;
 
   // Even items are plain text, odd items are control sequences.
@@ -518,13 +530,14 @@ function fitToWidth(line: string, width: number, prefix?: string): string {
       // Include all control sequences to preserve formatting.
       taken.push(parts[i]);
     } else {
-      let part = parts[i].substring(parts[i].length - width);
-      if (part.length < parts[i].length && part.length > 0) {
+      let part = suffixOfWidth(parts[i], width);
+      const wasTruncated = part.length < parts[i].length;
+      if (wasTruncated && parts[i].length > 0) {
         // Add ellipsis if we are truncating.
-        part = '\u2026' + part.substring(1);
+        part = '\u2026' + suffixOfWidth(parts[i], width - 1);
       }
       taken.push(part);
-      width -= part.length;
+      width -= stringWidth(part);
     }
   }
   return taken.reverse().join('');

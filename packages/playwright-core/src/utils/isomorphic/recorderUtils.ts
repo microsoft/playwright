@@ -22,6 +22,8 @@ export function buildFullSelector(framePath: string[], selector: string) {
   return [...framePath, selector].join(' >> internal:control=enter-frame >> ');
 }
 
+const kDefaultTimeout = 5_000;
+
 export function traceParamsForAction(actionInContext: recorderActions.ActionInContext): { method: string, params: any } {
   const { action } = actionInContext;
 
@@ -101,6 +103,7 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
         selector: action.selector,
         expression: 'to.be.checked',
         isNot: !action.checked,
+        timeout: kDefaultTimeout,
       };
       return { method: 'expect', params };
     }
@@ -110,6 +113,7 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
         expression: 'to.have.text',
         expectedText: [],
         isNot: false,
+        timeout: kDefaultTimeout,
       };
       return { method: 'expect', params };
     }
@@ -119,6 +123,7 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
         expression: 'to.have.value',
         expectedValue: undefined,
         isNot: false,
+        timeout: kDefaultTimeout,
       };
       return { method: 'expect', params };
     }
@@ -127,6 +132,7 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
         selector,
         expression: 'to.be.visible',
         isNot: false,
+        timeout: kDefaultTimeout,
       };
       return { method: 'expect', params };
     }
@@ -136,6 +142,7 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
         expression: 'to.match.snapshot',
         expectedText: [],
         isNot: false,
+        timeout: kDefaultTimeout,
       };
       return { method: 'expect', params };
     }

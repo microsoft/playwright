@@ -16,7 +16,7 @@
 
 .test-case-column {
   border-radius: 6px;
-  margin: 24px 0;
+  margin: 12px 0 24px 0;
 }
 
 .test-case-column .tab-element.selected {
