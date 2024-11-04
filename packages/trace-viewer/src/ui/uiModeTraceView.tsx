@@ -118,6 +118,7 @@ async function loadSingleTraceFile(traceURL: URL): Promise<MultiTraceModel> {
 }
 
 function formatUrl(traceURL: URL) {
+  // Dropbox does not support cors.
   if (traceURL.hostname === 'dropbox.com')
     traceURL.hostname = 'dl.dropboxusercontent.com';
 
