@@ -30,9 +30,8 @@ export class ZipTraceModelBackend implements TraceModelBackend {
 
   constructor(traceURL: string, progress: Progress) {
     this._traceURL = traceURL;
-    zipjs.configure({ baseURL: self.location.href } as any);
     this._zipReader = new zipjs.ZipReader(
-        new zipjs.HttpReader(formatUrl(traceURL), { mode: 'cors', preventHeadRequest: true } as any),
+        new zipjs.HttpReader(traceURL, { mode: 'cors', preventHeadRequest: true } as any),
         { useWebWorkers: false });
     this._entriesPromise = this._zipReader.getEntries({ onprogress: progress }).then(entries => {
       const map = new Map<string, zip.Entry>();
@@ -87,8 +86,8 @@ export class FetchTraceModelBackend implements TraceModelBackend {
 
   constructor(traceURL: string) {
     this._traceURL = traceURL;
-    this._entriesPromise = fetch('/trace/file?path=' + encodeURIComponent(traceURL)).then(async response => {
-      const json = JSON.parse(await response.text());
+    this._entriesPromise = fetch(traceURL).then(async response => {
+      const json = await response.json();
       const entries = new Map<string, string>();
       for (const entry of json.entries)
         entries.set(entry.name, entry.path);
@@ -126,17 +125,12 @@ export class FetchTraceModelBackend implements TraceModelBackend {
 
   private async _readEntry(entryName: string): Promise<Response | undefined> {
     const entries = await this._entriesPromise;
-    const fileName = entries.get(entryName);
-    if (!fileName)
+    const filePath = entries.get(entryName);
+    if (!filePath)
       return;
-    return fetch('/trace/file?path=' + encodeURIComponent(fileName));
-  }
-}
 
-function formatUrl(trace: string) {
-  let url = trace.startsWith('http') || trace.startsWith('blob') ? trace : `file?path=${encodeURIComponent(trace)}`;
-  // Dropbox does not support cors.
-  if (url.startsWith('https://www.dropbox.com/'))
-    url = 'https://dl.dropboxusercontent.com/' + url.substring('https://www.dropbox.com/'.length);
-  return url;
+    const url = new URL(this.traceURL());
+    url.searchParams.set('path', filePath);
+    return fetch(url);
+  }
 }
