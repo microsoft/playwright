@@ -126,11 +126,7 @@ for (const browserName of browserNames) {
     metadata: {
       platform: process.platform,
       docker: !!process.env.INSIDE_DOCKER,
-      headless: (() => {
-        if (headed)
-          return 'headed';
-        return 'headless';
-      })(),
+      headless: headed ? 'headed' : 'headless',
       browserName,
       channel,
       mode,

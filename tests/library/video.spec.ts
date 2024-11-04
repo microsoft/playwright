@@ -474,8 +474,8 @@ it.describe('screencast', () => {
   });
 
   it('should scale frames down to the requested size ', async ({ browser, browserName, server, headless, channel }, testInfo) => {
-    const isChromiumHeadlessNew = browserName === 'chromium' && channel !== 'chromium-headless-shell';
-    it.fixme(!headless || isChromiumHeadlessNew, 'Fails on headed');
+    it.fixme(!headless, 'Fails on headed');
+    it.fixme(browserName === 'chromium' && channel !== 'chromium-headless-shell', 'Fails on Chromiums');
 
     const context = await browser.newContext({
       recordVideo: {
@@ -796,8 +796,8 @@ it.describe('screencast', () => {
 
   it('should work with video+trace', async ({ browser, trace, headless, browserName, channel }, testInfo) => {
     it.skip(trace === 'on');
-    const isChromiumHeadlessNew = browserName === 'chromium' && channel !== 'chromium-headless-shell';
-    it.fixme(!headless || isChromiumHeadlessNew, 'different trace screencast image size on all browsers');
+    it.fixme(!headless, 'different trace screencast image size on all browsers');
+    it.fixme(browserName === 'chromium' && channel !== 'chromium-headless-shell', 'different trace screencast image size on Chromium');
 
     const size = { width: 500, height: 400 };
     const traceFile = testInfo.outputPath('trace.zip');
