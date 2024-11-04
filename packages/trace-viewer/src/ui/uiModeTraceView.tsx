@@ -53,7 +53,7 @@ export const TraceView: React.FC<{
     // Test finished.
     const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
-      loadSingleTraceFile(attachment.path).then(model => {
+      loadSingleTraceFile(filePathToTraceURL(attachment.path)).then(model => {
         if (model)
           setModel({ model, isLive: false });
       });
@@ -74,7 +74,7 @@ export const TraceView: React.FC<{
     // Start polling running test.
     pollTimer.current = setTimeout(async () => {
       try {
-        const model = await loadSingleTraceFile(traceLocation);
+        const model = await loadSingleTraceFile(filePathToTraceURL(traceLocation));
         if (model)
           setModel({ model, isLive: true });
       } catch {
@@ -109,13 +109,27 @@ const outputDirForTestCase = (testCase: reporterTypes.TestCase): string | undefi
   return undefined;
 };
 
-async function loadSingleTraceFile(url: string): Promise<MultiTraceModel | undefined> {
+async function loadSingleTraceFile(traceURL: URL): Promise<MultiTraceModel | undefined> {
   const params = new URLSearchParams();
-  params.set('trace', url);
+  params.set('trace', formatUrl(traceURL).toString());
   params.set('limit', '1');
   const response = await fetch(`contexts?${params.toString()}`);
   if (response.status === 404)
     return;
   const contextEntries = await response.json() as ContextEntry[];
   return new MultiTraceModel(contextEntries);
+}
+
+function formatUrl(traceURL: URL) {
+  // Dropbox does not support cors.
+  if (traceURL.hostname === 'dropbox.com')
+    traceURL.hostname = 'dl.dropboxusercontent.com';
+
+  return traceURL;
+}
+
+export function filePathToTraceURL(path: string) {
+  const url = new URL('file', location.href);
+  url.searchParams.set('path', path);
+  return url;
 }

@@ -23,8 +23,7 @@ browserTest.describe('page screenshot', () => {
   browserTest.skip(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
 
   browserTest('should run in parallel in multiple pages', async ({ server, contextFactory, browserName, channel }) => {
-    // TODO: We want to see test results
-    // browserTest.fixme(browserName === 'chromium' && channel !== 'chromium-headless-shell', 'https://github.com/microsoft/playwright/issues/33330');
+    browserTest.fixme(browserName === 'chromium' && channel !== 'chromium-headless-shell', 'https://github.com/microsoft/playwright/issues/33330');
     const context = await contextFactory();
     const N = 5;
     const pages = await Promise.all(Array(N).fill(0).map(async () => {

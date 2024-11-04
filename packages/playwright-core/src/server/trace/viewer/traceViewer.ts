@@ -106,8 +106,17 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
   const params = new URLSearchParams();
   if (path.sep !== path.posix.sep)
     params.set('pathSeparator', path.sep);
-  for (const traceUrl of traceUrls)
-    params.append('trace', traceUrl);
+  for (const traceUrl of traceUrls) {
+    if (traceUrl.startsWith('http://') || traceUrl.startsWith('https://')) {
+      params.append('trace', traceUrl);
+      continue;
+    }
+
+    // <testServerOrigin>/trace/file?path=/path/to/trace.zip
+    const url = new URL('/trace/file', server.urlPrefix('precise'));
+    url.searchParams.set('path', traceUrl);
+    params.append('trace', url.toString());
+  }
   if (server.wsGuid())
     params.append('ws', server.wsGuid()!);
   if (options?.isServer)
