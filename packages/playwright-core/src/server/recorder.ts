@@ -148,12 +148,12 @@ export class Recorder implements InstrumentationListener, IRecorder {
       this._pushAllSources();
     });
 
-    await this._context.exposeBinding('__pw_recorderState', false, source => {
+    await this._context.exposeBinding('__pw_recorderState', false, async source => {
       let actionSelector = '';
       let actionPoint: Point | undefined;
       const hasActiveScreenshotCommand = [...this._currentCallsMetadata.keys()].some(isScreenshotCommand);
       if (!hasActiveScreenshotCommand) {
-        actionSelector = this._scopeHighlightedSelectorToFrame(source.frame);
+        actionSelector = await this._scopeHighlightedSelectorToFrame(source.frame);
         for (const [metadata, sdkObject] of this._currentCallsMetadata) {
           if (source.page === sdkObject.attribution.page) {
             actionPoint = metadata.point || actionPoint;
@@ -245,15 +245,27 @@ export class Recorder implements InstrumentationListener, IRecorder {
     this._refreshOverlay();
   }
 
-  private _scopeHighlightedSelectorToFrame(frame: Frame): string  {
-    if (this._highlightedSelector === '')
+  private async _scopeHighlightedSelectorToFrame(frame: Frame): Promise<string> {
+    try {
+      const mainFrame = frame._page.mainFrame();
+      const resolved = await mainFrame.selectors.resolveFrameForSelector(this._highlightedSelector);
+      // selector couldn't be found, don't highlight anything
+      if (!resolved)
+        return '';
+
+      // selector points to no specific frame, highlight in all frames
+      if (resolved?.frame === mainFrame)
+        return stringifySelector(resolved.info.parsed);
+
+      // selector points to this frame, highlight it
+      if (resolved?.frame === frame)
+        return stringifySelector(resolved.info.parsed);
+
+      // selector points to a different frame, highlight nothing
       return '';
-    const parts = splitSelectorByFrame(this._highlightedSelector);
-    const selectorDepth = parts.length - 1;
-    const frameDepth = frame.depth();
-    if (frameDepth < selectorDepth)
+    } catch {
       return '';
-    return stringifySelector(parts[parts.length - 1]);
+    }
   }
 
   setOutput(codegenId: string, outputFile: string | undefined) {
