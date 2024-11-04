@@ -55,7 +55,7 @@ class JSCodeGen implements APIRequestCodegen {
     // Handle primitive types
     if (typeof obj !== 'object') {
       if (typeof obj === 'string')
-        return `'${obj}'`;
+        return this.stringLiteral(obj);
       return String(obj);
     }
 
@@ -84,11 +84,16 @@ class JSCodeGen implements APIRequestCodegen {
       // Handle keys that need quotes
       const formattedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ?
         key :
-        `'${key}'`;
+        this.stringLiteral(key);
       return `${nextSpaces}${formattedKey}: ${formattedValue}`;
     }).join(',\n');
 
     return `{\n${entries}\n${spaces}}`;
+  }
+
+  private stringLiteral(v: string): string {
+    v = v.replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
+    return `'${v}'`;
   }
 }
 
@@ -130,7 +135,7 @@ class PythonCodeGen implements APIRequestCodegen {
     // Handle primitive types
     if (typeof obj !== 'object') {
       if (typeof obj === 'string')
-        return `"${obj.replaceAll('"', '\\"')}"`;
+        return this.stringLiteral(obj);
       if (typeof obj === 'boolean')
         return obj ? 'True' : 'False';
       return String(obj);
@@ -158,10 +163,15 @@ class PythonCodeGen implements APIRequestCodegen {
 
     const entries = Object.entries(obj).map(([key, value]) => {
       const formattedValue = this.prettyPrintObject(value, indent, level + 1);
-      return `${nextSpaces}"${key}": ${formattedValue}`;
+      return `${nextSpaces}${this.stringLiteral(key)}: ${formattedValue}`;
     }).join(',\n');
 
     return `{\n${entries}\n${spaces}}`;
+  }
+
+  private stringLiteral(v: string): string {
+    v = v.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return `"${v}"`;
   }
 }
 
@@ -198,10 +208,6 @@ class CSharpCodeGen implements APIRequestCodegen {
     return method[0].toUpperCase() + method.slice(1) + 'Async';
   }
 
-  private indent(v: string, level: number): string {
-    return v.split('\n').map(s => ' '.repeat(level) + s).join('\n');
-  }
-
   private prettyPrintObject(obj: any, indent = 2, level = 0): string {
     // Handle null and undefined
     if (obj === null)
@@ -212,7 +218,7 @@ class CSharpCodeGen implements APIRequestCodegen {
     // Handle primitive types
     if (typeof obj !== 'object') {
       if (typeof obj === 'string')
-        return `"${obj.replace(/"/g, '\\"')}"`;
+        return this.stringLiteral(obj);
       if (typeof obj === 'boolean')
         return obj ? 'true' : 'false';
       return String(obj);
@@ -240,11 +246,17 @@ class CSharpCodeGen implements APIRequestCodegen {
 
     const entries = Object.entries(obj).map(([key, value]) => {
       const formattedValue = this.prettyPrintObject(value, indent, level + 1);
-      const formattedKey = level === 0 ? key : `["${key}"]`;
+      const formattedKey = level === 0 ? key : `[${this.stringLiteral(key)}]`;
       return `${nextSpaces}${formattedKey} = ${formattedValue}`;
     }).join(',\n');
 
     return `new() {\n${entries}\n${spaces}}`;
+  }
+
+  private stringLiteral(v: string): string {
+    // escape douvle quotes and backslashes
+    v = v.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return `"${v}"`;
   }
 }
 
@@ -262,15 +274,21 @@ class JavaCodeGen implements APIRequestCodegen {
     }
 
     for (const [key, value] of url.searchParams)
-      options.push(`setQueryParam("${key}", "${value}")`);
+      options.push(`setQueryParam(${this.stringLiteral(key)}, ${this.stringLiteral(value)})`);
     if (body)
-      options.push(`setData("${body.replaceAll('"', '\\"')}")`);
+      options.push(`setData(${this.stringLiteral(body)})`);
     for (const header of request.headers)
-      options.push(`setHeader("${header.name}", "${header.value}")`);
+      options.push(`setHeader(${this.stringLiteral(header.name)}, ${this.stringLiteral(header.value)})`);
 
     if (options.length > 0)
       params.push(`RequestOptions.create()\n  .${options.join('\n  .')}\n`);
     return `request.${method}(${params.join(', ')});`;
+  }
+
+  private stringLiteral(v: string): string {
+    // escape douvle quotes and backslashes
+    v = v.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return `"${v}"`;
   }
 }
 

@@ -201,6 +201,27 @@ await page.request.get('http://example.com/foo', {
 });`.trim());
   });
 
+  test('escape sequences', () => {
+    expect(impl.generatePlaywrightRequestCall({
+      url: 'http://example.com/foo',
+      method: 'GET',
+      headers: [
+        { name: 'F\\o', value: 'B\\r' },
+      ],
+      httpVersion: '1.1',
+      cookies: [],
+      queryString: [],
+      headersSize: 0,
+      bodySize: 0,
+      comment: '',
+    }, undefined)).toEqual(`
+await page.request.get('http://example.com/foo', {
+  headers: {
+    'F\\\\o': 'B\\\\r'
+  }
+});`.trim());
+  });
+
 });
 
 test.describe('python', () => {
@@ -394,6 +415,28 @@ await page.request.get(
 )`.trim());
   });
 
+  test('escape sequences', () => {
+    expect(impl.generatePlaywrightRequestCall({
+      url: 'http://example.com/foo',
+      method: 'GET',
+      headers: [
+        { name: 'F\\o', value: 'B\\r' },
+      ],
+      httpVersion: '1.1',
+      cookies: [],
+      queryString: [],
+      headersSize: 0,
+      bodySize: 0,
+      comment: '',
+    }, undefined)).toEqual(`
+await page.request.get(
+  "http://example.com/foo",
+  headers={
+    "F\\\\o": "B\\\\r"
+  }
+)`.trim());
+  });
+
 });
 
 test.describe('csharp', () => {
@@ -476,6 +519,27 @@ await request.PutAsync("http://example.com/foo", new() {
   Data = "{\\"key\\":\\"value\\"}",
   Headers = new() {
     ["Content-Type"] = "application/json"
+  }
+});`.trim());
+  });
+
+  test('escape sequences', () => {
+    expect(impl.generatePlaywrightRequestCall({
+      url: 'http://example.com/foo',
+      method: 'GET',
+      headers: [
+        { name: 'F\\o', value: 'B\\r' },
+      ],
+      httpVersion: '1.1',
+      cookies: [],
+      queryString: [],
+      headersSize: 0,
+      bodySize: 0,
+      comment: '',
+    }, undefined)).toEqual(`
+await request.GetAsync("http://example.com/foo", new() {
+  Headers = new() {
+    ["F\\\\o"] = "B\\\\r"
   }
 });`.trim());
   });
@@ -587,6 +651,25 @@ request.patch("http://example.com/foo", RequestOptions.create()
     }, undefined)).toEqual(`
 request.delete("http://example.com/foo", RequestOptions.create()
   .setHeader("Authorization", "Bearer token")
+);`.trim());
+  });
+
+  test('escape sequences', () => {
+    expect(impl.generatePlaywrightRequestCall({
+      url: 'http://example.com/foo',
+      method: 'GET',
+      headers: [
+        { name: 'F\\o', value: 'B\\r' },
+      ],
+      httpVersion: '1.1',
+      cookies: [],
+      queryString: [],
+      headersSize: 0,
+      bodySize: 0,
+      comment: '',
+    }, undefined)).toEqual(`
+request.get(\"http://example.com/foo\", RequestOptions.create()
+  .setHeader(\"F\\\\o\", \"B\\\\r\")
 );`.trim());
   });
 });
