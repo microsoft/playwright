@@ -35,6 +35,12 @@ export type HostPlatform = 'win64' |
                            '<unknown>';
 
 function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupportedPlatform: boolean } {
+  if (process.env.PLAYWRIGHT_HOST_PLATFORM_OVERRIDE) {
+    return {
+      hostPlatform: process.env.PLAYWRIGHT_HOST_PLATFORM_OVERRIDE as HostPlatform,
+      isOfficiallySupportedPlatform: false
+    };
+  }
   const platform = os.platform();
   if (platform === 'darwin') {
     const ver = os.release().split('.').map((a: string) => parseInt(a, 10));
