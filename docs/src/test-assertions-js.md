@@ -254,7 +254,7 @@ Note that by default `toPass` has timeout 0 and does not respect custom [expect 
 
 You can extend Playwright assertions by providing custom matchers. These matchers will be available on the `expect` object.
 
-In this example we add a custom `toHaveAmount` function. Custom matcher should return a `message` callback and a `pass` flag indicating whether the assertion passed.
+In this example we add a custom `toHaveAmount` function. Custom matcher should return a `pass` flag indicating whether the assertion passed, and a `message` callback that's used when the assertion fails.
 
 ```js title="fixtures.ts"
 import { expect as baseExpect } from '@playwright/test';
@@ -279,7 +279,7 @@ export const expect = baseExpect.extend({
       ? () => this.utils.matcherHint(assertionName, undefined, undefined, { isNot: this.isNot }) +
           '\n\n' +
           `Locator: ${locator}\n` +
-          `Expected: ${this.isNot ? 'not' : ''}${this.utils.printExpected(expected)}\n` +
+          `Expected: not ${this.utils.printExpected(expected)}\n` +
           (matcherResult ? `Received: ${this.utils.printReceived(matcherResult.actual)}` : '')
       : () =>  this.utils.matcherHint(assertionName, undefined, undefined, { isNot: this.isNot }) +
           '\n\n' +
