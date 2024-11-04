@@ -22,13 +22,13 @@ import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { generateCurlCommand, generateFetchCall } from '../third_party/devtools';
 import { CopyToClipboardTextButton } from './copyToClipboard';
-import { generatePlaywrightRequestCall } from '@isomorphic/codegen';
+import { getAPIRequestCodeGen } from './codegen';
 import type { Language } from '@isomorphic/locatorGenerators';
 
 export const NetworkResourceDetails: React.FunctionComponent<{
   resource: ResourceSnapshot;
   onClose: () => void;
-  sdkLanguage?: Language;
+  sdkLanguage: Language;
 }> = ({ resource, onClose, sdkLanguage }) => {
   const [selectedTab, setSelectedTab] = React.useState('request');
 
@@ -58,7 +58,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
 
 const RequestTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
-  sdkLanguage?: Language;
+  sdkLanguage: Language;
 }> = ({ resource, sdkLanguage }) => {
   const [requestBody, setRequestBody] = React.useState<{ text: string, mimeType?: string } | null>(null);
 
@@ -100,7 +100,7 @@ const RequestTab: React.FunctionComponent<{
     <div className='network-request-details-copy'>
       <CopyToClipboardTextButton description='Copy as cURL' value={() => generateCurlCommand(resource)} />
       <CopyToClipboardTextButton description='Copy as Fetch' value={() => generateFetchCall(resource)} />
-      {sdkLanguage === 'javascript' && <CopyToClipboardTextButton description='Copy as Playwright' value={async () => generatePlaywrightRequestCall(resource.request, requestBody?.text)} />}
+      <CopyToClipboardTextButton description='Copy as Playwright' value={async () => getAPIRequestCodeGen(sdkLanguage).generatePlaywrightRequestCall(resource.request, requestBody?.text)} />
     </div>
 
     {requestBody && <div className='network-request-details-header'>Request Body</div>}

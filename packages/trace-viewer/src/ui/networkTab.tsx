@@ -67,7 +67,7 @@ export const NetworkTab: React.FunctionComponent<{
   boundaries: Boundaries,
   networkModel: NetworkTabModel,
   onEntryHovered?: (entry: Entry | undefined) => void,
-  sdkLanguage?: Language,
+  sdkLanguage: Language,
 }> = ({ boundaries, networkModel, onEntryHovered, sdkLanguage }) => {
   const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
   const [selectedEntry, setSelectedEntry] = React.useState<RenderedEntry | undefined>(undefined);
