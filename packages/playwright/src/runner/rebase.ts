@@ -17,9 +17,10 @@
 import path from 'path';
 import fs from 'fs';
 import type { T } from '../transform/babelBundle';
-import { types, traverse, parse } from '../transform/babelBundle';
+import { types, traverse, babelParse } from '../transform/babelBundle';
 import { MultiMap } from 'playwright-core/lib/utils';
 import { generateUnifiedDiff } from 'playwright-core/lib/utils';
+import { colors } from 'playwright-core/lib/utilsBundle';
 import type { FullConfigInternal } from '../common/config';
 import { filterProjects } from './projectUtils';
 const t: typeof T = types;
@@ -45,15 +46,20 @@ export function addSuggestedRebaseline(location: Location, suggestedRebaseline: 
 export async function applySuggestedRebaselines(config: FullConfigInternal) {
   if (config.config.updateSnapshots !== 'all' && config.config.updateSnapshots !== 'missing')
     return;
+  if (!suggestedRebaselines.size)
+    return;
   const [project] = filterProjects(config.projects, config.cliProjectFilter);
   if (!project)
     return;
 
-  for (const fileName of suggestedRebaselines.keys()) {
+  const patches: string[] = [];
+  const files: string[] = [];
+
+  for (const fileName of [...suggestedRebaselines.keys()].sort()) {
     const source = await fs.promises.readFile(fileName, 'utf8');
     const lines = source.split('\n');
     const replacements = suggestedRebaselines.get(fileName);
-    const fileNode = parse(source, { sourceType: 'module' });
+    const fileNode = babelParse(source, fileName, true);
     const ranges: { start: number, end: number, oldText: string, newText: string }[] = [];
 
     traverse(fileNode, {
@@ -75,7 +81,7 @@ export async function applySuggestedRebaselines(config: FullConfigInternal) {
           if (matcher.loc!.start.column + 1 !== replacement.location.column)
             continue;
           const indent = lines[matcher.loc!.start.line - 1].match(/^\s*/)![0];
-          const newText = replacement.code.replace(/\$\{indent\}/g, indent);
+          const newText = replacement.code.replace(/\{indent\}/g, indent);
           ranges.push({ start: matcher.start!, end: node.end!, oldText: source.substring(matcher.start!, node.end!), newText });
         }
       }
@@ -87,9 +93,15 @@ export async function applySuggestedRebaselines(config: FullConfigInternal) {
       result = result.substring(0, range.start) + range.newText + result.substring(range.end);
 
     const relativeName = path.relative(process.cwd(), fileName);
-
-    const patchFile = path.join(project.project.outputDir, 'rebaselines.patch');
-    await fs.promises.mkdir(path.dirname(patchFile), { recursive: true });
-    await fs.promises.writeFile(patchFile, generateUnifiedDiff(source, result, relativeName));
+    files.push(relativeName);
+    patches.push(generateUnifiedDiff(source, result, relativeName.replace(/\\/g, '/')));
   }
+
+  const patchFile = path.join(project.project.outputDir, 'rebaselines.patch');
+  await fs.promises.mkdir(path.dirname(patchFile), { recursive: true });
+  await fs.promises.writeFile(patchFile, patches.join('\n'));
+
+  const fileList = files.map(file => '  ' + colors.dim(file)).join('\n');
+  // eslint-disable-next-line no-console
+  console.log(`New baselines created for:\n\n${fileList}\n\n  ` + colors.cyan('git apply ' + path.relative(process.cwd(), patchFile)) + '\n');
 }

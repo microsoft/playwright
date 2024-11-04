@@ -130,9 +130,8 @@ it('should be callable twice', async ({ browserType }) => {
   await browser.close();
 });
 
-it('should allow await using', async ({ browserType }) => {
-  const nodeVersion = +process.versions.node.split('.')[0];
-  it.skip(nodeVersion < 18);
+it('should allow await using', async ({ browserType, nodeVersion }) => {
+  it.skip(nodeVersion.major < 18);
 
   let b: Browser;
   let c: BrowserContext;

@@ -17,7 +17,7 @@
 import { EventEmitter } from 'events';
 import type * as channels from '@protocol/channels';
 import { findValidator, ValidationError, createMetadataValidator, type ValidatorContext } from '../../protocol/validator';
-import { LongStandingScope, assert, isUnderTest, monotonicTime, rewriteErrorMessage } from '../../utils';
+import { LongStandingScope, assert, compressCallLog, isUnderTest, monotonicTime, rewriteErrorMessage } from '../../utils';
 import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
 import type { CallMetadata } from '../instrumentation';
 import { SdkObject } from '../instrumentation';
@@ -357,7 +357,7 @@ export class DispatcherConnection {
     }
 
     if (response.error)
-      response.log = callMetadata.log;
+      response.log = compressCallLog(callMetadata.log);
     this.onmessage(response);
   }
 }

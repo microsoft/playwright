@@ -152,7 +152,8 @@ export const TestResultView: React.FC<{
 
 function classifyErrors(testErrors: string[], diffs: ImageDiff[]) {
   return testErrors.map(error => {
-    if (error.includes('Screenshot comparison failed:')) {
+    const firstLine = error.split('\n')[0];
+    if (firstLine.includes('toHaveScreenshot') || firstLine.includes('toMatchSnapshot')) {
       const matchingDiff = diffs.find(diff => {
         const attachmentName = diff.actual?.attachment.name;
         return attachmentName && error.includes(attachmentName);

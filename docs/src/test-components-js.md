@@ -521,7 +521,6 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
     {label: 'React', value: 'react'},
     {label: 'Solid', value: 'solid'},
     {label: 'Vue3', value: 'vue3'},
-    {label: 'Vue2', value: 'vue2'},
   ]
 }>
   <TabItem value="react">
@@ -604,40 +603,6 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
 
   ```js title="src/pages/ProductsPage.spec.ts"
   import { test, expect } from '@playwright/experimental-ct-vue';
-  import type { HooksConfig } from '../playwright';
-  import ProductsPage from './pages/ProductsPage.vue';
-
-  test('configure routing through hooks config', async ({ page, mount }) => {
-    const component = await mount<HooksConfig>(ProductsPage, {
-      hooksConfig: { enableRouting: true },
-    });
-    await expect(component.getByRole('link')).toHaveAttribute('href', '/products/42');
-  });
-  ```
-
-  </TabItem>
-
-  <TabItem value="vue2">
-
-  ```js title="playwright/index.ts"
-  import { beforeMount, afterMount } from '@playwright/experimental-ct-vue2/hooks';
-  import Router from 'vue-router';
-  import { router } from '../src/router';
-
-  export type HooksConfig = {
-    enableRouting?: boolean;
-  }
-
-  beforeMount<HooksConfig>(async ({ app, hooksConfig }) => {
-    if (hooksConfig?.enableRouting) {
-      Vue.use(Router);
-      return { router }
-    }
-  });
-  ```
-
-  ```js title="src/pages/ProductsPage.spec.ts"
-  import { test, expect } from '@playwright/experimental-ct-vue2';
   import type { HooksConfig } from '../playwright';
   import ProductsPage from './pages/ProductsPage.vue';
 

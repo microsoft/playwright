@@ -880,9 +880,9 @@ it('should respect timeout after redirects', async function({ context, server })
   expect(error.message).toContain(`Request timed out after 100ms`);
 });
 
-it('should not hang on a brotli encoded Range request', async ({ context, server }) => {
+it('should not hang on a brotli encoded Range request', async ({ context, server, nodeVersion }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/18190' });
-  it.skip(+process.versions.node.split('.')[0] < 18);
+  it.skip(nodeVersion.major < 18);
 
   const encodedRequestPayload = zlib.brotliCompressSync(Buffer.from('A'));
   server.setRoute('/brotli', (req, res) => {
@@ -1094,10 +1094,9 @@ it('should support multipart/form-data and keep the order', async function({ con
   expect(response.status()).toBe(200);
 });
 
-it('should support repeating names in multipart/form-data', async function({ context, server }) {
+it('should support repeating names in multipart/form-data', async function({ context, server, nodeVersion }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/28070' });
-  const nodeVersion = +process.versions.node.split('.')[0];
-  it.skip(nodeVersion < 20, 'File is not available in Node.js < 20. FormData is not available in Node.js < 18');
+  it.skip(nodeVersion.major < 20, 'File is not available in Node.js < 20. FormData is not available in Node.js < 18');
   const postBodyPromise = new Promise<string>(resolve => {
     server.setRoute('/empty.html', async (req, res) => {
       resolve((await req.postBody).toString('utf-8'));
@@ -1245,7 +1244,7 @@ it('should work with connectOverCDP', async ({ browserName, browserType, server 
   }
 });
 
-it('should support SameSite cookie attribute over https', async ({ contextFactory, httpsServer, browserName, isWindows, sameSiteStoredValueForNone }) => {
+it('should support SameSite cookie attribute over https', async ({ contextFactory, httpsServer, browserName, isWindows }) => {
   // Cookies with SameSite=None must also specify the Secure attribute. WebKit navigation
   // to HTTP url will fail if the response contains a cookie with Secure attribute, so
   // we do HTTPS navigation.
@@ -1261,8 +1260,6 @@ it('should support SameSite cookie attribute over https', async ({ contextFactor
       const [cookie] = await page.context().cookies();
       if (browserName === 'webkit' && isWindows)
         expect(cookie.sameSite).toBe('None');
-      else if (value === 'None')
-        expect(cookie.sameSite).toBe(sameSiteStoredValueForNone);
       else
         expect(cookie.sameSite).toBe(value);
     });
@@ -1292,7 +1289,7 @@ it('fetch should not throw on long set-cookie value', async ({ context, server }
   expect(cookies.map(c => c.name)).toContain('bar');
 });
 
-it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows, isLinux, sameSiteStoredValueForNone }) => {
+it('should support set-cookie with SameSite and without Secure attribute over HTTP', async ({ page, server, browserName, isWindows, isLinux }) => {
   for (const value of ['None', 'Lax', 'Strict']) {
     await it.step(`SameSite=${value}`, async () => {
       server.setRoute('/empty.html', (req, res) => {
@@ -1307,8 +1304,6 @@ it('should support set-cookie with SameSite and without Secure attribute over HT
         expect(cookie).toBeFalsy();
       else if (browserName === 'webkit' && isWindows)
         expect(cookie.sameSite).toBe('None');
-      else if (value === 'None')
-        expect(cookie.sameSite).toBe(sameSiteStoredValueForNone);
       else
         expect(cookie.sameSite).toBe(value);
     });

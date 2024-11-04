@@ -555,9 +555,11 @@ export interface TestCase {
  */
 export interface TestError {
   /**
-   * Expected value formatted as a human-readable string.
+   * Error cause. Set when there is a
+   * [cause](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause) for the
+   * error. Will be `undefined` if there is no cause or if the cause is not an instance of [Error].
    */
-  expected?: string;
+  cause?: TestError;
 
   /**
    * Error location in the source code.
@@ -565,29 +567,9 @@ export interface TestError {
   location?: Location;
 
   /**
-   * Receiver's locator.
-   */
-  locator?: string;
-
-  /**
-   * Call log.
-   */
-  log?: Array<string>;
-
-  /**
-   * Expect matcher name.
-   */
-  matcherName?: string;
-
-  /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */
   message?: string;
-
-  /**
-   * Received value formatted as a human-readable string.
-   */
-  received?: string;
 
   /**
    * Source code snippet with highlighted error.
@@ -598,11 +580,6 @@ export interface TestError {
    * Error stack. Set when [Error] (or its subclass) has been thrown.
    */
   stack?: string;
-
-  /**
-   * Timeout in milliseconds, if the error was caused by a timeout.
-   */
-  timeout?: number;
 
   /**
    * The value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.

@@ -2141,7 +2141,7 @@ export type PageReloadResult = {
 };
 export type PageExpectScreenshotParams = {
   expected?: Binary,
-  timeout?: number,
+  timeout: number,
   isNot: boolean,
   locator?: {
     frame: FrameChannel,
@@ -2166,7 +2166,6 @@ export type PageExpectScreenshotParams = {
 };
 export type PageExpectScreenshotOptions = {
   expected?: Binary,
-  timeout?: number,
   locator?: {
     frame: FrameChannel,
     selector: string,
@@ -2193,6 +2192,7 @@ export type PageExpectScreenshotResult = {
   errorMessage?: string,
   actual?: Binary,
   previous?: Binary,
+  timedOut?: boolean,
   log?: string[],
 };
 export type PageScreenshotParams = {
@@ -3162,7 +3162,7 @@ export type FrameExpectParams = {
   expectedValue?: SerializedArgument,
   useInnerText?: boolean,
   isNot: boolean,
-  timeout?: number,
+  timeout: number,
 };
 export type FrameExpectOptions = {
   expressionArg?: any,
@@ -3170,7 +3170,6 @@ export type FrameExpectOptions = {
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
   useInnerText?: boolean,
-  timeout?: number,
 };
 export type FrameExpectResult = {
   matches: boolean,

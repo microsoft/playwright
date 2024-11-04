@@ -23,6 +23,8 @@ import { EXPECTED_COLOR } from '../common/expectBundle';
 import { callLogText } from '../util';
 import { printReceivedStringContainExpectedSubstring } from './expect';
 import { currentTestInfo } from '../common/globals';
+import type { MatcherReceived } from '@injected/ariaSnapshot';
+import { escapeTemplateString } from 'playwright-core/lib/utils';
 
 export async function toMatchAriaSnapshot(
   this: ExpectMatcherState,
@@ -34,10 +36,10 @@ export async function toMatchAriaSnapshot(
 
   const testInfo = currentTestInfo();
   if (!testInfo)
-    throw new Error(`toMatchSnapshot() must be called during the test`);
+    throw new Error(`toMatchAriaSnapshot() must be called during the test`);
 
   if (testInfo._projectInternal.ignoreSnapshots)
-    return { pass: !this.isNot, message: () => '', name: 'toMatchSnapshot', expected };
+    return { pass: !this.isNot, message: () => '', name: 'toMatchAriaSnapshot', expected };
 
   const updateSnapshots = testInfo.config.updateSnapshots;
 
@@ -54,31 +56,55 @@ export async function toMatchAriaSnapshot(
     ].join('\n\n'));
   }
 
+  const generateMissingBaseline = updateSnapshots === 'missing' && !expected;
+  const generateNewBaseline = updateSnapshots === 'all' || generateMissingBaseline;
+
+  if (generateMissingBaseline) {
+    if (this.isNot) {
+      const message = `Matchers using ".not" can't generate new baselines`;
+      return { pass: this.isNot, message: () => message, name: 'toMatchAriaSnapshot' };
+    } else {
+      // When generating new baseline, run entire pipeline against impossible match.
+      expected = `- none "Generating new baseline"`;
+    }
+  }
+
   const timeout = options.timeout ?? this.timeout;
+  expected = unshift(expected);
   const { matches: pass, received, log, timedOut } = await receiver._expect('to.match.aria', { expectedValue: expected, isNot: this.isNot, timeout });
+  const typedReceived = received as MatcherReceived | typeof kNoElementsFoundError;
 
   const messagePrefix = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
-  const notFound = received === kNoElementsFoundError;
-  const escapedExpected = unshift(escapePrivateUsePoints(expected));
-  const escapedReceived = unshift(escapePrivateUsePoints(received));
+  const notFound = typedReceived === kNoElementsFoundError;
+  if (notFound) {
+    return {
+      pass: this.isNot,
+      message: () => messagePrefix + `Expected: ${this.utils.printExpected(expected)}\nReceived: ${EXPECTED_COLOR('not found')}` + callLogText(log),
+      name: 'toMatchAriaSnapshot',
+      expected,
+    };
+  }
+
+  const escapedExpected = escapePrivateUsePoints(expected);
+  const escapedReceived = escapePrivateUsePoints(typedReceived.raw);
   const message = () => {
     if (pass) {
       if (notFound)
         return messagePrefix + `Expected: not ${this.utils.printExpected(escapedExpected)}\nReceived: ${escapedReceived}` + callLogText(log);
       const printedReceived = printReceivedStringContainExpectedSubstring(escapedReceived, escapedReceived.indexOf(escapedExpected), escapedExpected.length);
-      return messagePrefix + `Expected: not ${this.utils.printExpected(escapedExpected)}\nReceived string: ${printedReceived}` + callLogText(log);
+      return messagePrefix + `Expected: not ${this.utils.printExpected(escapedExpected)}\nReceived: ${printedReceived}` + callLogText(log);
     } else {
       const labelExpected = `Expected`;
       if (notFound)
         return messagePrefix + `${labelExpected}: ${this.utils.printExpected(escapedExpected)}\nReceived: ${escapedReceived}` + callLogText(log);
-      return messagePrefix + this.utils.printDiffOrStringify(escapedExpected, escapedReceived, labelExpected, 'Received string', false) + callLogText(log);
+      return messagePrefix + this.utils.printDiffOrStringify(escapedExpected, escapedReceived, labelExpected, 'Received', false) + callLogText(log);
     }
   };
 
-  let suggestedRebaseline: string | undefined;
-  if (!this.isNot && pass === this.isNot) {
-    if (updateSnapshots === 'all' || (updateSnapshots === 'missing' && !expected.trim()))
-      suggestedRebaseline = `toMatchAriaSnapshot(\`\n${unshift(received, '${indent}  ')}\n\${indent}\`)`;
+  if (!this.isNot && pass === this.isNot && generateNewBaseline) {
+    // Only rebaseline failed snapshots.
+    const suggestedRebaseline = `toMatchAriaSnapshot(\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\`)`;
+    return { pass: this.isNot, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline };
   }
 
   return {
@@ -88,16 +114,15 @@ export async function toMatchAriaSnapshot(
     pass,
     actual: received,
     log,
-    suggestedRebaseline,
     timeout: timedOut ? timeout : undefined,
   };
 }
 
 function escapePrivateUsePoints(str: string) {
-  return str.replace(/[\uE000-\uF8FF]/g, char => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
+  return escapeTemplateString(str).replace(/[\uE000-\uF8FF]/g, char => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
 
-function unshift(snapshot: string, indent: string = ''): string {
+function unshift(snapshot: string): string {
   const lines = snapshot.split('\n');
   let whitespacePrefixLength = 100;
   for (const line of lines) {
@@ -108,5 +133,9 @@ function unshift(snapshot: string, indent: string = ''): string {
       whitespacePrefixLength = match[1].length;
     break;
   }
-  return lines.filter(t => t.trim()).map(line => indent + line.substring(whitespacePrefixLength)).join('\n');
+  return lines.filter(t => t.trim()).map(line => line.substring(whitespacePrefixLength)).join('\n');
+}
+
+function indent(snapshot: string, indent: string): string {
+  return snapshot.split('\n').map(line => indent + line).join('\n');
 }

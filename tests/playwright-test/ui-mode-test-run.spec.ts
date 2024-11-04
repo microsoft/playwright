@@ -70,7 +70,7 @@ test('should run visible', async ({ runUITest }) => {
             - button "Run"
             - button "Show source"
             - button "Watch"
-          - treeitem "[icon-error] suite"
+          - treeitem "[icon-error] suite" [expanded=false]
       - treeitem "[icon-error] b.test.ts" [expanded]:
         - group:
           - treeitem ${/\[icon-check\] passes/}
@@ -230,7 +230,7 @@ test('should run by project', async ({ runUITest }) => {
             - button "Run"
             - button "Show source"
             - button "Watch"
-          - treeitem "[icon-error] suite"
+          - treeitem "[icon-error] suite" [expanded=false]
       - treeitem "[icon-error] b.test.ts" [expanded]:
         - group:
           - treeitem ${/\[icon-check\] passes/}
@@ -263,23 +263,20 @@ test('should run by project', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-error] a.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-circle-outline\] passes/}
+          - treeitem ${/\[icon-circle-outline\] passes/} [expanded=false]
           - treeitem ${/\[icon-error\] fails/}:
             - group:
-              - treeitem ${/\[icon-error\] foo/} [selected]:
-                - button "Run"
-                - button "Show source"
-                - button "Watch"
+              - treeitem ${/\[icon-error\] foo/} [selected]
               - treeitem "[icon-circle-outline] bar"
-          - treeitem "[icon-error] suite"
+          - treeitem "[icon-error] suite" [expanded=false]
       - treeitem "[icon-error] b.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-circle-outline\] passes/}
-          - treeitem ${/\[icon-error\] fails/}
+          - treeitem ${/\[icon-circle-outline\] passes/} [expanded=false]
+          - treeitem ${/\[icon-error\] fails/} [expanded=false]
       - treeitem "[icon-circle-outline] c.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-circle-outline\] passes/}
-          - treeitem ${/\[icon-circle-outline\] skipped/}
+          - treeitem ${/\[icon-circle-outline\] passes/} [expanded=false]
+          - treeitem ${/\[icon-circle-outline\] skipped/} [expanded=false]
   `);
 
   await page.getByText('Status:').click();
@@ -347,12 +344,12 @@ test('should run by project', async ({ runUITest }) => {
           - treeitem ${/\[icon-error\] suite/}
       - treeitem "[icon-error] b.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes/}
-          - treeitem ${/\[icon-error\] fails/}
+          - treeitem ${/\[icon-check\] passes/} [expanded=false]
+          - treeitem ${/\[icon-error\] fails/} [expanded=false]
       - treeitem "[icon-check] c.test.ts" [expanded]:
         - group:
-          - treeitem ${/\[icon-check\] passes/}
-          - treeitem ${/\[icon-circle-slash\] skipped/}
+          - treeitem ${/\[icon-check\] passes/} [expanded=false]
+          - treeitem ${/\[icon-circle-slash\] skipped/} [expanded=false]
   `);
 });
 
@@ -445,8 +442,8 @@ test('should run folder', async ({ runUITest }) => {
     - tree:
       - treeitem "[icon-check] folder-b" [expanded] [selected]:
         - group:
-          - treeitem "[icon-check] folder-c"
-          - treeitem "[icon-check] in-b.test.ts"
+          - treeitem "[icon-check] folder-c" [expanded=false]
+          - treeitem "[icon-check] in-b.test.ts" [expanded=false]
       - treeitem "[icon-circle-outline] in-a.test.ts" [expanded]:
         - group:
           - treeitem "[icon-circle-outline] passes"
@@ -483,7 +480,7 @@ test('should show time', async ({ runUITest }) => {
             - button "Run"
             - button "Show source"
             - button "Watch"
-          - treeitem "[icon-error] suite"
+          - treeitem "[icon-error] suite" [expanded=false]
       - treeitem "[icon-error] b.test.ts" [expanded]:
         - group:
           - treeitem ${/\[icon-check\] passes \d+m?s/}
