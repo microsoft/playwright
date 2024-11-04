@@ -53,7 +53,7 @@ export const TabbedPane: React.FunctionComponent<{
             <TabbedPaneTab
               key={tab.id}
               id={tab.id}
-              aria-controls={`pane-${id}-tab-${tab.id}`}
+              ariaControls={`pane-${id}-tab-${tab.id}`}
               title={tab.title}
               count={tab.count}
               errorCount={tab.errorCount}
@@ -100,8 +100,8 @@ export const TabbedPaneTab: React.FunctionComponent<{
   errorCount?: number,
   selected?: boolean,
   onSelect?: (id: string) => void,
-  'aria-controls'?: string,
-}> = ({ id, title, count, errorCount, selected, onSelect, 'aria-controls': ariaControls }) => {
+  ariaControls?: string,
+}> = ({ id, title, count, errorCount, selected, onSelect, ariaControls }) => {
   return <div className={clsx('tabbed-pane-tab', selected && 'selected')}
     onClick={() => onSelect?.(id)}
     role='tab'
