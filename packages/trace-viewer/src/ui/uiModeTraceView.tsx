@@ -126,7 +126,7 @@ function formatUrl(traceURL: URL) {
 }
 
 function filePathToTraceURL(path: string) {
-  const url = new URL('/trace/file', location.href);
+  const url = new URL('file', location.href);
   url.searchParams.set('path', path);
   return url;
 }
