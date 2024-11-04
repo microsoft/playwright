@@ -14,7 +14,5 @@
  * limitations under the License.
  */
 
-const searchParams = new URLSearchParams(window.location.search);
-
-export const testServerBaseURL = new URL(self.location.href);
-testServerBaseURL.port = searchParams.get('testServerPort') ?? testServerBaseURL.port;
+export const testServerBaseURL = new URL(window.location.href);
+testServerBaseURL.port = testServerBaseURL.searchParams.get('testServerPort') ?? testServerBaseURL.port;

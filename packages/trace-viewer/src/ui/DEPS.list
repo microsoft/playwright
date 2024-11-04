@@ -4,6 +4,7 @@
 @trace/**
 @web/**
 ../entries.ts
+../settings.ts
 ../geometry.ts
 ../../../playwright/src/isomorphic/**
 ../third_party/devtools.ts
