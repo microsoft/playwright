@@ -248,6 +248,32 @@ class CSharpCodeGen implements APIRequestCodegen {
   }
 }
 
+class JavaCodeGen implements APIRequestCodegen {
+  generatePlaywrightRequestCall(request: har.Request, body: string | undefined): string {
+    const url = new URL(request.url);
+    const params = [`"${url.origin}${url.pathname}"`];
+
+    const options: string[] = [];
+
+    let method = request.method.toLowerCase();
+    if (!['delete', 'get', 'head', 'post', 'put', 'patch'].includes(method)) {
+      options.push(`setMethod("${method}")`);
+      method = 'fetch';
+    }
+
+    for (const [key, value] of url.searchParams)
+      options.push(`setQueryParam("${key}", "${value}")`);
+    if (body)
+      options.push(`setData("${body.replaceAll('"', '\\"')}")`);
+    for (const header of request.headers)
+      options.push(`setHeader("${header.name}", "${header.value}")`);
+
+    if (options.length > 0)
+      params.push(`RequestOptions.create()\n  .${options.join('\n  .')}\n`);
+    return `request.${method}(${params.join(', ')});`;
+  }
+}
+
 export function getAPIRequestCodeGen(language: Language): APIRequestCodegen {
   if (language === 'javascript')
     return new JSCodeGen();
@@ -255,5 +281,7 @@ export function getAPIRequestCodeGen(language: Language): APIRequestCodegen {
     return new PythonCodeGen();
   if (language === 'csharp')
     return new CSharpCodeGen();
+  if (language === 'java')
+    return new JavaCodeGen();
   throw new Error('Unsupported language: ' + language);
 }

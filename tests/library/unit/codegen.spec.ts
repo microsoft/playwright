@@ -480,3 +480,113 @@ await request.PutAsync("http://example.com/foo", new() {
 });`.trim());
   });
 });
+
+test.describe('java', () => {
+  const impl = getAPIRequestCodeGen('java');
+
+  test('generatePlaywrightRequestCall', () => {
+    expect(impl.generatePlaywrightRequestCall({
+      url: 'http://example.com/foo?bar=baz',
+      method: 'GET',
+      headers: [{ name: 'User-Agent', value: 'Mozilla/5.0' }, { name: 'Date', value: '2021-01-01' }],
+      httpVersion: '1.1',
+      cookies: [],
+      queryString: [],
+      headersSize: 0,
+      bodySize: 0,
+      comment: '',
+    }, 'foo')).toEqual(`
+request.get("http://example.com/foo", RequestOptions.create()
+  .setQueryParam("bar", "baz")
+  .setData("foo")
+  .setHeader("User-Agent", "Mozilla/5.0")
+  .setHeader("Date", "2021-01-01")
+);`.trim());
+
+    expect(impl.generatePlaywrightRequestCall({
+      url: 'http://example.com/foo?bar=baz',
+      method: 'OPTIONS',
+      headers: [],
+      httpVersion: '1.1',
+      cookies: [],
+      queryString: [],
+      headersSize: 0,
+      bodySize: 0,
+      comment: '',
+    }, undefined)).toEqual(`
+request.fetch("http://example.com/foo", RequestOptions.create()
+  .setMethod("options")
+  .setQueryParam("bar", "baz")
+);`.trim());
+  });
+
+  test('generatePlaywrightRequestCall with POST method and no body', () => {
+    expect(impl.generatePlaywrightRequestCall({
+      url: 'http://example.com/foo',
+      method: 'POST',
+      headers: [{ name: 'Content-Type', value: 'application/json' }],
+      httpVersion: '1.1',
+      cookies: [],
+      queryString: [],
+      headersSize: 0,
+      bodySize: 0,
+      comment: '',
+    }, undefined)).toEqual(`
+request.post("http://example.com/foo", RequestOptions.create()
+  .setHeader("Content-Type", "application/json")
+);`.trim());
+  });
+
+  test('generatePlaywrightRequestCall with PUT method and JSON body', () => {
+    expect(impl.generatePlaywrightRequestCall({
+      url: 'http://example.com/foo',
+      method: 'PUT',
+      headers: [{ name: 'Content-Type', value: 'application/json' }],
+      httpVersion: '1.1',
+      cookies: [],
+      queryString: [],
+      headersSize: 0,
+      bodySize: 0,
+      comment: '',
+    }, '{"key":"value"}')).toEqual(`
+request.put("http://example.com/foo", RequestOptions.create()
+  .setData("{\\"key\\":\\"value\\"}")
+  .setHeader("Content-Type", "application/json")
+);`.trim());
+  });
+
+  test('generatePlaywrightRequestCall with PATCH method and form data', () => {
+    expect(impl.generatePlaywrightRequestCall({
+      url: 'http://example.com/foo',
+      method: 'PATCH',
+      headers: [{ name: 'Content-Type', value: 'application/x-www-form-urlencoded' }],
+      httpVersion: '1.1',
+      cookies: [],
+      queryString: [],
+      headersSize: 0,
+      bodySize: 0,
+      comment: '',
+    }, 'key=value')).toEqual(`
+request.patch("http://example.com/foo", RequestOptions.create()
+  .setData("key=value")
+  .setHeader("Content-Type", "application/x-www-form-urlencoded")
+);`.trim());
+  });
+
+  test('generatePlaywrightRequestCall with DELETE method and custom header', () => {
+    expect(impl.generatePlaywrightRequestCall({
+      url: 'http://example.com/foo',
+      method: 'DELETE',
+      headers: [{ name: 'Authorization', value: 'Bearer token' }],
+      httpVersion: '1.1',
+      cookies: [],
+      queryString: [],
+      headersSize: 0,
+      bodySize: 0,
+      comment: '',
+    }, undefined)).toEqual(`
+request.delete("http://example.com/foo", RequestOptions.create()
+  .setHeader("Authorization", "Bearer token")
+);`.trim());
+  });
+});
