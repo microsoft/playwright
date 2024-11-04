@@ -30,7 +30,7 @@ import type { IRecorderAppFactory, IRecorderApp, IRecorder } from './recorder/re
 import { metadataToCallLog } from './recorder/recorderUtils';
 import type * as actions from '@recorder/actions';
 import { buildFullSelector } from '../utils/isomorphic/recorderUtils';
-import { splitSelectorByFrame, stringifySelector } from '../utils/isomorphic/selectorParser';
+import { stringifySelector } from '../utils/isomorphic/selectorParser';
 import type { Frame } from './frames';
 
 const recorderSymbol = Symbol('recorderSymbol');
