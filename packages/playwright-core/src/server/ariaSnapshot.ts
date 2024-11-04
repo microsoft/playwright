@@ -19,7 +19,9 @@ import { yaml } from '../utilsBundle';
 import { assert } from '../utils';
 
 export function parseAriaSnapshot(text: string): AriaTemplateNode {
-  const fragment = yaml.parse(text) as any[];
+  const fragment = yaml.parse(text);
+  if (!Array.isArray(fragment))
+    throw new Error('Expected object key starting with "- ":\n\n' + text + '\n');
   const result: AriaTemplateNode = { kind: 'role', role: 'fragment' };
   populateNode(result, fragment);
   return result;
@@ -73,7 +75,7 @@ function populateNode(node: AriaTemplateRoleNode, container: any[]) {
 
 function applyAttribute(node: AriaTemplateRoleNode, key: string, value: string) {
   if (key === 'checked') {
-    assert(value === 'true' || value === 'false' || value === 'mixed', 'Value of "disabled" attribute must be a boolean or "mixed"');
+    assert(value === 'true' || value === 'false' || value === 'mixed', 'Value of "checked\" attribute must be a boolean or "mixed"');
     node.checked = value === 'true' ? true : value === 'false' ? false : 'mixed';
     return;
   }
@@ -102,7 +104,7 @@ function applyAttribute(node: AriaTemplateRoleNode, key: string, value: string) 
     node.selected = value === 'true';
     return;
   }
-  throw new Error(`Unsupported attribute [${key}] `);
+  throw new Error(`Unsupported attribute [${key}]`);
 }
 
 function normalizeWhitespace(text: string) {
@@ -149,7 +151,7 @@ export class KeyParser {
 
   private _readIdentifier(): string {
     if (this._eof())
-      throw new Error('Unexpected end of input when expecting identifier');
+      this._throwError('Unexpected end of input when expecting identifier');
     const start = this._pos;
     while (!this._eof() && /[a-zA-Z]/.test(this._peek()))
       this._pos++;
@@ -173,7 +175,11 @@ export class KeyParser {
         result += ch;
       }
     }
-    throw new Error('Unterminated string starting at position ' + this._pos);
+    this._throwError('Unterminated string');
+  }
+
+  private _throwError(message: string): never {
+    throw new Error(message + ':\n\n' + this._input + '\n' + ' '.repeat(this._pos) + '^\n');
   }
 
   private _readRegex(): string {
@@ -193,7 +199,7 @@ export class KeyParser {
         result += ch;
       }
     }
-    throw new Error('Unterminated regex starting at position ' + this._pos);
+    this._throwError('Unterminated regex');
   }
 
   private _readStringOrRegex(): string | RegExp | null {
@@ -229,7 +235,7 @@ export class KeyParser {
         }
         this._skipWhitespace();
         if (this._peek() !== ']')
-          throw new Error('Expected ] at position ' + this._pos);
+          this._throwError('Expected ]');
 
         this._next(); // Consume ']'
         flags.set(flagName, flagValue || 'true');
@@ -252,8 +258,7 @@ export class KeyParser {
       applyAttribute(result, name, value);
     this._skipWhitespace();
     if (!this._eof())
-      throw new Error('Unexpected input at position ' + this._pos);
-
+      this._throwError('Unexpected input');
     return result;
   }
 }

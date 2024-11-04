@@ -458,3 +458,100 @@ test('should unpack escaped names', async ({ page }) => {
     `);
   }
 });
+
+test('should report error in YAML', async ({ page }) => {
+  await page.setContent(`<h1>title</h1>`);
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      heading "title"
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Expected object key starting with "- ":
+
+heading "title"
+`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading: a:
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Nested mappings are not allowed in compact mappings at line 1, column 12:
+
+- heading: a:
+           ^
+`);
+  }
+});
+
+test('should report error in YAML keys', async ({ page }) => {
+  await page.setContent(`<h1>title</h1>`);
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading "title
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unterminated string:
+
+heading "title
+              ^
+`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading /title
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unterminated regex:
+
+heading /title
+              ^
+`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading [level=a]
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "level" attribute must be a number`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading [expanded=FALSE]
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "expanded" attribute must be a boolean`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading [checked=foo]
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "checked" attribute must be a boolean or "mixed"`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading [level=]
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "level" attribute must be a number`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading [bogus]
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unsupported attribute [bogus]`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading invalid
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unexpected input:
+
+heading invalid
+        ^
+`);
+  }
+});
