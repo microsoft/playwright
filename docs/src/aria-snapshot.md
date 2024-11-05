@@ -1,25 +1,18 @@
 ---
 id: aria-snapshot
-title: "Accessibility snapshots"
+title: "Accessibility Snapshots"
 ---
 
 ## Overview
 
-Accessibility snapshots in Playwright are a YAML representation of elements on the page.
-These snapshots can be stored and later compared to check if the page structure remains consistent or meets specified
-expectations.
+In Playwright, **accessibility snapshots** provide a YAML representation of the accessible elements on a page. These snapshots can be stored and compared later to verify if the page structure remains consistent or meets defined expectations.
 
-The YAML format for accessibility trees is used to describe the hierarchical structure of the elements on a web page,
-including their roles, attributes, values and text content. The YAML structure follows a tree-like syntax where each node
-represents an accessible element, and indentation reflects nesting within the hierarchy.
+The YAML format describes the hierarchical structure of accessible elements on the page, detailing roles, attributes, values, and text content. The structure follows a tree-like syntax, where each node represents an accessible element, and indentation indicates nested elements.
 
-## Matching snapshots
+## Snapshot Matching
 
-The [`method: LocatorAssertions.toMatchAriaSnapshot`] assertion is a method used in Playwright to match the accessible
-structure of a page against a defined accessibility snapshot template. This helps in verifying that the page's state
-meets testing expectations.
+The [`method: LocatorAssertions.toMatchAriaSnapshot`] assertion method in Playwright compares the accessible structure of a page with a predefined accessibility snapshot template, helping validate the page's accessibility state against testing requirements.
 
-**Example**: Match a heading element
 
 ```js
 await page.setContent(`<h1>title</h1>`);
@@ -56,200 +49,171 @@ await Expect(page.Locator("body")).ToMatchAriaSnapshotAsync(@"
 ");
 ```
 
-**Example**: Match list
+When matching, the snapshot template is compared to the current accessibility tree of the page:
 
-Lists can be matched partially.
+* If the tree structure matches the template, the test passes; otherwise, it fails, indicating a mismatch between expected and actual accessibility states.
+* The comparison is case-sensitive and collapses whitespace, so indentation and line breaks are ignored.
+* The comparison is order-sensitive, meaning the order of elements in the snapshot template must match the order in the page's accessibility tree.
+
+## Generating Snapshots
+
+Creating accessibility snapshots in Playwright helps ensure and maintain your application’s structure.
+You can generate snapshots in various ways depending on your testing setup and workflow.
+
+### 1. Using the `Locator.ariaSnapshot` Method
+
+The [`method: Locator.ariaSnapshot`] method allows you to programmatically create a YAML representation of accessible elements within a locator’s scope, especially helpful for generating snapshots dynamically during test execution.
+
+**Example**:
 
 ```js
-await page.setContent(`
-  <ul aria-label="my list">
-    <li>one</li>
-    <li>two</li>
-    <li>three</li>
-    <li>four</li>
-    <li>five</li>
-  </ul>
-`);
-await expect(page.locator('body')).toMatchAriaSnapshot(`
-  - list "my list":
-    - listitem: one
-    - listitem: three
-    - listitem: five
-`);
+const snapshot = await page.locator('body').ariaSnapshot();
+console.log(snapshot);
 ```
 
 ```python sync
-page.set_content("""
-    <ul aria-label="my list">
-      <li>one</li>
-      <li>two</li>
-      <li>three</li>
-      <li>four</li>
-      <li>five</li>
-    </ul>
-""")
-page.locator("body").to_match_aria_snapshot("""
-  - list "my list":
-    - listitem: one
-    - listitem: two
-""")
+snapshot = page.locator("body").aria_snapshot()
+print(snapshot)
 ```
 
 ```python async
-await page.set_content("""
-    <ul aria-label="my list">
-      <li>one</li>
-      <li>two</li>
-      <li>three</li>
-      <li>four</li>
-      <li>five</li>
-    </ul>
-""")
-await page.locator("body").to_match_aria_snapshot("""
-  - list "my list":
-    - listitem: one
-    - listitem: three
-    - listitem: five
-""")
+snapshot = await page.locator("body").aria_snapshot()
+print(snapshot)
 ```
 
 ```java
-page.setContent("""
-    <ul aria-label="my list">
-      <li>one</li>
-      <li>two</li>
-      <li>three</li>
-      <li>four</li>
-      <li>five</li>
-    </ul>
-""");
-page.locator("body").expect().toMatchAriaSnapshot("""
-  - list "my list":
-    - listitem: one
-    - listitem: three
-    - listitem: five
-""");
+String snapshot = page.locator("body").ariaSnapshot();
+System.out.println(snapshot);
 ```
 
 ```csharp
-await page.SetContentAsync(@"
-    <ul aria-label=""my list"">
-      <li>one</li>
-      <li>two</li>
-      <li>three</li>
-      <li>four</li>
-      <li>five</li>
-    </ul>
-");
-await Expect(page.Locator("body")).ToMatchAriaSnapshotAsync(@"
-  - list ""my list"":
-    - listitem: one
-    - listitem: three
-    - listitem: five
-");
+var snapshot = await page.Locator("body").AriaSnapshotAsync();
+Console.WriteLine(snapshot);
 ```
 
-**Example**: Matching Elements with Attributes
+This command outputs the accessibility tree within the specified locator’s scope in YAML format, which you can validate or store as needed.
 
-Test elements with ARIA attributes, such as `checked`, `disabled`, `expanded`, `level`, `pressed` and `selected`, by specifying the attribute within square brackets.
+### 2. Generating Snapshots with the Playwright Code Generator
+
+If you’re using Playwright’s [Code Generator](./codegen.md), generating accessibility snapshots is streamlined with its interactive interface:
+
+- **"Assert Snapshot" Action**: In the code generator, you can select elements and use the "Assert snapshot" action to automatically create a snapshot assertion for those elements. This is a quick way to capture the accessibility structure as part of your recorded test flow.
+  
+- **"Accessibility" Tab**: The "Accessibility" tab within the code generator interface visually represents the accessibility tree for a selected locator, letting you explore, inspect, and verify element roles, attributes, and accessible names to aid snapshot creation and review.
+
+### 3. Updating Snapshots with `@playwright/test` and the `--update-snapshots` Flag
+
+When using the Playwright test runner (`@playwright/test`), you can automatically update snapshots by running tests with the `--update-snapshots` flag:
+
+```bash
+npx playwright test --update-snapshots
+```
+
+This command regenerates snapshots for assertions, including accessibility snapshots, replacing outdated ones. It’s useful when application structure changes require new snapshots as a baseline.
+
+#### Empty Template for Snapshot Generation
+
+Passing an empty string as the template in an assertion generates a snapshot on-the-fly:
 
 ```js
-await page.setContent(`
-  <input type='checkbox' checked />
-`);
-
-await expect(page.locator('body')).toMatchAriaSnapshot(`
-  - checkbox [checked=true]
-`);
+await expect(locator).toMatchAriaSnapshot('');
 ```
 
-```python sync
-page.set_content("<input type='checkbox' checked />")
-page.locator("body").to_match_aria_snapshot("""
-  - checkbox [checked=true]
-""")
+#### Snapshot Patch Files
+
+When updating snapshots, Playwright creates patch files that capture differences. These patch files can be reviewed, approved, and committed to source control, allowing teams to track structural changes over time and ensure updates are consistent with application requirements.
+
+### Partial Matching
+
+You can perform partial matches on nodes by omitting attributes or accessible names, enabling verification of specific parts of the accessibility tree without requiring exact matches. This flexibility is helpful for dynamic or irrelevant attributes.
+
+```html
+<button>Submit</button>
 ```
 
-```python async
-await page.set_content("<input type='checkbox' checked />")
-await page.locator("body").to_match_aria_snapshot("""
-  - checkbox [checked=true]
-""")
+*accessibility tree for partial match*
+
+```yaml
+- button
 ```
 
-```java
-page.setContent("<input type='checkbox' checked />");
-page.locator("body").expect().toMatchAriaSnapshot("""
-  - checkbox [checked=true]
-""");
+In this example, the button role is matched, but the accessible name ("Submit") is not specified, allowing the test to pass regardless of the button’s label.
+
+---
+
+For elements with ARIA attributes like `checked` or `disabled`, omitting these attributes allows partial matching, focusing solely on role and hierarchy.
+
+```html
+<input type="checkbox" checked>
+<input type="checkbox">
 ```
 
-```csharp
-await page.SetContentAsync("<input type='checkbox' checked />");
-await Expect(page.Locator("body")).ToMatchAriaSnapshotAsync(@"
-  - checkbox [checked=true]
-");
+*accessibility tree for partial match*
+
+```yaml
+- checkbox
 ```
 
-**Example**: Matching with Regular Expressions
+In this partial match, the `checked` attribute is ignored, so the test will pass regardless of the checkbox state.
 
-Use regular expressions to match elements with dynamic or varying text content.
+---
 
-```js
-await page.setContent(`<h1>Issues 12</h1>`);
-await expect(page.locator('body')).toMatchAriaSnapshot(`
-  - heading /Issues \\d+/
-`);
+Similarly, you can partially match children in lists or groups by omitting specific list items or nested elements.
+
+```html
+<ul>
+  <li>Feature A</li>
+  <li>Feature B</li>
+  <li>Feature C</li>
+</ul>
 ```
 
-```python sync
-page.set_content("<h1>Issues 12</h1>")
-page.locator("body").to_match_aria_snapshot("""
-  - heading /Issues \\d+/
-""")
+*accessibility tree for partial match*
+
+```yaml
+- list
+  - listitem: Feature B
 ```
 
-```python async
-await page.set_content("<h1>Issues 12</h1>")
-await page.locator("body").to_match_aria_snapshot("""
-  - heading /Issues \\d+/
-""")
+Partial matches let you create flexible accessibility tests that verify essential page structure without enforcing specific content or attributes.
+
+### Dynamic Matching with Regular Expressions
+
+Regular expressions allow flexible matching for elements with dynamic or variable text. Accessible names and text can support regex patterns.
+
+```html
+<h1>Issues 12</h1>
 ```
 
-```java
-page.setContent("<h1>Issues 12</h1>");
-page.locator("body").expect().toMatchAriaSnapshot("""
-  - heading /Issues \\d+/
-""");
-```
+*accessibility tree with regular expression*
 
-```csharp
-await page.SetContentAsync("<h1>Issues 12</h1>");
-await Expect(page.Locator("body")).ToMatchAriaSnapshotAsync(@"
-  - heading /Issues \\d+/
-");
+```yaml
+- heading /Issues \d+/
 ```
 
 ## Accessibility Tree
 
 ### Syntax Overview
 
-Each accessible element in the accessibility tree is represented as a YAML node with the following structure:
+Each accessible element in the tree is represented as a YAML node:
 
 ```yaml
 - role "name" [attribute=value]
 ```
 
-- **role**: Specifies the ARIA or HTML role of the element, such as `heading`, `list`, `listitem`, `button`, etc.
-- **"name"** (optional): Accessible name of the element. Quoted strings represent exact value, while regex patterns (e.g., `/pattern/`) match values dynamically.
-- **[attribute=value]** (optional): Attributes and their values, enclosed in square brackets. Attributes include `checked`, `disabled`, `expanded`, `level`, `pressed` and `selected`, as specified by ARIA or HTML semantics.
+- **role**: Specifies the ARIA or HTML role of the element (e.g., `heading`, `list`, `listitem`, `button`).
+- **"name"** (optional): Accessible name of the element. Quoted strings indicate exact values, while regular expressions (e.g., `/pattern/`) allow dynamic matching.
+- **[attribute=value]** (optional): Attributes and values, in square brackets, represent specific ARIA attributes, such as `checked`, `disabled`, `expanded`, `level`, `pressed`, or `selected`.
 
-When capturing the accessibility tree, these values are either extracted from the ARIA attributes, or are computed from the HTML semantics.
+These values are derived from ARIA attributes or calculated based on HTML semantics.
 
-You can use [Chrome DevTools Accessibility Pane](https://developer.chrome.com/docs/devtools/accessibility/reference#pane) to inspect the
-accessibility tree of a page and identify the roles, name, attributes, and text content of accessible elements.
+To inspect the accessibility tree structure of a page, use the [Chrome DevTools Accessibility Pane](https://developer.chrome.com/docs/devtools/accessibility/reference#pane).
 
-**Example**: Headings with `level` attributes indicate heading levels
+### Examples
+
+#### Headings with Level Attributes
+
+Headings can include a `level` attribute indicating their heading level.
 
 ```html
 <h1>Title</h1>
@@ -263,7 +227,9 @@ accessibility tree of a page and identify the roles, name, attributes, and text 
 - heading "Subtitle" [level=2]
 ```
 
-**Example**: Text Nodes capture standalone or descriptive text elements
+#### Text Nodes
+
+Standalone or descriptive text elements appear as text nodes.
 
 ```html
 <div>Sample accessible name</div>
@@ -275,7 +241,9 @@ accessibility tree of a page and identify the roles, name, attributes, and text 
 - text: Sample accessible name
 ```
 
-**Example**: Flattening of the multiline text
+#### Inline Multiline Text
+
+Multiline text, such as paragraphs, is flattened in the accessibility tree.
 
 ```html
 <p>Line 1<br>Line 2</p>
@@ -287,7 +255,9 @@ accessibility tree of a page and identify the roles, name, attributes, and text 
 - paragraph: Line 1 Line 2
 ```
 
-**Example**: Links represent hyperlinks with text or composed text from pseudo-elements
+#### Links
+
+Links display their text or composed content from pseudo-elements.
 
 ```html
 <a href="#more-info">Read more about Accessibility</a>
@@ -299,20 +269,9 @@ accessibility tree of a page and identify the roles, name, attributes, and text 
 - link "Read more about Accessibility"
 ```
 
+#### Textboxes
 
-**Example**: Buttons represent interactive button elements, supporting states like `pressed` or `disabled`
-
-```html
-<button disabled>Submit</button>
-```
-
-*accessibility tree*
-
-```yaml
-- button "Submit" [disabled=true]
-```
-
-**Example**: Textboxes capture input elements, with the `value` attribute reflecting the content
+Input elements of type `text` show their `value` attribute content.
 
 ```html
 <input type="text" value="Enter your name">
@@ -326,10 +285,11 @@ accessibility tree of a page and identify the roles, name, attributes, and text 
 
 ### Composite Structures
 
-Accessibility tree follows DOM hierarchy. It does not include **presentation** and **none** roles and inlines text content
-from the generic nodes.
+The accessibility tree mirrors the DOM hierarchy, excluding elements with `presentation` or `none` roles, while inlining text content for generic nodes.
 
-**Example**: Lists capture ordered and unordered lists with list items
+#### Example: Lists with Items
+
+Ordered and unordered lists include their list items.
 
 ```html
 <ul aria-label="Main Features">
@@ -346,7 +306,9 @@ from the generic nodes.
   - listitem: Feature 2
 ```
 
-**Example**: Groups capture grouped elements, such as `details` elements with `summary` text.
+#### Example: Grouped Elements
+
+Groups capture nested elements, such as `<details>` elements with summary content.
 
 ```html
 <details>
@@ -363,9 +325,9 @@ from the generic nodes.
 
 ### Attributes and States
 
-Attributes such as `checked`, `disabled`, `expanded`, `level`, `pressed`, and `selected` represent control states.
+Commonly used ARIA attributes, like `checked`, `disabled`, `expanded`, `level`, `pressed`, and `selected`, represent control states.
 
-**Example**: Checkbox with `checked` attribute
+#### Checkbox with `checked` Attribute
 
 ```html
 <input type="checkbox" checked>
@@ -377,94 +339,14 @@ Attributes such as `checked`, `disabled`, `expanded`, `level`, `pressed`, and `s
 - checkbox [checked=true]
 ```
 
-or
-
-```yaml
-- checkbox [checked]
-```
-
-**Example**: Button with `pressed` attribute
+#### Button with `pressed` Attribute
 
 ```html
 <button aria-pressed="true">Toggle</button>
 ```
 
+*accessibility tree*
+
 ```yaml
 - button "Toggle" [pressed=true]
-```
-
-or
-
-```yaml
-- button "Toggle" [pressed]
-```
-
-### Full Document Examples
-
-**Example**: Heading and Paragraph
-
-```html
-<h1>Welcome</h1>
-<p>This is a sample paragraph</p>
-```
-
-*accessibility tree*
-
-```yaml
-- heading "Welcome" [level=1]
-- paragraph: This is a sample paragraph
-```
-
-**Example**: Interactive List with Nested Elements
-
-```html
-<h2>Features</h2>
-<ul aria-label="Main Features">
-  <li><a href="#feature1">Feature 1</a></li>
-  <li><a href="#feature2">Feature 2</a></li>
-</ul>
-```
-
-*accessibility tree*
-
-
-```yaml
-- heading "Features" [level=2]
-- list "Main Features":
-  - listitem:
-    - link "Feature 1"
-  - listitem:
-    - link "Feature 2"
-```
-
-**Example**: Complex Document with Pseudo-Elements and Attributes
-
-```html
-<style>
-  p:before { content: 'hello '; }
-</style>
-<h1>Title</h1>
-<p>Introductory text</p>
-<a href="#more-info">Read more</a>
-```
-
-*accessibility tree*
-
-```yaml
-- heading "Title" [level=1]
-- text: hello Introductory text
-- link "Read more"
-```
-
-**Example**: Button with State Attributes
-
-```html
-<button aria-expanded="true">Toggle</button>
-```
-
-*accessibility tree*
-
-
-```yaml
-- button "Toggle" [expanded=true]
 ```
