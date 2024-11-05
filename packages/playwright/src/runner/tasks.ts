@@ -99,7 +99,7 @@ export function createGlobalSetupTasks(config: FullConfigInternal) {
     tasks.push(createRemoveOutputDirsTask());
   tasks.push(
       ...createPluginSetupTasks(config),
-      ...config.globalTeardowns.toReversed().map(file => createGlobalTeardownTask(file, config)),
+      ...config.globalTeardowns.map(file => createGlobalTeardownTask(file, config)).reverse(),
       ...config.globalSetups.map(file => createGlobalSetupTask(file, config)),
   );
   return tasks;
