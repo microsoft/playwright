@@ -442,7 +442,7 @@ test('sigint should stop global setup', async ({ interactWithTestRunner }) => {
   const result = parseTestRunnerOutput(testProcess.output);
   expect(result.passed).toBe(0);
   expect(result.output).toContain('Global setup');
-  expect(result.output).not.toContain('Global teardown');
+  expect(result.output).toContain('Global teardown');
 });
 
 test('sigint should stop plugins', async ({ interactWithTestRunner }) => {
