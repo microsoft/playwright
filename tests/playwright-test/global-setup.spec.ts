@@ -410,8 +410,8 @@ test('globalSetup should support multiple', async ({ runInlineTest }) => {
   }, { reporter: 'line' });
   expect(result.passed).toBe(2);
 
-  // behaviour: setups in order, teardowns in reverse order.
-  // setup-returned functions inherit their position, and take precedence over `globalTeardown` scripts.
+  // first setups, then setup callbacks in reverse order.
+  // then teardowns in declared order.
   expect(result.outputLines).toEqual([
     'globalSetup1',
     'globalSetup2',
