@@ -229,7 +229,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._appendTraceEvent(event);
   }
 
-  async groupEnd(): Promise<void> {
+  groupEnd() {
     if (!this._state)
       return;
     const callId = this._state.groupStack.pop();
@@ -285,7 +285,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       throw new Error(`Tracing is already stopping`);
     if (this._state.recording)
       throw new Error(`Must stop trace file before stopping tracing`);
-    await this._closeAllGroups();
+    this._closeAllGroups();
     this._harTracer.stop();
     this.flushHarEntries();
     await this._fs.syncAndGetError();
@@ -314,9 +314,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     await this._fs.syncAndGetError();
   }
 
-  async _closeAllGroups() {
+  private _closeAllGroups() {
     while (this._currentGroupId())
-      await this.groupEnd();
+      this.groupEnd();
   }
 
   async stopChunk(params: TracingTracingStopChunkParams): Promise<{ artifact?: Artifact, entries?: NameValue[] }> {
@@ -331,7 +331,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       return {};
     }
 
-    await this._closeAllGroups();
+    this._closeAllGroups();
 
     this._context.instrumentation.removeListener(this);
     eventsHelper.removeEventListeners(this._eventListeners);

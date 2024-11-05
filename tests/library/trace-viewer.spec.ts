@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+// DO NOT TOUCH THIS LINE
+// It is used in the tracing.group test.
+
 import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
 import fs from 'fs';
@@ -103,105 +106,45 @@ test('should open trace viewer on specific host', async ({ showTraceViewer }, te
   await expect(traceViewer.page).toHaveURL(/127.0.0.1/);
 });
 
-test('should show groups as tree in trace viewer', async ({ runAndTrace, page, context }) => {
-  const outerGroup = 'Outer Group';
-  const outerGroupContent = 'locator.clickgetByText(\'Click\')';
-  const firstInnerGroup = 'First Inner Group';
-  const firstInnerGroupContent = 'locator.clicklocator(\'button\').first()';
-  const secondInnerGroup = 'Second Inner Group';
-  const secondInnerGroupContent = 'expect.toBeVisiblegetByText(\'Click\')';
-  const expandedFailure = 'Expanded Failure';
-
+test('should show tracing.group in the action list with location', async ({ runAndTrace, page, context }) => {
   const traceViewer = await test.step('create trace with groups', async () => {
+    await page.context().tracing.group('ignored group');
     return await runAndTrace(async () => {
-      try {
-        await page.goto(`data:text/html,<!DOCTYPE html><html>Hello world</html>`);
-        await page.setContent('<!DOCTYPE html><button>Click</button>');
-        async function doClick() {
-          await page.getByText('Click').click();
-        }
-        await context.tracing.group(outerGroup);  // Outer group
-        await doClick();
-        await context.tracing.group(firstInnerGroup, { location: { file: `${__dirname}/tracing.spec.ts`, line: 100, column: 10 } });
-        await page.locator('button >> nth=0').click();
-        await context.tracing.groupEnd();
-        await context.tracing.group(secondInnerGroup, { location: { file: __filename } });
-        await expect(page.getByText('Click')).toBeVisible();
-        await context.tracing.groupEnd();
-        await context.tracing.groupEnd();
-        await context.tracing.group(expandedFailure);
-        try {
-          await expect(page.getByText('Click')).toBeHidden({ timeout: 1 });
-        } catch (e) {}
-        await context.tracing.groupEnd();
-        await page.evaluate(() => console.log('ungrouped'), null);
-      } catch (e) {}
+      await context.tracing.group('outer group');
+      await page.goto(`data:text/html,<!DOCTYPE html><body><div>Hello world</div></body>`);
+      await context.tracing.group('inner group 1', { location: { file: __filename, line: 17, column: 1 } });
+      await page.locator('body').click();
+      await context.tracing.groupEnd();
+      await context.tracing.group('inner group 2');
+      await expect(page.getByText('Hello')).toBeVisible();
+      await context.tracing.groupEnd();
+      await context.tracing.groupEnd();
     });
-  }, { box: true });
-  const treeViewEntries = traceViewer.actionsTree.locator('.tree-view-entry');
+  });
 
-  await test.step('check automatic expansion of groups on failure', async () => {
-    await expect(traceViewer.actionTitles).toHaveText([
-      /page.gotodata:text\/html,<!DOCTYPE html><html>Hello world<\/html>/,
-      /page.setContent/,
-      outerGroup,
-      expandedFailure,
-      /expect.toBeHiddengetByText\('Click'\)/,
-      /page.evaluate/,
-    ]);
-    await expect(traceViewer.actionsTree.locator('.tree-view-entry.selected > .tree-view-indent')).toHaveCount(1);
-    await expect(traceViewer.actionsTree.locator('.tree-view-entry.selected')).toHaveText(/expect.toBeHiddengetByText\('Click'\)/);
-    await treeViewEntries.filter({ hasText: expandedFailure }).locator('.codicon-chevron-down').click();
-  });
-  await test.step('check outer group', async () => {
-    await treeViewEntries.filter({ hasText: outerGroup }).locator('.codicon-chevron-right').click();
-    await expect(traceViewer.actionTitles).toHaveText([
-      /page.gotodata:text\/html,<!DOCTYPE html><html>Hello world<\/html>/,
-      /page.setContent/,
-      outerGroup,
-      outerGroupContent,
-      firstInnerGroup,
-      secondInnerGroup,
-      expandedFailure,
-      /page.evaluate/,
-    ]);
-    await expect(treeViewEntries.filter({ hasText: firstInnerGroup }).locator(' > .tree-view-indent')).toHaveCount(1);
-    await expect(treeViewEntries.filter({ hasText: secondInnerGroup }).locator(' > .tree-view-indent')).toHaveCount(1);
-    await test.step('check automatic location of groups', async () => {
-      await traceViewer.showSourceTab();
-      await traceViewer.selectAction(outerGroup);
-      await expect(traceViewer.sourceCodeTab.locator('.source-tab-file-name')).toHaveAttribute('title', __filename);
-      await expect(traceViewer.sourceCodeTab.locator('.source-line-running')).toHaveText(/\d+\s+await context.tracing.group\(outerGroup\);  \/\/ Outer group/);
-    });
-  });
-  await test.step('check inner groups', async () => {
-    await treeViewEntries.filter({ hasText: firstInnerGroup }).locator('.codicon-chevron-right').click();
-    await treeViewEntries.filter({ hasText: secondInnerGroup }).locator('.codicon-chevron-right').click();
-    await expect(traceViewer.actionTitles).toHaveText([
-      /page.gotodata:text\/html,<!DOCTYPE html><html>Hello world<\/html>/,
-      /page.setContent/,
-      outerGroup,
-      outerGroupContent,
-      firstInnerGroup,
-      firstInnerGroupContent,
-      secondInnerGroup,
-      secondInnerGroupContent,
-      expandedFailure,
-      /page.evaluate/,
-    ]);
-    await expect(treeViewEntries.filter({ hasText: firstInnerGroupContent }).locator(' > .tree-view-indent')).toHaveCount(2);
-    await expect(treeViewEntries.filter({ hasText: secondInnerGroupContent }).locator(' > .tree-view-indent')).toHaveCount(2);
-    await test.step('check location with file, line, column', async () => {
-      await traceViewer.selectAction(firstInnerGroup);
-      await expect(traceViewer.sourceCodeTab.locator('.source-tab-file-name')).toHaveAttribute('title', `${__dirname}/tracing.spec.ts`);
-    });
-    await test.step('check location with file', async () => {
-      await traceViewer.selectAction(secondInnerGroup);
-      await expect(traceViewer.sourceCodeTab.getByText(/Licensed under the Apache License/)).toBeVisible();
-    });
-  });
+  await expect(traceViewer.actionTitles).toHaveText([
+    /outer group/,
+    /page.goto/,
+    /inner group 1/,
+    /inner group 2/,
+    /expect.toBeVisible/,
+  ]);
+
+  await traceViewer.selectAction('inner group 1');
+  await traceViewer.expandAction('inner group 1');
+  await expect(traceViewer.actionTitles).toHaveText([
+    /outer group/,
+    /page.goto/,
+    /inner group 1/,
+    /locator.click/,
+    /inner group 2/,
+  ]);
+  await traceViewer.showSourceTab();
+  await expect(traceViewer.sourceCodeTab.locator('.source-line-running')).toHaveText(/DO NOT TOUCH THIS LINE/);
+
+  await traceViewer.selectAction('inner group 2');
+  await expect(traceViewer.sourceCodeTab.locator('.source-line-running')).toContainText("await context.tracing.group('inner group 2');");
 });
-
 
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer([traceFile]);

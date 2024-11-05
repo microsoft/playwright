@@ -21056,13 +21056,11 @@ export interface Touchscreen {
  */
 export interface Tracing {
   /**
-   * Creates a new inline group within the trace, assigning any subsequent calls to this group until
-   * [method: Tracing.groupEnd] is invoked.
+   * Creates a new group within the trace, assigning any subsequent API calls to this group, until
+   * [tracing.groupEnd()](https://playwright.dev/docs/api/class-tracing#tracing-group-end) is called. Groups can be
+   * nested and will be visible in the trace viewer and test reports.
    *
-   * Groups can be nested and are similar to `test.step` in trace. However, groups are only visualized in the trace
-   * viewer and, unlike test.step, have no effect on the test reports.
-   *
-   * **NOTE** This API is intended for Playwright API users that can not use `test.step`.
+   * **NOTE** When using Playwright test runner, we strongly recommend `test.step` instead.
    *
    * **Usage**
    *
@@ -21086,7 +21084,7 @@ export interface Tracing {
   group(name: string, options?: {
     /**
      * Specifies a custom location for the group start to be shown in source tab in trace viewer. By default, location of
-     * the tracing.group() call is shown.
+     * the [tracing.group(name[, options])](https://playwright.dev/docs/api/class-tracing#tracing-group) call is shown.
      */
     location?: {
       /**
@@ -21100,14 +21098,15 @@ export interface Tracing {
       line?: number;
 
       /**
-       * Column number in the source file
+       * Column number in the source file.
        */
       column?: number;
     };
   }): Promise<void>;
 
   /**
-   * Closes the currently open inline group in the trace.
+   * Closes the last group created by
+   * [tracing.group(name[, options])](https://playwright.dev/docs/api/class-tracing#tracing-group).
    */
   groupEnd(): Promise<void>;
 
