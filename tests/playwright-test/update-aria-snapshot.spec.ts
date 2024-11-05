@@ -15,7 +15,7 @@
  */
 
 import * as fs from 'fs';
-import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
+import { test, expect, playwrightCtConfigText, stripAnsi } from './playwright-test-fixtures';
 import { execSync } from 'child_process';
 
 test.describe.configure({ mode: 'parallel' });
@@ -49,6 +49,13 @@ test('should update snapshot with the update-snapshots flag', async ({ runInline
      
 `);
 
+  expect(stripAnsi(result.output).replace(/\\/g, '/')).toContain(`New baselines created for:
+
+  a.spec.ts
+
+  git apply test-results/rebaselines.patch
+`);
+
   execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
   const result2 = await runInlineTest({});
   expect(result2.exitCode).toBe(0);
@@ -66,6 +73,14 @@ test('should update missing snapshots', async ({ runInlineTest }, testInfo) => {
   });
 
   expect(result.exitCode).toBe(0);
+
+  expect(stripAnsi(result.output).replace(/\\/g, '/')).toContain(`New baselines created for:
+
+  a.spec.ts
+
+  git apply test-results/rebaselines.patch
+`);
+
   const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
   const data = fs.readFileSync(patchPath, 'utf-8');
   expect(data).toBe(`--- a/a.spec.ts
@@ -262,6 +277,15 @@ test('should update multiple files', async ({ runInlineTest }, testInfo) => {
   });
 
   expect(result.exitCode).toBe(0);
+
+  expect(stripAnsi(result.output).replace(/\\/g, '/')).toContain(`New baselines created for:
+
+  src/button-1.test.tsx
+  src/button-2.test.tsx
+
+  git apply test-results/rebaselines.patch
+`);
+
   const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
   const data = fs.readFileSync(patchPath, 'utf-8');
   expect(data).toBe(`--- a/src/button-1.test.tsx

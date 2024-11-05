@@ -155,7 +155,7 @@ Additional locator to match.
 - returns: <[string]>
 
 Captures the aria snapshot of the given element.
-Read more about [accessibility snapshots](../aria-snapshot.md) and [`method: LocatorAssertions.toMatchAriaSnapshot`] for the corresponding assertion.
+Read more about [aria snapshots](../aria-snapshots.md) and [`method: LocatorAssertions.toMatchAriaSnapshot`] for the corresponding assertion.
 
 **Usage**
 
