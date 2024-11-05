@@ -76,6 +76,11 @@ class TraceViewerPage {
   }
 
   @step
+  async expandAction(title: string, ordinal: number = 0) {
+    await this.actionsTree.locator('.tree-view-entry', { hasText: title }).nth(ordinal).locator('.codicon-chevron-right').click();
+  }
+
+  @step
   async selectAction(title: string, ordinal: number = 0) {
     await this.page.locator(`.action-title:has-text("${title}")`).nth(ordinal).click();
   }

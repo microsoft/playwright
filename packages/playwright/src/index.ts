@@ -259,13 +259,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const tracingGroupSteps: TestStepInternal[] = [];
     const csiListener: ClientInstrumentationListener = {
       onApiCallBegin: (apiName: string, params: Record<string, any>, frames: StackFrame[], userData: any, out: { stepId?: string }) => {
+        userData.apiName = apiName;
         const testInfo = currentTestInfo();
-        if (!testInfo || apiName.includes('setTestIdAttribute'))
-          return { userObject: null };
-        if (apiName === 'tracing.groupEnd') {
-          tracingGroupSteps.pop();
-          return { userObject: null };
-        }
+        if (!testInfo || apiName.includes('setTestIdAttribute') || apiName === 'tracing.groupEnd')
+          return;
         const step = testInfo._addStep({
           location: frames[0] as any,
           category: 'pw:api',
@@ -273,13 +270,21 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           apiName,
           params,
         }, tracingGroupSteps[tracingGroupSteps.length - 1]);
-        userData.userObject = step;
+        userData.step = step;
         out.stepId = step.stepId;
         if (apiName === 'tracing.group')
           tracingGroupSteps.push(step);
       },
       onApiCallEnd: (userData: any, error?: Error) => {
-        const step = userData.userObject;
+        // "tracing.group" step will end later, when "tracing.groupEnd" finishes.
+        if (userData.apiName === 'tracing.group')
+          return;
+        if (userData.apiName === 'tracing.groupEnd') {
+          const step = tracingGroupSteps.pop();
+          step?.complete({ error });
+          return;
+        }
+        const step = userData.step;
         step?.complete({ error });
       },
       onWillPause: () => {
@@ -707,6 +712,8 @@ class ArtifactsRecorder {
 const paramsToRender = ['url', 'selector', 'text', 'key'];
 
 function renderApiCall(apiName: string, params: any) {
+  if (apiName === 'tracing.group')
+    return params.name;
   const paramsArray = [];
   if (params) {
     for (const name of paramsToRender) {

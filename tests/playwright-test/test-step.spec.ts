@@ -1267,3 +1267,43 @@ hook      |After Hooks
   });
   expect(exitCode).toBe(0);
 });
+
+test('should show tracing.group nested inside test.step', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `module.exports = { reporter: [['./reporter', { printErrorLocation: true }]] };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await test.step('my step 1', async () => {
+          await test.step('my step 2', async () => {
+            await page.context().tracing.group('my group 1');
+            await page.context().tracing.group('my group 2');
+            await page.setContent('<button></button>');
+            await page.context().tracing.groupEnd();
+            await page.context().tracing.groupEnd();
+          });
+        });
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+fixture   |  fixture: browser
+pw:api    |    browserType.launch
+fixture   |  fixture: context
+pw:api    |    browser.newContext
+fixture   |  fixture: page
+pw:api    |    browserContext.newPage
+test.step |my step 1 @ a.test.ts:4
+test.step |  my step 2 @ a.test.ts:5
+pw:api    |    my group 1 @ a.test.ts:6
+pw:api    |      my group 2 @ a.test.ts:7
+pw:api    |        page.setContent @ a.test.ts:8
+hook      |After Hooks
+fixture   |  fixture: page
+fixture   |  fixture: context
+`);
+});
