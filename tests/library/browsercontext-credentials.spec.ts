@@ -15,26 +15,33 @@
  * limitations under the License.
  */
 
-import { browserTest as it, expect } from '../config/browserTest';
+import { browserTest as base, expect } from '../config/browserTest';
 
-it('should fail without credentials', async ({ browser, server, browserName, channel }) => {
+const it = base.extend<{ failsOn401: boolean }>({
+  failsOn401: async ({ browserName, headless, channel }, use) => {
+    const isHeadlessShell = channel === 'chromium-headless-shell' || (!channel && headless);
+    await use(browserName === 'chromium' && !isHeadlessShell);
+  },
+});
+
+it('should fail without credentials', async ({ browser, server, failsOn401 }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext();
   const page = await context.newPage();
   const responseOrError = await page.goto(server.EMPTY_PAGE).catch(e => e);
-  if (browserName === 'chromium' && channel !== 'chromium-headless-shell')
+  if (failsOn401)
     expect(responseOrError.message).toContain('net::ERR_INVALID_AUTH_CREDENTIALS');
   else
     expect(responseOrError.status()).toBe(401);
 });
 
-it('should work with setHTTPCredentials', async ({ browser, server, browserName, channel }) => {
+it('should work with setHTTPCredentials', async ({ browser, server, failsOn401 }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext();
   const page = await context.newPage();
 
   let responseOrError = await page.goto(server.EMPTY_PAGE).catch(e => e);
-  if (browserName === 'chromium' && channel !== 'chromium-headless-shell')
+  if (failsOn401)
     expect(responseOrError.message).toContain('net::ERR_INVALID_AUTH_CREDENTIALS');
   else
     expect(responseOrError.status()).toBe(401);
@@ -102,21 +109,21 @@ it('should work with correct credentials and matching origin case insensitive', 
   await context.close();
 });
 
-it('should fail with correct credentials and mismatching scheme', async ({ browser, server, browserName, channel }) => {
+it('should fail with correct credentials and mismatching scheme', async ({ browser, server, failsOn401 }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: { username: 'user', password: 'pass', origin: server.PREFIX.replace('http://', 'https://') }
   });
   const page = await context.newPage();
   const responseOrError = await page.goto(server.EMPTY_PAGE).catch(e => e);
-  if (browserName === 'chromium' && channel !== 'chromium-headless-shell')
+  if (failsOn401)
     expect(responseOrError.message).toContain('net::ERR_INVALID_AUTH_CREDENTIALS');
   else
     expect(responseOrError.status()).toBe(401);
   await context.close();
 });
 
-it('should fail with correct credentials and mismatching hostname', async ({ browser, server, browserName, channel }) => {
+it('should fail with correct credentials and mismatching hostname', async ({ browser, server, failsOn401 }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const hostname = new URL(server.PREFIX).hostname;
   const origin = server.PREFIX.replace(hostname, 'mismatching-hostname');
@@ -125,14 +132,14 @@ it('should fail with correct credentials and mismatching hostname', async ({ bro
   });
   const page = await context.newPage();
   const responseOrError = await page.goto(server.EMPTY_PAGE).catch(e => e);
-  if (browserName === 'chromium' && channel !== 'chromium-headless-shell')
+  if (failsOn401)
     expect(responseOrError.message).toContain('net::ERR_INVALID_AUTH_CREDENTIALS');
   else
     expect(responseOrError.status()).toBe(401);
   await context.close();
 });
 
-it('should fail with correct credentials and mismatching port', async ({ browser, server, browserName, channel }) => {
+it('should fail with correct credentials and mismatching port', async ({ browser, server, failsOn401 }) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const origin = server.PREFIX.replace(server.PORT.toString(), (server.PORT + 1).toString());
   const context = await browser.newContext({
@@ -140,7 +147,7 @@ it('should fail with correct credentials and mismatching port', async ({ browser
   });
   const page = await context.newPage();
   const responseOrError = await page.goto(server.EMPTY_PAGE).catch(e => e);
-  if (browserName === 'chromium' && channel !== 'chromium-headless-shell')
+  if (failsOn401)
     expect(responseOrError.message).toContain('net::ERR_INVALID_AUTH_CREDENTIALS');
   else
     expect(responseOrError.status()).toBe(401);

@@ -41,8 +41,8 @@ for (const cdn of CDNS) {
   test(`playwright cdn failover should work (${cdn})`, async ({ exec, installedSoftwareOnDisk }) => {
     await exec('npm i playwright');
     const result = await exec('npx playwright install', { env: { PW_TEST_CDN_THAT_SHOULD_WORK: cdn, DEBUG: 'pw:install' } });
-    expect(result).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg', 'firefox', 'webkit']);
-    expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);
+    expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit']);
+    expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit']);
     const dls = parsedDownloads(result);
     for (const software of ['chromium', 'ffmpeg', 'firefox', 'webkit'])
       expect(dls).toContainEqual({ status: 200, name: software, url: expect.stringContaining(cdn) });

@@ -10,7 +10,7 @@
     {
       "name": "chromium-headless-shell",
       "revision": "1148",
-      "installByDefault": false,
+      "installByDefault": true,
       "browserVersion": "131.0.6778.33"
     },
     {
