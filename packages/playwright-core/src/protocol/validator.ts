@@ -2297,6 +2297,17 @@ scheme.TracingTracingStartChunkParams = tObject({
 scheme.TracingTracingStartChunkResult = tObject({
   traceName: tString,
 });
+scheme.TracingTracingGroupParams = tObject({
+  name: tString,
+  location: tOptional(tObject({
+    file: tString,
+    line: tOptional(tNumber),
+    column: tOptional(tNumber),
+  })),
+});
+scheme.TracingTracingGroupResult = tOptional(tObject({}));
+scheme.TracingTracingGroupEndParams = tOptional(tObject({}));
+scheme.TracingTracingGroupEndResult = tOptional(tObject({}));
 scheme.TracingTracingStopChunkParams = tObject({
   mode: tEnum(['archive', 'discard', 'entries']),
 });

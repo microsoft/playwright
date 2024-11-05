@@ -21056,6 +21056,62 @@ export interface Touchscreen {
  */
 export interface Tracing {
   /**
+   * Creates a new inline group within the trace, assigning any subsequent calls to this group until
+   * [method: Tracing.groupEnd] is invoked.
+   *
+   * Groups can be nested and are similar to `test.step` in trace. However, groups are only visualized in the trace
+   * viewer and, unlike test.step, have no effect on the test reports.
+   *
+   * **NOTE** This API is intended for Playwright API users that can not use `test.step`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await context.tracing.start({ screenshots: true, snapshots: true });
+   * await context.tracing.group('Open Playwright.dev');
+   * // All actions between group and groupEnd will be shown in the trace viewer as a group.
+   * const page = await context.newPage();
+   * await page.goto('https://playwright.dev/');
+   * await context.tracing.groupEnd();
+   * await context.tracing.group('Open API Docs of Tracing');
+   * await page.getByRole('link', { name: 'API' }).click();
+   * await page.getByRole('link', { name: 'Tracing' }).click();
+   * await context.tracing.groupEnd();
+   * // This Trace will have two groups: 'Open Playwright.dev' and 'Open API Docs of Tracing'.
+   * ```
+   *
+   * @param name Group name shown in the actions tree in trace viewer.
+   * @param options
+   */
+  group(name: string, options?: {
+    /**
+     * Specifies a custom location for the group start to be shown in source tab in trace viewer. By default, location of
+     * the tracing.group() call is shown.
+     */
+    location?: {
+      /**
+       * Source file path to be shown in the trace viewer source tab.
+       */
+      file: string;
+
+      /**
+       * Line number in the source file.
+       */
+      line?: number;
+
+      /**
+       * Column number in the source file
+       */
+      column?: number;
+    };
+  }): Promise<void>;
+
+  /**
+   * Closes the currently open inline group in the trace.
+   */
+  groupEnd(): Promise<void>;
+
+  /**
    * Start tracing.
    *
    * **Usage**

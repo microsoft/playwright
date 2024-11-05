@@ -20,7 +20,7 @@ import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions,
 import * as playwrightLibrary from 'playwright-core';
 import { createGuid, debugMode, addInternalStackPrefix, isString, asLocator, jsonStringifyForceASCII } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
-import type { TestInfoImpl } from './worker/testInfo';
+import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import { rootTestType } from './common/testType';
 import type { ContextReuseMode } from './common/config';
 import type { ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
@@ -255,20 +255,28 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
+
+    const tracingGroupSteps: TestStepInternal[] = [];
     const csiListener: ClientInstrumentationListener = {
       onApiCallBegin: (apiName: string, params: Record<string, any>, frames: StackFrame[], userData: any, out: { stepId?: string }) => {
         const testInfo = currentTestInfo();
         if (!testInfo || apiName.includes('setTestIdAttribute'))
           return { userObject: null };
+        if (apiName === 'tracing.groupEnd') {
+          tracingGroupSteps.pop();
+          return { userObject: null };
+        }
         const step = testInfo._addStep({
           location: frames[0] as any,
           category: 'pw:api',
           title: renderApiCall(apiName, params),
           apiName,
           params,
-        });
+        }, tracingGroupSteps[tracingGroupSteps.length - 1]);
         userData.userObject = step;
         out.stepId = step.stepId;
+        if (apiName === 'tracing.group')
+          tracingGroupSteps.push(step);
       },
       onApiCallEnd: (userData: any, error?: Error) => {
         const step = userData.userObject;
