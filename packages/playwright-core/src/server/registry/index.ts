@@ -352,7 +352,7 @@ export const registryDirectory = (() => {
 function isBrowserDirectory(browserDirectory: string): boolean {
   const baseName = path.basename(browserDirectory);
   for (const browserName of allDownloadable) {
-    if (baseName.startsWith(browserName + '-'))
+    if (baseName.startsWith(browserName.replace(/-/g, '_') + '-'))
       return true;
   }
   return false;
@@ -406,7 +406,7 @@ export type BrowserName = 'chromium' | 'firefox' | 'webkit' | 'bidi';
 type InternalTool = 'ffmpeg' | 'firefox-beta' | 'chromium-tip-of-tree' | 'chromium-headless-shell' |'android';
 type BidiChannel = 'bidi-firefox-stable' | 'bidi-firefox-beta' | 'bidi-firefox-nightly' | 'bidi-chrome-canary' | 'bidi-chrome-stable' | 'bidi-chromium';
 type ChromiumChannel = 'chrome' | 'chrome-beta' | 'chrome-dev' | 'chrome-canary' | 'msedge' | 'msedge-beta' | 'msedge-dev' | 'msedge-canary';
-const allDownloadable = ['chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-tip-of-tree', 'chromium-headless-shell'];
+const allDownloadable = ['android', 'chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-tip-of-tree', 'chromium-headless-shell'];
 
 export interface Executable {
   type: 'browser' | 'tool' | 'channel';
@@ -489,27 +489,20 @@ export class Registry {
       _isHermeticInstallation: true,
     });
 
-    const chromiumHeadlessShellDescriptor: BrowsersJSONDescriptor = {
-      name: 'chromium-headless-shell',
-      revision: chromium.revision,
-      browserVersion: chromium.browserVersion,
-      dir: chromium.dir.replace(/(.*)(-\d+)$/, '$1-headless-shell$2'),
-      installByDefault: false,
-      hasRevisionOverride: false,
-    };
-    const chromiumHeadlessShellExecutable = findExecutablePath(chromiumHeadlessShellDescriptor.dir, 'chromium-headless-shell');
+    const chromiumHeadlessShell = descriptors.find(d => d.name === 'chromium-headless-shell')!;
+    const chromiumHeadlessShellExecutable = findExecutablePath(chromiumHeadlessShell.dir, 'chromium-headless-shell');
     this._executables.push({
       type: 'tool',
       name: 'chromium-headless-shell',
       browserName: 'chromium',
-      directory: chromiumHeadlessShellDescriptor.dir,
+      directory: chromiumHeadlessShell.dir,
       executablePath: () => chromiumHeadlessShellExecutable,
       executablePathOrDie: (sdkLanguage: string) => executablePathOrDie('chromium-headless-shell', chromiumHeadlessShellExecutable, false, sdkLanguage),
-      installType: 'download-on-demand',
-      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumHeadlessShellDescriptor.dir, ['chrome-linux'], [], ['chrome-win']),
-      downloadURLs: this._downloadURLs(chromiumHeadlessShellDescriptor),
+      installType: chromiumHeadlessShell.installByDefault ? 'download-by-default' : 'download-on-demand',
+      _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumHeadlessShell.dir, ['chrome-linux'], [], ['chrome-win']),
+      downloadURLs: this._downloadURLs(chromiumHeadlessShell),
       browserVersion: chromium.browserVersion,
-      _install: () => this._downloadExecutable(chromiumHeadlessShellDescriptor, chromiumHeadlessShellExecutable),
+      _install: () => this._downloadExecutable(chromiumHeadlessShell, chromiumHeadlessShellExecutable),
       _dependencyGroup: 'chromium',
       _isHermeticInstallation: true,
     });
