@@ -89,11 +89,13 @@ export class Tracing
 
   async stopChunk() {
     this._traceBuffer = await this._collectTraceAsBuffer();
+    return this._traceBuffer;
   }
 
   async stop() {
     this._traceBuffer = await this._collectTraceAsBuffer();
     await this._channel.tracingStop();
+    return this._traceBuffer;
   }
 
   private async _collectTraceAsBuffer(): Promise<Buffer> {
