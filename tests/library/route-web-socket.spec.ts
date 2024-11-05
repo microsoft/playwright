@@ -33,11 +33,11 @@ function withResolvers<T = void>() {
   return { promise, resolve };
 }
 
-async function setupWS(target: Page | Frame, port: number, binaryType: 'blob' | 'arraybuffer') {
+async function setupWS(target: Page | Frame, port: number, binaryType: 'blob' | 'arraybuffer', protocols?: string | string[]) {
   await target.goto('about:blank');
-  await target.evaluate(({ port, binaryType }) => {
+  await target.evaluate(({ port, binaryType, protocols }) => {
     window.log = [];
-    window.ws = new WebSocket('ws://localhost:' + port + '/ws');
+    window.ws = new WebSocket('ws://localhost:' + port + '/ws', protocols);
     window.ws.binaryType = binaryType;
     window.ws.addEventListener('open', () => window.log.push('open'));
     window.ws.addEventListener('close', event => window.log.push(`close code=${event.code} reason=${event.reason} wasClean=${event.wasClean}`));
@@ -53,7 +53,7 @@ async function setupWS(target: Page | Frame, port: number, binaryType: 'blob' | 
       window.log.push(`message: data=${data} origin=${event.origin} lastEventId=${event.lastEventId}`);
     });
     window.wsOpened = new Promise(f => window.ws.addEventListener('open', () => f()));
-  }, { port, binaryType });
+  }, { port, binaryType, protocols });
 }
 
 for (const mock of ['no-mock', 'no-match', 'pass-through']) {
@@ -190,6 +190,13 @@ for (const mock of ['no-mock', 'no-match', 'pass-through']) {
       const closed = await closedPromise;
       expect(closed.code).toBe(3002);
       expect(closed.reason.toString()).toBe('oops');
+    });
+
+    test('should pass through the required protocol', async ({ page, server }) => {
+      await setupWS(page, server.PORT, 'blob', 'my-custom-protocol');
+      await page.evaluate(() => window.wsOpened);
+      const protocol = await page.evaluate(() => window.ws.protocol);
+      expect(protocol).toBe('my-custom-protocol');
     });
   });
 }
