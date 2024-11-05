@@ -23,6 +23,7 @@ import { generateUnifiedDiff } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import type { FullConfigInternal } from '../common/config';
 import { filterProjects } from './projectUtils';
+import type { InternalReporter } from '../reporters/internalReporter';
 const t: typeof T = types;
 
 type Location = {
@@ -43,7 +44,7 @@ export function addSuggestedRebaseline(location: Location, suggestedRebaseline: 
   suggestedRebaselines.set(location.file, { location, code: suggestedRebaseline });
 }
 
-export async function applySuggestedRebaselines(config: FullConfigInternal) {
+export async function applySuggestedRebaselines(config: FullConfigInternal, reporter: InternalReporter) {
   if (config.config.updateSnapshots !== 'all' && config.config.updateSnapshots !== 'missing')
     return;
   if (!suggestedRebaselines.size)
@@ -102,6 +103,5 @@ export async function applySuggestedRebaselines(config: FullConfigInternal) {
   await fs.promises.writeFile(patchFile, patches.join('\n'));
 
   const fileList = files.map(file => '  ' + colors.dim(file)).join('\n');
-  // eslint-disable-next-line no-console
-  console.log(`New baselines created for:\n\n${fileList}\n\n  ` + colors.cyan('git apply ' + path.relative(process.cwd(), patchFile)) + '\n');
+  reporter.onStdErr(`\nNew baselines created for:\n\n${fileList}\n\n  ` + colors.cyan('git apply ' + path.relative(process.cwd(), patchFile)) + '\n');
 }

@@ -555,3 +555,12 @@ heading invalid
 `);
   }
 });
+
+test('call log should contain actual snapshot', async ({ page }) => {
+  await page.setContent(`<h1>todos</h1>`);
+  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - heading "wrong"
+  `, { timeout: 3000 }).catch(e => e);
+
+  expect(stripAnsi(error.message)).toContain(`- unexpected value "- heading "todos" [level=1]"`);
+});

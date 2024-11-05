@@ -33,7 +33,8 @@
   color: var(--vscode-debugTokenExpression-number);
 }
 
-.CodeMirror span.cm-keyword {
+.CodeMirror span.cm-keyword,
+.CodeMirror span.cm-builtin {
   color: var(--vscode-debugTokenExpression-name);
 }
 

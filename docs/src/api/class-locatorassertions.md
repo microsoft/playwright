@@ -2109,7 +2109,7 @@ Expected options currently selected.
 * langs:
   - alias-java: matchesAriaSnapshot
 
-Asserts that the target element matches the given [accessibility snapshot](../aria-snapshot.md).
+Asserts that the target element matches the given [accessibility snapshot](../aria-snapshots.md).
 
 **Usage**
 

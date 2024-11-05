@@ -137,6 +137,9 @@ export const Recorder: React.FC<RecorderProps> = ({
       <ToolbarButton icon='symbol-constant' title='Assert value' toggled={mode === 'assertingValue'} disabled={mode === 'none' || mode === 'standby' || mode === 'inspecting'} onClick={() => {
         window.dispatch({ event: 'setMode', params: { mode: mode === 'assertingValue' ? 'recording' : 'assertingValue' } });
       }}></ToolbarButton>
+      <ToolbarButton icon='gist' title='Assert snapshot' toggled={mode === 'assertingSnapshot'} disabled={mode === 'none' || mode === 'standby' || mode === 'inspecting'} onClick={() => {
+        window.dispatch({ event: 'setMode', params: { mode: mode === 'assertingSnapshot' ? 'recording' : 'assertingSnapshot' } });
+      }}></ToolbarButton>
       <ToolbarSeparator />
       <ToolbarButton icon='files' title='Copy' disabled={!source || !source.text} onClick={() => {
         copy(source.text);
@@ -179,7 +182,7 @@ export const Recorder: React.FC<RecorderProps> = ({
           },
           {
             id: 'aria',
-            title: 'Accessibility',
+            title: 'Aria snapshot',
             render: () => <CodeMirrorWrapper text={ariaSnapshot || ''} language={'python'} readOnly={true} wrapLines={true} />
           },
         ]}

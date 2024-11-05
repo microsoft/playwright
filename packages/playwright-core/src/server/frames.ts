@@ -1828,5 +1828,7 @@ function renderUnexpectedValue(expression: string, received: any): string {
     return received ? 'empty' : 'not empty';
   if (expression === 'to.be.focused')
     return received ? 'focused' : 'not focused';
+  if (expression === 'to.match.aria')
+    return received ? received.raw : received;
   return received;
 }

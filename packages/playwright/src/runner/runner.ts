@@ -89,7 +89,7 @@ export class Runner {
     ];
     const status = await runTasks(new TestRun(config, reporter), tasks, config.config.globalTimeout);
 
-    await applySuggestedRebaselines(config);
+    await applySuggestedRebaselines(config, reporter);
 
     // Calling process.exit() might truncate large stdout/stderr output.
     // See https://github.com/nodejs/node/issues/6456.
