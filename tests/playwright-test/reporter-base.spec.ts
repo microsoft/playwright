@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 import * as path from 'path';
 
 for (const useIntermediateMergeReport of [false, true] as const) {
@@ -470,14 +470,21 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const result = await runInlineTest({
         'a.test.ts': `
           const { test, expect } = require('@playwright/test');
-          test('passes', { tag: ['@foo', '@bar'] }, async ({}) => {
+          test('passes', { tag: ['@foo1', '@foo2'] }, async ({}) => {
+            expect(0).toBe(0);
+          });
+          test('passes @bar1 @bar2', async ({}) => {
+            expect(0).toBe(0);
+          });
+          test('passes @baz1', { tag: ['@baz2'] }, async ({}) => {
             expect(0).toBe(0);
           });
         `,
       });
-      const text = result.output;
-
-      expect(text).toContain('passes @foo @bar');
+      const text = stripAnsi(result.output);
+      expect(text).toContain('› passes @foo1 @foo2 (');
+      expect(text).toContain('› passes @bar1 @bar2 (');
+      expect(text).toContain('› passes @baz1 @baz2 (');
     });
   });
 }
