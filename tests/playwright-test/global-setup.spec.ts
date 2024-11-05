@@ -426,3 +426,31 @@ test('globalSetup should support multiple', async ({ runInlineTest }) => {
   ]);
   expect(result.output).toContain('Error: kaboom');
 });
+
+test('globalTeardown runs even if callback failed', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        globalSetup: './globalSetup.ts',
+        globalTeardown: './globalTeardown.ts',
+      };
+    `,
+    'globalSetup.ts': `module.exports = () => { console.log('%%globalSetup'); return () => { throw new Error('kaboom'); } };`,
+    'globalTeardown.ts': `module.exports = () => console.log('%%globalTeardown')`,
+
+    'a.test.js': `
+      import { test } from '@playwright/test';
+      test('a', () => console.log('%%test'));
+    `,
+  }, { reporter: 'line' });
+  expect(result.passed).toBe(1);
+
+  // first setups, then setup callbacks in reverse order.
+  // then teardowns in declared order.
+  expect(result.outputLines).toEqual([
+    'globalSetup',
+    'test',
+    'globalTeardown',
+  ]);
+  expect(result.output).toContain('Error: kaboom');
+});
