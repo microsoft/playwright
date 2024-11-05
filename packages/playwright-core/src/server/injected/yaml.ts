@@ -46,19 +46,6 @@ export function yamlEscapeValueIfNeeded(str: string): string {
   }) + '"';
 }
 
-export function yamlQuoteFragment(str: string, quote = '"'): string {
-  return quote + str.replace(/['"]/g, c => {
-    switch (c) {
-      case '"':
-        return quote === '"' ? '\\"' : '"';
-      case '\'':
-        return quote === '\''  ? '\\\'' : '\'';
-      default:
-        return c;
-    }
-  }) + quote;
-}
-
 function yamlStringNeedsQuotes(str: string): boolean {
   if (str.length === 0)
     return true;
