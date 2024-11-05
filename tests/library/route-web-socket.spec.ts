@@ -539,3 +539,26 @@ test('should work with no trailing slash', async ({ page, server }) => {
   await expect.poll(() => log).toEqual(['query']);
   expect(await page.evaluate(() => window.log)).toEqual(['response']);
 });
+
+test('should work with baseURL', async ({ contextFactory, server }) => {
+  const context = await contextFactory({ baseURL: 'http://localhost:' + server.PORT });
+  const page = await context.newPage();
+
+  await page.routeWebSocket('/ws', ws => {
+    ws.onMessage(message => {
+      ws.send(message);
+    });
+  });
+
+  await setupWS(page, server.PORT, 'blob');
+
+  await page.evaluate(async () => {
+    await window.wsOpened;
+    window.ws.send('echo');
+  });
+
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual([
+    'open',
+    `message: data=echo origin=ws://localhost:${server.PORT} lastEventId=`,
+  ]);
+});
