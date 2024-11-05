@@ -97,12 +97,11 @@ export function createGlobalSetupTasks(config: FullConfigInternal) {
   const tasks: Task<TestRun>[] = [];
   if (!config.configCLIOverrides.preserveOutputDir && !process.env.PW_TEST_NO_REMOVE_OUTPUT_DIRS)
     tasks.push(createRemoveOutputDirsTask());
-  tasks.push(...createPluginSetupTasks(config));
-  if (config.globalSetups.length || config.globalTeardowns.length) {
-    const length = Math.max(config.globalSetups.length, config.globalTeardowns.length);
-    for (let i = 0; i < length; i++)
-      tasks.push(createGlobalSetupTask(i, length));
-  }
+  tasks.push(
+      ...createPluginSetupTasks(config),
+      ...config.globalTeardowns.map(file => createGlobalTeardownTask(file, config)).reverse(),
+      ...config.globalSetups.map(file => createGlobalSetupTask(file, config)),
+  );
   return tasks;
 }
 
@@ -164,28 +163,35 @@ function createPluginBeginTask(plugin: TestRunnerPluginRegistration): Task<TestR
   };
 }
 
-function createGlobalSetupTask(index: number, length: number): Task<TestRun> {
-  let globalSetupResult: any;
-  let globalSetupFinished = false;
-  let teardownHook: any;
-
+function createGlobalSetupTask(file: string, config: FullConfigInternal): Task<TestRun> {
   let title = 'global setup';
-  if (length > 1)
-    title += ` #${index}`;
+  if (config.globalSetups.length > 1)
+    title += ` (${file})`;
 
+  let globalSetupResult: any;
   return {
     title,
     setup: async ({ config }) => {
-      const setupHook = config.globalSetups[index] ? await loadGlobalHook(config, config.globalSetups[index]) : undefined;
-      teardownHook = config.globalTeardowns[index] ? await loadGlobalHook(config, config.globalTeardowns[index]) : undefined;
-      globalSetupResult = setupHook ? await setupHook(config.config) : undefined;
-      globalSetupFinished = true;
+      const setupHook = await loadGlobalHook(config, file);
+      globalSetupResult = await setupHook(config.config);
     },
-    teardown: async ({ config }) => {
+    teardown: async () => {
       if (typeof globalSetupResult === 'function')
         await globalSetupResult();
-      if (globalSetupFinished)
-        await teardownHook?.(config.config);
+    },
+  };
+}
+
+function createGlobalTeardownTask(file: string, config: FullConfigInternal): Task<TestRun> {
+  let title = 'global teardown';
+  if (config.globalTeardowns.length > 1)
+    title += ` (${file})`;
+
+  return {
+    title,
+    teardown: async ({ config }) => {
+      const teardownHook = await loadGlobalHook(config, file);
+      await teardownHook(config.config);
     },
   };
 }
