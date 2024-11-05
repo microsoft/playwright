@@ -112,7 +112,7 @@ attributes.
 In this example, the button role is matched, but the accessible name ("Submit") is not specified, allowing the test to
 pass regardless of the button’s label.
 
----
+<hr/>
 
 For elements with ARIA attributes like `checked` or `disabled`, omitting these attributes allows partial matching,
 focusing solely on role and hierarchy.
@@ -130,7 +130,7 @@ focusing solely on role and hierarchy.
 
 In this partial match, the `checked` attribute is ignored, so the test will pass regardless of the checkbox state.
 
----
+<hr/>
 
 Similarly, you can partially match children in lists or groups by omitting specific list items or nested elements.
 
@@ -222,6 +222,7 @@ accessibility tree for a selected locator, letting you explore, inspect, and ver
 accessible names to aid snapshot creation and review.
 
 ### 3. Updating Snapshots with `@playwright/test` and the `--update-snapshots` Flag
+* langs: js
 
 When using the Playwright test runner (`@playwright/test`), you can automatically update snapshots by running tests with
 the `--update-snapshots` flag:
