@@ -773,7 +773,7 @@ test('should gracefully kill server', async ({ interactWithTestRunner }, { worke
   }, { workers: 1 });
 
   await testProcess.waitForOutput('webserver started');
-  process.kill(-testProcess.process.pid!, 'SIGINT');
+  process.kill(testProcess.process.pid!, 'SIGINT');
   await testProcess.exited;
 
   expect(testProcess.outputLines({ prefix: '[WebServer] ' })).toEqual(['webserver received SIGINT but stubbornly refuses to wind down']);
