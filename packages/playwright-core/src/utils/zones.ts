@@ -19,49 +19,52 @@ import { AsyncLocalStorage } from 'async_hooks';
 export type ZoneType = 'apiZone' | 'expectZone' | 'stepZone';
 
 class ZoneManager {
-  private readonly _asyncLocalStorage = new AsyncLocalStorage<Zone<unknown>|undefined>();
+  private readonly _asyncLocalStorage = new AsyncLocalStorage<Zone|undefined>();
 
   run<T, R>(type: ZoneType, data: T, func: () => R): R {
-    const previous = this._asyncLocalStorage.getStore();
-    const zone = new Zone(previous, type, data);
+    const current = this._asyncLocalStorage.getStore();
+    const zone = Zone.createWithData(current, type, data);
+    return this.runInZone(zone, func);
+  }
+
+  runInZone<R>(zone: Zone | undefined, func: () => R): R {
     return this._asyncLocalStorage.run(zone, func);
   }
 
   zoneData<T>(type: ZoneType): T | undefined {
-    for (let zone = this._asyncLocalStorage.getStore(); zone; zone = zone.previous) {
-      if (zone.type === type)
-        return zone.data as T;
-    }
-    return undefined;
+    const zone = this._asyncLocalStorage.getStore();
+    return zone?.get(type);
+  }
+
+  currentZone(): Zone | undefined {
+    return this._asyncLocalStorage.getStore();
   }
 
   exitZones<R>(func: () => R): R {
     return this._asyncLocalStorage.run(undefined, func);
   }
-
-  printZones() {
-    const zones = [];
-    for (let zone = this._asyncLocalStorage.getStore(); zone; zone = zone.previous) {
-      let str = zone.type;
-      if (zone.type === 'apiZone')
-        str += `(${(zone.data as any).apiName})`;
-      zones.push(str);
-
-    }
-    // eslint-disable-next-line no-console
-    console.log('zones: ', zones.join(' -> '));
-  }
 }
 
-class Zone<T> {
-  readonly type: ZoneType;
-  readonly data: T;
-  readonly previous: Zone<unknown> | undefined;
+export class Zone {
+  private readonly store: Map<ZoneType, unknown>;
 
-  constructor(previous: Zone<unknown> | undefined, type: ZoneType, data: T) {
-    this.type = type;
-    this.data = data;
-    this.previous = previous;
+  static createWithData(currentZone: Zone | undefined, type: ZoneType, data: unknown) {
+    const store = new Map(currentZone?.store.entries() ?? []);
+    store.set(type, data);
+    return new Zone(store);
+  }
+
+  private constructor(store: Map<ZoneType, unknown>) {
+    this.store = store;
+  }
+
+  copyWithoutTypes(types: ZoneType[]): Zone {
+    const store = new Map(this.store.entries().filter(([type]) => !types.includes(type)));
+    return new Zone(store);
+  }
+
+  get<T>(type: ZoneType): T | undefined {
+    return this.store.get(type) as T | undefined;
   }
 }
 
