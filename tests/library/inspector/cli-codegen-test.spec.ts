@@ -87,7 +87,7 @@ test('test', async ({ page }) => {`;
 
 test('should not generate recordHAR with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
-  const expectedResult = `  await page.routeFromHAR('${harFileName}');`;
+  const expectedResult = `  await page.routeFromHAR('${harFileName.replace(/\\/g, '\\\\')}');`;
   const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`], {
     autoExitWhen: expectedResult,
   });
@@ -99,7 +99,7 @@ test('should not generate recordHAR with --save-har', async ({ runCLI }, testInf
 test('should generate routeFromHAR with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
   const expectedResult = `test('test', async ({ page }) => {
-  await page.routeFromHAR('${harFileName}');
+  await page.routeFromHAR('${harFileName.replace(/\\/g, '\\\\')}');
 });`;
   const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`], {
     autoExitWhen: expectedResult,

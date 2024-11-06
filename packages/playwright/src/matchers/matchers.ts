@@ -140,7 +140,7 @@ export function toBeVisible(
   const expected = visible ? 'visible' : 'hidden';
   const unexpected = visible ? 'hidden' : 'visible';
   const arg = visible ? '' : '{ visible: false }';
-  return toBeTruthy.call(this, 'toBeVisibleFoo', locator, 'Locator', expected, unexpected, arg, async (isNot, timeout) => {
+  return toBeTruthy.call(this, 'toBeVisible', locator, 'Locator', expected, unexpected, arg, async (isNot, timeout) => {
     return await locator._expect(visible ? 'to.be.visible' : 'to.be.hidden', { isNot, timeout });
   }, options);
 }

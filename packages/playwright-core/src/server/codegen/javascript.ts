@@ -146,7 +146,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
 ${useText ? '\ntest.use(' + useText + ');\n' : ''}
       test('test', async ({ page }) => {`);
     if (options.contextOptions.recordHar)
-      formatter.add(`  await page.routeFromHAR('${options.contextOptions.recordHar.path}');`);
+      formatter.add(`  await page.routeFromHAR(${quote(options.contextOptions.recordHar.path)});`);
     return formatter.format();
   }
 
@@ -163,7 +163,7 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
         const browser = await ${options.browserName}.launch(${formatObjectOrVoid(options.launchOptions)});
         const context = await browser.newContext(${formatContextOptions(options.contextOptions, options.deviceName, false)});`);
     if (options.contextOptions.recordHar)
-      formatter.add(`        await context.routeFromHAR('${options.contextOptions.recordHar.path}');`);
+      formatter.add(`        await context.routeFromHAR(${quote(options.contextOptions.recordHar.path)});`);
     return formatter.format();
   }
 
