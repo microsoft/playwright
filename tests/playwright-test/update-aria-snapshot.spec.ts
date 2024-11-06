@@ -166,6 +166,8 @@ test('should generate baseline with special characters', async ({ runInlineTest 
           <button>Click: 123</button>
           <button>Click ' me</button>
           <button>Click: ' me</button>
+          <button>Click " me</button>
+          <button>Click \\\\ me</button>
           <li>Item: 1</li>
           <li>Item {a: b}</li>
         </ul>\`);
@@ -179,7 +181,7 @@ test('should generate baseline with special characters', async ({ runInlineTest 
   const data = fs.readFileSync(patchPath, 'utf-8');
   expect(data).toBe(`--- a/a.spec.ts
 +++ b/a.spec.ts
-@@ -9,6 +9,14 @@
+@@ -11,6 +11,16 @@
            <li>Item: 1</li>
            <li>Item {a: b}</li>
          </ul>\`);
@@ -190,6 +192,8 @@ test('should generate baseline with special characters', async ({ runInlineTest 
 +            - 'button /Click: \\\\d+/'
 +            - button "Click ' me"
 +            - 'button "Click: '' me"'
++            - button "Click \\\\" me"
++            - button "Click \\\\\\\\ me"
 +            - listitem: \"Item: 1\"
 +            - listitem: \"Item {a: b}\"
 +        \`);

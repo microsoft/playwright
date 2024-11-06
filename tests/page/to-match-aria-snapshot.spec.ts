@@ -436,10 +436,16 @@ test('should unpack escaped names', async ({ page }) => {
 
   {
     await page.setContent(`
-      <button>Click \\ me</button>
+      <button>Click " me</button>
     `);
     await expect(page.locator('body')).toMatchAriaSnapshot(`
-      - button "Click \\ me"
+      - button "Click \\\" me"
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <button>Click \\ me</button>
     `);
     await expect(page.locator('body')).toMatchAriaSnapshot(`
       - button /Click \\\\ me/

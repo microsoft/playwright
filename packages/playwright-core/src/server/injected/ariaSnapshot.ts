@@ -18,7 +18,7 @@ import * as roleUtils from './roleUtils';
 import { getElementComputedStyle } from './domUtils';
 import type { AriaRole } from './roleUtils';
 import { escapeRegExp, longestCommonSubstring } from '@isomorphic/stringUtils';
-import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded, yamlQuoteFragment } from './yaml';
+import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 
 type AriaProps = {
   checked?: boolean | 'mixed';
@@ -318,8 +318,10 @@ export function renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'r
     let key = ariaNode.role;
     if (ariaNode.name) {
       const name = renderString(ariaNode.name);
-      if (name)
-        key += ' ' + (name.startsWith('/') && name.endsWith('/') ? name : yamlQuoteFragment(name));
+      if (name) {
+        const stringifiedName = name.startsWith('/') && name.endsWith('/') ? name : JSON.stringify(name);
+        key += ' ' + stringifiedName;
+      }
     }
     if (ariaNode.checked === 'mixed')
       key += ` [checked=mixed]`;

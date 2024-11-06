@@ -85,19 +85,18 @@ export async function toMatchAriaSnapshot(
     };
   }
 
-  const escapedExpected = escapePrivateUsePoints(expected);
-  const escapedReceived = escapePrivateUsePoints(typedReceived.raw);
+  const receivedText = typedReceived.raw;
   const message = () => {
     if (pass) {
       if (notFound)
-        return messagePrefix + `Expected: not ${this.utils.printExpected(escapedExpected)}\nReceived: ${escapedReceived}` + callLogText(log);
-      const printedReceived = printReceivedStringContainExpectedSubstring(escapedReceived, escapedReceived.indexOf(escapedExpected), escapedExpected.length);
-      return messagePrefix + `Expected: not ${this.utils.printExpected(escapedExpected)}\nReceived: ${printedReceived}` + callLogText(log);
+        return messagePrefix + `Expected: not ${this.utils.printExpected(expected)}\nReceived: ${receivedText}` + callLogText(log);
+      const printedReceived = printReceivedStringContainExpectedSubstring(receivedText, receivedText.indexOf(expected), expected.length);
+      return messagePrefix + `Expected: not ${this.utils.printExpected(expected)}\nReceived: ${printedReceived}` + callLogText(log);
     } else {
       const labelExpected = `Expected`;
       if (notFound)
-        return messagePrefix + `${labelExpected}: ${this.utils.printExpected(escapedExpected)}\nReceived: ${escapedReceived}` + callLogText(log);
-      return messagePrefix + this.utils.printDiffOrStringify(escapedExpected, escapedReceived, labelExpected, 'Received', false) + callLogText(log);
+        return messagePrefix + `${labelExpected}: ${this.utils.printExpected(expected)}\nReceived: ${receivedText}` + callLogText(log);
+      return messagePrefix + this.utils.printDiffOrStringify(expected, receivedText, labelExpected, 'Received', false) + callLogText(log);
     }
   };
 
@@ -116,10 +115,6 @@ export async function toMatchAriaSnapshot(
     log,
     timeout: timedOut ? timeout : undefined,
   };
-}
-
-function escapePrivateUsePoints(str: string) {
-  return escapeTemplateString(str).replace(/[\uE000-\uF8FF]/g, char => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
 
 function unshift(snapshot: string): string {

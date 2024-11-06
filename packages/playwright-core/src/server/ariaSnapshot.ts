@@ -168,7 +168,6 @@ export class KeyParser {
         escaped = false;
       } else if (ch === '\\') {
         escaped = true;
-        result += ch;
       } else if (ch === '"') {
         return result;
       } else {
