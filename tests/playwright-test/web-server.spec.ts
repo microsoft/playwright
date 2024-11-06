@@ -745,36 +745,52 @@ test('should forward stdout when set to "pipe" before server is ready', async ({
   expect(result.output).not.toContain('Timed out waiting 3000ms');
 });
 
-test('should gracefully kill server', async ({ interactWithTestRunner }, { workerIndex }) => {
+test.describe('graceful shutdown', () => {
   test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
 
-  const port = workerIndex * 2 + 10510;
+  const files = (additionalOptions = {}) => {
+    const port = test.info().workerIndex * 2 + 10510;
+    return {
+      'web-server.js': `
+        process.on('SIGINT', () => { console.log('%%webserver received SIGINT but stubbornly refuses to wind down') })
+        const server = require('http').createServer((req, res) => { res.end("ok"); })
+        server.listen(process.argv[2], () => { console.log('webserver started'); });
+      `,
+      'test.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('pass', async ({}) => {});
+      `,
+      'playwright.config.ts': `
+        module.exports = {
+          webServer: {
+            command: 'node web-server.js ${port}',
+            port: ${port},
+            stdout: 'pipe',
+            timeout: 3000,
+            ...${JSON.stringify(additionalOptions)}
+          },
+        };
+      `,
+    };
+  };
 
-  const testProcess = await interactWithTestRunner({
-    'web-server.js': `
-      process.on('SIGINT', () => { console.log('%%webserver received SIGINT but stubbornly refuses to wind down') })
-      const server = require('http').createServer((req, res) => { res.end("ok"); })
-      server.listen(process.argv[2], () => { console.log('webserver started'); });
-    `,
-    'test.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('pass', async ({}) => {});
-    `,
-    'playwright.config.ts': `
-      module.exports = {
-        webServer: {
-          command: 'node web-server.js ${port}',
-          port: ${port},
-          stdout: 'pipe',
-          timeout: 3000,
-        },
-      };
-    `,
-  }, { workers: 1 });
+  test('sends SIGINT by default', async ({ interactWithTestRunner }) => {
+    const testProcess = await interactWithTestRunner(files(), { workers: 1 });
 
-  await testProcess.waitForOutput('webserver started');
-  process.kill(testProcess.process.pid!, 'SIGINT');
-  await testProcess.exited;
+    await testProcess.waitForOutput('webserver started');
+    process.kill(testProcess.process.pid!, 'SIGINT');
+    await testProcess.exited;
 
-  expect(testProcess.outputLines({ prefix: '[WebServer] ' })).toEqual(['webserver received SIGINT but stubbornly refuses to wind down']);
+    expect(testProcess.outputLines({ prefix: '[WebServer] ' })).toEqual(['webserver received SIGINT but stubbornly refuses to wind down']);
+  });
+
+  test('can be disabled', async ({ interactWithTestRunner }) => {
+    const testProcess = await interactWithTestRunner(files({ shutdownTimeout: 0 }), { workers: 1 });
+
+    await testProcess.waitForOutput('webserver started');
+    process.kill(testProcess.process.pid!, 'SIGINT');
+    await testProcess.exited;
+
+    expect(testProcess.outputLines({ prefix: '[WebServer] ' })).toEqual([]);
+  });
 });
