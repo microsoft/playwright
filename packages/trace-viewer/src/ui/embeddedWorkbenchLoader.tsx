@@ -21,7 +21,6 @@ import './embeddedWorkbenchLoader.css';
 import { Workbench } from './workbench';
 import { currentTheme, toggleTheme } from '@web/theme';
 import type { SourceLocation } from './modelUtil';
-import { filePathToTraceURL } from './uiModeTraceView';
 
 function openPage(url: string, target?: string) {
   if (url)
@@ -41,15 +40,7 @@ export const EmbeddedWorkbenchLoader: React.FunctionComponent = () => {
   React.useEffect(() => {
     window.addEventListener('message', async ({ data: { method, params } }) => {
       if (method === 'loadTraceRequested') {
-        if (params.traceUrl) {
-          // the param is called URL, but VS Code sends a path
-          const url = params.traceUrl.startsWith('http')
-            ? params.traceUrl
-            : filePathToTraceURL(params.traceUrl).toString();
-          setTraceURLs([url]);
-        } else {
-          setTraceURLs([]);
-        }
+        setTraceURLs(params.traceUrl ? [params.traceUrl] : []);
         setProcessingErrorMessage(null);
       } else if (method === 'applyTheme') {
         if (currentTheme() !== params.theme)
