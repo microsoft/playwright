@@ -1072,7 +1072,10 @@ fixture   |  fixture: context
 `);
 });
 
-test('should report api steps', async ({ runInlineTest }) => {
+test('should report api steps', async ({ runInlineTest, server }) => {
+  server.setRoute('/empty.html', (req, res) => {
+    req.socket.end();
+  });
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `module.exports = { reporter: [['./reporter', { skipErrorMessage: true }]] };`,
@@ -1085,8 +1088,8 @@ test('should report api steps', async ({ runInlineTest }) => {
         ]);
         await page.click('button');
         await page.getByRole('button').click();
-        await page.request.get('http://localhost2').catch(() => {});
-        await request.get('http://localhost2').catch(() => {});
+        await page.request.get('${server.EMPTY_PAGE}').catch(() => {});
+        await request.get('${server.EMPTY_PAGE}').catch(() => {});
       });
 
       test.describe('suite', () => {
@@ -1136,9 +1139,9 @@ pw:api    |page.waitForNavigation @ a.test.ts:5
 pw:api    |page.goto(data:text/html,<button></button>) @ a.test.ts:6
 pw:api    |page.click(button) @ a.test.ts:8
 pw:api    |locator.getByRole('button').click @ a.test.ts:9
-pw:api    |apiRequestContext.get(http://localhost2) @ a.test.ts:10
+pw:api    |apiRequestContext.get(${server.EMPTY_PAGE}) @ a.test.ts:10
 pw:api    |↪ error: <error message>
-pw:api    |apiRequestContext.get(http://localhost2) @ a.test.ts:11
+pw:api    |apiRequestContext.get(${server.EMPTY_PAGE}) @ a.test.ts:11
 pw:api    |↪ error: <error message>
 hook      |After Hooks
 fixture   |  fixture: request
