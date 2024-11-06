@@ -1363,3 +1363,48 @@ fixture   |  fixture: page
 fixture   |  fixture: context
 `);
 });
+
+test('calls from page.route callback should be under its parent step', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33186' }
+}, async ({ runInlineTest, server }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('waitForResponse step nesting', async ({ page }) => {
+        await test.step('custom step', async () => {
+          await page.route('**/empty.html', async route => {
+            const response = await route.fetch();
+            const text = await response.text();
+            expect(text).toBe('');
+            await route.fulfill({ response })
+          });
+          await page.goto('${server.EMPTY_PAGE}');
+        });
+      });
+      `
+  }, { reporter: '', workers: 1, timeout: 3000 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(0);
+  expect(result.output).not.toContain('Internal error');
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+fixture   |  fixture: browser
+pw:api    |    browserType.launch
+fixture   |  fixture: context
+pw:api    |    browser.newContext
+fixture   |  fixture: page
+pw:api    |    browserContext.newPage
+test.step |custom step @ a.test.ts:4
+pw:api    |  page.route @ a.test.ts:5
+pw:api    |  page.goto(http://localhost:8907/empty.html) @ a.test.ts:11
+pw:api    |  apiResponse.text @ a.test.ts:7
+expect    |  expect.toBe @ a.test.ts:8
+hook      |After Hooks
+fixture   |  fixture: page
+fixture   |  fixture: context
+`);
+});
+
