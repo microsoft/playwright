@@ -9372,6 +9372,12 @@ interface TestConfigWebServer {
   timeout?: number;
 
   /**
+   * How long to wait for the process to gracefully shut down after it was sent `SIGINT`. If exceeded, process is killed
+   * with `SIGKILL`. Defaults to 500 milliseconds.
+   */
+  shutdownTimeout?: number;
+
+  /**
    * The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the
    * server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is
    * checked. Either `port` or `url` should be specified.
