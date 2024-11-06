@@ -51,12 +51,13 @@ export const TestCaseView: React.FC<{
   }, [test?.annotations]);
 
   return <div className='test-case-column vbox'>
-    <div className='hbox'>
-      {prev && <Link href={`#?testId=${prev.testId}${filterParam}`}>« previous</Link>}
+    {test && <div className='hbox'>
+      <div className='test-case-path'>{test.path.join(' › ')}</div>
       <div style={{ flex: 'auto' }}></div>
-      {next && <Link href={`#?testId=${next.testId}${filterParam}`}>next »</Link>}
-    </div>
-    {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
+      <div className={clsx(!prev && 'hidden')}><Link href={`#?testId=${prev?.testId}${filterParam}`}>« previous</Link></div>
+      <div style={{ width: 10 }}></div>
+      <div className={clsx(!next && 'hidden')}><Link href={`#?testId=${next?.testId}${filterParam}`}>next »</Link></div>
+    </div>}
     {test && <div className='test-case-title'>{test?.title}</div>}
     {test && <div className='hbox'>
       <div className='test-case-location'>

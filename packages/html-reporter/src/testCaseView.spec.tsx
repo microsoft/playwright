@@ -154,7 +154,7 @@ const resultWithAttachment: TestResult = {
 const attachmentLinkRenderingTestCase: TestCase = {
   testId: 'testid',
   title: 'My test',
-  path: [],
+  path: ['group'],
   projectName: 'chromium',
   location: { file: 'test.spec.ts', line: 42, column: 0 },
   tags: [],
@@ -206,6 +206,7 @@ test('should correctly render links in attachment name', async ({ mount }) => {
 test('should correctly render prev and next', async ({ mount }) => {
   const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={attachmentLinkRenderingTestCase} prev={testCaseSummary} next={testCaseSummary} run={0} anchor=''></TestCaseView>);
   await expect(component).toMatchAriaSnapshot(`
+    - text: group
     - link "« previous"
     - link "next »"
     - text: "My test test.spec.ts:42 10ms"
