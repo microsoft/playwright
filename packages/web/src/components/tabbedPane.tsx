@@ -36,8 +36,8 @@ export const TabbedPane: React.FunctionComponent<{
   setSelectedTab?: (tab: string) => void,
   dataTestId?: string,
   mode?: 'default' | 'select',
-  id: string,
-}> = ({ tabs, selectedTab, setSelectedTab, leftToolbar, rightToolbar, dataTestId, mode, id }) => {
+}> = ({ tabs, selectedTab, setSelectedTab, leftToolbar, rightToolbar, dataTestId, mode }) => {
+  const id = React.useId();
   if (!selectedTab)
     selectedTab = tabs[0].id;
   if (!mode)
@@ -53,7 +53,7 @@ export const TabbedPane: React.FunctionComponent<{
             <TabbedPaneTab
               key={tab.id}
               id={tab.id}
-              ariaControls={`pane-${id}-tab-${tab.id}`}
+              ariaControls={`${id}-${tab.id}`}
               title={tab.title}
               count={tab.count}
               errorCount={tab.errorCount}
@@ -72,7 +72,7 @@ export const TabbedPane: React.FunctionComponent<{
                 suffix = ` (${tab.count})`;
               if (tab.errorCount)
                 suffix = ` (${tab.errorCount})`;
-              return <option key={tab.id} value={tab.id} selected={tab.id === selectedTab} role='tab' aria-controls={`pane-${id}-tab-${tab.id}`}>{tab.title}{suffix}</option>;
+              return <option key={tab.id} value={tab.id} selected={tab.id === selectedTab} role='tab' aria-controls={`${id}-${tab.id}`}>{tab.title}{suffix}</option>;
             })}
           </select>
         </div>}
@@ -84,9 +84,9 @@ export const TabbedPane: React.FunctionComponent<{
         tabs.map(tab => {
           const className = 'tab-content tab-' + tab.id;
           if (tab.component)
-            return <div key={tab.id} id={`pane-${id}-tab-${tab.id}`} role='tabpanel' aria-label={tab.title} className={className} style={{ display: selectedTab === tab.id ? 'inherit' : 'none' }}>{tab.component}</div>;
+            return <div key={tab.id} id={`${id}-${tab.id}`} role='tabpanel' aria-label={tab.title} className={className} style={{ display: selectedTab === tab.id ? 'inherit' : 'none' }}>{tab.component}</div>;
           if (selectedTab === tab.id)
-            return <div key={tab.id} id={`pane-${id}-tab-${tab.id}`} role='tabpanel' aria-label={tab.title} className={className}>{tab.render!()}</div>;
+            return <div key={tab.id} id={`${id}-${tab.id}`} role='tabpanel' aria-label={tab.title} className={className}>{tab.render!()}</div>;
         })
       }
     </div>

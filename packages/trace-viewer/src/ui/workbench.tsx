@@ -348,7 +348,6 @@ export const Workbench: React.FunctionComponent<{
           openPage={openPage} />}
         sidebar={
           <TabbedPane
-            id='actionlist-sidebar'
             tabs={[actionsTab, metadataTab]}
             selectedTab={selectedNavigatorTab}
             setSelectedTab={setSelectedNavigatorTab}
@@ -356,7 +355,6 @@ export const Workbench: React.FunctionComponent<{
         }
       />}
       sidebar={<TabbedPane
-        id='workbench-sidebar'
         tabs={tabs}
         selectedTab={selectedPropertiesTab}
         setSelectedTab={selectPropertiesTab}
