@@ -122,6 +122,11 @@ Fixtures have a number of advantages over before/after hooks:
 - Fixtures are **flexible**. Tests can use any combinations of the fixtures to tailor precise environment they need, without affecting other tests.
 - Fixtures simplify **grouping**. You no longer need to wrap tests in `describe`s that set up environment, and are free to group your tests by their meaning instead.
 
+Three good signs that something is better as a fixture than as a helper function or before/after hook are:
+1. The after hook performs cleanup, or the helper function returns a cleanup helper.
+2. There's dependencies between the helper functions, with some helper functions being commonly reused.
+3. The before hook or helper function create an object that is "ready to use", similar to the built-in `page` fixture.
+
 <details>
   <summary>Click to expand the code for the <code>TodoPage</code></summary>
   <div>
