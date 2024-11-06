@@ -36,7 +36,8 @@ export default defineConfig({
 | `cwd` | Current working directory of the spawned process, defaults to the directory of the configuration file. |
 | `stdout` | If `"pipe"`, it will pipe the stdout of the command to the process stdout. If `"ignore"`, it will ignore the stdout of the command. Default to `"ignore"`. |
 | `stderr` | Whether to pipe the stderr of the command to the process stderr or ignore it. Defaults to `"pipe"`. |
-| `timeout` | `How long to wait for the process to start up and be available in milliseconds. Defaults to 60000. |
+| `timeout` | How long to wait for the process to start up and be available in milliseconds. Defaults to 60000. |
+| `shutdownTimeout` | How long to wait for the process to gracefully shut down after it was sent `SIGINT`. If exceeded, process is killed with `SIGKILL`. Defaults to 500 milliseconds. |
 
 ## Adding a server timeout
 
