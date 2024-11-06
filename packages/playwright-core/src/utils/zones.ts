@@ -22,12 +22,7 @@ class ZoneManager {
   private readonly _asyncLocalStorage = new AsyncLocalStorage<Zone|undefined>();
 
   run<T, R>(type: ZoneType, data: T, func: () => R): R {
-    const current = this._asyncLocalStorage.getStore();
-    const zone = Zone.createWithData(current, type, data);
-    return this.runInZone(zone, func);
-  }
-
-  runInZone<R>(zone: Zone | undefined, func: () => R): R {
+    const zone = Zone.createWithData(this._asyncLocalStorage, type, data);
     return this._asyncLocalStorage.run(zone, func);
   }
 
@@ -36,8 +31,8 @@ class ZoneManager {
     return zone?.get(type);
   }
 
-  currentZone(): Zone | undefined {
-    return this._asyncLocalStorage.getStore();
+  currentZone(): Zone {
+    return this._asyncLocalStorage.getStore() ?? Zone.createEmpty(this._asyncLocalStorage);
   }
 
   exitZones<R>(func: () => R): R {
@@ -46,25 +41,33 @@ class ZoneManager {
 }
 
 export class Zone {
-  private readonly store: Map<ZoneType, unknown>;
+  private readonly _asyncLocalStorage: AsyncLocalStorage<Zone | undefined>;
+  private readonly _data: Map<ZoneType, unknown>;
 
-  static createWithData(currentZone: Zone | undefined, type: ZoneType, data: unknown) {
-    const store = new Map(currentZone?.store.entries() ?? []);
+  static createWithData(asyncLocalStorage: AsyncLocalStorage<Zone|undefined>, type: ZoneType, data: unknown) {
+    const store = new Map(asyncLocalStorage.getStore()?._data);
     store.set(type, data);
-    return new Zone(store);
+    return new Zone(asyncLocalStorage, store);
   }
 
-  private constructor(store: Map<ZoneType, unknown>) {
-    this.store = store;
+  static createEmpty(asyncLocalStorage: AsyncLocalStorage<Zone|undefined>) {
+    return new Zone(asyncLocalStorage, new Map());
   }
 
-  copyWithoutTypes(types: ZoneType[]): Zone {
-    const store = new Map(this.store.entries().filter(([type]) => !types.includes(type)));
-    return new Zone(store);
+  private constructor(asyncLocalStorage: AsyncLocalStorage<Zone|undefined>, store: Map<ZoneType, unknown>) {
+    this._asyncLocalStorage = asyncLocalStorage;
+    this._data = store;
+  }
+
+  run<R>(func: () => R): R {
+    // Reset apiZone and expectZone, but restore stepZone.
+    const entries = [...this._data.entries()].filter(([type]) => (type !== 'apiZone' && type !== 'expectZone'));
+    const resetZone = new Zone(this._asyncLocalStorage, new Map(entries));
+    return this._asyncLocalStorage.run(resetZone, func);
   }
 
   get<T>(type: ZoneType): T | undefined {
-    return this.store.get(type) as T | undefined;
+    return this._data.get(type) as T | undefined;
   }
 }
 

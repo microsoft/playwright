@@ -30,7 +30,7 @@ export class Waiter {
   private _channelOwner: ChannelOwner<channels.EventTargetChannel>;
   private _waitId: string;
   private _error: string | undefined;
-  private _savedZone: Zone | undefined;
+  private _savedZone: Zone;
 
   constructor(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
     this._waitId = createGuid();
@@ -107,12 +107,11 @@ export class Waiter {
   }
 }
 
-function waitForEvent<T = void>(emitter: EventEmitter, event: string, savedZone: Zone | undefined, predicate?: (arg: T) => boolean | Promise<boolean>): { promise: Promise<T>, dispose: () => void } {
+function waitForEvent<T = void>(emitter: EventEmitter, event: string, savedZone: Zone, predicate?: (arg: T) => boolean | Promise<boolean>): { promise: Promise<T>, dispose: () => void } {
   let listener: (eventArg: any) => void;
   const promise = new Promise<T>((resolve, reject) => {
     listener = async (eventArg: any) => {
-      // Reset apiZone and expectZone, but restore step data.
-      await zones.runInZone(savedZone?.copyWithoutTypes(['apiZone', 'expectZone']), async () => {
+      await savedZone.run(async () => {
         try {
           if (predicate && !(await predicate(eventArg)))
             return;
