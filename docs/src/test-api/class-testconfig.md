@@ -619,7 +619,7 @@ export default defineConfig({
   - `stdout` ?<["pipe"|"ignore"]> If `"pipe"`, it will pipe the stdout of the command to the process stdout. If `"ignore"`, it will ignore the stdout of the command. Default to `"ignore"`.
   - `stderr` ?<["pipe"|"ignore"]> Whether to pipe the stderr of the command to the process stderr or ignore it. Defaults to `"pipe"`.
   - `timeout` ?<[int]> How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
-  - `shutdownTimeout` ?<[int]> How long to wait for the process to gracefully shut down after it was sent `SIGINT`. If exceeded, process is killed with `SIGKILL`. Defaults to 500 milliseconds.
+  - `shutdownTimeout` ?<[int]> How long to wait for the process to gracefully shut down after it was sent `SIGINT`. If exceeded, process is killed with `SIGKILL`. Defaults to 500 milliseconds. Set to 0 to send `SIGKILL` immediately.
   - `url` ?<[string]> The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is checked. Either `port` or `url` should be specified.
 
 Launch a development web server (or multiple) during the tests.
