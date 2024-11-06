@@ -39,17 +39,6 @@ class ZoneManager {
     return this._asyncLocalStorage.run(undefined, func);
   }
 
-  currentZoneBefore(type: ZoneType): ZoneReference {
-    let zone = this._asyncLocalStorage.getStore();
-    while (zone && zone.type === type)
-      zone = zone.previous;
-    return new ZoneReference(zone, this._asyncLocalStorage);
-  }
-
-  currentZone(): ZoneReference {
-    return new ZoneReference(this._asyncLocalStorage.getStore(), this._asyncLocalStorage);
-  }
-
   printZones() {
     const zones = [];
     for (let zone = this._asyncLocalStorage.getStore(); zone; zone = zone.previous) {
@@ -61,20 +50,6 @@ class ZoneManager {
     }
     // eslint-disable-next-line no-console
     console.log('zones: ', zones.join(' -> '));
-  }
-}
-
-export class ZoneReference {
-  private _zone: Zone<unknown> | undefined;
-  private _asyncLocalStorage: AsyncLocalStorage<Zone<unknown>|undefined>;
-
-  constructor(zone: Zone<unknown> | undefined,  asyncLocalStorage: AsyncLocalStorage<Zone<unknown>|undefined>) {
-    this._zone = zone;
-    this._asyncLocalStorage = asyncLocalStorage;
-  }
-
-  runInZone<R>(func: () => R): R {
-    return this._asyncLocalStorage.run(this._zone, func);
   }
 }
 
