@@ -21056,50 +21056,34 @@ export interface Touchscreen {
  */
 export interface Tracing {
   /**
+   * **NOTE** Use `test.step` instead when available.
+   *
    * Creates a new group within the trace, assigning any subsequent API calls to this group, until
    * [tracing.groupEnd()](https://playwright.dev/docs/api/class-tracing#tracing-group-end) is called. Groups can be
-   * nested and will be visible in the trace viewer and test reports.
-   *
-   * **NOTE** When using Playwright test runner, we strongly recommend `test.step` instead.
+   * nested and will be visible in the trace viewer.
    *
    * **Usage**
    *
    * ```js
-   * await context.tracing.start({ screenshots: true, snapshots: true });
-   * await context.tracing.group('Open Playwright.dev');
-   * // All actions between group and groupEnd will be shown in the trace viewer as a group.
-   * const page = await context.newPage();
-   * await page.goto('https://playwright.dev/');
-   * await context.tracing.groupEnd();
-   * await context.tracing.group('Open API Docs of Tracing');
-   * await page.getByRole('link', { name: 'API' }).click();
-   * await page.getByRole('link', { name: 'Tracing' }).click();
-   * await context.tracing.groupEnd();
-   * // This Trace will have two groups: 'Open Playwright.dev' and 'Open API Docs of Tracing'.
+   * // use test.step instead
+   * await test.step('Log in', async () => {
+   *   // ...
+   * });
    * ```
    *
-   * @param name Group name shown in the actions tree in trace viewer.
+   * @param name Group name shown in the trace viewer.
    * @param options
    */
   group(name: string, options?: {
     /**
-     * Specifies a custom location for the group start to be shown in source tab in trace viewer. By default, location of
-     * the [tracing.group(name[, options])](https://playwright.dev/docs/api/class-tracing#tracing-group) call is shown.
+     * Specifies a custom location for the group to be shown in the trace viewer. Defaults to the location of the
+     * [tracing.group(name[, options])](https://playwright.dev/docs/api/class-tracing#tracing-group) call.
      */
     location?: {
-      /**
-       * Source file path to be shown in the trace viewer source tab.
-       */
       file: string;
 
-      /**
-       * Line number in the source file.
-       */
       line?: number;
 
-      /**
-       * Column number in the source file.
-       */
       column?: number;
     };
   }): Promise<void>;
