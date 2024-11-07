@@ -15,7 +15,6 @@
  */
 import path from 'path';
 import net from 'net';
-import timers from 'timers/promises';
 
 import { colors, debug } from 'playwright-core/lib/utilsBundle';
 import { raceAgainstDeadline, launchProcess, monotonicTime, isURLAvailable } from 'playwright-core/lib/utils';
@@ -129,19 +128,15 @@ export class WebServerPlugin implements TestRunnerPlugin {
         if (!success)
           throw new Error(`SIGINT didn't succeed, fall back to non-graceful shutdown`);
 
-        const processExit = new Promise<void>(f => launchedProcess.once('exit', f));
-        if (timeout === 0) {
-          await processExit;
-        } else {
-          await Promise.race([
-            processExit,
-            timers.setTimeout(timeout, undefined, { ref: false }).then(() => {
-              // @ts-expect-error. SIGINT didn't kill the process, but `processLauncher` will only attempt killing it if this is false
-              launchedProcess.killed = false;
-              throw new Error(`process didn't close gracefully within timeout, falling back to SIGKILL`);
-            }),
-          ]);
-        }
+        return new Promise<void>((resolve, reject) => {
+          const timer = timeout !== 0
+            ? setTimeout(() => reject(new Error(`process didn't close gracefully within timeout, falling back to SIGKILL`)), timeout)
+            : undefined;
+          launchedProcess.once('exit', () => {
+            clearTimeout(timer);
+            resolve();
+          });
+        });
       },
       log: () => {},
       onExit: code => processExitedReject(new Error(code ? `Process from config.webServer was not able to start. Exit code: ${code}` : 'Process from config.webServer exited early.')),
