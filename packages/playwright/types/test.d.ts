@@ -9378,9 +9378,9 @@ interface TestConfigWebServer {
    * and `SIGTERM` signals, so this option is ignored.
    */
   kill?: {
-    SIGINT: number;
+    SIGINT?: number;
 
-    SIGTERM: number;
+    SIGTERM?: number;
   };
 
   /**

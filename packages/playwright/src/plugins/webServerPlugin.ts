@@ -30,7 +30,7 @@ export type WebServerPluginOptions = {
   url?: string;
   ignoreHTTPSErrors?: boolean;
   timeout?: number;
-  kill?: { SIGINT: number }|{ SIGTERM: number };
+  kill?: { SIGINT?: number, SIGTERM?: number };
   reuseExistingServer?: boolean;
   cwd?: string;
   env?: { [key: string]: string; };
@@ -95,11 +95,11 @@ export class WebServerPlugin implements TestRunnerPlugin {
     let signal: 'SIGINT' | 'SIGTERM' | undefined = undefined;
     let timeout = 0;
     if (this._options.kill) {
-      if ('SIGINT' in this._options.kill && typeof this._options.kill.SIGINT === 'number') {
+      if (typeof this._options.kill.SIGINT === 'number') {
         signal = 'SIGINT';
         timeout = this._options.kill.SIGINT;
       }
-      if ('SIGTERM' in this._options.kill && typeof this._options.kill.SIGTERM === 'number') {
+      if (typeof this._options.kill.SIGTERM === 'number') {
         if (signal)
           throw new Error('Only one of SIGINT or SIGTERM can be specified in config.webServer.kill');
         signal = 'SIGTERM';
