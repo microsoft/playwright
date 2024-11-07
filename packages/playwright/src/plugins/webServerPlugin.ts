@@ -101,6 +101,8 @@ export class WebServerPlugin implements TestRunnerPlugin {
         timeout = this._options.kill.SIGINT;
       }
       if ('SIGTERM' in this._options.kill && typeof this._options.kill.SIGTERM === 'number') {
+        if (signal)
+          throw new Error('Only one of SIGINT or SIGTERM can be specified in config.webServer.kill');
         signal = 'SIGTERM';
         timeout = this._options.kill.SIGTERM;
       }

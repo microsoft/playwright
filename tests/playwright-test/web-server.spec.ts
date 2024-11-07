@@ -804,4 +804,11 @@ test.describe('kill option', () => {
 
     expect(testProcess.outputLines({ prefix: '[WebServer] ' })).toEqual(['webserver received SIGINT but stubbornly refuses to wind down']);
   });
+
+  test('throws when mixed', async ({ interactWithTestRunner }) => {
+    const testProcess = await interactWithTestRunner(files({ kill: { SIGINT: 500, SIGTERM: 500 } }), { workers: 1 });
+    await testProcess.exited;
+
+    expect(testProcess.output).toContain('Only one of SIGINT or SIGTERM can be specified in config.webServer.kill');
+  });
 });
