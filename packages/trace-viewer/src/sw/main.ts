@@ -68,7 +68,6 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
   return traceModel;
 }
 
-// @ts-ignore
 async function doFetch(event: FetchEvent): Promise<Response> {
   // In order to make Accessibility Insights for Web work.
   if (event.request.url.startsWith('chrome-extension://'))
@@ -180,7 +179,6 @@ async function gc() {
   const usedTraces = new Set<string>();
 
   for (const [clientId, data] of clientIdToTraceUrls) {
-    // @ts-ignore
     if (!clients.find(c => c.id === clientId)) {
       clientIdToTraceUrls.delete(clientId);
       continue;
@@ -199,7 +197,6 @@ async function gc() {
   }
 }
 
-// @ts-ignore
 self.addEventListener('fetch', function(event: FetchEvent) {
   event.respondWith(doFetch(event));
 });
