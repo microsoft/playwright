@@ -9372,10 +9372,12 @@ interface TestConfigWebServer {
   timeout?: number;
 
   /**
-   * How long to wait for the process to gracefully shut down after it was sent `SIGINT`. If exceeded, process is killed
-   * with `SIGKILL`. Defaults to 500 milliseconds.
+   * How to shut down the process gracefully. If unspecified, the process group is forcefully `SIGKILL`ed. If set to `{
+   * SIGINT: 500 }`, the top process is sent a `SIGINT` signal, followed by `SIGKILL` if it doesn't exit within 500ms.
+   * You can also use `SIGTERM` instead. A `0` timeout means no `SIGKILL` will be sent. Windows doesn't support `SIGINT`
+   * and `SIGTERM` signals, so this option is ignored.
    */
-  shutdownTimeout?: number;
+  kill?: { SIGINT: number }|{ SIGTERM: number };
 
   /**
    * The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the

@@ -37,7 +37,7 @@ export default defineConfig({
 | `stdout` | If `"pipe"`, it will pipe the stdout of the command to the process stdout. If `"ignore"`, it will ignore the stdout of the command. Default to `"ignore"`. |
 | `stderr` | Whether to pipe the stderr of the command to the process stderr or ignore it. Defaults to `"pipe"`. |
 | `timeout` | How long to wait for the process to start up and be available in milliseconds. Defaults to 60000. |
-| `shutdownTimeout` | How long to wait for the process to gracefully shut down after it was sent `SIGINT`. If exceeded, process is killed with `SIGKILL`. Defaults to 500 milliseconds. Set to 0 to send `SIGKILL` immediately. |
+| `kill` | How to shut down the process gracefully. If unspecified, the process group is forcefully `SIGKILL`ed. If set to `{ SIGINT: 500 }`, the top process is sent a `SIGINT` signal, followed by `SIGKILL` if it doesn't exit within 500ms. You can also use `SIGTERM` instead. A `0` timeout means no `SIGKILL` will be sent. Windows doesn't support `SIGINT` and `SIGTERM` signals, so this option is ignored. |
 
 ## Adding a server timeout
 

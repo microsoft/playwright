@@ -745,7 +745,7 @@ test('should forward stdout when set to "pipe" before server is ready', async ({
   expect(result.output).not.toContain('Timed out waiting 3000ms');
 });
 
-test.describe('graceful shutdown', () => {
+test.describe('kill option', () => {
   test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
 
   const files = (additionalOptions = {}) => {
@@ -753,6 +753,7 @@ test.describe('graceful shutdown', () => {
     return {
       'web-server.js': `
         process.on('SIGINT', () => { console.log('%%webserver received SIGINT but stubbornly refuses to wind down') })
+        process.on('SIGTERM', () => { console.log('%%webserver received SIGTERM but stubbornly refuses to wind down') })
         const server = require('http').createServer((req, res) => { res.end("ok"); })
         server.listen(process.argv[2], () => { console.log('webserver started'); });
       `,
@@ -774,23 +775,33 @@ test.describe('graceful shutdown', () => {
     };
   };
 
-  test('sends SIGINT by default', async ({ interactWithTestRunner }) => {
+  test('sends SIGKILL by default', async ({ interactWithTestRunner }) => {
     const testProcess = await interactWithTestRunner(files(), { workers: 1 });
 
     await testProcess.waitForOutput('webserver started');
     process.kill(testProcess.process.pid!, 'SIGINT');
     await testProcess.exited;
 
-    expect(testProcess.outputLines({ prefix: '[WebServer] ' })).toEqual(['webserver received SIGINT but stubbornly refuses to wind down']);
+    expect(testProcess.outputLines({ prefix: '[WebServer] ' })).toEqual([]);
   });
 
-  test('can be disabled', async ({ interactWithTestRunner }) => {
-    const testProcess = await interactWithTestRunner(files({ shutdownTimeout: 0 }), { workers: 1 });
+  test('can be configured to send SIGTERM', async ({ interactWithTestRunner }) => {
+    const testProcess = await interactWithTestRunner(files({ kill: { SIGTERM: 500 } }), { workers: 1 });
 
     await testProcess.waitForOutput('webserver started');
     process.kill(testProcess.process.pid!, 'SIGINT');
     await testProcess.exited;
 
-    expect(testProcess.outputLines({ prefix: '[WebServer] ' })).toEqual([]);
+    expect(testProcess.outputLines({ prefix: '[WebServer] ' })).toEqual(['webserver received SIGTERM but stubbornly refuses to wind down']);
+  });
+
+  test('can be configured to send SIGINT', async ({ interactWithTestRunner }) => {
+    const testProcess = await interactWithTestRunner(files({ kill: { SIGINT: 500 } }), { workers: 1 });
+
+    await testProcess.waitForOutput('webserver started');
+    process.kill(testProcess.process.pid!, 'SIGINT');
+    await testProcess.exited;
+
+    expect(testProcess.outputLines({ prefix: '[WebServer] ' })).toEqual(['webserver received SIGINT but stubbornly refuses to wind down']);
   });
 });

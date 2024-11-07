@@ -31,7 +31,7 @@ export type WebServerPluginOptions = {
   url?: string;
   ignoreHTTPSErrors?: boolean;
   timeout?: number;
-  shutdownTimeout?: number;
+  kill?: { SIGINT: number }|{ SIGTERM: number };
   reuseExistingServer?: boolean;
   cwd?: string;
   env?: { [key: string]: string; };
@@ -93,6 +93,19 @@ export class WebServerPlugin implements TestRunnerPlugin {
       throw new Error(`${this._options.url ?? `http://localhost${port ? ':' + port : ''}`} is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer.`);
     }
 
+    let signal: 'SIGINT' | 'SIGTERM' | undefined = undefined;
+    let timeout = 0;
+    if (this._options.kill) {
+      if ('SIGINT' in this._options.kill && typeof this._options.kill.SIGINT === 'number') {
+        signal = 'SIGINT';
+        timeout = this._options.kill.SIGINT;
+      }
+      if ('SIGTERM' in this._options.kill && typeof this._options.kill.SIGTERM === 'number') {
+        signal = 'SIGTERM';
+        timeout = this._options.kill.SIGTERM;
+      }
+    }
+
     debugWebServer(`Starting WebServer process ${this._options.command}...`);
     const { launchedProcess, gracefullyClose } = await launchProcess({
       command: this._options.command,
@@ -107,21 +120,26 @@ export class WebServerPlugin implements TestRunnerPlugin {
       attemptToGracefullyClose: async () => {
         if (process.platform === 'win32')
           throw new Error('Graceful shutdown is not supported on Windows');
-
-        if (this._options.shutdownTimeout === 0)
+        if (!signal)
           throw new Error('skip graceful shutdown');
 
-        const success = launchedProcess.kill('SIGINT');
+        const success = launchedProcess.kill(signal);
         if (!success)
           throw new Error(`SIGINT didn't succeed, fall back to non-graceful shutdown`);
-        await Promise.race([
-          timers.setTimeout(this._options.shutdownTimeout ?? 500).then(() => {
-            // @ts-expect-error. SIGINT didn't kill the process, but `processLauncher` will only attempt killing it if this is false
-            launchedProcess.killed = false;
-            return Promise.reject(new Error(`server didn't close gracefully within a second, falling back to non-graceful shutdown`));
-          }),
-          new Promise(f => launchedProcess.once('exit', f)),
-        ]);
+
+        const processExit = new Promise<void>(f => launchedProcess.once('exit', f));
+        if (timeout === 0) {
+          await processExit;
+        } else {
+          await Promise.race([
+            processExit,
+            timers.setTimeout(timeout).then(() => {
+              // @ts-expect-error. SIGINT didn't kill the process, but `processLauncher` will only attempt killing it if this is false
+              launchedProcess.killed = false;
+              return Promise.reject(new Error(`process didn't close gracefully within timeout, falling back to SIGKILL`));
+            }),
+          ]);
+        }
       },
       log: () => {},
       onExit: code => processExitedReject(new Error(code ? `Process from config.webServer was not able to start. Exit code: ${code}` : 'Process from config.webServer exited early.')),
