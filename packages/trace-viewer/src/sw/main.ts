@@ -148,7 +148,15 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       return new Response(null, { status: 404 });
     }
 
-    // Fallback to network.
+    if (relativePath.startsWith('/file/')) {
+      const path = url.searchParams.get('path')!;
+      const response = await traceViewerServer.readFile(path);
+      if (!response)
+        return new Response(null, { status: 404 });
+      return response;
+    }
+
+    // Fallback for static assets.
     return fetch(event.request);
   }
 
