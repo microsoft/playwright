@@ -22,7 +22,7 @@ class ZoneManager {
   private readonly _asyncLocalStorage = new AsyncLocalStorage<Zone|undefined>();
 
   run<T, R>(type: ZoneType, data: T, func: () => R): R {
-    const zone = Zone.createWithData(this._asyncLocalStorage, type, data);
+    const zone = Zone._createWithData(this._asyncLocalStorage, type, data);
     return this._asyncLocalStorage.run(zone, func);
   }
 
@@ -32,7 +32,7 @@ class ZoneManager {
   }
 
   currentZone(): Zone {
-    return this._asyncLocalStorage.getStore() ?? Zone.createEmpty(this._asyncLocalStorage);
+    return this._asyncLocalStorage.getStore() ?? Zone._createEmpty(this._asyncLocalStorage);
   }
 
   exitZones<R>(func: () => R): R {
@@ -44,13 +44,13 @@ export class Zone {
   private readonly _asyncLocalStorage: AsyncLocalStorage<Zone | undefined>;
   private readonly _data: Map<ZoneType, unknown>;
 
-  static createWithData(asyncLocalStorage: AsyncLocalStorage<Zone|undefined>, type: ZoneType, data: unknown) {
+  static _createWithData(asyncLocalStorage: AsyncLocalStorage<Zone|undefined>, type: ZoneType, data: unknown) {
     const store = new Map(asyncLocalStorage.getStore()?._data);
     store.set(type, data);
     return new Zone(asyncLocalStorage, store);
   }
 
-  static createEmpty(asyncLocalStorage: AsyncLocalStorage<Zone|undefined>) {
+  static _createEmpty(asyncLocalStorage: AsyncLocalStorage<Zone|undefined>) {
     return new Zone(asyncLocalStorage, new Map());
   }
 
