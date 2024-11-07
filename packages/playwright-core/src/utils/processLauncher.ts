@@ -180,7 +180,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   let processClosed = false;
   let fulfillCleanup = () => {};
   const waitForCleanup = new Promise<void>(f => fulfillCleanup = f);
-  spawnedProcess.once('exit', (exitCode, signal) => {
+  spawnedProcess.once('close', (exitCode, signal) => {
     options.log(`[pid=${spawnedProcess.pid}] <process did exit: exitCode=${exitCode}, signal=${signal}>`);
     processClosed = true;
     gracefullyCloseSet.delete(gracefullyClose);
@@ -215,18 +215,18 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     }
     gracefullyClosing = true;
     options.log(`[pid=${spawnedProcess.pid}] <gracefully close start>`);
-    await options.attemptToGracefullyClose().catch(() => killProcess(true));
+    await options.attemptToGracefullyClose().catch((e) => killProcess());
     await waitForCleanup;  // Ensure the process is dead and we have cleaned up.
     options.log(`[pid=${spawnedProcess.pid}] <gracefully close end>`);
   }
 
   // This method has to be sync to be used in the 'exit' event handler.
-  function killProcess(evenIfAlreadyKilled = false) {
+  function killProcess() {
     gracefullyCloseSet.delete(gracefullyClose);
     killSet.delete(killProcessAndCleanup);
     removeProcessHandlersIfNeeded();
     options.log(`[pid=${spawnedProcess.pid}] <kill>`);
-    if (spawnedProcess.pid && (evenIfAlreadyKilled || !spawnedProcess.killed) && !processClosed) {
+    if (spawnedProcess.pid && !processClosed) {
       options.log(`[pid=${spawnedProcess.pid}] <will force kill>`);
       // Force kill the browser.
       try {

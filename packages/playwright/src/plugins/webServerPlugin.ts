@@ -124,15 +124,13 @@ export class WebServerPlugin implements TestRunnerPlugin {
         if (!signal)
           throw new Error('skip graceful shutdown');
 
-        const success = launchedProcess.kill(signal);
-        if (!success)
-          throw new Error(`signal didn't succeed, fall back to non-graceful shutdown`);
-
+        process.kill(-launchedProcess.pid!, signal);
         return new Promise<void>((resolve, reject) => {
           const timer = timeout !== 0
             ? setTimeout(() => reject(new Error(`process didn't close gracefully within timeout, falling back to SIGKILL`)), timeout)
             : undefined;
-          launchedProcess.once('exit', () => {
+          launchedProcess.once('close', (...args) => {
+            console.log("closing", ...args)
             clearTimeout(timer);
             resolve();
           });
