@@ -135,10 +135,10 @@ export class WebServerPlugin implements TestRunnerPlugin {
         } else {
           await Promise.race([
             processExit,
-            timers.setTimeout(timeout).then(() => {
+            timers.setTimeout(timeout, undefined, { ref: false }).then(() => {
               // @ts-expect-error. SIGINT didn't kill the process, but `processLauncher` will only attempt killing it if this is false
               launchedProcess.killed = false;
-              return Promise.reject(new Error(`process didn't close gracefully within timeout, falling back to SIGKILL`));
+              throw new Error(`process didn't close gracefully within timeout, falling back to SIGKILL`);
             }),
           ]);
         }
