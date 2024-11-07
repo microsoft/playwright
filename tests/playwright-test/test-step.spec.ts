@@ -1399,7 +1399,7 @@ fixture   |  fixture: page
 pw:api    |    browserContext.newPage
 test.step |custom step @ a.test.ts:4
 pw:api    |  page.route @ a.test.ts:5
-pw:api    |  page.goto(http://localhost:8907/empty.html) @ a.test.ts:11
+pw:api    |  page.goto(${server.EMPTY_PAGE}) @ a.test.ts:11
 pw:api    |  apiResponse.text @ a.test.ts:7
 expect    |  expect.toBe @ a.test.ts:8
 hook      |After Hooks
