@@ -126,11 +126,15 @@ export class WebServerPlugin implements TestRunnerPlugin {
 
         const success = launchedProcess.kill(signal);
         if (!success)
-          throw new Error(`SIGINT didn't succeed, fall back to non-graceful shutdown`);
+          throw new Error(`signal didn't succeed, fall back to non-graceful shutdown`);
 
         return new Promise<void>((resolve, reject) => {
           const timer = timeout !== 0
-            ? setTimeout(() => reject(new Error(`process didn't close gracefully within timeout, falling back to SIGKILL`)), timeout)
+            ? setTimeout(() => {
+              // @ts-expect-error. SIGINT didn't kill the process, but `processLauncher` will only attempt killing it if this is false
+              launchedProcess.killed = false;
+              reject(new Error(`process didn't close gracefully within timeout, falling back to SIGKILL`));
+            }, timeout)
             : undefined;
           launchedProcess.once('exit', () => {
             clearTimeout(timer);

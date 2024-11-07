@@ -756,7 +756,7 @@ test.describe('kill option', () => {
         process.on('SIGINT', () => { console.log('%%webserver received SIGINT but stubbornly refuses to wind down') })
         process.on('SIGTERM', () => { console.log('%%webserver received SIGTERM but stubbornly refuses to wind down') })
         const server = require('http').createServer((req, res) => { res.end("ok"); })
-        server.listen(process.argv[2], () => { console.log('webserver started'); });
+        server.listen(process.argv[2]);
       `,
       'test.spec.ts': `
         import { test, expect } from '@playwright/test';
