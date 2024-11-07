@@ -215,7 +215,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     }
     gracefullyClosing = true;
     options.log(`[pid=${spawnedProcess.pid}] <gracefully close start>`);
-    await options.attemptToGracefullyClose().catch((e) => killProcess());
+    await options.attemptToGracefullyClose().catch(() => killProcess());
     await waitForCleanup;  // Ensure the process is dead and we have cleaned up.
     options.log(`[pid=${spawnedProcess.pid}] <gracefully close end>`);
   }
