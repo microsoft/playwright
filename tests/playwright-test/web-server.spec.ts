@@ -17,6 +17,7 @@
 import type http from 'http';
 import path from 'path';
 import { test, expect, parseTestRunnerOutput } from './playwright-test-fixtures';
+import type { RunResult } from './playwright-test-fixtures';
 import { createHttpServer } from '../../packages/playwright-core/lib/utils/network';
 
 const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');
@@ -775,40 +776,29 @@ test.describe('kill option', () => {
     };
   };
 
-  test('sends SIGKILL by default', async ({ interactWithTestRunner }) => {
-    const testProcess = await interactWithTestRunner(files(), { workers: 1 });
+  function parseOutputLines(result: RunResult): string[] {
+    const prefix = '[WebServer] %%';
+    return result.output.split('\n').filter(line => line.startsWith(prefix)).map(line => line.substring(prefix.length));
+  }
 
-    await testProcess.waitForOutput('webserver started');
-    process.kill(testProcess.process.pid!, 'SIGINT');
-    await testProcess.exited;
-
-    expect(testProcess.outputLines({ prefix: '[WebServer] ' })).toEqual([]);
+  test('sends SIGKILL by default', async ({ runInlineTest }) => {
+    const result = await runInlineTest(files(), { workers: 1 });
+    expect(parseOutputLines(result)).toEqual([]);
   });
 
-  test('can be configured to send SIGTERM', async ({ interactWithTestRunner }) => {
-    const testProcess = await interactWithTestRunner(files({ kill: { SIGTERM: 500 } }), { workers: 1 });
-
-    await testProcess.waitForOutput('webserver started');
-    process.kill(testProcess.process.pid!, 'SIGINT');
-    await testProcess.exited;
-
-    expect(testProcess.outputLines({ prefix: '[WebServer] ' })).toEqual(['webserver received SIGTERM but stubbornly refuses to wind down']);
+  test('can be configured to send SIGTERM', async ({ runInlineTest }) => {
+    const result = await runInlineTest(files({ kill: { SIGTERM: 500 } }), { workers: 1 });
+    expect(parseOutputLines(result)).toEqual(['webserver received SIGTERM but stubbornly refuses to wind down']);
   });
 
-  test('can be configured to send SIGINT', async ({ interactWithTestRunner }) => {
-    const testProcess = await interactWithTestRunner(files({ kill: { SIGINT: 500 } }), { workers: 1 });
-
-    await testProcess.waitForOutput('webserver started');
-    process.kill(testProcess.process.pid!, 'SIGINT');
-    await testProcess.exited;
-
-    expect(testProcess.outputLines({ prefix: '[WebServer] ' })).toEqual(['webserver received SIGINT but stubbornly refuses to wind down']);
+  test('can be configured to send SIGINT', async ({ runInlineTest }) => {
+    const result = await runInlineTest(files({ kill: { SIGINT: 500 } }), { workers: 1 });
+    expect(parseOutputLines(result)).toEqual(['webserver received SIGINT but stubbornly refuses to wind down']);
   });
 
-  test('throws when mixed', async ({ interactWithTestRunner }) => {
-    const testProcess = await interactWithTestRunner(files({ kill: { SIGINT: 500, SIGTERM: 500 } }), { workers: 1 });
-    await testProcess.exited;
-
-    expect(testProcess.output).toContain('Only one of SIGINT or SIGTERM can be specified in config.webServer.kill');
+  test('throws when mixed', async ({ runInlineTest }) => {
+    const result = await runInlineTest(files({ kill: { SIGINT: 500, SIGTERM: 500 } }), { workers: 1 });
+    expect(result.exitCode).toBe(1);
+    expect(result.output).toContain('Only one of SIGINT or SIGTERM can be specified in config.webServer.kill');
   });
 });
