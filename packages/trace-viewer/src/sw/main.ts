@@ -95,6 +95,26 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 
     const traceUrl = url.searchParams.get('trace');
 
+    if (relativePath.startsWith('/snapshot/')) {
+      const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
+      if (!snapshotServer)
+        return new Response(null, { status: 404 });
+      const response = snapshotServer.serveSnapshot(relativePath, url.searchParams, url.href);
+      if (isDeployedAsHttps)
+        response.headers.set('Content-Security-Policy', 'upgrade-insecure-requests');
+      return response;
+    }
+
+    if (relativePath.startsWith('/closest-screenshot/')) {
+      const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
+      if (!snapshotServer)
+        return new Response(null, { status: 404 });
+      return snapshotServer.serveClosestScreenshot(relativePath, url.searchParams);
+    }
+
+    if (!client)
+      throw new Error('expected client to be defined for all non-iframe requests. soemthing went wrong');
+
     if (relativePath === '/contexts') {
       try {
         const limit = url.searchParams.has('limit') ? +url.searchParams.get('limit')! : undefined;
@@ -118,23 +138,6 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       if (!snapshotServer)
         return new Response(null, { status: 404 });
       return snapshotServer.serveSnapshotInfo(relativePath, url.searchParams);
-    }
-
-    if (relativePath.startsWith('/snapshot/')) {
-      const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
-      if (!snapshotServer)
-        return new Response(null, { status: 404 });
-      const response = snapshotServer.serveSnapshot(relativePath, url.searchParams, url.href);
-      if (isDeployedAsHttps)
-        response.headers.set('Content-Security-Policy', 'upgrade-insecure-requests');
-      return response;
-    }
-
-    if (relativePath.startsWith('/closest-screenshot/')) {
-      const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
-      if (!snapshotServer)
-        return new Response(null, { status: 404 });
-      return snapshotServer.serveClosestScreenshot(relativePath, url.searchParams);
     }
 
     if (relativePath.startsWith('/sha1/')) {
