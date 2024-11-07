@@ -215,18 +215,18 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     }
     gracefullyClosing = true;
     options.log(`[pid=${spawnedProcess.pid}] <gracefully close start>`);
-    await options.attemptToGracefullyClose().catch(() => killProcess());
+    await options.attemptToGracefullyClose().catch(() => killProcess(true));
     await waitForCleanup;  // Ensure the process is dead and we have cleaned up.
     options.log(`[pid=${spawnedProcess.pid}] <gracefully close end>`);
   }
 
   // This method has to be sync to be used in the 'exit' event handler.
-  function killProcess() {
+  function killProcess(evenIfAlreadyKilled = false) {
     gracefullyCloseSet.delete(gracefullyClose);
     killSet.delete(killProcessAndCleanup);
     removeProcessHandlersIfNeeded();
     options.log(`[pid=${spawnedProcess.pid}] <kill>`);
-    if (spawnedProcess.pid && !spawnedProcess.killed && !processClosed) {
+    if (spawnedProcess.pid && (evenIfAlreadyKilled || !spawnedProcess.killed) && !processClosed) {
       options.log(`[pid=${spawnedProcess.pid}] <will force kill>`);
       // Force kill the browser.
       try {
