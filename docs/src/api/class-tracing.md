@@ -284,30 +284,24 @@ To specify the final trace zip file name, you need to pass `path` option to
 ## async method: Tracing.group
 * since: v1.49
 
-Creates a new group within the trace, assigning any subsequent API calls to this group, until [`method: Tracing.groupEnd`] is called. Groups can be nested and will be visible in the trace viewer and test reports.
-
 :::caution
-When using Playwright test runner, we strongly recommend `test.step` instead.
+Use `test.step` instead when available.
 :::
+
+Creates a new group within the trace, assigning any subsequent API calls to this group, until [`method: Tracing.groupEnd`] is called. Groups can be nested and will be visible in the trace viewer.
 
 **Usage**
 
 ```js
-await context.tracing.start({ screenshots: true, snapshots: true });
-await context.tracing.group('Open Playwright.dev');
-// All actions between group and groupEnd will be shown in the trace viewer as a group.
-const page = await context.newPage();
-await page.goto('https://playwright.dev/');
-await context.tracing.groupEnd();
-await context.tracing.group('Open API Docs of Tracing');
-await page.getByRole('link', { name: 'API' }).click();
-await page.getByRole('link', { name: 'Tracing' }).click();
-await context.tracing.groupEnd();
-// This Trace will have two groups: 'Open Playwright.dev' and 'Open API Docs of Tracing'.
+// use test.step instead
+await test.step('Log in', async () => {
+  // ...
+});
 ```
 
 ```java
-// All actions between group and groupEnd will be shown in the trace viewer as a group.
+// All actions between group and groupEnd
+// will be shown in the trace viewer as a group.
 page.context().tracing.group("Open Playwright.dev > API");
 page.navigate("https://playwright.dev/");
 page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("API")).click();
@@ -315,7 +309,8 @@ page.context().tracing.groupEnd();
 ```
 
 ```python sync
-# All actions between group and groupEnd will be shown in the trace viewer as a group.
+# All actions between group and group_end
+# will be shown in the trace viewer as a group.
 page.context.tracing.group("Open Playwright.dev > API")
 page.goto("https://playwright.dev/")
 page.get_by_role("link", name="API").click()
@@ -323,7 +318,8 @@ page.context.tracing.group_end()
 ```
 
 ```python async
-# All actions between group and groupEnd will be shown in the trace viewer as a group.
+# All actions between group and group_end
+# will be shown in the trace viewer as a group.
 await page.context.tracing.group("Open Playwright.dev > API")
 await page.goto("https://playwright.dev/")
 await page.get_by_role("link", name="API").click()
@@ -331,7 +327,8 @@ await page.context.tracing.group_end()
 ```
 
 ```csharp
-// All actions between group and groupEnd will be shown in the trace viewer as a group.
+// All actions between GroupAsync and GroupEndAsync
+// will be shown in the trace viewer as a group.
 await Page.Context().Tracing.GroupAsync("Open Playwright.dev > API");
 await Page.GotoAsync("https://playwright.dev/");
 await Page.GetByRole(AriaRole.Link, new() { Name = "API" }).ClickAsync();
@@ -342,17 +339,16 @@ await Page.Context().Tracing.GroupEndAsync();
 * since: v1.49
 - `name` <[string]>
 
-Group name shown in the actions tree in trace viewer.
+Group name shown in the trace viewer.
 
 ### option: Tracing.group.location
 * since: v1.49
 - `location` ?<[Object]>
-  - `file` <[string]> Source file path to be shown in the trace viewer source tab.
-  - `line` ?<[int]> Line number in the source file.
-  - `column` ?<[int]> Column number in the source file.
+  - `file` <[string]>
+  - `line` ?<[int]>
+  - `column` ?<[int]>
 
-Specifies a custom location for the group start to be shown in source tab in trace viewer.
-By default, location of the [`method: Tracing.group`] call is shown.
+Specifies a custom location for the group to be shown in the trace viewer. Defaults to the location of the [`method: Tracing.group`] call.
 
 ## async method: Tracing.groupEnd
 * since: v1.49
