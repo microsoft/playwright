@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2019",
     "module": "commonjs",
-    "lib": ["esnext", "dom", "DOM.Iterable"],
+    "lib": ["esnext", "dom", "DOM.Iterable", "WebWorker"],
     "baseUrl": ".",
     "paths": {
       /*
