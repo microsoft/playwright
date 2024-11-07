@@ -46,10 +46,9 @@ const xtermDataSource: XtermDataSource = {
   resize: () => {},
 };
 
-export const testServerBaseURL = new URL(window.location.href);
-const searchParams = testServerBaseURL.searchParams;
-testServerBaseURL.port = searchParams.get('testServerPort') ?? testServerBaseURL.port;
-const wsURL = new URL(`/${searchParams.get('ws')}`, testServerBaseURL);
+const searchParams = new URLSearchParams(window.location.search);
+const guid = searchParams.get('ws');
+const wsURL = new URL(`../${guid}`, window.location.toString());
 wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
 const queryParams = {
   args: searchParams.getAll('arg'),
