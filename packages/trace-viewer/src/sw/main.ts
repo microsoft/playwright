@@ -21,7 +21,6 @@ import { TraceModel } from './traceModel';
 import { FetchTraceModelBackend, ZipTraceModelBackend } from './traceModelBackends';
 import { TraceVersionError } from './traceModernizer';
 
-// @ts-ignore
 declare const self: ServiceWorkerGlobalScope;
 
 self.addEventListener('install', function(event: any) {
@@ -99,7 +98,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       try {
         const limit = url.searchParams.has('limit') ? +url.searchParams.get('limit')! : undefined;
         const traceModel = await loadTrace(traceUrl!, url.searchParams.get('traceFileName'), event.clientId, limit, (done: number, total: number) => {
-          client.postMessage({ method: 'progress', params: { done, total } });
+          client?.postMessage({ method: 'progress', params: { done, total } });
         });
         return new Response(JSON.stringify(traceModel!.contextEntries), {
           status: 200,
