@@ -15,6 +15,7 @@
 */
 
 import type { Language } from '../../playwright-core/src/utils/isomorphic/locatorGenerators';
+import type { ParsedYaml } from '@isomorphic/ariaSnapshot';
 
 export type Point = { x: number; y: number };
 
@@ -41,7 +42,7 @@ export type EventData = {
     | 'step'
     | 'pause'
     | 'setMode'
-    | 'selectorUpdated'
+    | 'highlightRequested'
     | 'fileChanged';
   params: any;
 };
@@ -54,6 +55,7 @@ export type UIState = {
   mode: Mode;
   actionPoint?: Point;
   actionSelector?: string;
+  ariaTemplate?: ParsedYaml;
   language: Language;
   testIdAttributeName: string;
   overlay: OverlayState;

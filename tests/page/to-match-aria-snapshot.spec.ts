@@ -528,35 +528,55 @@ heading /title
     const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
       - heading [level=a]
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "level" attribute must be a number`);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "level" attribute must be a number:
+
+heading [level=a]
+               ^
+`);
   }
 
   {
     const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
       - heading [expanded=FALSE]
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "expanded" attribute must be a boolean`);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "expanded" attribute must be a boolean:
+
+heading [expanded=FALSE]
+                  ^
+`);
   }
 
   {
     const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
       - heading [checked=foo]
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "checked" attribute must be a boolean or "mixed"`);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "checked" attribute must be a boolean or "mixed":
+
+heading [checked=foo]
+                 ^
+`);
   }
 
   {
     const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
       - heading [level=]
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "level" attribute must be a number`);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "level" attribute must be a number:
+
+heading [level=]
+               ^
+`);
   }
 
   {
     const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
       - heading [bogus]
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unsupported attribute [bogus]`);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unsupported attribute [bogus]:
+
+heading [bogus]
+         ^
+`);
   }
 
   {
