@@ -9377,7 +9377,11 @@ interface TestConfigWebServer {
    * You can also use `SIGTERM` instead. A `0` timeout means no `SIGKILL` will be sent. Windows doesn't support `SIGINT`
    * and `SIGTERM` signals, so this option is ignored.
    */
-  kill?: { SIGINT: number }|{ SIGTERM: number };
+  kill?: {
+    SIGINT: number;
+
+    SIGTERM: number;
+  };
 
   /**
    * The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the
