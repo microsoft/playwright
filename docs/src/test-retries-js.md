@@ -88,7 +88,7 @@ Running 3 tests using 1 worker
 
   ✓ example.spec.ts:4:2 › first passes (438ms)
   x example.spec.ts:5:2 › second flaky (691ms)
-  ✓ example.spec.ts:5:2 › second flaky (522ms)
+  x example.spec.ts:5:2 › second flaky (522ms)
   ✓ example.spec.ts:6:2 › third passes (932ms)
 
   1 flaky
