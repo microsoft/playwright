@@ -325,8 +325,10 @@ class HtmlBuilder {
         const hmrURL = new URL('http://localhost:44224'); // dev server, port is harcoded in build.js
         const popup = window.open(hmrURL);
         window.addEventListener('message', evt => {
-          if (evt.source === popup && evt.data === 'ready')
+          if (evt.source === popup && evt.data === 'ready') {
             popup!.postMessage((window as any).playwrightReportBase64, hmrURL.origin);
+            window.close();
+          }
         }, { once: true });
       }
 
