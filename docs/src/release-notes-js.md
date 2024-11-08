@@ -6,6 +6,68 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.49
+
+### New Chromium Headless
+
+Prior to this release, Playwright was running the old established implementation of Chromium headless. However, Chromium had entirely switched to the [new headless mode](https://developer.chrome.com/docs/chromium/headless) implementation, so Playwright had to switch as well.
+
+Most likely, this change should go unnoticed for you. However, the new headless implementation differs in a number of ways, for example when handling pdf documents, so please file an issue if you encounter a problem.
+
+### Chromium Headless Shell
+
+Playwright now also ships `chromium-headless-shell` channel that is a separate build that closely follows the old headless implementation. If you would like to keep the old behavior before you are ready to switch to the new headless, please fallback to this channel:
+
+1. First, install this channel prior to running tests. Make sure to list all browsers that you use.
+
+  ```bash
+  # running tests in all three browsers, headless and headed
+  npx playwright install chromium chromium-headless-shell firefox webkit
+
+  # running tests in all three browsers on CI, headless only
+  npx playwright install chromium-headless-shell firefox webkit
+  ```
+
+1. Update your config file to specify `'chromium-headless-shell'` channel.
+
+  ```js
+  import { defineConfig, devices } from '@playwright/test';
+
+  export default defineConfig({
+    projects: [
+      {
+        name: 'chromium',
+        use: {
+          ...devices['Desktop Chrome'],
+          channel: 'chromium-headless-shell',
+        },
+      },
+      {
+        name: 'firefox',
+        use: { ...devices['Desktop Firefox'] },
+      },
+      {
+        name: 'webkit',
+        use: { ...devices['Desktop Safari'] },
+      },
+    ],
+  });
+  ```
+
+1. Note that `chromium-headless-shell` channel only supports headless operations. If you try to run tests in headed mode, it will automatically fallback to regular `chromium`.
+
+### Browser Versions
+
+- Chromium 131.0.6778.24
+- Mozilla Firefox 132.0
+- WebKit 18.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 130
+- Microsoft Edge 130
+
+
 ## Version 1.48
 
 <LiteYouTube

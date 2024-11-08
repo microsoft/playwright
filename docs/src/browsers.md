@@ -472,6 +472,12 @@ rarely the case), you will also want to use the official channel.
 
 Google Chrome and Microsoft Edge respect enterprise policies, which include limitations to the capabilities, network proxy, mandatory extensions that stand in the way of testing. So if you are part of the organization that uses such policies, it is easiest to use bundled Chromium for your local testing, you can still opt into stable channels on the bots that are typically free of such restrictions.
 
+### Chromium Headless Shell
+
+Playwright runs a regular Chromium build in headed and headless modes. Note that headless mode has changed in Playwright version 1.49 when Chromium entirely switched to the [new headless implementation](https://developer.chrome.com/docs/chromium/headless).
+
+Playwright also provides [`'chromium-headless-shell'` channel](https://developer.chrome.com/blog/chrome-headless-shell) that differs from the regular Chromium browser in features, performance and behavior. If you would like to optimize your CI performance and can tolerate different behavior in some cases, install and use this channel similarly to [Google Chrome & Microsoft Edge](#google-chrome--microsoft-edge).
+
 ### Firefox
 
 Playwright's Firefox version matches the recent [Firefox Stable](https://www.mozilla.org/en-US/firefox/new/) build. Playwright doesn't work with the branded version of Firefox since it relies on patches.

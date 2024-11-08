@@ -294,8 +294,6 @@ export class Chromium extends BrowserType {
       throw new Error('Playwright manages remote debugging connection itself.');
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
-    if (!options.headless && options.channel === 'chromium-headless-shell')
-      throw new Error('Cannot launch headed Chromium with `chromium-headless-shell` channel. Consider using regular Chromium instead.');
     const chromeArguments = [...chromiumSwitches];
 
     if (os.platform() === 'darwin') {
@@ -348,6 +346,12 @@ export class Chromium extends BrowserType {
     if (options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port')))
       return new ChromiumReadyState();
     return undefined;
+  }
+
+  override getExecutableName(options: types.LaunchOptions): string {
+    if (options.channel === 'chromium-headless-shell' && !options.headless)
+      return 'chromium';
+    return options.channel || 'chromium';
   }
 }
 
