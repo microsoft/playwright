@@ -112,8 +112,10 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       return snapshotServer.serveClosestScreenshot(relativePath, url.searchParams);
     }
 
-    if (!client)
-      throw new Error('expected client to be defined for all non-iframe requests. soemthing went wrong');
+    if (!client) {
+      // expected client to be defined for all non-iframe requests. something went wrong
+      return fetch(event.request);
+    }
 
     if (relativePath === '/contexts') {
       try {
