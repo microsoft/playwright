@@ -16,38 +16,16 @@
 
 import * as roleUtils from './roleUtils';
 import { getElementComputedStyle } from './domUtils';
-import type { AriaRole } from './roleUtils';
 import { escapeRegExp, longestCommonSubstring } from '@isomorphic/stringUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
-
-type AriaProps = {
-  checked?: boolean | 'mixed';
-  disabled?: boolean;
-  expanded?: boolean;
-  level?: number;
-  pressed?: boolean | 'mixed';
-  selected?: boolean;
-};
+import type { AriaProps, AriaRole, AriaTemplateNode, AriaTemplateRoleNode, AriaTemplateTextNode } from '@isomorphic/ariaSnapshot';
 
 type AriaNode = AriaProps & {
   role: AriaRole | 'fragment';
   name: string;
   children: (AriaNode | string)[];
+  element: Element;
 };
-
-export type AriaTemplateTextNode = {
-  kind: 'text';
-  text: RegExp | string;
-};
-
-export type AriaTemplateRoleNode = AriaProps & {
-  kind: 'role';
-  role: AriaRole | 'fragment';
-  name?: RegExp | string;
-  children?: AriaTemplateNode[];
-};
-
-export type AriaTemplateNode = AriaTemplateRoleNode | AriaTemplateTextNode;
 
 export function generateAriaTree(rootElement: Element): AriaNode {
   const visited = new Set<Node>();
@@ -122,7 +100,7 @@ export function generateAriaTree(rootElement: Element): AriaNode {
   }
 
   roleUtils.beginAriaCaches();
-  const ariaRoot: AriaNode = { role: 'fragment', name: '', children: [] };
+  const ariaRoot: AriaNode = { role: 'fragment', name: '', children: [], element: rootElement };
   try {
     visit(ariaRoot, rootElement);
   } finally {
@@ -139,7 +117,7 @@ function toAriaNode(element: Element): AriaNode | null {
     return null;
 
   const name = roleUtils.getElementAccessibleName(element, false) || '';
-  const result: AriaNode = { role, name, children: [] };
+  const result: AriaNode = { role, name, children: [], element };
 
   if (roleUtils.kAriaCheckedRoles.includes(role))
     result.checked = roleUtils.getAriaChecked(element);
@@ -224,7 +202,7 @@ export type MatcherReceived = {
   regex: string;
 };
 
-export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode): { matches: boolean, received: MatcherReceived } {
+export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode): { matches: AriaNode[], received: MatcherReceived } {
   const root = generateAriaTree(rootElement);
   const matches = matchesNodeDeep(root, template);
   return {
@@ -234,6 +212,11 @@ export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode
       regex: renderAriaTree(root, { mode: 'regex' }),
     }
   };
+}
+
+export function getAllByAria(rootElement: Element, template: AriaTemplateNode): Element[] {
+  const result = matchesAriaTree(rootElement, template);
+  return result.matches.map(n => n.element);
 }
 
 function matchesNode(node: AriaNode | string, template: AriaTemplateNode, depth: number): boolean {
@@ -282,11 +265,11 @@ function containsList(children: (AriaNode | string)[], template: AriaTemplateNod
   return true;
 }
 
-function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode): boolean {
-  const results: (AriaNode | string)[] = [];
+function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode): AriaNode[] {
+  const results: AriaNode[] = [];
   const visit = (node: AriaNode | string): boolean => {
     if (matchesNode(node, template, 0)) {
-      results.push(node);
+      results.push(node as AriaNode);
       return true;
     }
     if (typeof node === 'string')
@@ -298,7 +281,7 @@ function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode): boolean {
     return false;
   };
   visit(root);
-  return !!results.length;
+  return results;
 }
 
 export function renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'regex' }): string {

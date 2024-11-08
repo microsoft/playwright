@@ -26,7 +26,7 @@ export type SourceHighlight = {
   message?: string;
 };
 
-export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl' | 'html' | 'css' | 'markdown';
+export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl' | 'html' | 'css' | 'markdown' | 'yaml';
 
 export const lineHeight = 20;
 
@@ -236,5 +236,6 @@ function languageToMode(language: Language | undefined): string | undefined {
     markdown: 'markdown',
     html: 'htmlmixed',
     css: 'css',
+    yaml: 'yaml',
   }[language];
 }

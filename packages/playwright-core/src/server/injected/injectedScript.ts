@@ -34,7 +34,9 @@ import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } fr
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
-import { matchesAriaTree, renderedAriaTree } from './ariaSnapshot';
+import { matchesAriaTree, renderedAriaTree, getAllByAria } from './ariaSnapshot';
+import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
+import { parseYamlTemplate } from '@isomorphic/ariaSnapshot';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
 
@@ -82,6 +84,7 @@ export class InjectedScript {
     isElementVisible,
     isInsideScope,
     normalizeWhiteSpace,
+    parseYamlTemplate,
   };
 
   // eslint-disable-next-line no-restricted-globals
@@ -216,6 +219,10 @@ export class InjectedScript {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
     return renderedAriaTree(node as Element, options);
+  }
+
+  getAllByAria(document: Document, template: AriaTemplateNode): Element[] {
+    return getAllByAria(document.documentElement, template);
   }
 
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
@@ -1263,8 +1270,13 @@ export class InjectedScript {
     }
 
     {
-      if (expression === 'to.match.aria')
-        return matchesAriaTree(element, options.expectedValue);
+      if (expression === 'to.match.aria') {
+        const result = matchesAriaTree(element, options.expectedValue);
+        return {
+          received: result.received,
+          matches: !!result.matches.length,
+        };
+      }
     }
 
     {

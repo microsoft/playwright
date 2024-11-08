@@ -16,6 +16,7 @@
 
 import type { CallLog, ElementInfo, Mode, Source } from './recorderTypes';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
+import type { SourceHighlight } from '@web/components/codeMirrorWrapper';
 import { SplitView } from '@web/components/splitView';
 import { TabbedPane } from '@web/components/tabbedPane';
 import { Toolbar } from '@web/components/toolbar';
@@ -27,6 +28,10 @@ import './recorder.css';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { toggleTheme } from '@web/theme';
 import { copy } from '@web/uiUtils';
+import yaml from 'yaml';
+import type { YAMLError } from 'yaml';
+import { parseAriaKey } from '@isomorphic/ariaSnapshot';
+import type { AriaKeyError, ParsedYaml } from '@isomorphic/ariaSnapshot';
 
 export interface RecorderProps {
   sources: Source[],
@@ -45,6 +50,7 @@ export const Recorder: React.FC<RecorderProps> = ({
   const [runningFileId, setRunningFileId] = React.useState<string | undefined>();
   const [selectedTab, setSelectedTab] = React.useState<string>('log');
   const [ariaSnapshot, setAriaSnapshot] = React.useState<string | undefined>();
+  const [ariaSnapshotErrors, setAriaSnapshotErrors] = React.useState<SourceHighlight[]>();
 
   const fileId = selectedFileId || runningFileId || sources[0]?.id;
 
@@ -105,7 +111,17 @@ export const Recorder: React.FC<RecorderProps> = ({
     if (mode === 'none' || mode === 'inspecting')
       window.dispatch({ event: 'setMode', params: { mode: 'standby' } });
     setLocator(selector);
-    window.dispatch({ event: 'selectorUpdated', params: { selector } });
+    window.dispatch({ event: 'highlightRequested', params: { selector } });
+  }, [mode]);
+
+  const onAriaEditorChange = React.useCallback((ariaSnapshot: string) => {
+    if (mode === 'none' || mode === 'inspecting')
+      window.dispatch({ event: 'setMode', params: { mode: 'standby' } });
+    const { fragment, errors } = parseAriaSnapshot(ariaSnapshot);
+    setAriaSnapshotErrors(errors);
+    setAriaSnapshot(ariaSnapshot);
+    if (!errors.length)
+      window.dispatch({ event: 'highlightRequested', params: { ariaSnapshot: fragment } });
   }, [mode]);
 
   return <div className='recorder'>
@@ -183,7 +199,7 @@ export const Recorder: React.FC<RecorderProps> = ({
           {
             id: 'aria',
             title: 'Aria snapshot',
-            render: () => <CodeMirrorWrapper text={ariaSnapshot || ''} language={'python'} readOnly={true} wrapLines={true} />
+            render: () => <CodeMirrorWrapper text={ariaSnapshot || ''} language={'yaml'} readOnly={false} onChange={onAriaEditorChange} highlight={ariaSnapshotErrors} wrapLines={true} />
           },
         ]}
         selectedTab={selectedTab}
@@ -192,3 +208,56 @@ export const Recorder: React.FC<RecorderProps> = ({
     />
   </div>;
 };
+
+function parseAriaSnapshot(ariaSnapshot: string): { fragment?: ParsedYaml, errors: SourceHighlight[] } {
+  const lineCounter = new yaml.LineCounter();
+  let yamlDoc: yaml.Document;
+  try {
+    yamlDoc = yaml.parseDocument(ariaSnapshot, {
+      keepSourceTokens: true,
+      lineCounter,
+    });
+  } catch (e) {
+    const error = e as YAMLError;
+    const pos = error.linePos?.[0];
+    return {
+      errors: [{
+        line: pos?.line || 0,
+        type: 'error',
+        message: error.message,
+      }],
+    };
+  }
+
+  const errors: SourceHighlight[] = [];
+  const handleKey = (key: yaml.Scalar<string>) => {
+    try {
+      parseAriaKey(key.value);
+    } catch (e) {
+      const keyError = e as AriaKeyError;
+      errors.push({
+        message: keyError.message,
+        line: lineCounter.linePos(key.srcToken!.offset + keyError.pos).line,
+        type: 'error',
+      });
+    }
+  };
+  const visitSeq = (seq: yaml.YAMLSeq) => {
+    for (const item of seq.items) {
+      if (item instanceof yaml.YAMLMap) {
+        const map = item as yaml.YAMLMap;
+        for (const entry of map.items) {
+          if (entry.key instanceof yaml.Scalar)
+            handleKey(entry.key);
+          if (entry.value instanceof yaml.YAMLSeq)
+            visitSeq(entry.value);
+        }
+        continue;
+      }
+      if (item instanceof yaml.Scalar)
+        handleKey(item);
+    }
+  };
+  visitSeq(yamlDoc.contents as yaml.YAMLSeq);
+  return errors.length ? { errors } : { fragment: yamlDoc.toJSON(), errors };
+}

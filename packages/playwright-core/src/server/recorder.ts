@@ -32,6 +32,7 @@ import type * as actions from '@recorder/actions';
 import { buildFullSelector } from '../utils/isomorphic/recorderUtils';
 import { stringifySelector } from '../utils/isomorphic/selectorParser';
 import type { Frame } from './frames';
+import type { ParsedYaml } from '@isomorphic/ariaSnapshot';
 
 const recorderSymbol = Symbol('recorderSymbol');
 
@@ -39,7 +40,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
   readonly handleSIGINT: boolean | undefined;
   private _context: BrowserContext;
   private _mode: Mode;
-  private _highlightedSelector = '';
+  private _highlightedElement: { selector?: string, ariaSnapshot?: ParsedYaml } = {};
   private _overlayState: OverlayState = { offsetX: 0 };
   private _recorderApp: IRecorderApp | null = null;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
@@ -103,8 +104,11 @@ export class Recorder implements InstrumentationListener, IRecorder {
         this.setMode(data.params.mode);
         return;
       }
-      if (data.event === 'selectorUpdated') {
-        this.setHighlightedSelector(this._currentLanguage, data.params.selector);
+      if (data.event === 'highlightRequested') {
+        if (data.params.selector)
+          this.setHighlightedSelector(this._currentLanguage, data.params.selector);
+        if (data.params.ariaSnapshot)
+          this.setHighlightedAriaSnapshot(data.params.ariaSnapshot);
         return;
       }
       if (data.event === 'step') {
@@ -149,7 +153,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
     });
 
     await this._context.exposeBinding('__pw_recorderState', false, async source => {
-      let actionSelector = '';
+      let actionSelector: string | undefined;
       let actionPoint: Point | undefined;
       const hasActiveScreenshotCommand = [...this._currentCallsMetadata.keys()].some(isScreenshotCommand);
       if (!hasActiveScreenshotCommand) {
@@ -165,6 +169,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
         mode: this._mode,
         actionPoint,
         actionSelector,
+        ariaTemplate: this._highlightedElement.ariaSnapshot,
         language: this._currentLanguage,
         testIdAttributeName: this._contextRecorder.testIdAttributeName(),
         overlay: this._overlayState,
@@ -217,7 +222,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
   setMode(mode: Mode) {
     if (this._mode === mode)
       return;
-    this._highlightedSelector = '';
+    this._highlightedElement = {};
     this._mode = mode;
     this._recorderApp?.setMode(this._mode);
     this._contextRecorder.setEnabled(this._mode === 'recording' || this._mode === 'assertingText' || this._mode === 'assertingVisibility' || this._mode === 'assertingValue' || this._mode === 'assertingSnapshot');
@@ -236,19 +241,26 @@ export class Recorder implements InstrumentationListener, IRecorder {
   }
 
   setHighlightedSelector(language: Language, selector: string) {
-    this._highlightedSelector = locatorOrSelectorAsSelector(language, selector, this._context.selectors().testIdAttributeName());
+    this._highlightedElement = { selector: locatorOrSelectorAsSelector(language, selector, this._context.selectors().testIdAttributeName()) };
+    this._refreshOverlay();
+  }
+
+  setHighlightedAriaSnapshot(ariaSnapshot: ParsedYaml) {
+    this._highlightedElement = { ariaSnapshot };
     this._refreshOverlay();
   }
 
   hideHighlightedSelector() {
-    this._highlightedSelector = '';
+    this._highlightedElement = {};
     this._refreshOverlay();
   }
 
-  private async _scopeHighlightedSelectorToFrame(frame: Frame): Promise<string> {
+  private async _scopeHighlightedSelectorToFrame(frame: Frame): Promise<string | undefined> {
+    if (!this._highlightedElement.selector)
+      return;
     try {
       const mainFrame = frame._page.mainFrame();
-      const resolved = await mainFrame.selectors.resolveFrameForSelector(this._highlightedSelector);
+      const resolved = await mainFrame.selectors.resolveFrameForSelector(this._highlightedElement.selector);
       // selector couldn't be found, don't highlight anything
       if (!resolved)
         return '';
@@ -288,7 +300,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
     if (isScreenshotCommand(metadata))
       this.hideHighlightedSelector();
     else if (metadata.params && metadata.params.selector)
-      this._highlightedSelector = metadata.params.selector;
+      this._highlightedElement = { selector: metadata.params.selector };
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {

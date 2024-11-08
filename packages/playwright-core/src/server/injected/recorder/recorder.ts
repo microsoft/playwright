@@ -207,9 +207,9 @@ class InspectTool implements RecorderTool {
 class RecordActionTool implements RecorderTool {
   private _recorder: Recorder;
   private _performingActions = new Set<actions.PerformOnRecordAction>();
-  private _hoveredModel: HighlightModel | null = null;
+  private _hoveredModel: HighlightModeWithSelector | null = null;
   private _hoveredElement: HTMLElement | null = null;
-  private _activeModel: HighlightModel | null = null;
+  private _activeModel: HighlightModeWithSelector | null = null;
   private _expectProgrammaticKeyUp = false;
   private _pendingClickAction: { action: actions.ClickAction, timeout: number } | undefined;
 
@@ -605,7 +605,7 @@ class RecordActionTool implements RecorderTool {
 
 class TextAssertionTool implements RecorderTool {
   private _recorder: Recorder;
-  private _hoverHighlight: HighlightModel | null = null;
+  private _hoverHighlight: HighlightModeWithSelector | null = null;
   private _action: actions.AssertAction | null = null;
   private _dialog: Dialog;
   private _textCache = new Map<Element | ShadowRoot, ElementText>();
@@ -1019,6 +1019,7 @@ export class Recorder {
   private _currentTool: RecorderTool;
   private _tools: Record<Mode, RecorderTool>;
   private _actionSelectorModel: HighlightModel | null = null;
+  private _lastHighlightedAriaTemplateJSON: string = 'undefined';
   readonly highlight: Highlight;
   readonly overlay: Overlay | undefined;
   private _stylesheet: CSSStyleSheet;
@@ -1129,10 +1130,26 @@ export class Recorder {
     this.overlay?.setUIState(state);
 
     // Race or scroll.
-    if (this._actionSelectorModel?.selector && !this._actionSelectorModel?.elements.length)
+    if (this._actionSelectorModel?.selector && !this._actionSelectorModel?.elements.length && !this._lastHighlightedAriaTemplateJSON)
       this._actionSelectorModel = null;
-    if (state.actionSelector !== this._actionSelectorModel?.selector)
-      this._actionSelectorModel = state.actionSelector ? querySelector(this.injectedScript, state.actionSelector, this.document) : null;
+
+    if (state.actionSelector && state.actionSelector !== this._actionSelectorModel?.selector)
+      this._actionSelectorModel =  querySelector(this.injectedScript, state.actionSelector, this.document);
+
+    const ariaTemplateJSON = JSON.stringify(state.ariaTemplate);
+    if (this._lastHighlightedAriaTemplateJSON !== ariaTemplateJSON) {
+      this._lastHighlightedAriaTemplateJSON = ariaTemplateJSON;
+      const template = state.ariaTemplate ? this.injectedScript.utils.parseYamlTemplate(state.ariaTemplate) : undefined;
+      const elements = template ? this.injectedScript.getAllByAria(this.document, template) : [];
+      if (elements.length)
+        this._actionSelectorModel = { elements };
+      else
+        this._actionSelectorModel = null;
+    }
+
+    if (!state.actionSelector && !state.ariaTemplate)
+      this._actionSelectorModel = null;
+
     if (this.state.mode === 'none' || this.state.mode === 'standby')
       this.updateHighlight(this._actionSelectorModel, false);
   }
@@ -1439,8 +1456,12 @@ function consumeEvent(e: Event) {
 }
 
 type HighlightModel = HighlightOptions & {
-  selector: string;
+  selector?: string;
   elements: Element[];
+};
+
+type HighlightModeWithSelector = HighlightModel & {
+  selector: string;
 };
 
 function asCheckbox(node: Node | null): HTMLInputElement | null {
