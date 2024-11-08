@@ -207,9 +207,9 @@ class InspectTool implements RecorderTool {
 class RecordActionTool implements RecorderTool {
   private _recorder: Recorder;
   private _performingActions = new Set<actions.PerformOnRecordAction>();
-  private _hoveredModel: HighlightModeWithSelector | null = null;
+  private _hoveredModel: HighlightModelWithSelector | null = null;
   private _hoveredElement: HTMLElement | null = null;
-  private _activeModel: HighlightModeWithSelector | null = null;
+  private _activeModel: HighlightModelWithSelector | null = null;
   private _expectProgrammaticKeyUp = false;
   private _pendingClickAction: { action: actions.ClickAction, timeout: number } | undefined;
 
@@ -605,7 +605,7 @@ class RecordActionTool implements RecorderTool {
 
 class TextAssertionTool implements RecorderTool {
   private _recorder: Recorder;
-  private _hoverHighlight: HighlightModeWithSelector | null = null;
+  private _hoverHighlight: HighlightModelWithSelector | null = null;
   private _action: actions.AssertAction | null = null;
   private _dialog: Dialog;
   private _textCache = new Map<Element | ShadowRoot, ElementText>();
@@ -1460,7 +1460,7 @@ type HighlightModel = HighlightOptions & {
   elements: Element[];
 };
 
-type HighlightModeWithSelector = HighlightModel & {
+type HighlightModelWithSelector = HighlightModel & {
   selector: string;
 };
 

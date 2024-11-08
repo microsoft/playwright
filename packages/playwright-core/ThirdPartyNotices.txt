@@ -10,7 +10,7 @@ This project incorporates components from the projects listed below. The origina
 -	balanced-match@1.0.2 (https://github.com/juliangruber/balanced-match)
 -	brace-expansion@1.1.11 (https://github.com/juliangruber/brace-expansion)
 -	buffer-crc32@0.2.13 (https://github.com/brianloveswords/buffer-crc32)
--	codemirror-shadow-1@0.0.1 (https://github.com/codemirror/CodeMirror)
+-	codemirror@5.65.18 (https://github.com/codemirror/CodeMirror)
 -	colors@1.4.0 (https://github.com/Marak/colors.js)
 -	commander@8.3.0 (https://github.com/tj/commander.js)
 -	concat-map@0.0.1 (https://github.com/substack/node-concat-map)
@@ -208,7 +208,7 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEAL
 =========================================
 END OF buffer-crc32@0.2.13 AND INFORMATION
 
-%% codemirror-shadow-1@0.0.1 NOTICES AND INFORMATION BEGIN HERE
+%% codemirror@5.65.18 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -232,7 +232,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
-END OF codemirror-shadow-1@0.0.1 AND INFORMATION
+END OF codemirror@5.65.18 AND INFORMATION
 
 %% colors@1.4.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
