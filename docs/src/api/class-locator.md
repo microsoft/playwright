@@ -1757,7 +1757,7 @@ new_email.click()
 
 ```csharp
 var newEmail = page.GetByRole(AriaRole.Button, new() { Name = "New" });
-var dialog = Page.GetByText("Confirm security settings");
+var dialog = page.GetByText("Confirm security settings");
 await Expect(newEmail.Or(dialog)).ToBeVisibleAsync();
 if (await dialog.IsVisibleAsync())
   await page.GetByRole(AriaRole.Button, new() { Name = "Dismiss" }).ClickAsync();

@@ -54,7 +54,7 @@ download.save_as("/path/to/save/at/" + download.suggested_filename)
 ```csharp
 // Start the task of waiting for the download before clicking
 var waitForDownloadTask = page.WaitForDownloadAsync();
-await Page.GetByText("Download file").ClickAsync();
+await page.GetByText("Download file").ClickAsync();
 var download = await waitForDownloadTask;
 
 // Wait for the download process to complete and save the downloaded file somewhere

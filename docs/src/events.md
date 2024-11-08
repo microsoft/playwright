@@ -152,11 +152,11 @@ void listener(object sender, IRequest request)
     Console.WriteLine("Request finished: " + request.Url);
 };
 page.RequestFinished += listener;
-await Page.GotoAsync("https://wikipedia.org");
+await page.GotoAsync("https://wikipedia.org");
 
 // Remove previously added listener.
 page.RequestFinished -= listener;
-await Page.GotoAsync("https://www.openstreetmap.org/");
+await page.GotoAsync("https://www.openstreetmap.org/");
 ```
 
 ## Adding one-off listeners

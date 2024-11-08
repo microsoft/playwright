@@ -101,7 +101,7 @@ locator.click()
 ```
 
 ```csharp
-var locator = Page.GetByText("Submit");
+var locator = page.GetByText("Submit");
 await locator.HoverAsync();
 await locator.ClickAsync();
 ```

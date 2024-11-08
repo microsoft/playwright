@@ -485,7 +485,7 @@ print(popup.evaluate("location.href"))
 ```csharp
 var popup = await page.RunAndWaitForPopupAsync(async () =>
 {
-    await Page.GetByText("open the popup").ClickAsync();
+    await page.GetByText("open the popup").ClickAsync();
 });
 Console.WriteLine(await popup.EvaluateAsync<string>("location.href"));
 ```
@@ -3186,12 +3186,12 @@ await page.get_by_role("button", name="Start here").click()
 
 ```csharp
 // Setup the handler.
-await page.AddLocatorHandlerAsync(Page.GetByText("Sign up to the newsletter"), async () => {
+await page.AddLocatorHandlerAsync(page.GetByText("Sign up to the newsletter"), async () => {
   await page.GetByRole(AriaRole.Button, new() { Name = "No thanks" }).ClickAsync();
 });
 
 // Write the test as usual.
-await Page.GotoAsync("https://example.com");
+await page.GotoAsync("https://example.com");
 await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
 ```
 
@@ -3243,12 +3243,12 @@ await page.get_by_role("button", name="Start here").click()
 
 ```csharp
 // Setup the handler.
-await page.AddLocatorHandlerAsync(Page.GetByText("Confirm your security details"), async () => {
+await page.AddLocatorHandlerAsync(page.GetByText("Confirm your security details"), async () => {
   await page.GetByRole(AriaRole.Button, new() { Name = "Remind me later" }).ClickAsync();
 });
 
 // Write the test as usual.
-await Page.GotoAsync("https://example.com");
+await page.GotoAsync("https://example.com");
 await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
 ```
 
@@ -3305,7 +3305,7 @@ await page.AddLocatorHandlerAsync(page.Locator("body"), async () => {
 }, new() { NoWaitAfter = true });
 
 // Write the test as usual.
-await Page.GotoAsync("https://example.com");
+await page.GotoAsync("https://example.com");
 await page.GetByRole("button", new() { Name = "Start here" }).ClickAsync();
 ```
 
@@ -3336,7 +3336,7 @@ await page.add_locator_handler(page.get_by_label("Close"), handler, times=1)
 ```
 
 ```csharp
-await page.AddLocatorHandlerAsync(Page.GetByText("Sign up to the newsletter"), async locator => {
+await page.AddLocatorHandlerAsync(page.GetByText("Sign up to the newsletter"), async locator => {
   await locator.ClickAsync();
 }, new() { Times = 1 });
 ```
@@ -4734,7 +4734,7 @@ with page.expect_navigation():
 await page.RunAndWaitForNavigationAsync(async () =>
 {
     // This action triggers the navigation after a timeout.
-    await Page.GetByText("Navigate after timeout").ClickAsync();
+    await page.GetByText("Navigate after timeout").ClickAsync();
 });
 
 // The method continues after navigation has finished
@@ -4865,13 +4865,13 @@ second_request = second.value
 // Waits for the next request with the specified url.
 await page.RunAndWaitForRequestAsync(async () =>
 {
-    await Page.GetByText("trigger request").ClickAsync();
+    await page.GetByText("trigger request").ClickAsync();
 }, "http://example.com/resource");
 
 // Alternative way with a predicate.
 await page.RunAndWaitForRequestAsync(async () =>
 {
-    await Page.GetByText("trigger request").ClickAsync();
+    await page.GetByText("trigger request").ClickAsync();
 }, request => request.Url == "https://example.com" && request.Method == "GET");
 ```
 
@@ -5009,13 +5009,13 @@ return response.ok
 // Waits for the next response with the specified url.
 await page.RunAndWaitForResponseAsync(async () =>
 {
-    await Page.GetByText("trigger response").ClickAsync();
+    await page.GetByText("trigger response").ClickAsync();
 }, "http://example.com/resource");
 
 // Alternative way with a predicate.
 await page.RunAndWaitForResponseAsync(async () =>
 {
-    await Page.GetByText("trigger response").ClickAsync();
+    await page.GetByText("trigger response").ClickAsync();
 }, response => response.Url == "https://example.com" && response.Status == 200 && response.Request.Method == "GET");
 ```
 
