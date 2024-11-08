@@ -20,6 +20,7 @@ import './colors.css';
 import './common.css';
 import * as icons from './icons';
 import { clsx } from '@web/uiUtils';
+import { Reveal } from './links';
 
 export const Chip: React.FC<{
   header: JSX.Element | string,
@@ -28,10 +29,9 @@ export const Chip: React.FC<{
   setExpanded?: (expanded: boolean) => void,
   children?: any,
   dataTestId?: string,
-  targetRef?: React.RefObject<HTMLDivElement>,
-}> = ({ header, expanded, setExpanded, children, noInsets, dataTestId, targetRef }) => {
+}> = ({ header, expanded, setExpanded, children, noInsets, dataTestId }) => {
   const id = React.useId();
-  return <div className='chip' data-testid={dataTestId} ref={targetRef}>
+  return <div className='chip' data-testid={dataTestId}>
     <div
       role='button'
       aria-expanded={!!expanded}
@@ -53,17 +53,24 @@ export const AutoChip: React.FC<{
   noInsets?: boolean,
   children?: any,
   dataTestId?: string,
-  targetRef?: React.RefObject<HTMLDivElement>,
-}> = ({ header, initialExpanded, noInsets, children, dataTestId, targetRef }) => {
-  const [expanded, setExpanded] = React.useState(initialExpanded || initialExpanded === undefined);
-  return <Chip
-    header={header}
-    expanded={expanded}
-    setExpanded={setExpanded}
-    noInsets={noInsets}
-    dataTestId={dataTestId}
-    targetRef={targetRef}
-  >
-    {children}
-  </Chip>;
+  revealId?: string,
+}> = ({ header, initialExpanded, noInsets, children, dataTestId, revealId }) => {
+  const [expanded, setExpanded] = React.useState(initialExpanded ?? true);
+  const onChangeReveal = React.useCallback((isRevealed: boolean) => {
+    if (isRevealed)
+      setExpanded(true);
+  }, [setExpanded]);
+  return <Reveal
+    revealId={revealId}
+    onChange={onChangeReveal}>
+    <Chip
+      header={header}
+      expanded={expanded}
+      setExpanded={setExpanded}
+      noInsets={noInsets}
+      dataTestId={dataTestId}
+    >
+      {children}
+    </Chip>
+  </Reveal>;
 };

@@ -113,3 +113,30 @@ export function generateTraceUrl(traces: TestAttachment[]) {
 }
 
 const kMissingContentType = 'x-playwright/missing';
+
+
+export function useRevealed(revealId?: string) {
+  const searchParams = React.useContext(SearchParamsContext);
+  if (revealId === undefined)
+    return false;
+  return searchParams.get('reveal') === revealId;
+}
+
+export function Reveal({ revealId, onChange, children }: React.PropsWithChildren<{ revealId?: string, onChange?(isRevealed: boolean, ref: HTMLDivElement): void }>) {
+  const isRevealed = useRevealed(revealId);
+
+  const ref = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!ref.current)
+      return;
+
+    const preventDefault = onChange?.(isRevealed, ref.current);
+    if (preventDefault)
+      return;
+
+    if (isRevealed)
+      ref.current?.scrollIntoView({ block: 'start', inline: 'start' });
+  }, [isRevealed, onChange]);
+
+  return <div ref={ref}>{children}</div>;
+}

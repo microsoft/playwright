@@ -64,9 +64,7 @@ function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
 export const TestResultView: React.FC<{
   test: TestCase,
   result: TestResult,
-  anchor: 'video' | 'diff' | '',
-}> = ({ result, anchor }) => {
-
+}> = ({ result }) => {
   const { screenshots, videos, traces, otherAttachments, diffs, errors, htmls } = React.useMemo(() => {
     const attachments = result?.attachments || [];
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
@@ -79,20 +77,6 @@ export const TestResultView: React.FC<{
     const errors = classifyErrors(result.errors, diffs);
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, htmls };
   }, [result]);
-
-  const videoRef = React.useRef<HTMLDivElement>(null);
-  const imageDiffRef = React.useRef<HTMLDivElement>(null);
-
-  const [scrolled, setScrolled] = React.useState(false);
-  React.useEffect(() => {
-    if (scrolled)
-      return;
-    setScrolled(true);
-    if (anchor === 'video')
-      videoRef.current?.scrollIntoView({ block: 'start', inline: 'start' });
-    if (anchor === 'diff')
-      imageDiffRef.current?.scrollIntoView({ block: 'start', inline: 'start' });
-  }, [scrolled, anchor, setScrolled, videoRef]);
 
   return <div className='test-result'>
     {!!errors.length && <AutoChip header='Errors'>
@@ -107,8 +91,8 @@ export const TestResultView: React.FC<{
     </AutoChip>}
 
     {diffs.map((diff, index) =>
-      <AutoChip key={`diff-${index}`} dataTestId='test-results-image-diff' header={`Image mismatch: ${diff.name}`} targetRef={imageDiffRef}>
-        <ImageDiffView key='image-diff' diff={diff}></ImageDiffView>
+      <AutoChip key={`diff-${index}`} dataTestId='test-results-image-diff' header={`Image mismatch: ${diff.name}`} revealId={`diff-${index}`}>
+        <ImageDiffView diff={diff}/>
       </AutoChip>
     )}
 
@@ -132,7 +116,7 @@ export const TestResultView: React.FC<{
       </div>}
     </AutoChip>}
 
-    {!!videos.length && <AutoChip header='Videos' targetRef={videoRef}>
+    {!!videos.length && <AutoChip header='Videos' revealId='videos'>
       {videos.map((a, i) => <div key={`video-${i}`}>
         <video controls>
           <source src={a.path} type={a.contentType}/>
