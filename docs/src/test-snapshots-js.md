@@ -16,6 +16,10 @@ test('example test', async ({ page }) => {
 });
 ```
 
+:::warning
+Browser rendering can vary based on the host OS, version, settings, hardware, power source (battery vs. power adapter), headless mode, and other factors. For consistent screenshots, run tests in the same environment where the baseline screenshots were generated.
+:::
+
 ## Generating screenshots
 
 When you run above for the first time, test runner will say:
