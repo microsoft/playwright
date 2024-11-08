@@ -113,8 +113,10 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     }
 
     if (!client) {
-      // expected client to be defined for all non-iframe requests. something went wrong
-      return fetch(event.request);
+      // vscode webview doesn't sent clientId under some circumstances
+      if (url.pathname.endsWith('embedded.html'))
+        return fetch(event.request);
+      throw new Error('expected client to be defined for all non-iframe requests. something went wrong');
     }
 
     if (relativePath === '/contexts') {
