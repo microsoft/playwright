@@ -130,7 +130,6 @@ export class WebServerPlugin implements TestRunnerPlugin {
             ? setTimeout(() => reject(new Error(`process didn't close gracefully within timeout, falling back to SIGKILL`)), timeout)
             : undefined;
           launchedProcess.once('close', (...args) => {
-            console.log("closing", ...args)
             clearTimeout(timer);
             resolve();
           });
