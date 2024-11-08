@@ -357,20 +357,22 @@ class HtmlBuilder {
       }
     }
 
-    // Inline report data.
-    const indexFile = path.join(this._reportFolder, 'index.html');
-    fs.appendFileSync(indexFile, '<script>\nwindow.playwrightReportBase64 = "data:application/zip;base64,');
+    await this._writeReportData(path.join(this._reportFolder, 'index.html'));
+
+
+    return { ok, singleTestId };
+  }
+
+  private async _writeReportData(path: string) {
+    fs.appendFileSync(path, '<script>\nwindow.playwrightReportBase64 = "data:application/zip;base64,');
     await new Promise(f => {
       this._dataZipFile!.end(undefined, () => {
         this._dataZipFile!.outputStream
             .pipe(new Base64Encoder())
-            .pipe(fs.createWriteStream(indexFile, { flags: 'a' })).on('close', f);
+            .pipe(fs.createWriteStream(path, { flags: 'a' })).on('close', f);
       });
     });
-    fs.appendFileSync(indexFile, '";</script>');
-
-
-    return { ok, singleTestId };
+    fs.appendFileSync(path, '";</script>');
   }
 
   private _addDataFile(fileName: string, data: any) {
