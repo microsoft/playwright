@@ -459,3 +459,36 @@ it('should be ok with circular ownership', async ({ page }) => {
       - region: Hello
   `);
 });
+
+it('should escape yaml text in text nodes', async ({ page }) => {
+  await page.setContent(`
+    <details>
+      <summary>one: <a href="#">link1</a> "two <a href="#">link2</a> 'three <a href="#">link3</a> \`four</summary>
+    </details>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - group:
+      - text: "one:"
+      - link "link1"
+      - text: "\\\"two"
+      - link "link2"
+      - text: "'three"
+      - link "link3"
+      - text: "\`four"
+  `);
+});
+
+it.fixme('should handle long strings', async ({ page }) => {
+  await page.setContent(`
+    <a href='about:blank'>
+      <div role='region'>${'a'.repeat(100000)}</div>
+    </a>
+  `);
+
+  const trimmed = 'a'.repeat(1000);
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - link "${trimmed}":
+      - region: "${trimmed}"
+  `);
+});

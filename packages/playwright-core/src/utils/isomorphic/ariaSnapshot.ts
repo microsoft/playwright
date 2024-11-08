@@ -138,14 +138,18 @@ class KeyParser {
     return this._pos >= this._length;
   }
 
+  private _isWhitespace() {
+    return !this._eof() && /\s/.test(this._peek());
+  }
+
   private _skipWhitespace() {
-    while (!this._eof() && /\s/.test(this._peek()))
+    while (this._isWhitespace())
       this._pos++;
   }
 
-  private _readIdentifier(): string {
+  private _readIdentifier(type: 'role' | 'attribute'): string {
     if (this._eof())
-      this._throwError('Unexpected end of input when expecting identifier');
+      this._throwError(`Unexpected end of input when expecting ${type}`);
     const start = this._pos;
     while (!this._eof() && /[a-zA-Z]/.test(this._peek()))
       this._pos++;
@@ -178,6 +182,7 @@ class KeyParser {
   private _readRegex(): string {
     let result = '';
     let escaped = false;
+    let insideClass = false;
     while (!this._eof()) {
       const ch = this._next();
       if (escaped) {
@@ -186,8 +191,14 @@ class KeyParser {
       } else if (ch === '\\') {
         escaped = true;
         result += ch;
-      } else if (ch === '/') {
+      } else if (ch === '/' && !insideClass) {
         return result;
+      } else if (ch === '[') {
+        insideClass = true;
+        result += ch;
+      } else if (ch === ']' && insideClass) {
+        result += ch;
+        insideClass = false;
       } else {
         result += ch;
       }
@@ -218,14 +229,14 @@ class KeyParser {
         this._next();
         this._skipWhitespace();
         errorPos = this._pos;
-        const flagName = this._readIdentifier();
+        const flagName = this._readIdentifier('attribute');
         this._skipWhitespace();
         let flagValue = '';
         if (this._peek() === '=') {
           this._next();
           this._skipWhitespace();
           errorPos = this._pos;
-          while (this._peek() !== ']' && !this._eof())
+          while (this._peek() !== ']' && !this._isWhitespace() && !this._eof())
             flagValue += this._next();
         }
         this._skipWhitespace();
@@ -243,7 +254,7 @@ class KeyParser {
   _parse(): AriaTemplateNode {
     this._skipWhitespace();
 
-    const role = this._readIdentifier() as AriaTemplateRoleNode['role'];
+    const role = this._readIdentifier('role') as AriaTemplateRoleNode['role'];
     this._skipWhitespace();
     const name = this._readStringOrRegex() || '';
     const result: AriaTemplateRoleNode = { kind: 'role', role, name };
