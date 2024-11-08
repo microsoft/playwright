@@ -26,6 +26,9 @@ export default defineConfig({
     react(),
     bundle()
   ],
+  define: {
+    'process.env': {},
+  },
   resolve: {
     alias: {
       '@injected': path.resolve(__dirname, '../playwright-core/src/server/injected'),
@@ -38,8 +41,6 @@ export default defineConfig({
   },
   build: {
     outDir: path.resolve(__dirname, '../playwright-core/lib/vite/traceViewer'),
-    // Output dir is shared with vite.sw.config.ts, clearing it here is racy.
-    emptyOutDir: false,
     rollupOptions: {
       input: {
         index: path.resolve(__dirname, 'index.html'),
