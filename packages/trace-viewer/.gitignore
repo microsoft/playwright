@@ -23,4 +23,4 @@ dist-ssr
 *.sln
 *.sw?
 
-public/sw.bundle.js*
+public/sw.bundle.js
