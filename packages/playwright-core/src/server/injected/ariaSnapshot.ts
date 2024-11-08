@@ -292,7 +292,7 @@ export function renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'r
     if (typeof ariaNode === 'string') {
       if (parentAriaNode && !includeText(parentAriaNode, ariaNode))
         return;
-      const text = renderString(ariaNode);
+      const text = yamlEscapeValueIfNeeded(renderString(ariaNode));
       if (text)
         lines.push(indent + '- text: ' + text);
       return;
@@ -399,8 +399,8 @@ function textContributesInfo(node: AriaNode, text: string): boolean {
   if (node.name.length > text.length)
     return false;
 
-  // Figure out if text adds any value.
-  const substr = longestCommonSubstring(text, node.name);
+  // Figure out if text adds any value. "longestCommonSubstring" is expensive, so limit strings length.
+  const substr = (text.length <= 200 && node.name.length <= 200) ? longestCommonSubstring(text, node.name) : '';
   let filtered = text;
   while (substr && filtered.includes(substr))
     filtered = filtered.replace(substr, '');

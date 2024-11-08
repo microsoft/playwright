@@ -76,10 +76,30 @@ test('should match complex', async ({ page }) => {
 });
 
 test('should match regex', async ({ page }) => {
-  await page.setContent(`<h1>Issues 12</h1>`);
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
-    - heading ${/Issues \d+/}
-  `);
+  {
+    await page.setContent(`<h1>Issues 12</h1>`);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading ${/Issues \d+/}
+    `);
+  }
+  {
+    await page.setContent(`<h1>Issues 1/2</h1>`);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading ${/Issues 1[/]2/}
+    `);
+  }
+  {
+    await page.setContent(`<h1>Issues 1[</h1>`);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading ${/Issues 1\[/}
+    `);
+  }
+  {
+    await page.setContent(`<h1>Issues 1]]2</h1>`);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading ${/Issues 1[\]]]2/}
+    `);
+  }
 });
 
 test('should allow text nodes', async ({ page }) => {
@@ -472,6 +492,26 @@ test('should unpack escaped names', async ({ page }) => {
       - 'button "Click '' me"'
     `);
   }
+
+  {
+    await page.setContent(`
+      <h1>heading "name" [level=1]</h1>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading "heading \\"name\\" [level=1]" [level=1]
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <h1>heading \\" [level=2]</h1>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - |
+          heading    "heading \\\\\\" [level=2]" [
+             level  =   1   ]
+    `);
+  }
 });
 
 test('should report error in YAML', async ({ page }) => {
@@ -598,4 +638,35 @@ test('call log should contain actual snapshot', async ({ page }) => {
   `, { timeout: 3000 }).catch(e => e);
 
   expect(stripAnsi(error.message)).toContain(`- unexpected value "- heading "todos" [level=1]"`);
+});
+
+test.fixme('should normalize whitespace when matching accessible name', async ({ page }) => {
+  await page.setContent(`
+    <button>hello world</button>
+  `);
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - |
+        button "hello
+          world"
+  `);
+});
+
+test('should parse attributes', async ({ page }) => {
+  {
+    await page.setContent(`
+      <button aria-pressed="mixed">hello world</button>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button [pressed=mixed ]
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <h2>hello world</h2>
+    `);
+    await expect(page.locator('body')).not.toMatchAriaSnapshot(`
+      - heading [level =  -3 ]
+    `);
+  }
 });

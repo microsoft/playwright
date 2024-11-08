@@ -20,6 +20,10 @@ import { execSync } from 'child_process';
 
 test.describe.configure({ mode: 'parallel' });
 
+function trimPatch(patch: string) {
+  return patch.split('\n').map(line => line.trimEnd()).join('\n');
+}
+
 test('should update snapshot with the update-snapshots flag', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.spec.ts': `
@@ -36,7 +40,7 @@ test('should update snapshot with the update-snapshots flag', async ({ runInline
   expect(result.exitCode).toBe(0);
   const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
   const data = fs.readFileSync(patchPath, 'utf-8');
-  expect(data).toBe(`--- a/a.spec.ts
+  expect(trimPatch(data)).toBe(`--- a/a.spec.ts
 +++ b/a.spec.ts
 @@ -3,7 +3,7 @@
        test('test', async ({ page }) => {
@@ -46,7 +50,7 @@ test('should update snapshot with the update-snapshots flag', async ({ runInline
 +          - heading "hello" [level=1]
          \`);
        });
-     
+
 `);
 
   expect(stripAnsi(result.output).replace(/\\/g, '/')).toContain(`New baselines created for:
@@ -83,7 +87,7 @@ test('should update missing snapshots', async ({ runInlineTest }, testInfo) => {
 
   const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
   const data = fs.readFileSync(patchPath, 'utf-8');
-  expect(data).toBe(`--- a/a.spec.ts
+  expect(trimPatch(data)).toBe(`--- a/a.spec.ts
 +++ b/a.spec.ts
 @@ -2,6 +2,8 @@
        import { test, expect } from '@playwright/test';
@@ -94,7 +98,7 @@ test('should update missing snapshots', async ({ runInlineTest }, testInfo) => {
 +          - heading "hello" [level=1]
 +        \`);
        });
-     
+
 `);
 
   execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
@@ -127,7 +131,7 @@ test('should generate baseline with regex', async ({ runInlineTest }, testInfo) 
   expect(result.exitCode).toBe(0);
   const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
   const data = fs.readFileSync(patchPath, 'utf-8');
-  expect(data).toBe(`--- a/a.spec.ts
+  expect(trimPatch(data)).toBe(`--- a/a.spec.ts
 +++ b/a.spec.ts
 @@ -13,6 +13,18 @@
            <li>/Regex 1/</li>
@@ -148,7 +152,7 @@ test('should generate baseline with regex', async ({ runInlineTest }, testInfo) 
 +            - listitem: /\\\\/Regex \\\\d+[hmsp]+\\\\//
 +        \`);
        });
-     
+
 `);
 
   execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
@@ -162,6 +166,10 @@ test('should generate baseline with special characters', async ({ runInlineTest 
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
         await page.setContent(\`<ul>
+          <details>
+            <summary>one: <a href="#">link1</a> "two <a href="#">link2</a> 'three <a href="#">link3</a> \\\`four</summary>
+          </details>
+          <h1>heading "name" [level=1]</h1>
           <button>Click: me</button>
           <button>Click: 123</button>
           <button>Click ' me</button>
@@ -181,15 +189,24 @@ test('should generate baseline with special characters', async ({ runInlineTest 
   expect(result.exitCode).toBe(0);
   const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
   const data = fs.readFileSync(patchPath, 'utf-8');
-  expect(data).toBe(`--- a/a.spec.ts
+  expect(trimPatch(data)).toBe(`--- a/a.spec.ts
 +++ b/a.spec.ts
-@@ -13,6 +13,18 @@
+@@ -17,6 +17,27 @@
            <li>Item: 1</li>
            <li>Item {a: b}</li>
          </ul>\`);
 -        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
 +        await expect(page.locator('body')).toMatchAriaSnapshot(\`
 +          - list:
++            - group:
++              - text: "one:"
++              - link "link1"
++              - text: "\\\\\"two"
++              - link "link2"
++              - text: "'three"
++              - link "link3"
++              - text: "\\\`four"
++            - heading "heading \\\\"name\\\\" [level=1]" [level=1]
 +            - 'button "Click: me"'
 +            - 'button /Click: \\\\d+/'
 +            - button "Click ' me"
@@ -202,7 +219,7 @@ test('should generate baseline with special characters', async ({ runInlineTest 
 +            - listitem: \"Item {a: b}\"
 +        \`);
        });
-     
+
 `);
 
   execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
@@ -234,10 +251,10 @@ test('should update missing snapshots in tsx', async ({ runInlineTest }, testInf
   expect(result.exitCode).toBe(0);
   const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
   const data = fs.readFileSync(patchPath, 'utf-8');
-  expect(data).toBe(`--- a/src/button.test.tsx
+  expect(trimPatch(data)).toBe(`--- a/src/button.test.tsx
 +++ b/src/button.test.tsx
 @@ -4,6 +4,8 @@
- 
+
        test('pass', async ({ mount }) => {
          const component = await mount(<Button></Button>);
 -        await expect(component).toMatchAriaSnapshot(\`\`);
@@ -245,7 +262,7 @@ test('should update missing snapshots in tsx', async ({ runInlineTest }, testInf
 +          - button \"Button\"
 +        \`);
        });
-     
+
 `);
 
   execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
@@ -296,10 +313,10 @@ test('should update multiple files', async ({ runInlineTest }, testInfo) => {
 
   const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
   const data = fs.readFileSync(patchPath, 'utf-8');
-  expect(data).toBe(`--- a/src/button-1.test.tsx
+  expect(trimPatch(data)).toBe(`--- a/src/button-1.test.tsx
 +++ b/src/button-1.test.tsx
 @@ -4,6 +4,8 @@
- 
+
        test('pass 1', async ({ mount }) => {
          const component = await mount(<Button></Button>);
 -        await expect(component).toMatchAriaSnapshot(\`\`);
@@ -307,12 +324,12 @@ test('should update multiple files', async ({ runInlineTest }, testInfo) => {
 +          - button \"Button\"
 +        \`);
        });
-     
+
 
 --- a/src/button-2.test.tsx
 +++ b/src/button-2.test.tsx
 @@ -4,6 +4,8 @@
- 
+
        test('pass 2', async ({ mount }) => {
          const component = await mount(<Button></Button>);
 -        await expect(component).toMatchAriaSnapshot(\`\`);
@@ -320,7 +337,7 @@ test('should update multiple files', async ({ runInlineTest }, testInfo) => {
 +          - button \"Button\"
 +        \`);
        });
-     
+
 `);
 
   execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
@@ -342,7 +359,7 @@ test('should generate baseline for input values', async ({ runInlineTest }, test
   expect(result.exitCode).toBe(0);
   const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
   const data = fs.readFileSync(patchPath, 'utf-8');
-  expect(data).toBe(`--- a/a.spec.ts
+  expect(trimPatch(data)).toBe(`--- a/a.spec.ts
 +++ b/a.spec.ts
 @@ -2,6 +2,8 @@
        import { test, expect } from '@playwright/test';
@@ -353,7 +370,7 @@ test('should generate baseline for input values', async ({ runInlineTest }, test
 +          - textbox: hello world
 +        \`);
        });
-     
+
 `);
 
   execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });

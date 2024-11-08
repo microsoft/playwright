@@ -86,6 +86,10 @@ function yamlStringNeedsQuotes(str: string): boolean {
   if (/^[>|]/.test(str))
     return true;
 
+  // Strings starting with quotes need quotes
+  if (/^["']/.test(str))
+    return true;
+
   // Strings containing special characters that could cause ambiguity
   if (/[{}`]/.test(str))
     return true;
