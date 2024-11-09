@@ -115,8 +115,13 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       return;
 
     let valueChanged = false;
-    if (codemirror.getValue() !== text) {
-      codemirror.setValue(text);
+    // CodeMirror has a bug that renders cursor poorly on a last line.
+    let normalizedText = text;
+    if (!readOnly && !wrapLines && !normalizedText.endsWith('\n'))
+      normalizedText = normalizedText + '\n';
+
+    if (codemirror.getValue() !== normalizedText) {
+      codemirror.setValue(normalizedText);
       valueChanged = true;
       if (focusOnChange) {
         codemirror.execCommand('selectAll');
@@ -170,7 +175,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       if (changeListener)
         codemirror.off('change', changeListener);
     };
-  }, [codemirror, text, highlight, revealLine, focusOnChange, onChange]);
+  }, [codemirror, text, highlight, revealLine, focusOnChange, onChange, readOnly]);
 
   return <div data-testid={dataTestId} className='cm-wrapper' ref={codemirrorElement} onClick={onCodeMirrorClick}></div>;
 };

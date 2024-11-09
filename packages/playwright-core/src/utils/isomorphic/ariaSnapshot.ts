@@ -52,6 +52,8 @@ export type AriaTemplateNode = AriaTemplateRoleNode | AriaTemplateTextNode;
 export function parseYamlTemplate(fragment: ParsedYaml): AriaTemplateNode {
   const result: AriaTemplateNode = { kind: 'role', role: 'fragment' };
   populateNode(result, fragment);
+  if (result.children && result.children.length === 1)
+    return result.children[0];
   return result;
 }
 

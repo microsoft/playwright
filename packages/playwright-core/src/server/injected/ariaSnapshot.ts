@@ -204,7 +204,7 @@ export type MatcherReceived = {
 
 export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode): { matches: AriaNode[], received: MatcherReceived } {
   const root = generateAriaTree(rootElement);
-  const matches = matchesNodeDeep(root, template);
+  const matches = matchesNodeDeep(root, template, false);
   return {
     matches,
     received: {
@@ -215,8 +215,9 @@ export function matchesAriaTree(rootElement: Element, template: AriaTemplateNode
 }
 
 export function getAllByAria(rootElement: Element, template: AriaTemplateNode): Element[] {
-  const result = matchesAriaTree(rootElement, template);
-  return result.matches.map(n => n.element);
+  const root = generateAriaTree(rootElement);
+  const matches = matchesNodeDeep(root, template, true);
+  return matches.map(n => n.element);
 }
 
 function matchesNode(node: AriaNode | string, template: AriaTemplateNode, depth: number): boolean {
@@ -265,12 +266,12 @@ function containsList(children: (AriaNode | string)[], template: AriaTemplateNod
   return true;
 }
 
-function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode): AriaNode[] {
+function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode, collectAll: boolean): AriaNode[] {
   const results: AriaNode[] = [];
   const visit = (node: AriaNode | string): boolean => {
     if (matchesNode(node, template, 0)) {
       results.push(node as AriaNode);
-      return true;
+      return !collectAll;
     }
     if (typeof node === 'string')
       return false;

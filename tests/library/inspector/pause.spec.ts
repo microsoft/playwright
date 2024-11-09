@@ -17,7 +17,8 @@
 import type { Page } from 'playwright-core';
 import { test as it, expect, Recorder } from './inspectorTest';
 import { waitForTestLog } from '../../config/utils';
-
+import { roundBox } from '../../page/pageTest';
+import type { BoundingBox } from '../../page/pageTest';
 
 it('should resume when closing inspector', async ({ page, recorderPageGetter, closeRecorder, mode }) => {
   it.skip(mode !== 'default');
@@ -385,7 +386,7 @@ it.describe('pause', () => {
     })();
     const recorderPage = await recorderPageGetter();
 
-    const box1Promise = waitForTestLog<Box>(page, 'Highlight box for test: ');
+    const box1Promise = waitForTestLog<BoundingBox>(page, 'Highlight box for test: ');
     await recorderPage.getByText('Locator', { exact: true }).click();
     await recorderPage.locator('.tabbed-pane .CodeMirror').click();
     await recorderPage.keyboard.type('getByText(\'Submit\')');
@@ -407,7 +408,7 @@ it.describe('pause', () => {
       })();
       const recorderPage = await recorderPageGetter();
 
-      const box1Promise = waitForTestLog<Box>(page, 'Highlight box for test: ');
+      const box1Promise = waitForTestLog<BoundingBox>(page, 'Highlight box for test: ');
       await recorderPage.getByText('Locator', { exact: true }).click();
       await recorderPage.locator('.tabbed-pane .CodeMirror').click();
       await recorderPage.keyboard.type('GetByText("Submit")');
@@ -472,7 +473,7 @@ it.describe('pause', () => {
     })();
     const recorderPage = await recorderPageGetter();
 
-    const box1Promise = waitForTestLog<Box>(page, 'Highlight box for test: ');
+    const box1Promise = waitForTestLog<BoundingBox>(page, 'Highlight box for test: ');
     await recorderPage.click('[title="Step over (F10)"]');
     const box2 = roundBox((await page.locator('#target').boundingBox())!);
     const box1 = roundBox(await box1Promise);
@@ -513,14 +514,4 @@ async function sanitizeLog(recorderPage: Page): Promise<string[]> {
     })));
   }
   return results;
-}
-
-type Box = { x: number, y: number, width: number, height: number };
-function roundBox(box: Box): Box {
-  return {
-    x: Math.round(box.x * 1000),
-    y: Math.round(box.y * 1000),
-    width: Math.round(box.width * 1000),
-    height: Math.round(box.height * 1000),
-  };
 }

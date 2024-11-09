@@ -61,7 +61,7 @@ This project incorporates components from the projects listed below. The origina
       }
     }
 
-    const packages = await checkDir('node_modules/codemirror-shadow-1');
+    const packages = await checkDir('node_modules/codemirror');
     for (const [key, value] of Object.entries(packages)) {
       if (value.licenseText)
         allPackages[key] = value;

@@ -29,7 +29,6 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import { toggleTheme } from '@web/theme';
 import { copy } from '@web/uiUtils';
 import yaml from 'yaml';
-import type { YAMLError } from 'yaml';
 import { parseAriaKey } from '@isomorphic/ariaSnapshot';
 import type { AriaKeyError, ParsedYaml } from '@isomorphic/ariaSnapshot';
 
@@ -199,7 +198,7 @@ export const Recorder: React.FC<RecorderProps> = ({
           {
             id: 'aria',
             title: 'Aria snapshot',
-            render: () => <CodeMirrorWrapper text={ariaSnapshot || ''} language={'yaml'} readOnly={false} onChange={onAriaEditorChange} highlight={ariaSnapshotErrors} wrapLines={true} />
+            render: () => <CodeMirrorWrapper text={ariaSnapshot || ''} language={'yaml'} readOnly={false} onChange={onAriaEditorChange} highlight={ariaSnapshotErrors} wrapLines={false} />
           },
         ]}
         selectedTab={selectedTab}
@@ -211,32 +210,31 @@ export const Recorder: React.FC<RecorderProps> = ({
 
 function parseAriaSnapshot(ariaSnapshot: string): { fragment?: ParsedYaml, errors: SourceHighlight[] } {
   const lineCounter = new yaml.LineCounter();
-  let yamlDoc: yaml.Document;
-  try {
-    yamlDoc = yaml.parseDocument(ariaSnapshot, {
-      keepSourceTokens: true,
-      lineCounter,
-    });
-  } catch (e) {
-    const error = e as YAMLError;
-    const pos = error.linePos?.[0];
-    return {
-      errors: [{
-        line: pos?.line || 0,
-        type: 'error',
-        message: error.message,
-      }],
-    };
-  }
+  const yamlDoc = yaml.parseDocument(ariaSnapshot, {
+    keepSourceTokens: true,
+    lineCounter,
+    prettyErrors: false,
+  });
 
   const errors: SourceHighlight[] = [];
+  for (const error of yamlDoc.errors) {
+    errors.push({
+      line: lineCounter.linePos(error.pos[0]).line,
+      type: 'error',
+      message: error.message,
+    });
+  }
+
+  if (yamlDoc.errors.length)
+    return { errors };
+
   const handleKey = (key: yaml.Scalar<string>) => {
     try {
       parseAriaKey(key.value);
     } catch (e) {
       const keyError = e as AriaKeyError;
       errors.push({
-        message: keyError.message,
+        message: keyError.shortMessage,
         line: lineCounter.linePos(key.srcToken!.offset + keyError.pos).line,
         type: 'error',
       });

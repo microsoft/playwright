@@ -15,17 +15,17 @@
 */
 
 // @ts-ignore
-import codemirror from 'codemirror-shadow-1';
+import codemirror from 'codemirror';
 import type codemirrorType from 'codemirror';
-import 'codemirror-shadow-1/lib/codemirror.css';
-import 'codemirror-shadow-1/mode/css/css';
-import 'codemirror-shadow-1/mode/htmlmixed/htmlmixed';
-import 'codemirror-shadow-1/mode/javascript/javascript';
-import 'codemirror-shadow-1/mode/python/python';
-import 'codemirror-shadow-1/mode/clike/clike';
-import 'codemirror-shadow-1/mode/markdown/markdown';
-import 'codemirror-shadow-1/addon/mode/simple';
-import 'codemirror-shadow-1/mode/yaml/yaml';
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/mode/css/css';
+import 'codemirror/mode/htmlmixed/htmlmixed';
+import 'codemirror/mode/javascript/javascript';
+import 'codemirror/mode/python/python';
+import 'codemirror/mode/clike/clike';
+import 'codemirror/mode/markdown/markdown';
+import 'codemirror/addon/mode/simple';
+import 'codemirror/mode/yaml/yaml';
 
 export type CodeMirror = typeof codemirrorType;
 export default codemirror;
