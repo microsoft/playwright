@@ -22,7 +22,8 @@ import { useMeasure, kWebLinkRe } from '../uiUtils';
 
 export type SourceHighlight = {
   line: number;
-  type: 'running' | 'paused' | 'error';
+  column?: number;
+  type: 'running' | 'paused' | 'error' | 'subtle-error';
   message?: string;
 };
 
@@ -64,7 +65,12 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
 }) => {
   const [measure, codemirrorElement] = useMeasure<HTMLDivElement>();
   const [modulePromise] = React.useState<Promise<CodeMirror>>(import('./codeMirrorModule').then(m => m.default));
-  const codemirrorRef = React.useRef<{ cm: CodeMirror.Editor, highlight?: SourceHighlight[], widgets?: CodeMirror.LineWidget[] } | null>(null);
+  const codemirrorRef = React.useRef<{
+    cm: CodeMirror.Editor,
+    highlight?: SourceHighlight[],
+    widgets?: CodeMirror.LineWidget[],
+    markers?: CodeMirror.TextMarker[],
+  } | null>(null);
   const [codemirror, setCodemirror] = React.useState<CodeMirror.Editor>();
 
   React.useEffect(() => {
@@ -115,13 +121,8 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       return;
 
     let valueChanged = false;
-    // CodeMirror has a bug that renders cursor poorly on a last line.
-    let normalizedText = text;
-    if (!readOnly && !wrapLines && !normalizedText.endsWith('\n'))
-      normalizedText = normalizedText + '\n';
-
-    if (codemirror.getValue() !== normalizedText) {
-      codemirror.setValue(normalizedText);
+    if (codemirror.getValue() !== text) {
+      codemirror.setValue(text);
       valueChanged = true;
       if (focusOnChange) {
         codemirror.execCommand('selectAll');
@@ -139,26 +140,36 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       // Error widgets.
       for (const w of codemirrorRef.current!.widgets || [])
         codemirror.removeLineWidget(w);
+      for (const m of codemirrorRef.current!.markers || [])
+        m.clear();
       const widgets: CodeMirror.LineWidget[] = [];
+      const markers: CodeMirror.TextMarker[] = [];
       for (const h of highlight || []) {
-        if (h.type !== 'error')
+        if (h.type !== 'subtle-error' && h.type !== 'error')
           continue;
 
         const line = codemirrorRef.current?.cm.getLine(h.line - 1);
         if (line) {
-          const underlineWidgetElement = document.createElement('div');
-          underlineWidgetElement.className = 'source-line-error-underline';
-          underlineWidgetElement.innerHTML = '&nbsp;'.repeat(line.length || 1);
-          widgets.push(codemirror.addLineWidget(h.line, underlineWidgetElement, { above: true, coverGutter: false }));
+          const attributes: Record<string, string> = {};
+          attributes['title'] = h.message || '';
+          markers.push(codemirror.markText(
+              { line: h.line - 1, ch: 0 },
+              { line: h.line - 1, ch: h.column || line.length },
+              { className: 'source-line-error-underline', attributes }));
         }
 
-        const errorWidgetElement = document.createElement('div');
-        errorWidgetElement.innerHTML = ansi2html(h.message || '');
-        errorWidgetElement.className = 'source-line-error-widget';
-        widgets.push(codemirror.addLineWidget(h.line, errorWidgetElement, { above: true, coverGutter: false }));
+        if (h.type === 'error') {
+          const errorWidgetElement = document.createElement('div');
+          errorWidgetElement.innerHTML = ansi2html(h.message || '');
+          errorWidgetElement.className = 'source-line-error-widget';
+          widgets.push(codemirror.addLineWidget(h.line, errorWidgetElement, { above: true, coverGutter: false }));
+        }
       }
+
+      // Error markers.
       codemirrorRef.current!.highlight = highlight;
       codemirrorRef.current!.widgets = widgets;
+      codemirrorRef.current!.markers = markers;
     }
 
     // Line-less locations have line = 0, but they mean to reveal the file.
@@ -175,7 +186,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       if (changeListener)
         codemirror.off('change', changeListener);
     };
-  }, [codemirror, text, highlight, revealLine, focusOnChange, onChange, readOnly]);
+  }, [codemirror, text, highlight, revealLine, focusOnChange, onChange]);
 
   return <div data-testid={dataTestId} className='cm-wrapper' ref={codemirrorElement} onClick={onCodeMirrorClick}></div>;
 };

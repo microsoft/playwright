@@ -163,12 +163,6 @@ body.dark-mode .CodeMirror span.cm-type {
   /* Intentionally empty. */
 }
 
-.CodeMirror .source-line-error-underline {
-  text-decoration: underline wavy var(--vscode-errorForeground);
-  position: relative;
-  top: -12px;
-}
-
 .CodeMirror .source-line-error-widget {
   background-color: var(--vscode-inputValidation-errorBackground);
   white-space: pre-wrap;
@@ -180,4 +174,10 @@ body.dark-mode .CodeMirror span.cm-type {
   color: var(--vscode-textLink-foreground);
   text-decoration: underline;
   cursor: pointer;
+}
+
+.CodeMirror .source-line-error-underline {
+  text-decoration: underline;
+  text-decoration-color: var(--vscode-errorForeground);
+  text-decoration-style: wavy;
 }

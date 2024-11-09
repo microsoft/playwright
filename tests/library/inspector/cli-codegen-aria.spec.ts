@@ -95,7 +95,6 @@ test.describe(() => {
     `);
 
     await recorder.recorderPage.locator('.tab-aria .CodeMirror').click();
-    await recorder.recorderPage.keyboard.press('ArrowLeft');
     for (let i = 0; i < '"Submit"'.length; i++)
       await recorder.recorderPage.keyboard.press('Backspace');
 
@@ -140,10 +139,8 @@ test.describe(() => {
     `);
 
     await recorder.recorderPage.locator('.tab-aria .CodeMirror').click();
-    await recorder.recorderPage.keyboard.press('ArrowLeft');
     await recorder.recorderPage.keyboard.press('Backspace');
-    await expect(recorder.recorderPage.locator('.tab-aria .CodeMirror')).toMatchAriaSnapshot(`
-      - text: '- button "Submit Unterminated string'
-    `);
+    // 3 highlighted tokens.
+    await expect(recorder.recorderPage.locator('.source-line-error-underline')).toHaveCount(3);
   });
 });
