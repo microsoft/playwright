@@ -154,7 +154,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     return fetch(event.request);
   }
 
-  const snapshotUrl = unwrapPopoutUrl(client!.url);
+  const snapshotUrl = unwrapPopoutUrl(client.url);
   const traceUrl = new URL(snapshotUrl).searchParams.get('trace')!;
   const { snapshotServer } = loadedTraces.get(traceUrl) || {};
   if (!snapshotServer)
