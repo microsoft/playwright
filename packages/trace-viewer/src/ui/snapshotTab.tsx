@@ -328,6 +328,7 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
 }
 
 const isUnderTest = new URLSearchParams(window.location.search).has('isUnderTest');
+const serverParam = new URLSearchParams(window.location.search).get('server');
 
 export function extendSnapshot(snapshot: Snapshot): SnapshotUrls {
   const params = new URLSearchParams();
@@ -346,6 +347,7 @@ export function extendSnapshot(snapshot: Snapshot): SnapshotUrls {
 
   const popoutParams = new URLSearchParams();
   popoutParams.set('r', snapshotUrl);
+  popoutParams.set('server', serverParam ?? '');
   popoutParams.set('trace', context(snapshot.action).traceUrl);
   if (snapshot.point) {
     popoutParams.set('pointX', String(snapshot.point.x));
