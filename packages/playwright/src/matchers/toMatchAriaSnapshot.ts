@@ -79,7 +79,7 @@ export async function toMatchAriaSnapshot(
   if (notFound) {
     return {
       pass: this.isNot,
-      message: () => messagePrefix + `Expected: ${this.utils.printExpected(expected)}\nReceived: ${EXPECTED_COLOR('not found')}` + callLogText(log),
+      message: () => messagePrefix + `Expected: ${this.utils.printExpected(expected)}\nReceived: ${EXPECTED_COLOR('<element not found>')}` + callLogText(log),
       name: 'toMatchAriaSnapshot',
       expected,
     };

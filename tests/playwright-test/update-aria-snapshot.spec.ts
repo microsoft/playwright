@@ -377,3 +377,22 @@ test('should generate baseline for input values', async ({ runInlineTest }, test
   const result2 = await runInlineTest({});
   expect(result2.exitCode).toBe(0);
 });
+
+test('should not update snapshots when locator did not match', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent('<h1>hello</h1>');
+        await expect(page.locator('div')).toMatchAriaSnapshot('- heading', { timeout: 3000 });
+      });
+    `,
+  }, { 'update-snapshots': true });
+
+  expect(result.exitCode).toBe(1);
+  const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
+  expect(fs.existsSync(patchPath)).toBe(false);
+  expect(result.output).not.toContain('New baselines created');
+  expect(result.output).toContain('Expected: "- heading"');
+  expect(result.output).toContain('Received: <element not found>');
+});

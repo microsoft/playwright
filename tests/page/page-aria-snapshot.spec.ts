@@ -479,16 +479,16 @@ it('should escape yaml text in text nodes', async ({ page }) => {
   `);
 });
 
-it.fixme('should handle long strings', async ({ page }) => {
+it('should handle long strings', async ({ page }) => {
+  const s = 'a'.repeat(10000);
   await page.setContent(`
     <a href='about:blank'>
-      <div role='region'>${'a'.repeat(100000)}</div>
+      <div role='region'>${s}</div>
     </a>
   `);
 
-  const trimmed = 'a'.repeat(1000);
   await checkAndMatchSnapshot(page.locator('body'), `
-    - link "${trimmed}":
-      - region: "${trimmed}"
+    - link:
+      - region: ${s}
   `);
 });

@@ -300,7 +300,8 @@ export function renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'r
     }
 
     let key = ariaNode.role;
-    if (ariaNode.name) {
+    // Yaml has a limit of 1024 characters per key, and we leave some space for role and attributes.
+    if (ariaNode.name && ariaNode.name.length <= 900) {
       const name = renderString(ariaNode.name);
       if (name) {
         const stringifiedName = name.startsWith('/') && name.endsWith('/') ? name : JSON.stringify(name);
