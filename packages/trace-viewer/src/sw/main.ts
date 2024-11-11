@@ -93,6 +93,14 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       return new Response(null, { status: 200 });
     }
 
+    let traceViewerServerBaseUrl = self.registration.scope;
+    if (client?.url) {
+      const clientUrl = new URL(client.url);
+      if (clientUrl.searchParams.has('server'))
+        traceViewerServerBaseUrl = clientUrl.searchParams.get('server')!;
+    }
+    const traceViewerServer = new TraceViewerServerBackend(traceViewerServerBaseUrl);
+
     const traceUrl = url.searchParams.get('trace');
 
     if (relativePath === '/contexts') {
