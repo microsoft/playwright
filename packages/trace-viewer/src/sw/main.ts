@@ -76,7 +76,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     return fetch(event.request);
 
   const request = event.request;
-  const client = await self.clients.get(event.clientId);
+  const client = await self.clients.get(event.clientId ?? event.resultingClientId);
 
   // When trace viewer is deployed over https, we will force upgrade
   // insecure http subresources to https. Otherwise, these will fail
@@ -96,6 +96,9 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     const traceUrl = url.searchParams.get('trace');
 
     if (relativePath.startsWith('/snapshot/')) {
+      // while there's no snapshot, the iframe keeps polling but isn't yet initialised.
+      // `event.resultingClientId` will contain an ID, but it won't yet be available in `self.clients`.
+      // so `client` will be undefined in that state.
       const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
       if (!snapshotServer)
         return new Response(null, { status: 404 });
@@ -103,13 +106,6 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       if (isDeployedAsHttps)
         response.headers.set('Content-Security-Policy', 'upgrade-insecure-requests');
       return response;
-    }
-
-    if (relativePath.startsWith('/closest-screenshot/')) {
-      const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
-      if (!snapshotServer)
-        return new Response(null, { status: 404 });
-      return snapshotServer.serveClosestScreenshot(relativePath, url.searchParams);
     }
 
     if (!client) {
@@ -142,6 +138,13 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       if (!snapshotServer)
         return new Response(null, { status: 404 });
       return snapshotServer.serveSnapshotInfo(relativePath, url.searchParams);
+    }
+
+    if (relativePath.startsWith('/closest-screenshot/')) {
+      const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
+      if (!snapshotServer)
+        return new Response(null, { status: 404 });
+      return snapshotServer.serveClosestScreenshot(relativePath, url.searchParams);
     }
 
     if (relativePath.startsWith('/sha1/')) {
