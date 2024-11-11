@@ -70,7 +70,7 @@ async function globalFetch(...args: Parameters<typeof globalThis.fetch>) {
         // pre 2.6.4
         headers.delete('x-msw-intention');
         // post 2.6.4
-        const accept = headers.get('accept')?.split(',').filter(h => !h.includes('msw/')).join(', ');
+        const accept = headers.get('accept')?.split(',').filter(h => !h.includes('msw/')).join(',');
         if (accept)
           headers.set('accept', accept);
         else
