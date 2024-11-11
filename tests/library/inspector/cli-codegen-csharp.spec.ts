@@ -170,13 +170,7 @@ await context.StorageStateAsync(new BrowserContextStorageStateOptions
 
 test('should work with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
-  const expectedResult = `
-var context = await browser.NewContextAsync(new BrowserNewContextOptions
-{
-    RecordHarMode = HarMode.Minimal,
-    RecordHarPath = ${JSON.stringify(harFileName)},
-    ServiceWorkers = ServiceWorkerPolicy.Block,
-});`;
+  const expectedResult = `await context.RouteFromHARAsync(${JSON.stringify(harFileName)});`;
   const cli = runCLI(['--target=csharp', `--save-har=${harFileName}`], {
     autoExitWhen: expectedResult,
   });
@@ -203,6 +197,17 @@ for (const testFramework of ['nunit', 'mstest'] as const) {
         };
     }
 `);
+  });
+
+  test(`should work with --save-har in ${testFramework}`, async ({ runCLI }, testInfo) => {
+    const harFileName = testInfo.outputPath('har.har');
+    const expectedResult = `await context.RouteFromHARAsync("${harFileName}");`;
+    const cli = runCLI([`--target=csharp-${testFramework}`, `--save-har=${harFileName}`], {
+      autoExitWhen: expectedResult,
+    });
+    await cli.waitForCleanExit();
+    const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
+    expect(json.log.creator.name).toBe('Playwright');
   });
 }
 

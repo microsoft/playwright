@@ -146,7 +146,7 @@ asyncio.run(main())
 
 test('should work with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
-  const expectedResult = `context = await browser.new_context(record_har_mode="minimal", record_har_path=${JSON.stringify(harFileName)}, service_workers="block")`;
+  const expectedResult = `await page.route_from_har(${JSON.stringify(harFileName)})`;
   const cli = runCLI(['--target=python-async', `--save-har=${harFileName}`], {
     autoExitWhen: expectedResult,
   });

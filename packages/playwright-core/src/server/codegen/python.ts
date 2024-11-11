@@ -151,6 +151,8 @@ from playwright.sync_api import Page, expect
 ${fixture}
 
 def test_example(page: Page) -> None {`);
+      if (options.contextOptions.recordHar)
+        formatter.add(`    page.route_from_har(${quote(options.contextOptions.recordHar.path)})`);
     } else if (this._isAsync) {
       formatter.add(`
 import asyncio
@@ -161,6 +163,8 @@ from playwright.async_api import Playwright, async_playwright, expect
 async def run(playwright: Playwright) -> None {
     browser = await playwright.${options.browserName}.launch(${formatOptions(options.launchOptions, false)})
     context = await browser.new_context(${formatContextOptions(options.contextOptions, options.deviceName)})`);
+      if (options.contextOptions.recordHar)
+        formatter.add(`    await page.route_from_har(${quote(options.contextOptions.recordHar.path)})`);
     } else {
       formatter.add(`
 import re
@@ -170,6 +174,8 @@ from playwright.sync_api import Playwright, sync_playwright, expect
 def run(playwright: Playwright) -> None {
     browser = playwright.${options.browserName}.launch(${formatOptions(options.launchOptions, false)})
     context = browser.new_context(${formatContextOptions(options.contextOptions, options.deviceName)})`);
+      if (options.contextOptions.recordHar)
+        formatter.add(`    context.route_from_har(${quote(options.contextOptions.recordHar.path)})`);
     }
     return formatter.format();
   }
@@ -232,24 +238,13 @@ function formatOptions(value: any, hasArguments: boolean, asDict?: boolean): str
   }).join(', ');
 }
 
-function convertContextOptions(options: BrowserContextOptions): any {
-  const result: any = { ...options };
-  if (options.recordHar) {
-    result['record_har_path'] = options.recordHar.path;
-    result['record_har_content'] = options.recordHar.content;
-    result['record_har_mode'] = options.recordHar.mode;
-    result['record_har_omit_content'] = options.recordHar.omitContent;
-    result['record_har_url_filter'] = options.recordHar.urlFilter;
-    delete result.recordHar;
-  }
-  return result;
-}
-
 function formatContextOptions(options: BrowserContextOptions, deviceName: string | undefined, asDict?: boolean): string {
+  // recordHAR is replaced with routeFromHAR in the generated code.
+  options = { ...options, recordHar: undefined };
   const device = deviceName && deviceDescriptors[deviceName];
   if (!device)
-    return formatOptions(convertContextOptions(options), false, asDict);
-  return `**playwright.devices[${quote(deviceName!)}]` + formatOptions(convertContextOptions(sanitizeDeviceOptions(device, options)), true, asDict);
+    return formatOptions(options, false, asDict);
+  return `**playwright.devices[${quote(deviceName!)}]` + formatOptions(sanitizeDeviceOptions(device, options), true, asDict);
 }
 
 class PythonFormatter {
