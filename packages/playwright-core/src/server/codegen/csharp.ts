@@ -265,9 +265,10 @@ function toPascal(value: string): string {
   return value[0].toUpperCase() + value.slice(1);
 }
 
-function formatContextOptions(options: BrowserContextOptions, deviceName: string | undefined): string {
+function formatContextOptions(contextOptions: BrowserContextOptions, deviceName: string | undefined): string {
+  let options = { ...contextOptions };
   // recordHAR is replaced with routeFromHAR in the generated code.
-  options = { ...options, recordHar: undefined };
+  delete options.recordHar;
   const device = deviceName && deviceDescriptors[deviceName];
   if (!device) {
     if (!Object.entries(options).length)
