@@ -20,7 +20,7 @@ import { TreeItem } from './treeItem';
 import { msToString } from './utils';
 import { AutoChip } from './chip';
 import { traceImage } from './images';
-import { AttachmentLink, generateTraceUrl } from './links';
+import { AttachmentLink, generateTraceUrl, Link } from './links';
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
@@ -91,7 +91,7 @@ export const TestResultView: React.FC<{
     </AutoChip>}
 
     {diffs.map((diff, index) =>
-      <AutoChip key={`diff-${index}`} dataTestId='test-results-image-diff' header={`Image mismatch: ${diff.name}`} revealId={`diff-${index}`}>
+      <AutoChip key={`diff-${index}`} dataTestId='test-results-image-diff' header={`Image mismatch: ${diff.name}`} anchorId={`diff-${index}`}>
         <ImageDiffView diff={diff}/>
       </AutoChip>
     )}
@@ -107,7 +107,7 @@ export const TestResultView: React.FC<{
       })}
     </AutoChip>}
 
-    {!!traces.length && <AutoChip header='Traces'>
+    {!!traces.length && <AutoChip header='Traces' anchorId='traces'>
       {<div>
         <a href={generateTraceUrl(traces)}>
           <img className='screenshot' src={traceImage} style={{ width: 192, height: 117, marginLeft: 20 }} />
@@ -116,7 +116,7 @@ export const TestResultView: React.FC<{
       </div>}
     </AutoChip>}
 
-    {!!videos.length && <AutoChip header='Videos' revealId='videos'>
+    {!!videos.length && <AutoChip header='Videos' anchorId='videos'>
       {videos.map((a, i) => <div key={`video-${i}`}>
         <video controls>
           <source src={a.path} type={a.contentType}/>

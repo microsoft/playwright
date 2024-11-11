@@ -114,19 +114,20 @@ export function generateTraceUrl(traces: TestAttachment[]) {
 
 const kMissingContentType = 'x-playwright/missing';
 
-
-export function useRevealed(revealId?: string) {
-  const searchParams = React.useContext(SearchParamsContext);
-  if (revealId === undefined)
-    return false;
-  return searchParams.get('reveal') === revealId;
+export function useAnchor(id: string | undefined, onChange: (isRevealed: boolean) => void) {
+  React.useEffect(() => {
+    const listener = () => {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      onChange(params.get('anchor') === id);
+    };
+    window.addEventListener('popstate', listener);
+    return () => window.removeEventListener('popstate', listener);
+  }, [id, onChange]);
 }
 
-export function Reveal({ revealId, onChange, children }: React.PropsWithChildren<{ revealId?: string, onChange?(isRevealed: boolean, ref: HTMLDivElement): void }>) {
-  const isRevealed = useRevealed(revealId);
-
+export function Anchor({ id, onChange, children }: React.PropsWithChildren<{ id?: string, onChange?(isRevealed: boolean, ref: HTMLDivElement): void }>) {
   const ref = React.useRef<HTMLDivElement>(null);
-  React.useEffect(() => {
+  const onAnchorChange = React.useCallback((isRevealed: boolean) => {
     if (!ref.current)
       return;
 
@@ -135,8 +136,9 @@ export function Reveal({ revealId, onChange, children }: React.PropsWithChildren
       return;
 
     if (isRevealed)
-      ref.current?.scrollIntoView({ block: 'start', inline: 'start' });
-  }, [isRevealed, onChange]);
+      requestAnimationFrame(() => ref.current?.scrollIntoView({ block: 'start', inline: 'start' }));
+  }, [onChange]);
+  useAnchor(id, onAnchorChange);
 
   return <div ref={ref}>{children}</div>;
 }
