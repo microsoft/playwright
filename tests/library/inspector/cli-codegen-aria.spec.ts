@@ -64,6 +64,7 @@ test.describe(() => {
   test('should inspect aria snapshot', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
     await recorder.setContentAndWait(`<main><button>Submit</button></main>`);
+    await recorder.recorderPage.getByRole('button', { name: 'Record' }).click();
     await recorder.page.click('x-pw-tool-item.pick-locator');
     await recorder.page.hover('button');
     await recorder.trustedClick();
