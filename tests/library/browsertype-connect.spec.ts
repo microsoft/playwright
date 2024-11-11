@@ -176,7 +176,8 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       const browser = await connect(remoteServer.wsEndpoint());
       const browserContext = await browser.newContext();
       const page = await browserContext.newPage();
-      await page.pause();
+      // @ts-ignore
+      await page.pause({ __testHookKeepTestTimeout: true });
       await browser.close();
       (browserType as any)._defaultLaunchOptions.headless = headless;
     });

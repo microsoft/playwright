@@ -22,7 +22,8 @@ let scriptPromise: Promise<void>;
 
 it.beforeEach(async ({ page, recorderPageGetter }) => {
   scriptPromise = (async () => {
-    await page.pause();
+    // @ts-ignore
+    await page.pause({ __testHookKeepTestTimeout: true });
   })();
   await recorderPageGetter();
 });
