@@ -40,7 +40,7 @@ test('event should work', async ({ mount }) => {
 
 ## How to get started
 
-Adding Playwright Test to an existing project is easy. Below are the steps to enable Playwright Test for a React, Vue, Svelte or Solid project.
+Adding Playwright Test to an existing project is easy. Below are the steps to enable Playwright Test for a React, Vue or Svelte project.
 
 ### Step 1: Install Playwright Test for components for your respective framework
 
@@ -106,7 +106,6 @@ component is mounted using this script. It can be either a `.js`, `.ts`, `.jsx` 
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
     {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
@@ -163,20 +162,6 @@ import App from './App.svelte';
 test('should work', async ({ mount }) => {
   const component = await mount(App);
   await expect(component).toContainText('Learn Svelte');
-});
-```
-
-</TabItem>
-
-<TabItem value="solid">
-
-```js title="app.spec.tsx"
-import { test, expect } from '@playwright/experimental-ct-solid';
-import App from './App';
-
-test('should work', async ({ mount }) => {
-  const component = await mount(<App />);
-  await expect(component).toContainText('Learn Solid');
 });
 ```
 
@@ -309,7 +294,6 @@ Provide props to a component when mounted.
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
     {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
@@ -319,17 +303,6 @@ Provide props to a component when mounted.
 
 ```js title="component.spec.tsx"
 import { test } from '@playwright/experimental-ct-react';
-
-test('props', async ({ mount }) => {
-  const component = await mount(<Component msg="greetings" />);
-});
-```
-
-</TabItem>
-<TabItem value="solid">
-
-```js title="component.spec.tsx"
-import { test } from '@playwright/experimental-ct-solid';
 
 test('props', async ({ mount }) => {
   const component = await mount(<Component msg="greetings" />);
@@ -379,7 +352,6 @@ Provide callbacks/events to a component when mounted.
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
     {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
@@ -389,17 +361,6 @@ Provide callbacks/events to a component when mounted.
 
 ```js title="component.spec.tsx"
 import { test } from '@playwright/experimental-ct-react';
-
-test('callback', async ({ mount }) => {
-  const component = await mount(<Component onClick={() => {}} />);
-});
-```
-
-</TabItem>
-<TabItem value="solid">
-
-```js title="component.spec.tsx"
-import { test } from '@playwright/experimental-ct-solid';
 
 test('callback', async ({ mount }) => {
   const component = await mount(<Component onClick={() => {}} />);
@@ -449,7 +410,6 @@ Provide children/slots to a component when mounted.
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
     {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
@@ -459,17 +419,6 @@ Provide children/slots to a component when mounted.
 
 ```js title="component.spec.tsx"
 import { test } from '@playwright/experimental-ct-react';
-
-test('children', async ({ mount }) => {
-  const component = await mount(<Component>Child</Component>);
-});
-```
-
-</TabItem>
-<TabItem value="solid">
-
-```js title="component.spec.tsx"
-import { test } from '@playwright/experimental-ct-solid';
 
 test('children', async ({ mount }) => {
   const component = await mount(<Component>Child</Component>);
@@ -519,7 +468,6 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
     {label: 'Vue3', value: 'vue3'},
   ]
 }>
@@ -541,37 +489,6 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
 
   ```js title="src/pages/ProductsPage.spec.tsx"
   import { test, expect } from '@playwright/experimental-ct-react';
-  import type { HooksConfig } from '../playwright';
-  import { ProductsPage } from './pages/ProductsPage';
-
-  test('configure routing through hooks config', async ({ page, mount }) => {
-    const component = await mount<HooksConfig>(<ProductsPage />, {
-      hooksConfig: { enableRouting: true },
-    });
-    await expect(component.getByRole('link')).toHaveAttribute('href', '/products/42');
-  });
-  ```
-
-  </TabItem>
-
-  <TabItem value="solid">
-
-  ```js title="playwright/index.tsx"
-  import { beforeMount, afterMount } from '@playwright/experimental-ct-solid/hooks';
-  import { Router } from '@solidjs/router';
-
-  export type HooksConfig = {
-    enableRouting?: boolean;
-  }
-
-  beforeMount<HooksConfig>(async ({ App, hooksConfig }) => {
-    if (hooksConfig?.enableRouting)
-      return <Router><App /></Router>;
-  });
-  ```
-
-  ```js title="src/pages/ProductsPage.spec.tsx"
-  import { test, expect } from '@playwright/experimental-ct-solid';
   import type { HooksConfig } from '../playwright';
   import { ProductsPage } from './pages/ProductsPage';
 
@@ -626,7 +543,6 @@ Unmount the mounted component from the DOM. This is useful for testing the compo
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
     {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
@@ -636,18 +552,6 @@ Unmount the mounted component from the DOM. This is useful for testing the compo
 
 ```js title="component.spec.tsx"
 import { test } from '@playwright/experimental-ct-react';
-
-test('unmount', async ({ mount }) => {
-  const component = await mount(<Component/>);
-  await component.unmount();
-});
-```
-
-</TabItem>
-<TabItem value="solid">
-
-```js title="component.spec.tsx"
-import { test } from '@playwright/experimental-ct-solid';
 
 test('unmount', async ({ mount }) => {
   const component = await mount(<Component/>);
@@ -700,7 +604,6 @@ Update props, slots/children, and/or events/callbacks of a mounted component. Th
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
     {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
@@ -710,20 +613,6 @@ Update props, slots/children, and/or events/callbacks of a mounted component. Th
 
 ```js title="component.spec.tsx"
 import { test } from '@playwright/experimental-ct-react';
-
-test('update', async ({ mount }) => {
-  const component = await mount(<Component/>);
-  await component.update(
-      <Component msg="greetings" onClick={() => {}}>Child</Component>
-  );
-});
-```
-
-</TabItem>
-<TabItem value="solid">
-
-```js title="component.spec.tsx"
-import { test } from '@playwright/experimental-ct-solid';
 
 test('update', async ({ mount }) => {
   const component = await mount(<Component/>);
@@ -820,7 +709,7 @@ test('example test', async ({ mount, router }) => {
 
 ## Frequently asked questions
 
-### What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue,solid}`?
+### What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue}`?
 
 ```js
 test('…', async ({ mount, page, context }) => {
@@ -828,13 +717,12 @@ test('…', async ({ mount, page, context }) => {
 });
 ```
 
-`@playwright/experimental-ct-{react,svelte,vue,solid}` wrap `@playwright/test` to provide an additional built-in component-testing specific fixture called `mount`:
+`@playwright/experimental-ct-{react,svelte,vue}` wrap `@playwright/test` to provide an additional built-in component-testing specific fixture called `mount`:
 
 <Tabs
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Solid', value: 'solid'},
     {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
@@ -889,22 +777,6 @@ test('should work', async ({ mount }) => {
       msg: 'Greetings',
     },
   });
-  await expect(component).toContainText('Greetings');
-});
-```
-
-</TabItem>
-
-<TabItem value="solid">
-
-```js
-import { test, expect } from '@playwright/experimental-ct-solid';
-import HelloWorld from './HelloWorld';
-
-test.use({ viewport: { width: 500, height: 500 } });
-
-test('should work', async ({ mount }) => {
-  const component = await mount(<HelloWorld msg="greetings" />);
   await expect(component).toContainText('Greetings');
 });
 ```
