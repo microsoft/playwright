@@ -474,9 +474,9 @@ Google Chrome and Microsoft Edge respect enterprise policies, which include limi
 
 ### Chromium Headless Shell
 
-Playwright runs a regular Chromium build in headed and headless modes. Note that headless mode has changed in Playwright version 1.49 when Chromium entirely switched to the [new headless implementation](https://developer.chrome.com/docs/chromium/headless).
+Playwright runs a regular Chromium build in headed and headless modes. Note that headless mode has changed in Playwright version 1.49, see #x for details.
 
-Playwright also provides [`'chromium-headless-shell'` channel](https://developer.chrome.com/blog/chrome-headless-shell) that differs from the regular Chromium browser in features, performance and behavior. If you would like to optimize your CI performance and can tolerate different behavior in some cases, install and use this channel similarly to [Google Chrome & Microsoft Edge](#google-chrome--microsoft-edge).
+Playwright also provides [`'chromium-headless-shell'` channel](https://developer.chrome.com/blog/chrome-headless-shell) that differs from the regular Chromium browser in features, performance and behavior. If you would like to optimize your CI performance and can tolerate different behavior in some cases, install and use this channel similarly to [Google Chrome and Microsoft Edge channels](#google-chrome--microsoft-edge).
 
 ### Firefox
 

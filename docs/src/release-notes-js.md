@@ -8,53 +8,16 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.49
 
-### New Chromium Headless
+### Breaking: New Chromium Headless
 
-Prior to this release, Playwright was running the old established implementation of Chromium headless. However, Chromium had entirely switched to the [new headless mode](https://developer.chrome.com/docs/chromium/headless) implementation, so Playwright had to switch as well.
+Playwright is switching to the new headless mode in Chromium. Please see #x for details.
 
-Most likely, this change should go unnoticed for you. However, the new headless implementation differs in a number of ways, for example when handling pdf documents, so please file an issue if you encounter a problem.
+Short summary:
+- Old headless mode is removed, Playwright switches to new headless mode.
+- You will have to update your test suite accordingly, for example with new screenshot expectations.
+- You can temporary opt-out by using `chromium-headless-shell` channel.
 
-### Chromium Headless Shell
-
-Playwright now also ships `chromium-headless-shell` channel that is a separate build that closely follows the old headless implementation. If you would like to keep the old behavior before you are ready to switch to the new headless, please fallback to this channel:
-
-1. First, install this channel prior to running tests. Make sure to list all browsers that you use.
-
-  ```bash
-  # running tests in all three browsers, headless and headed
-  npx playwright install chromium chromium-headless-shell firefox webkit
-
-  # running tests in all three browsers on CI, headless only
-  npx playwright install chromium-headless-shell firefox webkit
-  ```
-
-1. Update your config file to specify `'chromium-headless-shell'` channel.
-
-  ```js
-  import { defineConfig, devices } from '@playwright/test';
-
-  export default defineConfig({
-    projects: [
-      {
-        name: 'chromium',
-        use: {
-          ...devices['Desktop Chrome'],
-          channel: 'chromium-headless-shell',
-        },
-      },
-      {
-        name: 'firefox',
-        use: { ...devices['Desktop Firefox'] },
-      },
-      {
-        name: 'webkit',
-        use: { ...devices['Desktop Safari'] },
-      },
-    ],
-  });
-  ```
-
-1. Note that `chromium-headless-shell` channel only supports headless operations. If you try to run tests in headed mode, it will automatically fallback to regular `chromium`.
+Please read #x for in-depth explanation.
 
 ### Browser Versions
 
