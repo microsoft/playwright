@@ -77,6 +77,8 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 
   const request = event.request;
   const client = await self.clients.get(event.clientId);
+  if (!client)
+    return new Response(null, { status: 404 });
 
   // When trace viewer is deployed over https, we will force upgrade
   // insecure http subresources to https. Otherwise, these will fail
