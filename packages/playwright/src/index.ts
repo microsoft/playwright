@@ -287,8 +287,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         const step = userData.step;
         step?.complete({ error });
       },
-      onWillPause: () => {
-        currentTestInfo()?._setDebugMode();
+      onWillPause: ({ keepTestTimeout }) => {
+        if (!keepTestTimeout)
+          currentTestInfo()?._setDebugMode();
       },
       runAfterCreateBrowserContext: async (context: BrowserContext) => {
         await artifactsRecorder?.didCreateBrowserContext(context);
