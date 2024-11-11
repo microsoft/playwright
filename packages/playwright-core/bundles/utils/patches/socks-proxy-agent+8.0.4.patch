@@ -1,0 +1,21 @@
+diff --git a/node_modules/socks-proxy-agent/dist/index.js b/node_modules/socks-proxy-agent/dist/index.js
+index a9b5db2..968f0e1 100644
+--- a/node_modules/socks-proxy-agent/dist/index.js
++++ b/node_modules/socks-proxy-agent/dist/index.js
+@@ -32,6 +32,7 @@ const agent_base_1 = require("agent-base");
+ const debug_1 = __importDefault(require("debug"));
+ const dns = __importStar(require("dns"));
+ const tls = __importStar(require("tls"));
++const net = __importStar(require("net"));
+ const url_1 = require("url");
+ const debug = (0, debug_1.default)('socks-proxy-agent');
+ function parseSocksURL(url) {
+@@ -153,7 +154,7 @@ class SocksProxyAgent extends agent_base_1.Agent {
+             const tlsSocket = tls.connect({
+                 ...omit(opts, 'host', 'path', 'port'),
+                 socket,
+-                servername,
++                servername: (!servername || net.isIP(servername)) ? undefined : servername,
+             });
+             tlsSocket.once('error', (error) => {
+                 debug('Socket TLS error', error.message);

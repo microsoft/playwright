@@ -6,7 +6,8 @@
     "esbuild": "node build.js",
     "build": "npm run esbuild -- --minify",
     "watch": "npm run esbuild -- --watch --sourcemap",
-    "generate-license": "node ../../../../utils/generate_third_party_notice.js"
+    "generate-license": "node ../../../../utils/generate_third_party_notice.js",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "colors": "1.4.0",
@@ -40,6 +41,7 @@
     "@types/proper-lockfile": "^4.1.2",
     "@types/proxy-from-env": "^1.0.1",
     "@types/stack-utils": "^2.0.1",
-    "@types/ws": "8.2.2"
+    "@types/ws": "8.2.2",
+    "patch-package": "^8.0.0"
   }
 }

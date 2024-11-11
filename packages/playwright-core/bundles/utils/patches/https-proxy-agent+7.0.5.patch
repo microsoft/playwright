@@ -1,0 +1,22 @@
+diff --git a/node_modules/https-proxy-agent/dist/index.js b/node_modules/https-proxy-agent/dist/index.js
+index 0c91722..4c420aa 100644
+--- a/node_modules/https-proxy-agent/dist/index.js
++++ b/node_modules/https-proxy-agent/dist/index.js
+@@ -85,7 +85,7 @@ class HttpsProxyAgent extends agent_base_1.Agent {
+             const servername = this.connectOpts.servername || this.connectOpts.host;
+             socket = tls.connect({
+                 ...this.connectOpts,
+-                servername,
++                servername: servername && net.isIP(servername) ? undefined : servername,
+             });
+         }
+         else {
+@@ -126,7 +126,7 @@ class HttpsProxyAgent extends agent_base_1.Agent {
+                 return tls.connect({
+                     ...omit(opts, 'host', 'path', 'port'),
+                     socket,
+-                    servername,
++                    servername: net.isIP(servername) ? undefined : servername,
+                 });
+             }
+             return socket;
