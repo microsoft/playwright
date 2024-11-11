@@ -27,7 +27,9 @@ import traverseFunction from '@babel/traverse';
 export const traverse = traverseFunction;
 
 function babelTransformOptions(isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): TransformOptions {
-  const plugins = [];
+  const plugins = [
+    [require('@babel/plugin-syntax-import-attributes'), { deprecatedAssertSyntax: true }],
+  ];
 
   if (isTypeScript) {
     plugins.push(
@@ -45,7 +47,6 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
         [require('@babel/plugin-syntax-async-generators')],
         [require('@babel/plugin-syntax-object-rest-spread')],
         [require('@babel/plugin-transform-export-namespace-from')],
-        [require('@babel/plugin-syntax-import-attributes'), { deprecatedAssertSyntax: true }],
         [
           // From https://github.com/G-Rath/babel-plugin-replace-ts-export-assignment/blob/8dfdca32c8aa428574b0cae341444fc5822f2dc6/src/index.ts
           (

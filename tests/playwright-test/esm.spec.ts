@@ -45,9 +45,15 @@ test('should support import attributes', async ({ runInlineTest }) => {
     'package.json': JSON.stringify({ type: 'module', foo: 'bar' }),
     'a.test.ts': `
       import config from './package.json' with { type: 'json' };
+      import configFooFromUtils from './utils.js'
       console.log('imported value (test): ' + config.foo);
       import { test, expect } from '@playwright/test';
+      expect(configFooFromUtils.foo).toBe('bar');
       test('pass', async () => {});
+    `,
+    'utils.js': `
+      import config from './package.json' with { type: 'json' };
+      export default config;
     `
   });
   expect(result.exitCode).toBe(0);
