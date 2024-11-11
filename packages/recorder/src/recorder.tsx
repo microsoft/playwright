@@ -220,7 +220,7 @@ function parseAriaSnapshot(ariaSnapshot: string): { fragment?: ParsedYaml, error
   for (const error of yamlDoc.errors) {
     errors.push({
       line: lineCounter.linePos(error.pos[0]).line,
-      type: 'error',
+      type: 'subtle-error',
       message: error.message,
     });
   }
@@ -233,10 +233,12 @@ function parseAriaSnapshot(ariaSnapshot: string): { fragment?: ParsedYaml, error
       parseAriaKey(key.value);
     } catch (e) {
       const keyError = e as AriaKeyError;
+      const linePos = lineCounter.linePos(key.srcToken!.offset + keyError.pos);
       errors.push({
         message: keyError.shortMessage,
-        line: lineCounter.linePos(key.srcToken!.offset + keyError.pos).line,
-        type: 'error',
+        line: linePos.line,
+        column: linePos.col,
+        type: 'subtle-error',
       });
     }
   };
