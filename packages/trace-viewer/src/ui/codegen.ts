@@ -93,6 +93,8 @@ class JSCodeGen implements APIRequestCodegen {
 
   private stringLiteral(v: string): string {
     v = v.replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
+    if (v.includes('\n') || v.includes('\r') || v.includes('\t'))
+      return '`' + v + '`';
     return `'${v}'`;
   }
 }
@@ -170,8 +172,7 @@ class PythonCodeGen implements APIRequestCodegen {
   }
 
   private stringLiteral(v: string): string {
-    v = v.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    return `"${v}"`;
+    return JSON.stringify(v);
   }
 }
 
@@ -254,9 +255,7 @@ class CSharpCodeGen implements APIRequestCodegen {
   }
 
   private stringLiteral(v: string): string {
-    // escape douvle quotes and backslashes
-    v = v.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    return `"${v}"`;
+    return JSON.stringify(v);
   }
 }
 
@@ -286,9 +285,7 @@ class JavaCodeGen implements APIRequestCodegen {
   }
 
   private stringLiteral(v: string): string {
-    // escape douvle quotes and backslashes
-    v = v.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    return `"${v}"`;
+    return JSON.stringify(v);
   }
 }
 
