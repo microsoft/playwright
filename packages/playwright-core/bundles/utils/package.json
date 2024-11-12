@@ -12,7 +12,7 @@
     "colors": "1.4.0",
     "commander": "8.3.0",
     "debug": "^4.3.4",
-    "diff-match-patch": "^1.0.5",
+    "diff": "^7.0.0",
     "dotenv": "^16.4.5",
     "graceful-fs": "4.2.10",
     "https-proxy-agent": "7.0.5",
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
-    "@types/diff-match-patch": "^1.0.36",
+    "@types/diff": "^6.0.0",
     "@types/mime": "^2.0.3",
     "@types/minimatch": "^3.0.5",
     "@types/pngjs": "^6.0.1",

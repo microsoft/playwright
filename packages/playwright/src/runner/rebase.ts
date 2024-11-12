@@ -19,8 +19,7 @@ import fs from 'fs';
 import type { T } from '../transform/babelBundle';
 import { types, traverse, babelParse } from '../transform/babelBundle';
 import { MultiMap } from 'playwright-core/lib/utils';
-import { generateUnifiedDiff } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { colors, diff } from 'playwright-core/lib/utilsBundle';
 import type { FullConfigInternal } from '../common/config';
 import { filterProjects } from './projectUtils';
 import type { InternalReporter } from '../reporters/internalReporter';
@@ -95,7 +94,7 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
 
     const relativeName = path.relative(process.cwd(), fileName);
     files.push(relativeName);
-    patches.push(generateUnifiedDiff(source, result, relativeName.replace(/\\/g, '/')));
+    patches.push(createPatch(relativeName, source, result));
   }
 
   const patchFile = path.join(project.project.outputDir, 'rebaselines.patch');
@@ -104,4 +103,15 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
 
   const fileList = files.map(file => '  ' + colors.dim(file)).join('\n');
   reporter.onStdErr(`\nNew baselines created for:\n\n${fileList}\n\n  ` + colors.cyan('git apply ' + path.relative(process.cwd(), patchFile)) + '\n');
+}
+
+function createPatch(fileName: string, before: string, after: string) {
+  const file = fileName.replace(/\\/g, '/');
+  const text = diff.createPatch(file, before, after, undefined, undefined, { context: 3 });
+  return [
+    'diff --git a/' + file + ' b/' + file,
+    '--- a/' + file,
+    '+++ b/' + file,
+    ...text.split('\n').slice(4)
+  ].join('\n');
 }
