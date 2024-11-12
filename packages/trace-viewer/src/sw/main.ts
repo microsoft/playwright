@@ -69,6 +69,22 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
   return traceModel;
 }
 
+const traceViewerServers = new Map<string, TraceViewerServerBackend>();
+
+function getTraceViewerServer(client?: any): TraceViewerServerBackend {
+  let traceViewerServerBaseUrl = self.registration.scope;
+  if (client?.url) {
+    const clientUrl = new URL(client.url);
+    if (clientUrl.searchParams.has('server'))
+      traceViewerServerBaseUrl = clientUrl.searchParams.get('server')!;
+  }
+
+  if (!traceViewerServers.has(traceViewerServerBaseUrl))
+    traceViewerServers.set(traceViewerServerBaseUrl, new TraceViewerServerBackend(traceViewerServerBaseUrl));
+
+  return traceViewerServers.get(traceViewerServerBaseUrl)!;
+}
+
 // @ts-ignore
 async function doFetch(event: FetchEvent): Promise<Response> {
   // In order to make Accessibility Insights for Web work.
@@ -77,6 +93,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 
   const request = event.request;
   const client = await self.clients.get(event.clientId);
+  const traceViewerServer = getTraceViewerServer(client);
 
   // When trace viewer is deployed over https, we will force upgrade
   // insecure http subresources to https. Otherwise, these will fail
@@ -92,14 +109,6 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       await gc();
       return new Response(null, { status: 200 });
     }
-
-    let traceViewerServerBaseUrl = self.registration.scope;
-    if (client?.url) {
-      const clientUrl = new URL(client.url);
-      if (clientUrl.searchParams.has('server'))
-        traceViewerServerBaseUrl = clientUrl.searchParams.get('server')!;
-    }
-    const traceViewerServer = new TraceViewerServerBackend(traceViewerServerBaseUrl);
 
     const traceUrl = url.searchParams.get('trace');
 
