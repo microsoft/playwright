@@ -122,6 +122,9 @@ export const Recorder: React.FC<RecorderProps> = ({
     if (!errors.length)
       window.dispatch({ event: 'highlightRequested', params: { ariaSnapshot: fragment } });
   }, [mode]);
+  const isRecording = mode === 'recording' || mode === 'recording-inspecting';
+  const locatorPlaceholder = isRecording ? '// Unavailable while recording' : (locator ? undefined : '// Pick element or type locator');
+  const ariaPlaceholder = isRecording ? '# Unavailable while recording' : (ariaSnapshot ? undefined : '# Pick element or type snapshot');
 
   return <div className='recorder'>
     <Toolbar>
@@ -188,7 +191,7 @@ export const Recorder: React.FC<RecorderProps> = ({
           {
             id: 'locator',
             title: 'Locator',
-            render: () => <CodeMirrorWrapper text={locator} language={source.language} readOnly={false} focusOnChange={true} onChange={onEditorChange} wrapLines={true} />
+            render: () => <CodeMirrorWrapper text={locatorPlaceholder || locator} language={source.language} readOnly={isRecording} focusOnChange={true} onChange={onEditorChange} wrapLines={true} />
           },
           {
             id: 'log',
@@ -198,7 +201,7 @@ export const Recorder: React.FC<RecorderProps> = ({
           {
             id: 'aria',
             title: 'Aria snapshot',
-            render: () => <CodeMirrorWrapper text={ariaSnapshot || ''} language={'yaml'} readOnly={false} onChange={onAriaEditorChange} highlight={ariaSnapshotErrors} wrapLines={false} />
+            render: () => <CodeMirrorWrapper text={ariaPlaceholder || ariaSnapshot || ''} language={'yaml'} readOnly={isRecording} onChange={onAriaEditorChange} highlight={ariaSnapshotErrors} wrapLines={true} />
           },
         ]}
         selectedTab={selectedTab}
