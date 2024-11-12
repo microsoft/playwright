@@ -114,18 +114,22 @@ export function generateTraceUrl(traces: TestAttachment[]) {
 
 const kMissingContentType = 'x-playwright/missing';
 
-export function useAnchor(id: string | undefined, onChange: (isRevealed: boolean) => void) {
+type AnchorID = string | ((id: string | null) => boolean) | undefined;
+
+export function useAnchor(id: AnchorID, onChange: (isRevealed: boolean) => void) {
   React.useEffect(() => {
     const listener = () => {
       const params = new URLSearchParams(window.location.hash.slice(1));
-      onChange(params.get('anchor') === id);
+      const anchor = params.get('anchor');
+      const isRevealed = typeof id === 'function' ? id(anchor) : anchor === id;
+      onChange(isRevealed);
     };
     window.addEventListener('popstate', listener);
     return () => window.removeEventListener('popstate', listener);
   }, [id, onChange]);
 }
 
-export function Anchor({ id, onChange, children }: React.PropsWithChildren<{ id?: string, onChange?(isRevealed: boolean, ref: HTMLDivElement): void }>) {
+export function Anchor({ id, onChange, children }: React.PropsWithChildren<{ id: AnchorID, onChange?(isRevealed: boolean, ref: HTMLDivElement): void }>) {
   const ref = React.useRef<HTMLDivElement>(null);
   const onAnchorChange = React.useCallback((isRevealed: boolean) => {
     if (!ref.current)
