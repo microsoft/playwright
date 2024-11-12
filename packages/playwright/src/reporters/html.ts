@@ -365,16 +365,16 @@ class HtmlBuilder {
     return { ok, singleTestId };
   }
 
-  private async _writeReportData(path: string) {
-    fs.appendFileSync(path, '<script>\nwindow.playwrightReportBase64 = "data:application/zip;base64,');
+  private async _writeReportData(filePath: string) {
+    fs.appendFileSync(filePath, '<script>\nwindow.playwrightReportBase64 = "data:application/zip;base64,');
     await new Promise(f => {
       this._dataZipFile!.end(undefined, () => {
         this._dataZipFile!.outputStream
             .pipe(new Base64Encoder())
-            .pipe(fs.createWriteStream(path, { flags: 'a' })).on('close', f);
+            .pipe(fs.createWriteStream(filePath, { flags: 'a' })).on('close', f);
       });
     });
-    fs.appendFileSync(path, '";</script>');
+    fs.appendFileSync(filePath, '";</script>');
   }
 
   private _addDataFile(fileName: string, data: any) {
