@@ -28,7 +28,7 @@ export class ZipTraceModelBackend implements TraceModelBackend {
   private _entriesPromise: Promise<Map<string, zip.Entry>>;
   private _traceURL: string;
 
-  constructor(traceURL: string, server: TraceViewerServerBackend, progress: Progress) {
+  constructor(traceURL: string, server: TraceViewerServer, progress: Progress) {
     this._traceURL = traceURL;
     zipjs.configure({ baseURL: self.location.href } as any);
     this._zipReader = new zipjs.ZipReader(
@@ -84,9 +84,9 @@ export class ZipTraceModelBackend implements TraceModelBackend {
 export class FetchTraceModelBackend implements TraceModelBackend {
   private _entriesPromise: Promise<Map<string, string>>;
   private _path: string;
-  private _server: TraceViewerServerBackend;
+  private _server: TraceViewerServer;
 
-  constructor(path: string, server: TraceViewerServerBackend) {
+  constructor(path: string, server: TraceViewerServer) {
     this._path  = path;
     this._server = server;
     this._entriesPromise = server.readFile(path).then(async response => {
@@ -137,7 +137,7 @@ export class FetchTraceModelBackend implements TraceModelBackend {
   }
 }
 
-function formatUrl(trace: string, server: TraceViewerServerBackend) {
+function formatUrl(trace: string, server: TraceViewerServer) {
   let url = trace.startsWith('http') || trace.startsWith('blob') ? trace : server.getFileURL(trace).toString();
   // Dropbox does not support cors.
   if (url.startsWith('https://www.dropbox.com/'))
@@ -145,7 +145,7 @@ function formatUrl(trace: string, server: TraceViewerServerBackend) {
   return url;
 }
 
-export class TraceViewerServerBackend {
+export class TraceViewerServer {
   constructor(private readonly baseUrl: string) {}
 
   getFileURL(path: string): URL {

@@ -18,7 +18,7 @@ import { splitProgress } from './progress';
 import { unwrapPopoutUrl } from './snapshotRenderer';
 import { SnapshotServer } from './snapshotServer';
 import { TraceModel } from './traceModel';
-import { FetchTraceModelBackend, TraceViewerServerBackend, ZipTraceModelBackend } from './traceModelBackends';
+import { FetchTraceModelBackend, TraceViewerServer, ZipTraceModelBackend } from './traceModelBackends';
 import { TraceVersionError } from './traceModernizer';
 
 // @ts-ignore
@@ -38,7 +38,7 @@ const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: S
 
 const clientIdToTraceUrls = new Map<string, { limit: number | undefined, traceUrls: Set<string> }>();
 
-async function loadTrace(traceUrl: string, traceFileName: string | null, clientId: string, traceViewerServer: TraceViewerServerBackend, limit: number | undefined, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
+async function loadTrace(traceUrl: string, traceFileName: string | null, clientId: string, traceViewerServer: TraceViewerServer, limit: number | undefined, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
   await gc();
   let data = clientIdToTraceUrls.get(clientId);
   if (!data) {
@@ -69,9 +69,9 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
   return traceModel;
 }
 
-const traceViewerServers = new Map<string, TraceViewerServerBackend>();
+const traceViewerServers = new Map<string, TraceViewerServer>();
 
-function getTraceViewerServer(client?: any): TraceViewerServerBackend {
+function getTraceViewerServer(client?: any): TraceViewerServer {
   let traceViewerServerBaseUrl = self.registration.scope;
   if (client?.url) {
     const clientUrl = new URL(client.url);
@@ -80,7 +80,7 @@ function getTraceViewerServer(client?: any): TraceViewerServerBackend {
   }
 
   if (!traceViewerServers.has(traceViewerServerBaseUrl))
-    traceViewerServers.set(traceViewerServerBaseUrl, new TraceViewerServerBackend(traceViewerServerBaseUrl));
+    traceViewerServers.set(traceViewerServerBaseUrl, new TraceViewerServer(traceViewerServerBaseUrl));
 
   return traceViewerServers.get(traceViewerServerBaseUrl)!;
 }
