@@ -316,6 +316,13 @@ if (watchMode) {
     cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
     concurrent: true,
   });
+  steps.push({
+    command: 'npx',
+    args: ['vite', '--port', '44224'],
+    shell: true,
+    cwd: path.join(__dirname, '..', '..', 'packages', 'html-reporter'),
+    concurrent: true,
+  });
 }
 
 // Generate injected.

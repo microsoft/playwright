@@ -310,6 +310,33 @@ class HtmlBuilder {
 
     this._addDataFile('report.json', htmlReport);
 
+    let singleTestId: string | undefined;
+    if (htmlReport.stats.total === 1) {
+      const testFile: TestFile  = data.values().next().value.testFile;
+      singleTestId = testFile.tests[0].testId;
+    }
+
+    if (process.env.PW_HMR === '1') {
+      const redirectFile = path.join(this._reportFolder, 'index.html');
+
+      await this._writeReportData(redirectFile);
+
+      async function redirect() {
+        const hmrURL = new URL('http://localhost:44224'); // dev server, port is harcoded in build.js
+        const popup = window.open(hmrURL);
+        window.addEventListener('message', evt => {
+          if (evt.source === popup && evt.data === 'ready') {
+            popup!.postMessage((window as any).playwrightReportBase64, hmrURL.origin);
+            window.close();
+          }
+        }, { once: true });
+      }
+
+      fs.appendFileSync(redirectFile, `<script>(${redirect.toString()})()</script>`);
+
+      return { ok, singleTestId };
+    }
+
     // Copy app.
     const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite', 'htmlReport');
     await copyFileAndMakeWritable(path.join(appFolder, 'index.html'), path.join(this._reportFolder, 'index.html'));
@@ -332,25 +359,22 @@ class HtmlBuilder {
       }
     }
 
-    // Inline report data.
-    const indexFile = path.join(this._reportFolder, 'index.html');
-    fs.appendFileSync(indexFile, '<script>\nwindow.playwrightReportBase64 = "data:application/zip;base64,');
+    await this._writeReportData(path.join(this._reportFolder, 'index.html'));
+
+
+    return { ok, singleTestId };
+  }
+
+  private async _writeReportData(filePath: string) {
+    fs.appendFileSync(filePath, '<script>\nwindow.playwrightReportBase64 = "data:application/zip;base64,');
     await new Promise(f => {
       this._dataZipFile!.end(undefined, () => {
         this._dataZipFile!.outputStream
             .pipe(new Base64Encoder())
-            .pipe(fs.createWriteStream(indexFile, { flags: 'a' })).on('close', f);
+            .pipe(fs.createWriteStream(filePath, { flags: 'a' })).on('close', f);
       });
     });
-    fs.appendFileSync(indexFile, '";</script>');
-
-    let singleTestId: string | undefined;
-    if (htmlReport.stats.total === 1) {
-      const testFile: TestFile  = data.values().next().value.testFile;
-      singleTestId = testFile.tests[0].testId;
-    }
-
-    return { ok, singleTestId };
+    fs.appendFileSync(filePath, '";</script>');
   }
 
   private _addDataFile(fileName: string, data: any) {
