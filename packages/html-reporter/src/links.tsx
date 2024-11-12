@@ -116,33 +116,27 @@ const kMissingContentType = 'x-playwright/missing';
 
 type AnchorID = string | ((id: string | null) => boolean) | undefined;
 
-export function useAnchor(id: AnchorID, onChange: (isRevealed: boolean) => void) {
+function useAnchor(id: AnchorID, onReveal: () => void) {
   React.useEffect(() => {
     const listener = () => {
       const params = new URLSearchParams(window.location.hash.slice(1));
       const anchor = params.get('anchor');
       const isRevealed = typeof id === 'function' ? id(anchor) : anchor === id;
-      onChange(isRevealed);
+      if (isRevealed)
+        onReveal();
     };
     window.addEventListener('popstate', listener);
     return () => window.removeEventListener('popstate', listener);
-  }, [id, onChange]);
+  }, [id, onReveal]);
 }
 
-export function Anchor({ id, onChange, children }: React.PropsWithChildren<{ id: AnchorID, onChange?(isRevealed: boolean, ref: HTMLDivElement): void }>) {
+export function Anchor({ id, onReveal, children }: React.PropsWithChildren<{ id: AnchorID, onReveal?(): void }>) {
   const ref = React.useRef<HTMLDivElement>(null);
-  const onAnchorChange = React.useCallback((isRevealed: boolean) => {
-    if (!ref.current)
-      return;
-
-    const preventDefault = onChange?.(isRevealed, ref.current);
-    if (preventDefault)
-      return;
-
-    if (isRevealed)
-      requestAnimationFrame(() => ref.current?.scrollIntoView({ block: 'start', inline: 'start' }));
-  }, [onChange]);
-  useAnchor(id, onAnchorChange);
+  const onAnchorReveal = React.useCallback(() => {
+    onReveal?.();
+    requestAnimationFrame(() => ref.current?.scrollIntoView({ block: 'start', inline: 'start' }));
+  }, [onReveal]);
+  useAnchor(id, onAnchorReveal);
 
   return <div ref={ref}>{children}</div>;
 }

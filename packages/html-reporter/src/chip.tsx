@@ -56,13 +56,8 @@ export const AutoChip: React.FC<{
   anchorId?: string,
 }> = ({ header, initialExpanded, noInsets, children, dataTestId, anchorId }) => {
   const [expanded, setExpanded] = React.useState(initialExpanded ?? true);
-  const onChangeReveal = React.useCallback((isRevealed: boolean) => {
-    if (isRevealed)
-      setExpanded(true);
-  }, [setExpanded]);
-  return <Anchor
-    id={anchorId}
-    onChange={onChangeReveal}>
+  const onReveal = React.useCallback(() => setExpanded(true), []);
+  return <Anchor id={anchorId} onReveal={onReveal}>
     <Chip
       header={header}
       expanded={expanded}
