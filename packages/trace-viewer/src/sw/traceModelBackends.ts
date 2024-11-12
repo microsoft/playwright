@@ -147,11 +147,13 @@ function formatUrl(trace: string, server: TraceViewerServerBackend) {
 
 export class TraceViewerServerBackend {
   constructor(private readonly baseUrl: string) {}
+
   getFileURL(path: string): URL {
     const url = new URL('trace/file', this.baseUrl);
     url.searchParams.set('path', path);
     return url;
   }
+
   async readFile(path: string): Promise<Response | undefined> {
     const response = await fetch(this.getFileURL(path));
     if (response.status === 404)
