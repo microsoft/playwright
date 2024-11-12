@@ -201,7 +201,7 @@ for (const testFramework of ['nunit', 'mstest'] as const) {
 
   test(`should work with --save-har in ${testFramework}`, async ({ runCLI }, testInfo) => {
     const harFileName = testInfo.outputPath('har.har');
-    const expectedResult = `await context.RouteFromHARAsync("${harFileName}");`;
+    const expectedResult = `await context.RouteFromHARAsync(${JSON.stringify(harFileName)});`;
     const cli = runCLI([`--target=csharp-${testFramework}`, `--save-har=${harFileName}`], {
       autoExitWhen: expectedResult,
     });
