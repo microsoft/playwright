@@ -21,7 +21,7 @@ import { wrapFunctionWithLocation } from '../transform/transform';
 import type { FixturesWithLocation } from './config';
 import type { Fixtures, TestType, TestDetails } from '../../types/test';
 import type { Location } from '../../types/testReporter';
-import { getPackageManagerExecCommand, zones } from 'playwright-core/lib/utils';
+import { getPackageManagerExecCommand, ManualPromise, zones } from 'playwright-core/lib/utils';
 
 const testTypeSymbol = Symbol('testType');
 
@@ -256,19 +256,25 @@ export class TestTypeImpl {
     suite._use.push({ fixtures, location });
   }
 
-  async _step<T>(title: string, body: () => Promise<T>, options: {box?: boolean, location?: Location } = {}): Promise<T> {
+  async _step<T>(title: string, body: () => Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
     const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
     return await zones.run('stepZone', step, async () => {
+      const timeoutPromise = new ManualPromise<T>();
+      const timer = options.timeout
+        ? setTimeout(() => timeoutPromise.reject(new StepTimeoutError(`Step timeout ${options.timeout}ms exceeded.`)), options.timeout)
+        : undefined;
       try {
-        const result = await body();
+        const result = await Promise.race([body(), timeoutPromise]);
         step.complete({});
         return result;
       } catch (error) {
         step.complete({ error });
         throw error;
+      } finally {
+        clearTimeout(timer);
       }
     });
   }
@@ -301,6 +307,8 @@ function validateTestDetails(details: TestDetails) {
   }
   return { annotations, tags };
 }
+
+class StepTimeoutError extends Error {}
 
 export const rootTestType = new TestTypeImpl([]);
 
