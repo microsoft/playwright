@@ -37,13 +37,13 @@ const PACKAGE_PATH = path.join(__dirname, '..', '..', '..');
 const BIN_PATH = path.join(__dirname, '..', '..', '..', 'bin');
 
 const PLAYWRIGHT_CDN_MIRRORS = [
-  'https://playwright.azureedge.net/dbazure/download/playwright', // ESRP
-  'https://playwright.download.prss.microsoft.com/dbazure/download/playwright', // ESRP Fallback
+  'https://playwright.azureedge.net/dbazure/download/playwright', // ESRP CDN
+  'https://playwright.download.prss.microsoft.com/dbazure/download/playwright', // Directly hit ESRP CDN
 
-  // Old CDNs, to be removed.
+  // Old endpoints which hit the Storage Bucket directly:
   'https://playwright.azureedge.net',
-  'https://playwright-akamai.azureedge.net',
-  'https://playwright-verizon.azureedge.net',
+  'https://playwright-akamai.azureedge.net',  // Actually Edgio which will be retired Q4 2025.
+  'https://playwright-verizon.azureedge.net', // Actually Edgio which will be retired Q4 2025.
 ];
 
 if (process.env.PW_TEST_CDN_THAT_SHOULD_WORK) {
