@@ -1538,7 +1538,7 @@ test('canvas clipping with overlaying element', { annotation: [{ type: 'issue', 
   });
 
   const snapshot = await traceViewer.snapshotFrame('page.evaluate');
-  await expect(snapshot.owner()).toHaveScreenshot({ threshold: 0.05 });
+  await expect(snapshot.owner()).toHaveScreenshot({ maxDiffPixelRatio: 0.05 });
 });
 
 test('should show only one pointer with multilevel iframes', async ({ page, runAndTrace, server, browserName }) => {
