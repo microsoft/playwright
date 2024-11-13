@@ -257,14 +257,14 @@ export class TestTypeImpl {
     suite._use.push({ fixtures, location });
   }
 
-  async _step<T>(title: string, body: () => Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
+  async _step<T>(title: string, body: () => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
     const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
     return await zones.run('stepZone', step, async () => {
       try {
-        const result = await raceAgainstDeadline(body, options.timeout ? monotonicTime() + options.timeout : 0);
+        const result = await raceAgainstDeadline(async () => body(), options.timeout ? monotonicTime() + options.timeout : 0);
         if (result.timedOut)
           throw new errors.TimeoutError(`Step timeout ${options.timeout}ms exceeded.`);
         step.complete({});
