@@ -429,12 +429,12 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
 
             const boundingRect = canvas.getBoundingClientRect();
             const xStart = boundingRect.left / window.innerWidth;
-            const yStart = boundingRect.top / window.innerHeight;
+            const yStart = boundingRect.top / window.innerWidth;
             const xEnd = boundingRect.right / window.innerWidth;
-            const yEnd = boundingRect.bottom / window.innerHeight;
+            const yEnd = boundingRect.bottom / window.innerWidth;
 
-            const partiallyUncaptured = xEnd > 1 || yEnd > 1;
-            const fullyUncaptured = xStart > 1 || yStart > 1;
+            const partiallyUncaptured = boundingRect.right > window.innerWidth || boundingRect.bottom > window.innerHeight;
+            const fullyUncaptured = boundingRect.left > window.innerWidth || boundingRect.top > window.innerHeight;
             if (fullyUncaptured) {
               canvas.title = `Playwright couldn't capture canvas contents because it's located outside the viewport.`;
               continue;
@@ -442,7 +442,7 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
 
             drawCheckerboard(context, canvas);
 
-            context.drawImage(img, xStart * img.width, yStart * img.height, (xEnd - xStart) * img.width, (yEnd - yStart) * img.height, 0, 0, canvas.width, canvas.height);
+            context.drawImage(img, xStart * img.width, yStart * img.width, (xEnd - xStart) * img.width, (yEnd - yStart) * img.width, 0, 0, canvas.width, canvas.height);
             if (isUnderTest)
               // eslint-disable-next-line no-console
               console.log(`canvas drawn:`, JSON.stringify([xStart, yStart, xEnd, yEnd].map(v => Math.floor(v * 100))));

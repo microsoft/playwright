@@ -1,0 +1,42 @@
+<style>
+/* Style for the canvas */
+#myCanvas {
+    border: 2px solid #000000;
+}
+
+/* Style for the overlay div */
+#overlay {
+    position: absolute;
+    top: 150px;
+    /* Adjust position as needed */
+    left: 150px;
+    /* Adjust position as needed */
+    width: 150px;
+    height: 150px;
+    background-color: red;
+    opacity: 0.7;
+    /* Optional: make it semi-transparent */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+/* Container for positioning */
+.container {
+    position: relative;
+    width: 500px;
+    height: 500px;
+}
+</style>
+
+<div class="container">
+    <canvas id="myCanvas" width="500" height="500"></canvas>
+    <div id="overlay"><span>An HTML element</span></div>
+</div>
+
+<script>
+const ctx = document.getElementById('myCanvas').getContext('2d');
+ctx.fillStyle = 'blue';
+ctx.fillRect(50, 50, 200, 200);
+</script>
