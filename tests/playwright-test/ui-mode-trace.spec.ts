@@ -261,6 +261,38 @@ test('should not show caught errors in the errors tab', async ({ runUITest }, te
   await expect(page.locator('.tab-errors')).toHaveText('No errors');
 });
 
+test('should show errors with causes in the error tab', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        try {
+          try {
+            const error = new Error('my-message');
+            error.name = 'SpecialError';
+            throw error;
+          } catch (e) {
+            try {
+              throw new Error('inner-message', { cause: e });
+            } catch (e) {
+              throw new Error('outer-message', { cause: e });
+            }
+          }
+        } catch (e) {
+          throw new Error('wrapper-message', { cause: e });
+        }
+      });
+    `,
+  });
+
+  await page.getByText('pass').dblclick();
+  await page.getByText('Errors', { exact: true }).click();
+  await expect(page.locator('.tab-errors')).toContainText(`Error: wrapper-message
+[cause]: Error: outer-message
+[cause]: Error: inner-message
+[cause]: SpecialError: my-message`);
+});
+
 test('should reveal errors in the sourcetab', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.spec.ts': `
