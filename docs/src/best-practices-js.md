@@ -475,6 +475,21 @@ Setup CI/CD and run your tests frequently. The more often you run your tests the
 
 Use Linux when running your tests on CI as it is cheaper. Developers can use whatever environment when running locally but use linux on CI. Consider setting up [Sharding](./test-sharding.md) to make CI faster.
 
+
+#### Optimize browser downloads on CI
+
+Only install the browsers that you actually need, especially on CI. For example, if you're only testing with Chromium, install just Chromium.
+
+```bash title=".github/workflows/playwright.yml"
+# Instead of installing all browsers
+npx playwright install --with-deps
+
+# Install only Chromium
+npx playwright install chromium --with-deps
+```
+
+This saves both download time and disk space on your CI machines.
+
 ### Lint your tests
 
 We recommend TypeScript and linting with ESLint for your tests to catch errors early. Use [`@typescript-eslint/no-floating-promises`](https://typescript-eslint.io/rules/no-floating-promises/) [ESLint](https://eslint.org) rule to make sure there are no missing awaits before the asynchronous calls to the Playwright API. On your CI you can run `tsc --noEmit` to ensure that functions are called with the right signature.
