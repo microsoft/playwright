@@ -478,7 +478,7 @@ Use Linux when running your tests on CI as it is cheaper. Developers can use wha
 
 #### Optimize browser downloads on CI
 
-Only install the browsers that you actually need, especially on CI. For example, if you're only testing with Chromium, install just Chromium which might save you up to 50s.
+Only install the browsers that you actually need, especially on CI. For example, if you're only testing with Chromium, install just Chromium.
 
 ```bash title=".github/workflows/playwright.yml"
 # Instead of installing all browsers
