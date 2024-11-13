@@ -16,7 +16,6 @@
  */
 
 import path from 'path';
-import os from 'os';
 import { PNG, jpegjs } from '../../utilsBundle';
 import { splitErrorMessage } from '../../utils/stackTrace';
 import { assert, createGuid, debugAssert, headersArrayToObject } from '../../utils';

@@ -18,7 +18,7 @@
 import { test as it, expect } from './pageTest';
 import { chromiumVersionLessThan } from '../config/utils';
 
-it('should work @smoke', async ({ page, browserName, macVersion }) => {
+it('should work @smoke', async ({ page, browserName, isMac }) => {
   await page.setContent(`
   <head>
     <title>Accessibility Test</title>
@@ -74,7 +74,7 @@ it('should work @smoke', async ({ page, browserName, macVersion }) => {
       { role: 'textbox', name: 'Input with whitespace', value: '  ' },
       { role: 'textbox', name: '', value: 'value only' },
       { role: 'textbox', name: 'placeholder', value: 'and a value' },
-      { role: 'textbox', name: 'placeholder', value: 'and a value' },
+      { role: 'textbox', name: isMac ? 'placeholder' : 'This is a description!', value: 'and a value' },
     ]
   };
   expect(await page.accessibility.snapshot()).toEqual(golden);
