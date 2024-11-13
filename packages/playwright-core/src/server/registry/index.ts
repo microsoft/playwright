@@ -37,6 +37,10 @@ const PACKAGE_PATH = path.join(__dirname, '..', '..', '..');
 const BIN_PATH = path.join(__dirname, '..', '..', '..', 'bin');
 
 const PLAYWRIGHT_CDN_MIRRORS = [
+  'https://playwright.azureedge.net/dbazure/download/playwright', // ESRP
+  'https://playwright.download.prss.microsoft.com/dbazure/download/playwright', // ESRP Fallback
+
+  // Old CDNs, to be removed.
   'https://playwright.azureedge.net',
   'https://playwright-akamai.azureedge.net',
   'https://playwright-verizon.azureedge.net',
@@ -45,8 +49,11 @@ const PLAYWRIGHT_CDN_MIRRORS = [
 if (process.env.PW_TEST_CDN_THAT_SHOULD_WORK) {
   for (let i = 0; i < PLAYWRIGHT_CDN_MIRRORS.length; i++) {
     const cdn = PLAYWRIGHT_CDN_MIRRORS[i];
-    if (cdn !== process.env.PW_TEST_CDN_THAT_SHOULD_WORK)
-      PLAYWRIGHT_CDN_MIRRORS[i] = cdn + '.does-not-resolve.playwright.dev';
+    if (cdn !== process.env.PW_TEST_CDN_THAT_SHOULD_WORK) {
+      const parsedCDN = new URL(cdn);
+      parsedCDN.hostname = parsedCDN.hostname + '.does-not-resolve.playwright.dev';
+      PLAYWRIGHT_CDN_MIRRORS[i] = parsedCDN.toString();
+    }
   }
 }
 
