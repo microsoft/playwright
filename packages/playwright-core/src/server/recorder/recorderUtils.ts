@@ -72,11 +72,11 @@ export async function frameForAction(pageAliases: Map<Page, string>, actionInCon
 
 export function callMetadataForAction(pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext): { callMetadata: CallMetadata, mainFrame: Frame } {
   const mainFrame = mainFrameForAction(pageAliases, actionInContext);
-  const { method, params } = traceParamsForAction(actionInContext);
+  const { method, apiName, params } = traceParamsForAction(actionInContext);
 
   const callMetadata: CallMetadata = {
     id: `call@${createGuid()}`,
-    apiName: 'page.' + method,
+    apiName,
     objectId: mainFrame.guid,
     pageId: mainFrame._page.guid,
     frameId: mainFrame.guid,
