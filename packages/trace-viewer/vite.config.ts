@@ -41,6 +41,7 @@ export default defineConfig({
   },
   build: {
     outDir: path.resolve(__dirname, '../playwright-core/lib/vite/traceViewer'),
+    emptyOutDir: true,
     rollupOptions: {
       input: {
         index: path.resolve(__dirname, 'index.html'),
