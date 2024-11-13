@@ -60,7 +60,7 @@ Playwright now also ships `chromium-headless-shell` channel that is a separate b
 
 - Chromium 131.0.6778.24
 - Mozilla Firefox 132.0
-- WebKit 18.0
+- WebKit 18.2
 
 This version was also tested against the following stable channels:
 
