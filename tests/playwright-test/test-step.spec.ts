@@ -386,6 +386,58 @@ test('should not pass arguments and return value from step', async ({ runInlineT
   expect(result.output).toContain('v2 = 20');
 });
 
+test('step timeout option', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('step with timeout', async () => {
+        await test.step('my step', async () => {
+          await new Promise(() => {});
+        }, { timeout: 100 });
+      });
+    `
+  }, { reporter: '', workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Error: Step timeout 100ms exceeded.');
+});
+
+test('step timeout longer than test timeout', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({ timeout: 900 });
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('step with timeout', async () => {
+        await test.step('my step', async () => {
+          await new Promise(() => {});
+        }, { timeout: 5000 });
+      });
+    `
+  }, { reporter: '', workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('Test timeout of 900ms exceeded.');
+});
+
+test('step timeout is errors.TimeoutError', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect, errors } from '@playwright/test';
+      test('step timeout error type', async () => {
+        const e = await test.step('my step', async () => {
+          await new Promise(() => {});
+        }, { timeout: 100 }).catch(e => e);
+        expect(e).toBeInstanceOf(errors.TimeoutError);
+      });
+    `
+  }, { reporter: '', workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should mark step as failed when soft expect fails', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
