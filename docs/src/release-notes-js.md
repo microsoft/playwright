@@ -102,7 +102,7 @@ export default defineConfig({
 
 - Chromium 131.0.6778.33
 - Mozilla Firefox 132.0
-- WebKit 18.0
+- WebKit 18.2
 
 This version was also tested against the following stable channels:
 
