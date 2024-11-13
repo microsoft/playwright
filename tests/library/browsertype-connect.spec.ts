@@ -170,6 +170,8 @@ for (const kind of ['launchServer', 'run-server'] as const) {
     });
 
     test('should ignore page.pause when headed', async ({ connect, startRemoteServer, browserType, channel }) => {
+      test.skip(channel === 'chromium-headless-shell', 'shell is never headed');
+
       const headless = (browserType as any)._defaultLaunchOptions.headless;
       (browserType as any)._defaultLaunchOptions.headless = false;
       const remoteServer = await startRemoteServer(kind);

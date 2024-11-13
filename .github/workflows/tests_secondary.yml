@@ -274,7 +274,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest, macos-latest, windows-latest]
+        runs-on: [ubuntu-latest]
     runs-on: ${{ matrix.runs-on }}
     steps:
     - uses: actions/checkout@v4
@@ -288,3 +288,24 @@ jobs:
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: chromium-headless-shell
+
+  test_chromium_next:
+    name: Test chromium-next channel
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ./.github/actions/run-test
+      with:
+        browsers-to-install: chromium
+        command: npm run ctest
+        bot-name: "chromium-next-${{ matrix.runs-on }}"
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
+      env:
+        PWTEST_CHANNEL: chromium-next

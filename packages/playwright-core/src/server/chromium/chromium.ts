@@ -300,7 +300,7 @@ export class Chromium extends BrowserType {
       // See https://github.com/microsoft/playwright/issues/7362
       chromeArguments.push('--enable-use-zoom-for-dsf=false');
       // See https://bugs.chromium.org/p/chromium/issues/detail?id=1407025.
-      if (options.headless)
+      if (options.headless && (!options.channel || options.channel === 'chromium-headless-shell'))
         chromeArguments.push('--use-angle');
     }
 
@@ -349,9 +349,9 @@ export class Chromium extends BrowserType {
   }
 
   override getExecutableName(options: types.LaunchOptions): string {
-    if (options.channel === 'chromium-headless-shell' && !options.headless)
-      return 'chromium';
-    return options.channel || 'chromium';
+    if (options.channel)
+      return options.channel;
+    return options.headless ? 'chromium-headless-shell' : 'chromium';
   }
 }
 

@@ -119,8 +119,9 @@ it('clicking checkbox should activate it', async ({ page, browserName, headless,
 
 it('tab should cycle between single input and browser', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32339' }
-}, async ({ page, browserName, channel }) => {
-  it.fixme(browserName === 'chromium' && channel !== 'chromium-headless-shell', 'Chromium keeps input focused.');
+}, async ({ page, browserName, headless, channel }) => {
+  const isHeadlessShell = channel === 'chromium-headless-shell' || (!channel && headless);
+  it.fixme(browserName === 'chromium' && !isHeadlessShell, 'Chromium keeps input focused.');
   it.fixme(browserName !== 'chromium');
   await page.setContent(`<label for="input1">input1</label>
     <input id="input1">
@@ -146,8 +147,9 @@ it('tab should cycle between single input and browser', {
 
 it('tab should cycle between document elements and browser', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32339' }
-}, async ({ page, browserName, channel }) => {
-  it.fixme(browserName === 'chromium' && channel !== 'chromium-headless-shell', 'Chromium keeps last input focused.');
+}, async ({ page, browserName, headless, channel }) => {
+  const isHeadlessShell = channel === 'chromium-headless-shell' || (!channel && headless);
+  it.fixme(browserName === 'chromium' && !isHeadlessShell, 'Chromium keeps last input focused.');
   it.fixme(browserName !== 'chromium');
   await page.setContent(`
     <input id="input1">

@@ -338,6 +338,32 @@ dotnet test --settings:webkit.runsettings
 
 For Google Chrome, Microsoft Edge and other Chromium-based browsers, by default, Playwright uses open source Chromium builds. Since the Chromium project is ahead of the branded browsers, when the world is on Google Chrome N, Playwright already supports Chromium N+1 that will be released in Google Chrome and Microsoft Edge a few weeks later.
 
+Playwright ships a regular Chromium build for headed operations and a separate [Chromium headless shell](https://developer.chrome.com/blog/chrome-headless-shell) for headless mode. These two behave differently in some edge cases, but the majority of testing scenarios are not affected. Note this behavior has changed in Playwright version 1.49, see [issue #33566](https://github.com/microsoft/playwright/issues/33566) for details.
+
+#### Save on download size
+
+If you are only running tests in headless, for example on CI, you can avoid downloading a headed version of Chromium by specifying `chromium-headless-shell` during installation.
+
+```bash js
+# When only running tests headlessly
+npx playwright install chromium-headless-shell firefox webkit
+```
+
+```bash java
+# When only running tests headlessly
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install chromium-headless-shell firefox webkit"
+```
+
+```bash python
+# When only running tests headlessly
+playwright install chromium-headless-shell firefox webkit
+```
+
+```bash csharp
+# When only running tests headlessly
+pwsh bin/Debug/netX/playwright.ps1 install chromium-headless-shell firefox webkit
+```
+
 ### Google Chrome & Microsoft Edge
 
 While Playwright can download and use the recent Chromium build, it can operate against the branded Google Chrome and Microsoft Edge browsers available on the machine (note that Playwright doesn't install them by default). In particular, the current Playwright version will support Stable and Beta channels of these browsers.
@@ -346,6 +372,10 @@ Available channels are `chrome`, `msedge`, `chrome-beta`, `msedge-beta` or `msed
 
 :::warning
 Certain Enterprise Browser Policies may impact Playwright's ability to launch and control Google Chrome and Microsoft Edge. Running in an environment with browser policies is outside of the Playwright project's scope.
+:::
+
+:::warning
+Google Chrome and Microsoft Edge have switched to a [new headless mode](https://developer.chrome.com/docs/chromium/headless) implementation that is closer to a regular headed mode. This differs from [chromium headless shell](https://developer.chrome.com/blog/chrome-headless-shell) that is used in Playwright by default when running headless, so expect different behavior in some cases. See [issue #33566](https://github.com/microsoft/playwright/issues/33566) fore details.
 :::
 
 ```js
@@ -471,12 +501,6 @@ rarely the case), you will also want to use the official channel.
 ##### Enterprise policy
 
 Google Chrome and Microsoft Edge respect enterprise policies, which include limitations to the capabilities, network proxy, mandatory extensions that stand in the way of testing. So if you are part of the organization that uses such policies, it is easiest to use bundled Chromium for your local testing, you can still opt into stable channels on the bots that are typically free of such restrictions.
-
-### Chromium Headless Shell
-
-Playwright runs a regular Chromium build in headed and headless modes. Note that headless mode has changed in Playwright version 1.49 when Chromium entirely switched to the [new headless implementation](https://developer.chrome.com/docs/chromium/headless).
-
-Playwright also provides [`'chromium-headless-shell'` channel](https://developer.chrome.com/blog/chrome-headless-shell) that differs from the regular Chromium browser in features, performance and behavior. If you would like to optimize your CI performance and can tolerate different behavior in some cases, install and use this channel similarly to [Google Chrome & Microsoft Edge](#google-chrome--microsoft-edge).
 
 ### Firefox
 

@@ -8,57 +8,57 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.49
 
-### New Chromium Headless
+### Breaking: channels `chrome`, `msedge` and similar switch to new headless
 
-Prior to this release, Playwright was running the old established implementation of Chromium headless. However, Chromium had entirely switched to the [new headless mode](https://developer.chrome.com/docs/chromium/headless) implementation, so Playwright had to switch as well.
+Prior to this release, Playwright was running the old established implementation of [Chromium headless mode](https://developer.chrome.com/docs/chromium/headless). However, Chromium had entirely **switched to the new headless mode**, and **removed the old one**.
 
-Most likely, this change should go unnoticed for you. However, the new headless implementation differs in a number of ways, for example when handling pdf documents, so please file an issue if you encounter a problem.
+![Chromium Headless](https://github.com/user-attachments/assets/2829e86a-dfe2-4743-a6d4-2aa65beea890)
 
-### Chromium Headless Shell
+If you are using a browser channel, for example `'chrome'` or `'msedge'`, the headless mode switch **will affect you**. Most likely, you will have to update some of your tests and all of your screenshot expectations. See [issue #33566](https://github.com/microsoft/playwright/issues/33566) for more details.
 
-Playwright now also ships `chromium-headless-shell` channel that is a separate build that closely follows the old headless implementation. If you would like to keep the old behavior before you are ready to switch to the new headless, please fallback to this channel:
+#### Chromium headless shell
 
-1. First, install this channel prior to running tests. Make sure to list all browsers that you use.
+Starting with this release, Playwright downloads and runs two different browser builds - one is a regular headed chromium and the other is a chromium headless shell. This should be transparent to you, **no action is needed**. You can learn more in [issue #33566](https://github.com/microsoft/playwright/issues/33566).
 
-  ```bash
-  # running tests in all three browsers, headless and headed
-  npx playwright install chromium chromium-headless-shell firefox webkit
+If you are only running tests in headless, for example on CI, you can avoid downloading a headed version of Chromium by specifying `chromium-headless-shell` during installation.
 
-  # running tests in all three browsers on CI, headless only
-  npx playwright install chromium-headless-shell firefox webkit
-  ```
+```bash
+# only running tests headlessly
+npx playwright install chromium-headless-shell firefox webkit
+```
 
-1. Update your config file to specify `'chromium-headless-shell'` channel.
+Playwright will skip downloading headed chromium build, and will use `chromium-headless-shell` when running headless.
 
-  ```js
-  import { defineConfig, devices } from '@playwright/test';
+#### Opt-in to new headless
 
-  export default defineConfig({
-    projects: [
-      {
-        name: 'chromium',
-        use: {
-          ...devices['Desktop Chrome'],
-          channel: 'chromium-headless-shell',
-        },
+We encourage everyone to try and switch to the new headless by using the `chromium-next` channel.
+
+First, install this channel prior to running tests. Make sure to list all the browsers that you use.
+
+```bash
+npx playwright install chromium-next firefox webkit
+```
+
+Then update your config file to specify `'chromium-next'` channel.
+
+```js
+import { defineConfig, devices } from '@playwright/test';
+export default defineConfig({
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        channel: 'chromium-next',
       },
-      {
-        name: 'firefox',
-        use: { ...devices['Desktop Firefox'] },
-      },
-      {
-        name: 'webkit',
-        use: { ...devices['Desktop Safari'] },
-      },
-    ],
-  });
-  ```
-
-1. Note that `chromium-headless-shell` channel only supports headless operations. If you try to run tests in headed mode, it will automatically fallback to regular `chromium`.
+    },
+  ],
+});
+```
 
 ### Browser Versions
 
-- Chromium 131.0.6778.24
+- Chromium 131.0.6778.33
 - Mozilla Firefox 132.0
 - WebKit 18.0
 
