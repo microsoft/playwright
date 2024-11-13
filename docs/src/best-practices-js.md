@@ -476,7 +476,7 @@ Setup CI/CD and run your tests frequently. The more often you run your tests the
 Use Linux when running your tests on CI as it is cheaper. Developers can use whatever environment when running locally but use linux on CI. Consider setting up [Sharding](./test-sharding.md) to make CI faster.
 
 
-### Optimize browser downloads on CI
+#### Optimize browser downloads on CI
 
 Only install the browsers that you actually need, especially on CI. For example, if you're only testing with Chromium, install just Chromium which might save you up to 50s.
 
