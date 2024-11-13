@@ -295,6 +295,7 @@ if (watchMode) {
   // the build above outputs into `packages/trace-viewer/public`, where the `vite build` for `packages/trace-viewer` is supposed to pick it up.
   // there's a bug in `vite build --watch` though where the public dir is only copied over initially, but its not watched.
   // to work around this, we run a second watch build of the service worker into the final output.
+  // bug: https://github.com/vitejs/vite/issues/18655
   steps.push({
     command: 'npx',
     args: [
