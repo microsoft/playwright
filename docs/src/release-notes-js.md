@@ -58,7 +58,7 @@ If your `playwright.config.ts` doesn't contain any `channel: '...'` options, or 
 
 ### What do I need to do?
 
-After updating to Playwright 1.50, run your test suite. If it still passes, you're good to go. If not, you will probably need to update your snapshots, and adapt some of your test code aorund PDF viewers and extensions. See [issue #33566](https://github.com/microsoft/playwright/issues/33566) for more details.
+After updating to Playwright 1.50, run your test suite. If it still passes, you're good to go. If not, you will probably need to update your snapshots, and adapt some of your test code around PDF viewers and extensions. See [issue #33566](https://github.com/microsoft/playwright/issues/33566) for more details.
 
 ### Saving CI resources
 
