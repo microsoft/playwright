@@ -479,6 +479,14 @@ it('should escape yaml text in text nodes', async ({ page }) => {
   `);
 });
 
+it('should normalize accessible name', async ({ page }) => {
+  await page.setContent(`<button>foo&nbsp;bar\nbaz</button>`);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - button "foo bar baz"
+  `);
+});
+
 it('should handle long strings', async ({ page }) => {
   const s = 'a'.repeat(10000);
   await page.setContent(`

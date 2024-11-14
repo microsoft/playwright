@@ -16,6 +16,7 @@
 
 import type { AriaRole } from '@isomorphic/ariaSnapshot';
 import { closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
+import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 
 function hasExplicitAccessibleName(e: Element) {
   return e.hasAttribute('aria-label') || e.hasAttribute('aria-labelledby');
@@ -420,6 +421,8 @@ export function getElementAccessibleName(element: Element, includeHidden: boolea
       }));
     }
 
+    // Note: we always normalize whitespace in the accessible name to make it easier to work with.
+    accessibleName = normalizeWhiteSpace(accessibleName);
     cache?.set(element, accessibleName);
   }
   return accessibleName;
@@ -452,6 +455,8 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
       accessibleDescription = asFlatString(element.getAttribute('title') || '');
     }
 
+    // Note: we always normalize whitespace in the accessible description to make it easier to work with.
+    accessibleDescription = normalizeWhiteSpace(accessibleDescription);
     cache?.set(element, accessibleDescription);
   }
   return accessibleDescription;

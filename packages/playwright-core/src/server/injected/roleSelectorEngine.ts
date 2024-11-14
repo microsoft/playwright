@@ -147,8 +147,7 @@ function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: bo
         return;
     }
     if (options.name !== undefined) {
-      // Always normalize whitespace in the accessible name.
-      const accessibleName = normalizeWhiteSpace(getElementAccessibleName(element, !!options.includeHidden));
+      const accessibleName = getElementAccessibleName(element, !!options.includeHidden);
       if (typeof options.name === 'string')
         options.name = normalizeWhiteSpace(options.name);
       // internal:role assumes that [name="foo"i] also means substring.
