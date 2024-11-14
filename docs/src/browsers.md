@@ -338,30 +338,85 @@ dotnet test --settings:webkit.runsettings
 
 For Google Chrome, Microsoft Edge and other Chromium-based browsers, by default, Playwright uses open source Chromium builds. Since the Chromium project is ahead of the branded browsers, when the world is on Google Chrome N, Playwright already supports Chromium N+1 that will be released in Google Chrome and Microsoft Edge a few weeks later.
 
-Playwright ships a regular Chromium build for headed operations and a separate [Chromium headless shell](https://developer.chrome.com/blog/chrome-headless-shell) for headless mode. These two behave differently in some edge cases, but the majority of testing scenarios are not affected. Note this behavior has changed in Playwright version 1.49, see [issue #33566](https://github.com/microsoft/playwright/issues/33566) for details.
+Playwright ships a regular Chromium build for headed operations and a separate [chromium headless shell](https://developer.chrome.com/blog/chrome-headless-shell) for headless mode. See [issue #33566](https://github.com/microsoft/playwright/issues/33566) for details.
 
-#### Save on download size
+#### Optimize download size on CI
 
-If you are only running tests in headless, for example on CI, you can avoid downloading a headed version of Chromium by specifying `chromium-headless-shell` during installation.
+If you are only running tests in headless mode, for example on CI, you can avoid downloading a regular version of Chromium by passing `--only-shell` during installation.
 
 ```bash js
-# When only running tests headlessly
-npx playwright install chromium-headless-shell firefox webkit
+# only running tests headlessly
+npx playwright install --with-deps --only-shell
 ```
 
 ```bash java
-# When only running tests headlessly
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install chromium-headless-shell firefox webkit"
+# only running tests headlessly
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps --only-shell"
 ```
 
 ```bash python
-# When only running tests headlessly
-playwright install chromium-headless-shell firefox webkit
+# only running tests headlessly
+playwright install --with-deps --only-shell
 ```
 
 ```bash csharp
-# When only running tests headlessly
-pwsh bin/Debug/netX/playwright.ps1 install chromium-headless-shell firefox webkit
+# only running tests headlessly
+pwsh bin/Debug/netX/playwright.ps1 install --with-deps --only-shell
+```
+
+#### Opt-in to new headless mode
+
+You can opt into the new headless mode by using `'chromium'` channel. As [official Chrome documentation puts it](https://developer.chrome.com/blog/chrome-headless-shell):
+
+> New Headless on the other hand is the real Chrome browser, and is thus more authentic, reliable, and offers more features. This makes it more suitable for high-accuracy end-to-end web app testing or browser extension testing.
+
+See [issue #33566](https://github.com/microsoft/playwright/issues/33566) for details.
+
+```js
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'], channel: 'chromium' },
+    },
+  ],
+});
+```
+
+```java
+import com.microsoft.playwright.*;
+
+public class Example {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setChannel("chromium"));
+      Page page = browser.newPage();
+      // ...
+    }
+  }
+}
+```
+
+```bash python
+pytest test_login.py --browser-channel chromium
+```
+
+```xml csharp
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <LaunchOptions>
+      <Channel>chromium</Channel>
+    </LaunchOptions>
+  </Playwright>
+</RunSettings>
+```
+
+```bash csharp
+dotnet test -- Playwright.BrowserName=chromium Playwright.LaunchOptions.Channel=chromium
 ```
 
 ### Google Chrome & Microsoft Edge
