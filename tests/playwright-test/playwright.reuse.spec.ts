@@ -96,6 +96,14 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
       import { test, expect } from '@playwright/test';
       let lastContextGuid;
 
+      test.beforeAll(async () => {
+        console.log('fromBeforeAll');
+      });
+
+      test.afterAll(async () => {
+        console.log('fromAfterAll');
+      });
+
       test('one', async ({ context, page }) => {
         lastContextGuid = context._guid;
         await page.setContent('<button>Click</button>');
@@ -113,10 +121,13 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
+  expect(result.output).toContain('fromBeforeAll');
+  expect(result.output).toContain('fromAfterAll');
 
   const trace1 = await parseTrace(testInfo.outputPath('test-results', 'reuse-one', 'trace.zip'));
   expect(trace1.actionTree).toEqual([
     'Before Hooks',
+    '  beforeAll hook',
     '  fixture: browser',
     '    browserType.launch',
     '  fixture: context',
@@ -143,6 +154,7 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
     'After Hooks',
     '  fixture: page',
     '  fixture: context',
+    '  afterAll hook',
   ]);
   expect(trace2.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
 });
