@@ -429,8 +429,7 @@ for (const params of [
     height: 768,
   }
 ]) {
-  browserTest(`should produce screencast frames ${params.id}`, async ({ video, contextFactory, browserName, platform, headless, channel }, testInfo) => {
-    const isHeadlessShell = channel === 'chromium-headless-shell' || (!channel && headless);
+  browserTest(`should produce screencast frames ${params.id}`, async ({ video, contextFactory, browserName, platform, headless, isHeadlessShell }, testInfo) => {
     browserTest.skip(browserName === 'chromium' && video === 'on', 'Same screencast resolution conflicts');
     browserTest.fixme(browserName === 'chromium' && !isHeadlessShell, 'Chromium (but not headless-shell) screencast has a min width issue');
     browserTest.fixme(params.id === 'fit' && browserName === 'chromium' && platform === 'darwin', 'High DPI maxes image at 600x600');

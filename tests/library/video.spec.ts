@@ -473,9 +473,8 @@ it.describe('screencast', () => {
     expect(videoFiles.length).toBe(2);
   });
 
-  it('should scale frames down to the requested size ', async ({ browser, browserName, server, headless, channel }, testInfo) => {
+  it('should scale frames down to the requested size ', async ({ browser, browserName, server, headless, isHeadlessShell }, testInfo) => {
     it.fixme(!headless, 'Fails on headed');
-    const isHeadlessShell = channel === 'chromium-headless-shell' || (!channel && headless);
     it.fixme(browserName === 'chromium' && !isHeadlessShell, 'Chromium (but not headless shell) has a min width issue');
 
     const context = await browser.newContext({
@@ -723,9 +722,8 @@ it.describe('screencast', () => {
     expect(files.length).toBe(1);
   });
 
-  it('should capture full viewport', async ({ browserType, browserName, isWindows, headless, channel }, testInfo) => {
+  it('should capture full viewport', async ({ browserType, browserName, isWindows, headless, isHeadlessShell }, testInfo) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22411' });
-    const isHeadlessShell = channel === 'chromium-headless-shell' || (!channel && headless);
     it.fixme(browserName === 'chromium' && !isHeadlessShell, 'The square is not on the video');
     it.fixme(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
     const size = { width: 600, height: 400 };
@@ -759,9 +757,8 @@ it.describe('screencast', () => {
     expectAll(pixels, almostRed);
   });
 
-  it('should capture full viewport on hidpi', async ({ browserType, browserName, headless, isWindows, isLinux, channel }, testInfo) => {
+  it('should capture full viewport on hidpi', async ({ browserType, browserName, headless, isWindows, isLinux, isHeadlessShell }, testInfo) => {
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22411' });
-    const isHeadlessShell = channel === 'chromium-headless-shell' || (!channel && headless);
     it.fixme(browserName === 'chromium' && !isHeadlessShell, 'The square is not on the video');
     it.fixme(browserName === 'firefox' && isWindows, 'https://github.com/microsoft/playwright/issues/14405');
     it.fixme(browserName === 'webkit' && isLinux && !headless, 'https://github.com/microsoft/playwright/issues/22617');
@@ -797,10 +794,9 @@ it.describe('screencast', () => {
     expectAll(pixels, almostRed);
   });
 
-  it('should work with video+trace', async ({ browser, trace, headless, browserName, channel }, testInfo) => {
+  it('should work with video+trace', async ({ browser, trace, headless, browserName, isHeadlessShell }, testInfo) => {
     it.skip(trace === 'on');
     it.fixme(!headless, 'different trace screencast image size on all browsers');
-    const isHeadlessShell = channel === 'chromium-headless-shell' || (!channel && headless);
     it.fixme(browserName === 'chromium' && !isHeadlessShell, 'different trace screencast image size');
 
     const size = { width: 500, height: 400 };

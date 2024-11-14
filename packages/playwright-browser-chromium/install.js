@@ -24,4 +24,4 @@ try {
 }
 
 if (install)
-  install(['chromium', 'ffmpeg']);
+  install(['chromium', 'chromium-headless-shell', 'ffmpeg']);
