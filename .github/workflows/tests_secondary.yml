@@ -268,29 +268,8 @@ jobs:
     - run: npx playwright install-deps
     - run: utils/build/build-playwright-driver.sh
 
-  test_linux_chromium_headless_shell:
-    name: Chromium Headless Shell
-    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
-    strategy:
-      fail-fast: false
-      matrix:
-        runs-on: [ubuntu-latest]
-    runs-on: ${{ matrix.runs-on }}
-    steps:
-    - uses: actions/checkout@v4
-    - uses: ./.github/actions/run-test
-      with:
-        browsers-to-install: chromium chromium-headless-shell
-        command: npm run ctest
-        bot-name: "headless-shell-${{ matrix.runs-on }}"
-        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
-        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
-        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        PWTEST_CHANNEL: chromium-headless-shell
-
-  test_chromium_next:
-    name: Test chromium-next channel
+  test_channel_chromium:
+    name: Test channel=chromium
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
@@ -301,11 +280,13 @@ jobs:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test
       with:
+        # TODO: this should pass --no-shell.
+        # However, codegen tests do not inherit the channel and try to launch headless shell.
         browsers-to-install: chromium
         command: npm run ctest
-        bot-name: "chromium-next-${{ matrix.runs-on }}"
+        bot-name: "channel-chromium-${{ matrix.runs-on }}"
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
-        PWTEST_CHANNEL: chromium-next
+        PWTEST_CHANNEL: chromium

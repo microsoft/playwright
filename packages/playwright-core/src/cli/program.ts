@@ -96,16 +96,42 @@ function suggestedBrowsersToInstall() {
   return registry.executables().filter(e => e.installType !== 'none' && e.type !== 'tool').map(e => e.name).join(', ');
 }
 
-function checkBrowsersToInstall(args: string[]): Executable[] {
+function defaultBrowsersToInstall(options: { noShell?: boolean, onlyShell?: boolean }): Executable[] {
+  let executables = registry.defaultExecutables();
+  if (options.noShell)
+    executables = executables.filter(e => e.name !== 'chromium-headless-shell');
+  if (options.onlyShell)
+    executables = executables.filter(e => e.name !== 'chromium');
+  return executables;
+}
+
+function checkBrowsersToInstall(args: string[], options: { noShell?: boolean, onlyShell?: boolean }): Executable[] {
+  if (options.noShell && options.onlyShell)
+    throw new Error(`Only one of --no-shell and --only-shell can be specified`);
+
   const faultyArguments: string[] = [];
   const executables: Executable[] = [];
-  for (const arg of args) {
+  const handleArgument = (arg: string) => {
     const executable = registry.findExecutable(arg);
     if (!executable || executable.installType === 'none')
       faultyArguments.push(arg);
     else
       executables.push(executable);
+    if (executable?.browserName === 'chromium')
+      executables.push(registry.findExecutable('ffmpeg')!);
+  };
+
+  for (const arg of args) {
+    if (arg === 'chromium') {
+      if (!options.onlyShell)
+        handleArgument('chromium');
+      if (!options.noShell)
+        handleArgument('chromium-headless-shell');
+    } else {
+      handleArgument(arg);
+    }
   }
+
   if (faultyArguments.length)
     throw new Error(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${suggestedBrowsersToInstall()}`);
   return executables;
@@ -118,7 +144,12 @@ program
     .option('--with-deps', 'install system dependencies for browsers')
     .option('--dry-run', 'do not execute installation, only print information')
     .option('--force', 'force reinstall of stable browser channels')
-    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean }) {
+    .option('--only-shell', 'only install headless shell when installing chromium')
+    .option('--no-shell', 'do not install chromium headless shell')
+    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
+      // For '--no-shell' option, commander sets `shell: false` instead.
+      if (options.shell === false)
+        options.noShell = true;
       if (isLikelyNpxGlobal()) {
         console.error(wrapInASCIIBox([
           `WARNING: It looks like you are running 'npx playwright install' without first`,
@@ -141,7 +172,7 @@ program
       }
       try {
         const hasNoArguments = !args.length;
-        const executables = hasNoArguments ? registry.defaultExecutables() : checkBrowsersToInstall(args);
+        const executables = hasNoArguments ? defaultBrowsersToInstall(options) : checkBrowsersToInstall(args, options);
         if (options.withDeps)
           await registry.installDeps(executables, !!options.dryRun);
         if (options.dryRun) {
@@ -199,9 +230,9 @@ program
     .action(async function(args: string[], options: { dryRun?: boolean }) {
       try {
         if (!args.length)
-          await registry.installDeps(registry.defaultExecutables(), !!options.dryRun);
+          await registry.installDeps(defaultBrowsersToInstall({}), !!options.dryRun);
         else
-          await registry.installDeps(checkBrowsersToInstall(args), !!options.dryRun);
+          await registry.installDeps(checkBrowsersToInstall(args, {}), !!options.dryRun);
       } catch (e) {
         console.log(`Failed to install browser dependencies\n${e}`);
         gracefullyProcessExitDoNotHang(1);

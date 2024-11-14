@@ -101,10 +101,9 @@ it('should change document.activeElement', async ({ page, server }) => {
   expect(active).toEqual(['INPUT', 'TEXTAREA']);
 });
 
-it('should not affect screenshots', async ({ page, server, browserName, headless, isWindows, channel }) => {
+it('should not affect screenshots', async ({ page, server, browserName, headless, isWindows, isHeadlessShell }) => {
   it.skip(browserName === 'webkit' && isWindows && !headless, 'WebKit/Windows/headed has a larger minimal viewport. See https://github.com/microsoft/playwright/issues/22616');
   it.skip(browserName === 'firefox' && !headless, 'Firefox headed produces a different image');
-  const isHeadlessShell = channel === 'chromium-headless-shell' || (!channel && headless);
   it.fixme(browserName === 'chromium' && !isHeadlessShell, 'https://github.com/microsoft/playwright/issues/33330');
 
   const page2 = await page.context().newPage();
