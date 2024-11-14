@@ -109,7 +109,7 @@ Example:
     // 5. Generate types.
     console.log('\nGenerating protocol types...');
     const executablePath = registry.findExecutable(browserName).executablePathOrDie();
-    await protocolGenerator.generateProtocol(browserName, executablePath).catch(console.warn);
+    await protocolGenerator.generateProtocol(browserName, executablePath);
 
     // 6. Update docs.
     console.log('\nUpdating documentation...');
