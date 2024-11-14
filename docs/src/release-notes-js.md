@@ -40,57 +40,40 @@ Learn more in the [aria snapshots guide](./aria-snapshots).
 
 ### Breaking: channels `chrome`, `msedge` and similar switch to new headless
 
-Prior to this release, Playwright was running the old established implementation of [Chromium headless mode](https://developer.chrome.com/docs/chromium/headless). However, Chromium had entirely **switched to the new headless mode**, and **removed the old one**.
+This change affects you if you're using one of the following channels in your `playwright.config.ts`:
+- `chrome`, `chrome-dev`, `chrome-beta`, or `chrome-canary`
+- `msedge`, `msedge-dev`, `msedge-beta`, or `msedge-canary`
 
-![Chromium Headless](https://github.com/user-attachments/assets/2829e86a-dfe2-4743-a6d4-2aa65beea890)
+#### What do I need to do?
 
-If you are using a browser channel, for example `'chrome'` or `'msedge'`, the headless mode switch **will affect you**. Most likely, you will have to update some of your tests and all of your screenshot expectations. See [issue #33566](https://github.com/microsoft/playwright/issues/33566) for more details.
-
-#### Chromium headless shell
-
-Starting with this release, Playwright downloads and runs two different browser builds - one is a regular headed chromium and the other is a chromium headless shell. This should be transparent to you, **no action is needed**. You can learn more in [issue #33566](https://github.com/microsoft/playwright/issues/33566).
-
-If you are only running tests in headless, for example on CI, you can avoid downloading a headed version of Chromium by specifying `chromium-headless-shell` during installation.
-
-```bash
-# only running tests headlessly
-npx playwright install chromium-headless-shell firefox webkit
-```
-
-Playwright will skip downloading headed chromium build, and will use `chromium-headless-shell` when running headless.
-
-#### Opt-in to new headless
-
-We encourage everyone to try and switch to the new headless by using the `chromium-next` channel.
-
-First, install this channel prior to running tests. Make sure to list all the browsers that you use.
-
-```bash
-npx playwright install chromium-next firefox webkit
-```
-
-Then update your config file to specify `'chromium-next'` channel.
-
-```js
-import { defineConfig, devices } from '@playwright/test';
-export default defineConfig({
-  projects: [
-    {
-      name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-        channel: 'chromium-next',
-      },
-    },
-  ],
-});
-```
+After updating to Playwright v1.49, run your test suite. If it still passes, you're good to go. If not, you will probably need to update your snapshots, and adapt some of your test code around PDF viewers and extensions. See [issue #33566](https://github.com/microsoft/playwright/issues/33566) for more details.
 
 ### Other breaking changes
 
 - There will be no more updates for WebKit on Ubuntu 20.04 and Debian 11. We recommend updating your OS to a later version.
 - Package `@playwright/experimental-ct-vue2` will no longer be updated.
 - Package `@playwright/experimental-ct-solid` will no longer be updated.
+
+### Try new Chromium headless
+
+You can opt into the new headless mode by using `'chromium'` channel. As [official Chrome documentation puts it](https://developer.chrome.com/blog/chrome-headless-shell):
+
+> New Headless on the other hand is the real Chrome browser, and is thus more authentic, reliable, and offers more features. This makes it more suitable for high-accuracy end-to-end web app testing or browser extension testing.
+
+See [issue #33566](https://github.com/microsoft/playwright/issues/33566) for the list of possible breakages you could encounter and more details on Chromium headless. Please file an issue if you see any problems after opting in.
+
+```js
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'], channel: 'chromium' },
+    },
+  ],
+});
+```
 
 ### Miscellaneous
 
