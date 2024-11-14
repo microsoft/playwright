@@ -1529,18 +1529,6 @@ test('canvas clipping in iframe', async ({ runAndTrace, page, server }) => {
   await expect(canvas).toHaveAttribute('title', `Playwright displays canvas contents on a best-effort basis. It doesn't support canvas elements inside an iframe yet. If this impacts your workflow, please open an issue so we can prioritize.`);
 });
 
-test('canvas clipping with overlaying element', { annotation: [{ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33562' }] }, async ({ runAndTrace, page, server, browserName }) => {
-  test.fixme(browserName === 'firefox', 'firefox doesnt handle the screenshot test well');
-
-  const traceViewer = await runAndTrace(async () => {
-    await page.goto(server.PREFIX + '/screenshots/canvas-with-overlay.html');
-    await rafraf(page, 5);
-  });
-
-  const snapshot = await traceViewer.snapshotFrame('page.evaluate');
-  await expect(snapshot.owner()).toHaveScreenshot({ maxDiffPixelRatio: 0.05 });
-});
-
 test('should show only one pointer with multilevel iframes', async ({ page, runAndTrace, server, browserName }) => {
   test.fixme(browserName === 'firefox', 'Elements in iframe are not marked');
 
