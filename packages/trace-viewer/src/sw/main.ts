@@ -18,7 +18,7 @@ import { splitProgress } from './progress';
 import { unwrapPopoutUrl } from './snapshotRenderer';
 import { SnapshotServer } from './snapshotServer';
 import { TraceModel } from './traceModel';
-import { FetchTraceModelBackend, ZipTraceModelBackend } from './traceModelBackends';
+import { FetchTraceModelBackend, TraceViewerServer, ZipTraceModelBackend } from './traceModelBackends';
 import { TraceVersionError } from './traceModernizer';
 
 // @ts-ignore
@@ -36,13 +36,21 @@ const scopePath = new URL(self.registration.scope).pathname;
 
 const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: SnapshotServer }>();
 
-const clientIdToTraceUrls = new Map<string, { limit: number | undefined, traceUrls: Set<string> }>();
+const clientIdToTraceUrls = new Map<string, { limit: number | undefined, traceUrls: Set<string>, traceViewerServer: TraceViewerServer }>();
 
-async function loadTrace(traceUrl: string, traceFileName: string | null, clientId: string, limit: number | undefined, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
+async function loadTrace(traceUrl: string, traceFileName: string | null, client: any | undefined, limit: number | undefined, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
   await gc();
+  const clientId = client?.id ?? '';
   let data = clientIdToTraceUrls.get(clientId);
   if (!data) {
-    data = { limit, traceUrls: new Set() };
+    let traceViewerServerBaseUrl = self.registration.scope;
+    if (client?.url) {
+      const clientUrl = new URL(client.url);
+      if (clientUrl.searchParams.has('server'))
+        traceViewerServerBaseUrl = clientUrl.searchParams.get('server')!;
+    }
+
+    data = { limit, traceUrls: new Set(), traceViewerServer: new TraceViewerServer(traceViewerServerBaseUrl) };
     clientIdToTraceUrls.set(clientId, data);
   }
   data.traceUrls.add(traceUrl);
@@ -51,7 +59,7 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, clientI
   try {
     // Allow 10% to hop from sw to page.
     const [fetchProgress, unzipProgress] = splitProgress(progress, [0.5, 0.4, 0.1]);
-    const backend = traceUrl.endsWith('json') ? new FetchTraceModelBackend(traceUrl) : new ZipTraceModelBackend(traceUrl, fetchProgress);
+    const backend = traceUrl.endsWith('json') ? new FetchTraceModelBackend(traceUrl, data.traceViewerServer) : new ZipTraceModelBackend(traceUrl, data.traceViewerServer, fetchProgress);
     await traceModel.load(backend, unzipProgress);
   } catch (error: any) {
     // eslint-disable-next-line no-console
@@ -98,7 +106,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     if (relativePath === '/contexts') {
       try {
         const limit = url.searchParams.has('limit') ? +url.searchParams.get('limit')! : undefined;
-        const traceModel = await loadTrace(traceUrl!, url.searchParams.get('traceFileName'), event.clientId, limit, (done: number, total: number) => {
+        const traceModel = await loadTrace(traceUrl!, url.searchParams.get('traceFileName'), client, limit, (done: number, total: number) => {
           client.postMessage({ method: 'progress', params: { done, total } });
         });
         return new Response(JSON.stringify(traceModel!.contextEntries), {
@@ -148,7 +156,18 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       return new Response(null, { status: 404 });
     }
 
-    // Fallback to network.
+    if (relativePath.startsWith('/file/')) {
+      const path = url.searchParams.get('path')!;
+      const traceViewerServer = clientIdToTraceUrls.get(event.clientId ?? '')?.traceViewerServer;
+      if (!traceViewerServer)
+        throw new Error('client is not initialized');
+      const response = await traceViewerServer.readFile(path);
+      if (!response)
+        return new Response(null, { status: 404 });
+      return response;
+    }
+
+    // Fallback for static assets.
     return fetch(event.request);
   }
 
