@@ -68,7 +68,7 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
   }
 
   async highlight(params: channels.DebugControllerHighlightParams) {
-    await this._object.highlight(params.selector);
+    await this._object.highlight(params);
   }
 
   async hideHighlight() {

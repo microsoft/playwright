@@ -20,6 +20,7 @@ import { createGuid } from '../../packages/playwright-core/lib/utils/crypto';
 import { Backend } from '../config/debugControllerBackend';
 import type { Browser, BrowserContext } from '@playwright/test';
 import type * as channels from '@protocol/channels';
+import { roundBox } from '../page/pageTest';
 
 type BrowserWithReuse = Browser & { _newContextForReuse: () => Promise<BrowserContext> };
 type Fixtures = {
@@ -278,4 +279,21 @@ test('should highlight inside iframe', async ({ backend, connectedBrowser }, tes
   await backend.highlight({ selector: `getByText('bar')` });
   await expect(highlight).toHaveCount(1);
   await expect(page.locator('x-pw-highlight')).toHaveCount(1);
+});
+
+test('should highlight aria template', async ({ backend, connectedBrowser }, testInfo) => {
+  const context = await connectedBrowser._newContextForReuse();
+  const page = await context.newPage();
+  await backend.navigate({ url: `data:text/html,<button>Submit</button>` });
+
+  const button = page.getByRole('button');
+  const highlight = page.locator('x-pw-highlight');
+
+  await backend.highlight({ ariaTemplate: `- button "Submit2"` });
+  await expect(highlight).toHaveCount(0);
+
+  await backend.highlight({ ariaTemplate: `- button "Submit"` });
+  const box1 = roundBox(await button.boundingBox());
+  const box2 = roundBox(await highlight.boundingBox());
+  expect(box1).toEqual(box2);
 });

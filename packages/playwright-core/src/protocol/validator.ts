@@ -422,7 +422,8 @@ scheme.DebugControllerSetRecorderModeParams = tObject({
 });
 scheme.DebugControllerSetRecorderModeResult = tOptional(tObject({}));
 scheme.DebugControllerHighlightParams = tObject({
-  selector: tString,
+  selector: tOptional(tString),
+  ariaTemplate: tOptional(tString),
 });
 scheme.DebugControllerHighlightResult = tOptional(tObject({}));
 scheme.DebugControllerHideHighlightParams = tOptional(tObject({}));

@@ -40,7 +40,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
   readonly handleSIGINT: boolean | undefined;
   private _context: BrowserContext;
   private _mode: Mode;
-  private _highlightedElement: { selector?: string, ariaSnapshot?: ParsedYaml } = {};
+  private _highlightedElement: { selector?: string, ariaTemplate?: ParsedYaml } = {};
   private _overlayState: OverlayState = { offsetX: 0 };
   private _recorderApp: IRecorderApp | null = null;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
@@ -107,8 +107,8 @@ export class Recorder implements InstrumentationListener, IRecorder {
       if (data.event === 'highlightRequested') {
         if (data.params.selector)
           this.setHighlightedSelector(this._currentLanguage, data.params.selector);
-        if (data.params.ariaSnapshot)
-          this.setHighlightedAriaSnapshot(data.params.ariaSnapshot);
+        if (data.params.ariaTemplate)
+          this.setHighlightedAriaTemplate(data.params.ariaTemplate);
         return;
       }
       if (data.event === 'step') {
@@ -169,7 +169,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
         mode: this._mode,
         actionPoint,
         actionSelector,
-        ariaTemplate: this._highlightedElement.ariaSnapshot,
+        ariaTemplate: this._highlightedElement.ariaTemplate,
         language: this._currentLanguage,
         testIdAttributeName: this._contextRecorder.testIdAttributeName(),
         overlay: this._overlayState,
@@ -245,8 +245,8 @@ export class Recorder implements InstrumentationListener, IRecorder {
     this._refreshOverlay();
   }
 
-  setHighlightedAriaSnapshot(ariaSnapshot: ParsedYaml) {
-    this._highlightedElement = { ariaSnapshot };
+  setHighlightedAriaTemplate(ariaTemplate: ParsedYaml) {
+    this._highlightedElement = { ariaTemplate };
     this._refreshOverlay();
   }
 

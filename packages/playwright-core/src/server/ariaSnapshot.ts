@@ -15,12 +15,16 @@
  */
 
 import { parseYamlTemplate } from '../utils/isomorphic/ariaSnapshot';
-import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
+import type { AriaTemplateNode, ParsedYaml } from '@isomorphic/ariaSnapshot';
 import { yaml } from '../utilsBundle';
 
 export function parseAriaSnapshot(text: string): AriaTemplateNode {
-  const fragment = yaml.parse(text);
-  if (!Array.isArray(fragment))
+  return parseYamlTemplate(parseYamlForAriaSnapshot(text));
+}
+
+export function parseYamlForAriaSnapshot(text: string): ParsedYaml {
+  const parsed = yaml.parse(text);
+  if (!Array.isArray(parsed))
     throw new Error('Expected object key starting with "- ":\n\n' + text + '\n');
-  return parseYamlTemplate(fragment);
+  return parsed;
 }

@@ -120,7 +120,7 @@ export const Recorder: React.FC<RecorderProps> = ({
     setAriaSnapshotErrors(errors);
     setAriaSnapshot(ariaSnapshot);
     if (!errors.length)
-      window.dispatch({ event: 'highlightRequested', params: { ariaSnapshot: fragment } });
+      window.dispatch({ event: 'highlightRequested', params: { ariaTemplate: fragment } });
   }, [mode]);
   const isRecording = mode === 'recording' || mode === 'recording-inspecting';
   const locatorPlaceholder = isRecording ? '// Unavailable while recording' : (locator ? undefined : '// Pick element or type locator');
