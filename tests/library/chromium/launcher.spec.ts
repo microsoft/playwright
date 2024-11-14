@@ -52,8 +52,7 @@ it('should open devtools when "devtools: true" option is given', async ({ browse
   await browser.close();
 });
 
-it('should return background pages', async ({ browserType, createUserDataDir, asset, headless, channel }) => {
-  const isHeadlessShell = channel === 'chromium-headless-shell' || (!channel && headless);
+it('should return background pages', async ({ browserType, createUserDataDir, asset, isHeadlessShell }) => {
   it.skip(isHeadlessShell, 'Headless Shell has no support for extensions');
 
   const userDataDir = await createUserDataDir();
@@ -78,8 +77,7 @@ it('should return background pages', async ({ browserType, createUserDataDir, as
   expect(context.backgroundPages().length).toBe(0);
 });
 
-it('should return background pages when recording video', async ({ browserType, createUserDataDir, asset, headless, channel }, testInfo) => {
-  const isHeadlessShell = channel === 'chromium-headless-shell' || (!channel && headless);
+it('should return background pages when recording video', async ({ browserType, createUserDataDir, asset, isHeadlessShell }, testInfo) => {
   it.skip(isHeadlessShell, 'Headless Shell has no support for extensions');
 
   const userDataDir = await createUserDataDir();
@@ -105,8 +103,7 @@ it('should return background pages when recording video', async ({ browserType, 
   await context.close();
 });
 
-it('should support request/response events when using backgroundPage()', async ({ browserType, createUserDataDir, asset, server, headless, channel }) => {
-  const isHeadlessShell = channel === 'chromium-headless-shell' || (!channel && headless);
+it('should support request/response events when using backgroundPage()', async ({ browserType, createUserDataDir, asset, server, isHeadlessShell }) => {
   it.skip(isHeadlessShell, 'Headless Shell has no support for extensions');
 
   server.setRoute('/empty.html', (req, res) => {
@@ -157,8 +154,7 @@ it('should support request/response events when using backgroundPage()', async (
 
 it('should report console messages from content script', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32762' }
-}, async ({ browserType, createUserDataDir, asset, server, headless, channel }) => {
-  const isHeadlessShell = channel === 'chromium-headless-shell' || (!channel && headless);
+}, async ({ browserType, createUserDataDir, asset, server, isHeadlessShell }) => {
   it.skip(isHeadlessShell, 'Headless Shell has no support for extensions');
 
   const userDataDir = await createUserDataDir();

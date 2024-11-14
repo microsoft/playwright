@@ -22,8 +22,7 @@ import { verifyViewport } from '../config/utils';
 browserTest.describe('page screenshot', () => {
   browserTest.skip(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
 
-  browserTest('should run in parallel in multiple pages', async ({ server, contextFactory, browserName, headless, channel }) => {
-    const isHeadlessShell = channel === 'chromium-headless-shell' || (!channel && headless);
+  browserTest('should run in parallel in multiple pages', async ({ server, contextFactory, browserName, isHeadlessShell }) => {
     browserTest.fixme(browserName === 'chromium' && !isHeadlessShell, 'https://github.com/microsoft/playwright/issues/33330');
 
     const context = await contextFactory();

@@ -35,6 +35,7 @@ export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserType: BrowserType;
   isAndroid: boolean;
   isElectron: boolean;
+  isHeadlessShell: boolean;
   nodeVersion: { major: number, minor: number, patch: number };
   bidiTestSkipPredicate: (info: TestInfo) => boolean;
 };
@@ -96,6 +97,10 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   isElectron: [false, { scope: 'worker' }],
   electronMajorVersion: [0, { scope: 'worker' }],
   isWebView2: [false, { scope: 'worker' }],
+
+  isHeadlessShell: [async ({ browserName, channel, headless }, use) => {
+    await use(browserName === 'chromium' && (channel === 'chromium-headless-shell' || (!channel && headless)));
+  }, { scope: 'worker' }],
 
   contextFactory: async ({ _contextFactory }: any, run) => {
     await run(_contextFactory);

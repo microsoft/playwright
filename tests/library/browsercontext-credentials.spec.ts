@@ -18,8 +18,7 @@
 import { browserTest as base, expect } from '../config/browserTest';
 
 const it = base.extend<{ failsOn401: boolean }>({
-  failsOn401: async ({ browserName, headless, channel }, use) => {
-    const isHeadlessShell = channel === 'chromium-headless-shell' || (!channel && headless);
+  failsOn401: async ({ browserName, isHeadlessShell }, use) => {
     await use(browserName === 'chromium' && !isHeadlessShell);
   },
 });

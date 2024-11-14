@@ -76,13 +76,22 @@ test(`playwright should work`, async ({ exec, installedSoftwareOnDisk }) => {
   await exec('node esm-playwright.mjs');
 });
 
-test(`playwright should work with chromium-next`, async ({ exec, installedSoftwareOnDisk }) => {
+test(`playwright should work with chromium --no-shell`, async ({ exec, installedSoftwareOnDisk }) => {
   const result1 = await exec('npm i --foreground-scripts playwright');
   expect(result1).toHaveLoggedSoftwareDownload([]);
   expect(await installedSoftwareOnDisk()).toEqual([]);
-  const result2 = await exec('npx playwright install chromium-next');
+  const result2 = await exec('npx playwright install chromium --no-shell');
   expect(result2).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg']);
   expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg']);
+});
+
+test(`playwright should work with chromium --only-shell`, async ({ exec, installedSoftwareOnDisk }) => {
+  const result1 = await exec('npm i --foreground-scripts playwright');
+  expect(result1).toHaveLoggedSoftwareDownload([]);
+  expect(await installedSoftwareOnDisk()).toEqual([]);
+  const result2 = await exec('npx playwright install --only-shell');
+  expect(result2).toHaveLoggedSoftwareDownload(['chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit']);
+  expect(await installedSoftwareOnDisk()).toEqual(['chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit']);
 });
 
 test('@playwright/test should work', async ({ exec, installedSoftwareOnDisk }) => {
