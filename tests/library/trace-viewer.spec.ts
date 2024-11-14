@@ -1510,7 +1510,7 @@ test('canvas clipping', async ({ runAndTrace, page, server }) => {
   });
 
   const msg = await traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') });
-  expect(msg.text()).toEqual('canvas drawn: [0,91,12,111]');
+  expect(msg.text()).toEqual('canvas drawn: [0,91,11,20]');
 
   const snapshot = await traceViewer.snapshotFrame('page.goto');
   await expect(snapshot.locator('canvas')).toHaveAttribute('title', `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`);
