@@ -741,10 +741,12 @@ export type DebugControllerSetRecorderModeOptions = {
 };
 export type DebugControllerSetRecorderModeResult = void;
 export type DebugControllerHighlightParams = {
-  selector: string,
+  selector?: string,
+  ariaTemplate?: string,
 };
 export type DebugControllerHighlightOptions = {
-
+  selector?: string,
+  ariaTemplate?: string,
 };
 export type DebugControllerHighlightResult = void;
 export type DebugControllerHideHighlightParams = {};

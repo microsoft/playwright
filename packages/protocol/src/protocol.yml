@@ -791,7 +791,8 @@ DebugController:
 
     highlight:
       parameters:
-        selector: string
+        selector: string?
+        ariaTemplate: string?
 
     hideHighlight:
 
