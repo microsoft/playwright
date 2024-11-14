@@ -680,9 +680,8 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(await response.json()).toEqual({ 'foo': 'bar' });
     });
 
-    test('should upload large file', async ({ connect, startRemoteServer, server, browserName, isMac, macVersion, mode }, testInfo) => {
+    test('should upload large file', async ({ connect, startRemoteServer, server, mode }, testInfo) => {
       test.skip(mode.startsWith('service'), 'Take it easy on service');
-      test.skip(browserName === 'webkit' && isMac && macVersion < 11, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
       test.slow();
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
