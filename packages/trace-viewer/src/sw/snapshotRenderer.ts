@@ -427,25 +427,26 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
           for (const canvas of canvasElements) {
             const context = canvas.getContext('2d')!;
 
-            const boundingRect = canvas.getBoundingClientRect();
-            const xStart = boundingRect.left / window.innerWidth;
-            const yStart = boundingRect.top / window.innerWidth;
-            const xEnd = boundingRect.right / window.innerWidth;
-            const yEnd = boundingRect.bottom / window.innerWidth;
+            drawCheckerboard(context, canvas);
 
-            const partiallyUncaptured = boundingRect.right > window.innerWidth || boundingRect.bottom > window.innerHeight;
-            const fullyUncaptured = boundingRect.left > window.innerWidth || boundingRect.top > window.innerHeight;
+            const boundingRectAttribute = canvas.getAttribute('__playwright_bounding_rect__');
+            canvas.removeAttribute('__playwright_bounding_rect__');
+            if (!boundingRectAttribute)
+              continue;
+
+            const boundingRect = JSON.parse(boundingRectAttribute) as { left: number, top: number, right: number, bottom: number };
+
+            const partiallyUncaptured = boundingRect.right > 1 || boundingRect.bottom > 1;
+            const fullyUncaptured = boundingRect.left > 1 || boundingRect.top > 1;
             if (fullyUncaptured) {
               canvas.title = `Playwright couldn't capture canvas contents because it's located outside the viewport.`;
               continue;
             }
 
-            drawCheckerboard(context, canvas);
-
-            context.drawImage(img, xStart * img.width, yStart * img.width, (xEnd - xStart) * img.width, (yEnd - yStart) * img.width, 0, 0, canvas.width, canvas.height);
+            context.drawImage(img, boundingRect.left * img.width, boundingRect.top * img.height, (boundingRect.right - boundingRect.left) * img.width, (boundingRect.bottom - boundingRect.top) * img.height, 0, 0, canvas.width, canvas.height);
             if (isUnderTest)
               // eslint-disable-next-line no-console
-              console.log(`canvas drawn:`, JSON.stringify([xStart, yStart, xEnd, yEnd].map(v => Math.floor(v * 100))));
+              console.log(`canvas drawn:`, JSON.stringify([boundingRect.left, boundingRect.top, (boundingRect.right - boundingRect.left), (boundingRect.bottom - boundingRect.top)].map(v => Math.floor(v * 100))));
 
             if (partiallyUncaptured)
               canvas.title = `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`;
