@@ -2159,3 +2159,6 @@ assertThat(page.locator("body")).matchesAriaSnapshot("""
 
 ### option: LocatorAssertions.toMatchAriaSnapshot.timeout = %%-js-assertions-timeout-%%
 * since: v1.49
+
+### option: LocatorAssertions.toMatchAriaSnapshot.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.49
