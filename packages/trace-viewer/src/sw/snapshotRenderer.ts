@@ -427,14 +427,17 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
           for (const canvas of canvasElements) {
             const context = canvas.getContext('2d')!;
 
-            drawCheckerboard(context, canvas);
-
             const boundingRectAttribute = canvas.getAttribute('__playwright_bounding_rect__');
             canvas.removeAttribute('__playwright_bounding_rect__');
             if (!boundingRectAttribute)
               continue;
 
-            const boundingRect = JSON.parse(boundingRectAttribute) as { left: number, top: number, right: number, bottom: number };
+            let boundingRect: { left: number, top: number, right: number, bottom: number };
+            try {
+              boundingRect = JSON.parse(boundingRectAttribute);
+            } catch (e) {
+              continue;
+            }
 
             const partiallyUncaptured = boundingRect.right > 1 || boundingRect.bottom > 1;
             const fullyUncaptured = boundingRect.left > 1 || boundingRect.top > 1;
@@ -442,6 +445,8 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
               canvas.title = `Playwright couldn't capture canvas contents because it's located outside the viewport.`;
               continue;
             }
+
+            drawCheckerboard(context, canvas);
 
             context.drawImage(img, boundingRect.left * img.width, boundingRect.top * img.height, (boundingRect.right - boundingRect.left) * img.width, (boundingRect.bottom - boundingRect.top) * img.height, 0, 0, canvas.width, canvas.height);
             if (isUnderTest)
