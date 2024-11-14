@@ -181,7 +181,7 @@ export function toHaveAccessibleDescription(
   options?: { timeout?: number, ignoreCase?: boolean },
 ) {
   return toMatchText.call(this, 'toHaveAccessibleDescription', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
+    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase, normalizeWhiteSpace: true });
     return await locator._expect('to.have.accessible.description', { expectedText, isNot, timeout });
   }, expected, options);
 }
@@ -193,7 +193,7 @@ export function toHaveAccessibleName(
   options?: { timeout?: number, ignoreCase?: boolean },
 ) {
   return toMatchText.call(this, 'toHaveAccessibleName', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
+    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase, normalizeWhiteSpace: true });
     return await locator._expect('to.have.accessible.name', { expectedText, isNot, timeout });
   }, expected, options);
 }
