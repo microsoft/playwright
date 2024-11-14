@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import type { ReporterDescription } from '../../types/test';
 import type { FullConfigInternal } from '../common/config';
-import type { JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonProject, JsonSuite, JsonTestCase, JsonTestResultEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
+import type { JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonProject, JsonSuite, JsonTestCase, JsonTestResultEnd, JsonTestStepStart, JsonTestStepEnd } from '../isomorphic/teleReceiver';
 import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
 import { JsonStringInternalizer, StringInternPool } from '../isomorphic/stringInternPool';
 import { createReporters } from '../runner/reporters';
@@ -471,7 +471,7 @@ class PathSeparatorPatcher {
     }
     if (jsonEvent.method === 'onTestEnd') {
       const testResult = jsonEvent.params.result as JsonTestResultEnd;
-      testResult.errors.forEach(error => this._updateLocation(error.location));
+      testResult.errors.forEach(error => this._updateErrorLocations(error));
       testResult.attachments.forEach(attachment => {
         if (attachment.path)
           attachment.path = this._updatePath(attachment.path);
@@ -481,6 +481,11 @@ class PathSeparatorPatcher {
     if (jsonEvent.method === 'onStepBegin') {
       const step = jsonEvent.params.step as JsonTestStepStart;
       this._updateLocation(step.location);
+      return;
+    }
+    if (jsonEvent.method === 'onStepEnd') {
+      const step = jsonEvent.params.step as JsonTestStepEnd;
+      this._updateErrorLocations(step.error);
       return;
     }
   }
@@ -501,6 +506,13 @@ class PathSeparatorPatcher {
         this._updateLocation(entry.location);
       else
         this._updateSuite(entry);
+    }
+  }
+
+  private _updateErrorLocations(error: TestError | undefined) {
+    while (error) {
+      this._updateLocation(error.location);
+      error = error.cause;
     }
   }
 
