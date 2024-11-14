@@ -48,8 +48,8 @@ const xtermDataSource: XtermDataSource = {
 
 const searchParams = new URLSearchParams(window.location.search);
 const guid = searchParams.get('ws');
-const wsURL = new URL(`../${guid}`, window.location.toString());
-wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
+const wsURL = new URL(`/${guid}`, searchParams.get('server') ?? window.location.toString());
+wsURL.protocol = (wsURL.protocol === 'https:' ? 'wss:' : 'ws:');
 const queryParams = {
   args: searchParams.getAll('arg'),
   grep: searchParams.get('grep') || undefined,
