@@ -83,6 +83,10 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
           const indent = lines[matcher.loc!.start.line - 1].match(/^\s*/)![0];
           const newText = replacement.code.replace(/\{indent\}/g, indent);
           ranges.push({ start: matcher.start!, end: node.end!, oldText: source.substring(matcher.start!, node.end!), newText });
+          // We can have multiple, hopefully equal, replacements for the same location,
+          // for example when a single test runs multiple times because of projects or retries.
+          // Do not apply multiple replacements for the same assertion.
+          break;
         }
       }
     });
