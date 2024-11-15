@@ -1018,7 +1018,7 @@ export class Recorder {
   private _listeners: (() => void)[] = [];
   private _currentTool: RecorderTool;
   private _tools: Record<Mode, RecorderTool>;
-  private _actionSelectorModel: HighlightModel | null = null;
+  private _lastHighlightedSelector: string | undefined = undefined;
   private _lastHighlightedAriaTemplateJSON: string = 'undefined';
   readonly highlight: Highlight;
   readonly overlay: Overlay | undefined;
@@ -1129,12 +1129,12 @@ export class Recorder {
     this._switchCurrentTool();
     this.overlay?.setUIState(state);
 
-    // Race or scroll.
-    if (this._actionSelectorModel?.selector && !this._actionSelectorModel?.elements.length && !this._lastHighlightedAriaTemplateJSON)
-      this._actionSelectorModel = null;
-
-    if (state.actionSelector && state.actionSelector !== this._actionSelectorModel?.selector)
-      this._actionSelectorModel =  querySelector(this.injectedScript, state.actionSelector, this.document);
+    let highlight: HighlightModel | 'clear' | 'noop' = 'noop';
+    if (state.actionSelector !== this._lastHighlightedSelector) {
+      this._lastHighlightedSelector = state.actionSelector;
+      const model = state.actionSelector ? querySelector(this.injectedScript, state.actionSelector, this.document) : null;
+      highlight = model?.elements.length ? model : 'clear';
+    }
 
     const ariaTemplateJSON = JSON.stringify(state.ariaTemplate);
     if (this._lastHighlightedAriaTemplateJSON !== ariaTemplateJSON) {
@@ -1142,16 +1142,15 @@ export class Recorder {
       const template = state.ariaTemplate ? this.injectedScript.utils.parseYamlTemplate(state.ariaTemplate) : undefined;
       const elements = template ? this.injectedScript.getAllByAria(this.document, template) : [];
       if (elements.length)
-        this._actionSelectorModel = { elements };
+        highlight = { elements };
       else
-        this._actionSelectorModel = null;
+        highlight = 'clear';
     }
 
-    if (!state.actionSelector && !state.ariaTemplate)
-      this._actionSelectorModel = null;
-
-    if (this.state.mode === 'none' || this.state.mode === 'standby')
-      this.updateHighlight(this._actionSelectorModel, false);
+    if (highlight === 'clear')
+      this.clearHighlight();
+    else if (highlight !== 'noop')
+      this.updateHighlight(highlight, false);
   }
 
   clearHighlight() {
@@ -1266,6 +1265,8 @@ export class Recorder {
   private _onScroll(event: Event) {
     if (!event.isTrusted)
       return;
+    this._lastHighlightedSelector = undefined;
+    this._lastHighlightedAriaTemplateJSON = 'undefined';
     this.highlight.hideActionPoint();
     this._currentTool.onScroll?.(event);
   }
