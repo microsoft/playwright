@@ -30,7 +30,7 @@ export const SettingsView: React.FunctionComponent<{
     {settings.map(({ value, set, title }) => {
       return <div key={title} className='setting'>
         <label>
-          <input type='checkbox' checked={value} onClick={() => set(!value)}/>
+          <input type='checkbox' checked={value} onChange={() => set(!value)}/>
           {title}
         </label>
       </div>;
