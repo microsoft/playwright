@@ -701,7 +701,7 @@ expect(locator).to_be_enabled()
 
 ```csharp
 var locator = Page.Locator("button.submit");
-await Expect(locator).toBeEnabledAsync();
+await Expect(locator).ToBeEnabledAsync();
 ```
 
 ### option: LocatorAssertions.toBeEnabled.enabled
@@ -1181,7 +1181,7 @@ expect(locator).to_have_accessible_description("Save results to disk")
 
 ```csharp
 var locator = Page.GetByTestId("save-button");
-await Expect(locator).toHaveAccessibleDescriptionAsync("Save results to disk");
+await Expect(locator).ToHaveAccessibleDescriptionAsync("Save results to disk");
 ```
 
 ### param: LocatorAssertions.toHaveAccessibleDescription.description
@@ -1231,7 +1231,7 @@ expect(locator).to_have_accessible_name("Save to disk")
 
 ```csharp
 var locator = Page.GetByTestId("save-button");
-await Expect(locator).toHaveAccessibleNameAsync("Save to disk");
+await Expect(locator).ToHaveAccessibleNameAsync("Save to disk");
 ```
 
 ### param: LocatorAssertions.toHaveAccessibleName.name

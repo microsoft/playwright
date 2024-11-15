@@ -788,7 +788,7 @@ All the same methods are also available on [Locator], [FrameLocator] and [Frame]
 - [`method: LocatorAssertions.toHaveAttribute`] with an empty value does not match missing attribute anymore. For example, the following snippet will succeed when `button` **does not** have a `disabled` attribute.
 
    ```csharp
-   await Expect(Page.GetByRole(AriaRole.Button)).ToHaveAttribute("disabled", "");
+   await Expect(Page.GetByRole(AriaRole.Button)).ToHaveAttributeAsync("disabled", "");
    ```
 
 ### Browser Versions
