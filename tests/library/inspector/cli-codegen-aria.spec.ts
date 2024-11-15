@@ -64,11 +64,10 @@ test.describe(() => {
   test('should inspect aria snapshot', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
     await recorder.setContentAndWait(`<main><button>Submit</button></main>`);
-    await recorder.recorderPage.getByRole('button', { name: 'Record' }).click();
     await recorder.page.click('x-pw-tool-item.pick-locator');
     await recorder.page.hover('button');
     await recorder.trustedClick();
-    await recorder.recorderPage.getByRole('tab', { name: 'Aria snapshot ' }).click();
+    await recorder.recorderPage.getByRole('tab', { name: 'Aria snapshot' }).click();
     await expect(recorder.recorderPage.locator('.tab-aria .CodeMirror')).toMatchAriaSnapshot(`
       - textbox
       - text: '- button "Submit"'
@@ -85,12 +84,11 @@ test.describe(() => {
     const submitButton = recorder.page.getByRole('button', { name: 'Submit' });
     const cancelButton = recorder.page.getByRole('button', { name: 'Cancel' });
 
-    await recorder.recorderPage.getByRole('button', { name: 'Record' }).click();
 
     await recorder.page.click('x-pw-tool-item.pick-locator');
     await submitButton.hover();
     await recorder.trustedClick();
-    await recorder.recorderPage.getByRole('tab', { name: 'Aria snapshot ' }).click();
+    await recorder.recorderPage.getByRole('tab', { name: 'Aria snapshot' }).click();
     await expect(recorder.recorderPage.locator('.tab-aria .CodeMirror')).toMatchAriaSnapshot(`
       - text: '- button "Submit"'
     `);
@@ -128,13 +126,12 @@ test.describe(() => {
     </main>`);
 
     const submitButton = recorder.page.getByRole('button', { name: 'Submit' });
-    await recorder.recorderPage.getByRole('button', { name: 'Record' }).click();
 
     await recorder.page.click('x-pw-tool-item.pick-locator');
     await submitButton.hover();
     await recorder.trustedClick();
 
-    await recorder.recorderPage.getByRole('tab', { name: 'Aria snapshot ' }).click();
+    await recorder.recorderPage.getByRole('tab', { name: 'Aria snapshot' }).click();
     await expect(recorder.recorderPage.locator('.tab-aria .CodeMirror')).toMatchAriaSnapshot(`
       - text: '- button "Submit"'
     `);
