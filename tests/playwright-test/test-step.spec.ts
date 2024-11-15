@@ -1406,9 +1406,7 @@ pw:api    |page.setContent @ a.test.ts:5
 test.step |custom step @ a.test.ts:6
 pw:api    |  page.waitForResponse @ a.test.ts:7
 pw:api    |  page.click(div) @ a.test.ts:13
-pw:api    |  response.text @ a.test.ts:8
 expect    |  expect.toBeTruthy @ a.test.ts:9
-pw:api    |  response.text @ a.test.ts:15
 expect    |expect.toBe @ a.test.ts:17
 hook      |After Hooks
 fixture   |  fixture: page
