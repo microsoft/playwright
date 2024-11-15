@@ -99,11 +99,17 @@ export const TestListView: React.FC<{
       setSelectedTreeItemId(selectedTreeItem.id);
   }, [runningState, setSelectedTreeItemId, testTree, collapseAllCount, setCollapseAllCount, requestedCollapseAllCount, expandAllCount, setExpandAllCount, requestedExpandAllCount, treeState, setTreeState]);
 
-  // Compute selected item.
-  const { selectedTreeItem } = React.useMemo(() => {
+  // Compute selected item
+  const selectedTreeItem = React.useMemo(() => {
+    if (!selectedTreeItemId)
+      return undefined;
+    return testTree.treeItemById(selectedTreeItemId);
+  }, [selectedTreeItemId, testTree]);
+
+  // Handle selection effects separately
+  React.useEffect(() => {
     if (!testModel)
-      return { selectedTreeItem: undefined };
-    const selectedTreeItem = selectedTreeItemId ? testTree.treeItemById(selectedTreeItemId) : undefined;
+      return;
     const testFile = itemLocation(selectedTreeItem, testModel);
     let selectedTest: reporterTypes.TestCase | undefined;
     if (selectedTreeItem?.kind === 'test')
@@ -111,8 +117,7 @@ export const TestListView: React.FC<{
     else if (selectedTreeItem?.kind === 'case' && selectedTreeItem.tests.length === 1)
       selectedTest = selectedTreeItem.tests[0];
     onItemSelected({ treeItem: selectedTreeItem, testCase: selectedTest, testFile });
-    return { selectedTreeItem };
-  }, [onItemSelected, selectedTreeItemId, testModel, testTree]);
+  }, [testModel, selectedTreeItem, onItemSelected]);
 
   // Update watch all.
   React.useEffect(() => {
