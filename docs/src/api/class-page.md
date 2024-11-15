@@ -3668,6 +3668,11 @@ When set to `minimal`, only record information necessary for routing from HAR. T
 
 Optional setting to control resource content management. If `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is specified, content is stored inline the HAR file.
 
+### option: Page.routeFromHAR.shouldSave
+* since: v1.49
+- `shouldSave` <[function]\(\):[boolean]>
+
+If specified, controls when the HAR file should be saved to disk. Defaults to always save the HAR file.
 
 ## async method: Page.routeWebSocket
 * since: v1.48

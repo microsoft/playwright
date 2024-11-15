@@ -64,7 +64,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly _backgroundPages = new Set<Page>();
   readonly _serviceWorkers = new Set<Worker>();
   readonly _isChromium: boolean;
-  private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
+  private _harRecorders = new Map<string, {
+    path: string,
+    content: 'embed' | 'attach' | 'omit' | undefined,
+    shouldSave: (() => boolean) | undefined,
+  }>();
   _closeWasCalled = false;
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
@@ -152,8 +156,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   _setOptions(contextOptions: channels.BrowserNewContextParams, browserOptions: LaunchOptions) {
     this._options = contextOptions;
-    if (this._options.recordHar)
-      this._harRecorders.set('', { path: this._options.recordHar.path, content: this._options.recordHar.content });
+    if (this._options.recordHar) {
+      this._harRecorders.set('', {
+        path: this._options.recordHar.path,
+        content: this._options.recordHar.content,
+        shouldSave: undefined,
+      });
+    }
     this.tracing._tracesDir = browserOptions.tracesDir;
   }
 
@@ -343,7 +352,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._updateWebSocketInterceptionPatterns();
   }
 
-  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full'} = {}): Promise<void> {
+  async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full', shouldSave?: () => boolean } = {}): Promise<void> {
     const { harId } = await this._channel.harStart({
       page: page?._channel,
       options: prepareRecordHarOptions({
@@ -353,7 +362,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         urlFilter: options.url
       })!
     });
-    this._harRecorders.set(harId, { path: har, content: options.updateContent ?? 'attach' });
+    this._harRecorders.set(harId, { path: har, content: options.updateContent ?? 'attach', shouldSave: options.shouldSave });
   }
 
   async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full' } = {}): Promise<void> {
@@ -474,6 +483,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._wrapApiCall(async () => {
       await this._browserType?._willCloseContext(this);
       for (const [harId, harParams] of this._harRecorders) {
+        const shouldSave = harParams.shouldSave ? harParams.shouldSave() : true;
+        if (!shouldSave)
+          continue;
+
         const har = await this._channel.harExport({ harId });
         const artifact = Artifact.from(har.artifact);
         // Server side will compress artifact if content is attach or if file is .zip.

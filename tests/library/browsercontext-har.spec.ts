@@ -557,3 +557,29 @@ it('should ignore aborted requests', async ({ contextFactory, server }) => {
     expect(result).toBe('timeout');
   }
 });
+
+it('should save HAR files by default', async ({ contextFactory, server }, testInfo) => {
+  const harPath = testInfo.outputPath('har.har');
+  const context = await contextFactory();
+  await context.routeFromHAR(harPath, { update: true });
+
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/one-style.html');
+  await context.close();
+
+  expect(fs.existsSync(harPath)).toBe(true);
+  const har = fs.readFileSync(harPath, 'utf-8');
+  expect(har).not.toContain('background-color');
+});
+
+it('can disable saving HAR files', async ({ contextFactory, server }, testInfo) => {
+  const harPath = testInfo.outputPath('har.har');
+  const context = await contextFactory();
+  await context.routeFromHAR(harPath, { update: true, shouldSave: () => false });
+
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/one-style.html');
+  await context.close();
+
+  expect(fs.existsSync(harPath)).toBe(false);
+});

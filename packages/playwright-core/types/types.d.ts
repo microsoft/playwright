@@ -4008,6 +4008,11 @@ export interface Page {
     notFound?: "abort"|"fallback";
 
     /**
+     * If specified, controls when the HAR file should be saved to disk. Defaults to always save the HAR file.
+     */
+    shouldSave?: (() => boolean);
+
+    /**
      * If specified, updates the given HAR with the actual network information instead of serving from file. The file is
      * written to disk when
      * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is
@@ -9098,6 +9103,11 @@ export interface BrowserContext {
     notFound?: "abort"|"fallback";
 
     /**
+     * If specified, controls when the HAR file should be saved to disk. Defaults to always save the HAR file.
+     */
+    shouldSave?: (() => boolean);
+
+    /**
      * If specified, updates the given HAR with the actual network information instead of serving from file. The file is
      * written to disk when
      * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) is
@@ -9941,6 +9951,11 @@ export interface Browser {
        * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
        */
       urlFilter?: string|RegExp;
+
+      /**
+       * If specified, controls when the HAR file should be saved to disk. Defaults to always save the HAR file.
+       */
+      shouldSave?: (() => boolean);
     };
 
     /**
@@ -15024,6 +15039,11 @@ export interface BrowserType<Unused = {}> {
        * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
        */
       urlFilter?: string|RegExp;
+
+      /**
+       * If specified, controls when the HAR file should be saved to disk. Defaults to always save the HAR file.
+       */
+      shouldSave?: (() => boolean);
     };
 
     /**
@@ -16772,6 +16792,11 @@ export interface AndroidDevice {
        * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
        */
       urlFilter?: string|RegExp;
+
+      /**
+       * If specified, controls when the HAR file should be saved to disk. Defaults to always save the HAR file.
+       */
+      shouldSave?: (() => boolean);
     };
 
     /**
@@ -19195,6 +19220,11 @@ export interface Electron {
        * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
        */
       urlFilter?: string|RegExp;
+
+      /**
+       * If specified, controls when the HAR file should be saved to disk. Defaults to always save the HAR file.
+       */
+      shouldSave?: (() => boolean);
     };
 
     /**
@@ -22075,6 +22105,11 @@ export interface BrowserContextOptions {
      * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
      */
     urlFilter?: string|RegExp;
+
+    /**
+     * If specified, controls when the HAR file should be saved to disk. Defaults to always save the HAR file.
+     */
+    shouldSave?: (() => boolean);
   };
 
   /**
