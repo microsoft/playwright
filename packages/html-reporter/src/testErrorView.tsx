@@ -25,7 +25,7 @@ export const TestErrorView: React.FC<{
   testId?: string;
 }> = ({ error, testId }) => {
   const html = React.useMemo(() => ansiErrorToHtml(error), [error]);
-  return <div className='test-error-view test-error-text' data-testId={testId} dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
+  return <div className='test-error-view test-error-text' data-testid={testId} dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
 };
 
 export const TestScreenshotErrorView: React.FC<{
