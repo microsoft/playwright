@@ -24,6 +24,7 @@ import 'codemirror/mode/javascript/javascript';
 import 'codemirror/mode/python/python';
 import 'codemirror/mode/clike/clike';
 import 'codemirror/mode/markdown/markdown';
+import 'codemirror/addon/display/placeholder';
 import 'codemirror/addon/mode/simple';
 import 'codemirror/mode/yaml/yaml';
 
