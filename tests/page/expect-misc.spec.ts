@@ -431,6 +431,9 @@ test('toHaveAccessibleName', async ({ page }) => {
   await expect(page.locator('div')).toHaveAccessibleName(/ell\w/);
   await expect(page.locator('div')).not.toHaveAccessibleName(/hello/);
   await expect(page.locator('div')).toHaveAccessibleName(/hello/, { ignoreCase: true });
+
+  await page.setContent(`<button>foo&nbsp;bar\nbaz</button>`);
+  await expect(page.locator('button')).toHaveAccessibleName('foo bar baz');
 });
 
 test('toHaveAccessibleDescription', async ({ page }) => {
@@ -443,6 +446,12 @@ test('toHaveAccessibleDescription', async ({ page }) => {
   await expect(page.locator('div')).toHaveAccessibleDescription(/ell\w/);
   await expect(page.locator('div')).not.toHaveAccessibleDescription(/hello/);
   await expect(page.locator('div')).toHaveAccessibleDescription(/hello/, { ignoreCase: true });
+
+  await page.setContent(`
+    <div role="button" aria-describedby="desc"></div>
+    <span id="desc">foo&nbsp;bar\nbaz</span>
+  `);
+  await expect(page.locator('div')).toHaveAccessibleDescription('foo bar baz');
 });
 
 test('toHaveRole', async ({ page }) => {
