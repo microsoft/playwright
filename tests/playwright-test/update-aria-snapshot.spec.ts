@@ -24,12 +24,15 @@ function trimPatch(patch: string) {
   return patch.split('\n').map(line => line.trimEnd()).join('\n');
 }
 
-test('should update snapshot with the update-snapshots flag', async ({ runInlineTest }, testInfo) => {
+test('should update snapshot with the update-snapshots flag with multiple projects', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default { projects: [{ name: 'p1' }, { name: 'p2' }] };
+    `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
-        await page.setContent(\`<h1>hello</h1>\`);
+        await page.setContent(\`<h1>hello</h1><h2>bye</h2>\`);
         await expect(page.locator('body')).toMatchAriaSnapshot(\`
           - heading "world"
         \`);
@@ -43,12 +46,13 @@ test('should update snapshot with the update-snapshots flag', async ({ runInline
   expect(trimPatch(data)).toBe(`diff --git a/a.spec.ts b/a.spec.ts
 --- a/a.spec.ts
 +++ b/a.spec.ts
-@@ -3,7 +3,7 @@
+@@ -3,7 +3,8 @@
        test('test', async ({ page }) => {
-         await page.setContent(\`<h1>hello</h1>\`);
+         await page.setContent(\`<h1>hello</h1><h2>bye</h2>\`);
          await expect(page.locator('body')).toMatchAriaSnapshot(\`
 -          - heading "world"
 +          - heading "hello" [level=1]
++          - heading "bye" [level=2]
          \`);
        });
 
