@@ -141,4 +141,35 @@ test.describe(() => {
     // 3 highlighted tokens.
     await expect(recorder.recorderPage.locator('.source-line-error-underline')).toHaveCount(3);
   });
+
+  test('should generate valid javascript with multiline snapshot assertion', async ({ openRecorder }) => {
+    const { recorder } = await openRecorder();
+    // set width and height to 100% to ensure click is outside of the list
+    await recorder.setContentAndWait(`<body style="width:100%;height:100%"><ul><li>item 1</li><li>item 2</li></ul></body>`);
+
+    await recorder.page.click('x-pw-tool-item.snapshot');
+    await recorder.page.hover('body');
+    await recorder.trustedClick();
+
+    // playwright tests assertions are uncommented
+    await expect.poll(() =>
+      recorder.text('Playwright Test')).toContain([
+      `  await expect(page.locator('body')).toMatchAriaSnapshot(\``,
+      `    - list:`,
+      `      - listitem: item 1`,
+      `      - listitem: item 2`,
+      `    \`);`,
+    ].join('\n'));
+
+    // non-test javascript has commented assertions
+    await expect.poll(() =>
+      recorder.text('JavaScript')).toContain([
+      `  // await expect(page.locator('body')).toMatchAriaSnapshot(\``,
+      `  //   - list:`,
+      `  //     - listitem: item 1`,
+      `  //     - listitem: item 2`,
+      `  //   \`);`,
+    ].join('\n'));
+
+  });
 });
