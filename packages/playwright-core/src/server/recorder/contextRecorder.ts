@@ -208,6 +208,10 @@ export class ContextRecorder extends EventEmitter {
     }
   }
 
+  runTask(task: string): void {
+    // TODO: implement
+  }
+
   private _describeMainFrame(page: Page): actions.FrameDescription {
     return {
       pageAlias: this._pageAliases.get(page)!,

@@ -34,7 +34,8 @@ import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } fr
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
-import { matchesAriaTree, renderedAriaTree, getAllByAria } from './ariaSnapshot';
+import { matchesAriaTree, getAllByAria, generateAriaTree, renderAriaTree } from './ariaSnapshot';
+import type { AriaNode, AriaSnapshot } from './ariaSnapshot';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 import { parseYamlTemplate } from '@isomorphic/ariaSnapshot';
 
@@ -215,10 +216,27 @@ export class InjectedScript {
     return new Set<Element>(result.map(r => r.element));
   }
 
-  ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex' }): string {
+  ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex', id?: boolean }): string {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
-    return renderedAriaTree(node as Element, options);
+    const ariaSnapshot = generateAriaTree(node as Element);
+    return renderAriaTree(ariaSnapshot.root, options);
+  }
+
+  ariaSnapshotAsObject(node: Node): AriaSnapshot {
+    return generateAriaTree(node as Element);
+  }
+
+  ariaSnapshotElement(snapshot: AriaSnapshot, elementId: number): Element | null {
+    return snapshot.elements.get(elementId) || null;
+  }
+
+  renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'regex', id?: boolean}): string {
+    return renderAriaTree(ariaNode, options);
+  }
+
+  renderAriaSnapshotWithIds(ariaSnapshot: AriaSnapshot): string {
+    return renderAriaTree(ariaSnapshot.root, { ids: ariaSnapshot.ids });
   }
 
   getAllByAria(document: Document, template: AriaTemplateNode): Element[] {
