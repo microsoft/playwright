@@ -27,7 +27,7 @@ import { CallLogView } from './callLog';
 import './recorder.css';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { toggleTheme } from '@web/theme';
-import { copy } from '@web/uiUtils';
+import { copy, useSetting } from '@web/uiUtils';
 import yaml from 'yaml';
 import { parseAriaKey } from '@isomorphic/ariaSnapshot';
 import type { AriaKeyError, ParsedYaml } from '@isomorphic/ariaSnapshot';
@@ -47,7 +47,7 @@ export const Recorder: React.FC<RecorderProps> = ({
 }) => {
   const [selectedFileId, setSelectedFileId] = React.useState<string | undefined>();
   const [runningFileId, setRunningFileId] = React.useState<string | undefined>();
-  const [selectedTab, setSelectedTab] = React.useState<string>('log');
+  const [selectedTab, setSelectedTab] = useSetting<string>('recorderPropertiesTab', 'log');
   const [ariaSnapshot, setAriaSnapshot] = React.useState<string | undefined>();
   const [ariaSnapshotErrors, setAriaSnapshotErrors] = React.useState<SourceHighlight[]>();
 
@@ -189,7 +189,7 @@ export const Recorder: React.FC<RecorderProps> = ({
           {
             id: 'locator',
             title: 'Locator',
-            render: () => <CodeMirrorWrapper text={locator} language={source.language} focusOnChange={true} onChange={onEditorChange} wrapLines={true} />
+            render: () => <CodeMirrorWrapper text={locator} placeholder='Type locator to inspect' language={source.language} focusOnChange={true} onChange={onEditorChange} wrapLines={true} />
           },
           {
             id: 'log',
@@ -198,8 +198,8 @@ export const Recorder: React.FC<RecorderProps> = ({
           },
           {
             id: 'aria',
-            title: 'Aria snapshot',
-            render: () => <CodeMirrorWrapper text={ariaSnapshot || ''} language={'yaml'} onChange={onAriaEditorChange} highlight={ariaSnapshotErrors} wrapLines={true} />
+            title: 'Aria',
+            render: () => <CodeMirrorWrapper text={ariaSnapshot || ''} placeholder='Type aria template to match' language={'yaml'} onChange={onAriaEditorChange} highlight={ariaSnapshotErrors} wrapLines={true} />
           },
         ]}
         selectedTab={selectedTab}

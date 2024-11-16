@@ -67,7 +67,7 @@ test.describe(() => {
     await recorder.page.click('x-pw-tool-item.pick-locator');
     await recorder.page.hover('button');
     await recorder.trustedClick();
-    await recorder.recorderPage.getByRole('tab', { name: 'Aria snapshot' }).click();
+    await recorder.recorderPage.getByRole('tab', { name: 'Aria' }).click();
     await expect(recorder.recorderPage.locator('.tab-aria .CodeMirror')).toMatchAriaSnapshot(`
       - textbox
       - text: '- button "Submit"'
@@ -88,7 +88,7 @@ test.describe(() => {
     await recorder.page.click('x-pw-tool-item.pick-locator');
     await submitButton.hover();
     await recorder.trustedClick();
-    await recorder.recorderPage.getByRole('tab', { name: 'Aria snapshot' }).click();
+    await recorder.recorderPage.getByRole('tab', { name: 'Aria' }).click();
     await expect(recorder.recorderPage.locator('.tab-aria .CodeMirror')).toMatchAriaSnapshot(`
       - text: '- button "Submit"'
     `);
@@ -131,7 +131,7 @@ test.describe(() => {
     await submitButton.hover();
     await recorder.trustedClick();
 
-    await recorder.recorderPage.getByRole('tab', { name: 'Aria snapshot' }).click();
+    await recorder.recorderPage.getByRole('tab', { name: 'Aria' }).click();
     await expect(recorder.recorderPage.locator('.tab-aria .CodeMirror')).toMatchAriaSnapshot(`
       - text: '- button "Submit"'
     `);

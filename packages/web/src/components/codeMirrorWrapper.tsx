@@ -46,6 +46,7 @@ export interface SourceProps {
   wrapLines?: boolean;
   onChange?: (text: string) => void;
   dataTestId?: string;
+  placeholder?: string;
 }
 
 export const CodeMirrorWrapper: React.FC<SourceProps> = ({
@@ -62,6 +63,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
   wrapLines,
   onChange,
   dataTestId,
+  placeholder,
 }) => {
   const [measure, codemirrorElement] = useMeasure<HTMLDivElement>();
   const [modulePromise] = React.useState<Promise<CodeMirror>>(import('./codeMirrorModule').then(m => m.default));
@@ -89,7 +91,8 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
         && mode === codemirrorRef.current.cm.getOption('mode')
         && !!readOnly === codemirrorRef.current.cm.getOption('readOnly')
         && lineNumbers === codemirrorRef.current.cm.getOption('lineNumbers')
-        && wrapLines === codemirrorRef.current.cm.getOption('lineWrapping')) {
+        && wrapLines === codemirrorRef.current.cm.getOption('lineWrapping')
+        && placeholder === codemirrorRef.current.cm.getOption('placeholder')) {
         // No need to re-create codemirror.
         return;
       }
@@ -102,6 +105,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
         readOnly: !!readOnly,
         lineNumbers,
         lineWrapping: wrapLines,
+        placeholder,
       });
       codemirrorRef.current = { cm };
       if (isFocused)
@@ -109,7 +113,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       setCodemirror(cm);
       return cm;
     })();
-  }, [modulePromise, codemirror, codemirrorElement, language, mimeType, linkify, lineNumbers, wrapLines, readOnly, isFocused]);
+  }, [modulePromise, codemirror, codemirrorElement, language, mimeType, linkify, lineNumbers, wrapLines, readOnly, isFocused, placeholder]);
 
   React.useEffect(() => {
     if (codemirrorRef.current)
