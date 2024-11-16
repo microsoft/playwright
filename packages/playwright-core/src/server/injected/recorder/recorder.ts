@@ -492,9 +492,10 @@ class RecordActionTool implements RecorderTool {
       return;
     const result = activeElement ? this._recorder.injectedScript.generateSelector(activeElement, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : null;
     this._activeModel = result && result.selector ? result : null;
-    if (userGesture)
+    if (userGesture) {
       this._hoveredElement = activeElement as HTMLElement | null;
-    this._updateModelForHoveredElement();
+      this._updateModelForHoveredElement();
+    }
   }
 
   private _shouldIgnoreMouseEvent(event: MouseEvent): boolean {
@@ -589,6 +590,8 @@ class RecordActionTool implements RecorderTool {
   }
 
   private _updateModelForHoveredElement() {
+    if (this._performingActions.size)
+      return;
     if (!this._hoveredElement || !this._hoveredElement.isConnected) {
       this._hoveredModel = null;
       this._hoveredElement = null;

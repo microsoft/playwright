@@ -402,17 +402,6 @@ await page1.GotoAsync("about:blank?foo");`);
     await expect.poll(() => messages).toEqual(['mousedown', 'mouseup', 'click']);
   });
 
-  test('should update hover model on action', async ({ openRecorder }) => {
-    const { page, recorder } = await openRecorder();
-
-    await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name='updated'"></input>`);
-    const [models] = await Promise.all([
-      recorder.waitForActionPerformed(),
-      page.click('input')
-    ]);
-    expect(models.hovered).toBe('#checkbox');
-  });
-
   test('should reset hover model on action when element detaches', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
