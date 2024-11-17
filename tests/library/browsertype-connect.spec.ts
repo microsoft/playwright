@@ -169,14 +169,17 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
     });
 
-    test('should ignore page.pause when headed', async ({ connect, startRemoteServer, browserType }) => {
+    test('should ignore page.pause when headed', async ({ connect, startRemoteServer, browserType, channel }) => {
+      test.skip(channel === 'chromium-headless-shell', 'shell is never headed');
+
       const headless = (browserType as any)._defaultLaunchOptions.headless;
       (browserType as any)._defaultLaunchOptions.headless = false;
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const browserContext = await browser.newContext();
       const page = await browserContext.newPage();
-      await page.pause();
+      // @ts-ignore
+      await page.pause({ __testHookKeepTestTimeout: true });
       await browser.close();
       (browserType as any)._defaultLaunchOptions.headless = headless;
     });
@@ -677,9 +680,8 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(await response.json()).toEqual({ 'foo': 'bar' });
     });
 
-    test('should upload large file', async ({ connect, startRemoteServer, server, browserName, isMac, macVersion, mode }, testInfo) => {
+    test('should upload large file', async ({ connect, startRemoteServer, server, mode }, testInfo) => {
       test.skip(mode.startsWith('service'), 'Take it easy on service');
-      test.skip(browserName === 'webkit' && isMac && macVersion < 11, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
       test.slow();
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());

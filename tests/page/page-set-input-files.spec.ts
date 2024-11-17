@@ -144,8 +144,7 @@ it('should upload a file after popup', async ({ page, server, asset }) => {
   expect(await page.evaluate(e => e.files[0].name, input)).toBe('file-to-upload.txt');
 });
 
-it('should upload large file', async ({ page, server, browserName, isMac, isAndroid, isWebView2, mode, macVersion }, testInfo) => {
-  it.skip(browserName === 'webkit' && isMac && macVersion < 11, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
+it('should upload large file', async ({ page, server, isAndroid, isWebView2, mode }, testInfo) => {
   it.skip(isAndroid);
   it.skip(isWebView2);
   it.skip(mode.startsWith('service'));
@@ -203,8 +202,7 @@ it('should throw an error if the file does not exist', async ({ page, server, as
   expect(error.message).toContain('i actually do not exist.txt');
 });
 
-it('should upload multiple large files', async ({ page, server, browserName, isMac, isAndroid, isWebView2, mode, macVersion }, testInfo) => {
-  it.skip(browserName === 'webkit' && isMac && macVersion < 11, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
+it('should upload multiple large files', async ({ page, server, isAndroid, isWebView2, mode }, testInfo) => {
   it.skip(isAndroid);
   it.skip(isWebView2);
   it.skip(mode.startsWith('service'));
@@ -244,8 +242,7 @@ it('should upload multiple large files', async ({ page, server, browserName, isM
   await Promise.all(uploadFiles.map(path => fs.promises.unlink(path)));
 });
 
-it('should upload large file with relative path', async ({ page, server, browserName, isMac, isAndroid, isWebView2, mode, macVersion }, testInfo) => {
-  it.skip(browserName === 'webkit' && isMac && macVersion < 11, 'WebKit for macOS 10.15 is frozen and does not have corresponding protocol features.');
+it('should upload large file with relative path', async ({ page, server, isAndroid, isWebView2, mode }, testInfo) => {
   it.skip(isAndroid);
   it.skip(isWebView2);
   it.skip(mode.startsWith('service'));

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 import * as path from 'path';
 
 for (const useIntermediateMergeReport of [false, true] as const) {
@@ -116,6 +116,53 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(output).toContain(`    |             ^`);
       expect(output).toContain(`utils.js:4`);
       expect(output).toContain(`a.spec.ts:5:13`);
+    });
+
+    test('should print error with a nested cause', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.spec.ts': `
+          import { test, expect } from '@playwright/test';
+
+          test('foobar', async ({}) => {
+            try {
+              try {
+                const error = new Error('my-message');
+                error.name = 'SpecialError';
+                throw error;
+              } catch (e) {
+                try {
+                  throw new Error('inner-message', { cause: e });
+                } catch (e) {
+                  throw new Error('outer-message', { cause: e });
+                }
+              }
+            } catch (e) {
+              throw new Error('wrapper-message', { cause: e });
+            }
+          });
+          test.afterAll(() => {
+            expect(test.info().errors.length).toBe(1);
+            expect(test.info().errors[0]).toBe(test.info().error);
+            expect(test.info().error.message).toBe('Error: wrapper-message');
+            expect(test.info().error.cause.message).toBe('Error: outer-message');
+            expect(test.info().error.cause.cause.message).toBe('Error: inner-message');
+            expect(test.info().error.cause.cause.cause.message).toBe('SpecialError: my-message');
+            expect(test.info().error.cause.cause.cause.cause).toBe(undefined);
+            console.log('afterAll executed successfully');
+          })
+        `
+      });
+      expect(result.exitCode).toBe(1);
+      expect(result.failed).toBe(1);
+      const testFile = path.join(result.report.config.rootDir, result.report.suites[0].specs[0].file);
+      expect(result.output).toContain(`${testFile}:18:21`);
+      expect(result.output).toContain(`[cause]: Error: outer-message`);
+      expect(result.output).toContain(`${testFile}:14:25`);
+      expect(result.output).toContain(`[cause]: Error: inner-message`);
+      expect(result.output).toContain(`${testFile}:12:25`);
+      expect(result.output).toContain(`[cause]: SpecialError: my-message`);
+      expect(result.output).toContain(`${testFile}:7:31`);
+      expect(result.output).toContain('afterAll executed successfully');
     });
 
     test('should print codeframe from a helper', async ({ runInlineTest }) => {
@@ -423,14 +470,21 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const result = await runInlineTest({
         'a.test.ts': `
           const { test, expect } = require('@playwright/test');
-          test('passes', { tag: ['@foo', '@bar'] }, async ({}) => {
+          test('passes', { tag: ['@foo1', '@foo2'] }, async ({}) => {
+            expect(0).toBe(0);
+          });
+          test('passes @bar1 @bar2', async ({}) => {
+            expect(0).toBe(0);
+          });
+          test('passes @baz1', { tag: ['@baz2'] }, async ({}) => {
             expect(0).toBe(0);
           });
         `,
       });
-      const text = result.output;
-
-      expect(text).toContain('passes @foo @bar');
+      const text = stripAnsi(result.output);
+      expect(text).toContain('› passes @foo1 @foo2 (');
+      expect(text).toContain('› passes @bar1 @bar2 (');
+      expect(text).toContain('› passes @baz1 @baz2 (');
     });
   });
 }

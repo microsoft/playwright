@@ -5536,7 +5536,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
    * @param body Step body.
    * @param options
    */
-  step<T>(title: string, body: () => T | Promise<T>, options?: { box?: boolean, location?: Location }): Promise<T>;
+  step<T>(title: string, body: () => T | Promise<T>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<T>;
   /**
    * `expect` function can be used to create test assertions. Read more about [test assertions](https://playwright.dev/docs/test-assertions).
    *
@@ -8414,7 +8414,7 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Asserts that the target element matches the given accessibility snapshot.
+   * Asserts that the target element matches the given [accessibility snapshot](https://playwright.dev/docs/aria-snapshots).
    *
    * **Usage**
    *
@@ -9152,6 +9152,13 @@ export interface TestInfo {
  * Information about an error thrown during test execution.
  */
 export interface TestInfoError {
+  /**
+   * Error cause. Set when there is a
+   * [cause](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause) for the
+   * error. Will be `undefined` if there is no cause or if the cause is not an instance of [Error].
+   */
+  cause?: TestInfoError;
+
   /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
    */

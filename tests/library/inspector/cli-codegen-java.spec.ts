@@ -91,10 +91,7 @@ test('should print load/save storage_state', async ({ runCLI, browserName }, tes
 
 test('should work with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
-  const expectedResult = `BrowserContext context = browser.newContext(new Browser.NewContextOptions()
-        .setRecordHarMode(HarMode.MINIMAL)
-        .setRecordHarPath(Paths.get(${JSON.stringify(harFileName)}))
-        .setServiceWorkers(ServiceWorkerPolicy.BLOCK));`;
+  const expectedResult = `context.routeFromHAR(${JSON.stringify(harFileName)});`;
   const cli = runCLI(['--target=java', `--save-har=${harFileName}`], {
     autoExitWhen: expectedResult,
   });

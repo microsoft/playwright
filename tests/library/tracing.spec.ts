@@ -107,6 +107,28 @@ test('should not collect snapshots by default', async ({ context, page, server }
   expect(events.some(e => e.type === 'resource-snapshot')).toBeFalsy();
 });
 
+test('can call tracing.group/groupEnd at any time and auto-close', async ({ context, page, server }, testInfo) => {
+  await context.tracing.group('ignored');
+  await context.tracing.groupEnd();
+  await context.tracing.group('ignored2');
+
+  await context.tracing.start();
+  await context.tracing.group('actual');
+  await page.goto(server.EMPTY_PAGE);
+  await context.tracing.stopChunk({ path: testInfo.outputPath('trace.zip') });
+
+  await context.tracing.group('ignored3');
+  await context.tracing.groupEnd();
+  await context.tracing.groupEnd();
+  await context.tracing.groupEnd();
+
+  const { events } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+  const groups = events.filter(e => e.method === 'tracingGroup');
+  expect(groups).toHaveLength(1);
+  expect(groups[0].apiName).toBe('actual');
+  expect(events.some(e => e.type === 'after' && e.callId === groups[0].callId)).toBe(true);
+});
+
 test('should not include buffers in the trace', async ({ context, page, server }, testInfo) => {
   await context.tracing.start({ snapshots: true });
   await page.goto(server.PREFIX + '/empty.html');
@@ -407,9 +429,9 @@ for (const params of [
     height: 768,
   }
 ]) {
-  browserTest(`should produce screencast frames ${params.id}`, async ({ video, contextFactory, browserName, platform, headless }, testInfo) => {
+  browserTest(`should produce screencast frames ${params.id}`, async ({ video, contextFactory, browserName, platform, headless, isHeadlessShell }, testInfo) => {
     browserTest.skip(browserName === 'chromium' && video === 'on', 'Same screencast resolution conflicts');
-    browserTest.fixme(browserName === 'chromium' && (!headless || !!process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW), 'Chromium screencast on headed has a min width issue');
+    browserTest.fixme(browserName === 'chromium' && !isHeadlessShell, 'Chromium (but not headless-shell) screencast has a min width issue');
     browserTest.fixme(params.id === 'fit' && browserName === 'chromium' && platform === 'darwin', 'High DPI maxes image at 600x600');
     browserTest.fixme(params.id === 'fit' && browserName === 'webkit' && platform === 'linux', 'Image size is flaky');
     browserTest.fixme(browserName === 'firefox' && !headless, 'Image size is different');

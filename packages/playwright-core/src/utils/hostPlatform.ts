@@ -35,6 +35,12 @@ export type HostPlatform = 'win64' |
                            '<unknown>';
 
 function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupportedPlatform: boolean } {
+  if (process.env.PLAYWRIGHT_HOST_PLATFORM_OVERRIDE) {
+    return {
+      hostPlatform: process.env.PLAYWRIGHT_HOST_PLATFORM_OVERRIDE as HostPlatform,
+      isOfficiallySupportedPlatform: false
+    };
+  }
   const platform = os.platform();
   if (platform === 'darwin') {
     const ver = os.release().split('.').map((a: string) => parseInt(a, 10));
@@ -86,20 +92,15 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
         return { hostPlatform: ('ubuntu22.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
       return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
     }
-    if (distroInfo?.id === 'debian' || distroInfo?.id === 'raspbian' || distroInfo?.id === 'devuan') {
+    if (distroInfo?.id === 'debian' || distroInfo?.id === 'raspbian') {
       const isOfficiallySupportedPlatform = distroInfo?.id === 'debian';
-      let debianVersion = distroInfo?.version;
-      if (distroInfo.id === 'devuan') {
-        // Devuan is debian-based but it's always 7 versions behind
-        debianVersion = String(parseInt(distroInfo.version, 10) + 7);
-      }
-      if (debianVersion === '11')
+      if (distroInfo?.version === '11')
         return { hostPlatform: ('debian11' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
-      if (debianVersion === '12')
+      if (distroInfo?.version === '12')
         return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
       // use most recent supported release for 'debian testing' and 'unstable'.
       // they never include a numeric version entry in /etc/os-release.
-      if (debianVersion === '')
+      if (distroInfo?.version === '')
         return { hostPlatform: ('debian12' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
     }
     return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };

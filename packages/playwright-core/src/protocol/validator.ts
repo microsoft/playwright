@@ -422,7 +422,8 @@ scheme.DebugControllerSetRecorderModeParams = tObject({
 });
 scheme.DebugControllerSetRecorderModeResult = tOptional(tObject({}));
 scheme.DebugControllerHighlightParams = tObject({
-  selector: tString,
+  selector: tOptional(tString),
+  ariaTemplate: tOptional(tString),
 });
 scheme.DebugControllerHighlightResult = tOptional(tObject({}));
 scheme.DebugControllerHideHighlightParams = tOptional(tObject({}));
@@ -1165,7 +1166,7 @@ scheme.PageReloadResult = tObject({
 });
 scheme.PageExpectScreenshotParams = tObject({
   expected: tOptional(tBinary),
-  timeout: tOptional(tNumber),
+  timeout: tNumber,
   isNot: tBoolean,
   locator: tOptional(tObject({
     frame: tChannel(['Frame']),
@@ -1193,6 +1194,7 @@ scheme.PageExpectScreenshotResult = tObject({
   errorMessage: tOptional(tString),
   actual: tOptional(tBinary),
   previous: tOptional(tBinary),
+  timedOut: tOptional(tBoolean),
   log: tOptional(tArray(tString)),
 });
 scheme.PageScreenshotParams = tObject({
@@ -1769,7 +1771,7 @@ scheme.FrameExpectParams = tObject({
   expectedValue: tOptional(tType('SerializedArgument')),
   useInnerText: tOptional(tBoolean),
   isNot: tBoolean,
-  timeout: tOptional(tNumber),
+  timeout: tNumber,
 });
 scheme.FrameExpectResult = tObject({
   matches: tBoolean,
@@ -2296,6 +2298,17 @@ scheme.TracingTracingStartChunkParams = tObject({
 scheme.TracingTracingStartChunkResult = tObject({
   traceName: tString,
 });
+scheme.TracingTracingGroupParams = tObject({
+  name: tString,
+  location: tOptional(tObject({
+    file: tString,
+    line: tOptional(tNumber),
+    column: tOptional(tNumber),
+  })),
+});
+scheme.TracingTracingGroupResult = tOptional(tObject({}));
+scheme.TracingTracingGroupEndParams = tOptional(tObject({}));
+scheme.TracingTracingGroupEndResult = tOptional(tObject({}));
 scheme.TracingTracingStopChunkParams = tObject({
   mode: tEnum(['archive', 'discard', 'entries']),
 });

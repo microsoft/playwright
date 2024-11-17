@@ -27,6 +27,7 @@ import { ReportView } from './reportView';
 const zipjs = zipImport as typeof zip;
 
 import logo from '@web/assets/playwright-logo.svg';
+import { SearchParamsProvider } from './links';
 const link = document.createElement('link');
 link.rel = 'shortcut icon';
 link.href = logo;
@@ -40,7 +41,9 @@ const ReportLoader: React.FC = () => {
     const zipReport = new ZipReport();
     zipReport.load().then(() => setReport(zipReport));
   }, [report]);
-  return <ReportView report={report}></ReportView>;
+  return <SearchParamsProvider>
+    <ReportView report={report} />
+  </SearchParamsProvider>;
 };
 
 window.onload = () => {
@@ -52,7 +55,14 @@ class ZipReport implements LoadedReport {
   private _json!: HTMLReport;
 
   async load() {
-    const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(window.playwrightReportBase64!), { useWebWorkers: false });
+    const zipURI = await new Promise<string>(resolve => {
+      if (window.playwrightReportBase64)
+        return resolve(window.playwrightReportBase64);
+      window.addEventListener('message', event => event.source === window.opener && resolve(event.data), { once: true });
+      window.opener.postMessage('ready', '*');
+    });
+
+    const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(zipURI), { useWebWorkers: false });
     for (const entry of await zipReader.getEntries())
       this._entries.set(entry.filename, entry);
     this._json = await this.entry('report.json') as HTMLReport;

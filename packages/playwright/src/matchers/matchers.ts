@@ -15,7 +15,7 @@
  */
 
 import type { Locator, Page, APIResponse } from 'playwright-core';
-import type { FrameExpectOptions } from 'playwright-core/lib/client/types';
+import type { FrameExpectParams } from 'playwright-core/lib/client/types';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { expectTypes, callLogText } from '../util';
 import { toBeTruthy } from './toBeTruthy';
@@ -28,7 +28,7 @@ import type { ExpectMatcherState } from '../../types/test';
 import { takeFirst } from '../common/config';
 
 export interface LocatorEx extends Locator {
-  _expect(expression: string, options: Omit<FrameExpectOptions, 'expectedValue'> & { expectedValue?: any }): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
+  _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
 }
 
 interface APIResponseEx extends APIResponse {
@@ -181,7 +181,7 @@ export function toHaveAccessibleDescription(
   options?: { timeout?: number, ignoreCase?: boolean },
 ) {
   return toMatchText.call(this, 'toHaveAccessibleDescription', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
+    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase, normalizeWhiteSpace: true });
     return await locator._expect('to.have.accessible.description', { expectedText, isNot, timeout });
   }, expected, options);
 }
@@ -194,12 +194,12 @@ export function toHaveAccessibleName(
 ) {
   if (Array.isArray(expected)) {
     return toEqual.call(this, 'toHaveAccessibleName', locator, 'Locator', async (isNot, timeout) => {
-      const expectedText = serializeExpectedTextValues(expected, { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
+      const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase, normalizeWhiteSpace: true });
       return await locator._expect('to.have.accessible.name.array', { expectedText, isNot, timeout });
     }, expected, options);
   } else {
     return toMatchText.call(this, 'toHaveAccessibleName', locator, 'Locator', async (isNot, timeout) => {
-      const expectedText = serializeExpectedTextValues([expected], { matchSubstring: true, normalizeWhiteSpace: true, ignoreCase: options.ignoreCase });
+      const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase, normalizeWhiteSpace: true });
       return await locator._expect('to.have.accessible.name', { expectedText, isNot, timeout });
     }, expected, options);
   }

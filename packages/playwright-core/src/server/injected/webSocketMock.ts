@@ -331,6 +331,13 @@ export function inject(globalThis: GlobalThis) {
     _ensureOpened() {
       if (this.readyState !== WebSocketMock.CONNECTING)
         return;
+      this.extensions = this._ws?.extensions || '';
+      if (this._ws)
+        this.protocol = this._ws.protocol;
+      else if (Array.isArray(this._protocols))
+        this.protocol = this._protocols[0] || '';
+      else
+        this.protocol = this._protocols || '';
       this.readyState = WebSocketMock.OPEN;
       this.dispatchEvent(new Event('open', { cancelable: true }));
     }

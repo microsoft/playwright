@@ -47,6 +47,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
   const kTargetAttribute = '__playwright_target__';
   const kCustomElementsAttribute = '__playwright_custom_elements__';
   const kCurrentSrcAttribute = '__playwright_current_src__';
+  const kBoundingRectAttribute = '__playwright_bounding_rect__';
 
   // Symbols for our own info on Nodes/StyleSheets.
   const kSnapshotFrameId = Symbol('__playwright_snapshot_frameid_');
@@ -435,6 +436,18 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
             expectValue(kSelectedAttribute);
             expectValue(value);
             attrs[kSelectedAttribute] = value;
+          }
+          if (nodeName === 'CANVAS') {
+            const boundingRect = (element as HTMLCanvasElement).getBoundingClientRect();
+            const value = JSON.stringify({
+              left: boundingRect.left / window.innerWidth,
+              top: boundingRect.top / window.innerHeight,
+              right: boundingRect.right / window.innerWidth,
+              bottom: boundingRect.bottom / window.innerHeight
+            });
+            expectValue(kBoundingRectAttribute);
+            expectValue(value);
+            attrs[kBoundingRectAttribute] = value;
           }
           if (element.scrollTop) {
             expectValue(kScrollTopAttribute);

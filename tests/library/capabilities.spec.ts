@@ -19,8 +19,7 @@ import url from 'url';
 import { contextTest as it, expect } from '../config/browserTest';
 import { hostPlatform } from '../../packages/playwright-core/src/utils/hostPlatform';
 
-it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer, isMac, macVersion, browserName }) {
-  it.skip(browserName === 'webkit' && isMac && macVersion <= 12, 'WebKit on macOS 12 is frozen and does not support SharedArrayBuffer');
+it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer }) {
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   httpsServer.setRoute('/sharedarraybuffer', (req, res) => {
@@ -234,9 +233,8 @@ it('make sure that XMLHttpRequest upload events are emitted correctly', async ({
   expect(events).toEqual(['loadstart', 'progress', 'load', 'loadend']);
 });
 
-it('loading in HTMLImageElement.prototype', async ({ page, server, browserName, isMac, macVersion }) => {
+it('loading in HTMLImageElement.prototype', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22738' });
-  it.skip(browserName === 'webkit' && isMac && macVersion < 12, 'macOS 11 is frozen');
   await page.goto(server.EMPTY_PAGE);
   const defined = await page.evaluate(() => 'loading' in HTMLImageElement.prototype);
   expect(defined).toBeTruthy();
@@ -251,7 +249,7 @@ it('window.GestureEvent in WebKit', async ({ page, server, browserName }) => {
   expect(type).toBe(browserName === 'webkit' ? 'function' : 'undefined');
 });
 
-it('requestFullscreen', async ({ page, server, browserName, headless, isLinux }) => {
+it('requestFullscreen', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22832' });
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {
@@ -268,7 +266,7 @@ it('requestFullscreen', async ({ page, server, browserName, headless, isLinux })
   expect(await page.evaluate(() => !!document.fullscreenElement)).toBeFalsy();
 });
 
-it('should send no Content-Length header for GET requests with a Content-Type', async ({ page, server, browserName }) => {
+it('should send no Content-Length header for GET requests with a Content-Type', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22569' });
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([

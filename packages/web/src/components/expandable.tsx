@@ -24,14 +24,20 @@ export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
   expanded: boolean,
   expandOnTitleClick?: boolean,
 }>> = ({ title, children, setExpanded, expanded, expandOnTitleClick }) => {
+  const id = React.useId();
   return <div className={clsx('expandable', expanded && 'expanded')}>
-    <div className='expandable-title' onClick={() => expandOnTitleClick && setExpanded(!expanded)}>
+    <div
+      role='button'
+      aria-expanded={expanded}
+      aria-controls={id}
+      className='expandable-title'
+      onClick={() => expandOnTitleClick && setExpanded(!expanded)}>
       <div
         className={clsx('codicon', expanded ? 'codicon-chevron-down' : 'codicon-chevron-right')}
         style={{ cursor: 'pointer', color: 'var(--vscode-foreground)', marginLeft: '5px' }}
         onClick={() => !expandOnTitleClick && setExpanded(!expanded)} />
       {title}
     </div>
-    { expanded && <div style={{ marginLeft: 25 }}>{children}</div> }
+    { expanded && <div id={id} role='region' style={{ marginLeft: 25 }}>{children}</div> }
   </div>;
 };

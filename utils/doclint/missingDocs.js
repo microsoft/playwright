@@ -120,7 +120,7 @@ function listMethods(rootNames, apiFileName) {
   function shouldSkipMethodByName(className, methodName) {
     if (methodName.startsWith('_') || methodName === 'T' || methodName === 'toString')
       return true;
-    if (/** @type {any} */(EventEmitter).prototype.hasOwnProperty(methodName))
+    if (EventEmitter.prototype.hasOwnProperty(methodName))
       return true;
     return false;
   }
@@ -141,7 +141,7 @@ function listMethods(rootNames, apiFileName) {
       const memberType = checker.getTypeOfSymbolAtLocation(member, member.valueDeclaration);
       const signature = signatureForType(memberType);
       if (signature)
-        methods.set(name, new Set(signature.parameters.map(p => p.escapedName)));
+        methods.set(name, new Set(signature.parameters.filter(p => !p.escapedName.startsWith('_')).map(p => p.escapedName)));
       else
         methods.set(name, new Set());
     }

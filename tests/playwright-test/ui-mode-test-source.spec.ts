@@ -40,6 +40,17 @@ test('should show selected test in sources', async ({ runUITest }) => {
         ◯ third
   `);
 
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] first"
+          - treeitem "[icon-circle-outline] second"
+      - treeitem "[icon-circle-outline] b.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] third"
+  `);
+
   await page.getByTestId('test-tree').getByText('first').click();
   await expect(
       page.getByTestId('source-code').locator('.source-tab-file-name')
@@ -47,6 +58,13 @@ test('should show selected test in sources', async ({ runUITest }) => {
   await expect(
       page.locator('.CodeMirror .source-line-running'),
   ).toHaveText(`3    test('first', () => {});`);
+
+  await expect(page.getByTestId('source-code-mirror')).toMatchAriaSnapshot(`
+    - text: |
+        import { test } from '@playwright/test';
+        test('first', () => {});
+        test('second', () => {});
+  `);
 
   await page.getByTestId('test-tree').getByText('second').click();
   await expect(
@@ -85,6 +103,14 @@ test('should show top-level errors in file', async ({ runUITest }) => {
         ◯ third
   `);
 
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts"
+      - treeitem "[icon-circle-outline] b.test.ts" [expanded]:
+        - group:
+          - treeitem "[icon-circle-outline] third"
+  `);
+
   await page.getByTestId('test-tree').getByText('a.test.ts').click();
   await expect(
       page.getByTestId('source-code').locator('.source-tab-file-name')
@@ -96,7 +122,6 @@ test('should show top-level errors in file', async ({ runUITest }) => {
   await expect(
       page.locator('.CodeMirror-linewidget')
   ).toHaveText([
-    '            ',
     'TypeError: Assignment to constant variable.'
   ]);
 });
@@ -113,6 +138,11 @@ test('should show syntax errors in file', async ({ runUITest }) => {
       ◯ a.test.ts
   `);
 
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "[icon-circle-outline] a.test.ts"
+  `);
+
   await page.getByTestId('test-tree').getByText('a.test.ts').click();
   await expect(
       page.getByTestId('source-code').locator('.source-tab-file-name')
@@ -124,7 +154,6 @@ test('should show syntax errors in file', async ({ runUITest }) => {
   await expect(
       page.locator('.CodeMirror-linewidget')
   ).toHaveText([
-    '                                              ',
     /Missing semicolon./
   ]);
 });
@@ -152,7 +181,14 @@ test('should load error (dupe tests) indicator on sources', async ({ runUITest }
   await expect(
       page.locator('.CodeMirror-linewidget')
   ).toHaveText([
-    '                              ',
     /Error: duplicate test title "first", first declared in a.test.ts:3/
   ]);
+
+  await expect(page.getByTestId('source-code-mirror')).toMatchAriaSnapshot(`
+    - text: |
+        import { test } from '@playwright/test';
+        test('first', () => {});
+        test('first', () => {});
+        Error: duplicate test title "first", first declared in a.test.ts:3
+  `);
 });

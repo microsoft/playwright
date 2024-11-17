@@ -118,10 +118,5 @@ export async function toMatchText(
     actual: received,
     log,
     timeout: timedOut ? timeout : undefined,
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
-    locator: receiver.toString(),
-    ...(printedReceived ? { printedReceived } : {}),
-    ...(printedExpected ? { printedExpected } : {}),
-    ...(printedDiff ? { printedDiff } : {}),
   };
 }

@@ -30,12 +30,12 @@ import type { TestInfo } from '@playwright/test';
 export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   browserVersion: string;
   defaultSameSiteCookieValue: string;
-  sameSiteStoredValueForNone: string;
   allowsThirdParty: boolean;
   browserMajorVersion: number;
   browserType: BrowserType;
   isAndroid: boolean;
   isElectron: boolean;
+  isHeadlessShell: boolean;
   nodeVersion: { major: number, minor: number, patch: number };
   bidiTestSkipPredicate: (info: TestInfo) => boolean;
 };
@@ -76,21 +76,12 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await run('Lax');
     else if (browserName === 'webkit' && platform === 'linux')
       await run('Lax');
-    else if (browserName === 'webkit' && platform === 'darwin' && macVersion >= 15)
-      await run('Lax');
     else if (browserName === 'webkit')
       await run('None'); // Windows + older macOS
     else if (browserName === 'firefox' || browserName as any === '_bidiFirefox')
       await run('None');
     else
       throw new Error('unknown browser - ' + browserName);
-  }, { scope: 'worker' }],
-
-  sameSiteStoredValueForNone: [async ({ browserName, isMac, macVersion }, run) => {
-    if (browserName === 'webkit' && isMac && macVersion >= 15)
-      await run('Lax');
-    else
-      await run('None');
   }, { scope: 'worker' }],
 
   browserMajorVersion: [async ({ browserVersion }, run) => {
@@ -106,6 +97,10 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   isElectron: [false, { scope: 'worker' }],
   electronMajorVersion: [0, { scope: 'worker' }],
   isWebView2: [false, { scope: 'worker' }],
+
+  isHeadlessShell: [async ({ browserName, channel, headless }, use) => {
+    await use(browserName === 'chromium' && (channel === 'chromium-headless-shell' || (!channel && headless)));
+  }, { scope: 'worker' }],
 
   contextFactory: async ({ _contextFactory }: any, run) => {
     await run(_contextFactory);

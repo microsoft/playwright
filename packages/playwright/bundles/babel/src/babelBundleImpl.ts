@@ -23,12 +23,13 @@ import * as babel from '@babel/core';
 export { codeFrameColumns } from '@babel/code-frame';
 export { declare } from '@babel/helper-plugin-utils';
 export { types } from '@babel/core';
-export { parse } from '@babel/parser';
 import traverseFunction from '@babel/traverse';
 export const traverse = traverseFunction;
 
 function babelTransformOptions(isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): TransformOptions {
-  const plugins = [];
+  const plugins = [
+    [require('@babel/plugin-syntax-import-attributes'), { deprecatedAssertSyntax: true }],
+  ];
 
   if (isTypeScript) {
     plugins.push(
@@ -46,7 +47,6 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
         [require('@babel/plugin-syntax-async-generators')],
         [require('@babel/plugin-syntax-object-rest-spread')],
         [require('@babel/plugin-transform-export-namespace-from')],
-        [require('@babel/plugin-syntax-import-attributes'), { deprecatedAssertSyntax: true }],
         [
           // From https://github.com/G-Rath/babel-plugin-replace-ts-export-assignment/blob/8dfdca32c8aa428574b0cae341444fc5822f2dc6/src/index.ts
           (
@@ -114,16 +114,25 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
 
 let isTransforming = false;
 
-export function babelTransform(code: string, filename: string, isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): BabelFileResult {
+function isTypeScript(filename: string) {
+  return filename.endsWith('.ts') || filename.endsWith('.tsx') || filename.endsWith('.mts') || filename.endsWith('.cts');
+}
+
+export function babelTransform(code: string, filename: string, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): BabelFileResult {
   if (isTransforming)
     return {};
 
   // Prevent reentry while requiring plugins lazily.
   isTransforming = true;
   try {
-    const options = babelTransformOptions(isTypeScript, isModule, pluginsPrologue, pluginsEpilogue);
+    const options = babelTransformOptions(isTypeScript(filename), isModule, pluginsPrologue, pluginsEpilogue);
     return babel.transform(code, { filename, ...options })!;
   } finally {
     isTransforming = false;
   }
+}
+
+export function babelParse(code: string, filename: string, isModule: boolean): babel.ParseResult {
+  const options = babelTransformOptions(isTypeScript(filename), isModule, [], []);
+  return babel.parse(code, { filename, ...options })!;
 }

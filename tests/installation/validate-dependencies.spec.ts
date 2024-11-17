@@ -58,7 +58,7 @@ test('should validate dependencies correctly if skipped during install', async (
         DEBUG: 'pw:install',
       },
     });
-    expect(result).toContain(`validating host requirements for "chromium"`);
+    expect(result).toContain(`validating host requirements for "chromium-headless-shell"`);
     expect(result).not.toContain(`validating host requirements for "firefox"`);
     expect(result).not.toContain(`validating host requirements for "webkit"`);
   });

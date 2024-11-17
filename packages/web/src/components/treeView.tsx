@@ -231,6 +231,7 @@ export function TreeItemHeader<T extends TreeItem>({
   icon,
   isKeyboardNavigation,
   setIsKeyboardNavigation }: TreeItemHeaderProps<T>) {
+  const groupId = React.useId();
   const itemRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -251,7 +252,7 @@ export function TreeItemHeader<T extends TreeItem>({
   const titled = title?.(item);
   const iconed = icon?.(item) || 'codicon-blank';
 
-  return <div ref={itemRef} role='treeitem' aria-selected={item === selectedItem} aria-expanded={expanded} title={titled} className='vbox' style={{ flex: 'none' }}>
+  return <div ref={itemRef} role='treeitem' aria-selected={item === selectedItem} aria-expanded={expanded} aria-controls={groupId} title={titled} className='vbox' style={{ flex: 'none' }}>
     <div
       onDoubleClick={() => onAccepted?.(item)}
       className={clsx(
@@ -281,7 +282,7 @@ export function TreeItemHeader<T extends TreeItem>({
       {icon && <div className={'codicon ' + iconed} style={{ minWidth: 16, marginRight: 4 }} aria-label={'[' + iconed.replace('codicon', 'icon') + ']'}></div>}
       {typeof rendered === 'string' ? <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>{rendered}</div> : rendered}
     </div>
-    {!!children.length && <div role='group'>
+    {!!children.length && <div id={groupId} role='group'>
       {children.map(child => {
         const itemData = treeItems.get(child);
         return itemData && <TreeItemHeader

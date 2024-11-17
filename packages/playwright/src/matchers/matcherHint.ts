@@ -33,16 +33,12 @@ export function matcherHint(state: ExpectMatcherState, locator: Locator | undefi
 
 export type MatcherResult<E, A> = {
   name: string;
-  expected: E;
+  expected?: E;
   message: () => string;
   pass: boolean;
   actual?: A;
   log?: string[];
   timeout?: number;
-  locator?: string;
-  printedReceived?: string;
-  printedExpected?: string;
-  printedDiff?: string;
   suggestedRebaseline?: string;
 };
 

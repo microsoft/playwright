@@ -125,6 +125,8 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
 
+  params.set('server', server.urlPrefix('precise'));
+
   const urlPath  = `./trace/${options.webApp || 'index.html'}?${params.toString()}`;
   server.routePath('/', (_, response) => {
     response.statusCode = 302;
@@ -163,6 +165,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
       ...options?.persistentContextOptions,
       useWebSocket: isUnderTest(),
       headless: !!options?.headless,
+      colorScheme: isUnderTest() ? 'light' : undefined,
     },
   });
 

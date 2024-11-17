@@ -616,6 +616,33 @@ test('should print pending operations for toHaveText', async ({ runInlineTest })
   expect(output).toContain('waiting for locator(\'no-such-thing\')');
 });
 
+test('should only highlight unmatched regex in diff message for toHaveText with array', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('toHaveText with mixed strings and regexes (array)', async ({ page }) => {
+        await page.setContent(\`
+          <ul>
+            <li>Coffee</li>
+            <li>Tea</li>
+            <li>Milk</li>
+          </ul>
+        \`);
+
+        const items = page.locator('li');
+        await expect(items).toHaveText(['Coffee', /\\d+/, /Milk/]);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(1);
+  const output = result.output;
+  expect(output).toContain('-   /\\d+/,');
+  expect(output).toContain('+   "Tea",');
+  expect(output).not.toContain('-   /Milk/,');
+  expect(output).not.toContain('-   "Coffee",');
+});
+
 test('should print expected/received on Ctrl+C', async ({ interactWithTestRunner }) => {
   test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
 
