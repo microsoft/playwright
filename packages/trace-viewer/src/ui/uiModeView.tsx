@@ -109,7 +109,10 @@ export const UIModeView: React.FC<{}> = ({
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const reloadTests = React.useCallback(() => {
-    setTestServerConnection(new TestServerConnection(new WebSocketTestServerTransport(wsURL)));
+    setTestServerConnection(prevConnection => {
+      prevConnection?.close();
+      return new TestServerConnection(new WebSocketTestServerTransport(wsURL));
+    });
   }, []);
 
   // Load tests on startup.
@@ -224,7 +227,7 @@ export const UIModeView: React.FC<{}> = ({
         newFilter.set(projectSuite.title, !!selectedProjects?.includes(projectSuite.title));
     }
     if (!selectedProjects && newFilter.size && ![...newFilter.values()].includes(true))
-      newFilter.set(newFilter.entries().next().value[0], true);
+      newFilter.set(newFilter.entries().next().value![0], true);
     if (projectFilters.size !== newFilter.size || [...projectFilters].some(([k, v]) => newFilter.get(k) !== v))
       setProjectFilters(newFilter);
   }, [projectFilters, testModel]);
