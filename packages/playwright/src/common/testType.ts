@@ -104,7 +104,17 @@ export class TestTypeImpl {
     test._requireFile = suite._requireFile;
     test._staticAnnotations.push(...validatedDetails.annotations);
     test._tags.push(...validatedDetails.tags);
-    suite._addTest(test);
+
+    if (typeof details.fixtures === 'object') {
+      const containingSubSuite = new Suite(title, 'describe');
+      containingSubSuite._requireFile = suite._requireFile;
+      containingSubSuite.location = location;
+      containingSubSuite._use.push({ fixtures: details.fixtures, location });
+      containingSubSuite._addTest(test);
+      suite._addSuite(containingSubSuite);
+    } else {
+      suite._addTest(test);
+    }
 
     if (type === 'only' || type === 'fail.only')
       test._only = true;

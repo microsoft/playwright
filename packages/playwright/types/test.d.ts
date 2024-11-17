@@ -1857,6 +1857,7 @@ type TestDetailsAnnotation = {
 export type TestDetails = {
   tag?: string | string[];
   annotation?: TestDetailsAnnotation | TestDetailsAnnotation[];
+  fixtures?: Fixtures;
 }
 
 type TestBody<TestArgs> = (args: TestArgs, testInfo: TestInfo) => Promise<void> | void;
