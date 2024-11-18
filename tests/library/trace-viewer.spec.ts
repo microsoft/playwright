@@ -1444,10 +1444,13 @@ test('should not record route actions', {
   ]);
 });
 
-test('should not record response actions', {
+test('should not record network actions', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33558' },
 }, async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
+    page.on('request', async request => {
+      await request.allHeaders();
+    });
     page.on('response', async response => {
       await response.text();
     });

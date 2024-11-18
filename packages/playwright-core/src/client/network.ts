@@ -97,6 +97,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.RequestInitializer) {
     super(parent, type, guid, initializer);
+    this.markAsInternalType();
     this._redirectedFrom = Request.fromNullable(initializer.redirectedFrom);
     if (this._redirectedFrom)
       this._redirectedFrom._redirectedTo = this;

@@ -1414,6 +1414,42 @@ fixture   |  fixture: context
 `);
 });
 
+test('reading network request / response should not be listed as step', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33558' }
+}, async ({ runInlineTest, server }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('waitForResponse step nesting', async ({ page }) => {
+        page.on('request', async request => {
+          await request.allHeaders();
+        });
+        page.on('response', async response => {
+          await response.text();
+        });
+        await page.goto('${server.EMPTY_PAGE}');
+      });
+      `
+  }, { reporter: '', workers: 1, timeout: 3000 });
+
+  expect(result.exitCode).toBe(0);
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+fixture   |  fixture: browser
+pw:api    |    browserType.launch
+fixture   |  fixture: context
+pw:api    |    browser.newContext
+fixture   |  fixture: page
+pw:api    |    browserContext.newPage
+pw:api    |page.goto(${server.EMPTY_PAGE}) @ a.test.ts:10
+hook      |After Hooks
+fixture   |  fixture: page
+fixture   |  fixture: context
+`);
+});
+
 test('calls from page.route callback should be under its parent step', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33186' }
 }, async ({ runInlineTest, server }) => {
