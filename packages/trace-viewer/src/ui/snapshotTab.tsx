@@ -40,8 +40,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedLocator: string,
   setHighlightedLocator: (locator: string) => void,
-  openPage?: (url: string, target?: string) => Window | any,
-}> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator, openPage }) => {
+}> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator }) => {
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
   const snapshots = React.useMemo(() => {
@@ -66,9 +65,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
       })}
       <div style={{ flex: 'auto' }}></div>
       <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!snapshotUrls?.popoutUrl} onClick={() => {
-        if (!openPage)
-          openPage = window.open;
-        const win = openPage(snapshotUrls?.popoutUrl || '', '_blank');
+        const win = window.open(snapshotUrls?.popoutUrl || '', '_blank');
         win?.addEventListener('DOMContentLoaded', () => {
           const injectedScript = new InjectedScript(win as any, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
           new ConsoleAPI(injectedScript);
