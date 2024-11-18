@@ -7899,7 +7899,7 @@ interface LocatorAssertions {
    * @param name Expected accessible name.
    * @param options
    */
-  toHaveAccessibleName(name: string|RegExp, options?: {
+  toHaveAccessibleName(name: string|RegExp|ReadonlyArray<string|RegExp>, options?: {
     /**
      * Whether to perform case-insensitive match.
      * [`ignoreCase`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-accessible-name-option-ignore-case)

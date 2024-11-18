@@ -1354,6 +1354,8 @@ export class InjectedScript {
       received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : elementText(new Map(), e).full);
     else if (expression === 'to.have.class.array')
       received = elements.map(e => e.classList.toString());
+    else if (expression === 'to.have.accessible.name.array')
+      received = elements.map(e => getElementAccessibleName(e, false));
 
     if (received && options.expectedText) {
       // "To match an array" is "to contain an array" + "equal length"
