@@ -62,7 +62,7 @@ export const FiltersView: React.FC<{
         {[...statusFilters.entries()].map(([status, value]) => {
           return <div className='filter-entry' key={status} role='listitem'>
             <label>
-              <input type='checkbox' checked={value} onClick={() => {
+              <input type='checkbox' checked={value} onChange={() => {
                 const copy = new Map(statusFilters);
                 copy.set(status, !copy.get(status));
                 setStatusFilters(copy);
@@ -76,7 +76,7 @@ export const FiltersView: React.FC<{
         {[...projectFilters.entries()].map(([projectName, value]) => {
           return <div className='filter-entry' key={projectName}  role='listitem'>
             <label>
-              <input type='checkbox' checked={value} onClick={() => {
+              <input type='checkbox' checked={value} onChange={() => {
                 const copy = new Map(projectFilters);
                 copy.set(projectName, !copy.get(projectName));
                 setProjectFilters(copy);
