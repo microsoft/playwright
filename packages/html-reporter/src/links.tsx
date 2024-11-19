@@ -116,8 +116,11 @@ const kMissingContentType = 'x-playwright/missing';
 
 type AnchorID = string | ((id: string | null) => boolean) | undefined;
 
-function useAnchor(id: AnchorID, onReveal: () => void) {
+export function useAnchor(id: AnchorID, onReveal: () => void) {
   React.useEffect(() => {
+    if (typeof id === 'undefined')
+      return;
+
     const listener = () => {
       const params = new URLSearchParams(window.location.hash.slice(1));
       const anchor = params.get('anchor');

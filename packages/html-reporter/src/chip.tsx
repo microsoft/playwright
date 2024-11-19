@@ -20,7 +20,7 @@ import './colors.css';
 import './common.css';
 import * as icons from './icons';
 import { clsx } from '@web/uiUtils';
-import { Anchor } from './links';
+import { useAnchor } from './links';
 
 export const Chip: React.FC<{
   header: JSX.Element | string,
@@ -53,19 +53,18 @@ export const AutoChip: React.FC<{
   noInsets?: boolean,
   children?: any,
   dataTestId?: string,
-  anchorId?: string,
-}> = ({ header, initialExpanded, noInsets, children, dataTestId, anchorId }) => {
+  revealOnAnchorId?: string,
+}> = ({ header, initialExpanded, noInsets, children, dataTestId, revealOnAnchorId }) => {
   const [expanded, setExpanded] = React.useState(initialExpanded ?? true);
   const onReveal = React.useCallback(() => setExpanded(true), []);
-  return <Anchor id={anchorId} onReveal={onReveal}>
-    <Chip
-      header={header}
-      expanded={expanded}
-      setExpanded={setExpanded}
-      noInsets={noInsets}
-      dataTestId={dataTestId}
-    >
-      {children}
-    </Chip>
-  </Anchor>;
+  useAnchor(revealOnAnchorId, onReveal);
+  return <Chip
+    header={header}
+    expanded={expanded}
+    setExpanded={setExpanded}
+    noInsets={noInsets}
+    dataTestId={dataTestId}
+  >
+    {children}
+  </Chip>;
 };
