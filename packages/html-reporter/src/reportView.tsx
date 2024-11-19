@@ -101,7 +101,6 @@ const TestCaseViewLoader: React.FC<{
   const searchParams = React.useContext(SearchParamsContext);
   const [test, setTest] = React.useState<TestCase | undefined>();
   const testId = searchParams.get('testId');
-  const anchor = (searchParams.get('anchor') || '') as 'video' | 'diff' | '';
   const run = +(searchParams.get('run') || '0');
 
   const { prev, next } = React.useMemo(() => {
@@ -133,7 +132,6 @@ const TestCaseViewLoader: React.FC<{
     next={next}
     prev={prev}
     test={test}
-    anchor={anchor}
     run={run}
   />;
 };

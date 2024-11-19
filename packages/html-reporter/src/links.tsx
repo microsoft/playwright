@@ -113,3 +113,32 @@ export function generateTraceUrl(traces: TestAttachment[]) {
 }
 
 const kMissingContentType = 'x-playwright/missing';
+
+type AnchorID = string | ((id: string | null) => boolean) | undefined;
+
+export function useAnchor(id: AnchorID, onReveal: () => void) {
+  React.useEffect(() => {
+    if (typeof id === 'undefined')
+      return;
+
+    const listener = () => {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      const anchor = params.get('anchor');
+      const isRevealed = typeof id === 'function' ? id(anchor) : anchor === id;
+      if (isRevealed)
+        onReveal();
+    };
+    window.addEventListener('popstate', listener);
+    return () => window.removeEventListener('popstate', listener);
+  }, [id, onReveal]);
+}
+
+export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID }>) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const onAnchorReveal = React.useCallback(() => {
+    requestAnimationFrame(() => ref.current?.scrollIntoView({ block: 'start', inline: 'start' }));
+  }, []);
+  useAnchor(id, onAnchorReveal);
+
+  return <div ref={ref}>{children}</div>;
+}
