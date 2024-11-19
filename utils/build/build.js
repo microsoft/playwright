@@ -301,7 +301,7 @@ if (watchMode) {
     args: [
       'vite', '--config', 'vite.sw.config.ts',
       'build', '--watch', '--minify=false',
-      '--outDir', path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'lib', 'vite', 'trace-viewer'),
+      '--outDir', path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'lib', 'vite', 'traceViewer'),
       '--emptyOutDir=false'
     ],
     shell: true,
