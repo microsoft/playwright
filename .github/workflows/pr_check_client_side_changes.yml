@@ -27,7 +27,11 @@ jobs:
               repo: context.repo.repo,
               commit_sha: context.sha,
             });
-            const commitHeader = data.message.split('\n')[0].replace(/#(\d+)/g, 'https://github.com/microsoft/playwright/pull/$1');
+            const commitHeader = data.message.split('\n')[0];
+            const prMatch = commitHeader.match(/#(\d+)/);
+            const formattedCommit = prMatch 
+              ? `https://github.com/microsoft/playwright/pull/${prMatch[1]}`
+              : `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.sha} (${commitHeader})`;
 
             const title = '[Ports]: Backport client side changes for ' + currentPlaywrightVersion;
             for (const repo of ['playwright-python', 'playwright-java', 'playwright-dotnet']) {
@@ -50,7 +54,7 @@ jobs:
                 issueBody = issueCreateData.body;
               }
               const newBody = issueBody.trimEnd() + `
-              - [ ] https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.sha} (${commitHeader})`;
+              - [ ] ${formattedCommit}`;
               const data = await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: repo,
