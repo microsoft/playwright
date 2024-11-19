@@ -47,11 +47,10 @@ const xtermDataSource: XtermDataSource = {
 };
 
 const searchParams = new URLSearchParams(window.location.search);
-const guid = searchParams.get('ws');
-let testServerBaseUrl = new URL(window.location.href);
+let testServerBaseUrl = new URL('../', window.location.href);
 if (testServerBaseUrl.searchParams.has('server'))
   testServerBaseUrl = new URL(testServerBaseUrl.searchParams.get('server')!, testServerBaseUrl);
-const wsURL = new URL(`../${guid}`, testServerBaseUrl);
+const wsURL = new URL(searchParams.get('ws')!, testServerBaseUrl);
 wsURL.protocol = (wsURL.protocol === 'https:' ? 'wss:' : 'ws:');
 const queryParams = {
   args: searchParams.getAll('arg'),
