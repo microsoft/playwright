@@ -114,7 +114,7 @@ export function generateTraceUrl(traces: TestAttachment[]) {
 
 const kMissingContentType = 'x-playwright/missing';
 
-type AnchorID = string | ((id: string | null) => boolean) | undefined;
+export type AnchorID = string | ((id: string) => boolean) | undefined;
 
 export function useAnchor(id: AnchorID, onReveal: () => void) {
   React.useEffect(() => {
@@ -123,8 +123,10 @@ export function useAnchor(id: AnchorID, onReveal: () => void) {
 
     const listener = () => {
       const params = new URLSearchParams(window.location.hash.slice(1));
+      if (!params.has('anchor'))
+        return;
       const anchor = params.get('anchor');
-      const isRevealed = typeof id === 'function' ? id(anchor) : anchor === id;
+      const isRevealed = typeof id === 'function' ? id(anchor!) : anchor === id;
       if (isRevealed)
         onReveal();
     };
