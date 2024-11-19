@@ -22,7 +22,6 @@ import { CopyToClipboard } from './copyToClipboard';
 import './links.css';
 import { linkifyText } from '@web/renderUtils';
 import { clsx } from '@web/uiUtils';
-import { componentID } from './testResultView';
 
 export function navigate(href: string) {
   window.history.pushState({}, '', href);
@@ -78,7 +77,7 @@ export const AttachmentLink: React.FunctionComponent<{
   linkName?: string,
   openInNewTab?: boolean,
 }> = ({ attachment, href, linkName, openInNewTab }) => {
-  return <TreeItem id={componentID(params => params.set('attachment', attachment.name))} title={<span>
+  return <TreeItem title={<span>
     {attachment.contentType === kMissingContentType ? icons.warning() : icons.attachment()}
     {attachment.path && <a href={href || attachment.path} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>}
     {!attachment.path && (

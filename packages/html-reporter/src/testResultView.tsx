@@ -174,12 +174,6 @@ function classifyErrors(testErrors: string[], diffs: ImageDiff[]) {
   });
 }
 
-export function componentID(cb: (params: URLSearchParams) => void) {
-  const searchParams = new URLSearchParams(window.location.hash.slice(1));
-  cb(searchParams);
-  return '?' + searchParams;
-}
-
 const StepTreeItem: React.FC<{
   step: TestStep;
   depth: number,
@@ -187,7 +181,7 @@ const StepTreeItem: React.FC<{
   const attachmentName = step.title.match(/^attach "(.*)"$/)?.[1];
   return <TreeItem title={<span aria-label={step.title}>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
-    {attachmentName && <a style={{ float: 'right' }} title='link to attachment' href={'#' + componentID(params => params.set('attachment', attachmentName))} onClick={evt => { evt.stopPropagation(); }}>{icons.attachment()}</a>}
+    {attachmentName && <a style={{ float: 'right' }} title='link to attachment' href='TODO' onClick={evt => { evt.stopPropagation(); }}>{icons.attachment()}</a>}
     {statusIcon(step.error || step.duration === -1 ? 'failed' : 'passed')}
     <span>{step.title}</span>
     {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}

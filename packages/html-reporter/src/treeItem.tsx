@@ -26,11 +26,10 @@ export const TreeItem: React.FunctionComponent<{
   depth: number,
   selected?: boolean,
   style?:  React.CSSProperties,
-  id?: string,
-}> = ({ title, loadChildren, onClick, expandByDefault, depth, selected, style, id }) => {
+}> = ({ title, loadChildren, onClick, expandByDefault, depth, selected, style }) => {
   const [expanded, setExpanded] = React.useState(expandByDefault || false);
   const className = selected ? 'tree-item-title selected' : 'tree-item-title';
-  return <div className={'tree-item'} id={id} style={style}>
+  return <div className={'tree-item'} style={style}>
     <span className={className} style={{ whiteSpace: 'nowrap', paddingLeft: depth * 22 + 4 }} onClick={() => { onClick?.(); setExpanded(!expanded); }} >
       {loadChildren && !!expanded && icons.downArrow()}
       {loadChildren && !expanded && icons.rightArrow()}
