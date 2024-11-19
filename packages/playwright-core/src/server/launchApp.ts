@@ -43,12 +43,12 @@ export async function launchApp(browserType: BrowserType, options: {
   }
 
   const context = await browserType.launchPersistentContext(serverSideCallMetadata(), '', {
-    channel: !options.persistentContextOptions?.executablePath ? findChromiumChannel(options.sdkLanguage) : undefined,
-    noDefaultViewport: true,
     ignoreDefaultArgs: ['--enable-automation'],
-    colorScheme: 'no-override',
-    acceptDownloads: isUnderTest() ? 'accept' : 'internal-browser-default',
     ...options?.persistentContextOptions,
+    channel: options.persistentContextOptions?.channel ?? (!options.persistentContextOptions?.executablePath ? findChromiumChannel(options.sdkLanguage) : undefined),
+    noDefaultViewport: options.persistentContextOptions?.noDefaultViewport ?? true,
+    acceptDownloads: options?.persistentContextOptions?.acceptDownloads ?? (isUnderTest() ? 'accept' : 'internal-browser-default'),
+    colorScheme: options?.persistentContextOptions?.colorScheme ?? 'no-override',
     args,
   });
   const [page] = context.pages();
