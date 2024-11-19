@@ -45,7 +45,7 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, client:
   if (!data) {
     let traceViewerServerBaseUrl = new URL(client?.url ?? self.registration.scope);
     if (traceViewerServerBaseUrl.searchParams.has('server'))
-      traceViewerServerBaseUrl = new URL(traceViewerServerBaseUrl.searchParams.get('server')!, traceViewerServerBaseUrl)
+      traceViewerServerBaseUrl = new URL(traceViewerServerBaseUrl.searchParams.get('server')!, traceViewerServerBaseUrl);
 
     data = { limit, traceUrls: new Set(), traceViewerServer: new TraceViewerServer(traceViewerServerBaseUrl) };
     clientIdToTraceUrls.set(clientId, data);
