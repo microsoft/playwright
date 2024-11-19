@@ -495,6 +495,16 @@ test('should not include hidden pseudo into accessible name', async ({ page }) =
   expect.soft(await getNameAndRole(page, 'a')).toEqual({ role: 'link', name: 'hello hello' });
 });
 
+test('should ignore invalid aria-labelledby', async ({ page }) => {
+  await page.setContent(`
+    <label>
+      <span>Text here</span>
+      <input type=text aria-labelledby="does-not-exist">
+    </label>
+  `);
+  expect.soft(await getNameAndRole(page, 'input')).toEqual({ role: 'textbox', name: 'Text here' });
+});
+
 function toArray(x: any): any[] {
   return Array.isArray(x) ? x : [x];
 }
