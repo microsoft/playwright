@@ -133,12 +133,11 @@ export function useAnchor(id: AnchorID, onReveal: () => void) {
   }, [id, onReveal]);
 }
 
-export function Anchor({ id, onReveal, children }: React.PropsWithChildren<{ id: AnchorID, onReveal?(): void }>) {
+export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID }>) {
   const ref = React.useRef<HTMLDivElement>(null);
   const onAnchorReveal = React.useCallback(() => {
-    onReveal?.();
     requestAnimationFrame(() => ref.current?.scrollIntoView({ block: 'start', inline: 'start' }));
-  }, [onReveal]);
+  }, []);
   useAnchor(id, onAnchorReveal);
 
   return <div ref={ref}>{children}</div>;
