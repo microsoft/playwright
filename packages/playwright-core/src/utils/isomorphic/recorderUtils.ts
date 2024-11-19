@@ -22,7 +22,9 @@ export function buildFullSelector(framePath: string[], selector: string) {
   return [...framePath, selector].join(' >> internal:control=enter-frame >> ');
 }
 
-export function traceParamsForAction(actionInContext: recorderActions.ActionInContext): { method: string, params: any } {
+const kDefaultTimeout = 5_000;
+
+export function traceParamsForAction(actionInContext: recorderActions.ActionInContext): { method: string, apiName: string, params: any } {
   const { action } = actionInContext;
 
   switch (action.name) {
@@ -30,7 +32,7 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
       const params: channels.FrameGotoParams = {
         url: action.url,
       };
-      return { method: 'goto', params };
+      return { method: 'goto', apiName: 'page.goto', params };
     }
     case 'openPage':
     case 'closePage':
@@ -48,7 +50,7 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
         clickCount: action.clickCount,
         position: action.position,
       };
-      return { method: 'click', params };
+      return { method: 'click', apiName: 'locator.click', params };
     }
     case 'press': {
       const params: channels.FramePressParams = {
@@ -56,7 +58,7 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
         strict: true,
         key: [...toKeyboardModifiers(action.modifiers), action.key].join('+'),
       };
-      return { method: 'press', params };
+      return { method: 'press', apiName: 'locator.press', params };
     }
     case 'fill': {
       const params: channels.FrameFillParams = {
@@ -64,7 +66,7 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
         strict: true,
         value: action.text,
       };
-      return { method: 'fill', params };
+      return { method: 'fill', apiName: 'locator.fill', params };
     }
     case 'setInputFiles': {
       const params: channels.FrameSetInputFilesParams = {
@@ -72,21 +74,21 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
         strict: true,
         localPaths: action.files,
       };
-      return { method: 'setInputFiles', params };
+      return { method: 'setInputFiles', apiName: 'locator.setInputFiles', params };
     }
     case 'check': {
       const params: channels.FrameCheckParams = {
         selector,
         strict: true,
       };
-      return { method: 'check', params };
+      return { method: 'check', apiName: 'locator.check', params };
     }
     case 'uncheck': {
       const params: channels.FrameUncheckParams = {
         selector,
         strict: true,
       };
-      return { method: 'uncheck', params };
+      return { method: 'uncheck', apiName: 'locator.uncheck', params };
     }
     case 'select': {
       const params: channels.FrameSelectOptionParams = {
@@ -94,15 +96,16 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
         strict: true,
         options: action.options.map(option => ({ value: option })),
       };
-      return { method: 'selectOption', params };
+      return { method: 'selectOption', apiName: 'locator.selectOption', params };
     }
     case 'assertChecked': {
       const params: channels.FrameExpectParams = {
         selector: action.selector,
         expression: 'to.be.checked',
         isNot: !action.checked,
+        timeout: kDefaultTimeout,
       };
-      return { method: 'expect', params };
+      return { method: 'expect', apiName: 'expect.toBeChecked', params };
     }
     case 'assertText': {
       const params: channels.FrameExpectParams = {
@@ -110,8 +113,9 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
         expression: 'to.have.text',
         expectedText: [],
         isNot: false,
+        timeout: kDefaultTimeout,
       };
-      return { method: 'expect', params };
+      return { method: 'expect', apiName: 'expect.toContainText', params };
     }
     case 'assertValue': {
       const params: channels.FrameExpectParams = {
@@ -119,16 +123,18 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
         expression: 'to.have.value',
         expectedValue: undefined,
         isNot: false,
+        timeout: kDefaultTimeout,
       };
-      return { method: 'expect', params };
+      return { method: 'expect', apiName: 'expect.toHaveValue', params };
     }
     case 'assertVisible': {
       const params: channels.FrameExpectParams = {
         selector,
         expression: 'to.be.visible',
         isNot: false,
+        timeout: kDefaultTimeout,
       };
-      return { method: 'expect', params };
+      return { method: 'expect', apiName: 'expect.toBeVisible', params };
     }
     case 'assertSnapshot': {
       const params: channels.FrameExpectParams = {
@@ -136,8 +142,9 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
         expression: 'to.match.snapshot',
         expectedText: [],
         isNot: false,
+        timeout: kDefaultTimeout,
       };
-      return { method: 'expect', params };
+      return { method: 'expect', apiName: 'expect.toMatchAriaSnapshot', params };
     }
   }
 }

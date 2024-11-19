@@ -90,7 +90,7 @@ await page
 
 #### Prefer user-facing attributes to XPath or CSS selectors
 
-Your DOM can easily change so having your tests depend on your DOM structure can lead to failing tests. For example consider selecting this button by its CSS classes. Should the designer change something then the class might change breaking your test.
+Your DOM can easily change so having your tests depend on your DOM structure can lead to failing tests. For example consider selecting this button by its CSS classes. Should the designer change something then the class might change, thus breaking your test.
 
 
 ```js
@@ -474,6 +474,21 @@ pnpm exec playwright --version
 Setup CI/CD and run your tests frequently. The more often you run your tests the better. Ideally you should run your tests on each commit and pull request. Playwright comes with a [GitHub actions workflow](/ci-intro.md) so that tests will run on CI for you with no setup required. Playwright can also be setup on the [CI environment](/ci.md) of your choice.
 
 Use Linux when running your tests on CI as it is cheaper. Developers can use whatever environment when running locally but use linux on CI. Consider setting up [Sharding](./test-sharding.md) to make CI faster.
+
+
+#### Optimize browser downloads on CI
+
+Only install the browsers that you actually need, especially on CI. For example, if you're only testing with Chromium, install just Chromium.
+
+```bash title=".github/workflows/playwright.yml"
+# Instead of installing all browsers
+npx playwright install --with-deps
+
+# Install only Chromium
+npx playwright install chromium --with-deps
+```
+
+This saves both download time and disk space on your CI machines.
 
 ### Lint your tests
 

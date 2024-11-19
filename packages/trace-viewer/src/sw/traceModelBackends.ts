@@ -28,10 +28,11 @@ export class ZipTraceModelBackend implements TraceModelBackend {
   private _entriesPromise: Promise<Map<string, zip.Entry>>;
   private _traceURL: string;
 
-  constructor(traceURL: string, progress: Progress) {
+  constructor(traceURL: string, server: TraceViewerServer, progress: Progress) {
     this._traceURL = traceURL;
+    zipjs.configure({ baseURL: self.location.href } as any);
     this._zipReader = new zipjs.ZipReader(
-        new zipjs.HttpReader(formatTraceFileUrl(traceURL), { mode: 'cors', preventHeadRequest: true } as any),
+        new zipjs.HttpReader(formatUrl(traceURL, server), { mode: 'cors', preventHeadRequest: true } as any),
         { useWebWorkers: false });
     this._entriesPromise = this._zipReader.getEntries({ onprogress: progress }).then(entries => {
       const map = new Map<string, zip.Entry>();
@@ -82,12 +83,16 @@ export class ZipTraceModelBackend implements TraceModelBackend {
 
 export class FetchTraceModelBackend implements TraceModelBackend {
   private _entriesPromise: Promise<Map<string, string>>;
-  private _traceURL: string;
+  private _path: string;
+  private _server: TraceViewerServer;
 
-  constructor(traceURL: string) {
-    this._traceURL = traceURL;
-    this._entriesPromise = fetch(formatTraceFileUrl(traceURL)).then(async response => {
-      const json = JSON.parse(await response.text());
+  constructor(path: string, server: TraceViewerServer) {
+    this._path  = path;
+    this._server = server;
+    this._entriesPromise = server.readFile(path).then(async response => {
+      if (!response)
+        throw new Error('File not found');
+      const json = await response.json();
       const entries = new Map<string, string>();
       for (const entry of json.entries)
         entries.set(entry.name, entry.path);
@@ -100,7 +105,7 @@ export class FetchTraceModelBackend implements TraceModelBackend {
   }
 
   traceURL(): string {
-    return this._traceURL;
+    return this._path;
   }
 
   async entryNames(): Promise<string[]> {
@@ -128,22 +133,31 @@ export class FetchTraceModelBackend implements TraceModelBackend {
     const fileName = entries.get(entryName);
     if (!fileName)
       return;
-
-    return fetch(formatTraceFileUrl(fileName));
+    return this._server.readFile(fileName);
   }
 }
 
-const baseURL = new URL(self.location.href);
-baseURL.port = baseURL.searchParams.get('testServerPort') ?? baseURL.port;
+function formatUrl(trace: string, server: TraceViewerServer) {
+  let url = trace.startsWith('http') || trace.startsWith('blob') ? trace : server.getFileURL(trace).toString();
+  // Dropbox does not support cors.
+  if (url.startsWith('https://www.dropbox.com/'))
+    url = 'https://dl.dropboxusercontent.com/' + url.substring('https://www.dropbox.com/'.length);
+  return url;
+}
 
-function formatTraceFileUrl(trace: string) {
-  if (trace.startsWith('https://www.dropbox.com/'))
-    return 'https://dl.dropboxusercontent.com/' + trace.substring('https://www.dropbox.com/'.length);
+export class TraceViewerServer {
+  constructor(private readonly baseUrl: URL) {}
 
-  if (trace.startsWith('http') || trace.startsWith('blob'))
-    return trace;
+  getFileURL(path: string): URL {
+    const url = new URL('trace/file', this.baseUrl);
+    url.searchParams.set('path', path);
+    return url;
+  }
 
-  const url = new URL('/trace/file', baseURL);
-  url.searchParams.set('path', trace);
-  return url.toString();
+  async readFile(path: string): Promise<Response | undefined> {
+    const response = await fetch(this.getFileURL(path));
+    if (response.status === 404)
+      return;
+    return response;
+  }
 }

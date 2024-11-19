@@ -281,6 +281,80 @@ given name prefix inside the [`option: BrowserType.launch.tracesDir`] directory 
 To specify the final trace zip file name, you need to pass `path` option to
 [`method: Tracing.stopChunk`] instead.
 
+## async method: Tracing.group
+* since: v1.49
+
+:::caution
+Use `test.step` instead when available.
+:::
+
+Creates a new group within the trace, assigning any subsequent API calls to this group, until [`method: Tracing.groupEnd`] is called. Groups can be nested and will be visible in the trace viewer.
+
+**Usage**
+
+```js
+// use test.step instead
+await test.step('Log in', async () => {
+  // ...
+});
+```
+
+```java
+// All actions between group and groupEnd
+// will be shown in the trace viewer as a group.
+page.context().tracing.group("Open Playwright.dev > API");
+page.navigate("https://playwright.dev/");
+page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("API")).click();
+page.context().tracing.groupEnd();
+```
+
+```python sync
+# All actions between group and group_end
+# will be shown in the trace viewer as a group.
+page.context.tracing.group("Open Playwright.dev > API")
+page.goto("https://playwright.dev/")
+page.get_by_role("link", name="API").click()
+page.context.tracing.group_end()
+```
+
+```python async
+# All actions between group and group_end
+# will be shown in the trace viewer as a group.
+await page.context.tracing.group("Open Playwright.dev > API")
+await page.goto("https://playwright.dev/")
+await page.get_by_role("link", name="API").click()
+await page.context.tracing.group_end()
+```
+
+```csharp
+// All actions between GroupAsync and GroupEndAsync
+// will be shown in the trace viewer as a group.
+await Page.Context().Tracing.GroupAsync("Open Playwright.dev > API");
+await Page.GotoAsync("https://playwright.dev/");
+await Page.GetByRole(AriaRole.Link, new() { Name = "API" }).ClickAsync();
+await Page.Context().Tracing.GroupEndAsync();
+```
+
+### param: Tracing.group.name
+* since: v1.49
+- `name` <[string]>
+
+Group name shown in the trace viewer.
+
+### option: Tracing.group.location
+* since: v1.49
+- `location` ?<[Object]>
+  - `file` <[string]>
+  - `line` ?<[int]>
+  - `column` ?<[int]>
+
+Specifies a custom location for the group to be shown in the trace viewer. Defaults to the location of the [`method: Tracing.group`] call.
+
+## async method: Tracing.groupEnd
+* since: v1.49
+
+Closes the last group created by [`method: Tracing.group`].
+
 ## async method: Tracing.stop
 * since: v1.12
 

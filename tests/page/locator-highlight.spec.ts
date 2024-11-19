@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './pageTest';
-import type { Locator } from 'playwright-core';
-
-type BoundingBox = Awaited<ReturnType<Locator['boundingBox']>>;
+import { test as it, expect, roundBox } from './pageTest';
 
 it.skip(({ mode }) => mode !== 'default', 'Highlight element has a closed shadow-root on != default');
 
@@ -30,12 +27,3 @@ it('should highlight locator', async ({ page }) => {
   const box2 = roundBox(await page.locator('x-pw-highlight').boundingBox());
   expect(box1).toEqual(box2);
 });
-
-function roundBox(box: BoundingBox): BoundingBox {
-  return {
-    x: Math.round(box.x),
-    y: Math.round(box.y),
-    width: Math.round(box.width),
-    height: Math.round(box.height),
-  };
-}

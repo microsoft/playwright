@@ -19,7 +19,7 @@ import path from 'path';
 
 export const colors: typeof import('../bundles/utils/node_modules/colors/safe') = require('./utilsBundleImpl').colors;
 export const debug: typeof import('../bundles/utils/node_modules/@types/debug') = require('./utilsBundleImpl').debug;
-export const diffMatchPatch: typeof import('../bundles/utils/node_modules/@types/diff-match-patch') = require('./utilsBundleImpl').diffMatchPatch;
+export const diff: typeof import('../bundles/utils/node_modules/@types/diff') = require('./utilsBundleImpl').diff;
 export const dotenv: typeof import('../bundles/utils/node_modules/dotenv') = require('./utilsBundleImpl').dotenv;
 export const getProxyForUrl: typeof import('../bundles/utils/node_modules/@types/proxy-from-env').getProxyForUrl = require('./utilsBundleImpl').getProxyForUrl;
 export const HttpsProxyAgent: typeof import('../bundles/utils/node_modules/https-proxy-agent').HttpsProxyAgent = require('./utilsBundleImpl').HttpsProxyAgent;
@@ -43,12 +43,8 @@ import type { StackFrame } from '@protocol/channels';
 
 const StackUtils: typeof import('../bundles/utils/node_modules/@types/stack-utils') = require('./utilsBundleImpl').StackUtils;
 const stackUtils = new StackUtils({ internals: StackUtils.nodeInternals() });
-const nodeInternals = StackUtils.nodeInternals();
-const nodeMajorVersion = +process.versions.node.split('.')[0];
 
 export function parseStackTraceLine(line: string): StackFrame | null {
-  if (!process.env.PWDEBUGIMPL && nodeMajorVersion < 16 && nodeInternals.some(internal => internal.test(line)))
-    return null;
   const frame = stackUtils.parseLine(line);
   if (!frame)
     return null;

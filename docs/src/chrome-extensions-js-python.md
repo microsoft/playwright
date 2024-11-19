@@ -214,10 +214,6 @@ def test_popup_page(page: Page, extension_id: str) -> None:
 
 ## Headless mode
 
-:::danger
-`headless=new` mode is not officially supported by Playwright and might result in unexpected behavior.
-:::
-
 By default, Chrome's headless mode in Playwright does not support Chrome extensions. To overcome this limitation, you can run Chrome's persistent context with a new headless mode by using the following code:
 
 ```js title="fixtures.ts"

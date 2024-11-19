@@ -198,11 +198,6 @@ const workspace = new Workspace(ROOT_PATH, [
     files: ['LICENSE'],
   }),
   new PWPackage({
-    name: '@playwright/experimental-ct-solid',
-    path: path.join(ROOT_PATH, 'packages', 'playwright-ct-solid'),
-    files: ['LICENSE'],
-  }),
-  new PWPackage({
     name: '@playwright/experimental-ct-svelte',
     path: path.join(ROOT_PATH, 'packages', 'playwright-ct-svelte'),
     files: ['LICENSE'],
@@ -210,11 +205,6 @@ const workspace = new Workspace(ROOT_PATH, [
   new PWPackage({
     name: '@playwright/experimental-ct-vue',
     path: path.join(ROOT_PATH, 'packages', 'playwright-ct-vue'),
-    files: ['LICENSE'],
-  }),
-  new PWPackage({
-    name: '@playwright/experimental-ct-vue2',
-    path: path.join(ROOT_PATH, 'packages', 'playwright-ct-vue2'),
     files: ['LICENSE'],
   }),
 ]);

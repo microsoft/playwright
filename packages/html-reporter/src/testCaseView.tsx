@@ -14,12 +14,12 @@
   limitations under the License.
 */
 
-import type { TestCase, TestCaseAnnotation } from './types';
+import type { TestCase, TestCaseAnnotation, TestCaseSummary } from './types';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
 import './common.css';
-import { ProjectLink } from './links';
+import { Link, ProjectLink, SearchParamsContext } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
@@ -31,10 +31,13 @@ import { CopyToClipboardContainer } from './copyToClipboard';
 export const TestCaseView: React.FC<{
   projectNames: string[],
   test: TestCase | undefined,
-  anchor: 'video' | 'diff' | '',
+  next: TestCaseSummary | undefined,
+  prev: TestCaseSummary | undefined,
   run: number,
-}> = ({ projectNames, test, run, anchor }) => {
+}> = ({ projectNames, test, run, next, prev }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
+  const searchParams = React.useContext(SearchParamsContext);
+  const filterParam = searchParams.has('q') ? '&q=' + searchParams.get('q') : '';
 
   const labels = React.useMemo(() => {
     if (!test)
@@ -47,7 +50,13 @@ export const TestCaseView: React.FC<{
   }, [test?.annotations]);
 
   return <div className='test-case-column vbox'>
-    {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
+    {test && <div className='hbox'>
+      <div className='test-case-path'>{test.path.join(' › ')}</div>
+      <div style={{ flex: 'auto' }}></div>
+      <div className={clsx(!prev && 'hidden')}><Link href={`#?testId=${prev?.testId}${filterParam}`}>« previous</Link></div>
+      <div style={{ width: 10 }}></div>
+      <div className={clsx(!next && 'hidden')}><Link href={`#?testId=${next?.testId}${filterParam}`}>next »</Link></div>
+    </div>}
     {test && <div className='test-case-title'>{test?.title}</div>}
     {test && <div className='hbox'>
       <div className='test-case-location'>
@@ -69,7 +78,7 @@ export const TestCaseView: React.FC<{
       test.results.map((result, index) => ({
         id: String(index),
         title: <div style={{ display: 'flex', alignItems: 'center' }}>{statusIcon(result.status)} {retryLabel(index)}</div>,
-        render: () => <TestResultView test={test!} result={result} anchor={anchor}></TestResultView>
+        render: () => <TestResultView test={test!} result={result} />
       })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
   </div>;
 };

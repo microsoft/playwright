@@ -27,7 +27,6 @@ function unshift(snapshot: string): string {
     const match = line.match(/^(\s*)/);
     if (match && match[1].length < whitespacePrefixLength)
       whitespacePrefixLength = match[1].length;
-    break;
   }
   return lines.filter(t => t.trim()).map(line => line.substring(whitespacePrefixLength)).join('\n');
 }
@@ -64,10 +63,8 @@ it('should snapshot list with accessible name', async ({ page }) => {
   `);
   await checkAndMatchSnapshot(page.locator('body'), `
     - list "my list":
-      - listitem:
-        - text: "one"
-      - listitem:
-        - text: "two"
+      - listitem: one
+      - listitem: two
   `);
 });
 
@@ -94,7 +91,7 @@ it('should allow text nodes', async ({ page }) => {
 
   await checkAndMatchSnapshot(page.locator('body'), `
     - heading "Microsoft" [level=1]
-    - text: "Open source projects and samples from Microsoft"
+    - text: Open source projects and samples from Microsoft
   `);
 });
 
@@ -107,8 +104,7 @@ it('should snapshot details visibility', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - group:
-      - text: "Summary"
+    - group: Summary
   `);
 });
 
@@ -148,11 +144,10 @@ it('should snapshot integration', async ({ page }) => {
 
   await checkAndMatchSnapshot(page.locator('body'), `
     - heading "Microsoft" [level=1]
-    - text: "Open source projects and samples from Microsoft"
+    - text: Open source projects and samples from Microsoft
     - list:
       - listitem:
-        - group:
-          - text: "Verified"
+        - group: Verified
       - listitem:
         - link "Sponsor"
   `);
@@ -168,12 +163,10 @@ it('should support multiline text', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - paragraph:
-      - text: "Line 1 Line 2 Line 3"
+    - paragraph: Line 1 Line 2 Line 3
   `);
   await expect(page.locator('body')).toMatchAriaSnapshot(`
-    - paragraph:
-      - text: |
+    - paragraph: |
           Line 1
           Line 2
           Line 3
@@ -186,7 +179,7 @@ it('should concatenate span text', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - text: "One Two Three"
+    - text: One Two Three
   `);
 });
 
@@ -196,7 +189,7 @@ it('should concatenate span text 2', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - text: "One Two Three"
+    - text: One Two Three
   `);
 });
 
@@ -206,7 +199,7 @@ it('should concatenate div text with spaces', async ({ page }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - text: "One Two Three"
+    - text: One Two Three
   `);
 });
 
@@ -368,12 +361,12 @@ it('should snapshot inner text', async ({ page }) => {
 
   await checkAndMatchSnapshot(page.locator('body'), `
     - listitem:
-      - text: "a.test.ts"
+      - text: a.test.ts
       - button "Run"
       - button "Show source"
       - button "Watch"
     - listitem:
-      - text: "snapshot 30ms"
+      - text: snapshot 30ms
       - button "Run"
       - button "Show source"
       - button "Watch"
@@ -388,13 +381,11 @@ it('should include pseudo codepoints', async ({ page, server }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - paragraph:
-      - text: "\ueab2hello"
+    - paragraph: \ueab2hello
   `);
 });
 
-it('check aria-hidden text', async ({ page, server }) => {
-  await page.goto(server.EMPTY_PAGE);
+it('check aria-hidden text', async ({ page }) => {
   await page.setContent(`
     <p>
       <span>hello</span>
@@ -403,7 +394,100 @@ it('check aria-hidden text', async ({ page, server }) => {
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
-    - paragraph:
-      - text: "hello"
+    - paragraph: hello
+  `);
+});
+
+it('should ignore presentation and none roles', async ({ page }) => {
+  await page.setContent(`
+    <ul>
+      <li role='presentation'>hello</li>
+      <li role='none'>world</li>
+    </ul>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - list: hello world
+  `);
+});
+
+it('should treat input value as text in templates', async ({ page }) => {
+  await page.setContent(`
+    <input value='hello world'>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - textbox: hello world
+  `);
+});
+
+it('should respect aria-owns', async ({ page }) => {
+  await page.setContent(`
+    <a href='about:blank' aria-owns='input p'>
+      <div role='region'>Link 1</div>
+    </a>
+    <a href='about:blank' aria-owns='input p'>
+      <div role='region'>Link 2</div>
+    </a>
+    <input id='input' value='Value'>
+    <p id='p'>Paragraph</p>
+  `);
+
+  // - Different from Chrome DevTools which attributes ownership to the last element.
+  // - CDT also does not include non-owned children in accessible name.
+  // - Disregarding these as aria-owns can't suggest multiple parts by spec.
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - link "Link 1 Value Paragraph":
+      - region: Link 1
+      - textbox: Value
+      - paragraph: Paragraph
+    - link "Link 2 Value Paragraph":
+      - region: Link 2
+  `);
+});
+
+it('should be ok with circular ownership', async ({ page }) => {
+  await page.setContent(`
+    <a href='about:blank' id='parent'>
+      <div role='region' aria-owns='parent'>Hello</div>
+    </a>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - link "Hello":
+      - region: Hello
+  `);
+});
+
+it('should escape yaml text in text nodes', async ({ page }) => {
+  await page.setContent(`
+    <details>
+      <summary>one: <a href="#">link1</a> "two <a href="#">link2</a> 'three <a href="#">link3</a> \`four</summary>
+    </details>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - group:
+      - text: "one:"
+      - link "link1"
+      - text: "\\\"two"
+      - link "link2"
+      - text: "'three"
+      - link "link3"
+      - text: "\`four"
+  `);
+});
+
+it('should handle long strings', async ({ page }) => {
+  const s = 'a'.repeat(10000);
+  await page.setContent(`
+    <a href='about:blank'>
+      <div role='region'>${s}</div>
+    </a>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - link:
+      - region: ${s}
   `);
 });

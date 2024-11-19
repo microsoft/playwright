@@ -33,16 +33,13 @@ export function matcherHint(state: ExpectMatcherState, locator: Locator | undefi
 
 export type MatcherResult<E, A> = {
   name: string;
-  expected: E;
+  expected?: E;
   message: () => string;
   pass: boolean;
   actual?: A;
   log?: string[];
   timeout?: number;
-  locator?: string;
-  printedReceived?: string;
-  printedExpected?: string;
-  printedDiff?: string;
+  suggestedRebaseline?: string;
 };
 
 export type MatcherResultProperty = Omit<MatcherResult<unknown, unknown>, 'message'> & {
@@ -69,6 +66,6 @@ export class ExpectError extends Error {
   }
 }
 
-export function isExpectError(e: unknown): e is ExpectError {
+export function isJestError(e: unknown): e is JestError {
   return e instanceof Error && 'matcherResult' in e;
 }

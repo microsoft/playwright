@@ -95,8 +95,38 @@ it('should not throw UnhandledPromiseRejection when page closes', async ({ page,
   ]).catch(e => {});
 });
 
-it('should click the 1x1 div', async ({ page }) => {
+it('should click the aligned 1x1 div', async ({ page }) => {
   await page.setContent(`<div style="width: 1px; height: 1px;" onclick="window.__clicked = true"></div>`);
+  await page.click('div');
+  expect(await page.evaluate('window.__clicked')).toBe(true);
+});
+
+it('should click the half-aligned 1x1 div', async ({ page }) => {
+  await page.setContent(`<div style="margin-left: 20.5px; margin-top: 11.5px; width: 1px; height: 1px;" onclick="window.__clicked = true"></div>`);
+  await page.click('div');
+  expect(await page.evaluate('window.__clicked')).toBe(true);
+});
+
+it('should click the unaligned 1x1 div v1', async ({ page }) => {
+  await page.setContent(`<div style="margin-left: 20.23px; margin-top: 11.65px; width: 1px; height: 1px;" onclick="window.__clicked = true"></div>`);
+  await page.click('div');
+  expect(await page.evaluate('window.__clicked')).toBe(true);
+});
+
+it('should click the unaligned 1x1 div v2', async ({ page }) => {
+  await page.setContent(`<div style="margin-left: 20.68px; margin-top: 11.13px; width: 1px; height: 1px;" onclick="window.__clicked = true"></div>`);
+  await page.click('div');
+  expect(await page.evaluate('window.__clicked')).toBe(true);
+});
+
+it('should click the unaligned 1x1 div v3', async ({ page }) => {
+  await page.setContent(`<div style="margin-left: 20.68px; margin-top: 11.52px; width: 1px; height: 1px;" onclick="window.__clicked = true"></div>`);
+  await page.click('div');
+  expect(await page.evaluate('window.__clicked')).toBe(true);
+});
+
+it('should click the unaligned 1x1 div v4', async ({ page }) => {
+  await page.setContent(`<div style="margin-left: 20.15px; margin-top: 11.24px; width: 1px; height: 1px;" onclick="window.__clicked = true"></div>`);
   await page.click('div');
   expect(await page.evaluate('window.__clicked')).toBe(true);
 });

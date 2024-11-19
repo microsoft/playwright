@@ -88,7 +88,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     });
 
     const mainFrame = this._page.mainFrame();
-    await mainFrame.goto(serverSideCallMetadata(), 'https://playwright/index.html');
+    await mainFrame.goto(serverSideCallMetadata(), process.env.PW_HMR ? 'http://localhost:44225' : 'https://playwright/index.html');
   }
 
   static factory(context: BrowserContext): IRecorderAppFactory {
@@ -111,7 +111,7 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
         noDefaultViewport: true,
         headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
         useWebSocket: isUnderTest(),
-        handleSIGINT: false,
+        handleSIGINT: recorder.handleSIGINT,
         executablePath: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.customExecutablePath : undefined,
       }
     });

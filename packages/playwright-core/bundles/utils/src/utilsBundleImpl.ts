@@ -20,8 +20,8 @@ export const colors = colorsLibrary;
 import debugLibrary from 'debug';
 export const debug = debugLibrary;
 
-import diffMatchPatchLibrary from 'diff-match-patch';
-export const diffMatchPatch = diffMatchPatchLibrary;
+import * as diffLibrary from 'diff';
+export const diff = diffLibrary;
 
 import dotenvLibrary from 'dotenv';
 export const dotenv = dotenvLibrary;

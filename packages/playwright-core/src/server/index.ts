@@ -19,7 +19,6 @@ export {
   registry,
   registryDirectory,
   Registry,
-  installDefaultBrowsersForNpmInstall,
   installBrowsersForNpmInstall,
   writeDockerVersion } from './registry';
 

@@ -97,7 +97,7 @@ const NSActivityOptions ActivityOptions =
 
     for (NSString *argument in subArray) {
         if (![argument hasPrefix:@"--"])
-            _initialURL = argument;
+            _initialURL = [argument copy];
         if ([argument hasPrefix:@"--user-data-dir="]) {
             NSRange range = NSMakeRange(16, [argument length] - 16);
             _userDataDir = [[argument substringWithRange:range] copy];
@@ -230,7 +230,7 @@ const NSActivityOptions ActivityOptions =
         configuration = [[WKWebViewConfiguration alloc] init];
         configuration.websiteDataStore = [self persistentDataStore];
         configuration._controlledByAutomation = true;
-        configuration.preferences._fullScreenEnabled = YES;
+        configuration.preferences.elementFullscreenEnabled = YES;
         configuration.preferences._developerExtrasEnabled = YES;
         configuration.preferences._mediaDevicesEnabled = YES;
         configuration.preferences._mockCaptureDevicesEnabled = YES;

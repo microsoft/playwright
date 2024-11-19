@@ -300,17 +300,14 @@ export class Chromium extends BrowserType {
       // See https://github.com/microsoft/playwright/issues/7362
       chromeArguments.push('--enable-use-zoom-for-dsf=false');
       // See https://bugs.chromium.org/p/chromium/issues/detail?id=1407025.
-      if (options.headless)
+      if (options.headless && (!options.channel || options.channel === 'chromium-headless-shell'))
         chromeArguments.push('--use-angle');
     }
 
     if (options.devtools)
       chromeArguments.push('--auto-open-devtools-for-tabs');
     if (options.headless) {
-      if (process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW)
-        chromeArguments.push('--headless=new');
-      else
-        chromeArguments.push('--headless=old');
+      chromeArguments.push('--headless');
 
       chromeArguments.push(
           '--hide-scrollbars',
@@ -349,6 +346,12 @@ export class Chromium extends BrowserType {
     if (options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port')))
       return new ChromiumReadyState();
     return undefined;
+  }
+
+  override getExecutableName(options: types.LaunchOptions): string {
+    if (options.channel)
+      return options.channel;
+    return options.headless ? 'chromium-headless-shell' : 'chromium';
   }
 }
 

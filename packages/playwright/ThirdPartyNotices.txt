@@ -97,7 +97,7 @@ This project incorporates components from the projects listed below. The origina
 -	chalk@4.1.2 (https://github.com/chalk/chalk)
 -	chokidar@3.6.0 (https://github.com/paulmillr/chokidar)
 -	ci-info@3.9.0 (https://github.com/watson/ci-info)
--	codemirror-shadow-1@0.0.1 (https://github.com/codemirror/CodeMirror)
+-	codemirror@5.65.18 (https://github.com/codemirror/CodeMirror)
 -	color-convert@1.9.3 (https://github.com/Qix-/color-convert)
 -	color-convert@2.0.1 (https://github.com/Qix-/color-convert)
 -	color-name@1.1.3 (https://github.com/dfcreative/color-name)
@@ -112,6 +112,7 @@ This project incorporates components from the projects listed below. The origina
 -	escape-string-regexp@2.0.0 (https://github.com/sindresorhus/escape-string-regexp)
 -	fill-range@7.1.1 (https://github.com/jonschlinkert/fill-range)
 -	gensync@1.0.0-beta.2 (https://github.com/loganfsmyth/gensync)
+-	get-east-asian-width@1.3.0 (https://github.com/sindresorhus/get-east-asian-width)
 -	glob-parent@5.1.2 (https://github.com/gulpjs/glob-parent)
 -	globals@11.12.0 (https://github.com/sindresorhus/globals)
 -	graceful-fs@4.2.11 (https://github.com/isaacs/node-graceful-fs)
@@ -3102,7 +3103,7 @@ SOFTWARE.
 =========================================
 END OF ci-info@3.9.0 AND INFORMATION
 
-%% codemirror-shadow-1@0.0.1 NOTICES AND INFORMATION BEGIN HERE
+%% codemirror@5.65.18 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -3126,7 +3127,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
-END OF codemirror-shadow-1@0.0.1 AND INFORMATION
+END OF codemirror@5.65.18 AND INFORMATION
 
 %% color-convert@1.9.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -3409,6 +3410,20 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF gensync@1.0.0-beta.2 AND INFORMATION
+
+%% get-east-asian-width@1.3.0 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+MIT License
+
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+=========================================
+END OF get-east-asian-width@1.3.0 AND INFORMATION
 
 %% glob-parent@5.1.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -4399,6 +4414,6 @@ END OF yallist@3.1.1 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================
-Total Packages: 151
+Total Packages: 152
 =========================================
 END OF SUMMARY

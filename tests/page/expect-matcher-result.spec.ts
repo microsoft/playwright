@@ -24,16 +24,12 @@ test('toMatchText-based assertions should have matcher result', async ({ page })
   {
     const e = await expect(locator).toHaveText(/Text2/, { timeout: 1 }).catch(e => e);
     e.matcherResult.message = stripAnsi(e.matcherResult.message);
-    e.matcherResult.printedDiff = stripAnsi(e.matcherResult.printedDiff);
     expect.soft(e.matcherResult).toEqual({
       actual: 'Text content',
       expected: /Text2/,
       message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).toHaveText(expected)`),
       name: 'toHaveText',
       pass: false,
-      locator: `locator('#node')`,
-      printedDiff: `Expected pattern: /Text2/
-Received string:  \"Text content\"`,
       log: expect.any(Array),
       timeout: 1,
     });
@@ -50,17 +46,12 @@ Call log`);
   {
     const e = await expect(locator).not.toHaveText(/Text/, { timeout: 1 }).catch(e => e);
     e.matcherResult.message = stripAnsi(e.matcherResult.message);
-    e.matcherResult.printedExpected = stripAnsi(e.matcherResult.printedExpected);
-    e.matcherResult.printedReceived = stripAnsi(e.matcherResult.printedReceived);
     expect.soft(e.matcherResult).toEqual({
       actual: 'Text content',
       expected: /Text/,
       message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).not.toHaveText(expected)`),
       name: 'toHaveText',
       pass: true,
-      locator: `locator('#node')`,
-      printedExpected: 'Expected pattern: not /Text/',
-      printedReceived: `Received string: \"Text content\"`,
       log: expect.any(Array),
       timeout: 1,
     });
@@ -88,8 +79,6 @@ test('toBeTruthy-based assertions should have matcher result', async ({ page }) 
       name: 'toBeVisible',
       pass: false,
       log: expect.any(Array),
-      printedExpected: 'Expected: visible',
-      printedReceived: 'Received: <element(s) not found>',
       timeout: 1,
     });
 
@@ -112,8 +101,6 @@ Call log`);
       name: 'toBeVisible',
       pass: true,
       log: expect.any(Array),
-      printedExpected: 'Expected: not visible',
-      printedReceived: 'Received: visible',
       timeout: 1,
     });
 
@@ -133,7 +120,6 @@ test('toEqual-based assertions should have matcher result', async ({ page }) => 
   {
     const e = await expect(page.locator('#node2')).toHaveCount(1, { timeout: 1 }).catch(e => e);
     e.matcherResult.message = stripAnsi(e.matcherResult.message);
-    e.matcherResult.printedDiff = stripAnsi(e.matcherResult.printedDiff);
     expect.soft(e.matcherResult).toEqual({
       actual: 0,
       expected: 1,
@@ -141,8 +127,6 @@ test('toEqual-based assertions should have matcher result', async ({ page }) => 
       name: 'toHaveCount',
       pass: false,
       log: expect.any(Array),
-      printedDiff: `Expected: 1
-Received: 0`,
       timeout: 1,
     });
 
@@ -157,8 +141,6 @@ Call log`);
   {
     const e = await expect(page.locator('#node')).not.toHaveCount(1, { timeout: 1 }).catch(e => e);
     e.matcherResult.message = stripAnsi(e.matcherResult.message);
-    e.matcherResult.printedExpected = stripAnsi(e.matcherResult.printedExpected);
-    e.matcherResult.printedReceived = stripAnsi(e.matcherResult.printedReceived);
     expect.soft(e.matcherResult).toEqual({
       actual: 1,
       expected: 1,
@@ -166,8 +148,6 @@ Call log`);
       name: 'toHaveCount',
       pass: true,
       log: expect.any(Array),
-      printedExpected: `Expected: not 1`,
-      printedReceived: `Received: 1`,
       timeout: 1,
     });
 
@@ -197,8 +177,6 @@ test('toBeChecked({ checked: false }) should have expected: false', async ({ pag
       name: 'toBeChecked',
       pass: false,
       log: expect.any(Array),
-      printedExpected: 'Expected: checked',
-      printedReceived: 'Received: unchecked',
       timeout: 1,
     });
 
@@ -221,8 +199,6 @@ Call log`);
       name: 'toBeChecked',
       pass: true,
       log: expect.any(Array),
-      printedExpected: 'Expected: not checked',
-      printedReceived: 'Received: checked',
       timeout: 1,
     });
 
@@ -245,8 +221,6 @@ Call log`);
       name: 'toBeChecked',
       pass: false,
       log: expect.any(Array),
-      printedExpected: 'Expected: unchecked',
-      printedReceived: 'Received: checked',
       timeout: 1,
     });
 
@@ -269,8 +243,6 @@ Call log`);
       name: 'toBeChecked',
       pass: true,
       log: expect.any(Array),
-      printedExpected: 'Expected: not unchecked',
-      printedReceived: 'Received: unchecked',
       timeout: 1,
     });
 
@@ -295,15 +267,13 @@ test('toHaveScreenshot should populate matcherResult', async ({ page, server, is
     actual: expect.stringContaining('screenshot-sanity-actual'),
     expected: expect.stringContaining('screenshot-sanity-'),
     diff: expect.stringContaining('screenshot-sanity-diff'),
-    message: expect.stringContaining(`Screenshot comparison failed`),
+    message: expect.stringContaining(`expect(page).toHaveScreenshot(expected)`),
     name: 'toHaveScreenshot',
     pass: false,
     log: expect.any(Array),
-    printedExpected: expect.stringContaining('screenshot-sanity-'),
-    printedReceived: expect.stringContaining('screenshot-sanity-actual'),
   });
 
-  expect.soft(stripAnsi(e.toString())).toContain(`Error: Screenshot comparison failed:
+  expect.soft(stripAnsi(e.toString())).toContain(`Error: expect(page).toHaveScreenshot(expected)
 
   23362 pixels (ratio 0.10 of all image pixels) are different.
 

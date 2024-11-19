@@ -19,7 +19,7 @@ import type { FullResult, TestError } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createErrorCollectingReporter, createReporters } from './reporters';
-import { TestRun, createClearCacheTask, createGlobalSetupTasks, createLoadTask, createPluginSetupTasks, createReportBeginTask, createRunTestsTasks, createStartDevServerTask, runTasks } from './tasks';
+import { TestRun, createApplyRebaselinesTask, createClearCacheTask, createGlobalSetupTasks, createLoadTask, createPluginSetupTasks, createReportBeginTask, createRunTestsTasks, createStartDevServerTask, runTasks } from './tasks';
 import type { FullConfigInternal } from '../common/config';
 import { affectedTestFiles } from '../transform/compilationCache';
 import { InternalReporter } from '../reporters/internalReporter';
@@ -82,6 +82,7 @@ export class Runner {
       createLoadTask('in-process', { failOnLoadErrors: true, filterOnly: false }),
       createReportBeginTask(),
     ] : [
+      createApplyRebaselinesTask(),
       ...createGlobalSetupTasks(config),
       createLoadTask('in-process', { filterOnly: true, failOnLoadErrors: true }),
       ...createRunTestsTasks(config),

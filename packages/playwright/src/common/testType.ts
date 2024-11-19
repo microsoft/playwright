@@ -21,7 +21,8 @@ import { wrapFunctionWithLocation } from '../transform/transform';
 import type { FixturesWithLocation } from './config';
 import type { Fixtures, TestType, TestDetails } from '../../types/test';
 import type { Location } from '../../types/testReporter';
-import { getPackageManagerExecCommand, zones } from 'playwright-core/lib/utils';
+import { getPackageManagerExecCommand, monotonicTime, raceAgainstDeadline, zones } from 'playwright-core/lib/utils';
+import { errors } from 'playwright-core';
 
 const testTypeSymbol = Symbol('testType');
 
@@ -256,16 +257,18 @@ export class TestTypeImpl {
     suite._use.push({ fixtures, location });
   }
 
-  async _step<T>(title: string, body: () => Promise<T>, options: {box?: boolean, location?: Location } = {}): Promise<T> {
+  async _step<T>(title: string, body: () => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
     const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
     return await zones.run('stepZone', step, async () => {
       try {
-        const result = await body();
+        const result = await raceAgainstDeadline(async () => body(), options.timeout ? monotonicTime() + options.timeout : 0);
+        if (result.timedOut)
+          throw new errors.TimeoutError(`Step timeout ${options.timeout}ms exceeded.`);
         step.complete({});
-        return result;
+        return result.result;
       } catch (error) {
         step.complete({ error });
         throw error;

@@ -47,10 +47,11 @@ const xtermDataSource: XtermDataSource = {
 };
 
 const searchParams = new URLSearchParams(window.location.search);
-const guid = searchParams.get('ws');
-const wsURL = new URL(`../${guid}`, window.location.toString());
-wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
-wsURL.port = searchParams.get('testServerPort') ?? window.location.port;
+let testServerBaseUrl = new URL('../', window.location.href);
+if (testServerBaseUrl.searchParams.has('server'))
+  testServerBaseUrl = new URL(testServerBaseUrl.searchParams.get('server')!, testServerBaseUrl);
+const wsURL = new URL(searchParams.get('ws')!, testServerBaseUrl);
+wsURL.protocol = (wsURL.protocol === 'https:' ? 'wss:' : 'ws:');
 const queryParams = {
   args: searchParams.getAll('arg'),
   grep: searchParams.get('grep') || undefined,
@@ -69,7 +70,6 @@ const isMac = navigator.platform === 'MacIntel';
 
 export const UIModeView: React.FC<{}> = ({
 }) => {
-  const isJokesDay = new Date().getMonth() === 3 && new Date().getDate() === 1;
   const [filterText, setFilterText] = React.useState<string>('');
   const [isShowingOutput, setIsShowingOutput] = React.useState<boolean>(false);
   const [outputContainsError, setOutputContainsError] = React.useState(false);
@@ -111,7 +111,10 @@ export const UIModeView: React.FC<{}> = ({
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const reloadTests = React.useCallback(() => {
-    setTestServerConnection(new TestServerConnection(new WebSocketTestServerTransport(wsURL)));
+    setTestServerConnection(prevConnection => {
+      prevConnection?.close();
+      return new TestServerConnection(new WebSocketTestServerTransport(wsURL));
+    });
   }, []);
 
   // Load tests on startup.
@@ -226,7 +229,7 @@ export const UIModeView: React.FC<{}> = ({
         newFilter.set(projectSuite.title, !!selectedProjects?.includes(projectSuite.title));
     }
     if (!selectedProjects && newFilter.size && ![...newFilter.values()].includes(true))
-      newFilter.set(newFilter.entries().next().value[0], true);
+      newFilter.set(newFilter.entries().next().value![0], true);
     if (projectFilters.size !== newFilter.size || [...projectFilters].some(([k, v]) => newFilter.get(k) !== v))
       setProjectFilters(newFilter);
   }, [projectFilters, testModel]);
@@ -442,7 +445,7 @@ export const UIModeView: React.FC<{}> = ({
       sidebar={<div className='vbox ui-mode-sidebar'>
         <Toolbar noShadow={true} noMinHeight={true}>
           <img src='playwright-logo.svg' alt='Playwright logo' />
-          <div className='section-title'>{isJokesDay ? 'Claywright' : 'Playwright'}</div>
+          <div className='section-title'>Playwright</div>
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
           <div style={{ position: 'relative' }}>
             <ToolbarButton icon={'terminal'} title={'Toggle output — ' + (isMac ? '⌃`' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
@@ -518,11 +521,10 @@ export const UIModeView: React.FC<{}> = ({
             style={{ marginLeft: 5 }}
             title={settingsVisible ? 'Hide Settings' : 'Show Settings'}
           />
-          <div className='section-title' data-testid='settings-title'>{isJokesDay ? 'Schmettings' : 'Settings'}</div>
+          <div className='section-title'>Settings</div>
         </Toolbar>
         {settingsVisible && <SettingsView settings={[
           { value: darkMode, set: setDarkMode, title: 'Dark mode' },
-          ...(isJokesDay ? [{ value: darkMode, set: setDarkMode, title: 'Fart mode' }] : [])
         ]} />}
       </div>
       }

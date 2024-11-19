@@ -33,13 +33,8 @@ export const Route: React.FunctionComponent<{
   predicate: (params: URLSearchParams) => boolean,
   children: any
 }> = ({ predicate, children }) => {
-  const [matches, setMatches] = React.useState(predicate(new URLSearchParams(window.location.hash.slice(1))));
-  React.useEffect(() => {
-    const listener = () => setMatches(predicate(new URLSearchParams(window.location.hash.slice(1))));
-    window.addEventListener('popstate', listener);
-    return () => window.removeEventListener('popstate', listener);
-  }, [predicate]);
-  return matches ? children : null;
+  const searchParams = React.useContext(SearchParamsContext);
+  return predicate(searchParams) ? children : null;
 };
 
 export const Link: React.FunctionComponent<{
@@ -90,6 +85,20 @@ export const AttachmentLink: React.FunctionComponent<{
   } : undefined} depth={0} style={{ lineHeight: '32px' }}></TreeItem>;
 };
 
+export const SearchParamsContext = React.createContext<URLSearchParams>(new URLSearchParams(window.location.hash.slice(1)));
+
+export const SearchParamsProvider: React.FunctionComponent<React.PropsWithChildren> = ({ children }) => {
+  const [searchParams, setSearchParams] = React.useState<URLSearchParams>(new URLSearchParams(window.location.hash.slice(1)));
+
+  React.useEffect(() => {
+    const listener = () => setSearchParams(new URLSearchParams(window.location.hash.slice(1)));
+    window.addEventListener('popstate', listener);
+    return () => window.removeEventListener('popstate', listener);
+  }, []);
+
+  return <SearchParamsContext.Provider value={searchParams}>{children}</SearchParamsContext.Provider>;
+};
+
 function downloadFileNameForAttachment(attachment: TestAttachment): string {
   if (attachment.name.includes('.') || !attachment.path)
     return attachment.name;
@@ -104,3 +113,32 @@ export function generateTraceUrl(traces: TestAttachment[]) {
 }
 
 const kMissingContentType = 'x-playwright/missing';
+
+type AnchorID = string | ((id: string | null) => boolean) | undefined;
+
+export function useAnchor(id: AnchorID, onReveal: () => void) {
+  React.useEffect(() => {
+    if (typeof id === 'undefined')
+      return;
+
+    const listener = () => {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      const anchor = params.get('anchor');
+      const isRevealed = typeof id === 'function' ? id(anchor) : anchor === id;
+      if (isRevealed)
+        onReveal();
+    };
+    window.addEventListener('popstate', listener);
+    return () => window.removeEventListener('popstate', listener);
+  }, [id, onReveal]);
+}
+
+export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID }>) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const onAnchorReveal = React.useCallback(() => {
+    requestAnimationFrame(() => ref.current?.scrollIntoView({ block: 'start', inline: 'start' }));
+  }, []);
+  useAnchor(id, onAnchorReveal);
+
+  return <div ref={ref}>{children}</div>;
+}

@@ -16,9 +16,10 @@
  */
 
 import { colors, jpegjs } from '../utilsBundle';
-const pixelmatch = require('../third_party/pixelmatch');
+// @ts-ignore
+import pixelmatch from '../third_party/pixelmatch';
 import { compare } from '../image_tools/compare';
-const { diffMatchPatch } = require('../utilsBundle');
+import { diff } from '../utilsBundle';
 import { PNG } from '../utilsBundle';
 
 export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, comparator?: string };
@@ -106,40 +107,28 @@ function validateBuffer(buffer: Buffer, mimeType: string): void {
 }
 
 function compareText(actual: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
-  const { diff_match_patch } = diffMatchPatch;
   if (typeof actual !== 'string')
     return { errorMessage: 'Actual result should be a string' };
   const expected = expectedBuffer.toString('utf-8');
   if (expected === actual)
     return null;
-  const dmp = new diff_match_patch();
-  const d = dmp.diff_main(expected, actual);
-  dmp.diff_cleanupSemantic(d);
+  const diffs = diff.diffChars(expected, actual);
   return {
-    errorMessage: diff_prettyTerminal(d)
+    errorMessage: diff_prettyTerminal(diffs),
   };
 }
 
-function diff_prettyTerminal(diffs: [number, string][]) {
-  const { DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } = diffMatchPatch;
-  const html = [];
-  for (let x = 0; x < diffs.length; x++) {
-    const op = diffs[x][0];    // Operation (insert, delete, equal)
-    const data = diffs[x][1];  // Text of change.
-    const text = data;
-    switch (op) {
-      case DIFF_INSERT:
-        html[x] = colors.green(text);
-        break;
-      case DIFF_DELETE:
-        html[x] = colors.reset(colors.strikethrough(colors.red(text)));
-        break;
-      case DIFF_EQUAL:
-        html[x] = text;
-        break;
-    }
-  }
-  return html.join('');
+function diff_prettyTerminal(diffs: Diff.Change[]): string {
+  const result = diffs.map(part => {
+    const text = part.value;
+    if (part.added)
+      return colors.green(text);
+    else if (part.removed)
+      return colors.reset(colors.strikethrough(colors.red(text)));
+    else
+      return text;
+  });
+  return result.join('');
 }
 
 function resizeImage(image: ImageData, size: { width: number, height: number }): ImageData {

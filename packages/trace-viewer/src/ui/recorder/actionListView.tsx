@@ -49,10 +49,9 @@ export const ActionListView: React.FC<{
 };
 
 export const renderAction = (sdkLanguage: Language, action: actionTypes.ActionInContext) => {
-  const { method, params } = traceParamsForAction(action);
+  const { method, apiName, params } = traceParamsForAction(action);
   const locator = params.selector ? asLocator(sdkLanguage || 'javascript', params.selector) : undefined;
 
-  const apiName = `page.${method}`;
   return <>
     <div className='action-title' title={apiName}>
       <span>{apiName}</span>

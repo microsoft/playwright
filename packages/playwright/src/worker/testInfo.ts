@@ -31,7 +31,7 @@ import type { StackFrame } from '@protocol/channels';
 import { testInfoError } from './util';
 
 export interface TestStepInternal {
-  complete(result: { error?: Error | unknown, attachments?: Attachment[] }): void;
+  complete(result: { error?: Error | unknown, attachments?: Attachment[], suggestedRebaseline?: string }): void;
   stepId: string;
   title: string;
   category: 'hook' | 'fixture' | 'test.step' | 'expect' | 'attach' | string;
@@ -238,15 +238,15 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>): TestStepInternal {
+  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>, parentStep?: TestStepInternal): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
 
-    let parentStep: TestStepInternal | undefined;
     if (data.isStage) {
       // Predefined stages form a fixed hierarchy - use the current one as parent.
       parentStep = this._findLastStageStep(this._steps);
     } else {
-      parentStep = zones.zoneData<TestStepInternal>('stepZone');
+      if (!parentStep)
+        parentStep = zones.zoneData<TestStepInternal>('stepZone');
       if (!parentStep) {
         // If no parent step on stack, assume the current stage as parent.
         parentStep = this._findLastStageStep(this._steps);
@@ -297,6 +297,7 @@ export class TestInfoImpl implements TestInfo {
           stepId,
           wallTime: step.endWallTime,
           error: step.error,
+          suggestedRebaseline: result.suggestedRebaseline,
         };
         this._onStepEnd(payload);
         const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;

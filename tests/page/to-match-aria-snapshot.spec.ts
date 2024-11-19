@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { stripAnsi } from 'tests/config/utils';
+import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
 test('should match', async ({ page }) => {
@@ -43,8 +43,8 @@ test('should match list with accessible name', async ({ page }) => {
   `);
   await expect(page.locator('body')).toMatchAriaSnapshot(`
     - list "my list":
-      - listitem: one
-      - listitem: two
+      - listitem: "one"
+      - listitem: "two"
   `);
 });
 
@@ -76,10 +76,30 @@ test('should match complex', async ({ page }) => {
 });
 
 test('should match regex', async ({ page }) => {
-  await page.setContent(`<h1>Issues 12</h1>`);
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
-    - heading ${/Issues \d+/}
-  `);
+  {
+    await page.setContent(`<h1>Issues 12</h1>`);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading ${/Issues \d+/}
+    `);
+  }
+  {
+    await page.setContent(`<h1>Issues 1/2</h1>`);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading ${/Issues 1[/]2/}
+    `);
+  }
+  {
+    await page.setContent(`<h1>Issues 1[</h1>`);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading ${/Issues 1\[/}
+    `);
+  }
+  {
+    await page.setContent(`<h1>Issues 1]]2</h1>`);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading ${/Issues 1[\]]]2/}
+    `);
+  }
 });
 
 test('should allow text nodes', async ({ page }) => {
@@ -90,7 +110,7 @@ test('should allow text nodes', async ({ page }) => {
 
   await expect(page.locator('body')).toMatchAriaSnapshot(`
     - heading "Microsoft"
-    - text: Open source projects and samples from Microsoft
+    - text: "Open source projects and samples from Microsoft"
   `);
 });
 
@@ -103,7 +123,7 @@ test('details visibility', async ({ page }) => {
   `);
 
   await expect(page.locator('body')).toMatchAriaSnapshot(`
-    - group: Summary
+    - group: "Summary"
   `);
 });
 
@@ -396,12 +416,260 @@ test('expected formatter', async ({ page }) => {
 
   expect(stripAnsi(error.message)).toContain(`
 Locator: locator('body')
-- Expected         - 2
-+ Received string  + 3
+- Expected  - 2
++ Received  + 3
 
 - - heading "todos"
 - - textbox "Wrong text"
 + - banner:
 +   - heading "todos" [level=1]
 +   - textbox "What needs to be done?"`);
+});
+
+test('should unpack escaped names', async ({ page }) => {
+  {
+    await page.setContent(`
+      <button>Click: me</button>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - 'button "Click: me"'
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - 'button /Click: me/'
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <button>Click / me</button>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button "Click / me"
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button /Click \\/ me/
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - 'button /Click \\/ me/'
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <button>Click " me</button>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button "Click \\\" me"
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button /Click \" me/
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button /Click \\\" me/
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <button>Click \\ me</button>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button "Click \\\\ me"
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button /Click \\\\ me/
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - 'button /Click \\\\ me/'
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <button>Click ' me</button>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - 'button "Click '' me"'
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <h1>heading "name" [level=1]</h1>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading "heading \\"name\\" [level=1]" [level=1]
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <h1>heading \\" [level=2]</h1>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - |
+          heading    "heading \\\\\\" [level=2]" [
+             level  =   1   ]
+    `);
+  }
+});
+
+test('should report error in YAML', async ({ page }) => {
+  await page.setContent(`<h1>title</h1>`);
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      heading "title"
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Expected object key starting with "- ":
+
+heading "title"
+`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading: a:
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Nested mappings are not allowed in compact mappings at line 1, column 12:
+
+- heading: a:
+           ^
+`);
+  }
+});
+
+test('should report error in YAML keys', async ({ page }) => {
+  await page.setContent(`<h1>title</h1>`);
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading "title
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unterminated string:
+
+heading "title
+              ^
+`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading /title
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unterminated regex:
+
+heading /title
+              ^
+`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading [level=a]
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "level" attribute must be a number:
+
+heading [level=a]
+               ^
+`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading [expanded=FALSE]
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "expanded" attribute must be a boolean:
+
+heading [expanded=FALSE]
+                  ^
+`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading [checked=foo]
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "checked" attribute must be a boolean or "mixed":
+
+heading [checked=foo]
+                 ^
+`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading [level=]
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "level" attribute must be a number:
+
+heading [level=]
+               ^
+`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading [bogus]
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unsupported attribute [bogus]:
+
+heading [bogus]
+         ^
+`);
+  }
+
+  {
+    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading invalid
+    `).catch(e => e);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unexpected input:
+
+heading invalid
+        ^
+`);
+  }
+});
+
+test('call log should contain actual snapshot', async ({ page }) => {
+  await page.setContent(`<h1>todos</h1>`);
+  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - heading "wrong"
+  `, { timeout: 3000 }).catch(e => e);
+
+  expect(stripAnsi(error.message)).toContain(`- unexpected value "- heading "todos" [level=1]"`);
+});
+
+test('should parse attributes', async ({ page }) => {
+  {
+    await page.setContent(`
+      <button aria-pressed="mixed">hello world</button>
+    `);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - button [pressed=mixed ]
+    `);
+  }
+
+  {
+    await page.setContent(`
+      <h2>hello world</h2>
+    `);
+    await expect(page.locator('body')).not.toMatchAriaSnapshot(`
+      - heading [level =  -3 ]
+    `);
+  }
+});
+
+test('should not unshift actual template text', async ({ page }) => {
+  await page.setContent(`
+    <h1>title</h1>
+    <h1>title 2</h1>
+  `);
+  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+        - heading "title" [level=1]
+    - heading "title 2" [level=1]
+  `, { timeout: 1000 }).catch(e => e);
+  expect(stripAnsi(error.message)).toContain(`
+    - heading "title" [level=1]
+- heading "title 2" [level=1]`);
 });

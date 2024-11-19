@@ -26,7 +26,7 @@ import { RecorderView } from './ui/recorder/recorderView';
   if (window.location.protocol !== 'file:') {
     if (!navigator.serviceWorker)
       throw new Error(`Service workers are not supported.\nMake sure to serve the Recorder (${window.location}) via HTTPS or localhost.`);
-    navigator.serviceWorker.register('sw.bundle.js' + window.location.search);
+    navigator.serviceWorker.register('sw.bundle.js');
     if (!navigator.serviceWorker.controller) {
       await new Promise<void>(f => {
         navigator.serviceWorker.oncontrollerchange = () => f();

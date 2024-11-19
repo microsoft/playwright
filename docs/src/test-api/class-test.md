@@ -1767,6 +1767,12 @@ Whether to box the step in the report. Defaults to `false`. When the step is box
 
 Specifies a custom location for the step to be shown in test reports and trace viewer. By default, location of the [`method: Test.step`] call is shown.
 
+### option: Test.step.timeout
+* since: v1.50
+- `timeout` <[float]>
+
+Maximum time in milliseconds for the step to finish. Defaults to `0` (no timeout).
+
 ## method: Test.use
 * since: v1.10
 

@@ -24,6 +24,7 @@ import type { Playwright } from './playwright';
 import { Recorder } from './recorder';
 import { EmptyRecorderApp } from './recorder/recorderApp';
 import { asLocator, type Language } from '../utils';
+import { parseYamlForAriaSnapshot } from './ariaSnapshot';
 
 const internalMetadata = serverSideCallMetadata();
 
@@ -142,9 +143,13 @@ export class DebugController extends SdkObject {
     this._autoCloseTimer = setTimeout(heartBeat, 30000);
   }
 
-  async highlight(selector: string) {
-    for (const recorder of await this._allRecorders())
-      recorder.setHighlightedSelector(this._sdkLanguage, selector);
+  async highlight(params: { selector?: string, ariaTemplate?: string }) {
+    for (const recorder of await this._allRecorders()) {
+      if (params.ariaTemplate)
+        recorder.setHighlightedAriaTemplate(parseYamlForAriaSnapshot(params.ariaTemplate));
+      else if (params.selector)
+        recorder.setHighlightedSelector(this._sdkLanguage, params.selector);
+    }
   }
 
   async hideHighlight() {

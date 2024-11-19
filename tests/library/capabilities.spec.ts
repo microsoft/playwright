@@ -19,8 +19,7 @@ import url from 'url';
 import { contextTest as it, expect } from '../config/browserTest';
 import { hostPlatform } from '../../packages/playwright-core/src/utils/hostPlatform';
 
-it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer, isMac, macVersion, browserName }) {
-  it.skip(browserName === 'webkit' && isMac && macVersion <= 12, 'WebKit on macOS 12 is frozen and does not support SharedArrayBuffer');
+it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer }) {
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   httpsServer.setRoute('/sharedarraybuffer', (req, res) => {
@@ -234,9 +233,8 @@ it('make sure that XMLHttpRequest upload events are emitted correctly', async ({
   expect(events).toEqual(['loadstart', 'progress', 'load', 'loadend']);
 });
 
-it('loading in HTMLImageElement.prototype', async ({ page, server, browserName, isMac, macVersion }) => {
+it('loading in HTMLImageElement.prototype', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22738' });
-  it.skip(browserName === 'webkit' && isMac && macVersion < 12, 'macOS 11 is frozen');
   await page.goto(server.EMPTY_PAGE);
   const defined = await page.evaluate(() => 'loading' in HTMLImageElement.prototype);
   expect(defined).toBeTruthy();
@@ -251,7 +249,7 @@ it('window.GestureEvent in WebKit', async ({ page, server, browserName }) => {
   expect(type).toBe(browserName === 'webkit' ? 'function' : 'undefined');
 });
 
-it('requestFullscreen', async ({ page, server, browserName, headless, isLinux }) => {
+it('requestFullscreen', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22832' });
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {
@@ -268,7 +266,7 @@ it('requestFullscreen', async ({ page, server, browserName, headless, isLinux })
   expect(await page.evaluate(() => !!document.fullscreenElement)).toBeFalsy();
 });
 
-it('should send no Content-Length header for GET requests with a Content-Type', async ({ page, server, browserName }) => {
+it('should send no Content-Length header for GET requests with a Content-Type', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22569' });
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([
@@ -401,6 +399,7 @@ it('should be able to render avif images', {
 }, async ({ page, server, browserName, platform }) => {
   it.fixme(browserName === 'webkit' && platform === 'win32');
   it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'Ubuntu 20.04 is frozen');
+  it.skip(browserName === 'webkit' && hostPlatform.startsWith('debian11'), 'Debian 11 is too old');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<img src="${server.PREFIX}/rgb.avif" onerror="window.error = true">`);
   await expect.poll(() => page.locator('img').boundingBox()).toEqual(expect.objectContaining({
@@ -408,4 +407,24 @@ it('should be able to render avif images', {
     height: 128,
   }));
   expect(await page.evaluate(() => (window as any).error)).toBe(undefined);
+});
+
+it('should not crash when clicking a label with a <input type="file"/>', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/33257'
+  }
+}, async ({ page }) => {
+  await page.setContent(`
+    <form>
+      <label>
+        A second file
+        <input type="file" />
+      </label>
+    </form>
+  `);
+  const fileChooserPromise = page.waitForEvent('filechooser');
+  await page.getByText('A second file').click();
+  const fileChooser = await fileChooserPromise;
+  expect(fileChooser.page()).toBe(page);
 });
