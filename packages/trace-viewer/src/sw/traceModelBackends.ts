@@ -146,7 +146,7 @@ function formatUrl(trace: string, server: TraceViewerServer) {
 }
 
 export class TraceViewerServer {
-  constructor(private readonly baseUrl: string) {}
+  constructor(private readonly baseUrl: URL) {}
 
   getFileURL(path: string): URL {
     const url = new URL('trace/file', this.baseUrl);
