@@ -60,7 +60,7 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
         <input type='search' spellCheck={false} className='form-control subnav-search-input input-contrast width-full' value={filterText} onChange={e => {
           const filterText = e.target.value;
           if (filterText)
-            navigate(`#?` + new URLSearchParams({ q: filterText }));
+            setFilterText(filterText);
           else
             navigate('#');
         }}></input>

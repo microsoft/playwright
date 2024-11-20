@@ -2381,6 +2381,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       const searchInput = page.locator('.subnav-search-input');
       await searchInput.fill('a.test.js:3:11');
+      await searchInput.press('Enter');
       await page.waitForURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === 'a.test.js:3:11');
       await searchInput.clear();
       await page.waitForURL(url => !new URLSearchParams(url.hash.slice(1)).has('q'));
