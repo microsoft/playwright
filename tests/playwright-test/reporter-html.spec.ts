@@ -933,7 +933,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await page.waitForURL(url => {
         const navState = new URLSearchParams(url.hash.slice(1));
-        return navState.get('attachment') === 'foo';
+        return navState.get('anchor') === 'attachment-foo';
       });
     });
 
