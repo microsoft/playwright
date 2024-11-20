@@ -2,12 +2,18 @@
 id: aria-snapshots
 title: "Aria snapshots"
 ---
+import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Overview
 
 In Playwright, aria snapshots provide a YAML representation of the accessibility tree of a page.
 These snapshots can be stored and compared later to verify if the page structure remains consistent or meets defined
 expectations.
+
+<LiteYouTube
+    id="P4R6hnsE0UY"
+    title="Getting started with ARIA Snapshots"
+/>
 
 The YAML format describes the hierarchical structure of accessible elements on the page, detailing **roles**, **attributes**, **values**, and **text content**.
 The structure follows a tree-like syntax, where each node represents an accessible element, and indentation indicates
