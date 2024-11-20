@@ -2563,6 +2563,33 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('#fallback-error')).toContainText('The Playwright Trace Viewer must be loaded over the http:// or https:// protocols.');
       await expect(page.locator('#fallback-error')).toContainText(`npx playwright show-report ${reportPath.replace(/\\/g, '\\\\')}`);
     });
+
+    test('should not collate identical file names in different project directories', async ({ runInlineTest, page }) => {
+      await runInlineTest({
+        'playwright.config.ts': `
+          export default {
+            projects: [
+              { name: 'a', testDir: './tests/a' },
+              { name: 'b', testDir: './tests/b' },
+            ],
+          }
+        `,
+        'tests/a/test.spec.ts': `
+          import { test } from '@playwright/test';
+          test('passes', ({ page }) => {});
+        `,
+        'tests/b/test.spec.ts': `
+          import { test } from '@playwright/test';
+          test('passes', ({ page }) => {});
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      const reportPath = path.join(test.info().outputPath(), 'playwright-report', 'index.html');
+      await page.goto(url.pathToFileURL(reportPath).toString());
+      await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+        - button "tests/a/test.spec.ts"
+        - button "tests/b/test.spec.ts"
+      `);
+    });
   });
 }
 
