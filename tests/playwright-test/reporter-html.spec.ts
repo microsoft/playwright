@@ -2368,6 +2368,24 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.getByText('a.test.js:4', { exact: true })).toBeVisible();
     });
 
+    test('filter should be mirrored in URL', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          const { test, expect } = require('@playwright/test');
+          test('test1', async ({}) => { expect(1).toBe(1); });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+      expect(result.exitCode).toBe(0);
+
+      await showReport();
+      const searchInput = page.locator('.subnav-search-input');
+      await searchInput.fill('a.test.js:3:11');
+      await page.waitForURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === 'a.test.js:3:11');
+      await searchInput.clear();
+      await page.waitForURL(url => !new URLSearchParams(url.hash.slice(1)).has('q'));
+    });
+
     test('should properly display beforeEach with and without title', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'a.test.js': `
