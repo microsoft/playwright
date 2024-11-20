@@ -58,8 +58,20 @@ class ZipReport implements LoadedReport {
     const zipURI = await new Promise<string>(resolve => {
       if (window.playwrightReportBase64)
         return resolve(window.playwrightReportBase64);
-      window.addEventListener('message', event => event.source === window.opener && resolve(event.data), { once: true });
-      window.opener.postMessage('ready', '*');
+      if (window.opener) {
+        window.addEventListener('message', event => {
+          if (event.source === window.opener) {
+            localStorage.setItem('playwrightReportBase64', event.data);
+            resolve(event.data);
+          }
+        }, { once: true });
+        window.opener.postMessage('ready', '*');
+      } else {
+        const oldReport = localStorage.getItem('playwrightReportBase64');
+        if (oldReport)
+          return resolve(oldReport);
+        alert('couldnt find report, something with HMR is broken');
+      }
     });
 
     const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(zipURI), { useWebWorkers: false });
