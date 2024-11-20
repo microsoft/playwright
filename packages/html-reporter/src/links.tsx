@@ -134,13 +134,14 @@ export function useAnchor(id: AnchorID, onReveal: () => void) {
 
     const listener = () => {
       const params = new URLSearchParams(window.location.hash.slice(1));
-      if (!params.has('anchor'))
-        return;
-      const anchor = params.get('anchor');
-      if (matchesAnchor(id, anchor!))
+      if (params.has('anchor') && matchesAnchor(id, params.get('anchor')!))
         onReveal();
     };
     window.addEventListener('popstate', listener);
+
+    // check if we're already on the anchor. required to make it work on page load.
+    listener();
+
     return () => window.removeEventListener('popstate', listener);
   }, [id, onReveal]);
 }
