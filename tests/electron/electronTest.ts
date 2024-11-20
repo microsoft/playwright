@@ -35,6 +35,7 @@ export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
   isAndroid: [false, { scope: 'worker' }],
   isElectron: [true, { scope: 'worker' }],
   isWebView2: [false, { scope: 'worker' }],
+  isHeadlessShell: [false, { scope: 'worker' }],
 
   launchElectronApp: async ({ playwright }, use) => {
     // This env prevents 'Electron Security Policy' console message.
