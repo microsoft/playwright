@@ -8,6 +8,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.49
 
+<LiteYouTube
+  id="S5wCft-ImKk"
+  title="Playwright 1.49"
+/>
+
 ### Aria snapshots
 
 New assertion [`method: LocatorAssertions.toMatchAriaSnapshot`] verifies page structure by comparing to an expected accessibility tree, represented as YAML.
