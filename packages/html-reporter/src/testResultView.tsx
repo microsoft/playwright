@@ -71,20 +71,19 @@ export const TestResultView: React.FC<{
   test: TestCase,
   result: TestResult,
 }> = ({ test, result }) => {
-  const { screenshots, videos, traces, otherAttachments, diffs, errors } = React.useMemo(() => {
+  const { screenshots, videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors } = React.useMemo(() => {
     const attachments = result?.attachments || [];
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
+    const screenshotAnchors = [...screenshots].map(a => `attachment-${a.name}`);
     const videos = attachments.filter(a => a.contentType.startsWith('video/'));
     const traces = attachments.filter(a => a.name === 'trace');
     const otherAttachments = new Set<TestAttachment>(attachments);
     [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
+    const otherAttachmentAnchors = [...otherAttachments].map(a => `attachment-${a.name}`);
     const diffs = groupImageDiffs(screenshots);
     const errors = classifyErrors(result.errors, diffs);
-    return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors };
+    return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors };
   }, [result]);
-
-  const screenshotAnchor = React.useMemo(() => screenshots.map(a => `attachment-${a.name}`), [screenshots]);
-  const otherAttachmentsAnchor = React.useMemo(() => [...otherAttachments].map(a => `attachment-${a.name}`), [otherAttachments]);
 
   return <div className='test-result'>
     {!!errors.length && <AutoChip header='Errors'>
@@ -106,7 +105,7 @@ export const TestResultView: React.FC<{
       </Anchor>
     )}
 
-    {!!screenshots.length && <Anchor id={screenshotAnchor}><AutoChip header='Screenshots' revealOnAnchorId={screenshotAnchor}>
+    {!!screenshots.length && <Anchor id={screenshotAnchors}><AutoChip header='Screenshots' revealOnAnchorId={screenshotAnchors}>
       {screenshots.map((a, i) => {
         return <div key={`screenshot-${i}`}>
           <a href={a.path}>
@@ -135,7 +134,7 @@ export const TestResultView: React.FC<{
       </div>)}
     </AutoChip></Anchor>}
 
-    {!!otherAttachments.size && <AutoChip header='Attachments' revealOnAnchorId={otherAttachmentsAnchor}>
+    {!!otherAttachments.size && <AutoChip header='Attachments' revealOnAnchorId={otherAttachmentAnchors}>
       {[...otherAttachments].map((a, i) =>
         <Anchor key={`attachment-link-${i}`} id={`attachment-${a.name}`}>
           <AttachmentLink attachment={a} openInNewTab={a.contentType.startsWith('text/html')} />
