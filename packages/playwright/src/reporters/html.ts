@@ -133,7 +133,7 @@ class HtmlReporter implements ReporterV2 {
     const projectSuites = this.suite.suites;
     await removeFolders([this._outputFolder]);
     const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL);
-    this._buildResult = await builder.build(this.config.metadata, this.config.rootDir, projectSuites, result, this._topLevelErrors);
+    this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
   }
 
   async onExit() {
@@ -238,13 +238,12 @@ class HtmlBuilder {
     this._attachmentsBaseURL = attachmentsBaseURL;
   }
 
-  async build(metadata: Metadata, rootDir: string, projectSuites: Suite[], result: FullResult, topLevelErrors: TestError[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
+  async build(metadata: Metadata, projectSuites: Suite[], result: FullResult, topLevelErrors: TestError[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectSuite of projectSuites) {
       for (const fileSuite of projectSuite.suites) {
         const fileName = this._relativeLocation(fileSuite.location)!.file;
-        const relativeFile = path.relative(rootDir, fileSuite.location!.file);
-        const fileId = calculateSha1(toPosixPath(relativeFile)).slice(0, 20);
+        const fileId = calculateSha1(toPosixPath(fileName)).slice(0, 20);
         let fileEntry = data.get(fileId);
         if (!fileEntry) {
           fileEntry = {
