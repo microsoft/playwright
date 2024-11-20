@@ -72,6 +72,7 @@ export const AttachmentLink: React.FunctionComponent<{
   linkName?: string,
   openInNewTab?: boolean,
 }> = ({ attachment, href, linkName, openInNewTab }) => {
+  const isAnchored = useIsAnchored('attachment-' + attachment.name);
   return <TreeItem title={<span>
     {attachment.contentType === kMissingContentType ? icons.warning() : icons.attachment()}
     {attachment.path && <a href={href || attachment.path} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>}
@@ -82,7 +83,7 @@ export const AttachmentLink: React.FunctionComponent<{
     )}
   </span>} loadChildren={attachment.body ? () => {
     return [<div key={1} className='attachment-body'><CopyToClipboard value={attachment.body!}/>{linkifyText(attachment.body!)}</div>];
-  } : undefined} depth={0} style={{ lineHeight: '32px' }}></TreeItem>;
+  } : undefined} depth={0} style={{ lineHeight: '32px' }} selected={isAnchored}></TreeItem>;
 };
 
 export const SearchParamsContext = React.createContext<URLSearchParams>(new URLSearchParams(window.location.hash.slice(1)));
@@ -133,6 +134,14 @@ export function useAnchor(id: AnchorID, onReveal: () => void) {
     window.addEventListener('popstate', listener);
     return () => window.removeEventListener('popstate', listener);
   }, [id, onReveal]);
+}
+
+export function useIsAnchored(id: AnchorID) {
+  const searchParams = React.useContext(SearchParamsContext);
+  if (!searchParams.has('anchor'))
+    return false;
+  const anchor = searchParams.get('anchor');
+  return typeof id === 'function' ? id(anchor!) : anchor === id;
 }
 
 export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID }>) {
