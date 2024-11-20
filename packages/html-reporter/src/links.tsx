@@ -115,7 +115,17 @@ export function generateTraceUrl(traces: TestAttachment[]) {
 
 const kMissingContentType = 'x-playwright/missing';
 
-export type AnchorID = string | ((id: string) => boolean) | undefined;
+export type AnchorID = string | string[] | ((id: string) => boolean) | undefined;
+
+function matchesAnchor(id: AnchorID, anchor: string): boolean {
+  if (typeof id === 'undefined')
+    return false;
+  if (typeof id === 'string')
+    return id === anchor;
+  if (Array.isArray(id))
+    return id.includes(anchor);
+  return id(anchor);
+}
 
 export function useAnchor(id: AnchorID, onReveal: () => void) {
   React.useEffect(() => {
@@ -127,8 +137,7 @@ export function useAnchor(id: AnchorID, onReveal: () => void) {
       if (!params.has('anchor'))
         return;
       const anchor = params.get('anchor');
-      const isRevealed = typeof id === 'function' ? id(anchor!) : anchor === id;
-      if (isRevealed)
+      if (matchesAnchor(id, anchor!))
         onReveal();
     };
     window.addEventListener('popstate', listener);
@@ -141,7 +150,7 @@ export function useIsAnchored(id: AnchorID) {
   if (!searchParams.has('anchor'))
     return false;
   const anchor = searchParams.get('anchor');
-  return typeof id === 'function' ? id(anchor!) : anchor === id;
+  return matchesAnchor(id, anchor!);
 }
 
 export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID }>) {
