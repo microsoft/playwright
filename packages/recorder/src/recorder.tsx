@@ -27,7 +27,7 @@ import { CallLogView } from './callLog';
 import './recorder.css';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { toggleTheme } from '@web/theme';
-import { copy } from '@web/uiUtils';
+import { copy, useSetting } from '@web/uiUtils';
 import yaml from 'yaml';
 import { parseAriaKey } from '@isomorphic/ariaSnapshot';
 import type { AriaKeyError, ParsedYaml } from '@isomorphic/ariaSnapshot';
@@ -47,7 +47,7 @@ export const Recorder: React.FC<RecorderProps> = ({
 }) => {
   const [selectedFileId, setSelectedFileId] = React.useState<string | undefined>();
   const [runningFileId, setRunningFileId] = React.useState<string | undefined>();
-  const [selectedTab, setSelectedTab] = React.useState<string>('log');
+  const [selectedTab, setSelectedTab] = useSetting<string>('recorderPropertiesTab', 'log');
   const [ariaSnapshot, setAriaSnapshot] = React.useState<string | undefined>();
   const [ariaSnapshotErrors, setAriaSnapshotErrors] = React.useState<SourceHighlight[]>();
 
@@ -67,6 +67,7 @@ export const Recorder: React.FC<RecorderProps> = ({
     const language = source.language;
     setLocator(asLocator(language, elementInfo.selector));
     setAriaSnapshot(elementInfo.ariaSnapshot);
+    setAriaSnapshotErrors([]);
     if (userGesture && selectedTab !== 'locator' && selectedTab !== 'aria')
       setSelectedTab('locator');
 
@@ -122,9 +123,6 @@ export const Recorder: React.FC<RecorderProps> = ({
     if (!errors.length)
       window.dispatch({ event: 'highlightRequested', params: { ariaTemplate: fragment } });
   }, [mode]);
-  const isRecording = mode === 'recording' || mode === 'recording-inspecting';
-  const locatorPlaceholder = isRecording ? '// Unavailable while recording' : (locator ? undefined : '// Pick element or type locator');
-  const ariaPlaceholder = isRecording ? '# Unavailable while recording' : (ariaSnapshot ? undefined : '# Pick element or type snapshot');
 
   return <div className='recorder'>
     <Toolbar>
@@ -191,7 +189,7 @@ export const Recorder: React.FC<RecorderProps> = ({
           {
             id: 'locator',
             title: 'Locator',
-            render: () => <CodeMirrorWrapper text={locatorPlaceholder || locator} language={source.language} readOnly={isRecording} focusOnChange={true} onChange={onEditorChange} wrapLines={true} />
+            render: () => <CodeMirrorWrapper text={locator} placeholder='Type locator to inspect' language={source.language} focusOnChange={true} onChange={onEditorChange} wrapLines={true} />
           },
           {
             id: 'log',
@@ -200,8 +198,8 @@ export const Recorder: React.FC<RecorderProps> = ({
           },
           {
             id: 'aria',
-            title: 'Aria snapshot',
-            render: () => <CodeMirrorWrapper text={ariaPlaceholder || ariaSnapshot || ''} language={'yaml'} readOnly={isRecording} onChange={onAriaEditorChange} highlight={ariaSnapshotErrors} wrapLines={true} />
+            title: 'Aria',
+            render: () => <CodeMirrorWrapper text={ariaSnapshot || ''} placeholder='Type aria template to match' language={'yaml'} onChange={onAriaEditorChange} highlight={ariaSnapshotErrors} wrapLines={true} />
           },
         ]}
         selectedTab={selectedTab}

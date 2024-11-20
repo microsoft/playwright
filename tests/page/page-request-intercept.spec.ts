@@ -318,3 +318,25 @@ it('request.postData is not null when fetching FormData with a Blob', {
   expect(postData).toContain('Content-Disposition: form-data; name="file"; filename="blob"');
   expect(postData).toContain('\r\nhello\r\n');
 });
+
+it('should abort favicon requests if interception is enabled', async ({ page, server, browserName }) => {
+  let requestCount = 0;
+  server.setRoute('/favicon.ico', (req, res) => {
+    ++requestCount;
+    res.setHeader('content-type', 'text/plain');
+    res.end('my content');
+  });
+  // Intercept all requests.
+  await page.route('**/*', async route => {
+    await route.fulfill({
+      status: 200,
+      body: 'Hello, world!',
+    });
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const response = await page.evaluate(() => fetch('/favicon.ico').then(r => r.text()).catch(e => 'load failed'));
+  expect(response).toBe('load failed');
+  // Browsers can send favicon requests in the background.
+  await new Promise(f => setTimeout(f, 1000));
+  expect(requestCount).toBe(0);
+});

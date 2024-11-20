@@ -47,8 +47,10 @@ const xtermDataSource: XtermDataSource = {
 };
 
 const searchParams = new URLSearchParams(window.location.search);
-const guid = searchParams.get('ws');
-const wsURL = new URL(`/${guid}`, searchParams.get('server') ?? window.location.toString());
+let testServerBaseUrl = new URL('../', window.location.href);
+if (testServerBaseUrl.searchParams.has('server'))
+  testServerBaseUrl = new URL(testServerBaseUrl.searchParams.get('server')!, testServerBaseUrl);
+const wsURL = new URL(searchParams.get('ws')!, testServerBaseUrl);
 wsURL.protocol = (wsURL.protocol === 'https:' ? 'wss:' : 'ws:');
 const queryParams = {
   args: searchParams.getAll('arg'),
@@ -109,7 +111,10 @@ export const UIModeView: React.FC<{}> = ({
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const reloadTests = React.useCallback(() => {
-    setTestServerConnection(new TestServerConnection(new WebSocketTestServerTransport(wsURL)));
+    setTestServerConnection(prevConnection => {
+      prevConnection?.close();
+      return new TestServerConnection(new WebSocketTestServerTransport(wsURL));
+    });
   }, []);
 
   // Load tests on startup.
@@ -224,7 +229,7 @@ export const UIModeView: React.FC<{}> = ({
         newFilter.set(projectSuite.title, !!selectedProjects?.includes(projectSuite.title));
     }
     if (!selectedProjects && newFilter.size && ![...newFilter.values()].includes(true))
-      newFilter.set(newFilter.entries().next().value[0], true);
+      newFilter.set(newFilter.entries().next().value![0], true);
     if (projectFilters.size !== newFilter.size || [...projectFilters].some(([k, v]) => newFilter.get(k) !== v))
       setProjectFilters(newFilter);
   }, [projectFilters, testModel]);

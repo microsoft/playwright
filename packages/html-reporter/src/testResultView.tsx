@@ -20,7 +20,7 @@ import { TreeItem } from './treeItem';
 import { msToString } from './utils';
 import { AutoChip } from './chip';
 import { traceImage } from './images';
-import { AttachmentLink, generateTraceUrl } from './links';
+import { Anchor, AttachmentLink, generateTraceUrl } from './links';
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
@@ -64,9 +64,7 @@ function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiff[] {
 export const TestResultView: React.FC<{
   test: TestCase,
   result: TestResult,
-  anchor: 'video' | 'diff' | '',
-}> = ({ result, anchor }) => {
-
+}> = ({ result }) => {
   const { screenshots, videos, traces, otherAttachments, diffs, errors, htmls } = React.useMemo(() => {
     const attachments = result?.attachments || [];
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
@@ -79,20 +77,6 @@ export const TestResultView: React.FC<{
     const errors = classifyErrors(result.errors, diffs);
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, htmls };
   }, [result]);
-
-  const videoRef = React.useRef<HTMLDivElement>(null);
-  const imageDiffRef = React.useRef<HTMLDivElement>(null);
-
-  const [scrolled, setScrolled] = React.useState(false);
-  React.useEffect(() => {
-    if (scrolled)
-      return;
-    setScrolled(true);
-    if (anchor === 'video')
-      videoRef.current?.scrollIntoView({ block: 'start', inline: 'start' });
-    if (anchor === 'diff')
-      imageDiffRef.current?.scrollIntoView({ block: 'start', inline: 'start' });
-  }, [scrolled, anchor, setScrolled, videoRef]);
 
   return <div className='test-result'>
     {!!errors.length && <AutoChip header='Errors'>
@@ -107,9 +91,11 @@ export const TestResultView: React.FC<{
     </AutoChip>}
 
     {diffs.map((diff, index) =>
-      <AutoChip key={`diff-${index}`} dataTestId='test-results-image-diff' header={`Image mismatch: ${diff.name}`} targetRef={imageDiffRef}>
-        <ImageDiffView key='image-diff' diff={diff}></ImageDiffView>
-      </AutoChip>
+      <Anchor key={`diff-${index}`} id={`diff-${index}`}>
+        <AutoChip dataTestId='test-results-image-diff' header={`Image mismatch: ${diff.name}`} revealOnAnchorId={`diff-${index}`}>
+          <ImageDiffView diff={diff}/>
+        </AutoChip>
+      </Anchor>
     )}
 
     {!!screenshots.length && <AutoChip header='Screenshots'>
@@ -123,23 +109,23 @@ export const TestResultView: React.FC<{
       })}
     </AutoChip>}
 
-    {!!traces.length && <AutoChip header='Traces'>
+    {!!traces.length && <Anchor id='traces'><AutoChip header='Traces' revealOnAnchorId='traces'>
       {<div>
         <a href={generateTraceUrl(traces)}>
           <img className='screenshot' src={traceImage} style={{ width: 192, height: 117, marginLeft: 20 }} />
         </a>
         {traces.map((a, i) => <AttachmentLink key={`trace-${i}`} attachment={a} linkName={traces.length === 1 ? 'trace' : `trace-${i + 1}`}></AttachmentLink>)}
       </div>}
-    </AutoChip>}
+    </AutoChip></Anchor>}
 
-    {!!videos.length && <AutoChip header='Videos' targetRef={videoRef}>
+    {!!videos.length && <Anchor id='videos'><AutoChip header='Videos' revealOnAnchorId='videos'>
       {videos.map((a, i) => <div key={`video-${i}`}>
         <video controls>
           <source src={a.path} type={a.contentType}/>
         </video>
         <AttachmentLink attachment={a}></AttachmentLink>
       </div>)}
-    </AutoChip>}
+    </AutoChip></Anchor>}
 
     {!!(otherAttachments.size + htmls.length) && <AutoChip header='Attachments'>
       {[...htmls].map((a, i) => (

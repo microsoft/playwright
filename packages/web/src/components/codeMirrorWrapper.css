@@ -181,3 +181,7 @@ body.dark-mode .CodeMirror span.cm-type {
   text-decoration-color: var(--vscode-errorForeground);
   text-decoration-style: wavy;
 }
+
+.CodeMirror-placeholder {
+  color: var(--vscode-input-placeholderForeground) !important;
+}

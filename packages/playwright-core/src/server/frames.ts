@@ -296,7 +296,8 @@ export class FrameManager {
     if (request._documentId)
       frame.setPendingDocument({ documentId: request._documentId, request });
     if (request._isFavicon) {
-      route?.continue({ isFallback: true }).catch(() => {});
+      // Abort favicon requests to avoid network access in case of interception.
+      route?.abort('aborted').catch(() => {});
       return;
     }
     this._page.emitOnContext(BrowserContext.Events.Request, request);

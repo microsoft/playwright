@@ -19,6 +19,8 @@ import net from 'net';
 import type { AddressInfo } from 'net';
 
 const CDNS = [
+  'https://playwright.azureedge.net/dbazure/download/playwright', // ESRP
+  'https://playwright.download.prss.microsoft.com/dbazure/download/playwright', // ESRP Fallback
   'https://playwright.azureedge.net',
   'https://playwright-akamai.azureedge.net',
   'https://playwright-verizon.azureedge.net',
@@ -90,8 +92,8 @@ test(`npx playwright install should not hang when CDN closes the connection`, as
       },
       expectToExitWithError: true
     });
-    expect(retryCount).toBe(3);
-    expect([...result.matchAll(/Download failed: server closed connection/g)]).toHaveLength(3);
+    expect(retryCount).toBe(5);
+    expect([...result.matchAll(/Download failed: server closed connection/g)]).toHaveLength(5);
   } finally {
     await new Promise(resolve => server.close(resolve));
   }
@@ -120,8 +122,8 @@ test(`npx playwright install should not hang when CDN TCP connection stalls`, as
       },
       expectToExitWithError: true
     });
-    expect(retryCount).toBe(3);
-    expect([...result.matchAll(/timed out after/g)]).toHaveLength(3);
+    expect(retryCount).toBe(5);
+    expect([...result.matchAll(/timed out after/g)]).toHaveLength(5);
   } finally {
     for (const socket of socketsToDestroy)
       socket.destroy();

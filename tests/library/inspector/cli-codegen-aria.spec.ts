@@ -64,11 +64,10 @@ test.describe(() => {
   test('should inspect aria snapshot', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
     await recorder.setContentAndWait(`<main><button>Submit</button></main>`);
-    await recorder.recorderPage.getByRole('button', { name: 'Record' }).click();
     await recorder.page.click('x-pw-tool-item.pick-locator');
     await recorder.page.hover('button');
     await recorder.trustedClick();
-    await recorder.recorderPage.getByRole('tab', { name: 'Aria snapshot ' }).click();
+    await recorder.recorderPage.getByRole('tab', { name: 'Aria' }).click();
     await expect(recorder.recorderPage.locator('.tab-aria .CodeMirror')).toMatchAriaSnapshot(`
       - textbox
       - text: '- button "Submit"'
@@ -85,12 +84,11 @@ test.describe(() => {
     const submitButton = recorder.page.getByRole('button', { name: 'Submit' });
     const cancelButton = recorder.page.getByRole('button', { name: 'Cancel' });
 
-    await recorder.recorderPage.getByRole('button', { name: 'Record' }).click();
 
     await recorder.page.click('x-pw-tool-item.pick-locator');
     await submitButton.hover();
     await recorder.trustedClick();
-    await recorder.recorderPage.getByRole('tab', { name: 'Aria snapshot ' }).click();
+    await recorder.recorderPage.getByRole('tab', { name: 'Aria' }).click();
     await expect(recorder.recorderPage.locator('.tab-aria .CodeMirror')).toMatchAriaSnapshot(`
       - text: '- button "Submit"'
     `);
@@ -128,13 +126,12 @@ test.describe(() => {
     </main>`);
 
     const submitButton = recorder.page.getByRole('button', { name: 'Submit' });
-    await recorder.recorderPage.getByRole('button', { name: 'Record' }).click();
 
     await recorder.page.click('x-pw-tool-item.pick-locator');
     await submitButton.hover();
     await recorder.trustedClick();
 
-    await recorder.recorderPage.getByRole('tab', { name: 'Aria snapshot ' }).click();
+    await recorder.recorderPage.getByRole('tab', { name: 'Aria' }).click();
     await expect(recorder.recorderPage.locator('.tab-aria .CodeMirror')).toMatchAriaSnapshot(`
       - text: '- button "Submit"'
     `);
@@ -143,5 +140,36 @@ test.describe(() => {
     await recorder.recorderPage.keyboard.press('Backspace');
     // 3 highlighted tokens.
     await expect(recorder.recorderPage.locator('.source-line-error-underline')).toHaveCount(3);
+  });
+
+  test('should generate valid javascript with multiline snapshot assertion', async ({ openRecorder }) => {
+    const { recorder } = await openRecorder();
+    // set width and height to 100% to ensure click is outside of the list
+    await recorder.setContentAndWait(`<body style="width:100%;height:100%"><ul><li>item 1</li><li>item 2</li></ul></body>`);
+
+    await recorder.page.click('x-pw-tool-item.snapshot');
+    await recorder.page.hover('body');
+    await recorder.trustedClick();
+
+    // playwright tests assertions are uncommented
+    await expect.poll(() =>
+      recorder.text('Playwright Test')).toContain([
+      `  await expect(page.locator('body')).toMatchAriaSnapshot(\``,
+      `    - list:`,
+      `      - listitem: item 1`,
+      `      - listitem: item 2`,
+      `    \`);`,
+    ].join('\n'));
+
+    // non-test javascript has commented assertions
+    await expect.poll(() =>
+      recorder.text('JavaScript')).toContain([
+      `  // await expect(page.locator('body')).toMatchAriaSnapshot(\``,
+      `  //   - list:`,
+      `  //     - listitem: item 1`,
+      `  //     - listitem: item 2`,
+      `  //   \`);`,
+    ].join('\n'));
+
   });
 });

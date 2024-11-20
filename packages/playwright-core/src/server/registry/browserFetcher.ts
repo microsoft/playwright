@@ -36,7 +36,7 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
 
   const zipPath = path.join(os.tmpdir(), downloadFileName);
   try {
-    const retryCount = 3;
+    const retryCount = 5;
     for (let attempt = 1; attempt <= retryCount; ++attempt) {
       debugLogger.log('install', `downloading ${title} - attempt #${attempt}`);
       const url = downloadURLs[(attempt - 1) % downloadURLs.length];

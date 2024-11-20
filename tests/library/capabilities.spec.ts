@@ -408,3 +408,23 @@ it('should be able to render avif images', {
   }));
   expect(await page.evaluate(() => (window as any).error)).toBe(undefined);
 });
+
+it('should not crash when clicking a label with a <input type="file"/>', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/33257'
+  }
+}, async ({ page }) => {
+  await page.setContent(`
+    <form>
+      <label>
+        A second file
+        <input type="file" />
+      </label>
+    </form>
+  `);
+  const fileChooserPromise = page.waitForEvent('filechooser');
+  await page.getByText('A second file').click();
+  const fileChooser = await fileChooserPromise;
+  expect(fileChooser.page()).toBe(page);
+});

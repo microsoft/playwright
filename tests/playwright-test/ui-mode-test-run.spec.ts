@@ -775,3 +775,26 @@ test('should respect --ignore-snapshots option', {
           - treeitem ${/\[icon-check\] snapshot/}
   `);
 });
+
+test('should not leak websocket connections', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33641' }
+}, async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async () => {});
+    `,
+  });
+
+  const [ws1] = await Promise.all([
+    page.waitForEvent('websocket'),
+    page.getByTitle('Reload').click(),
+  ]);
+
+  await Promise.all([
+    page.waitForEvent('websocket'),
+    page.getByTitle('Reload').click(),
+  ]);
+
+  await expect.poll(() => ws1.isClosed()).toBe(true);
+});

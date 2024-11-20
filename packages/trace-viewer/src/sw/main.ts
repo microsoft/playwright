@@ -43,12 +43,9 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, client:
   const clientId = client?.id ?? '';
   let data = clientIdToTraceUrls.get(clientId);
   if (!data) {
-    let traceViewerServerBaseUrl = self.registration.scope;
-    if (client?.url) {
-      const clientUrl = new URL(client.url);
-      if (clientUrl.searchParams.has('server'))
-        traceViewerServerBaseUrl = clientUrl.searchParams.get('server')!;
-    }
+    let traceViewerServerBaseUrl = new URL('../', client?.url ?? self.registration.scope);
+    if (traceViewerServerBaseUrl.searchParams.has('server'))
+      traceViewerServerBaseUrl = new URL(traceViewerServerBaseUrl.searchParams.get('server')!, traceViewerServerBaseUrl);
 
     data = { limit, traceUrls: new Set(), traceViewerServer: new TraceViewerServer(traceViewerServerBaseUrl) };
     clientIdToTraceUrls.set(clientId, data);

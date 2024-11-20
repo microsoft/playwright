@@ -33,9 +33,8 @@ export const TestCaseView: React.FC<{
   test: TestCase | undefined,
   next: TestCaseSummary | undefined,
   prev: TestCaseSummary | undefined,
-  anchor: 'video' | 'diff' | '',
   run: number,
-}> = ({ projectNames, test, run, anchor, next, prev }) => {
+}> = ({ projectNames, test, run, next, prev }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
   const searchParams = React.useContext(SearchParamsContext);
   const filterParam = searchParams.has('q') ? '&q=' + searchParams.get('q') : '';
@@ -79,7 +78,7 @@ export const TestCaseView: React.FC<{
       test.results.map((result, index) => ({
         id: String(index),
         title: <div style={{ display: 'flex', alignItems: 'center' }}>{statusIcon(result.status)} {retryLabel(index)}</div>,
-        render: () => <TestResultView test={test!} result={result} anchor={anchor}></TestResultView>
+        render: () => <TestResultView test={test!} result={result} />
       })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
   </div>;
 };
