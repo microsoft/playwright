@@ -26,6 +26,7 @@ import { GridView, type RenderedGridCell } from '@web/components/gridView';
 import { SplitView } from '@web/components/splitView';
 import type { ContextEntry } from '../types/entries';
 import { NetworkFilters, defaultFilterState, type FilterState, type ResourceType } from './networkFilters';
+import type { Language } from '@isomorphic/locatorGenerators';
 
 type NetworkTabModel = {
   resources: Entry[],
@@ -66,7 +67,8 @@ export const NetworkTab: React.FunctionComponent<{
   boundaries: Boundaries,
   networkModel: NetworkTabModel,
   onEntryHovered?: (entry: Entry | undefined) => void,
-}> = ({ boundaries, networkModel, onEntryHovered }) => {
+  sdkLanguage: Language,
+}> = ({ boundaries, networkModel, onEntryHovered, sdkLanguage }) => {
   const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
   const [selectedEntry, setSelectedEntry] = React.useState<RenderedEntry | undefined>(undefined);
   const [filterState, setFilterState] = React.useState(defaultFilterState);
@@ -115,7 +117,7 @@ export const NetworkTab: React.FunctionComponent<{
         sidebarIsFirst={true}
         orientation='horizontal'
         settingName='networkResourceDetails'
-        main={<NetworkResourceDetails resource={selectedEntry.resource} onClose={() => setSelectedEntry(undefined)} />}
+        main={<NetworkResourceDetails resource={selectedEntry.resource} onClose={() => setSelectedEntry(undefined)} sdkLanguage={sdkLanguage} />}
         sidebar={grid}
       />}
   </>;
