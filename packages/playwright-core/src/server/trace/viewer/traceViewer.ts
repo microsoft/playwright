@@ -128,7 +128,7 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
   let baseUrl = '.';
   if (process.env.PW_HMR) {
     baseUrl = 'http://localhost:44223'; // port is hardcoded in build.js
-    params.set('server', server.urlPrefix('precise') + '/trace/');
+    params.set('server', server.urlPrefix('precise'));
   }
 
   const urlPath  = `${baseUrl}/trace/${options.webApp || 'index.html'}?${params.toString()}`;
