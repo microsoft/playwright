@@ -464,6 +464,12 @@ it('should escape yaml text in text nodes', async ({ page }) => {
     <details>
       <summary>one: <a href="#">link1</a> "two <a href="#">link2</a> 'three <a href="#">link3</a> \`four</summary>
     </details>
+    <ul>
+      <a href="#">one</a>,<a href="#">two</a>
+      (<a href="#">three</a>)
+      {<a href="#">four</a>}
+      [<a href="#">five</a>]
+    </ul>
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
@@ -475,6 +481,17 @@ it('should escape yaml text in text nodes', async ({ page }) => {
       - text: "'three"
       - link "link3"
       - text: "\`four"
+    - list:
+      - link "one"
+      - text: ","
+      - link "two"
+      - text: (
+      - link "three"
+      - text: ") {"
+      - link "four"
+      - text: "} ["
+      - link "five"
+      - text: "]"
   `);
 });
 
