@@ -63,7 +63,7 @@ function yamlStringNeedsQuotes(str: string): boolean {
     return true;
 
   // Strings that start with a special indicator character need quotes
-  if (/^[&*].*/.test(str))
+  if (/^[&*\],].*/.test(str))
     return true;
 
   // Strings containing ':' followed by a space or at the end need quotes
