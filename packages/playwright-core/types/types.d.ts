@@ -12425,7 +12425,7 @@ export interface Locator {
   and(locator: Locator): Locator;
 
   /**
-   * Captures the aria snapshot of the given element. See
+   * Captures the aria snapshot of the given element. Read more about [aria snapshots](https://playwright.dev/docs/aria-snapshots) and
    * [expect(locator).toMatchAriaSnapshot(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-match-aria-snapshot)
    * for the corresponding assertion.
    *
@@ -21055,6 +21055,45 @@ export interface Touchscreen {
  *
  */
 export interface Tracing {
+  /**
+   * **NOTE** Use `test.step` instead when available.
+   *
+   * Creates a new group within the trace, assigning any subsequent API calls to this group, until
+   * [tracing.groupEnd()](https://playwright.dev/docs/api/class-tracing#tracing-group-end) is called. Groups can be
+   * nested and will be visible in the trace viewer.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // use test.step instead
+   * await test.step('Log in', async () => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param name Group name shown in the trace viewer.
+   * @param options
+   */
+  group(name: string, options?: {
+    /**
+     * Specifies a custom location for the group to be shown in the trace viewer. Defaults to the location of the
+     * [tracing.group(name[, options])](https://playwright.dev/docs/api/class-tracing#tracing-group) call.
+     */
+    location?: {
+      file: string;
+
+      line?: number;
+
+      column?: number;
+    };
+  }): Promise<void>;
+
+  /**
+   * Closes the last group created by
+   * [tracing.group(name[, options])](https://playwright.dev/docs/api/class-tracing#tracing-group).
+   */
+  groupEnd(): Promise<void>;
+
   /**
    * Start tracing.
    *

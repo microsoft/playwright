@@ -181,7 +181,7 @@ export function toHaveAccessibleDescription(
   options?: { timeout?: number, ignoreCase?: boolean },
 ) {
   return toMatchText.call(this, 'toHaveAccessibleDescription', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
+    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase, normalizeWhiteSpace: true });
     return await locator._expect('to.have.accessible.description', { expectedText, isNot, timeout });
   }, expected, options);
 }
@@ -189,13 +189,20 @@ export function toHaveAccessibleDescription(
 export function toHaveAccessibleName(
   this: ExpectMatcherState,
   locator: LocatorEx,
-  expected: string | RegExp,
-  options?: { timeout?: number, ignoreCase?: boolean },
+  expected: string | RegExp | (string | RegExp)[],
+  options: { timeout?: number, ignoreCase?: boolean, normalizeWhiteSpace?: boolean } = {}
 ) {
-  return toMatchText.call(this, 'toHaveAccessibleName', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
-    return await locator._expect('to.have.accessible.name', { expectedText, isNot, timeout });
-  }, expected, options);
+  if (Array.isArray(expected)) {
+    return toEqual.call(this, 'toHaveAccessibleName', locator, 'Locator', async (isNot, timeout) => {
+      const expectedText = serializeExpectedTextValues(expected, { ignoreCase: options?.ignoreCase, normalizeWhiteSpace: true });
+      return await locator._expect('to.have.accessible.name.array', { expectedText, isNot, timeout });
+    }, expected, options);
+  } else {
+    return toMatchText.call(this, 'toHaveAccessibleName', locator, 'Locator', async (isNot, timeout) => {
+      const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase, normalizeWhiteSpace: true });
+      return await locator._expect('to.have.accessible.name', { expectedText, isNot, timeout });
+    }, expected, options);
+  }
 }
 
 export function toHaveAttribute(

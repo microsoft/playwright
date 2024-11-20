@@ -24,7 +24,7 @@ export interface ClientInstrumentation {
   removeAllListeners(): void;
   onApiCallBegin(apiCall: string, params: Record<string, any>, frames: StackFrame[], userData: any, out: { stepId?: string }): void;
   onApiCallEnd(userData: any, error?: Error): void;
-  onWillPause(): void;
+  onWillPause(options: { keepTestTimeout: boolean }): void;
 
   runAfterCreateBrowserContext(context: BrowserContext): Promise<void>;
   runAfterCreateRequestContext(context: APIRequestContext): Promise<void>;
@@ -35,7 +35,7 @@ export interface ClientInstrumentation {
 export interface ClientInstrumentationListener {
   onApiCallBegin?(apiName: string, params: Record<string, any>, frames: StackFrame[], userData: any, out: { stepId?: string }): void;
   onApiCallEnd?(userData: any, error?: Error): void;
-  onWillPause?(): void;
+  onWillPause?(options: { keepTestTimeout: boolean }): void;
 
   runAfterCreateBrowserContext?(context: BrowserContext): Promise<void>;
   runAfterCreateRequestContext?(context: APIRequestContext): Promise<void>;

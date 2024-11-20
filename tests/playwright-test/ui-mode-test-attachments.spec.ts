@@ -130,7 +130,7 @@ test('should linkify string attachments', async ({ runUITest, server }) => {
   }
 
   {
-    await attachmentsPane.getByText('Second download').click();
+    await attachmentsPane.getByLabel('Second').click();
     const url = server.PREFIX + '/two.html';
     const promise = page.waitForEvent('popup');
     await attachmentsPane.getByText(url).click();
@@ -139,13 +139,38 @@ test('should linkify string attachments', async ({ runUITest, server }) => {
   }
 
   {
-    await attachmentsPane.getByText('Third download').click();
+    await attachmentsPane.getByLabel('Third').click();
     const url = server.PREFIX + '/three.html';
     const promise = page.waitForEvent('popup');
     await attachmentsPane.getByText('[markdown link]').click();
     const popup = await promise;
     await expect(popup).toHaveURL(url);
   }
+});
+
+test('should link from attachment step to attachments view', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('attach test', async () => {
+        for (let i = 0; i < 100; i++)
+          await test.info().attach('spacer-' + i);
+        await test.info().attach('my-attachment', { body: 'bar' });
+      });
+    `,
+  });
+
+  await page.getByText('attach test').click();
+  await page.getByTitle('Run all').click();
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+  await page.getByRole('tab', { name: 'Attachments' }).click();
+
+  const panel = page.getByRole('tabpanel', { name: 'Attachments' });
+  const attachment = panel.getByLabel('my-attachment');
+  await page.getByRole('treeitem', { name: 'attach "spacer-1"' }).getByLabel('Open Attachment').click();
+  await expect(attachment).not.toBeInViewport();
+  await page.getByRole('treeitem', { name: 'attach "my-attachment"' }).getByLabel('Open Attachment').click();
+  await expect(attachment).toBeInViewport();
 });
 
 function readAllFromStream(stream: NodeJS.ReadableStream): Promise<Buffer> {

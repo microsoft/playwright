@@ -23,14 +23,14 @@ test('install command should work', async ({ exec, installedSoftwareOnDisk }) =>
 
   await test.step('playwright install chromium', async () => {
     const result = await exec('npx playwright install chromium');
-    expect(result).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg']);
-    expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg']);
+    expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg']);
+    expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'chromium-headless-shell', 'ffmpeg']);
   });
 
   await test.step('playwright install', async () => {
     const result = await exec('npx playwright install');
     expect(result).toHaveLoggedSoftwareDownload(['firefox', 'webkit']);
-    expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);
+    expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit']);
   });
 
   await exec('node sanity.js playwright', { env: { PLAYWRIGHT_BROWSERS_PATH: '0' } });
@@ -50,7 +50,7 @@ test('install command should work', async ({ exec, installedSoftwareOnDisk }) =>
 test('should be able to remove browsers', async ({ exec, installedSoftwareOnDisk }) => {
   await exec('npm i playwright');
   await exec('npx playwright install chromium');
-  expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg']);
+  expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'chromium-headless-shell', 'ffmpeg']);
   await exec('npx playwright uninstall');
   expect(await installedSoftwareOnDisk()).toEqual([]);
 });

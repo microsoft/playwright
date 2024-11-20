@@ -41,6 +41,7 @@ import type { Entry } from '@trace/har';
 import './workbench.css';
 import { testStatusIcon, testStatusText } from './testUtils';
 import type { UITestStatus } from './testUtils';
+import type { AfterActionTraceEventAttachment } from '@trace/trace';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -52,12 +53,12 @@ export const Workbench: React.FunctionComponent<{
   status?: UITestStatus,
   annotations?: { type: string; description?: string; }[];
   inert?: boolean,
-  openPage?: (url: string, target?: string) => Window | any,
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
-}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, openPage, onOpenExternally, revealSource }) => {
+}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource }) => {
   const [selectedCallId, setSelectedCallId] = React.useState<string | undefined>(undefined);
   const [revealedError, setRevealedError] = React.useState<ErrorDescription | undefined>(undefined);
+  const [revealedAttachment, setRevealedAttachment] = React.useState<AfterActionTraceEventAttachment | undefined>(undefined);
   const [highlightedCallId, setHighlightedCallId] = React.useState<string | undefined>();
   const [highlightedEntry, setHighlightedEntry] = React.useState<Entry | undefined>();
   const [highlightedConsoleMessage, setHighlightedConsoleMessage] = React.useState<ConsoleEntry | undefined>();
@@ -142,6 +143,11 @@ export const Workbench: React.FunctionComponent<{
   const locatorPicked = React.useCallback((locator: string) => {
     setHighlightedLocator(locator);
     selectPropertiesTab('inspector');
+  }, [selectPropertiesTab]);
+
+  const revealAttachment = React.useCallback((attachment: AfterActionTraceEventAttachment) => {
+    selectPropertiesTab('attachments');
+    setRevealedAttachment(attachment);
   }, [selectPropertiesTab]);
 
   React.useEffect(() => {
@@ -231,7 +237,7 @@ export const Workbench: React.FunctionComponent<{
     id: 'attachments',
     title: 'Attachments',
     count: attachments.length,
-    render: () => <AttachmentsTab model={model} />
+    render: () => <AttachmentsTab model={model} selectedAction={selectedAction} revealedAttachment={revealedAttachment} />
   };
 
   const tabs: TabbedPaneTabModel[] = [
@@ -296,6 +302,7 @@ export const Workbench: React.FunctionComponent<{
         setSelectedTime={setSelectedTime}
         onSelected={onActionSelected}
         onHighlighted={setHighlightedAction}
+        revealAttachment={revealAttachment}
         revealConsole={() => selectPropertiesTab('console')}
         isLive={isLive}
       />
@@ -336,8 +343,7 @@ export const Workbench: React.FunctionComponent<{
           isInspecting={isInspecting}
           setIsInspecting={setIsInspecting}
           highlightedLocator={highlightedLocator}
-          setHighlightedLocator={locatorPicked}
-          openPage={openPage} />}
+          setHighlightedLocator={locatorPicked} />}
         sidebar={
           <TabbedPane
             tabs={[actionsTab, metadataTab]}

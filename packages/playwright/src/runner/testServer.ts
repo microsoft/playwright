@@ -23,7 +23,7 @@ import type * as reporterTypes from '../../types/testReporter';
 import { affectedTestFiles, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import type { ConfigLocation, FullConfigInternal } from '../common/config';
 import { createErrorCollectingReporter, createReporterForTestServer, createReporters } from './reporters';
-import { TestRun, runTasks, createLoadTask, createRunTestsTasks, createReportBeginTask, createListFilesTask, runTasksDeferCleanup, createClearCacheTask, createGlobalSetupTasks, createStartDevServerTask } from './tasks';
+import { TestRun, runTasks, createLoadTask, createRunTestsTasks, createReportBeginTask, createListFilesTask, runTasksDeferCleanup, createClearCacheTask, createGlobalSetupTasks, createStartDevServerTask, createApplyRebaselinesTask } from './tasks';
 import { open } from 'playwright-core/lib/utilsBundle';
 import ListReporter from '../reporters/list';
 import { SigIntWatcher } from './sigIntWatcher';
@@ -336,6 +336,7 @@ export class TestServerDispatcher implements TestServerInterface {
     const reporter = new InternalReporter([...configReporters, wireReporter]);
     const stop = new ManualPromise();
     const tasks = [
+      createApplyRebaselinesTask(),
       createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: false, doNotRunDepsOutsideProjectFilter: true }),
       ...createRunTestsTasks(config),
     ];

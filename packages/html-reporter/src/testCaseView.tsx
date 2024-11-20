@@ -33,9 +33,8 @@ export const TestCaseView: React.FC<{
   test: TestCase | undefined,
   next: TestCaseSummary | undefined,
   prev: TestCaseSummary | undefined,
-  anchor: 'video' | 'diff' | '',
   run: number,
-}> = ({ projectNames, test, run, anchor, next, prev }) => {
+}> = ({ projectNames, test, run, next, prev }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
   const searchParams = React.useContext(SearchParamsContext);
   const filterParam = searchParams.has('q') ? '&q=' + searchParams.get('q') : '';
@@ -51,12 +50,13 @@ export const TestCaseView: React.FC<{
   }, [test?.annotations]);
 
   return <div className='test-case-column vbox'>
-    <div className='hbox'>
-      {prev && <Link href={`#?testId=${prev.testId}${filterParam}`}>« previous</Link>}
+    {test && <div className='hbox'>
+      <div className='test-case-path'>{test.path.join(' › ')}</div>
       <div style={{ flex: 'auto' }}></div>
-      {next && <Link href={`#?testId=${next.testId}${filterParam}`}>next »</Link>}
-    </div>
-    {test && <div className='test-case-path'>{test.path.join(' › ')}</div>}
+      <div className={clsx(!prev && 'hidden')}><Link href={`#?testId=${prev?.testId}${filterParam}`}>« previous</Link></div>
+      <div style={{ width: 10 }}></div>
+      <div className={clsx(!next && 'hidden')}><Link href={`#?testId=${next?.testId}${filterParam}`}>next »</Link></div>
+    </div>}
     {test && <div className='test-case-title'>{test?.title}</div>}
     {test && <div className='hbox'>
       <div className='test-case-location'>
@@ -78,7 +78,7 @@ export const TestCaseView: React.FC<{
       test.results.map((result, index) => ({
         id: String(index),
         title: <div style={{ display: 'flex', alignItems: 'center' }}>{statusIcon(result.status)} {retryLabel(index)}</div>,
-        render: () => <TestResultView test={test!} result={result} anchor={anchor}></TestResultView>
+        render: () => <TestResultView test={test!} result={result} />
       })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
   </div>;
 };

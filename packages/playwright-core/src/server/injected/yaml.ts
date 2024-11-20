@@ -46,19 +46,6 @@ export function yamlEscapeValueIfNeeded(str: string): string {
   }) + '"';
 }
 
-export function yamlQuoteFragment(str: string, quote = '"'): string {
-  return quote + str.replace(/['"]/g, c => {
-    switch (c) {
-      case '"':
-        return quote === '"' ? '\\"' : '"';
-      case '\'':
-        return quote === '\''  ? '\\\'' : '\'';
-      default:
-        return c;
-    }
-  }) + quote;
-}
-
 function yamlStringNeedsQuotes(str: string): boolean {
   if (str.length === 0)
     return true;
@@ -97,6 +84,10 @@ function yamlStringNeedsQuotes(str: string): boolean {
 
   // Strings starting with '>' or '|' (block scalar indicators) need quotes
   if (/^[>|]/.test(str))
+    return true;
+
+  // Strings starting with quotes need quotes
+  if (/^["']/.test(str))
     return true;
 
   // Strings containing special characters that could cause ambiguity

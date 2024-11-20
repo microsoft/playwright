@@ -256,6 +256,13 @@ class PageHandler {
     return await this._contentPage.send('disposeObject', options);
   }
 
+  async ['Heap.collectGarbage']() {
+    Services.obs.notifyObservers(null, "child-gc-request");
+    Cu.forceGC();
+    Services.obs.notifyObservers(null, "child-cc-request");
+    Cu.forceCC();
+  }
+
   async ['Network.getResponseBody']({requestId}) {
     return this._pageNetwork.getResponseBody(requestId);
   }

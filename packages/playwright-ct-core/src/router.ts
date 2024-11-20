@@ -37,10 +37,20 @@ async function executeRequestHandlers(request: Request, handlers: RequestHandler
   }
 }
 
+function isMswRequestPassthrough(headers: Headers): boolean {
+  if (headers.get('x-msw-intention') === 'bypass')
+    return true;
+  // After MSW v2.6.4
+  // https://github.com/mswjs/msw/commit/2fa98c327acc51189f87789d9155c4ec57be2299
+  if (headers.get('accept')?.includes('msw/passthrough'))
+    return true;
+  return false;
+}
+
 async function globalFetch(...args: Parameters<typeof globalThis.fetch>) {
   if (args[0] && args[0] instanceof Request) {
     const request = args[0];
-    if (request.headers.get('x-msw-intention') === 'bypass') {
+    if (isMswRequestPassthrough(request.headers)) {
       const cookieHeaders = await Promise.all([...currentlyInterceptingInContexts.keys()].map(async context => {
         const cookies = await context.cookies(request.url);
         if (!cookies.length)
@@ -56,7 +66,16 @@ async function globalFetch(...args: Parameters<typeof globalThis.fetch>) {
 
       const headers = new Headers(request.headers);
       headers.set('cookie', cookieHeaders[0]!);
-      headers.delete('x-msw-intention');
+      {
+        // pre 2.6.4
+        headers.delete('x-msw-intention');
+        // post 2.6.4
+        const accept = headers.get('accept')?.split(',').filter(h => !h.includes('msw/')).join(',');
+        if (accept)
+          headers.set('accept', accept);
+        else
+          headers.delete('accept');
+      }
       args[0] = new Request(request.clone(), { headers });
     }
   }

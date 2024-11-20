@@ -46,6 +46,10 @@ svg {
   position: relative;
 }
 
+.hidden {
+  visibility: hidden;
+}
+
 .d-flex {
   display: flex !important;
 }

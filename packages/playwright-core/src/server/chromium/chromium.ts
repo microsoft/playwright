@@ -294,25 +294,20 @@ export class Chromium extends BrowserType {
       throw new Error('Playwright manages remote debugging connection itself.');
     if (args.find(arg => !arg.startsWith('-')))
       throw new Error('Arguments can not specify page to be opened');
-    if (!options.headless && options.channel === 'chromium-headless-shell')
-      throw new Error('Cannot launch headed Chromium with `chromium-headless-shell` channel. Consider using regular Chromium instead.');
     const chromeArguments = [...chromiumSwitches];
 
     if (os.platform() === 'darwin') {
       // See https://github.com/microsoft/playwright/issues/7362
       chromeArguments.push('--enable-use-zoom-for-dsf=false');
       // See https://bugs.chromium.org/p/chromium/issues/detail?id=1407025.
-      if (options.headless)
+      if (options.headless && (!options.channel || options.channel === 'chromium-headless-shell'))
         chromeArguments.push('--use-angle');
     }
 
     if (options.devtools)
       chromeArguments.push('--auto-open-devtools-for-tabs');
     if (options.headless) {
-      if (process.env.PLAYWRIGHT_CHROMIUM_USE_HEADLESS_NEW)
-        chromeArguments.push('--headless=new');
-      else
-        chromeArguments.push('--headless=old');
+      chromeArguments.push('--headless');
 
       chromeArguments.push(
           '--hide-scrollbars',
@@ -351,6 +346,12 @@ export class Chromium extends BrowserType {
     if (options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port')))
       return new ChromiumReadyState();
     return undefined;
+  }
+
+  override getExecutableName(options: types.LaunchOptions): string {
+    if (options.channel)
+      return options.channel;
+    return options.headless ? 'chromium-headless-shell' : 'chromium';
   }
 }
 

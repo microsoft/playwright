@@ -79,25 +79,24 @@ export async function toMatchAriaSnapshot(
   if (notFound) {
     return {
       pass: this.isNot,
-      message: () => messagePrefix + `Expected: ${this.utils.printExpected(expected)}\nReceived: ${EXPECTED_COLOR('not found')}` + callLogText(log),
+      message: () => messagePrefix + `Expected: ${this.utils.printExpected(expected)}\nReceived: ${EXPECTED_COLOR('<element not found>')}` + callLogText(log),
       name: 'toMatchAriaSnapshot',
       expected,
     };
   }
 
-  const escapedExpected = escapePrivateUsePoints(expected);
-  const escapedReceived = escapePrivateUsePoints(typedReceived.raw);
+  const receivedText = typedReceived.raw;
   const message = () => {
     if (pass) {
       if (notFound)
-        return messagePrefix + `Expected: not ${this.utils.printExpected(escapedExpected)}\nReceived: ${escapedReceived}` + callLogText(log);
-      const printedReceived = printReceivedStringContainExpectedSubstring(escapedReceived, escapedReceived.indexOf(escapedExpected), escapedExpected.length);
-      return messagePrefix + `Expected: not ${this.utils.printExpected(escapedExpected)}\nReceived: ${printedReceived}` + callLogText(log);
+        return messagePrefix + `Expected: not ${this.utils.printExpected(expected)}\nReceived: ${receivedText}` + callLogText(log);
+      const printedReceived = printReceivedStringContainExpectedSubstring(receivedText, receivedText.indexOf(expected), expected.length);
+      return messagePrefix + `Expected: not ${this.utils.printExpected(expected)}\nReceived: ${printedReceived}` + callLogText(log);
     } else {
       const labelExpected = `Expected`;
       if (notFound)
-        return messagePrefix + `${labelExpected}: ${this.utils.printExpected(escapedExpected)}\nReceived: ${escapedReceived}` + callLogText(log);
-      return messagePrefix + this.utils.printDiffOrStringify(escapedExpected, escapedReceived, labelExpected, 'Received', false) + callLogText(log);
+        return messagePrefix + `${labelExpected}: ${this.utils.printExpected(expected)}\nReceived: ${receivedText}` + callLogText(log);
+      return messagePrefix + this.utils.printDiffOrStringify(expected, receivedText, labelExpected, 'Received', false) + callLogText(log);
     }
   };
 
@@ -118,10 +117,6 @@ export async function toMatchAriaSnapshot(
   };
 }
 
-function escapePrivateUsePoints(str: string) {
-  return escapeTemplateString(str).replace(/[\uE000-\uF8FF]/g, char => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
-}
-
 function unshift(snapshot: string): string {
   const lines = snapshot.split('\n');
   let whitespacePrefixLength = 100;
@@ -131,7 +126,6 @@ function unshift(snapshot: string): string {
     const match = line.match(/^(\s*)/);
     if (match && match[1].length < whitespacePrefixLength)
       whitespacePrefixLength = match[1].length;
-    break;
   }
   return lines.filter(t => t.trim()).map(line => line.substring(whitespacePrefixLength)).join('\n');
 }

@@ -207,9 +207,9 @@ class InspectTool implements RecorderTool {
 class RecordActionTool implements RecorderTool {
   private _recorder: Recorder;
   private _performingActions = new Set<actions.PerformOnRecordAction>();
-  private _hoveredModel: HighlightModel | null = null;
+  private _hoveredModel: HighlightModelWithSelector | null = null;
   private _hoveredElement: HTMLElement | null = null;
-  private _activeModel: HighlightModel | null = null;
+  private _activeModel: HighlightModelWithSelector | null = null;
   private _expectProgrammaticKeyUp = false;
   private _pendingClickAction: { action: actions.ClickAction, timeout: number } | undefined;
 
@@ -492,9 +492,10 @@ class RecordActionTool implements RecorderTool {
       return;
     const result = activeElement ? this._recorder.injectedScript.generateSelector(activeElement, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : null;
     this._activeModel = result && result.selector ? result : null;
-    if (userGesture)
+    if (userGesture) {
       this._hoveredElement = activeElement as HTMLElement | null;
-    this._updateModelForHoveredElement();
+      this._updateModelForHoveredElement();
+    }
   }
 
   private _shouldIgnoreMouseEvent(event: MouseEvent): boolean {
@@ -589,6 +590,8 @@ class RecordActionTool implements RecorderTool {
   }
 
   private _updateModelForHoveredElement() {
+    if (this._performingActions.size)
+      return;
     if (!this._hoveredElement || !this._hoveredElement.isConnected) {
       this._hoveredModel = null;
       this._hoveredElement = null;
@@ -605,7 +608,7 @@ class RecordActionTool implements RecorderTool {
 
 class TextAssertionTool implements RecorderTool {
   private _recorder: Recorder;
-  private _hoverHighlight: HighlightModel | null = null;
+  private _hoverHighlight: HighlightModelWithSelector | null = null;
   private _action: actions.AssertAction | null = null;
   private _dialog: Dialog;
   private _textCache = new Map<Element | ShadowRoot, ElementText>();
@@ -1018,7 +1021,8 @@ export class Recorder {
   private _listeners: (() => void)[] = [];
   private _currentTool: RecorderTool;
   private _tools: Record<Mode, RecorderTool>;
-  private _actionSelectorModel: HighlightModel | null = null;
+  private _lastHighlightedSelector: string | undefined = undefined;
+  private _lastHighlightedAriaTemplateJSON: string = 'undefined';
   readonly highlight: Highlight;
   readonly overlay: Overlay | undefined;
   private _stylesheet: CSSStyleSheet;
@@ -1128,13 +1132,28 @@ export class Recorder {
     this._switchCurrentTool();
     this.overlay?.setUIState(state);
 
-    // Race or scroll.
-    if (this._actionSelectorModel?.selector && !this._actionSelectorModel?.elements.length)
-      this._actionSelectorModel = null;
-    if (state.actionSelector !== this._actionSelectorModel?.selector)
-      this._actionSelectorModel = state.actionSelector ? querySelector(this.injectedScript, state.actionSelector, this.document) : null;
-    if (this.state.mode === 'none' || this.state.mode === 'standby')
-      this.updateHighlight(this._actionSelectorModel, false);
+    let highlight: HighlightModel | 'clear' | 'noop' = 'noop';
+    if (state.actionSelector !== this._lastHighlightedSelector) {
+      this._lastHighlightedSelector = state.actionSelector;
+      const model = state.actionSelector ? querySelector(this.injectedScript, state.actionSelector, this.document) : null;
+      highlight = model?.elements.length ? model : 'clear';
+    }
+
+    const ariaTemplateJSON = JSON.stringify(state.ariaTemplate);
+    if (this._lastHighlightedAriaTemplateJSON !== ariaTemplateJSON) {
+      this._lastHighlightedAriaTemplateJSON = ariaTemplateJSON;
+      const template = state.ariaTemplate ? this.injectedScript.utils.parseYamlTemplate(state.ariaTemplate) : undefined;
+      const elements = template ? this.injectedScript.getAllByAria(this.document, template) : [];
+      if (elements.length)
+        highlight = { elements };
+      else
+        highlight = 'clear';
+    }
+
+    if (highlight === 'clear')
+      this.clearHighlight();
+    else if (highlight !== 'noop')
+      this.updateHighlight(highlight, false);
   }
 
   clearHighlight() {
@@ -1249,6 +1268,8 @@ export class Recorder {
   private _onScroll(event: Event) {
     if (!event.isTrusted)
       return;
+    this._lastHighlightedSelector = undefined;
+    this._lastHighlightedAriaTemplateJSON = 'undefined';
     this.highlight.hideActionPoint();
     this._currentTool.onScroll?.(event);
   }
@@ -1439,8 +1460,12 @@ function consumeEvent(e: Event) {
 }
 
 type HighlightModel = HighlightOptions & {
-  selector: string;
+  selector?: string;
   elements: Element[];
+};
+
+type HighlightModelWithSelector = HighlightModel & {
+  selector: string;
 };
 
 function asCheckbox(node: Node | null): HTMLInputElement | null {

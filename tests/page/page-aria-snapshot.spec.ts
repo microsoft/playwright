@@ -27,7 +27,6 @@ function unshift(snapshot: string): string {
     const match = line.match(/^(\s*)/);
     if (match && match[1].length < whitespacePrefixLength)
       whitespacePrefixLength = match[1].length;
-    break;
   }
   return lines.filter(t => t.trim()).map(line => line.substring(whitespacePrefixLength)).join('\n');
 }
@@ -457,5 +456,38 @@ it('should be ok with circular ownership', async ({ page }) => {
   await checkAndMatchSnapshot(page.locator('body'), `
     - link "Hello":
       - region: Hello
+  `);
+});
+
+it('should escape yaml text in text nodes', async ({ page }) => {
+  await page.setContent(`
+    <details>
+      <summary>one: <a href="#">link1</a> "two <a href="#">link2</a> 'three <a href="#">link3</a> \`four</summary>
+    </details>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - group:
+      - text: "one:"
+      - link "link1"
+      - text: "\\\"two"
+      - link "link2"
+      - text: "'three"
+      - link "link3"
+      - text: "\`four"
+  `);
+});
+
+it('should handle long strings', async ({ page }) => {
+  const s = 'a'.repeat(10000);
+  await page.setContent(`
+    <a href='about:blank'>
+      <div role='region'>${s}</div>
+    </a>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - link:
+      - region: ${s}
   `);
 });

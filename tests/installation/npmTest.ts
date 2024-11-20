@@ -31,13 +31,19 @@ export const TMP_WORKSPACES = path.join(os.platform() === 'darwin' ? '/tmp' : os
 const debug = debugLogger('itest');
 
 const expect = _expect.extend({
-  toHaveLoggedSoftwareDownload(received: any, browsers: ('chromium' | 'firefox' | 'webkit' | 'ffmpeg')[]) {
+  toHaveLoggedSoftwareDownload(received: any, browsers: ('chromium' | 'chromium-headless-shell' | 'firefox' | 'webkit' | 'ffmpeg')[]) {
     if (typeof received !== 'string')
       throw new Error(`Expected argument to be a string.`);
 
     const downloaded = new Set();
-    for (const [, browser] of received.matchAll(/^.*(chromium|firefox|webkit|ffmpeg).*playwright build v\d+\)? downloaded.*$/img))
-      downloaded.add(browser.toLowerCase());
+    let index = 0;
+    while (true) {
+      const match = received.substring(index).match(/(chromium|chromium headless shell|firefox|webkit|ffmpeg)[\s\d\.]+\(?playwright build v\d+\)? downloaded/im);
+      if (!match)
+        break;
+      downloaded.add(match[1].replace(/\s/g, '-').toLowerCase());
+      index += match.index + 1;
+    }
 
     const expected = browsers;
     if (expected.length === downloaded.size && expected.every(browser => downloaded.has(browser))) {
@@ -143,7 +149,7 @@ export const test = _test
       installedSoftwareOnDisk: async ({ isolateBrowsers, _browsersPath }, use) => {
         if (!isolateBrowsers)
           throw new Error(`Test that checks browser installation must set "isolateBrowsers" to true`);
-        await use(async () => fs.promises.readdir(_browsersPath).catch(() => []).then(files => files.map(f => f.split('-')[0]).filter(f => !f.startsWith('.'))));
+        await use(async () => fs.promises.readdir(_browsersPath).catch(() => []).then(files => files.map(f => f.split('-')[0].replace(/_/g, '-')).filter(f => !f.startsWith('.'))));
       },
       exec: async ({ tmpWorkspace, _browsersPath, isolateBrowsers }, use, testInfo) => {
         await use(async (cmd: string, ...argsAndOrOptions: [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions]) => {

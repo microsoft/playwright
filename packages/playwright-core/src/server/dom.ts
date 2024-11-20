@@ -266,14 +266,22 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const filtered = quads.map(quad => intersectQuadWithViewport(quad)).filter(quad => computeQuadArea(quad) > 0.99);
     if (!filtered.length)
       return 'error:notinviewport';
-    // Return the middle point of the first quad.
-    const result = { x: 0, y: 0 };
-    for (const point of filtered[0]) {
-      result.x += point.x / 4;
-      result.y += point.y / 4;
+    if (this._page._browserContext._browser.options.name === 'firefox') {
+      // Firefox internally uses integer coordinates, so 8.x is converted to 8 or 9 when clicking.
+      //
+      // This does not work nicely for small elements. For example, 1x1 square with corners
+      // (8;8) and (9;9) is targeted when clicking at (8;8) but not when clicking at (9;9).
+      // So, clicking at (8.x;8.y) will sometimes click at (9;9) and miss the target.
+      //
+      // Therefore, we try to find an integer point within a quad to make sure we click inside the element.
+      for (const quad of filtered) {
+        const integerPoint = findIntegerPointInsideQuad(quad);
+        if (integerPoint)
+          return integerPoint;
+      }
     }
-    compensateHalfIntegerRoundingError(result);
-    return result;
+    // Return the middle point of the first quad.
+    return quadMiddlePoint(filtered[0]);
   }
 
   private async _offsetPoint(offset: types.Point): Promise<types.Point | 'error:notvisible' | 'error:notconnected'> {
@@ -920,24 +928,47 @@ function roundPoint(point: types.Point): types.Point {
   };
 }
 
-function compensateHalfIntegerRoundingError(point: types.Point) {
-  // Firefox internally uses integer coordinates, so 8.5 is converted to 9 when clicking.
-  //
-  // This does not work nicely for small elements. For example, 1x1 square with corners
-  // (8;8) and (9;9) is targeted when clicking at (8;8) but not when clicking at (9;9).
-  // So, clicking at (8.5;8.5) will effectively click at (9;9) and miss the target.
-  //
-  // Therefore, we skew half-integer values from the interval (8.49, 8.51) towards
-  // (8.47, 8.49) that is rounded towards 8. This means clicking at (8.5;8.5) will
-  // be replaced with (8.48;8.48) and will effectively click at (8;8).
-  //
-  // Other browsers use float coordinates, so this change should not matter.
-  const remainderX = point.x - Math.floor(point.x);
-  if (remainderX > 0.49 && remainderX < 0.51)
-    point.x -= 0.02;
-  const remainderY = point.y - Math.floor(point.y);
-  if (remainderY > 0.49 && remainderY < 0.51)
-    point.y -= 0.02;
+function quadMiddlePoint(quad: types.Quad): types.Point {
+  const result = { x: 0, y: 0 };
+  for (const point of quad) {
+    result.x += point.x / 4;
+    result.y += point.y / 4;
+  }
+  return result;
+}
+
+function triangleArea(p1: types.Point, p2: types.Point, p3: types.Point): number {
+  return Math.abs(p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y)) / 2;
+}
+
+function isPointInsideQuad(point: types.Point, quad: types.Quad): boolean {
+  const area1 = triangleArea(point, quad[0], quad[1]) + triangleArea(point, quad[1], quad[2]) + triangleArea(point, quad[2], quad[3]) + triangleArea(point, quad[3], quad[0]);
+  const area2 = triangleArea(quad[0], quad[1], quad[2]) + triangleArea(quad[1], quad[2], quad[3]);
+  // Check that point is inside the quad.
+  if (Math.abs(area1 - area2) > 0.1)
+    return false;
+  // Check that point is not on the right/bottom edge, because clicking
+  // there does not actually click the element.
+  return point.x < Math.max(quad[0].x, quad[1].x, quad[2].x, quad[3].x) &&
+         point.y < Math.max(quad[0].y, quad[1].y, quad[2].y, quad[3].y);
+}
+
+function findIntegerPointInsideQuad(quad: types.Quad): types.Point | undefined {
+  // Try all four rounding directions of the middle point.
+  const point = quadMiddlePoint(quad);
+  point.x = Math.floor(point.x);
+  point.y = Math.floor(point.y);
+  if (isPointInsideQuad(point, quad))
+    return point;
+  point.x += 1;
+  if (isPointInsideQuad(point, quad))
+    return point;
+  point.y += 1;
+  if (isPointInsideQuad(point, quad))
+    return point;
+  point.x -= 1;
+  if (isPointInsideQuad(point, quad))
+    return point;
 }
 
 export const kUnableToAdoptErrorMessage = 'Unable to adopt element handle from a different document';

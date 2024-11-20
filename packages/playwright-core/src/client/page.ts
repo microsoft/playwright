@@ -786,14 +786,14 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return [...this._workers];
   }
 
-  async pause() {
+  async pause(_options?: { __testHookKeepTestTimeout: boolean }) {
     if (require('inspector').url())
       return;
     const defaultNavigationTimeout = this._browserContext._timeoutSettings.defaultNavigationTimeout();
     const defaultTimeout = this._browserContext._timeoutSettings.defaultTimeout();
     this._browserContext.setDefaultNavigationTimeout(0);
     this._browserContext.setDefaultTimeout(0);
-    this._instrumentation?.onWillPause();
+    this._instrumentation?.onWillPause({ keepTestTimeout: !!_options?.__testHookKeepTestTimeout });
     await this._closedOrCrashedScope.safeRace(this.context()._channel.pause());
     this._browserContext.setDefaultNavigationTimeout(defaultNavigationTimeout);
     this._browserContext.setDefaultTimeout(defaultTimeout);

@@ -791,7 +791,8 @@ DebugController:
 
     highlight:
       parameters:
-        selector: string
+        selector: string?
+        ariaTemplate: string?
 
     hideHighlight:
 
@@ -3197,6 +3198,18 @@ Tracing:
         title: string?
       returns:
         traceName: string
+
+    tracingGroup:
+      parameters:
+        name: string
+        location:
+          type: object?
+          properties:
+            file: string
+            line: number?
+            column: number?
+
+    tracingGroupEnd:
 
     tracingStopChunk:
       parameters:

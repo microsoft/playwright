@@ -34,7 +34,10 @@ import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } fr
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
-import { matchesAriaTree, renderedAriaTree } from './ariaSnapshot';
+import { matchesAriaTree, getAllByAria, generateAriaTree, renderAriaTree } from './ariaSnapshot';
+import type { AriaNode, AriaSnapshot } from './ariaSnapshot';
+import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
+import { parseYamlTemplate } from '@isomorphic/ariaSnapshot';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
 
@@ -82,6 +85,7 @@ export class InjectedScript {
     isElementVisible,
     isInsideScope,
     normalizeWhiteSpace,
+    parseYamlTemplate,
   };
 
   // eslint-disable-next-line no-restricted-globals
@@ -212,10 +216,31 @@ export class InjectedScript {
     return new Set<Element>(result.map(r => r.element));
   }
 
-  ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex' }): string {
+  ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex', id?: boolean }): string {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
-    return renderedAriaTree(node as Element, options);
+    const ariaSnapshot = generateAriaTree(node as Element);
+    return renderAriaTree(ariaSnapshot.root, options);
+  }
+
+  ariaSnapshotAsObject(node: Node): AriaSnapshot {
+    return generateAriaTree(node as Element);
+  }
+
+  ariaSnapshotElement(snapshot: AriaSnapshot, elementId: number): Element | null {
+    return snapshot.elements.get(elementId) || null;
+  }
+
+  renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'regex', id?: boolean}): string {
+    return renderAriaTree(ariaNode, options);
+  }
+
+  renderAriaSnapshotWithIds(ariaSnapshot: AriaSnapshot): string {
+    return renderAriaTree(ariaSnapshot.root, { ids: ariaSnapshot.ids });
+  }
+
+  getAllByAria(document: Document, template: AriaTemplateNode): Element[] {
+    return getAllByAria(document.documentElement, template);
   }
 
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
@@ -1263,8 +1288,13 @@ export class InjectedScript {
     }
 
     {
-      if (expression === 'to.match.aria')
-        return matchesAriaTree(element, options.expectedValue);
+      if (expression === 'to.match.aria') {
+        const result = matchesAriaTree(element, options.expectedValue);
+        return {
+          received: result.received,
+          matches: !!result.matches.length,
+        };
+      }
     }
 
     {
@@ -1324,6 +1354,8 @@ export class InjectedScript {
       received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : elementText(new Map(), e).full);
     else if (expression === 'to.have.class.array')
       received = elements.map(e => e.classList.toString());
+    else if (expression === 'to.have.accessible.name.array')
+      received = elements.map(e => getElementAccessibleName(e, false));
 
     if (received && options.expectedText) {
       // "To match an array" is "to contain an array" + "equal length"

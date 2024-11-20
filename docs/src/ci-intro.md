@@ -21,7 +21,7 @@ Playwright tests can be run on any CI provider. This guide covers one way of run
 ## Introduction
 * langs: python, java, csharp
 
-Playwright tests can be ran on any CI provider. In this section we will cover running tests on GitHub using GitHub actions. If you would like to see how to configure other CI providers check out our detailed doc on Continuous Integration.
+Playwright tests can be run on any CI provider. In this section we will cover running tests on GitHub using GitHub actions. If you would like to see how to configure other CI providers check out our detailed doc on Continuous Integration.
 
 #### You will learn
 * langs: python, java, csharp

@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { ActionTraceEvent } from '@trace/trace';
+import type { ActionTraceEvent, AfterActionTraceEventAttachment } from '@trace/trace';
 import { msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './actionList.css';
@@ -25,6 +25,7 @@ import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
 import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
 import type { Boundaries } from './geometry';
+import { ToolbarButton } from '@web/components/toolbarButton';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
@@ -35,6 +36,7 @@ export interface ActionListProps {
   onSelected?: (action: ActionTraceEventInContext) => void,
   onHighlighted?: (action: ActionTraceEventInContext | undefined) => void,
   revealConsole?: () => void,
+  revealAttachment(attachment: AfterActionTraceEventAttachment): void,
   isLive?: boolean,
 }
 
@@ -49,6 +51,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   onSelected,
   onHighlighted,
   revealConsole,
+  revealAttachment,
   isLive,
 }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
@@ -68,8 +71,8 @@ export const ActionList: React.FC<ActionListProps> = ({
   }, [setSelectedTime]);
 
   const render = React.useCallback((item: ActionTreeItem) => {
-    return renderAction(item.action!, { sdkLanguage, revealConsole, isLive, showDuration: true, showBadges: true });
-  }, [isLive, revealConsole, sdkLanguage]);
+    return renderAction(item.action!, { sdkLanguage, revealConsole, revealAttachment, isLive, showDuration: true, showBadges: true });
+  }, [isLive, revealConsole, revealAttachment, sdkLanguage]);
 
   const isVisible = React.useCallback((item: ActionTreeItem) => {
     return !selectedTime || !item.action || (item.action!.startTime <= selectedTime.maximum && item.action!.endTime >= selectedTime.minimum);
@@ -106,13 +109,15 @@ export const renderAction = (
   options: {
     sdkLanguage?: Language,
     revealConsole?: () => void,
+    revealAttachment?(attachment: AfterActionTraceEventAttachment): void,
     isLive?: boolean,
     showDuration?: boolean,
     showBadges?: boolean,
   }) => {
-  const { sdkLanguage, revealConsole, isLive, showDuration, showBadges } = options;
+  const { sdkLanguage, revealConsole, revealAttachment, isLive, showDuration, showBadges } = options;
   const { errors, warnings } = modelUtil.stats(action);
   const locator = action.params.selector ? asLocator(sdkLanguage || 'javascript', action.params.selector) : undefined;
+  const showAttachments = !!action.attachments?.length && !!revealAttachment;
 
   let time: string = '';
   if (action.endTime)
@@ -128,7 +133,8 @@ export const renderAction = (
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
       {action.class === 'APIRequestContext' && action.params.url && <div className='action-url' title={action.params.url}>{excludeOrigin(action.params.url)}</div>}
     </div>
-    {(showDuration || showBadges) && <div className='spacer'></div>}
+    {(showDuration || showBadges || showAttachments) && <div className='spacer'></div>}
+    {showAttachments && <ToolbarButton icon='attach' title='Open Attachment' onClick={() => revealAttachment(action.attachments![0])} />}
     {showDuration && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
     {showBadges && <div className='action-icons' onClick={() => revealConsole?.()}>
       {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className='action-icon-value'>{errors}</span></div>}

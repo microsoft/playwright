@@ -22,14 +22,14 @@ import { Worker } from './worker';
 import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import fs from 'fs';
 import { mime } from '../utilsBundle';
-import { assert, isString, headersObjectToArray, isRegExp, rewriteErrorMessage } from '../utils';
+import { assert, isString, headersObjectToArray, isRegExp, rewriteErrorMessage, MultiMap, urlMatches, zones } from '../utils';
+import type { URLMatch, Zone } from '../utils';
 import { ManualPromise, LongStandingScope } from '../utils/manualPromise';
 import { Events } from './events';
 import type { Page } from './page';
 import { Waiter } from './waiter';
 import type * as api from '../../types/types';
 import type { HeadersArray } from '../common/types';
-import { MultiMap, urlMatches, type URLMatch } from '../utils';
 import { APIResponse } from './fetch';
 import type { Serializable } from '../../types/structs';
 import type { BrowserContext } from './browserContext';
@@ -97,6 +97,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.RequestInitializer) {
     super(parent, type, guid, initializer);
+    this.markAsInternalType();
     this._redirectedFrom = Request.fromNullable(initializer.redirectedFrom);
     if (this._redirectedFrom)
       this._redirectedFrom._redirectedTo = this;
@@ -645,6 +646,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ResponseInitializer) {
     super(parent, type, guid, initializer);
+    this.markAsInternalType();
     this._provisionalHeaders = new RawHeaders(initializer.headers);
     this._request = Request.from(this._initializer.request);
     Object.assign(this._request._timing, this._initializer.timing);
@@ -811,12 +813,14 @@ export class RouteHandler {
   readonly handler: RouteHandlerCallback;
   private _ignoreException: boolean = false;
   private _activeInvocations: Set<{ complete: Promise<void>, route: Route }> = new Set();
+  private _svedZone: Zone;
 
   constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER) {
     this._baseURL = baseURL;
     this._times = times;
     this.url = url;
     this.handler = handler;
+    this._svedZone = zones.currentZone();
   }
 
   static prepareInterceptionPatterns(handlers: RouteHandler[]) {
@@ -840,6 +844,10 @@ export class RouteHandler {
   }
 
   public async handle(route: Route): Promise<boolean> {
+    return await this._svedZone.run(async () => this._handleImpl(route));
+  }
+
+  private async _handleImpl(route: Route): Promise<boolean> {
     const handlerInvocation = { complete: new ManualPromise(), route } ;
     this._activeInvocations.add(handlerInvocation);
     try {
