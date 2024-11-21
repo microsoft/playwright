@@ -442,6 +442,23 @@ Expected options currently selected.
 ### option: LocatorAssertions.NotToHaveValues.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.23
 
+## async method: LocatorAssertions.NotToMatchAriaSnapshot
+* since: v1.49
+* langs: python
+
+The opposite of [`method: LocatorAssertions.toMatchAriaSnapshot`].
+
+### param: LocatorAssertions.NotToMatchAriaSnapshot.expected
+* since: v1.49
+- `expected` <string>
+
+### option: LocatorAssertions.NotToMatchAriaSnapshot.timeout = %%-js-assertions-timeout-%%
+* since: v1.49
+
+### option: LocatorAssertions.NotToMatchAriaSnapshot.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.49
+
+
 
 ## async method: LocatorAssertions.toBeAttached
 * since: v1.33
