@@ -43,7 +43,7 @@ export class WebKit extends BrowserType {
   override doRewriteStartupLog(error: ProtocolError): ProtocolError {
     if (!error.logs)
       return error;
-    if (error.logs.includes('cannot open display'))
+    if (error.logs.includes('Failed to open display') || error.logs.includes('cannot open display'))
       error.logs = '\n' + wrapInASCIIBox(kNoXServerRunningError, 1);
     return error;
   }
