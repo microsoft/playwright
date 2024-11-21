@@ -2139,7 +2139,7 @@ await expect(page.locator('body')).toMatchAriaSnapshot(`
 ```
 
 ```python async
-await page.goto('https://demo.playwright.dev/todomvc/')
+await page.goto("https://demo.playwright.dev/todomvc/")
 await expect(page.locator('body')).to_match_aria_snapshot('''
   - heading "todos"
   - textbox "What needs to be done?"
@@ -2147,7 +2147,7 @@ await expect(page.locator('body')).to_match_aria_snapshot('''
 ```
 
 ```python sync
-page.goto('https://demo.playwright.dev/todomvc/')
+page.goto("https://demo.playwright.dev/todomvc/")
 expect(page.locator('body')).to_match_aria_snapshot('''
   - heading "todos"
   - textbox "What needs to be done?"
