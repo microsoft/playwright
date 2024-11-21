@@ -67,19 +67,19 @@ await expect(page.locator('body')).toMatchAriaSnapshot(`
 ```
 
 ```python sync
-page.locator("body").to_match_aria_snapshot("""
+expect(page.locator("body")).to_match_aria_snapshot("""
   - heading "title"
 """)
 ```
 
 ```python async
-await page.locator("body").to_match_aria_snapshot("""
+await expect(page.locator("body")).to_match_aria_snapshot("""
   - heading "title"
 """)
 ```
 
 ```java
-page.locator("body").expect().toMatchAriaSnapshot("""
+assertThat(page.locator("body")).matchesAriaSnapshot("""
   - heading "title"
 """);
 ```
@@ -185,7 +185,7 @@ interactive interface:
 - **"Assert snapshot" Action**: In the code generator, you can use the "Assert snapshot" action to automatically create
 a snapshot assertion for the selected elements. This is a quick way to capture the aria snapshot as part of your
 recorded test flow.
-  
+
 - **"Aria snapshot" Tab**: The "Aria snapshot" tab within the code generator interface visually represents the
 aria snapshot for a selected locator, letting you explore, inspect, and verify element roles, attributes, and
 accessible names to aid snapshot creation and review.

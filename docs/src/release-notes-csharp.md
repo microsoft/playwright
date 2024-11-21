@@ -5,6 +5,91 @@ toc_max_heading_level: 2
 ---
 
 
+## Version 1.49
+
+### Aria snapshots
+
+New assertion [`method: LocatorAssertions.toMatchAriaSnapshot`] verifies page structure by comparing to an expected accessibility tree, represented as YAML.
+
+```csharp
+await page.GotoAsync("https://playwright.dev");
+await Expect(page.Locator("body")).ToMatchAriaSnapshotAsync(@"
+  - banner:
+    - heading /Playwright enables reliable/ [level=1]
+    - link ""Get started""
+    - link ""Star microsoft/playwright on GitHub""
+  - main:
+    - img ""Browsers (Chromium, Firefox, WebKit)""
+    - heading ""Any browser • Any platform • One API""
+");
+```
+
+You can generate this assertion with [Test Generator](./codegen) or by calling [`method: Locator.ariaSnapshot`].
+
+Learn more in the [aria snapshots guide](./aria-snapshots).
+
+### Tracing groups
+
+New method [`method: Tracing.group`] allows you to visually group actions in the trace viewer.
+
+```csharp
+// All actions between GroupAsync and GroupEndAsync
+// will be shown in the trace viewer as a group.
+await Page.Context.Tracing.GroupAsync("Open Playwright.dev > API");
+await Page.GotoAsync("https://playwright.dev/");
+await Page.GetByRole(AriaRole.Link, new() { Name = "API" }).ClickAsync();
+await Page.Context.Tracing.GroupEndAsync();
+```
+
+### Breaking: `chrome` and `msedge` channels switch to new headless mode
+
+This change affects you if you're using one of the following channels in your `playwright.config.ts`:
+- `chrome`, `chrome-dev`, `chrome-beta`, or `chrome-canary`
+- `msedge`, `msedge-dev`, `msedge-beta`, or `msedge-canary`
+
+After updating to Playwright v1.49, run your test suite. If it still passes, you're good to go. If not, you will probably need to update your snapshots, and adapt some of your test code around PDF viewers and extensions. See [issue #33566](https://github.com/microsoft/playwright/issues/33566) for more details.
+
+### Try new Chromium headless
+
+You can opt into the new headless mode by using `'chromium'` channel. As [official Chrome documentation puts it](https://developer.chrome.com/blog/chrome-headless-shell):
+
+> New Headless on the other hand is the real Chrome browser, and is thus more authentic, reliable, and offers more features. This makes it more suitable for high-accuracy end-to-end web app testing or browser extension testing.
+
+See [issue #33566](https://github.com/microsoft/playwright/issues/33566) for the list of possible breakages you could encounter and more details on Chromium headless. Please file an issue if you see any problems after opting in.
+
+```xml csharp title="runsettings.xml"
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <LaunchOptions>
+      <Channel>chromium</Channel>
+    </LaunchOptions>
+  </Playwright>
+</RunSettings>
+```
+
+```bash csharp
+dotnet test -- Playwright.BrowserName=chromium Playwright.LaunchOptions.Channel=chromium
+```
+
+### Miscellaneous
+
+- There will be no more updates for WebKit on Ubuntu 20.04 and Debian 11. We recommend updating your OS to a later version.
+- `<canvas>` elements inside a snapshot now draw a preview.
+
+### Browser Versions
+
+- Chromium 131.0.6778.33
+- Mozilla Firefox 132.0
+- WebKit 18.2
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 130
+- Microsoft Edge 130
+
+
 ## Version 1.48
 
 ### WebSocket routing
