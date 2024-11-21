@@ -45,7 +45,8 @@ it.describe('element screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-element-bounding-box.png');
   });
 
-  it('should take into account padding and border', async ({ page }) => {
+  it('should take into account padding and border', async ({ page, isLinux, headless, browserName }) => {
+    it.fixme(isLinux && !headless && browserName === 'webkit', 'Corner rendered differently after migrating from gtk3 to gtk4');
     await page.setViewportSize({ width: 500, height: 500 });
     await page.setContent(`
       <div style="height: 14px">oooo</div>
