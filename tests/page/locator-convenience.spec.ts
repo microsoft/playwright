@@ -119,7 +119,15 @@ it('isEnabled and isDisabled should work', async ({ page }) => {
 });
 
 it('isEditable should work', async ({ page }) => {
-  await page.setContent(`<input id=input1 disabled><textarea></textarea><input id=input2>`);
+  await page.setContent(`
+    <input id=input1 disabled>
+    <textarea></textarea>
+    <input id=input2>
+    <div contenteditable="true"></div>
+    <span id=span1 role=textbox aria-readonly=true></span>
+    <span id=span2 role=textbox></span>
+    <button>button</button>
+  `);
   await page.$eval('textarea', t => t.readOnly = true);
   const input1 = page.locator('#input1');
   expect(await input1.isEditable()).toBe(false);
@@ -130,6 +138,11 @@ it('isEditable should work', async ({ page }) => {
   const textarea = page.locator('textarea');
   expect(await textarea.isEditable()).toBe(false);
   expect(await page.isEditable('textarea')).toBe(false);
+  expect(await page.locator('div').isEditable()).toBe(true);
+  expect(await page.locator('#span1').isEditable()).toBe(false);
+  expect(await page.locator('#span2').isEditable()).toBe(true);
+  const error = await page.locator('button').isEditable().catch(e => e);
+  expect(error.message).toContain('Element is not an <input>, <textarea>, <select> or [contenteditable] and does not have a role allowing [aria-readonly]');
 });
 
 it('isChecked should work', async ({ page }) => {

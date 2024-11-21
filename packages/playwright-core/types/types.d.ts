@@ -13680,7 +13680,9 @@ export interface Locator {
   }): Promise<boolean>;
 
   /**
-   * Returns whether the element is [editable](https://playwright.dev/docs/actionability#editable).
+   * Returns whether the element is [editable](https://playwright.dev/docs/actionability#editable). If the target element is not an `<input>`,
+   * `<textarea>`, `<select>`, `[contenteditable]` and does not have a role allowing `[aria-readonly]`, this method
+   * throws an error.
    *
    * **NOTE** If you need to assert that an element is editable, prefer
    * [expect(locator).toBeEditable([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-editable)
