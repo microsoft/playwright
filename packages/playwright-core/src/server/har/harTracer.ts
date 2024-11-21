@@ -257,7 +257,7 @@ export class HarTracer {
     const page = request.frame()?._page;
     if (this._page && page !== this._page)
       return;
-    const url = network.parsedURL(request.url());
+    const url = network.parseURL(request.url());
     if (!url)
       return;
 

@@ -942,7 +942,7 @@ export class Frame extends SdkObject {
   origin(): string | undefined {
     if (!this._url.startsWith('http'))
       return;
-    return network.parsedURL(this._url)?.origin;
+    return network.parseURL(this._url)?.origin;
   }
 
   parentFrame(): Frame | null {
