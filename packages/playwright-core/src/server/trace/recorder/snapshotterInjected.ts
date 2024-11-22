@@ -48,6 +48,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
   const kCustomElementsAttribute = '__playwright_custom_elements__';
   const kCurrentSrcAttribute = '__playwright_current_src__';
   const kBoundingRectAttribute = '__playwright_bounding_rect__';
+  const kPopoverOpenAttribute = '__playwright_popover_open_';
 
   // Symbols for our own info on Nodes/StyleSheets.
   const kSnapshotFrameId = Symbol('__playwright_snapshot_frameid_');
@@ -448,6 +449,12 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
             expectValue(kBoundingRectAttribute);
             expectValue(value);
             attrs[kBoundingRectAttribute] = value;
+          }
+          if ((element as HTMLElement).popover && (element as HTMLElement).matches && (element as HTMLElement).matches(':popover-open')) {
+            const value = 'true';
+            expectValue(kPopoverOpenAttribute);
+            expectValue(value);
+            attrs[kPopoverOpenAttribute] = value;
           }
           if (element.scrollTop) {
             expectValue(kScrollTopAttribute);

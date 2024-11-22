@@ -1,35 +1,141 @@
 ---
 id: aria-snapshots
-title: "Aria snapshots"
+title: "Snapshot testing"
 ---
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Overview
 
-In Playwright, aria snapshots provide a YAML representation of the accessibility tree of a page.
-These snapshots can be stored and compared later to verify if the page structure remains consistent or meets defined
-expectations.
+With the Playwright Snapshot testing you can assert the accessibility tree of a page against a predefined snapshot template.
+
+```js
+await page.goto('https://playwright.dev/');
+await expect(page.getByRole('banner')).toMatchAriaSnapshot(`
+  - banner:
+    - heading /Playwright enables reliable end-to-end/ [level=1]
+    - link "Get started"
+    - link "Star microsoft/playwright on GitHub"
+    - link /[\\d]+k\\+ stargazers on GitHub/
+`);
+```
+
+```python sync
+page.goto('https://playwright.dev/')
+expect(page.query_selector('banner')).to_match_aria_snapshot("""
+  - banner:
+    - heading /Playwright enables reliable end-to-end/ [level=1]
+    - link "Get started"
+    - link "Star microsoft/playwright on GitHub"
+    - link /[\\d]+k\\+ stargazers on GitHub/
+""")
+```
+
+```python async
+await page.goto('https://playwright.dev/')
+await expect(page.query_selector('banner')).to_match_aria_snapshot("""
+  - banner:
+    - heading /Playwright enables reliable end-to-end/ [level=1]
+    - link "Get started"
+    - link "Star microsoft/playwright on GitHub"
+    - link /[\\d]+k\\+ stargazers on GitHub/
+""")
+```
+
+```java
+page.navigate("https://playwright.dev/");
+assertThat(page.locator("banner")).matchesAriaSnapshot("""
+  - banner:
+    - heading /Playwright enables reliable end-to-end/ [level=1]
+    - link "Get started"
+    - link "Star microsoft/playwright on GitHub"
+    - link /[\\d]+k\\+ stargazers on GitHub/
+""");
+```
+
+```csharp
+await page.GotoAsync("https://playwright.dev/");
+await Expect(page.Locator("banner")).ToMatchAriaSnapshotAsync(@"
+  - banner:
+    - heading ""Playwright enables reliable end-to-end testing for modern web apps."" [level=1]
+    - link ""Get started""
+    - link ""Star microsoft/playwright on GitHub""
+    - link /[\\d]+k\\+ stargazers on GitHub/
+");
+```
 
 <LiteYouTube
     id="P4R6hnsE0UY"
     title="Getting started with ARIA Snapshots"
 />
 
+## Assertion testing vs Snapshot testing
+
+Snapshot testing and assertion testing serve different purposes in test automation:
+
+### Assertion testing
+Assertion testing is a targeted approach where you assert specific values or conditions about elements or components. For instance, with Playwright, [`method: LocatorAssertions.toHaveText`]
+verifies that an element contains the expected text, and [`method: LocatorAssertions.toHaveValue`]
+confirms that an input field has the expected value.
+Assertion tests are specific and generally check the current state of an element or property
+against an expected, predefined state.
+They work well for predictable, single-value checks but are limited in scope when testing the
+broader  structure or variations.
+
+**Advantages**
+- **Clarity**: The intent of the test is explicit and easy to understand.
+- **Specificity**: Tests focus on particular aspects of functionality, making them more robust
+  against  unrelated changes.
+- **Debugging**: Failures provide targeted feedback, pointing directly to the problematic aspect.
+
+**Disadvantages**
+- **Verbose for complex outputs**: Writing assertions for complex data structures or large outputs
+  can be cumbersome and error-prone.
+- **Maintenance overhead**: As code evolves, manually updating assertions can be time-consuming.
+
+### Snapshot testing
+Snapshot testing captures a “snapshot” or representation of the entire
+state of an element, component, or data at a given moment, which is then saved for future
+comparisons. When re-running tests, the current state is compared to the snapshot, and if there
+are differences, the test fails. This approach is especially useful for complex or dynamic
+structures, where manually asserting each detail would be too time-consuming. Snapshot testing
+is broader and more holistic than assertion testing, allowing you to track more complex changes over time.
+
+**Advantages**
+- **Simplifies complex outputs**: For example, testing a UI component's rendered output can be tedious with traditional assertions. Snapshots capture the entire output for easy comparison.
+- **Quick Feedback loop**: Developers can easily spot unintended changes in the output.
+- **Encourages consistency**: Helps maintain consistent output as code evolves.
+
+**Disadvantages**
+- **Over-Reliance**: It can be tempting to accept changes to snapshots without fully understanding
+  them, potentially hiding bugs.
+- **Granularity**: Large snapshots may be hard to interpret when differences arise, especially
+  if minor changes affect large portions of the output.
+- **Suitability**: Not ideal for highly dynamic content where outputs change frequently or
+  unpredictably.
+
+### When to use
+
+- **Snapshot testing** is ideal for:
+  - UI testing of whole pages and components.
+  - Broad structural checks for complex UI components.
+  - Regression testing for outputs that rarely change structure.
+
+- **Assertion testing** is ideal for:
+  - Core logic validation.
+  - Computed value testing.
+  - Fine-grained tests requiring precise conditions.
+
+By combining snapshot testing for broad, structural checks and assertion testing for specific functionality, you can achieve a well-rounded testing strategy.
+
+## Aria snapshots
+
+In Playwright, aria snapshots provide a YAML representation of the accessibility tree of a page.
+These snapshots can be stored and compared later to verify if the page structure remains consistent or meets defined
+expectations.
+
 The YAML format describes the hierarchical structure of accessible elements on the page, detailing **roles**, **attributes**, **values**, and **text content**.
 The structure follows a tree-like syntax, where each node represents an accessible element, and indentation indicates
 nested elements.
-
-Following is a simple example of an aria snapshot for the playwright.dev homepage:
-
-```yaml
-- banner:
-  - heading /Playwright enables reliable/ [level=1]
-  - link "Get started"
-  - link "Star microsoft/playwright on GitHub"
-- main:
-  - img "Browsers (Chromium, Firefox, WebKit)"
-  - heading "Any browser • Any platform • One API"
-```
 
 Each accessible element in the tree is represented as a YAML node:
 
@@ -67,19 +173,19 @@ await expect(page.locator('body')).toMatchAriaSnapshot(`
 ```
 
 ```python sync
-page.locator("body").to_match_aria_snapshot("""
+expect(page.locator("body")).to_match_aria_snapshot("""
   - heading "title"
 """)
 ```
 
 ```python async
-await page.locator("body").to_match_aria_snapshot("""
+await expect(page.locator("body")).to_match_aria_snapshot("""
   - heading "title"
 """)
 ```
 
 ```java
-page.locator("body").expect().toMatchAriaSnapshot("""
+assertThat(page.locator("body")).matchesAriaSnapshot("""
   - heading "title"
 """);
 ```
@@ -185,7 +291,7 @@ interactive interface:
 - **"Assert snapshot" Action**: In the code generator, you can use the "Assert snapshot" action to automatically create
 a snapshot assertion for the selected elements. This is a quick way to capture the aria snapshot as part of your
 recorded test flow.
-  
+
 - **"Aria snapshot" Tab**: The "Aria snapshot" tab within the code generator interface visually represents the
 aria snapshot for a selected locator, letting you explore, inspect, and verify element roles, attributes, and
 accessible names to aid snapshot creation and review.

@@ -50,6 +50,8 @@ window.onload = () => {
   ReactDOM.createRoot(document.querySelector('#root')!).render(<ReportLoader />);
 };
 
+const kPlaywrightReportStorageForHMR = 'playwrightReportStorageForHMR';
+
 class ZipReport implements LoadedReport {
   private _entries = new Map<string, zip.Entry>();
   private _json!: HTMLReport;
@@ -58,8 +60,20 @@ class ZipReport implements LoadedReport {
     const zipURI = await new Promise<string>(resolve => {
       if (window.playwrightReportBase64)
         return resolve(window.playwrightReportBase64);
-      window.addEventListener('message', event => event.source === window.opener && resolve(event.data), { once: true });
-      window.opener.postMessage('ready', '*');
+      if (window.opener) {
+        window.addEventListener('message', event => {
+          if (event.source === window.opener) {
+            localStorage.setItem(kPlaywrightReportStorageForHMR, event.data);
+            resolve(event.data);
+          }
+        }, { once: true });
+        window.opener.postMessage('ready', '*');
+      } else {
+        const oldReport = localStorage.getItem(kPlaywrightReportStorageForHMR);
+        if (oldReport)
+          return resolve(oldReport);
+        alert('couldnt find report, something with HMR is broken');
+      }
     });
 
     const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(zipURI), { useWebWorkers: false });

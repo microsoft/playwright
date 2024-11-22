@@ -1483,7 +1483,7 @@ Boolean disabled = await page.GetByRole(AriaRole.Button).IsDisabledAsync();
 * since: v1.14
 - returns: <[boolean]>
 
-Returns whether the element is [editable](../actionability.md#editable).
+Returns whether the element is [editable](../actionability.md#editable). If the target element is not an `<input>`, `<textarea>`, `<select>`, `[contenteditable]` and does not have a role allowing `[aria-readonly]`, this method throws an error.
 
 :::warning[Asserting editable state]
 If you need to assert that an element is editable, prefer [`method: LocatorAssertions.toBeEditable`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.

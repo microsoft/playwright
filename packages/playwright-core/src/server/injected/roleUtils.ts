@@ -860,6 +860,21 @@ export function getChecked(element: Element, allowMixed: boolean): boolean | 'mi
   return 'error';
 }
 
+// https://w3c.github.io/aria/#aria-readonly
+const kAriaReadonlyRoles = ['checkbox', 'combobox', 'grid', 'gridcell', 'listbox', 'radiogroup', 'slider', 'spinbutton', 'textbox', 'columnheader', 'rowheader', 'searchbox', 'switch', 'treegrid'];
+export function getReadonly(element: Element): boolean | 'error' {
+  const tagName = elementSafeTagName(element);
+  // https://www.w3.org/TR/wai-aria-1.2/#aria-checked
+  // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tagName))
+    return element.hasAttribute('readonly');
+  if (kAriaReadonlyRoles.includes(getAriaRole(element) || ''))
+    return element.getAttribute('aria-readonly') === 'true';
+  if ((element as HTMLElement).isContentEditable)
+    return false;
+  return 'error';
+}
+
 export const kAriaPressedRoles = ['button'];
 export function getAriaPressed(element: Element): boolean | 'mixed' {
   // https://www.w3.org/TR/wai-aria-1.2/#aria-pressed

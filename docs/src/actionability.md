@@ -93,11 +93,20 @@ Element is considered stable when it has maintained the same bounding box for at
 
 ## Enabled
 
-Element is considered enabled unless it is a `<button>`, `<select>`, `<input>` or `<textarea>` with a `disabled` property.
+Element is considered enabled when it is **not disabled**.
+
+Element is **disabled** when:
+- it is a `<button>`, `<select>`, `<input>`, `<textarea>`, `<option>` or `<optgroup>` with a `[disabled]` attribute;
+- it is a `<button>`, `<select>`, `<input>`, `<textarea>`, `<option>` or `<optgroup>` that is a part of a `<fieldset>` with a `[disabled]` attribute;
+- it is a descendant of an element with `[aria-disabled=true]` attribute.
 
 ## Editable
 
-Element is considered editable when it is [enabled] and does not have `readonly` property set.
+Element is considered editable when it is [enabled] and is **not readonly**.
+
+Element is **readonly** when:
+- it is a `<select>`, `<input>` or `<textarea>` with a `[readonly]` attribute;
+- it has an `[aria-readonly=true]` attribute and an aria role that [supports it](https://w3c.github.io/aria/#aria-readonly).
 
 ## Receives Events
 

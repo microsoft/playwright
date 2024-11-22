@@ -132,7 +132,7 @@ Browser builds for Firefox and WebKit are built for the [glibc](https://en.wikip
 You can use the [.NET install script](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-install-script) in order to install different SDK versions:
 
 ```bash
-curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --install-dir /usr/share/dotnet --channel 6.0
+curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --install-dir /usr/share/dotnet --channel 9.0
 ```
 
 ## Build your own image

@@ -54,6 +54,7 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
 
   const patches: string[] = [];
   const files: string[] = [];
+  const gitCache = new Map<string, string | null>();
 
   for (const fileName of [...suggestedRebaselines.keys()].sort()) {
     const source = await fs.promises.readFile(fileName, 'utf8');
@@ -96,9 +97,16 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
     for (const range of ranges)
       result = result.substring(0, range.start) + range.newText + result.substring(range.end);
 
-    const relativeName = path.relative(process.cwd(), fileName);
-    files.push(relativeName);
-    patches.push(createPatch(relativeName, source, result));
+    if (process.env.PWTEST_UPDATE_SNAPSHOTS === 'overwrite') {
+      await fs.promises.writeFile(fileName, result);
+    } else if (process.env.PWTEST_UPDATE_SNAPSHOTS === 'manual') {
+      await fs.promises.writeFile(fileName, applyPatchWithConflictMarkers(source, result));
+    } else {
+      const gitFolder = findGitRoot(path.dirname(fileName), gitCache);
+      const relativeName = path.relative(gitFolder || process.cwd(), fileName);
+      files.push(relativeName);
+      patches.push(createPatch(relativeName, source, result));
+    }
   }
 
   const patchFile = path.join(project.project.outputDir, 'rebaselines.patch');
@@ -118,4 +126,63 @@ function createPatch(fileName: string, before: string, after: string) {
     '+++ b/' + file,
     ...text.split('\n').slice(4)
   ].join('\n');
+}
+
+function findGitRoot(dir: string, cache: Map<string, string | null>): string | null {
+  const result = cache.get(dir);
+  if (result !== undefined)
+    return result;
+
+  const gitPath = path.join(dir, '.git');
+  if (fs.existsSync(gitPath) && fs.lstatSync(gitPath).isDirectory()) {
+    cache.set(dir, dir);
+    return dir;
+  }
+
+  const parentDir = path.dirname(dir);
+  if (dir === parentDir) {
+    cache.set(dir, null);
+    return null;
+  }
+
+  const parentResult = findGitRoot(parentDir, cache);
+  cache.set(dir, parentResult);
+  return parentResult;
+}
+
+function applyPatchWithConflictMarkers(oldText: string, newText: string) {
+  const diffResult = diff.diffLines(oldText, newText);
+
+  let result = '';
+  let conflict = false;
+
+  diffResult.forEach(part => {
+    if (part.added) {
+      if (conflict) {
+        result += part.value;
+        result += '>>>>>>> SNAPSHOT\n';
+        conflict = false;
+      } else {
+        result += '<<<<<<< HEAD\n';
+        result += part.value;
+        result += '=======\n';
+        conflict = true;
+      }
+    } else if (part.removed) {
+      result += '<<<<<<< HEAD\n';
+      result += part.value;
+      result += '=======\n';
+      conflict = true;
+    } else {
+      if (conflict) {
+        result += '>>>>>>> SNAPSHOT\n';
+        conflict = false;
+      }
+      result += part.value;
+    }
+  });
+
+  if (conflict)
+    result += '>>>>>>> SNAPSHOT\n';
+  return result;
 }
