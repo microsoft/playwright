@@ -270,6 +270,13 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
         (element as HTMLOptionElement).selected = element.getAttribute('__playwright_selected_') === 'true';
         element.removeAttribute('__playwright_selected_');
       }
+      for (const element of root.querySelectorAll(`[__playwright_popover_open_]`)) {
+        try {
+          (element as HTMLElement).showPopover();
+        } catch {
+        }
+        element.removeAttribute('__playwright_popover_open_');
+      }
 
       for (const targetId of targetIds) {
         for (const target of root.querySelectorAll(`[__playwright_target__="${targetId}"]`)) {
