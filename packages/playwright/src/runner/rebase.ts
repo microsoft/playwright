@@ -97,10 +97,16 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
     for (const range of ranges)
       result = result.substring(0, range.start) + range.newText + result.substring(range.end);
 
-    const gitFolder = findGitRoot(path.dirname(fileName), gitCache);
-    const relativeName = path.relative(gitFolder || process.cwd(), fileName);
-    files.push(relativeName);
-    patches.push(createPatch(relativeName, source, result));
+    if (process.env.PWTEST_UPDATE_SNAPSHOTS === 'overwrite') {
+      await fs.promises.writeFile(fileName, result);
+    } else if (process.env.PWTEST_UPDATE_SNAPSHOTS === 'manual') {
+      await fs.promises.writeFile(fileName, applyPatchWithConflictMarkers(source, result));
+    } else {
+      const gitFolder = findGitRoot(path.dirname(fileName), gitCache);
+      const relativeName = path.relative(gitFolder || process.cwd(), fileName);
+      files.push(relativeName);
+      patches.push(createPatch(relativeName, source, result));
+    }
   }
 
   const patchFile = path.join(project.project.outputDir, 'rebaselines.patch');
@@ -142,4 +148,41 @@ function findGitRoot(dir: string, cache: Map<string, string | null>): string | n
   const parentResult = findGitRoot(parentDir, cache);
   cache.set(dir, parentResult);
   return parentResult;
+}
+
+function applyPatchWithConflictMarkers(oldText: string, newText: string) {
+  const diffResult = diff.diffLines(oldText, newText);
+
+  let result = '';
+  let conflict = false;
+
+  diffResult.forEach(part => {
+    if (part.added) {
+      if (conflict) {
+        result += part.value;
+        result += '>>>>>>> SNAPSHOT\n';
+        conflict = false;
+      } else {
+        result += '<<<<<<< HEAD\n';
+        result += part.value;
+        result += '=======\n';
+        conflict = true;
+      }
+    } else if (part.removed) {
+      result += '<<<<<<< HEAD\n';
+      result += part.value;
+      result += '=======\n';
+      conflict = true;
+    } else {
+      if (conflict) {
+        result += '>>>>>>> SNAPSHOT\n';
+        conflict = false;
+      }
+      result += part.value;
+    }
+  });
+
+  if (conflict)
+    result += '>>>>>>> SNAPSHOT\n';
+  return result;
 }
