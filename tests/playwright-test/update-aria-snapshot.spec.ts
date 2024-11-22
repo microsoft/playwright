@@ -26,6 +26,7 @@ function trimPatch(patch: string) {
 
 test('should update snapshot with the update-snapshots flag with multiple projects', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
+    '.git/marker': '',
     'playwright.config.ts': `
       export default { projects: [{ name: 'p1' }, { name: 'p2' }] };
     `,
@@ -73,6 +74,7 @@ test('should update snapshot with the update-snapshots flag with multiple projec
 
 test('should update missing snapshots', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
+    '.git/marker': '',
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
@@ -116,6 +118,7 @@ test('should update missing snapshots', async ({ runInlineTest }, testInfo) => {
 
 test('should generate baseline with regex', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
+    '.git/marker': '',
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
@@ -172,6 +175,7 @@ test('should generate baseline with regex', async ({ runInlineTest }, testInfo) 
 
 test('should generate baseline with special characters', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
+    '.git/marker': '',
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
@@ -241,6 +245,7 @@ test('should generate baseline with special characters', async ({ runInlineTest 
 
 test('should update missing snapshots in tsx', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
+    '.git/marker': '',
     'playwright.config.ts': playwrightCtConfigText,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': ``,
@@ -286,6 +291,7 @@ test('should update missing snapshots in tsx', async ({ runInlineTest }, testInf
 
 test('should update multiple files', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
+    '.git/marker': '',
     'playwright.config.ts': playwrightCtConfigText,
     'playwright/index.html': `<script type="module" src="./index.ts"></script>`,
     'playwright/index.ts': ``,
@@ -365,6 +371,7 @@ diff --git a/src/button-2.test.tsx b/src/button-2.test.tsx
 
 test('should generate baseline for input values', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
+    '.git/marker': '',
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
@@ -400,6 +407,7 @@ test('should generate baseline for input values', async ({ runInlineTest }, test
 
 test('should not update snapshots when locator did not match', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
+    '.git/marker': '',
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {

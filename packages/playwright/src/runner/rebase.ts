@@ -54,6 +54,7 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
 
   const patches: string[] = [];
   const files: string[] = [];
+  const gitCache = new Map<string, string | null>();
 
   for (const fileName of [...suggestedRebaselines.keys()].sort()) {
     const source = await fs.promises.readFile(fileName, 'utf8');
@@ -96,7 +97,8 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
     for (const range of ranges)
       result = result.substring(0, range.start) + range.newText + result.substring(range.end);
 
-    const relativeName = path.relative(process.cwd(), fileName);
+    const gitFolder = findGitRoot(path.dirname(fileName), gitCache);
+    const relativeName = path.relative(gitFolder || process.cwd(), fileName);
     files.push(relativeName);
     patches.push(createPatch(relativeName, source, result));
   }
@@ -118,4 +120,26 @@ function createPatch(fileName: string, before: string, after: string) {
     '+++ b/' + file,
     ...text.split('\n').slice(4)
   ].join('\n');
+}
+
+function findGitRoot(dir: string, cache: Map<string, string | null>): string | null {
+  const result = cache.get(dir);
+  if (result !== undefined)
+    return result;
+
+  const gitPath = path.join(dir, '.git');
+  if (fs.existsSync(gitPath) && fs.lstatSync(gitPath).isDirectory()) {
+    cache.set(dir, dir);
+    return dir;
+  }
+
+  const parentDir = path.dirname(dir);
+  if (dir === parentDir) {
+    cache.set(dir, null);
+    return null;
+  }
+
+  const parentResult = findGitRoot(parentDir, cache);
+  cache.set(dir, parentResult);
+  return parentResult;
 }
