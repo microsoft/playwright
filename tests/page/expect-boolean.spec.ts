@@ -138,6 +138,13 @@ test.describe('toBeEditable', () => {
     const locator = page.locator('input');
     await expect(locator).not.toBeEditable({ editable: false });
   });
+
+  test('throws', async ({ page }) => {
+    await page.setContent('<button>');
+    const locator = page.locator('button');
+    const error = await expect(locator).toBeEditable().catch(e => e);
+    expect(error.message).toContain('Element is not an <input>, <textarea>, <select> or [contenteditable] and does not have a role allowing [aria-readonly]');
+  });
 });
 
 test.describe('toBeEnabled', () => {
