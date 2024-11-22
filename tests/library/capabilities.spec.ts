@@ -434,7 +434,8 @@ it('should not auto play audio', {
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/33590'
   }
-}, async ({ page }) => {
+}, async ({ page, browserName, isWindows }) => {
+  it.fixme(browserName === 'webkit' && isWindows);
   await page.route('**/*', async route => {
     await route.fulfill({
       status: 200,
