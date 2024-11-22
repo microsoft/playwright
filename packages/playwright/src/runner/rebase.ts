@@ -44,7 +44,7 @@ export function addSuggestedRebaseline(location: Location, suggestedRebaseline: 
 }
 
 export async function applySuggestedRebaselines(config: FullConfigInternal, reporter: InternalReporter) {
-  if (config.config.updateSnapshots !== 'all' && config.config.updateSnapshots !== 'missing')
+  if (config.config.updateSnapshots === 'none')
     return;
   if (!suggestedRebaselines.size)
     return;
@@ -106,15 +106,15 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
       const relativeName = path.relative(gitFolder || process.cwd(), fileName);
       files.push(relativeName);
       patches.push(createPatch(relativeName, source, result));
+
+      const patchFile = path.join(project.project.outputDir, 'rebaselines.patch');
+      await fs.promises.mkdir(path.dirname(patchFile), { recursive: true });
+      await fs.promises.writeFile(patchFile, patches.join('\n'));
+
+      const fileList = files.map(file => '  ' + colors.dim(file)).join('\n');
+      reporter.onStdErr(`\nNew baselines created for:\n\n${fileList}\n\n  ` + colors.cyan('git apply ' + path.relative(process.cwd(), patchFile)) + '\n');
     }
   }
-
-  const patchFile = path.join(project.project.outputDir, 'rebaselines.patch');
-  await fs.promises.mkdir(path.dirname(patchFile), { recursive: true });
-  await fs.promises.writeFile(patchFile, patches.join('\n'));
-
-  const fileList = files.map(file => '  ' + colors.dim(file)).join('\n');
-  reporter.onStdErr(`\nNew baselines created for:\n\n${fileList}\n\n  ` + colors.cyan('git apply ' + path.relative(process.cwd(), patchFile)) + '\n');
 }
 
 function createPatch(fileName: string, before: string, after: string) {

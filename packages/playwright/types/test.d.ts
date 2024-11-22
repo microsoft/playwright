@@ -1665,11 +1665,12 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
 
   /**
    * Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
-   * - `'all'` - All tests that are executed will update snapshots that did not match. Matching snapshots will not be
-   *   updated.
-   * - `'none'` - No snapshots are updated.
+   * - `'all'` - All tests that are executed will update snapshots.
+   * - `'changed'` - All tests that are executed will update snapshots that did not match. Matching snapshots will not
+   *   be updated.
    * - `'missing'` - Missing snapshots are created, for example when authoring a new test and running it for the first
    *   time. This is the default.
+   * - `'none'` - No snapshots are updated.
    *
    * Learn more about [snapshots](https://playwright.dev/docs/test-snapshots).
    *
@@ -1685,7 +1686,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * ```
    *
    */
-  updateSnapshots?: "all"|"none"|"missing";
+  updateSnapshots?: "all"|"changed"|"missing"|"none";
 
   /**
    * The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of
@@ -1834,7 +1835,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * See [testConfig.updateSnapshots](https://playwright.dev/docs/api/class-testconfig#test-config-update-snapshots).
    */
-  updateSnapshots: "all"|"none"|"missing";
+  updateSnapshots: "all"|"changed"|"missing"|"none";
 
   /**
    * Playwright version.
