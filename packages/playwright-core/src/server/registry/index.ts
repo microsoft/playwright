@@ -429,7 +429,7 @@ export interface Executable {
 }
 
 interface ExecutableImpl extends Executable {
-  _install?: () => Promise<void>;
+  _install?: (quiet?: boolean) => Promise<void>;
   _dependencyGroup?: DependencyGroup;
   _isHermeticInstallation?: boolean;
 }
@@ -491,7 +491,7 @@ export class Registry {
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromium.dir, ['chrome-linux'], [], ['chrome-win']),
       downloadURLs: this._downloadURLs(chromium),
       browserVersion: chromium.browserVersion,
-      _install: () => this._downloadExecutable(chromium, chromiumExecutable),
+      _install: (quiet?: boolean) => this._downloadExecutable(chromium, chromiumExecutable, quiet),
       _dependencyGroup: 'chromium',
       _isHermeticInstallation: true,
     });
@@ -509,7 +509,7 @@ export class Registry {
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumHeadlessShell.dir, ['chrome-linux'], [], ['chrome-win']),
       downloadURLs: this._downloadURLs(chromiumHeadlessShell),
       browserVersion: chromium.browserVersion,
-      _install: () => this._downloadExecutable(chromiumHeadlessShell, chromiumHeadlessShellExecutable),
+      _install: (quiet?: boolean) => this._downloadExecutable(chromiumHeadlessShell, chromiumHeadlessShellExecutable, quiet),
       _dependencyGroup: 'chromium',
       _isHermeticInstallation: true,
     });
@@ -527,7 +527,7 @@ export class Registry {
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromiumTipOfTree.dir, ['chrome-linux'], [], ['chrome-win']),
       downloadURLs: this._downloadURLs(chromiumTipOfTree),
       browserVersion: chromiumTipOfTree.browserVersion,
-      _install: () => this._downloadExecutable(chromiumTipOfTree, chromiumTipOfTreeExecutable),
+      _install: (quiet?: boolean) => this._downloadExecutable(chromiumTipOfTree, chromiumTipOfTreeExecutable, quiet),
       _dependencyGroup: 'chromium',
       _isHermeticInstallation: true,
     });
@@ -637,7 +637,7 @@ export class Registry {
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, chromium.dir, ['chrome-linux'], [], ['chrome-win']),
       downloadURLs: this._downloadURLs(chromium),
       browserVersion: chromium.browserVersion,
-      _install: () => this._downloadExecutable(chromium, chromiumExecutable),
+      _install: (quiet?: boolean) => this._downloadExecutable(chromium, chromiumExecutable, quiet),
       _dependencyGroup: 'chromium',
       _isHermeticInstallation: true,
     });
@@ -655,7 +655,7 @@ export class Registry {
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, firefox.dir, ['firefox'], [], ['firefox']),
       downloadURLs: this._downloadURLs(firefox),
       browserVersion: firefox.browserVersion,
-      _install: () => this._downloadExecutable(firefox, firefoxExecutable),
+      _install: (quiet?: boolean) => this._downloadExecutable(firefox, firefoxExecutable, quiet),
       _dependencyGroup: 'firefox',
       _isHermeticInstallation: true,
     });
@@ -673,7 +673,7 @@ export class Registry {
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, firefoxBeta.dir, ['firefox'], [], ['firefox']),
       downloadURLs: this._downloadURLs(firefoxBeta),
       browserVersion: firefoxBeta.browserVersion,
-      _install: () => this._downloadExecutable(firefoxBeta, firefoxBetaExecutable),
+      _install: (quiet?: boolean) => this._downloadExecutable(firefoxBeta, firefoxBetaExecutable, quiet),
       _dependencyGroup: 'firefox',
       _isHermeticInstallation: true,
     });
@@ -701,7 +701,7 @@ export class Registry {
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, webkit.dir, webkitLinuxLddDirectories, ['libGLESv2.so.2', 'libx264.so'], ['']),
       downloadURLs: this._downloadURLs(webkit),
       browserVersion: webkit.browserVersion,
-      _install: () => this._downloadExecutable(webkit, webkitExecutable),
+      _install: (quiet?: boolean) => this._downloadExecutable(webkit, webkitExecutable, quiet),
       _dependencyGroup: 'webkit',
       _isHermeticInstallation: true,
     });
@@ -718,7 +718,7 @@ export class Registry {
       installType: ffmpeg.installByDefault ? 'download-by-default' : 'download-on-demand',
       _validateHostRequirements: () => Promise.resolve(),
       downloadURLs: this._downloadURLs(ffmpeg),
-      _install: () => this._downloadExecutable(ffmpeg, ffmpegExecutable),
+      _install: (quiet?: boolean) => this._downloadExecutable(ffmpeg, ffmpegExecutable, quiet),
       _dependencyGroup: 'tools',
       _isHermeticInstallation: true,
     });
@@ -911,7 +911,7 @@ export class Registry {
       return await installDependenciesLinux(targets, dryRun);
   }
 
-  async install(executablesToInstall: Executable[], forceReinstall: boolean) {
+  async install(executablesToInstall: Executable[], forceReinstall: boolean, quiet?: boolean) {
     const executables = this._dedupe(executablesToInstall);
     await fs.promises.mkdir(registryDirectory, { recursive: true });
     const lockfilePath = path.join(registryDirectory, '__dirlock');
@@ -963,7 +963,7 @@ export class Registry {
             `<3 Playwright Team`,
           ].join('\n'), 1));
         }
-        await executable._install();
+        await executable._install(quiet);
       }
     } catch (e) {
       if (e.code === 'ELOCKED') {
@@ -1060,7 +1060,7 @@ export class Registry {
     return downloadURLs;
   }
 
-  private async _downloadExecutable(descriptor: BrowsersJSONDescriptor, executablePath?: string) {
+  private async _downloadExecutable(descriptor: BrowsersJSONDescriptor, executablePath?: string, quiet?: boolean) {
     const downloadURLs = this._downloadURLs(descriptor);
     if (!downloadURLs.length)
       throw new Error(`ERROR: Playwright does not support ${descriptor.name} on ${hostPlatform}`);
@@ -1084,7 +1084,7 @@ export class Registry {
     const downloadFileName = `playwright-download-${descriptor.name}-${hostPlatform}-${descriptor.revision}.zip`;
     const downloadConnectionTimeoutEnv = getFromENV('PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT');
     const downloadConnectionTimeout = +(downloadConnectionTimeoutEnv || '0') || 30_000;
-    await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURLs, downloadFileName, downloadConnectionTimeout).catch(e => {
+    await downloadBrowserWithProgressBar(title, descriptor.dir, executablePath, downloadURLs, downloadFileName, downloadConnectionTimeout, quiet).catch(e => {
       throw new Error(`Failed to download ${title}, caused by\n${e.stack}`);
     });
   }
