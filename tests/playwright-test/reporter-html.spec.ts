@@ -916,7 +916,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]));
     });
 
-    test('should strikethrough textual diff', async ({ runInlineTest, showReport, page }) => {
+    test('should highlight textual diff', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'helper.ts': `
           import { test as base } from '@playwright/test';
@@ -940,36 +940,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.click('text="is a test"');
 
-      await expect(page.locator('.test-error-view').getByText('old')).toHaveCSS('text-decoration', 'line-through solid rgb(205, 49, 49)');
-      await expect(page.locator('.test-error-view').getByText('new', { exact: true })).toHaveCSS('text-decoration', 'none solid rgb(0, 188, 0)');
-    });
-
-    test('should strikethrough textual diff with commonalities', async ({ runInlineTest, showReport, page }) => {
-      const result = await runInlineTest({
-        'helper.ts': `
-          import { test as base } from '@playwright/test';
-          export * from '@playwright/test';
-          export const test = base.extend({
-            auto: [ async ({}, run, testInfo) => {
-              testInfo.snapshotSuffix = '';
-              await run();
-            }, { auto: true } ]
-          });
-        `,
-        'a.spec.js-snapshots/snapshot.txt': `oldcommon`,
-        'a.spec.js': `
-          const { test, expect } = require('./helper');
-          test('is a test', ({}) => {
-            expect('newcommon').toMatchSnapshot('snapshot.txt');
-          });
-        `
-      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
-      expect(result.exitCode).toBe(1);
-      await showReport();
-      await page.click('text="is a test"');
-      await expect(page.locator('.test-error-view').getByText('old')).toHaveCSS('text-decoration', 'line-through solid rgb(205, 49, 49)');
-      await expect(page.locator('.test-error-view').getByText('new', { exact: true })).toHaveCSS('text-decoration', 'none solid rgb(0, 188, 0)');
-      await expect(page.locator('.test-error-view').getByText('common Expected:')).toHaveCSS('text-decoration', 'none solid rgb(36, 41, 47)');
+      await expect(page.locator('.test-error-view').getByText('-old')).toHaveCSS('color', 'rgb(205, 49, 49)');
+      await expect(page.locator('.test-error-view').getByText('+new', { exact: true })).toHaveCSS('color', 'rgb(0, 188, 0)');
     });
 
     test('should highlight inline textual diff in toHaveText', async ({ runInlineTest, showReport, page }) => {
