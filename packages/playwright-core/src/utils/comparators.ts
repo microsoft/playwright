@@ -38,7 +38,7 @@ export function getComparator(mimeType: string): Comparator {
 
 const JPEG_JS_MAX_BUFFER_SIZE_IN_MB = 5 * 1024; // ~5 GB
 
-function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
+export function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
   if (typeof actualBuffer === 'string')
     return compareText(actualBuffer, expectedBuffer);
   if (!actualBuffer || !(actualBuffer instanceof Buffer))

@@ -1393,3 +1393,80 @@ test('should trim+sanitize attachment names and paths', async ({ runInlineTest }
   ]);
 });
 
+test.describe('update-snapshots', () => {
+  test('should rebase non-matching image', async ({ runInlineTest }) => {
+    const BAD_PIXELS = 10;
+    const EXPECTED_SNAPSHOT = paintBlackPixels(whiteImage, BAD_PIXELS);
+
+    const result = await runInlineTest({
+      ...playwrightConfig({
+        snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+      }),
+      '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
+      'a.spec.js': `
+        const { test, expect } = require('@playwright/test');
+        test('is a test', async ({ page }) => {
+          await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+        });
+      `
+    }, { 'update-snapshots': 'changed' });
+    expect(result.exitCode).toBe(0);
+    const newBaseline = fs.readFileSync(test.info().outputPath('__screenshots__/a.spec.js/snapshot.png'));
+    expect(comparePNGs(newBaseline, whiteImage)).toBe(null);
+    expect(comparePNGs(newBaseline, EXPECTED_SNAPSHOT)).not.toBe(null);
+  });
+
+  test('should not rebase matching image', async ({ runInlineTest }) => {
+    const BAD_PIXELS = 10;
+    const EXPECTED_SNAPSHOT = paintBlackPixels(whiteImage, BAD_PIXELS);
+
+    const result = await runInlineTest({
+      ...playwrightConfig({
+        snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+        expect: {
+          toHaveScreenshot: {
+            maxDiffPixels: BAD_PIXELS
+          }
+        }
+      }),
+      '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
+      'a.spec.js': `
+        const { test, expect } = require('@playwright/test');
+        test('is a test', async ({ page }) => {
+          await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+        });
+      `
+    }, { 'update-snapshots': 'changed' });
+    expect(result.exitCode).toBe(0);
+    const newBaseline = fs.readFileSync(test.info().outputPath('__screenshots__/a.spec.js/snapshot.png'));
+    expect(comparePNGs(newBaseline, EXPECTED_SNAPSHOT)).toBe(null);
+    expect(comparePNGs(newBaseline, whiteImage)).not.toBe(null);
+  });
+
+  test('should rebase matching image with update-snapshots=all', async ({ runInlineTest }) => {
+    const BAD_PIXELS = 10;
+    const EXPECTED_SNAPSHOT = paintBlackPixels(whiteImage, BAD_PIXELS);
+
+    const result = await runInlineTest({
+      ...playwrightConfig({
+        snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+        expect: {
+          toHaveScreenshot: {
+            maxDiffPixels: BAD_PIXELS
+          }
+        }
+      }),
+      '__screenshots__/a.spec.js/snapshot.png': EXPECTED_SNAPSHOT,
+      'a.spec.js': `
+        const { test, expect } = require('@playwright/test');
+        test('is a test', async ({ page }) => {
+          await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
+        });
+      `
+    }, { 'update-snapshots': 'all' });
+    expect(result.exitCode).toBe(0);
+    const newBaseline = fs.readFileSync(test.info().outputPath('__screenshots__/a.spec.js/snapshot.png'));
+    expect(comparePNGs(newBaseline, whiteImage)).toBe(null);
+    expect(comparePNGs(newBaseline, EXPECTED_SNAPSHOT)).not.toBe(null);
+  });
+});

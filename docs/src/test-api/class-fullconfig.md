@@ -114,7 +114,7 @@ See [`property: TestConfig.shard`].
 
 ## property: FullConfig.updateSnapshots
 * since: v1.10
-- type: <[UpdateSnapshots]<"all"|"none"|"missing">>
+- type: <[UpdateSnapshots]<"all"|"changed"|"missing"|"none">>
 
 See [`property: TestConfig.updateSnapshots`].
 
