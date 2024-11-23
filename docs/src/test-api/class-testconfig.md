@@ -590,6 +590,15 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.updateSourceMethod
+* since: v1.50
+- type: ?<[UpdateSourceMethod]<"overwrite"|"3way"|"patch">>
+
+Defines how to update the source code snapshots.
+* `'overwrite'` - Overwrite the source code snapshot with the actual result.
+* `'3way'` - Use a three-way merge to update the source code snapshot.
+* `'patch'` - Use a patch to update the source code snapshot. This is the default.
+
 ## property: TestConfig.use
 * since: v1.10
 - type: ?<[TestOptions]>

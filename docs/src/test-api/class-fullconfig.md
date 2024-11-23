@@ -118,6 +118,12 @@ See [`property: TestConfig.shard`].
 
 See [`property: TestConfig.updateSnapshots`].
 
+## property: FullConfig.updateSourceMethod
+* since: v1.50
+- type: <[UpdateSourceMethod]<"overwrite"|"3way"|"patch">>
+
+See [`property: TestConfig.updateSourceMethod`].
+
 ## property: FullConfig.version
 * since: v1.20
 - type: <[string]>
