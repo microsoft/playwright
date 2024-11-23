@@ -65,7 +65,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
 
 export type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
 
-type TestDetailsAnnotation = {
+export type TestDetailsAnnotation = {
   type: string;
   description?: string;
 };

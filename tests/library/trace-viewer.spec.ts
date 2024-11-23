@@ -1572,3 +1572,20 @@ test('should show only one pointer with multilevel iframes', async ({ page, runA
   await expect.soft(snapshotFrame.frameLocator('iframe').locator('x-pw-pointer')).not.toBeAttached();
   await expect.soft(snapshotFrame.frameLocator('iframe').frameLocator('iframe').locator('x-pw-pointer')).toBeVisible();
 });
+
+test('should show a popover', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent(`
+      <button popovertarget="pop">Click me</button>
+      <article id="pop" popover="auto">
+        <div>I'm a popover</div>
+      </article>
+    `);
+    await page.getByRole('button').click();
+    await expect(page.locator('div')).toBeVisible();
+  });
+
+  const snapshot = await traceViewer.snapshotFrame('expect.toBeVisible');
+  const popover = snapshot.locator('#pop');
+  await expect.poll(() => popover.evaluate(e => e.matches(':popover-open'))).toBe(true);
+});

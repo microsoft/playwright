@@ -238,8 +238,8 @@ it('should fill elements with existing value and selection', async ({ page, serv
 
 it('should throw nice error without injected script stack when element is not an <input>', async ({ page, server }) => {
   let error = null;
-  await page.goto(server.PREFIX + '/input/textarea.html');
-  await page.fill('body', '').catch(e => error = e);
+  await page.setContent(`<select><option>value1</option></select>`);
+  await page.fill('select', '').catch(e => error = e);
   expect(error.message).toContain('page.fill: Error: Element is not an <input>, <textarea> or [contenteditable] element\nCall log:');
 });
 

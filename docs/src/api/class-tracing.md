@@ -302,10 +302,10 @@ await test.step('Log in', async () => {
 ```java
 // All actions between group and groupEnd
 // will be shown in the trace viewer as a group.
-page.context().tracing.group("Open Playwright.dev > API");
+page.context().tracing().group("Open Playwright.dev > API");
 page.navigate("https://playwright.dev/");
 page.getByRole(AriaRole.LINK, new Page.GetByRoleOptions().setName("API")).click();
-page.context().tracing.groupEnd();
+page.context().tracing().groupEnd();
 ```
 
 ```python sync
@@ -329,10 +329,10 @@ await page.context.tracing.group_end()
 ```csharp
 // All actions between GroupAsync and GroupEndAsync
 // will be shown in the trace viewer as a group.
-await Page.Context().Tracing.GroupAsync("Open Playwright.dev > API");
+await Page.Context.Tracing.GroupAsync("Open Playwright.dev > API");
 await Page.GotoAsync("https://playwright.dev/");
 await Page.GetByRole(AriaRole.Link, new() { Name = "API" }).ClickAsync();
-await Page.Context().Tracing.GroupEndAsync();
+await Page.Context.Tracing.GroupEndAsync();
 ```
 
 ### param: Tracing.group.name

@@ -58,7 +58,8 @@ test('should work with non-txt extensions', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`1,2,34`);
+  expect(result.rawOutput).toContain(colors.red('-1,2,3'));
+  expect(result.rawOutput).toContain(colors.green('+1,2,4'));
 });
 
 
@@ -202,8 +203,8 @@ Line7`,
   });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Line1');
-  expect(result.rawOutput).toContain('Line2' + colors.green('2'));
-  expect(result.rawOutput).toContain('line' + colors.reset(colors.strikethrough(colors.red('1'))) + colors.green('2'));
+  expect(result.rawOutput).toContain(colors.red('-Line2'));
+  expect(result.rawOutput).toContain(colors.green('+Line22'));
   expect(result.output).toContain('Line3');
   expect(result.output).toContain('Line5');
   expect(result.output).toContain('Line7');

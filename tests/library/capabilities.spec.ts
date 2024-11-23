@@ -428,3 +428,38 @@ it('should not crash when clicking a label with a <input type="file"/>', {
   const fileChooser = await fileChooserPromise;
   expect(fileChooser.page()).toBe(page);
 });
+
+it('should not auto play audio', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/33590'
+  }
+}, async ({ page, browserName, isWindows }) => {
+  it.fixme(browserName === 'webkit' && isWindows);
+  await page.route('**/*', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: `
+      <script>
+        async function onLoad() {
+          const log = document.getElementById('log');
+          const audioContext = new AudioContext();
+          const gainNode = new GainNode(audioContext);
+          gainNode.connect(audioContext.destination);
+          gainNode.gain.value = 0.025;
+          const sineNode = new OscillatorNode(audioContext);
+          sineNode.connect(gainNode);
+          sineNode.start();
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          log.innerHTML = 'State: ' + audioContext.state;
+        }
+      </script>
+      <body onload="onLoad()">
+      <div id="log"></div>
+      </body>`,
+    });
+  });
+  await page.goto('http://127.0.0.1/audio.html');
+  await expect(page.locator('#log')).toHaveText('State: suspended');
+});
