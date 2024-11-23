@@ -1689,6 +1689,14 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   updateSnapshots?: "all"|"changed"|"missing"|"none";
 
   /**
+   * Defines how to update the source code snapshots.
+   * - `'overwrite'` - Overwrite the source code snapshot with the actual result.
+   * - `'3way'` - Use a three-way merge to update the source code snapshot.
+   * - `'patch'` - Use a patch to update the source code snapshot. This is the default.
+   */
+  updateSourceMethod?: "overwrite"|"3way"|"patch";
+
+  /**
    * The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of
    * logical CPU cores, e.g. `'50%'.`
    *
@@ -1836,6 +1844,12 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * See [testConfig.updateSnapshots](https://playwright.dev/docs/api/class-testconfig#test-config-update-snapshots).
    */
   updateSnapshots: "all"|"changed"|"missing"|"none";
+
+  /**
+   * See
+   * [testConfig.updateSourceMethod](https://playwright.dev/docs/api/class-testconfig#test-config-update-source-method).
+   */
+  updateSourceMethod: "overwrite"|"3way"|"patch";
 
   /**
    * Playwright version.

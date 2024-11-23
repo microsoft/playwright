@@ -490,3 +490,82 @@ test.describe('update-snapshots all', () => {
     expect(result2.exitCode).toBe(0);
   });
 });
+
+test.describe('update-source-method', () => {
+  test('should overwrite source', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      '.git/marker': '',
+      'a.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('test', async ({ page }) => {
+          await page.setContent(\`<h1>hello</h1>\`);
+          await expect(page.locator('body')).toMatchAriaSnapshot(\`
+            - heading "world"
+          \`);
+        });
+      `
+    }, { 'update-snapshots': 'all', 'update-source-method': 'overwrite' });
+
+    expect(result.exitCode).toBe(0);
+    const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
+    expect(fs.existsSync(patchPath)).toBeFalsy();
+
+    const data = fs.readFileSync(testInfo.outputPath('a.spec.ts'), 'utf-8');
+    expect(data).toBe(`
+        import { test, expect } from '@playwright/test';
+        test('test', async ({ page }) => {
+          await page.setContent(\`<h1>hello</h1>\`);
+          await expect(page.locator('body')).toMatchAriaSnapshot(\`
+            - heading "hello" [level=1]
+          \`);
+        });
+      `);
+
+    expect(stripAnsi(result.output).replace(/\\/g, '/')).toContain(`New baselines created for:
+
+  a.spec.ts
+`);
+
+    const result2 = await runInlineTest({});
+    expect(result2.exitCode).toBe(0);
+  });
+
+  test('should 3way source', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      '.git/marker': '',
+      'a.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('test', async ({ page }) => {
+          await page.setContent(\`<h1>hello</h1>\`);
+          await expect(page.locator('body')).toMatchAriaSnapshot(\`
+            - heading "world"
+          \`);
+        });
+      `
+    }, { 'update-snapshots': 'all', 'update-source-method': '3way' });
+
+    expect(result.exitCode).toBe(0);
+    const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
+    expect(fs.existsSync(patchPath)).toBeFalsy();
+
+    const data = fs.readFileSync(testInfo.outputPath('a.spec.ts'), 'utf-8');
+    expect(data).toBe(`
+        import { test, expect } from '@playwright/test';
+        test('test', async ({ page }) => {
+          await page.setContent(\`<h1>hello</h1>\`);
+          await expect(page.locator('body')).toMatchAriaSnapshot(\`
+\<<<<<<< HEAD
+            - heading "world"
+=======
+            - heading "hello" [level=1]
+>>>>>>> SNAPSHOT
+          \`);
+        });
+      `);
+
+    expect(stripAnsi(result.output).replace(/\\/g, '/')).toContain(`New baselines created for:
+
+  a.spec.ts
+`);
+  });
+});

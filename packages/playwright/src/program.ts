@@ -303,6 +303,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     tsconfig: options.tsconfig ? path.resolve(process.cwd(), options.tsconfig) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
     updateSnapshots,
+    updateSourceMethod: options.updateSourceMethod || 'patch',
     workers: options.workers,
   };
 
@@ -385,6 +386,7 @@ const testOptions: [string, string][] = [
   ['--ui-host <host>', 'Host to serve UI on; specifying this option opens UI in a browser tab'],
   ['--ui-port <port>', 'Port to serve UI on, 0 for any free port; specifying this option opens UI in a browser tab'],
   ['-u, --update-snapshots [mode]', `Update snapshots with actual results. Possible values are 'all', 'changed', 'missing' and 'none'. Not passing defaults to 'missing', passing without value defaults to 'changed'`],
+  ['--update-source-method <method>', `Chooses the way source is updated. Possible values are 'overwrite', '3way' and 'patch'. Defaults to 'patch'`],
   ['-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`],
   ['-x', `Stop after the first failure`],
 ];
