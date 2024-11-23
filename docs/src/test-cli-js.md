@@ -76,33 +76,40 @@ Here are the most common options available in the command line.
 
 Complete set of Playwright Test options is available in the [configuration file](./test-use-options.md). Following options can be passed to a command line and take priority over the configuration file:
 
+<!-- // Note: packages/playwright/src/program.ts is the source of truth. -->
+
 | Option | Description |
 | :- | :- |
-| Non-option arguments | Each argument is treated as a regular expression matched against the full test file path. Only tests from the files matching the pattern will be executed. Special symbols like `$` or `*` should be escaped with `\`. In many shells/terminals you may need to quote the arguments. |
-| `-c <file>` or `--config <file>`| Configuration file. If not passed, defaults to `playwright.config.ts` or `playwright.config.js` in the current directory. |
-| `--debug`| Run tests with Playwright Inspector. Shortcut for `PWDEBUG=1` environment variable and `--timeout=0 --max-failures=1 --headed --workers=1` options.|
-| `--fail-on-flaky-tests` | Fails test runs that contain flaky tests. By default flaky tests count as successes. |
-| `--forbid-only` | Whether to disallow `test.only`. Useful on CI.|
-| `--global-timeout <number>` | Total timeout for the whole test run in milliseconds. By default, there is no global timeout. Learn more about [various timeouts](./test-timeouts.md).|
-| `-g <grep>` or `--grep <grep>` | Only run tests matching this regular expression. For example, this will run `'should add to cart'` when passed `-g "add to cart"`.  The regular expression will be tested against the string that consists of the project name, test file name, `test.describe` titles if any, test title and all test tags, separated by spaces, e.g. `chromium my-test.spec.ts my-suite my-test @smoke`. The filter does not apply to the tests from dependency projects, i.e. Playwright will still run all tests from [project dependencies](./test-projects.md#dependencies). |
-| `--grep-invert <grep>` | Only run tests **not** matching this regular expression. The opposite of `--grep`. The filter does not apply to the tests from dependency projects, i.e. Playwright will still run all tests from [project dependencies](./test-projects.md#dependencies).|
-| `--headed` | Run tests in headed browsers. Useful for debugging. |
-| `--ignore-snapshots` | Whether to ignore [snapshots](./test-snapshots.md). Use this when snapshot expectations are known to be different, e.g. running tests on Linux against Windows screenshots. |
-| `--last-failed` | Only re-run the failures.|
-| `--list` | list all the tests, but do not run them.|
-| `--max-failures <N>` or `-x`| Stop after the first `N` test failures. Passing `-x` stops after the first failure.|
-| `--no-deps` | Ignore the dependencies between projects and behave as if they were not specified. |
-| `--output <dir>` | Directory for artifacts produced by tests, defaults to `test-results`. |
-| `--only-changed [ref]` | Only run test files that have been changed between working tree and "ref". Defaults to running all uncommitted changes with ref=HEAD. Only supports Git. |
-| `--pass-with-no-tests` | Allows the test suite to pass when no files are found. |
-| `--project <name>` | Only run tests from the specified [projects](./test-projects.md), supports '*' wildcard. Defaults to running all projects defined in the configuration file.|
-| `--quiet` | Whether to suppress stdout and stderr from the tests. |
-| `--repeat-each <N>` | Run each test `N` times, defaults to one. |
-| `--reporter <reporter>` | Choose a reporter: minimalist `dot`, concise `line` or detailed `list`. See [reporters](./test-reporters.md) for more information. You can also pass a path to a [custom reporter](./test-reporters.md#custom-reporters) file. |
-| `--retries <number>` | The maximum number of [retries](./test-retries.md#retries) for flaky tests, defaults to zero (no retries). |
-| `--shard <shard>` | [Shard](./test-parallel.md#shard-tests-between-multiple-machines) tests and execute only selected shard, specified in the form `current/all`, 1-based, for example `3/5`.|
-| `--timeout <number>` | Maximum timeout in milliseconds for each test, defaults to 30 seconds. Learn more about [various timeouts](./test-timeouts.md).|
-| `--trace <mode>` | Force tracing mode, can be `on`, `off`, `on-first-retry`, `on-all-retries`, `retain-on-failure` |
-| `--tsconfig <path>` | Path to a single tsconfig applicable to all imported files. See [tsconfig resolution](./test-typescript.md#tsconfig-resolution) for more details. |
-| `--update-snapshots` or `-u` | Whether to update [snapshots](./test-snapshots.md) with actual results instead of comparing them. Use this when snapshot expectations have changed.|
-| `--workers <number>` or `-j <number>`| The maximum number of concurrent worker processes that run in [parallel](./test-parallel.md). |
+| Non-option arguments | Each argument is treated as a regular expression matched against the full test file path. Only tests from files matching the pattern will be executed. Special symbols like `$` or `*` should be escaped with `\`. In many shells/terminals you may need to quote the arguments. |
+| `-c <file>` or `--config <file>` | Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}". Defaults to `playwright.config.ts` or `playwright.config.js` in the current directory. |
+| `--debug` | Run tests with Playwright Inspector. Shortcut for `PWDEBUG=1` environment variable and `--timeout=0 --max-failures=1 --headed --workers=1` options. |
+| `--fail-on-flaky-tests` | Fail if any test is flagged as flaky (default: false). |
+| `--forbid-only` | Fail if `test.only` is called (default: false). Useful on CI. |
+| `--fully-parallel` | Run all tests in parallel (default: false). |
+| `--global-timeout <timeout>` | Maximum time this test suite can run in milliseconds (default: unlimited). |
+| `-g <grep>` or `--grep <grep>` | Only run tests matching this regular expression (default: ".*"). |
+| `-gv <grep>` or `--grep-invert <grep>` | Only run tests that do not match this regular expression. |
+| `--headed` | Run tests in headed browsers (default: headless). |
+| `--ignore-snapshots` | Ignore screenshot and snapshot expectations. |
+| `--last-failed` | Only re-run the failures. |
+| `--list` | Collect all the tests and report them, but do not run. |
+| `--max-failures <N>` or `-x` | Stop after the first `N` failures. Passing `-x` stops after the first failure. |
+| `--no-deps` | Do not run project dependencies. |
+| `--output <dir>` | Folder for output artifacts (default: "test-results"). |
+| `--only-changed [ref]` | Only run test files that have been changed between 'HEAD' and 'ref'. Defaults to running all uncommitted changes. Only supports Git. |
+| `--pass-with-no-tests` | Makes test run succeed even if no tests were found. |
+| `--project <project-name...>` | Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects). |
+| `--quiet` | Suppress stdio. |
+| `--repeat-each <N>` | Run each test `N` times (default: 1). |
+| `--reporter <reporter>` | Reporter to use, comma-separated, can be "dot", "line", "list", or others (default: "list"). You can also pass a path to a custom reporter file. |
+| `--retries <retries>` | Maximum retry count for flaky tests, zero for no retries (default: no retries). |
+| `--shard <shard>` | Shard tests and execute only the selected shard, specified in the form "current/all", 1-based, e.g., "3/5". |
+| `--timeout <timeout>` | Specify test timeout threshold in milliseconds, zero for unlimited (default: 30 seconds). |
+| `--trace <mode>` | Force tracing mode, can be "on", "off", "on-first-retry", "on-all-retries", "retain-on-failure", "retain-on-first-failure". |
+| `--tsconfig <path>` | Path to a single tsconfig applicable to all imported files (default: look up tsconfig for each imported file separately). |
+| `--ui` | Run tests in interactive UI mode. |
+| `--ui-host <host>` | Host to serve UI on; specifying this option opens UI in a browser tab. |
+| `--ui-port <port>` | Port to serve UI on, 0 for any free port; specifying this option opens UI in a browser tab. |
+| `-u` or `--update-snapshots [mode]` | Update snapshots with actual results. Possible values are "all", "changed", "missing", and "none". Not passing defaults to "missing"; passing without a value defaults to "changed". |
+| `-j <workers>` or `--workers <workers>` | Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%). |
+| `-x` | Stop after the first failure. |

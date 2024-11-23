@@ -594,6 +594,7 @@ export const baseFullConfig: reporterTypes.FullConfig = {
   quiet: false,
   shard: null,
   updateSnapshots: 'missing',
+  updateSourceMethod: 'patch',
   version: '',
   workers: 0,
   webServer: null,

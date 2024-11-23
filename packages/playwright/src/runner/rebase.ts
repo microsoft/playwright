@@ -44,7 +44,7 @@ export function addSuggestedRebaseline(location: Location, suggestedRebaseline: 
 }
 
 export async function applySuggestedRebaselines(config: FullConfigInternal, reporter: InternalReporter) {
-  if (config.config.updateSnapshots !== 'all' && config.config.updateSnapshots !== 'missing')
+  if (config.config.updateSnapshots === 'none')
     return;
   if (!suggestedRebaselines.size)
     return;
@@ -55,6 +55,8 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
   const patches: string[] = [];
   const files: string[] = [];
   const gitCache = new Map<string, string | null>();
+
+  const patchFile = path.join(project.project.outputDir, 'rebaselines.patch');
 
   for (const fileName of [...suggestedRebaselines.keys()].sort()) {
     const source = await fs.promises.readFile(fileName, 'utf8');
@@ -97,24 +99,27 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
     for (const range of ranges)
       result = result.substring(0, range.start) + range.newText + result.substring(range.end);
 
-    if (process.env.PWTEST_UPDATE_SNAPSHOTS === 'overwrite') {
+    const relativeName = path.relative(process.cwd(), fileName);
+    files.push(relativeName);
+
+    if (config.config.updateSourceMethod === 'overwrite') {
       await fs.promises.writeFile(fileName, result);
-    } else if (process.env.PWTEST_UPDATE_SNAPSHOTS === 'manual') {
+    } else if (config.config.updateSourceMethod === '3way') {
       await fs.promises.writeFile(fileName, applyPatchWithConflictMarkers(source, result));
     } else {
       const gitFolder = findGitRoot(path.dirname(fileName), gitCache);
-      const relativeName = path.relative(gitFolder || process.cwd(), fileName);
-      files.push(relativeName);
-      patches.push(createPatch(relativeName, source, result));
+      const relativeToGit = path.relative(gitFolder || process.cwd(), fileName);
+      patches.push(createPatch(relativeToGit, source, result));
     }
   }
 
-  const patchFile = path.join(project.project.outputDir, 'rebaselines.patch');
-  await fs.promises.mkdir(path.dirname(patchFile), { recursive: true });
-  await fs.promises.writeFile(patchFile, patches.join('\n'));
-
   const fileList = files.map(file => '  ' + colors.dim(file)).join('\n');
-  reporter.onStdErr(`\nNew baselines created for:\n\n${fileList}\n\n  ` + colors.cyan('git apply ' + path.relative(process.cwd(), patchFile)) + '\n');
+  reporter.onStdErr(`\nNew baselines created for:\n\n${fileList}\n`);
+  if (config.config.updateSourceMethod === 'patch') {
+    await fs.promises.mkdir(path.dirname(patchFile), { recursive: true });
+    await fs.promises.writeFile(patchFile, patches.join('\n'));
+    reporter.onStdErr(`\n  ` + colors.cyan('git apply ' + path.relative(process.cwd(), patchFile)) + '\n');
+  }
 }
 
 function createPatch(fileName: string, before: string, after: string) {

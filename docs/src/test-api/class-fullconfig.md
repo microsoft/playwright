@@ -114,9 +114,15 @@ See [`property: TestConfig.shard`].
 
 ## property: FullConfig.updateSnapshots
 * since: v1.10
-- type: <[UpdateSnapshots]<"all"|"none"|"missing">>
+- type: <[UpdateSnapshots]<"all"|"changed"|"missing"|"none">>
 
 See [`property: TestConfig.updateSnapshots`].
+
+## property: FullConfig.updateSourceMethod
+* since: v1.50
+- type: <[UpdateSourceMethod]<"overwrite"|"3way"|"patch">>
+
+See [`property: TestConfig.updateSourceMethod`].
 
 ## property: FullConfig.version
 * since: v1.20
