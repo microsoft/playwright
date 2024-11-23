@@ -109,26 +109,27 @@ function validateBuffer(buffer: Buffer, mimeType: string): void {
 function compareText(actual: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
   if (typeof actual !== 'string')
     return { errorMessage: 'Actual result should be a string' };
-  const expected = expectedBuffer.toString('utf-8');
+  let expected = expectedBuffer.toString('utf-8');
   if (expected === actual)
     return null;
-  const diffs = diff.diffChars(expected, actual);
-  return {
-    errorMessage: diff_prettyTerminal(diffs),
-  };
-}
+  // Eliminate '\\ No newline at end of file'
+  if (!actual.endsWith('\n'))
+    actual += '\n';
+  if (!expected.endsWith('\n'))
+    expected += '\n';
 
-function diff_prettyTerminal(diffs: Diff.Change[]): string {
-  const result = diffs.map(part => {
-    const text = part.value;
-    if (part.added)
-      return colors.green(text);
-    else if (part.removed)
-      return colors.reset(colors.strikethrough(colors.red(text)));
-    else
-      return text;
+  const lines = diff.createPatch('file', expected, actual, undefined, undefined, { context: 5 }).split('\n');
+  const coloredLines = lines.slice(4).map(line => {
+    if (line.startsWith('-'))
+      return colors.red(line);
+    if (line.startsWith('+'))
+      return colors.green(line);
+    if (line.startsWith('@@'))
+      return colors.dim(line);
+    return line;
   });
-  return result.join('');
+  const errorMessage = coloredLines.join('\n');
+  return { errorMessage  };
 }
 
 function resizeImage(image: ImageData, size: { width: number, height: number }): ImageData {
