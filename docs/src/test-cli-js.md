@@ -81,7 +81,7 @@ Complete set of Playwright Test options is available in the [configuration file]
 | Option | Description |
 | :- | :- |
 | Non-option arguments | Each argument is treated as a regular expression matched against the full test file path. Only tests from files matching the pattern will be executed. Special symbols like `$` or `*` should be escaped with `\`. In many shells/terminals you may need to quote the arguments. |
-| `-c <file>` or `--config <file>` | Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}". Defaults to `playwright.config.ts` or `playwright.config.js` in the current directory. |
+| `-c <file>` or `--config <file>` | Configuration file, or a test directory with optional "playwright.config.&#123;m,c&#125;?&#123;js,ts&#125;". Defaults to `playwright.config.ts` or `playwright.config.js` in the current directory. |
 | `--debug` | Run tests with Playwright Inspector. Shortcut for `PWDEBUG=1` environment variable and `--timeout=0 --max-failures=1 --headed --workers=1` options. |
 | `--fail-on-flaky-tests` | Fail if any test is flagged as flaky (default: false). |
 | `--forbid-only` | Fail if `test.only` is called (default: false). Useful on CI. |
