@@ -146,7 +146,7 @@ program
     .option('--force', 'force reinstall of stable browser channels')
     .option('--only-shell', 'only install headless shell when installing chromium')
     .option('--no-shell', 'do not install chromium headless shell')
-    .option('--quiet', 'hide logs while installing')
+    .option('--quiet', 'do not print logs while installing')
     .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean, quiet?: boolean }) {
       // For '--no-shell' option, commander sets `shell: false` instead.
       if (options.shell === false)
