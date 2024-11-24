@@ -40,9 +40,8 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
     for (let attempt = 1; attempt <= retryCount; ++attempt) {
       debugLogger.log('install', `downloading ${title} - attempt #${attempt}`);
       const url = downloadURLs[(attempt - 1) % downloadURLs.length];
-      if (!quiet) {
+      if (!quiet)
         logPolitely(`Downloading ${title}` + colors.dim(` from ${url}`));
-      }
       const { error } = await downloadBrowserWithProgressBarOutOfProcess(title, browserDirectory, url, zipPath, executablePath, downloadConnectionTimeout, quiet);
       if (!error) {
         debugLogger.log('install', `SUCCESS installing ${title}`);
@@ -65,9 +64,8 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
     if (await existsAsync(zipPath))
       await fs.promises.unlink(zipPath);
   }
-  if (!quiet) {
+  if (!quiet)
     logPolitely(`${title} downloaded to ${browserDirectory}`);
-  }
   return true;
 }
 
@@ -87,7 +85,7 @@ function downloadBrowserWithProgressBarOutOfProcess(title: string, browserDirect
       if (message?.method === 'progress')
         progress(message.params.done, message.params.total);
     });
-  } 
+  }
   cp.on('exit', code => {
     if (code !== 0) {
       promise.resolve({ error: new Error(`Download failure, code=${code}`) });
