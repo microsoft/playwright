@@ -241,12 +241,9 @@ class HtmlBuilder {
   async build(metadata: Metadata, projectSuites: Suite[], result: FullResult, topLevelErrors: TestError[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectSuite of projectSuites) {
-      const testDir = projectSuite.project()!.testDir;
       for (const fileSuite of projectSuite.suites) {
         const fileName = this._relativeLocation(fileSuite.location)!.file;
-        // Preserve file ids computed off the testDir.
-        const relativeFile = path.relative(testDir, fileSuite.location!.file);
-        const fileId = calculateSha1(toPosixPath(relativeFile)).slice(0, 20);
+        const fileId = calculateSha1(toPosixPath(fileName)).slice(0, 20);
         let fileEntry = data.get(fileId);
         if (!fileEntry) {
           fileEntry = {

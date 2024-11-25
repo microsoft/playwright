@@ -238,7 +238,7 @@ const PropertiesView: React.FunctionComponent<{
     id: 'network',
     title: 'Network',
     count: networkModel.resources.length,
-    render: () => <NetworkTab boundaries={boundaries} networkModel={networkModel} />
+    render: () => <NetworkTab boundaries={boundaries} networkModel={networkModel} sdkLanguage={sdkLanguage} />
   };
 
   const tabs: TabbedPaneTabModel[] = [

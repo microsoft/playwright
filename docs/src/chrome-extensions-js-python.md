@@ -214,16 +214,15 @@ def test_popup_page(page: Page, extension_id: str) -> None:
 
 ## Headless mode
 
-By default, Chrome's headless mode in Playwright does not support Chrome extensions. To overcome this limitation, you can run Chrome's persistent context with a new headless mode by using the following code:
+By default, Chrome's headless mode in Playwright does not support Chrome extensions. To overcome this limitation, you can run Chrome's persistent context with a new headless mode by using [channel `chromium`](./browsers.md#opt-in-to-new-headless-mode):
 
 ```js title="fixtures.ts"
 // ...
 
 const pathToExtension = path.join(__dirname, 'my-extension');
 const context = await chromium.launchPersistentContext('', {
-  headless: false,
+  channel: 'chromium',
   args: [
-    `--headless=new`,
     `--disable-extensions-except=${pathToExtension}`,
     `--load-extension=${pathToExtension}`,
   ],
@@ -235,9 +234,8 @@ const context = await chromium.launchPersistentContext('', {
 path_to_extension = Path(__file__).parent.joinpath("my-extension")
 context = playwright.chromium.launch_persistent_context(
     "",
-    headless=False,
+    channel="chromium",
     args=[
-        "--headless=new",
         f"--disable-extensions-except={path_to_extension}",
         f"--load-extension={path_to_extension}",
     ],

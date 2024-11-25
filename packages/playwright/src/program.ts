@@ -281,6 +281,13 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
   const shardPair = options.shard ? options.shard.split('/').map((t: string) => parseInt(t, 10)) : undefined;
+
+  let updateSnapshots: 'all' | 'changed' | 'missing' | 'none';
+  if (['all', 'changed', 'missing', 'none'].includes(options.updateSnapshots))
+    updateSnapshots = options.updateSnapshots;
+  else
+    updateSnapshots = 'updateSnapshots' in options ? 'changed' : 'missing';
+
   const overrides: ConfigCLIOverrides = {
     forbidOnly: options.forbidOnly ? true : undefined,
     fullyParallel: options.fullyParallel ? true : undefined,
@@ -295,7 +302,8 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     tsconfig: options.tsconfig ? path.resolve(process.cwd(), options.tsconfig) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
-    updateSnapshots: options.updateSnapshots ? 'all' as const : undefined,
+    updateSnapshots,
+    updateSourceMethod: options.updateSourceMethod || 'patch',
     workers: options.workers,
   };
 
@@ -344,8 +352,10 @@ function resolveReporter(id: string) {
 
 const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries', 'retain-on-failure', 'retain-on-first-failure'];
 
+// Note: update docs/src/test-cli-js.md when you update this, program is the source of truth.
+
 const testOptions: [string, string][] = [
-  ['--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`],
+  /* deprecated */ ['--browser <browser>', `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")`],
   ['-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`],
   ['--debug', `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`],
   ['--fail-on-flaky-tests', `Fail if any test is flagged as flaky (default: false)`],
@@ -375,7 +385,8 @@ const testOptions: [string, string][] = [
   ['--ui', `Run tests in interactive UI mode`],
   ['--ui-host <host>', 'Host to serve UI on; specifying this option opens UI in a browser tab'],
   ['--ui-port <port>', 'Port to serve UI on, 0 for any free port; specifying this option opens UI in a browser tab'],
-  ['-u, --update-snapshots', `Update snapshots with actual results (default: only create missing snapshots)`],
+  ['-u, --update-snapshots [mode]', `Update snapshots with actual results. Possible values are 'all', 'changed', 'missing' and 'none'. Not passing defaults to 'missing', passing without value defaults to 'changed'`],
+  ['--update-source-method <method>', `Chooses the way source is updated. Possible values are 'overwrite', '3way' and 'patch'. Defaults to 'patch'`],
   ['-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`],
   ['-x', `Stop after the first failure`],
 ];

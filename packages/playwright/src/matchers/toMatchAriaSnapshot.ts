@@ -57,8 +57,6 @@ export async function toMatchAriaSnapshot(
   }
 
   const generateMissingBaseline = updateSnapshots === 'missing' && !expected;
-  const generateNewBaseline = updateSnapshots === 'all' || generateMissingBaseline;
-
   if (generateMissingBaseline) {
     if (this.isNot) {
       const message = `Matchers using ".not" can't generate new baselines`;
@@ -100,10 +98,13 @@ export async function toMatchAriaSnapshot(
     }
   };
 
-  if (!this.isNot && pass === this.isNot && generateNewBaseline) {
-    // Only rebaseline failed snapshots.
-    const suggestedRebaseline = `toMatchAriaSnapshot(\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\`)`;
-    return { pass: this.isNot, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline };
+  if (!this.isNot) {
+    if ((updateSnapshots === 'all') ||
+        (updateSnapshots === 'changed' && pass === this.isNot) ||
+        generateMissingBaseline) {
+      const suggestedRebaseline = `toMatchAriaSnapshot(\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\`)`;
+      return { pass: this.isNot, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline };
+    }
   }
 
   return {

@@ -315,28 +315,23 @@ test('should list parametrized tests', async ({ runUITest }) => {
 
   await page.getByText('cookies').click();
   await page.keyboard.press('ArrowRight');
-  await page.getByText('<anonymous>').click();
-  await page.keyboard.press('ArrowRight');
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
-      ▼ ◯ cookies
-        ▼ ◯ <anonymous> <=
-            ◯ test FR
-            ◯ test DE
-            ◯ test LT
+      ▼ ◯ cookies <=
+          ◯ test FR
+          ◯ test DE
+          ◯ test LT
   `);
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
-          - treeitem "[icon-circle-outline] cookies" [expanded]:
+          - treeitem "[icon-circle-outline] cookies" [expanded] [selected]:
             - group:
-              - treeitem "[icon-circle-outline] <anonymous>" [expanded] [selected]:
-                - group:
-                  - treeitem "[icon-circle-outline] test FR"
-                  - treeitem "[icon-circle-outline] test DE"
-                  - treeitem "[icon-circle-outline] test LT"
+              - treeitem "[icon-circle-outline] test FR"
+              - treeitem "[icon-circle-outline] test DE"
+              - treeitem "[icon-circle-outline] test LT"
   `);
 });
 
@@ -356,28 +351,23 @@ test('should update parametrized tests', async ({ runUITest, writeFiles }) => {
 
   await page.getByText('cookies').click();
   await page.keyboard.press('ArrowRight');
-  await page.getByText('<anonymous>').click();
-  await page.keyboard.press('ArrowRight');
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
-      ▼ ◯ cookies
-        ▼ ◯ <anonymous> <=
-            ◯ test FR
-            ◯ test DE
-            ◯ test LT
+      ▼ ◯ cookies <=
+          ◯ test FR
+          ◯ test DE
+          ◯ test LT
   `);
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
-          - treeitem "[icon-circle-outline] cookies" [expanded]:
+          - treeitem "[icon-circle-outline] cookies" [expanded] [selected]:
             - group:
-              - treeitem "[icon-circle-outline] <anonymous>" [expanded] [selected]:
-                - group:
-                  - treeitem "[icon-circle-outline] test FR"
-                  - treeitem "[icon-circle-outline] test DE"
-                  - treeitem "[icon-circle-outline] test LT"
+              - treeitem "[icon-circle-outline] test FR"
+              - treeitem "[icon-circle-outline] test DE"
+              - treeitem "[icon-circle-outline] test LT"
   `);
 
   await writeFiles({
@@ -396,21 +386,18 @@ test('should update parametrized tests', async ({ runUITest, writeFiles }) => {
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
-      ▼ ◯ cookies
-        ▼ ◯ <anonymous> <=
-            ◯ test FR
-            ◯ test LT
+      ▼ ◯ cookies <=
+          ◯ test FR
+          ◯ test LT
   `);
   await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot(`
     - tree:
       - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
         - group:
-          - treeitem "[icon-circle-outline] cookies" [expanded]:
+          - treeitem "[icon-circle-outline] cookies" [expanded] [selected]:
             - group:
-              - treeitem "[icon-circle-outline] <anonymous>" [expanded] [selected]:
-                - group:
-                  - treeitem "[icon-circle-outline] test FR"
-                  - treeitem "[icon-circle-outline] test LT"
+              - treeitem "[icon-circle-outline] test FR"
+              - treeitem "[icon-circle-outline] test LT"
   `);
 });
 

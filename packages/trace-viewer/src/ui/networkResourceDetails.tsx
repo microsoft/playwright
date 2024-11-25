@@ -22,11 +22,14 @@ import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { generateCurlCommand, generateFetchCall } from '../third_party/devtools';
 import { CopyToClipboardTextButton } from './copyToClipboard';
+import { getAPIRequestCodeGen } from './codegen';
+import type { Language } from '@isomorphic/locatorGenerators';
 
 export const NetworkResourceDetails: React.FunctionComponent<{
   resource: ResourceSnapshot;
   onClose: () => void;
-}> = ({ resource, onClose }) => {
+  sdkLanguage: Language;
+}> = ({ resource, onClose, sdkLanguage }) => {
   const [selectedTab, setSelectedTab] = React.useState('request');
 
   return <TabbedPane
@@ -36,7 +39,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
       {
         id: 'request',
         title: 'Request',
-        render: () => <RequestTab resource={resource}/>,
+        render: () => <RequestTab resource={resource} sdkLanguage={sdkLanguage} />,
       },
       {
         id: 'response',
@@ -55,7 +58,8 @@ export const NetworkResourceDetails: React.FunctionComponent<{
 
 const RequestTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
-}> = ({ resource }) => {
+  sdkLanguage: Language;
+}> = ({ resource, sdkLanguage }) => {
   const [requestBody, setRequestBody] = React.useState<{ text: string, mimeType?: string } | null>(null);
 
   React.useEffect(() => {
@@ -96,6 +100,7 @@ const RequestTab: React.FunctionComponent<{
     <div className='network-request-details-copy'>
       <CopyToClipboardTextButton description='Copy as cURL' value={() => generateCurlCommand(resource)} />
       <CopyToClipboardTextButton description='Copy as Fetch' value={() => generateFetchCall(resource)} />
+      <CopyToClipboardTextButton description='Copy as Playwright' value={async () => getAPIRequestCodeGen(sdkLanguage).generatePlaywrightRequestCall(resource.request, requestBody?.text)} />
     </div>
 
     {requestBody && <div className='network-request-details-header'>Request Body</div>}

@@ -963,9 +963,14 @@ specified.
 * since: v1.8
 - `permissions` <[Array]<[string]>>
 
-A permission or an array of permissions to grant. Permissions can be one of the following values:
+A list of permissions to grant.
+
+:::danger
+Supported permissions differ between browsers, and even between different versions of the same browser. Any permission may stop working after an update.
+:::
+
+Here are some permissions that may be supported by some browsers:
 * `'accelerometer'`
-* `'accessibility-events'`
 * `'ambient-light-sensor'`
 * `'background-sync'`
 * `'camera'`

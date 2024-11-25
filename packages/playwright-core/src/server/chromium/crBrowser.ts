@@ -428,7 +428,6 @@ export class CRBrowserContext extends BrowserContext {
       ['accelerometer', 'sensors'],
       ['gyroscope', 'sensors'],
       ['magnetometer', 'sensors'],
-      ['accessibility-events', 'accessibilityEvents'],
       ['clipboard-read', 'clipboardReadWrite'],
       ['clipboard-write', 'clipboardSanitizedWrite'],
       ['payment-handler', 'paymentHandler'],
