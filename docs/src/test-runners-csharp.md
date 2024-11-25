@@ -5,7 +5,7 @@ title: "Test Runners"
 
 ## Introduction
 
-While Playwright for .NET isn't tied to a particular test runner or testing framework, in our experience the easiest way of getting started is by using the base classes we provide for MSTest and NUnit. These classes support running tests on multiple browser engines, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box. 
+While Playwright for .NET isn't tied to a particular test runner or testing framework, in our experience the easiest way of getting started is by using the base classes we provide for MSTest, NUnit, or xUnit. These classes support running tests on multiple browser engines, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box. 
 
 Playwright and Browser instances will be reused between tests for better performance. We
 recommend running each test case in a new BrowserContext, this way browser state will be
@@ -17,6 +17,7 @@ isolated between the tests.
   values={[
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
+    {label: 'xUnit', value: 'xunit'},
   ]
 }>
 <TabItem value="nunit">
@@ -27,6 +28,11 @@ Playwright provides base classes to write tests with NUnit via the [`Microsoft.P
 <TabItem value="mstest">
 
 Playwright provides base classes to write tests with MSTest via the [`Microsoft.Playwright.MSTest`](https://www.nuget.org/packages/Microsoft.Playwright.MSTest) package.
+
+</TabItem>
+<TabItem value="xunit">
+
+Playwright provides base classes to write tests with xUnit via the [`Microsoft.Playwright.Xunit`](https://www.nuget.org/packages/Microsoft.Playwright.Xunit) package.
 
 </TabItem>
 </Tabs>
@@ -41,6 +47,7 @@ Check out the [installation guide](./intro.md) to get started.
   values={[
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
+    {label: 'xUnit', value: 'xunit'},
   ]
 }>
 <TabItem value="nunit">
@@ -65,6 +72,20 @@ dotnet test --settings:.runsettings -- MSTest.Parallelize.Workers=4
 ```
 
 </TabItem>
+<TabItem value="xunit">
+
+By default xUnit will run all classes in parallel, while running tests inside each class sequentially.
+It will create by default as many processes as there are cores on the system. You can adjust this behavior by using the following CLI parameter or using a `.runsettings` file, see below.
+
+```bash
+dotnet test -- xUnit.MaxParallelThreads=5
+```
+
+:::note
+We recommend xUnit 2.8+ which uses the [`conservative` parallelism algorithm](https://xunit.net/docs/running-tests-in-parallel.html#algorithms) by default.
+:::
+
+</TabItem>
 </Tabs>
 
 
@@ -76,6 +97,7 @@ dotnet test --settings:.runsettings -- MSTest.Parallelize.Workers=4
   values={[
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
+    {label: 'xUnit', value: 'xunit'},
   ]
 }>
 <TabItem value="nunit">
@@ -155,6 +177,41 @@ public class ExampleTest : PageTest
 ```
 
 </TabItem>
+<TabItem value="xunit">
+
+To customize context options, you can override the `ContextOptions` method of your test class derived from `Microsoft.Playwright.Xunit.PageTest` or `Microsoft.Playwright.Xunit.ContextTest`. See the following example:
+
+```csharp
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit;
+
+namespace PlaywrightTests;
+
+public class UnitTest1 : PageTest
+{
+    [Fact]
+    public async Task TestWithCustomContextOptions()
+    {
+        // The following Page (and BrowserContext) instance has the custom colorScheme, viewport and baseURL set:
+        await Page.GotoAsync("/login");
+    }
+    public override BrowserNewContextOptions ContextOptions()
+    {
+        return new BrowserNewContextOptions()
+        {
+            ColorScheme = ColorScheme.Light,
+            ViewportSize = new()
+            {
+                Width = 1920,
+                Height = 1080
+            },
+            BaseURL = "https://github.com",
+        };
+    }
+}
+```
+
+</TabItem>
 </Tabs>
 
 
@@ -194,6 +251,7 @@ When running tests from Visual Studio, you can take advantage of the `.runsettin
   values={[
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
+    {label: 'xUnit', value: 'xunit'},
   ]
 }>
 <TabItem value="nunit">
@@ -260,6 +318,36 @@ For example, to specify the number of workers, you can use `MSTest.Parallelize.W
 ```
 
 </TabItem>
+<TabItem value="xunit">
+
+For example, to specify the number of workers, you can use `xUnit.MaxParallelThreads`. You can also enable `DEBUG` logs using `RunConfiguration.EnvironmentVariables`.
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <!-- See https://xunit.net/docs/runsettings -->
+  <xUnit>
+    <MaxParallelThreads>1</MaxParallelThreads>
+  </xUnit>
+  <!-- General run configuration -->
+  <RunConfiguration>
+    <EnvironmentVariables>
+      <!-- For debugging selectors, it's recommend to set the following environment variable -->
+      <DEBUG>pw:api</DEBUG>
+    </EnvironmentVariables>
+  </RunConfiguration>
+  <!-- Playwright -->  
+  <Playwright>
+    <BrowserName>chromium</BrowserName>
+    <ExpectTimeout>5000</ExpectTimeout>
+    <LaunchOptions>
+      <Headless>false</Headless>
+      <Channel>msedge</Channel>
+    </LaunchOptions>
+  </Playwright>
+</RunSettings>
+```
+</TabItem>
 </Tabs>
 
 ## Base classes for Playwright
@@ -270,6 +358,7 @@ For example, to specify the number of workers, you can use `MSTest.Parallelize.W
   values={[
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
+    {label: 'xUnit', value: 'xunit'},
   ]
 }>
 <TabItem value="nunit">
@@ -282,6 +371,11 @@ There are a few base classes available to you in `Microsoft.Playwright.NUnit` na
 There are a few base classes available to you in `Microsoft.Playwright.MSTest` namespace:
 
 </TabItem>
+<TabItem value="xunit">
+
+There are a few base classes available to you in `Microsoft.Playwright.Xunit` namespace:
+
+</TabItem>
 </Tabs>
 
 |Test          |Description|
@@ -290,8 +384,3 @@ There are a few base classes available to you in `Microsoft.Playwright.MSTest` n
 |ContextTest   |Each test will get a fresh copy of a [BrowserContext]. You can create as many pages in this context as you'd like. Using this test is the easiest way to test multi-page scenarios where you need more than one tab.<br></br><br></br>Note: You can override the `ContextOptions` method in each test file to control context options, the ones typically passed into the [`method: Browser.newContext`] method. That way you can specify all kinds of emulation options for your test file individually.|
 |BrowserTest   |Each test will get a browser and can create as many contexts as it likes. Each test is responsible for cleaning up all the contexts it created.|
 |PlaywrightTest|This gives each test a Playwright object so that the test could start and stop as many browsers as it likes.|
-
-## xUnit support
-
-While using xUnit is also supported, we do not support running parallel tests. This is a well known problem/design limitation
-outlined by the maintainers across [several](https://github.com/xunit/xunit/issues/2003) [issues](https://github.com/xunit/xunit/issues/2111#issuecomment-650004247).

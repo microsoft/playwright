@@ -7,7 +7,7 @@ title: "Installation"
 
 Playwright was created specifically to accommodate the needs of end-to-end testing. Playwright supports all modern rendering engines including Chromium, WebKit, and Firefox. Test on Windows, Linux, and macOS, locally or on CI, headless or headed with native mobile emulation.
 
-You can choose to use [MSTest base classes](./test-runners.md) or [NUnit base classes](./test-runners.md) that Playwright provides to write end-to-end tests. These classes support running tests on multiple browser engines, parallelizing tests, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box. Alternatively you can use the [library](./library.md) to manually write the testing infrastructure.
+You can choose to use MSTest, NUnit, or xUnit [base classes](./test-runners.md) that Playwright provides to write end-to-end tests. These classes support running tests on multiple browser engines, parallelizing tests, adjusting launch/context options and getting a [Page]/[BrowserContext] instance per test out of the box. Alternatively you can use the [library](./library.md) to manually write the testing infrastructure.
 
 1. Start by creating a new project with `dotnet new`. This will create the `PlaywrightTests` directory which includes a `UnitTest1.cs` file:
 
@@ -17,6 +17,7 @@ You can choose to use [MSTest base classes](./test-runners.md) or [NUnit base cl
   values={[
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
+    {label: 'xUnit', value: 'xunit'},
   ]
 }>
 <TabItem value="nunit">
@@ -35,6 +36,14 @@ cd PlaywrightTests
 ```
 
 </TabItem>
+<TabItem value="xunit">
+
+```bash
+dotnet new xunit -n PlaywrightTests
+cd PlaywrightTests
+```
+
+</TabItem>
 </Tabs>
 
 2. Install the necessary Playwright dependencies:
@@ -45,6 +54,7 @@ cd PlaywrightTests
   values={[
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
+    {label: 'xUnit', value: 'xunit'},
   ]
 }>
 <TabItem value="nunit">
@@ -58,6 +68,13 @@ dotnet add package Microsoft.Playwright.NUnit
 
 ```bash
 dotnet add package Microsoft.Playwright.MSTest
+```
+
+</TabItem>
+<TabItem value="xunit">
+
+```bash
+dotnet add package Microsoft.Playwright.Xunit
 ```
 
 </TabItem>
@@ -87,6 +104,7 @@ Edit the `UnitTest1.cs` file with the code below to create an example end-to-end
   values={[
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
+    {label: 'xUnit', value: 'xunit'},
   ]
 }>
 <TabItem value="nunit">
@@ -164,6 +182,41 @@ public class ExampleTest : PageTest
 ```
 
 </TabItem>
+<TabItem value="xunit">
+
+```csharp title="UnitTest1.cs"
+using System.Text.RegularExpressions;
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit;
+
+namespace PlaywrightTests;
+
+public class UnitTest1: PageTest
+{
+    [Fact]
+    public async Task HasTitle()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+
+        // Expect a title "to contain" a substring.
+        await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
+    }
+
+    [Fact]
+    public async Task GetStartedLink()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+
+        // Click the get started link.
+        await Page.GetByRole(AriaRole.Link, new() { Name = "Get started" }).ClickAsync();
+
+        // Expects page to have a heading with the name of Installation.
+        await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
+    } 
+}
+```
+</TabItem>
+
 </Tabs>
 
 ## Running the Example Tests
@@ -190,4 +243,4 @@ See our doc on [Running and Debugging Tests](./running-tests.md) to learn more a
 - [Generate tests with Codegen](./codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
 - [Run tests on CI](./ci-intro.md)
-- [Learn more about the MSTest and NUnit base classes](./test-runners.md)
+- [Learn more about the MSTest, NUnit, and xUnit base classes](./test-runners.md)

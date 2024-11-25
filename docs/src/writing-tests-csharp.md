@@ -39,6 +39,7 @@ Take a look at the following example to see how to write a test.
   values={[
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
+    {label: 'xUnit', value: 'xunit'},
   ]
 }>
 <TabItem value="nunit">
@@ -117,6 +118,40 @@ public class ExampleTest : PageTest
 }
 ```
 
+</TabItem>
+<TabItem value="xunit">
+
+```csharp title="UnitTest1.cs"
+using System.Text.RegularExpressions;
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit;
+
+namespace PlaywrightTests;
+
+public class UnitTest1: PageTest
+{
+    [Fact]
+    public async Task HasTitle()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+
+        // Expect a title "to contain" a substring.
+        await Expect(Page).ToHaveTitleAsync(new Regex("Playwright"));
+    }
+
+    [Fact]
+    public async Task GetStartedLink()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+
+        // Click the get started link.
+        await Page.GetByRole(AriaRole.Link, new() { Name = "Get started" }).ClickAsync();
+
+        // Expects page to have a heading with the name of Installation.
+        await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
+    } 
+}
+```
 </TabItem>
 </Tabs>
 
@@ -204,6 +239,7 @@ The Playwright NUnit and MSTest test framework base classes will isolate each te
   values={[
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
+    {label: 'xUnit', value: 'xunit'},
   ]
 }>
 <TabItem value="nunit">
@@ -249,11 +285,28 @@ public class ExampleTest : PageTest
 ```
 
 </TabItem>
+<TabItem value="xunit">
+
+```csharp title="UnitTest1.cs"
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit;
+
+namespace PlaywrightTests;
+
+public class UnitTest1: PageTest
+{
+    [Fact]
+    public async Task BasicTest()
+    {
+        await Page.GotoAsync("https://playwright.dev");
+    }
+}
+```
+
+</TabItem>
 </Tabs>
 
 ## Using Test Hooks
-
-You can use `SetUp`/`TearDown` in NUnit or `TestInitialize`/`TestCleanup` in MSTest to prepare and clean up your test environment:
 
 <Tabs
   groupId="test-runners"
@@ -261,9 +314,12 @@ You can use `SetUp`/`TearDown` in NUnit or `TestInitialize`/`TestCleanup` in MST
   values={[
     {label: 'MSTest', value: 'mstest'},
     {label: 'NUnit', value: 'nunit'},
+    {label: 'xUnit', value: 'xunit'},
   ]
 }>
 <TabItem value="nunit">
+
+You can use `SetUp`/`TearDown` to prepare and clean up your test environment:
 
 ```csharp title="UnitTest1.cs"
 using System.Threading.Tasks;
@@ -294,6 +350,8 @@ public class ExampleTest : PageTest
 </TabItem>
 <TabItem value="mstest">
 
+You can use `TestInitialize`/`TestCleanup` to prepare and clean up your test environment:
+
 ```csharp title="UnitTest1.cs"
 using System.Threading.Tasks;
 using Microsoft.Playwright.MSTest;
@@ -320,6 +378,39 @@ public class ExampleTest : PageTest
 ```
 
 </TabItem>
+<TabItem value="xunit">
+
+You can use `InitializeAsync`/`DisposeAsync` to prepare and clean up your test environment:
+
+```csharp title="UnitTest1.cs"
+using Microsoft.Playwright;
+using Microsoft.Playwright.Xunit;
+
+namespace PlaywrightTests;
+
+public class UnitTest1: PageTest
+{
+    [Fact]
+    public async Task MainNavigation()
+    {
+        // Assertions use the expect API.
+        await Expect(Page).ToHaveURLAsync("https://playwright.dev/");
+    }
+
+    override public async Task InitializeAsync()
+    {
+        await base.InitializeAsync();
+        await Page.GotoAsync("https://playwright.dev");
+    }
+
+    public override async Task DisposeAsync()
+    {
+        Console.WriteLine("After each test cleanup");
+        await base.DisposeAsync();
+    }
+}
+```
+</TabItem>
 </Tabs>
 
 ## What's Next
@@ -328,4 +419,4 @@ public class ExampleTest : PageTest
 - [Generate tests with Codegen](./codegen-intro.md)
 - [See a trace of your tests](./trace-viewer-intro.md)
 - [Run tests on CI](./ci-intro.md)
-- [Learn more about the MSTest and NUnit base classes](./test-runners.md)
+- [Learn more about the MSTest, NUnit, or xUnit base classes](./test-runners.md)
