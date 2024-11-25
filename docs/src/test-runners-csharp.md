@@ -81,6 +81,10 @@ It will create by default as many processes as there are cores on the system. Yo
 dotnet test -- xUnit.MaxParallelThreads=5
 ```
 
+:::note
+We recommend xUnit 2.8+ which uses the [`conservative` parallelism algorithm](https://xunit.net/docs/running-tests-in-parallel.html#algorithms) by default.
+:::
+
 </TabItem>
 </Tabs>
 

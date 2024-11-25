@@ -138,6 +138,10 @@ dotnet test -- xUnit.MaxParallelThreads=5
 
 See [here](https://xunit.net/docs/running-tests-in-parallel.html) for more information to run tests in parallel with xUnit.
 
+:::note
+We recommend xUnit 2.8+ which uses the [`conservative` parallelism algorithm](https://xunit.net/docs/running-tests-in-parallel.html#algorithms) by default.
+:::
+
 </TabItem>
 </Tabs>
 
