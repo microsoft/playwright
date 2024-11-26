@@ -16,6 +16,9 @@
 
 import { createImage } from './playwright-test-fixtures';
 import { test, expect, retries } from './ui-mode-fixtures';
+import http from 'node:http';
+import httpProxy from 'http-proxy';
+import { ManualPromise } from 'packages/playwright-core/lib/utils/manualPromise';
 
 test.describe.configure({ mode: 'parallel', retries });
 
@@ -338,4 +341,56 @@ test('should show request source context id', async ({ runUITest, server }) => {
   await expect(page.getByText('page#1')).toBeVisible();
   await expect(page.getByText('page#2')).toBeVisible();
   await expect(page.getByText('api#1')).toBeVisible();
+});
+
+test('should work behind proxy', async ({ runUITest }, testInfo) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('trace test', async ({ page }) => {
+        await page.setContent('<button>Submit</button>');
+        await page.getByRole('button').click();
+        expect(1).toBe(1);
+      });
+    `,
+  });
+
+  const prefix = '/subdir';
+  const origin = new URL(page.url());
+  const proxy = httpProxy.createProxy({ target: { port: origin.port }, ws: true });
+
+  const proxyServer = http.createServer((req, res) => {
+    req.url = req.url!.replace(prefix, '');
+    proxy.web(req, res);
+  });
+  proxyServer.on('upgrade', (req, socket, head) => {
+    req.url = req.url!.replace(prefix, '');
+    proxy.ws(req, socket, head);
+  });
+
+  const proxyPort = 9010 + testInfo.workerIndex * 4;
+  await new Promise<void>(resolve => proxyServer.listen(proxyPort, resolve));
+
+  const proxyURL = new URL(origin);
+  proxyURL.host = `localhost:${proxyPort}`;
+  proxyURL.pathname = prefix + proxyURL.pathname;
+
+  await page.goto(proxyURL.toString());
+
+  await page.getByText('trace test').dblclick();
+
+  await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem /Before Hooks \\d+[hmsp]+/
+      - treeitem /page\\.setContent \\d+[hmsp]+/
+      - treeitem /locator\\.clickgetByRole\\('button'\\) \\d+[hmsp]+/
+      - treeitem /expect\\.toBe \\d+[hmsp]+/ [selected]
+      - treeitem /After Hooks \\d+[hmsp]+/
+  `);
+
+  await expect(
+      page.frameLocator('iframe.snapshot-visible[name=snapshot]').locator('button'),
+  ).toHaveText('Submit');
+
+  proxyServer.close();
 });
