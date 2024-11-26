@@ -343,7 +343,7 @@ test('should show request source context id', async ({ runUITest, server }) => {
   await expect(page.getByText('api#1')).toBeVisible();
 });
 
-test('should work behind proxy', async ({ runUITest }, testInfo) => {
+test('should work behind proxy', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33705' } }, async ({ runUITest }, testInfo) => {
   const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
