@@ -468,34 +468,18 @@ function requestAuthorization(
 	res.end('Proxy authorization required');
 }
 
-function createHttpHeader(line: string, headers: http.IncomingHttpHeaders) {
-	return Object.keys(headers).reduce(function (head, key) {
-		var value = headers[key];
-
-		if (!Array.isArray(value)) {
-			head.push(key + ': ' + value);
-			return head;
-		}
-
-		for (var i = 0; i < value.length; i++) {
-			head.push(key + ': ' + value[i]);
-		}
-		return head;
-	}, [line])
-		.join('\r\n') + '\r\n\r\n';
-}
-
 function onupgrade(req: http.IncomingMessage, socket: net.Socket, head: Buffer) {
-	const parsed = url.parse(req.url || '/');
-	const proxyReq = http.request({
-		...parsed,
+	const proxyReq = http.request(req.url, {
 		method: req.method,
 		headers: req.headers,
 		localAddress: this.localAddress,
 	});
 
 	proxyReq.on('upgrade', function (proxyRes, proxySocket, proxyHead) {
-		socket.write(createHttpHeader('HTTP/1.1 101 Switching Protocols', proxyRes.headers));
+		const header = ['HTTP/1.1 101 Switching Protocols'];
+		for (const [key, value] of Object.entries(proxyRes.headersDistinct))
+			header.push(`${key}: ${value}`);
+		socket.write(header.join('\r\n') + '\r\n\r\n');
 		if (proxyHead && proxyHead.length) proxySocket.unshift(proxyHead);
 		proxySocket.pipe(socket).pipe(proxySocket);
 	});
