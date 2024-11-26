@@ -339,3 +339,35 @@ test('should show request source context id', async ({ runUITest, server }) => {
   await expect(page.getByText('page#2')).toBeVisible();
   await expect(page.getByText('api#1')).toBeVisible();
 });
+
+test('should work behind proxy', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33705' } }, async ({ runUITest, proxyServer }, testInfo) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('trace test', async ({ page }) => {
+        await page.setContent('<button>Submit</button>');
+        await page.getByRole('button').click();
+        expect(1).toBe(1);
+      });
+    `,
+  });
+
+  const origin = new URL(page.url());
+  proxyServer.forwardTo(+origin.port, { prefix: '/subdir' });
+  await page.goto(`${proxyServer.URL}/subdir${origin.pathname}?${origin.searchParams}`);
+
+  await page.getByText('trace test').dblclick();
+
+  await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem /Before Hooks \\d+[hmsp]+/
+      - treeitem /page\\.setContent \\d+[hmsp]+/
+      - treeitem /locator\\.clickgetByRole\\('button'\\) \\d+[hmsp]+/
+      - treeitem /expect\\.toBe \\d+[hmsp]+/ [selected]
+      - treeitem /After Hooks \\d+[hmsp]+/
+  `);
+
+  await expect(
+      page.frameLocator('iframe.snapshot-visible[name=snapshot]').locator('button'),
+  ).toHaveText('Submit');
+});

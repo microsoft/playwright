@@ -58,11 +58,13 @@ export class TestProxy {
     await new Promise(x => this._server.close(x));
   }
 
-  forwardTo(port: number, options?: { allowConnectRequests: boolean }) {
+  forwardTo(port: number, options?: { allowConnectRequests?: boolean, prefix?: string }) {
     this._prependHandler('request', (req: IncomingMessage) => {
       this.requestUrls.push(req.url);
-      const url = new URL(req.url);
-      url.host = `127.0.0.1:${port}`;
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      url.port = '' + port;
+      if (options.prefix)
+        url.pathname = url.pathname.replace(options.prefix, '');
       req.url = url.toString();
     });
     this._prependHandler('connect', (req: IncomingMessage) => {
