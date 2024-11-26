@@ -64,7 +64,7 @@ export class TestProxy {
       this.requestUrls.push(req.url);
       const url = new URL(req.url, `http://${req.headers.host}`);
       url.port = '' + port;
-      if (options.prefix)
+      if (options?.prefix)
         url.pathname = url.pathname.replace(options.prefix, '');
       req.url = url.toString();
     });
@@ -80,7 +80,7 @@ export class TestProxy {
       this.wsUrls.push(req.url);
       const url = new URL(req.url, `http://${req.headers.host}`);
       url.port = '' + port;
-      if (options.prefix)
+      if (options?.prefix)
         url.pathname = url.pathname.replace(options.prefix, '');
       req.url = url.toString();
     });
