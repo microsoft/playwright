@@ -18,7 +18,6 @@ import { createImage } from './playwright-test-fixtures';
 import { test, expect, retries } from './ui-mode-fixtures';
 import http from 'node:http';
 import httpProxy from 'http-proxy';
-import { ManualPromise } from 'packages/playwright-core/lib/utils/manualPromise';
 
 test.describe.configure({ mode: 'parallel', retries });
 
