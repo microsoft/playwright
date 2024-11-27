@@ -164,7 +164,7 @@ export interface TestType<TestArgs extends KeyValue, WorkerArgs extends KeyValue
   use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs>): void;
   step<T>(title: string, body: () => T | Promise<T>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<T>;
   expect: Expect<{}>;
-  extend<T extends KeyValue, W extends KeyValue = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
+  extend<T extends {}, W extends {} = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
   info(): TestInfo;
 }
 
