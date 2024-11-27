@@ -17,3 +17,66 @@ test('sample test', async ({ page, plugin }) => {
   // @ts-expect-error
   await expect(page).toContainText(123);
 });
+
+test1.extend({
+  page: async ({ page }) => {
+    type IsPage = (typeof page) extends Page ? true : never;
+    const isPage: IsPage = true;
+  },
+});
+
+test1.extend<{ myFixture: (arg: number) => void }>({
+  page: async ({ page }) => {
+    type IsPage = (typeof page) extends Page ? true : never;
+    const isPage: IsPage = true;
+  },
+});
+
+test1.extend({
+  myFixture: async ({ page }) => {
+    type IsPage = (typeof page) extends Page ? true : never;
+    const isPage: IsPage = true;
+  }
+});
+
+test1.extend<{ myFixture: (arg: number) => void }>({
+  myFixture: async ({ page }) => {
+    type IsPage = (typeof page) extends Page ? true : never;
+    const isPage: IsPage = true;
+  }
+});
+
+test1.extend({
+  page: async ({ page }) => {
+    type IsPage = (typeof page) extends Page ? true : never;
+    const isPage: IsPage = true;
+  },
+  myFixture: async ({ page }) => {
+    type IsPage = (typeof page) extends Page ? true : never;
+    const isPage: IsPage = true;
+  }
+});
+
+test1.extend<{ myFixture: (arg: number) => void }>({
+  page: async ({ page }) => {
+    type IsPage = (typeof page) extends Page ? true : never;
+    const isPage: IsPage = true;
+  },
+  myFixture: async ({ page }) => {
+    type IsPage = (typeof page) extends Page ? true : never;
+    const isPage: IsPage = true;
+  }
+});
+
+test1.extend<{ myFixture: (arg: number) => void }>({
+  // @ts-expect-error
+  myFixture: (arg: number) => {},
+});
+
+test1.extend<{ myFixture: (arg: number) => void }>({
+  myFixture: async (_, use) => {
+    use((arg: number) => {});
+    // @ts-expect-error
+    use((arg: string) => {});
+  }
+});
