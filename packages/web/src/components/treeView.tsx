@@ -320,6 +320,8 @@ function indexTree<T extends TreeItem>(
   expandedItems: Map<string, boolean | undefined>,
   autoExpandDepth: number,
   isVisible?: (item: T) => boolean): Map<T, TreeItemData> {
+  if (isVisible && !isVisible(rootItem))
+    return new Map();
 
   const result = new Map<T, TreeItemData>();
   const temporaryExpanded = new Set<string>();
