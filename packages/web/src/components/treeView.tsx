@@ -328,8 +328,6 @@ function indexTree<T extends TreeItem>(
   let lastItem: T | null = null;
 
   const appendChildren = (parent: T, depth: number) => {
-    if (isVisible && !isVisible(parent))
-      return;
     for (const item of parent.children as T[]) {
       if (isVisible && !isVisible(item))
         continue;
