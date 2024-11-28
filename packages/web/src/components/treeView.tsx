@@ -331,6 +331,8 @@ function indexTree<T extends TreeItem>(
     if (isVisible && !isVisible(parent))
       return;
     for (const item of parent.children as T[]) {
+      if (isVisible && !isVisible(item))
+        continue;
       const expandState = temporaryExpanded.has(item.id) || expandedItems.get(item.id);
       const autoExpandMatches = autoExpandDepth > depth && result.size < 25 && expandState !== false;
       const expanded = item.children.length ? expandState ?? autoExpandMatches : undefined;
