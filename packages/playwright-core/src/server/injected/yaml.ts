@@ -62,12 +62,8 @@ function yamlStringNeedsQuotes(str: string): boolean {
   if (/^-\s/.test(str))
     return true;
 
-  // Strings that start with a special indicator character need quotes
-  if (/^[&*\],].*/.test(str))
-    return true;
-
-  // Strings containing ':' followed by a space or at the end need quotes
-  if (/:(\s|$)/.test(str))
+  // Strings containing ':' or '\n' followed by a space or at the end need quotes
+  if (/[\n:](\s|$)/.test(str))
     return true;
 
   // Strings containing '#' preceded by a space need quotes (comment indicator)
@@ -78,20 +74,16 @@ function yamlStringNeedsQuotes(str: string): boolean {
   if (/[\n\r]/.test(str))
     return true;
 
-  // Strings starting with '?' or '!' (directives) need quotes
-  if (/^[?!]/.test(str))
-    return true;
-
-  // Strings starting with '>' or '|' (block scalar indicators) need quotes
-  if (/^[>|]/.test(str))
-    return true;
-
-  // Strings starting with quotes need quotes
-  if (/^["']/.test(str))
+  // Strings starting with indicator characters or quotes need quotes
+  if (/^[&*\],?!>|@"'#%]/.test(str))
     return true;
 
   // Strings containing special characters that could cause ambiguity
   if (/[{}`]/.test(str))
+    return true;
+
+  // Non-string types recognized by YAML
+  if (!isNaN(Number(str)) || ['y', 'n', 'yes', 'no', 'true', 'false', 'on', 'off', 'null'].includes(str.toLowerCase()))
     return true;
 
   return false;
