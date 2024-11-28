@@ -508,3 +508,57 @@ it('should handle long strings', async ({ page }) => {
       - region: ${s}
   `);
 });
+
+it('should escape special yaml characters', async ({ page }) => {
+  await page.setContent(`
+    <a href="#">@hello</a>@hello
+    <a href="#">]hello</a>]hello
+    <a href="#">hello\n</a>
+    hello\n<a href="#">\n hello</a>\n hello
+    <a href="#">#hello</a>#hello
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - link "@hello"
+    - text: "@hello"
+    - link "]hello"
+    - text: "]hello"
+    - link "hello"
+    - text: hello
+    - link "hello"
+    - text: hello
+    - link "#hello"
+    - text: "#hello"
+  `);
+});
+
+it('should escape special yaml values', async ({ page }) => {
+  await page.setContent(`
+    <a href="#">true</a>False
+    <a href="#">NO</a>yes
+    <a href="#">y</a>N
+    <a href="#">on</a>Off
+    <a href="#">null</a>NULL
+    <a href="#">123</a>123
+    <a href="#">-1.2</a>-1.2
+    <input type=text value="555">
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - link "true"
+    - text: "False"
+    - link "NO"
+    - text: "yes"
+    - link "y"
+    - text: "N"
+    - link "on"
+    - text: "Off"
+    - link "null"
+    - text: "NULL"
+    - link "123"
+    - text: "123"
+    - link "-1.2"
+    - text: "-1.2"
+    - textbox: "555"
+  `);
+});
