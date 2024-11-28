@@ -438,13 +438,13 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
             expectValue(value);
             attrs[kSelectedAttribute] = value;
           }
-          if (nodeName === 'CANVAS') {
-            const boundingRect = (element as HTMLCanvasElement).getBoundingClientRect();
+          if (nodeName === 'CANVAS' || nodeName === 'IFRAME' || nodeName === 'FRAME') {
+            const boundingRect = (element as HTMLElement).getBoundingClientRect();
             const value = JSON.stringify({
-              left: boundingRect.left / window.innerWidth,
-              top: boundingRect.top / window.innerHeight,
-              right: boundingRect.right / window.innerWidth,
-              bottom: boundingRect.bottom / window.innerHeight
+              left: boundingRect.left,
+              top: boundingRect.top,
+              right: boundingRect.right,
+              bottom: boundingRect.bottom
             });
             expectValue(kBoundingRectAttribute);
             expectValue(value);
