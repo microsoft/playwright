@@ -319,8 +319,8 @@ function indexTree<T extends TreeItem>(
   selectedItem: T | undefined,
   expandedItems: Map<string, boolean | undefined>,
   autoExpandDepth: number,
-  isVisible?: (item: T) => boolean): Map<T, TreeItemData> {
-  if (isVisible && !isVisible(rootItem))
+  isVisible: (item: T) => boolean = () => true): Map<T, TreeItemData> {
+  if (!isVisible(rootItem))
     return new Map();
 
   const result = new Map<T, TreeItemData>();
@@ -331,7 +331,7 @@ function indexTree<T extends TreeItem>(
 
   const appendChildren = (parent: T, depth: number) => {
     for (const item of parent.children as T[]) {
-      if (isVisible && !isVisible(item))
+      if (!isVisible(item))
         continue;
       const expandState = temporaryExpanded.has(item.id) || expandedItems.get(item.id);
       const autoExpandMatches = autoExpandDepth > depth && result.size < 25 && expandState !== false;
