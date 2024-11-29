@@ -63,7 +63,7 @@ export class TestProxy {
     this._prependHandler('request', (req: IncomingMessage) => {
       this.requestUrls.push(req.url);
       const url = new URL(req.url, `http://${req.headers.host}`);
-      url.port = '' + port;
+      url.host = `localhost:${port}`;
       if (options?.prefix)
         url.pathname = url.pathname.replace(options.prefix, '');
       req.url = url.toString();
@@ -74,12 +74,12 @@ export class TestProxy {
       if (kConnectHostsToIgnore.has(req.url))
         return;
       this.connectHosts.push(req.url);
-      req.url = `127.0.0.1:${port}`;
+      req.url = `localhost:${port}`;
     });
     this._prependHandler('upgrade', (req: IncomingMessage) => {
       this.wsUrls.push(req.url);
       const url = new URL(req.url, `http://${req.headers.host}`);
-      url.port = '' + port;
+      url.host = `localhost:${port}`;
       if (options?.prefix)
         url.pathname = url.pathname.replace(options.prefix, '');
       req.url = url.toString();
