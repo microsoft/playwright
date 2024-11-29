@@ -170,6 +170,13 @@ async function downloadBrotli(title: string, browserDirectory: string, url: stri
       throw new Error(`Download failed: size mismatch, file size: ${downloadedBytes}, expected size: ${totalBytes} URL: ${url}`);
 
     debugLogger.log('install', `-- download complete, size: ${downloadedBytes}`);
+
+    if (executablePath) {
+      debugLogger.log('install', `fixing permissions at ${executablePath}`);
+      await fs.promises.chmod(executablePath, 0o755);
+    }
+    await fs.promises.writeFile(browserDirectoryToMarkerFilePath(browserDirectory), '');
+
     return { error: null };
   } catch (error) {
     debugLogger.log('install', `-- ${error.message}`);
