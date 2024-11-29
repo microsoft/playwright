@@ -159,24 +159,20 @@ async function downloadBrotli(title: string, browserDirectory: string, url: stri
           tarFs.extract(browserDirectory)
       );
     } catch (error) {
-      if (error?.code === 'ECONNRESET') {
-        debugLogger.log('install', `-- download failed, server closed connection`);
+      if (error?.code === 'ECONNRESET')
         throw new Error(`Download failed: server closed connection. URL: ${url}`);
-      }
 
-      debugLogger.log('install', `-- download failed, unexpected error`);
       throw new Error(`Download failed: ${error?.message ?? error}. URL: ${url}`);
     }
 
 
-    if (downloadedBytes !== totalBytes) {
-      debugLogger.log('install', `-- download failed, size mismatch: ${downloadedBytes} != ${totalBytes}`);
+    if (downloadedBytes !== totalBytes)
       throw new Error(`Download failed: size mismatch, file size: ${downloadedBytes}, expected size: ${totalBytes} URL: ${url}`);
-    }
 
     debugLogger.log('install', `-- download complete, size: ${downloadedBytes}`);
     return { error: null };
   } catch (error) {
+    debugLogger.log('install', `-- ${error.message}`);
     return { error };
   }
 }
