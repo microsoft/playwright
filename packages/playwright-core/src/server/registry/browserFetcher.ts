@@ -22,7 +22,7 @@ import childProcess from 'child_process';
 import { existsAsync } from '../../utils/fileUtils';
 import { debugLogger } from '../../utils/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
-import { colors, progress as ProgressBar } from '../../utilsBundle';
+import { colors, multiProgress as MultiProgressBar } from '../../utilsBundle';
 import { browserDirectoryToMarkerFilePath } from '.';
 import { getUserAgent } from '../../utils/userAgent';
 import type { DownloadParams } from './oopDownloadBrowserMain';
@@ -75,7 +75,7 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
 function downloadBrowserWithProgressBarOutOfProcess(title: string, browserDirectory: string, url: string, zipPath: string, executablePath: string | undefined, connectionTimeout: number): Promise<{ error: Error | null }> {
   const cp = childProcess.fork(path.join(__dirname, 'oopDownloadBrowserMain.js'));
   const promise = new ManualPromise<{ error: Error | null }>();
-  const progress = getDownloadProgress();
+  const progress = getDownloadProgress(title);
   cp.on('message', (message: any) => {
     if (message?.method === 'log')
       debugLogger.log('install', message.params.message);
@@ -122,20 +122,22 @@ export function logPolitely(toBeLogged: string) {
 
 type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 
-function getDownloadProgress(): OnProgressCallback {
+function getDownloadProgress(title: string): OnProgressCallback {
   if (process.stdout.isTTY)
-    return getAnimatedDownloadProgress();
-  return getBasicDownloadProgress();
+    return getAnimatedDownloadProgress(title);
+  return getBasicDownloadProgress(title);
 }
 
-function getAnimatedDownloadProgress(): OnProgressCallback {
+const multiProgress = new MultiProgressBar();
+
+function getAnimatedDownloadProgress(title: string): OnProgressCallback {
   let progressBar: ProgressBar;
   let lastDownloadedBytes = 0;
 
   return (downloadedBytes: number, totalBytes: number) => {
     if (!progressBar) {
-      progressBar = new ProgressBar(
-          `${toMegabytes(
+      progressBar = multiProgress.newBar(
+          `${title} ${toMegabytes(
               totalBytes
           )} [:bar] :percent :etas`,
           {
@@ -152,7 +154,7 @@ function getAnimatedDownloadProgress(): OnProgressCallback {
   };
 }
 
-function getBasicDownloadProgress(): OnProgressCallback {
+function getBasicDownloadProgress(title: string): OnProgressCallback {
   const totalRows = 10;
   const stepWidth = 8;
   let lastRow = -1;
@@ -163,7 +165,7 @@ function getBasicDownloadProgress(): OnProgressCallback {
       lastRow = row;
       const percentageString = String(percentage * 100 | 0).padStart(3);
       // eslint-disable-next-line no-console
-      console.log(`|${'■'.repeat(row * stepWidth)}${' '.repeat((totalRows - row) * stepWidth)}| ${percentageString}% of ${toMegabytes(totalBytes)}`);
+      console.log(`${title} |${'■'.repeat(row * stepWidth)}${' '.repeat((totalRows - row) * stepWidth)}| ${percentageString}% of ${toMegabytes(totalBytes)}`);
     }
   };
 }
