@@ -1278,7 +1278,7 @@ async function allThrottled<T>(items: T[], fn: (item: T) => Promise<void>, concu
   const event = new EventEmitter();
   await Promise.all(items.map(async item => {
     while (state.budget < 1)
-      await new Promise(f => event.once('done', f));
+      await EventEmitter.once(event, 'done');
 
     try {
       state.budget--;
