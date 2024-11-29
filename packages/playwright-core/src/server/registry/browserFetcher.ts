@@ -29,6 +29,8 @@ import { browserDirectoryToMarkerFilePath } from '.';
 import { getUserAgent } from '../../utils/userAgent';
 import type { DownloadParams } from './oopDownloadBrowserMain';
 import { httpRequest } from '../../utils';
+import type { IncomingMessage } from 'http';
+import { pipeline, finished } from 'stream/promises';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string | undefined, downloadURLs: string[], downloadFileName: string, downloadConnectionTimeout: number): Promise<boolean> {
   if (await existsAsync(browserDirectoryToMarkerFilePath(browserDirectory))) {
@@ -118,73 +120,64 @@ function downloadBrowserWithProgressBarOutOfProcess(title: string, browserDirect
 
 
 async function downloadBrotli(title: string, browserDirectory: string, url: string, zipPath: string, executablePath: string | undefined, connectionTimeout: number): Promise<{ error: Error | null }> {
-  debugLogger.log('install', `running download:`);
-  debugLogger.log('install', `-- from url: ${url}`);
-  debugLogger.log('install', `-- to location: ${zipPath}`);
+  try {
+    debugLogger.log('install', `running download:`);
+    debugLogger.log('install', `-- from url: ${url}`);
+    debugLogger.log('install', `-- to location: ${zipPath}`);
 
-  let downloadedBytes = 0;
-  let totalBytes = 0;
+    const response = await new Promise<IncomingMessage>((resolve, reject) => {
+      httpRequest({
+        url,
+        headers: { 'User-Agent': getUserAgent() },
+        timeout: connectionTimeout,
+      }, resolve, reject);
+    });
 
-  const promise = new ManualPromise<{ error: Error | null }>();
-
-  const progress = getDownloadProgress(title);
-
-  httpRequest({
-    url,
-    headers: { 'User-Agent': getUserAgent() },
-    timeout: connectionTimeout,
-  }, response => {
     debugLogger.log('install', `-- response status code: ${response.statusCode}`);
     if (response.statusCode !== 200) {
       let content = '';
-      const handleError = () => {
-        const error = new Error(`Download failed: server returned code ${response.statusCode} body '${content}'. URL: ${url}`);
-        // consume response data to free up memory
-        response.resume();
-        promise.reject(error);
-      };
-      response
-          .on('data', chunk => content += chunk)
-          .on('end', handleError)
-          .on('error', handleError);
-      return;
+      response.on('data', chunk => content += chunk);
+      try { await finished(response); } catch {}
+      // consume response data to free up memory
+      response.resume();
+      throw new Error(`Download failed: server returned code ${response.statusCode} body '${content}'. URL: ${url}`);
     }
-    totalBytes = parseInt(response.headers['content-length'] || '0', 10);
+
+    const progress = getDownloadProgress(title);
+    const totalBytes = parseInt(response.headers['content-length'] || '0', 10);
+    let downloadedBytes = 0;
+    response.on('data', chunk => {
+      downloadedBytes += chunk.length;
+      progress(downloadedBytes, totalBytes);
+    });
     debugLogger.log('install', `-- total bytes: ${totalBytes}`);
 
-    const decompress = zlib.createBrotliDecompress();
-    const extract = tarFs.extract(browserDirectory);
-
-    response
-        .pipe(decompress)
-        .pipe(extract)
-        .on('finish', () => {
-          if (downloadedBytes !== totalBytes) {
-            debugLogger.log('install', `-- download failed, size mismatch: ${downloadedBytes} != ${totalBytes}`);
-            promise.resolve({ error: new Error(`Download failed: size mismatch, file size: ${downloadedBytes}, expected size: ${totalBytes} URL: ${url}`) });
-          } else {
-            debugLogger.log('install', `-- download complete, size: ${downloadedBytes}`);
-            promise.resolve({ error: null });
-          }
-        })
-        .on('error', error => promise.resolve({ error }));
-
-    response.on('data', onData);
-    response.on('error', (error: any) => {
+    try {
+      await pipeline(
+          response,
+          zlib.createBrotliDecompress(),
+          tarFs.extract(browserDirectory)
+      );
+    } catch (error) {
       if (error?.code === 'ECONNRESET') {
         debugLogger.log('install', `-- download failed, server closed connection`);
-        promise.resolve({ error: new Error(`Download failed: server closed connection. URL: ${url}`) });
-      } else {
-        debugLogger.log('install', `-- download failed, unexpected error`);
-        promise.resolve({ error: new Error(`Download failed: ${error?.message ?? error}. URL: ${url}`) });
+        throw new Error(`Download failed: server closed connection. URL: ${url}`);
       }
-    });
-  }, (error: any) => promise.resolve({ error }));
-  return promise;
 
-  function onData(chunk: string) {
-    downloadedBytes += chunk.length;
-    progress(downloadedBytes, totalBytes);
+      debugLogger.log('install', `-- download failed, unexpected error`);
+      throw new Error(`Download failed: ${error?.message ?? error}. URL: ${url}`);
+    }
+
+
+    if (downloadedBytes !== totalBytes) {
+      debugLogger.log('install', `-- download failed, size mismatch: ${downloadedBytes} != ${totalBytes}`);
+      throw new Error(`Download failed: size mismatch, file size: ${downloadedBytes}, expected size: ${totalBytes} URL: ${url}`);
+    }
+
+    debugLogger.log('install', `-- download complete, size: ${downloadedBytes}`);
+    return { error: null };
+  } catch (error) {
+    return { error };
   }
 }
 
