@@ -353,7 +353,7 @@ test('should work behind proxy', { annotation: { type: 'issue', description: 'ht
   });
 
   const origin = new URL(page.url());
-  proxyServer.forwardTo(+origin.port, { prefix: '/subdir' });
+  proxyServer.forwardTo(+origin.port, { prefix: '/subdir', dontTouchHost: true });
   await page.goto(`${proxyServer.URL}/subdir${origin.pathname}?${origin.searchParams}`);
 
   await page.getByText('trace test').dblclick();
