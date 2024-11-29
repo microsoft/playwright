@@ -195,6 +195,7 @@ program
             e.name = 'Playwright Host validation warning';
             console.error(e);
           });
+          gracefullyProcessExitDoNotHang(0);
         }
       } catch (e) {
         console.log(`Failed to install browsers\n${e}`);
