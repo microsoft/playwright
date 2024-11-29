@@ -26,6 +26,7 @@ import { colors, multiProgress as MultiProgressBar } from '../../utilsBundle';
 import { browserDirectoryToMarkerFilePath } from '.';
 import { getUserAgent } from '../../utils/userAgent';
 import type { DownloadParams } from './oopDownloadBrowserMain';
+import { httpRequest } from '../../utils';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string | undefined, downloadURLs: string[], downloadFileName: string, downloadConnectionTimeout: number): Promise<boolean> {
   if (await existsAsync(browserDirectoryToMarkerFilePath(browserDirectory))) {
@@ -41,7 +42,8 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
       debugLogger.log('install', `downloading ${title} - attempt #${attempt}`);
       const url = downloadURLs[(attempt - 1) % downloadURLs.length];
       logPolitely(`Downloading ${title}` + colors.dim(` from ${url}`));
-      const { error } = await downloadBrowserWithProgressBarOutOfProcess(title, browserDirectory, url, zipPath, executablePath, downloadConnectionTimeout);
+      const downloader = url.endsWith('.tar.br') ? downloadBrotli : downloadBrowserWithProgressBarOutOfProcess;
+      const { error } = await downloader(title, browserDirectory, url, zipPath, executablePath, downloadConnectionTimeout);
       if (!error) {
         debugLogger.log('install', `SUCCESS installing ${title}`);
         break;
@@ -110,6 +112,73 @@ function downloadBrowserWithProgressBarOutOfProcess(title: string, browserDirect
   };
   cp.send({ method: 'download', params: downloadParams });
   return promise;
+}
+
+
+async function downloadBrotli(title: string, browserDirectory: string, url: string, zipPath: string, executablePath: string | undefined, connectionTimeout: number): Promise<{ error: Error | null }> {
+  debugLogger.log('install', `running download:`);
+  debugLogger.log('install', `-- from url: ${url}`);
+  debugLogger.log('install', `-- to location: ${zipPath}`);
+
+  let downloadedBytes = 0;
+  let totalBytes = 0;
+
+  const promise = new ManualPromise<{ error: Error | null }>();
+
+  const progress = getDownloadProgress(title);
+
+  httpRequest({
+    url,
+    headers: { 'User-Agent': getUserAgent() },
+    timeout: connectionTimeout,
+  }, response => {
+    debugLogger.log('install', `-- response status code: ${response.statusCode}`);
+    if (response.statusCode !== 200) {
+      let content = '';
+      const handleError = () => {
+        const error = new Error(`Download failed: server returned code ${response.statusCode} body '${content}'. URL: ${url}`);
+        // consume response data to free up memory
+        response.resume();
+        promise.reject(error);
+      };
+      response
+          .on('data', chunk => content += chunk)
+          .on('end', handleError)
+          .on('error', handleError);
+      return;
+    }
+    totalBytes = parseInt(response.headers['content-length'] || '0', 10);
+    debugLogger.log('install', `-- total bytes: ${totalBytes}`);
+    const file = fs.createWriteStream(zipPath);
+    file.on('finish', () => {
+      if (downloadedBytes !== totalBytes) {
+        debugLogger.log('install', `-- download failed, size mismatch: ${downloadedBytes} != ${totalBytes}`);
+        promise.resolve({ error: new Error(`Download failed: size mismatch, file size: ${downloadedBytes}, expected size: ${totalBytes} URL: ${url}`) });
+      } else {
+        debugLogger.log('install', `-- download complete, size: ${downloadedBytes}`);
+        promise.resolve({ error: null });
+      }
+    });
+    file.on('error', error => promise.resolve({ error }));
+    response.pipe(file);
+    response.on('data', onData);
+    response.on('error', (error: any) => {
+      file.close();
+      if (error?.code === 'ECONNRESET') {
+        debugLogger.log('install', `-- download failed, server closed connection`);
+        promise.resolve({ error: new Error(`Download failed: server closed connection. URL: ${url}`) });
+      } else {
+        debugLogger.log('install', `-- download failed, unexpected error`);
+        promise.resolve({ error: new Error(`Download failed: ${error?.message ?? error}. URL: ${url}`) });
+      }
+    });
+  }, (error: any) => promise.resolve({ error }));
+  return promise;
+
+  function onData(chunk: string) {
+    downloadedBytes += chunk.length;
+    progress(downloadedBytes, totalBytes);
+  }
 }
 
 export function logPolitely(toBeLogged: string) {
