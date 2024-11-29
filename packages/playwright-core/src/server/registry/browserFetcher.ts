@@ -19,10 +19,12 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import childProcess from 'child_process';
+import zlib from 'zlib';
 import { existsAsync } from '../../utils/fileUtils';
 import { debugLogger } from '../../utils/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
 import { colors, multiProgress as MultiProgressBar } from '../../utilsBundle';
+import { tarFs } from '../../zipBundle';
 import { browserDirectoryToMarkerFilePath } from '.';
 import { getUserAgent } from '../../utils/userAgent';
 import type { DownloadParams } from './oopDownloadBrowserMain';
@@ -149,21 +151,26 @@ async function downloadBrotli(title: string, browserDirectory: string, url: stri
     }
     totalBytes = parseInt(response.headers['content-length'] || '0', 10);
     debugLogger.log('install', `-- total bytes: ${totalBytes}`);
-    const file = fs.createWriteStream(zipPath);
-    file.on('finish', () => {
-      if (downloadedBytes !== totalBytes) {
-        debugLogger.log('install', `-- download failed, size mismatch: ${downloadedBytes} != ${totalBytes}`);
-        promise.resolve({ error: new Error(`Download failed: size mismatch, file size: ${downloadedBytes}, expected size: ${totalBytes} URL: ${url}`) });
-      } else {
-        debugLogger.log('install', `-- download complete, size: ${downloadedBytes}`);
-        promise.resolve({ error: null });
-      }
-    });
-    file.on('error', error => promise.resolve({ error }));
-    response.pipe(file);
+
+    const decompress = zlib.createBrotliDecompress();
+    const extract = tarFs.extract(browserDirectory);
+
+    response
+        .pipe(decompress)
+        .pipe(extract)
+        .on('finish', () => {
+          if (downloadedBytes !== totalBytes) {
+            debugLogger.log('install', `-- download failed, size mismatch: ${downloadedBytes} != ${totalBytes}`);
+            promise.resolve({ error: new Error(`Download failed: size mismatch, file size: ${downloadedBytes}, expected size: ${totalBytes} URL: ${url}`) });
+          } else {
+            debugLogger.log('install', `-- download complete, size: ${downloadedBytes}`);
+            promise.resolve({ error: null });
+          }
+        })
+        .on('error', error => promise.resolve({ error }));
+
     response.on('data', onData);
     response.on('error', (error: any) => {
-      file.close();
       if (error?.code === 'ECONNRESET') {
         debugLogger.log('install', `-- download failed, server closed connection`);
         promise.resolve({ error: new Error(`Download failed: server closed connection. URL: ${url}`) });
