@@ -449,10 +449,12 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   // Viewport size
   if (options.viewportSize) {
     try {
-      const [width, height] = options.viewportSize.split(',').map(n => parseInt(n, 10));
+      const [width, height] = options.viewportSize.split(',').map(n => +n);
+      if (isNaN(width) || isNaN(height))
+        throw new Error('bad values');
       contextOptions.viewport = { width, height };
     } catch (e) {
-      throw new Error('Invalid viewport size format: use "width, height", for example --viewport-size=800,600');
+      throw new Error('Invalid viewport size format: use "width,height", for example --viewport-size="800,600"');
     }
   }
 

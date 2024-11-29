@@ -21,7 +21,7 @@ Install the VS Code extension and generate tests directly from VS Code. The exte
 
 ### Record a New Test
 
-To record a test click on the **Record new** button from the Testing sidebar. This will create a `test-1.spec.ts` file as well as open up a browser window. 
+To record a test click on the **Record new** button from the Testing sidebar. This will create a `test-1.spec.ts` file as well as open up a browser window.
 
 <img width="1385" alt="record new in vs code" src="https://user-images.githubusercontent.com/13063165/220961665-615d0ab8-3f0b-439c-ad0b-0424d9aa154b.png" />
 
@@ -58,16 +58,16 @@ In the test file in VS Code you will see your new generated actions added to you
 
 ### Generating locators
 
-You can generate locators with the test generator. 
-- Click on the **Pick locator** button form the testing sidebar and then hover over elements in the browser window to see the [locator](./locators.md) highlighted underneath each element. 
-- Click the element you require and it will now show up in the **Pick locator** box in VS Code. 
+You can generate locators with the test generator.
+- Click on the **Pick locator** button form the testing sidebar and then hover over elements in the browser window to see the [locator](./locators.md) highlighted underneath each element.
+- Click the element you require and it will now show up in the **Pick locator** box in VS Code.
 - Press <kbd>Enter</kbd> on your keyboard to copy the locator into the clipboard and then paste anywhere in your code. Or press 'escape' if you want to cancel.
 
 <img width="1641" alt="Pick locators in VS code" src="https://user-images.githubusercontent.com/13063165/220958368-95b03620-3c9b-40a8-be74-01c96ba03cad.png" />
 
 ## Generate tests with the Playwright Inspector
 
-When running the `codegen` command two windows will be opened, a browser window where you interact with the website you wish to test and the Playwright Inspector window where you can record your tests and then copy them into your editor. 
+When running the `codegen` command two windows will be opened, a browser window where you interact with the website you wish to test and the Playwright Inspector window where you can record your tests and then copy them into your editor.
 
 ### Running Codegen
 
@@ -128,10 +128,10 @@ When you have finished interacting with the page, press the **record** button to
 Use the **clear** button to clear the code to start recording again. Once finished, close the Playwright inspector window or stop the terminal command.
 
 ### Generating locators
-You can generate [locators](/locators.md) with the test generator. 
+You can generate [locators](/locators.md) with the test generator.
 
 * Press the `'Record'` button to stop the recording and the `'Pick Locator'` button will appear.
-* Click on the `'Pick Locator'` button and then hover over elements in the browser window to see the locator highlighted underneath each element. 
+* Click on the `'Pick Locator'` button and then hover over elements in the browser window to see the locator highlighted underneath each element.
 * To choose a locator, click on the element you would like to locate and the code for that locator will appear in the field next to the Pick Locator button.
 * You can then edit the locator in this field to fine tune it or use the copy button to copy it and paste it into your code.
 
@@ -164,19 +164,19 @@ You can use the test generator to generate tests using emulation so as to genera
 Playwright opens a browser window with its viewport set to a specific width and height and is not responsive as tests need to be run under the same conditions. Use the `--viewport` option to generate tests with a different viewport size.
 
 ```bash js
-npx playwright codegen --viewport-size=800,600 playwright.dev
+npx playwright codegen --viewport-size="800,600" playwright.dev
 ```
 
 ```bash java
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen --viewport-size=800,600 playwright.dev"
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="codegen --viewport-size='800,600' playwright.dev"
 ```
 
 ```bash python
-playwright codegen --viewport-size=800,600 playwright.dev
+playwright codegen --viewport-size="800,600" playwright.dev
 ```
 
 ```bash csharp
-pwsh bin/Debug/netX/playwright.ps1 codegen --viewport-size=800,600 playwright.dev
+pwsh bin/Debug/netX/playwright.ps1 codegen --viewport-size="800,600" playwright.dev
 ```
 ######
 * langs: js
@@ -325,7 +325,7 @@ pwsh bin/Debug/netX/playwright.ps1 codegen --timezone="Europe/Rome" --geolocatio
 
 ### Preserve authenticated state
 
-Run `codegen` with `--save-storage` to save [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) at the end of the session. This is useful to separately record an authentication step and reuse it later when recording more tests. 
+Run `codegen` with `--save-storage` to save [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) at the end of the session. This is useful to separately record an authentication step and reuse it later when recording more tests.
 
 ```bash js
 npx playwright codegen github.com/microsoft/playwright --save-storage=auth.json
@@ -367,7 +367,7 @@ pwsh bin/Debug/netX/playwright.ps1 codegen github.com/microsoft/playwright --sav
 
 #### Login
 
-After performing authentication and closing the browser, `auth.json` will contain the storage state which you can then reuse in your tests. 
+After performing authentication and closing the browser, `auth.json` will contain the storage state which you can then reuse in your tests.
 
 <img width="1394" alt="login to GitHub screen" src="https://user-images.githubusercontent.com/13063165/220561688-04b2b984-4ba6-4446-8b0a-8058876e2a02.png" />
 
