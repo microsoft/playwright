@@ -32,6 +32,7 @@ import { installDependenciesLinux, installDependenciesWindows, validateDependenc
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 export { writeDockerVersion } from './dependencies';
 import { debugLogger } from '../../utils/debugLogger';
+import EventEmitter from 'events';
 
 let ARCHIVE: '.tar.br' | '.zip' = '.zip';
 if (process.env.PW_BROWSER_DOWNLOAD_BROTLI)
@@ -946,7 +947,7 @@ export class Registry {
       await this._validateInstallationCache(linksDir);
 
       // Install browsers for this package.
-      for (const executable of executables) {
+      await allThrottled(executables, async executable => {
         if (!executable._install)
           throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
 
@@ -970,7 +971,7 @@ export class Registry {
           ].join('\n'), 1));
         }
         await executable._install();
-      }
+      }, ARCHIVE === '.tar.br' ? os.availableParallelism() : 1);
     } catch (e) {
       if (e.code === 'ELOCKED') {
         const rmCommand = process.platform === 'win32' ? 'rm -R' : 'rm -rf';
@@ -1270,6 +1271,23 @@ function lowercaseAllKeys(json: any): any {
   for (const [key, value] of Object.entries(json))
     result[key.toLowerCase()] = lowercaseAllKeys(value);
   return result;
+}
+
+async function allThrottled<T>(items: T[], fn: (item: T) => Promise<void>, concurrency: number) {
+  const state = { budget: concurrency };
+  const event = new EventEmitter();
+  await Promise.all(items.map(async item => {
+    while (state.budget < 1)
+      await new Promise(f => event.once('done', f));
+
+    try {
+      state.budget--;
+      return fn(item);
+    } finally {
+      state.budget++;
+      event.emit('done');
+    }
+  }));
 }
 
 export const registry = new Registry(require('../../../browsers.json'));
