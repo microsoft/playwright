@@ -79,7 +79,8 @@ export class RecorderCollection extends EventEmitter {
     callMetadata.error = error ? serializeError(error) : undefined;
     // Do not wait for onAfterCall so that performAction returned immediately after the action.
     mainFrame.instrumentation.onAfterCall(mainFrame, callMetadata).then(() => {
-      this._fireChange();
+      if (this._enabled)
+        this._fireChange();
     }).catch(() => {});
   }
 
@@ -126,8 +127,6 @@ export class RecorderCollection extends EventEmitter {
   }
 
   private _fireChange() {
-    if (!this._enabled)
-      return;
     this.emit('change', collapseActions(this._actions));
   }
 }
