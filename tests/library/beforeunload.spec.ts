@@ -104,3 +104,25 @@ it('should not stall on evaluate when dismissing beforeunload', async ({ page, s
   ]);
 });
 
+it('should not stall on click when dismissing beforeunload', async ({ page, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33806' });
+
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<a href="${server.PREFIX}/frames/one-frame.html">click me</a>`);
+
+  await page.evaluate(() => {
+    window.onbeforeunload = () => false;
+  });
+  page.on('dialog', async dialog => {
+    await dialog.dismiss();
+  });
+
+  await page.getByRole('link').click({ noWaitAfter: true });
+  await page.evaluate(() => {
+    window.onbeforeunload = null;
+  });
+
+  // This line should not timeout.
+  await page.getByRole('link').click({ timeout: 5000 });
+  await expect(page).toHaveURL(server.PREFIX + '/frames/one-frame.html');
+});
