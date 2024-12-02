@@ -607,7 +607,7 @@ for a list of supported timezone IDs. Defaults to the system timezone.
 ## context-option-locale
 - `locale` <[string]>
 
-Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default locale. Learn more about emulation in our [emulation guide](../emulation.md#locale--timezone).
+Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules. Defaults to `en-US`. Learn more about emulation in our [emulation guide](../emulation.md#locale--timezone).
 
 ## context-option-permissions
 - `permissions` <[Array]<[string]>>
