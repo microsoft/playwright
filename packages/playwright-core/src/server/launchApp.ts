@@ -78,7 +78,7 @@ async function installAppIcon(page: Page) {
 export async function syncLocalStorageWithSettings(page: Page, appName: string) {
   if (isUnderTest())
     return;
-  const settingsFile = path.join(registryDirectory, '.settings', `${appName}.json`);
+  const settingsFile = path.join(registryDirectory(), '.settings', `${appName}.json`);
   await page.exposeBinding('_saveSerializedSettings', false, (_, settings) => {
     fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
     fs.writeFileSync(settingsFile, settings);

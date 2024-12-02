@@ -324,7 +324,7 @@ const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
   } as DownloadPaths,
 };
 
-export const registryDirectory = (() => {
+export function registryDirectory() {
   let result: string;
 
   const envDefined = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
@@ -354,7 +354,7 @@ export const registryDirectory = (() => {
     result = path.resolve(getFromENV('INIT_CWD') || process.cwd(), result);
   }
   return result;
-})();
+}
 
 function isBrowserDirectory(browserDirectory: string): boolean {
   const baseName = path.basename(browserDirectory);
@@ -403,7 +403,7 @@ function readDescriptors(browsersJSON: BrowsersJSON): BrowsersJSONDescriptor[] {
       // are prefixes of others, e.g. 'webkit' is a prefix of `webkit-technology-preview`.
       // To avoid older registries erroneously removing 'webkit-technology-preview', we have to
       // ensure that browser folders to never include dashes inside.
-      dir: path.join(registryDirectory, browserDirectoryPrefix.replace(/-/g, '_') + '-' + revision),
+      dir: path.join(registryDirectory(), browserDirectoryPrefix.replace(/-/g, '_') + '-' + revision),
     };
     return descriptor;
   });
@@ -913,13 +913,13 @@ export class Registry {
 
   async install(executablesToInstall: Executable[], forceReinstall: boolean) {
     const executables = this._dedupe(executablesToInstall);
-    await fs.promises.mkdir(registryDirectory, { recursive: true });
-    const lockfilePath = path.join(registryDirectory, '__dirlock');
-    const linksDir = path.join(registryDirectory, '.links');
+    await fs.promises.mkdir(registryDirectory(), { recursive: true });
+    const lockfilePath = path.join(registryDirectory(), '__dirlock');
+    const linksDir = path.join(registryDirectory(), '.links');
 
     let releaseLock;
     try {
-      releaseLock = await lockfile.lock(registryDirectory, {
+      releaseLock = await lockfile.lock(registryDirectory(), {
         retries: {
           // Retry 20 times during 10 minutes with
           // exponential back-off.
@@ -991,7 +991,7 @@ export class Registry {
   }
 
   async uninstall(all: boolean): Promise<{ numberOfBrowsersLeft: number }> {
-    const linksDir = path.join(registryDirectory, '.links');
+    const linksDir = path.join(registryDirectory(), '.links');
     if (all) {
       const links = await fs.promises.readdir(linksDir).catch(() => []);
       for (const link of links)
@@ -1003,7 +1003,7 @@ export class Registry {
     // Remove stale browsers.
     await this._validateInstallationCache(linksDir);
     return {
-      numberOfBrowsersLeft: (await fs.promises.readdir(registryDirectory).catch(() => [])).filter(browserDirectory => isBrowserDirectory(browserDirectory)).length
+      numberOfBrowsersLeft: (await fs.promises.readdir(registryDirectory()).catch(() => [])).filter(browserDirectory => isBrowserDirectory(browserDirectory)).length
     };
   }
 
@@ -1177,7 +1177,7 @@ export class Registry {
 
     // 2. Delete all unused browsers.
     if (!getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_GC')) {
-      let downloadedBrowsers = (await fs.promises.readdir(registryDirectory)).map(file => path.join(registryDirectory, file));
+      let downloadedBrowsers = (await fs.promises.readdir(registryDirectory())).map(file => path.join(registryDirectory(), file));
       downloadedBrowsers = downloadedBrowsers.filter(file => isBrowserDirectory(file));
       const directories = new Set<string>(downloadedBrowsers);
       for (const browserDirectory of usedBrowserPaths)
