@@ -420,6 +420,37 @@ const matchers: MatchersObject = {
     return { message, pass };
   },
 
+  toBeOneOf(received: unknown, expected: Array<unknown>) {
+    const matcherName = 'toBeOneOf';
+    const isNot = this.isNot;
+    const options: MatcherHintOptions = {
+      isNot,
+      promise: this.promise,
+    };
+
+    if (!Array.isArray(expected)) {
+      throw new Error(
+          matcherErrorMessage(
+              matcherHint(matcherName, undefined, undefined, options),
+              `${EXPECTED_COLOR('expected')} value must be an array`,
+              printWithType('Expected', expected, printExpected),
+          ),
+      );
+    }
+
+    const pass = expected.some(item =>
+      equals(received, item, [...this.customTesters, iterableEquality]),
+    );
+
+    const message = () =>
+      matcherHint(matcherName, undefined, undefined, options) +
+      '\n\n' +
+      `Expected: ${isNot ? 'not ' : ''}to be one of ${printExpected(expected)}\n` +
+      `Received: ${printReceived(received)}`;
+
+    return { actual: received, expected, message, name: matcherName, pass };
+  },
+
   toBeTruthy(received: unknown, expected: void) {
     const matcherName = 'toBeTruthy';
     const options: MatcherHintOptions = {
