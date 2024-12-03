@@ -605,9 +605,16 @@ for a list of supported timezone IDs. Defaults to the system timezone.
   - `accuracy` ?<[float]> Non-negative accuracy value. Defaults to `0`.
 
 ## context-option-locale
+* langs: js
 - `locale` <[string]>
 
 Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules. Defaults to `en-US`. Learn more about emulation in our [emulation guide](../emulation.md#locale--timezone).
+
+## context-option-locale-java-csharp-python
+* langs: java, csharp, python
+- `locale` <[string]>
+
+Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value, `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default locale. Learn more about emulation in our [emulation guide](../emulation.md#locale--timezone).
 
 ## context-option-permissions
 - `permissions` <[Array]<[string]>>
