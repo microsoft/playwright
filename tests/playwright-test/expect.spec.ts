@@ -141,6 +141,7 @@ test('should compile generic matchers', async ({ runTSC }) => {
       expect(42).toBeLessThanOrEqual(1);
       expect(42n).toBeLessThanOrEqual(1n);
       expect(42).toBeNull();
+      expect(42).toBeOneOf([1, 2, 42]);
       expect(42).toBeTruthy();
       expect(42).toBeUndefined();
       expect(42).toBeNaN();

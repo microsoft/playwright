@@ -2336,3 +2336,91 @@ test.describe('toMatchObject()', () => {
     });
   });
 });
+
+test.describe('.toBeOneOf()', () => {
+  const matchingCases = [
+    [2, [1, 2, 3]],
+    ['b', ['a', 'b', 'c']],
+    [true, [false, true]],
+    [null, [undefined, null]],
+    [undefined, [undefined, null]],
+    [NaN, [NaN, 1, 2]],
+    [BigInt(1), [BigInt(1), BigInt(2)]],
+    [[1, 2], [[1, 2], [3, 4]]],
+    [{ a: 1 }, [{ a: 1 }, { b: 2 }]],
+    [{ a: { b: { c: 1 } } }, [{ a: { b: { c: 1 } } }, { a: { b: { c: 2 } } }]],
+  ];
+
+  const nonMatchingCases = [
+    [4, [1, 2, 3]],
+    ['d', ['a', 'b', 'c']],
+    [false, [true]],
+    [null, [undefined]],
+    [undefined, [null]],
+    [NaN, [1, 2]],
+    [BigInt(3), [BigInt(1), BigInt(2)]],
+    [[1, 2], [[3, 4], [5, 6]]],
+    [{ a: 1 }, [{ b: 2 }, { c: 3 }]],
+    [{ a: { b: { c: 1 } } }, [{ a: { b: { c: 2 } } }]],
+  ];
+
+  matchingCases.forEach(([value, array]: [any, any]) => {
+    test(`passes when the value is in the expected array: expect(${stringify(value)}).toBeOneOf(${stringify(array)})`, () => {
+      expectUnderTest(value).toBeOneOf(array);
+    });
+  });
+
+  nonMatchingCases.forEach(([value, array]: [any, any]) => {
+    test(`fails when the value is not in the expected array: expect(${stringify(value)}).toBeOneOf(${stringify(array)})`, () => {
+      expect(() => expectUnderTest(value).toBeOneOf(array)).toThrowErrorMatchingSnapshot();
+    });
+  });
+
+  nonMatchingCases.forEach(([value, array]: [any, any]) => {
+    test(`passes when using .not and value is not in the expected array: expect(${stringify(value)}).not.toBeOneOf(${stringify(array)})`, () => {
+      expectUnderTest(value).not.toBeOneOf(array);
+    });
+  });
+
+  matchingCases.forEach(([value, array]: [any, any]) => {
+    test(`fails when using .not and value is in the expected array: expect(${stringify(value)}).not.toBeOneOf(${stringify(array)})`, () => {
+      expect(() => expectUnderTest(value).not.toBeOneOf(array)).toThrowErrorMatchingSnapshot();
+    });
+  });
+
+  test('supports asymmetric matchers within the expected array', () => {
+    expectUnderTest({ a: 1, b: 2 }).toBeOneOf([
+      { a: 1 },
+      expect.objectContaining({ b: 2 }),
+    ]);
+    expectUnderTest('hello world').toBeOneOf([
+      expect.stringContaining('world'),
+      'hello',
+    ]);
+  });
+
+  test('fails when value does not match any asymmetric matchers in expected array', () => {
+    expect(() =>
+      expectUnderTest({ a: 1, b: 2 }).toBeOneOf([
+        { a: 2 },
+        expect.objectContaining({ c: 3 }),
+      ]),
+    ).toThrowErrorMatchingSnapshot();
+  });
+
+  test('assertion error matcherResult property contains matcher name, expected and actual values', () => {
+    const actual = 5;
+    const expected = [1, 2, 3];
+    try {
+      expectUnderTest(actual).toBeOneOf(expected);
+    } catch (error) {
+      expect(error.matcherResult).toEqual(
+          expect.objectContaining({
+            actual,
+            expected,
+            name: 'toBeOneOf',
+          }),
+      );
+    }
+  });
+});

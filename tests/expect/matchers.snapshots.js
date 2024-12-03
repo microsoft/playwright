@@ -3612,3 +3612,108 @@ module.exports["toMatchObject() does not match properties up in the prototype ch
 <g>-   "ref": [Circular],</>
 <d>  }</>`;
 
+module.exports[".toBeOneOf() fails when the value is not in the expected array: expect(4).toBeOneOf([1, 2, 3])"] = `<d>expect(</><r>received</><d>).</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: to be one of <g>[1, 2, 3]</>
+Received: <r>4</>`;
+
+module.exports[".toBeOneOf() fails when the value is not in the expected array: expect(\"d\").toBeOneOf([\"a\", \"b\", \"c\"])"] = `<d>expect(</><r>received</><d>).</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: to be one of <g>["a", "b", "c"]</>
+Received: <r>"d"</>`;
+
+module.exports[".toBeOneOf() fails when the value is not in the expected array: expect(false).toBeOneOf([true])"] = `<d>expect(</><r>received</><d>).</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: to be one of <g>[true]</>
+Received: <r>false</>`;
+
+module.exports[".toBeOneOf() fails when the value is not in the expected array: expect(null).toBeOneOf([undefined])"] = `<d>expect(</><r>received</><d>).</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: to be one of <g>[undefined]</>
+Received: <r>null</>`;
+
+module.exports[".toBeOneOf() fails when the value is not in the expected array: expect(undefined).toBeOneOf([null])"] = `<d>expect(</><r>received</><d>).</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: to be one of <g>[null]</>
+Received: <r>undefined</>`;
+
+module.exports[".toBeOneOf() fails when the value is not in the expected array: expect(NaN).toBeOneOf([1, 2])"] = `<d>expect(</><r>received</><d>).</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: to be one of <g>[1, 2]</>
+Received: <r>NaN</>`;
+
+module.exports[".toBeOneOf() fails when the value is not in the expected array: expect(3n).toBeOneOf([1n, 2n])"] = `<d>expect(</><r>received</><d>).</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: to be one of <g>[1n, 2n]</>
+Received: <r>3n</>`;
+
+module.exports[".toBeOneOf() fails when the value is not in the expected array: expect([1, 2]).toBeOneOf([[3, 4], [5, 6]])"] = `<d>expect(</><r>received</><d>).</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: to be one of <g>[[3, 4], [5, 6]]</>
+Received: <r>[1, 2]</>`;
+
+module.exports[".toBeOneOf() fails when the value is not in the expected array: expect({\"a\": 1}).toBeOneOf([{\"b\": 2}, {\"c\": 3}])"] = `<d>expect(</><r>received</><d>).</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: to be one of <g>[{"b": 2}, {"c": 3}]</>
+Received: <r>{"a": 1}</>`;
+
+module.exports[".toBeOneOf() fails when the value is not in the expected array: expect({\"a\": {\"b\": {\"c\": 1}}}).toBeOneOf([{\"a\": {\"b\": {\"c\": 2}}}])"] = `<d>expect(</><r>received</><d>).</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: to be one of <g>[{"a": {"b": {"c": 2}}}]</>
+Received: <r>{"a": {"b": {"c": 1}}}</>`;
+
+module.exports[".toBeOneOf() fails when using .not and value is in the expected array: expect(2).not.toBeOneOf([1, 2, 3])"] = `<d>expect(</><r>received</><d>).</>not<d>.</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: not to be one of <g>[1, 2, 3]</>
+Received: <r>2</>`;
+
+module.exports[".toBeOneOf() fails when using .not and value is in the expected array: expect(\"b\").not.toBeOneOf([\"a\", \"b\", \"c\"])"] = `<d>expect(</><r>received</><d>).</>not<d>.</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: not to be one of <g>["a", "b", "c"]</>
+Received: <r>"b"</>`;
+
+module.exports[".toBeOneOf() fails when using .not and value is in the expected array: expect(true).not.toBeOneOf([false, true])"] = `<d>expect(</><r>received</><d>).</>not<d>.</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: not to be one of <g>[false, true]</>
+Received: <r>true</>`;
+
+module.exports[".toBeOneOf() fails when using .not and value is in the expected array: expect(null).not.toBeOneOf([undefined, null])"] = `<d>expect(</><r>received</><d>).</>not<d>.</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: not to be one of <g>[undefined, null]</>
+Received: <r>null</>`;
+
+module.exports[".toBeOneOf() fails when using .not and value is in the expected array: expect(undefined).not.toBeOneOf([undefined, null])"] = `<d>expect(</><r>received</><d>).</>not<d>.</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: not to be one of <g>[undefined, null]</>
+Received: <r>undefined</>`;
+
+module.exports[".toBeOneOf() fails when using .not and value is in the expected array: expect(NaN).not.toBeOneOf([NaN, 1, 2])"] = `<d>expect(</><r>received</><d>).</>not<d>.</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: not to be one of <g>[NaN, 1, 2]</>
+Received: <r>NaN</>`;
+
+module.exports[".toBeOneOf() fails when using .not and value is in the expected array: expect(1n).not.toBeOneOf([1n, 2n])"] = `<d>expect(</><r>received</><d>).</>not<d>.</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: not to be one of <g>[1n, 2n]</>
+Received: <r>1n</>`;
+
+module.exports[".toBeOneOf() fails when using .not and value is in the expected array: expect([1, 2]).not.toBeOneOf([[1, 2], [3, 4]])"] = `<d>expect(</><r>received</><d>).</>not<d>.</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: not to be one of <g>[[1, 2], [3, 4]]</>
+Received: <r>[1, 2]</>`;
+
+module.exports[".toBeOneOf() fails when using .not and value is in the expected array: expect({\"a\": 1}).not.toBeOneOf([{\"a\": 1}, {\"b\": 2}])"] = `<d>expect(</><r>received</><d>).</>not<d>.</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: not to be one of <g>[{"a": 1}, {"b": 2}]</>
+Received: <r>{"a": 1}</>`;
+
+module.exports[".toBeOneOf() fails when using .not and value is in the expected array: expect({\"a\": {\"b\": {\"c\": 1}}}).not.toBeOneOf([{\"a\": {\"b\": {\"c\": 1}}}, {\"a\": {\"b\": {\"c\": 2}}}])"] = `<d>expect(</><r>received</><d>).</>not<d>.</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: not to be one of <g>[{"a": {"b": {"c": 1}}}, {"a": {"b": {"c": 2}}}]</>
+Received: <r>{"a": {"b": {"c": 1}}}</>`;
+
+module.exports[".toBeOneOf() fails when value does not match any asymmetric matchers in expected array"] = `<d>expect(</><r>received</><d>).</>toBeOneOf<d>(</><g>expected</><d>)</>
+
+Expected: to be one of <g>[{"a": 2}, ObjectContaining {"c": 3}]</>
+Received: <r>{"a": 1, "b": 2}</>`;
+
