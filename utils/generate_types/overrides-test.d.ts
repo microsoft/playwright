@@ -314,6 +314,7 @@ interface GenericAssertions<R> {
   toBeLessThanOrEqual(expected: number | bigint): R;
   toBeNaN(): R;
   toBeNull(): R;
+  toBeOneOf(expected: unknown[]): R;
   toBeTruthy(): R;
   toBeUndefined(): R;
   toContain(expected: string): R;

@@ -227,6 +227,30 @@ expect(value).toBeNull();
 ```
 
 
+## method: GenericAssertions.toBeOneOf
+* since: v1.49.1
+
+Ensures that value is deeply equal to one of the elements in the expected array.
+
+**Usage**
+
+```js
+const value = 2;
+expect(value).toBeOneOf([1, 2, 3]);
+expect(value).not.toBeOneOf([4, 5, 6]);
+
+const obj = { a: 1 };
+expect(obj).toBeOneOf([{ a: 1 }, { b: 2 }]);
+expect(obj).not.toBeOneOf([{ a: 2 }, { b: 3 }]);
+```
+
+### param: GenericAssertions.toBeOneOf.expected
+* since: v1.49.1
+- `expected` <[Array]<[any]>>
+
+Expected array to match against.
+
+
 
 ## method: GenericAssertions.toBeTruthy
 * since: v1.9

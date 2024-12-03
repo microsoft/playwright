@@ -7041,6 +7041,24 @@ interface GenericAssertions<R> {
    */
   toBeNull(): R;
   /**
+   * Ensures that value is deeply equal to one of the elements in the expected array.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const value = 2;
+   * expect(value).toBeOneOf([1, 2, 3]);
+   * expect(value).not.toBeOneOf([4, 5, 6]);
+   *
+   * const obj = { a: 1 };
+   * expect(obj).toBeOneOf([{ a: 1 }, { b: 2 }]);
+   * expect(obj).not.toBeOneOf([{ a: 2 }, { b: 3 }]);
+   * ```
+   *
+   * @param expected Expected array to match against.
+   */
+  toBeOneOf(expected: unknown[]): R;
+  /**
    * Ensures that value is true in a boolean context, **anything but** `false`, `0`, `''`, `null`, `undefined` or `NaN`.
    * Use this method when you don't care about the specific value.
    *

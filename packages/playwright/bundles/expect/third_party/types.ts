@@ -224,6 +224,11 @@ export interface Matchers<R extends void | Promise<void>, T = unknown> {
   toBeNull(): R;
   /**
    * Use when you don't care what a value is, you just want to ensure a value
+   * is not null. You will often see it in tests for checking that a callback
+   */
+  toBeOneOf(expected: Array<unknown>): R;
+  /**
+   * Use when you don't care what a value is, you just want to ensure a value
    * is true in a boolean context. In JavaScript, there are six falsy values:
    * `false`, `0`, `''`, `null`, `undefined`, and `NaN`. Everything else is truthy.
    */
