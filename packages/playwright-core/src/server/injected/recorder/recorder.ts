@@ -1157,7 +1157,6 @@ export class Recorder {
   }
 
   clearHighlight() {
-    this._currentTool.cleanup?.();
     this.updateHighlight(null, false);
   }
 
