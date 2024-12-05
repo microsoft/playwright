@@ -38,7 +38,7 @@ export class RecorderCollection extends EventEmitter {
 
   restart() {
     this._actions = [];
-    this._fireChange();
+    this.emit('change', []);
   }
 
   setEnabled(enabled: boolean) {
