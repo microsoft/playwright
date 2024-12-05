@@ -6247,8 +6247,8 @@ export interface PlaywrightTestOptions {
   javaScriptEnabled: boolean;
   /**
    * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
-   * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
-   * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+   * `Accept-Language` request header value as well as number and date formatting rules. Defaults to `en-US`. Learn more
+   * about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
    *
    * **Usage**
    *
