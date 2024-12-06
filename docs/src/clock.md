@@ -35,7 +35,7 @@ The recommended approach is to use `setFixedTime` to set the time to a specific 
 :::
 
 :::warning
-If you call `install` at any point in your test, the call _MUST_ occur before any other clock related calls (see note above for list). For example, you cannot call `setInterval`, followed by `install`, then `clearInterval`, as `install` overrides the native definition of the clock functions.
+If you call `install` at any point in your test, the call _MUST_ occur before any other clock related calls (see note above for list). Calling these methods out of order will result in undefined behavior. For example, you cannot call `setInterval`, followed by `install`, then `clearInterval`, as `install` overrides the native definition of the clock functions.
 :::
 
 ## Test with predefined time
