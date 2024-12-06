@@ -2762,10 +2762,6 @@ This method requires Playwright to be started in a headed mode, with a falsy [`o
 
 Returns the PDF buffer.
 
-:::note
-Generating a pdf is currently only supported in Chromium headless.
-:::
-
 `page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call
 [`method: Page.emulateMedia`] before calling `page.pdf()`:
 

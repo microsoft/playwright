@@ -3609,8 +3609,6 @@ export interface Page {
   /**
    * Returns the PDF buffer.
    *
-   * **NOTE** Generating a pdf is currently only supported in Chromium headless.
-   *
    * `page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call
    * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) before calling
    * `page.pdf()`:
