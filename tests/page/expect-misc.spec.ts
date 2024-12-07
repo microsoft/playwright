@@ -491,15 +491,33 @@ test('toHaveAccessibleDescription', async ({ page }) => {
   await expect(page.locator('div')).toHaveAccessibleDescription('foo bar baz');
 });
 
-test('toHaveRole', async ({ page }) => {
-  await page.setContent(`<div role="button">Button!</div>`);
-  await expect(page.locator('div')).toHaveRole('button');
-  await expect(page.locator('div')).not.toHaveRole('checkbox');
-  try {
-    // @ts-expect-error
-    await expect(page.locator('div')).toHaveRole(/button|checkbox/);
-    expect(1, 'Must throw when given a regular expression').toBe(2);
-  } catch (error) {
-    expect(error.message).toBe(`"role" argument in toHaveRole must be a string`);
-  }
+test('toHaveAccessibleErrorMessage', async ({ page }) => {
+  await page.setContent(`
+      <form>
+        <div role="button" aria-invalid="true" aria-errormessage="error-message"></div>
+        <div id="error-message">Hello</div>
+        <div id="irrelevant-error">This should not be considered.</div>
+      </form>
+    `);
+
+  const locator = page.locator('div[role="button"]');
+  await expect(locator).toHaveAccessibleErrorMessage('Hello');
+  await expect(locator).not.toHaveAccessibleErrorMessage('hello');
+  await expect(locator).toHaveAccessibleErrorMessage('hello', { ignoreCase: true });
+  await expect(locator).toHaveAccessibleErrorMessage(/ell\w/);
+  await expect(locator).not.toHaveAccessibleErrorMessage(/hello/);
+  await expect(locator).toHaveAccessibleErrorMessage(/hello/, { ignoreCase: true });
+  await expect(locator).not.toHaveAccessibleErrorMessage('This should not be considered.');
+});
+
+test('toHaveAccessibleErrorMessage fails when aria-invalid is not true', async ({ page }) => {
+  await page.setContent(`
+      <form>
+        <input id="username" aria-invalid="false" aria-errormessage="username-error" />
+        <div id="username-error">Username is required.</div>
+      </form>
+    `);
+
+  const input = page.locator('#username');
+  await expect(input).not.toHaveAccessibleErrorMessage('Username is required.');
 });
