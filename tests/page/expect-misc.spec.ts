@@ -521,3 +521,16 @@ test('toHaveAccessibleErrorMessage fails when aria-invalid is not true', async (
   const input = page.locator('#username');
   await expect(input).not.toHaveAccessibleErrorMessage('Username is required.');
 });
+
+test('toHaveRole', async ({ page }) => {
+  await page.setContent(`<div role="button">Button!</div>`);
+  await expect(page.locator('div')).toHaveRole('button');
+  await expect(page.locator('div')).not.toHaveRole('checkbox');
+  try {
+    // @ts-expect-error
+    await expect(page.locator('div')).toHaveRole(/button|checkbox/);
+    expect(1, 'Must throw when given a regular expression').toBe(2);
+  } catch (error) {
+    expect(error.message).toBe(`"role" argument in toHaveRole must be a string`);
+  }
+});
