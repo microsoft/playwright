@@ -31,6 +31,7 @@ test('render an empty component', async ({ mount, page }) => {
 const testWithServer = test.extend(serverFixtures);
 testWithServer(
   'components routing should go through context',
+  // @ts-ignore "serverFixtures" are imported from the impl without any types
   async ({ mount, context, server }) => {
     server.setRoute('/hello', (req: any, res: any) => {
       res.write('served via server');
