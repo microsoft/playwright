@@ -25,6 +25,7 @@ let lastConnectionId = 0;
 const kConnectionSymbol = Symbol('kConnection');
 
 export const perMessageDeflate = {
+  serverNoContextTakeover: true,
   zlibDeflateOptions: {
     level: 3,
   },
