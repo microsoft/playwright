@@ -461,6 +461,38 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
   return accessibleDescription;
 }
 
+export function getElementAccessibleErrorMessage(element: Element, includeHidden: boolean): string {
+  const cache = includeHidden ? cacheAccessibleErrorMessageHidden : cacheAccessibleErrorMessage;
+  let accessibleErrorMessage = cache?.get(element);
+
+  if (accessibleErrorMessage === undefined) {
+    accessibleErrorMessage = '';
+
+    const ariaInvalid = element.getAttribute('aria-invalid');
+    if (ariaInvalid === 'true') {
+      const errorMessageId = element.getAttribute('aria-errormessage');
+      if (errorMessageId) {
+        // Ensure the ID is valid (no whitespace)
+        if (!/\s+/.test(errorMessageId)) {
+          // Retrieve the element referenced by aria-errormessage.
+          const errorElement = element.ownerDocument.getElementById(errorMessageId);
+          if (errorElement) {
+            accessibleErrorMessage = asFlatString(
+                getTextAlternativeInternal(errorElement, {
+                  includeHidden,
+                  visitedElements: new Set(),
+                  embeddedInDescribedBy: { element: errorElement, hidden: isElementHiddenForAria(errorElement) },
+                })
+            );
+          }
+        }
+      }
+    }
+    cache?.set(element, accessibleErrorMessage);
+  }
+  return accessibleErrorMessage;
+}
+
 type AccessibleNameOptions = {
   visitedElements: Set<Element>,
   includeHidden?: boolean,
@@ -972,6 +1004,8 @@ let cacheAccessibleName: Map<Element, string> | undefined;
 let cacheAccessibleNameHidden: Map<Element, string> | undefined;
 let cacheAccessibleDescription: Map<Element, string> | undefined;
 let cacheAccessibleDescriptionHidden: Map<Element, string> | undefined;
+let cacheAccessibleErrorMessage: Map<Element, string> | undefined;
+let cacheAccessibleErrorMessageHidden: Map<Element, string> | undefined;
 let cacheIsHidden: Map<Element, boolean> | undefined;
 let cachePseudoContentBefore: Map<Element, string> | undefined;
 let cachePseudoContentAfter: Map<Element, string> | undefined;
