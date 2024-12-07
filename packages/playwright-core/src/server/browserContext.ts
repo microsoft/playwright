@@ -44,6 +44,7 @@ import type { Artifact } from './artifact';
 import { Clock } from './clock';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { RecorderApp } from './recorder/recorderApp';
+import { registry } from './registry';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
@@ -659,7 +660,7 @@ export function assertBrowserContextIsNotOwned(context: BrowserContext) {
   }
 }
 
-export function validateBrowserContextOptions(options: types.BrowserContextOptions, browserOptions: BrowserOptions) {
+export function validateBrowserContextOptions(options: types.BrowserContextOptions, browserOptions: BrowserOptions, sdkLanguage: string) {
   if (options.noDefaultViewport && options.deviceScaleFactor !== undefined)
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
   if (options.noDefaultViewport && !!options.isMobile)
@@ -674,6 +675,7 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
   if (options.recordVideo) {
+    registry.findExecutable('ffmpeg')!.executablePathOrDie(sdkLanguage);
     if (!options.recordVideo.size) {
       if (options.noDefaultViewport) {
         options.recordVideo.size = { width: 800, height: 600 };

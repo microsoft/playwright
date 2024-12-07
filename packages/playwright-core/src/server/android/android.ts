@@ -341,7 +341,7 @@ export class AndroidDevice extends SdkObject {
       browserLogsCollector: new RecentLogsCollector(),
       originalLaunchOptions: {},
     };
-    validateBrowserContextOptions(options, browserOptions);
+    validateBrowserContextOptions(options, browserOptions, this.attribution.playwright.options.sdkLanguage);
 
     const browser = await CRBrowser.connect(this.attribution.playwright, androidBrowser, browserOptions);
     const controller = new ProgressController(serverSideCallMetadata(), this);
