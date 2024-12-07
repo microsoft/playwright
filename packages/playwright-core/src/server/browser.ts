@@ -82,7 +82,7 @@ export abstract class Browser extends SdkObject {
   abstract userAgent(): string;
 
   async newContext(metadata: CallMetadata, options: types.BrowserContextOptions): Promise<BrowserContext> {
-    validateBrowserContextOptions(options, this.options);
+    validateBrowserContextOptions(options, this.options, this.attribution.playwright.options.sdkLanguage);
     let clientCertificatesProxy: ClientCertificatesProxy | undefined;
     if (options.clientCertificates?.length) {
       clientCertificatesProxy = new ClientCertificatesProxy(options);

@@ -155,7 +155,7 @@ export abstract class BrowserType extends SdkObject {
       originalLaunchOptions: options,
     };
     if (persistent)
-      validateBrowserContextOptions(persistent, browserOptions);
+      validateBrowserContextOptions(persistent, browserOptions, this.attribution.playwright.options.sdkLanguage);
     copyTestHooks(options, browserOptions);
     const browser = await this.connectToTransport(transport, browserOptions);
     (browser as any)._userDataDirForTest = userDataDir;

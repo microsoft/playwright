@@ -283,7 +283,7 @@ export class Electron extends SdkObject {
         tracesDir: options.tracesDir || artifactsDir,
         originalLaunchOptions: {},
       };
-      validateBrowserContextOptions(contextOptions, browserOptions);
+      validateBrowserContextOptions(contextOptions, browserOptions, this.attribution.playwright.options.sdkLanguage);
       const browser = await CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions);
       app = new ElectronApplication(this, browser, nodeConnection, launchedProcess);
       await app.initialize();
