@@ -8114,7 +8114,7 @@ interface LocatorAssertions {
 
   /**
    * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with a given
-   * [accessible error message](https://www.w3.org/TR/wai-aria-1.2/#aria-errormessage).
+   * [aria errormessage](https://w3c.github.io/aria/#aria-errormessage).
    *
    * **Usage**
    *
