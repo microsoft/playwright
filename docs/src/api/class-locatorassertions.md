@@ -1222,7 +1222,7 @@ Expected accessible description.
 * langs:
   - alias-java: hasAccessibleErrorMessage
 
-Ensures the [Locator] points to an element with a given [accessible error message](https://www.w3.org/TR/wai-aria-1.2/#aria-errormessage).
+Ensures the [Locator] points to an element with a given [aria errormessage](https://w3c.github.io/aria/#aria-errormessage).
 
 **Usage**
 
