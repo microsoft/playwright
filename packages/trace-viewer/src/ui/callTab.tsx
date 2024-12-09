@@ -27,24 +27,32 @@ import type { ActionTraceEventInContext } from './modelUtil';
 
 export const CallTab: React.FunctionComponent<{
   action: ActionTraceEventInContext | undefined,
+  executionStartTime: number,
+  executionStartWallTime: number,
   sdkLanguage: Language | undefined,
-}> = ({ action, sdkLanguage }) => {
+}> = ({ action, executionStartTime, executionStartWallTime, sdkLanguage }) => {
   if (!action)
     return <PlaceholderPanel text='No action selected' />;
   const params = { ...action.params };
   // Strip down the waitForEventInfo data, we never need it.
   delete params.info;
   const paramKeys = Object.keys(params);
-  const timeMillis = action.startTime + (action.context.wallTime - action.context.startTime);
-  const wallTime = new Date(timeMillis).toLocaleString();
+
+  const startTimeMillis = action.startTime - executionStartTime;
+  const startTime = msToString(startTimeMillis);
+
+  const wallTimeMillis = startTimeMillis + executionStartWallTime;
+  const wallTime = new Date(wallTimeMillis).toLocaleString();
+
   const duration = action.endTime ? msToString(action.endTime - action.startTime) : 'Timed Out';
 
   return <div className='call-tab'>
     <div className='call-line'>{action.apiName}</div>
     {<>
       <div className='call-section'>Time</div>
-      {wallTime && <div className='call-line'>wall time:<span className='call-value datetime' title={wallTime}>{wallTime}</span></div>}
-      <div className='call-line'>duration:<span className='call-value datetime' title={duration}>{duration}</span></div>
+      {wallTime && <DateTimeCallLine name='wall time:' value={wallTime}/>}
+      <DateTimeCallLine name='start:' value={startTime}/>
+      <DateTimeCallLine name='duration:' value={duration}/>
     </>}
     { !!paramKeys.length && <div className='call-section'>Parameters</div> }
     {
@@ -58,6 +66,8 @@ export const CallTab: React.FunctionComponent<{
     }
   </div>;
 };
+
+const DateTimeCallLine: React.FC<{ name: string, value: string }> = ({ name, value }) => <div className='call-line'>{name}<span className='call-value datetime' title={value}>{value}</span></div>;
 
 type Property = {
   name: string;
