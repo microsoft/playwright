@@ -72,6 +72,7 @@ export const AttachmentLink: React.FunctionComponent<{
   linkName?: string,
   openInNewTab?: boolean,
 }> = ({ attachment, href, linkName, openInNewTab }) => {
+  const isAnchored = useIsAnchored('attachment-' + attachment.name);
   return <TreeItem title={<span>
     {attachment.contentType === kMissingContentType ? icons.warning() : icons.attachment()}
     {attachment.path && <a href={href || attachment.path} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>}
@@ -82,7 +83,7 @@ export const AttachmentLink: React.FunctionComponent<{
     )}
   </span>} loadChildren={attachment.body ? () => {
     return [<div key={1} className='attachment-body'><CopyToClipboard value={attachment.body!}/>{linkifyText(attachment.body!)}</div>];
-  } : undefined} depth={0} style={{ lineHeight: '32px' }}></TreeItem>;
+  } : undefined} depth={0} style={{ lineHeight: '32px' }} selected={isAnchored}></TreeItem>;
 };
 
 export const SearchParamsContext = React.createContext<URLSearchParams>(new URLSearchParams(window.location.hash.slice(1)));
@@ -114,7 +115,17 @@ export function generateTraceUrl(traces: TestAttachment[]) {
 
 const kMissingContentType = 'x-playwright/missing';
 
-type AnchorID = string | ((id: string | null) => boolean) | undefined;
+export type AnchorID = string | string[] | ((id: string) => boolean) | undefined;
+
+function matchesAnchor(id: AnchorID, anchor: string): boolean {
+  if (typeof id === 'undefined')
+    return false;
+  if (typeof id === 'string')
+    return id === anchor;
+  if (Array.isArray(id))
+    return id.includes(anchor);
+  return id(anchor);
+}
 
 export function useAnchor(id: AnchorID, onReveal: () => void) {
   React.useEffect(() => {
@@ -123,14 +134,24 @@ export function useAnchor(id: AnchorID, onReveal: () => void) {
 
     const listener = () => {
       const params = new URLSearchParams(window.location.hash.slice(1));
-      const anchor = params.get('anchor');
-      const isRevealed = typeof id === 'function' ? id(anchor) : anchor === id;
-      if (isRevealed)
+      if (params.has('anchor') && matchesAnchor(id, params.get('anchor')!))
         onReveal();
     };
     window.addEventListener('popstate', listener);
+
+    // check if we're already on the anchor. required to make it work on page load.
+    listener();
+
     return () => window.removeEventListener('popstate', listener);
   }, [id, onReveal]);
+}
+
+export function useIsAnchored(id: AnchorID) {
+  const searchParams = React.useContext(SearchParamsContext);
+  if (!searchParams.has('anchor'))
+    return false;
+  const anchor = searchParams.get('anchor');
+  return matchesAnchor(id, anchor!);
 }
 
 export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID }>) {
