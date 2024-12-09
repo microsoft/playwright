@@ -18,19 +18,25 @@
 import type { LocatorEx } from './matchers';
 import type { ExpectMatcherState } from '../../types/test';
 import { kNoElementsFoundError, matcherHint, type MatcherResult } from './matcherHint';
-import { colors } from 'playwright-core/lib/utilsBundle';
 import { EXPECTED_COLOR } from '../common/expectBundle';
-import { callLogText } from '../util';
+import { callLogText, sanitizeFilePathBeforeExtension, trimLongString } from '../util';
 import { printReceivedStringContainExpectedSubstring } from './expect';
 import { currentTestInfo } from '../common/globals';
 import type { MatcherReceived } from '@injected/ariaSnapshot';
-import { escapeTemplateString } from 'playwright-core/lib/utils';
+import { escapeTemplateString, isString, sanitizeForFilePath } from 'playwright-core/lib/utils';
+import fs from 'fs';
+import path from 'path';
+
+type ToMatchAriaSnapshotExpected = {
+  name?: string;
+  path?: string;
+} | string;
 
 export async function toMatchAriaSnapshot(
   this: ExpectMatcherState,
   receiver: LocatorEx,
-  expected: string,
-  options: { timeout?: number, matchSubstring?: boolean } = {},
+  expectedParam: ToMatchAriaSnapshotExpected,
+  options: { timeout?: number } = {},
 ): Promise<MatcherResult<string | RegExp, string>> {
   const matcherName = 'toMatchAriaSnapshot';
 
@@ -39,7 +45,7 @@ export async function toMatchAriaSnapshot(
     throw new Error(`toMatchAriaSnapshot() must be called during the test`);
 
   if (testInfo._projectInternal.ignoreSnapshots)
-    return { pass: !this.isNot, message: () => '', name: 'toMatchAriaSnapshot', expected };
+    return { pass: !this.isNot, message: () => '', name: 'toMatchAriaSnapshot', expected: '' };
 
   const updateSnapshots = testInfo.config.updateSnapshots;
 
@@ -48,12 +54,25 @@ export async function toMatchAriaSnapshot(
     promise: this.promise,
   };
 
-  if (typeof expected !== 'string') {
-    throw new Error([
-      matcherHint(this, receiver, matcherName, receiver, expected, matcherOptions),
-      `${colors.bold('Matcher error')}: ${EXPECTED_COLOR('expected',)} value must be a string`,
-      this.utils.printWithType('Expected', expected, this.utils.printExpected)
-    ].join('\n\n'));
+  let expected: string;
+  let expectedPath: string | undefined;
+  if (isString(expectedParam)) {
+    expected = expectedParam;
+  } else {
+    if (expectedParam?.path) {
+      expectedPath = expectedParam.path;
+    } else if (expectedParam?.name) {
+      expectedPath = testInfo.snapshotPath(sanitizeFilePathBeforeExtension(expectedParam.name));
+    } else {
+      let snapshotNames = (testInfo as any)[snapshotNamesSymbol] as SnapshotNames;
+      if (!snapshotNames) {
+        snapshotNames = { anonymousSnapshotIndex: 0 };
+        (testInfo as any)[snapshotNamesSymbol] = snapshotNames;
+      }
+      const fullTitleWithoutSpec = [...testInfo.titlePath.slice(1), ++snapshotNames.anonymousSnapshotIndex].join(' ');
+      expectedPath = testInfo.snapshotPath(sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.yml');
+    }
+    expected = await fs.promises.readFile(expectedPath, 'utf8').catch(() => '');
   }
 
   const generateMissingBaseline = updateSnapshots === 'missing' && !expected;
@@ -102,8 +121,24 @@ export async function toMatchAriaSnapshot(
     if ((updateSnapshots === 'all') ||
         (updateSnapshots === 'changed' && pass === this.isNot) ||
         generateMissingBaseline) {
-      const suggestedRebaseline = `toMatchAriaSnapshot(\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\`)`;
-      return { pass: this.isNot, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline };
+      if (expectedPath) {
+        await fs.promises.mkdir(path.dirname(expectedPath), { recursive: true });
+        await fs.promises.writeFile(expectedPath, typedReceived.regex, 'utf8');
+        const relativePath = path.relative(process.cwd(), expectedPath);
+        if (updateSnapshots === 'missing') {
+          const message = `A snapshot doesn't exist at ${relativePath}, writing actual.`;
+          testInfo._hasNonRetriableError = true;
+          testInfo._failWithError(new Error(message));
+        } else {
+          const message = `A snapshot is generated at ${relativePath}.`;
+          /* eslint-disable no-console */
+          console.log(message);
+        }
+        return { pass: true, message: () => '', name: 'toMatchAriaSnapshot' };
+      } else {
+        const suggestedRebaseline = `toMatchAriaSnapshot(\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\`)`;
+        return { pass: false, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline };
+      }
     }
   }
 
@@ -134,3 +169,9 @@ function unshift(snapshot: string): string {
 function indent(snapshot: string, indent: string): string {
   return snapshot.split('\n').map(line => indent + line).join('\n');
 }
+
+const snapshotNamesSymbol = Symbol('snapshotNames');
+
+type SnapshotNames = {
+  anonymousSnapshotIndex: number;
+};
