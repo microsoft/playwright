@@ -19,13 +19,18 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import childProcess from 'child_process';
+import zlib from 'zlib';
 import { existsAsync } from '../../utils/fileUtils';
 import { debugLogger } from '../../utils/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
-import { colors, progress as ProgressBar } from '../../utilsBundle';
+import { colors, multiProgress as MultiProgressBar } from '../../utilsBundle';
+import { tarFs } from '../../zipBundle';
 import { browserDirectoryToMarkerFilePath } from '.';
 import { getUserAgent } from '../../utils/userAgent';
 import type { DownloadParams } from './oopDownloadBrowserMain';
+import { httpRequest } from '../../utils';
+import type { IncomingMessage } from 'http';
+import { pipeline, finished } from 'stream/promises';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string | undefined, downloadURLs: string[], downloadFileName: string, downloadConnectionTimeout: number): Promise<boolean> {
   if (await existsAsync(browserDirectoryToMarkerFilePath(browserDirectory))) {
@@ -41,7 +46,8 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
       debugLogger.log('install', `downloading ${title} - attempt #${attempt}`);
       const url = downloadURLs[(attempt - 1) % downloadURLs.length];
       logPolitely(`Downloading ${title}` + colors.dim(` from ${url}`));
-      const { error } = await downloadBrowserWithProgressBarOutOfProcess(title, browserDirectory, url, zipPath, executablePath, downloadConnectionTimeout);
+      const downloader = url.endsWith('.tar.br') ? downloadBrotli : downloadBrowserWithProgressBarOutOfProcess;
+      const { error } = await downloader(title, browserDirectory, url, zipPath, executablePath, downloadConnectionTimeout);
       if (!error) {
         debugLogger.log('install', `SUCCESS installing ${title}`);
         break;
@@ -75,7 +81,7 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
 function downloadBrowserWithProgressBarOutOfProcess(title: string, browserDirectory: string, url: string, zipPath: string, executablePath: string | undefined, connectionTimeout: number): Promise<{ error: Error | null }> {
   const cp = childProcess.fork(path.join(__dirname, 'oopDownloadBrowserMain.js'));
   const promise = new ManualPromise<{ error: Error | null }>();
-  const progress = getDownloadProgress();
+  const progress = getDownloadProgress(title);
   cp.on('message', (message: any) => {
     if (message?.method === 'log')
       debugLogger.log('install', message.params.message);
@@ -112,6 +118,72 @@ function downloadBrowserWithProgressBarOutOfProcess(title: string, browserDirect
   return promise;
 }
 
+
+async function downloadBrotli(title: string, browserDirectory: string, url: string, zipPath: string, executablePath: string | undefined, connectionTimeout: number): Promise<{ error: Error | null }> {
+  try {
+    debugLogger.log('install', `running download:`);
+    debugLogger.log('install', `-- from url: ${url}`);
+    debugLogger.log('install', `-- to location: ${zipPath}`);
+
+    const response = await new Promise<IncomingMessage>((resolve, reject) => {
+      httpRequest({
+        url,
+        headers: { 'User-Agent': getUserAgent() },
+        timeout: connectionTimeout,
+      }, resolve, reject);
+    });
+
+    debugLogger.log('install', `-- response status code: ${response.statusCode}`);
+    if (response.statusCode !== 200) {
+      let content = '';
+      response.on('data', chunk => content += chunk);
+      try { await finished(response); } catch {}
+      // consume response data to free up memory
+      response.resume();
+      throw new Error(`Download failed: server returned code ${response.statusCode} body '${content}'. URL: ${url}`);
+    }
+
+    const progress = getDownloadProgress(title);
+    const totalBytes = parseInt(response.headers['content-length'] || '0', 10);
+    let downloadedBytes = 0;
+    response.on('data', chunk => {
+      downloadedBytes += chunk.length;
+      progress(downloadedBytes, totalBytes);
+    });
+    debugLogger.log('install', `-- total bytes: ${totalBytes}`);
+
+    try {
+      await pipeline(
+          response,
+          zlib.createBrotliDecompress(),
+          tarFs.extract(browserDirectory)
+      );
+    } catch (error) {
+      if (error?.code === 'ECONNRESET')
+        throw new Error(`Download failed: server closed connection. URL: ${url}`);
+
+      throw new Error(`Download failed: ${error?.message ?? error}. URL: ${url}`);
+    }
+
+
+    if (downloadedBytes !== totalBytes)
+      throw new Error(`Download failed: size mismatch, file size: ${downloadedBytes}, expected size: ${totalBytes} URL: ${url}`);
+
+    debugLogger.log('install', `-- download complete, size: ${downloadedBytes}`);
+
+    if (executablePath) {
+      debugLogger.log('install', `fixing permissions at ${executablePath}`);
+      await fs.promises.chmod(executablePath, 0o755);
+    }
+    await fs.promises.writeFile(browserDirectoryToMarkerFilePath(browserDirectory), '');
+
+    return { error: null };
+  } catch (error) {
+    debugLogger.log('install', `-- ${error.message}`);
+    return { error };
+  }
+}
+
 export function logPolitely(toBeLogged: string) {
   const logLevel = process.env.npm_config_loglevel;
   const logLevelDisplay = ['silent', 'error', 'warn'].indexOf(logLevel || '') > -1;
@@ -122,20 +194,22 @@ export function logPolitely(toBeLogged: string) {
 
 type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 
-function getDownloadProgress(): OnProgressCallback {
+function getDownloadProgress(title: string): OnProgressCallback {
   if (process.stdout.isTTY)
-    return getAnimatedDownloadProgress();
-  return getBasicDownloadProgress();
+    return getAnimatedDownloadProgress(title);
+  return getBasicDownloadProgress(title);
 }
 
-function getAnimatedDownloadProgress(): OnProgressCallback {
+const multiProgress = new MultiProgressBar();
+
+function getAnimatedDownloadProgress(title: string): OnProgressCallback {
   let progressBar: ProgressBar;
   let lastDownloadedBytes = 0;
 
   return (downloadedBytes: number, totalBytes: number) => {
     if (!progressBar) {
-      progressBar = new ProgressBar(
-          `${toMegabytes(
+      progressBar = multiProgress.newBar(
+          `${title} ${toMegabytes(
               totalBytes
           )} [:bar] :percent :etas`,
           {
@@ -152,7 +226,7 @@ function getAnimatedDownloadProgress(): OnProgressCallback {
   };
 }
 
-function getBasicDownloadProgress(): OnProgressCallback {
+function getBasicDownloadProgress(title: string): OnProgressCallback {
   const totalRows = 10;
   const stepWidth = 8;
   let lastRow = -1;
@@ -163,7 +237,7 @@ function getBasicDownloadProgress(): OnProgressCallback {
       lastRow = row;
       const percentageString = String(percentage * 100 | 0).padStart(3);
       // eslint-disable-next-line no-console
-      console.log(`|${'■'.repeat(row * stepWidth)}${' '.repeat((totalRows - row) * stepWidth)}| ${percentageString}% of ${toMegabytes(totalBytes)}`);
+      console.log(`${title} |${'■'.repeat(row * stepWidth)}${' '.repeat((totalRows - row) * stepWidth)}| ${percentageString}% of ${toMegabytes(totalBytes)}`);
     }
   };
 }
