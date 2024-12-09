@@ -8436,6 +8436,37 @@ interface LocatorAssertions {
    * **Usage**
    *
    * ```js
+   * await expect(page.locator('body')).toMatchAriaSnapshot();
+   * await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'snapshot' });
+   * await expect(page.locator('body')).toMatchAriaSnapshot({ path: '/path/to/snapshot.yml' });
+   * ```
+   *
+   * @param options
+   */
+  toMatchAriaSnapshot(options?: {
+    /**
+     * Name of the snapshot to store in the snapshot folder corresponding to this test. Generates ordinal name if not
+     * specified.
+     */
+    name?: string;
+
+    /**
+     * Path to the YAML snapshot file.
+     */
+    path?: string;
+
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Asserts that the target element matches the given [accessibility snapshot](https://playwright.dev/docs/aria-snapshots).
+   *
+   * **Usage**
+   *
+   * ```js
    * await page.goto('https://demo.playwright.dev/todomvc/');
    * await expect(page.locator('body')).toMatchAriaSnapshot(`
    *   - heading "todos"

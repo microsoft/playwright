@@ -116,6 +116,55 @@ test('should update missing snapshots', async ({ runInlineTest }, testInfo) => {
   expect(result2.exitCode).toBe(0);
 });
 
+test('should update multiple missing snapshots', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    '.git/marker': '',
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<h1>hello</h1>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+
+  expect(stripAnsi(result.output).replace(/\\/g, '/')).toContain(`New baselines created for:
+
+  a.spec.ts
+
+  git apply test-results/rebaselines.patch
+`);
+
+  const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
+  const data = fs.readFileSync(patchPath, 'utf-8');
+  expect(trimPatch(data)).toBe(`diff --git a/a.spec.ts b/a.spec.ts
+--- a/a.spec.ts
++++ b/a.spec.ts
+@@ -2,7 +2,11 @@
+       import { test, expect } from '@playwright/test';
+       test('test', async ({ page }) => {
+         await page.setContent(\`<h1>hello</h1>\`);
+-        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
+-        await expect(page.locator('body')).toMatchAriaSnapshot(\`\`);
++        await expect(page.locator('body')).toMatchAriaSnapshot(\`
++          - heading "hello" [level=1]
++        \`);
++        await expect(page.locator('body')).toMatchAriaSnapshot(\`
++          - heading "hello" [level=1]
++        \`);
+       });
+
+\\ No newline at end of file
+`);
+
+  execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
+  const result2 = await runInlineTest({});
+  expect(result2.exitCode).toBe(0);
+});
+
 test('should generate baseline with regex', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     '.git/marker': '',

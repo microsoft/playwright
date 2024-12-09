@@ -15,7 +15,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ### Aria snapshots
 
-New assertion [`method: LocatorAssertions.toMatchAriaSnapshot`] verifies page structure by comparing to an expected accessibility tree, represented as YAML.
+New assertion [`method: LocatorAssertions.toMatchAriaSnapshot#2`] verifies page structure by comparing to an expected accessibility tree, represented as YAML.
 
 ```js
 await page.goto('https://playwright.dev');
