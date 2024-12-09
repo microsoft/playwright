@@ -152,7 +152,7 @@ export class SnapshotRenderer {
       const html = prefix + [
         // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
         '<style>*,*::before,*::after { visibility: hidden }</style>',
-        `<script>${snapshotScript(this._callId, this.snapshotName)}</script>`
+        `<script>${snapshotScript(this.viewport(), this._callId, this.snapshotName)}</script>`
       ].join('') + result.join('');
       return { value: html, size: html.length };
     });
@@ -236,9 +236,32 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
   return (snapshot as any)._nodes;
 }
 
-function snapshotScript(...targetIds: (string | undefined)[]) {
-  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, ...targetIds: (string | undefined)[]) {
+type ViewportSize = { width: number, height: number };
+type BoundingRect = { left: number, top: number, right: number, bottom: number };
+type CanvasRenderInfo = {
+  viewport: ViewportSize;
+  frames: WeakMap<Element, {
+    boundingRect?: BoundingRect;
+    scrollLeft: number;
+    scrollTop: number;
+  }>;
+};
+
+declare global {
+  interface Window {
+    __playwright_canvas_render_info__: CanvasRenderInfo;
+  }
+}
+
+function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
+  function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
     const isUnderTest = new URLSearchParams(location.search).has('isUnderTest');
+
+    const canvasRenderInfo = {
+      viewport,
+      frames: new WeakMap(),
+    };
+    window['__playwright_canvas_render_info__'] = canvasRenderInfo;
 
     const kPointerWarningTitle = 'Recorded click position in absolute coordinates did not' +
         ' match the center of the clicked element. This is likely due to a difference between' +
@@ -248,6 +271,10 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
     const scrollLefts: Element[] = [];
     const targetElements: Element[] = [];
     const canvasElements: HTMLCanvasElement[] = [];
+
+    let topFrameWindow: Window = window;
+    while (topFrameWindow !== topFrameWindow.parent && !topFrameWindow.location.pathname.match(/\/page@[a-z0-9]+$/))
+      topFrameWindow = topFrameWindow.parent;
 
     const visit = (root: Document | ShadowRoot) => {
       // Collect all scrolled elements for later use.
@@ -288,6 +315,10 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
       }
 
       for (const iframe of root.querySelectorAll('iframe, frame')) {
+        const boundingRectJson = iframe.getAttribute('__playwright_bounding_rect__');
+        iframe.removeAttribute('__playwright_bounding_rect__');
+        const boundingRect = boundingRectJson ? JSON.parse(boundingRectJson) : undefined;
+        canvasRenderInfo.frames.set(iframe, { boundingRect, scrollLeft: 0, scrollTop: 0 });
         const src = iframe.getAttribute('__playwright_src__');
         if (!src) {
           iframe.setAttribute('src', 'data:text/html,<body style="background: #ddd"></body>');
@@ -339,16 +370,20 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
       for (const element of scrollTops) {
         element.scrollTop = +element.getAttribute('__playwright_scroll_top_')!;
         element.removeAttribute('__playwright_scroll_top_');
+        if (canvasRenderInfo.frames.has(element))
+          canvasRenderInfo.frames.get(element)!.scrollTop = element.scrollTop;
       }
       for (const element of scrollLefts) {
         element.scrollLeft = +element.getAttribute('__playwright_scroll_left_')!;
         element.removeAttribute('__playwright_scroll_left_');
+        if (canvasRenderInfo.frames.has(element))
+          canvasRenderInfo.frames.get(element)!.scrollLeft = element.scrollTop;
       }
 
       document.styleSheets[0].disabled = true;
 
       const search = new URL(window.location.href).searchParams;
-      const isTopFrame = window.location.pathname.match(/\/page@[a-z0-9]+$/);
+      const isTopFrame = window === topFrameWindow;
 
       if (search.get('pointX') && search.get('pointY')) {
         const pointX = +search.get('pointX')!;
@@ -419,16 +454,6 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
           context.fillRect(0, 0, canvas.width, canvas.height);
         }
 
-
-        if (!isTopFrame) {
-          for (const canvas of canvasElements) {
-            const context = canvas.getContext('2d')!;
-            drawCheckerboard(context, canvas);
-            canvas.title = `Playwright displays canvas contents on a best-effort basis. It doesn't support canvas elements inside an iframe yet. If this impacts your workflow, please open an issue so we can prioritize.`;
-          }
-          return;
-        }
-
         const img = new Image();
         img.onload = () => {
           for (const canvas of canvasElements) {
@@ -445,6 +470,33 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
             } catch (e) {
               continue;
             }
+
+            let currWindow: Window = window;
+            while (currWindow !== topFrameWindow) {
+              const iframe = currWindow.frameElement!;
+              currWindow = currWindow.parent;
+
+              const currCanvasRenderInfo = currWindow['__playwright_canvas_render_info__'];
+              const iframeRenderInfo = currCanvasRenderInfo.frames.get(iframe);
+
+              if (!iframeRenderInfo?.boundingRect)
+                break;
+
+              const leftOffset = iframeRenderInfo.boundingRect.left - iframeRenderInfo.scrollLeft;
+              const topOffset = iframeRenderInfo.boundingRect.top - iframeRenderInfo.scrollTop;
+
+              boundingRect.left += leftOffset;
+              boundingRect.top += topOffset;
+              boundingRect.right += leftOffset;
+              boundingRect.bottom += topOffset;
+            }
+
+            const { width, height } = topFrameWindow['__playwright_canvas_render_info__'].viewport;
+
+            boundingRect.left = boundingRect.left / width;
+            boundingRect.top = boundingRect.top / height;
+            boundingRect.right = boundingRect.right / width;
+            boundingRect.bottom = boundingRect.bottom / height;
 
             const partiallyUncaptured = boundingRect.right > 1 || boundingRect.bottom > 1;
             const fullyUncaptured = boundingRect.left > 1 || boundingRect.top > 1;
@@ -483,7 +535,7 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
     window.addEventListener('DOMContentLoaded', onDOMContentLoaded);
   }
 
-  return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()}${targetIds.map(id => `, "${id}"`).join('')})`;
+  return `\n(${applyPlaywrightAttributes.toString()})(${unwrapPopoutUrl.toString()}, ${JSON.stringify(viewport)}${targetIds.map(id => `, "${id}"`).join('')})`;
 }
 
 
