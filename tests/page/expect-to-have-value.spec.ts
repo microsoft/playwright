@@ -45,6 +45,13 @@ test('should support failure', async ({ page }) => {
   expect(stripAnsi(error.message)).toContain('"Text content"');
 });
 
+test('should normalize whitespace', async ({ page }) => {
+  await page.setContent('<input id=node></input>');
+  const locator = page.locator('#node');
+  await locator.fill('foo&nbsp;bar\nbaz');
+  await expect(locator).toHaveValue('foo bar baz');
+});
+
 test.describe('toHaveValues with multi-select', () => {
   test('works with text', async ({ page }) => {
     await page.setContent(`
