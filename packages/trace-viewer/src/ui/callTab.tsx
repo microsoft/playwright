@@ -37,11 +37,12 @@ export const CallTab: React.FunctionComponent<{
   if (!action)
     return <PlaceholderPanel text='No action selected' />;
 
+  // Calculate execution time relative to the test runner's start time
   const startTimeMillis = action.startTime - executionStartTime;
   const startTime = msToString(startTimeMillis);
 
   const wallTimeMillis = startTimeMillis + executionStartWallTime;
-  const wallTime = new Date(wallTimeMillis).toLocaleString();
+  const wallTime = new Date(wallTimeMillis).toLocaleString(undefined, { timeZoneName: 'short' });
 
   const duration = action.endTime ? msToString(action.endTime - action.startTime) : 'Timed Out';
 
