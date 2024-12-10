@@ -360,15 +360,21 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async _loadDefaultContextAsIs(progress: Progress): Promise<Page> {
+    let pageOrError;
     if (!this.pagesOrErrors().length) {
       const waitForEvent = helper.waitForEvent(progress, this, BrowserContext.Events.Page);
       progress.cleanupWhenAborted(() => waitForEvent.dispose);
-      const page = await waitForEvent.promise as Page;
-      const pageOrError = await page._delegate.pageOrError();
-      if (pageOrError instanceof Error)
-        throw pageOrError;
+      // Race against BrowserContext.close
+      pageOrError = await Promise.race([
+        waitForEvent.promise as Promise<Page>,
+        this._closePromise,
+      ]);
+      // Consider Page initialization errors
+      if (pageOrError instanceof Page)
+        pageOrError = await pageOrError._delegate.pageOrError();
+    } else {
+      pageOrError = await this.pagesOrErrors()[0];
     }
-    const pageOrError = await this.pagesOrErrors()[0];
     if (pageOrError instanceof Error)
       throw pageOrError;
     await pageOrError.mainFrame()._waitForLoadState(progress, 'load');
