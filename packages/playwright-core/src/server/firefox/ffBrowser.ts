@@ -271,6 +271,10 @@ export class FFBrowserContext extends BrowserContext {
     return this._ffPages().map(ffPage => ffPage._initializedPage).filter(pageOrNull => !!pageOrNull) as Page[];
   }
 
+  pagesOrErrors() {
+    return this._ffPages().map(ffPage => ffPage.pageOrError());
+  }
+
   async newPageDelegate(): Promise<PageDelegate> {
     assertBrowserContextIsNotOwned(this);
     const { targetId } = await this._browser.session.send('Browser.newPage', {

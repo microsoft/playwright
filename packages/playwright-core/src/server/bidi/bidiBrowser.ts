@@ -211,6 +211,10 @@ export class BidiBrowserContext extends BrowserContext {
     return this._bidiPages().map(bidiPage => bidiPage._initializedPage).filter(Boolean) as Page[];
   }
 
+  pagesOrErrors() {
+    return this._bidiPages().map(bidiPage => bidiPage.pageOrError());
+  }
+
   async newPageDelegate(): Promise<PageDelegate> {
     assertBrowserContextIsNotOwned(this);
     const { context } = await this._browser._browserSession.send('browsingContext.create', {

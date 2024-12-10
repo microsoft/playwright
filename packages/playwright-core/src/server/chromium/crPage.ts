@@ -432,6 +432,8 @@ class FrameSession {
       this._firstNonInitialNavigationCommittedFulfill = f;
       this._firstNonInitialNavigationCommittedReject = r;
     });
+    // We do not always await this promise.
+    this._firstNonInitialNavigationCommittedPromise.catch(() => {});
   }
 
   _isMainFrame(): boolean {

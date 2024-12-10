@@ -368,6 +368,10 @@ export class CRBrowserContext extends BrowserContext {
     return this._crPages().map(crPage => crPage._initializedPage).filter(Boolean) as Page[];
   }
 
+  pagesOrErrors() {
+    return this._crPages().map(crPage => crPage.pageOrError());
+  }
+
   async newPageDelegate(): Promise<PageDelegate> {
     assertBrowserContextIsNotOwned(this);
 
