@@ -37,12 +37,12 @@ When `fullyParallel: true` is enabled, Playwright Test runs individual tests in 
 
 **Sharding without fullyParallel**
 
-Without the fullyParallel setting, Playwright Test defaults to file-level granularity, meaning entire test files are assigned to shards. In this case, the number of tests per file can greatly influence shard distribution. If your test files are not evenly sized (i.e., some files contain many more tests than others), certain shards may end up running significantly more tests, while others may run fewer or even none. Note that each test file runs once per project it is included in, and for each project, it may be assigned to a different shard.
+Without the fullyParallel setting, Playwright Test defaults to file-level granularity, meaning entire test files are assigned to shards (note that the same file may be assigned to different shards across different projects). In this case, the number of tests per file can greatly influence shard distribution. If your test files are not evenly sized (i.e., some files contain many more tests than others), certain shards may end up running significantly more tests, while others may run fewer or even none.
 
 **Key Takeaways:**
 
 - **With** `fullyParallel: true`: Tests are split at the individual test level, leading to more balanced shard execution.
-- **Without** `fullyParallel`: Tests are split at the file level, so to balance the shards, it's important to keep your test files small and evenly sized. Note that each test file runs once for every project it is included in, and for each project, it may run on a different shard.
+- **Without** `fullyParallel`: Tests are split at the file level, so to balance the shards, it's important to keep your test files small and evenly sized.
 - To ensure the most effective use of sharding, especially in CI environments, it is recommended to use `fullyParallel: true` when aiming for balanced distribution across shards. Otherwise, you may need to manually organize your test files to avoid imbalances.
 
 ## Merging reports from multiple shards
