@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import type React from 'react';
+
 import type { TestType, Locator } from '@playwright/experimental-ct-core';
 
 export interface MountOptions<HooksConfig> {
@@ -22,12 +24,12 @@ export interface MountOptions<HooksConfig> {
 
 export interface MountResult extends Locator {
   unmount(): Promise<void>;
-  update(component: JSX.Element): Promise<void>;
+  update(component: React.JSX.Element): Promise<void>;
 }
 
 export const test: TestType<{
   mount<HooksConfig>(
-    component: JSX.Element,
+    component: React.JSX.Element,
     options?: MountOptions<HooksConfig>
   ): Promise<MountResult>;
 }>;
