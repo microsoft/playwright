@@ -117,7 +117,20 @@ const kMissingContentType = 'x-playwright/missing';
 
 export type AnchorID = string | string[] | ((id: string) => boolean) | undefined;
 
-function matchesAnchor(id: AnchorID, anchor: string): boolean {
+export function useAnchor(id: AnchorID, onReveal: () => void) {
+  const searchParams = React.useContext(SearchParamsContext);
+  const isAnchored = useIsAnchored(id);
+  React.useEffect(() => {
+    if (isAnchored)
+      onReveal();
+  }, [isAnchored, onReveal, searchParams]);
+}
+
+export function useIsAnchored(id: AnchorID) {
+  const searchParams = React.useContext(SearchParamsContext);
+  const anchor = searchParams.get('anchor');
+  if (anchor === null)
+    return false;
   if (typeof id === 'undefined')
     return false;
   if (typeof id === 'string')
@@ -125,33 +138,6 @@ function matchesAnchor(id: AnchorID, anchor: string): boolean {
   if (Array.isArray(id))
     return id.includes(anchor);
   return id(anchor);
-}
-
-export function useAnchor(id: AnchorID, onReveal: () => void) {
-  React.useEffect(() => {
-    if (typeof id === 'undefined')
-      return;
-
-    const listener = () => {
-      const params = new URLSearchParams(window.location.hash.slice(1));
-      if (params.has('anchor') && matchesAnchor(id, params.get('anchor')!))
-        onReveal();
-    };
-    window.addEventListener('popstate', listener);
-
-    // check if we're already on the anchor. required to make it work on page load.
-    listener();
-
-    return () => window.removeEventListener('popstate', listener);
-  }, [id, onReveal]);
-}
-
-export function useIsAnchored(id: AnchorID) {
-  const searchParams = React.useContext(SearchParamsContext);
-  if (!searchParams.has('anchor'))
-    return false;
-  const anchor = searchParams.get('anchor');
-  return matchesAnchor(id, anchor!);
 }
 
 export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID }>) {
