@@ -339,3 +339,27 @@ test('should show request source context id', async ({ runUITest, server }) => {
   await expect(page.getByText('page#2')).toBeVisible();
   await expect(page.getByText('api#1')).toBeVisible();
 });
+
+test('should filter actions tab on double-click', async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.goto('${server.EMPTY_PAGE}');
+      });
+    `,
+  });
+
+  await page.getByText('pass').dblclick();
+
+  const actionsTree = page.getByTestId('actions-tree');
+  await expect(actionsTree.getByRole('treeitem')).toHaveText([
+    /Before Hooks/,
+    /page.goto/,
+    /After Hooks/,
+  ]);
+  await actionsTree.getByRole('treeitem', { name: 'page.goto' }).dblclick();
+  await expect(actionsTree.getByRole('treeitem')).toHaveText([
+    /page.goto/,
+  ]);
+});

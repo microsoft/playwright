@@ -3609,8 +3609,6 @@ export interface Page {
   /**
    * Returns the PDF buffer.
    *
-   * **NOTE** Generating a pdf is currently only supported in Chromium headless.
-   *
    * `page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call
    * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) before calling
    * `page.pdf()`:
@@ -12430,7 +12428,7 @@ export interface Locator {
 
   /**
    * Captures the aria snapshot of the given element. Read more about [aria snapshots](https://playwright.dev/docs/aria-snapshots) and
-   * [expect(locator).toMatchAriaSnapshot(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-match-aria-snapshot)
+   * [expect(locator).toMatchAriaSnapshot(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-match-aria-snapshot-2)
    * for the corresponding assertion.
    *
    * **Usage**
@@ -18590,6 +18588,19 @@ export interface Clock {
    * ```js
    * await page.clock.pauseAt(new Date('2020-02-02'));
    * await page.clock.pauseAt('2020-02-02');
+   * ```
+   *
+   * For best results, install the clock before navigating the page and set it to a time slightly before the intended
+   * test time. This ensures that all timers run normally during page loading, preventing the page from getting stuck.
+   * Once the page has fully loaded, you can safely use
+   * [clock.pauseAt(time)](https://playwright.dev/docs/api/class-clock#clock-pause-at) to pause the clock.
+   *
+   * ```js
+   * // Initialize clock with some time before the test time and let the page load
+   * // naturally. `Date.now` will progress as the timers fire.
+   * await page.clock.install({ time: new Date('2024-12-10T08:00:00') });
+   * await page.goto('http://localhost:3333');
+   * await page.clock.pauseAt(new Date('2024-12-10T10:00:00'));
    * ```
    *
    * @param time Time to pause at.

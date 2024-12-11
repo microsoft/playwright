@@ -611,6 +611,9 @@ export class WKPage implements PageDelegate {
         event.type as dialog.DialogType,
         event.message,
         async (accept: boolean, promptText?: string) => {
+          // TODO: this should actually be a RDP event that notifies about a cancelled navigation attempt.
+          if (event.type === 'beforeunload' && !accept)
+            this._page._frameManager.frameAbortedNavigation(this._page.mainFrame()._id, 'navigation cancelled by beforeunload dialog');
           await this._pageProxySession.send('Dialog.handleJavaScriptDialog', { accept, promptText });
         },
         event.defaultPrompt));

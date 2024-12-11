@@ -158,8 +158,10 @@ function toAriaNode(element: Element): AriaNode | null {
   if (roleUtils.kAriaSelectedRoles.includes(role))
     result.selected = roleUtils.getAriaSelected(element);
 
-  if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement)
-    result.children = [element.value];
+  if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+    if (element.type !== 'checkbox' && element.type !== 'radio')
+      result.children = [element.value];
+  }
 
   return result;
 }

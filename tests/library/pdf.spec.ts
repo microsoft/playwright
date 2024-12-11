@@ -17,9 +17,8 @@
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
 
-it('should be able to save file', async ({ contextFactory, headless, browserName }, testInfo) => {
-  it.skip(!headless || browserName !== 'chromium', 'Printing to pdf is currently only supported in headless chromium.');
-
+it('should be able to save file', async ({ contextFactory, browserName }, testInfo) => {
+  it.skip(browserName !== 'chromium', 'Printing to pdf is currently only supported in chromium.');
   const context = await contextFactory();
   const page = await context.newPage();
   const outputFile = testInfo.outputPath('output.pdf');
@@ -27,9 +26,8 @@ it('should be able to save file', async ({ contextFactory, headless, browserName
   expect(fs.readFileSync(outputFile).byteLength).toBeGreaterThan(0);
 });
 
-it('should be able to generate outline', async ({ contextFactory, server, headless, browserName }, testInfo) => {
-  it.skip(!headless || browserName !== 'chromium', 'Printing to pdf is currently only supported in headless chromium.');
-  // const context = await contextFactory();
+it('should be able to generate outline', async ({ contextFactory, server, browserName }, testInfo) => {
+  it.skip(browserName !== 'chromium', 'Printing to pdf is currently only supported in chromium.');
   const context = await contextFactory({
     baseURL: server.PREFIX,
   });
