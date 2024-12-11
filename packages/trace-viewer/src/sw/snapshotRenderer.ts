@@ -238,10 +238,10 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
 
 type ViewportSize = { width: number, height: number };
 type BoundingRect = { left: number, top: number, right: number, bottom: number };
-type CanvasRenderInfo = {
+type FrameBoundingRectsInfo = {
   viewport: ViewportSize;
   frames: WeakMap<Element, {
-    boundingRect?: BoundingRect;
+    boundingRect: BoundingRect;
     scrollLeft: number;
     scrollTop: number;
   }>;
@@ -249,7 +249,7 @@ type CanvasRenderInfo = {
 
 declare global {
   interface Window {
-    __playwright_canvas_render_info__: CanvasRenderInfo;
+    __playwright_frame_bounding_rects__: FrameBoundingRectsInfo;
   }
 }
 
@@ -257,11 +257,17 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
   function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
     const isUnderTest = new URLSearchParams(location.search).has('isUnderTest');
 
-    const canvasRenderInfo = {
+    // info to recursively compute canvas position relative to the top snapshot frame.
+    // Before rendering each iframe, its parent extracts the '__playwright_canvas_render_info__' attribute
+    // value and keeps in this variable. It can then remove the attribute and render the element,
+    // which will eventually trigger the same process inside the iframe recursively.
+    // When there's a canvas to render, we iterate over its ancestor frames to compute
+    // its position relative to the top snapshot frame.
+    const frameBoundingRectsInfo = {
       viewport,
       frames: new WeakMap(),
     };
-    window['__playwright_canvas_render_info__'] = canvasRenderInfo;
+    window['__playwright_frame_bounding_rects__'] = frameBoundingRectsInfo;
 
     const kPointerWarningTitle = 'Recorded click position in absolute coordinates did not' +
         ' match the center of the clicked element. This is likely due to a difference between' +
@@ -272,9 +278,9 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
     const targetElements: Element[] = [];
     const canvasElements: HTMLCanvasElement[] = [];
 
-    let topFrameWindow: Window = window;
-    while (topFrameWindow !== topFrameWindow.parent && !topFrameWindow.location.pathname.match(/\/page@[a-z0-9]+$/))
-      topFrameWindow = topFrameWindow.parent;
+    let topSnapshotWindow: Window = window;
+    while (topSnapshotWindow !== topSnapshotWindow.parent && !topSnapshotWindow.location.pathname.match(/\/page@[a-z0-9]+$/))
+      topSnapshotWindow = topSnapshotWindow.parent;
 
     const visit = (root: Document | ShadowRoot) => {
       // Collect all scrolled elements for later use.
@@ -318,7 +324,8 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
         const boundingRectJson = iframe.getAttribute('__playwright_bounding_rect__');
         iframe.removeAttribute('__playwright_bounding_rect__');
         const boundingRect = boundingRectJson ? JSON.parse(boundingRectJson) : undefined;
-        canvasRenderInfo.frames.set(iframe, { boundingRect, scrollLeft: 0, scrollTop: 0 });
+        if (boundingRect)
+          frameBoundingRectsInfo.frames.set(iframe, { boundingRect, scrollLeft: 0, scrollTop: 0 });
         const src = iframe.getAttribute('__playwright_src__');
         if (!src) {
           iframe.setAttribute('src', 'data:text/html,<body style="background: #ddd"></body>');
@@ -370,20 +377,20 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
       for (const element of scrollTops) {
         element.scrollTop = +element.getAttribute('__playwright_scroll_top_')!;
         element.removeAttribute('__playwright_scroll_top_');
-        if (canvasRenderInfo.frames.has(element))
-          canvasRenderInfo.frames.get(element)!.scrollTop = element.scrollTop;
+        if (frameBoundingRectsInfo.frames.has(element))
+          frameBoundingRectsInfo.frames.get(element)!.scrollTop = element.scrollTop;
       }
       for (const element of scrollLefts) {
         element.scrollLeft = +element.getAttribute('__playwright_scroll_left_')!;
         element.removeAttribute('__playwright_scroll_left_');
-        if (canvasRenderInfo.frames.has(element))
-          canvasRenderInfo.frames.get(element)!.scrollLeft = element.scrollTop;
+        if (frameBoundingRectsInfo.frames.has(element))
+          frameBoundingRectsInfo.frames.get(element)!.scrollLeft = element.scrollTop;
       }
 
       document.styleSheets[0].disabled = true;
 
       const search = new URL(window.location.href).searchParams;
-      const isTopFrame = window === topFrameWindow;
+      const isTopFrame = window === topSnapshotWindow;
 
       if (search.get('pointX') && search.get('pointY')) {
         const pointX = +search.get('pointX')!;
@@ -472,18 +479,16 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
             }
 
             let currWindow: Window = window;
-            while (currWindow !== topFrameWindow) {
+            while (currWindow !== topSnapshotWindow) {
               const iframe = currWindow.frameElement!;
               currWindow = currWindow.parent;
 
-              const currCanvasRenderInfo = currWindow['__playwright_canvas_render_info__'];
-              const iframeRenderInfo = currCanvasRenderInfo.frames.get(iframe);
-
-              if (!iframeRenderInfo?.boundingRect)
+              const iframeInfo = currWindow['__playwright_frame_bounding_rects__']?.frames.get(iframe);
+              if (!iframeInfo?.boundingRect)
                 break;
 
-              const leftOffset = iframeRenderInfo.boundingRect.left - iframeRenderInfo.scrollLeft;
-              const topOffset = iframeRenderInfo.boundingRect.top - iframeRenderInfo.scrollTop;
+              const leftOffset = iframeInfo.boundingRect.left - iframeInfo.scrollLeft;
+              const topOffset = iframeInfo.boundingRect.top - iframeInfo.scrollTop;
 
               boundingRect.left += leftOffset;
               boundingRect.top += topOffset;
@@ -491,7 +496,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
               boundingRect.bottom += topOffset;
             }
 
-            const { width, height } = topFrameWindow['__playwright_canvas_render_info__'].viewport;
+            const { width, height } = topSnapshotWindow['__playwright_frame_bounding_rects__'].viewport;
 
             boundingRect.left = boundingRect.left / width;
             boundingRect.top = boundingRect.top / height;
