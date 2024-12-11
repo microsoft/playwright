@@ -2562,6 +2562,24 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         - button "tests/b/test.spec.ts"
       `);
     });
+
+    test('execSync doesnt produce a second stdout attachment', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33886' } }, async ({ runInlineTest, showReport, page }) => {
+      await runInlineTest({
+        'a.test.js': `
+          const { test, expect } = require('@playwright/test');
+          const { execSync } = require('node:child_process');
+          test('my test', async ({}) => {
+            console.log('foo');
+            execSync('echo bar', { stdio: 'inherit' });
+            console.log('baz');
+          });
+        `,
+      }, { reporter: 'dot,html' });
+
+      await showReport();
+      await page.getByText('my test').click();
+      await expect(page.locator('.tree-item', { hasText: 'stdout' })).toHaveCount(1);
+    });
   });
 }
 
