@@ -195,6 +195,7 @@ program
             e.name = 'Playwright Host validation warning';
             console.error(e);
           });
+          // our download has http keepalive enabled, so the dangling sockets prevent the process from exiting by itself.
           gracefullyProcessExitDoNotHang(0);
         }
       } catch (e) {
