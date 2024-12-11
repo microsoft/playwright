@@ -1017,6 +1017,8 @@ export function beginAriaCaches() {
   cacheAccessibleNameHidden ??= new Map();
   cacheAccessibleDescription ??= new Map();
   cacheAccessibleDescriptionHidden ??= new Map();
+  cacheAccessibleErrorMessage ??= new Map();
+  cacheAccessibleErrorMessageHidden ??= new Map();
   cacheIsHidden ??= new Map();
   cachePseudoContentBefore ??= new Map();
   cachePseudoContentAfter ??= new Map();
@@ -1028,6 +1030,8 @@ export function endAriaCaches() {
     cacheAccessibleNameHidden = undefined;
     cacheAccessibleDescription = undefined;
     cacheAccessibleDescriptionHidden = undefined;
+    cacheAccessibleErrorMessage = undefined;
+    cacheAccessibleErrorMessageHidden = undefined;
     cacheIsHidden = undefined;
     cachePseudoContentBefore = undefined;
     cachePseudoContentAfter = undefined;
