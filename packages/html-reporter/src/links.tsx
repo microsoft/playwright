@@ -22,7 +22,6 @@ import { CopyToClipboard } from './copyToClipboard';
 import './links.css';
 import { linkifyText } from '@web/renderUtils';
 import { clsx } from '@web/uiUtils';
-import { URLSearchParams } from 'url';
 
 export function navigate(href: string) {
   window.history.pushState({}, '', href);
