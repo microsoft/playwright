@@ -49,7 +49,9 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
       <form className='subnav-search' onSubmit={
         event => {
           event.preventDefault();
-          navigate(filterText ? '#?' + new URLSearchParams({ q: filterText }) : '/');
+          const url = new URL(window.location.href);
+          url.hash = filterText ? '?' + new URLSearchParams({ q: filterText }) : '';
+          navigate(url);
         }
       }>
         {icons.search()}
