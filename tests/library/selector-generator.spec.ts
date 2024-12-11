@@ -309,7 +309,7 @@ it.describe('selector generator', () => {
     expect(await generate(page, 'input[mark="1"]')).toBe('internal:role=textbox >> nth=1');
   });
 
-  it.describe('should prioritise attributes correctly', () => {
+  it.describe('should prioritize attributes correctly', () => {
     it('role', async ({ page }) => {
       await page.setContent(`<input name="foobar" type="text"/>`);
       expect(await generate(page, 'input')).toBe('internal:role=textbox');
@@ -594,6 +594,25 @@ it.describe('selector generator', () => {
       `#second span`,
       `internal:text="Some span"i >> nth=1`,
       `span >> nth=1`,
+    ]);
+  });
+
+  it('should prefer role with hasText to css with hasText', async ({ page }) => {
+    await page.setContent(`
+      <ul>
+        <li>
+          <input aria-label="Toggle Todo" type="checkbox">
+          buy flowers
+        </li>
+        <li>
+          <input aria-label="Toggle Todo" type="checkbox">
+          sell milk
+        </li>
+      </ul>
+    `);
+    expect(await generateMultiple(page, 'input')).toEqual([
+      `internal:role=listitem >> internal:has-text=\"buy flowers\"i >> internal:label=\"Toggle Todo\"i`,
+      `internal:label=\"Toggle Todo\"i >> nth=0`,
     ]);
   });
 });
