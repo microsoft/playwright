@@ -4294,7 +4294,7 @@ export interface Page {
    * takes priority over
    * [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout).
    *
-   * @param timeout Maximum time in milliseconds
+   * @param timeout Maximum time in milliseconds. Pass `0` to disable timeout.
    */
   setDefaultTimeout(timeout: number): void;
 
@@ -9193,7 +9193,7 @@ export interface BrowserContext {
    * take priority over
    * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout).
    *
-   * @param timeout Maximum time in milliseconds
+   * @param timeout Maximum time in milliseconds. Pass `0` to disable timeout.
    */
   setDefaultTimeout(timeout: number): void;
 
