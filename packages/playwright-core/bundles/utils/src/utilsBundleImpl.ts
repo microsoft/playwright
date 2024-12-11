@@ -49,8 +49,8 @@ export { PNG } from 'pngjs';
 
 export { program } from 'commander';
 
-import progressLibrary from 'progress';
-export const progress = progressLibrary;
+import multiProgressLibrary from 'multi-progress';
+export const multiProgress = multiProgressLibrary;
 
 export { SocksProxyAgent } from 'socks-proxy-agent';
 
