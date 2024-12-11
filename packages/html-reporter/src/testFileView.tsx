@@ -75,14 +75,14 @@ function imageDiffBadge(test: TestCaseSummary): JSX.Element | undefined {
   for (const result of test.results) {
     for (const attachment of result.attachments) {
       if (attachment.contentType.startsWith('image/') && !!attachment.name.match(/-(expected|actual|diff)/))
-        return <Link href={`#?testId=${test.testId}&anchor=attachment-${attachment.name}&run=${test.results.indexOf(result)}`} title='View images' className='test-file-badge'>{image()}</Link>;
+        return <Link href={`#?` + new URLSearchParams({ testId: test.testId, anchor: `attachment-${attachment.name}`, run: '' + test.results.indexOf(result) })} title='View images' className='test-file-badge'>{image()}</Link>;
     }
   }
 }
 
 function videoBadge(test: TestCaseSummary): JSX.Element | undefined {
   const resultWithVideo = test.results.find(result => result.attachments.some(attachment => attachment.name === 'video'));
-  return resultWithVideo ? <Link href={`#?testId=${test.testId}&anchor=attachment-video&run=${test.results.indexOf(resultWithVideo)}`} title='View video' className='test-file-badge'>{video()}</Link> : undefined;
+  return resultWithVideo ? <Link href={`#?` + new URLSearchParams({ testId: test.testId, anchor: `attachment-video`, run: '' + test.results.indexOf(resultWithVideo) })}  title='View video' className='test-file-badge'>{video()}</Link> : undefined;
 }
 
 function traceBadge(test: TestCaseSummary): JSX.Element | undefined {
