@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestAttachment } from './types';
+import type { TestAttachment, TestCase, TestCaseSummary, TestResult, TestResultSummary } from './types';
 import * as React from 'react';
 import * as icons from './icons';
 import { TreeItem } from './treeItem';
@@ -22,6 +22,7 @@ import { CopyToClipboard } from './copyToClipboard';
 import './links.css';
 import { linkifyText } from '@web/renderUtils';
 import { clsx } from '@web/uiUtils';
+import { URLSearchParams } from 'url';
 
 export function navigate(href: string) {
   window.history.pushState({}, '', href);
@@ -148,4 +149,15 @@ export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID 
   useAnchor(id, onAnchorReveal);
 
   return <div ref={ref}>{children}</div>;
+}
+
+export function testResultHref({ test, result, anchor }: { test?: TestCase | TestCaseSummary, result?: TestResult | TestResultSummary, anchor?: string }) {
+  const params = new URLSearchParams();
+  if (test)
+    params.set('testId', test.testId);
+  if (test && result)
+    params.set('run', '' + test.results.indexOf(result as any));
+  if (anchor)
+    params.set('anchor', anchor);
+  return `#?` + params;
 }

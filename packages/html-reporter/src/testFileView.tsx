@@ -19,7 +19,7 @@ import * as React from 'react';
 import { hashStringToInt, msToString } from './utils';
 import { Chip } from './chip';
 import { filterWithToken } from './filter';
-import { generateTraceUrl, Link, navigate, ProjectLink, SearchParamsContext } from './links';
+import { generateTraceUrl, Link, navigate, ProjectLink, SearchParamsContext, testResultHref } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
 import { video, image, trace } from './icons';
@@ -48,7 +48,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
               {statusIcon(test.outcome)}
             </span>
             <span>
-              <Link href={`#?testId=${test.testId}${filterParam}`} title={[...test.path, test.title].join(' › ')}>
+              <Link href={testResultHref({ test }) + filterParam} title={[...test.path, test.title].join(' › ')}>
                 <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
               </Link>
               {projectNames.length > 1 && !!test.projectName &&
@@ -59,7 +59,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
           <span data-testid='test-duration' style={{ minWidth: '50px', textAlign: 'right' }}>{msToString(test.duration)}</span>
         </div>
         <div className='test-file-details-row'>
-          <Link href={`#?testId=${test.testId}`} title={[...test.path, test.title].join(' › ')} className='test-file-path-link'>
+          <Link href={testResultHref({ test })} title={[...test.path, test.title].join(' › ')} className='test-file-path-link'>
             <span className='test-file-path'>{test.location.file}:{test.location.line}</span>
           </Link>
           {imageDiffBadge(test)}
@@ -75,14 +75,14 @@ function imageDiffBadge(test: TestCaseSummary): JSX.Element | undefined {
   for (const result of test.results) {
     for (const attachment of result.attachments) {
       if (attachment.contentType.startsWith('image/') && !!attachment.name.match(/-(expected|actual|diff)/))
-        return <Link href={`#?` + new URLSearchParams({ testId: test.testId, anchor: `attachment-${attachment.name}`, run: '' + test.results.indexOf(result) })} title='View images' className='test-file-badge'>{image()}</Link>;
+        return <Link href={testResultHref({ test, result, anchor: `attachment-${attachment.name}` })} title='View images' className='test-file-badge'>{image()}</Link>;
     }
   }
 }
 
 function videoBadge(test: TestCaseSummary): JSX.Element | undefined {
   const resultWithVideo = test.results.find(result => result.attachments.some(attachment => attachment.name === 'video'));
-  return resultWithVideo ? <Link href={`#?` + new URLSearchParams({ testId: test.testId, anchor: `attachment-video`, run: '' + test.results.indexOf(resultWithVideo) })}  title='View video' className='test-file-badge'>{video()}</Link> : undefined;
+  return resultWithVideo ? <Link href={testResultHref({ test, result: resultWithVideo, anchor: 'attachment-video' })}  title='View video' className='test-file-badge'>{video()}</Link> : undefined;
 }
 
 function traceBadge(test: TestCaseSummary): JSX.Element | undefined {

@@ -20,7 +20,7 @@ import { TreeItem } from './treeItem';
 import { msToString } from './utils';
 import { AutoChip } from './chip';
 import { traceImage } from './images';
-import { Anchor, AttachmentLink, generateTraceUrl } from './links';
+import { Anchor, AttachmentLink, generateTraceUrl, testResultHref } from './links';
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
@@ -177,7 +177,7 @@ const StepTreeItem: React.FC<{
   const attachmentName = step.title.match(/^attach "(.*)"$/)?.[1];
   return <TreeItem title={<span aria-label={step.title}>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
-    {attachmentName && <a style={{ float: 'right' }} title='link to attachment' href={`#?testId=${test.testId}&anchor=attachment-${encodeURIComponent(attachmentName)}&run=${test.results.indexOf(result)}`} onClick={evt => { evt.stopPropagation(); }}>{icons.attachment()}</a>}
+    {attachmentName && <a style={{ float: 'right' }} title='link to attachment' href={testResultHref({ test, result, anchor: `attachment-${attachmentName}` })} onClick={evt => { evt.stopPropagation(); }}>{icons.attachment()}</a>}
     {statusIcon(step.error || step.duration === -1 ? 'failed' : 'passed')}
     <span>{step.title}</span>
     {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
