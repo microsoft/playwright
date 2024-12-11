@@ -95,3 +95,27 @@ test('install playwright-chromium should work', async ({ exec, installedSoftware
   await exec('npx playwright install chromium');
   await exec('node sanity.js playwright-chromium chromium');
 });
+
+test('should print error if recording video without ffmpeg', async ({ exec }) => {
+  await exec('npm i playwright');
+
+  await test.step('BrowserType.launch', async () => {
+    const result = await exec('node', '-e', `"
+        import playwright from 'playwright';
+        const browser = await playwright.chromium.launch({ channel: 'chrome' });
+        const context = await browser.newContext({ recordVideo: { dir: 'videos' } });
+        const page = await context.newPage();
+      "`, { expectToExitWithError: true });
+    expect(result).toContain(`browserContext.newPage: Executable doesn't exist at`);
+  });
+
+  await test.step('BrowserType.launchPersistentContext', async () => {
+    const result = await exec('node', '-e', `"
+        import playwright from 'playwright';
+        process.on('unhandledRejection', (e) => console.error('unhandledRejection', e));
+        const context = await playwright.chromium.launchPersistentContext('', { channel: 'chrome', recordVideo: { dir: 'videos' } });
+      "`, { expectToExitWithError: true });
+    expect(result).not.toContain('unhandledRejection');
+    expect(result).toContain(`browserType.launchPersistentContext: Executable doesn't exist at`);
+  });
+});

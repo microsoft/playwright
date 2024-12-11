@@ -259,6 +259,7 @@ export abstract class BrowserContext extends SdkObject {
 
   // BrowserContext methods.
   abstract pages(): Page[];
+  abstract pagesOrErrors(): Promise<Page | Error>[];
   abstract newPageDelegate(): Promise<PageDelegate>;
   abstract addCookies(cookies: channels.SetNetworkCookie[]): Promise<void>;
   abstract setGeolocation(geolocation?: types.Geolocation): Promise<void>;
@@ -358,29 +359,36 @@ export abstract class BrowserContext extends SdkObject {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async _loadDefaultContextAsIs(progress: Progress): Promise<Page[]> {
-    if (!this.pages().length) {
+  async _loadDefaultContextAsIs(progress: Progress): Promise<Page> {
+    let pageOrError;
+    if (!this.pagesOrErrors().length) {
       const waitForEvent = helper.waitForEvent(progress, this, BrowserContext.Events.Page);
       progress.cleanupWhenAborted(() => waitForEvent.dispose);
-      const page = (await waitForEvent.promise) as Page;
-      if (page._pageIsError)
-        throw page._pageIsError;
+      // Race against BrowserContext.close
+      pageOrError = await Promise.race([
+        waitForEvent.promise as Promise<Page>,
+        this._closePromise,
+      ]);
+      // Consider Page initialization errors
+      if (pageOrError instanceof Page)
+        pageOrError = await pageOrError._delegate.pageOrError();
+    } else {
+      pageOrError = await this.pagesOrErrors()[0];
     }
-    const pages = this.pages();
-    if (pages[0]._pageIsError)
-      throw pages[0]._pageIsError;
-    await pages[0].mainFrame()._waitForLoadState(progress, 'load');
-    return pages;
+    if (pageOrError instanceof Error)
+      throw pageOrError;
+    await pageOrError.mainFrame()._waitForLoadState(progress, 'load');
+    return pageOrError;
   }
 
   async _loadDefaultContext(progress: Progress) {
-    const pages = await this._loadDefaultContextAsIs(progress);
+    const defaultPage = await this._loadDefaultContextAsIs(progress);
     const browserName = this._browser.options.name;
     if ((this._options.isMobile && browserName === 'chromium') || (this._options.locale && browserName === 'webkit')) {
       // Workaround for:
       // - chromium fails to change isMobile for existing page;
       // - webkit fails to change locale for existing page.
-      const oldPage = pages[0];
+      const oldPage = defaultPage;
       await this.newPage(progress.metadata);
       await oldPage.close(progress.metadata);
     }
