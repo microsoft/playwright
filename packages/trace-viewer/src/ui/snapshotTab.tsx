@@ -344,7 +344,8 @@ export function extendSnapshot(snapshot: Snapshot): SnapshotUrls {
 
   const popoutParams = new URLSearchParams();
   popoutParams.set('r', snapshotUrl);
-  popoutParams.set('server', serverParam ?? '');
+  if (serverParam)
+    popoutParams.set('server', serverParam);
   popoutParams.set('trace', context(snapshot.action).traceUrl);
   if (snapshot.point) {
     popoutParams.set('pointX', String(snapshot.point.x));
