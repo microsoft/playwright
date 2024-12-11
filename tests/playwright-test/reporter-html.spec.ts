@@ -921,7 +921,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         'a.test.js': `
           import { test, expect } from '@playwright/test';
           test('passing', async ({ page }, testInfo) => {
-            await testInfo.attach('foo', { body: 'bar' });
+            for (let i = 0; i < 100; i++)
+              await testInfo.attach('foo-1', { body: 'bar' });
+            await testInfo.attach('foo-2', { body: 'bar' });
           });
         `,
       }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
@@ -929,12 +931,11 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await page.getByRole('link', { name: 'passing' }).click();
-      await page.getByLabel('attach "foo"').getByTitle('link to attachment').click();
 
-      await page.waitForURL(url => {
-        const navState = new URLSearchParams(url.hash.slice(1));
-        return navState.get('anchor') === 'attachment-foo';
-      });
+      const attachment = page.getByText('foo-2', { exact: true });
+      await expect(attachment).not.toBeInViewport();
+      await page.getByLabel('attach "foo-2"').getByTitle('link to attachment').click();
+      await expect(attachment).toBeInViewport();
     });
 
     test('should highlight textual diff', async ({ runInlineTest, showReport, page }) => {
