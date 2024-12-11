@@ -454,11 +454,11 @@ jobs:
 
 ### Docker
 
-We have a [pre-built Docker image](./docker.md) which can either be used directly, or as a reference to update your existing Docker definitions.
+We have a [pre-built Docker image](./docker.md) which can either be used directly or as a reference to update your existing Docker definitions.
 
 Suggested configuration
 1. Using `--ipc=host` is also recommended when using Chromium. Without it Chromium can run out of memory
-   and crash. Learn more about this option in [Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc).
+   and crash. Learn more about this option in [Docker docs](https://docs.docker.com/reference/cli/docker/container/run/#ipc).
 1. Seeing other weird errors when launching Chromium? Try running your container
    with `docker run --cap-add=SYS_ADMIN` when developing locally.
 1. Using `--init` Docker flag or [dumb-init](https://github.com/Yelp/dumb-init) is recommended to avoid special
@@ -466,7 +466,7 @@ Suggested configuration
 
 ### Azure Pipelines
 
-For Windows or macOS agents, no additional configuration required, just install Playwright and run your tests.
+For Windows or macOS agents, no additional configuration is required, just install Playwright and run your tests.
 
 For Linux agents, you can use [our Docker container](./docker.md) with Azure
 Pipelines support [running containerized

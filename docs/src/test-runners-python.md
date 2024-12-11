@@ -259,3 +259,18 @@ def test_bing_is_working(page):
 ## Deploy to CI
 
 See the [guides for CI providers](./ci.md) to deploy your tests to CI/CD.
+
+## Async Fixtures
+
+If you want to use async fixtures, you can use the [`pytest-playwright-asyncio`](https://pypi.org/project/pytest-playwright-asyncio/) plugin.
+Make sure to use `pytest-asyncio>=0.24.0` and make your tests use of [`loop_scope=sesion`](https://pytest-asyncio.readthedocs.io/en/latest/how-to-guides/run_session_tests_in_same_loop.html).
+
+```python
+import pytest
+from playwright.async_api import Page
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_foo(page: Page):
+    await page.goto("https://github.com")
+    # ...
+```
