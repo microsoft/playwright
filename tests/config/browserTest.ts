@@ -99,7 +99,7 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   isWebView2: [false, { scope: 'worker' }],
 
   isHeadlessShell: [async ({ browserName, channel, headless }, use) => {
-    await use(browserName === 'chromium' && (channel === 'chromium-headless-shell' || (!channel && headless)));
+    await use(browserName === 'chromium' && (channel === 'chromium-headless-shell' || channel === 'chromium-tip-of-tree-headless-shell' || (!channel && headless)));
   }, { scope: 'worker' }],
 
   contextFactory: async ({ _contextFactory }: any, run) => {

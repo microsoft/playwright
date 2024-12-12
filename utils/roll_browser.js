@@ -100,6 +100,10 @@ Example:
       const headlessShellBrowser = await browsersJSON.browsers.find(b => b.name === 'chromium-headless-shell');
       headlessShellBrowser.revision = revision;
       headlessShellBrowser.browserVersion = browserVersion;
+    } else if (browserName === 'chromium-tip-of-tree') {
+      const tipOfTreeBrowser = await browsersJSON.browsers.find(b => b.name === 'chromium-tip-of-tree-headless-shell');
+      tipOfTreeBrowser.revision = revision;
+      tipOfTreeBrowser.browserVersion = browserVersion;
     }
 
     fs.writeFileSync(path.join(CORE_PATH, 'browsers.json'), JSON.stringify(browsersJSON, null, 2) + '\n');
