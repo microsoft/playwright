@@ -29,43 +29,73 @@ enum TarType {
   CONTTYPE
 }
 
-function parseHeader(buffer: Buffer) {
-  if (buffer.length < 512)
-    throw new Error('Invalid header: ' + buffer.toString('utf8'));
+class TarEntry {
+  name: string;
+  size: number;
+  type: TarType;
+  mode: number;
+  linkname: string;
+  uid: number;
+  gid: number;
 
-  let name = buffer.toString('utf8', 0, 100).replace(/\0/g, '');
-  const prefixField = buffer.toString('utf8', 345, 500).replace(/\0/g, '');
-  if (prefixField)
-    name = path.join(prefixField, name);
-  name = name.replace(/^\/+/, '');
+  fileStream: fs.WriteStream | null = null;
+  remainingBytes = 0;
 
-  const size = parseInt(buffer.toString('utf8', 124, 136).trim(), 8);
-  const type = parseInt(buffer.toString('ascii', 156, 157), 10) as TarType;
-  const mode = parseInt(buffer.toString('utf8', 100, 108).trim(), 8) || 0o644;
-  const linkname = buffer.toString('utf8', 157, 257).replace(/\0/g, '');
+  constructor(header: Buffer) {
+    if (header.length < 512)
+      throw new Error('Invalid header: ' + header.toString('utf8'));
 
-  const uid = parseInt(buffer.toString('utf8', 108, 116).trim(), 8);
-  const gid = parseInt(buffer.toString('utf8', 116, 124).trim(), 8);
+    this.name = header.toString('utf8', 0, 100).replace(/\0/g, '');
+    const prefixField = header.toString('utf8', 345, 500).replace(/\0/g, '');
+    if (prefixField)
+      this.name = path.join(prefixField, this.name);
+    this.name = this.name.replace(/^\/+/, '');
 
-  return {
-    name,
-    size,
-    type,
-    mode,
-    linkname,
-    uid,
-    gid
-  };
+    this.size = parseInt(header.toString('utf8', 124, 136).trim(), 8);
+    this.type = parseInt(header.toString('ascii', 156, 157), 10) as TarType;
+    this.mode = parseInt(header.toString('utf8', 100, 108).trim(), 8) || 0o644;
+    this.linkname = header.toString('utf8', 157, 257).replace(/\0/g, '');
+
+    this.uid = parseInt(header.toString('utf8', 108, 116).trim(), 8);
+    this.gid = parseInt(header.toString('utf8', 116, 124).trim(), 8);
+  }
+
+  async writeToDisk(outputPath: (path: string) => string) {
+    const fullPath = outputPath(this.name);
+    switch (this.type) {
+      case TarType.DIRTYPE:
+        await fs.promises.mkdir(fullPath, { recursive: true, mode: 0o755 });
+        break;
+      case TarType.SYMTYPE:
+        await fs.promises.symlink(this.linkname, fullPath);
+        break;
+      case TarType.REGTYPE:
+        this.fileStream = fs.createWriteStream(fullPath, { mode: this.mode });
+        await once(this.fileStream, 'ready');
+        this.remainingBytes = this.size;
+        break;
+      default:
+        throw new Error(`Unsupported type ${this.type} for '${this.name}'`);
+    }
+  }
+
+  chunk(chunk: Buffer) {
+    assert(this.fileStream);
+    this.fileStream.write(chunk);
+    this.remainingBytes -= chunk.length;
+    if (this.remainingBytes === 0) {
+      this.fileStream.end();
+      return true;
+    }
+    return false;
+  }
 }
 
-type TarHeader = NonNullable<ReturnType<typeof parseHeader>>;
 
 export class TarExtractor extends Writable {
   private queue = Promise.resolve();
   private buffer = Buffer.alloc(0);
-  private currentHeader: TarHeader | null = null;
-  private remainingBytes = 0;
-  private currentFileStream: fs.WriteStream | null = null;
+  private currentEntry: TarEntry | null = null;
 
   constructor(private outputPath: (path: string) => string) {
     super();
@@ -78,55 +108,28 @@ export class TarExtractor extends Writable {
   private async _writeImpl(chunk: Buffer): Promise<undefined> {
     this.buffer = Buffer.concat([this.buffer, chunk]);
     while (this.buffer.length >= 512) {
-      if (!this.currentHeader) {
-        // Check for end of archive (two consecutive zero blocks)
+      if (!this.currentEntry) {
+        // two consecutive zero blocks mark end of archive, skip them
         if (this.buffer.subarray(0, 512).every(byte => byte === 0)) {
           this.buffer = this.buffer.subarray(512);
           continue;
         }
 
-        const header = parseHeader(this.buffer);
+        const entry = new TarEntry(this.buffer);
         this.buffer = this.buffer.subarray(512);
-
-        const fullPath = this.outputPath(header.name);
-        switch (header.type) {
-          case TarType.DIRTYPE:
-            await fs.promises.mkdir(fullPath, { recursive: true, mode: 0o755 });
-            break;
-          case TarType.SYMTYPE:
-            await fs.promises.symlink(header.linkname, fullPath);
-            break;
-          case TarType.REGTYPE:
-            this.currentFileStream = fs.createWriteStream(fullPath, { mode: header.mode });
-            await once(this.currentFileStream, 'ready');
-            this.currentHeader = header;
-            this.remainingBytes = header.size;
-            break;
-          default:
-            throw new Error(`Unsupported type ${header.type} for '${header.name}'`);
+        await entry.writeToDisk(this.outputPath);
+        if (entry.type === TarType.REGTYPE)
+          this.currentEntry = entry;
+      } else if (this.currentEntry.remainingBytes > 0) {
+        const chunk = this.buffer.subarray(0, this.currentEntry.remainingBytes);
+        this.buffer = this.buffer.subarray(chunk.length);
+        const finished = this.currentEntry.chunk(chunk);
+        if (finished) {
+          const padding = 512 - (this.currentEntry.size % 512);
+          if (padding < 512)
+            this.buffer = this.buffer.subarray(padding);
+          this.currentEntry = null;
         }
-
-        continue;
-      }
-
-      assert(this.currentFileStream);
-      assert(this.remainingBytes > 0);
-
-      const dataChunk = this.buffer.subarray(0, this.remainingBytes);
-      this.buffer = this.buffer.subarray(this.remainingBytes);
-      this.remainingBytes -= dataChunk.length;
-
-      this.currentFileStream.write(dataChunk);
-
-      if (this.remainingBytes === 0) {
-        this.currentFileStream.end();
-        this.currentFileStream = null;
-
-        const padding = 512 - (this.currentHeader.size % 512);
-        if (padding < 512)
-          this.buffer = this.buffer.subarray(padding);
-
-        this.currentHeader = null;
       }
     }
   }
