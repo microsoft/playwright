@@ -164,7 +164,6 @@ export class Page extends SdkObject {
   _clientRequestInterceptor: network.RouteHandler | undefined;
   _serverRequestInterceptor: network.RouteHandler | undefined;
   _ownedContext: BrowserContext | undefined;
-  _pageIsError: Error | undefined;
   _video: Artifact | null = null;
   _opener: Page | undefined;
   private _isServerSideOnly = false;
@@ -208,7 +207,7 @@ export class Page extends SdkObject {
       // context/browser closure. Just ignore the page.
       if (this._browserContext.isClosingOrClosed())
         return;
-      this._setIsError(error);
+      this._frameManager.createDummyMainFrameIfNeeded();
     }
     this._initialized = true;
     this.emitOnContext(contextEvent, this);
@@ -707,11 +706,6 @@ export class Page extends SdkObject {
       await this._closedPromise;
     if (this._ownedContext)
       await this._ownedContext.close(options);
-  }
-
-  private _setIsError(error: Error) {
-    this._pageIsError = error;
-    this._frameManager.createDummyMainFrameIfNeeded();
   }
 
   isClosed(): boolean {
