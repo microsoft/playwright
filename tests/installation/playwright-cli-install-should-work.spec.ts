@@ -101,19 +101,33 @@ test('should print error if recording video without ffmpeg', async ({ exec }) =>
 
   await test.step('BrowserType.launch', async () => {
     const result = await exec('node', '-e', `"
-        import playwright from 'playwright';
-        const browser = await playwright.chromium.launch({ channel: 'chrome' });
-        const context = await browser.newContext({ recordVideo: { dir: 'videos' } });
-        const page = await context.newPage();
+        const playwright = require('playwright');
+        (async () => {
+          const browser = await playwright.chromium.launch({ channel: 'chrome' });
+          try {
+            const context = await browser.newContext({ recordVideo: { dir: 'videos' } });
+            const page = await context.newPage();
+          } finally {
+            await browser.close();
+          }
+        })().catch(e => {
+          console.error(e);
+          process.exit(1);
+        });
       "`, { expectToExitWithError: true });
     expect(result).toContain(`browserContext.newPage: Executable doesn't exist at`);
   });
 
   await test.step('BrowserType.launchPersistentContext', async () => {
     const result = await exec('node', '-e', `"
-        import playwright from 'playwright';
+        const playwright = require('playwright');
         process.on('unhandledRejection', (e) => console.error('unhandledRejection', e));
-        const context = await playwright.chromium.launchPersistentContext('', { channel: 'chrome', recordVideo: { dir: 'videos' } });
+        (async () => {
+          const context = await playwright.chromium.launchPersistentContext('', { channel: 'chrome', recordVideo: { dir: 'videos' } });
+        })().catch(e => {
+          console.error(e);
+          process.exit(1);
+        });
       "`, { expectToExitWithError: true });
     expect(result).not.toContain('unhandledRejection');
     expect(result).toContain(`browserType.launchPersistentContext: Executable doesn't exist at`);
