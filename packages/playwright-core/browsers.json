@@ -22,7 +22,7 @@
     {
       "name": "chromium-tip-of-tree-headless-shell",
       "revision": "1285",
-      "installByDefault": true,
+      "installByDefault": false,
       "browserVersion": "133.0.6887.0"
     },
     {
