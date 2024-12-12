@@ -15,7 +15,6 @@
  */
 import fs from 'fs';
 import { Writable, once } from 'stream';
-import path from 'path';
 import assert from 'assert';
 
 enum TarType {
@@ -45,19 +44,15 @@ class TarEntry {
     if (header.length < 512)
       throw new Error('Invalid header: ' + header.toString('utf8'));
 
-    this.name = header.toString('utf8', 0, 100).replace(/\0/g, '');
-    const prefixField = header.toString('utf8', 345, 500).replace(/\0/g, '');
-    if (prefixField)
-      this.name = path.join(prefixField, this.name);
-    this.name = this.name.replace(/^\/+/, '');
+    this.name = header.toString('utf8', 0, 100).replace(/\0/g, '').replace(/^\/+/, '');
 
-    this.size = parseInt(header.toString('utf8', 124, 136).trim(), 8);
+    this.size = parseInt(header.toString('ascii', 124, 136).trim(), 8);
     this.type = parseInt(header.toString('ascii', 156, 157), 10) as TarType;
-    this.mode = parseInt(header.toString('utf8', 100, 108).trim(), 8) || 0o644;
+    this.mode = parseInt(header.toString('ascii', 100, 108).trim(), 8) || 0o644;
     this.linkname = header.toString('utf8', 157, 257).replace(/\0/g, '');
 
-    this.uid = parseInt(header.toString('utf8', 108, 116).trim(), 8);
-    this.gid = parseInt(header.toString('utf8', 116, 124).trim(), 8);
+    this.uid = parseInt(header.toString('ascii', 108, 116).trim(), 8);
+    this.gid = parseInt(header.toString('ascii', 116, 124).trim(), 8);
   }
 
   async writeToDisk(outputPath: (path: string) => string) {
