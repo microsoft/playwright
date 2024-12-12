@@ -14,8 +14,20 @@
  * limitations under the License.
  */
 import fs from 'fs';
-import { Writable } from 'stream';
+import { Writable, once } from 'stream';
 import path from 'path';
+import assert from 'assert';
+
+enum TarType {
+  REGTYPE,
+  LNKTYPE,
+  SYMTYPE,
+  CHRTYPE,
+  BLKTYPE,
+  DIRTYPE,
+  FIFOTYPE,
+  CONTTYPE
+}
 
 function parseHeader(buffer: Buffer) {
   if (buffer.length < 512)
@@ -25,29 +37,21 @@ function parseHeader(buffer: Buffer) {
   const prefixField = buffer.toString('utf8', 345, 500).replace(/\0/g, '');
   if (prefixField)
     name = path.join(prefixField, name);
+  name = name.replace(/^\/+/, '');
 
   const size = parseInt(buffer.toString('utf8', 124, 136).trim(), 8);
-  const typeFlag = buffer[156];
-  const mode = parseInt(buffer.toString('utf8', 100, 108).trim(), 8);
+  const type = parseInt(buffer.toString('ascii', 156, 157), 10) as TarType;
+  const mode = parseInt(buffer.toString('utf8', 100, 108).trim(), 8) || 0o644;
   const linkname = buffer.toString('utf8', 157, 257).replace(/\0/g, '');
 
-  // Parse user and group IDs
   const uid = parseInt(buffer.toString('utf8', 108, 116).trim(), 8);
   const gid = parseInt(buffer.toString('utf8', 116, 124).trim(), 8);
 
-  let type = 'file';
-  if (typeFlag === 53) // ASCII '5'
-    type = 'directory';
-  else if (typeFlag === 50) // ASCII '2'
-    type = 'symlink';
-  else if (typeFlag === 0 || typeFlag === 48) // ASCII '0'
-    type = 'file';
-
   return {
-    name: name.replace(/^\/+/, ''),
+    name,
     size,
     type,
-    mode: mode || 0o644,
+    mode,
     linkname,
     uid,
     gid
@@ -81,48 +85,49 @@ export class TarExtractor extends Writable {
           continue;
         }
 
-        this.currentHeader = parseHeader(this.buffer);
+        const header = parseHeader(this.buffer);
         this.buffer = this.buffer.subarray(512);
-        await this.processHeader();
 
-        if (!this.currentFileStream)
-          this.currentHeader = null;
+        const fullPath = this.outputPath(header.name);
+        switch (header.type) {
+          case TarType.DIRTYPE:
+            await fs.promises.mkdir(fullPath, { recursive: true, mode: 0o755 });
+            break;
+          case TarType.SYMTYPE:
+            await fs.promises.symlink(header.linkname, fullPath);
+            break;
+          case TarType.REGTYPE:
+            this.currentFileStream = fs.createWriteStream(fullPath, { mode: header.mode });
+            await once(this.currentFileStream, 'ready');
+            this.currentHeader = header;
+            this.remainingBytes = header.size;
+            break;
+          default:
+            throw new Error(`Unsupported type ${header.type} for '${header.name}'`);
+        }
 
         continue;
       }
 
-      if (this.remainingBytes > 0) {
-        const dataChunk = this.buffer.subarray(0, this.remainingBytes);
-        this.buffer = this.buffer.subarray(this.remainingBytes);
-        this.remainingBytes -= dataChunk.length;
+      assert(this.currentFileStream);
+      assert(this.remainingBytes > 0);
 
-        this.currentFileStream!.write(dataChunk);
+      const dataChunk = this.buffer.subarray(0, this.remainingBytes);
+      this.buffer = this.buffer.subarray(this.remainingBytes);
+      this.remainingBytes -= dataChunk.length;
 
-        if (this.remainingBytes === 0) {
-          const padding = 512 - (this.currentHeader!.size % 512);
-          if (padding < 512)
-            this.buffer = this.buffer.subarray(padding);
+      this.currentFileStream.write(dataChunk);
 
-          this.currentFileStream!.end();
-          this.currentHeader = null;
-          this.currentFileStream = null;
-        }
+      if (this.remainingBytes === 0) {
+        this.currentFileStream.end();
+        this.currentFileStream = null;
+
+        const padding = 512 - (this.currentHeader.size % 512);
+        if (padding < 512)
+          this.buffer = this.buffer.subarray(padding);
+
+        this.currentHeader = null;
       }
-    }
-  }
-
-  private async processHeader() {
-    if (!this.currentHeader)
-      throw new Error('No header');
-    const fullPath = this.outputPath(this.currentHeader.name);
-
-    if (this.currentHeader.type === 'directory') {
-      await fs.promises.mkdir(fullPath, { recursive: true, mode: 0o755 });
-    } else if (this.currentHeader.type === 'symlink') {
-      await fs.promises.symlink(this.currentHeader.linkname, fullPath);
-    } else {
-      this.currentFileStream = fs.createWriteStream(fullPath, { mode: this.currentHeader.mode });
-      this.remainingBytes = this.currentHeader.size;
     }
   }
 }
