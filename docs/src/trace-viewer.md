@@ -37,7 +37,7 @@ playwright show-trace trace.zip
 pwsh bin/Debug/netX/playwright.ps1 show-trace trace.zip
 ```
 
-## Using [trace.playwright.dev](https://trace.playwright.dev)
+### Using [trace.playwright.dev](https://trace.playwright.dev)
 
 [trace.playwright.dev](https://trace.playwright.dev) is a statically hosted variant of the Trace Viewer. You can upload trace files using drag and drop or via the `Select file(s)` button.
 
@@ -45,7 +45,7 @@ Trace Viewer loads the trace entirely in your browser and does not transmit any 
 
 <img width="1119" alt="Drop Playwright Trace to load" src="https://user-images.githubusercontent.com/13063165/194577918-b4d45726-2692-4093-8a28-9e73552617ef.png" />
 
-## Viewing remote traces
+### Viewing remote traces
 
 You can open remote traces directly using its URL. This makes it easy to view the remote trace without having to manually download the file from CI runs, for example.
 
