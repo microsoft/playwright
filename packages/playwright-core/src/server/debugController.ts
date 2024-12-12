@@ -25,6 +25,9 @@ import { Recorder } from './recorder';
 import { EmptyRecorderApp } from './recorder/recorderApp';
 import { asLocator, type Language } from '../utils';
 import { parseYamlForAriaSnapshot } from './ariaSnapshot';
+import type { ParsedYaml } from '../utils/isomorphic/ariaSnapshot';
+import { parseYamlTemplate } from '../utils/isomorphic/ariaSnapshot';
+import { unsafeLocatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
 
 const internalMetadata = serverSideCallMetadata();
 
@@ -144,9 +147,17 @@ export class DebugController extends SdkObject {
   }
 
   async highlight(params: { selector?: string, ariaTemplate?: string }) {
+    // Assert parameters validity.
+    if (params.selector)
+      unsafeLocatorOrSelectorAsSelector(this._sdkLanguage, params.selector, 'data-testid');
+    let parsedYaml: ParsedYaml | undefined;
+    if (params.ariaTemplate) {
+      parsedYaml = parseYamlForAriaSnapshot(params.ariaTemplate);
+      parseYamlTemplate(parsedYaml);
+    }
     for (const recorder of await this._allRecorders()) {
-      if (params.ariaTemplate)
-        recorder.setHighlightedAriaTemplate(parseYamlForAriaSnapshot(params.ariaTemplate));
+      if (parsedYaml)
+        recorder.setHighlightedAriaTemplate(parsedYaml);
       else if (params.selector)
         recorder.setHighlightedSelector(this._sdkLanguage, params.selector);
     }
