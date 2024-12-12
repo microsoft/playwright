@@ -19,13 +19,12 @@ import path from 'path';
 
 function parseHeader(buffer: Buffer) {
   if (buffer.length < 512)
-    return null;
+    throw new Error('Invalid header: ' + buffer.toString('utf8'));
 
   let name = buffer.toString('utf8', 0, 100).replace(/\0/g, '');
   const prefixField = buffer.toString('utf8', 345, 500).replace(/\0/g, '');
   if (prefixField)
     name = path.join(prefixField, name);
-
 
   const size = parseInt(buffer.toString('utf8', 124, 136).trim(), 8);
   const typeFlag = buffer[156];
@@ -74,7 +73,6 @@ export class TarExtractor extends Writable {
 
   private async _writeImpl(chunk: Buffer): Promise<undefined> {
     this.buffer = Buffer.concat([this.buffer, chunk]);
-
     while (this.buffer.length >= 512) {
       if (!this.currentHeader) {
         // Check for end of archive (two consecutive zero blocks)
@@ -83,89 +81,48 @@ export class TarExtractor extends Writable {
           continue;
         }
 
-        const header = parseHeader(this.buffer);
-        if (!header)
-          break;
-
-        this.currentHeader = header;
-        this.remainingBytes = header.size;
+        this.currentHeader = parseHeader(this.buffer);
         this.buffer = this.buffer.subarray(512);
+        await this.processHeader();
 
-        if (header.size > 0)
-          this.currentFileStream = await this.processHeader(header);
-        else
-          await this.processHeader(header); // For symlinks and directories
+        if (!this.currentFileStream)
+          this.currentHeader = null;
 
         continue;
       }
 
-      const blockSize = Math.min(this.remainingBytes, this.buffer.length);
-      if (blockSize === 0) {
-        this.currentHeader = null;
-        this.currentFileStream = null;
-        continue;
-      }
+      if (this.remainingBytes > 0) {
+        const dataChunk = this.buffer.subarray(0, this.remainingBytes);
+        this.buffer = this.buffer.subarray(this.remainingBytes);
+        this.remainingBytes -= dataChunk.length;
 
-      const dataChunk = this.buffer.subarray(0, blockSize);
-      this.buffer = this.buffer.subarray(blockSize);
-      this.remainingBytes -= blockSize;
+        this.currentFileStream!.write(dataChunk);
 
-      if (this.currentFileStream)
-        await new Promise<void>((resolve, reject) => this.currentFileStream!.write(dataChunk, err => err ? reject(err) : resolve()));
+        if (this.remainingBytes === 0) {
+          const padding = 512 - (this.currentHeader!.size % 512);
+          if (padding < 512)
+            this.buffer = this.buffer.subarray(padding);
 
-      // Handle padding
-      if (this.remainingBytes === 0) {
-        const padding = 512 - (this.currentHeader.size % 512);
-        if (padding < 512)
-          this.buffer = this.buffer.subarray(padding);
-
-        this.currentHeader = null;
-        if (this.currentFileStream) {
-          await new Promise(resolve => this.currentFileStream!.end(resolve));
+          this.currentFileStream!.end();
+          this.currentHeader = null;
           this.currentFileStream = null;
         }
       }
     }
   }
 
-  async mkdir(dir: string) {
-    try {
-      await fs.promises.mkdir(dir, { recursive: true });
-      // Set proper permissions for directories
-      await fs.promises.chmod(dir, 0o755);
-    } catch (err) {
-      if (err.code !== 'EEXIST')
-        throw err;
+  private async processHeader() {
+    if (!this.currentHeader)
+      throw new Error('No header');
+    const fullPath = this.outputPath(this.currentHeader.name);
+
+    if (this.currentHeader.type === 'directory') {
+      await fs.promises.mkdir(fullPath, { recursive: true, mode: 0o755 });
+    } else if (this.currentHeader.type === 'symlink') {
+      await fs.promises.symlink(this.currentHeader.linkname, fullPath);
+    } else {
+      this.currentFileStream = fs.createWriteStream(fullPath, { mode: this.currentHeader.mode });
+      this.remainingBytes = this.currentHeader.size;
     }
-  }
-
-  async processHeader(header: TarHeader) {
-    const fullPath = this.outputPath(header.name);
-    await this.mkdir(path.dirname(fullPath));
-
-    if (header.type === 'directory') {
-      await this.mkdir(fullPath);
-      return null;
-    }
-
-    if (header.type === 'symlink') {
-      await this.createSymlink(fullPath, header.linkname);
-      return null;
-    }
-
-    // TODO: track chmod maybe
-
-    return fs.createWriteStream(fullPath, { mode: header.mode });
-  }
-
-  async createSymlink(symlinkPath: string, targetPath: string) {
-    try {
-      await fs.promises.unlink(symlinkPath);
-    } catch (err) {
-      if (err.code !== 'ENOENT')
-        throw err;
-    }
-
-    await fs.promises.symlink(targetPath, symlinkPath);
   }
 }
