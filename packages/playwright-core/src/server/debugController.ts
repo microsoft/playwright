@@ -226,6 +226,10 @@ class InspectingRecorderApp extends EmptyRecorderApp {
     this._debugController = debugController;
   }
 
+  override disableModeController(): boolean {
+    return true;
+  }
+
   override async elementPicked(elementInfo: ElementInfo): Promise<void> {
     const locator: string = asLocator(this._debugController._sdkLanguage, elementInfo.selector);
     this._debugController.emit(DebugController.Events.InspectRequested, { selector: elementInfo.selector, locator, ariaSnapshot: elementInfo.ariaSnapshot });

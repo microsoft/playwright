@@ -39,6 +39,7 @@ export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
   async setSources(sources: Source[]): Promise<void> {}
   async setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void> {}
+  disableModeController(): boolean { return false; }
 }
 
 export class RecorderApp extends EventEmitter implements IRecorderApp {
@@ -170,5 +171,9 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     await this._page.mainFrame().evaluateExpression(((callLogs: CallLog[]) => {
       window.playwrightUpdateLogs(callLogs);
     }).toString(), { isFunction: true }, callLogs).catch(() => {});
+  }
+
+  disableModeController(): boolean {
+    return false;
   }
 }

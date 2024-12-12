@@ -149,21 +149,24 @@ x-pw-tools-list {
 
 x-pw-tool-item {
   pointer-events: auto;
-  cursor: pointer;
   height: 28px;
   width: 28px;
   border-radius: 3px;
+}
+
+x-pw-tool-item:not(.disabled) {
+  cursor: pointer;
 }
 
 x-pw-tool-item:not(.disabled):hover {
   background-color: hsl(0, 0%, 86%);
 }
 
-x-pw-tool-item.active {
+x-pw-tool-item.toggled {
   background-color: rgba(138, 202, 228, 0.5);
 }
 
-x-pw-tool-item.active:not(.disabled):hover {
+x-pw-tool-item.toggled:not(.disabled):hover {
   background-color: #8acae4c4;
 }
 
@@ -179,16 +182,20 @@ x-pw-tool-item.disabled > x-div {
   cursor: default;
 }
 
-x-pw-tool-item.record.active {
+x-pw-tool-item.record.toggled {
   background-color: transparent;
 }
 
-x-pw-tool-item.record.active:hover {
+x-pw-tool-item.record.toggled:not(.disabled):hover {
   background-color: hsl(0, 0%, 86%);
 }
 
-x-pw-tool-item.record.active > x-div {
+x-pw-tool-item.record.toggled > x-div {
   background-color: #a1260d;
+}
+
+x-pw-tool-item.record.disabled.toggled > x-div {
+  opacity: 0.8;
 }
 
 x-pw-tool-item.accept > x-div {

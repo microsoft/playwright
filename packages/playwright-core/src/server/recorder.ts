@@ -177,6 +177,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
         language: this._currentLanguage,
         testIdAttributeName: this._contextRecorder.testIdAttributeName(),
         overlay: this._overlayState,
+        disableModeController: this._recorderApp ? this._recorderApp.disableModeController() : true,
       };
       return uiState;
     });

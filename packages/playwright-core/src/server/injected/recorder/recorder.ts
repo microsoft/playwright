@@ -883,9 +883,13 @@ class Overlay {
         this._dragState = { offsetX: this._offsetX, dragStart: { x: (event as MouseEvent).clientX, y: 0 } };
       }),
       addEventListener(this._recordToggle, 'click', () => {
+        if (this._recordToggle.classList.contains('disabled'))
+          return;
         this._recorder.setMode(this._recorder.state.mode === 'none' || this._recorder.state.mode === 'standby' || this._recorder.state.mode === 'inspecting' ? 'recording' : 'standby');
       }),
       addEventListener(this._pickLocatorToggle, 'click', () => {
+        if (this._pickLocatorToggle.classList.contains('disabled'))
+          return;
         const newMode: Record<Mode, Mode> = {
           'inspecting': 'standby',
           'none': 'inspecting',
@@ -929,15 +933,18 @@ class Overlay {
   }
 
   setUIState(state: UIState) {
-    this._recordToggle.classList.toggle('active', state.mode === 'recording' || state.mode === 'assertingText' || state.mode === 'assertingVisibility' || state.mode === 'assertingValue' || state.mode === 'recording-inspecting');
-    this._pickLocatorToggle.classList.toggle('active', state.mode === 'inspecting' || state.mode === 'recording-inspecting');
-    this._assertVisibilityToggle.classList.toggle('active', state.mode === 'assertingVisibility');
+    this._recordToggle.classList.toggle('disabled', this._recorder.state.disableModeController);
+    this._pickLocatorToggle.classList.toggle('disabled', this._recorder.state.disableModeController);
+
+    this._recordToggle.classList.toggle('toggled', state.mode === 'recording' || state.mode === 'assertingText' || state.mode === 'assertingVisibility' || state.mode === 'assertingValue' || state.mode === 'assertingSnapshot' || state.mode === 'recording-inspecting');
+    this._pickLocatorToggle.classList.toggle('toggled', state.mode === 'inspecting' || state.mode === 'recording-inspecting');
+    this._assertVisibilityToggle.classList.toggle('toggled', state.mode === 'assertingVisibility');
     this._assertVisibilityToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
-    this._assertTextToggle.classList.toggle('active', state.mode === 'assertingText');
+    this._assertTextToggle.classList.toggle('toggled', state.mode === 'assertingText');
     this._assertTextToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
-    this._assertValuesToggle.classList.toggle('active', state.mode === 'assertingValue');
+    this._assertValuesToggle.classList.toggle('toggled', state.mode === 'assertingValue');
     this._assertValuesToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
-    this._assertSnapshotToggle.classList.toggle('active', state.mode === 'assertingSnapshot');
+    this._assertSnapshotToggle.classList.toggle('toggled', state.mode === 'assertingSnapshot');
     this._assertSnapshotToggle.classList.toggle('disabled', state.mode === 'none' || state.mode === 'standby' || state.mode === 'inspecting');
     if (this._offsetX !== state.overlay.offsetX) {
       this._offsetX = state.overlay.offsetX;
@@ -1031,6 +1038,7 @@ export class Recorder {
     testIdAttributeName: 'data-testid',
     language: 'javascript',
     overlay: { offsetX: 0 },
+    disableModeController: false,
   };
   readonly document: Document;
   private _delegate: RecorderDelegate = {};

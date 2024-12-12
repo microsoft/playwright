@@ -89,6 +89,10 @@ export class RecorderInTraceViewer extends EventEmitter implements IRecorderApp 
   async setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void> {
     this._transport.deliverEvent('setActions', { actions, sources });
   }
+
+  disableModeController(): boolean {
+    return true;
+  }
 }
 
 async function openApp(trace: string, options?: TraceViewerServerOptions & { headless?: boolean }): Promise<{ wsEndpointForTest: string | undefined, tracePage: Page, traceServer: HttpServer }> {

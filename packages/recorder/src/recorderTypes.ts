@@ -59,6 +59,7 @@ export type UIState = {
   language: Language;
   testIdAttributeName: string;
   overlay: OverlayState;
+  disableModeController: boolean;
 };
 
 export type CallLogStatus = 'in-progress' | 'done' | 'error' | 'paused';
