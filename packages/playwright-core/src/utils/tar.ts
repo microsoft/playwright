@@ -97,14 +97,14 @@ export class TarExtractor extends Writable {
   }
 
   override _write(chunk: Buffer, _encoding: string, callback: (err?: Error) => void) {
+    this.buffer = Buffer.concat([this.buffer, chunk]);
     // we queue parsing because some operations need to be sequential,
     // e.g. a directory entry needs to be created on disk
     // before we can create the file entry in that directory.
-    this.queue = this.queue.then(() => this._writeImpl(chunk)).then(callback).catch(callback);
+    this.queue = this.queue.then(() => this._parse()).then(callback).catch(callback);
   }
 
-  private async _writeImpl(chunk: Buffer): Promise<undefined> {
-    this.buffer = Buffer.concat([this.buffer, chunk]);
+  private async _parse(): Promise<undefined> {
     while (this.buffer.length >= 512) {
       if (!this.currentEntry) {
         // two consecutive zero blocks mark end of archive, skip them
