@@ -385,6 +385,7 @@ scheme.DebugControllerInitializer = tOptional(tObject({}));
 scheme.DebugControllerInspectRequestedEvent = tObject({
   selector: tString,
   locator: tString,
+  ariaSnapshot: tString,
 });
 scheme.DebugControllerSetModeRequestedEvent = tObject({
   mode: tString,

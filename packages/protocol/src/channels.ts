@@ -691,6 +691,7 @@ export interface DebugControllerChannel extends DebugControllerEventTarget, Chan
 export type DebugControllerInspectRequestedEvent = {
   selector: string,
   locator: string,
+  ariaSnapshot: string,
 };
 export type DebugControllerSetModeRequestedEvent = {
   mode: string,
