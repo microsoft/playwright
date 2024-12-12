@@ -38,9 +38,9 @@ const kOtherTestIdScore = 2;   // other data-test* attributes
 const kIframeByAttributeScore = 10;
 
 const kBeginPenalizedScore = 50;
-const kPlaceholderScore = 100;
-const kLabelScore = 120;
-const kRoleWithNameScore = 140;
+const kRoleWithNameScore = 100;
+const kPlaceholderScore = 120;
+const kLabelScore = 140;
 const kAltTextScore = 160;
 const kTextScore = 180;
 const kTitleScore = 200;
