@@ -96,7 +96,10 @@ export class TarExtractor extends Writable {
     super();
   }
 
-  override async _write(chunk: Buffer, _encoding: string, callback: (err?: Error) => void) {
+  override _write(chunk: Buffer, _encoding: string, callback: (err?: Error) => void) {
+    // we queue parsing because some operations need to be sequential,
+    // e.g. a directory entry needs to be created on disk
+    // before we can create the file entry in that directory.
     this.queue = this.queue.then(() => this._writeImpl(chunk)).then(callback).catch(callback);
   }
 
