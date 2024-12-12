@@ -40,6 +40,7 @@ export default defineConfig({
     // outputs into the public dir, where the build of vite.config.ts will pick it up
     outDir: path.resolve(__dirname, 'public'),
     emptyOutDir: false,
+    sourcemap: true,
     rollupOptions: {
       input: {
         sw: path.resolve(__dirname, 'src/sw-main.ts'),
