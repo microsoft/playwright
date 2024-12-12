@@ -84,9 +84,11 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
 
   expect(events).toEqual([
     {
+      ariaSnapshot: '- button "Submit"',
       selector: 'internal:role=button[name=\"Submit\"i]',
       locator: 'getByRole(\'button\', { name: \'Submit\' })',
     }, {
+      ariaSnapshot: '- button "Submit"',
       selector: 'internal:role=button[name=\"Submit\"i]',
       locator: 'getByRole(\'button\', { name: \'Submit\' })',
     },
