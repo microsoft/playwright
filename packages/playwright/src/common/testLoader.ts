@@ -68,7 +68,7 @@ export async function loadTestFile(file: string, rootDir: string, testErrors?: T
     suite.allTests().map(t => files.add(t.location.file));
     if (files.size === 1) {
       // All tests point to one file.
-      const mappedFile = files.values().next().value;
+      const mappedFile = files.values().next().value!;
       if (suite.location.file !== mappedFile) {
         // The file is different, check for a likely source map case.
         if (path.extname(mappedFile) !== path.extname(suite.location.file))

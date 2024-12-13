@@ -37,7 +37,7 @@ export class LRUCache<K, V> {
     const result = compute();
 
     while (this._map.size && this._size + result.size > this._maxSize) {
-      const [firstKey, firstValue] = this._map.entries().next().value;
+      const [firstKey, firstValue] = this._map.entries().next().value!;
       this._size -= firstValue.size;
       this._map.delete(firstKey);
     }

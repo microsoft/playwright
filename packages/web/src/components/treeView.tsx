@@ -180,7 +180,7 @@ export function TreeView<T extends TreeItem>({
         const itemData = treeItems.get(child as T);
         return itemData && <TreeItemHeader
           key={child.id}
-          item={child}
+          item={child as T}
           treeItems={treeItems}
           selectedItem={selectedItem}
           onSelected={onSelected}

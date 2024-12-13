@@ -309,7 +309,7 @@ class HtmlBuilder {
 
     let singleTestId: string | undefined;
     if (htmlReport.stats.total === 1) {
-      const testFile: TestFile  = data.values().next().value.testFile;
+      const testFile: TestFile  = data.values().next().value!.testFile;
       singleTestId = testFile.tests[0].testId;
     }
 

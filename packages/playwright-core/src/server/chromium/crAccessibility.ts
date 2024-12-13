@@ -299,6 +299,6 @@ class CRAXNode implements accessibility.AXNode {
       for (const childId of node._payload.childIds || [])
         node._children.push(nodeById.get(childId)!);
     }
-    return nodeById.values().next().value;
+    return nodeById.values().next().value!;
   }
 }
