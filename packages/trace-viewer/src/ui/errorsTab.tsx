@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ErrorMessage } from '@web/components/errorMessage';
+import { ErrorMessage } from '@playwright/web/src/components/errorMessage';
 import * as React from 'react';
 import type * as modelUtil from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';

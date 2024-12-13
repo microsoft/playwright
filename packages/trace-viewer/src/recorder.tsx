@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import '@web/common.css';
-import { applyTheme } from '@web/theme';
-import '@web/third_party/vscode/codicon.css';
+import '@playwright/web/src/common.css';
+import { applyTheme } from '@playwright/web/src/theme';
+import '@playwright/web/src/third_party/vscode/codicon.css';
 import * as ReactDOM from 'react-dom/client';
 import { RecorderView } from './ui/recorder/recorderView';
 

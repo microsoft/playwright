@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import '@web/common.css';
-import { Expandable } from '@web/components/expandable';
-import '@web/third_party/vscode/codicon.css';
-import { settings } from '@web/uiUtils';
+import '@playwright/web/src/common.css';
+import { Expandable } from '@playwright/web/src/components/expandable';
+import '@playwright/web/src/third_party/vscode/codicon.css';
+import { settings } from '@playwright/web/src/uiUtils';
 import React from 'react';
 import './uiModeFiltersView.css';
 import type { TeleSuiteUpdaterTestModel } from '@testIsomorphic/teleSuiteUpdater';

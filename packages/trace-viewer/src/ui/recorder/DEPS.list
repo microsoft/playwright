@@ -1,5 +1,5 @@
 [*]
 @isomorphic/**
 @trace/**
-@web/**
+@playwright/web/**
 ../**

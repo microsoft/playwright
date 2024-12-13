@@ -14,12 +14,12 @@
   limitations under the License.
 */
 
-import { ToolbarButton } from '@web/components/toolbarButton';
+import { ToolbarButton } from '@playwright/web/src/components/toolbarButton';
 import * as React from 'react';
 import type { ContextEntry } from '../types/entries';
 import { MultiTraceModel } from './modelUtil';
 import './workbenchLoader.css';
-import { toggleTheme } from '@web/theme';
+import { toggleTheme } from '@playwright/web/src/theme';
 import { Workbench } from './workbench';
 import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';
 

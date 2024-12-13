@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
-import type { Language } from '@web/components/codeMirrorWrapper';
-import { ToolbarButton } from '@web/components/toolbarButton';
-import { copy } from '@web/uiUtils';
+import { CodeMirrorWrapper } from '@playwright/web/src/components/codeMirrorWrapper';
+import type { Language } from '@playwright/web/src/components/codeMirrorWrapper';
+import { ToolbarButton } from '@playwright/web/src/components/toolbarButton';
+import { copy } from '@playwright/web/src/uiUtils';
 import * as React from 'react';
 import './sourceTab.css';
 

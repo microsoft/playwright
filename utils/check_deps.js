@@ -26,7 +26,7 @@ const builtins = new Set(Module.builtinModules);
 const packagesDir = path.resolve(path.join(__dirname, '..', 'packages'));
 
 const packages = new Map();
-packages.set('web', packagesDir + '/web/src/');
+packages.set('@playwright/web', packagesDir + '/web/');
 packages.set('injected', packagesDir + '/playwright-core/src/server/injected/');
 packages.set('isomorphic', packagesDir + '/playwright-core/src/utils/isomorphic/');
 packages.set('testIsomorphic', packagesDir + '/playwright/src/isomorphic/');
@@ -128,14 +128,24 @@ async function innerCheckDeps(root) {
         importPath = path.resolve(path.dirname(fileName), importName);
       } else if (importName.startsWith('@')) {
         const tokens = importName.substring(1).split('/');
-        const package = tokens[0];
-        if (packages.has(package))
-          importPath = packages.get(package) + tokens.slice(1).join('/');
+        if (packages.has(`@${tokens[0]}/${tokens[1]}`)) {
+          // Namespaced package.
+          importPath = packages.get(`@${tokens[0]}/${tokens[1]}`) + tokens.slice(2).join('/');
+        } else if (packages.has(tokens[0])) {
+          // Aliases.
+          importPath = packages.get(tokens[0]) + tokens.slice(1).join('/');
+        }
       }
 
       const mergedDeps = calculateDeps(fileName);
       if (mergedDeps.includes('***'))
         return;
+
+      // Unresolved import.
+      if (allowImport(fileName, importName, mergedDeps))
+        return;
+
+      // Resolved import.
       if (importPath) {
         if (!fs.existsSync(importPath)) {
           if (fs.existsSync(importPath + '.ts'))
@@ -192,8 +202,9 @@ async function innerCheckDeps(root) {
         }
         if (line === '***')
           group.push('***');
-        else if (line.startsWith('@'))
-          group.push(line.replace(/@([\w-]+)\/(.*)/, (_, arg1, arg2) => packages.get(arg1) + arg2));
+        else if (line.startsWith('@')) {
+          group.push(line);
+        }
         else
           group.push(path.resolve(depsDirectory, line));
       }

@@ -15,14 +15,14 @@
 */
 
 import type * as actionTypes from '@recorder/actions';
-import { SourceChooser } from '@web/components/sourceChooser';
-import { SplitView } from '@web/components/splitView';
-import type { TabbedPaneTabModel } from '@web/components/tabbedPane';
-import { TabbedPane } from '@web/components/tabbedPane';
-import { Toolbar } from '@web/components/toolbar';
-import { ToolbarButton, ToolbarSeparator } from '@web/components/toolbarButton';
-import { toggleTheme } from '@web/theme';
-import { copy, useSetting } from '@web/uiUtils';
+import { SourceChooser } from '@playwright/web/src/components/sourceChooser';
+import { SplitView } from '@playwright/web/src/components/splitView';
+import type { TabbedPaneTabModel } from '@playwright/web/src/components/tabbedPane';
+import { TabbedPane } from '@playwright/web/src/components/tabbedPane';
+import { Toolbar } from '@playwright/web/src/components/toolbar';
+import { ToolbarButton, ToolbarSeparator } from '@playwright/web/src/components/toolbarButton';
+import { toggleTheme } from '@playwright/web/src/theme';
+import { copy, useSetting } from '@playwright/web/src/uiUtils';
 import * as React from 'react';
 import { ConsoleTab, useConsoleTabModel } from '../consoleTab';
 import type { Boundaries } from '../geometry';

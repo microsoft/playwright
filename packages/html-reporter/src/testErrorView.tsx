@@ -14,11 +14,11 @@
   limitations under the License.
 */
 
-import { ansi2html } from '@web/ansi2html';
+import { ansi2html } from '@playwright/web/src/ansi2html';
 import * as React from 'react';
 import './testErrorView.css';
-import type { ImageDiff } from '@web/shared/imageDiffView';
-import { ImageDiffView } from '@web/shared/imageDiffView';
+import type { ImageDiff } from '@playwright/web/src/shared/imageDiffView';
+import { ImageDiffView } from '@playwright/web/src/shared/imageDiffView';
 
 export const TestErrorView: React.FC<{
   error: string;

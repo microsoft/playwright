@@ -17,7 +17,7 @@
 import * as React from 'react';
 import './annotationsTab.css';
 import { PlaceholderPanel } from './placeholderPanel';
-import { linkifyText } from '@web/renderUtils';
+import { linkifyText } from '@playwright/web/src/renderUtils';
 
 type Annotation = { type: string; description?: string; };
 

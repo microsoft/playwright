@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-@import '@web/third_party/vscode/colors.css';
+@import '@playwright/web/src/third_party/vscode/colors.css';
 
 .test-error-view {
   white-space: pre;

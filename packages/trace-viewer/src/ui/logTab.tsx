@@ -16,9 +16,9 @@
 
 import type { ActionTraceEventInContext } from './modelUtil';
 import * as React from 'react';
-import { ListView } from '@web/components/listView';
+import { ListView } from '@playwright/web/src/components/listView';
 import { PlaceholderPanel } from './placeholderPanel';
-import { msToString } from '@web/uiUtils';
+import { msToString } from '@playwright/web/src/uiUtils';
 import './logTab.css';
 
 const LogList = ListView<{ message: string, time: string }>;

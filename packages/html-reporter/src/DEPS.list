@@ -1,6 +1,6 @@
 [*]
 @playwright/experimental-ct-react
-@web/**
+@playwright/web/**
 
 [chip.spec.tsx]
 ***

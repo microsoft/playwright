@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-import '@web/third_party/vscode/codicon.css';
-import '@web/common.css';
+import '@playwright/web/src/third_party/vscode/codicon.css';
+import '@playwright/web/src/common.css';
 import React from 'react';
 import { TeleSuite } from '@testIsomorphic/teleReceiver';
 import { TeleSuiteUpdater, type TeleSuiteUpdaterProgress, type TeleSuiteUpdaterTestModel } from '@testIsomorphic/teleSuiteUpdater';
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
 import type * as reporterTypes from 'playwright/types/testReporter';
-import { SplitView } from '@web/components/splitView';
+import { SplitView } from '@playwright/web/src/components/splitView';
 import type { SourceLocation } from './modelUtil';
 import './uiModeView.css';
-import { ToolbarButton } from '@web/components/toolbarButton';
-import { Toolbar } from '@web/components/toolbar';
-import type { XtermDataSource } from '@web/components/xtermWrapper';
-import { XtermWrapper } from '@web/components/xtermWrapper';
-import { useDarkModeSetting } from '@web/theme';
-import { clsx, settings, useSetting } from '@web/uiUtils';
+import { ToolbarButton } from '@playwright/web/src/components/toolbarButton';
+import { Toolbar } from '@playwright/web/src/components/toolbar';
+import type { XtermDataSource } from '@playwright/web/src/components/xtermWrapper';
+import { XtermWrapper } from '@playwright/web/src/components/xtermWrapper';
+import { useDarkModeSetting } from '@playwright/web/src/theme';
+import { clsx, settings, useSetting } from '@playwright/web/src/uiUtils';
 import { statusEx, TestTree } from '@testIsomorphic/testTree';
 import type { TreeItem  } from '@testIsomorphic/testTree';
 import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';

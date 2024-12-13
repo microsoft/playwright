@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { clsx } from '@web/uiUtils';
+import { clsx } from '@playwright/web/src/uiUtils';
 import './tag.css';
 
 export const TagView = ({ tag, style, onClick }: { tag: string, style?: React.CSSProperties, onClick?: (e: React.MouseEvent) => void }) => {

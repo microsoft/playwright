@@ -16,13 +16,13 @@
 
 import type { TreeItem } from '@testIsomorphic/testTree';
 import type { TestTree } from '@testIsomorphic/testTree';
-import '@web/common.css';
-import { Toolbar } from '@web/components/toolbar';
-import { ToolbarButton } from '@web/components/toolbarButton';
-import type { TreeState } from '@web/components/treeView';
-import { TreeView } from '@web/components/treeView';
-import '@web/third_party/vscode/codicon.css';
-import { msToString } from '@web/uiUtils';
+import '@playwright/web/src/common.css';
+import { Toolbar } from '@playwright/web/src/components/toolbar';
+import { ToolbarButton } from '@playwright/web/src/components/toolbarButton';
+import type { TreeState } from '@playwright/web/src/components/treeView';
+import { TreeView } from '@playwright/web/src/components/treeView';
+import '@playwright/web/src/third_party/vscode/codicon.css';
+import { msToString } from '@playwright/web/src/uiUtils';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import React from 'react';
 import type { SourceLocation } from './modelUtil';

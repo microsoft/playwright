@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-import { SplitView } from '@web/components/splitView';
+import { SplitView } from '@playwright/web/src/components/splitView';
 import * as React from 'react';
-import { useAsyncMemo } from '@web/uiUtils';
+import { useAsyncMemo } from '@playwright/web/src/uiUtils';
 import './sourceTab.css';
 import { StackTraceView } from './stackTrace';
-import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
-import type { SourceHighlight } from '@web/components/codeMirrorWrapper';
+import { CodeMirrorWrapper } from '@playwright/web/src/components/codeMirrorWrapper';
+import type { SourceHighlight } from '@playwright/web/src/components/codeMirrorWrapper';
 import type { SourceLocation, SourceModel } from './modelUtil';
 import type { StackFrame } from '@protocol/channels';
 import { CopyToClipboard } from './copyToClipboard';
-import { ToolbarButton } from '@web/components/toolbarButton';
-import { Toolbar } from '@web/components/toolbar';
+import { ToolbarButton } from '@playwright/web/src/components/toolbarButton';
+import { Toolbar } from '@playwright/web/src/components/toolbar';
 
 export const SourceTab: React.FunctionComponent<{
   stack?: StackFrame[],

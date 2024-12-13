@@ -16,15 +16,15 @@
 
 import * as React from 'react';
 import './attachmentsTab.css';
-import { ImageDiffView } from '@web/shared/imageDiffView';
+import { ImageDiffView } from '@playwright/web/src/shared/imageDiffView';
 import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
-import { CodeMirrorWrapper, lineHeight } from '@web/components/codeMirrorWrapper';
+import { CodeMirrorWrapper, lineHeight } from '@playwright/web/src/components/codeMirrorWrapper';
 import { isTextualMimeType } from '@isomorphic/mimeType';
-import { Expandable } from '@web/components/expandable';
-import { linkifyText } from '@web/renderUtils';
-import { clsx } from '@web/uiUtils';
+import { Expandable } from '@playwright/web/src/components/expandable';
+import { linkifyText } from '@playwright/web/src/renderUtils';
+import { clsx } from '@playwright/web/src/uiUtils';
 
 type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
 

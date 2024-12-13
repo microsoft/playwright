@@ -19,7 +19,7 @@ import './chip.css';
 import './colors.css';
 import './common.css';
 import * as icons from './icons';
-import { clsx } from '@web/uiUtils';
+import { clsx } from '@playwright/web/src/uiUtils';
 import { useAnchor } from './links';
 
 export const Chip: React.FC<{

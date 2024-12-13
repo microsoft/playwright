@@ -36,7 +36,6 @@ export default defineConfig({
       '@protocol': path.resolve(__dirname, '../protocol/src'),
       '@testIsomorphic': path.resolve(__dirname, '../playwright/src/isomorphic'),
       '@trace': path.resolve(__dirname, '../trace/src'),
-      '@web': path.resolve(__dirname, '../web/src'),
     },
   },
   build: {

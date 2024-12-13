@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { sha1 } from '@web/uiUtils';
+import { sha1 } from '@playwright/web/src/uiUtils';
 import * as React from 'react';
 import type { ContextEntry } from '../../types/entries';
 import { MultiTraceModel } from '../modelUtil';

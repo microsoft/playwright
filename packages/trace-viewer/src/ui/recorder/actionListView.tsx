@@ -15,7 +15,7 @@
 */
 
 import type * as actionTypes from '@recorder/actions';
-import { ListView } from '@web/components/listView';
+import { ListView } from '@playwright/web/src/components/listView';
 import * as React from 'react';
 import '../actionList.css';
 import { traceParamsForAction } from '@isomorphic/recorderUtils';

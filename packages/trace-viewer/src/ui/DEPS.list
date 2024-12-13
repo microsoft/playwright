@@ -2,7 +2,7 @@
 @injected/**
 @isomorphic/**
 @trace/**
-@web/**
+@playwright/web/**
 ../entries.ts
 ../geometry.ts
 ../../../playwright/src/isomorphic/**

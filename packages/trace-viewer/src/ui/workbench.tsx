@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { SplitView } from '@web/components/splitView';
+import { SplitView } from '@playwright/web/src/components/splitView';
 import * as React from 'react';
 import { ActionList } from './actionList';
 import { CallTab } from './callTab';
@@ -27,16 +27,16 @@ import type * as modelUtil from './modelUtil';
 import { NetworkTab, useNetworkTabModel } from './networkTab';
 import { SnapshotTabsView } from './snapshotTab';
 import { SourceTab } from './sourceTab';
-import { TabbedPane } from '@web/components/tabbedPane';
-import type { TabbedPaneTabModel } from '@web/components/tabbedPane';
+import { TabbedPane } from '@playwright/web/src/components/tabbedPane';
+import type { TabbedPaneTabModel } from '@playwright/web/src/components/tabbedPane';
 import { Timeline } from './timeline';
 import { MetadataView } from './metadataView';
 import { AttachmentsTab } from './attachmentsTab';
 import { AnnotationsTab } from './annotationsTab';
 import type { Boundaries } from './geometry';
 import { InspectorTab } from './inspectorTab';
-import { ToolbarButton } from '@web/components/toolbarButton';
-import { useSetting, msToString, clsx } from '@web/uiUtils';
+import { ToolbarButton } from '@playwright/web/src/components/toolbarButton';
+import { useSetting, msToString, clsx } from '@playwright/web/src/uiUtils';
 import type { Entry } from '@trace/har';
 import './workbench.css';
 import { testStatusIcon, testStatusText } from './testUtils';

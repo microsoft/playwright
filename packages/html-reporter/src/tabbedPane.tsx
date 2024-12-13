@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { clsx } from '@web/uiUtils';
+import { clsx } from '@playwright/web/src/uiUtils';
 import './tabbedPane.css';
 import * as React from 'react';
 

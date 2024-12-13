@@ -18,10 +18,10 @@ import type * as channels from '@protocol/channels';
 import * as React from 'react';
 import './consoleTab.css';
 import type * as modelUtil from './modelUtil';
-import { ListView } from '@web/components/listView';
+import { ListView } from '@playwright/web/src/components/listView';
 import type { Boundaries } from './geometry';
-import { clsx, msToString } from '@web/uiUtils';
-import { ansi2html } from '@web/ansi2html';
+import { clsx, msToString } from '@playwright/web/src/uiUtils';
+import { ansi2html } from '@playwright/web/src/ansi2html';
 import { PlaceholderPanel } from './placeholderPanel';
 
 export type ConsoleEntry = {

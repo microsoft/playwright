@@ -15,19 +15,19 @@
 */
 
 import type { CallLog, ElementInfo, Mode, Source } from './recorderTypes';
-import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
-import type { SourceHighlight } from '@web/components/codeMirrorWrapper';
-import { SplitView } from '@web/components/splitView';
-import { TabbedPane } from '@web/components/tabbedPane';
-import { Toolbar } from '@web/components/toolbar';
-import { emptySource, SourceChooser } from '@web/components/sourceChooser';
-import { ToolbarButton, ToolbarSeparator } from '@web/components/toolbarButton';
+import { CodeMirrorWrapper } from '@playwright/web/src/components/codeMirrorWrapper';
+import type { SourceHighlight } from '@playwright/web/src/components/codeMirrorWrapper';
+import { SplitView } from '@playwright/web/src/components/splitView';
+import { TabbedPane } from '@playwright/web/src/components/tabbedPane';
+import { Toolbar } from '@playwright/web/src/components/toolbar';
+import { emptySource, SourceChooser } from '@playwright/web/src/components/sourceChooser';
+import { ToolbarButton, ToolbarSeparator } from '@playwright/web/src/components/toolbarButton';
 import * as React from 'react';
 import { CallLogView } from './callLog';
 import './recorder.css';
 import { asLocator } from '@isomorphic/locatorGenerators';
-import { toggleTheme } from '@web/theme';
-import { copy, useSetting } from '@web/uiUtils';
+import { toggleTheme } from '@playwright/web/src/theme';
+import { copy, useSetting } from '@playwright/web/src/uiUtils';
 import yaml from 'yaml';
 import { parseAriaKey } from '@isomorphic/ariaSnapshot';
 import type { AriaKeyError, ParsedYaml } from '@isomorphic/ariaSnapshot';

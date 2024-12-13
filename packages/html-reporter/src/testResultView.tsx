@@ -22,8 +22,8 @@ import { AutoChip } from './chip';
 import { traceImage } from './images';
 import { Anchor, AttachmentLink, generateTraceUrl } from './links';
 import { statusIcon } from './statusIcon';
-import type { ImageDiff } from '@web/shared/imageDiffView';
-import { ImageDiffView } from '@web/shared/imageDiffView';
+import type { ImageDiff } from '@playwright/web/src/shared/imageDiffView';
+import { ImageDiffView } from '@playwright/web/src/shared/imageDiffView';
 import { TestErrorView, TestScreenshotErrorView } from './testErrorView';
 import './testResultView.css';
 

@@ -16,8 +16,8 @@
 
 import { artifactsFolderName } from '@testIsomorphic/folders';
 import type { TreeItem } from '@testIsomorphic/testTree';
-import '@web/common.css';
-import '@web/third_party/vscode/codicon.css';
+import '@playwright/web/src/common.css';
+import '@playwright/web/src/third_party/vscode/codicon.css';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import React from 'react';
 import type { ContextEntry } from '../types/entries';

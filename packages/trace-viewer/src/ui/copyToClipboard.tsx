@@ -15,7 +15,7 @@
  */
 
 import * as React from 'react';
-import { ToolbarButton } from '@web/components/toolbarButton';
+import { ToolbarButton } from '@playwright/web/src/components/toolbarButton';
 import './copyToClipboard.css';
 
 export const CopyToClipboard: React.FunctionComponent<{

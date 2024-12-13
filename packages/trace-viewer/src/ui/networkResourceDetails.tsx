@@ -17,9 +17,9 @@
 import type { ResourceSnapshot } from '@trace/snapshot';
 import * as React from 'react';
 import './networkResourceDetails.css';
-import { TabbedPane } from '@web/components/tabbedPane';
-import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
-import { ToolbarButton } from '@web/components/toolbarButton';
+import { TabbedPane } from '@playwright/web/src/components/tabbedPane';
+import { CodeMirrorWrapper } from '@playwright/web/src/components/codeMirrorWrapper';
+import { ToolbarButton } from '@playwright/web/src/components/toolbarButton';
 import { generateCurlCommand, generateFetchCall } from '../third_party/devtools';
 import { CopyToClipboardTextButton } from './copyToClipboard';
 import { getAPIRequestCodeGen } from './codegen';

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { clsx, msToString, useMeasure } from '@web/uiUtils';
-import { GlassPane } from '@web/shared/glassPane';
+import { clsx, msToString, useMeasure } from '@playwright/web/src/uiUtils';
+import { GlassPane } from '@playwright/web/src/shared/glassPane';
 import * as React from 'react';
 import type { Boundaries } from './geometry';
 import { FilmStrip } from './filmStrip';

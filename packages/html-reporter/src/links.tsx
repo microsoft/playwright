@@ -20,8 +20,8 @@ import * as icons from './icons';
 import { TreeItem } from './treeItem';
 import { CopyToClipboard } from './copyToClipboard';
 import './links.css';
-import { linkifyText } from '@web/renderUtils';
-import { clsx } from '@web/uiUtils';
+import { linkifyText } from '@playwright/web/src/renderUtils';
+import { clsx } from '@playwright/web/src/uiUtils';
 
 export function navigate(href: string | URL) {
   window.history.pushState({}, '', href);

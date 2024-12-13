@@ -23,9 +23,9 @@ import { Link, ProjectLink, SearchParamsContext } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
-import { linkifyText } from '@web/renderUtils';
+import { linkifyText } from '@playwright/web/src/renderUtils';
 import { hashStringToInt, msToString } from './utils';
-import { clsx } from '@web/uiUtils';
+import { clsx } from '@playwright/web/src/uiUtils';
 import { CopyToClipboardContainer } from './copyToClipboard';
 
 export const TestCaseView: React.FC<{

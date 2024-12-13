@@ -23,7 +23,7 @@ import { generateTraceUrl, Link, navigate, ProjectLink, SearchParamsContext } fr
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
 import { video, image, trace } from './icons';
-import { clsx } from '@web/uiUtils';
+import { clsx } from '@playwright/web/src/uiUtils';
 
 export const TestFileView: React.FC<React.PropsWithChildren<{
   file: TestFileSummary;

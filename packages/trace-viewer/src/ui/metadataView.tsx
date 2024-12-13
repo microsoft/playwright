@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { msToString } from '@web/uiUtils';
+import { msToString } from '@playwright/web/src/uiUtils';
 import * as React from 'react';
 import type { MultiTraceModel } from './modelUtil';
 import './callTab.css';

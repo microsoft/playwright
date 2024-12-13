@@ -15,7 +15,6 @@
           "@protocol/*": ["packages/protocol/src/*"],
           "@recorder/*": ["packages/recorder/src/*"],
           "@trace/*": ["packages/trace/src/*"],
-          "@web/*": ["packages/web/src/*"],
         },
     },
     "include": ["**/*.spec.js", "**/*.ts"],
