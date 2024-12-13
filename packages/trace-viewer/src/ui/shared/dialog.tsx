@@ -37,6 +37,10 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
 }) => {
   const dialogRef = React.useRef<HTMLDialogElement>(null);
 
+  // Allow window dimension changes to force a rerender
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_, setRecalculateDimensionsCount] = React.useState(0);
+
   let style: React.CSSProperties | undefined = undefined;
 
   if (hostingElement?.current) {
@@ -83,14 +87,19 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
     return () => {};
   }, [open, requestClose]);
 
+  React.useEffect(() => {
+    const onResize = () => setRecalculateDimensionsCount(count => count + 1);
+
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      window.removeEventListener('resize', onResize);
+    };
+  }, []);
+
   return (
     open && (
-      <dialog
-        ref={dialogRef}
-        style={style}
-        className={className}
-        open
-      >
+      <dialog ref={dialogRef} style={style} className={className} open>
         {children}
       </dialog>
     )
