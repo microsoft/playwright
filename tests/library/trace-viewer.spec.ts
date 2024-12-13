@@ -1593,3 +1593,60 @@ test('should show a popover', async ({ runAndTrace, page, server }) => {
   const popover = snapshot.locator('#pop');
   await expect.poll(() => popover.evaluate(e => e.matches(':popover-open'))).toBe(true);
 });
+
+test('should open settings dialog', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer([traceFile]);
+  await traceViewer.selectAction('http://localhost');
+  await traceViewer.showSettings();
+  await expect(traceViewer.settingsDialog).toBeVisible();
+});
+
+test('should toggle theme color', async ({ showTraceViewer, page }) => {
+  const traceViewer = await showTraceViewer([traceFile]);
+  await traceViewer.selectAction('http://localhost');
+  await traceViewer.showSettings();
+
+  await expect(traceViewer.darkModeSetting).toBeChecked({ checked: false });
+
+  await traceViewer.darkModeSetting.click();
+  await expect(traceViewer.darkModeSetting).toBeChecked({ checked: true });
+  await expect(traceViewer.page.locator('.dark-mode')).toBeVisible();
+
+  await traceViewer.darkModeSetting.click();
+  await expect(traceViewer.darkModeSetting).toBeChecked({ checked: false });
+  await expect(traceViewer.page.locator('.light-mode')).toBeVisible();
+});
+
+test('should toggle canvas rendering', async ({ runAndTrace, page }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(`data:text/html,<!DOCTYPE html><body><div>Hello world</div><canvas /></body>`);
+    await page.goto(`data:text/html,<!DOCTYPE html><body><div>Hello world</div></body>`);
+  });
+
+  let snapshotRequestPromise = traceViewer.page.waitForRequest(request => request.url().includes('/snapshot/'), { timeout: 2000 });
+
+  // Click on the action with a canvas snapshot
+  await traceViewer.selectAction('goto', 0);
+
+  let snapshotRequest = await snapshotRequestPromise;
+
+  expect(snapshotRequest.url()).not.toContain('shouldPopulateCanvasFromScreenshot');
+
+  await traceViewer.showSettings();
+
+  await expect(traceViewer.displayCanvasContentSetting).toBeChecked({ checked: false });
+  await traceViewer.displayCanvasContentSetting.click();
+  await expect(traceViewer.displayCanvasContentSetting).toBeChecked({ checked: true });
+
+  // Deselect canvas
+  await traceViewer.selectAction('goto', 1);
+
+  snapshotRequestPromise = traceViewer.page.waitForRequest(request => request.url().includes('/snapshot/'), { timeout: 2000 });
+
+  // Select canvas again
+  await traceViewer.selectAction('goto', 0);
+
+  snapshotRequest = await snapshotRequestPromise;
+
+  expect(snapshotRequest.url()).toContain('shouldPopulateCanvasFromScreenshot');
+});
