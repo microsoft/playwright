@@ -59,8 +59,6 @@ export interface PageDelegate {
   addInitScript(initScript: InitScript): Promise<void>;
   removeNonInternalInitScripts(): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
-  potentiallyUninitializedPage(): Page;
-  pageOrError(): Promise<Page | Error>;
 
   navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult>;
 
@@ -139,7 +137,8 @@ export class Page extends SdkObject {
 
   private _closedState: 'open' | 'closing' | 'closed' = 'open';
   private _closedPromise = new ManualPromise<void>();
-  private _initialized = false;
+  private _initialized: Page | Error | undefined;
+  private _initializedPromise = new ManualPromise<Page | Error>();
   private _eventsToEmitAfterInitialized: { event: string | symbol, args: any[] }[] = [];
   private _crashed = false;
   readonly openScope = new LongStandingScope();
@@ -193,12 +192,12 @@ export class Page extends SdkObject {
     this.coverage = delegate.coverage ? delegate.coverage() : null;
   }
 
-  async initOpener(opener: PageDelegate | null) {
+  async initOpener(opener: Page | undefined) {
     if (!opener)
       return;
-    const openerPage = await opener.pageOrError();
-    if (openerPage instanceof Page && !openerPage.isClosed())
-      this._opener = openerPage;
+    const openerPageOrError = await opener.waitForInitializedOrError();
+    if (openerPageOrError instanceof Page && !openerPageOrError.isClosed())
+      this._opener = openerPageOrError;
   }
 
   reportAsNew(error: Error | undefined = undefined, contextEvent: string = BrowserContext.Events.Page) {
@@ -209,7 +208,7 @@ export class Page extends SdkObject {
         return;
       this._frameManager.createDummyMainFrameIfNeeded();
     }
-    this._initialized = true;
+    this._initialized = error || this;
     this.emitOnContext(contextEvent, this);
 
     for (const { event, args } of this._eventsToEmitAfterInitialized)
@@ -223,10 +222,18 @@ export class Page extends SdkObject {
       this.emit(Page.Events.Close);
     else
       this.instrumentation.onPageOpen(this);
+
+    // Note: it is important to resolve _initializedPromise at the end,
+    // so that anyone who awaits waitForInitializedOrError got a ready and reported page.
+    this._initializedPromise.resolve(this._initialized);
   }
 
-  initializedOrUndefined() {
+  initialized(): Page | undefined {
     return this._initialized ? this : undefined;
+  }
+
+  waitForInitializedOrError(): Promise<Page | Error> {
+    return this._initializedPromise;
   }
 
   emitOnContext(event: string | symbol, ...args: any[]) {

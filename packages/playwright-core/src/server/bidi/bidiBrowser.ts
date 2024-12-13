@@ -22,7 +22,7 @@ import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext } from '../browserContext';
 import type { SdkObject } from '../instrumentation';
 import * as network from '../network';
-import type { InitScript, Page, PageDelegate } from '../page';
+import type { InitScript, Page } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type { BidiSession } from './bidiConnection';
@@ -99,8 +99,8 @@ export class BidiBrowser extends Browser {
       browser._defaultContext = new BidiBrowserContext(browser, undefined, options.persistent);
       await (browser._defaultContext as BidiBrowserContext)._initialize();
       // Create default page as we cannot get access to the existing one.
-      const pageDelegate = await browser._defaultContext.newPageDelegate();
-      await pageDelegate.pageOrError();
+      const page = await browser._defaultContext.doCreateNewPage();
+      await page.waitForInitializedOrError();
     }
     return browser;
   }
@@ -207,21 +207,17 @@ export class BidiBrowserContext extends BrowserContext {
     return [...this._browser._bidiPages.values()].filter(bidiPage => bidiPage._browserContext === this);
   }
 
-  pages(): Page[] {
-    return this._bidiPages().map(bidiPage => bidiPage._initializedPage).filter(Boolean) as Page[];
+  override possiblyUninitializedPages(): Page[] {
+    return this._bidiPages().map(bidiPage => bidiPage._page);
   }
 
-  pagesOrErrors() {
-    return this._bidiPages().map(bidiPage => bidiPage.pageOrError());
-  }
-
-  async newPageDelegate(): Promise<PageDelegate> {
+  override async doCreateNewPage(): Promise<Page> {
     assertBrowserContextIsNotOwned(this);
     const { context } = await this._browser._browserSession.send('browsingContext.create', {
       type: bidi.BrowsingContext.CreateType.Window,
       userContext: this._browserContextId,
     });
-    return this._browser._bidiPages.get(context)!;
+    return this._browser._bidiPages.get(context)!._page;
   }
 
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {

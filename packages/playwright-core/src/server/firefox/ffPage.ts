@@ -34,7 +34,6 @@ import type { Protocol } from './protocol';
 import type { Progress } from '../progress';
 import { splitErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../utils/debugLogger';
-import { ManualPromise } from '../../utils/manualPromise';
 import { BrowserContext } from '../browserContext';
 import { TargetClosedError } from '../errors';
 
@@ -49,8 +48,6 @@ export class FFPage implements PageDelegate {
   readonly _page: Page;
   readonly _networkManager: FFNetworkManager;
   readonly _browserContext: FFBrowserContext;
-  private _pagePromise = new ManualPromise<Page | Error>();
-  _initializedPage: Page | null = null;
   private _initializationFailed = false;
   readonly _opener: FFPage | null;
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
@@ -103,14 +100,10 @@ export class FFPage implements PageDelegate {
 
     ];
     this._session.once('Page.ready', async () => {
-      await this._page.initOpener(this._opener);
+      await this._page.initOpener(this._opener?._page);
       if (this._initializationFailed)
         return;
-      // Note: it is important to call |reportAsNew| before resolving pageOrError promise,
-      // so that anyone who awaits pageOrError got a ready and reported page.
-      this._initializedPage = this._page;
       this._page.reportAsNew();
-      this._pagePromise.resolve(this._page);
     });
     // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
     // Therefore, we can end up with an initialized page without utility world, although very unlikely.
@@ -122,20 +115,15 @@ export class FFPage implements PageDelegate {
   }
 
   async _markAsError(error: Error) {
-    // Same error may be report twice: channer disconnected and session.send fails.
+    // Same error may be reported twice: channel disconnected and session.send fails.
     if (this._initializationFailed)
       return;
     this._initializationFailed = true;
 
-    if (!this._initializedPage) {
-      await this._page.initOpener(this._opener);
+    if (!this._page.initialized()) {
+      await this._page.initOpener(this._opener?._page);
       this._page.reportAsNew(error);
-      this._pagePromise.resolve(error);
     }
-  }
-
-  async pageOrError(): Promise<Page | Error> {
-    return this._pagePromise;
   }
 
   _onWebSocketCreated(event: Protocol.Page.webSocketCreatedPayload) {
@@ -268,7 +256,7 @@ export class FFPage implements PageDelegate {
   }
 
   async _onBindingCalled(event: Protocol.Page.bindingCalledPayload) {
-    const pageOrError = await this.pageOrError();
+    const pageOrError = await this._page.waitForInitializedOrError();
     if (!(pageOrError instanceof Error)) {
       const context = this._contextIdToContext.get(event.executionContextId);
       if (context)
@@ -333,7 +321,7 @@ export class FFPage implements PageDelegate {
   }
 
   _onVideoRecordingStarted(event: Protocol.Page.videoRecordingStartedPayload) {
-    this._browserContext._browser._videoStarted(this._browserContext, event.screencastId, event.file, this.pageOrError());
+    this._browserContext._browser._videoStarted(this._browserContext, event.screencastId, event.file, this._page.waitForInitializedOrError());
   }
 
   didClose() {
