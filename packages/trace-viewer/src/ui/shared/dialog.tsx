@@ -22,6 +22,8 @@ export interface DialogProps {
   open: boolean;
   width: number;
 
+  verticalOffset?: number;
+
   requestClose?: () => void;
 
   hostingElement?: React.RefObject<HTMLElement>;
@@ -31,6 +33,7 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
   className,
   open,
   width,
+  verticalOffset,
   requestClose,
   hostingElement,
   children,
@@ -50,7 +53,7 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
     style = {
       // Override default `<dialog>` positioning
       margin: 0,
-      top: bounds.bottom,
+      top: bounds.bottom + (verticalOffset ?? 0),
       left: buildTopLeftCoord(bounds, width),
       width,
       // For some reason the dialog is placed behind the timeline, but there's a stacking context that allows the dialog to be placed above

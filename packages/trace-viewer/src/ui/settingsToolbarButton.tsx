@@ -37,6 +37,8 @@ export const SettingsToolbarButton: React.FC<{}> = () => {
         className='settings-toolbar-dialog'
         open={open}
         width={200}
+        // TODO: Temporary spacing until design of toolbar buttons is revisited
+        verticalOffset={8}
         requestClose={() => setOpen(false)}
         hostingElement={hostingRef}
       >
