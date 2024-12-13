@@ -849,7 +849,7 @@ export class WKPage implements PageDelegate {
     this.validateScreenshotDimension(rect.height, omitDeviceScaleFactor);
     const result = await this._session.send('Page.snapshotRect', { ...rect, coordinateSystem: documentRect ? 'Page' : 'Viewport', omitDeviceScaleFactor });
     const prefix = 'data:image/png;base64,';
-    let buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
+    let buffer: Buffer = Buffer.from(result.dataURL.substr(prefix.length), 'base64');
     if (format === 'jpeg')
       buffer = jpegjs.encode(PNG.sync.read(buffer), quality).data;
     return buffer;
