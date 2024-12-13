@@ -120,7 +120,7 @@ const ResponseTab: React.FunctionComponent<{
 const BodyTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
-  const [responseBody, setResponseBody] = React.useState<{ dataUrl?: string, text?: string, mimeType?: string, font?: BinaryData } | null>(null);
+  const [responseBody, setResponseBody] = React.useState<{ dataUrl?: string, text?: string, mimeType?: string, font?: BufferSource } | null>(null);
 
   React.useEffect(() => {
     const readResources = async  () => {
@@ -158,7 +158,7 @@ const BodyTab: React.FunctionComponent<{
 };
 
 const FontPreview: React.FunctionComponent<{
-  font: BinaryData;
+  font: BufferSource;
 }> = ({ font }) => {
   const [isError, setIsError] = React.useState(false);
 

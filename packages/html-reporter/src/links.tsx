@@ -23,7 +23,7 @@ import './links.css';
 import { linkifyText } from '@web/renderUtils';
 import { clsx } from '@web/uiUtils';
 
-export function navigate(href: string) {
+export function navigate(href: string | URL) {
   window.history.pushState({}, '', href);
   const navEvent = new PopStateEvent('popstate');
   window.dispatchEvent(navEvent);

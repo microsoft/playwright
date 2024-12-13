@@ -161,6 +161,41 @@ await page.Clock.PauseAtAsync(DateTime.Parse("2020-02-02"));
 await page.Clock.PauseAtAsync("2020-02-02");
 ```
 
+For best results, install the clock before navigating the page and set it to a time slightly before the intended test time. This ensures that all timers run normally during page loading, preventing the page from getting stuck. Once the page has fully loaded, you can safely use [`method: Clock.pauseAt`] to pause the clock.
+
+```js
+// Initialize clock with some time before the test time and let the page load
+// naturally. `Date.now` will progress as the timers fire.
+await page.clock.install({ time: new Date('2024-12-10T08:00:00') });
+await page.goto('http://localhost:3333');
+await page.clock.pauseAt(new Date('2024-12-10T10:00:00'));
+```
+
+```python async
+# Initialize clock with some time before the test time and let the page load
+# naturally. `Date.now` will progress as the timers fire.
+await page.clock.install(time=datetime.datetime(2024, 12, 10, 8, 0, 0))
+await page.goto("http://localhost:3333")
+await page.clock.pause_at(datetime.datetime(2024, 12, 10, 10, 0, 0))
+```
+
+```python sync
+# Initialize clock with some time before the test time and let the page load
+# naturally. `Date.now` will progress as the timers fire.
+page.clock.install(time=datetime.datetime(2024, 12, 10, 8, 0, 0))
+page.goto("http://localhost:3333")
+page.clock.pause_at(datetime.datetime(2024, 12, 10, 10, 0, 0))
+```
+
+```java
+// Initialize clock with some time before the test time and let the page load
+// naturally. `Date.now` will progress as the timers fire.
+SimpleDateFormat format = new SimpleDateFormat("yyy-MM-dd'T'HH:mm:ss");
+page.clock().install(new Clock.InstallOptions().setTime(format.parse("2024-12-10T08:00:00")));
+page.navigate("http://localhost:3333");
+page.clock().pauseAt(format.parse("2024-12-10T10:00:00"));
+```
+
 ### param: Clock.pauseAt.time
 * langs: js, java
 * since: v1.45

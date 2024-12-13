@@ -228,7 +228,7 @@ class InspectingRecorderApp extends EmptyRecorderApp {
 
   override async elementPicked(elementInfo: ElementInfo): Promise<void> {
     const locator: string = asLocator(this._debugController._sdkLanguage, elementInfo.selector);
-    this._debugController.emit(DebugController.Events.InspectRequested, { selector: elementInfo.selector, locator });
+    this._debugController.emit(DebugController.Events.InspectRequested, { selector: elementInfo.selector, locator, ariaSnapshot: elementInfo.ariaSnapshot });
   }
 
   override async setSources(sources: Source[]): Promise<void> {

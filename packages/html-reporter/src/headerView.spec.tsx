@@ -64,6 +64,6 @@ test('should toggle filters', async ({ page, mount }) => {
   await expect(page).toHaveURL(/#\?q=s:flaky/);
   await component.locator('a', { hasText: 'Skipped' }).click();
   await expect(page).toHaveURL(/#\?q=s:skipped/);
-  await component.getByRole('searchbox').fill('annot:annotation type=annotation description');
+  await component.getByRole('textbox').fill('annot:annotation type=annotation description');
   expect(filters).toEqual(['', 's:passed', 's:failed', 's:flaky', 's:skipped', 'annot:annotation type=annotation description']);
 });

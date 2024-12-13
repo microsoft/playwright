@@ -91,7 +91,8 @@ function parseLocator(locator: string, testIdAttributeName: string): { selector:
       .replace(/newregex\(([^)]+)\)/g, 'r$1')
       .replace(/string=/g, '=')
       .replace(/regex=/g, '=')
-      .replace(/,,/g, ',');
+      .replace(/,,/g, ',')
+      .replace(/,\)/g, ')');
 
   const preferredQuote = params.map(p => p.quote).filter(quote => '\'"`'.includes(quote))[0] as Quote | undefined;
   return { selector: transform(template, params, testIdAttributeName), preferredQuote };
@@ -174,6 +175,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
       .replace(/filter\(,?hasnot2=([^)]+)\)/g, 'internal:has-not=$1')
       .replace(/,exact=false/g, '')
       .replace(/,exact=true/g, 's')
+      .replace(/,includehidden=/g, ',include-hidden=')
       .replace(/\,/g, '][');
 
   const parts = template.split('.');
@@ -233,6 +235,6 @@ export function locatorOrSelectorAsSelector(language: Language, locator: string,
 function digestForComparison(language: Language, locator: string) {
   locator = locator.replace(/\s/g, '');
   if (language === 'javascript')
-    locator = locator.replace(/\\?["`]/g, '\'');
+    locator = locator.replace(/\\?["`]/g, '\'').replace(/,{}/g, '');
   return locator;
 }

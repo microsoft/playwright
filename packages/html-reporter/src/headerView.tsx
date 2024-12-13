@@ -49,12 +49,14 @@ export const HeaderView: React.FC<React.PropsWithChildren<{
       <form className='subnav-search' onSubmit={
         event => {
           event.preventDefault();
-          navigate(`#?q=${filterText ? encodeURIComponent(filterText) : ''}`);
+          const url = new URL(window.location.href);
+          url.hash = filterText ? '?' + new URLSearchParams({ q: filterText }) : '';
+          navigate(url);
         }
       }>
         {icons.search()}
         {/* Use navigationId to reset defaultValue */}
-        <input type='search' spellCheck={false} className='form-control subnav-search-input input-contrast width-full' value={filterText} onChange={e => {
+        <input spellCheck={false} className='form-control subnav-search-input input-contrast width-full' value={filterText} onChange={e => {
           setFilterText(e.target.value);
         }}></input>
       </form>

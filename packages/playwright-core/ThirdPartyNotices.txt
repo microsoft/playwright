@@ -6,7 +6,7 @@ This project incorporates components from the projects listed below. The origina
 
 -	@types/node@17.0.24 (https://github.com/DefinitelyTyped/DefinitelyTyped)
 -	@types/yauzl@2.10.0 (https://github.com/DefinitelyTyped/DefinitelyTyped)
--	agent-base@7.1.1 (https://github.com/TooTallNate/proxy-agents)
+-	agent-base@7.1.3 (https://github.com/TooTallNate/proxy-agents)
 -	balanced-match@1.0.2 (https://github.com/juliangruber/balanced-match)
 -	brace-expansion@1.1.11 (https://github.com/juliangruber/brace-expansion)
 -	buffer-crc32@0.2.13 (https://github.com/brianloveswords/buffer-crc32)
@@ -24,7 +24,7 @@ This project incorporates components from the projects listed below. The origina
 -	fd-slicer@1.1.0 (https://github.com/andrewrk/node-fd-slicer)
 -	get-stream@5.2.0 (https://github.com/sindresorhus/get-stream)
 -	graceful-fs@4.2.10 (https://github.com/isaacs/node-graceful-fs)
--	https-proxy-agent@7.0.5 (https://github.com/TooTallNate/proxy-agents)
+-	https-proxy-agent@7.0.6 (https://github.com/TooTallNate/proxy-agents)
 -	ip-address@9.0.5 (https://github.com/beaugunderson/ip-address)
 -	is-docker@2.2.1 (https://github.com/sindresorhus/is-docker)
 -	is-wsl@2.2.0 (https://github.com/sindresorhus/is-wsl)
@@ -43,7 +43,7 @@ This project incorporates components from the projects listed below. The origina
 -	retry@0.12.0 (https://github.com/tim-kos/node-retry)
 -	signal-exit@3.0.7 (https://github.com/tapjs/signal-exit)
 -	smart-buffer@4.2.0 (https://github.com/JoshGlazebrook/smart-buffer)
--	socks-proxy-agent@8.0.4 (https://github.com/TooTallNate/proxy-agents)
+-	socks-proxy-agent@8.0.5 (https://github.com/TooTallNate/proxy-agents)
 -	socks@2.8.3 (https://github.com/JoshGlazebrook/socks)
 -	sprintf-js@1.1.3 (https://github.com/alexei/sprintf.js)
 -	stack-utils@2.0.5 (https://github.com/tapjs/stack-utils)
@@ -105,7 +105,7 @@ MIT License
 =========================================
 END OF @types/yauzl@2.10.0 AND INFORMATION
 
-%% agent-base@7.1.1 NOTICES AND INFORMATION BEGIN HERE
+%% agent-base@7.1.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 (The MIT License)
 
@@ -130,7 +130,7 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF agent-base@7.1.1 AND INFORMATION
+END OF agent-base@7.1.3 AND INFORMATION
 
 %% balanced-match@1.0.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -542,7 +542,7 @@ IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 =========================================
 END OF graceful-fs@4.2.10 AND INFORMATION
 
-%% https-proxy-agent@7.0.5 NOTICES AND INFORMATION BEGIN HERE
+%% https-proxy-agent@7.0.6 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 (The MIT License)
 
@@ -567,7 +567,7 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF https-proxy-agent@7.0.5 AND INFORMATION
+END OF https-proxy-agent@7.0.6 AND INFORMATION
 
 %% ip-address@9.0.5 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1005,7 +1005,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF smart-buffer@4.2.0 AND INFORMATION
 
-%% socks-proxy-agent@8.0.4 NOTICES AND INFORMATION BEGIN HERE
+%% socks-proxy-agent@8.0.5 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 (The MIT License)
 
@@ -1030,7 +1030,7 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF socks-proxy-agent@8.0.4 AND INFORMATION
+END OF socks-proxy-agent@8.0.5 AND INFORMATION
 
 %% socks@2.8.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================

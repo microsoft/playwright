@@ -479,7 +479,7 @@ type StdioPayload = {
 };
 
 function chunkToPayload(type: 'stdout' | 'stderr', chunk: Buffer | string): StdioPayload {
-  if (chunk instanceof Buffer)
+  if (chunk instanceof Uint8Array)
     return { type, buffer: chunk.toString('base64') };
   return { type, text: chunk };
 }
