@@ -14,15 +14,13 @@
   limitations under the License.
 */
 
-import { ToolbarButton } from '@web/components/toolbarButton';
 import * as React from 'react';
 import type { ContextEntry } from '../types/entries';
 import { MultiTraceModel } from './modelUtil';
 import './workbenchLoader.css';
-import { toggleTheme } from '@web/theme';
 import { Workbench } from './workbench';
 import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';
-import { SettingsToolbar } from './settingsToolbar';
+import { SettingsToolbarButton } from './settingsToolbarButton';
 
 export const WorkbenchLoader: React.FunctionComponent<{
 }> = () => {
@@ -162,7 +160,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       <div className='product'>Playwright</div>
       {model.title && <div className='title'>{model.title}</div>}
       <div className='spacer'></div>
-      <SettingsToolbar />
+      <SettingsToolbarButton />
     </div>
     <div className='progress'>
       <div className='inner-progress' style={{ width: progress.total ? (100 * progress.done / progress.total) + '%' : 0 }}></div>

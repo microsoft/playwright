@@ -20,7 +20,7 @@ import { ToolbarButton } from '@web/components/toolbarButton';
 import { DefaultSettingsView } from './defaultSettingsView';
 import './settingsToolbar.css';
 
-export const SettingsToolbar: React.FC<{}> = () => {
+export const SettingsToolbarButton: React.FC<{}> = () => {
   const hostingRef = React.useRef<HTMLButtonElement>(null);
 
   const [open, setOpen] = React.useState(false);
@@ -36,7 +36,7 @@ export const SettingsToolbar: React.FC<{}> = () => {
       <Dialog
         className='settings-toolbar-dialog'
         open={open}
-        width={150}
+        width={200}
         requestClose={() => setOpen(false)}
         hostingElement={hostingRef}
       >
