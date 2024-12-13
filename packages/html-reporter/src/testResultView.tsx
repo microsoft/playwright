@@ -107,12 +107,12 @@ export const TestResultView: React.FC<{
 
     {!!screenshots.length && <Anchor id={screenshotAnchors}><AutoChip header='Screenshots' revealOnAnchorId={screenshotAnchors}>
       {screenshots.map((a, i) => {
-        return <div key={`screenshot-${i}`}>
+        return <Anchor key={`screenshot-${i}`} id={`attachment-${a.name}`}>
           <a href={a.path}>
             <img className='screenshot' src={a.path} />
           </a>
           <AttachmentLink attachment={a}></AttachmentLink>
-        </div>;
+        </Anchor>;
       })}
     </AutoChip></Anchor>}
 
