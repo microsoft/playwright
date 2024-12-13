@@ -1013,6 +1013,38 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]);
     });
 
+    test('show custom fixture titles', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.spec.js': `
+          import { test as base, expect } from '@playwright/test';
+          
+          const test = base.extend({
+            fixture1: [async ({}, use) => {
+              await use();
+            }, { title: 'custom fixture name' }],
+            fixture2: async ({}, use) => {
+              await use();
+            },
+          });
+
+          test('sample', ({ fixture1, fixture2 }) => {
+            // Empty test using both fixtures
+          });
+        `
+      }, { 'reporter': 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      await showReport();
+      await page.getByRole('link', { name: 'sample' }).click();
+      await page.getByText('Before Hooks').click();
+      await expect(page.getByText('fixture: custom fixture name')).toBeVisible();
+      await expect(page.locator('.tree-item-title')).toHaveText([
+        /Before Hooks/,
+        /fixture: custom fixture/,
+        /fixture: fixture2/,
+        /After Hooks/,
+      ]);
+    });
+
     test('open tests from required file', async ({ runInlineTest, showReport, page }) => {
       test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11742' });
       const result = await runInlineTest({

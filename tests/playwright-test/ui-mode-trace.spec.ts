@@ -363,3 +363,33 @@ test('should filter actions tab on double-click', async ({ runUITest, server }) 
     /page.goto/,
   ]);
 });
+
+test('should show custom fixture titles in actions tree', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      
+      const test = base.extend({
+        fixture1: [async ({}, use) => {
+          await use();
+        }, { title: 'My Custom Fixture' }],
+        fixture2: async ({}, use) => {
+          await use();
+        },
+      });
+
+      test('fixture test', async ({ fixture1, fixture2 }) => {
+        // Empty test using both fixtures
+      });
+    `,
+  });
+
+  await page.getByText('fixture test').dblclick();
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
+  await expect(listItem, 'action list').toHaveText([
+    /Before Hooks[\d.]+m?s/,
+    /My Custom Fixture[\d.]+m?s/,
+    /fixture2[\d.]+m?s/,
+    /After Hooks[\d.]+m?s/,
+  ]);
+});
