@@ -115,6 +115,8 @@ function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObj
 }
 
 function rewriteError(error: Error): Error {
+  if (error.message.includes('Object has too long reference chain'))
+    throw new Error('Cannot serialize result: object reference chain is too long.');
   if (!js.isJavaScriptErrorInEvaluate(error) && !isSessionClosedError(error))
     return new Error('Execution context was destroyed, most likely because of a navigation.');
   return error;

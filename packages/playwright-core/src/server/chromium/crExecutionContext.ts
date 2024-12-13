@@ -96,7 +96,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
 
 function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
   if (error.message.includes('Object reference chain is too long'))
-    return { result: { type: 'undefined' } };
+    throw new Error('Cannot serialize result: object reference chain is too long.');
   if (error.message.includes('Object couldn\'t be returned by value'))
     return { result: { type: 'undefined' } };
 
