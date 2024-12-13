@@ -403,16 +403,17 @@ it('should return undefined for non-serializable objects', async ({ page }) => {
 it('should throw for too deep reference chain', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33997' }
 }, async ({ page, browserName }) => {
-  it.fixme(browserName === 'firefox', 'Firefox does not throw on long chain yet.');
-  await expect(page.evaluate((depth) => {
+  await expect(page.evaluate(depth => {
     const obj = {};
     let temp = obj;
     for (let i = 0; i < depth; i++) {
       temp[i] = {};
       temp = temp[i];
     }
-    return obj
-  }, 1000)).rejects.toThrow('Cannot serialize result: object reference chain is too long.');
+    return obj;
+  }, 1000)).rejects.toThrow(browserName === 'firefox'
+    ? 'Maximum call stack size exceeded'
+    : 'Cannot serialize result: object reference chain is too long.');
 });
 
 it('should alias Window, Document and Node', async ({ page }) => {
