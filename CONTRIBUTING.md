@@ -26,7 +26,7 @@ npm run watch
 npx playwright install
 ```
 
-**Experimental watch mode for recorder/trace-viewer/UI Mode**
+**Experimental dev HRR mode for recorder/trace-viewer/UI Mode**
 
 ```
 PW_HMR=1 npm run watch
