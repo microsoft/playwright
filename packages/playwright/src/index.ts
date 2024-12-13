@@ -685,14 +685,17 @@ class ArtifactsRecorder {
 
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {
     const options = this._testInfo._tracing.traceOptions();
+    const seenInThisTestSymbol = this._testInfo._tracing.uniqueSymbol();
     if (options) {
+      const seenInThisTest = !!(tracing as any)[seenInThisTestSymbol];
+      (tracing as any)[seenInThisTestSymbol] = true;
       const title = this._testInfo._tracing.traceTitle();
       const name = this._testInfo._tracing.generateNextTraceRecordingName();
       if (!(tracing as any)[kTracingStarted]) {
         await tracing.start({ ...options, title, name });
         (tracing as any)[kTracingStarted] = true;
       } else {
-        await tracing.startChunk({ title, name });
+        await tracing.startChunk({ title, name, _resetNetwork: seenInThisTest } as any);
       }
     } else {
       if ((tracing as any)[kTracingStarted]) {

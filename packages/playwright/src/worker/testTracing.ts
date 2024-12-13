@@ -43,6 +43,7 @@ export class TestTracing {
   private _artifactsDir: string;
   private _tracesDir: string;
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
+  private _uniqueSymbol: symbol;
 
   constructor(testInfo: TestInfoImpl, artifactsDir: string) {
     this._testInfo = testInfo;
@@ -59,6 +60,7 @@ export class TestTracing {
       monotonicTime: monotonicTime(),
       sdkLanguage: 'javascript',
     };
+    this._uniqueSymbol = Symbol('unique');
     this._appendTraceEvent(this._contextCreatedEvent);
   }
 
@@ -138,6 +140,10 @@ export class TestTracing {
 
   traceOptions() {
     return this._options;
+  }
+
+  uniqueSymbol() {
+    return this._uniqueSymbol;
   }
 
   async stopIfNeeded() {

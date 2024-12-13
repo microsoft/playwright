@@ -23,6 +23,7 @@ import { TraceModel } from '../../packages/trace-viewer/src/sw/traceModel';
 import type { ActionTreeItem } from '../../packages/trace-viewer/src/ui/modelUtil';
 import { buildActionTree, MultiTraceModel } from '../../packages/trace-viewer/src/ui/modelUtil';
 import type { ActionTraceEvent, ConsoleMessageTraceEvent, EventTraceEvent, TraceEvent } from '@trace/trace';
+import type { ResourceSnapshot } from '@trace/snapshot';
 import style from 'ansi-styles';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
@@ -157,7 +158,7 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
   };
 }
 
-export async function parseTrace(file: string): Promise<{ resources: Map<string, Buffer>, events: (EventTraceEvent | ConsoleMessageTraceEvent)[], actions: ActionTraceEvent[], apiNames: string[], traceModel: TraceModel, model: MultiTraceModel, actionTree: string[], errors: string[] }> {
+export async function parseTrace(file: string): Promise<{ resources: Map<string, Buffer>, events: (EventTraceEvent | ConsoleMessageTraceEvent)[], actions: ActionTraceEvent[], apiNames: string[], traceModel: TraceModel, model: MultiTraceModel, actionTree: string[], errors: string[], network: ResourceSnapshot[] }> {
   const backend = new TraceBackend(file);
   const traceModel = new TraceModel();
   await traceModel.load(backend, () => {});
@@ -179,6 +180,7 @@ export async function parseTrace(file: string): Promise<{ resources: Map<string,
     model,
     traceModel,
     actionTree,
+    network: model.resources,
   };
 }
 

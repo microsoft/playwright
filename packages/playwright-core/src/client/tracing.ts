@@ -46,8 +46,12 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     await this._startCollectingStacks(traceName);
   }
 
-  async startChunk(options: { name?: string, title?: string } = {}) {
-    const { traceName } = await this._channel.tracingStartChunk(options);
+  async startChunk(options: { name?: string, title?: string, _resetNetwork?: boolean } = {}) {
+    const { traceName } = await this._channel.tracingStartChunk({
+      name: options.name,
+      title: options.title,
+      resetNetwork: options._resetNetwork,
+    });
     await this._startCollectingStacks(traceName);
   }
 

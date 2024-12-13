@@ -3196,6 +3196,7 @@ Tracing:
       parameters:
         name: string?
         title: string?
+        resetNetwork: boolean?
       returns:
         traceName: string
 

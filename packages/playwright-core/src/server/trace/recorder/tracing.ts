@@ -158,7 +158,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._harTracer.start({ omitScripts: !options.live });
   }
 
-  async startChunk(options: { name?: string, title?: string } = {}): Promise<{ traceName: string }> {
+  async startChunk(options: { name?: string, title?: string, resetNetwork?: boolean } = {}): Promise<{ traceName: string }> {
     if (this._state && this._state.recording)
       await this.stopChunk({ mode: 'discard' });
 
@@ -183,6 +183,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       monotonicTime: monotonicTime()
     };
     this._appendTraceEvent(event);
+
+    if (options.resetNetwork)
+      this._fs.writeFile(this._state.networkFile, '');
 
     this._context.instrumentation.addListener(this, this._context);
     this._eventListeners.push(

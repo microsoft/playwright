@@ -4109,10 +4109,12 @@ export type TracingTracingStartResult = void;
 export type TracingTracingStartChunkParams = {
   name?: string,
   title?: string,
+  resetNetwork?: boolean,
 };
 export type TracingTracingStartChunkOptions = {
   name?: string,
   title?: string,
+  resetNetwork?: boolean,
 };
 export type TracingTracingStartChunkResult = {
   traceName: string,

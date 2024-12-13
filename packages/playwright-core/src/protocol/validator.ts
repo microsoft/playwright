@@ -2294,6 +2294,7 @@ scheme.TracingTracingStartResult = tOptional(tObject({}));
 scheme.TracingTracingStartChunkParams = tObject({
   name: tOptional(tString),
   title: tOptional(tString),
+  resetNetwork: tOptional(tBoolean),
 });
 scheme.TracingTracingStartChunkResult = tObject({
   traceName: tString,
