@@ -133,7 +133,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       const requestDispatcher = RequestDispatcher.from(this, request);
       this._dispatchEvent('request', {
         request: requestDispatcher,
-        page: PageDispatcher.fromNullable(this, request.frame()?._page.initialized())
+        page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined())
       });
     });
     this.addObjectListener(BrowserContext.Events.Response, (response: Response) => {
@@ -142,7 +142,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         return;
       this._dispatchEvent('response', {
         response: ResponseDispatcher.from(this, response),
-        page: PageDispatcher.fromNullable(this, response.frame()?._page.initialized())
+        page: PageDispatcher.fromNullable(this, response.frame()?._page.initializedOrUndefined())
       });
     });
     this.addObjectListener(BrowserContext.Events.RequestFailed, (request: Request) => {
@@ -153,7 +153,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         request: RequestDispatcher.from(this, request),
         failureText: request._failureText || undefined,
         responseEndTiming: request._responseEndTiming,
-        page: PageDispatcher.fromNullable(this, request.frame()?._page.initialized())
+        page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined())
       });
     });
     this.addObjectListener(BrowserContext.Events.RequestFinished, ({ request, response }: { request: Request, response: Response | null }) => {
@@ -164,13 +164,13 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         request: RequestDispatcher.from(this, request),
         response: ResponseDispatcher.fromNullable(this, response),
         responseEndTiming: request._responseEndTiming,
-        page: PageDispatcher.fromNullable(this, request.frame()?._page.initialized()),
+        page: PageDispatcher.fromNullable(this, request.frame()?._page.initializedOrUndefined()),
       });
     });
   }
 
   private _shouldDispatchNetworkEvent(request: Request, event: channels.BrowserContextUpdateSubscriptionParams['event'] & channels.PageUpdateSubscriptionParams['event']): boolean {
-    return this._shouldDispatchEvent(request.frame()?._page?.initialized(), event);
+    return this._shouldDispatchEvent(request.frame()?._page?.initializedOrUndefined(), event);
   }
 
   private _shouldDispatchEvent(page: Page | undefined, event: channels.BrowserContextUpdateSubscriptionParams['event'] & channels.PageUpdateSubscriptionParams['event']): boolean {

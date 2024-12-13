@@ -108,10 +108,6 @@ export class WKPage implements PageDelegate {
     }
   }
 
-  potentiallyUninitializedPage(): Page {
-    return this._page;
-  }
-
   private async _initializePageProxySession() {
     if (this._page._browserContext.isSettingStorageState())
       return;
@@ -280,7 +276,7 @@ export class WKPage implements PageDelegate {
   }
 
   handleProvisionalLoadFailed(event: Protocol.Playwright.provisionalLoadFailedPayload) {
-    if (!this._page.initialized()) {
+    if (!this._page.initializedOrUndefined()) {
       this._firstNonInitialNavigationCommittedReject(new Error('Initial load failed'));
       return;
     }
@@ -309,7 +305,7 @@ export class WKPage implements PageDelegate {
     assert(targetInfo.type === 'page', 'Only page targets are expected in WebKit, received: ' + targetInfo.type);
 
     if (!targetInfo.isProvisional) {
-      assert(!this._page.initialized());
+      assert(!this._page.initializedOrUndefined());
       let pageOrError: Page | Error;
       try {
         this._setSession(session);
@@ -336,8 +332,7 @@ export class WKPage implements PageDelegate {
         // Avoid rejection on disconnect.
         this._firstNonInitialNavigationCommittedPromise.catch(() => {});
       }
-      await this._page.initOpener(this._opener?._page);
-      this._page.reportAsNew(pageOrError instanceof Page ? undefined : pageOrError);
+      this._page.reportAsNew(this._opener?._page, pageOrError instanceof Page ? undefined : pageOrError);
     } else {
       assert(targetInfo.isProvisional);
       assert(!this._provisionalPage);

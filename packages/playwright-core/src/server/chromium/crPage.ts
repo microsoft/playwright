@@ -108,9 +108,9 @@ export class CRPage implements PageDelegate {
     }
 
     const createdEvent = this._isBackgroundPage ? CRBrowserContext.CREvents.BackgroundPage : BrowserContext.Events.Page;
-    this._mainFrameSession._initialize(bits.hasUIWindow)
-        .finally(() => this._page.initOpener(this._opener?._page))
-        .then(() => this._page.reportAsNew(undefined, createdEvent), error => this._page.reportAsNew(error, createdEvent));
+    this._mainFrameSession._initialize(bits.hasUIWindow).then(
+        () => this._page.reportAsNew(this._opener?._page, undefined, createdEvent),
+        error => this._page.reportAsNew(this._opener?._page, error, createdEvent));
   }
 
   private async _forAllFrameSessions(cb: (frame: FrameSession) => Promise<any>) {
@@ -873,7 +873,7 @@ class FrameSession {
   }
 
   _willBeginDownload() {
-    if (!this._crPage._page.initialized()) {
+    if (!this._crPage._page.initializedOrUndefined()) {
       // Resume the page creation with an error. The page will automatically close right
       // after the download begins.
       this._firstNonInitialNavigationCommittedReject(new Error('Starting new page download'));

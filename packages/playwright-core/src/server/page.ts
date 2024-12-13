@@ -192,15 +192,16 @@ export class Page extends SdkObject {
     this.coverage = delegate.coverage ? delegate.coverage() : null;
   }
 
-  async initOpener(opener: Page | undefined) {
-    if (!opener)
-      return;
-    const openerPageOrError = await opener.waitForInitializedOrError();
-    if (openerPageOrError instanceof Page && !openerPageOrError.isClosed())
-      this._opener = openerPageOrError;
+  async reportAsNew(opener: Page | undefined, error: Error | undefined = undefined, contextEvent: string = BrowserContext.Events.Page) {
+    if (opener) {
+      const openerPageOrError = await opener.waitForInitializedOrError();
+      if (openerPageOrError instanceof Page && !openerPageOrError.isClosed())
+        this._opener = openerPageOrError;
+    }
+    this._markInitialized(error, contextEvent);
   }
 
-  reportAsNew(error: Error | undefined = undefined, contextEvent: string = BrowserContext.Events.Page) {
+  private _markInitialized(error: Error | undefined = undefined, contextEvent: string = BrowserContext.Events.Page) {
     if (error) {
       // Initialization error could have happened because of
       // context/browser closure. Just ignore the page.
@@ -228,7 +229,7 @@ export class Page extends SdkObject {
     this._initializedPromise.resolve(this._initialized);
   }
 
-  initialized(): Page | undefined {
+  initializedOrUndefined(): Page | undefined {
     return this._initialized ? this : undefined;
   }
 

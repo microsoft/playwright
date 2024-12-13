@@ -121,14 +121,14 @@ export class WKBrowser extends Browser {
     // abort navigation that is still running. We should be able to fix this by
     // instrumenting policy decision start/proceed/cancel.
     page._page._frameManager.frameAbortedNavigation(payload.frameId, 'Download is starting');
-    let originPage = page._page.initialized();
+    let originPage = page._page.initializedOrUndefined();
     // If it's a new window download, report it on the opener page.
     if (!originPage) {
       // Resume the page creation with an error. The page will automatically close right
       // after the download begins.
       page._firstNonInitialNavigationCommittedReject(new Error('Starting new page download'));
       if (page._opener)
-        originPage = page._opener._page.initialized();
+        originPage = page._opener._page.initializedOrUndefined();
     }
     if (!originPage)
       return;

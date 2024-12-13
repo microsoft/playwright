@@ -259,10 +259,10 @@ export class CRBrowser extends Browser {
     }
     page.willBeginDownload();
 
-    let originPage = page._page.initialized();
+    let originPage = page._page.initializedOrUndefined();
     // If it's a new window download, report it on the opener page.
     if (!originPage && page._opener)
-      originPage = page._opener._page.initialized();
+      originPage = page._opener._page.initializedOrUndefined();
     if (!originPage)
       return;
     this._downloadCreated(originPage, payload.guid, payload.url, payload.suggestedFilename);
@@ -544,7 +544,7 @@ export class CRBrowserContext extends BrowserContext {
     // When persistent context is closed, we do not necessary get Target.detachedFromTarget
     // for all the background pages.
     for (const [targetId, backgroundPage] of this._browser._backgroundPages.entries()) {
-      if (backgroundPage._browserContext === this && backgroundPage._page.initialized()) {
+      if (backgroundPage._browserContext === this && backgroundPage._page.initializedOrUndefined()) {
         backgroundPage.didClose();
         this._browser._backgroundPages.delete(targetId);
       }
@@ -569,7 +569,7 @@ export class CRBrowserContext extends BrowserContext {
   backgroundPages(): Page[] {
     const result: Page[] = [];
     for (const backgroundPage of this._browser._backgroundPages.values()) {
-      if (backgroundPage._browserContext === this && backgroundPage._page.initialized())
+      if (backgroundPage._browserContext === this && backgroundPage._page.initializedOrUndefined())
         result.push(backgroundPage._page);
     }
     return result;

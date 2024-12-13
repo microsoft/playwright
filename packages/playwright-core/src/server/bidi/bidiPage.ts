@@ -80,9 +80,9 @@ export class BidiPage implements PageDelegate {
 
     // Initialize main frame.
     // TODO: Wait for first execution context to be created and maybe about:blank navigated.
-    this._initialize()
-        .finally(() => this._page.initOpener(this._opener?._page))
-        .then(() => this._page.reportAsNew(), error => this._page.reportAsNew(error));
+    this._initialize().then(
+        () => this._page.reportAsNew(this._opener?._page),
+        error => this._page.reportAsNew(this._opener?._page, error));
   }
 
   private async _initialize() {
@@ -99,10 +99,6 @@ export class BidiPage implements PageDelegate {
 
   private async _addAllInitScripts() {
     return Promise.all(this._page.allInitScripts().map(initScript => this.addInitScript(initScript)));
-  }
-
-  potentiallyUninitializedPage(): Page {
-    return this._page;
   }
 
   didClose() {

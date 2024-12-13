@@ -257,7 +257,7 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   pages(): Page[] {
-    return this.possiblyUninitializedPages().filter(page => page.initialized());
+    return this.possiblyUninitializedPages().filter(page => page.initializedOrUndefined());
   }
 
   // BrowserContext methods.

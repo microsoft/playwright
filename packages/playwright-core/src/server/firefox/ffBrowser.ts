@@ -136,14 +136,14 @@ export class FFBrowser extends Browser {
     // Abort the navigation that turned into download.
     ffPage._page._frameManager.frameAbortedNavigation(payload.frameId, 'Download is starting');
 
-    let originPage = ffPage._page.initialized();
+    let originPage = ffPage._page.initializedOrUndefined();
     // If it's a new window download, report it on the opener page.
     if (!originPage) {
       // Resume the page creation with an error. The page will automatically close right
       // after the download begins.
       ffPage._markAsError(new Error('Starting new page download'));
       if (ffPage._opener)
-        originPage = ffPage._opener._page.initialized();
+        originPage = ffPage._opener._page.initializedOrUndefined();
     }
     if (!originPage)
       return;

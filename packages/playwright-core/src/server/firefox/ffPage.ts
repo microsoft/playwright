@@ -48,7 +48,7 @@ export class FFPage implements PageDelegate {
   readonly _page: Page;
   readonly _networkManager: FFNetworkManager;
   readonly _browserContext: FFBrowserContext;
-  private _initializationFailed = false;
+  private _reportedAsNew = false;
   readonly _opener: FFPage | null;
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
@@ -99,31 +99,23 @@ export class FFPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Page.screencastFrame', this._onScreencastFrame.bind(this)),
 
     ];
-    this._session.once('Page.ready', async () => {
-      await this._page.initOpener(this._opener?._page);
-      if (this._initializationFailed)
+    this._session.once('Page.ready', () => {
+      if (this._reportedAsNew)
         return;
-      this._page.reportAsNew();
+      this._reportedAsNew = true;
+      this._page.reportAsNew(this._opener?._page);
     });
     // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
     // Therefore, we can end up with an initialized page without utility world, although very unlikely.
     this.addInitScript(new InitScript('', true), UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
   }
 
-  potentiallyUninitializedPage(): Page {
-    return this._page;
-  }
-
   async _markAsError(error: Error) {
     // Same error may be reported twice: channel disconnected and session.send fails.
-    if (this._initializationFailed)
+    if (this._reportedAsNew)
       return;
-    this._initializationFailed = true;
-
-    if (!this._page.initialized()) {
-      await this._page.initOpener(this._opener?._page);
-      this._page.reportAsNew(error);
-    }
+    this._reportedAsNew = true;
+    this._page.reportAsNew(this._opener?._page, error);
   }
 
   _onWebSocketCreated(event: Protocol.Page.webSocketCreatedPayload) {
