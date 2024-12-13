@@ -238,7 +238,9 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
 
 function snapshotScript(...targetIds: (string | undefined)[]) {
   function applyPlaywrightAttributes(unwrapPopoutUrl: (url: string) => string, ...targetIds: (string | undefined)[]) {
-    const isUnderTest = new URLSearchParams(location.search).has('isUnderTest');
+    const searchParams = new URLSearchParams(location.search);
+    const shouldPopulateCanvasFromScreenshot = searchParams.has('shouldPopulateCanvasFromScreenshot');
+    const isUnderTest = searchParams.has('isUnderTest');
 
     const kPointerWarningTitle = 'Recorded click position in absolute coordinates did not' +
         ' match the center of the clicked element. This is likely due to a difference between' +
@@ -455,15 +457,20 @@ function snapshotScript(...targetIds: (string | undefined)[]) {
 
             drawCheckerboard(context, canvas);
 
-            context.drawImage(img, boundingRect.left * img.width, boundingRect.top * img.height, (boundingRect.right - boundingRect.left) * img.width, (boundingRect.bottom - boundingRect.top) * img.height, 0, 0, canvas.width, canvas.height);
+            if (shouldPopulateCanvasFromScreenshot) {
+              context.drawImage(img, boundingRect.left * img.width, boundingRect.top * img.height, (boundingRect.right - boundingRect.left) * img.width, (boundingRect.bottom - boundingRect.top) * img.height, 0, 0, canvas.width, canvas.height);
+
+              if (partiallyUncaptured)
+                canvas.title = `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`;
+              else
+                canvas.title = `Canvas contents are displayed on a best-effort basis based on viewport screenshots taken during test execution.`;  
+            } else {
+              canvas.title = 'Canvas content display is disabled.';
+            }
+
             if (isUnderTest)
               // eslint-disable-next-line no-console
               console.log(`canvas drawn:`, JSON.stringify([boundingRect.left, boundingRect.top, (boundingRect.right - boundingRect.left), (boundingRect.bottom - boundingRect.top)].map(v => Math.floor(v * 100))));
-
-            if (partiallyUncaptured)
-              canvas.title = `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`;
-            else
-              canvas.title = `Canvas contents are displayed on a best-effort basis based on viewport screenshots taken during test execution.`;
           }
         };
         img.onerror = () => {

@@ -30,6 +30,7 @@ import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { TabbedPaneTab } from '@web/components/tabbedPane';
 import { BrowserFrame } from './browserFrame';
 import type { ElementInfo } from '@recorder/recorderTypes';
+import { useShouldPopulateCanvasFromScreenshot } from './settings/useShouldPopulateCanvasFromScreenshot';
 
 export const SnapshotTabsView: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
@@ -43,13 +44,16 @@ export const SnapshotTabsView: React.FunctionComponent<{
 }> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator }) => {
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [shouldPopulateCanvasFromScreenshot, _] = useShouldPopulateCanvasFromScreenshot();
+
   const snapshots = React.useMemo(() => {
     return collectSnapshots(action);
   }, [action]);
   const snapshotUrls = React.useMemo(() => {
     const snapshot = snapshots[snapshotTab];
-    return snapshot ? extendSnapshot(snapshot) : undefined;
-  }, [snapshots, snapshotTab]);
+    return snapshot ? extendSnapshot(snapshot, shouldPopulateCanvasFromScreenshot) : undefined;
+  }, [snapshots, snapshotTab, shouldPopulateCanvasFromScreenshot]);
 
   return <div className='snapshot-tab vbox'>
     <Toolbar>
@@ -327,7 +331,7 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
 const isUnderTest = new URLSearchParams(window.location.search).has('isUnderTest');
 const serverParam = new URLSearchParams(window.location.search).get('server');
 
-export function extendSnapshot(snapshot: Snapshot): SnapshotUrls {
+export function extendSnapshot(snapshot: Snapshot, shouldPopulateCanvasFromScreenshot: boolean): SnapshotUrls {
   const params = new URLSearchParams();
   params.set('trace', context(snapshot.action).traceUrl);
   params.set('name', snapshot.snapshotName);
@@ -339,6 +343,9 @@ export function extendSnapshot(snapshot: Snapshot): SnapshotUrls {
     if (snapshot.hasInputTarget)
       params.set('hasInputTarget', '1');
   }
+  if (shouldPopulateCanvasFromScreenshot)
+    params.set('shouldPopulateCanvasFromScreenshot', '1');
+
   const snapshotUrl = new URL(`snapshot/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
   const snapshotInfoUrl = new URL(`snapshotInfo/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
 
