@@ -291,7 +291,7 @@ program
     });
 
 program
-    .command('run-server', { hidden: true })
+    .command('run-server')
     .option('--port <port>', 'Server port')
     .option('--host <host>', 'Server host')
     .option('--path <path>', 'Endpoint Path', '/')
