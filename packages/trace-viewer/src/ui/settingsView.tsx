@@ -30,16 +30,17 @@ export const SettingsView: React.FunctionComponent<{
   return (
     <div className='vbox settings-view'>
       {settings.map(({ value, set, name, title }) => {
+        const labelId = `setting-${name}`;
+
         return (
           <div key={name} className='setting' title={title}>
-            <label>
-              <input
-                type='checkbox'
-                checked={value}
-                onChange={() => set(!value)}
-              />
-              {name}
-            </label>
+            <input
+              type='checkbox'
+              id={labelId}
+              checked={value}
+              onChange={() => set(!value)}
+            />
+            <label htmlFor={labelId}>{name}</label>
           </div>
         );
       })}
