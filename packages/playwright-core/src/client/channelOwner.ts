@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from './eventEmitter';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { maybeFindValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 import { debugLogger } from '../utils/debugLogger';
 import type { ExpectZone } from '../utils/stackTrace';

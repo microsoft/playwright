@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ClientSideCallMetadata } from '@protocol/channels';
+import type { ClientSideCallMetadata } from '@playwright/protocol/src/channels';
 import type { SerializedClientSideCallMetadata, SerializedStack, SerializedStackFrame } from './isomorphic/traceUtils';
 
 export function serializeClientSideCallMetadata(metadatas: ClientSideCallMetadata[]): SerializedClientSideCallMetadata {

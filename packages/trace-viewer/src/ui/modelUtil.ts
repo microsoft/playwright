@@ -19,7 +19,7 @@ import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { ActionTraceEvent } from '@trace/trace';
 import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
-import type { StackFrame } from '@protocol/channels';
+import type { StackFrame } from '@playwright/protocol/src/channels';
 
 const contextSymbol = Symbol('context');
 const nextInContextSymbol = Symbol('next');

@@ -19,7 +19,7 @@ import type * as accessibility from '../accessibility';
 import type { FFSession } from './ffConnection';
 import type { Protocol } from './protocol';
 import type * as dom from '../dom';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 
 export async function getAccessibilityTree(session: FFSession, needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
   const objectId = needle ? needle._objectId : undefined;

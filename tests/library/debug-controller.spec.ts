@@ -19,7 +19,7 @@ import { PlaywrightServer } from '../../packages/playwright-core/lib/remote/play
 import { createGuid } from '../../packages/playwright-core/lib/utils/crypto';
 import { Backend } from '../config/debugControllerBackend';
 import type { Browser, BrowserContext } from '@playwright/test';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { roundBox } from '../page/pageTest';
 
 type BrowserWithReuse = Browser & { _newContextForReuse: () => Promise<BrowserContext> };

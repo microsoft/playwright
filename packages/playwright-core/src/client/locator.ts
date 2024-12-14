@@ -16,7 +16,7 @@
 
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import * as util from 'util';
 import { asLocator, isString, monotonicTime } from '../utils';
 import { ElementHandle } from './elementHandle';

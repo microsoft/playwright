@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ExpectedTextValue } from '@protocol/channels';
+import type { ExpectedTextValue } from '@playwright/protocol/src/channels';
 import { isRegExp, isString } from './rtti';
 
 export function serializeExpectedTextValues(items: (string | RegExp)[], options: { matchSubstring?: boolean, normalizeWhiteSpace?: boolean, ignoreCase?: boolean } = {}): ExpectedTextValue[] {

@@ -16,7 +16,7 @@
  */
 
 import { assert } from '../../utils';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import type { BidiSession } from './bidiConnection';
 
 const PagePaperFormats: { [key: string]: { width: number, height: number }} = {

@@ -20,7 +20,7 @@ import * as frames from './frames';
 import * as input from './input';
 import * as js from './javascript';
 import type * as network from './network';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import type { ScreenshotOptions } from './screenshotter';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
 import { TimeoutSettings } from '../common/timeoutSettings';

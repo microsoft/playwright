@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import type { Page } from './page';
 import { ChannelOwner } from './channelOwner';

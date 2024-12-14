@@ -17,7 +17,7 @@ import type * as accessibility from '../accessibility';
 import type { WKSession } from './wkConnection';
 import type { Protocol } from './protocol';
 import type * as dom from '../dom';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 
 export async function getAccessibilityTree(session: WKSession, needle?: dom.ElementHandle) {
   const objectId = needle ? needle._objectId : undefined;

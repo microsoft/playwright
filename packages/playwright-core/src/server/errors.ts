@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { SerializedError } from '@protocol/channels';
+import type { SerializedError } from '@playwright/protocol/src/channels';
 import { isError } from '../utils';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
 

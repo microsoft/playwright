@@ -27,7 +27,7 @@ import type { FullConfig, Location } from '../../types/testReporter';
 import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import type { Attachment } from './testTracing';
-import type { StackFrame } from '@protocol/channels';
+import type { StackFrame } from '@playwright/protocol/src/channels';
 import { testInfoError } from './util';
 
 export interface TestStepInternal {

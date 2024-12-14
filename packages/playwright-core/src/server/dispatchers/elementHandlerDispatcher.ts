@@ -17,7 +17,7 @@
 import type { ElementHandle } from '../dom';
 import type { Frame } from '../frames';
 import type * as js from '../javascript';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { existingDispatcher } from './dispatcher';
 import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
 import type { JSHandleDispatcherParentScope } from './jsHandleDispatcher';

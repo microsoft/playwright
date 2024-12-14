@@ -29,7 +29,7 @@ import { Page, PageBinding } from './page';
 import type { Progress, ProgressController } from './progress';
 import type { Selectors } from './selectors';
 import type * as types from './types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import path from 'path';
 import fs from 'fs';
 import type { CallMetadata } from './instrumentation';

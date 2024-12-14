@@ -17,7 +17,7 @@
 
 import type { Size, Point, TimeoutOptions, HeadersArray } from '../common/types';
 export type { Size, Point, Rect, Quad, TimeoutOptions, HeadersArray } from '../common/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 
 export type StrictOptions = {
   strict?: boolean,

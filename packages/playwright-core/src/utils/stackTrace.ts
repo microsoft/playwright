@@ -16,7 +16,7 @@
 
 import path from 'path';
 import { parseStackTraceLine } from '../utilsBundle';
-import type { StackFrame } from '@protocol/channels';
+import type { StackFrame } from '@playwright/protocol/src/channels';
 import { colors } from '../utilsBundle';
 import { findRepeatedSubsequences } from './sequence';
 

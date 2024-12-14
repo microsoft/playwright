@@ -44,7 +44,7 @@ import type * as childProcess from 'child_process';
 import * as readline from 'readline';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { serverSideCallMetadata, SdkObject } from '../instrumentation';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { toConsoleMessageLocation } from '../chromium/crProtocolHelper';
 import { ConsoleMessage } from '../console';
 

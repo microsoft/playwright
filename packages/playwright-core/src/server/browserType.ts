@@ -30,7 +30,7 @@ import { PipeTransport } from './pipeTransport';
 import type { Progress } from './progress';
 import { ProgressController } from './progress';
 import type * as types from './types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
 import { debugMode, ManualPromise } from '../utils';
 import { existsAsync } from '../utils/fileUtils';

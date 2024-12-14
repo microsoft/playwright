@@ -16,7 +16,7 @@
 
 import type { BrowserType } from '../browserType';
 import { BrowserDispatcher } from './browserDispatcher';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';

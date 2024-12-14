@@ -15,7 +15,7 @@
  */
 
 import { Browser } from '../browser';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { existingDispatcher } from './dispatcher';

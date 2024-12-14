@@ -23,7 +23,7 @@ import { monotonicTime } from '../../utils/time';
 import { callMetadataForAction, collapseActions } from './recorderUtils';
 import { serializeError } from '../errors';
 import { performAction } from './recorderRunner';
-import type { CallMetadata } from '@protocol/callMetadata';
+import type { CallMetadata } from '@playwright/protocol/src/callMetadata';
 import { isUnderTest } from '../../utils/debug';
 
 export class RecorderCollection extends EventEmitter {

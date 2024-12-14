@@ -18,7 +18,7 @@ import type EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { ManualPromise } from '../../utils/manualPromise';
 import { assert, calculateSha1, createGuid, removeFolders } from '../../utils';
 import type { RootDispatcher } from './dispatcher';

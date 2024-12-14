@@ -25,7 +25,7 @@ import type { InitScript, Page, PageDelegate } from '../page';
 import { PageBinding } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { ConnectionEvents, FFConnection, type FFSession } from './ffConnection';
 import { FFPage } from './ffPage';
 import type { Protocol } from './protocol';

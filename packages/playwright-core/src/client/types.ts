@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import type { Size } from '../common/types';
 export type { Size, Point, Rect, Quad, TimeoutOptions, HeadersArray } from '../common/types';
 
