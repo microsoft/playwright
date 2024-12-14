@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Entry } from '@trace/har';
+import type { Entry } from '@playwright/trace/src/har';
 import * as React from 'react';
 import type { Boundaries } from './geometry';
 import './networkTab.css';

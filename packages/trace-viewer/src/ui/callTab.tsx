@@ -15,7 +15,7 @@
  */
 
 import type { SerializedValue } from '@protocol/channels';
-import type { ActionTraceEvent } from '@trace/trace';
+import type { ActionTraceEvent } from '@playwright/trace/src/trace';
 import { clsx, msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './callTab.css';

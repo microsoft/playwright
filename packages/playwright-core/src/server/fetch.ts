@@ -39,7 +39,7 @@ import { Tracing } from './trace/recorder/tracing';
 import type * as types from './types';
 import type { HeadersArray, ProxySettings } from './types';
 import { getMatchingTLSOptionsForOrigin, rewriteOpenSSLErrorIfNeeded } from './socksClientCertificatesInterceptor';
-import type * as har from '@trace/har';
+import type * as har from '@playwright/trace/src/har';
 import { TLSSocket } from 'tls';
 
 type FetchRequestOptions = {

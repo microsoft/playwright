@@ -15,8 +15,8 @@
  */
 
 import type { Language } from 'playwright-core/src/utils/isomorphic/locatorGenerators';
-import type { ResourceSnapshot } from '@trace/snapshot';
-import type * as trace from '@trace/trace';
+import type { ResourceSnapshot } from '@playwright/trace/src/snapshot';
+import type * as trace from '@playwright/trace/src/trace';
 
 // *Entry structures are used to pass the trace between the sw and the page.
 

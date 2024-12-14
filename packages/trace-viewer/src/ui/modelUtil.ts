@@ -15,9 +15,9 @@
  */
 
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { ResourceSnapshot } from '@trace/snapshot';
-import type * as trace from '@trace/trace';
-import type { ActionTraceEvent } from '@trace/trace';
+import type { ResourceSnapshot } from '@playwright/trace/src/snapshot';
+import type * as trace from '@playwright/trace/src/trace';
+import type { ActionTraceEvent } from '@playwright/trace/src/trace';
 import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
 import type { StackFrame } from '@protocol/channels';
 

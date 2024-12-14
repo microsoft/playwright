@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { ActionTraceEvent, AfterActionTraceEventAttachment } from '@trace/trace';
+import type { ActionTraceEvent, AfterActionTraceEventAttachment } from '@playwright/trace/src/trace';
 import { msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './actionList.css';

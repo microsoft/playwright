@@ -17,7 +17,7 @@
 import type { URLSearchParams } from 'url';
 import type { SnapshotRenderer } from './snapshotRenderer';
 import type { SnapshotStorage } from './snapshotStorage';
-import type { ResourceSnapshot } from '@trace/snapshot';
+import type { ResourceSnapshot } from '@playwright/trace/src/snapshot';
 
 type Point = { x: number, y: number };
 

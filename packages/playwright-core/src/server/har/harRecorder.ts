@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
-import type * as har from '@trace/har';
+import type * as har from '@playwright/trace/src/har';
 import { HarTracer } from './harTracer';
 import type { HarTracerDelegate } from './harTracer';
 import type * as channels from '@protocol/channels';

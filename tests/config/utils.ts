@@ -22,7 +22,7 @@ import { parseClientSideCallMetadata } from '../../packages/playwright-core/lib/
 import { TraceModel } from '../../packages/trace-viewer/src/sw/traceModel';
 import type { ActionTreeItem } from '../../packages/trace-viewer/src/ui/modelUtil';
 import { buildActionTree, MultiTraceModel } from '../../packages/trace-viewer/src/ui/modelUtil';
-import type { ActionTraceEvent, ConsoleMessageTraceEvent, EventTraceEvent, TraceEvent } from '@trace/trace';
+import type { ActionTraceEvent, ConsoleMessageTraceEvent, EventTraceEvent, TraceEvent } from '@playwright/trace/src/trace';
 import style from 'ansi-styles';
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {

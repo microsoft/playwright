@@ -31,7 +31,6 @@ export default defineConfig({
       '@isomorphic': path.resolve(__dirname, '../playwright-core/src/utils/isomorphic'),
       '@protocol': path.resolve(__dirname, '../protocol/src'),
       '@testIsomorphic': path.resolve(__dirname, '../playwright-core/src/utils/testIsomorphic'),
-      '@trace': path.resolve(__dirname, '../trace/src'),
       '@web': path.resolve(__dirname, '../web/src'),
     },
   },

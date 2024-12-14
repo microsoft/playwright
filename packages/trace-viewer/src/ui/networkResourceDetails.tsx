@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ResourceSnapshot } from '@trace/snapshot';
+import type { ResourceSnapshot } from '@playwright/trace/src/snapshot';
 import * as React from 'react';
 import './networkResourceDetails.css';
 import { TabbedPane } from '@web/components/tabbedPane';

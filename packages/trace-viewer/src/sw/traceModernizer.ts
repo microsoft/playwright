@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as trace from '@trace/trace';
+import type * as trace from '@playwright/trace/src/trace';
 import type * as traceV3 from './versions/traceV3';
 import type * as traceV4 from './versions/traceV4';
 import type * as traceV5 from './versions/traceV5';

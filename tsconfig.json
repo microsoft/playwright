@@ -16,7 +16,6 @@
       "@protocol/*": ["./packages/protocol/src/*"],
       "@recorder/*": ["./packages/recorder/src/*"],
       "@testIsomorphic/*": ["./packages/playwright/src/isomorphic/*"],
-      "@trace/*": ["./packages/trace/src/*"],
       "@web/*": ["./packages/web/src/*"],
       "playwright-core/lib/*": ["./packages/playwright-core/src/*"],
       "playwright/lib/*": ["./packages/playwright/src/*"],

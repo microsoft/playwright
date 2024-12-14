@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Entry as ResourceSnapshot } from '@trace/har';
+import type { Entry as ResourceSnapshot } from '@playwright/trace/src/har';
 
 type SerializedValue = {
   n?: number,

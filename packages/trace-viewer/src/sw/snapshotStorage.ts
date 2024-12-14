@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
+import type { FrameSnapshot, ResourceSnapshot } from '@playwright/trace/src/snapshot';
 import { rewriteURLForCustomProtocol, SnapshotRenderer } from './snapshotRenderer';
 import type { PageEntry } from '../types/entries';
 import { LRUCache } from './lruCache';

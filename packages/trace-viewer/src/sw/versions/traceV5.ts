@@ -15,7 +15,7 @@
  */
 
 
-import type { Entry as ResourceSnapshot } from '@trace/har';
+import type { Entry as ResourceSnapshot } from '@playwright/trace/src/har';
 
 type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
 type Point = { x: number, y: number };

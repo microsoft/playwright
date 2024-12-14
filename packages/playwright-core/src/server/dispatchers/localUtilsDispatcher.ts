@@ -25,7 +25,7 @@ import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { yazl, yauzl } from '../../zipBundle';
 import { ZipFile } from '../../utils/zipFile';
-import type * as har from '@trace/har';
+import type * as har from '@playwright/trace/src/har';
 import type { HeadersArray } from '../types';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
 import { WebSocketTransport } from '../transport';

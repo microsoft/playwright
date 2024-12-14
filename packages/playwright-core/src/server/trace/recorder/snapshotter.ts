@@ -23,7 +23,7 @@ import type { Frame } from '../../frames';
 import type { SnapshotData } from './snapshotterInjected';
 import { frameSnapshotStreamer } from './snapshotterInjected';
 import { calculateSha1, createGuid, monotonicTime } from '../../../utils';
-import type { FrameSnapshot } from '@trace/snapshot';
+import type { FrameSnapshot } from '@playwright/trace/src/snapshot';
 import { mime } from '../../../utilsBundle';
 
 export type SnapshotterBlob = {

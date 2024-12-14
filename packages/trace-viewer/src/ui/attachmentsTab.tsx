@@ -19,7 +19,7 @@ import './attachmentsTab.css';
 import { ImageDiffView } from '@web/shared/imageDiffView';
 import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
-import type { AfterActionTraceEventAttachment } from '@trace/trace';
+import type { AfterActionTraceEventAttachment } from '@playwright/trace/src/trace';
 import { CodeMirrorWrapper, lineHeight } from '@web/components/codeMirrorWrapper';
 import { isTextualMimeType } from '@isomorphic/mimeType';
 import { Expandable } from '@web/components/expandable';

@@ -16,14 +16,14 @@
 
 import type { BrowserContext } from '../../browserContext';
 import type { Page } from '../../page';
-import type { FrameSnapshot } from '@trace/snapshot';
+import type { FrameSnapshot } from '@playwright/trace/src/snapshot';
 import type { SnapshotRenderer } from '../../../../../trace-viewer/src/sw/snapshotRenderer';
 import { SnapshotStorage } from '../../../../../trace-viewer/src/sw/snapshotStorage';
 import type { SnapshotterBlob, SnapshotterDelegate } from '../recorder/snapshotter';
 import { Snapshotter } from '../recorder/snapshotter';
 import type { HarTracerDelegate } from '../../har/harTracer';
 import { HarTracer } from '../../har/harTracer';
-import type * as har from '@trace/har';
+import type * as har from '@playwright/trace/src/har';
 import { ManualPromise } from '../../../utils';
 
 export class InMemorySnapshotter implements SnapshotterDelegate, HarTracerDelegate {

@@ -37,11 +37,11 @@ import type { Boundaries } from './geometry';
 import { InspectorTab } from './inspectorTab';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { useSetting, msToString, clsx } from '@web/uiUtils';
-import type { Entry } from '@trace/har';
+import type { Entry } from '@playwright/trace/src/har';
 import './workbench.css';
 import { testStatusIcon, testStatusText } from './testUtils';
 import type { UITestStatus } from './testUtils';
-import type { AfterActionTraceEventAttachment } from '@trace/trace';
+import type { AfterActionTraceEventAttachment } from '@playwright/trace/src/trace';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,

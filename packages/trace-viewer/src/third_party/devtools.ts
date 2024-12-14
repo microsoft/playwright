@@ -57,7 +57,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import type { Entry } from '@trace/har';
+import type { Entry } from '@playwright/trace/src/har';
 
 // The following function is derived from Chromium's source code
 // https://github.com/ChromeDevTools/devtools-frontend/blob/83cbe41b4107e188a1f66fdf6ea3a9cca42587c6/front_end/panels/network/NetworkLogView.ts#L2363

@@ -1,6 +1,5 @@
 [*]
 @isomorphic/**
-@trace/**
 @web/**
 ui/
 

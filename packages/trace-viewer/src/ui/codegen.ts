@@ -15,7 +15,7 @@
  */
 
 import type { Language } from '@isomorphic/locatorGenerators';
-import type * as har from '@trace/har';
+import type * as har from '@playwright/trace/src/har';
 
 interface APIRequestCodegen {
   generatePlaywrightRequestCall(request: har.Request, body: string | undefined): string;

@@ -23,7 +23,7 @@ import type { FilmStripPreviewPoint } from './filmStrip';
 import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
 import './timeline.css';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { Entry } from '@trace/har';
+import type { Entry } from '@playwright/trace/src/har';
 import type { ConsoleEntry } from './consoleTab';
 
 type TimelineBar = {

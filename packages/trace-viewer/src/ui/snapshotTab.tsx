@@ -16,7 +16,7 @@
 
 import './snapshotTab.css';
 import * as React from 'react';
-import type { ActionTraceEvent } from '@trace/trace';
+import type { ActionTraceEvent } from '@playwright/trace/src/trace';
 import { context, type MultiTraceModel, prevInList } from './modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
