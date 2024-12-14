@@ -111,17 +111,17 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       lines.pop(); // Remove last item that contains [v] and time in ms.
       expect(lines).toEqual([
         '#0 :      1 a.test.ts:3:11 › passes',
-        '#0 :      1 a.test.ts:4:20 › passes › outer 1.0',
-        '#0 :      1 a.test.ts:5:22 › passes › outer 1.0 › inner 1.1',
-        '#0 :      1 a.test.ts:4:20 › passes › outer 1.0',
-        '#0 :      1 a.test.ts:6:22 › passes › outer 1.0 › inner 1.2',
-        '#0 :      1 a.test.ts:4:20 › passes › outer 1.0',
+        '#0 :      1 a.test.ts:3:11 › passes › outer 1.0',
+        '#0 :      1 a.test.ts:3:11 › passes › outer 1.0 › inner 1.1',
+        '#0 :      1 a.test.ts:3:11 › passes › outer 1.0',
+        '#0 :      1 a.test.ts:3:11 › passes › outer 1.0 › inner 1.2',
+        '#0 :      1 a.test.ts:3:11 › passes › outer 1.0',
         '#0 :      1 a.test.ts:3:11 › passes',
-        '#0 :      1 a.test.ts:8:20 › passes › outer 2.0',
-        '#0 :      1 a.test.ts:9:22 › passes › outer 2.0 › inner 2.1',
-        '#0 :      1 a.test.ts:8:20 › passes › outer 2.0',
-        '#0 :      1 a.test.ts:10:22 › passes › outer 2.0 › inner 2.2',
-        '#0 :      1 a.test.ts:8:20 › passes › outer 2.0',
+        '#0 :      1 a.test.ts:3:11 › passes › outer 2.0',
+        '#0 :      1 a.test.ts:3:11 › passes › outer 2.0 › inner 2.1',
+        '#0 :      1 a.test.ts:3:11 › passes › outer 2.0',
+        '#0 :      1 a.test.ts:3:11 › passes › outer 2.0 › inner 2.2',
+        '#0 :      1 a.test.ts:3:11 › passes › outer 2.0',
         '#0 :      1 a.test.ts:3:11 › passes',
       ]);
     });
@@ -145,12 +145,12 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const text = result.output;
       const lines = text.split('\n').filter(l => l.match(/^#.* :/)).map(l => l.replace(/[.\d]+m?s/, 'Xms'));
       expect(lines).toEqual([
-        '#0 :      1.1 a.test.ts:5:26 › passes › outer 1.0 › inner 1.1 (Xms)',
-        '#1 :      1.2 a.test.ts:6:26 › passes › outer 1.0 › inner 1.2 (Xms)',
-        '#2 :      1.3 a.test.ts:4:24 › passes › outer 1.0 (Xms)',
-        '#3 :      1.4 a.test.ts:9:26 › passes › outer 2.0 › inner 2.1 (Xms)',
-        '#4 :      1.5 a.test.ts:10:26 › passes › outer 2.0 › inner 2.2 (Xms)',
-        '#5 :      1.6 a.test.ts:8:24 › passes › outer 2.0 (Xms)',
+        '#0 :      1.1 a.test.ts:3:15 › passes › outer 1.0 › inner 1.1 (Xms)',
+        '#1 :      1.2 a.test.ts:3:15 › passes › outer 1.0 › inner 1.2 (Xms)',
+        '#2 :      1.3 a.test.ts:3:15 › passes › outer 1.0 (Xms)',
+        '#3 :      1.4 a.test.ts:3:15 › passes › outer 2.0 › inner 2.1 (Xms)',
+        '#4 :      1.5 a.test.ts:3:15 › passes › outer 2.0 › inner 2.2 (Xms)',
+        '#5 :      1.6 a.test.ts:3:15 › passes › outer 2.0 (Xms)',
         `#6 :   ${POSITIVE_STATUS_MARK} 1 a.test.ts:3:15 › passes (Xms)`,
       ]);
     });
