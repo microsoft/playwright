@@ -204,3 +204,30 @@ test('step should inherit return type from its callback ', async ({ runTSC }) =>
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('step.fail and step.fixme return void ', async ({ runTSC }) => {
+  const result = await runTSC({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test step.fail', async ({ }) => {
+        // @ts-expect-error
+        const bad1: string = await test.step.fail('my step', () => { });
+        // @ts-expect-error
+        const bad2: void = await test.step.fail('my step', async () => {
+          return 10;
+        });
+        const good: void = await test.step.fail('my step', async () => { });
+      });
+      test('test step.fixme', async ({ }) => {
+        // @ts-expect-error
+        const bad1: string = await test.step.fixme('my step', () => { });
+        // @ts-expect-error
+        const bad2: void = await test.step.fixme('my step', async () => {
+          return 10;
+        });
+        const good: void = await test.step.fixme('my step', async () => { });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
