@@ -1,5 +1,5 @@
 {
-  "name": "html-reporter",
+  "name": "@playwright/html-reporter",
   "private": true,
   "version": "0.0.0",
   "type": "module"

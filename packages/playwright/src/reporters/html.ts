@@ -29,7 +29,7 @@ import type { Metadata } from '../../types/test';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
-import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
+import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@playwright/html-reporter/src/types';
 import type { ReporterV2 } from './reporterV2';
 
 type TestEntry = {
