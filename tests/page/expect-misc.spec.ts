@@ -510,16 +510,48 @@ test('toHaveAccessibleErrorMessage', async ({ page }) => {
   await expect(locator).not.toHaveAccessibleErrorMessage('This should not be considered.');
 });
 
-test('toHaveAccessibleErrorMessage fails when aria-invalid is not true', async ({ page }) => {
-  await page.setContent(`
-      <form>
-        <input id="username" aria-invalid="false" aria-errormessage="username-error" />
-        <div id="username-error">Username is required.</div>
-      </form>
-    `);
+test.describe('toHaveAccessibleErrorMessage should handle aria-invalid attribute', () => {
+  const errorMessageText = 'Error message';
 
-  const input = page.locator('#username');
-  await expect(input).not.toHaveAccessibleErrorMessage('Username is required.');
+  async function setupPage(page, ariaInvalidValue: string | null) {
+    const ariaInvalidAttr = ariaInvalidValue === null ? '' : `aria-invalid="${ariaInvalidValue}"`;
+    await page.setContent(`
+        <form>
+          <input id="node" type="text" ${ariaInvalidAttr} aria-errormessage="error-msg" />
+          <div id="error-msg">${errorMessageText}</div>
+        </form>
+      `);
+    return page.locator('#node');
+  }
+
+  test.describe('evaluated in false', () => {
+    test('no aria-invalid attribute', async ({ page }) => {
+      const locator = await setupPage(page, null);
+      await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
+    });
+
+    test('aria-invalid="false"', async ({ page }) => {
+      const locator = await setupPage(page, 'false');
+      await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
+    });
+  });
+
+  test.describe('evaluated in true', () => {
+    test('aria-invalid="true"', async ({ page }) => {
+      const locator = await setupPage(page, 'true');
+      await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
+    });
+
+    test('aria-invalid="" (empty string)', async ({ page }) => {
+      const locator = await setupPage(page, '');
+      await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
+    });
+
+    test('aria-invalid="foo" (unrecognized value)', async ({ page }) => {
+      const locator = await setupPage(page, 'foo');
+      await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
+    });
+  });
 });
 
 test('toHaveRole', async ({ page }) => {
