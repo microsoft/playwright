@@ -473,18 +473,15 @@ export function getElementAccessibleErrorMessage(element: Element): string {
     if (isAriaInvalid) {
       const errorMessageId = element.getAttribute('aria-errormessage');
       if (errorMessageId) {
-        // Ensure the ID is valid (no whitespace)
-        if (!/\s+/.test(errorMessageId)) {
-          // Retrieve the element referenced by aria-errormessage.
-          const errorElement = element.ownerDocument.getElementById(errorMessageId);
-          if (errorElement) {
-            accessibleErrorMessage = asFlatString(
-                getTextAlternativeInternal(errorElement, {
-                  visitedElements: new Set(),
-                  embeddedInDescribedBy: { element: errorElement, hidden: isElementHiddenForAria(errorElement) },
-                })
-            );
-          }
+        const errorMessages = getIdRefs(element, errorMessageId);
+        if (errorMessages.length) {
+          const parts = errorMessages.map(errorMessage => asFlatString(
+              getTextAlternativeInternal(errorMessage, {
+                visitedElements: new Set(),
+                embeddedInDescribedBy: { element: errorMessage, hidden: isElementHiddenForAria(errorMessage) },
+              })
+          ));
+          accessibleErrorMessage = parts.join(' ').trim();
         }
       }
     }
