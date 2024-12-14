@@ -217,18 +217,23 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
 
 export function locatorOrSelectorAsSelector(language: Language, locator: string, testIdAttributeName: string): string {
   try {
+    return unsafeLocatorOrSelectorAsSelector(language, locator, testIdAttributeName);
+  } catch (e) {
+    return '';
+  }
+}
+
+export function unsafeLocatorOrSelectorAsSelector(language: Language, locator: string, testIdAttributeName: string): string {
+  try {
     parseSelector(locator);
     return locator;
   } catch (e) {
   }
-  try {
-    const { selector, preferredQuote } = parseLocator(locator, testIdAttributeName);
-    const locators = asLocators(language, selector, undefined, undefined, preferredQuote);
-    const digest = digestForComparison(language, locator);
-    if (locators.some(candidate => digestForComparison(language, candidate) === digest))
-      return selector;
-  } catch (e) {
-  }
+  const { selector, preferredQuote } = parseLocator(locator, testIdAttributeName);
+  const locators = asLocators(language, selector, undefined, undefined, preferredQuote);
+  const digest = digestForComparison(language, locator);
+  if (locators.some(candidate => digestForComparison(language, candidate) === digest))
+    return selector;
   return '';
 }
 
