@@ -20,7 +20,7 @@ import { Browser } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
 import { assert } from '../../utils';
 import * as network from '../network';
-import type { InitScript, Page, PageDelegate } from '../page';
+import type { InitScript, Page } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type * as channels from '@protocol/channels';
@@ -121,14 +121,14 @@ export class WKBrowser extends Browser {
     // abort navigation that is still running. We should be able to fix this by
     // instrumenting policy decision start/proceed/cancel.
     page._page._frameManager.frameAbortedNavigation(payload.frameId, 'Download is starting');
-    let originPage = page._initializedPage;
+    let originPage = page._page.initializedOrUndefined();
     // If it's a new window download, report it on the opener page.
     if (!originPage) {
       // Resume the page creation with an error. The page will automatically close right
       // after the download begins.
       page._firstNonInitialNavigationCommittedReject(new Error('Starting new page download'));
       if (page._opener)
-        originPage = page._opener._initializedPage;
+        originPage = page._opener._page.initializedOrUndefined();
     }
     if (!originPage)
       return;
@@ -239,18 +239,14 @@ export class WKBrowserContext extends BrowserContext {
     return Array.from(this._browser._wkPages.values()).filter(wkPage => wkPage._browserContext === this);
   }
 
-  pages(): Page[] {
-    return this._wkPages().map(wkPage => wkPage._initializedPage).filter(pageOrNull => !!pageOrNull) as Page[];
+  override possiblyUninitializedPages(): Page[] {
+    return this._wkPages().map(wkPage => wkPage._page);
   }
 
-  pagesOrErrors() {
-    return this._wkPages().map(wkPage => wkPage.pageOrError());
-  }
-
-  async newPageDelegate(): Promise<PageDelegate> {
+  override async doCreateNewPage(): Promise<Page> {
     assertBrowserContextIsNotOwned(this);
     const { pageProxyId } = await this._browser._browserSession.send('Playwright.createPage', { browserContextId: this._browserContextId });
-    return this._browser._wkPages.get(pageProxyId)!;
+    return this._browser._wkPages.get(pageProxyId)!._page;
   }
 
   async doGetCookies(urls: string[]): Promise<channels.NetworkCookie[]> {
