@@ -311,6 +311,7 @@ export class TestServerDispatcher implements TestServerInterface {
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
       },
       ...(params.updateSnapshots ? { updateSnapshots: params.updateSnapshots } : {}),
+      ...(params.updateSourceMethod ? { updateSourceMethod: params.updateSourceMethod } : {}),
       ...(params.workers ? { workers: params.workers } : {}),
     };
     if (params.trace === 'on')

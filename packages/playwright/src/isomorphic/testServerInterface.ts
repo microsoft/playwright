@@ -94,7 +94,8 @@ export interface TestServerInterface {
     testIds?: string[];
     headed?: boolean;
     workers?: number | string;
-    updateSnapshots?: 'all' | 'none' | 'missing';
+    updateSnapshots?: 'all' | 'changed' | 'missing' | 'none';
+    updateSourceMethod?: 'overwrite' | 'patch' | '3way';
     reporters?: string[],
     trace?: 'on' | 'off';
     video?: 'on' | 'off';
