@@ -469,7 +469,9 @@ export function getElementAccessibleErrorMessage(element: Element, includeHidden
     accessibleErrorMessage = '';
 
     const ariaInvalid = element.getAttribute('aria-invalid');
-    if (ariaInvalid === 'true') {
+    // const isAriaInvalid = ariaInvalid === 'true' || (ariaInvalid !== 'false' && ariaInvalid !== null && ariaInvalid !== '');
+    const isAriaInvalid = ariaInvalid !== null && ariaInvalid.toLowerCase() !== 'false';
+    if (isAriaInvalid) {
       const errorMessageId = element.getAttribute('aria-errormessage');
       if (errorMessageId) {
         // Ensure the ID is valid (no whitespace)
