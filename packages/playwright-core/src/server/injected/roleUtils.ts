@@ -461,15 +461,14 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
   return accessibleDescription;
 }
 
-export function getElementAccessibleErrorMessage(element: Element, includeHidden: boolean): string {
-  const cache = includeHidden ? cacheAccessibleErrorMessageHidden : cacheAccessibleErrorMessage;
-  let accessibleErrorMessage = cache?.get(element);
+export function getElementAccessibleErrorMessage(element: Element): string {
+  const cache = cacheAccessibleErrorMessage;
+  let accessibleErrorMessage = cacheAccessibleErrorMessage?.get(element);
 
   if (accessibleErrorMessage === undefined) {
     accessibleErrorMessage = '';
 
     const ariaInvalid = element.getAttribute('aria-invalid');
-    // const isAriaInvalid = ariaInvalid === 'true' || (ariaInvalid !== 'false' && ariaInvalid !== null && ariaInvalid !== '');
     const isAriaInvalid = ariaInvalid !== null && ariaInvalid.toLowerCase() !== 'false';
     if (isAriaInvalid) {
       const errorMessageId = element.getAttribute('aria-errormessage');
@@ -481,7 +480,6 @@ export function getElementAccessibleErrorMessage(element: Element, includeHidden
           if (errorElement) {
             accessibleErrorMessage = asFlatString(
                 getTextAlternativeInternal(errorElement, {
-                  includeHidden,
                   visitedElements: new Set(),
                   embeddedInDescribedBy: { element: errorElement, hidden: isElementHiddenForAria(errorElement) },
                 })
@@ -1007,7 +1005,6 @@ let cacheAccessibleNameHidden: Map<Element, string> | undefined;
 let cacheAccessibleDescription: Map<Element, string> | undefined;
 let cacheAccessibleDescriptionHidden: Map<Element, string> | undefined;
 let cacheAccessibleErrorMessage: Map<Element, string> | undefined;
-let cacheAccessibleErrorMessageHidden: Map<Element, string> | undefined;
 let cacheIsHidden: Map<Element, boolean> | undefined;
 let cachePseudoContentBefore: Map<Element, string> | undefined;
 let cachePseudoContentAfter: Map<Element, string> | undefined;
@@ -1020,7 +1017,6 @@ export function beginAriaCaches() {
   cacheAccessibleDescription ??= new Map();
   cacheAccessibleDescriptionHidden ??= new Map();
   cacheAccessibleErrorMessage ??= new Map();
-  cacheAccessibleErrorMessageHidden ??= new Map();
   cacheIsHidden ??= new Map();
   cachePseudoContentBefore ??= new Map();
   cachePseudoContentAfter ??= new Map();
@@ -1033,7 +1029,6 @@ export function endAriaCaches() {
     cacheAccessibleDescription = undefined;
     cacheAccessibleDescriptionHidden = undefined;
     cacheAccessibleErrorMessage = undefined;
-    cacheAccessibleErrorMessageHidden = undefined;
     cacheIsHidden = undefined;
     cachePseudoContentBefore = undefined;
     cachePseudoContentAfter = undefined;

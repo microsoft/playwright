@@ -1322,7 +1322,7 @@ export class InjectedScript {
       } else if (expression === 'to.have.accessible.description') {
         received = getElementAccessibleDescription(element, false /* includeHidden */);
       } else if (expression === 'to.have.accessible.error.message') {
-        received = getElementAccessibleErrorMessage(element, false /* includeHidden */);
+        received = getElementAccessibleErrorMessage(element);
       } else if (expression === 'to.have.role') {
         received = getAriaRole(element) || '';
       } else if (expression === 'to.have.title') {
