@@ -510,6 +510,24 @@ test('toHaveAccessibleErrorMessage', async ({ page }) => {
   await expect(locator).not.toHaveAccessibleErrorMessage('This should not be considered.');
 });
 
+test('toHaveAccessibleErrorMessage should handle multiple aria-errormessage references', async ({ page }) => {
+  await page.setContent(`
+    <form>
+      <input id="user-input" aria-invalid="true" aria-errormessage="error1 error2" />
+      <div id="error1">First error message.</div>
+      <div id="error2">Second error message.</div>
+      <div id="irrelevant-error">This should not be considered.</div>
+    </form>
+  `);
+
+  const input = page.locator('#user-input');
+
+  await expect(input).toHaveAccessibleErrorMessage('First error message. Second error message.');
+  await expect(input).toHaveAccessibleErrorMessage(/first error message./i);
+  await expect(input).toHaveAccessibleErrorMessage(/second error message./i);
+  await expect(input).not.toHaveAccessibleErrorMessage(/This should not be considered./i);
+});
+
 test.describe('toHaveAccessibleErrorMessage should handle aria-invalid attribute', () => {
   const errorMessageText = 'Error message';
 
