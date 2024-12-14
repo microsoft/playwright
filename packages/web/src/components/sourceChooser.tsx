@@ -15,7 +15,7 @@
  */
 
 import * as React from 'react';
-import type { Source } from '@recorder/recorderTypes';
+import type { Source } from '@playwright/recorder/src/recorderTypes';
 
 export const SourceChooser: React.FC<{
   sources: Source[],

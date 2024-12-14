@@ -29,7 +29,7 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { TabbedPaneTab } from '@web/components/tabbedPane';
 import { BrowserFrame } from './browserFrame';
-import type { ElementInfo } from '@recorder/recorderTypes';
+import type { ElementInfo } from '@playwright/recorder/src/recorderTypes';
 
 export const SnapshotTabsView: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,

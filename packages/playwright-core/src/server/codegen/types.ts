@@ -15,7 +15,7 @@
  */
 
 import type { BrowserContextOptions, LaunchOptions } from '../../../types/types';
-import type * as actions from '@recorder/actions';
+import type * as actions from '@playwright/recorder/src/actions';
 import type { Language } from '../../utils';
 export type { Language } from '../../utils';
 

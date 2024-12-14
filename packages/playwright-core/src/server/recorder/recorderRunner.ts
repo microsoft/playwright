@@ -18,7 +18,7 @@ import { serializeExpectedTextValues } from '../../utils';
 import { toKeyboardModifiers } from '../codegen/language';
 import type { CallMetadata } from '../instrumentation';
 import type { Page } from '../page';
-import type * as actions from '@recorder/actions';
+import type * as actions from '@playwright/recorder/src/actions';
 import type * as types from '../types';
 import { mainFrameForAction } from './recorderUtils';
 import { buildFullSelector } from '../../utils/isomorphic/recorderUtils';

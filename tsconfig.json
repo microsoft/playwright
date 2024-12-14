@@ -14,7 +14,6 @@
       "@injected/*": ["./packages/playwright-core/src/server/injected/*"],
       "@isomorphic/*": ["./packages/playwright-core/src/utils/isomorphic/*"],
       "@protocol/*": ["./packages/protocol/src/*"],
-      "@recorder/*": ["./packages/recorder/src/*"],
       "@testIsomorphic/*": ["./packages/playwright/src/isomorphic/*"],
       "@trace/*": ["./packages/trace/src/*"],
       "@web/*": ["./packages/web/src/*"],

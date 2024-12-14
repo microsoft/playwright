@@ -15,7 +15,7 @@
  */
 
 import type * as channels from '@protocol/channels';
-import type { Source } from '@recorder/recorderTypes';
+import type { Source } from '@playwright/recorder/src/recorderTypes';
 import { EventEmitter } from 'events';
 import * as recorderSource from '../../generated/pollingRecorderSource';
 import { eventsHelper, monotonicTime, quoteCSSAttributeValue, type RegisteredListener } from '../../utils';
@@ -26,7 +26,7 @@ import { languageSet } from '../codegen/languages';
 import type { Dialog } from '../dialog';
 import { Frame } from '../frames';
 import { Page } from '../page';
-import type * as actions from '@recorder/actions';
+import type * as actions from '@playwright/recorder/src/actions';
 import { ThrottledFile } from './throttledFile';
 import { RecorderCollection } from './recorderCollection';
 import { generateCode } from '../codegen/language';

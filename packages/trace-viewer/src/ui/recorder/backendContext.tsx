@@ -14,8 +14,8 @@
   limitations under the License.
 */
 
-import type * as actionTypes from '@recorder/actions';
-import type { Mode, Source } from '@recorder/recorderTypes';
+import type * as actionTypes from '@playwright/recorder/src/actions';
+import type { Mode, Source } from '@playwright/recorder/src/recorderTypes';
 import * as React from 'react';
 
 export const BackendContext = React.createContext<Backend | undefined>(undefined);
