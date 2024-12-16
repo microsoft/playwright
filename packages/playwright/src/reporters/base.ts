@@ -381,7 +381,7 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
   if (omitLocation)
     location = `${relativeTestPath(config, test)}`;
   else
-    location = `${relativeTestPath(config, test)}:${step?.location?.line ?? test.location.line}:${step?.location?.column ?? test.location.column}`;
+    location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
   const testTitle = `${projectTitle}${location} › ${titles.join(' › ')}`;
   const extraTags = test.tags.filter(t => !testTitle.includes(t));
