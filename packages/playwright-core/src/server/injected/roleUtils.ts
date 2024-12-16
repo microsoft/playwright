@@ -461,6 +461,23 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
   return accessibleDescription;
 }
 
+// https://www.w3.org/TR/wai-aria-1.2/#aria-invalid
+export const kAriaInvalidRoles = ['application', 'checkbox', 'combobox', 'gridcell', 'listbox', 'radiogroup', 'slider', 'spinbutton', 'textbox', 'tree', 'columnheader', 'rowheader', 'searchbox', 'switch', 'treegrid'];
+
+export function getAriaInvalid(element: Element): 'false' | 'true' | 'grammar' | 'spelling' {
+  const role = getAriaRole(element) || '';
+  if (!role || !kAriaInvalidRoles.includes(role))
+    return 'false';
+  if (element instanceof HTMLInputElement && element.validity)
+    return element.validity.valid ? 'false' : 'true';
+  const ariaInvalid = element.getAttribute('aria-invalid');
+  if (!ariaInvalid || ariaInvalid.trim() === '' || ariaInvalid.toLocaleLowerCase() === 'false')
+    return 'false';
+  if (ariaInvalid === 'true' || ariaInvalid === 'grammar' || ariaInvalid === 'spelling')
+    return ariaInvalid;
+  return 'true';
+}
+
 export function getElementAccessibleErrorMessage(element: Element): string {
   // SPEC: https://w3c.github.io/aria/#aria-errormessage
   //
@@ -471,8 +488,7 @@ export function getElementAccessibleErrorMessage(element: Element): string {
   if (accessibleErrorMessage === undefined) {
     accessibleErrorMessage = '';
 
-    const ariaInvalid = element.getAttribute('aria-invalid');
-    const isAriaInvalid = ariaInvalid !== null && ariaInvalid.toLowerCase() !== 'false';
+    const isAriaInvalid = getAriaInvalid(element) !== 'false';
     if (isAriaInvalid) {
       const errorMessageId = element.getAttribute('aria-errormessage');
       const errorMessages = getIdRefs(element, errorMessageId);
