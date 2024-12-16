@@ -4,6 +4,7 @@ module.exports = {
     parserOptions: {
       ecmaVersion: 9,
       sourceType: "module",
+      project: "./tsconfig.json"
     },
     extends: [
       "plugin:react/recommended",
@@ -26,6 +27,8 @@ module.exports = {
     rules: {
         "@typescript-eslint/no-unused-vars": [2, {args: "none"}],
         "@typescript-eslint/consistent-type-imports": [2, {disallowTypeAnnotations: false}],
+        "@typescript-eslint/no-unnecessary-condition": [2],
+
         /**
          * Enforced rules
          */
@@ -48,8 +51,8 @@ module.exports = {
             "getWithoutSet": false,
             "setWithoutGet": false
         }],
-        "brace-style": [2, "1tbs", {"allowSingleLine": true}],
-        "curly": [2, "multi-or-nest", "consistent"],
+        "brace-style": [2, "1tbs"],
+        "curly": [2, "all"],
         "new-parens": 2,
         "arrow-parens": [2, "as-needed"],
         "prefer-const": 2,
