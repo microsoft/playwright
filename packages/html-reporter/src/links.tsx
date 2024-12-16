@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { TestAttachment } from './types';
+import type { TestAttachment, TestCase, TestCaseSummary, TestResult, TestResultSummary } from './types';
 import * as React from 'react';
 import * as icons from './icons';
 import { TreeItem } from './treeItem';
@@ -72,6 +72,7 @@ export const AttachmentLink: React.FunctionComponent<{
   linkName?: string,
   openInNewTab?: boolean,
 }> = ({ attachment, href, linkName, openInNewTab }) => {
+  const isAnchored = useIsAnchored('attachment-' + attachment.name);
   return <TreeItem title={<span>
     {attachment.contentType === kMissingContentType ? icons.warning() : icons.attachment()}
     {attachment.path && <a href={href || attachment.path} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>}
@@ -82,7 +83,7 @@ export const AttachmentLink: React.FunctionComponent<{
     )}
   </span>} loadChildren={attachment.body ? () => {
     return [<div key={1} className='attachment-body'><CopyToClipboard value={attachment.body!}/>{linkifyText(attachment.body!)}</div>];
-  } : undefined} depth={0} style={{ lineHeight: '32px' }}></TreeItem>;
+  } : undefined} depth={0} style={{ lineHeight: '32px' }} selected={isAnchored}></TreeItem>;
 };
 
 export const SearchParamsContext = React.createContext<URLSearchParams>(new URLSearchParams(window.location.hash.slice(1)));
@@ -114,23 +115,29 @@ export function generateTraceUrl(traces: TestAttachment[]) {
 
 const kMissingContentType = 'x-playwright/missing';
 
-type AnchorID = string | ((id: string | null) => boolean) | undefined;
+export type AnchorID = string | string[] | ((id: string) => boolean) | undefined;
 
 export function useAnchor(id: AnchorID, onReveal: () => void) {
+  const searchParams = React.useContext(SearchParamsContext);
+  const isAnchored = useIsAnchored(id);
   React.useEffect(() => {
-    if (typeof id === 'undefined')
-      return;
+    if (isAnchored)
+      onReveal();
+  }, [isAnchored, onReveal, searchParams]);
+}
 
-    const listener = () => {
-      const params = new URLSearchParams(window.location.hash.slice(1));
-      const anchor = params.get('anchor');
-      const isRevealed = typeof id === 'function' ? id(anchor) : anchor === id;
-      if (isRevealed)
-        onReveal();
-    };
-    window.addEventListener('popstate', listener);
-    return () => window.removeEventListener('popstate', listener);
-  }, [id, onReveal]);
+export function useIsAnchored(id: AnchorID) {
+  const searchParams = React.useContext(SearchParamsContext);
+  const anchor = searchParams.get('anchor');
+  if (anchor === null)
+    return false;
+  if (typeof id === 'undefined')
+    return false;
+  if (typeof id === 'string')
+    return id === anchor;
+  if (Array.isArray(id))
+    return id.includes(anchor);
+  return id(anchor);
 }
 
 export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID }>) {
@@ -141,4 +148,15 @@ export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID 
   useAnchor(id, onAnchorReveal);
 
   return <div ref={ref}>{children}</div>;
+}
+
+export function testResultHref({ test, result, anchor }: { test?: TestCase | TestCaseSummary, result?: TestResult | TestResultSummary, anchor?: string }) {
+  const params = new URLSearchParams();
+  if (test)
+    params.set('testId', test.testId);
+  if (test && result)
+    params.set('run', '' + test.results.indexOf(result as any));
+  if (anchor)
+    params.set('anchor', anchor);
+  return `#?` + params;
 }
