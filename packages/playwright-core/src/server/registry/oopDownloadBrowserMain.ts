@@ -18,11 +18,10 @@ import fs from 'fs';
 import path from 'path';
 import { httpRequest } from '../../utils/network';
 import { ManualPromise } from '../../utils/manualPromise';
-import { extract } from '../../zipBundle';
+import { extract, tarFs } from '../../zipBundle';
 import type http from 'http';
 import { pipeline } from 'stream/promises';
 import { createBrotliDecompress } from 'zlib';
-import { TarExtractor } from '../../utils/tar';
 
 export type DownloadParams = {
   title: string;
@@ -151,7 +150,7 @@ async function downloadAndExtractBrotli(options: DownloadParams) {
   await pipeline(
       response,
       createBrotliDecompress(),
-      new TarExtractor(file => path.join(options.browserDirectory, file)),
+      tarFs.extract(options.browserDirectory)
   );
 
   if (downloadedBytes !== totalBytes)
