@@ -493,14 +493,14 @@ test('toHaveAccessibleDescription', async ({ page }) => {
 
 test('toHaveAccessibleErrorMessage', async ({ page }) => {
   await page.setContent(`
-      <form>
-        <div role="button" aria-invalid="true" aria-errormessage="error-message"></div>
-        <div id="error-message">Hello</div>
-        <div id="irrelevant-error">This should not be considered.</div>
-      </form>
-    `);
+    <form>
+      <div role="textbox" aria-invalid="true" aria-errormessage="error-message"></div>
+      <div id="error-message">Hello</div>
+      <div id="irrelevant-error">This should not be considered.</div>
+    </form>
+  `);
 
-  const locator = page.locator('div[role="button"]');
+  const locator = page.locator('div[role="textbox"]');
   await expect(locator).toHaveAccessibleErrorMessage('Hello');
   await expect(locator).not.toHaveAccessibleErrorMessage('hello');
   await expect(locator).toHaveAccessibleErrorMessage('hello', { ignoreCase: true });
@@ -513,19 +513,19 @@ test('toHaveAccessibleErrorMessage', async ({ page }) => {
 test('toHaveAccessibleErrorMessage should handle multiple aria-errormessage references', async ({ page }) => {
   await page.setContent(`
     <form>
-      <input id="user-input" aria-invalid="true" aria-errormessage="error1 error2" />
+      <div role="textbox" aria-invalid="true" aria-errormessage="error1 error2" />
       <div id="error1">First error message.</div>
       <div id="error2">Second error message.</div>
       <div id="irrelevant-error">This should not be considered.</div>
     </form>
   `);
 
-  const input = page.locator('#user-input');
+  const locator = page.locator('div[role="textbox"]');
 
-  await expect(input).toHaveAccessibleErrorMessage('First error message. Second error message.');
-  await expect(input).toHaveAccessibleErrorMessage(/first error message./i);
-  await expect(input).toHaveAccessibleErrorMessage(/second error message./i);
-  await expect(input).not.toHaveAccessibleErrorMessage(/This should not be considered./i);
+  await expect(locator).toHaveAccessibleErrorMessage('First error message. Second error message.');
+  await expect(locator).toHaveAccessibleErrorMessage(/first error message./i);
+  await expect(locator).toHaveAccessibleErrorMessage(/second error message./i);
+  await expect(locator).not.toHaveAccessibleErrorMessage(/This should not be considered./i);
 });
 
 test.describe('toHaveAccessibleErrorMessage should handle aria-invalid attribute', () => {
@@ -535,7 +535,7 @@ test.describe('toHaveAccessibleErrorMessage should handle aria-invalid attribute
     const ariaInvalidAttr = ariaInvalidValue === null ? '' : `aria-invalid="${ariaInvalidValue}"`;
     await page.setContent(`
         <form>
-          <input id="node" type="text" ${ariaInvalidAttr} aria-errormessage="error-msg" />
+          <div id="node" role="textbox" type="text" ${ariaInvalidAttr} aria-errormessage="error-msg" />
           <div id="error-msg">${errorMessageText}</div>
         </form>
       `);
@@ -547,28 +547,55 @@ test.describe('toHaveAccessibleErrorMessage should handle aria-invalid attribute
       const locator = await setupPage(page, null);
       await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
     });
-
     test('aria-invalid="false"', async ({ page }) => {
       const locator = await setupPage(page, 'false');
       await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
     });
+    test('aria-invalid="" (empty string)', async ({ page }) => {
+      const locator = await setupPage(page, '');
+      await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
+    });
   });
-
   test.describe('evaluated in true', () => {
     test('aria-invalid="true"', async ({ page }) => {
       const locator = await setupPage(page, 'true');
       await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
     });
-
-    test('aria-invalid="" (empty string)', async ({ page }) => {
-      const locator = await setupPage(page, '');
-      await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
-    });
-
     test('aria-invalid="foo" (unrecognized value)', async ({ page }) => {
       const locator = await setupPage(page, 'foo');
       await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
     });
+  });
+});
+
+test.describe('toHaveAccessibleErrorMessage should handle validity state', () => {
+  const errorMessageText = 'Error message';
+  test('should ignore aria-invalid="true" when HTMLElement.validity.valid is true', async ({ page }) => {
+    await page.setContent(`
+        <form>
+          <input id="node" role="textbox" type="number" min="1" max="100" aria-invalid="true" aria-errormessage="error-msg" />
+          <div id="error-msg">${errorMessageText}</div>
+        </form>
+      `);
+    const locator = page.locator('#node');
+    await locator.fill('99');
+    await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
+    await locator.fill('101');
+    await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
+  });
+
+  test('should ignore aria-invalid="false" when HTMLElement.validity.valid is false', async ({ page }) => {
+    await page.setContent(`
+      <form>
+        <input id="node" role="textbox" type="number" min="1" max="100" aria-invalid="false" aria-errormessage="error-msg" />
+        <div id="error-msg">${errorMessageText}</div>
+      </form>
+    `);
+    const locator = page.locator('#node');
+    await locator.fill('99');
+    await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
+    await locator.fill('101');
+    await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
   });
 });
 
