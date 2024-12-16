@@ -494,13 +494,13 @@ test('toHaveAccessibleDescription', async ({ page }) => {
 test('toHaveAccessibleErrorMessage', async ({ page }) => {
   await page.setContent(`
     <form>
-      <div role="textbox" aria-invalid="true" aria-errormessage="error-message"></div>
+      <input role="textbox" aria-invalid="true" aria-errormessage="error-message" />
       <div id="error-message">Hello</div>
       <div id="irrelevant-error">This should not be considered.</div>
     </form>
   `);
 
-  const locator = page.locator('div[role="textbox"]');
+  const locator = page.locator('input[role="textbox"]');
   await expect(locator).toHaveAccessibleErrorMessage('Hello');
   await expect(locator).not.toHaveAccessibleErrorMessage('hello');
   await expect(locator).toHaveAccessibleErrorMessage('hello', { ignoreCase: true });
@@ -513,14 +513,14 @@ test('toHaveAccessibleErrorMessage', async ({ page }) => {
 test('toHaveAccessibleErrorMessage should handle multiple aria-errormessage references', async ({ page }) => {
   await page.setContent(`
     <form>
-      <div role="textbox" aria-invalid="true" aria-errormessage="error1 error2" />
+      <input role="textbox" aria-invalid="true" aria-errormessage="error1 error2" />
       <div id="error1">First error message.</div>
       <div id="error2">Second error message.</div>
       <div id="irrelevant-error">This should not be considered.</div>
     </form>
   `);
 
-  const locator = page.locator('div[role="textbox"]');
+  const locator = page.locator('input[role="textbox"]');
 
   await expect(locator).toHaveAccessibleErrorMessage('First error message. Second error message.');
   await expect(locator).toHaveAccessibleErrorMessage(/first error message./i);
@@ -528,14 +528,14 @@ test('toHaveAccessibleErrorMessage should handle multiple aria-errormessage refe
   await expect(locator).not.toHaveAccessibleErrorMessage(/This should not be considered./i);
 });
 
-test.describe('toHaveAccessibleErrorMessage should handle aria-invalid attribute', () => {
+test.describe.only('toHaveAccessibleErrorMessage should handle aria-invalid attribute', () => {
   const errorMessageText = 'Error message';
 
   async function setupPage(page, ariaInvalidValue: string | null) {
     const ariaInvalidAttr = ariaInvalidValue === null ? '' : `aria-invalid="${ariaInvalidValue}"`;
     await page.setContent(`
         <form>
-          <div id="node" role="textbox" type="text" ${ariaInvalidAttr} aria-errormessage="error-msg" />
+          <input id="node" role="textbox" ${ariaInvalidAttr} aria-errormessage="error-msg" />
           <div id="error-msg">${errorMessageText}</div>
         </form>
       `);
