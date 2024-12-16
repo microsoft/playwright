@@ -51,7 +51,7 @@ import {
 } from './matchers';
 import { toMatchSnapshot, toHaveScreenshot, toHaveScreenshotStepTitle } from './toMatchSnapshot';
 import type { Expect, ExpectMatcherState } from '../../types/test';
-import { currentTestInfo } from '../common/globals';
+import { currentTestInfo, setCurrentStep } from '../common/globals';
 import { filteredStackTrace, trimLongString } from '../util';
 import {
   expect as expectLibrary,
@@ -322,8 +322,10 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       };
 
       const step = testInfo._addStep(stepInfo);
+      setCurrentStep(step);
 
       const reportStepError = (e: Error | unknown) => {
+        setCurrentStep(undefined);
         const jestError = isJestError(e) ? e : null;
         const error = jestError ? new ExpectError(jestError, customMessage, stackFrames) : e;
         if (jestError?.matcherResult.suggestedRebaseline) {
@@ -338,6 +340,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       };
 
       const finalizer = () => {
+        setCurrentStep(undefined);
         step.complete({});
       };
 
