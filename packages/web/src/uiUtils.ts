@@ -43,6 +43,11 @@ export function useMeasure<T extends Element>() {
     const target = ref.current;
     if (!target)
       return;
+
+    const bounds = target.getBoundingClientRect();
+
+    setMeasure(new DOMRect(0, 0, bounds.width, bounds.height));
+
     const resizeObserver = new ResizeObserver((entries: any) => {
       const entry = entries[entries.length - 1];
       if (entry && entry.contentRect)
