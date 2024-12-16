@@ -7,3 +7,5 @@
 ../geometry.ts
 ../../../playwright/src/isomorphic/**
 ../third_party/devtools.ts
+./settings/**
+./shared/**
