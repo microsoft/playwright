@@ -16,6 +16,7 @@
 import fs from 'fs';
 import { Writable, once } from 'stream';
 import assert from 'assert';
+import { join } from 'path';
 
 enum TarType {
   REGTYPE,
@@ -36,6 +37,7 @@ class TarEntry {
   linkname: string;
   uid: number;
   gid: number;
+  prefix: string;
 
   fileStream: fs.WriteStream | null = null;
   remainingBytes = 0;
@@ -53,10 +55,11 @@ class TarEntry {
 
     this.uid = parseInt(header.toString('ascii', 108, 116).trim(), 8);
     this.gid = parseInt(header.toString('ascii', 116, 124).trim(), 8);
+    this.prefix = header.toString('utf8', 345, 500).replace(/\0/g, '');
   }
 
   async writeToDisk(outputPath: (path: string) => string) {
-    const fullPath = outputPath(this.name);
+    const fullPath = outputPath(this.prefix ? join(this.prefix, this.name) : this.name);
     switch (this.type) {
       case TarType.DIRTYPE:
         await fs.promises.mkdir(fullPath, { recursive: true, mode: 0o755 });
