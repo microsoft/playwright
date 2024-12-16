@@ -462,6 +462,9 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
 }
 
 export function getElementAccessibleErrorMessage(element: Element): string {
+  // SPEC: https://w3c.github.io/aria/#aria-errormessage
+  //
+  // TODO: support https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement/validationMessage
   const cache = cacheAccessibleErrorMessage;
   let accessibleErrorMessage = cacheAccessibleErrorMessage?.get(element);
 
