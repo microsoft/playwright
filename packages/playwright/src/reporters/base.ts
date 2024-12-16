@@ -258,7 +258,7 @@ export class BaseReporter implements ReporterV2 {
       console.log(colors.yellow('  Slow test file: ') + file + colors.yellow(` (${milliseconds(duration)})`));
     });
     if (slowTests.length)
-      console.log(colors.yellow('  Consider running more tests in parallel from slow test files, see https://playwright.dev/docs/test-parallel.'));
+      console.log(colors.yellow('  Consider running tests from slow files in parallel, see https://playwright.dev/docs/test-parallel.'));
   }
 
   private _printSummary(summary: string) {

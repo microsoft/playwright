@@ -222,7 +222,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.output).toContain(`Slow test file: [bar] › dir${path.sep}a.test.js (`);
       expect(result.output).toContain(`Slow test file: [baz] › dir${path.sep}a.test.js (`);
       expect(result.output).toContain(`Slow test file: [qux] › dir${path.sep}a.test.js (`);
-      expect(result.output).toContain(`Consider splitting slow test files to speed up parallel execution`);
+      expect(result.output).toContain(`Consider running tests from slow files in parallel`);
       expect(result.output).not.toContain(`Slow test file: [foo] › dir${path.sep}b.test.js (`);
       expect(result.output).not.toContain(`Slow test file: [bar] › dir${path.sep}b.test.js (`);
       expect(result.output).not.toContain(`Slow test file: [baz] › dir${path.sep}b.test.js (`);
