@@ -461,6 +461,16 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
   return accessibleDescription;
 }
 
+// https://html.spec.whatwg.org/multipage/input.html#the-input-element
+export const kInputValidityAttributes = ['required', 'pattern', 'min', 'max', 'minlength', 'maxlength', 'step', 'type', 'value'];
+
+export function hasValidationAttributes(element: Element): boolean {
+  if (!(element instanceof HTMLInputElement))
+    return false;
+
+  return kInputValidityAttributes.some(attr => element.hasAttribute(attr));
+}
+
 // https://www.w3.org/TR/wai-aria-1.2/#aria-invalid
 export const kAriaInvalidRoles = ['application', 'checkbox', 'combobox', 'gridcell', 'listbox', 'radiogroup', 'slider', 'spinbutton', 'textbox', 'tree', 'columnheader', 'rowheader', 'searchbox', 'switch', 'treegrid'];
 
@@ -468,7 +478,7 @@ export function getAriaInvalid(element: Element): 'false' | 'true' | 'grammar' |
   const role = getAriaRole(element) || '';
   if (!role || !kAriaInvalidRoles.includes(role))
     return 'false';
-  if (element instanceof HTMLInputElement && element.validity)
+  if (element instanceof HTMLInputElement && hasValidationAttributes(element) && element.validity)
     return element.validity.valid ? 'false' : 'true';
   const ariaInvalid = element.getAttribute('aria-invalid');
   if (!ariaInvalid || ariaInvalid.trim() === '' || ariaInvalid.toLocaleLowerCase() === 'false')

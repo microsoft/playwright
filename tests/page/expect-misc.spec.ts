@@ -528,7 +528,7 @@ test('toHaveAccessibleErrorMessage should handle multiple aria-errormessage refe
   await expect(locator).not.toHaveAccessibleErrorMessage(/This should not be considered./i);
 });
 
-test.describe.only('toHaveAccessibleErrorMessage should handle aria-invalid attribute', () => {
+test.describe('toHaveAccessibleErrorMessage should handle aria-invalid attribute', () => {
   const errorMessageText = 'Error message';
 
   async function setupPage(page, ariaInvalidValue: string | null) {
