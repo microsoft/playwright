@@ -1521,11 +1521,25 @@ test('should serve css without content-type', async ({ page, runAndTrace, server
   await expect(snapshotFrame.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)', { timeout: 0 });
 });
 
+test('canvas disabled title', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/screenshots/canvas.html#canvas-on-edge');
+    await rafraf(page, 5);
+  });
+
+  const snapshot = await traceViewer.snapshotFrame('page.goto');
+  await expect(snapshot.locator('canvas')).toHaveAttribute('title', `Canvas content display is disabled.`);
+});
+
 test('canvas clipping', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/screenshots/canvas.html#canvas-on-edge');
     await rafraf(page, 5);
   });
+
+  // Enable canvas display
+  await traceViewer.showSettings();
+  await traceViewer.displayCanvasContentSetting.click();
 
   const msg = await traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') });
   expect(msg.text()).toEqual('canvas drawn: [0,91,11,20]');
@@ -1542,6 +1556,10 @@ test('canvas clipping in iframe', async ({ runAndTrace, page, server }) => {
     await page.locator('iframe').contentFrame().locator('canvas').scrollIntoViewIfNeeded();
     await rafraf(page, 5);
   });
+
+  // Enable canvas display
+  await traceViewer.showSettings();
+  await traceViewer.displayCanvasContentSetting.click();
 
   const msg = await traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') });
   expect(msg.text()).toEqual('canvas drawn: [1,1,11,20]');
