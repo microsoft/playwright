@@ -108,6 +108,7 @@ export type JsonTestStepEnd = {
   id: string;
   duration: number;
   error?: reporterTypes.TestError;
+  attachments: number[]; // index of JsonTestResultEnd.attachments
 };
 
 export type JsonFullResult = {
@@ -239,6 +240,8 @@ export class TeleReporterReceiver {
     result.error = result.errors?.[0];
     result.attachments = this._parseAttachments(payload.attachments);
     this._reporter.onTestEnd?.(test, result);
+    for (const step of result.steps)
+      step.attachments = step._attachmentIndices.map(index => result.attachments[index]);
     // Free up the memory as won't see these step ids.
     result._stepMap = new Map();
   }
@@ -264,6 +267,7 @@ export class TeleReporterReceiver {
     const step = result._stepMap.get(payload.id)!;
     step.duration = payload.duration;
     step.error = payload.error;
+    step._attachmentIndices = payload.attachments;
     this._reporter.onStepEnd?.(test, result, step);
   }
 
@@ -512,9 +516,11 @@ class TeleTestStep implements reporterTypes.TestStep {
   parent: reporterTypes.TestStep | undefined;
   duration: number = -1;
   steps: reporterTypes.TestStep[] = [];
-  attachments = [];
+  attachments: reporterTypes.TestStep['attachments'] = [];
+  error?: reporterTypes.TestError | undefined;
 
   private _startTime: number = 0;
+  _attachmentIndices: number[] = [];
 
   constructor(payload: JsonTestStepStart, parentStep: reporterTypes.TestStep | undefined, location: reporterTypes.Location | undefined) {
     this.title = payload.title;
@@ -551,7 +557,7 @@ export class TeleTestResult implements reporterTypes.TestResult {
   errors: reporterTypes.TestResult['errors'] = [];
   error: reporterTypes.TestResult['error'];
 
-  _stepMap: Map<string, reporterTypes.TestStep> = new Map();
+  _stepMap = new Map<string, TeleTestStep>();
   _id: string;
 
   private _startTime: number = 0;
