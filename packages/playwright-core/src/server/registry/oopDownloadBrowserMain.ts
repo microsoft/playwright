@@ -22,7 +22,7 @@ import { extract } from '../../zipBundle';
 import type http from 'http';
 import { pipeline } from 'stream/promises';
 import { createBrotliDecompress } from 'zlib';
-import { TarExtractor } from 'playwright-core/lib/utils/tar';
+import { TarExtractor } from '../../utils/tar';
 
 export type DownloadParams = {
   title: string;
