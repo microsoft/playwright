@@ -475,18 +475,14 @@ export function getElementAccessibleErrorMessage(element: Element): string {
     const isAriaInvalid = ariaInvalid !== null && ariaInvalid.toLowerCase() !== 'false';
     if (isAriaInvalid) {
       const errorMessageId = element.getAttribute('aria-errormessage');
-      if (errorMessageId) {
-        const errorMessages = getIdRefs(element, errorMessageId);
-        if (errorMessages.length) {
-          const parts = errorMessages.map(errorMessage => asFlatString(
-              getTextAlternativeInternal(errorMessage, {
-                visitedElements: new Set(),
-                embeddedInDescribedBy: { element: errorMessage, hidden: isElementHiddenForAria(errorMessage) },
-              })
-          ));
-          accessibleErrorMessage = parts.join(' ').trim();
-        }
-      }
+      const errorMessages = getIdRefs(element, errorMessageId);
+      const parts = errorMessages.map(errorMessage => asFlatString(
+          getTextAlternativeInternal(errorMessage, {
+            visitedElements: new Set(),
+            embeddedInDescribedBy: { element: errorMessage, hidden: isElementHiddenForAria(errorMessage) },
+          })
+      ));
+      accessibleErrorMessage = parts.join(' ').trim();
     }
     cache?.set(element, accessibleErrorMessage);
   }
