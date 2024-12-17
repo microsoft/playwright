@@ -44,13 +44,16 @@ export class TraceModel {
     let hasSource = false;
     for (const entryName of await this._backend.entryNames()) {
       const match = entryName.match(/(.+)\.trace/);
-      if (match)
+      if (match) {
         ordinals.push(match[1] || '');
-      if (entryName.includes('src@'))
+      }
+      if (entryName.includes('src@')) {
         hasSource = true;
+      }
     }
-    if (!ordinals.length)
+    if (!ordinals.length) {
       throw new Error('Cannot find .trace file');
+    }
 
     this._snapshotStorage = new SnapshotStorage();
 
@@ -80,8 +83,9 @@ export class TraceModel {
         for (const action of contextEntry.actions.slice().reverse()) {
           if (!action.endTime && !action.error) {
             for (const a of contextEntry.actions) {
-              if (a.parentId === action.callId && action.endTime < a.endTime)
+              if (a.parentId === action.callId && action.endTime < a.endTime) {
                 action.endTime = a.endTime;
+              }
             }
           }
         }
@@ -90,16 +94,19 @@ export class TraceModel {
       const stacks = await this._backend.readText(ordinal + '.stacks');
       if (stacks) {
         const callMetadata = parseClientSideCallMetadata(JSON.parse(stacks));
-        for (const action of contextEntry.actions)
+        for (const action of contextEntry.actions) {
           action.stack = action.stack || callMetadata.get(action.callId);
+        }
       }
       unzipProgress(++done, total);
 
       for (const resource of contextEntry.resources) {
-        if (resource.request.postData?._sha1)
+        if (resource.request.postData?._sha1) {
           this._resourceToContentType.set(resource.request.postData._sha1, stripEncodingFromContentType(resource.request.postData.mimeType));
-        if (resource.response.content?._sha1)
+        }
+        if (resource.response.content._sha1) {
           this._resourceToContentType.set(resource.response.content._sha1, stripEncodingFromContentType(resource.response.content.mimeType));
+        }
       }
 
       this.contextEntries.push(contextEntry);
@@ -116,8 +123,9 @@ export class TraceModel {
     const blob = await this._backend.readBlob('resources/' + sha1);
     const contentType = this._resourceToContentType.get(sha1);
     // "x-unknown" in the har means "no content type".
-    if (!blob || contentType === undefined || contentType === 'x-unknown')
+    if (!blob || contentType === undefined || contentType === 'x-unknown') {
       return blob;
+    }
     return new Blob([blob], { type: contentType });
   }
 
@@ -128,8 +136,9 @@ export class TraceModel {
 
 function stripEncodingFromContentType(contentType: string) {
   const charset = contentType.match(/^(.*);\s*charset=.*$/);
-  if (charset)
+  if (charset) {
     return charset[1];
+  }
   return contentType;
 }
 

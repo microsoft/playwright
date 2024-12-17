@@ -61,11 +61,15 @@ it('should work for multiple pages sharing same process', async ({ browser, serv
   await page.goto(server.EMPTY_PAGE);
   let [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(url => { window.open(url); }, server.EMPTY_PAGE),
+    page.evaluate(url => {
+      window.open(url);
+    }, server.EMPTY_PAGE),
   ]);
   [popup] = await Promise.all([
     popup.waitForEvent('popup'),
-    popup.evaluate(url => { window.open(url); }, server.EMPTY_PAGE),
+    popup.evaluate(url => {
+      window.open(url);
+    }, server.EMPTY_PAGE),
   ]);
   await context.close();
 });

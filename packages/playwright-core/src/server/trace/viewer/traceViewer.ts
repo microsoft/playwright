@@ -54,11 +54,13 @@ function validateTraceUrls(traceUrls: string[]) {
   for (const traceUrl of traceUrls) {
     let traceFile = traceUrl;
     // If .json is requested, we'll synthesize it.
-    if (traceUrl.endsWith('.json'))
+    if (traceUrl.endsWith('.json')) {
       traceFile = traceUrl.substring(0, traceUrl.length - '.json'.length);
+    }
 
-    if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceFile) && !fs.existsSync(traceFile + '.trace'))
+    if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceFile) && !fs.existsSync(traceFile + '.trace')) {
       throw new Error(`Trace file ${traceUrl} does not exist!`);
+    }
   }
 }
 
@@ -67,13 +69,15 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
   server.routePrefix('/trace', (request, response) => {
     const url = new URL('http://localhost' + request.url!);
     const relativePath = url.pathname.slice('/trace'.length);
-    if (relativePath.endsWith('/stall.js'))
+    if (relativePath.endsWith('/stall.js')) {
       return true;
+    }
     if (relativePath.startsWith('/file')) {
       try {
         const filePath = url.searchParams.get('path')!;
-        if (fs.existsSync(filePath))
+        if (fs.existsSync(filePath)) {
           return server.serveFile(request, response, url.searchParams.get('path')!);
+        }
 
         // If .json is requested, we'll synthesize it for zip-less operation.
         if (filePath.endsWith('.json')) {
@@ -94,8 +98,9 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
   });
 
   const transport = options?.transport || (options?.isServer ? new StdinServer() : undefined);
-  if (transport)
+  if (transport) {
     server.createWebSocket(transport);
+  }
 
   const { host, port } = options || {};
   await server.start({ preferredPort: port, host });
@@ -104,26 +109,36 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
 
 export async function installRootRedirect(server: HttpServer, traceUrls: string[], options: TraceViewerRedirectOptions) {
   const params = new URLSearchParams();
-  if (path.sep !== path.posix.sep)
+  if (path.sep !== path.posix.sep) {
     params.set('pathSeparator', path.sep);
-  for (const traceUrl of traceUrls)
+  }
+  for (const traceUrl of traceUrls) {
     params.append('trace', traceUrl);
-  if (server.wsGuid())
+  }
+  if (server.wsGuid()) {
     params.append('ws', server.wsGuid()!);
-  if (options?.isServer)
+  }
+  if (options.isServer) {
     params.append('isServer', '');
-  if (isUnderTest())
+  }
+  if (isUnderTest()) {
     params.append('isUnderTest', 'true');
-  for (const arg of options.args || [])
+  }
+  for (const arg of options.args || []) {
     params.append('arg', arg);
-  if (options.grep)
+  }
+  if (options.grep) {
     params.append('grep', options.grep);
-  if (options.grepInvert)
+  }
+  if (options.grepInvert) {
     params.append('grepInvert', options.grepInvert);
-  for (const project of options.project || [])
+  }
+  for (const project of options.project || []) {
     params.append('project', project);
-  for (const reporter of options.reporter || [])
+  }
+  for (const reporter of options.reporter || []) {
     params.append('reporter', reporter);
+  }
 
   let baseUrl = '.';
   if (process.env.PW_HMR) {
@@ -145,8 +160,9 @@ export async function runTraceViewerApp(traceUrls: string[], browserName: string
   const server = await startTraceViewerServer(options);
   await installRootRedirect(server, traceUrls, options);
   const page = await openTraceViewerApp(server.urlPrefix('precise'), browserName, options);
-  if (exitOnClose)
+  if (exitOnClose) {
     page.on('close', () => gracefullyProcessExitDoNotHang(0));
+  }
   return page;
 }
 
@@ -178,14 +194,17 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
     await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
   });
 
-  if (process.env.PWTEST_PRINT_WS_ENDPOINT)
+  if (process.env.PWTEST_PRINT_WS_ENDPOINT) {
     process.stderr.write('DevTools listening on: ' + context._browser.options.wsEndpoint + '\n');
+  }
 
-  if (!isUnderTest())
+  if (!isUnderTest()) {
     await syncLocalStorageWithSettings(page, 'traceviewer');
+  }
 
-  if (isUnderTest())
+  if (isUnderTest()) {
     page.on('close', () => context.close({ reason: 'Trace viewer closed' }).catch(() => {}));
+  }
 
   await page.mainFrame().goto(serverSideCallMetadata(), url);
   return page;
@@ -194,8 +213,9 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
 export async function openTraceInBrowser(url: string) {
   // eslint-disable-next-line no-console
   console.log('\nListening on ' + url);
-  if (!isUnderTest())
+  if (!isUnderTest()) {
     await open(url.replace('0.0.0.0', 'localhost')).catch(() => {});
+  }
 }
 
 class StdinServer implements Transport {
@@ -205,12 +225,14 @@ class StdinServer implements Transport {
   constructor() {
     process.stdin.on('data', data => {
       const url = data.toString().trim();
-      if (url === this._traceUrl)
+      if (url === this._traceUrl) {
         return;
-      if (url.endsWith('.json'))
+      }
+      if (url.endsWith('.json')) {
         this._pollLoadTrace(url);
-      else
+      } else {
         this._loadTrace(url);
+      }
     });
     process.stdin.on('close', () => gracefullyProcessExitDoNotHang(0));
   }
@@ -220,8 +242,9 @@ class StdinServer implements Transport {
 
   async dispatch(method: string, params: any) {
     if (method === 'initialize') {
-      if (this._traceUrl)
+      if (this._traceUrl) {
         this._loadTrace(this._traceUrl);
+      }
     }
   }
 
@@ -253,14 +276,16 @@ function traceDescriptor(traceName: string) {
   const traceDir = path.dirname(traceName);
   const traceFile = path.basename(traceName);
   for (const name of fs.readdirSync(traceDir)) {
-    if (name.startsWith(traceFile))
+    if (name.startsWith(traceFile)) {
       result.entries.push({ name, path: path.join(traceDir, name) });
+    }
   }
 
   const resourcesDir = path.join(traceDir, 'resources');
   if (fs.existsSync(resourcesDir)) {
-    for (const name of fs.readdirSync(resourcesDir))
+    for (const name of fs.readdirSync(resourcesDir)) {
       result.entries.push({ name: 'resources/' + name, path: path.join(resourcesDir, name) });
+    }
   }
   return result;
 }

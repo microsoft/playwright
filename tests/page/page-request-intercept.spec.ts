@@ -25,8 +25,9 @@ import path from 'path';
 // To use request such an url with apiRequestContext on the desktop, we need to change it back to localhost.
 const it = base.extend<{ rewriteAndroidLoopbackURL(url: string): string }>({
   rewriteAndroidLoopbackURL: ({ isAndroid }, use) => use(givenURL => {
-    if (!isAndroid)
+    if (!isAndroid) {
       return givenURL;
+    }
     const requestURL = new URL(givenURL);
     requestURL.hostname = 'localhost';
     return requestURL.toString();
@@ -89,10 +90,11 @@ it('should override with defaults when intercepted response not provided', async
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.status()).toBe(201);
   expect(await response.text()).toBe('');
-  if (browserName === 'webkit')
+  if (browserName === 'webkit') {
     expect(response.headers()).toEqual({ 'content-type': 'text/plain' });
-  else
+  } else {
     expect(response.headers()).toEqual({ });
+  }
 });
 
 it('should fulfill with any response', async ({ page, server, isElectron, electronMajorVersion, rewriteAndroidLoopbackURL }) => {

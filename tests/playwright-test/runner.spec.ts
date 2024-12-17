@@ -140,8 +140,9 @@ test('should ignore subprocess creation error because of SIGINT', async ({ inter
     `
   });
 
-  while (!fs.existsSync(readyFile))
+  while (!fs.existsSync(readyFile)) {
     await new Promise(f => setTimeout(f, 100));
+  }
   process.kill(-testProcess.process.pid!, 'SIGINT');
 
   const { exitCode } = await testProcess.exited;

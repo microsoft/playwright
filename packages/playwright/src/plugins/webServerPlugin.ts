@@ -85,8 +85,9 @@ export class WebServerPlugin implements TestRunnerPlugin {
     const isAlreadyAvailable = await this._isAvailableCallback?.();
     if (isAlreadyAvailable) {
       debugWebServer(`WebServer is already available`);
-      if (this._options.reuseExistingServer)
+      if (this._options.reuseExistingServer) {
         return;
+      }
       const port = new URL(this._options.url!).port;
       throw new Error(`${this._options.url ?? `http://localhost${port ? ':' + port : ''}`} is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer.`);
     }
@@ -114,12 +115,14 @@ export class WebServerPlugin implements TestRunnerPlugin {
     debugWebServer(`Process started`);
 
     launchedProcess.stderr!.on('data', data => {
-      if (debugWebServer.enabled || (this._options.stderr === 'pipe' || !this._options.stderr))
-        this._reporter!.onStdErr?.(prefixOutputLines(data.toString()));
+      if (debugWebServer.enabled || (this._options.stderr === 'pipe' || !this._options.stderr)) {
+this._reporter!.onStdErr?.(prefixOutputLines(data.toString()));
+      }
     });
     launchedProcess.stdout!.on('data', data => {
-      if (debugWebServer.enabled || this._options.stdout === 'pipe')
-        this._reporter!.onStdOut?.(prefixOutputLines(data.toString()));
+      if (debugWebServer.enabled || this._options.stdout === 'pipe') {
+this._reporter!.onStdOut?.(prefixOutputLines(data.toString()));
+      }
     });
   }
 
@@ -136,8 +139,9 @@ export class WebServerPlugin implements TestRunnerPlugin {
       this._processExitedPromise,
     ]));
     cancellationToken.canceled = true;
-    if (timedOut)
+    if (timedOut) {
       throw new Error(`Timed out waiting ${launchTimeout}ms from config.webServer.`);
+    }
     debugWebServer(`WebServer available`);
   }
 }
@@ -161,8 +165,9 @@ async function waitFor(waitFn: () => Promise<boolean>, cancellationToken: { canc
   const logScale = [100, 250, 500];
   while (!cancellationToken.canceled) {
     const connected = await waitFn();
-    if (connected)
+    if (connected) {
       return;
+    }
     const delay = logScale.shift() || 1000;
     debugWebServer(`Waiting ${delay}ms`);
     await new Promise(x => setTimeout(x, delay));
@@ -171,8 +176,9 @@ async function waitFor(waitFn: () => Promise<boolean>, cancellationToken: { canc
 
 function getIsAvailableFunction(url: string, checkPortOnly: boolean, ignoreHTTPSErrors: boolean, onStdErr: ReporterV2['onStdErr']) {
   const urlObject = new URL(url);
-  if (!checkPortOnly)
+  if (!checkPortOnly) {
     return () => isURLAvailable(urlObject, ignoreHTTPSErrors, debugWebServer, onStdErr);
+  }
   const port = urlObject.port;
   return () => isPortUsed(+port);
 }
@@ -185,16 +191,18 @@ export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunne
   const shouldSetBaseUrl = !!config.config.webServer;
   const webServerPlugins = [];
   for (const webServerConfig of config.webServers) {
-    if (webServerConfig.port && webServerConfig.url)
+    if (webServerConfig.port && webServerConfig.url) {
       throw new Error(`Either 'port' or 'url' should be specified in config.webServer.`);
+    }
 
     let url: string | undefined;
     if (webServerConfig.port || webServerConfig.url) {
       url = webServerConfig.url || `http://localhost:${webServerConfig.port}`;
 
       // We only set base url when only the port is given. That's a legacy mode we have regrets about.
-      if (shouldSetBaseUrl && !webServerConfig.url)
+      if (shouldSetBaseUrl && !webServerConfig.url) {
         process.env.PLAYWRIGHT_TEST_BASE_URL = url;
+      }
     }
     webServerPlugins.push(new WebServerPlugin({ ...webServerConfig,  url }, webServerConfig.port !== undefined));
   }
@@ -205,10 +213,12 @@ export const webServerPluginsForConfig = (config: FullConfigInternal): TestRunne
 function prefixOutputLines(output: string) {
   const lastIsNewLine = output[output.length - 1] === '\n';
   let lines = output.split('\n');
-  if (lastIsNewLine)
+  if (lastIsNewLine) {
     lines.pop();
+  }
   lines = lines.map(line => colors.dim('[WebServer] ') + line);
-  if (lastIsNewLine)
+  if (lastIsNewLine) {
     lines.push('');
+  }
   return lines.join('\n');
 }

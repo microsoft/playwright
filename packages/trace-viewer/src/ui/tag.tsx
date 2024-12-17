@@ -31,7 +31,8 @@ export const TagView = ({ tag, style, onClick }: { tag: string, style?: React.CS
 // hash string to integer in range [0, 6] for color index, to get same color for same tag
 function tagNameToColor(str: string) {
   let hash = 0;
-  for (let i = 0; i < str.length; i++)
+  for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 8) - hash);
+  }
   return Math.abs(hash % 6);
 }

@@ -87,8 +87,9 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     if (!filePath) {
       // Not interested in artifacts.
       await this._channel.tracingStopChunk({ mode: 'discard' });
-      if (this._stacksId)
+      if (this._stacksId) {
         await this._connection.localUtils()._channel.traceDiscarded({ stacksId: this._stacksId });
+      }
       return;
     }
 
@@ -104,8 +105,9 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
     // The artifact may be missing if the browser closed while stopping tracing.
     if (!result.artifact) {
-      if (this._stacksId)
+      if (this._stacksId) {
         await this._connection.localUtils()._channel.traceDiscarded({ stacksId: this._stacksId });
+      }
       return;
     }
 

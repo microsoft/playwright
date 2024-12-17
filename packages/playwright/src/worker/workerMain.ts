@@ -124,12 +124,14 @@ export class WorkerMain extends ProcessRunner {
   }
 
   private _appendProcessTeardownDiagnostics(error: TestInfoErrorImpl) {
-    if (!this._lastRunningTests.length)
+    if (!this._lastRunningTests.length) {
       return;
+    }
     const count = this._totalRunningTests === 1 ? '1 test' : `${this._totalRunningTests} tests`;
     let lastMessage = '';
-    if (this._lastRunningTests.length < this._totalRunningTests)
+    if (this._lastRunningTests.length < this._totalRunningTests) {
       lastMessage = `, last ${this._lastRunningTests.length} tests were`;
+    }
     const message = [
       '',
       '',
@@ -153,8 +155,9 @@ export class WorkerMain extends ProcessRunner {
   unhandledError(error: Error | any) {
     // No current test - fatal error.
     if (!this._currentTest) {
-      if (!this._fatalErrors.length)
+      if (!this._fatalErrors.length) {
         this._fatalErrors.push(testInfoError(error));
+      }
       void this._stop();
       return;
     }
@@ -178,13 +181,15 @@ export class WorkerMain extends ProcessRunner {
     // an expect() error which we know does not mess things up.
     const isExpectError = (error instanceof Error) && !!(error as any).matcherResult;
     const shouldContinueInThisWorker = this._currentTest.expectedStatus === 'failed' && isExpectError;
-    if (!shouldContinueInThisWorker)
+    if (!shouldContinueInThisWorker) {
       void this._stop();
+    }
   }
 
   private async _loadIfNeeded() {
-    if (this._config)
+    if (this._config) {
       return;
+    }
 
     this._config = await deserializeConfig(this._params.config);
     this._project = this._config.projects.find(p => p.id === this._params.projectId)!;
@@ -199,8 +204,9 @@ export class WorkerMain extends ProcessRunner {
       await this._loadIfNeeded();
       const fileSuite = await loadTestFile(runPayload.file, this._config.config.rootDir);
       const suite = bindFileSuiteToProject(this._project, fileSuite);
-      if (this._params.repeatEachIndex)
+      if (this._params.repeatEachIndex) {
         applyRepeatEachIndex(this._project, suite, this._params.repeatEachIndex);
+      }
       const hasEntries = filterTestsRemoveEmptySuites(suite, test => entries.has(test.id));
       if (hasEntries) {
         this._poolBuilder.buildPools(suite);
@@ -209,8 +215,9 @@ export class WorkerMain extends ProcessRunner {
         const tests = suite.allTests();
         for (let i = 0; i < tests.length; i++) {
           // Do not run tests after full cleanup, because we are entirely done.
-          if (this._isStopped && this._didRunFullCleanup)
+          if (this._isStopped && this._didRunFullCleanup) {
             break;
+          }
           const entry = entries.get(tests[i].id)!;
           entries.delete(tests[i].id);
           debugTest(`test started "${tests[i].title}"`);
@@ -234,8 +241,9 @@ export class WorkerMain extends ProcessRunner {
         fatalUnknownTestIds
       };
       for (const test of this._skipRemainingTestsInSuite?.allTests() || []) {
-        if (entries.has(test.id))
+        if (entries.has(test.id)) {
           donePayload.skipTestsDueToSetupFailure.push(test.id);
+        }
       }
       this.dispatchEvent('done', donePayload);
       this._fatalErrors = [];
@@ -258,8 +266,9 @@ export class WorkerMain extends ProcessRunner {
           testInfo.expectedStatus = 'skipped';
           break;
         case 'fail':
-          if (testInfo.expectedStatus !== 'skipped')
+          if (testInfo.expectedStatus !== 'skipped') {
             testInfo.expectedStatus = 'failed';
+          }
           break;
         case 'slow':
           testInfo._timeoutManager.slow();
@@ -267,22 +276,25 @@ export class WorkerMain extends ProcessRunner {
       }
     };
 
-    if (!this._isStopped)
+    if (!this._isStopped) {
       this._fixtureRunner.setPool(test._pool!);
+    }
 
     const suites = getSuites(test);
     const reversedSuites = suites.slice().reverse();
     const nextSuites = new Set(getSuites(nextTest));
 
     testInfo._timeoutManager.setTimeout(test.timeout);
-    for (const annotation of test.annotations)
+    for (const annotation of test.annotations) {
       processAnnotation(annotation);
+    }
 
     // Process existing annotations dynamically set for parent suites.
     for (const suite of suites) {
       const extraAnnotations = this._activeSuites.get(suite) || [];
-      for (const annotation of extraAnnotations)
+      for (const annotation of extraAnnotations) {
         processAnnotation(annotation);
+      }
     }
 
     this._currentTest = testInfo;
@@ -302,8 +314,9 @@ export class WorkerMain extends ProcessRunner {
 
     this._totalRunningTests++;
     this._lastRunningTests.push(test);
-    if (this._lastRunningTests.length > 10)
+    if (this._lastRunningTests.length > 10) {
       this._lastRunningTests.shift();
+    }
     let shouldRunAfterEachHooks = false;
 
     testInfo._allowSkips = true;
@@ -314,10 +327,12 @@ export class WorkerMain extends ProcessRunner {
         // However, for backwards compatibility, we have to read it from a fixture today.
         // We decided to not introduce the config-level option just yet.
         const traceFixtureRegistration = test._pool!.resolve('trace');
-        if (!traceFixtureRegistration)
+        if (!traceFixtureRegistration) {
           return;
-        if (typeof traceFixtureRegistration.fn === 'function')
+        }
+        if (typeof traceFixtureRegistration.fn === 'function') {
           throw new Error(`"trace" option cannot be a function`);
+        }
         await testInfo._tracing.startIfNeeded(traceFixtureRegistration.fn);
       });
 
@@ -335,8 +350,9 @@ export class WorkerMain extends ProcessRunner {
       let testFunctionParams: object | null = null;
       await testInfo._runAsStage({ title: 'Before Hooks', stepInfo: { category: 'hook' } }, async () => {
         // Run "beforeAll" hooks, unless already run during previous tests.
-        for (const suite of suites)
+        for (const suite of suites) {
           await this._runBeforeAllHooksForSuite(suite, testInfo);
+        }
 
         // Run "beforeEach" hooks. Once started with "beforeEach", we must run all "afterEach" hooks as well.
         shouldRunAfterEachHooks = true;
@@ -379,8 +395,9 @@ export class WorkerMain extends ProcessRunner {
 
       try {
         // Run "afterEach" hooks, unless we failed at beforeAll stage.
-        if (shouldRunAfterEachHooks)
+        if (shouldRunAfterEachHooks) {
           await this._runEachHooksForSuites(reversedSuites, 'afterEach', testInfo, afterHooksSlot);
+        }
       } catch (error) {
         firstAfterHooksError = firstAfterHooksError ?? error;
       }
@@ -406,12 +423,14 @@ export class WorkerMain extends ProcessRunner {
           }
         }
       }
-      if (firstAfterHooksError)
+      if (firstAfterHooksError) {
         throw firstAfterHooksError;
+      }
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
-    if (testInfo._isFailure())
+    if (testInfo._isFailure()) {
       this._isStopped = true;
+    }
 
     if (this._isStopped) {
       // Run all remaining "afterAll" hooks and teardown all fixtures when worker is shutting down.
@@ -445,8 +464,9 @@ export class WorkerMain extends ProcessRunner {
           firstWorkerCleanupError = firstWorkerCleanupError ?? error;
         }
 
-        if (firstWorkerCleanupError)
+        if (firstWorkerCleanupError) {
           throw firstWorkerCleanupError;
+        }
       }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
     }
 
@@ -463,8 +483,9 @@ export class WorkerMain extends ProcessRunner {
 
     const preserveOutput = this._config.config.preserveOutput === 'always' ||
       (this._config.config.preserveOutput === 'failures-only' && testInfo._isFailure());
-    if (!preserveOutput)
+    if (!preserveOutput) {
       await removeFolders([testInfo.outputDir]);
+    }
   }
 
   private _collectHooksAndModifiers(suite: Suite, type: 'beforeAll' | 'beforeEach' | 'afterAll' | 'afterEach', testInfo: TestInfoImpl) {
@@ -472,8 +493,9 @@ export class WorkerMain extends ProcessRunner {
     const runnables: Runnable[] = [];
     for (const modifier of suite._modifiers) {
       const modifierType = this._fixtureRunner.dependsOnWorkerFixturesOnly(modifier.fn, modifier.location) ? 'beforeAll' : 'beforeEach';
-      if (modifierType !== type)
+      if (modifierType !== type) {
         continue;
+      }
       const fn = async (fixtures: any) => {
         const result = await modifier.fn(fixtures);
         testInfo[modifier.type](!!result, modifier.description);
@@ -492,8 +514,9 @@ export class WorkerMain extends ProcessRunner {
   }
 
   private async _runBeforeAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
-    if (this._activeSuites.has(suite))
+    if (this._activeSuites.has(suite)) {
       return;
+    }
     const extraAnnotations: Annotation[] = [];
     this._activeSuites.set(suite, extraAnnotations);
     await this._runAllHooksForSuite(suite, testInfo, 'beforeAll', extraAnnotations);
@@ -525,8 +548,9 @@ export class WorkerMain extends ProcessRunner {
       } catch (error) {
         firstError = firstError ?? error;
         // Skip in beforeAll/modifier prevents others from running.
-        if (type === 'beforeAll' && (error instanceof SkipError))
+        if (type === 'beforeAll' && (error instanceof SkipError)) {
           break;
+        }
         if (type === 'beforeAll' && !this._skipRemainingTestsInSuite) {
           // This will inform dispatcher that we should not run more tests from this group
           // because we had a beforeAll error.
@@ -535,13 +559,15 @@ export class WorkerMain extends ProcessRunner {
         }
       }
     }
-    if (firstError)
+    if (firstError) {
       throw firstError;
+    }
   }
 
   private async _runAfterAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
-    if (!this._activeSuites.has(suite))
+    if (!this._activeSuites.has(suite)) {
       return;
+    }
     this._activeSuites.delete(suite);
     await this._runAllHooksForSuite(suite, testInfo, 'afterAll');
   }
@@ -563,12 +589,14 @@ export class WorkerMain extends ProcessRunner {
       } catch (error) {
         firstError = firstError ?? error;
         // Skip in modifier prevents others from running.
-        if (error instanceof SkipError)
+        if (error instanceof SkipError) {
           break;
+        }
       }
     }
-    if (firstError)
+    if (firstError) {
       throw firstError;
+    }
   }
 }
 
@@ -594,8 +622,9 @@ function buildTestEndPayload(testInfo: TestInfoImpl): TestEndPayload {
 
 function getSuites(test: TestCase | undefined): Suite[] {
   const suites: Suite[] = [];
-  for (let suite: Suite | undefined = test?.parent; suite; suite = suite.parent)
+  for (let suite: Suite | undefined = test?.parent; suite; suite = suite.parent) {
     suites.push(suite);
+  }
   suites.reverse();  // Put root suite first.
   return suites;
 }

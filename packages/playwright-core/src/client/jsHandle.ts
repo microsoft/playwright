@@ -51,8 +51,9 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
 
   async getProperties(): Promise<Map<string, JSHandle>> {
     const map = new Map<string, JSHandle>();
-    for (const { name, value } of (await this._channel.getPropertyList()).properties)
+    for (const { name, value } of (await this._channel.getPropertyList()).properties) {
       map.set(name, JSHandle.from(value));
+    }
     return map;
   }
 
@@ -72,8 +73,9 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> im
     try {
       await this._channel.dispose();
     } catch (e) {
-      if (isTargetClosedError(e))
+      if (isTargetClosedError(e)) {
         return;
+      }
       throw e;
     }
   }
@@ -92,8 +94,9 @@ export function serializeArgument(arg: any): channels.SerializedArgument {
     return handles.length - 1;
   };
   const value = serializeValue(arg, value => {
-    if (value instanceof JSHandle)
+    if (value instanceof JSHandle) {
       return { h: pushHandle(value._channel) };
+    }
     return { fallThrough: value };
   });
   return { value, handles };
@@ -104,6 +107,7 @@ export function parseResult(value: channels.SerializedValue): any {
 }
 
 export function assertMaxArguments(count: number, max: number): asserts count {
-  if (count > max)
+  if (count > max) {
     throw new Error('Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object.');
+  }
 }

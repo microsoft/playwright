@@ -42,8 +42,9 @@ export class WKBrowser extends Browser {
 
   static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
     const browser = new WKBrowser(parent, transport, options);
-    if ((options as any).__testHookOnConnectToBrowser)
+    if ((options as any).__testHookOnConnectToBrowser) {
       await (options as any).__testHookOnConnectToBrowser();
+    }
     const promises: Promise<any>[] = [
       browser._browserSession.send('Playwright.enable'),
     ];
@@ -72,11 +73,13 @@ export class WKBrowser extends Browser {
   }
 
   _onDisconnect() {
-    for (const wkPage of this._wkPages.values())
+    for (const wkPage of this._wkPages.values()) {
       wkPage.didClose();
+    }
     this._wkPages.clear();
-    for (const video of this._idToVideo.values())
+    for (const video of this._idToVideo.values()) {
       video.artifact.reportFinished(new TargetClosedError());
+    }
     this._idToVideo.clear();
     this._didClose();
   }
@@ -111,8 +114,9 @@ export class WKBrowser extends Browser {
 
   _onDownloadCreated(payload: Protocol.Playwright.downloadCreatedPayload) {
     const page = this._wkPages.get(payload.pageProxyId);
-    if (!page)
+    if (!page) {
       return;
+    }
     // In some cases, e.g. blob url download, we receive only frameScheduledNavigation
     // but no signals that the navigation was canceled and replaced by download. Fix it
     // here by simulating cancelled provisional load which matches downloads from network.
@@ -127,11 +131,13 @@ export class WKBrowser extends Browser {
       // Resume the page creation with an error. The page will automatically close right
       // after the download begins.
       page._firstNonInitialNavigationCommittedReject(new Error('Starting new page download'));
-      if (page._opener)
+      if (page._opener) {
         originPage = page._opener._page.initializedOrUndefined();
+      }
     }
-    if (!originPage)
+    if (!originPage) {
       return;
+    }
     this._downloadCreated(originPage, payload.uuid, payload.url);
   }
 
@@ -157,10 +163,12 @@ export class WKBrowser extends Browser {
       // lifecycle events.
       context = this._contexts.get(event.browserContextId) || null;
     }
-    if (!context)
+    if (!context) {
       context = this._defaultContext as WKBrowserContext;
-    if (!context)
+    }
+    if (!context) {
       return;
+    }
     const pageProxySession = new WKSession(this._connection, pageProxyId, (message: any) => {
       this._connection.rawSend({ ...message, pageProxyId });
     });
@@ -172,30 +180,34 @@ export class WKBrowser extends Browser {
   _onPageProxyDestroyed(event: Protocol.Playwright.pageProxyDestroyedPayload) {
     const pageProxyId = event.pageProxyId;
     const wkPage = this._wkPages.get(pageProxyId);
-    if (!wkPage)
+    if (!wkPage) {
       return;
+    }
     wkPage.didClose();
     this._wkPages.delete(pageProxyId);
   }
 
   _onPageProxyMessageReceived(event: PageProxyMessageReceivedPayload) {
     const wkPage = this._wkPages.get(event.pageProxyId);
-    if (!wkPage)
+    if (!wkPage) {
       return;
+    }
     wkPage.dispatchMessageToSession(event.message);
   }
 
   _onProvisionalLoadFailed(event: Protocol.Playwright.provisionalLoadFailedPayload) {
     const wkPage = this._wkPages.get(event.pageProxyId);
-    if (!wkPage)
+    if (!wkPage) {
       return;
+    }
     wkPage.handleProvisionalLoadFailed(event);
   }
 
   _onWindowOpen(event: Protocol.Playwright.windowOpenPayload) {
     const wkPage = this._wkPages.get(event.pageProxyId);
-    if (!wkPage)
+    if (!wkPage) {
       return;
+    }
     wkPage.handleWindowOpen(event);
   }
 
@@ -222,16 +234,21 @@ export class WKBrowserContext extends BrowserContext {
       downloadPath: this._browser.options.downloadsPath,
       browserContextId
     }));
-    if (this._options.ignoreHTTPSErrors || this._options.internalIgnoreHTTPSErrors)
+    if (this._options.ignoreHTTPSErrors || this._options.internalIgnoreHTTPSErrors) {
       promises.push(this._browser._browserSession.send('Playwright.setIgnoreCertificateErrors', { browserContextId, ignore: true }));
-    if (this._options.locale)
+    }
+    if (this._options.locale) {
       promises.push(this._browser._browserSession.send('Playwright.setLanguages', { browserContextId, languages: [this._options.locale] }));
-    if (this._options.geolocation)
+    }
+    if (this._options.geolocation) {
       promises.push(this.setGeolocation(this._options.geolocation));
-    if (this._options.offline)
+    }
+    if (this._options.offline) {
       promises.push(this.setOffline(this._options.offline));
-    if (this._options.httpCredentials)
+    }
+    if (this._options.httpCredentials) {
       promises.push(this.setHTTPCredentials(this._options.httpCredentials));
+    }
     await Promise.all(promises);
   }
 
@@ -289,41 +306,48 @@ export class WKBrowserContext extends BrowserContext {
 
   async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
     this._options.extraHTTPHeaders = headers;
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as WKPage).updateExtraHTTPHeaders();
+    }
   }
 
   async setUserAgent(userAgent: string | undefined): Promise<void> {
     this._options.userAgent = userAgent;
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as WKPage).updateUserAgent();
+    }
   }
 
   async setOffline(offline: boolean): Promise<void> {
     this._options.offline = offline;
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as WKPage).updateOffline();
+    }
   }
 
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
     this._options.httpCredentials = httpCredentials;
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as WKPage).updateHttpCredentials();
+    }
   }
 
   async doAddInitScript(initScript: InitScript) {
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as WKPage)._updateBootstrapScript();
+    }
   }
 
   async doRemoveNonInternalInitScripts() {
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as WKPage)._updateBootstrapScript();
+    }
   }
 
   async doUpdateRequestInterception(): Promise<void> {
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as WKPage).updateRequestInterception();
+    }
   }
 
   onClosePersistent() {}
@@ -351,9 +375,11 @@ export class WKBrowserContext extends BrowserContext {
   }
 
   _validateEmulatedViewport(viewportSize?: types.Size | null) {
-    if (!viewportSize)
+    if (!viewportSize) {
       return;
-    if (process.platform === 'win32' && this._browser.options.headful && (viewportSize.width < 250 || viewportSize.height < 240))
+    }
+    if (process.platform === 'win32' && this._browser.options.headful && (viewportSize.width < 250 || viewportSize.height < 240)) {
       throw new Error(`WebKit on Windows has a minimal viewport of 250x240.`);
+    }
   }
 }

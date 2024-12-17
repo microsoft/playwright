@@ -52,8 +52,9 @@ export const test = contextTest.extend<CLITestArgs>({
   recorderPageGetter: async ({ context, toImpl, mode }, run, testInfo) => {
     testInfo.skip(mode.startsWith('service'));
     await run(async () => {
-      while (!toImpl(context).recorderAppForTest)
+      while (!toImpl(context).recorderAppForTest) {
         await new Promise(f => setTimeout(f, 100));
+      }
       const wsEndpoint = toImpl(context).recorderAppForTest.wsEndpointForTest;
       const browser = await playwrightToAutomateInspector.chromium.connectOverCDP({ wsEndpoint });
       const c = browser.contexts()[0];
@@ -141,16 +142,18 @@ export class Recorder {
   }
 
   async waitForOutput(file: string, text: string): Promise<Map<string, Source>> {
-    if (!codegenLang2Id.has(file))
+    if (!codegenLang2Id.has(file)) {
       throw new Error(`Unknown language: ${file}`);
+    }
     await expect.poll(() => this.recorderPage.evaluate(languageId => {
       const sources = ((window as any).playwrightSourcesEchoForTest || []) as Source[];
       return sources.find(s => s.id === languageId)?.text || '';
     }, codegenLang2Id.get(file)), { timeout: 0 }).toContain(text);
     const sources: Source[] = await this.recorderPage.evaluate(() => (window as any).playwrightSourcesEchoForTest || []);
     for (const source of sources) {
-      if (!codegenLangId2lang.has(source.id))
+      if (!codegenLangId2lang.has(source.id)) {
         throw new Error(`Unknown language: ${source.id}`);
+      }
       this._sources.set(codegenLangId2lang.get(source.id), source);
     }
     return this._sources;
@@ -163,8 +166,9 @@ export class Recorder {
   async text(file: string): Promise<string> {
     const sources: Source[] = await this.recorderPage.evaluate(() => (window as any).playwrightSourcesEchoForTest || []);
     for (const source of sources) {
-      if (codegenLangId2lang.get(source.id) === file)
+      if (codegenLangId2lang.get(source.id) === file) {
         return source.text;
+      }
     }
     return '';
   }
@@ -243,8 +247,9 @@ class CLIMock {
       ...options.args,
       `--browser=${options.browserName}`,
     ];
-    if (options.channel)
+    if (options.channel) {
       nodeArgs.push(`--channel=${options.channel}`);
+    }
     this.process = childProcess({
       command: nodeArgs,
       env: {

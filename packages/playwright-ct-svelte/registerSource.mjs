@@ -55,8 +55,9 @@ function __pwCreateSlots(slots) {
           __pwInsert(target, element, anchor);
         },
         d: function destroy(detaching) {
-          if (detaching)
+          if (detaching) {
             __pwDetach(element);
+          }
         },
         l: __pwNoop,
       };
@@ -68,8 +69,9 @@ function __pwCreateSlots(slots) {
 const __pwSvelteComponentKey = Symbol('svelteComponent');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  if (!isObjectComponent(component))
+  if (!isObjectComponent(component)) {
     throw new Error('JSX mount notation is not supported');
+  }
 
   const objectComponent = component;
   const componentCtor = component.type;
@@ -89,40 +91,49 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   }
 
   let svelteComponent;
-  for (const hook of window.__pw_hooks_before_mount || [])
+  for (const hook of window.__pw_hooks_before_mount || []) {
     svelteComponent = await hook({ hooksConfig, App });
+  }
 
-  if (!svelteComponent)
+  if (!svelteComponent) {
     svelteComponent = new App();
+  }
 
   rootElement[__pwSvelteComponentKey] = svelteComponent;
 
-  for (const [key, listener] of Object.entries(objectComponent.on || {}))
+  for (const [key, listener] of Object.entries(objectComponent.on || {})) {
     svelteComponent.$on(key, event => listener(event.detail));
+  }
 
-  for (const hook of window.__pw_hooks_after_mount || [])
+  for (const hook of window.__pw_hooks_after_mount || []) {
     await hook({ hooksConfig, svelteComponent });
+  }
 };
 
 window.playwrightUnmount = async rootElement => {
   const svelteComponent = /** @type {SvelteComponent} */ (rootElement[__pwSvelteComponentKey]);
-  if (!svelteComponent)
+  if (!svelteComponent) {
     throw new Error('Component was not mounted');
+  }
   svelteComponent.$destroy();
   delete rootElement[__pwSvelteComponentKey];
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
-  if (!isObjectComponent(component))
+  if (!isObjectComponent(component)) {
     throw new Error('JSX mount notation is not supported');
+  }
 
   const svelteComponent = /** @type {SvelteComponent} */ (rootElement[__pwSvelteComponentKey]);
-  if (!svelteComponent)
+  if (!svelteComponent) {
     throw new Error('Component was not mounted');
+  }
 
-  for (const [key, listener] of Object.entries(component.on || {}))
+  for (const [key, listener] of Object.entries(component.on || {})) {
     svelteComponent.$on(key, event => listener(event.detail));
+  }
 
-  if (component.props)
+  if (component.props) {
     svelteComponent.$set(component.props);
+  }
 };

@@ -159,8 +159,9 @@ it('should work when subframe issues window.stop()', async ({ browserName, page,
   page.goto(server.PREFIX + '/frames/one-frame.html').then(() => done = true).catch(() => {});
   const frame = await new Promise<Frame>(f => page.once('frameattached', f));
   await new Promise<void>(fulfill => page.on('framenavigated', f => {
-    if (f === frame)
+    if (f === frame) {
       fulfill();
+    }
   }));
   await frame.evaluate(() => window.stop());
   expect(done).toBe(true);
@@ -253,7 +254,9 @@ it('should fail when frame detaches', async ({ page, server }) => {
   server.setRoute('/one-style.css', () => {});
   const [error] = await Promise.all([
     frame.waitForNavigation().catch(e => e),
-    page.$eval('iframe', frame => { frame.contentWindow.location.href = '/one-style.html'; }),
+    page.$eval('iframe', frame => {
+      frame.contentWindow.location.href = '/one-style.html';
+    }),
     // Make sure policy checks pass and navigation actually begins before removing the frame to avoid other errors
     server.waitForRequest('/one-style.css').then(() => page.$eval('iframe', frame => window.builtinSetTimeout(() => frame.remove(), 0)))
   ]);

@@ -42,39 +42,47 @@ export class Accessibility {
     } = options;
     const { tree, needle } = await this._getAXTree(root || undefined);
     if (!interestingOnly) {
-      if (root)
+      if (root) {
         return needle && serializeTree(needle)[0];
+      }
       return serializeTree(tree)[0];
     }
 
     const interestingNodes: Set<AXNode> = new Set();
     collectInterestingNodes(interestingNodes, tree, false);
-    if (root && (!needle || !interestingNodes.has(needle)))
+    if (root && (!needle || !interestingNodes.has(needle))) {
       return null;
+    }
     return serializeTree(needle || tree, interestingNodes)[0];
   }
 }
 
 function collectInterestingNodes(collection: Set<AXNode>, node: AXNode, insideControl: boolean) {
-  if (node.isInteresting(insideControl))
+  if (node.isInteresting(insideControl)) {
     collection.add(node);
-  if (node.isLeafNode())
+  }
+  if (node.isLeafNode()) {
     return;
+  }
   insideControl = insideControl || node.isControl();
-  for (const child of node.children())
+  for (const child of node.children()) {
     collectInterestingNodes(collection, child, insideControl);
+  }
 }
 
 function serializeTree(node: AXNode, whitelistedNodes?: Set<AXNode>): channels.AXNode[] {
   const children: channels.AXNode[] = [];
-  for (const child of node.children())
+  for (const child of node.children()) {
     children.push(...serializeTree(child, whitelistedNodes));
+  }
 
-  if (whitelistedNodes && !whitelistedNodes.has(node))
+  if (whitelistedNodes && !whitelistedNodes.has(node)) {
     return children;
+  }
 
   const serializedNode = node.serialize();
-  if (children.length)
+  if (children.length) {
     serializedNode.children = children;
+  }
   return [serializedNode];
 }

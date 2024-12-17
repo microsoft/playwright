@@ -44,10 +44,12 @@ class LineReporter extends BaseReporter {
   }
 
   private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
-    if (this.config.quiet)
+    if (this.config.quiet) {
       return;
-    if (!process.env.PW_TEST_DEBUG_REPORTERS)
+    }
+    if (!process.env.PW_TEST_DEBUG_REPORTERS) {
       stream.write(`\u001B[1A\u001B[2K`);
+    }
     if (test && this._lastTest !== test) {
       // Write new header for the output.
       const title = colors.dim(formatTestTitle(this.config, test));
@@ -56,8 +58,9 @@ class LineReporter extends BaseReporter {
     }
 
     stream.write(chunk);
-    if (chunk[chunk.length - 1] !== '\n')
+    if (chunk[chunk.length - 1] !== '\n') {
       console.log();
+    }
 
     console.log();
   }
@@ -68,20 +71,23 @@ class LineReporter extends BaseReporter {
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
-    if (step.category === 'test.step')
+    if (step.category === 'test.step') {
       this._updateLine(test, result, step);
+    }
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-    if (step.category === 'test.step')
+    if (step.category === 'test.step') {
       this._updateLine(test, result, step.parent);
+    }
   }
 
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
     if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected' || result.status === 'interrupted')) {
-      if (!process.env.PW_TEST_DEBUG_REPORTERS)
+      if (!process.env.PW_TEST_DEBUG_REPORTERS) {
         process.stdout.write(`\u001B[1A\u001B[2K`);
+      }
       console.log(formatFailure(this.config, test, ++this._failures));
       console.log();
     }
@@ -92,25 +98,28 @@ class LineReporter extends BaseReporter {
     const prefix = `[${this._current}/${this.totalTestCount}]${retriesPrefix} `;
     const currentRetrySuffix = result.retry ? colors.yellow(` (retry #${result.retry})`) : '';
     const title = formatTestTitle(this.config, test, step) + currentRetrySuffix;
-    if (process.env.PW_TEST_DEBUG_REPORTERS)
+    if (process.env.PW_TEST_DEBUG_REPORTERS) {
       process.stdout.write(`${prefix + title}\n`);
-    else
+    } else {
       process.stdout.write(`\u001B[1A\u001B[2K${prefix + this.fitToScreen(title, prefix)}\n`);
+    }
   }
 
   override onError(error: TestError): void {
     super.onError(error);
 
     const message = formatError(error, colors.enabled).message + '\n';
-    if (!process.env.PW_TEST_DEBUG_REPORTERS && this._didBegin)
+    if (!process.env.PW_TEST_DEBUG_REPORTERS && this._didBegin) {
       process.stdout.write(`\u001B[1A\u001B[2K`);
+    }
     process.stdout.write(message);
     console.log();
   }
 
   override async onEnd(result: FullResult) {
-    if (!process.env.PW_TEST_DEBUG_REPORTERS && this._didBegin)
+    if (!process.env.PW_TEST_DEBUG_REPORTERS && this._didBegin) {
       process.stdout.write(`\u001B[1A\u001B[2K`);
+    }
     await super.onEnd(result);
     this.epilogue(false);
   }

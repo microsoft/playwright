@@ -20,7 +20,8 @@ import { serializeError } from '../util';
 
 export function testInfoError(error: Error | any): TestInfoErrorImpl {
   const result = serializeError(error);
-  if (error instanceof ExpectError)
+  if (error instanceof ExpectError) {
     result.matcherResult = error.matcherResult;
+  }
   return result;
 }

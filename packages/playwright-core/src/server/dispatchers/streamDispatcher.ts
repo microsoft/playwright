@@ -33,8 +33,9 @@ export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.
 
   async read(params: channels.StreamReadParams): Promise<channels.StreamReadResult> {
     const stream = this._object.stream;
-    if (this._ended)
+    if (this._ended) {
       return { binary: Buffer.from('') };
+    }
     if (!stream.readableLength) {
       const readyPromise = new ManualPromise<void>();
       const done = () => readyPromise.resolve();

@@ -68,8 +68,9 @@ export class Highlight {
       this._glassPaneElement.addEventListener(eventName, e => {
         e.stopPropagation();
         e.stopImmediatePropagation();
-        if (e.type === 'click' && (e as MouseEvent).button === 0 && this._highlightOptions.tooltipListItemSelected)
+        if (e.type === 'click' && (e as MouseEvent).button === 0 && this._highlightOptions.tooltipListItemSelected) {
           this._highlightOptions.tooltipListItemSelected(undefined);
+        }
       });
     }
     this._actionPointElement = document.createElement('x-pw-action-point');
@@ -91,8 +92,9 @@ export class Highlight {
 
   install() {
     // NOTE: document.documentElement can be null: https://github.com/microsoft/TypeScript/issues/50078
-    if (this._injectedScript.document.documentElement && !this._injectedScript.document.documentElement.contains(this._glassPaneElement))
+    if (this._injectedScript.document.documentElement && !this._injectedScript.document.documentElement.contains(this._glassPaneElement)) {
       this._injectedScript.document.documentElement.appendChild(this._glassPaneElement);
+    }
   }
 
   setLanguage(language: Language) {
@@ -100,15 +102,17 @@ export class Highlight {
   }
 
   runHighlightOnRaf(selector: ParsedSelector) {
-    if (this._rafRequest)
+    if (this._rafRequest) {
       cancelAnimationFrame(this._rafRequest);
+    }
     this.updateHighlight(this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement), { tooltipText: asLocator(this._language, stringifySelector(selector)) });
     this._rafRequest = this._injectedScript.builtinRequestAnimationFrame(() => this.runHighlightOnRaf(selector));
   }
 
   uninstall() {
-    if (this._rafRequest)
+    if (this._rafRequest) {
       cancelAnimationFrame(this._rafRequest);
+    }
     this._glassPaneElement.remove();
   }
 
@@ -124,7 +128,7 @@ export class Highlight {
 
   clearHighlight() {
     for (const entry of this._highlightEntries) {
-      entry.highlightElement?.remove();
+      entry.highlightElement.remove();
       entry.tooltipElement?.remove();
     }
     this._highlightEntries = [];
@@ -142,14 +146,16 @@ export class Highlight {
 
   private _innerUpdateHighlight(elements: Element[], options: HighlightOptions) {
     let color = options.color;
-    if (!color)
+    if (!color) {
       color = elements.length > 1 ? '#f6b26b7f' : '#6fa8dc7f';
+    }
 
     // Code below should trigger one layout and leave with the
     // destroyed layout.
 
-    if (this._highlightIsUpToDate(elements, options))
+    if (this._highlightIsUpToDate(elements, options)) {
       return;
+    }
 
     // 1. Destroy the layout
     this.clearHighlight();
@@ -195,8 +201,9 @@ export class Highlight {
     // 2. Trigger layout while positioning tooltips and computing bounding boxes.
     for (const entry of this._highlightEntries) {
       entry.box = entry.targetElement.getBoundingClientRect();
-      if (!entry.tooltipElement)
+      if (!entry.tooltipElement) {
         continue;
+      }
 
       // Position tooltip, if any.
       const { anchorLeft, anchorTop } = this.tooltipPosition(entry.box, entry.tooltipElement);
@@ -220,8 +227,9 @@ export class Highlight {
       entry.highlightElement.style.height = box.height + 'px';
       entry.highlightElement.style.display = 'block';
 
-      if (this._isUnderTest)
+      if (this._isUnderTest) {
         console.error('Highlight box for test: ' + JSON.stringify({ x: box.x, y: box.y, width: box.width, height: box.height })); // eslint-disable-line no-console
+      }
     }
   }
 
@@ -236,8 +244,9 @@ export class Highlight {
     const totalHeight = this._glassPaneElement.offsetHeight;
 
     let anchorLeft = box.left;
-    if (anchorLeft + tooltipWidth > totalWidth - 5)
+    if (anchorLeft + tooltipWidth > totalWidth - 5) {
       anchorLeft = totalWidth - tooltipWidth - 5;
+    }
     let anchorTop = box.bottom + 5;
     if (anchorTop + tooltipHeight > totalHeight - 5) {
       // If can't fit below, either position above...
@@ -252,33 +261,42 @@ export class Highlight {
   }
 
   private _highlightIsUpToDate(elements: Element[], options: HighlightOptions): boolean {
-    if (options.tooltipText !== this._highlightOptions.tooltipText)
+    if (options.tooltipText !== this._highlightOptions.tooltipText) {
       return false;
-    if (options.tooltipListItemSelected !== this._highlightOptions.tooltipListItemSelected)
+    }
+    if (options.tooltipListItemSelected !== this._highlightOptions.tooltipListItemSelected) {
       return false;
-    if (options.tooltipFooter !== this._highlightOptions.tooltipFooter)
+    }
+    if (options.tooltipFooter !== this._highlightOptions.tooltipFooter) {
       return false;
+    }
 
-    if (options.tooltipList?.length !== this._highlightOptions.tooltipList?.length)
+    if (options.tooltipList?.length !== this._highlightOptions.tooltipList?.length) {
       return false;
+    }
     if (options.tooltipList && this._highlightOptions.tooltipList) {
       for (let i = 0; i < options.tooltipList.length; i++) {
-        if (options.tooltipList[i] !== this._highlightOptions.tooltipList[i])
+        if (options.tooltipList[i] !== this._highlightOptions.tooltipList[i]) {
           return false;
+        }
       }
     }
 
-    if (elements.length !== this._highlightEntries.length)
+    if (elements.length !== this._highlightEntries.length) {
       return false;
+    }
     for (let i = 0; i < this._highlightEntries.length; ++i) {
-      if (elements[i] !== this._highlightEntries[i].targetElement)
+      if (elements[i] !== this._highlightEntries[i].targetElement) {
         return false;
+      }
       const oldBox = this._highlightEntries[i].box;
-      if (!oldBox)
+      if (!oldBox) {
         return false;
+      }
       const box = elements[i].getBoundingClientRect();
-      if (box.top !== oldBox.top || box.right !== oldBox.right || box.bottom !== oldBox.bottom || box.left !== oldBox.left)
+      if (box.top !== oldBox.top || box.right !== oldBox.right || box.bottom !== oldBox.bottom || box.left !== oldBox.left) {
         return false;
+      }
     }
 
     return true;

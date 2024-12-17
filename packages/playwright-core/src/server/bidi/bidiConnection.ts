@@ -69,10 +69,11 @@ export class BidiConnection {
     if (object.type === 'event') {
       // Route page events to the right session.
       let context;
-      if ('context' in object.params)
+      if ('context' in object.params) {
         context = object.params.context;
-      else if (object.method === 'log.entryAdded' || object.method === 'script.message')
-        context = object.params.source?.context;
+      } else if (object.method === 'log.entryAdded' || object.method === 'script.message') {
+        context = object.params.source.context;
+      }
       if (context) {
         const session = this._browsingContextToSession.get(context);
         if (session) {
@@ -106,8 +107,9 @@ export class BidiConnection {
   }
 
   close() {
-    if (!this._closed)
+    if (!this._closed) {
       this._transport.close();
+    }
   }
 
   createMainFrameBrowsingContextSession(bowsingContextId: bidi.BrowsingContext.BrowsingContext): BidiSession {
@@ -165,8 +167,9 @@ export class BidiSession extends EventEmitter {
     method: T,
     params?: bidiCommands.Commands[T]['params']
   ): Promise<bidiCommands.Commands[T]['returnType']> {
-    if (this._crashed || this._disposed || this.connection._browserDisconnectedLogs)
+    if (this._crashed || this._disposed || this.connection._browserDisconnectedLogs) {
       throw new ProtocolError(this._crashed ? 'crashed' : 'closed', undefined, this.connection._browserDisconnectedLogs);
+    }
     const id = this.connection.nextMessageId();
     const messageObj = { id, method, params };
     this._rawSend(messageObj);
@@ -190,8 +193,9 @@ export class BidiSession extends EventEmitter {
   dispose() {
     this._disposed = true;
     this.connection._browsingContextToSession.delete(this.sessionId);
-    for (const context of this._browsingContexts)
+    for (const context of this._browsingContexts) {
       this.connection._browsingContextToSession.delete(context);
+    }
     this._browsingContexts.clear();
     for (const callback of this._callbacks.values()) {
       callback.error.type = this._crashed ? 'crashed' : 'closed';
@@ -207,8 +211,9 @@ export class BidiSession extends EventEmitter {
 
   dispatchMessage(message: any) {
     const object = message as bidi.Message;
-    if (object.id === kBrowserCloseMessageId)
+    if (object.id === kBrowserCloseMessageId) {
       return;
+    }
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);

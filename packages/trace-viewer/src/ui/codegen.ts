@@ -31,38 +31,46 @@ class JSCodeGen implements APIRequestCodegen {
       options.method = method;
       method = 'fetch';
     }
-    if (url.searchParams.size)
+    if (url.searchParams.size) {
       options.params = Object.fromEntries(url.searchParams.entries());
-    if (body)
+    }
+    if (body) {
       options.data = body;
-    if (request.headers.length)
+    }
+    if (request.headers.length) {
       options.headers = Object.fromEntries(request.headers.map(header => [header.name, header.value]));
+    }
 
     const params = [`'${urlParam}'`];
     const hasOptions = Object.keys(options).length > 0;
-    if (hasOptions)
+    if (hasOptions) {
       params.push(this.prettyPrintObject(options));
+    }
     return `await page.request.${method}(${params.join(', ')});`;
   }
 
   private prettyPrintObject(obj: any, indent = 2, level = 0): string {
     // Handle null and undefined
-    if (obj === null)
+    if (obj === null) {
       return 'null';
-    if (obj === undefined)
+    }
+    if (obj === undefined) {
       return 'undefined';
+    }
 
     // Handle primitive types
     if (typeof obj !== 'object') {
-      if (typeof obj === 'string')
+      if (typeof obj === 'string') {
         return this.stringLiteral(obj);
+      }
       return String(obj);
     }
 
     // Handle arrays
     if (Array.isArray(obj)) {
-      if (obj.length === 0)
+      if (obj.length === 0) {
         return '[]';
+      }
       const spaces = ' '.repeat(level * indent);
       const nextSpaces = ' '.repeat((level + 1) * indent);
 
@@ -74,8 +82,9 @@ class JSCodeGen implements APIRequestCodegen {
     }
 
     // Handle regular objects
-    if (Object.keys(obj).length === 0)
+    if (Object.keys(obj).length === 0) {
       return '{}';
+    }
     const spaces = ' '.repeat(level * indent);
     const nextSpaces = ' '.repeat((level + 1) * indent);
 
@@ -93,8 +102,9 @@ class JSCodeGen implements APIRequestCodegen {
 
   private stringLiteral(v: string): string {
     v = v.replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
-    if (v.includes('\n') || v.includes('\r') || v.includes('\t'))
+    if (v.includes('\n') || v.includes('\r') || v.includes('\t')) {
       return '`' + v + '`';
+    }
     return `'${v}'`;
   }
 }
@@ -112,12 +122,15 @@ class PythonCodeGen implements APIRequestCodegen {
       method = 'fetch';
     }
 
-    if (url.searchParams.size)
+    if (url.searchParams.size) {
       params.push(`params=${this.prettyPrintObject(Object.fromEntries(url.searchParams.entries()))}`);
-    if (body)
+    }
+    if (body) {
       params.push(`data=${this.prettyPrintObject(body)}`);
-    if (request.headers.length)
+    }
+    if (request.headers.length) {
       params.push(`headers=${this.prettyPrintObject(Object.fromEntries(request.headers.map(header => [header.name, header.value])))}`);
+    }
 
     const paramsString = params.length === 1 ? params[0] : `\n${params.map(p => this.indent(p, 2)).join(',\n')}\n`;
     return `await page.request.${method}(${paramsString})`;
@@ -129,24 +142,29 @@ class PythonCodeGen implements APIRequestCodegen {
 
   private prettyPrintObject(obj: any, indent = 2, level = 0): string {
     // Handle null and undefined
-    if (obj === null)
+    if (obj === null) {
       return 'None';
-    if (obj === undefined)
+    }
+    if (obj === undefined) {
       return 'None';
+    }
 
     // Handle primitive types
     if (typeof obj !== 'object') {
-      if (typeof obj === 'string')
+      if (typeof obj === 'string') {
         return this.stringLiteral(obj);
-      if (typeof obj === 'boolean')
+      }
+      if (typeof obj === 'boolean') {
         return obj ? 'True' : 'False';
+      }
       return String(obj);
     }
 
     // Handle arrays
     if (Array.isArray(obj)) {
-      if (obj.length === 0)
+      if (obj.length === 0) {
         return '[]';
+      }
       const spaces = ' '.repeat(level * indent);
       const nextSpaces = ' '.repeat((level + 1) * indent);
 
@@ -158,8 +176,9 @@ class PythonCodeGen implements APIRequestCodegen {
     }
 
     // Handle regular objects
-    if (Object.keys(obj).length === 0)
+    if (Object.keys(obj).length === 0) {
       return '{}';
+    }
     const spaces = ' '.repeat(level * indent);
     const nextSpaces = ' '.repeat((level + 1) * indent);
 
@@ -190,17 +209,21 @@ class CSharpCodeGen implements APIRequestCodegen {
       method = 'fetch';
     }
 
-    if (url.searchParams.size)
+    if (url.searchParams.size) {
       options.Params = Object.fromEntries(url.searchParams.entries());
-    if (body)
+    }
+    if (body) {
       options.Data = body;
-    if (request.headers.length)
+    }
+    if (request.headers.length) {
       options.Headers = Object.fromEntries(request.headers.map(header => [header.name, header.value]));
+    }
 
     const params = [`"${urlParam}"`];
     const hasOptions = Object.keys(options).length > 0;
-    if (hasOptions)
+    if (hasOptions) {
       params.push(this.prettyPrintObject(options));
+    }
 
     return `${initLines.join('\n')}${initLines.length ? '\n' : ''}await request.${this.toFunctionName(method)}(${params.join(', ')});`;
   }
@@ -211,24 +234,29 @@ class CSharpCodeGen implements APIRequestCodegen {
 
   private prettyPrintObject(obj: any, indent = 2, level = 0): string {
     // Handle null and undefined
-    if (obj === null)
+    if (obj === null) {
       return 'null';
-    if (obj === undefined)
+    }
+    if (obj === undefined) {
       return 'null';
+    }
 
     // Handle primitive types
     if (typeof obj !== 'object') {
-      if (typeof obj === 'string')
+      if (typeof obj === 'string') {
         return this.stringLiteral(obj);
-      if (typeof obj === 'boolean')
+      }
+      if (typeof obj === 'boolean') {
         return obj ? 'true' : 'false';
+      }
       return String(obj);
     }
 
     // Handle arrays
     if (Array.isArray(obj)) {
-      if (obj.length === 0)
+      if (obj.length === 0) {
         return 'new object[] {}';
+      }
       const spaces = ' '.repeat(level * indent);
       const nextSpaces = ' '.repeat((level + 1) * indent);
 
@@ -240,8 +268,9 @@ class CSharpCodeGen implements APIRequestCodegen {
     }
 
     // Handle regular objects
-    if (Object.keys(obj).length === 0)
+    if (Object.keys(obj).length === 0) {
       return 'new {}';
+    }
     const spaces = ' '.repeat(level * indent);
     const nextSpaces = ' '.repeat((level + 1) * indent);
 
@@ -272,15 +301,19 @@ class JavaCodeGen implements APIRequestCodegen {
       method = 'fetch';
     }
 
-    for (const [key, value] of url.searchParams)
+    for (const [key, value] of url.searchParams) {
       options.push(`setQueryParam(${this.stringLiteral(key)}, ${this.stringLiteral(value)})`);
-    if (body)
+    }
+    if (body) {
       options.push(`setData(${this.stringLiteral(body)})`);
-    for (const header of request.headers)
+    }
+    for (const header of request.headers) {
       options.push(`setHeader(${this.stringLiteral(header.name)}, ${this.stringLiteral(header.value)})`);
+    }
 
-    if (options.length > 0)
+    if (options.length > 0) {
       params.push(`RequestOptions.create()\n  .${options.join('\n  .')}\n`);
+    }
     return `request.${method}(${params.join(', ')});`;
   }
 
@@ -290,13 +323,17 @@ class JavaCodeGen implements APIRequestCodegen {
 }
 
 export function getAPIRequestCodeGen(language: Language): APIRequestCodegen {
-  if (language === 'javascript')
+  if (language === 'javascript') {
     return new JSCodeGen();
-  if (language === 'python')
+  }
+  if (language === 'python') {
     return new PythonCodeGen();
-  if (language === 'csharp')
+  }
+  if (language === 'csharp') {
     return new CSharpCodeGen();
-  if (language === 'java')
+  }
+  if (language === 'java') {
     return new JavaCodeGen();
+  }
   throw new Error('Unsupported language: ' + language);
 }

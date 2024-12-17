@@ -44,11 +44,11 @@ export async function launchApp(browserType: BrowserType, options: {
 
   const context = await browserType.launchPersistentContext(serverSideCallMetadata(), '', {
     ignoreDefaultArgs: ['--enable-automation'],
-    ...options?.persistentContextOptions,
+    ...options.persistentContextOptions,
     channel: options.persistentContextOptions?.channel ?? (!options.persistentContextOptions?.executablePath ? findChromiumChannel(options.sdkLanguage) : undefined),
     noDefaultViewport: options.persistentContextOptions?.noDefaultViewport ?? true,
-    acceptDownloads: options?.persistentContextOptions?.acceptDownloads ?? (isUnderTest() ? 'accept' : 'internal-browser-default'),
-    colorScheme: options?.persistentContextOptions?.colorScheme ?? 'no-override',
+    acceptDownloads: options.persistentContextOptions?.acceptDownloads ?? (isUnderTest() ? 'accept' : 'internal-browser-default'),
+    colorScheme: options.persistentContextOptions?.colorScheme ?? 'no-override',
     args,
   });
   const [page] = context.pages();
@@ -62,8 +62,9 @@ export async function launchApp(browserType: BrowserType, options: {
       }
     });
   }
-  if (browserType.name() === 'chromium')
+  if (browserType.name() === 'chromium') {
     await installAppIcon(page);
+  }
   return { context, page };
 }
 
@@ -76,8 +77,9 @@ async function installAppIcon(page: Page) {
 }
 
 export async function syncLocalStorageWithSettings(page: Page, appName: string) {
-  if (isUnderTest())
+  if (isUnderTest()) {
     return;
+  }
   const settingsFile = path.join(registryDirectory, '.settings', `${appName}.json`);
   await page.exposeBinding('_saveSerializedSettings', false, (_, settings) => {
     fs.mkdirSync(path.dirname(settingsFile), { recursive: true });
@@ -88,10 +90,12 @@ export async function syncLocalStorageWithSettings(page: Page, appName: string) 
   await page.addInitScript(
       `(${String((settings: any) => {
         // iframes w/ snapshots, etc.
-        if (location && location.protocol === 'data:')
+        if (location && location.protocol === 'data:') {
           return;
-        if (window.top !== window)
+        }
+        if (window.top !== window) {
           return;
+        }
         Object.entries(settings).map(([k, v]) => localStorage[k] = v);
         (window as any).saveSettings = () => {
           (window as any)._saveSerializedSettings(JSON.stringify({ ...localStorage }));

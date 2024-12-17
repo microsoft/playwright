@@ -132,5 +132,8 @@ process.on('message', async message => {
   }
 });
 
-// eslint-disable-next-line no-restricted-properties
-process.on('disconnect', () => { process.exit(0); });
+
+process.on('disconnect', () => {
+  // eslint-disable-next-line no-restricted-properties
+  process.exit(0);
+});

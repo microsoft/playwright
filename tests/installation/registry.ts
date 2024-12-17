@@ -46,7 +46,9 @@ export class Registry {
     this._url = url;
   }
 
-  url() { return this._url; }
+  url() {
+    return this._url;
+  }
 
   async shutdown() {
     return new Promise<void>((res, rej) => this._server.close(err => err ? rej(err) : res()));
@@ -60,8 +62,9 @@ export class Registry {
 
     this._server = createHttpServer(async (req: http.IncomingMessage, res: http.ServerResponse) => {
       // 1. Only support GET requests
-      if (req.method !== 'GET')
+      if (req.method !== 'GET') {
         return res.writeHead(405).end();
+      }
 
       // 2. Determine what package is being asked for.
       //    The paths we can handle look like:
@@ -70,10 +73,12 @@ export class Registry {
       //    - /<userSuppliedPackageName>
       const url = new URL(req.url, kPublicNpmRegistry);
       let [/* empty */, userSuppliedPackageName, /* empty */, userSuppliedTarName] = url.pathname.split('/');
-      if (userSuppliedPackageName)
+      if (userSuppliedPackageName) {
         userSuppliedPackageName = decodeURIComponent(userSuppliedPackageName);
-      if (userSuppliedTarName)
+      }
+      if (userSuppliedTarName) {
         userSuppliedTarName = decodeURIComponent(userSuppliedTarName);
+      }
 
       // 3. If we have local metadata, serve directly (otherwise, proxy to upstream).
       if (this._packageMeta.has(userSuppliedPackageName)) {
@@ -132,8 +137,9 @@ export class Registry {
       return acc;
     }, { local: false, proxied: false });
 
-    if (summary.local && !summary.proxied)
+    if (summary.local && !summary.proxied) {
       return;
+    }
 
     throw new Error(`${pkg} was not accessed strictly locally: local: ${summary.local}, proxied: ${summary.proxied}`);
   }
@@ -141,12 +147,14 @@ export class Registry {
   private async _addPackage(pkg: string, tarPath: string) {
     const tmpDir = await fs.promises.mkdtemp(path.join(this._workDir, '.staging-package-'));
     const { stderr, code } = await spawnAsync('tar', ['-xvzf', tarPath, '-C', tmpDir]);
-    if (!!code)
+    if (!!code) {
       throw new Error(`Failed to untar ${pkg}: ${stderr}`);
+    }
 
     const packageJson = JSON.parse((await fs.promises.readFile(path.join(tmpDir, 'package', 'package.json'), 'utf8')));
-    if (pkg !== packageJson.name)
+    if (pkg !== packageJson.name) {
       throw new Error(`Package name mismatch: ${pkg} is called ${packageJson.name} in its package.json`);
+    }
 
     const now = new Date().toISOString();
     const shasum = crypto.createHash('sha1').update(await fs.promises.readFile(tarPath)).digest().toString('hex');

@@ -31,8 +31,9 @@ import { verifyClientCertificates } from './browserContext';
 
 let dummyServerTlsOptions: tls.TlsOptions | undefined = undefined;
 function loadDummyServerCertsIfNeeded() {
-  if (dummyServerTlsOptions)
+  if (dummyServerTlsOptions) {
     return;
+  }
   const { cert, key } = generateSelfSignedCertificate();
   dummyServerTlsOptions = { key, cert };
 }
@@ -97,10 +98,11 @@ class SocksProxyConnection {
   }
 
   async connect() {
-    if (this.socksProxy.proxyAgentFromOptions)
+    if (this.socksProxy.proxyAgentFromOptions) {
       this.target = await this.socksProxy.proxyAgentFromOptions.connect(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
-    else
+    } else {
       this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
+    }
 
     this.target.once('close', this._targetCloseEventListener);
     this.target.once('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
@@ -129,15 +131,17 @@ class SocksProxyConnection {
     if (!this.firstPackageReceived) {
       this.firstPackageReceived = true;
       // 0x16 is SSLv3/TLS "handshake" content type: https://en.wikipedia.org/wiki/Transport_Layer_Security#TLS_record
-      if (data[0] === 0x16)
+      if (data[0] === 0x16) {
         this._attachTLSListeners();
-      else
+      } else {
         this.target.on('data', data => this.socksProxy._socksProxy.sendSocketData({ uid: this.uid, data }));
+      }
     }
-    if (this.internal)
+    if (this.internal) {
       this.internal.push(data);
-    else
+    } else {
       this.target.write(data);
+    }
   }
 
   private _attachTLSListeners() {
@@ -150,8 +154,9 @@ class SocksProxyConnection {
     });
     this.socksProxy.alpnCache.get(rewriteToLocalhostIfNeeded(this.host), this.port, alpnProtocolChosenByServer => {
       debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${alpnProtocolChosenByServer}`);
-      if (this._closed)
+      if (this._closed) {
         return;
+      }
       this._dummyServer = tls.createServer({
         ...dummyServerTlsOptions,
         ALPNProtocols: alpnProtocolChosenByServer === 'h2' ? ['h2', 'http/1.1'] : ['http/1.1'],
@@ -167,7 +172,7 @@ class SocksProxyConnection {
           debugLogger.log('client-certificates', `error when connecting to target: ${error.message.replaceAll('\n', ' ')}`);
           const responseBody = escapeHTML('Playwright client-certificate error: ' + error.message)
               .replaceAll('\n', ' <br>');
-          if (internalTLS?.alpnProtocol === 'h2') {
+          if (internalTLS.alpnProtocol === 'h2') {
             // This method is available only in Node.js 20+
             if ('performServerHandshake' in http2) {
               // In case of an 'error' event on the target connection, we still need to perform the http2 handshake on the browser side.
@@ -313,20 +318,24 @@ function normalizeOrigin(origin: string): string {
 function convertClientCertificatesToTLSOptions(
   clientCertificates: types.BrowserContextOptions['clientCertificates']
 ): Pick<https.RequestOptions, 'pfx' | 'key' | 'cert'> | undefined {
-  if (!clientCertificates || !clientCertificates.length)
+  if (!clientCertificates || !clientCertificates.length) {
     return;
+  }
   const tlsOptions = {
     pfx: [] as { buf: Buffer, passphrase?: string }[],
     key: [] as { pem: Buffer, passphrase?: string }[],
     cert: [] as Buffer[],
   };
   for (const cert of clientCertificates) {
-    if (cert.cert)
+    if (cert.cert) {
       tlsOptions.cert.push(cert.cert);
-    if (cert.key)
+    }
+    if (cert.key) {
       tlsOptions.key.push({ pem: cert.key, passphrase: cert.passphrase });
-    if (cert.pfx)
+    }
+    if (cert.pfx) {
       tlsOptions.pfx.push({ buf: cert.pfx, passphrase: cert.passphrase });
+    }
   }
   return tlsOptions;
 }
@@ -346,8 +355,9 @@ function rewriteToLocalhostIfNeeded(host: string): string {
 }
 
 export function rewriteOpenSSLErrorIfNeeded(error: Error): Error {
-  if (error.message !== 'unsupported' && (error as NodeJS.ErrnoException).code !== 'ERR_CRYPTO_UNSUPPORTED_OPERATION')
+  if (error.message !== 'unsupported' && (error as NodeJS.ErrnoException).code !== 'ERR_CRYPTO_UNSUPPORTED_OPERATION') {
     return error;
+  }
   return rewriteErrorMessage(error, [
     'Unsupported TLS certificate.',
     'Most likely, the security algorithm of the given certificate was deprecated by OpenSSL.',

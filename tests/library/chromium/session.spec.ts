@@ -59,8 +59,9 @@ it('should enable and disable domains independently', async function({ page }) {
   // generate a script in page and wait for the event.
   await Promise.all([
     new Promise<void>(f => client.on('Debugger.scriptParsed', event => {
-      if (event.url === 'foo.js')
+      if (event.url === 'foo.js') {
         f();
+      }
     })),
     page.evaluate('//# sourceURL=foo.js')
   ]);

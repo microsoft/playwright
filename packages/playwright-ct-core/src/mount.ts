@@ -46,8 +46,9 @@ export const fixtures: Fixtures<TestFixtures, WorkerFixtures, BaseTestFixtures> 
   serviceWorkers: 'block',
 
   page: async ({ page }, use, info) => {
-    if (!((info as any)._configInternal as FullConfigInternal).defineConfigWasUsed)
+    if (!((info as any)._configInternal as FullConfigInternal).defineConfigWasUsed) {
       throw new Error('Component testing requires the use of the defineConfig() in your playwright-ct.config.{ts,js}: https://aka.ms/playwright/ct-define-config');
+    }
     await (page as any)._wrapApiCall(async () => {
       await page.exposeFunction('__ctDispatchFunction', (ordinal: number, args: any[]) => {
         boundCallbacksForMount[ordinal](...args);
@@ -71,8 +72,9 @@ export const fixtures: Fixtures<TestFixtures, WorkerFixtures, BaseTestFixtures> 
           });
         },
         update: async (options: JsxComponent | ObjectComponentOptions) => {
-          if (isJsxComponent(options))
+          if (isJsxComponent(options)) {
             return await innerUpdate(page, options);
+          }
           await innerUpdate(page, componentRef, options);
         }
       });
@@ -124,8 +126,9 @@ async function innerMount(page: Page, componentRef: JsxComponent | ImportRef, op
 }
 
 function createComponent(component: JsxComponent | ImportRef, options: ObjectComponentOptions = {}): Component {
-  if (component.__pw_type === 'jsx')
+  if (component.__pw_type === 'jsx') {
     return component;
+  }
   return {
     __pw_type: 'object-component',
     type: component,

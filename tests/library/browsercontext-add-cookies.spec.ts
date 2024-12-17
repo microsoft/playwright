@@ -449,10 +449,11 @@ it('should allow unnamed cookies', async ({ page, context, server, browserName, 
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.cookie = '=unnamed-via-js;');
   await context.addCookies(await context.cookies());
-  if (browserName === 'webkit' && platform === 'darwin')
+  if (browserName === 'webkit' && platform === 'darwin') {
     expect.soft(await page.evaluate('document.cookie')).toBe('');
-  else
+  } else {
     expect.soft(await page.evaluate('document.cookie')).toBe('unnamed-via-js');
+  }
 });
 
 it('should set secure cookies on secure WebSocket', async ({ contextFactory, httpsServer }) => {

@@ -49,24 +49,28 @@ function __pwRender(value) {
     if (isJsxComponent(v)) {
       const component = v;
       let type = component.type;
-      if (isJsxFragment(type))
+      if (isJsxFragment(type)) {
         type = __pwReact.Fragment;
+      }
       const props = component.props ? __pwRender(component.props) : {};
       const key = component.key ? __pwRender(component.key) : undefined;
       const { children, ...propsWithoutChildren } = props;
-      if (key)
+      if (key) {
         propsWithoutChildren.key = key;
+      }
       const createElementArguments = [propsWithoutChildren];
-      if (children)
+      if (children) {
         createElementArguments.push(children);
+      }
       return { result: __pwReact.createElement(type, ...createElementArguments) };
     }
   });
 }
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
-  if (!isJsxComponent(component))
+  if (!isJsxComponent(component)) {
     throw new Error('Object mount notation is not supported');
+  }
   if (__pwRootRegistry.has(rootElement)) {
     throw new Error(
         'Attempting to mount a component into an container that already has a React root'
@@ -86,31 +90,36 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   let AppWrapper = App;
   for (const hook of window.__pw_hooks_before_mount || []) {
     const wrapper = await hook({ App: AppWrapper, hooksConfig });
-    if (wrapper)
+    if (wrapper) {
       AppWrapper = () => wrapper;
+    }
   }
 
   root.render(__pwReact.createElement(AppWrapper));
 
-  for (const hook of window.__pw_hooks_after_mount || [])
+  for (const hook of window.__pw_hooks_after_mount || []) {
     await hook({ hooksConfig });
+  }
 };
 
 window.playwrightUnmount = async rootElement => {
   const entry = __pwRootRegistry.get(rootElement);
-  if (!entry)
+  if (!entry) {
     throw new Error('Component was not mounted');
+  }
 
   entry.root.unmount();
   __pwRootRegistry.delete(rootElement);
 };
 
 window.playwrightUpdate = async (rootElement, component) => {
-  if (!isJsxComponent(component))
+  if (!isJsxComponent(component)) {
     throw new Error('Object mount notation is not supported');
+  }
 
   const entry = __pwRootRegistry.get(rootElement);
-  if (!entry)
+  if (!entry) {
     throw new Error('Component was not mounted');
+  }
   entry.setRenderer(() => __pwRender(component));
 };

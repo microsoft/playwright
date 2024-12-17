@@ -107,14 +107,16 @@ it('should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     query(root, selector) {
       const result = root.querySelector(selector);
-      if (result)
+      if (result) {
         void Promise.resolve().then(() => result.onclick = '');
+      }
       return result;
     },
     queryAll(root: HTMLElement, selector: string) {
       const result = Array.from(root.querySelectorAll(selector));
-      for (const e of result)
+      for (const e of result) {
         void Promise.resolve().then(() => (e as HTMLElement).onclick = null);
+      }
       return result;
     }
   });

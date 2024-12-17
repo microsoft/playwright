@@ -23,8 +23,9 @@ export type TestExpectation = 'unknown' | 'flaky' | 'pass' | 'fail' | 'timeout';
 type ShouldSkipPredicate = (info: TestInfo) => boolean;
 
 export async function createSkipTestPredicate(projectName: string): Promise<ShouldSkipPredicate> {
-  if (!process.env.PWTEST_USE_BIDI_EXPECTATIONS)
+  if (!process.env.PWTEST_USE_BIDI_EXPECTATIONS) {
     return () => false;
+  }
   const expectationsMap = await parseBidiExpectations(projectName);
   return (info: TestInfo) => {
     const key = info.titlePath.join(' › ');

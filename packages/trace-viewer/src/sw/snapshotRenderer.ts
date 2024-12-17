@@ -21,8 +21,9 @@ import type { LRUCache } from './lruCache';
 
 function findClosest<T>(items: T[], metric: (v: T) => number, target: number) {
   return items.find((item, index) => {
-    if (index === items.length - 1)
+    if (index === items.length - 1) {
       return true;
+    }
     const next = items[index + 1];
     return Math.abs(metric(item) - target) < Math.abs(metric(next) - target);
   });
@@ -80,10 +81,11 @@ export class SnapshotRenderer {
       if (typeof n === 'string') {
         // Best-effort Electron support: rewrite custom protocol in url() links in stylesheets.
         // Old snapshotter was sending lower-case.
-        if (parentTag === 'STYLE' || parentTag === 'style')
+        if (parentTag === 'STYLE' || parentTag === 'style') {
           result.push(rewriteURLsInStyleSheetForCustomProtocol(n));
-        else
+        } else {
           result.push(escapeHTML(n));
+        }
         return;
       }
 
@@ -93,8 +95,9 @@ export class SnapshotRenderer {
         if (referenceIndex >= 0 && referenceIndex <= snapshotIndex) {
           const nodes = snapshotNodes(this._snapshots[referenceIndex]);
           const nodeIndex = n[0][1];
-          if (nodeIndex >= 0 && nodeIndex < nodes.length)
+          if (nodeIndex >= 0 && nodeIndex < nodes.length) {
             return visit(nodes[nodeIndex], referenceIndex, parentTag, parentAttrs);
+          }
         }
       } else if (isNodeNameAttributesChildNodesSnapshot(n)) {
         const [name, nodeAttrs, ...children] = n;
@@ -127,17 +130,20 @@ export class SnapshotRenderer {
             attrName = '_' + attrName;
           }
           let attrValue = value;
-          if (isAnchor && attr.toLowerCase() === 'href')
+          if (isAnchor && attr.toLowerCase() === 'href') {
             attrValue = 'link://' + value;
-          else if (attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src' || attr === kCurrentSrcAttribute)
+          } else if (attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src' || attr === kCurrentSrcAttribute) {
             attrValue = rewriteURLForCustomProtocol(value);
+          }
           result.push(' ', attrName, '="', escapeHTMLAttribute(attrValue), '"');
         }
         result.push('>');
-        for (const child of children)
+        for (const child of children) {
           visit(child, snapshotIndex, nodeName, attrs);
-        if (!autoClosing.has(nodeName))
+        }
+        if (!autoClosing.has(nodeName)) {
           result.push('</', nodeName, '>');
+        }
         return;
       } else {
         // Why are we here? Let's not throw, just in case.
@@ -168,8 +174,9 @@ export class SnapshotRenderer {
     for (const resource of this._resources) {
       // Only use resources that received response before the snapshot.
       // Note that both snapshot time and request time are taken in the same Node process.
-      if (typeof resource._monotonicTime === 'number' && resource._monotonicTime >= snapshot.timestamp)
+      if (typeof resource._monotonicTime === 'number' && resource._monotonicTime >= snapshot.timestamp) {
         break;
+      }
       if (resource.response.status === 304) {
         // "Not Modified" responses are issued when browser requests the same resource
         // multiple times, meanwhile indicating that it has the response cached.
@@ -182,10 +189,11 @@ export class SnapshotRenderer {
       if (resource.request.url === url && resource.request.method === method) {
         // Pick the last resource with matching url - most likely it was used
         // at the time of snapshot, not the earlier aborted resource with the same url.
-        if (resource._frameref === snapshot.frameId)
+        if (resource._frameref === snapshot.frameId) {
           sameFrameResource = resource;
-        else
+        } else {
           otherFrameResource = resource;
+        }
       }
     }
 
@@ -225,8 +233,9 @@ function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
         nodes.push(n);
       } else if (isNodeNameAttributesChildNodesSnapshot(n)) {
         const [,, ...children] = n;
-        for (const child of children)
+        for (const child of children) {
           visit(child);
+        }
         nodes.push(n);
       }
     };
@@ -279,20 +288,24 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
     const canvasElements: HTMLCanvasElement[] = [];
 
     let topSnapshotWindow: Window = window;
-    while (topSnapshotWindow !== topSnapshotWindow.parent && !topSnapshotWindow.location.pathname.match(/\/page@[a-z0-9]+$/))
+    while (topSnapshotWindow !== topSnapshotWindow.parent && !topSnapshotWindow.location.pathname.match(/\/page@[a-z0-9]+$/)) {
       topSnapshotWindow = topSnapshotWindow.parent;
+    }
 
     const visit = (root: Document | ShadowRoot) => {
       // Collect all scrolled elements for later use.
-      for (const e of root.querySelectorAll(`[__playwright_scroll_top_]`))
+      for (const e of root.querySelectorAll(`[__playwright_scroll_top_]`)) {
         scrollTops.push(e);
-      for (const e of root.querySelectorAll(`[__playwright_scroll_left_]`))
+      }
+      for (const e of root.querySelectorAll(`[__playwright_scroll_left_]`)) {
         scrollLefts.push(e);
+      }
 
       for (const element of root.querySelectorAll(`[__playwright_value_]`)) {
         const inputElement = element as HTMLInputElement | HTMLTextAreaElement;
-        if (inputElement.type !== 'file')
+        if (inputElement.type !== 'file') {
           inputElement.value = inputElement.getAttribute('__playwright_value_')!;
+        }
         element.removeAttribute('__playwright_value_');
       }
       for (const element of root.querySelectorAll(`[__playwright_checked_]`)) {
@@ -324,8 +337,9 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
         const boundingRectJson = iframe.getAttribute('__playwright_bounding_rect__');
         iframe.removeAttribute('__playwright_bounding_rect__');
         const boundingRect = boundingRectJson ? JSON.parse(boundingRectJson) : undefined;
-        if (boundingRect)
+        if (boundingRect) {
           frameBoundingRectsInfo.frames.set(iframe, { boundingRect, scrollLeft: 0, scrollTop: 0 });
+        }
         const src = iframe.getAttribute('__playwright_src__');
         if (!src) {
           iframe.setAttribute('src', 'data:text/html,<body style="background: #ddd"></body>');
@@ -334,8 +348,9 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
           const url = new URL(unwrapPopoutUrl(window.location.href));
           // We can be loading iframe from within iframe, reset base to be absolute.
           const index = url.pathname.lastIndexOf('/snapshot/');
-          if (index !== -1)
+          if (index !== -1) {
             url.pathname = url.pathname.substring(0, index + 1);
+          }
           url.pathname += src.substring(1);
           iframe.setAttribute('src', url.toString());
         }
@@ -345,8 +360,9 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
         const body = root.querySelector(`body[__playwright_custom_elements__]`);
         if (body && window.customElements) {
           const customElements = (body.getAttribute('__playwright_custom_elements__') || '').split(',');
-          for (const elementName of customElements)
+          for (const elementName of customElements) {
             window.customElements.define(elementName, class extends HTMLElement {});
+          }
         }
       }
 
@@ -377,14 +393,16 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
       for (const element of scrollTops) {
         element.scrollTop = +element.getAttribute('__playwright_scroll_top_')!;
         element.removeAttribute('__playwright_scroll_top_');
-        if (frameBoundingRectsInfo.frames.has(element))
-          frameBoundingRectsInfo.frames.get(element)!.scrollTop = element.scrollTop;
+        if (frameBoundingRectsInfo.frames.has(element)) {
+frameBoundingRectsInfo.frames.get(element)!.scrollTop = element.scrollTop;
+        }
       }
       for (const element of scrollLefts) {
         element.scrollLeft = +element.getAttribute('__playwright_scroll_left_')!;
         element.removeAttribute('__playwright_scroll_left_');
-        if (frameBoundingRectsInfo.frames.has(element))
-          frameBoundingRectsInfo.frames.get(element)!.scrollLeft = element.scrollTop;
+        if (frameBoundingRectsInfo.frames.has(element)) {
+frameBoundingRectsInfo.frames.get(element)!.scrollLeft = element.scrollTop;
+        }
       }
 
       document.styleSheets[0].disabled = true;
@@ -468,8 +486,9 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
 
             const boundingRectAttribute = canvas.getAttribute('__playwright_bounding_rect__');
             canvas.removeAttribute('__playwright_bounding_rect__');
-            if (!boundingRectAttribute)
+            if (!boundingRectAttribute) {
               continue;
+            }
 
             let boundingRect: { left: number, top: number, right: number, bottom: number };
             try {
@@ -483,9 +502,10 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
               const iframe = currWindow.frameElement!;
               currWindow = currWindow.parent;
 
-              const iframeInfo = currWindow['__playwright_frame_bounding_rects__']?.frames.get(iframe);
-              if (!iframeInfo?.boundingRect)
+              const iframeInfo = currWindow['__playwright_frame_bounding_rects__'].frames.get(iframe);
+              if (!iframeInfo?.boundingRect) {
                 break;
+              }
 
               const leftOffset = iframeInfo.boundingRect.left - iframeInfo.scrollLeft;
               const topOffset = iframeInfo.boundingRect.top - iframeInfo.scrollTop;
@@ -513,14 +533,16 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
             drawCheckerboard(context, canvas);
 
             context.drawImage(img, boundingRect.left * img.width, boundingRect.top * img.height, (boundingRect.right - boundingRect.left) * img.width, (boundingRect.bottom - boundingRect.top) * img.height, 0, 0, canvas.width, canvas.height);
-            if (isUnderTest)
+            if (isUnderTest) {
               // eslint-disable-next-line no-console
               console.log(`canvas drawn:`, JSON.stringify([boundingRect.left, boundingRect.top, (boundingRect.right - boundingRect.left), (boundingRect.bottom - boundingRect.top)].map(v => Math.floor(v * 100))));
+            }
 
-            if (partiallyUncaptured)
+            if (partiallyUncaptured) {
               canvas.title = `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`;
-            else
+            } else {
               canvas.title = `Canvas contents are displayed on a best-effort basis based on viewport screenshots taken during test execution.`;
+            }
           }
         };
         img.onerror = () => {
@@ -553,25 +575,29 @@ const kLegacyBlobPrefix = 'http://playwright.bloburl/#';
 
 export function rewriteURLForCustomProtocol(href: string): string {
   // Legacy support, we used to prepend this to blobs, strip it away.
-  if (href.startsWith(kLegacyBlobPrefix))
+  if (href.startsWith(kLegacyBlobPrefix)) {
     href = href.substring(kLegacyBlobPrefix.length);
+  }
 
   try {
     const url = new URL(href);
     // Sanitize URL.
-    if (url.protocol === 'javascript:' || url.protocol === 'vbscript:')
+    if (url.protocol === 'javascript:' || url.protocol === 'vbscript:') {
       return 'javascript:void(0)';
+    }
 
     // Pass through if possible.
     const isBlob = url.protocol === 'blob:';
     const isFile = url.protocol === 'file:';
-    if (!isBlob && !isFile && schemas.includes(url.protocol))
+    if (!isBlob && !isFile && schemas.includes(url.protocol)) {
       return href;
+    }
 
     // Rewrite blob, file and custom schemas.
     const prefix = 'pw-' + url.protocol.slice(0, url.protocol.length - 1);
-    if (!isFile)
+    if (!isFile) {
       url.protocol = 'https:';
+    }
     url.hostname = url.hostname ? `${prefix}--${url.hostname}` : prefix;
     if (isFile) {
       // File URIs can only have their protocol changed after the hostname
@@ -594,8 +620,9 @@ function rewriteURLsInStyleSheetForCustomProtocol(text: string): string {
   return text.replace(urlInCSSRegex, (match: string, protocol: string) => {
     const isBlob = protocol === 'blob:';
     const isFile = protocol === 'file:';
-    if (!isBlob && !isFile && schemas.includes(protocol))
+    if (!isBlob && !isFile && schemas.includes(protocol)) {
       return match;
+    }
     return match.replace(protocol + '//', `https://pw-${protocol.slice(0, -1)}--`);
   });
 }
@@ -603,7 +630,8 @@ function rewriteURLsInStyleSheetForCustomProtocol(text: string): string {
 // <base>/snapshot.html?r=<snapshotUrl> is used for "pop out snapshot" feature.
 export function unwrapPopoutUrl(url: string) {
   const u = new URL(url);
-  if (u.pathname.endsWith('/snapshot.html'))
+  if (u.pathname.endsWith('/snapshot.html')) {
     return u.searchParams.get('r')!;
+  }
   return url;
 }

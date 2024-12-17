@@ -33,8 +33,9 @@ export class SnapshotStorage {
   }
 
   addFrameSnapshot(snapshot: FrameSnapshot, screencastFrames: PageEntry['screencastFrames']) {
-    for (const override of snapshot.resourceOverrides)
+    for (const override of snapshot.resourceOverrides) {
       override.url = rewriteURLForCustomProtocol(override.url);
+    }
     let frameSnapshots = this._frameSnapshots.get(snapshot.frameId);
     if (!frameSnapshots) {
       frameSnapshots = {
@@ -42,8 +43,9 @@ export class SnapshotStorage {
         renderers: [],
       };
       this._frameSnapshots.set(snapshot.frameId, frameSnapshots);
-      if (snapshot.isMainFrame)
+      if (snapshot.isMainFrame) {
         this._frameSnapshots.set(snapshot.pageId, frameSnapshots);
+      }
     }
     frameSnapshots.raw.push(snapshot);
     const renderer = new SnapshotRenderer(this._cache, this._resources, frameSnapshots.raw, screencastFrames, frameSnapshots.raw.length - 1);

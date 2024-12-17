@@ -91,8 +91,9 @@ export class TestServerDispatcher implements TestServerInterface {
       onconnect: () => {},
       dispatch: (method, params) => (this as any)[method](params),
       onclose: () => {
-        if (this._closeOnDisconnect)
+        if (this._closeOnDisconnect) {
           gracefullyProcessExitDoNotHang(0);
+        }
       },
     };
     this._watcher = new Watcher(events => {
@@ -125,8 +126,9 @@ export class TestServerDispatcher implements TestServerInterface {
   async ping() {}
 
   async open(params: Parameters<TestServerInterface['open']>[0]): ReturnType<TestServerInterface['open']> {
-    if (isUnderTest())
+    if (isUnderTest()) {
       return;
+    }
     // eslint-disable-next-line no-console
     open('vscode://file/' + params.location.file + ':' + params.location.line).catch(e => console.error(e));
   }
@@ -151,16 +153,18 @@ export class TestServerDispatcher implements TestServerInterface {
 
     const { reporter, report } = await this._collectingInternalReporter(new ListReporter());
     const config = await this._loadConfigOrReportError(reporter, this._configCLIOverrides);
-    if (!config)
+    if (!config) {
       return { status: 'failed', report };
+    }
 
     const { status, cleanup } = await runTasksDeferCleanup(new TestRun(config, reporter), [
       ...createGlobalSetupTasks(config),
     ]);
-    if (status !== 'passed')
+    if (status !== 'passed') {
       await cleanup();
-    else
+    } else {
       this._globalSetup = { cleanup, report };
+    }
     return { report, status };
   }
 
@@ -176,17 +180,19 @@ export class TestServerDispatcher implements TestServerInterface {
 
     const { reporter, report } = await this._collectingInternalReporter();
     const config = await this._loadConfigOrReportError(reporter);
-    if (!config)
+    if (!config) {
       return { report, status: 'failed' };
+    }
 
     const { status, cleanup } = await runTasksDeferCleanup(new TestRun(config, reporter), [
       createLoadTask('out-of-process', { failOnLoadErrors: true, filterOnly: false }),
       createStartDevServerTask(),
     ]);
-    if (status !== 'passed')
+    if (status !== 'passed') {
       await cleanup();
-    else
+    } else {
       this._devServer = { cleanup, report };
+    }
     return { report, status };
   }
 
@@ -200,8 +206,9 @@ export class TestServerDispatcher implements TestServerInterface {
   async clearCache(params: Parameters<TestServerInterface['clearCache']>[0]): ReturnType<TestServerInterface['clearCache']> {
     const reporter = new InternalReporter([]);
     const config = await this._loadConfigOrReportError(reporter);
-    if (!config)
+    if (!config) {
       return;
+    }
     await runTasks(new TestRun(config, reporter), [
       createClearCacheTask(config),
     ]);
@@ -210,8 +217,9 @@ export class TestServerDispatcher implements TestServerInterface {
   async listFiles(params: Parameters<TestServerInterface['listFiles']>[0]): ReturnType<TestServerInterface['listFiles']> {
     const { reporter, report } = await this._collectingInternalReporter();
     const config = await this._loadConfigOrReportError(reporter);
-    if (!config)
+    if (!config) {
       return { status: 'failed', report };
+    }
 
     config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
     const status = await runTasks(new TestRun(config, reporter), [
@@ -225,8 +233,9 @@ export class TestServerDispatcher implements TestServerInterface {
     let result: Awaited<ReturnType<TestServerInterface['listTests']>>;
     this._queue = this._queue.then(async () => {
       const { config, report, status } = await this._innerListTests(params);
-      if (config)
+      if (config) {
         await this._updateWatchedDirs(config);
+      }
       result = { report, status };
     }).catch(printInternalError);
     await this._queue;
@@ -246,8 +255,9 @@ export class TestServerDispatcher implements TestServerInterface {
     };
     const { reporter, report } = await this._collectingInternalReporter();
     const config = await this._loadConfigOrReportError(reporter, overrides);
-    if (!config)
+    if (!config) {
       return { report, reporter, status: 'failed' };
+    }
 
     config.cliArgs = params.locations || [];
     config.cliGrep = params.grep;
@@ -276,8 +286,9 @@ export class TestServerDispatcher implements TestServerInterface {
       this._ignoredProjectOutputs.add(result.outDir);
     }
 
-    if (this._watchTestDirs)
+    if (this._watchTestDirs) {
       await this._updateWatcher(false);
+    }
   }
 
   private async _updateWatcher(reportPending: boolean) {
@@ -287,7 +298,9 @@ export class TestServerDispatcher implements TestServerInterface {
   async runTests(params: Parameters<TestServerInterface['runTests']>[0]): ReturnType<TestServerInterface['runTests']> {
     let result: Awaited<ReturnType<TestServerInterface['runTests']>> = { status: 'passed' };
     this._queue = this._queue.then(async () => {
-      result = await this._innerRunTests(params).catch(e => { printInternalError(e); return { status: 'failed' }; });
+      result = await this._innerRunTests(params).catch(e => {
+        printInternalError(e); return { status: 'failed' };
+      });
     });
     await this._queue;
     return result;
@@ -314,15 +327,17 @@ export class TestServerDispatcher implements TestServerInterface {
       ...(params.updateSourceMethod ? { updateSourceMethod: params.updateSourceMethod } : {}),
       ...(params.workers ? { workers: params.workers } : {}),
     };
-    if (params.trace === 'on')
+    if (params.trace === 'on') {
       process.env.PW_LIVE_TRACE_STACKS = '1';
-    else
+    } else {
       process.env.PW_LIVE_TRACE_STACKS = undefined;
+    }
 
     const wireReporter = await this._wireReporter(e => this._dispatchEvent('report', e));
     const config = await this._loadConfigOrReportError(new InternalReporter([wireReporter]), overrides);
-    if (!config)
+    if (!config) {
       return { status: 'failed' };
+    }
 
     const testIdSet = params.testIds ? new Set<string>(params.testIds) : null;
     config.cliListOnly = false;
@@ -362,24 +377,27 @@ export class TestServerDispatcher implements TestServerInterface {
     const errorReporter = createErrorCollectingReporter();
     const reporter = new InternalReporter([errorReporter]);
     const config = await this._loadConfigOrReportError(reporter);
-    if (!config)
+    if (!config) {
       return { errors: errorReporter.errors(), testFiles: [] };
+    }
     const status = await runTasks(new TestRun(config, reporter), [
       createLoadTask('out-of-process', { failOnLoadErrors: true, filterOnly: false, populateDependencies: true }),
     ]);
-    if (status !== 'passed')
+    if (status !== 'passed') {
       return { errors: errorReporter.errors(), testFiles: [] };
+    }
     return { testFiles: affectedTestFiles(params.files) };
   }
 
   async stopTests() {
-    this._testRun?.stop?.resolve();
+    this._testRun?.stop.resolve();
     await this._testRun?.run;
   }
 
   async _setInterceptStdio(intercept: boolean) {
-    if (process.env.PWTEST_DEBUG)
+    if (process.env.PWTEST_DEBUG) {
       return;
+    }
     if (intercept) {
       process.stdout.write = (chunk: string | Buffer) => {
         this._dispatchEvent('stdio', chunkToPayload('stdout', chunk));
@@ -417,8 +435,9 @@ export class TestServerDispatcher implements TestServerInterface {
 
   private async _loadConfigOrReportError(reporter: InternalReporter, overrides?: ConfigCLIOverrides): Promise<FullConfigInternal | null> {
     const { config, error } = await this._loadConfig(overrides);
-    if (config)
+    if (config) {
       return config;
+    }
     // Produce dummy config when it has an error.
     reporter.onConfigure(baseFullConfig);
     reporter.onError(error!);
@@ -455,8 +474,9 @@ export async function runTestServer(configFile: string | undefined, configCLIOve
 }
 
 async function innerRunTestServer(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides, options: { host?: string, port?: number }, openUI: (server: HttpServer, cancelPromise: ManualPromise<void>, configLocation: ConfigLocation) => Promise<void>): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
-  if (restartWithExperimentalTsEsm(undefined, true))
+  if (restartWithExperimentalTsEsm(undefined, true)) {
     return 'restarted';
+  }
   const testServer = new TestServer(configLocation, configCLIOverrides);
   const cancelPromise = new ManualPromise<void>();
   const sigintWatcher = new SigIntWatcher();
@@ -480,8 +500,9 @@ type StdioPayload = {
 };
 
 function chunkToPayload(type: 'stdout' | 'stderr', chunk: Buffer | string): StdioPayload {
-  if (chunk instanceof Uint8Array)
+  if (chunk instanceof Uint8Array) {
     return { type, buffer: chunk.toString('base64') };
+  }
   return { type, text: chunk };
 }
 
@@ -511,8 +532,9 @@ export async function resolveCtDirs(config: FullConfigInternal) {
   const use = config.config.projects[0].use as any;
   const relativeTemplateDir = use.ctTemplateDir || 'playwright';
   const templateDir = await fs.promises.realpath(path.normalize(path.join(config.configDir, relativeTemplateDir))).catch(() => undefined);
-  if (!templateDir)
+  if (!templateDir) {
     return null;
+  }
   const outDir = use.ctCacheDir ? path.resolve(config.configDir, use.ctCacheDir) : path.resolve(templateDir, '.cache');
   return {
     outDir,

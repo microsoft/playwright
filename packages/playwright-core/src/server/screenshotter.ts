@@ -56,8 +56,9 @@ function inPagePrepareForScreenshots(screenshotStyle: string, hideCaret: boolean
     style.remove();
   }
 
-  if (!screenshotStyle && !hideCaret && !disableAnimations)
+  if (!screenshotStyle && !hideCaret && !disableAnimations) {
     return;
+  }
 
   const collectRoots = (root: Document | ShadowRoot, roots: (Document|ShadowRoot)[] = []): (Document|ShadowRoot)[] => {
     roots.push(root);
@@ -65,8 +66,9 @@ function inPagePrepareForScreenshots(screenshotStyle: string, hideCaret: boolean
     do {
       const node = walker.currentNode;
       const shadowRoot = node instanceof Element ? node.shadowRoot : null;
-      if (shadowRoot)
+      if (shadowRoot) {
         collectRoots(shadowRoot, roots);
+      }
     } while (walker.nextNode());
     return roots;
   };
@@ -78,10 +80,11 @@ function inPagePrepareForScreenshots(screenshotStyle: string, hideCaret: boolean
     for (const root of roots) {
       const styleTag = document.createElement('style');
       styleTag.textContent = screenshotStyle;
-      if (root === document)
+      if (root === document) {
         document.documentElement.append(styleTag);
-      else
+      } else {
         root.append(styleTag);
+      }
 
       cleanupCallbacks.push(() => {
         styleTag.remove();
@@ -101,8 +104,9 @@ function inPagePrepareForScreenshots(screenshotStyle: string, hideCaret: boolean
       });
     }
     cleanupCallbacks.push(() => {
-      for (const [element, value] of elements)
+      for (const [element, value] of elements) {
         element.style.setProperty('caret-color', value.value, value.priority);
+      }
     });
   }
 
@@ -110,8 +114,9 @@ function inPagePrepareForScreenshots(screenshotStyle: string, hideCaret: boolean
     const infiniteAnimationsToResume: Set<Animation> = new Set();
     const handleAnimations = (root: Document|ShadowRoot): void => {
       for (const animation of root.getAnimations()) {
-        if (!animation.effect || animation.playbackRate === 0 || infiniteAnimationsToResume.has(animation))
+        if (!animation.effect || animation.playbackRate === 0 || infiniteAnimationsToResume.has(animation)) {
           continue;
+        }
         const endTime = animation.effect.getComputedTiming().endTime;
         if (Number.isFinite(endTime)) {
           try {
@@ -156,8 +161,9 @@ function inPagePrepareForScreenshots(screenshotStyle: string, hideCaret: boolean
   }
 
   window.__pwCleanupScreenshot = () => {
-    for (const cleanupCallback of cleanupCallbacks)
+    for (const cleanupCallback of cleanupCallbacks) {
       cleanupCallback();
+    }
     delete window.__pwCleanupScreenshot;
   };
 }
@@ -174,15 +180,17 @@ export class Screenshotter {
   private async _originalViewportSize(progress: Progress): Promise<{ viewportSize: types.Size, originalViewportSize: types.Size | null }> {
     const originalViewportSize = this._page.viewportSize();
     let viewportSize = originalViewportSize;
-    if (!viewportSize)
+    if (!viewportSize) {
       viewportSize = await this._page.mainFrame().waitForFunctionValueInUtility(progress, () => ({ width: window.innerWidth, height: window.innerHeight }));
+    }
     return { viewportSize, originalViewportSize };
   }
 
   private async _fullPageSize(progress: Progress): Promise<types.Size> {
     const fullPageSize = await this._page.mainFrame().waitForFunctionValueInUtility(progress, () => {
-      if (!document.body || !document.documentElement)
+      if (!document.body || !document.documentElement) {
         return null;
+      }
       return {
         width: Math.max(
             document.body.scrollWidth, document.documentElement.scrollWidth,
@@ -211,8 +219,9 @@ export class Screenshotter {
         const fullPageSize = await this._fullPageSize(progress);
         let documentRect = { x: 0, y: 0, width: fullPageSize.width, height: fullPageSize.height };
         const fitsViewport = fullPageSize.width <= viewportSize.width && fullPageSize.height <= viewportSize.height;
-        if (options.clip)
+        if (options.clip) {
           documentRect = trimClipToSize(options.clip, documentRect);
+        }
         const buffer = await this._screenshot(progress, format, documentRect, undefined, fitsViewport, options);
         progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
         await this._restorePageAfterScreenshot();
@@ -258,8 +267,9 @@ export class Screenshotter {
   }
 
   async _preparePageForScreenshot(progress: Progress, frame: Frame, screenshotStyle: string | undefined, hideCaret: boolean, disableAnimations: boolean) {
-    if (disableAnimations)
+    if (disableAnimations) {
       progress.log('  disabled all CSS animations');
+    }
     const syncAnimations = this._page._delegate.shouldToggleStyleSheetToSyncAnimations();
     await this._page.safeNonStallingEvaluateInAllFrames('(' + inPagePrepareForScreenshots.toString() + `)(${JSON.stringify(screenshotStyle)}, ${hideCaret}, ${disableAnimations}, ${syncAnimations})`, 'utility');
     if (!process.env.PW_TEST_SCREENSHOT_NO_FONTS_READY) {
@@ -283,13 +293,15 @@ export class Screenshotter {
       }));
     };
 
-    if (!options.mask || !options.mask.length)
+    if (!options.mask || !options.mask.length) {
       return cleanup;
+    }
 
     await Promise.all((options.mask || []).map(async ({ frame, selector }) => {
       const pair = await frame.selectors.resolveFrameForSelector(selector);
-      if (pair)
+      if (pair) {
         framesToParsedSelectors.set(pair.frame, pair.info.parsed);
+      }
     }));
     progress.throwIfAborted(); // Avoid extra work.
 
@@ -301,8 +313,9 @@ export class Screenshotter {
   }
 
   private async _screenshot(progress: Progress, format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, fitsViewport: boolean, options: ScreenshotOptions): Promise<Buffer> {
-    if ((options as any).__testHookBeforeScreenshot)
+    if ((options as any).__testHookBeforeScreenshot) {
       await (options as any).__testHookBeforeScreenshot();
+    }
     progress.throwIfAborted(); // Screenshotting is expensive - avoid extra work.
     const shouldSetDefaultBackground = options.omitBackground && format === 'png';
     if (shouldSetDefaultBackground) {
@@ -321,11 +334,13 @@ export class Screenshotter {
     await cleanupHighlight();
     progress.throwIfAborted(); // Avoid restoring after failure - should be done by cleanup.
 
-    if (shouldSetDefaultBackground)
+    if (shouldSetDefaultBackground) {
       await this._page._delegate.setBackgroundColor();
+    }
     progress.throwIfAborted(); // Avoid side effects.
-    if ((options as any).__testHookAfterScreenshot)
+    if ((options as any).__testHookAfterScreenshot) {
       await (options as any).__testHookAfterScreenshot();
+    }
     return buffer;
   }
 }
@@ -367,8 +382,9 @@ export function validateScreenshotOptions(options: ScreenshotOptions): 'png' | '
     format = options.type;
   }
 
-  if (!format)
+  if (!format) {
     format = 'png';
+  }
 
   if (options.quality !== undefined) {
     assert(format === 'jpeg', 'options.quality is unsupported for the ' + format + ' screenshots');

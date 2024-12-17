@@ -92,13 +92,15 @@ export const Workbench: React.FunctionComponent<{
   const selectedAction = React.useMemo(() => {
     if (selectedCallId) {
       const action = model?.actions.find(a => a.callId === selectedCallId);
-      if (action)
+      if (action) {
         return action;
+      }
     }
 
     const failedAction = model?.failedAction();
-    if (failedAction)
+    if (failedAction) {
       return failedAction;
+    }
 
     if (model?.actions.length) {
       // Select the last non-after hooks item.
@@ -118,8 +120,9 @@ export const Workbench: React.FunctionComponent<{
   }, [selectedAction, highlightedAction]);
 
   const revealedStack = React.useMemo(() => {
-    if (revealedError)
+    if (revealedError) {
       return revealedError.stack;
+    }
     return activeAction?.stack;
   }, [activeAction, revealedError]);
 
@@ -130,13 +133,15 @@ export const Workbench: React.FunctionComponent<{
 
   const selectPropertiesTab = React.useCallback((tab: string) => {
     setSelectedPropertiesTab(tab);
-    if (tab !== 'inspector')
+    if (tab !== 'inspector') {
       setIsInspectingState(false);
+    }
   }, [setSelectedPropertiesTab]);
 
   const setIsInspecting = React.useCallback((value: boolean) => {
-    if (!isInspecting && value)
+    if (!isInspecting && value) {
       selectPropertiesTab('inspector');
+    }
     setIsInspectingState(value);
   }, [setIsInspectingState, selectPropertiesTab, isInspecting]);
 
@@ -151,8 +156,9 @@ export const Workbench: React.FunctionComponent<{
   }, [selectPropertiesTab]);
 
   React.useEffect(() => {
-    if (revealSource)
+    if (revealSource) {
       selectPropertiesTab('source');
+    }
   }, [revealSource, selectPropertiesTab]);
 
   const consoleModel = useConsoleTabModel(model, selectedTime);
@@ -188,10 +194,11 @@ export const Workbench: React.FunctionComponent<{
     title: 'Errors',
     errorCount: errorsModel.errors.size,
     render: () => <ErrorsTab errorsModel={errorsModel} sdkLanguage={sdkLanguage} revealInSource={error => {
-      if (error.action)
+      if (error.action) {
         setSelectedAction(error.action);
-      else
+      } else {
         setRevealedError(error);
+      }
       selectPropertiesTab('source');
     }} />
   };
@@ -199,8 +206,9 @@ export const Workbench: React.FunctionComponent<{
   // Fallback location w/o action stands for file / test.
   // Render error count on Source tab for that case.
   let fallbackSourceErrorCount: number | undefined = undefined;
-  if (!selectedAction && fallbackLocation)
+  if (!selectedAction && fallbackLocation) {
     fallbackSourceErrorCount = fallbackLocation.source?.errors.length;
+  }
 
   const sourceTab: TabbedPaneTabModel = {
     id: 'source',
@@ -279,10 +287,11 @@ export const Workbench: React.FunctionComponent<{
   }, [model]);
 
   let time: number = 0;
-  if (!isLive && model && model.endTime >= 0)
+  if (!isLive && model && model.endTime >= 0) {
     time = model.endTime - model.startTime;
-  else if (model && model.wallTime)
+  } else if (model && model.wallTime) {
     time = Date.now() - model.wallTime;
+  }
 
   const actionsTab: TabbedPaneTabModel = {
     id: 'actions',

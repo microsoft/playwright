@@ -61,8 +61,9 @@ export class RecorderCollection extends EventEmitter {
   }
 
   private async _addAction(actionInContext: actions.ActionInContext, callback?: (callMetadata: CallMetadata) => Promise<void>) {
-    if (!this._enabled)
+    if (!this._enabled) {
       return;
+    }
     if (actionInContext.action.name === 'openPage' || actionInContext.action.name === 'closePage') {
       this._actions.push(actionInContext);
       this._fireChange();
@@ -84,8 +85,9 @@ export class RecorderCollection extends EventEmitter {
   }
 
   signal(pageAlias: string, frame: Frame, signal: Signal) {
-    if (!this._enabled)
+    if (!this._enabled) {
       return;
+    }
 
     if (signal.name === 'navigation' && frame._page.mainFrame() === frame) {
       const timestamp = monotonicTime();
@@ -93,12 +95,13 @@ export class RecorderCollection extends EventEmitter {
       const signalThreshold = isUnderTest() ? 500 : 5000;
 
       let generateGoto = false;
-      if (!lastAction)
+      if (!lastAction) {
         generateGoto = true;
-      else if (lastAction.action.name !== 'click' && lastAction.action.name !== 'press')
+      } else if (lastAction.action.name !== 'click' && lastAction.action.name !== 'press') {
         generateGoto = true;
-      else if (timestamp - lastAction.startTime > signalThreshold)
+      } else if (timestamp - lastAction.startTime > signalThreshold) {
         generateGoto = true;
+      }
 
       if (generateGoto) {
         this.addRecordedAction({
@@ -126,8 +129,9 @@ export class RecorderCollection extends EventEmitter {
   }
 
   private _fireChange() {
-    if (!this._enabled)
+    if (!this._enabled) {
       return;
+    }
 
     this.emit('change', collapseActions(this._actions));
   }

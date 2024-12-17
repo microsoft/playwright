@@ -107,8 +107,9 @@ export const SnapshotView: React.FunctionComponent<{
       const newSnapshotInfo = await fetchSnapshotInfo(snapshotUrls?.snapshotInfoUrl);
 
       // Interrupted by another load - bail out.
-      if (loadingRef.current.iteration !== thisIteration)
+      if (loadingRef.current.iteration !== thisIteration) {
         return;
+      }
 
       const iframe = [iframeRef0, iframeRef1][newVisibleIframe].current;
       if (iframe) {
@@ -120,10 +121,11 @@ export const SnapshotView: React.FunctionComponent<{
 
           // Try preventing history entry from being created.
           const snapshotUrl = snapshotUrls?.snapshotUrl || kBlankSnapshotUrl;
-          if (iframe.contentWindow)
+          if (iframe.contentWindow) {
             iframe.contentWindow.location.replace(snapshotUrl);
-          else
+          } else {
             iframe.src = snapshotUrl;
+          }
 
           await loadedPromise;
         } catch {
@@ -133,8 +135,9 @@ export const SnapshotView: React.FunctionComponent<{
         }
       }
       // Interrupted by another load - bail out.
-      if (loadingRef.current.iteration !== thisIteration)
+      if (loadingRef.current.iteration !== thisIteration) {
         return;
+      }
 
       loadingRef.current.visibleIframe = newVisibleIframe;
       setSnapshotInfo(newSnapshotInfo);
@@ -146,8 +149,9 @@ export const SnapshotView: React.FunctionComponent<{
     tabIndex={0}
     onKeyDown={event => {
       if (event.key === 'Escape') {
-        if (isInspecting)
+        if (isInspecting) {
           setIsInspecting(false);
+        }
       }
     }}
   >
@@ -206,12 +210,15 @@ const SnapshotWrapper: React.FunctionComponent<React.PropsWithChildren<{
 };
 
 function renderTitle(snapshotTitle: string): string {
-  if (snapshotTitle === 'before')
+  if (snapshotTitle === 'before') {
     return 'Before';
-  if (snapshotTitle === 'after')
+  }
+  if (snapshotTitle === 'after') {
     return 'After';
-  if (snapshotTitle === 'action')
+  }
+  if (snapshotTitle === 'action') {
     return 'Action';
+  }
   return snapshotTitle;
 }
 
@@ -247,8 +254,9 @@ export const InspectModeController: React.FunctionComponent<{
         },
         highlightUpdated() {
           for (const r of recorders) {
-            if (r.recorder !== recorder)
+            if (r.recorder !== recorder) {
               r.recorder.clearHighlight();
+            }
           }
         }
       });
@@ -258,8 +266,9 @@ export const InspectModeController: React.FunctionComponent<{
 };
 
 function createRecorders(recorders: { recorder: Recorder, frameSelector: string }[], sdkLanguage: Language, testIdAttributeName: string, isUnderTest: boolean, parentFrameSelector: string, frameWindow: Window | null | undefined) {
-  if (!frameWindow)
+  if (!frameWindow) {
     return;
+  }
   const win = frameWindow as any;
   if (!win._recorder) {
     const injectedScript = new InjectedScript(frameWindow as any, isUnderTest, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
@@ -307,20 +316,22 @@ export type SnapshotUrls = {
 };
 
 export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshots {
-  if (!action)
+  if (!action) {
     return {};
+  }
 
   // if the action has no beforeSnapshot, use the last available afterSnapshot.
   let beforeSnapshot: Snapshot | undefined = action.beforeSnapshot ? { action, snapshotName: action.beforeSnapshot } : undefined;
   let a = action;
   while (!beforeSnapshot && a) {
     a = prevInList(a);
-    beforeSnapshot = a?.afterSnapshot ? { action: a, snapshotName: a?.afterSnapshot } : undefined;
+    beforeSnapshot = a.afterSnapshot ? { action: a, snapshotName: a.afterSnapshot } : undefined;
   }
   const afterSnapshot: Snapshot | undefined = action.afterSnapshot ? { action, snapshotName: action.afterSnapshot } : beforeSnapshot;
   const actionSnapshot: Snapshot | undefined = action.inputSnapshot ? { action, snapshotName: action.inputSnapshot, hasInputTarget: true } : afterSnapshot;
-  if (actionSnapshot)
+  if (actionSnapshot) {
     actionSnapshot.point = action.point;
+  }
   return { action: actionSnapshot, before: beforeSnapshot, after: afterSnapshot };
 }
 
@@ -331,27 +342,31 @@ export function extendSnapshot(snapshot: Snapshot): SnapshotUrls {
   const params = new URLSearchParams();
   params.set('trace', context(snapshot.action).traceUrl);
   params.set('name', snapshot.snapshotName);
-  if (isUnderTest)
+  if (isUnderTest) {
     params.set('isUnderTest', 'true');
+  }
   if (snapshot.point) {
     params.set('pointX', String(snapshot.point.x));
     params.set('pointY', String(snapshot.point.y));
-    if (snapshot.hasInputTarget)
+    if (snapshot.hasInputTarget) {
       params.set('hasInputTarget', '1');
+    }
   }
   const snapshotUrl = new URL(`snapshot/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
   const snapshotInfoUrl = new URL(`snapshotInfo/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
 
   const popoutParams = new URLSearchParams();
   popoutParams.set('r', snapshotUrl);
-  if (serverParam)
+  if (serverParam) {
     popoutParams.set('server', serverParam);
+  }
   popoutParams.set('trace', context(snapshot.action).traceUrl);
   if (snapshot.point) {
     popoutParams.set('pointX', String(snapshot.point.x));
     popoutParams.set('pointY', String(snapshot.point.y));
-    if (snapshot.hasInputTarget)
+    if (snapshot.hasInputTarget) {
       params.set('hasInputTarget', '1');
+    }
   }
   const popoutUrl = new URL(`snapshot.html?${popoutParams.toString()}`, window.location.href).toString();
   return { snapshotInfoUrl, snapshotUrl, popoutUrl };

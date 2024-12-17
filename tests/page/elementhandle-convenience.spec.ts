@@ -143,8 +143,9 @@ it('isVisible should not throw when the DOM element is not connected', async ({ 
     window.requestAnimationFrame(insert);
   });
 
-  for (let i = 0; i < 10; i++)
+  for (let i = 0; i < 10; i++) {
     await page.isVisible('#problem');
+  }
 });
 
 it('isEnabled and isDisabled should work', async ({ page }) => {

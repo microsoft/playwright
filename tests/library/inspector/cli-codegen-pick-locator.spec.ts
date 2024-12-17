@@ -54,8 +54,9 @@ test.describe(() => {
     `);
 
     await recorder.recorderPage.locator('.tab-locator .CodeMirror').click();
-    for (let i = 0; i < `Submit' })`.length; i++)
+    for (let i = 0; i < `Submit' })`.length; i++) {
       await recorder.recorderPage.keyboard.press('Backspace');
+    }
 
     {
       // Different button.

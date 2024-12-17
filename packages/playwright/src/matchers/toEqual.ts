@@ -63,8 +63,9 @@ export async function toEqual<T>(
   } else if (Array.isArray(expected) && Array.isArray(received)) {
     const normalizedExpected = expected.map((exp, index) => {
       const rec = received[index];
-      if (isRegExp(exp))
+      if (isRegExp(exp)) {
         return exp.test(rec) ? rec : exp;
+      }
 
       return exp;
     });

@@ -49,8 +49,9 @@ export class FrameSelectors {
   async query(selector: string, options?: types.StrictOptions, scope?: ElementHandle): Promise<ElementHandle<Element> | null> {
     const resolved = await this.resolveInjectedForSelector(selector, options, scope);
     // Be careful, |this.frame| can be different from |resolved.frame|.
-    if (!resolved)
+    if (!resolved) {
       return null;
+    }
     const handle = await resolved.injected.evaluateHandle((injected, { info, scope }) => {
       return injected.querySelector(info.parsed, scope || document, info.strict);
     }, { info: resolved.info, scope: resolved.scope });
@@ -65,8 +66,9 @@ export class FrameSelectors {
   async queryArrayInMainWorld(selector: string, scope?: ElementHandle): Promise<JSHandle<Element[]>> {
     const resolved = await this.resolveInjectedForSelector(selector, { mainWorld: true }, scope);
     // Be careful, |this.frame| can be different from |resolved.frame|.
-    if (!resolved)
+    if (!resolved) {
       throw new Error(`Failed to find frame for selector "${selector}"`);
+    }
     return await resolved.injected.evaluateHandle((injected, { info, scope }) => {
       return injected.querySelectorAll(info.parsed, scope || document);
     }, { info: resolved.info, scope: resolved.scope });
@@ -75,8 +77,9 @@ export class FrameSelectors {
   async queryCount(selector: string): Promise<number> {
     const resolved = await this.resolveInjectedForSelector(selector);
     // Be careful, |this.frame| can be different from |resolved.frame|.
-    if (!resolved)
+    if (!resolved) {
       throw new Error(`Failed to find frame for selector "${selector}"`);
+    }
     return await resolved.injected.evaluate((injected, { info }) => {
       return injected.querySelectorAll(info.parsed, document).length;
     }, { info: resolved.info });
@@ -85,8 +88,9 @@ export class FrameSelectors {
   async queryAll(selector: string, scope?: ElementHandle): Promise<ElementHandle<Element>[]> {
     const resolved = await this.resolveInjectedForSelector(selector, {}, scope);
     // Be careful, |this.frame| can be different from |resolved.frame|.
-    if (!resolved)
+    if (!resolved) {
       return [];
+    }
     const arrayHandle = await resolved.injected.evaluateHandle((injected, { info, scope }) => {
       return injected.querySelectorAll(info.parsed, scope || document);
     }, { info: resolved.info, scope: resolved.scope });
@@ -100,10 +104,11 @@ export class FrameSelectors {
     const result: Promise<ElementHandle<Element>>[] = [];
     for (const property of properties.values()) {
       const elementHandle = property.asElement() as ElementHandle<Element>;
-      if (elementHandle)
+      if (elementHandle) {
         result.push(adoptIfNeeded(elementHandle, targetContext));
-      else
+      } else {
         property.dispose();
+      }
     }
     return Promise.all(result);
   }
@@ -127,30 +132,35 @@ export class FrameSelectors {
       const injectedScript = await context.injectedScript();
       const handle = await injectedScript.evaluateHandle((injected, { info, scope, selectorString }) => {
         const element = injected.querySelector(info.parsed, scope || document, info.strict);
-        if (element && element.nodeName !== 'IFRAME' && element.nodeName !== 'FRAME')
+        if (element && element.nodeName !== 'IFRAME' && element.nodeName !== 'FRAME') {
           throw injected.createStacklessError(`Selector "${selectorString}" resolved to ${injected.previewNode(element)}, <iframe> was expected`);
+        }
         return element;
       }, { info, scope: i === 0 ? scope : undefined, selectorString: stringifySelector(info.parsed) });
       const element = handle.asElement() as ElementHandle<Element> | null;
-      if (!element)
+      if (!element) {
         return null;
+      }
       const maybeFrame = await frame._page._delegate.getContentFrame(element);
       element.dispose();
-      if (!maybeFrame)
+      if (!maybeFrame) {
         return null;
+      }
       frame = maybeFrame;
     }
     // If we end up in the different frame, we should start from the frame root, so throw away the scope.
-    if (frame !== this.frame)
+    if (frame !== this.frame) {
       scope = undefined;
+    }
     return { frame, info: frame.selectors._parseSelector(frameChunks[frameChunks.length - 1], options), scope };
   }
 
   async resolveInjectedForSelector(selector: string, options?: { strict?: boolean, mainWorld?: boolean }, scope?: ElementHandle): Promise<{ injected: JSHandle<InjectedScript>, info: SelectorInfo, frame: Frame, scope?: ElementHandle } | undefined> {
     const resolved = await this.resolveFrameForSelector(selector, options, scope);
     // Be careful, |this.frame| can be different from |resolved.frame|.
-    if (!resolved)
+    if (!resolved) {
       return;
+    }
     const context = await resolved.frame._context(options?.mainWorld ? 'main' : resolved.info.world);
     const injected = await context.injectedScript();
     return { injected, info: resolved.info, frame: resolved.frame, scope: resolved.scope };
@@ -158,8 +168,9 @@ export class FrameSelectors {
 }
 
 async function adoptIfNeeded<T extends Node>(handle: ElementHandle<T>, context: FrameExecutionContext): Promise<ElementHandle<T>> {
-  if (handle._context === context)
+  if (handle._context === context) {
     return handle;
+  }
   const adopted = await handle._page._delegate.adoptElementHandle(handle, context);
   handle.dispose();
   return adopted;

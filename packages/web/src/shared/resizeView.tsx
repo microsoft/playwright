@@ -74,8 +74,9 @@ export const ResizeView: React.FC<{
           const previous = resizing.index > 0 ? offsets[resizing.index - 1] : 0;
           const next = orientation === 'horizontal' ? measure.width : measure.height;
           const constrainedDelta = Math.min(Math.max(previous + minGap, newOffset), next - minGap) - offsets[resizing.index];
-          for (let i = resizing.index; i < offsets.length; ++i)
+          for (let i = resizing.index; i < offsets.length; ++i) {
             offsets[i] = offsets[i] + constrainedDelta;
+          }
           setOffsets([...offsets]);
         }
       }}

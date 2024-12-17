@@ -45,8 +45,9 @@ export function parseSelector(selector: string): ParsedSelector {
   const parts: ParsedSelectorPart[] = [];
   for (const part of parsedStrings.parts) {
     if (part.name === 'css' || part.name === 'css:light') {
-      if (part.name === 'css:light')
+      if (part.name === 'css:light') {
         part.body = ':light(' + part.body + ')';
+      }
       const parsedCSS = parseCSS(part.body, customCSSNames);
       parts.push({
         name: 'css',
@@ -60,12 +61,14 @@ export function parseSelector(selector: string): ParsedSelector {
       let distance: number | undefined;
       try {
         const unescaped = JSON.parse('[' + part.body + ']');
-        if (!Array.isArray(unescaped) || unescaped.length < 1 || unescaped.length > 2 || typeof unescaped[0] !== 'string')
+        if (!Array.isArray(unescaped) || unescaped.length < 1 || unescaped.length > 2 || typeof unescaped[0] !== 'string') {
           throw new InvalidSelectorError(`Malformed selector: ${part.name}=` + part.body);
+        }
         innerSelector = unescaped[0];
         if (unescaped.length === 2) {
-          if (typeof unescaped[1] !== 'number' || !kNestedSelectorNamesWithDistance.has(part.name))
+          if (typeof unescaped[1] !== 'number' || !kNestedSelectorNamesWithDistance.has(part.name)) {
             throw new InvalidSelectorError(`Malformed selector: ${part.name}=` + part.body);
+          }
           distance = unescaped[1];
         }
       } catch (e) {
@@ -75,15 +78,17 @@ export function parseSelector(selector: string): ParsedSelector {
       const lastFrame = [...nested.body.parsed.parts].reverse().find(part => part.name === 'internal:control' && part.body === 'enter-frame');
       const lastFrameIndex = lastFrame ? nested.body.parsed.parts.indexOf(lastFrame) : -1;
       // Allow nested selectors to start with the same frame selector.
-      if (lastFrameIndex !== -1 && selectorPartsEqual(nested.body.parsed.parts.slice(0, lastFrameIndex + 1), parts.slice(0, lastFrameIndex + 1)))
+      if (lastFrameIndex !== -1 && selectorPartsEqual(nested.body.parsed.parts.slice(0, lastFrameIndex + 1), parts.slice(0, lastFrameIndex + 1))) {
         nested.body.parsed.parts.splice(0, lastFrameIndex + 1);
+      }
       parts.push(nested);
       continue;
     }
     parts.push({ ...part, source: part.body });
   }
-  if (kNestedSelectorNames.has(parts[0].name))
+  if (kNestedSelectorNames.has(parts[0].name)) {
     throw new InvalidSelectorError(`"${parts[0].name}" selector cannot be first`);
+  }
   return {
     capture: parsedStrings.capture,
     parts
@@ -100,22 +105,26 @@ export function splitSelectorByFrame(selectorText: string): ParsedSelector[] {
   for (let i = 0; i < selector.parts.length; ++i) {
     const part = selector.parts[i];
     if (part.name === 'internal:control' && part.body === 'enter-frame') {
-      if (!chunk.parts.length)
+      if (!chunk.parts.length) {
         throw new InvalidSelectorError('Selector cannot start with entering frame, select the iframe first');
+      }
       result.push(chunk);
       chunk = { parts: [] };
       chunkStartIndex = i + 1;
       continue;
     }
-    if (selector.capture === i)
+    if (selector.capture === i) {
       chunk.capture = i - chunkStartIndex;
+    }
     chunk.parts.push(part);
   }
-  if (!chunk.parts.length)
+  if (!chunk.parts.length) {
     throw new InvalidSelectorError(`Selector cannot end with entering frame, while parsing selector ${selectorText}`);
+  }
   result.push(chunk);
-  if (typeof selector.capture === 'number' && typeof result[result.length - 1].capture !== 'number')
+  if (typeof selector.capture === 'number' && typeof result[result.length - 1].capture !== 'number') {
     throw new InvalidSelectorError(`Can not capture the selector before diving into the frame. Only use * after the last frame has been selected`);
+  }
   return result;
 }
 
@@ -124,15 +133,17 @@ function selectorPartsEqual(list1: ParsedSelectorPart[], list2: ParsedSelectorPa
 }
 
 export function stringifySelector(selector: string | ParsedSelector, forceEngineName?: boolean): string {
-  if (typeof selector === 'string')
+  if (typeof selector === 'string') {
     return selector;
+  }
   return selector.parts.map((p, i) => {
     let includeEngine = true;
     if (!forceEngineName && i !== selector.capture) {
-      if (p.name === 'css')
+      if (p.name === 'css') {
         includeEngine = false;
-      else if (p.name === 'xpath' && p.source.startsWith('//') || p.source.startsWith('..'))
+      } else if (p.name === 'xpath' && p.source.startsWith('//') || p.source.startsWith('..')) {
         includeEngine = false;
+      }
     }
     const prefix = includeEngine ? p.name + '=' : '';
     return `${i === selector.capture ? '*' : ''}${prefix}${p.source}`;
@@ -143,8 +154,9 @@ export function visitAllSelectorParts(selector: ParsedSelector, visitor: (part: 
   const visit = (selector: ParsedSelector, nested: boolean) => {
     for (const part of selector.parts) {
       visitor(part, nested);
-      if (kNestedSelectorNames.has(part.name))
+      if (kNestedSelectorNames.has(part.name)) {
         visit((part.body as NestedSelectorBody).parsed, true);
+      }
     }
   };
   visit(selector, false);
@@ -186,8 +198,9 @@ function parseSelectorString(selector: string): ParsedSelectorStrings {
     }
     result.parts.push({ name, body });
     if (capture) {
-      if (result.capture !== undefined)
+      if (result.capture !== undefined) {
         throw new InvalidSelectorError(`Only one of the selectors can capture using * modifier`);
+      }
       result.capture = result.parts.length - 1;
     }
   };
@@ -255,14 +268,16 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
   };
 
   const syntaxError = (stage: string|undefined) => {
-    if (EOL)
+    if (EOL) {
       throw new InvalidSelectorError(`Unexpected end of selector while parsing selector \`${selector}\``);
+    }
     throw new InvalidSelectorError(`Error while parsing selector \`${selector}\` - unexpected symbol "${next()}" at position ${wp}` + (stage ? ' during ' + stage : ''));
   };
 
   function skipSpaces() {
-    while (!EOL && /\s/.test(next()))
+    while (!EOL && /\s/.test(next())) {
       eat1();
+    }
   }
 
   function isCSSNameChar(char: string) {
@@ -279,37 +294,43 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
   function readIdentifier() {
     let result = '';
     skipSpaces();
-    while (!EOL && isCSSNameChar(next()))
+    while (!EOL && isCSSNameChar(next())) {
       result += eat1();
+    }
     return result;
   }
 
   function readQuotedString(quote: string) {
     let result = eat1();
-    if (result !== quote)
+    if (result !== quote) {
       syntaxError('parsing quoted string');
+    }
     while (!EOL && next() !== quote) {
-      if (next() === '\\')
+      if (next() === '\\') {
         eat1();
+      }
       result += eat1();
     }
-    if (next() !== quote)
+    if (next() !== quote) {
       syntaxError('parsing quoted string');
+    }
     result += eat1();
     return result;
   }
 
   function readRegularExpression() {
-    if (eat1() !== '/')
+    if (eat1() !== '/') {
       syntaxError('parsing regular expression');
+    }
     let source = '';
     let inClass = false;
     // https://262.ecma-international.org/11.0/#sec-literals-regular-expression-literals
     while (!EOL) {
       if (next() === '\\') {
         source += eat1();
-        if (EOL)
+        if (EOL) {
           syntaxError('parsing regular expression');
+        }
       } else if (inClass && next() === ']') {
         inClass = false;
       } else if (!inClass && next() === '[') {
@@ -319,12 +340,14 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
       }
       source += eat1();
     }
-    if (eat1() !== '/')
+    if (eat1() !== '/') {
       syntaxError('parsing regular expression');
+    }
     let flags = '';
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions
-    while (!EOL && next().match(/[dgimsuy]/))
+    while (!EOL && next().match(/[dgimsuy]/)) {
       flags += eat1();
+    }
     try {
       return new RegExp(source, flags);
     } catch (e) {
@@ -335,24 +358,29 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
   function readAttributeToken() {
     let token = '';
     skipSpaces();
-    if (next() === `'` || next() === `"`)
+    if (next() === `'` || next() === `"`) {
       token = readQuotedString(next()).slice(1, -1);
-    else
+    } else {
       token = readIdentifier();
-    if (!token)
+    }
+    if (!token) {
       syntaxError('parsing property path');
+    }
     return token;
   }
 
   function readOperator(): AttributeSelectorOperator {
     skipSpaces();
     let op = '';
-    if (!EOL)
+    if (!EOL) {
       op += eat1();
-    if (!EOL && (op !== '='))
+    }
+    if (!EOL && (op !== '=')) {
       op += eat1();
-    if (!['=', '*=', '^=', '$=', '|=', '~='].includes(op))
+    }
+    if (!['=', '*=', '^=', '$=', '|=', '~='].includes(op)) {
       syntaxError('parsing operator');
+    }
     return (op as AttributeSelectorOperator);
   }
 
@@ -383,8 +411,9 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
     let caseSensitive = true;
     skipSpaces();
     if (next() === '/') {
-      if (operator !== '=')
+      if (operator !== '=') {
         throw new InvalidSelectorError(`Error while parsing selector \`${selector}\` - cannot use ${operator} in attribute with regular expression`);
+      }
       value = readRegularExpression();
     } else if (next() === `'` || next() === `"`) {
       value = readQuotedString(next()).slice(1, -1);
@@ -398,8 +427,9 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
       }
     } else {
       value = '';
-      while (!EOL && (isCSSNameChar(next()) || next() === '+' || next() === '.'))
+      while (!EOL && (isCSSNameChar(next()) || next() === '+' || next() === '.')) {
         value += eat1();
+      }
       if (value === 'true') {
         value = true;
       } else if (value === 'false') {
@@ -407,18 +437,21 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
       } else {
         if (!allowUnquotedStrings) {
           value = +value;
-          if (Number.isNaN(value))
+          if (Number.isNaN(value)) {
             syntaxError('parsing attribute value');
+          }
         }
       }
     }
     skipSpaces();
-    if (next() !== ']')
+    if (next() !== ']') {
       syntaxError('parsing attribute value');
+    }
 
     eat1();
-    if (operator !== '=' && typeof value !== 'string')
+    if (operator !== '=' && typeof value !== 'string') {
       throw new InvalidSelectorError(`Error while parsing selector \`${selector}\` - cannot use ${operator} in attribute with non-string matching value - ${value}`);
+    }
     return { name: jsonPath.join('.'), jsonPath, op: operator, value, caseSensitive };
   }
 
@@ -432,9 +465,11 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
     result.attributes.push(readAttribute());
     skipSpaces();
   }
-  if (!EOL)
+  if (!EOL) {
     syntaxError(undefined);
-  if (!result.name && !result.attributes.length)
+  }
+  if (!result.name && !result.attributes.length) {
     throw new InvalidSelectorError(`Error while parsing selector \`${selector}\` - selector cannot be empty`);
+  }
   return result;
 }

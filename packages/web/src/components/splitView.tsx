@@ -52,26 +52,30 @@ export const SplitView: React.FC<SplitViewProps> = ({
   let size: number;
   if (orientation === 'vertical') {
     size = vSize / window.devicePixelRatio;
-    if (measure && measure.height < size)
+    if (measure && measure.height < size) {
       size = measure.height - 10;
+    }
   } else {
     size = hSize / window.devicePixelRatio;
-    if (measure && measure.width < size)
+    if (measure && measure.width < size) {
       size = measure.width - 10;
+    }
   }
 
   document.body.style.userSelect = resizing ? 'none' : 'inherit';
   let resizerStyle: any = {};
   if (orientation === 'vertical') {
-    if (sidebarIsFirst)
+    if (sidebarIsFirst) {
       resizerStyle = { top: resizing ? 0 : size - 4, bottom: resizing ? 0 : undefined, height: resizing ? 'initial' : 8 };
-    else
+    } else {
       resizerStyle = { bottom: resizing ? 0 : size - 4, top: resizing ? 0 : undefined, height: resizing ? 'initial' : 8 };
+    }
   } else {
-    if (sidebarIsFirst)
+    if (sidebarIsFirst) {
       resizerStyle = { left: resizing ? 0 : size - 4, right: resizing ? 0 : undefined, width: resizing ? 'initial' : 8 };
-    else
+    } else {
       resizerStyle = { right: resizing ? 0 : size - 4, left: resizing ? 0 : undefined, width: resizing ? 'initial' : 8 };
+    }
   }
 
   return <div className={clsx('split-view', orientation, sidebarIsFirst && 'sidebar-first')} ref={ref}>
@@ -93,10 +97,11 @@ export const SplitView: React.FC<SplitViewProps> = ({
           const splitView = (event.target as HTMLElement).parentElement!;
           const rect = splitView.getBoundingClientRect();
           const size = Math.min(Math.max(minSidebarSize, newSize), (orientation === 'vertical' ? rect.height : rect.width) - minSidebarSize);
-          if (orientation === 'vertical')
+          if (orientation === 'vertical') {
             setVSize(size * window.devicePixelRatio);
-          else
+          } else {
             setHSize(size * window.devicePixelRatio);
+          }
         }
       }}
     ></div>}

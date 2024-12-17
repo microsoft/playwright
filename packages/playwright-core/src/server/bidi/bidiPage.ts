@@ -115,20 +115,24 @@ export class BidiPage implements PageDelegate {
     for (const [contextId, context] of this._realmToContext) {
       if (context.frame === frame) {
         this._realmToContext.delete(contextId);
-        if (notifyFrame)
+        if (notifyFrame) {
           frame._contextDestroyed(context);
+        }
       }
     }
   }
 
   private _onRealmCreated(realmInfo: bidi.Script.RealmInfo) {
-    if (this._realmToContext.has(realmInfo.realm))
+    if (this._realmToContext.has(realmInfo.realm)) {
       return;
-    if (realmInfo.type !== 'window')
+    }
+    if (realmInfo.type !== 'window') {
       return;
+    }
     const frame = this._page._frameManager.frame(realmInfo.context);
-    if (!frame)
+    if (!frame) {
       return;
+    }
     const delegate = new BidiExecutionContext(this._session, realmInfo);
     let worldName: types.World;
     if (!realmInfo.sandbox) {
@@ -164,8 +168,9 @@ export class BidiPage implements PageDelegate {
 
   _onRealmDestroyed(params: bidi.Script.RealmDestroyedParameters): boolean {
     const context = this._realmToContext.get(params.realm);
-    if (!context)
+    if (!context) {
       return false;
+    }
     this._realmToContext.delete(params.realm);
     context.frame._contextDestroyed(context);
     return true;
@@ -185,8 +190,9 @@ export class BidiPage implements PageDelegate {
       // Navigation to file urls doesn't emit network events, so we fire 'commit' event right when navigation is started.
       // Doing it in domcontentload would be too late as we'd clear frame tree.
       const frame = this._page._frameManager.frame(frameId)!;
-      if (frame)
+      if (frame) {
         this._page._frameManager.frameCommittedNewDocumentNavigation(frameId, params.url, '', params.navigation!, /* initial */ false);
+      }
     }
   }
 
@@ -233,12 +239,14 @@ export class BidiPage implements PageDelegate {
   }
 
   private _onLogEntryAdded(params: bidi.Log.Entry) {
-    if (params.type !== 'console')
+    if (params.type !== 'console') {
       return;
+    }
     const entry: bidi.Log.ConsoleLogEntry = params as bidi.Log.ConsoleLogEntry;
     const context = this._realmToContext.get(params.source.realm);
-    if (!context)
+    if (!context) {
       return;
+    }
     const callFrame = params.stackTrace?.callFrames[0];
     const location = callFrame ?? { url: '', lineNumber: 1, columnNumber: 1 };
     this._page._addConsoleMessage(entry.method, entry.args.map(arg => context.createHandle({ objectId: (arg as any).handle, ...arg })), location, params.text || undefined);
@@ -274,8 +282,9 @@ export class BidiPage implements PageDelegate {
   private async _updateViewport(): Promise<void> {
     const options = this._browserContext._options;
     const deviceSize = this._page.emulatedSize();
-    if (deviceSize === null)
+    if (deviceSize === null) {
       return;
+    }
     const viewportSize = deviceSize.viewport;
     await this._session.send('browsingContext.setViewport', {
       context: this._session.sessionId,
@@ -353,16 +362,20 @@ export class BidiPage implements PageDelegate {
   }
 
   private async _onScriptMessage(event: bidi.Script.MessageParameters) {
-    if (event.channel !== kPlaywrightBindingChannel)
+    if (event.channel !== kPlaywrightBindingChannel) {
       return;
+    }
     const pageOrError = await this._page.waitForInitializedOrError();
-    if (pageOrError instanceof Error)
+    if (pageOrError instanceof Error) {
       return;
+    }
     const context = this._realmToContext.get(event.source.realm);
-    if (!context)
+    if (!context) {
       return;
-    if (event.data.type !== 'string')
+    }
+    if (event.data.type !== 'string') {
       return;
+    }
     await this._page._onBindingCalled(event.data.value, context);
   }
 
@@ -373,8 +386,9 @@ export class BidiPage implements PageDelegate {
       // TODO: push to iframes?
       contexts: [this._session.sessionId],
     });
-    if (!initScript.internal)
+    if (!initScript.internal) {
       this._initScriptIds.push(script);
+    }
   }
 
   async removeNonInternalInitScripts() {
@@ -431,16 +445,19 @@ export class BidiPage implements PageDelegate {
 
   async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
     const box = await handle.evaluate(element => {
-      if (!(element instanceof Element))
+      if (!(element instanceof Element)) {
         return null;
+      }
       const rect = element.getBoundingClientRect();
       return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
     });
-    if (!box)
+    if (!box) {
       return null;
+    }
     const position = await this._framePosition(handle._frame);
-    if (!position)
+    if (!position) {
       return null;
+    }
     box.x += position.x;
     box.y += position.y;
     return box;
@@ -448,15 +465,18 @@ export class BidiPage implements PageDelegate {
 
   // TODO: move to Frame.
   private async _framePosition(frame: frames.Frame): Promise<types.Point | null> {
-    if (frame === this._page.mainFrame())
+    if (frame === this._page.mainFrame()) {
       return { x: 0, y: 0 };
+    }
     const element = await frame.frameElement();
     const box = await element.boundingBox();
-    if (!box)
+    if (!box) {
       return null;
+    }
     const style = await element.evaluateInUtility(([injected, iframe]) => injected.describeIFrameStyle(iframe as Element), {}).catch(e => 'error:notconnected' as const);
-    if (style === 'error:notconnected' || style === 'transformed')
+    if (style === 'error:notconnected' || style === 'transformed') {
       return null;
+    }
     // Content box is offset by border and padding widths.
     box.x += style.left;
     box.y += style.top;
@@ -471,10 +491,12 @@ export class BidiPage implements PageDelegate {
         behavior: 'instant',
       });
     }, null).then(() => 'done' as const).catch(e => {
-      if (e instanceof Error && e.message.includes('Node is detached from document'))
+      if (e instanceof Error && e.message.includes('Node is detached from document')) {
         return 'error:notconnected';
-      if (e instanceof Error && e.message.includes('Node does not have a layout object'))
+      }
+      if (e instanceof Error && e.message.includes('Node does not have a layout object')) {
         return 'error:notvisible';
+      }
       throw e;
     });
   }
@@ -488,11 +510,13 @@ export class BidiPage implements PageDelegate {
 
   async getContentQuads(handle: dom.ElementHandle<Element>): Promise<types.Quad[] | null | 'error:notconnected'> {
     const quads = await handle.evaluateInUtility(([injected, node]) => {
-      if (!node.isConnected)
+      if (!node.isConnected) {
         return 'error:notconnected';
+      }
       const rects = node.getClientRects();
-      if (!rects)
+      if (!rects) {
         return null;
+      }
       return [...rects].map(rect => [
         { x: rect.left, y: rect.top },
         { x: rect.right, y: rect.top },
@@ -500,12 +524,14 @@ export class BidiPage implements PageDelegate {
         { x: rect.left, y: rect.bottom },
       ]);
     }, null);
-    if (!quads || quads === 'error:notconnected')
+    if (!quads || quads === 'error:notconnected') {
       return quads;
+    }
     // TODO: consider transforming quads to support clicks in iframes.
     const position = await this._framePosition(handle._frame);
-    if (!position)
+    if (!position) {
       return null;
+    }
     quads.forEach(quad => quad.forEach(point => {
       point.x += position.x;
       point.y += position.y;
@@ -525,13 +551,15 @@ export class BidiPage implements PageDelegate {
     const fromContext = toBidiExecutionContext(handle._context);
     const shared = await fromContext.rawCallFunction('x => x',  { handle: handle._objectId });
     // TODO: store sharedId in the handle.
-    if (!('sharedId' in shared))
+    if (!('sharedId' in shared)) {
       throw new Error('Element is not a node');
+    }
     const sharedId = shared.sharedId!;
     const executionContext = toBidiExecutionContext(to);
     const result = await executionContext.rawCallFunction('x => x',  { sharedId });
-    if ('handle' in result)
+    if ('handle' in result) {
       return to.createHandle({ objectId: result.handle!, ...result }) as dom.ElementHandle<T>;
+    }
     throw new Error('Failed to adopt element handle.');
   }
 
@@ -551,10 +579,13 @@ export class BidiPage implements PageDelegate {
 
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
     const parent = frame.parentFrame();
-    if (!parent)
+    if (!parent) {
       throw new Error('Frame has been detached.');
+    }
     const parentContext = await parent._mainContext();
-    const list = await parentContext.evaluateHandle(() => { return [...document.querySelectorAll('iframe,frame')]; });
+    const list = await parentContext.evaluateHandle(() => {
+      return [...document.querySelectorAll('iframe,frame')];
+    });
     const length = await list.evaluate(list => list.length);
     let foundElement = null;
     for (let i = 0; i < length; i++) {
@@ -568,8 +599,9 @@ export class BidiPage implements PageDelegate {
       }
     }
     list.dispose();
-    if (!foundElement)
+    if (!foundElement) {
       throw new Error('Frame has been detached.');
+    }
     return foundElement;
   }
 

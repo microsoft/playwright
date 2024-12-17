@@ -48,8 +48,9 @@ export type SerializedCompilationCache = {
 //   each worker anew.
 
 export const cacheDir = process.env.PWTEST_CACHE_DIR || (() => {
-  if (process.platform === 'win32')
+  if (process.platform === 'win32') {
     return path.join(os.tmpdir(), `playwright-transform-cache`);
+  }
   // Use `geteuid()` instead of more natural `os.userInfo().username`
   // since `os.userInfo()` is not always available.
   // Note: `process.geteuid()` is not available on windows.
@@ -71,8 +72,9 @@ export function installSourceMapSupport() {
     environment: 'node',
     handleUncaughtExceptions: false,
     retrieveSourceMap(source) {
-      if (!sourceMaps.has(source))
+      if (!sourceMaps.has(source)) {
         return null;
+      }
       const sourceMapPath = sourceMaps.get(source)!;
       try {
         return {
@@ -129,13 +131,16 @@ export function getFromCompilationCache(filename: string, hash: string, moduleUr
 
   return {
     addToCache: (code: string, map: any | undefined | null, data: Map<string, any>) => {
-      if (isWorkerProcess())
+      if (isWorkerProcess()) {
         return {};
+      }
       fs.mkdirSync(path.dirname(cachePath), { recursive: true });
-      if (map)
+      if (map) {
         fs.writeFileSync(sourceMapPath, JSON.stringify(map), 'utf8');
-      if (data.size)
+      }
+      if (data.size) {
         fs.writeFileSync(dataPath, JSON.stringify(Object.fromEntries(data.entries()), undefined, 2), 'utf8');
+      }
       fs.writeFileSync(codePath, code, 'utf8');
       const serializedCache = _innerAddToCompilationCacheAndSerialize(filename, { codePath, sourceMapPath, dataPath, moduleUrl });
       return { serializedCache };
@@ -153,10 +158,12 @@ export function serializeCompilationCache(): SerializedCompilationCache {
 }
 
 export function addToCompilationCache(payload: SerializedCompilationCache) {
-  for (const entry of payload.sourceMaps)
+  for (const entry of payload.sourceMaps) {
     sourceMaps.set(entry[0], entry[1]);
-  for (const entry of payload.memoryCache)
+  }
+  for (const entry of payload.memoryCache) {
     memoryCache.set(entry[0], entry[1]);
+  }
   for (const entry of payload.fileDependencies) {
     const existing = fileDependencies.get(entry[0]) || [];
     fileDependencies.set(entry[0], new Set([...entry[1], ...existing]));
@@ -181,12 +188,14 @@ export function startCollectingFileDeps() {
 }
 
 export function stopCollectingFileDeps(filename: string) {
-  if (!depsCollector)
+  if (!depsCollector) {
     return;
+  }
   depsCollector.delete(filename);
   for (const dep of depsCollector) {
-    if (belongsToNodeModules(dep))
+    if (belongsToNodeModules(dep)) {
       depsCollector.delete(dep);
+    }
   }
   fileDependencies.set(filename, depsCollector);
   depsCollector = undefined;
@@ -208,22 +217,26 @@ export function fileDependenciesForTest() {
 export function collectAffectedTestFiles(changedFile: string, testFileCollector: Set<string>) {
   const isTestFile = (file: string) => fileDependencies.has(file);
 
-  if (isTestFile(changedFile))
+  if (isTestFile(changedFile)) {
     testFileCollector.add(changedFile);
+  }
 
   for (const [testFile, deps] of fileDependencies) {
-    if (deps.has(changedFile))
+    if (deps.has(changedFile)) {
       testFileCollector.add(testFile);
+    }
   }
 
   for (const [importingFile, depsOfImportingFile] of externalDependencies) {
     if (depsOfImportingFile.has(changedFile)) {
-      if (isTestFile(importingFile))
+      if (isTestFile(importingFile)) {
         testFileCollector.add(importingFile);
+      }
 
       for (const [testFile, depsOfTestFile] of fileDependencies) {
-        if (depsOfTestFile.has(importingFile))
+        if (depsOfTestFile.has(importingFile)) {
           testFileCollector.add(testFile);
+        }
       }
     }
   }
@@ -231,8 +244,9 @@ export function collectAffectedTestFiles(changedFile: string, testFileCollector:
 
 export function affectedTestFiles(changes: string[]): string[] {
   const result = new Set<string>();
-  for (const change of changes)
+  for (const change of changes) {
     collectAffectedTestFiles(change, result);
+  }
   return [...result];
 }
 
@@ -244,11 +258,13 @@ export function dependenciesForTestFile(filename: string): Set<string> {
   const result = new Set<string>();
   for (const testDependency of fileDependencies.get(filename) || []) {
     result.add(testDependency);
-    for (const externalDependency of externalDependencies.get(testDependency) || [])
+    for (const externalDependency of externalDependencies.get(testDependency) || []) {
       result.add(externalDependency);
+    }
   }
-  for (const dep of externalDependencies.get(filename) || [])
+  for (const dep of externalDependencies.get(filename) || []) {
     result.add(dep);
+  }
   return result;
 }
 
@@ -258,23 +274,28 @@ export function dependenciesForTestFile(filename: string): Set<string> {
 const kPlaywrightInternalPrefix = path.resolve(__dirname, '../../../playwright');
 
 export function belongsToNodeModules(file: string) {
-  if (file.includes(`${path.sep}node_modules${path.sep}`))
+  if (file.includes(`${path.sep}node_modules${path.sep}`)) {
     return true;
-  if (file.startsWith(kPlaywrightInternalPrefix) && (file.endsWith('.js') || file.endsWith('.mjs')))
+  }
+  if (file.startsWith(kPlaywrightInternalPrefix) && (file.endsWith('.js') || file.endsWith('.mjs'))) {
     return true;
+  }
   return false;
 }
 
 export async function getUserData(pluginName: string): Promise<Map<string, any>> {
   const result = new Map<string, any>();
   for (const [fileName, cache] of memoryCache) {
-    if (!cache.dataPath)
+    if (!cache.dataPath) {
       continue;
-    if (!fs.existsSync(cache.dataPath))
+    }
+    if (!fs.existsSync(cache.dataPath)) {
       continue;
+    }
     const data = JSON.parse(await fs.promises.readFile(cache.dataPath, 'utf8'));
-    if (data[pluginName])
+    if (data[pluginName]) {
       result.set(fileName, data[pluginName]);
+    }
   }
   return result;
 }

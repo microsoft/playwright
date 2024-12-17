@@ -63,20 +63,23 @@ export async function runDevServer(config: FullConfig): Promise<() => Promise<vo
     const registry: ComponentRegistry = new Map();
     await populateComponentsFromTests(registry);
     // compare componentRegistry to registry key sets.
-    if (componentRegistry.size === registry.size && [...componentRegistry.keys()].every(k => registry.has(k)))
+    if (componentRegistry.size === registry.size && [...componentRegistry.keys()].every(k => registry.has(k))) {
       return;
+    }
 
     // eslint-disable-next-line no-console
     console.log('List of components changed');
     componentRegistry.clear();
-    for (const [k, v] of registry)
+    for (const [k, v] of registry) {
       componentRegistry.set(k, v);
+    }
 
     const id = path.join(dirs.templateDir, 'index');
     const modules = [...devServer.moduleGraph.urlToModuleMap.values()];
     const rootModule = modules.find(m => m.file?.startsWith(id + '.ts') || m.file?.startsWith(id + '.js'));
-    if (rootModule)
+    if (rootModule) {
       devServer.moduleGraph.onFileChange(rootModule.file!);
+    }
   });
   await globalWatcher.update([...projectDirs], [...projectOutputs], false);
   return () => Promise.all([devServer.close(), globalWatcher.close()]).then(() => {});

@@ -24,10 +24,12 @@ export const kNoElementsFoundError = '<element(s) not found>';
 
 export function matcherHint(state: ExpectMatcherState, locator: Locator | undefined, matcherName: string, expression: any, actual: any, matcherOptions: any, timeout?: number) {
   let header = state.utils.matcherHint(matcherName, expression, actual, matcherOptions).replace(/ \/\/ deep equality/, '') + '\n\n';
-  if (timeout)
+  if (timeout) {
     header = colors.red(`Timed out ${timeout}ms waiting for `) + header;
-  if (locator)
+  }
+  if (locator) {
     header += `Locator: ${String(locator)}\n`;
+  }
   return header;
 }
 
@@ -60,8 +62,9 @@ export class ExpectError extends Error {
     this.message = jestError.message;
     this.matcherResult = jestError.matcherResult;
 
-    if (customMessage)
+    if (customMessage) {
       this.message = customMessage + '\n\n' + this.message;
+    }
     this.stack = this.name + ': ' + this.message + '\n' + stringifyStackFrames(stackFrames).join('\n');
   }
 }

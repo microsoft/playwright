@@ -59,12 +59,15 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, client:
   } catch (error: any) {
     // eslint-disable-next-line no-console
     console.error(error);
-    if (error?.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html'))
+    if (error?.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html')) {
       throw new Error('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');
-    if (error instanceof TraceVersionError)
+    }
+    if (error instanceof TraceVersionError) {
       throw new Error(`Could not load trace from ${traceFileName || traceUrl}. ${error.message}`);
-    if (traceFileName)
+    }
+    if (traceFileName) {
       throw new Error(`Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.`);
+    }
     throw new Error(`Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`);
   }
   const snapshotServer = new SnapshotServer(traceModel.storage(), sha1 => traceModel.resourceForSha1(sha1));
@@ -75,8 +78,9 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, client:
 // @ts-ignore
 async function doFetch(event: FetchEvent): Promise<Response> {
   // In order to make Accessibility Insights for Web work.
-  if (event.request.url.startsWith('chrome-extension://'))
+  if (event.request.url.startsWith('chrome-extension://')) {
     return fetch(event.request);
+  }
 
   const request = event.request;
   const client = await self.clients.get(event.clientId);
@@ -118,25 +122,29 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 
     if (relativePath.startsWith('/snapshotInfo/')) {
       const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
-      if (!snapshotServer)
+      if (!snapshotServer) {
         return new Response(null, { status: 404 });
+      }
       return snapshotServer.serveSnapshotInfo(relativePath, url.searchParams);
     }
 
     if (relativePath.startsWith('/snapshot/')) {
       const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
-      if (!snapshotServer)
+      if (!snapshotServer) {
         return new Response(null, { status: 404 });
+      }
       const response = snapshotServer.serveSnapshot(relativePath, url.searchParams, url.href);
-      if (isDeployedAsHttps)
+      if (isDeployedAsHttps) {
         response.headers.set('Content-Security-Policy', 'upgrade-insecure-requests');
+      }
       return response;
     }
 
     if (relativePath.startsWith('/closest-screenshot/')) {
       const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
-      if (!snapshotServer)
+      if (!snapshotServer) {
         return new Response(null, { status: 404 });
+      }
       return snapshotServer.serveClosestScreenshot(relativePath, url.searchParams);
     }
 
@@ -145,8 +153,9 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       const sha1 = relativePath.slice('/sha1/'.length);
       for (const trace of loadedTraces.values()) {
         const blob = await trace.traceModel.resourceForSha1(sha1);
-        if (blob)
+        if (blob) {
           return new Response(blob, { status: 200, headers: downloadHeaders(url.searchParams) });
+        }
       }
       return new Response(null, { status: 404 });
     }
@@ -154,11 +163,13 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     if (relativePath.startsWith('/file/')) {
       const path = url.searchParams.get('path')!;
       const traceViewerServer = clientIdToTraceUrls.get(event.clientId ?? '')?.traceViewerServer;
-      if (!traceViewerServer)
+      if (!traceViewerServer) {
         throw new Error('client is not initialized');
+      }
       const response = await traceViewerServer.readFile(path);
-      if (!response)
+      if (!response) {
         return new Response(null, { status: 404 });
+      }
       return response;
     }
 
@@ -169,24 +180,28 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   const snapshotUrl = unwrapPopoutUrl(client!.url);
   const traceUrl = new URL(snapshotUrl).searchParams.get('trace')!;
   const { snapshotServer } = loadedTraces.get(traceUrl) || {};
-  if (!snapshotServer)
+  if (!snapshotServer) {
     return new Response(null, { status: 404 });
+  }
 
   const lookupUrls = [request.url];
-  if (isDeployedAsHttps && request.url.startsWith('https://'))
+  if (isDeployedAsHttps && request.url.startsWith('https://')) {
     lookupUrls.push(request.url.replace(/^https/, 'http'));
+  }
   return snapshotServer.serveResource(lookupUrls, request.method, snapshotUrl);
 }
 
 function downloadHeaders(searchParams: URLSearchParams): Headers | undefined {
   const name = searchParams.get('dn');
   const contentType = searchParams.get('dct');
-  if (!name)
+  if (!name) {
     return;
+  }
   const headers = new Headers();
   headers.set('Content-Disposition', `attachment; filename="attachment"; filename*=UTF-8''${encodeURIComponent(name)}`);
-  if (contentType)
+  if (contentType) {
     headers.set('Content-Type', contentType);
+  }
   return headers;
 }
 
@@ -209,8 +224,9 @@ async function gc() {
   }
 
   for (const traceUrl of loadedTraces.keys()) {
-    if (!usedTraces.has(traceUrl))
+    if (!usedTraces.has(traceUrl)) {
       loadedTraces.delete(traceUrl);
+    }
   }
 }
 

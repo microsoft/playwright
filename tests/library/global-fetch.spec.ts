@@ -239,18 +239,20 @@ it('should set playwright as user-agent', async ({ playwright, server, isWindows
       .replace(/\d+/g, 'X');
 
   const tokens = [];
-  if (process.env.CI)
+  if (process.env.CI) {
     tokens.push('CI/X');
+  }
   const suffix = tokens.length ? ` ${tokens.join(' ')}` : '';
 
-  if (isWindows)
+  if (isWindows) {
     expect(userAgentMasked).toBe('Playwright/X.X.X (<ARCH>; windows X.X) node/X.X' + suffix);
-  else if (isLinux)
+  } else if (isLinux) {
     // on ubuntu: distro is 'ubuntu' and version is 'X.X'
     // on manjaro: distro is 'Manjaro' and version is 'unknown'
     expect(userAgentMasked.replace(/<ARCH>; \w+ [^)]+/, '<ARCH>; distro version')).toBe('Playwright/X.X.X (<ARCH>; distro version) node/X.X' + suffix);
-  else if (isMac)
+  } else if (isMac) {
     expect(userAgentMasked).toBe('Playwright/X.X.X (<ARCH>; macOS X.X) node/X.X' + suffix);
+  }
   await request.dispose();
 });
 
@@ -398,8 +400,9 @@ it(`should have nice toString`, async ({ playwright, server }) => {
   });
   const str = response[util.inspect.custom]();
   expect(str).toContain('APIResponse: 200 OK');
-  for (const { name, value } of response.headersArray())
+  for (const { name, value } of response.headersArray()) {
     expect(str).toContain(`  ${name}: ${value}`);
+  }
   await request.dispose();
 });
 
@@ -445,8 +448,9 @@ it('should throw an error when maxRedirects is exceeded', async ({ playwright, s
 
   const request = await playwright.request.newContext();
   for (const method of ['GET', 'PUT', 'POST', 'OPTIONS', 'HEAD', 'PATCH']) {
-    for (const maxRedirects of [1, 2, 3])
+    for (const maxRedirects of [1, 2, 3]) {
       await expect(async () => request.fetch(`${server.PREFIX}/a/redirect1`, { method: method, maxRedirects: maxRedirects })).rejects.toThrow('Max redirect count exceeded');
+    }
   }
   await request.dispose();
 });
@@ -469,8 +473,9 @@ it('should throw an error when maxRedirects is less than 0', async ({ playwright
   server.setRedirect('/b/c/redirect2', '/simple.json');
 
   const request = await playwright.request.newContext();
-  for (const method of ['GET', 'PUT', 'POST', 'OPTIONS', 'HEAD', 'PATCH'])
+  for (const method of ['GET', 'PUT', 'POST', 'OPTIONS', 'HEAD', 'PATCH']) {
     await expect(async () => request.fetch(`${server.PREFIX}/a/redirect1`, { method, maxRedirects: -1 })).rejects.toThrow(`'maxRedirects' must be greater than or equal to '0'`);
+  }
   await request.dispose();
 });
 
@@ -497,8 +502,9 @@ it('should serialize post data on the client', async ({ playwright, server }) =>
   const postReq = request.post(server.EMPTY_PAGE, {
     data: {
       toJSON() {
-        if (!onStack)
+        if (!onStack) {
           throw new Error('Should not be called on the server');
+        }
         return { 'foo': 'bar' };
       }
     }

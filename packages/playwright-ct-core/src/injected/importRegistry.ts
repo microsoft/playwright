@@ -28,21 +28,25 @@ export class ImportRegistry {
   private _registry = new Map<string, () => Promise<any>>();
 
   initialize(components: Record<string, () => Promise<any>>) {
-    for (const [name, value] of Object.entries(components))
+    for (const [name, value] of Object.entries(components)) {
       this._registry.set(name, value);
+    }
   }
 
   async resolveImportRef(importRef: ImportRef): Promise<any> {
     const importFunction = this._registry.get(importRef.id);
-    if (!importFunction)
+    if (!importFunction) {
       throw new Error(`Unregistered component: ${importRef.id}. Following components are registered: ${[...this._registry.keys()]}`);
+    }
     let importedObject = await importFunction();
-    if (!importedObject)
+    if (!importedObject) {
       throw new Error(`Could not resolve component: ${importRef.id}.`);
+    }
     if (importRef.property) {
       importedObject = importedObject[importRef.property];
-      if (!importedObject)
+      if (!importedObject) {
         throw new Error(`Could not instantiate component: ${importRef.id}.${importRef.property}.`);
+      }
     }
     return importedObject;
   }

@@ -39,8 +39,9 @@ export class Chat {
   async post<T>(prompt: string): Promise<T | null> {
     await this._append('user', prompt);
     let text = await asString(await this._post());
-    if (text.startsWith('```json') && text.endsWith('```'))
+    if (text.startsWith('```json') && text.endsWith('```')) {
       text = text.substring('```json'.length, text.length - '```'.length);
+    }
     for (let i = 0; i < 3; ++i) {
       try {
         return JSON.parse(text);
@@ -69,8 +70,9 @@ export class Chat {
       const { chatId, chunk } = params;
       const chunkSink = this._chatSinks.get(chatId)!;
       chunkSink(chunk);
-      if (!chunk)
+      if (!chunk) {
         this._chatSinks.delete(chatId);
+      }
     }
   }
 
@@ -86,8 +88,9 @@ export class Chat {
 
 export async function asString(stream: AsyncIterable<string>): Promise<string> {
   let result = '';
-  for await (const chunk of stream)
+  for await (const chunk of stream) {
     result += chunk;
+  }
   return result;
 }
 
@@ -104,8 +107,9 @@ function iterablePump(): ChunkIterator {
     const reader = stream.getReader();
     while (true) {
       const { done, value } = await reader.read();
-      if (done)
+      if (done) {
         break;
+      }
       yield value!;
     }
   })();
@@ -113,10 +117,11 @@ function iterablePump(): ChunkIterator {
   return {
     iterable,
     addChunk: chunk => {
-      if (chunk)
+      if (chunk) {
         controller.enqueue(chunk);
-      else
+      } else {
         controller.close();
+      }
     }
   };
 }
@@ -154,8 +159,9 @@ class Connection {
 
     const callback = this._pending.get(message.id);
     this._pending.delete(message.id);
-    if (!callback)
+    if (!callback) {
       return;
+    }
 
     if (message.error) {
       callback.reject(new Error(message.error.message));
@@ -168,8 +174,9 @@ class Connection {
     this._closed = true;
     this._transport.onmessage = undefined;
     this._transport.onclose = undefined;
-    for (const { reject } of this._pending.values())
+    for (const { reject } of this._pending.values()) {
       reject(new Error('Connection closed'));
+    }
     this._onClose();
   }
 
@@ -178,7 +185,8 @@ class Connection {
   }
 
   close() {
-    if (!this._closed)
+    if (!this._closed) {
       this._transport.close();
+    }
   }
 }

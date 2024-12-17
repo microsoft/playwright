@@ -54,8 +54,9 @@ export const ReportView: React.FC<{
   const testIdToFileIdMap = React.useMemo(() => {
     const map = new Map<string, string>();
     for (const file of report?.json().files || []) {
-      for (const test of file.tests)
+      for (const test of file.tests) {
         map.set(test.testId, file.fileId);
+      }
     }
     return map;
   }, [report]);
@@ -66,8 +67,9 @@ export const ReportView: React.FC<{
     const result: TestModelSummary = { files: [], tests: [] };
     for (const file of report?.json().files || []) {
       const tests = file.tests.filter(t => filter.matches(t));
-      if (tests.length)
+      if (tests.length) {
         result.files.push({ ...file, tests });
+      }
       result.tests.push(...tests);
     }
     return result;
@@ -112,11 +114,13 @@ const TestCaseViewLoader: React.FC<{
 
   React.useEffect(() => {
     (async () => {
-      if (!testId || testId === test?.testId)
+      if (!testId || testId === test?.testId) {
         return;
+      }
       const fileId = testIdToFileIdMap.get(testId);
-      if (!fileId)
+      if (!fileId) {
         return;
+      }
       const file = await report.entry(`${fileId}.json`) as TestFile;
       for (const t of file.tests) {
         if (t.testId === testId) {
@@ -144,8 +148,9 @@ function computeStats(files: TestFileSummary[], filter: Filter): FilteredStats {
   for (const file of files) {
     const tests = file.tests.filter(t => filter.matches(t));
     stats.total += tests.length;
-    for (const test of tests)
+    for (const test of tests) {
       stats.duration += test.duration;
+    }
   }
   return stats;
 }

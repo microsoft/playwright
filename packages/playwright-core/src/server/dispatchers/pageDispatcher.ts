@@ -49,8 +49,9 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   static fromNullable(parentScope: BrowserContextDispatcher, page: Page | undefined): PageDispatcher | undefined {
-    if (!page)
+    if (!page) {
       return undefined;
+    }
     const result = existingDispatcher<PageDispatcher>(page);
     return result || new PageDispatcher(parentScope, page);
   }
@@ -91,12 +92,14 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     this.addObjectListener(Page.Events.WebSocket, webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this, webSocket) }));
     this.addObjectListener(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this, worker) }));
     this.addObjectListener(Page.Events.Video, (artifact: Artifact) => this._dispatchEvent('video', { artifact: ArtifactDispatcher.from(parentScope, artifact) }));
-    if (page._video)
+    if (page._video) {
       this._dispatchEvent('video', { artifact: ArtifactDispatcher.from(this.parentScope(), page._video) });
+    }
     // Ensure client knows about all frames.
     const frames = page._frameManager.frames();
-    for (let i = 1; i < frames.length; i++)
+    for (let i = 1; i < frames.length; i++) {
       this._onFrameAttached(frames[i]);
+    }
   }
 
   page(): Page {
@@ -115,8 +118,9 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await this._page.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
       // When reusing the context, we might have some bindings called late enough,
       // after context and page dispatchers have been disposed.
-      if (this._disposed)
+      if (this._disposed) {
         return;
+      }
       const binding = new BindingCallDispatcher(this, params.name, !!params.needsHandle, source, args);
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
@@ -181,8 +185,9 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     const urlMatchers = params.patterns.map(pattern => pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags!) : pattern.glob!);
     await this._page.setClientRequestInterceptor((route, request) => {
       const matchesSome = urlMatchers.some(urlMatch => urlMatches(this._page._browserContext._options.baseURL, request.url(), urlMatch));
-      if (!matchesSome)
+      if (!matchesSome) {
         return false;
+      }
       this._dispatchEvent('route', { route: RouteDispatcher.from(RequestDispatcher.from(this.parentScope(), request), route) });
       return true;
     });
@@ -190,8 +195,9 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
     this._webSocketInterceptionPatterns = params.patterns;
-    if (params.patterns.length)
+    if (params.patterns.length) {
       await WebSocketRouteDispatcher.installIfNeeded(this.parentScope(), this._page);
+    }
   }
 
   async expectScreenshot(params: channels.PageExpectScreenshotParams, metadata: CallMetadata): Promise<channels.PageExpectScreenshotResult> {
@@ -219,18 +225,21 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async close(params: channels.PageCloseParams, metadata: CallMetadata): Promise<void> {
-    if (!params.runBeforeUnload)
+    if (!params.runBeforeUnload) {
       metadata.potentiallyClosesScope = true;
+    }
     await this._page.close(metadata, params);
   }
 
   async updateSubscription(params: channels.PageUpdateSubscriptionParams): Promise<void> {
-    if (params.event === 'fileChooser')
+    if (params.event === 'fileChooser') {
       await this._page.setFileChooserIntercepted(params.enabled);
-    if (params.enabled)
+    }
+    if (params.enabled) {
       this._subscriptions.add(params.event);
-    else
+    } else {
       this._subscriptions.delete(params.event);
+    }
   }
 
   async keyboardDown(params: channels.PageKeyboardDownParams, metadata: CallMetadata): Promise<void> {
@@ -286,8 +295,9 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async pdf(params: channels.PagePdfParams, metadata: CallMetadata): Promise<channels.PagePdfResult> {
-    if (!this._page.pdf)
+    if (!this._page.pdf) {
       throw new Error('PDF generation is only supported for Headless Chromium');
+    }
     const buffer = await this._page.pdf(params);
     return { pdf: buffer };
   }
@@ -326,8 +336,9 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   override _onDispose() {
     // Avoid protocol calls for the closed page.
-    if (!this._page.isClosedOrClosingOrCrashed())
+    if (!this._page.isClosedOrClosingOrCrashed()) {
       this._page.setClientRequestInterceptor(undefined).catch(() => {});
+    }
   }
 }
 
@@ -336,8 +347,9 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
   _type_Worker = true;
 
   static fromNullable(scope: PageDispatcher | BrowserContextDispatcher, worker: Worker | null): WorkerDispatcher | undefined {
-    if (!worker)
+    if (!worker) {
       return undefined;
+    }
     const result = existingDispatcher<WorkerDispatcher>(worker);
     return result || new WorkerDispatcher(scope, worker);
   }

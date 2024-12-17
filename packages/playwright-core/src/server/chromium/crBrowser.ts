@@ -59,11 +59,13 @@ export class CRBrowser extends Browser {
     const connection = new CRConnection(transport, options.protocolLogger, options.browserLogsCollector);
     const browser = new CRBrowser(parent, connection, options);
     browser._devtools = devtools;
-    if (browser.isClank())
+    if (browser.isClank()) {
       browser._isCollocatedWithServer = false;
+    }
     const session = connection.rootSession;
-    if ((options as any).__testHookOnConnectToBrowser)
+    if ((options as any).__testHookOnConnectToBrowser) {
       await (options as any).__testHookOnConnectToBrowser();
+    }
 
     const version = await session.send('Browser.getVersion');
     browser._version = version.product.substring(version.product.indexOf('/') + 1);
@@ -104,10 +106,11 @@ export class CRBrowser extends Browser {
     const proxy = options.proxyOverride || options.proxy;
     let proxyBypassList = undefined;
     if (proxy) {
-      if (process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK)
+      if (process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK) {
         proxyBypassList = proxy.bypass;
-      else
+      } else {
         proxyBypassList = '<-loopback>' + (proxy.bypass ? `,${proxy.bypass}` : '');
+      }
     }
 
     const { browserContextId } = await this._session.send('Target.createBrowserContext', {
@@ -134,10 +137,12 @@ export class CRBrowser extends Browser {
   }
 
   _platform(): 'mac' | 'linux' | 'win' {
-    if (this._userAgent.includes('Windows'))
+    if (this._userAgent.includes('Windows')) {
       return 'win';
-    if (this._userAgent.includes('Macintosh'))
+    }
+    if (this._userAgent.includes('Macintosh')) {
       return 'mac';
+    }
     return 'linux';
   }
 
@@ -150,8 +155,9 @@ export class CRBrowser extends Browser {
   }
 
   _onAttachedToTarget({ targetInfo, sessionId, waitingForDebugger }: Protocol.Target.attachedToTargetPayload) {
-    if (targetInfo.type === 'browser')
+    if (targetInfo.type === 'browser') {
       return;
+    }
     const session = this._session.createChildSession(sessionId);
     assert(targetInfo.browserContextId, 'targetInfo: ' + JSON.stringify(targetInfo, null, 2));
     let context = this._contexts.get(targetInfo.browserContextId) || null;
@@ -228,14 +234,17 @@ export class CRBrowser extends Browser {
   }
 
   private _didDisconnect() {
-    for (const crPage of this._crPages.values())
+    for (const crPage of this._crPages.values()) {
       crPage.didClose();
+    }
     this._crPages.clear();
-    for (const backgroundPage of this._backgroundPages.values())
+    for (const backgroundPage of this._backgroundPages.values()) {
       backgroundPage.didClose();
+    }
     this._backgroundPages.clear();
-    for (const serviceWorker of this._serviceWorkers.values())
+    for (const serviceWorker of this._serviceWorkers.values()) {
       serviceWorker.didClose();
+    }
     this._serviceWorkers.clear();
     this._didClose();
   }
@@ -243,8 +252,9 @@ export class CRBrowser extends Browser {
   private _findOwningPage(frameId: string) {
     for (const crPage of this._crPages.values()) {
       const frame = crPage._page._frameManager.frame(frameId);
-      if (frame)
+      if (frame) {
         return crPage;
+      }
     }
     return null;
   }
@@ -261,18 +271,22 @@ export class CRBrowser extends Browser {
 
     let originPage = page._page.initializedOrUndefined();
     // If it's a new window download, report it on the opener page.
-    if (!originPage && page._opener)
+    if (!originPage && page._opener) {
       originPage = page._opener._page.initializedOrUndefined();
-    if (!originPage)
+    }
+    if (!originPage) {
       return;
+    }
     this._downloadCreated(originPage, payload.guid, payload.url, payload.suggestedFilename);
   }
 
   _onDownloadProgress(payload: any) {
-    if (payload.state === 'completed')
+    if (payload.state === 'completed') {
       this._downloadFinished(payload.guid, '');
-    if (payload.state === 'canceled')
+    }
+    if (payload.state === 'canceled') {
       this._downloadFinished(payload.guid, this._closeReason || 'canceled');
+    }
   }
 
   async _closePage(crPage: CRPage) {
@@ -298,8 +312,9 @@ export class CRBrowser extends Browser {
       categories = defaultCategories,
     } = options;
 
-    if (screenshots)
+    if (screenshots) {
       categories.push('disabled-by-default-devtools.screenshot');
+    }
 
     this._tracingRecording = true;
     await this._tracingClient.send('Tracing.start', {
@@ -327,8 +342,9 @@ export class CRBrowser extends Browser {
   }
 
   async _clientRootSession(): Promise<CDPSession> {
-    if (!this._clientRootSessionPromise)
+    if (!this._clientRootSessionPromise) {
       this._clientRootSessionPromise = this._connection.createBrowserSession();
+    }
     return this._clientRootSessionPromise;
   }
 }
@@ -380,13 +396,15 @@ export class CRBrowserContext extends BrowserContext {
       // heuristic assuming that there is only one page created at a time.
       const newKeys = new Set(this._browser._crPages.keys());
       // Remove old keys.
-      for (const key of oldKeys)
+      for (const key of oldKeys) {
         newKeys.delete(key);
+      }
       // Remove potential concurrent popups.
       for (const key of newKeys) {
         const page = this._browser._crPages.get(key)!;
-        if (page._opener)
+        if (page._opener) {
           newKeys.delete(key);
+        }
       }
       assert(newKeys.size === 1);
       [targetId] = [...newKeys];
@@ -437,8 +455,9 @@ export class CRBrowserContext extends BrowserContext {
     ]);
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);
-      if (!protocolPermission)
+      if (!protocolPermission) {
         throw new Error('Unknown permission: ' + permission);
+      }
       return protocolPermission;
     });
     await this._browser._session.send('Browser.grantPermissions', { origin: origin === '*' ? undefined : origin, browserContextId: this._browserContextId, permissions: filtered });
@@ -451,56 +470,68 @@ export class CRBrowserContext extends BrowserContext {
   async setGeolocation(geolocation?: types.Geolocation): Promise<void> {
     verifyGeolocation(geolocation);
     this._options.geolocation = geolocation;
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as CRPage).updateGeolocation();
+    }
   }
 
   async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
     this._options.extraHTTPHeaders = headers;
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as CRPage).updateExtraHTTPHeaders();
-    for (const sw of this.serviceWorkers())
+    }
+    for (const sw of this.serviceWorkers()) {
       await (sw as CRServiceWorker).updateExtraHTTPHeaders();
+    }
   }
 
   async setUserAgent(userAgent: string | undefined): Promise<void> {
     this._options.userAgent = userAgent;
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as CRPage).updateUserAgent();
+    }
     // TODO: service workers don't have Emulation domain?
   }
 
   async setOffline(offline: boolean): Promise<void> {
     this._options.offline = offline;
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as CRPage).updateOffline();
-    for (const sw of this.serviceWorkers())
+    }
+    for (const sw of this.serviceWorkers()) {
       await (sw as CRServiceWorker).updateOffline();
+    }
   }
 
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
     this._options.httpCredentials = httpCredentials;
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as CRPage).updateHttpCredentials();
-    for (const sw of this.serviceWorkers())
+    }
+    for (const sw of this.serviceWorkers()) {
       await (sw as CRServiceWorker).updateHttpCredentials();
+    }
   }
 
   async doAddInitScript(initScript: InitScript) {
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as CRPage).addInitScript(initScript);
+    }
   }
 
   async doRemoveNonInternalInitScripts() {
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as CRPage).removeNonInternalInitScripts();
+    }
   }
 
   async doUpdateRequestInterception(): Promise<void> {
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as CRPage).updateRequestInterception();
-    for (const sw of this.serviceWorkers())
+    }
+    for (const sw of this.serviceWorkers()) {
       await (sw as CRServiceWorker).updateRequestInterception();
+    }
   }
 
   async doClose(reason: string | undefined) {
@@ -525,8 +556,9 @@ export class CRBrowserContext extends BrowserContext {
     await this._browser._session.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
     for (const [targetId, serviceWorker] of this._browser._serviceWorkers) {
-      if (serviceWorker._browserContext !== this)
+      if (serviceWorker._browserContext !== this) {
         continue;
+      }
       // When closing a browser context, service workers are shutdown
       // asynchronously and we get detached from them later.
       // To avoid the wrong order of notifications, we manually fire
@@ -552,8 +584,9 @@ export class CRBrowserContext extends BrowserContext {
   }
 
   override async clearCache(): Promise<void> {
-    for (const page of this._crPages())
+    for (const page of this._crPages()) {
       await page._networkManager.clearCache();
+    }
   }
 
   async cancelDownload(guid: string) {
@@ -569,8 +602,9 @@ export class CRBrowserContext extends BrowserContext {
   backgroundPages(): Page[] {
     const result: Page[] = [];
     for (const backgroundPage of this._browser._backgroundPages.values()) {
-      if (backgroundPage._browserContext === this && backgroundPage._page.initializedOrUndefined())
+      if (backgroundPage._browserContext === this && backgroundPage._page.initializedOrUndefined()) {
         result.push(backgroundPage._page);
+      }
     }
     return result;
   }
@@ -585,8 +619,9 @@ export class CRBrowserContext extends BrowserContext {
       targetId = (page._delegate as CRPage)._targetId;
     } else if (page instanceof Frame) {
       const session = (page._page._delegate as CRPage)._sessions.get(page._id);
-      if (!session)
+      if (!session) {
         throw new Error(`This frame does not have a separate CDP session, it is a part of the parent frame's session`);
+      }
       targetId = session._targetId;
     } else {
       throw new Error('page: expected Page or Frame');

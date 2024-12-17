@@ -230,10 +230,11 @@ it('should not dispatch binding on a closed page', async function({ browser, ser
   await page.goto(server.EMPTY_PAGE);
   await Promise.all([
     page.waitForEvent('popup').then(popup => {
-      if (popup.isClosed())
+      if (popup.isClosed()) {
         messages.push('close');
-      else
+      } else {
         return popup.waitForEvent('close').then(() => messages.push('close'));
+      }
     }),
     page.evaluate(async () => {
       const win = window.open('about:blank');
@@ -242,10 +243,11 @@ it('should not dispatch binding on a closed page', async function({ browser, ser
     }),
   ]);
   await context.close();
-  if (browserName === 'firefox')
+  if (browserName === 'firefox') {
     expect(messages.join('|')).toBe('close');
-  else
+  } else {
     expect(messages.join('|')).toBe('binding|close');
+  }
 });
 
 it('should not throttle rAF in the opener page', async ({ page, server }) => {
@@ -253,7 +255,9 @@ it('should not throttle rAF in the opener page', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(() => { window.open('about:blank'); }),
+    page.evaluate(() => {
+      window.open('about:blank');
+    }),
   ]);
   await Promise.all([
     waitForRafs(page, 30),
@@ -269,8 +273,9 @@ it('should not throw when click closes popup', async ({ browserName, page, serve
     page.waitForEvent('popup'),
     page.evaluate(async browserName => {
       const w = window.open('about:blank');
-      if (browserName === 'firefox')
+      if (browserName === 'firefox') {
         await new Promise(x => w.onload = x);
+      }
       w.document.body.innerHTML = `<button onclick="window.close()">close</button>`;
     }, browserName),
   ]);
@@ -281,10 +286,11 @@ async function waitForRafs(page: Page, count: number): Promise<void> {
   await page.evaluate(count => new Promise<void>(resolve => {
     const onRaf = () => {
       --count;
-      if (!count)
+      if (!count) {
         resolve();
-      else
+      } else {
         window.builtinRequestAnimationFrame(onRaf);
+      }
     };
     window.builtinRequestAnimationFrame(onRaf);
   }), count);

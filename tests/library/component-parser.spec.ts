@@ -22,8 +22,9 @@ const parse = (selector: string) => parseAttributeSelector(selector, false);
 const serialize = (parsed: AttributeSelector) => {
   return parsed.name + parsed.attributes.map(attr => {
     const path = attr.jsonPath.map(token => /^[a-zA-Z0-9]+$/i.test(token) ? token : JSON.stringify(token)).join('.');
-    if (attr.op === '<truthy>')
+    if (attr.op === '<truthy>') {
       return '[' + path + ']';
+    }
     const value = attr.value instanceof RegExp ? attr.value.toString() : JSON.stringify(attr.value);
     return '[' + path + ' ' + attr.op + ' ' + value + (attr.caseSensitive ? ']' : ' i]');
   }).join('');

@@ -38,8 +38,9 @@ async function globalSetup() {
     const build = async (buildTarget: string, pkgNameOverride?: string) => {
       const outPath = path.resolve(path.join(outputDir, `${buildTarget}.tgz`));
       const { code, stderr, stdout } = await spawnAsync('node', [PACKAGE_BUILDER_SCRIPT, buildTarget, outPath]);
-      if (!!code)
+      if (!!code) {
         throw new Error(`Failed to build: ${buildTarget}:\n${stderr}\n${stdout}`);
+      }
       console.log('Built:', pkgNameOverride || buildTarget);
       return [pkgNameOverride || buildTarget, outPath];
     };
@@ -61,11 +62,13 @@ async function globalSetup() {
     const buildPlaywrightTestPlugin = async () => {
       const cwd = path.resolve(path.join(__dirname, `playwright-test-plugin`));
       const tscResult = await spawnAsync('npx', ['tsc', '-p', 'tsconfig.json'], { cwd, shell: process.platform === 'win32' });
-      if (tscResult.code)
+      if (tscResult.code) {
         throw new Error(`Failed to build playwright-test-plugin:\n${tscResult.stderr}\n${tscResult.stdout}`);
+      }
       const packResult = await spawnAsync('npm', ['pack'], { cwd, shell: process.platform === 'win32' });
-      if (packResult.code)
+      if (packResult.code) {
         throw new Error(`Failed to build playwright-test-plugin:\n${packResult.stderr}\n${packResult.stdout}`);
+      }
       const tgzName = packResult.stdout.trim();
       const outPath = path.resolve(path.join(outputDir, `playwright-test-plugin.tgz`));
       await fs.promises.rename(path.join(cwd, tgzName), outPath);

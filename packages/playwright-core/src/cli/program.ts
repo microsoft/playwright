@@ -82,42 +82,50 @@ function suggestedBrowsersToInstall() {
 
 function defaultBrowsersToInstall(options: { noShell?: boolean, onlyShell?: boolean }): Executable[] {
   let executables = registry.defaultExecutables();
-  if (options.noShell)
+  if (options.noShell) {
     executables = executables.filter(e => e.name !== 'chromium-headless-shell');
-  if (options.onlyShell)
+  }
+  if (options.onlyShell) {
     executables = executables.filter(e => e.name !== 'chromium');
+  }
   return executables;
 }
 
 function checkBrowsersToInstall(args: string[], options: { noShell?: boolean, onlyShell?: boolean }): Executable[] {
-  if (options.noShell && options.onlyShell)
+  if (options.noShell && options.onlyShell) {
     throw new Error(`Only one of --no-shell and --only-shell can be specified`);
+  }
 
   const faultyArguments: string[] = [];
   const executables: Executable[] = [];
   const handleArgument = (arg: string) => {
     const executable = registry.findExecutable(arg);
-    if (!executable || executable.installType === 'none')
+    if (!executable || executable.installType === 'none') {
       faultyArguments.push(arg);
-    else
+    } else {
       executables.push(executable);
-    if (executable?.browserName === 'chromium')
+    }
+    if (executable?.browserName === 'chromium') {
       executables.push(registry.findExecutable('ffmpeg')!);
+    }
   };
 
   for (const arg of args) {
     if (arg === 'chromium') {
-      if (!options.onlyShell)
+      if (!options.onlyShell) {
         handleArgument('chromium');
-      if (!options.noShell)
+      }
+      if (!options.noShell) {
         handleArgument('chromium-headless-shell');
+      }
     } else {
       handleArgument(arg);
     }
   }
 
-  if (faultyArguments.length)
+  if (faultyArguments.length) {
     throw new Error(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${suggestedBrowsersToInstall()}`);
+  }
   return executables;
 }
 
@@ -132,8 +140,9 @@ program
     .option('--no-shell', 'do not install chromium headless shell')
     .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
       // For '--no-shell' option, commander sets `shell: false` instead.
-      if (options.shell === false)
+      if (options.shell === false) {
         options.noShell = true;
+      }
       if (isLikelyNpxGlobal()) {
         console.error(wrapInASCIIBox([
           `WARNING: It looks like you are running 'npx playwright install' without first`,
@@ -157,8 +166,9 @@ program
       try {
         const hasNoArguments = !args.length;
         const executables = hasNoArguments ? defaultBrowsersToInstall(options) : checkBrowsersToInstall(args, options);
-        if (options.withDeps)
+        if (options.withDeps) {
           await registry.installDeps(executables, !!options.dryRun);
+        }
         if (options.dryRun) {
           for (const executable of executables) {
             const version = executable.browserVersion ? `version ` + executable.browserVersion : '';
@@ -167,8 +177,9 @@ program
             if (executable.downloadURLs?.length) {
               const [url, ...fallbacks] = executable.downloadURLs;
               console.log(`  Download url:        ${url}`);
-              for (let i = 0; i < fallbacks.length; ++i)
+              for (let i = 0; i < fallbacks.length; ++i) {
                 console.log(`  Download fallback ${i + 1}: ${fallbacks[i]}`);
+              }
             }
             console.log(``);
           }
@@ -213,10 +224,11 @@ program
     .option('--dry-run', 'Do not execute installation commands, only print them')
     .action(async function(args: string[], options: { dryRun?: boolean }) {
       try {
-        if (!args.length)
+        if (!args.length) {
           await registry.installDeps(defaultBrowsersToInstall({}), !!options.dryRun);
-        else
+        } else {
           await registry.installDeps(checkBrowsersToInstall(args, {}), !!options.dryRun);
+        }
       } catch (e) {
         console.log(`Failed to install browser dependencies\n${e}`);
         gracefullyProcessExitDoNotHang(1);
@@ -313,12 +325,15 @@ program
     .option('--stdin', 'Accept trace URLs over stdin to update the viewer')
     .description('show trace viewer')
     .action(function(traces, options) {
-      if (options.browser === 'cr')
+      if (options.browser === 'cr') {
         options.browser = 'chromium';
-      if (options.browser === 'ff')
+      }
+      if (options.browser === 'ff') {
         options.browser = 'firefox';
-      if (options.browser === 'wk')
+      }
+      if (options.browser === 'wk') {
         options.browser = 'webkit';
+      }
 
       const openOptions: TraceViewerServerOptions = {
         host: options.host,
@@ -326,10 +341,11 @@ program
         isServer: !!options.stdin,
       };
 
-      if (options.port !== undefined || options.host !== undefined)
+      if (options.port !== undefined || options.host !== undefined) {
         runTraceInBrowser(traces, openOptions).catch(logErrorAndExit);
-      else
+      } else {
         runTraceViewerApp(traces, options.browser, openOptions, true).catch(logErrorAndExit);
+      }
     }).addHelpText('afterAll', `
 Examples:
 
@@ -367,8 +383,9 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   validateOptions(options);
   const browserType = lookupBrowserType(options);
   const launchOptions: LaunchOptions = extraOptions;
-  if (options.channel)
+  if (options.channel) {
     launchOptions.channel = options.channel as any;
+  }
   launchOptions.handleSIGINT = false;
 
   const contextOptions: BrowserContextOptions =
@@ -378,8 +395,9 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   // In headful mode, use host device scale factor for things to look nice.
   // In headless, keep things the way it works in Playwright by default.
   // Assume high-dpi on MacOS. TODO: this is not perfect.
-  if (!extraOptions.headless)
+  if (!extraOptions.headless) {
     contextOptions.deviceScaleFactor = os.platform() === 'darwin' ? 2 : 1;
+  }
 
   // Work around the WebKit GTK scrolling issue.
   if (browserType.name() === 'webkit' && process.platform === 'linux') {
@@ -387,11 +405,13 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     delete contextOptions.isMobile;
   }
 
-  if (contextOptions.isMobile && browserType.name() === 'firefox')
+  if (contextOptions.isMobile && browserType.name() === 'firefox') {
     contextOptions.isMobile = undefined;
+  }
 
-  if (options.blockServiceWorkers)
+  if (options.blockServiceWorkers) {
     contextOptions.serviceWorkers = 'block';
+  }
 
   // Proxy
 
@@ -399,8 +419,9 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     launchOptions.proxy = {
       server: options.proxyServer
     };
-    if (options.proxyBypass)
+    if (options.proxyBypass) {
       launchOptions.proxy.bypass = options.proxyBypass;
+    }
   }
 
   const browser = await browserType.launch(launchOptions);
@@ -411,8 +432,9 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
       process.stdout.write(text);
       process.stdout.write('\n-------------8<-------------\n');
       const autoExitCondition = process.env.PWTEST_CLI_AUTO_EXIT_WHEN;
-      if (autoExitCondition && text.includes(autoExitCondition))
+      if (autoExitCondition && text.includes(autoExitCondition)) {
         closeBrowser();
+      }
     };
     // Make sure we exit abnormally when browser crashes.
     const logs: string[] = [];
@@ -434,8 +456,9 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   if (options.viewportSize) {
     try {
       const [width, height] = options.viewportSize.split(',').map(n => +n);
-      if (isNaN(width) || isNaN(height))
+      if (isNaN(width) || isNaN(height)) {
         throw new Error('bad values');
+      }
       contextOptions.viewport = { width, height };
     } catch (e) {
       throw new Error('Invalid viewport size format: use "width,height", for example --viewport-size="800,600"');
@@ -459,38 +482,45 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
 
   // User agent
 
-  if (options.userAgent)
+  if (options.userAgent) {
     contextOptions.userAgent = options.userAgent;
+  }
 
   // Lang
 
-  if (options.lang)
+  if (options.lang) {
     contextOptions.locale = options.lang;
+  }
 
   // Color scheme
 
-  if (options.colorScheme)
+  if (options.colorScheme) {
     contextOptions.colorScheme = options.colorScheme as 'dark' | 'light';
+  }
 
   // Timezone
 
-  if (options.timezone)
+  if (options.timezone) {
     contextOptions.timezoneId = options.timezone;
+  }
 
   // Storage
 
-  if (options.loadStorage)
+  if (options.loadStorage) {
     contextOptions.storageState = options.loadStorage;
+  }
 
-  if (options.ignoreHttpsErrors)
+  if (options.ignoreHttpsErrors) {
     contextOptions.ignoreHTTPSErrors = true;
+  }
 
   // HAR
 
   if (options.saveHar) {
     contextOptions.recordHar = { path: path.resolve(process.cwd(), options.saveHar), mode: 'minimal' };
-    if (options.saveHarGlob)
+    if (options.saveHarGlob) {
       contextOptions.recordHar.urlFilter = options.saveHarGlob;
+    }
     contextOptions.serviceWorkers = 'block';
   }
 
@@ -502,15 +532,19 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   async function closeBrowser() {
     // We can come here multiple times. For example, saving storage creates
     // a temporary page and we call closeBrowser again when that page closes.
-    if (closingBrowser)
+    if (closingBrowser) {
       return;
+    }
     closingBrowser = true;
-    if (options.saveTrace)
+    if (options.saveTrace) {
       await context.tracing.stop({ path: options.saveTrace });
-    if (options.saveStorage)
+    }
+    if (options.saveStorage) {
       await context.storageState({ path: options.saveStorage }).catch(e => null);
-    if (options.saveHar)
+    }
+    if (options.saveHar) {
       await context.close();
+    }
     await browser.close();
   }
 
@@ -518,8 +552,9 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     page.on('dialog', () => {});  // Prevent dialogs from being automatically dismissed.
     page.on('close', () => {
       const hasPage = browser.contexts().some(context => context.pages().length > 0);
-      if (hasPage)
+      if (hasPage) {
         return;
+      }
       // Avoid the error when the last page is closed because the browser has been closed.
       closeBrowser().catch(() => {});
     });
@@ -533,8 +568,9 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   context.setDefaultTimeout(timeout);
   context.setDefaultNavigationTimeout(timeout);
 
-  if (options.saveTrace)
+  if (options.saveTrace) {
     await context.tracing.start({ screenshots: true, snapshots: true });
+  }
 
   // Omit options that we add automatically for presentation purpose.
   delete launchOptions.headless;
@@ -547,10 +583,11 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
 async function openPage(context: BrowserContext, url: string | undefined): Promise<Page> {
   const page = await context.newPage();
   if (url) {
-    if (fs.existsSync(url))
+    if (fs.existsSync(url)) {
       url = 'file://' + path.resolve(url);
-    else if (!url.startsWith('http') && !url.startsWith('file://') && !url.startsWith('about:') && !url.startsWith('data:'))
+    } else if (!url.startsWith('http') && !url.startsWith('file://') && !url.startsWith('about:') && !url.startsWith('data:')) {
       url = 'http://' + url;
+    }
     await page.goto(url).catch(error => {
       if (process.env.PWTEST_CLI_AUTO_EXIT_WHEN && isTargetClosedError(error)) {
         // Tests with PWTEST_CLI_AUTO_EXIT_WHEN might close page too fast, resulting
@@ -623,8 +660,9 @@ async function screenshot(options: Options, captureOptions: CaptureOptions, url:
 }
 
 async function pdf(options: Options, captureOptions: CaptureOptions, url: string, path: string) {
-  if (options.browser !== 'chromium')
+  if (options.browser !== 'chromium') {
     throw new Error('PDF creation is only working with Chromium');
+  }
   const { context } = await launchContext({ ...options, browser: 'chromium' }, { headless: true });
   console.log('Navigating to ' + url);
   const page = await openPage(context, url);
@@ -650,27 +688,31 @@ function lookupBrowserType(options: Options): BrowserType {
     case 'wk': browserType = playwright.webkit; break;
     case 'ff': browserType = playwright.firefox; break;
   }
-  if (browserType)
+  if (browserType) {
     return browserType;
+  }
   program.help();
 }
 
 function validateOptions(options: Options) {
   if (options.device && !(options.device in playwright.devices)) {
     const lines = [`Device descriptor not found: '${options.device}', available devices are:`];
-    for (const name in playwright.devices)
+    for (const name in playwright.devices) {
       lines.push(`  "${name}"`);
+    }
     throw new Error(lines.join('\n'));
   }
-  if (options.colorScheme && !['light', 'dark'].includes(options.colorScheme))
+  if (options.colorScheme && !['light', 'dark'].includes(options.colorScheme)) {
     throw new Error('Invalid color scheme, should be one of "light", "dark"');
+  }
 }
 
 function logErrorAndExit(e: Error) {
-  if (process.env.PWDEBUGIMPL)
+  if (process.env.PWDEBUGIMPL) {
     console.error(e);
-  else
+  } else {
     console.error(e.name + ': ' + e.message);
+  }
   gracefullyProcessExitDoNotHang(1);
 }
 
@@ -680,8 +722,9 @@ function codegenId(): string {
 
 function commandWithOpenOptions(command: string, description: string, options: any[][]): Command {
   let result = program.command(command).description(description);
-  for (const option of options)
+  for (const option of options) {
     result = result.option(option[0], ...option.slice(1));
+  }
   return result
       .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
       .option('--block-service-workers', 'block service workers')

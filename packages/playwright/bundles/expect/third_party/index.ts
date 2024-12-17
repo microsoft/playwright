@@ -85,21 +85,23 @@ const createToThrowErrorMatchingSnapshotMatcher = function(
 };
 
 const getPromiseMatcher = (name: string, matcher: RawMatcherFn) => {
-  if (name === 'toThrow' || name === 'toThrowError')
+  if (name === 'toThrow' || name === 'toThrowError') {
     return createThrowMatcher(name, true);
-  else if (
+  } else if (
     name === 'toThrowErrorMatchingSnapshot' ||
     name === 'toThrowErrorMatchingInlineSnapshot'
-  )
+  ) {
     return createToThrowErrorMatchingSnapshotMatcher(matcher);
+  }
 
 
   return null;
 };
 
 export const expect: Expect = (actual: any, ...rest: Array<any>) => {
-  if (rest.length !== 0)
+  if (rest.length !== 0) {
     throw new Error('Expect takes at most one argument.');
+  }
 
 
   const allMatchers = getMatchers();
@@ -321,8 +323,9 @@ const makeThrowingMatcher = (
 
           // Try to remove this function from the stack trace frame.
           // Guard for some environments (browsers) that do not support this feature.
-          if (Error.captureStackTrace)
+          if (Error.captureStackTrace) {
             Error.captureStackTrace(error, throwingMatcher);
+          }
 
         }
         // Passing the result of the matcher with the error so that a custom
@@ -330,10 +333,11 @@ const makeThrowingMatcher = (
         // for example in order to display a custom visual diff
         error.matcherResult = { ...result, message };
 
-        if (throws)
+        if (throws) {
           throw error;
-        else
+        } else {
           getState().suppressedErrors.push(error);
+        }
 
       } else {
         getState().numPassingAsserts++;
@@ -369,8 +373,9 @@ const makeThrowingMatcher = (
 
       if (isPromise(potentialResult)) {
         const asyncError = new JestAssertionError();
-        if (Error.captureStackTrace)
+        if (Error.captureStackTrace) {
           Error.captureStackTrace(asyncError, throwingMatcher);
+        }
 
 
         return potentialResult
@@ -427,8 +432,9 @@ const _validateResult = (result: any) => {
 
 function assertions(expected: number): void {
   const error = new Error();
-  if (Error.captureStackTrace)
+  if (Error.captureStackTrace) {
     Error.captureStackTrace(error, assertions);
+  }
 
 
   setState({
@@ -438,8 +444,9 @@ function assertions(expected: number): void {
 }
 function hasAssertions(...args: Array<unknown>): void {
   const error = new Error();
-  if (Error.captureStackTrace)
+  if (Error.captureStackTrace) {
     Error.captureStackTrace(error, hasAssertions);
+  }
 
 
   matcherUtils.ensureNoExpected(args[0], '.hasAssertions');

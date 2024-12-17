@@ -45,8 +45,9 @@ export const TestFilesView: React.FC<{
         projectNames={projectNames}
         isFileExpanded={fileId => {
           const value = expandedFiles.get(fileId);
-          if (value === undefined)
+          if (value === undefined) {
             return defaultExpanded;
+          }
           return !!value;
         }}
         setFileExpanded={(fileId, expanded) => {
@@ -63,8 +64,9 @@ export const TestFilesHeader: React.FC<{
   report: HTMLReport | undefined,
   filteredStats?: FilteredStats,
 }> = ({ report, filteredStats }) => {
-  if (!report)
+  if (!report) {
     return;
+  }
   return <>
     <div className='mt-2 mx-1' style={{ display: 'flex' }}>
       {report.projectNames.length === 1 && !!report.projectNames[0] && <div data-testid='project-name' style={{ color: 'var(--color-fg-subtle)' }}>Project: {report.projectNames[0]}</div>}

@@ -36,8 +36,9 @@ function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiffWithAnchors
   const snapshotNameToImageDiff = new Map<string, ImageDiffWithAnchors>();
   for (const attachment of screenshots) {
     const match = attachment.name.match(/^(.*)-(expected|actual|diff|previous)(\.[^.]+)?$/);
-    if (!match)
+    if (!match) {
       continue;
+    }
     const [, name, category, extension = ''] = match;
     const snapshotName = name + extension;
     let imageDiff = snapshotNameToImageDiff.get(snapshotName);
@@ -46,14 +47,18 @@ function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiffWithAnchors
       snapshotNameToImageDiff.set(snapshotName, imageDiff);
     }
     imageDiff.anchors.push(`attachment-${attachment.name}`);
-    if (category === 'actual')
+    if (category === 'actual') {
       imageDiff.actual = { attachment };
-    if (category === 'expected')
+    }
+    if (category === 'expected') {
       imageDiff.expected = { attachment, title: 'Expected' };
-    if (category === 'previous')
+    }
+    if (category === 'previous') {
       imageDiff.expected = { attachment, title: 'Previous' };
-    if (category === 'diff')
+    }
+    if (category === 'diff') {
       imageDiff.diff = { attachment };
+    }
   }
   for (const [name, diff] of snapshotNameToImageDiff) {
     if (!diff.actual || !diff.expected) {
@@ -88,8 +93,9 @@ export const TestResultView: React.FC<{
   return <div className='test-result'>
     {!!errors.length && <AutoChip header='Errors'>
       {errors.map((error, index) => {
-        if (error.type === 'screenshot')
+        if (error.type === 'screenshot') {
           return <TestScreenshotErrorView key={'test-result-error-message-' + index} errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
+        }
         return <TestErrorView key={'test-result-error-message-' + index} error={error.error!}></TestErrorView>;
       })}
     </AutoChip>}
@@ -177,15 +183,18 @@ const StepTreeItem: React.FC<{
   const attachmentName = step.title.match(/^attach "(.*)"$/)?.[1];
   return <TreeItem title={<span aria-label={step.title}>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
-    {attachmentName && <a style={{ float: 'right' }} title='link to attachment' href={testResultHref({ test, result, anchor: `attachment-${attachmentName}` })} onClick={evt => { evt.stopPropagation(); }}>{icons.attachment()}</a>}
+    {attachmentName && <a style={{ float: 'right' }} title='link to attachment' href={testResultHref({ test, result, anchor: `attachment-${attachmentName}` })} onClick={evt => {
+      evt.stopPropagation();
+    }}>{icons.attachment()}</a>}
     {statusIcon(step.error || step.duration === -1 ? 'failed' : 'passed')}
     <span>{step.title}</span>
     {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
     {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
   </span>} loadChildren={step.steps.length + (step.snippet ? 1 : 0) ? () => {
     const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} result={result} test={test} />);
-    if (step.snippet)
+    if (step.snippet) {
       children.unshift(<TestErrorView testId='test-snippet' key='line' error={step.snippet}/>);
+    }
     return children;
   } : undefined} depth={depth}/>;
 };

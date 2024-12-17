@@ -39,10 +39,12 @@ class ExpectationReporter implements Reporter {
   }
 
   onEnd(result: FullResult) {
-    if (!this._options.rebase)
+    if (!this._options.rebase) {
       return;
-    for (const project of this._suite.suites)
+    }
+    for (const project of this._suite.suites) {
       this._pendingUpdates.push(this._updateProjectExpectations(project));
+    }
   }
 
   async onExit() {
@@ -57,8 +59,9 @@ class ExpectationReporter implements Reporter {
       // Strip root and project names.
       const key = test.titlePath().slice(2).join(' › ');
       if (!expectations.has(key) || expectations.get(key) === 'unknown' ||
-          (expectations.get(key) === 'fail' && outcome === 'pass'))
+          (expectations.get(key) === 'fail' && outcome === 'pass')) {
         expectations.set(key, outcome);
+      }
     }
     const keys = Array.from(expectations.keys());
     keys.sort();
@@ -73,16 +76,21 @@ class ExpectationReporter implements Reporter {
 }
 
 function getOutcome(test: TestCase): TestExpectation {
-  if (test.results.length === 0)
+  if (test.results.length === 0) {
     return 'unknown';
-  if (test.results.every(r => r.status === 'timedOut'))
+  }
+  if (test.results.every(r => r.status === 'timedOut')) {
     return 'timeout';
-  if (test.outcome() === 'expected')
+  }
+  if (test.outcome() === 'expected') {
     return 'pass';
-  if (test.outcome() === 'unexpected')
+  }
+  if (test.outcome() === 'unexpected') {
     return 'fail';
-  if (test.outcome() === 'flaky')
+  }
+  if (test.outcome() === 'flaky') {
     return 'flaky';
+  }
   return 'unknown';
 }
 

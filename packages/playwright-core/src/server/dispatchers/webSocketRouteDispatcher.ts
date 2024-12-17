@@ -43,12 +43,14 @@ export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, chann
         // When the frame navigates or detaches, there will be no more communication
         // from the mock websocket, so pretend like it was closed.
         eventsHelper.addEventListener(frame._page, Page.Events.InternalFrameNavigatedToNewDocument, (frame: Frame) => {
-          if (frame === this._frame)
+          if (frame === this._frame) {
             this._executionContextGone();
+          }
         }),
         eventsHelper.addEventListener(frame._page, Page.Events.FrameDetached, (frame: Frame) => {
-          if (frame === this._frame)
+          if (frame === this._frame) {
             this._executionContextGone();
+          }
         }),
         eventsHelper.addEventListener(frame._page, Page.Events.Close, () => this._executionContextGone()),
         eventsHelper.addEventListener(frame._page, Page.Events.Crash, () => this._executionContextGone()),
@@ -66,10 +68,11 @@ export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, chann
         if (payload.type === 'onCreate') {
           const pageDispatcher = PageDispatcher.fromNullable(contextDispatcher, source.page);
           let scope: PageDispatcher | BrowserContextDispatcher | undefined;
-          if (pageDispatcher && matchesPattern(pageDispatcher, context._options.baseURL, payload.url))
+          if (pageDispatcher && matchesPattern(pageDispatcher, context._options.baseURL, payload.url)) {
             scope = pageDispatcher;
-          else if (matchesPattern(contextDispatcher, context._options.baseURL, payload.url))
+          } else if (matchesPattern(contextDispatcher, context._options.baseURL, payload.url)) {
             scope = contextDispatcher;
+          }
           if (scope) {
             new WebSocketRouteDispatcher(scope, payload.id, payload.url, source.frame);
           } else {
@@ -80,14 +83,18 @@ export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, chann
         }
 
         const dispatcher = WebSocketRouteDispatcher._idToDispatcher.get(payload.id);
-        if (payload.type === 'onMessageFromPage')
+        if (payload.type === 'onMessageFromPage') {
           dispatcher?._dispatchEvent('messageFromPage', { message: payload.data.data, isBase64: payload.data.isBase64 });
-        if (payload.type === 'onMessageFromServer')
+        }
+        if (payload.type === 'onMessageFromServer') {
           dispatcher?._dispatchEvent('messageFromServer', { message: payload.data.data, isBase64: payload.data.isBase64 });
-        if (payload.type === 'onClosePage')
+        }
+        if (payload.type === 'onClosePage') {
           dispatcher?._dispatchEvent('closePage', { code: payload.code, reason: payload.reason, wasClean: payload.wasClean });
-        if (payload.type === 'onCloseServer')
+        }
+        if (payload.type === 'onCloseServer') {
           dispatcher?._dispatchEvent('closeServer', { code: payload.code, reason: payload.reason, wasClean: payload.wasClean });
+        }
       });
     }
 
@@ -149,8 +156,9 @@ export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, chann
 function matchesPattern(dispatcher: PageDispatcher | BrowserContextDispatcher, baseURL: string | undefined, url: string) {
   for (const pattern of dispatcher._webSocketInterceptionPatterns || []) {
     const urlMatch = pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags) : pattern.glob;
-    if (urlMatches(baseURL, url, urlMatch))
+    if (urlMatches(baseURL, url, urlMatch)) {
       return true;
+    }
   }
   return false;
 }

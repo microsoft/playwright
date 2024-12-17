@@ -104,15 +104,16 @@ const matchers: MatchersObject = {
                 [...this.customTesters, ...toStrictEqualTesters],
                 true,
             )
-          )
+          ) {
             deepEqualityName = 'toStrictEqual';
-          else if (
+          } else if (
             equals(received, expected, [
               ...this.customTesters,
               iterableEquality,
             ])
-          )
+          ) {
             deepEqualityName = 'toEqual';
+          }
 
         }
 

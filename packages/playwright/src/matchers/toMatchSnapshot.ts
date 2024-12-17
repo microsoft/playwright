@@ -155,8 +155,9 @@ class SnapshotHelper {
     this.diffPath = addSuffixToFilePath(outputBasePath, '-diff');
 
     const filteredConfigOptions = { ...configOptions };
-    for (const prop of NonConfigProperties)
+    for (const prop of NonConfigProperties) {
       delete (filteredConfigOptions as any)[prop];
+    }
     this.options = {
       ...filteredConfigOptions,
       ...this.options,
@@ -168,11 +169,13 @@ class SnapshotHelper {
       delete (this.options as any)._comparator;
     }
 
-    if (this.options.maxDiffPixels !== undefined && this.options.maxDiffPixels < 0)
+    if (this.options.maxDiffPixels !== undefined && this.options.maxDiffPixels < 0) {
       throw new Error('`maxDiffPixels` option value must be non-negative integer');
+    }
 
-    if (this.options.maxDiffPixelRatio !== undefined && (this.options.maxDiffPixelRatio < 0 || this.options.maxDiffPixelRatio > 1))
+    if (this.options.maxDiffPixelRatio !== undefined && (this.options.maxDiffPixelRatio < 0 || this.options.maxDiffPixelRatio > 1)) {
       throw new Error('`maxDiffPixelRatio` option value must be between 0 and 1');
+    }
 
     this.matcherName = matcherName;
     this.locator = locator;
@@ -222,8 +225,9 @@ class SnapshotHelper {
 
   handleMissing(actual: Buffer | string): ImageMatcherResult {
     const isWriteMissingMode = this.updateSnapshots !== 'none';
-    if (isWriteMissingMode)
+    if (isWriteMissingMode) {
       writeFileSync(this.expectedPath, actual);
+    }
     this.testInfo.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
     writeFileSync(this.actualPath, actual);
     this.testInfo.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
@@ -273,10 +277,11 @@ class SnapshotHelper {
       output.push(`    Diff: ${colors.yellow(this.diffPath)}`);
     }
 
-    if (log?.length)
+    if (log?.length) {
       output.push(callLogText(log));
-    else
+    } else {
       output.push('');
+    }
 
     return this.createMatcherResult(output.join('\n'), false, log);
   }
@@ -293,13 +298,16 @@ export function toMatchSnapshot(
   optOptions: ImageComparatorOptions = {}
 ): MatcherResult<NameOrSegments | { name?: NameOrSegments }, string> {
   const testInfo = currentTestInfo();
-  if (!testInfo)
+  if (!testInfo) {
     throw new Error(`toMatchSnapshot() must be called during the test`);
-  if (received instanceof Promise)
+  }
+  if (received instanceof Promise) {
     throw new Error('An unresolved Promise was passed to toMatchSnapshot(), make sure to resolve it by adding await to it.');
+  }
 
-  if (testInfo._projectInternal.ignoreSnapshots)
+  if (testInfo._projectInternal.ignoreSnapshots) {
     return { pass: !this.isNot, message: () => '', name: 'toMatchSnapshot', expected: nameOrOptions };
+  }
 
   const configOptions = testInfo._projectInternal.expect?.toMatchSnapshot || {};
   const helper = new SnapshotHelper(
@@ -307,20 +315,23 @@ export function toMatchSnapshot(
       configOptions, nameOrOptions, optOptions);
 
   if (this.isNot) {
-    if (!fs.existsSync(helper.expectedPath))
+    if (!fs.existsSync(helper.expectedPath)) {
       return helper.handleMissingNegated();
+    }
     const isDifferent = !!helper.comparator(received, fs.readFileSync(helper.expectedPath), helper.options);
     return isDifferent ? helper.handleDifferentNegated() : helper.handleMatchingNegated();
   }
 
-  if (!fs.existsSync(helper.expectedPath))
+  if (!fs.existsSync(helper.expectedPath)) {
     return helper.handleMissing(received);
+  }
 
   const expected = fs.readFileSync(helper.expectedPath);
 
   if (helper.updateSnapshots === 'all') {
-    if (!compareBuffersOrStrings(received, expected))
+    if (!compareBuffersOrStrings(received, expected)) {
       return helper.handleMatching();
+    }
     writeFileSync(helper.expectedPath, received);
     /* eslint-disable no-console */
     console.log(helper.expectedPath + ' is not the same, writing actual.');
@@ -329,8 +340,9 @@ export function toMatchSnapshot(
 
   if (helper.updateSnapshots === 'changed') {
     const result = helper.comparator(received, expected, helper.options);
-    if (!result)
+    if (!result) {
       return helper.handleMatching();
+    }
     writeFileSync(helper.expectedPath, received);
     /* eslint-disable no-console */
     console.log(helper.expectedPath + ' does not match, writing actual.');
@@ -338,8 +350,9 @@ export function toMatchSnapshot(
   }
 
   const result = helper.comparator(received, expected, helper.options);
-  if (!result)
+  if (!result) {
     return helper.handleMatching();
+  }
 
   const receiver = isString(received) ? 'string' : 'Buffer';
   const header = matcherHint(this, undefined, 'toMatchSnapshot', receiver, undefined, undefined);
@@ -351,10 +364,11 @@ export function toHaveScreenshotStepTitle(
   optOptions: ToHaveScreenshotOptions = {}
 ): string {
   let name: NameOrSegments | undefined;
-  if (typeof nameOrOptions === 'object' && !Array.isArray(nameOrOptions))
+  if (typeof nameOrOptions === 'object' && !Array.isArray(nameOrOptions)) {
     name = nameOrOptions.name;
-  else
+  } else {
     name = nameOrOptions;
+  }
   return Array.isArray(name) ? name.join(path.sep) : name || '';
 }
 
@@ -365,18 +379,21 @@ export async function toHaveScreenshot(
   optOptions: ToHaveScreenshotOptions = {}
 ): Promise<MatcherResult<NameOrSegments | { name?: NameOrSegments }, string>> {
   const testInfo = currentTestInfo();
-  if (!testInfo)
+  if (!testInfo) {
     throw new Error(`toHaveScreenshot() must be called during the test`);
+  }
 
-  if (testInfo._projectInternal.ignoreSnapshots)
+  if (testInfo._projectInternal.ignoreSnapshots) {
     return { pass: !this.isNot, message: () => '', name: 'toHaveScreenshot', expected: nameOrOptions };
+  }
 
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as Locator];
   const configOptions = testInfo._projectInternal.expect?.toHaveScreenshot || {};
   const helper = new SnapshotHelper(testInfo, 'toHaveScreenshot', locator, 'png', configOptions, nameOrOptions, optOptions);
-  if (!helper.expectedPath.toLowerCase().endsWith('.png'))
+  if (!helper.expectedPath.toLowerCase().endsWith('.png')) {
     throw new Error(`Screenshot name "${path.basename(helper.expectedPath)}" must have '.png' extension`);
+  }
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
   const style = await loadScreenshotStyles(helper.options.stylePath);
   const timeout = helper.options.timeout ?? this.timeout;
@@ -401,8 +418,9 @@ export async function toHaveScreenshot(
 
   const hasSnapshot = fs.existsSync(helper.expectedPath);
   if (this.isNot) {
-    if (!hasSnapshot)
+    if (!hasSnapshot) {
       return helper.handleMissingNegated();
+    }
 
     // Having `errorMessage` means we timed out while waiting
     // for screenshots not to match, so screenshots
@@ -413,8 +431,9 @@ export async function toHaveScreenshot(
   }
 
   // Fast path: there's no screenshot and we don't intend to update it.
-  if (helper.updateSnapshots === 'none' && !hasSnapshot)
+  if (helper.updateSnapshots === 'none' && !hasSnapshot) {
     return helper.createMatcherResult(`A snapshot doesn't exist at ${helper.expectedPath}.`, false);
+  }
 
   const receiver = locator ? 'locator' : 'page';
   if (!hasSnapshot) {
@@ -455,8 +474,9 @@ export async function toHaveScreenshot(
     return helper.handleMatching();
   }
 
-  if (helper.updateSnapshots === 'changed' || helper.updateSnapshots === 'all')
+  if (helper.updateSnapshots === 'changed' || helper.updateSnapshots === 'all') {
     return writeFiles();
+  }
 
   const header = matcherHint(this, undefined, 'toHaveScreenshot', receiver, undefined, undefined, timedOut ? timeout : undefined);
   return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log);
@@ -472,12 +492,15 @@ function indent(lines: string, tab: string) {
 }
 
 function determineFileExtension(file: string | Buffer): string {
-  if (typeof file === 'string')
+  if (typeof file === 'string') {
     return 'txt';
-  if (compareMagicBytes(file, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+  }
+  if (compareMagicBytes(file, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
     return 'png';
-  if (compareMagicBytes(file, [0xff, 0xd8, 0xff]))
+  }
+  if (compareMagicBytes(file, [0xff, 0xd8, 0xff])) {
     return 'jpg';
+  }
   return 'dat';
 }
 
@@ -486,8 +509,9 @@ function compareMagicBytes(file: Buffer, magicBytes: number[]): boolean {
 }
 
 async function loadScreenshotStyles(stylePath?: string | string[]): Promise<string | undefined> {
-  if (!stylePath)
+  if (!stylePath) {
     return;
+  }
 
   const stylePaths = Array.isArray(stylePath) ? stylePath : [stylePath];
   const styles = await Promise.all(stylePaths.map(async stylePath => {

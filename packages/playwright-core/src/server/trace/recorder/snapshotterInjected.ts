@@ -33,8 +33,9 @@ export type SnapshotData = {
 
 export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: boolean) {
   // Communication with Playwright.
-  if ((window as any)[snapshotStreamer])
+  if ((window as any)[snapshotStreamer]) {
     return;
+  }
 
   // Attributes present in the snapshot.
   const kShadowAttribute = '__playwright_shadow_root_';
@@ -67,8 +68,9 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
   }
 
   function ensureCachedData(obj: any): CachedData {
-    if (!obj[kCachedData])
+    if (!obj[kCachedData]) {
       obj[kCachedData] = {};
+    }
     return obj[kCachedData];
   }
 
@@ -91,8 +93,9 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
 
     constructor() {
       const invalidateCSSGroupingRule = (rule: CSSGroupingRule) => {
-        if (rule.parentStyleSheet)
+        if (rule.parentStyleSheet) {
           this._invalidateStyleSheet(rule.parentStyleSheet);
+        }
       };
       this._interceptNativeMethod(window.CSSStyleSheet.prototype, 'insertRule', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
       this._interceptNativeMethod(window.CSSStyleSheet.prototype, 'deleteRule', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
@@ -142,24 +145,28 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
 
     private _refreshListeners() {
       (document as any).addEventListener('__playwright_mark_target__', (event: CustomEvent) => {
-        if (!event.detail)
+        if (!event.detail) {
           return;
+        }
         const callId = event.detail as string;
         (event.composedPath()[0] as any).__playwright_target__ = callId;
       });
       (document as any).addEventListener('__playwright_unmark_target__', (event: CustomEvent) => {
-        if (!event.detail)
+        if (!event.detail) {
           return;
+        }
         const callId = event.detail as string;
-        if ((event.composedPath()[0] as any).__playwright_target__ === callId)
+        if ((event.composedPath()[0] as any).__playwright_target__ === callId) {
           delete (event.composedPath()[0] as any).__playwright_target__;
+        }
       });
     }
 
     private _interceptNativeMethod(obj: any, method: string, cb: (thisObj: any, result: any) => void) {
       const native = obj[method] as Function;
-      if (!native)
+      if (!native) {
         return;
+      }
       obj[method] = function(...args: any[]) {
         const result = native.call(this, ...args);
         cb(this, result);
@@ -169,8 +176,9 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
 
     private _interceptNativeAsyncMethod(obj: any, method: string, cb: (thisObj: any, result: any) => void) {
       const native = obj[method] as Function;
-      if (!native)
+      if (!native) {
         return;
+      }
       obj[method] = async function(...args: any[]) {
         const result = await native.call(this, ...args);
         cb(this, result);
@@ -191,13 +199,15 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
     }
 
     private _handleMutations(list: MutationRecord[]) {
-      for (const mutation of list)
+      for (const mutation of list) {
         ensureCachedData(mutation.target).attributesCached = undefined;
+      }
     }
 
     private _invalidateStyleSheet(sheet: CSSStyleSheet) {
-      if (this._readingStyleSheet)
+      if (this._readingStyleSheet) {
         return;
+      }
       this._staleStyleSheets.add(sheet);
     }
 
@@ -242,37 +252,44 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
         resetCachedData(node);
         if (node.nodeType === Node.ELEMENT_NODE) {
           const element = node as Element;
-          if (element.shadowRoot)
+          if (element.shadowRoot) {
             visitNode(element.shadowRoot);
+          }
         }
-        for (let child = node.firstChild; child; child = child.nextSibling)
+        for (let child = node.firstChild; child; child = child.nextSibling) {
           visitNode(child);
+        }
       };
       visitNode(document.documentElement);
       visitNode(this._fakeBase);
     }
 
     private __sanitizeMetaAttribute(name: string, value: string, httpEquiv: string) {
-      if (name === 'charset')
+      if (name === 'charset') {
         return 'utf-8';
+      }
 
-      if (httpEquiv.toLowerCase() !== 'content-type' || name !== 'content')
+      if (httpEquiv.toLowerCase() !== 'content-type' || name !== 'content') {
         return value;
+      }
 
       const [type, ...params] = value.split(';');
-      if (type !== 'text/html' || params.length <= 0)
+      if (type !== 'text/html' || params.length <= 0) {
         return value;
+      }
 
       const charsetParamIdx = params.findIndex(param => param.trim().startsWith('charset='));
-      if (charsetParamIdx > -1)
+      if (charsetParamIdx > -1) {
         params[charsetParamIdx] = 'charset=utf-8';
+      }
 
       return `${type}; ${params.join('; ')}`;
     }
 
     private _sanitizeUrl(url: string): string {
-      if (url.startsWith('javascript:') || url.startsWith('vbscript:'))
+      if (url.startsWith('javascript:') || url.startsWith('vbscript:')) {
         return '';
+      }
       return url;
     }
 
@@ -280,15 +297,17 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       return srcset.split(',').map(src => {
         src = src.trim();
         const spaceIndex = src.lastIndexOf(' ');
-        if (spaceIndex === -1)
+        if (spaceIndex === -1) {
           return this._sanitizeUrl(src);
+        }
         return this._sanitizeUrl(src.substring(0, spaceIndex).trim()) + src.substring(spaceIndex);
       }).join(', ');
     }
 
     private _resolveUrl(base: string, url: string): string {
-      if (url === '')
+      if (url === '') {
         return '';
+      }
       try {
         return new URL(url, base).href;
       } catch (e) {
@@ -298,10 +317,12 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
 
     private _getSheetBase(sheet: CSSStyleSheet): string {
       let rootSheet = sheet;
-      while (rootSheet.parentStyleSheet)
+      while (rootSheet.parentStyleSheet) {
         rootSheet = rootSheet.parentStyleSheet;
-      if (rootSheet.ownerNode)
+      }
+      if (rootSheet.ownerNode) {
         return rootSheet.ownerNode.baseURI;
+      }
       return document.baseURI;
     }
 
@@ -309,8 +330,9 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       this._readingStyleSheet = true;
       try {
         const rules: string[] = [];
-        for (const rule of sheet.cssRules)
+        for (const rule of sheet.cssRules) {
           rules.push(rule.cssText);
+        }
         return rules.join('\n');
       } finally {
         this._readingStyleSheet = false;
@@ -335,24 +357,30 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
 
         if (nodeType !== Node.ELEMENT_NODE &&
             nodeType !== Node.DOCUMENT_FRAGMENT_NODE &&
-            nodeType !== Node.TEXT_NODE)
+            nodeType !== Node.TEXT_NODE) {
           return;
-        if (nodeName === 'SCRIPT')
+        }
+        if (nodeName === 'SCRIPT') {
           return;
+        }
         // Don't preload resources.
         if (nodeName === 'LINK' && nodeType === Node.ELEMENT_NODE) {
           const rel = (node as Element).getAttribute('rel')?.toLowerCase();
-          if (rel === 'preload' || rel === 'prefetch')
+          if (rel === 'preload' || rel === 'prefetch') {
             return;
+          }
         }
-        if (removeNoScript && nodeName === 'NOSCRIPT')
+        if (removeNoScript && nodeName === 'NOSCRIPT') {
           return;
-        if (nodeName === 'META' && (node as HTMLMetaElement).httpEquiv.toLowerCase() === 'content-security-policy')
+        }
+        if (nodeName === 'META' && (node as HTMLMetaElement).httpEquiv.toLowerCase() === 'content-security-policy') {
           return;
+        }
         // Skip iframes which are inside document's head as they are not visible.
         // See https://github.com/microsoft/playwright/issues/12005.
-        if ((nodeName === 'IFRAME' || nodeName === 'FRAME') && headNesting)
+        if ((nodeName === 'IFRAME' || nodeName === 'FRAME') && headNesting) {
           return;
+        }
 
         const data = ensureCachedData(node);
         const values: any[] = [];
@@ -366,8 +394,9 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
 
         const checkAndReturn = (n: NodeSnapshot): { equals: boolean, n: NodeSnapshot } => {
           data.attributesCached = true;
-          if (equals)
+          if (equals) {
             return { equals: true, n: [[snapshotNumber - data.ref![0], data.ref![1]]] };
+          }
           nodeCounter += extraNodes;
           data.ref = [snapshotNumber, nodeCounter++];
           data.cached = values;
@@ -383,8 +412,9 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
         if (nodeName === 'STYLE') {
           const sheet = (node as HTMLStyleElement).sheet;
           let cssText: string | undefined;
-          if (sheet)
+          if (sheet) {
             cssText = this._updateStyleElementStyleSheetTextIfNeeded(sheet);
+          }
           cssText = cssText || node.textContent || '';
           expectValue(cssText);
           // Compensate for the extra 'cssText' text node.
@@ -413,13 +443,15 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
           }
         };
 
-        if (nodeType === Node.DOCUMENT_FRAGMENT_NODE)
+        if (nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
           attrs[kShadowAttribute] = 'open';
+        }
 
         if (nodeType === Node.ELEMENT_NODE) {
           const element = node as Element;
-          if (element.localName.includes('-') && window.customElements?.get(element.localName))
+          if (element.localName.includes('-') && window.customElements.get(element.localName)) {
             definedCustomElements.add(element.localName);
+          }
           if (nodeName === 'INPUT' || nodeName === 'TEXTAREA') {
             const value = (element as HTMLInputElement).value;
             expectValue(kValueAttribute);
@@ -484,19 +516,23 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
           this._fakeBase.setAttribute('href', document.baseURI);
           visitChild(this._fakeBase);
         }
-        for (let child = node.firstChild; child; child = child.nextSibling)
+        for (let child = node.firstChild; child; child = child.nextSibling) {
           visitChild(child);
-        if (nodeName === 'HEAD')
+        }
+        if (nodeName === 'HEAD') {
           --headNesting;
+        }
         expectValue(kEndOfList);
         let documentOrShadowRoot = null;
-        if (node.ownerDocument!.documentElement === node)
+        if (node.ownerDocument!.documentElement === node) {
           documentOrShadowRoot = node.ownerDocument;
-        else if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE)
+        } else if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
           documentOrShadowRoot = node;
+        }
         if (documentOrShadowRoot) {
-          for (const sheet of (documentOrShadowRoot as any).adoptedStyleSheets || [])
+          for (const sheet of (documentOrShadowRoot as any).adoptedStyleSheets || []) {
             visitChildStyleSheet(sheet);
+          }
           expectValue(kEndOfList);
         }
 
@@ -529,32 +565,37 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
 
         // We can skip attributes comparison because nothing else has changed,
         // and mutation observer didn't tell us about the attributes.
-        if (equals && data.attributesCached && !shadowDomNesting)
+        if (equals && data.attributesCached && !shadowDomNesting) {
           return checkAndReturn(result);
+        }
 
         if (nodeType === Node.ELEMENT_NODE) {
           const element = node as Element;
           for (let i = 0; i < element.attributes.length; i++) {
             const name = element.attributes[i].name;
-            if (nodeName === 'LINK' && name === 'integrity')
+            if (nodeName === 'LINK' && name === 'integrity') {
               continue;
-            if (nodeName === 'IFRAME' && (name === 'src' || name === 'srcdoc' || name === 'sandbox'))
+            }
+            if (nodeName === 'IFRAME' && (name === 'src' || name === 'srcdoc' || name === 'sandbox')) {
               continue;
-            if (nodeName === 'FRAME' && name === 'src')
+            }
+            if (nodeName === 'FRAME' && name === 'src') {
               continue;
+            }
             let value = element.attributes[i].value;
-            if (nodeName === 'META')
+            if (nodeName === 'META') {
               value = this.__sanitizeMetaAttribute(name, value, (node as HTMLMetaElement).httpEquiv);
-            else if (name === 'src' && (nodeName === 'IMG'))
+            } else if (name === 'src' && (nodeName === 'IMG')) {
               value = this._sanitizeUrl(value);
-            else if (name === 'srcset' && (nodeName === 'IMG'))
+            } else if (name === 'srcset' && (nodeName === 'IMG')) {
               value = this._sanitizeSrcSet(value);
-            else if (name === 'srcset' && (nodeName === 'SOURCE'))
+            } else if (name === 'srcset' && (nodeName === 'SOURCE')) {
               value = this._sanitizeSrcSet(value);
-            else if (name === 'href' && (nodeName === 'LINK'))
+            } else if (name === 'href' && (nodeName === 'LINK')) {
               value = this._sanitizeUrl(value);
-            else if (name.startsWith('on'))
+            } else if (name.startsWith('on')) {
               value = '';
+            }
             expectValue(name);
             expectValue(value);
             attrs[name] = value;
@@ -562,8 +603,9 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
           expectValue(kEndOfList);
         }
 
-        if (result.length === 2 && !Object.keys(attrs).length)
-          result.pop();  // Remove empty attrs when there are no children.
+        if (result.length === 2 && !Object.keys(attrs).length) {
+          result.pop();
+        }  // Remove empty attrs when there are no children.
         return checkAndReturn(result);
       };
 
@@ -571,8 +613,9 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
         const data = ensureCachedData(sheet);
         const oldCSSText = data.cssText;
         const cssText = this._updateStyleElementStyleSheetTextIfNeeded(sheet, true /* forceText */)!;
-        if (cssText === oldCSSText)
+        if (cssText === oldCSSText) {
           return { equals: true, n: [[snapshotNumber - data.ref![0], data.ref![1]]] };
+        }
         data.ref = [snapshotNumber, nodeCounter++];
         return {
           equals: false,
@@ -604,8 +647,9 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       };
 
       for (const sheet of this._staleStyleSheets) {
-        if (sheet.href === null)
+        if (sheet.href === null) {
           continue;
+        }
         const content = this._updateLinkStyleSheetTextIfNeeded(sheet, snapshotNumber);
         if (content === undefined) {
           // Unable to capture stylesheet contents.

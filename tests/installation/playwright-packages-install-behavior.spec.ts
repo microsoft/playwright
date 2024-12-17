@@ -24,8 +24,9 @@ for (const browser of ['chromium', 'firefox', 'webkit']) {
     const result = await exec('npm i --foreground-scripts', pkg);
     const browserName = pkg.split('-')[1];
     const expectedSoftware = [browserName];
-    if (browserName === 'chromium')
+    if (browserName === 'chromium') {
       expectedSoftware.push('chromium-headless-shell', 'ffmpeg');
+    }
     expect(result).toHaveLoggedSoftwareDownload(expectedSoftware as any);
     expect(await installedSoftwareOnDisk()).toEqual(expectedSoftware);
     expect(result).not.toContain(`To avoid unexpected behavior, please install your dependencies first`);
@@ -38,8 +39,9 @@ for (const browser of ['chromium', 'firefox', 'webkit']) {
   test(`@playwright/browser-${browser} should work`, async ({ exec, installedSoftwareOnDisk }) => {
     const pkg = `@playwright/browser-${browser}`;
     const expectedSoftware = [browser];
-    if (browser === 'chromium')
+    if (browser === 'chromium') {
       expectedSoftware.push('chromium-headless-shell', 'ffmpeg');
+    }
 
     const result1 = await exec('npm i --foreground-scripts', pkg);
     expect(result1).toHaveLoggedSoftwareDownload(expectedSoftware as any);

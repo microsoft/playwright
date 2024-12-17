@@ -47,8 +47,9 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   };
   const reporters: ReporterV2[] = [];
   descriptions ??= config.config.reporter;
-  if (config.configCLIOverrides.additionalReporters)
+  if (config.configCLIOverrides.additionalReporters) {
     descriptions = [...descriptions, ...config.configCLIOverrides.additionalReporters];
+  }
   const runOptions = reporterOptions(config, mode, isTestServer);
   for (const r of descriptions) {
     const [name, arg] = r;
@@ -69,10 +70,11 @@ export async function createReporters(config: FullConfigInternal, mode: 'list' |
   if (reporters.length && !someReporterPrintsToStdio) {
     // Add a line/dot/list-mode reporter for convenience.
     // Important to put it first, just in case some other reporter stalls onEnd.
-    if (mode === 'list')
+    if (mode === 'list') {
       reporters.unshift(new ListModeReporter());
-    else if (mode !== 'merge')
+    } else if (mode !== 'merge') {
       reporters.unshift(!process.env.CI ? new LineReporter({ omitFailures: true }) : new DotReporter());
+    }
   }
   return reporters;
 }
@@ -94,8 +96,9 @@ export function createErrorCollectingReporter(writeToConsole?: boolean): ErrorCo
     version: () => 'v2',
     onError(error: TestError) {
       errors.push(error);
-      if (writeToConsole)
+      if (writeToConsole) {
         process.stdout.write(formatError(error, colors.enabled).message + '\n');
+      }
     },
     errors: () => errors,
   };
@@ -113,19 +116,25 @@ function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'me
 function computeCommandHash(config: FullConfigInternal) {
   const parts = [];
   // Include project names for readability.
-  if (config.cliProjectFilter)
+  if (config.cliProjectFilter) {
     parts.push(...config.cliProjectFilter);
+  }
   const command = {} as any;
-  if (config.cliArgs.length)
+  if (config.cliArgs.length) {
     command.cliArgs = config.cliArgs;
-  if (config.cliGrep)
+  }
+  if (config.cliGrep) {
     command.cliGrep = config.cliGrep;
-  if (config.cliGrepInvert)
+  }
+  if (config.cliGrepInvert) {
     command.cliGrepInvert = config.cliGrepInvert;
-  if (config.cliOnlyChanged)
+  }
+  if (config.cliOnlyChanged) {
     command.cliOnlyChanged = config.cliOnlyChanged;
-  if (Object.keys(command).length)
+  }
+  if (Object.keys(command).length) {
     parts.push(calculateSha1(JSON.stringify(command)).substring(0, 7));
+  }
   return parts.join('-');
 }
 

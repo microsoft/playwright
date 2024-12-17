@@ -314,7 +314,9 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       test.skip(mode !== 'default');
 
       const remoteServer = await startRemoteServer(kind);
-      const __testHookBeforeCreateBrowser = () => { throw new Error('Dummy'); };
+      const __testHookBeforeCreateBrowser = () => {
+        throw new Error('Dummy');
+      };
       const error = await connect(remoteServer.wsEndpoint(), { __testHookBeforeCreateBrowser } as any).catch(e => e);
       expect(error.message).toContain('Dummy');
     });
@@ -518,8 +520,9 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       process.on('warning', warningHandler);
 
       const browsers = [];
-      for (let i = 0; i < 20; i++)
+      for (let i = 0; i < 20; i++) {
         browsers.push(await connect(remoteServer.wsEndpoint()));
+      }
       await Promise.all([browsers.map(browser => browser.close())]);
 
       process.off('warning', warningHandler);
@@ -695,10 +698,11 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       for (let i = 0; i < 50 * 1024; i++) {
         await new Promise<void>((fulfill, reject) => {
           stream.write(str, err => {
-            if (err)
+            if (err) {
               reject(err);
-            else
+            } else {
               fulfill();
+            }
           });
         });
       }
@@ -748,8 +752,9 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       const expectedTimestamps = files.map(file => Math.round(fs.statSync(asset(file)).mtimeMs));
       // On Linux browser sometimes reduces the timestamp by 1ms: 1696272058110.0715  -> 1696272058109 or even
       // rounds it to seconds in WebKit: 1696272058110 -> 1696272058000.
-      for (let i = 0; i < timestamps.length; i++)
+      for (let i = 0; i < timestamps.length; i++) {
         expect(Math.abs(timestamps[i] - expectedTimestamps[i]), `expected: ${expectedTimestamps}; actual: ${timestamps}`).toBeLessThan(1000);
+      }
     });
 
     test('should connect over http', async ({ connect, startRemoteServer, mode }) => {
@@ -856,12 +861,13 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         const browser = await connect(remoteServer.wsEndpoint(), { exposeNetwork: '*' });
         const page = await browser.newPage();
         const error = await page.goto(`http://127.0.0.1:${examplePort}`).catch(e => e);
-        if (browserName === 'chromium')
+        if (browserName === 'chromium') {
           expect(error.message).toContain('net::ERR_SOCKS_CONNECTION_FAILED at http://127.0.0.1:20');
-        else if (browserName === 'webkit')
+        } else if (browserName === 'webkit') {
           expect(error.message).toBeTruthy();
-        else if (browserName === 'firefox')
+        } else if (browserName === 'firefox') {
           expect(error.message.includes('NS_ERROR_NET_RESET') || error.message.includes('NS_ERROR_CONNECTION_REFUSED')).toBe(true);
+        }
       });
 
       test('should proxy based on the pattern', async ({ connect, startRemoteServer, server, browserName, platform, dummyServerPort }, workerInfo) => {

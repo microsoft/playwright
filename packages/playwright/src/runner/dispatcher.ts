@@ -53,17 +53,20 @@ export class Dispatcher {
 
   private async _scheduleJob() {
     // 1. Find a job to run.
-    if (this._isStopped || !this._queue.length)
+    if (this._isStopped || !this._queue.length) {
       return;
+    }
     const job = this._queue[0];
 
     // 2. Find a worker with the same hash, or just some free worker.
     let index = this._workerSlots.findIndex(w => !w.busy && w.worker && w.worker.hash() === job.workerHash && !w.worker.didSendStop());
-    if (index === -1)
+    if (index === -1) {
       index = this._workerSlots.findIndex(w => !w.busy);
+    }
     // No workers available, bail out.
-    if (index === -1)
+    if (index === -1) {
       return;
+    }
 
     // 3. Claim both the job and the worker, run the job and release the worker.
     this._queue.shift();
@@ -81,8 +84,9 @@ export class Dispatcher {
   private async _startJobInWorker(index: number, job: TestGroup) {
     const stopCallback = () => this.stop().catch(() => {});
     const jobDispatcher = new JobDispatcher(job, this._reporter, this._failureTracker, stopCallback);
-    if (jobDispatcher.skipWholeJob())
+    if (jobDispatcher.skipWholeJob()) {
       return;
+    }
 
     let worker = this._workerSlots[index].worker;
 
@@ -90,8 +94,10 @@ export class Dispatcher {
     if (worker && (worker.hash() !== job.workerHash || worker.didSendStop())) {
       await worker.stop();
       worker = undefined;
-      if (this._isStopped) // Check stopped signal after async hop.
+      if (this._isStopped) {
+        // Check stopped signal after async hop.
         return;
+      }
     }
     this._workerSlots[index].jobDispatcher = jobDispatcher;
 
@@ -102,25 +108,29 @@ export class Dispatcher {
       this._workerSlots[index].worker = worker;
       worker.on('exit', () => this._workerSlots[index].worker = undefined);
       startError = await worker.start();
-      if (this._isStopped) // Check stopped signal after async hop.
+      if (this._isStopped) {
+        // Check stopped signal after async hop.
         return;
+      }
     }
 
     // 3. Run the job.
-    if (startError)
+    if (startError) {
       jobDispatcher.onExit(startError);
-    else
+    } else {
       jobDispatcher.runInWorker(worker);
+    }
     const result = await jobDispatcher.jobResult;
     this._workerSlots[index].jobDispatcher = undefined;
     this._updateCounterForWorkerHash(job.workerHash, -1);
 
     // 4. When worker encounters error, we stop it and create a new one.
     //    We also do not keep the worker alive if it cannot serve any more jobs.
-    if (result.didFail)
+    if (result.didFail) {
       void worker.stop(true /* didFail */);
-    else if (this._isWorkerRedundant(worker))
+    } else if (this._isWorkerRedundant(worker)) {
       void worker.stop();
+    }
 
     // 5. Possibly schedule a new job with leftover tests and/or retries.
     if (!this._isStopped && result.newJob) {
@@ -130,16 +140,19 @@ export class Dispatcher {
   }
 
   private _checkFinished() {
-    if (this._finished.isDone())
+    if (this._finished.isDone()) {
       return;
+    }
 
     // Check that we have no more work to do.
-    if (this._queue.length && !this._isStopped)
+    if (this._queue.length && !this._isStopped) {
       return;
+    }
 
     // Make sure all workers have finished the current job.
-    if (this._workerSlots.some(w => w.busy))
+    if (this._workerSlots.some(w => w.busy)) {
       return;
+    }
 
     this._finished.resolve();
   }
@@ -147,8 +160,9 @@ export class Dispatcher {
   private _isWorkerRedundant(worker: WorkerHost) {
     let workersWithSameHash = 0;
     for (const slot of this._workerSlots) {
-      if (slot.worker && !slot.worker.didSendStop() && slot.worker.hash() === worker.hash())
+      if (slot.worker && !slot.worker.didSendStop() && slot.worker.hash() === worker.hash()) {
         workersWithSameHash++;
+      }
     }
     return workersWithSameHash > this._queuedOrRunningHashCount.get(worker.hash())!;
   }
@@ -160,19 +174,23 @@ export class Dispatcher {
   async run(testGroups: TestGroup[], extraEnvByProjectId: EnvByProjectId) {
     this._extraEnvByProjectId = extraEnvByProjectId;
     this._queue = testGroups;
-    for (const group of testGroups)
+    for (const group of testGroups) {
       this._updateCounterForWorkerHash(group.workerHash, +1);
+    }
     this._isStopped = false;
     this._workerSlots = [];
     // 0. Stop right away if we have reached max failures.
-    if (this._failureTracker.hasReachedMaxFailures())
+    if (this._failureTracker.hasReachedMaxFailures()) {
       void this.stop();
+    }
     // 1. Allocate workers.
-    for (let i = 0; i < this._config.config.workers; i++)
+    for (let i = 0; i < this._config.config.workers; i++) {
       this._workerSlots.push({ busy: false });
+    }
     // 2. Schedule enough jobs.
-    for (let i = 0; i < this._workerSlots.length; i++)
+    for (let i = 0; i < this._workerSlots.length; i++) {
       void this._scheduleJob();
+    }
     this._checkFinished();
     // 3. More jobs are scheduled when the worker becomes free.
     // 4. Wait for all jobs to finish.
@@ -192,8 +210,9 @@ export class Dispatcher {
         return { chunk };
       }
       const currentlyRunning = this._workerSlots[parallelIndex].jobDispatcher?.currentlyRunning();
-      if (!currentlyRunning)
+      if (!currentlyRunning) {
         return { chunk };
+      }
       return { chunk, test: currentlyRunning.test, result: currentlyRunning.result };
     };
     worker.on('stdOut', (params: TestOutputPayload) => {
@@ -208,8 +227,9 @@ export class Dispatcher {
     });
     worker.on('teardownErrors', (params: TeardownErrorsPayload) => {
       this._failureTracker.onWorkerError();
-      for (const error of params.fatalErrors)
+      for (const error of params.fatalErrors) {
         this._reporter.onError?.(error);
+      }
     });
     worker.on('exit', () => {
       const producedEnv = this._producedEnvByProjectId.get(testGroup.projectId) || {};
@@ -223,8 +243,9 @@ export class Dispatcher {
   }
 
   async stop() {
-    if (this._isStopped)
+    if (this._isStopped) {
       return;
+    }
     this._isStopped = true;
     await Promise.all(this._workerSlots.map(({ worker }) => worker?.stop()));
     this._checkFinished();
@@ -285,10 +306,12 @@ class JobDispatcher {
     test.annotations = params.annotations;
     test.timeout = params.timeout;
     const isFailure = result.status !== 'skipped' && result.status !== test.expectedStatus;
-    if (isFailure)
+    if (isFailure) {
       this._failedTests.add(test);
-    if (params.hasNonRetriableError)
+    }
+    if (params.hasNonRetriableError) {
       this._addNonretriableTestAndSerialModeParents(test);
+    }
     this._reportTestEnd(test, result);
     this._currentlyRunning = undefined;
   }
@@ -296,8 +319,9 @@ class JobDispatcher {
   private _addNonretriableTestAndSerialModeParents(test: TestCase) {
     this._failedWithNonRetriableError.add(test);
     for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
-      if (parent._parallelMode === 'serial')
+      if (parent._parallelMode === 'serial') {
         this._failedWithNonRetriableError.add(parent);
+      }
     }
   }
 
@@ -340,10 +364,12 @@ class JobDispatcher {
       return;
     }
     step.duration = params.wallTime - step.startTime.getTime();
-    if (params.error)
+    if (params.error) {
       step.error = params.error;
-    if (params.suggestedRebaseline)
+    }
+    if (params.suggestedRebaseline) {
       addSuggestedRebaseline(step.location!, params.suggestedRebaseline);
+    }
     steps.delete(params.stepId);
     this._reporter.onStepEnd?.(test, result, step);
   }
@@ -382,8 +408,9 @@ class JobDispatcher {
 
   private _massSkipTestsFromRemaining(testIds: Set<string>, errors: TestError[]) {
     for (const test of this._remainingByTestId.values()) {
-      if (!testIds.has(test.id))
+      if (!testIds.has(test.id)) {
         continue;
+      }
       if (!this._failureTracker.hasReachedMaxFailures()) {
         this._failTestWithErrors(test, errors);
         errors = []; // Only report errors for the first test.
@@ -394,8 +421,9 @@ class JobDispatcher {
       // We had fatal errors after all tests have passed - most likely in some teardown.
       // Let's just fail the test run.
       this._failureTracker.onWorkerError();
-      for (const error of errors)
+      for (const error of errors) {
         this._reporter.onError?.(error);
+      }
     }
   }
 
@@ -431,35 +459,40 @@ class JobDispatcher {
       // The most common situation when worker exits while not running a test is:
       //   worker failed to require the test file (at the start) because of an exception in one of imports.
       // In this case, "skip" all remaining tests, to avoid running into the same exception over and over.
-      if (this._currentlyRunning)
+      if (this._currentlyRunning) {
         this._massSkipTestsFromRemaining(new Set([this._currentlyRunning.test.id]), [params.unexpectedExitError]);
-      else
+      } else {
         this._massSkipTestsFromRemaining(new Set(this._remainingByTestId.keys()), [params.unexpectedExitError]);
+      }
     }
 
     const retryCandidates = new Set<TestCase>();
     const serialSuitesWithFailures = new Set<Suite>();
 
     for (const failedTest of this._failedTests) {
-      if (this._failedWithNonRetriableError.has(failedTest))
+      if (this._failedWithNonRetriableError.has(failedTest)) {
         continue;
+      }
       retryCandidates.add(failedTest);
 
       let outermostSerialSuite: Suite | undefined;
       for (let parent: Suite | undefined = failedTest.parent; parent; parent = parent.parent) {
-        if (parent._parallelMode ===  'serial')
+        if (parent._parallelMode ===  'serial') {
           outermostSerialSuite = parent;
+        }
       }
-      if (outermostSerialSuite && !this._failedWithNonRetriableError.has(outermostSerialSuite))
+      if (outermostSerialSuite && !this._failedWithNonRetriableError.has(outermostSerialSuite)) {
         serialSuitesWithFailures.add(outermostSerialSuite);
+      }
     }
 
     // If we have failed tests that belong to a serial suite,
     // we should skip all future tests from the same serial suite.
     const testsBelongingToSomeSerialSuiteWithFailures = [...this._remainingByTestId.values()].filter(test => {
       let parent: Suite | undefined = test.parent;
-      while (parent && !serialSuitesWithFailures.has(parent))
+      while (parent && !serialSuitesWithFailures.has(parent)) {
         parent = parent.parent;
+      }
       return !!parent;
     });
     this._massSkipTestsFromRemaining(new Set(testsBelongingToSomeSerialSuiteWithFailures.map(test => test.id)), []);
@@ -473,8 +506,9 @@ class JobDispatcher {
 
     const remaining = [...this._remainingByTestId.values()];
     for (const test of retryCandidates) {
-      if (test.results.length < test.retries + 1)
+      if (test.results.length < test.retries + 1) {
         remaining.push(test);
+      }
     }
 
     // This job is over, we will schedule another one.
@@ -548,14 +582,16 @@ class JobDispatcher {
     this._failureTracker.onTestEnd(test, result);
     if (this._failureTracker.hasReachedMaxFailures()) {
       this._stopCallback();
-      if (!hadMaxFailures)
+      if (!hadMaxFailures) {
         this._reporter.onError?.({ message: colors.red(`Testing stopped early after ${this._failureTracker.maxFailures()} maximum allowed failures.`) });
+      }
     }
   }
 }
 
 function chunkFromParams(params: TestOutputPayload): string | Buffer {
-  if (typeof params.text === 'string')
+  if (typeof params.text === 'string') {
     return params.text;
+  }
   return Buffer.from(params.buffer!, 'base64');
 }

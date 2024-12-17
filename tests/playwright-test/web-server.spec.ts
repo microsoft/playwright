@@ -438,8 +438,9 @@ test(`should support self signed certificate`, async ({ runInlineTest, httpsServ
 test('should send Accept header', async ({ runInlineTest, server }) => {
   let acceptHeader: string | undefined | null = null;
   server.setRoute('/hello', (req, res) => {
-    if (acceptHeader === null)
+    if (acceptHeader === null) {
       acceptHeader = req.headers.accept;
+    }
     res.end('<html><body>hello</body></html>');
   });
   const result = await runInlineTest({

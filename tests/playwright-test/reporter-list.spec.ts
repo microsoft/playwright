@@ -167,10 +167,11 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       }, { reporter: 'list' }, { PLAYWRIGHT_FORCE_TTY: TTY_WIDTH + '' });
 
       const renderedText = simpleAnsiRenderer(result.rawOutput, TTY_WIDTH);
-      if (process.platform === 'win32')
+      if (process.platform === 'win32') {
         expect(renderedText).toContain('  ok 1 a.test.ts:3:15 › passes');
-      else
+      } else {
         expect(renderedText).toContain('  ✓  1 a.test.ts:3:15 › passes');
+      }
       expect(renderedText).not.toContain('     1 a.test.ts:3:15 › passes');
       expect(renderedText).toContain('a'.repeat(80) + '\n' + 'b'.repeat(20));
     });
@@ -266,10 +267,12 @@ function simpleAnsiRenderer(text, ttyWidth) {
   let columnNumber = 0;
   const screenLines: string[][] = [];
   const ensureScreenSize = () => {
-    if (lineNumber < 0)
+    if (lineNumber < 0) {
       throw new Error('Bad terminal navigation!');
-    while (lineNumber >= screenLines.length)
+    }
+    while (lineNumber >= screenLines.length) {
       screenLines.push(new Array(ttyWidth).fill(''));
+    }
   };
   const print = ch => {
     ensureScreenSize();
@@ -292,8 +295,9 @@ function simpleAnsiRenderer(text, ttyWidth) {
   for (const ansiCode of ansiCodes) {
     const [matchText, codeValue, codeType] = ansiCode;
     const code = (codeValue + codeType).toUpperCase();
-    while (index < ansiCode.index)
+    while (index < ansiCode.index) {
       print(text[index++]);
+    }
     if (codeType.toUpperCase() === 'E') {
       // Go X lines down
       lineNumber += +codeValue;
@@ -314,8 +318,9 @@ function simpleAnsiRenderer(text, ttyWidth) {
     }
     index += matchText.length;
   }
-  while (index < text.length)
+  while (index < text.length) {
     print(text[index++]);
+  }
 
   return screenLines.map(line => line.join('')).join('\n');
 }

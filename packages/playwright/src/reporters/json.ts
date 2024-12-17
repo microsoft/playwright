@@ -92,8 +92,9 @@ class JSONReporter implements ReporterV2 {
         flaky: 0,
       },
     };
-    for (const test of this.suite.allTests())
+    for (const test of this.suite.allTests()) {
       ++report.stats[test.outcome()];
+    }
     return report;
   }
 
@@ -105,8 +106,9 @@ class JSONReporter implements ReporterV2 {
       for (const fileSuite of projectSuite.suites) {
         const file = fileSuite.location!.file;
         const serialized = this._serializeSuite(projectId, projectName, fileSuite);
-        if (serialized)
+        if (serialized) {
           fileSuites.set(file, serialized);
+        }
       }
     }
 
@@ -119,16 +121,18 @@ class JSONReporter implements ReporterV2 {
         line: 0,
         specs: [],
       };
-      for (const suite of suites)
+      for (const suite of suites) {
         this._mergeTestsFromSuite(result, suite);
+      }
       results.push(result);
     }
     return results;
   }
 
   private _relativeLocation(location: Location | undefined): Location {
-    if (!location)
+    if (!location) {
       return { file: '', line: 0, column: 0 };
+    }
     return {
       file: toPosixPath(path.relative(this.config.rootDir, location.file)),
       line: location.line,
@@ -146,24 +150,27 @@ class JSONReporter implements ReporterV2 {
       if (toSuite) {
         this._mergeTestsFromSuite(toSuite, fromSuite);
       } else {
-        if (!to.suites)
+        if (!to.suites) {
           to.suites = [];
+        }
         to.suites.push(fromSuite);
       }
     }
 
     for (const spec of from.specs || []) {
       const toSpec = to.specs.find(s => s.title === spec.title && s.file === toPosixPath(path.relative(this.config.rootDir, spec.file)) && s.line === spec.line && s.column === spec.column);
-      if (toSpec)
+      if (toSpec) {
         toSpec.tests.push(...spec.tests);
-      else
+      } else {
         to.specs.push(spec);
+      }
     }
   }
 
   private _serializeSuite(projectId: string, projectName: string, suite: Suite): null | JSONReportSuite {
-    if (!suite.allTests().length)
+    if (!suite.allTests().length) {
       return null;
+    }
     const suites = suite.suites.map(suite => this._serializeSuite(projectId, projectName, suite)).filter(s => s) as JSONReportSuite[];
     return {
       title: suite.title,
@@ -216,8 +223,9 @@ class JSONReporter implements ReporterV2 {
         body: a.body?.toString('base64')
       })),
     };
-    if (result.error?.stack)
+    if (result.error?.stack) {
       jsonResult.errorLocation = prepareErrorStack(result.error.stack).location;
+    }
     return jsonResult;
   }
 
@@ -247,8 +255,9 @@ async function outputReport(report: JSONReport, resolvedOutputFile: string | und
 }
 
 function stdioEntry(s: string | Buffer): any {
-  if (typeof s === 'string')
+  if (typeof s === 'string') {
     return { text: s };
+  }
   return { buffer: s.toString('base64') };
 }
 
@@ -257,8 +266,9 @@ function removePrivateFields(config: FullConfig): FullConfig {
 }
 
 export function serializePatterns(patterns: string | RegExp | (string | RegExp)[]): string[] {
-  if (!Array.isArray(patterns))
+  if (!Array.isArray(patterns)) {
     patterns = [patterns];
+  }
   return patterns.map(s => s.toString());
 }
 

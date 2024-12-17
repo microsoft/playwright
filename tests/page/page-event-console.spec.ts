@@ -25,10 +25,11 @@ it('should work @smoke', async ({ page, browserName }) => {
     page.evaluate(() => console.log('hello', 5, { foo: 'bar' })),
     page.waitForEvent('console')
   ]);
-  if (browserName !== 'firefox')
+  if (browserName !== 'firefox') {
     expect(message.text()).toEqual('hello 5 {foo: bar}');
-  else
+  } else {
     expect(message.text()).toEqual('hello 5 JSHandle@object');
+  }
   expect(message.type()).toEqual('log');
   expect(await message.args()[0].jsonValue()).toEqual('hello');
   expect(await message.args()[1].jsonValue()).toEqual(5);
@@ -39,8 +40,9 @@ it('should emit same log twice', async ({ page }) => {
   const messages = [];
   page.on('console', m => messages.push(m.text()));
   await page.evaluate(() => {
-    for (let i = 0; i < 2; ++i)
+    for (let i = 0; i < 2; ++i) {
       console.log('hello');
+    }
   });
   expect(messages).toEqual(['hello', 'hello']);
 });
@@ -103,10 +105,11 @@ it('should format the message correctly with time/timeLog/timeEnd', async ({ pag
     console.timeEnd('foo time');
   });
   expect(messages.length).toBe(2);
-  if (browserName === 'webkit')
+  if (browserName === 'webkit') {
     expect(messages[0].type()).toBe('timeEnd');
-  else if (browserName === 'chromium')
+  } else if (browserName === 'chromium') {
     expect(messages[0].type()).toBe('log');
+  }
   expect(messages[1].type()).toBe('timeEnd');
 
   // WebKit has a space before the unit: https://bugs.webkit.org/show_bug.cgi?id=233556
@@ -121,10 +124,11 @@ it('should not fail for window object', async ({ page, browserName }) => {
     page.evaluate(() => console.error(window)),
     page.waitForEvent('console')
   ]);
-  if (browserName !== 'firefox')
+  if (browserName !== 'firefox') {
     expect(message.text()).toEqual('Window');
-  else
+  } else {
     expect(message.text()).toEqual('JSHandle@object');
+  }
 });
 
 it('should trigger correct Log', async ({ page, server, browserName, isWindows }) => {
@@ -163,13 +167,15 @@ it('should not throw when there are console messages in detached iframes', async
       // 1. Create a popup that Playwright is not connected to.
       const win = window.open('');
       window['_popup'] = win;
-      if (window.document.readyState !== 'complete')
+      if (window.document.readyState !== 'complete') {
         await new Promise(f => window.addEventListener('load', f));
+      }
       // 2. In this popup, create an iframe that console.logs a message.
       win.document.body.innerHTML = `<iframe src='/consolelog.html'></iframe>`;
       const frame = win.document.querySelector('iframe');
-      if (!frame.contentDocument || frame.contentDocument.readyState !== 'complete')
+      if (!frame.contentDocument || frame.contentDocument.readyState !== 'complete') {
         await new Promise(f => frame.addEventListener('load', f));
+      }
       // 3. After that, remove the iframe.
       frame.remove();
     }),
@@ -185,10 +191,11 @@ it('should use object previews for arrays and objects', async ({ page, browserNa
   });
   await page.evaluate(() => console.log([1, 2, 3], { a: 1 }, window));
 
-  if (browserName !== 'firefox')
+  if (browserName !== 'firefox') {
     expect(text).toEqual('[1, 2, 3] {a: 1} Window');
-  else
+  } else {
     expect(text).toEqual('Array JSHandle@object JSHandle@object');
+  }
 });
 
 it('should use object previews for errors', async ({ page, browserName }) => {
@@ -197,12 +204,15 @@ it('should use object previews for errors', async ({ page, browserName }) => {
     text = message.text();
   });
   await page.evaluate(() => console.log(new Error('Exception')));
-  if (browserName === 'chromium')
+  if (browserName === 'chromium') {
     expect(text).toContain('.evaluate');
-  if (browserName === 'webkit')
+  }
+  if (browserName === 'webkit') {
     expect(text).toEqual('Error: Exception');
-  if (browserName === 'firefox')
+  }
+  if (browserName === 'firefox') {
     expect(text).toEqual('Error');
+  }
 });
 
 it('do not update console count on unhandled rejections', async ({ page }) => {

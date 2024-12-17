@@ -18,8 +18,9 @@ import { test, expect } from './playwright-test-fixtures';
 import path from 'path';
 
 function relativeFilePath(file: string): string {
-  if (!path.isAbsolute(file))
+  if (!path.isAbsolute(file)) {
     return file;
+  }
   return path.relative(process.cwd(), file);
 }
 

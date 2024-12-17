@@ -73,9 +73,10 @@ export class Dialog extends SdkObject {
   }
 
   async close() {
-    if (this._type === 'beforeunload')
+    if (this._type === 'beforeunload') {
       await this.accept();
-    else
+    } else {
       await this.dismiss();
+    }
   }
 }

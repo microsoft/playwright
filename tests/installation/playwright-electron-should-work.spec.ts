@@ -34,8 +34,9 @@ test('electron should work with special characters in path', async ({ exec, tmpW
 
   await exec('npm i playwright electron@19.0.11');
   await fs.promises.mkdir(folderName);
-  for (const file of ['electron-app.js', 'sanity-electron.js'])
+  for (const file of ['electron-app.js', 'sanity-electron.js']) {
     await fs.promises.copyFile(path.join(tmpWorkspace, file), path.join(folderName, file));
+  }
   await exec('node sanity-electron.js', {
     cwd: path.join(folderName)
   });
@@ -77,8 +78,9 @@ test('should work when wrapped inside @playwright/test and trace is enabled', as
     // contains the expect() calls
     path.join(tmpWorkspace, 'test-results', 'electron-with-tracing-should-work', 'trace.zip'),
   ];
-  for (const trace of traces)
+  for (const trace of traces) {
     expect(fs.existsSync(trace)).toBe(true);
+  }
   const report = JSON.parse(fs.readFileSync(jsonOutputName, 'utf-8'));
   expect(new Set(['trace'])).toEqual(new Set(report.suites[0].specs[0].tests[0].results[0].attachments.map(a => a.name)));
   expect(new Set(traces.map(p => fs.realpathSync(p)))).toEqual(new Set(report.suites[0].specs[0].tests[0].results[0].attachments.map(a => a.path)));

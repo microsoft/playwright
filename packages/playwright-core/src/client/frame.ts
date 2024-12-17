@@ -66,8 +66,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
     this._eventEmitter = new EventEmitter();
     this._eventEmitter.setMaxListeners(0);
     this._parentFrame = Frame.fromNullable(initializer.parentFrame);
-    if (this._parentFrame)
+    if (this._parentFrame) {
       this._parentFrame._childFrames.add(this);
+    }
     this._name = initializer.name;
     this._url = initializer.url;
     this._loadStates = new Set(initializer.loadStates);
@@ -76,19 +77,23 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
         this._loadStates.add(event.add);
         this._eventEmitter.emit('loadstate', event.add);
       }
-      if (event.remove)
+      if (event.remove) {
         this._loadStates.delete(event.remove);
-      if (!this._parentFrame && event.add === 'load' && this._page)
+      }
+      if (!this._parentFrame && event.add === 'load' && this._page) {
         this._page.emit(Events.Page.Load, this._page);
-      if (!this._parentFrame && event.add === 'domcontentloaded' && this._page)
+      }
+      if (!this._parentFrame && event.add === 'domcontentloaded' && this._page) {
         this._page.emit(Events.Page.DOMContentLoaded, this._page);
+      }
     });
     this._channel.on('navigated', event => {
       this._url = event.url;
       this._name = event.name;
       this._eventEmitter.emit('navigated', event);
-      if (!event.error && this._page)
+      if (!event.error && this._page) {
         this._page.emit(Events.Page.FrameNavigated, this);
+      }
     });
   }
 
@@ -103,8 +108,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
   private _setupNavigationWaiter(options: { timeout?: number }): Waiter {
     const waiter = new Waiter(this._page!, '');
-    if (this._page!.isClosed())
+    if (this._page!.isClosed()) {
       waiter.rejectImmediately(this._page!._closeErrorWithReason());
+    }
     waiter.rejectOnEvent(this._page!, Events.Page.Close, () => this._page!._closeErrorWithReason());
     waiter.rejectOnEvent(this._page!, Events.Page.Crash, new Error('Navigation failed because page crashed!'));
     waiter.rejectOnEvent<Frame>(this._page!, Events.Page.FrameDetached, new Error('Navigating frame was detached!'), frame => frame === this);
@@ -123,8 +129,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
       const navigatedEvent = await waiter.waitForEvent<channels.FrameNavigatedEvent>(this._eventEmitter, 'navigated', event => {
         // Any failed navigation results in a rejection.
-        if (event.error)
+        if (event.error) {
           return true;
+        }
         waiter.log(`  navigated to "${event.url}"`);
         return urlMatches(this._page?.context()._options.baseURL, event.url, options.url);
       });
@@ -165,8 +172,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async waitForURL(url: URLMatch, options: { waitUntil?: LifecycleEvent, timeout?: number } = {}): Promise<void> {
-    if (urlMatches(this._page?.context()._options.baseURL, this.url(), url))
+    if (urlMatches(this._page?.context()._options.baseURL, this.url(), url)) {
       return await this.waitForLoadState(options.waitUntil, options);
+    }
 
     await this.waitForNavigation({ url, ...options });
   }
@@ -201,10 +209,12 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   waitForSelector(selector: string, options: channels.FrameWaitForSelectorOptions & { state: 'attached' | 'visible' }): Promise<ElementHandle<SVGElement | HTMLElement>>;
   waitForSelector(selector: string, options?: channels.FrameWaitForSelectorOptions): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
   async waitForSelector(selector: string, options: channels.FrameWaitForSelectorOptions = {}): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
-    if ((options as any).visibility)
+    if ((options as any).visibility) {
       throw new Error('options.visibility is not supported, did you mean options.state?');
-    if ((options as any).waitFor && (options as any).waitFor !== 'visible')
+    }
+    if ((options as any).waitFor && (options as any).waitFor !== 'visible') {
       throw new Error('options.waitFor is not supported, did you mean options.state?');
+    }
     const result = await this._channel.waitForSelector({ selector, ...options });
     return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
   }
@@ -421,10 +431,11 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async setChecked(selector: string, checked: boolean, options?: channels.FrameCheckOptions) {
-    if (checked)
+    if (checked) {
       await this.check(selector, options);
-    else
+    } else {
       await this.uncheck(selector, options);
+    }
   }
 
   async waitForTimeout(timeout: number) {
@@ -432,8 +443,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async waitForFunction<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options: WaitForFunctionOptions = {}): Promise<structs.SmartHandle<R>> {
-    if (typeof options.polling === 'string')
+    if (typeof options.polling === 'string') {
       assert(options.polling === 'raf', 'Unknown polling option: ' + options.polling);
+    }
     const result = await this._channel.waitForFunction({
       ...options,
       pollingInterval: options.polling === 'raf' ? undefined : options.polling,
@@ -450,9 +462,11 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 }
 
 export function verifyLoadState(name: string, waitUntil: LifecycleEvent): LifecycleEvent {
-  if (waitUntil as unknown === 'networkidle0')
+  if (waitUntil as unknown === 'networkidle0') {
     waitUntil = 'networkidle';
-  if (!kLifecycleEvents.has(waitUntil))
+  }
+  if (!kLifecycleEvents.has(waitUntil)) {
     throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle|commit)`);
+  }
   return waitUntil;
 }

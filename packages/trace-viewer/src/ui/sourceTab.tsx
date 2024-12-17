@@ -48,8 +48,9 @@ export const SourceTab: React.FunctionComponent<{
   const { source, highlight, targetLine, fileName, location } = useAsyncMemo<{ source: SourceModel, targetLine?: number, fileName?: string, highlight: SourceHighlight[], location?: SourceLocation }>(async () => {
     const actionLocation = stack?.[selectedFrame];
     const shouldUseFallback = !actionLocation?.file;
-    if (shouldUseFallback && !fallbackLocation)
+    if (shouldUseFallback && !fallbackLocation) {
       return { source: { file: '', errors: [], content: undefined }, targetLine: 0, highlight: [] };
+    }
 
     const file = shouldUseFallback ? fallbackLocation!.file : actionLocation.file;
     let source = sources.get(file);
@@ -72,12 +73,14 @@ export const SourceTab: React.FunctionComponent<{
       const sha1 = await calculateSha1(file);
       try {
         let response = await fetch(`sha1/src@${sha1}.txt`);
-        if (response.status === 404)
+        if (response.status === 404) {
           response = await fetch(`file?path=${encodeURIComponent(file)}`);
-        if (response.status >= 400)
+        }
+        if (response.status >= 400) {
           source.content = `<Unable to read "${file}">`;
-        else
+        } else {
           source.content = await response.text();
+        }
       } catch {
         source.content = `<Unable to read "${file}">`;
       }
@@ -86,8 +89,9 @@ export const SourceTab: React.FunctionComponent<{
   }, [stack, selectedFrame, rootDir, fallbackLocation], { source: { errors: [], content: 'Loading\u2026' }, highlight: [] });
 
   const openExternally = React.useCallback(() => {
-    if (!location)
+    if (!location) {
       return;
+    }
     if (onOpenExternally) {
       onOpenExternally(location);
     } else {
@@ -130,8 +134,9 @@ export async function calculateSha1(text: string): Promise<string> {
 }
 
 function getFileName(fullPath?: string): string {
-  if (!fullPath)
+  if (!fullPath) {
     return '';
-  const pathSep = fullPath?.includes('/') ? '/' : '\\';
-  return fullPath?.split(pathSep).pop() ?? '';
+  }
+  const pathSep = fullPath.includes('/') ? '/' : '\\';
+  return fullPath.split(pathSep).pop() ?? '';
 }

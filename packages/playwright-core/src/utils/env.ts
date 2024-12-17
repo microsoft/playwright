@@ -23,27 +23,33 @@ export function getFromENV(name: string): string | undefined {
 
 export function getAsBooleanFromENV(name: string, defaultValue?: boolean | undefined): boolean {
   const value = getFromENV(name);
-  if (value === 'false' || value === '0')
+  if (value === 'false' || value === '0') {
     return false;
-  if (value)
+  }
+  if (value) {
     return true;
+  }
   return !!defaultValue;
 }
 
 export function getPackageManager() {
   const env = process.env.npm_config_user_agent || '';
-  if (env.includes('yarn'))
+  if (env.includes('yarn')) {
     return 'yarn';
-  if (env.includes('pnpm'))
+  }
+  if (env.includes('pnpm')) {
     return 'pnpm';
+  }
   return 'npm';
 }
 
 export function getPackageManagerExecCommand() {
   const packageManager = getPackageManager();
-  if (packageManager === 'yarn')
+  if (packageManager === 'yarn') {
     return 'yarn';
-  if (packageManager === 'pnpm')
+  }
+  if (packageManager === 'pnpm') {
     return 'pnpm exec';
+  }
   return 'npx';
 }

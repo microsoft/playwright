@@ -32,18 +32,21 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   ) { }
 
   _commandsForCode(code: string, modifiers: Set<types.KeyboardModifier>) {
-    if (!this._isMac)
+    if (!this._isMac) {
       return [];
+    }
     const parts = [];
     for (const modifier of (['Shift', 'Control', 'Alt', 'Meta']) as types.KeyboardModifier[]) {
-      if (modifiers.has(modifier))
+      if (modifiers.has(modifier)) {
         parts.push(modifier);
+      }
     }
     parts.push(code);
     const shortcut = parts.join('+');
     let commands = macEditingCommands[shortcut] || [];
-    if (isString(commands))
+    if (isString(commands)) {
       commands = [commands];
+    }
     // Commands that insert text are not supported
     commands = commands.filter(x => !x.startsWith('insert'));
     // remove the trailing : to match the Chromium command names.
@@ -51,8 +54,9 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   }
 
   async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
-    if (code === 'Escape' && await this._dragManger.cancelDrag())
+    if (code === 'Escape' && await this._dragManger.cancelDrag()) {
       return;
+    }
     const commands = this._commandsForCode(code, modifiers);
     await this._client.send('Input.dispatchKeyEvent', {
       type: text ? 'keyDown' : 'rawKeyDown',
@@ -116,8 +120,9 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async down(x: number, y: number, button: types.MouseButton, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, clickCount: number): Promise<void> {
-    if (this._dragManager.isDragging())
+    if (this._dragManager.isDragging()) {
       return;
+    }
     await this._client.send('Input.dispatchMouseEvent', {
       type: 'mousePressed',
       button,

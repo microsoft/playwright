@@ -31,8 +31,9 @@ export const defaultTimeout = 30000;
 const cachedFileSuites = new Map<string, Suite>();
 
 export async function loadTestFile(file: string, rootDir: string, testErrors?: TestError[]): Promise<Suite> {
-  if (cachedFileSuites.has(file))
+  if (cachedFileSuites.has(file)) {
     return cachedFileSuites.get(file)!;
+  }
   const suite = new Suite(path.relative(rootDir, file) || path.basename(file), 'file');
   suite._requireFile = file;
   suite.location = { file, line: 0, column: 0 };
@@ -46,8 +47,9 @@ export async function loadTestFile(file: string, rootDir: string, testErrors?: T
     await requireOrImport(file);
     cachedFileSuites.set(file, suite);
   } catch (e) {
-    if (!testErrors)
+    if (!testErrors) {
       throw e;
+    }
     testErrors.push(serializeLoadError(file, e));
   } finally {
     setCurrentlyLoadingFileSuite(undefined);
@@ -71,8 +73,9 @@ export async function loadTestFile(file: string, rootDir: string, testErrors?: T
       const mappedFile = files.values().next().value!;
       if (suite.location.file !== mappedFile) {
         // The file is different, check for a likely source map case.
-        if (path.extname(mappedFile) !== path.extname(suite.location.file))
+        if (path.extname(mappedFile) !== path.extname(suite.location.file)) {
           suite.location.file = mappedFile;
+        }
       }
     }
   }

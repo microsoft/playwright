@@ -81,8 +81,9 @@ export function TreeView<T extends TreeItem>({
 
   React.useEffect(() => {
     const treeElem = itemListRef.current;
-    if (!treeElem)
+    if (!treeElem) {
       return;
+    }
     const saveScrollPosition = () => {
       scrollPositions.set(name, treeElem.scrollTop);
     };
@@ -91,8 +92,9 @@ export function TreeView<T extends TreeItem>({
   }, [name]);
 
   React.useEffect(() => {
-    if (itemListRef.current)
+    if (itemListRef.current) {
       itemListRef.current.scrollTop = scrollPositions.get(name) || 0;
+    }
   }, [name]);
 
   const toggleExpanded = React.useCallback((item: T) => {
@@ -121,8 +123,9 @@ export function TreeView<T extends TreeItem>({
           onAccepted?.(selectedItem);
           return;
         }
-        if (event.key !== 'ArrowDown' &&  event.key !== 'ArrowUp' && event.key !== 'ArrowLeft' &&  event.key !== 'ArrowRight')
+        if (event.key !== 'ArrowDown' &&  event.key !== 'ArrowUp' && event.key !== 'ArrowLeft' &&  event.key !== 'ArrowRight') {
           return;
+        }
 
         event.stopPropagation();
         event.preventDefault();
@@ -245,8 +248,9 @@ export function TreeItemHeader<T extends TreeItem>({
   const indentation = itemData.depth;
   const expanded = itemData.expanded;
   let expandIcon = 'codicon-blank';
-  if (typeof expanded === 'boolean')
+  if (typeof expanded === 'boolean') {
     expandIcon = expanded ? 'codicon-chevron-down' : 'codicon-chevron-right';
+  }
   const rendered = render(item);
   const children = expanded && item.children.length ? item.children as T[] : [];
   const titled = title?.(item);
@@ -320,19 +324,22 @@ function indexTree<T extends TreeItem>(
   expandedItems: Map<string, boolean | undefined>,
   autoExpandDepth: number,
   isVisible: (item: T) => boolean = () => true): Map<T, TreeItemData> {
-  if (!isVisible(rootItem))
+  if (!isVisible(rootItem)) {
     return new Map();
+  }
 
   const result = new Map<T, TreeItemData>();
   const temporaryExpanded = new Set<string>();
-  for (let item: TreeItem | undefined = selectedItem?.parent; item; item = item.parent)
+  for (let item: TreeItem | undefined = selectedItem?.parent; item; item = item.parent) {
     temporaryExpanded.add(item.id);
+  }
   let lastItem: T | null = null;
 
   const appendChildren = (parent: T, depth: number) => {
     for (const item of parent.children as T[]) {
-      if (!isVisible(item))
+      if (!isVisible(item)) {
         continue;
+      }
       const expandState = temporaryExpanded.has(item.id) || expandedItems.get(item.id);
       const autoExpandMatches = autoExpandDepth > depth && result.size < 25 && expandState !== false;
       const expanded = item.children.length ? expandState ?? autoExpandMatches : undefined;
@@ -343,12 +350,14 @@ function indexTree<T extends TreeItem>(
         next: null,
         prev: lastItem,
       };
-      if (lastItem)
-        result.get(lastItem)!.next = item;
+      if (lastItem) {
+result.get(lastItem)!.next = item;
+      }
       lastItem = item;
       result.set(item, itemData);
-      if (expanded)
+      if (expanded) {
         appendChildren(item, depth + 1);
+      }
     }
   };
   appendChildren(rootItem, 0);

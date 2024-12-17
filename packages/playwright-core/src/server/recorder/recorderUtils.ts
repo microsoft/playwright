@@ -24,11 +24,13 @@ import { buildFullSelector, traceParamsForAction } from '../../utils/isomorphic/
 
 export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {
   let title = metadata.apiName || metadata.method;
-  if (metadata.method === 'waitForEventInfo')
+  if (metadata.method === 'waitForEventInfo') {
     title += `(${metadata.params.info.event})`;
+  }
   title = title.replace('object.expect', 'expect');
-  if (metadata.error)
+  if (metadata.error) {
     status = 'error';
+  }
   const params = {
     url: metadata.params?.url,
     selector: metadata.params?.selector,
@@ -53,20 +55,23 @@ export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus)
 export function mainFrameForAction(pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext): Frame {
   const pageAlias = actionInContext.frame.pageAlias;
   const page = [...pageAliases.entries()].find(([, alias]) => pageAlias === alias)?.[0];
-  if (!page)
+  if (!page) {
     throw new Error(`Internal error: page ${pageAlias} not found in [${[...pageAliases.values()]}]`);
+  }
   return page.mainFrame();
 }
 
 export async function frameForAction(pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext, action: actions.ActionWithSelector): Promise<Frame> {
   const pageAlias = actionInContext.frame.pageAlias;
   const page = [...pageAliases.entries()].find(([, alias]) => pageAlias === alias)?.[0];
-  if (!page)
+  if (!page) {
     throw new Error('Internal error: page not found');
+  }
   const fullSelector = buildFullSelector(actionInContext.frame.framePath, action.selector);
   const result = await page.mainFrame().selectors.resolveFrameForSelector(fullSelector);
-  if (!result)
+  if (!result) {
     throw new Error('Internal error: frame not found');
+  }
   return result.frame;
 }
 

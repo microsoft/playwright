@@ -49,8 +49,9 @@ export const FiltersView: React.FC<{
           setFilterText(e.target.value);
         }}
         onKeyDown={e => {
-          if (e.key === 'Enter')
+          if (e.key === 'Enter') {
             runTests();
+          }
         }} />}>
     </Expandable>
     <div className='filter-summary' title={'Status: ' + statusLine + '\nProjects: ' + projectsLine} onClick={() => setExpanded(!expanded)}>
@@ -80,9 +81,10 @@ export const FiltersView: React.FC<{
                 const copy = new Map(projectFilters);
                 copy.set(projectName, !copy.get(projectName));
                 setProjectFilters(copy);
-                const configFile = testModel?.config?.configFile;
-                if (configFile)
+                const configFile = testModel?.config.configFile;
+                if (configFile) {
                   settings.setObject(configFile + ':projects', [...copy.entries()].filter(([_, v]) => v).map(([k]) => k));
+                }
               }}/>
               <div>{projectName || 'untitled'}</div>
             </label>

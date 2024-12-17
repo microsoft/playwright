@@ -79,8 +79,9 @@ export class WebSocketTransport implements ConnectionTransport {
     const transport = new WebSocketTransport(progress, url, logUrl, headers, redirect.follow && redirect.hadRedirects, debugLogHeader);
     let success = false;
     progress?.cleanupWhenAborted(async () => {
-      if (!success)
+      if (!success) {
         await transport.closeAndWait().catch(e => null);
+      }
     });
     const result = await new Promise<{ transport?: WebSocketTransport, redirect?: IncomingMessage }>((fulfill, reject) => {
       transport._ws.on('open', async () => {
@@ -99,8 +100,9 @@ export class WebSocketTransport implements ConnectionTransport {
           return;
         }
         for (let i = 0; i < response.rawHeaders.length; i += 2) {
-          if (debugLogHeader && response.rawHeaders[i] === debugLogHeader)
+          if (debugLogHeader && response.rawHeaders[i] === debugLogHeader) {
             progress?.log(response.rawHeaders[i + 1]);
+          }
         }
         const chunks: Buffer[] = [];
         const errorPrefix = `${logUrl} ${response.statusCode} ${response.statusMessage}`;
@@ -141,8 +143,9 @@ export class WebSocketTransport implements ConnectionTransport {
     this._ws.on('upgrade', response => {
       for (let i = 0; i < response.rawHeaders.length; i += 2) {
         this.headers.push({ name: response.rawHeaders[i], value: response.rawHeaders[i + 1] });
-        if (debugLogHeader && response.rawHeaders[i] === debugLogHeader)
+        if (debugLogHeader && response.rawHeaders[i] === debugLogHeader) {
           progress?.log(response.rawHeaders[i + 1]);
+        }
       }
     });
     this._progress = progress;
@@ -164,8 +167,9 @@ export class WebSocketTransport implements ConnectionTransport {
           return;
         }
         try {
-          if (this.onmessage)
+          if (this.onmessage) {
             this.onmessage.call(null, parsedJson);
+          }
         } catch (e) {
           this._progress?.log(`<closing ws> Closing websocket due to failed onmessage callback. eventData=${eventData} e=${e?.message}`);
           this._ws.close();
@@ -175,8 +179,9 @@ export class WebSocketTransport implements ConnectionTransport {
 
     this._ws.addEventListener('close', event => {
       this._progress?.log(`<ws disconnected> ${logUrl} code=${event.code} reason=${event.reason}`);
-      if (this.onclose)
+      if (this.onclose) {
         this.onclose.call(null, event.reason);
+      }
     });
     // Prevent Error: read ECONNRESET.
     this._ws.addEventListener('error', error => this._progress?.log(`<ws error> ${logUrl} ${error.type} ${error.message}`));
@@ -192,8 +197,9 @@ export class WebSocketTransport implements ConnectionTransport {
   }
 
   async closeAndWait() {
-    if (this._ws.readyState === ws.CLOSED)
+    if (this._ws.readyState === ws.CLOSED) {
       return;
+    }
     const promise = new Promise(f => this._ws.once('close', f));
     this.close();
     await promise; // Make sure to await the actual disconnect.

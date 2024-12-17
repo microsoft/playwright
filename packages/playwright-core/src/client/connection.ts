@@ -112,17 +112,20 @@ export class Connection extends EventEmitter {
   }
 
   setIsTracing(isTracing: boolean) {
-    if (isTracing)
+    if (isTracing) {
       this._tracingCount++;
-    else
+    } else {
       this._tracingCount--;
+    }
   }
 
   async sendMessageToServer(object: ChannelOwner, method: string, params: any, apiName: string | undefined, frames: channels.StackFrame[], stepId?: string): Promise<any> {
-    if (this._closedError)
+    if (this._closedError) {
       throw this._closedError;
-    if (object._wasCollected)
+    }
+    if (object._wasCollected) {
       throw new Error('The object has been collected to prevent unbounded heap growth.');
+    }
 
     const guid = object._guid;
     const type = object._type;
@@ -134,8 +137,9 @@ export class Connection extends EventEmitter {
     }
     const location = frames[0] ? { file: frames[0].file, line: frames[0].line, column: frames[0].column } : undefined;
     const metadata: channels.Metadata = { apiName, location, internal: !apiName, stepId };
-    if (this._tracingCount && frames && type !== 'LocalUtils')
+    if (this._tracingCount && frames && type !== 'LocalUtils') {
       this._localUtils?._channel.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
+    }
     // We need to exit zones before calling into the server, otherwise
     // when we receive events from the server, we would be in an API zone.
     zones.exitZones(() => this.onmessage({ ...message, metadata }));
@@ -143,16 +147,19 @@ export class Connection extends EventEmitter {
   }
 
   dispatch(message: object) {
-    if (this._closedError)
+    if (this._closedError) {
       return;
+    }
 
     const { id, guid, method, params, result, error, log } = message as any;
     if (id) {
-      if (debugLogger.isEnabled('channel'))
+      if (debugLogger.isEnabled('channel')) {
         debugLogger.log('channel', '<RECV ' + JSON.stringify(message));
+      }
       const callback = this._callbacks.get(id);
-      if (!callback)
+      if (!callback) {
         throw new Error(`Cannot find command to respond: ${id}`);
+      }
       this._callbacks.delete(id);
       if (error && !result) {
         const parsedError = parseError(error);
@@ -165,21 +172,24 @@ export class Connection extends EventEmitter {
       return;
     }
 
-    if (debugLogger.isEnabled('channel'))
+    if (debugLogger.isEnabled('channel')) {
       debugLogger.log('channel', '<EVENT ' + JSON.stringify(message));
+    }
     if (method === '__create__') {
       this._createRemoteObject(guid, params.type, params.guid, params.initializer);
       return;
     }
 
     const object = this._objects.get(guid);
-    if (!object)
+    if (!object) {
       throw new Error(`Cannot find object to "${method}": ${guid}`);
+    }
 
     if (method === '__adopt__') {
       const child = this._objects.get(params.guid);
-      if (!child)
+      if (!child) {
         throw new Error(`Unknown new child: ${params.guid}`);
+      }
       object._adopt(child);
       return;
     }
@@ -194,11 +204,13 @@ export class Connection extends EventEmitter {
   }
 
   close(cause?: string) {
-    if (this._closedError)
+    if (this._closedError) {
       return;
+    }
     this._closedError = new TargetClosedError(cause);
-    for (const callback of this._callbacks.values())
+    for (const callback of this._callbacks.values()) {
       callback.reject(this._closedError);
+    }
     this._callbacks.clear();
     this.emit('close');
   }
@@ -206,10 +218,12 @@ export class Connection extends EventEmitter {
   private _tChannelImplFromWire(names: '*' | string[], arg: any, path: string, context: ValidatorContext) {
     if (arg && typeof arg === 'object' && typeof arg.guid === 'string') {
       const object = this._objects.get(arg.guid)!;
-      if (!object)
+      if (!object) {
         throw new Error(`Object with guid ${arg.guid} was not bound in the connection`);
-      if (names !== '*' && !names.includes(object._type))
+      }
+      if (names !== '*' && !names.includes(object._type)) {
         throw new ValidationError(`${path}: expected channel ${names.toString()}`);
+      }
       return object._channel;
     }
     throw new ValidationError(`${path}: expected channel ${names.toString()}`);
@@ -217,8 +231,9 @@ export class Connection extends EventEmitter {
 
   private _createRemoteObject(parentGuid: string, type: string, guid: string, initializer: any): any {
     const parent = this._objects.get(parentGuid);
-    if (!parent)
+    if (!parent) {
       throw new Error(`Cannot find parent object ${parentGuid} to create ${guid}`);
+    }
     let result: ChannelOwner<any>;
     const validator = findValidator(type, '', 'Initializer');
     initializer = validator(initializer, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._rawBuffers ? 'buffer' : 'fromBase64' });
@@ -276,8 +291,9 @@ export class Connection extends EventEmitter {
         break;
       case 'LocalUtils':
         result = new LocalUtils(parent, type, guid, initializer);
-        if (!this._localUtils)
+        if (!this._localUtils) {
           this._localUtils = result as LocalUtils;
+        }
         break;
       case 'Page':
         result = new Page(parent, type, guid, initializer);

@@ -38,8 +38,9 @@ export class VideoRecorder {
   private _ffmpegPath: string;
 
   static async launch(page: Page, ffmpegPath: string, options: types.PageScreencastOptions): Promise<VideoRecorder> {
-    if (!options.outputFile.endsWith('.webm'))
+    if (!options.outputFile.endsWith('.webm')) {
       throw new Error('File must have .webm extension');
+    }
 
     const controller = new ProgressController(serverSideCallMetadata(), page);
     controller.setLogName('browser');
@@ -128,14 +129,16 @@ export class VideoRecorder {
 
   writeFrame(frame: Buffer, timestamp: number) {
     assert(this._process);
-    if (this._isStopped)
+    if (this._isStopped) {
       return;
+    }
 
     if (this._lastFrameBuffer) {
       const durationSec = timestamp - this._lastFrameTimestamp;
       const repeatCount = Math.max(1, Math.round(fps * durationSec));
-      for (let i = 0; i < repeatCount; ++i)
+      for (let i = 0; i < repeatCount; ++i) {
         this._frameQueue.push(this._lastFrameBuffer);
+      }
       this._lastWritePromise = this._lastWritePromise.then(() => this._sendFrames());
     }
 
@@ -145,20 +148,23 @@ export class VideoRecorder {
   }
 
   private async _sendFrames() {
-    while (this._frameQueue.length)
+    while (this._frameQueue.length) {
       await this._sendFrame(this._frameQueue.shift()!);
+    }
   }
 
   private async _sendFrame(frame: Buffer) {
     return new Promise(f => this._process!.stdin!.write(frame, f)).then(error => {
-      if (error)
+      if (error) {
         this._progress.log(`ffmpeg failed to write: ${String(error)}`);
+      }
     });
   }
 
   async stop() {
-    if (this._isStopped)
+    if (this._isStopped) {
       return;
+    }
     this.writeFrame(Buffer.from([]), this._lastFrameTimestamp + (monotonicTime() - this._lastWriteTimestamp) / 1000);
     this._isStopped = true;
     await this._lastWritePromise;

@@ -40,8 +40,9 @@ export const TestCaseView: React.FC<{
   const filterParam = searchParams.has('q') ? '&q=' + searchParams.get('q') : '';
 
   const labels = React.useMemo(() => {
-    if (!test)
+    if (!test) {
       return undefined;
+    }
     return test.tags;
   }, [test]);
 
@@ -93,8 +94,9 @@ function TestCaseAnnotationView({ annotation: { type, description } }: { annotat
 }
 
 function retryLabel(index: number) {
-  if (!index)
+  if (!index) {
     return 'Run';
+  }
   return `Retry #${index}`;
 }
 

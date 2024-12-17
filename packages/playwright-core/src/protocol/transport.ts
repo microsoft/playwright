@@ -49,22 +49,25 @@ export class PipeTransport {
     pipeRead.on('data', buffer => this._dispatch(buffer));
     pipeRead.on('close', () => {
       this._closed = true;
-      if (this.onclose)
+      if (this.onclose) {
         this.onclose();
+      }
     });
     this.onmessage = undefined;
     this.onclose = undefined;
   }
 
   send(message: string) {
-    if (this._closed)
+    if (this._closed) {
       throw new Error('Pipe has been closed');
+    }
     const data = Buffer.from(message, 'utf-8');
     const dataLength = Buffer.alloc(4);
-    if (this._endian === 'be')
+    if (this._endian === 'be') {
       dataLength.writeUInt32BE(data.length, 0);
-    else
+    } else {
       dataLength.writeUInt32LE(data.length, 0);
+    }
     this._pipeWrite.write(dataLength);
     this._pipeWrite.write(data);
   }
@@ -96,8 +99,9 @@ export class PipeTransport {
       this._data = this._data.slice(this._bytesLeft);
       this._bytesLeft = 0;
       this._waitForNextTask(() => {
-        if (this.onmessage)
+        if (this.onmessage) {
           this.onmessage(message.toString('utf-8'));
+        }
       });
     }
   }

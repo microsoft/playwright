@@ -24,8 +24,9 @@ export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): 
   const lines: string[] = (e.stack?.split('\n') || []).filter(l => l.startsWith('    at '));
   e.message = newMessage;
   const errorTitle = `${e.name}: ${e.message}`;
-  if (lines.length)
+  if (lines.length) {
     e.stack = `${errorTitle}\n${lines.join('\n')}`;
+  }
   return e;
 }
 
@@ -57,8 +58,9 @@ export function captureLibraryStackTrace(): { frames: StackFrame[], apiName: str
   };
   let parsedFrames = stack.map(line => {
     const frame = parseStackTraceLine(line);
-    if (!frame || !frame.file)
+    if (!frame || !frame.file) {
       return null;
+    }
     const isPlaywrightLibrary = frame.file.startsWith(CORE_DIR);
     const parsed: ParsedFrame = {
       frame,
@@ -81,20 +83,24 @@ export function captureLibraryStackTrace(): { frames: StackFrame[], apiName: str
   }
 
   function normalizeAPIName(name?: string): string {
-    if (!name)
+    if (!name) {
       return '';
+    }
     const match = name.match(/(API|JS|CDP|[A-Z])(.*)/);
-    if (!match)
+    if (!match) {
       return name;
+    }
     return match[1].toLowerCase() + match[2];
   }
 
   // This is for the inspector so that it did not include the test runner stack frames.
   parsedFrames = parsedFrames.filter(f => {
-    if (process.env.PWDEBUGIMPL)
+    if (process.env.PWDEBUGIMPL) {
       return true;
-    if (internalStackPrefixes.some(prefix => f.frame.file.startsWith(prefix)))
+    }
+    if (internalStackPrefixes.some(prefix => f.frame.file.startsWith(prefix))) {
       return false;
+    }
     return true;
   });
 
@@ -107,10 +113,11 @@ export function captureLibraryStackTrace(): { frames: StackFrame[], apiName: str
 export function stringifyStackFrames(frames: StackFrame[]): string[] {
   const stackLines: string[] = [];
   for (const frame of frames) {
-    if (frame.function)
+    if (frame.function) {
       stackLines.push(`    at ${frame.function} (${frame.file}:${frame.line}:${frame.column})`);
-    else
+    } else {
       stackLines.push(`    at ${frame.file}:${frame.line}:${frame.column}`);
+    }
   }
   return stackLines;
 }
@@ -129,8 +136,9 @@ export function splitErrorMessage(message: string): { name: string, message: str
 }
 
 export function formatCallLog(log: string[] | undefined): string {
-  if (!log || !log.some(l => !!l))
+  if (!log || !log.some(l => !!l)) {
     return '';
+  }
   return `
 Call log:
 ${colors.dim(log.join('\n'))}
@@ -146,12 +154,13 @@ export function compressCallLog(log: string[]): string[] {
       const leadingWhitespace = line.match(/^\s*/);
       const whitespacePrefix = '  ' + leadingWhitespace?.[0] || '';
       const countPrefix = `${block.count} × `;
-      if (block.count > 1 && i === 0)
+      if (block.count > 1 && i === 0) {
         lines.push(whitespacePrefix + countPrefix + line.trim());
-      else if (block.count > 1)
+      } else if (block.count > 1) {
         lines.push(whitespacePrefix + ' '.repeat(countPrefix.length - 2) + '- ' + line.trim());
-      else
+      } else {
         lines.push(whitespacePrefix + '- ' + line.trim());
+      }
     }
   }
   return lines;

@@ -43,10 +43,12 @@ export class PlaywrightServer {
 
   constructor(options: ServerOptions) {
     this._options = options;
-    if (options.preLaunchedBrowser)
+    if (options.preLaunchedBrowser) {
       this._preLaunchedPlaywright = options.preLaunchedBrowser.attribution.playwright;
-    if (options.preLaunchedAndroidDevice)
+    }
+    if (options.preLaunchedAndroidDevice) {
       this._preLaunchedPlaywright = options.preLaunchedAndroidDevice._android.attribution.playwright;
+    }
 
     const browserSemaphore = new Semaphore(this._options.maxConnections);
     const controllerSemaphore = new Semaphore(1);
@@ -55,13 +57,15 @@ export class PlaywrightServer {
     this._wsServer = new WSServer({
       onUpgrade: (request, socket) => {
         const uaError = userAgentVersionMatchesErrorMessage(request.headers['user-agent'] || '');
-        if (uaError)
+        if (uaError) {
           return { error: `HTTP/${request.httpVersion} 428 Precondition Required\r\n\r\n${uaError}` };
+        }
       },
 
       onHeaders: headers => {
-        if (process.env.PWTEST_SERVER_WS_HEADERS)
+        if (process.env.PWTEST_SERVER_WS_HEADERS) {
           headers.push(process.env.PWTEST_SERVER_WS_HEADERS!);
+        }
       },
 
       onConnection: (request, url, ws, id) => {
@@ -82,8 +86,9 @@ export class PlaywrightServer {
         // Instantiate playwright for the extension modes.
         const isExtension = this._options.mode === 'extension';
         if (isExtension) {
-          if (!this._preLaunchedPlaywright)
+          if (!this._preLaunchedPlaywright) {
             this._preLaunchedPlaywright = createPlaywright({ sdkLanguage: 'javascript', isServer: true });
+          }
         }
 
         let clientType: ClientType = 'launch-browser';
@@ -114,8 +119,9 @@ export class PlaywrightServer {
 
       onClose: async () => {
         debugLogger.log('server', 'closing browsers');
-        if (this._preLaunchedPlaywright)
+        if (this._preLaunchedPlaywright) {
           await Promise.all(this._preLaunchedPlaywright.allBrowsers().map(browser => browser.close({ reason: 'Playwright Server stopped' })));
+        }
         debugLogger.log('server', 'closed browsers');
       }
     });

@@ -38,17 +38,21 @@ export async function pollAgainstDeadline<T>(callback: () => Promise<{ continueP
   const wrappedCallback = () => Promise.resolve().then(callback);
   while (true) {
     const time = monotonicTime();
-    if (deadline && time >= deadline)
+    if (deadline && time >= deadline) {
       break;
+    }
     const received = await raceAgainstDeadline(wrappedCallback, deadline);
-    if (received.timedOut)
+    if (received.timedOut) {
       break;
+    }
     lastResult = (received as any).result.result;
-    if (!(received as any).result.continuePolling)
+    if (!(received as any).result.continuePolling) {
       return { result: lastResult, timedOut: false };
+    }
     const interval = pollIntervals!.shift() ?? lastPollInterval;
-    if (deadline && deadline <= monotonicTime() + interval)
+    if (deadline && deadline <= monotonicTime() + interval) {
       break;
+    }
     await new Promise(x => setTimeout(x, interval));
   }
   return { timedOut: true, result: lastResult };

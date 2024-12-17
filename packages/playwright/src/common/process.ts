@@ -56,8 +56,9 @@ process.on('SIGTERM', () => {});
 process.execArgv = execArgvWithoutExperimentalLoaderOptions();
 
 // Node.js >= 20
-if (process.env.PW_TS_ESM_LOADER_ON)
+if (process.env.PW_TS_ESM_LOADER_ON) {
   registerESMLoader();
+}
 
 let processRunner: ProcessRunner | undefined;
 let processName: string | undefined;
@@ -105,8 +106,9 @@ async function gracefullyCloseAndExit(forceExit: boolean) {
     gracefullyCloseCalled = true;
     // Meanwhile, try to gracefully shutdown.
     await processRunner?.gracefullyClose().catch(() => {});
-    if (processName)
+    if (processName) {
       await stopProfiling(processName).catch(() => {});
+    }
     // eslint-disable-next-line no-restricted-properties
     process.exit(0);
   }

@@ -384,10 +384,11 @@ async function trackEvents(target: ElementHandle) {
     ]) {
       target.addEventListener(event, (e: PointerEvent) => {
         // Browsers are all over the place with dragend position.
-        if (event === 'dragend')
+        if (event === 'dragend') {
           events.push('dragend');
-        else
+        } else {
           events.push(`${event} at ${e.clientX};${e.clientY}`);
+        }
       }, false);
     }
     return events;

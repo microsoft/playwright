@@ -47,24 +47,30 @@ export function createInstrumentation(): ClientInstrumentation {
   const listeners: ClientInstrumentationListener[] = [];
   return new Proxy({}, {
     get: (obj: any, prop: string | symbol) => {
-      if (typeof prop !== 'string')
+      if (typeof prop !== 'string') {
         return obj[prop];
-      if (prop === 'addListener')
+      }
+      if (prop === 'addListener') {
         return (listener: ClientInstrumentationListener) => listeners.push(listener);
-      if (prop === 'removeListener')
+      }
+      if (prop === 'removeListener') {
         return (listener: ClientInstrumentationListener) => listeners.splice(listeners.indexOf(listener), 1);
-      if (prop === 'removeAllListeners')
+      }
+      if (prop === 'removeAllListeners') {
         return () => listeners.splice(0, listeners.length);
+      }
       if (prop.startsWith('run')) {
         return async (...params: any[]) => {
-          for (const listener of listeners)
+          for (const listener of listeners) {
             await (listener as any)[prop]?.(...params);
+          }
         };
       }
       if (prop.startsWith('on')) {
         return (...params: any[]) => {
-          for (const listener of listeners)
+          for (const listener of listeners) {
             (listener as any)[prop]?.(...params);
+          }
         };
       }
       return obj[prop];

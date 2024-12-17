@@ -33,8 +33,9 @@ export const CallLogView: React.FC<CallLogProps> = ({
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const [expandOverrides, setExpandOverrides] = React.useState<Map<string, boolean>>(new Map());
   React.useLayoutEffect(() => {
-    if (log.find(callLog => callLog.reveal))
+    if (log.find(callLog => callLog.reveal)) {
       messagesEndRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
+    }
   }, [messagesEndRef, log]);
   return <div className='call-log' style={{ flex: 'auto' }}>
     {log.map(callLog => {

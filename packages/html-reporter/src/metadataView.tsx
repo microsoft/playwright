@@ -62,8 +62,9 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, { error
 export const MetadataView: React.FC<Metainfo> = metadata => <ErrorBoundary><InnerMetadataView {...metadata} /></ErrorBoundary>;
 
 const InnerMetadataView: React.FC<Metainfo> = metadata => {
-  if (!Object.keys(metadata).find(k => k.startsWith('revision.') || k.startsWith('ci.')))
+  if (!Object.keys(metadata).find(k => k.startsWith('revision.') || k.startsWith('ci.'))) {
     return null;
+  }
 
   return (
     <AutoChip header={

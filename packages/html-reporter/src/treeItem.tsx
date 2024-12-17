@@ -30,7 +30,9 @@ export const TreeItem: React.FunctionComponent<{
 }> = ({ title, loadChildren, onClick, expandByDefault, depth, selected, style }) => {
   const [expanded, setExpanded] = React.useState(expandByDefault || false);
   return <div className={'tree-item'} style={style}>
-    <span className={clsx('tree-item-title', selected && 'selected')} style={{ whiteSpace: 'nowrap', paddingLeft: depth * 22 + 4 }} onClick={() => { onClick?.(); setExpanded(!expanded); }} >
+    <span className={clsx('tree-item-title', selected && 'selected')} style={{ whiteSpace: 'nowrap', paddingLeft: depth * 22 + 4 }} onClick={() => {
+      onClick?.(); setExpanded(!expanded);
+    }} >
       {loadChildren && !!expanded && icons.downArrow()}
       {loadChildren && !expanded && icons.rightArrow()}
       {!loadChildren && <span style={{ visibility: 'hidden' }}>{icons.rightArrow()}</span>}

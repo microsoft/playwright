@@ -32,8 +32,9 @@ export const gitCommitInfo = (options?: GitCommitInfoPluginOptions): TestRunnerP
       };
       // Normalize dates
       const timestamp = info['revision.timestamp'];
-      if (timestamp instanceof Date)
+      if (timestamp instanceof Date) {
         info['revision.timestamp'] = timestamp.getTime();
+      }
 
       config.metadata = config.metadata || {};
       Object.assign(config.metadata, info);
@@ -59,18 +60,23 @@ export interface Info {
 const linksFromEnv = (): Pick<Info, 'revision.link' | 'ci.link'> => {
   const out: { 'revision.link'?: string; 'ci.link'?: string; } = {};
   // Jenkins: https://www.jenkins.io/doc/book/pipeline/jenkinsfile/#using-environment-variables
-  if (process.env.BUILD_URL)
+  if (process.env.BUILD_URL) {
     out['ci.link'] = process.env.BUILD_URL;
+  }
   // GitLab: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
-  if (process.env.CI_PROJECT_URL && process.env.CI_COMMIT_SHA)
+  if (process.env.CI_PROJECT_URL && process.env.CI_COMMIT_SHA) {
     out['revision.link'] = `${process.env.CI_PROJECT_URL}/-/commit/${process.env.CI_COMMIT_SHA}`;
-  if (process.env.CI_JOB_URL)
+  }
+  if (process.env.CI_JOB_URL) {
     out['ci.link'] = process.env.CI_JOB_URL;
-    // GitHub: https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
-  if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_SHA)
+  }
+  // GitHub: https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
+  if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_SHA) {
     out['revision.link'] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`;
-  if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID)
+  }
+  if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID) {
     out['ci.link'] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+  }
   return out;
 };
 
@@ -81,8 +87,9 @@ export const gitStatusFromCLI = async (gitDir: string): Promise<Info | undefined
       ['show', '-s', `--format=%H${separator}%s${separator}%an${separator}%ae${separator}%ct`, 'HEAD'],
       { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS }
   );
-  if (code)
+  if (code) {
     return;
+  }
   const showOutput = stdout.trim();
   const [id, subject, author, email, rawTimestamp] = showOutput.split(separator);
   let timestamp: number = Number.parseInt(rawTimestamp, 10);

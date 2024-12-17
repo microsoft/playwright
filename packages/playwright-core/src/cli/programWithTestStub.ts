@@ -29,8 +29,9 @@ function printPlaywrightTestError(command: string) {
     } catch (e) {
     }
   }
-  if (!packages.length)
+  if (!packages.length) {
     packages.push('playwright');
+  }
   const packageManager = getPackageManager();
   if (packageManager === 'yarn') {
     console.error(`Please install @playwright/test package before running "yarn playwright ${command}"`);
@@ -63,5 +64,6 @@ function addExternalPlaywrightTestCommands() {
   }
 }
 
-if (!process.env.PW_LANG_NAME)
+if (!process.env.PW_LANG_NAME) {
   addExternalPlaywrightTestCommands();
+}

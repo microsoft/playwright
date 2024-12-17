@@ -150,8 +150,9 @@ it('should have passed URL when launching with ignoreDefaultArgs: true', async (
     ignoreDefaultArgs: true,
   };
   const browserContext = await browserType.launchPersistentContext(userDataDir, options);
-  if (!browserContext.pages().length)
+  if (!browserContext.pages().length) {
     await browserContext.waitForEvent('page');
+  }
   await browserContext.pages()[0].waitForLoadState();
   const gotUrls = browserContext.pages().map(page => page.url());
   expect(gotUrls).toEqual([server.EMPTY_PAGE]);
@@ -170,7 +171,9 @@ it('should handle exception', async ({ browserType, createUserDataDir, mode }) =
   it.skip(mode !== 'default');
 
   const e = new Error('Dummy');
-  const options: any = { __testHookBeforeCreateBrowser: () => { throw e; } };
+  const options: any = { __testHookBeforeCreateBrowser: () => {
+    throw e;
+  } };
   const error = await browserType.launchPersistentContext(await createUserDataDir(), options).catch(e => e);
   expect(error.message).toContain('Dummy');
 });

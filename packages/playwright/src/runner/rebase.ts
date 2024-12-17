@@ -44,13 +44,16 @@ export function addSuggestedRebaseline(location: Location, suggestedRebaseline: 
 }
 
 export async function applySuggestedRebaselines(config: FullConfigInternal, reporter: InternalReporter) {
-  if (config.config.updateSnapshots === 'none')
+  if (config.config.updateSnapshots === 'none') {
     return;
-  if (!suggestedRebaselines.size)
+  }
+  if (!suggestedRebaselines.size) {
     return;
+  }
   const [project] = filterProjects(config.projects, config.cliProjectFilter);
-  if (!project)
+  if (!project) {
     return;
+  }
 
   const patches: string[] = [];
   const files: string[] = [];
@@ -68,21 +71,26 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
     traverse(fileNode, {
       CallExpression: path => {
         const node = path.node;
-        if (node.arguments.length !== 1)
+        if (node.arguments.length !== 1) {
           return;
-        if (!t.isMemberExpression(node.callee))
+        }
+        if (!t.isMemberExpression(node.callee)) {
           return;
+        }
         const argument = node.arguments[0];
-        if (!t.isStringLiteral(argument) && !t.isTemplateLiteral(argument))
+        if (!t.isStringLiteral(argument) && !t.isTemplateLiteral(argument)) {
           return;
+        }
 
         const matcher = node.callee.property;
         for (const replacement of replacements) {
           // In Babel, rows are 1-based, columns are 0-based.
-          if (matcher.loc!.start.line !== replacement.location.line)
+          if (matcher.loc!.start.line !== replacement.location.line) {
             continue;
-          if (matcher.loc!.start.column + 1 !== replacement.location.column)
+          }
+          if (matcher.loc!.start.column + 1 !== replacement.location.column) {
             continue;
+          }
           const indent = lines[matcher.loc!.start.line - 1].match(/^\s*/)![0];
           const newText = replacement.code.replace(/\{indent\}/g, indent);
           ranges.push({ start: matcher.start!, end: node.end!, oldText: source.substring(matcher.start!, node.end!), newText });
@@ -96,8 +104,9 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
 
     ranges.sort((a, b) => b.start - a.start);
     let result = source;
-    for (const range of ranges)
+    for (const range of ranges) {
       result = result.substring(0, range.start) + range.newText + result.substring(range.end);
+    }
 
     const relativeName = path.relative(process.cwd(), fileName);
     files.push(relativeName);
@@ -135,8 +144,9 @@ function createPatch(fileName: string, before: string, after: string) {
 
 function findGitRoot(dir: string, cache: Map<string, string | null>): string | null {
   const result = cache.get(dir);
-  if (result !== undefined)
+  if (result !== undefined) {
     return result;
+  }
 
   const gitPath = path.join(dir, '.git');
   if (fs.existsSync(gitPath) && fs.lstatSync(gitPath).isDirectory()) {
@@ -187,7 +197,8 @@ function applyPatchWithConflictMarkers(oldText: string, newText: string) {
     }
   });
 
-  if (conflict)
+  if (conflict) {
     result += '>>>>>>> SNAPSHOT\n';
+  }
   return result;
 }

@@ -110,8 +110,9 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     try {
       await this._channel.dispose(options);
     } catch (e) {
-      if (isTargetClosedError(e))
+      if (isTargetClosedError(e)) {
         return;
+      }
       throw e;
     }
     this._tracing._resetStackCounter();
@@ -168,8 +169,9 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
 
   async _innerFetch(options: FetchOptions & { url?: string, request?: api.Request } = {}): Promise<APIResponse> {
     return await this._wrapApiCall(async () => {
-      if (this._closeReason)
+      if (this._closeReason) {
         throw new TargetClosedError(this._closeReason);
+      }
       assert(options.request || typeof options.url === 'string', 'First argument must be either URL string or Request');
       assert((options.data === undefined ? 0 : 1) + (options.form === undefined ? 0 : 1) + (options.multipart === undefined ? 0 : 1) <= 1, `Only one of 'data', 'form' or 'multipart' can be specified`);
       assert(options.maxRedirects === undefined || options.maxRedirects >= 0, `'maxRedirects' must be greater than or equal to '0'`);
@@ -177,10 +179,11 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
       const url = options.url !== undefined ? options.url : options.request!.url();
       const method = options.method || options.request?.method();
       let encodedParams = undefined;
-      if (typeof options.params === 'string')
+      if (typeof options.params === 'string') {
         encodedParams = options.params;
-      else if (options.params instanceof URLSearchParams)
+      } else if (options.params instanceof URLSearchParams) {
         encodedParams = options.params.toString();
+      }
       // Cannot call allHeaders() here as the request may be paused inside route handler.
       const headersObj = options.headers || options.request?.headers();
       const headers = headersObj ? headersObjectToArray(headersObj) : undefined;
@@ -190,10 +193,11 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
       let postDataBuffer: Buffer | undefined;
       if (options.data !== undefined) {
         if (isString(options.data)) {
-          if (isJsonContentType(headers))
+          if (isJsonContentType(headers)) {
             jsonData = isJsonParsable(options.data) ? options.data : JSON.stringify(options.data);
-          else
+          } else {
             postDataBuffer = Buffer.from(options.data, 'utf8');
+          }
         } else if (Buffer.isBuffer(options.data)) {
           postDataBuffer = options.data;
         } else if (typeof options.data === 'object' || typeof options.data === 'number' || typeof options.data === 'boolean') {
@@ -205,8 +209,9 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
         if (globalThis.FormData && options.form instanceof FormData) {
           formData = [];
           for (const [name, value] of options.form.entries()) {
-            if (typeof value !== 'string')
+            if (typeof value !== 'string') {
               throw new Error(`Expected string for options.form["${name}"], found File. Please use options.multipart instead.`);
+            }
             formData.push({ name, value });
           }
         } else {
@@ -230,12 +235,14 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
           }
         } else {
           // Convert file-like values to ServerFilePayload structs.
-          for (const [name, value] of Object.entries(options.multipart))
+          for (const [name, value] of Object.entries(options.multipart)) {
             multipartData.push(await toFormField(name, value));
+          }
         }
       }
-      if (postDataBuffer === undefined && jsonData === undefined && formData === undefined && multipartData === undefined)
+      if (postDataBuffer === undefined && jsonData === undefined && formData === undefined && multipartData === undefined) {
         postDataBuffer = options.request?.postDataBuffer() || undefined;
+      }
       const fixtures = {
         __testHookLookup: (options as any).__testHookLookup
       };
@@ -273,8 +280,9 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
 async function toFormField(name: string, value: string|number|boolean|fs.ReadStream|FilePayload): Promise<channels.FormField> {
   if (isFilePayload(value)) {
     const payload = value as FilePayload;
-    if (!Buffer.isBuffer(payload.buffer))
+    if (!Buffer.isBuffer(payload.buffer)) {
       throw new Error(`Unexpected buffer type of 'data.${name}'`);
+    }
     return { name, file: filePayloadToJson(payload) };
   } else if (value instanceof fs.ReadStream) {
     return { name, file: await readStreamToJson(value as fs.ReadStream) };
@@ -284,16 +292,18 @@ async function toFormField(name: string, value: string|number|boolean|fs.ReadStr
 }
 
 function isJsonParsable(value: any) {
-  if (typeof value !== 'string')
+  if (typeof value !== 'string') {
     return false;
+  }
   try {
     JSON.parse(value);
     return true;
   } catch (e) {
-    if (e instanceof SyntaxError)
+    if (e instanceof SyntaxError) {
       return false;
-    else
+    } else {
       throw e;
+    }
   }
 }
 
@@ -335,12 +345,14 @@ export class APIResponse implements api.APIResponse {
   async body(): Promise<Buffer> {
     try {
       const result = await this._request._channel.fetchResponseBody({ fetchUid: this._fetchUid() });
-      if (result.binary === undefined)
+      if (result.binary === undefined) {
         throw new Error('Response has been disposed');
+      }
       return result.binary;
     } catch (e) {
-      if (isTargetClosedError(e))
+      if (isTargetClosedError(e)) {
         throw new Error('Response has been disposed');
+      }
       throw e;
     }
   }
@@ -403,21 +415,25 @@ async function readStreamToJson(stream: fs.ReadStream): Promise<ServerFilePayloa
 }
 
 function isJsonContentType(headers?: HeadersArray): boolean {
-  if (!headers)
+  if (!headers) {
     return false;
+  }
   for (const { name, value } of headers) {
-    if (name.toLocaleLowerCase() === 'content-type')
+    if (name.toLocaleLowerCase() === 'content-type') {
       return value === 'application/json';
+    }
   }
   return false;
 }
 
 function objectToArray(map?: { [key: string]: any }): NameValue[] | undefined {
-  if (!map)
+  if (!map) {
     return undefined;
+  }
   const result = [];
-  for (const [name, value] of Object.entries(map))
+  for (const [name, value] of Object.entries(map)) {
     result.push({ name, value: String(value) });
+  }
   return result;
 }
 

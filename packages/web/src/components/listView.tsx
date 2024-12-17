@@ -66,8 +66,9 @@ export function ListView<T>({
 
   React.useEffect(() => {
     const listElem = itemListRef.current;
-    if (!listElem)
+    if (!listElem) {
       return;
+    }
     const saveScrollPosition = () => {
       scrollPositions.set(name, listElem.scrollTop);
     };
@@ -76,8 +77,9 @@ export function ListView<T>({
   }, [name]);
 
   React.useEffect(() => {
-    if (itemListRef.current)
+    if (itemListRef.current) {
       itemListRef.current.scrollTop = scrollPositions.get(name) || 0;
+    }
   }, [name]);
 
   return <div className={clsx(`list-view vbox`, name + '-list-view')} role={items.length > 0 ? 'list' : undefined} data-testid={dataTestId || (name + '-list')}>
@@ -89,8 +91,9 @@ export function ListView<T>({
           onAccepted?.(selectedItem, items.indexOf(selectedItem));
           return;
         }
-        if (event.key !== 'ArrowDown' &&  event.key !== 'ArrowUp')
+        if (event.key !== 'ArrowDown' &&  event.key !== 'ArrowUp') {
           return;
+        }
 
         event.stopPropagation();
         event.preventDefault();
@@ -98,16 +101,18 @@ export function ListView<T>({
         const index = selectedItem ? items.indexOf(selectedItem) : -1;
         let newIndex = index;
         if (event.key === 'ArrowDown') {
-          if (index === -1)
+          if (index === -1) {
             newIndex = 0;
-          else
+          } else {
             newIndex = Math.min(index + 1, items.length - 1);
+          }
         }
         if (event.key === 'ArrowUp') {
-          if (index === -1)
+          if (index === -1) {
             newIndex = items.length - 1;
-          else
+          } else {
             newIndex = Math.max(index - 1, 0);
+          }
         }
 
         const element = itemListRef.current?.children.item(newIndex);

@@ -77,8 +77,9 @@ it('elementHandle.waitForSelector should throw on navigation', async ({ page, se
   const div = (await page.$('div'))!;
   const promise = div.waitForSelector('span').catch(e => e);
   // Give it some time before navigating.
-  for (let i = 0; i < 10; i++)
+  for (let i = 0; i < 10; i++) {
     await page.evaluate(() => 1);
+  }
   await page.goto(server.EMPTY_PAGE);
   const error = await promise;
   expect(error.message).toContain(`waiting for locator('span') to be visible`);

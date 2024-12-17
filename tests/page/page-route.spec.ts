@@ -276,10 +276,11 @@ it('should work with custom referer headers', async ({ page, server, browserName
   await page.setExtraHTTPHeaders({ 'referer': server.EMPTY_PAGE });
   await page.route('**/*', route => {
     // See https://github.com/microsoft/playwright/issues/8999
-    if (browserName === 'chromium')
+    if (browserName === 'chromium') {
       expect(route.request().headers()['referer']).toBe(server.EMPTY_PAGE + ', ' + server.EMPTY_PAGE);
-    else
+    } else {
       expect(route.request().headers()['referer']).toBe(server.EMPTY_PAGE);
+    }
     void route.continue();
   });
   const response = await page.goto(server.EMPTY_PAGE);
@@ -290,8 +291,9 @@ it('should be abortable', async ({ page, server }) => {
   await page.route(/\.css$/, route => route.abort());
   let failed = false;
   page.on('requestfailed', request => {
-    if (request.url().includes('.css'))
+    if (request.url().includes('.css')) {
       failed = true;
+    }
   });
   const response = await page.goto(server.PREFIX + '/one-style.html');
   expect(response.ok()).toBe(true);
@@ -305,12 +307,13 @@ it('should be abortable with custom error codes', async ({ page, server, browser
   page.on('requestfailed', request => failedRequest = request);
   await page.goto(server.EMPTY_PAGE).catch(e => {});
   expect(failedRequest).toBeTruthy();
-  if (browserName === 'webkit')
+  if (browserName === 'webkit') {
     expect(failedRequest.failure().errorText).toBe(isMac && macVersion < 11 ? 'Request intercepted' : 'Blocked by Web Inspector');
-  else if (browserName === 'firefox')
+  } else if (browserName === 'firefox') {
     expect(failedRequest.failure().errorText).toBe('NS_ERROR_OFFLINE');
-  else
+  } else {
     expect(failedRequest.failure().errorText).toBe('net::ERR_INTERNET_DISCONNECTED');
+  }
 });
 
 it('should not throw if request was cancelled by the page', async ({ page, server }) => {
@@ -348,12 +351,13 @@ it('should fail navigation when aborting main resource', async ({ page, server, 
   let error = null;
   await page.goto(server.EMPTY_PAGE).catch(e => error = e);
   expect(error).toBeTruthy();
-  if (browserName === 'webkit')
+  if (browserName === 'webkit') {
     expect(error.message).toContain(isMac && macVersion < 11 ? 'Request intercepted' : 'Blocked by Web Inspector');
-  else if (browserName === 'firefox')
+  } else if (browserName === 'firefox') {
     expect(error.message).toContain('NS_ERROR_FAILURE');
-  else
+  } else {
     expect(error.message).toContain('net::ERR_FAILED');
+  }
 });
 
 it('should not work with redirects', async ({ page, server }) => {
@@ -387,8 +391,9 @@ it('should not work with redirects', async ({ page, server }) => {
   expect(chain[2].url()).toContain('/non-existing-page-3.html');
   expect(chain[3].url()).toContain('/non-existing-page-2.html');
   expect(chain[4].url()).toContain('/non-existing-page.html');
-  for (let i = 0; i < chain.length; i++)
+  for (let i = 0; i < chain.length; i++) {
     expect(chain[i].redirectedTo()).toBe(i ? chain[i - 1] : null);
+  }
 });
 
 it('should chain fallback w/ dynamic URL', async ({ page, server }) => {
@@ -451,8 +456,9 @@ it('should work with equal requests', async ({ page, server }) => {
     spinner = !spinner;
   });
   const results = [];
-  for (let i = 0; i < 3; i++)
+  for (let i = 0; i < 3; i++) {
     results.push(await page.evaluate(() => fetch('/zzz').then(response => response.text()).catch(e => 'FAILED')));
+  }
   expect(results).toEqual(['11', 'FAILED', '22']);
 });
 
@@ -519,10 +525,12 @@ it('should work with encoded server - 2', async ({ page, server, browserName }) 
   });
   const response = await page.goto(`data:text/html,<link rel="stylesheet" href="${server.PREFIX}/fonts?helvetica|arial"/>`);
   expect(response).toBe(null);
-  if (browserName === 'firefox')
-    expect(requests.length).toBe(2); // Firefox DevTools report to navigations in this case as well.
-  else
+  if (browserName === 'firefox') {
+    expect(requests.length).toBe(2);
+  } else {
+    // Firefox DevTools report to navigations in this case as well.
     expect(requests.length).toBe(1);
+  }
   expect((await requests[0].response()).status()).toBe(404);
 });
 
@@ -558,8 +566,9 @@ it('should fulfill with redirect status', async ({ page, server, browserName }) 
   await page.goto(server.PREFIX + '/title.html');
   server.setRoute('/final', (req, res) => res.end('foo'));
   await page.route('**/*', async (route, request) => {
-    if (request.url() !== server.PREFIX + '/redirect_this')
+    if (request.url() !== server.PREFIX + '/redirect_this') {
       return route.continue();
+    }
     await route.fulfill({
       status: 301,
       headers: {
@@ -584,8 +593,9 @@ it('should not fulfill with redirect status', async ({ page, server, browserName
   let fulfill;
   let reject;
   await page.route('**/*', async (route, request) => {
-    if (request.url() !== server.PREFIX + '/redirect_this')
+    if (request.url() !== server.PREFIX + '/redirect_this') {
       return route.continue();
+    }
     try {
       await route.fulfill({
         status,
@@ -602,7 +612,9 @@ it('should not fulfill with redirect status', async ({ page, server, browserName
   for (status = 300; status < 310; status++) {
     const [, exception] = await Promise.all([
       page.evaluate(url => location.href = url, server.PREFIX + '/redirect_this'),
-      new Promise<Error>((f, r) => {fulfill = f; reject = r;})
+      new Promise<Error>((f, r) => {
+        fulfill = f; reject = r;
+      })
     ]);
     expect(exception).toBeTruthy();
     expect(exception.message.includes('Cannot fulfill with redirect status')).toBe(true);
@@ -634,12 +646,15 @@ it('should support cors with GET', async ({ page, server, browserName }) => {
       const response = await fetch('https://example.com/cars?reject', { mode: 'cors' });
       return response.json();
     }).catch(e => e);
-    if (browserName === 'chromium')
+    if (browserName === 'chromium') {
       expect(error.message).toContain('Failed');
-    if (browserName === 'webkit')
+    }
+    if (browserName === 'webkit') {
       expect(error.message).toContain('TypeError');
-    if (browserName === 'firefox')
+    }
+    if (browserName === 'firefox') {
       expect(error.message).toContain('NetworkError');
+    }
   }
 });
 
@@ -727,12 +742,13 @@ it('should respect cors overrides', async ({ page, server, browserName, isAndroi
       });
       return data.text();
     }, server.CROSS_PROCESS_PREFIX + '/something').catch(e => e);
-    if (browserName === 'chromium')
+    if (browserName === 'chromium') {
       expect(error.message).toContain('Failed to fetch');
-    else if (browserName === 'webkit')
+    } else if (browserName === 'webkit') {
       expect(error.message).toContain('Load failed');
-    else if (browserName === 'firefox')
+    } else if (browserName === 'firefox') {
       expect(error.message).toContain('NetworkError when attempting to fetch resource.');
+    }
   }
 });
 
@@ -790,10 +806,11 @@ it('should not auto-intercept non-preflight OPTIONS', async ({ page, server, isA
     expect.soft(text1).toBe('Hello');
     expect.soft(text2).toBe('World');
     // Preflight for OPTIONS is auto-fulfilled, then OPTIONS, then GET without preflight.
-    if (browserName === 'firefox')
+    if (browserName === 'firefox') {
       expect.soft(requests).toEqual(['OPTIONS:/something', 'OPTIONS:/something', 'GET:/something']);
-    else
+    } else {
       expect.soft(requests).toEqual(['OPTIONS:/something', 'GET:/something']);
+    }
   }
 });
 

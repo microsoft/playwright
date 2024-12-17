@@ -99,8 +99,9 @@ class Fixture {
     let called = false;
     const useFuncStarted = new ManualPromise<void>();
     const useFunc = async (value: any) => {
-      if (called)
+      if (called) {
         throw new Error(`Cannot provide fixture value for the second time`);
+      }
       called = true;
       this.value = value;
       this._useFuncFinished = new ManualPromise<void>();
@@ -115,10 +116,11 @@ class Fixture {
         await this.registration.fn(params, useFunc, info);
       } catch (error) {
         this.failed = true;
-        if (!useFuncStarted.isDone())
+        if (!useFuncStarted.isDone()) {
           useFuncStarted.reject(error);
-        else
+        } else {
           throw error;
+        }
       }
     })();
     await useFuncStarted;
@@ -141,15 +143,17 @@ class Fixture {
     } finally {
       // To preserve fixtures integrity, forcefully cleanup fixtures
       // that cannnot teardown due to a timeout or an error.
-      for (const dep of this._deps)
+      for (const dep of this._deps) {
         dep._usages.delete(this);
+      }
       this.runner.instanceForId.delete(this.registration.id);
     }
   }
 
   private async _teardownInternal() {
-    if (typeof this.registration.fn !== 'function')
+    if (typeof this.registration.fn !== 'function') {
       return;
+    }
     if (this._usages.size !== 0) {
       // TODO: replace with assert.
       console.error('Internal error: fixture integrity at', this._teardownDescription.title);  // eslint-disable-line no-console
@@ -163,10 +167,12 @@ class Fixture {
   }
 
   _collectFixturesInTeardownOrder(scope: FixtureScope, collector: Set<Fixture>) {
-    if (this.registration.scope !== scope)
+    if (this.registration.scope !== scope) {
       return;
-    for (const fixture of this._usages)
+    }
+    for (const fixture of this._usages) {
       fixture._collectFixturesInTeardownOrder(scope, collector);
+    }
     collector.add(this);
   }
 }
@@ -177,8 +183,9 @@ export class FixtureRunner {
   instanceForId = new Map<string, Fixture>();
 
   setPool(pool: FixturePool) {
-    if (!this.testScopeClean)
+    if (!this.testScopeClean) {
       throw new Error('Did not teardown test scope');
+    }
     if (this.pool && pool.digest !== this.pool.digest) {
       throw new Error([
         `Playwright detected inconsistent test.use() options.`,
@@ -191,8 +198,9 @@ export class FixtureRunner {
   }
 
   private _collectFixturesInSetupOrder(registration: FixtureRegistration, collector: Set<FixtureRegistration>) {
-    if (collector.has(registration))
+    if (collector.has(registration)) {
       return;
+    }
     for (const name of registration.deps) {
       const dep = this.pool!.resolve(name, registration)!;
       this._collectFixturesInSetupOrder(dep, collector);
@@ -204,8 +212,9 @@ export class FixtureRunner {
     // Teardown fixtures in the reverse order.
     const fixtures = Array.from(this.instanceForId.values()).reverse();
     const collector = new Set<Fixture>();
-    for (const fixture of fixtures)
+    for (const fixture of fixtures) {
       fixture._collectFixturesInTeardownOrder(scope, collector);
+    }
     let firstError: Error | undefined;
     for (const fixture of collector) {
       try {
@@ -214,10 +223,12 @@ export class FixtureRunner {
         firstError = firstError ?? error;
       }
     }
-    if (scope === 'test')
+    if (scope === 'test') {
       this.testScopeClean = true;
-    if (firstError)
+    }
+    if (firstError) {
       throw firstError;
+    }
   }
 
   async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only', runnable: RunnableDescription): Promise<object | null> {
@@ -227,33 +238,39 @@ export class FixtureRunner {
     const auto: FixtureRegistration[] = [];
     for (const registration of this.pool!.autoFixtures()) {
       let shouldRun = true;
-      if (autoFixtures === 'all-hooks-only')
+      if (autoFixtures === 'all-hooks-only') {
         shouldRun = registration.scope === 'worker' || registration.auto === 'all-hooks-included';
-      else if (autoFixtures === 'worker')
+      } else if (autoFixtures === 'worker') {
         shouldRun = registration.scope === 'worker';
-      if (shouldRun)
+      }
+      if (shouldRun) {
         auto.push(registration);
+      }
     }
     auto.sort((r1, r2) => (r1.scope === 'worker' ? 0 : 1) - (r2.scope === 'worker' ? 0 : 1));
-    for (const registration of auto)
+    for (const registration of auto) {
       this._collectFixturesInSetupOrder(registration, collector);
+    }
 
     // Collect used fixtures.
     const names = getRequiredFixtureNames(fn);
-    for (const name of names)
+    for (const name of names) {
       this._collectFixturesInSetupOrder(this.pool!.resolve(name)!, collector);
+    }
 
     // Setup fixtures.
-    for (const registration of collector)
+    for (const registration of collector) {
       await this._setupFixtureForRegistration(registration, testInfo, runnable);
+    }
 
     // Create params object.
     const params: { [key: string]: any } = {};
     for (const name of names) {
       const registration = this.pool!.resolve(name)!;
       const fixture = this.instanceForId.get(registration.id);
-      if (!fixture || fixture.failed)
+      if (!fixture || fixture.failed) {
         return null;
+      }
       params[name] = fixture.value;
     }
     return params;
@@ -271,12 +288,14 @@ export class FixtureRunner {
   }
 
   private async _setupFixtureForRegistration(registration: FixtureRegistration, testInfo: TestInfoImpl, runnable: RunnableDescription): Promise<Fixture> {
-    if (registration.scope === 'test')
+    if (registration.scope === 'test') {
       this.testScopeClean = false;
+    }
 
     let fixture = this.instanceForId.get(registration.id);
-    if (fixture)
+    if (fixture) {
       return fixture;
+    }
 
     fixture = new Fixture(this, registration);
     await fixture.setup(testInfo, runnable);
@@ -287,8 +306,9 @@ export class FixtureRunner {
     const names = getRequiredFixtureNames(fn, location);
     for (const name of names) {
       const registration = this.pool!.resolve(name)!;
-      if (registration.scope !== 'worker')
+      if (registration.scope !== 'worker') {
         return false;
+      }
     }
     return true;
   }

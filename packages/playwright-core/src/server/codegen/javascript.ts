@@ -36,16 +36,18 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
 
   generateAction(actionInContext: actions.ActionInContext): string {
     const action = actionInContext.action;
-    if (this._isTest && (action.name === 'openPage' || action.name === 'closePage'))
+    if (this._isTest && (action.name === 'openPage' || action.name === 'closePage')) {
       return '';
+    }
 
     const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new JavaScriptFormatter(2);
 
     if (action.name === 'openPage') {
       formatter.add(`const ${pageAlias} = await context.newPage();`);
-      if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
+      if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/') {
         formatter.add(`await ${pageAlias}.goto(${quote(action.url)});`);
+      }
       return formatter.format();
     }
 
@@ -60,17 +62,21 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   });`);
     }
 
-    if (signals.popup)
+    if (signals.popup) {
       formatter.add(`const ${signals.popup.popupAlias}Promise = ${pageAlias}.waitForEvent('popup');`);
-    if (signals.download)
+    }
+    if (signals.download) {
       formatter.add(`const download${signals.download.downloadAlias}Promise = ${pageAlias}.waitForEvent('download');`);
+    }
 
     formatter.add(wrapWithStep(actionInContext.description, this._generateActionCall(subject, actionInContext)));
 
-    if (signals.popup)
+    if (signals.popup) {
       formatter.add(`const ${signals.popup.popupAlias} = await ${signals.popup.popupAlias}Promise;`);
-    if (signals.download)
+    }
+    if (signals.download) {
       formatter.add(`const download${signals.download.downloadAlias} = await download${signals.download.downloadAlias}Promise;`);
+    }
 
     return formatter.format();
   }
@@ -84,8 +90,9 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         return `await ${subject}.close();`;
       case 'click': {
         let method = 'click';
-        if (action.clickCount === 2)
+        if (action.clickCount === 2) {
           method = 'dblclick';
+        }
         const options = toClickOptionsForSourceCode(action);
         const optionsString = formatOptions(options, false);
         return `await ${subject}.${this._asLocator(action.selector)}.${method}(${optionsString});`;
@@ -129,14 +136,16 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   }
 
   generateHeader(options: LanguageGeneratorOptions): string {
-    if (this._isTest)
+    if (this._isTest) {
       return this.generateTestHeader(options);
+    }
     return this.generateStandaloneHeader(options);
   }
 
   generateFooter(saveStorage: string | undefined): string {
-    if (this._isTest)
+    if (this._isTest) {
       return this.generateTestFooter(saveStorage);
+    }
     return this.generateStandaloneFooter(saveStorage);
   }
 
@@ -147,8 +156,9 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       import { test, expect${options.deviceName ? ', devices' : ''} } from '@playwright/test';
 ${useText ? '\ntest.use(' + useText + ');\n' : ''}
       test('test', async ({ page }) => {`);
-    if (options.contextOptions.recordHar)
+    if (options.contextOptions.recordHar) {
       formatter.add(`  await page.routeFromHAR(${quote(options.contextOptions.recordHar.path)});`);
+    }
     return formatter.format();
   }
 
@@ -164,8 +174,9 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
       (async () => {
         const browser = await ${options.browserName}.launch(${formatObjectOrVoid(options.launchOptions)});
         const context = await browser.newContext(${formatContextOptions(options.contextOptions, options.deviceName, false)});`);
-    if (options.contextOptions.recordHar)
+    if (options.contextOptions.recordHar) {
       formatter.add(`        await context.routeFromHAR(${quote(options.contextOptions.recordHar.path)});`);
+    }
     return formatter.format();
   }
 
@@ -180,23 +191,28 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
 
 function formatOptions(value: any, hasArguments: boolean): string {
   const keys = Object.keys(value);
-  if (!keys.length)
+  if (!keys.length) {
     return '';
+  }
   return (hasArguments ? ', ' : '') + formatObject(value);
 }
 
 function formatObject(value: any, indent = '  '): string {
-  if (typeof value === 'string')
+  if (typeof value === 'string') {
     return quote(value);
-  if (Array.isArray(value))
+  }
+  if (Array.isArray(value)) {
     return `[${value.map(o => formatObject(o)).join(', ')}]`;
+  }
   if (typeof value === 'object') {
     const keys = Object.keys(value).filter(key => value[key] !== undefined).sort();
-    if (!keys.length)
+    if (!keys.length) {
       return '{}';
+    }
     const tokens: string[] = [];
-    for (const key of keys)
+    for (const key of keys) {
       tokens.push(`${key}: ${formatObject(value[key])}`);
+    }
     return `{\n${indent}${tokens.join(`,\n${indent}`)}\n}`;
   }
   return String(value);
@@ -211,13 +227,15 @@ function formatContextOptions(options: BrowserContextOptions, deviceName: string
   const device = deviceName && deviceDescriptors[deviceName];
   // recordHAR is replaced with routeFromHAR in the generated code.
   options = { ...options, recordHar: undefined };
-  if (!device)
+  if (!device) {
     return formatObjectOrVoid(options);
+  }
   // Filter out all the properties from the device descriptor.
   let serializedObject = formatObjectOrVoid(sanitizeDeviceOptions(device, options));
   // When there are no additional context options, we still want to spread the device inside.
-  if (!serializedObject)
+  if (!serializedObject) {
     serializedObject = '{\n}';
+  }
   const lines = serializedObject.split('\n');
   lines.splice(1, 0, `...devices[${quote(deviceName!)}],`);
   return lines.join('\n');
@@ -251,18 +269,21 @@ export class JavaScriptFormatter {
     let spaces = '';
     let previousLine = '';
     return this._lines.map((line: string) => {
-      if (line === '')
+      if (line === '') {
         return line;
-      if (line.startsWith('}') || line.startsWith(']'))
+      }
+      if (line.startsWith('}') || line.startsWith(']')) {
         spaces = spaces.substring(this._baseIndent.length);
+      }
 
       const extraSpaces = /^(for|while|if|try).*\(.*\)$/.test(previousLine) ? this._baseIndent : '';
       previousLine = line;
 
       const callCarryOver = line.startsWith('.set');
       line = spaces + extraSpaces + (callCarryOver ? this._baseIndent : '') + line;
-      if (line.endsWith('{') || line.endsWith('['))
+      if (line.endsWith('{') || line.endsWith('[')) {
         spaces += this._baseIndent;
+      }
       return this._baseOffset + line;
     }).join('\n');
   }
@@ -283,8 +304,9 @@ export function quoteMultiline(text: string, indent = '  ') {
       .replace(/`/g, '\\`')
       .replace(/\$\{/g, '\\${');
   const lines = text.split('\n');
-  if (lines.length === 1)
+  if (lines.length === 1) {
     return '`' + escape(text) + '`';
+  }
   return '`\n' + lines.map(line => indent + escape(line).replace(/\${/g, '\\${')).join('\n') + `\n${indent}\``;
 }
 

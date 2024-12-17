@@ -27,14 +27,16 @@ class DotReporter extends BaseReporter {
 
   override onStdOut(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdOut(chunk, test, result);
-    if (!this.config.quiet)
+    if (!this.config.quiet) {
       process.stdout.write(chunk);
+    }
   }
 
   override onStdErr(chunk: string | Buffer, test?: TestCase, result?: TestResult) {
     super.onStdErr(chunk, test, result);
-    if (!this.config.quiet)
+    if (!this.config.quiet) {
       process.stderr.write(chunk);
+    }
   }
 
   override onTestEnd(test: TestCase, result: TestResult) {

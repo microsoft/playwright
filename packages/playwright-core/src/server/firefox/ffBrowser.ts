@@ -42,11 +42,13 @@ export class FFBrowser extends Browser {
   static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
     const connection = new FFConnection(transport, options.protocolLogger, options.browserLogsCollector);
     const browser = new FFBrowser(parent, connection, options);
-    if ((options as any).__testHookOnConnectToBrowser)
+    if ((options as any).__testHookOnConnectToBrowser) {
       await (options as any).__testHookOnConnectToBrowser();
+    }
     let firefoxUserPrefs = options.originalLaunchOptions.firefoxUserPrefs ?? {};
-    if (Object.keys(kBandaidFirefoxUserPrefs).length)
+    if (Object.keys(kBandaidFirefoxUserPrefs).length) {
       firefoxUserPrefs = { ...kBandaidFirefoxUserPrefs, ...firefoxUserPrefs };
+    }
     const promises: Promise<any>[] = [
       browser.session.send('Browser.enable', {
         attachToDefaultContext: !!options.persistent,
@@ -59,8 +61,9 @@ export class FFBrowser extends Browser {
       promises.push((browser._defaultContext as FFBrowserContext)._initialize());
     }
     const proxy = options.originalLaunchOptions.proxyOverride || options.proxy;
-    if (proxy)
+    if (proxy) {
       promises.push(browser.session.send('Browser.setBrowserProxy', toJugglerProxyOptions(proxy)));
+    }
     await Promise.all(promises);
     return browser;
   }
@@ -90,8 +93,9 @@ export class FFBrowser extends Browser {
   }
 
   async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
-    if (options.isMobile)
+    if (options.isMobile) {
       throw new Error('options.isMobile is not supported in Firefox');
+    }
     const { browserContextId } = await this.session.send('Browser.createBrowserContext', { removeOnDetach: true });
     const context = new FFBrowserContext(this, browserContextId, options);
     await context._initialize();
@@ -130,8 +134,9 @@ export class FFBrowser extends Browser {
 
   _onDownloadCreated(payload: Protocol.Browser.downloadCreatedPayload) {
     const ffPage = this._ffPages.get(payload.pageTargetId);
-    if (!ffPage)
+    if (!ffPage) {
       return;
+    }
 
     // Abort the navigation that turned into download.
     ffPage._page._frameManager.frameAbortedNavigation(payload.frameId, 'Download is starting');
@@ -142,11 +147,13 @@ export class FFBrowser extends Browser {
       // Resume the page creation with an error. The page will automatically close right
       // after the download begins.
       ffPage._markAsError(new Error('Starting new page download'));
-      if (ffPage._opener)
+      if (ffPage._opener) {
         originPage = ffPage._opener._page.initializedOrUndefined();
+      }
     }
-    if (!originPage)
+    if (!originPage) {
       return;
+    }
     this._downloadCreated(originPage, payload.uuid, payload.url, payload.suggestedFileName);
   }
 
@@ -160,11 +167,13 @@ export class FFBrowser extends Browser {
   }
 
   _onDisconnect() {
-    for (const video of this._idToVideo.values())
+    for (const video of this._idToVideo.values()) {
       video.artifact.reportFinished(new TargetClosedError());
+    }
     this._idToVideo.clear();
-    for (const ffPage of this._ffPages.values())
+    for (const ffPage of this._ffPages.values()) {
       ffPage.didClose();
+    }
     this._ffPages.clear();
     this._didClose();
   }
@@ -200,28 +209,39 @@ export class FFBrowserContext extends BrowserContext {
       };
       promises.push(this._browser.session.send('Browser.setDefaultViewport', { browserContextId, viewport }));
     }
-    if (this._options.hasTouch)
+    if (this._options.hasTouch) {
       promises.push(this._browser.session.send('Browser.setTouchOverride', { browserContextId, hasTouch: true }));
-    if (this._options.userAgent)
+    }
+    if (this._options.userAgent) {
       promises.push(this._browser.session.send('Browser.setUserAgentOverride', { browserContextId, userAgent: this._options.userAgent }));
-    if (this._options.bypassCSP)
+    }
+    if (this._options.bypassCSP) {
       promises.push(this._browser.session.send('Browser.setBypassCSP', { browserContextId, bypassCSP: true }));
-    if (this._options.ignoreHTTPSErrors || this._options.internalIgnoreHTTPSErrors)
+    }
+    if (this._options.ignoreHTTPSErrors || this._options.internalIgnoreHTTPSErrors) {
       promises.push(this._browser.session.send('Browser.setIgnoreHTTPSErrors', { browserContextId, ignoreHTTPSErrors: true }));
-    if (this._options.javaScriptEnabled === false)
+    }
+    if (this._options.javaScriptEnabled === false) {
       promises.push(this._browser.session.send('Browser.setJavaScriptDisabled', { browserContextId, javaScriptDisabled: true }));
-    if (this._options.locale)
+    }
+    if (this._options.locale) {
       promises.push(this._browser.session.send('Browser.setLocaleOverride', { browserContextId, locale: this._options.locale }));
-    if (this._options.timezoneId)
+    }
+    if (this._options.timezoneId) {
       promises.push(this._browser.session.send('Browser.setTimezoneOverride', { browserContextId, timezoneId: this._options.timezoneId }));
-    if (this._options.extraHTTPHeaders || this._options.locale)
+    }
+    if (this._options.extraHTTPHeaders || this._options.locale) {
       promises.push(this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || []));
-    if (this._options.httpCredentials)
+    }
+    if (this._options.httpCredentials) {
       promises.push(this.setHTTPCredentials(this._options.httpCredentials));
-    if (this._options.geolocation)
+    }
+    if (this._options.geolocation) {
       promises.push(this.setGeolocation(this._options.geolocation));
-    if (this._options.offline)
+    }
+    if (this._options.offline) {
       promises.push(this.setOffline(this._options.offline));
+    }
     if (this._options.colorScheme !== 'no-override') {
       promises.push(this._browser.session.send('Browser.setColorScheme', {
         browserContextId,
@@ -276,8 +296,9 @@ export class FFBrowserContext extends BrowserContext {
     const { targetId } = await this._browser.session.send('Browser.newPage', {
       browserContextId: this._browserContextId
     }).catch(e =>  {
-      if (e.message.includes('Failed to override timezone'))
+      if (e.message.includes('Failed to override timezone')) {
         throw new Error(`Invalid timezone ID: ${this._options.timezoneId}`);
+      }
       throw e;
     });
     return this._browser._ffPages.get(targetId)!._page;
@@ -314,8 +335,9 @@ export class FFBrowserContext extends BrowserContext {
     ]);
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);
-      if (!protocolPermission)
+      if (!protocolPermission) {
         throw new Error('Unknown permission: ' + permission);
+      }
       return protocolPermission;
     });
     await this._browser.session.send('Browser.grantPermissions', { origin: origin, browserContextId: this._browserContextId, permissions: filtered });
@@ -334,8 +356,9 @@ export class FFBrowserContext extends BrowserContext {
   async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
     this._options.extraHTTPHeaders = headers;
     let allHeaders = this._options.extraHTTPHeaders;
-    if (this._options.locale)
+    if (this._options.locale) {
       allHeaders = network.mergeHeaders([allHeaders, network.singleHeader('Accept-Language', this._options.locale)]);
+    }
     await this._browser.session.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId, headers: allHeaders });
   }
 
@@ -411,17 +434,19 @@ function toJugglerProxyOptions(proxy: types.ProxySettings) {
   const proxyServer = new URL(proxy.server);
   let port = parseInt(proxyServer.port, 10);
   let type: 'http' | 'https' | 'socks' | 'socks4' = 'http';
-  if (proxyServer.protocol === 'socks5:')
+  if (proxyServer.protocol === 'socks5:') {
     type = 'socks';
-  else if (proxyServer.protocol === 'socks4:')
+  } else if (proxyServer.protocol === 'socks4:') {
     type = 'socks4';
-  else if (proxyServer.protocol === 'https:')
+  } else if (proxyServer.protocol === 'https:') {
     type = 'https';
+  }
   if (proxyServer.port === '') {
-    if (proxyServer.protocol === 'http:')
+    if (proxyServer.protocol === 'http:') {
       port = 80;
-    else if (proxyServer.protocol === 'https:')
+    } else if (proxyServer.protocol === 'https:') {
       port = 443;
+    }
   }
   return {
     type,

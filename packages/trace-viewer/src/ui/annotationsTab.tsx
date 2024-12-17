@@ -25,8 +25,9 @@ export const AnnotationsTab: React.FunctionComponent<{
   annotations: Annotation[],
 }> = ({ annotations }) => {
 
-  if (!annotations.length)
+  if (!annotations.length) {
     return <PlaceholderPanel text='No annotations' />;
+  }
 
   return <div className='annotations-tab'>
     {annotations.map((annotation, i) => {

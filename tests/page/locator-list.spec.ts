@@ -19,7 +19,8 @@ import { test as it, expect } from './pageTest';
 it('locator.all should work', async ({ page }) => {
   await page.setContent(`<div><p>A</p><p>B</p><p>C</p></div>`);
   const texts = [];
-  for (const p of await page.locator('div >> p').all())
+  for (const p of await page.locator('div >> p').all()) {
     texts.push(await p.textContent());
+  }
   expect(texts).toEqual(['A', 'B', 'C']);
 });

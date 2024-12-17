@@ -68,8 +68,9 @@ export class TestRun {
 export async function runTasks(testRun: TestRun, tasks: Task<TestRun>[], globalTimeout?: number, cancelPromise?: ManualPromise<void>) {
   const deadline = globalTimeout ? monotonicTime() + globalTimeout : 0;
   const taskRunner = new TaskRunner<TestRun>(testRun.reporter, globalTimeout || 0);
-  for (const task of tasks)
+  for (const task of tasks) {
     taskRunner.addTask(task);
+  }
   testRun.reporter.onConfigure(testRun.config.config);
   const status = await taskRunner.run(testRun, deadline, cancelPromise);
   return await finishTaskRun(testRun, status);
@@ -77,27 +78,31 @@ export async function runTasks(testRun: TestRun, tasks: Task<TestRun>[], globalT
 
 export async function runTasksDeferCleanup(testRun: TestRun, tasks: Task<TestRun>[]) {
   const taskRunner = new TaskRunner<TestRun>(testRun.reporter, 0);
-  for (const task of tasks)
+  for (const task of tasks) {
     taskRunner.addTask(task);
+  }
   testRun.reporter.onConfigure(testRun.config.config);
   const { status, cleanup } = await taskRunner.runDeferCleanup(testRun, 0);
   return { status: await finishTaskRun(testRun, status), cleanup };
 }
 
 async function finishTaskRun(testRun: TestRun, status: FullResult['status']) {
-  if (status === 'passed')
+  if (status === 'passed') {
     status = testRun.failureTracker.result();
+  }
   const modifiedResult = await testRun.reporter.onEnd({ status });
-  if (modifiedResult && modifiedResult.status)
+  if (modifiedResult && modifiedResult.status) {
     status = modifiedResult.status;
+  }
   await testRun.reporter.onExit();
   return status;
 }
 
 export function createGlobalSetupTasks(config: FullConfigInternal) {
   const tasks: Task<TestRun>[] = [];
-  if (!config.configCLIOverrides.preserveOutputDir && !process.env.PW_TEST_NO_REMOVE_OUTPUT_DIRS)
+  if (!config.configCLIOverrides.preserveOutputDir && !process.env.PW_TEST_NO_REMOVE_OUTPUT_DIRS) {
     tasks.push(createRemoveOutputDirsTask());
+  }
   tasks.push(
       ...createPluginSetupTasks(config),
       ...config.globalTeardowns.map(file => createGlobalTeardownTask(file, config)).reverse(),
@@ -120,8 +125,9 @@ export function createClearCacheTask(config: FullConfigInternal): Task<TestRun> 
     title: 'clear cache',
     setup: async () => {
       await removeDirAndLogToConsole(cacheDir);
-      for (const plugin of config.plugins)
+      for (const plugin of config.plugins) {
         await plugin.instance?.clearCache?.();
+      }
     },
   };
 }
@@ -130,7 +136,7 @@ export function createReportBeginTask(): Task<TestRun> {
   return {
     title: 'report begin',
     setup: async testRun => {
-      testRun.reporter.onBegin?.(testRun.rootSuite!);
+      testRun.reporter.onBegin(testRun.rootSuite!);
     },
     teardown: async ({}) => {},
   };
@@ -140,11 +146,12 @@ export function createPluginSetupTasks(config: FullConfigInternal): Task<TestRun
   return config.plugins.map(plugin => ({
     title: 'plugin setup',
     setup: async ({ reporter }) => {
-      if (typeof plugin.factory === 'function')
+      if (typeof plugin.factory === 'function') {
         plugin.instance = await plugin.factory();
-      else
+      } else {
         plugin.instance = plugin.factory;
-      await plugin.instance?.setup?.(config.config, config.configDir, reporter);
+      }
+      await plugin.instance.setup?.(config.config, config.configDir, reporter);
     },
     teardown: async () => {
       await plugin.instance?.teardown?.();
@@ -166,8 +173,9 @@ function createPluginBeginTask(plugin: TestRunnerPluginRegistration): Task<TestR
 
 function createGlobalSetupTask(file: string, config: FullConfigInternal): Task<TestRun> {
   let title = 'global setup';
-  if (config.globalSetups.length > 1)
+  if (config.globalSetups.length > 1) {
     title += ` (${file})`;
+  }
 
   let globalSetupResult: any;
   return {
@@ -177,16 +185,18 @@ function createGlobalSetupTask(file: string, config: FullConfigInternal): Task<T
       globalSetupResult = await setupHook(config.config);
     },
     teardown: async () => {
-      if (typeof globalSetupResult === 'function')
+      if (typeof globalSetupResult === 'function') {
         await globalSetupResult();
+      }
     },
   };
 }
 
 function createGlobalTeardownTask(file: string, config: FullConfigInternal): Task<TestRun> {
   let title = 'global teardown';
-  if (config.globalTeardowns.length > 1)
+  if (config.globalTeardowns.length > 1) {
     title += ` (${file})`;
+  }
 
   return {
     title,
@@ -206,8 +216,9 @@ function createRemoveOutputDirsTask(): Task<TestRun> {
       projects.forEach(p => outputDirs.add(p.project.outputDir));
 
       await Promise.all(Array.from(outputDirs).map(outputDir => removeFolders([outputDir]).then(async ([error]) => {
-        if (!error)
+        if (!error) {
           return;
+        }
         if ((error as any).code === 'EBUSY') {
           // We failed to remove folder, might be due to the whole folder being mounted inside a container:
           //   https://github.com/microsoft/playwright/issues/12106
@@ -254,8 +265,9 @@ export function createLoadTask(mode: 'out-of-process' | 'in-process', options: {
       await loadFileSuites(testRun, mode, options.failOnLoadErrors ? errors : softErrors);
 
       if (testRun.config.cliOnlyChanged || options.populateDependencies) {
-        for (const plugin of testRun.config.plugins)
+        for (const plugin of testRun.config.plugins) {
           await plugin.instance?.populateDependencies?.();
+        }
       }
 
       let cliOnlyChangedMatcher: Matcher | undefined = undefined;
@@ -311,17 +323,20 @@ function createPhasesTask(): Task<TestRun> {
         // Find all projects that have all their dependencies processed by previous phases.
         const phaseProjects: FullProjectInternal[] = [];
         for (const project of projectToSuite.keys()) {
-          if (processed.has(project))
+          if (processed.has(project)) {
             continue;
+          }
           const projectsThatShouldFinishFirst = [...project.deps, ...(teardownToSetupsDependents.get(project) || [])];
-          if (projectsThatShouldFinishFirst.find(p => !processed.has(p)))
+          if (projectsThatShouldFinishFirst.find(p => !processed.has(p))) {
             continue;
+          }
           phaseProjects.push(project);
         }
 
         // Create a new phase.
-        for (const project of phaseProjects)
+        for (const project of phaseProjects) {
           processed.add(project);
+        }
         if (phaseProjects.length) {
           let testGroupsInPhase = 0;
           const phase: Phase = { dispatcher: new Dispatcher(testRun.config, testRun.reporter, testRun.failureTracker), projects: [] };
@@ -358,15 +373,18 @@ function createRunTestsTask(): Task<TestRun> {
         for (const { project, testGroups } of projects) {
           // Inherit extra environment variables from dependencies.
           let extraEnv: Record<string, string | undefined> = {};
-          for (const dep of project.deps)
+          for (const dep of project.deps) {
             extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(dep.id) };
-          for (const setup of teardownToSetups.get(project) || [])
+          }
+          for (const setup of teardownToSetups.get(project) || []) {
             extraEnv = { ...extraEnv, ...extraEnvByProjectId.get(setup.id) };
+          }
           extraEnvByProjectId.set(project.id, extraEnv);
 
           const hasFailedDeps = project.deps.some(p => !successfulProjects.has(p));
-          if (!hasFailedDeps)
+          if (!hasFailedDeps) {
             phaseTestGroups.push(...testGroups);
+          }
         }
 
         if (phaseTestGroups.length) {
@@ -383,15 +401,17 @@ function createRunTestsTask(): Task<TestRun> {
         if (!failureTracker.hasWorkerErrors()) {
           for (const { project, projectSuite } of projects) {
             const hasFailedDeps = project.deps.some(p => !successfulProjects.has(p));
-            if (!hasFailedDeps && !projectSuite.allTests().some(test => !test.ok()))
+            if (!hasFailedDeps && !projectSuite.allTests().some(test => !test.ok())) {
               successfulProjects.add(project);
+            }
           }
         }
       }
     },
     teardown: async ({ phases }) => {
-      for (const { dispatcher } of phases.reverse())
+      for (const { dispatcher } of phases.reverse()) {
         await dispatcher.stop();
+      }
     },
   };
 }
@@ -404,10 +424,12 @@ export function createStartDevServerTask(): Task<TestRun> {
         errors.push({ message: `DevServer is already running` });
         return;
       }
-      for (const plugin of config.plugins)
+      for (const plugin of config.plugins) {
         plugin.devServerCleanup = await plugin.instance?.startDevServer?.();
-      if (!config.plugins.some(plugin => !!plugin.devServerCleanup))
+      }
+      if (!config.plugins.some(plugin => !!plugin.devServerCleanup)) {
         errors.push({ message: `DevServer is not available in the package you are using. Did you mean to use component testing?` });
+      }
     },
 
     teardown: async ({ config }) => {

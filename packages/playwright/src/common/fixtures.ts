@@ -88,11 +88,13 @@ export class FixturePool {
       // so that any test.use() override it.
       const selectedOverrides: Fixtures = {};
       for (const [key, value] of Object.entries(list.fixtures)) {
-        if (isFixtureOption(value) && overrideKeys.has(key))
+        if (isFixtureOption(value) && overrideKeys.has(key)) {
           (selectedOverrides as any)[key] = [(allOverrides as any)[key], value[1]];
+        }
       }
-      if (Object.entries(selectedOverrides).length)
+      if (Object.entries(selectedOverrides).length) {
         this._appendFixtureList({ fixtures: selectedOverrides, location: optionOverrides!.location }, !!disallowWorkerFixtures, true);
+      }
     }
 
     this.digest = this.validate();
@@ -146,8 +148,9 @@ export class FixturePool {
       // from the config or from the original declaration of the option.
       if (fn === undefined && options.option && previous) {
         let original = previous;
-        while (!original.optionOverride && original.super)
+        while (!original.optionOverride && original.super) {
           original = original.super;
+        }
         fn = original.fn;
       }
 
@@ -172,10 +175,11 @@ export class FixturePool {
       for (const name of registration.deps) {
         const dep = this.resolve(name, registration);
         if (!dep) {
-          if (name === registration.name)
+          if (name === registration.name) {
             addDependencyError(`Fixture "${registration.name}" references itself, but does not have a base implementation.`, registration.location);
-          else
+          } else {
             addDependencyError(`Fixture "${registration.name}" has unknown parameter "${name}".`, registration.location);
+          }
           continue;
         }
         if (kScopeOrder.indexOf(registration.scope) > kScopeOrder.indexOf(dep.scope)) {
@@ -203,24 +207,27 @@ export class FixturePool {
     // First iterate over non-boxed fixtures to provide clear error messages.
     for (const name of names) {
       const registration = this._registrations.get(name)!;
-      if (!registration.box)
+      if (!registration.box) {
         visit(registration, true);
+      }
     }
 
     // If no errors found, iterate over boxed fixtures
     if (!hasDependencyErrors) {
       for (const name of names) {
         const registration = this._registrations.get(name)!;
-        if (registration.box)
+        if (registration.box) {
           visit(registration, false);
+        }
       }
     }
 
     const hash = crypto.createHash('sha1');
     for (const name of names) {
       const registration = this._registrations.get(name)!;
-      if (registration.scope === 'worker')
+      if (registration.scope === 'worker') {
         hash.update(registration.id + ';');
+      }
     }
     return hash.digest('hex');
   }
@@ -228,14 +235,16 @@ export class FixturePool {
   validateFunction(fn: Function, prefix: string, location: Location) {
     for (const name of fixtureParameterNames(fn, location, e => this._onLoadError(e))) {
       const registration = this._registrations.get(name);
-      if (!registration)
+      if (!registration) {
         this._addLoadError(`${prefix} has unknown parameter "${name}".`, location);
+      }
     }
   }
 
   resolve(name: string, forFixture?: FixtureRegistration): FixtureRegistration | undefined {
-    if (name === forFixture?.name)
+    if (name === forFixture?.name) {
       return forFixture.super;
+    }
     return this._registrations.get(name);
   }
 
@@ -256,10 +265,12 @@ export function formatPotentiallyInternalLocation(location: Location): string {
 }
 
 export function fixtureParameterNames(fn: Function | any, location: Location, onError: LoadErrorSink): string[] {
-  if (typeof fn !== 'function')
+  if (typeof fn !== 'function') {
     return [];
-  if (!fn[signatureSymbol])
+  }
+  if (!fn[signatureSymbol]) {
     fn[signatureSymbol] = innerFixtureParameterNames(fn, location, onError);
+  }
   return fn[signatureSymbol];
 }
 
@@ -270,11 +281,13 @@ export function inheritFixtureNames(from: Function, to: Function) {
 function innerFixtureParameterNames(fn: Function, location: Location, onError: LoadErrorSink): string[] {
   const text = filterOutComments(fn.toString());
   const match = text.match(/(?:async)?(?:\s+function)?[^(]*\(([^)]*)/);
-  if (!match)
+  if (!match) {
     return [];
+  }
   const trimmedParams = match[1].trim();
-  if (!trimmedParams)
+  if (!trimmedParams) {
     return [];
+  }
   const [firstParam] = splitByComma(trimmedParams);
   if (firstParam[0] !== '{' || firstParam[firstParam.length - 1] !== '}') {
     onError({ message: 'First argument must use the object destructuring pattern: '  + firstParam, location });
@@ -297,11 +310,13 @@ function filterOutComments(s: string): string {
   let commentState: 'none'|'singleline'|'multiline' = 'none';
   for (let i = 0; i < s.length; ++i) {
     if (commentState === 'singleline') {
-      if (s[i] === '\n')
+      if (s[i] === '\n') {
         commentState = 'none';
+      }
     } else if (commentState === 'multiline') {
-      if (s[i - 1] === '*' && s[i] === '/')
+      if (s[i - 1] === '*' && s[i] === '/') {
         commentState = 'none';
+      }
     } else if (commentState === 'none') {
       if (s[i] === '/' && s[i + 1] === '/') {
         commentState = 'singleline';
@@ -327,14 +342,16 @@ function splitByComma(s: string) {
       stack.pop();
     } else if (!stack.length && s[i] === ',') {
       const token = s.substring(start, i).trim();
-      if (token)
+      if (token) {
         result.push(token);
+      }
       start = i + 1;
     }
   }
   const lastToken = s.substring(start).trim();
-  if (lastToken)
+  if (lastToken) {
     result.push(lastToken);
+  }
   return result;
 }
 
@@ -343,16 +360,18 @@ const registrationIdMap = new Map<string, Map<Function | any, string>>();
 let lastId = 0;
 
 function registrationId(registration: FixtureRegistration): string {
-  if (registration.id)
+  if (registration.id) {
     return registration.id;
+  }
   const key = registration.name + '@@@' + (registration.super ?  registrationId(registration.super) : '');
   let map = registrationIdMap.get(key);
   if (!map) {
     map = new Map();
     registrationIdMap.set(key, map);
   }
-  if (!map.has(registration.fn))
+  if (!map.has(registration.fn)) {
     map.set(registration.fn, String(lastId++));
+  }
   registration.id = map.get(registration.fn)!;
   return registration.id;
 }

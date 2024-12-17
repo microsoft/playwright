@@ -41,8 +41,9 @@ export class BidiBrowser extends Browser {
 
   static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions): Promise<BidiBrowser> {
     const browser = new BidiBrowser(parent, transport, options);
-    if ((options as any).__testHookOnConnectToBrowser)
+    if ((options as any).__testHookOnConnectToBrowser) {
       await (options as any).__testHookOnConnectToBrowser();
+    }
 
     let proxy: bidi.Session.ManualProxyConfiguration | undefined;
     if (options.proxy) {
@@ -68,8 +69,9 @@ export class BidiBrowser extends Browser {
         default:
           throw new Error('Invalid proxy server protocol: ' + options.proxy.server);
       }
-      if (options.proxy.bypass)
+      if (options.proxy.bypass) {
         proxy.noProxy = options.proxy.bypass.split(',');
+      }
       // TODO: support authentication.
     }
 
@@ -148,8 +150,9 @@ export class BidiBrowser extends Browser {
       const parentFrameId = event.parent;
       for (const page of this._bidiPages.values()) {
         const parentFrame = page._page._frameManager.frame(parentFrameId);
-        if (!parentFrame)
+        if (!parentFrame) {
           continue;
+        }
         page._session.addFrameBrowsingContext(event.context);
         page._page._frameManager.frameAttached(event.context, parentFrameId);
         return;
@@ -157,10 +160,12 @@ export class BidiBrowser extends Browser {
       return;
     }
     let context = this._contexts.get(event.userContext);
-    if (!context)
+    if (!context) {
       context = this._defaultContext as BidiBrowserContext;
-    if (!context)
+    }
+    if (!context) {
       return;
+    }
     const session = this._connection.createMainFrameBrowsingContextSession(event.context);
     const opener = event.originalOpener && this._bidiPages.get(event.originalOpener);
     const page = new BidiPage(context, session, opener || null);
@@ -173,24 +178,27 @@ export class BidiBrowser extends Browser {
       const parentFrameId = event.parent;
       for (const page of this._bidiPages.values()) {
         const parentFrame = page._page._frameManager.frame(parentFrameId);
-        if (!parentFrame)
+        if (!parentFrame) {
           continue;
+        }
         page._page._frameManager.frameDetached(event.context);
         return;
       }
       return;
     }
     const bidiPage = this._bidiPages.get(event.context);
-    if (!bidiPage)
+    if (!bidiPage) {
       return;
+    }
     bidiPage.didClose();
     this._bidiPages.delete(event.context);
   }
 
   private _onScriptRealmDestroyed(event: bidi.Script.RealmDestroyedParameters) {
     for (const page of this._bidiPages.values()) {
-      if (page._onRealmDestroyed(event))
+      if (page._onRealmDestroyed(event)) {
         return;
+      }
     }
   }
 }
@@ -282,8 +290,9 @@ export class BidiBrowserContext extends BrowserContext {
 
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
     this._options.httpCredentials = httpCredentials;
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       await (page._delegate as BidiPage).updateHttpCredentials();
+    }
   }
 
   async doAddInitScript(initScript: InitScript) {

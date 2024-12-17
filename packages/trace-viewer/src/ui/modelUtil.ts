@@ -116,8 +116,9 @@ export class MultiTraceModel {
   private _errorDescriptorsFromActions(): ErrorDescription[] {
     const errors: ErrorDescription[] = [];
     for (const action of this.actions || []) {
-      if (!action.error?.message)
+      if (!action.error?.message) {
         continue;
+      }
       errors.push({
         action,
         stack: action.stack,
@@ -130,8 +131,9 @@ export class MultiTraceModel {
   private _errorDescriptorsFromTestRunner(): ErrorDescription[] {
     const errors: ErrorDescription[] = [];
     for (const error of this.errors || []) {
-      if (!error.message)
+      if (!error.message) {
         continue;
+      }
       errors.push({
         stack: error.stack,
         message: error.message
@@ -142,8 +144,9 @@ export class MultiTraceModel {
 }
 
 function indexModel(context: ContextEntry) {
-  for (const page of context.pages)
+  for (const page of context.pages) {
     (page as any)[contextSymbol] = context;
+  }
   for (let i = 0; i < context.actions.length; ++i) {
     const action = context.actions[i] as any;
     action[contextSymbol] = context;
@@ -152,13 +155,16 @@ function indexModel(context: ContextEntry) {
   for (let i = context.actions.length - 1; i >= 0; i--) {
     const action = context.actions[i] as any;
     action[nextInContextSymbol] = lastNonRouteAction;
-    if (!action.apiName.includes('route.'))
+    if (!action.apiName.includes('route.')) {
       lastNonRouteAction = action;
+    }
   }
-  for (const event of context.events)
+  for (const event of context.events) {
     (event as any)[contextSymbol] = context;
-  for (const resource of context.resources)
+  }
+  for (const resource of context.resources) {
     (resource as any)[contextSymbol] = context;
+  }
 }
 
 function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
@@ -180,22 +186,26 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
     // traces from more than one file we make the ids unique across the
     // files. The code does not update snapshot ids as they are always
     // retrieved from a particular trace file.
-    if (traceFileToContexts.size > 1)
+    if (traceFileToContexts.size > 1) {
       makeCallIdsUniqueAcrossTraceFiles(contexts, ++traceFileId);
+    }
     // Align action times across runner and library contexts within each trace file.
     const actions = mergeActionsAndUpdateTimingSameTrace(contexts);
     result.push(...actions);
   }
   result.sort((a1, a2) => {
-    if (a2.parentId === a1.callId)
+    if (a2.parentId === a1.callId) {
       return -1;
-    if (a1.parentId === a2.callId)
+    }
+    if (a1.parentId === a2.callId) {
       return 1;
+    }
     return a1.startTime - a2.startTime;
   });
 
-  for (let i = 1; i < result.length; ++i)
+  for (let i = 1; i < result.length; ++i) {
     (result[i] as any)[prevInListSymbol] = result[i - 1];
+  }
 
   return result;
 }
@@ -203,10 +213,12 @@ function mergeActionsAndUpdateTiming(contexts: ContextEntry[]) {
 function makeCallIdsUniqueAcrossTraceFiles(contexts: ContextEntry[], traceFileId: number) {
   for (const context of contexts) {
     for (const action of context.actions) {
-      if (action.callId)
+      if (action.callId) {
         action.callId = `${traceFileId}:${action.callId}`;
-      if (action.parentId)
+      }
+      if (action.parentId) {
         action.parentId = `${traceFileId}:${action.parentId}`;
+      }
     }
   }
 }
@@ -244,8 +256,9 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionT
   // Adjust startTime/endTime on the library contexts to align them with the test
   // runner steps.
   const delta = monotonicTimeDeltaBetweenLibraryAndRunner(testRunnerContexts, map, matchByStepId);
-  if (delta)
+  if (delta) {
     adjustMonotonicTime(libraryContexts, delta);
+  }
 
   const nonPrimaryIdToPrimaryId = new Map<string, string>();
   for (const context of testRunnerContexts) {
@@ -254,20 +267,24 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionT
       const existing = map.get(key);
       if (existing) {
         nonPrimaryIdToPrimaryId.set(action.callId, existing.callId);
-        if (action.error)
+        if (action.error) {
           existing.error = action.error;
-        if (action.attachments)
+        }
+        if (action.attachments) {
           existing.attachments = action.attachments;
-        if (action.parentId)
+        }
+        if (action.parentId) {
           existing.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
+        }
         // For the events that are present in the test runner context, always take
         // their time from the test runner context to preserve client side order.
         existing.startTime = action.startTime;
         existing.endTime = action.endTime;
         continue;
       }
-      if (action.parentId)
+      if (action.parentId) {
         action.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
+      }
       map.set(key, { ...action, context });
     }
   }
@@ -279,22 +296,28 @@ function adjustMonotonicTime(contexts: ContextEntry[], monotonicTimeDelta: numbe
     context.startTime += monotonicTimeDelta;
     context.endTime += monotonicTimeDelta;
     for (const action of context.actions) {
-      if (action.startTime)
+      if (action.startTime) {
         action.startTime += monotonicTimeDelta;
-      if (action.endTime)
+      }
+      if (action.endTime) {
         action.endTime += monotonicTimeDelta;
+      }
     }
-    for (const event of context.events)
+    for (const event of context.events) {
       event.time += monotonicTimeDelta;
-    for (const event of context.stdio)
+    }
+    for (const event of context.stdio) {
       event.timestamp += monotonicTimeDelta;
+    }
     for (const page of context.pages) {
-      for (const frame of page.screencastFrames)
+      for (const frame of page.screencastFrames) {
         frame.timestamp += monotonicTimeDelta;
+      }
     }
     for (const resource of context.resources) {
-      if (resource._monotonicTime)
+      if (resource._monotonicTime) {
         resource._monotonicTime += monotonicTimeDelta;
+      }
     }
   }
 }
@@ -307,12 +330,14 @@ function monotonicTimeDeltaBetweenLibraryAndRunner(nonPrimaryContexts: ContextEn
   // same instant.
   for (const context of nonPrimaryContexts) {
     for (const action of context.actions) {
-      if (!action.startTime)
+      if (!action.startTime) {
         continue;
+      }
       const key = matchByStepId ? action.callId! : `${action.apiName}@${(action as any).wallTime}`;
       const libraryAction = libraryActions.get(key);
-      if (libraryAction)
+      if (libraryAction) {
         return action.startTime - libraryAction.startTime;
+      }
     }
   }
   return 0;
@@ -357,21 +382,24 @@ export function stats(action: ActionTraceEvent): { errors: number, warnings: num
   for (const event of eventsForAction(action)) {
     if (event.type === 'console') {
       const type = event.messageType;
-      if (type === 'warning')
+      if (type === 'warning') {
         ++warnings;
-      else if (type === 'error')
+      } else if (type === 'error') {
         ++errors;
+      }
     }
-    if (event.type === 'event' && event.method === 'pageError')
+    if (event.type === 'event' && event.method === 'pageError') {
       ++errors;
+    }
   }
   return { errors, warnings };
 }
 
 export function eventsForAction(action: ActionTraceEvent): (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[] {
   let result: (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[] = (action as any)[eventsSymbol];
-  if (result)
+  if (result) {
     return result;
+  }
 
   const nextAction = nextInContext(action);
   result = context(action).events.filter(event => {
@@ -395,8 +423,9 @@ function collectSources(actions: trace.ActionTraceEvent[], errorDescriptors: Err
 
   for (const error of errorDescriptors) {
     const { action, stack, message } = error;
-    if (!action || !stack)
+    if (!action || !stack) {
       continue;
+    }
     result.get(stack[0].file)?.errors.push({
       line: stack[0].line || 0,
       message
@@ -417,16 +446,18 @@ const kRouteMethods = new Set([
 ]);
 {
   // .NET adds async suffix.
-  for (const method of [...kRouteMethods])
+  for (const method of [...kRouteMethods]) {
     kRouteMethods.add(method + 'async');
+  }
   // Python methods which contain underscores.
   for (const method of [
     'page.route_from_har',
     'page.unroute_all',
     'context.route_from_har',
     'context.unroute_all',
-  ])
+  ]) {
     kRouteMethods.add(method);
+  }
 }
 export function isRouteAction(action: ActionTraceEventInContext) {
   return action.class === 'Route' || kRouteMethods.has(action.apiName.toLowerCase());

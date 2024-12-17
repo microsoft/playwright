@@ -98,16 +98,18 @@ export abstract class Browser extends SdkObject {
       throw error;
     }
     context._clientCertificatesProxy = clientCertificatesProxy;
-    if (options.storageState)
+    if (options.storageState) {
       await context.setStorageState(metadata, options.storageState);
+    }
     return context;
   }
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, metadata: CallMetadata): Promise<{ context: BrowserContext, needsReset: boolean }> {
     const hash = BrowserContext.reusableContextHash(params);
     if (!this._contextForReuse || hash !== this._contextForReuse.hash || !this._contextForReuse.context.canResetForReuse()) {
-      if (this._contextForReuse)
+      if (this._contextForReuse) {
         await this._contextForReuse.context.close({ reason: 'Context reused' });
+      }
       this._contextForReuse = { context: await this.newContext(metadata, params), hash };
       return { context: this._contextForReuse.context, needsReset: false };
     }
@@ -116,7 +118,7 @@ export abstract class Browser extends SdkObject {
   }
 
   async stopPendingOperations(reason: string) {
-    await this._contextForReuse?.context?.stopPendingOperations(reason);
+    await this._contextForReuse?.context.stopPendingOperations(reason);
   }
 
   _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string) {
@@ -126,15 +128,17 @@ export abstract class Browser extends SdkObject {
 
   _downloadFilenameSuggested(uuid: string, suggestedFilename: string) {
     const download = this._downloads.get(uuid);
-    if (!download)
+    if (!download) {
       return;
+    }
     download._filenameSuggested(suggestedFilename);
   }
 
   _downloadFinished(uuid: string, error?: string) {
     const download = this._downloads.get(uuid);
-    if (!download)
+    if (!download) {
       return;
+    }
     download.artifact.reportFinished(error ? new Error(error) : undefined);
     this._downloads.delete(uuid);
   }
@@ -158,23 +162,27 @@ export abstract class Browser extends SdkObject {
   }
 
   _didClose() {
-    for (const context of this.contexts())
+    for (const context of this.contexts()) {
       context._browserClosed();
-    if (this._defaultContext)
+    }
+    if (this._defaultContext) {
       this._defaultContext._browserClosed();
+    }
     this.emit(Browser.Events.Disconnected);
     this.instrumentation.onBrowserClose(this);
   }
 
   async close(options: { reason?: string }) {
     if (!this._startedClosing) {
-      if (options.reason)
+      if (options.reason) {
         this._closeReason = options.reason;
+      }
       this._startedClosing = true;
       await this.options.browserProcess.close();
     }
-    if (this.isConnected())
+    if (this.isConnected()) {
       await new Promise(x => this.once(Browser.Events.Disconnected, x));
+    }
   }
 
   async killForTests() {

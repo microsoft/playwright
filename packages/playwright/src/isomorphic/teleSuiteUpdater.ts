@@ -90,13 +90,15 @@ export class TeleSuiteUpdater {
       },
 
       onBegin: (suite: reporterTypes.Suite) => {
-        if (!this.rootSuite)
+        if (!this.rootSuite) {
           this.rootSuite = suite as TeleSuite;
+        }
         // As soon as new test tree is built add previous results, before calling onUpdate
         // to avoid flashing empty results in the UI.
         if (this._testResultsSnapshot) {
-          for (const test of this.rootSuite.allTests())
-            test.results = this._testResultsSnapshot?.get(test.id) || test.results;
+          for (const test of this.rootSuite.allTests()) {
+            test.results = this._testResultsSnapshot.get(test.id) || test.results;
+          }
           this._testResultsSnapshot = undefined;
         }
         this.progress.total = this._lastRunTestCount;
@@ -116,12 +118,13 @@ export class TeleSuiteUpdater {
       },
 
       onTestEnd: (test: reporterTypes.TestCase, testResult: reporterTypes.TestResult) => {
-        if (test.outcome() === 'skipped')
+        if (test.outcome() === 'skipped') {
           ++this.progress.skipped;
-        else if (test.outcome() === 'unexpected')
+        } else if (test.outcome() === 'unexpected') {
           ++this.progress.failed;
-        else
+        } else {
           ++this.progress.passed;
+        }
         (testResult as any)[statusEx] = testResult.status;
         this._options.onUpdate();
       },
@@ -140,8 +143,9 @@ export class TeleSuiteUpdater {
       },
       onError: (error: reporterTypes.TestError) => this._handleOnError(error)
     });
-    for (const message of report)
+    for (const message of report) {
       void receiver.dispatch(message);
+    }
   }
 
   processListReport(report: any[]) {
@@ -150,14 +154,15 @@ export class TeleSuiteUpdater {
     const tests = this.rootSuite?.allTests() || [];
     this._testResultsSnapshot = new Map(tests.map(test => [test.id, test.results]));
     this._receiver.reset();
-    for (const message of report)
+    for (const message of report) {
       void this._receiver.dispatch(message);
+    }
   }
 
   processTestReportEvent(message: any) {
     // The order of receiver dispatches matters here, we want to assign `lastRunTestCount`
     // before we use it.
-    this._lastRunReceiver?.dispatch(message)?.catch(() => { });
+    this._lastRunReceiver?.dispatch(message).catch(() => { });
     this._receiver.dispatch(message)?.catch(() => { });
   }
 

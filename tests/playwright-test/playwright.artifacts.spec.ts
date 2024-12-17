@@ -23,8 +23,9 @@ function listFiles(dir: string): string[] {
   const entries = fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name));
   for (const entry of entries) {
     result.push(entry.name);
-    if (entry.isDirectory())
+    if (entry.isDirectory()) {
       result.push(...listFiles(path.join(dir, entry.name)).map(x => '  ' + x));
+    }
   }
   return result;
 }

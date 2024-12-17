@@ -38,8 +38,9 @@ export class JsonPipeDispatcher extends Dispatcher<{ guid: string }, channels.Js
   }
 
   dispatch(message: Object) {
-    if (!this._disposed)
+    if (!this._disposed) {
       this._dispatchEvent('message', { message });
+    }
   }
 
   wasClosed(reason?: string): void {

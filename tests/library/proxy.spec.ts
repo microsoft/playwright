@@ -110,10 +110,11 @@ it.describe('should proxy local network requests', () => {
           expect(await page.title()).toBe('Served by the proxy');
 
           await page.goto('http://1.non.existent.domain.for.the.test/foo.html').catch(() => {});
-          if (additionalBypass)
+          if (additionalBypass) {
             expect(proxyServer.requestUrls).not.toContain('http://1.non.existent.domain.for.the.test/foo.html');
-          else
+          } else {
             expect(proxyServer.requestUrls).toContain('http://1.non.existent.domain.for.the.test/foo.html');
+          }
 
           await browser.close();
         });
@@ -156,14 +157,16 @@ it('should work with authenticate followed by redirect', async ({ browserName, b
     return true;
   }
   server.setRoute('/page1.html', async (req, res) => {
-    if (!hasAuth(req, res))
+    if (!hasAuth(req, res)) {
       return;
+    }
     res.writeHead(302, { location: '/page2.html' });
     res.end();
   });
   server.setRoute('/page2.html', async (req, res) => {
-    if (!hasAuth(req, res))
+    if (!hasAuth(req, res)) {
       return;
+    }
     res.end('<html><title>Served by the proxy</title></html>');
   });
   const browser = await browserType.launch({
@@ -314,7 +317,9 @@ it('should use SOCKS proxy for websocket requests', async ({ browserType, server
     let cb;
     const result = new Promise(f => cb = f);
     const ws = new WebSocket('ws://fake-localhost-127-0-0-1.nip.io:1337/ws');
-    ws.addEventListener('message', data => { ws.close(); cb(data.data); });
+    ws.addEventListener('message', data => {
+      ws.close(); cb(data.data);
+    });
     return result;
   });
   expect(value).toBe('incoming');

@@ -68,8 +68,9 @@ export class WKConnection {
 
   private _dispatchMessage(message: ProtocolResponse) {
     this._protocolLogger('receive', message);
-    if (message.id === kBrowserCloseMessageId)
+    if (message.id === kBrowserCloseMessageId) {
       return;
+    }
     if (message.pageProxyId) {
       const payload: PageProxyMessageReceivedPayload = { message: message, pageProxyId: message.pageProxyId };
       this.browserSession.dispatchMessage({ method: kPageProxyMessageReceived, params: payload });
@@ -92,8 +93,9 @@ export class WKConnection {
   }
 
   close() {
-    if (!this._closed)
+    if (!this._closed) {
       this._transport.close();
+    }
   }
 }
 
@@ -130,8 +132,9 @@ export class WKSession extends EventEmitter {
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
-    if (this._crashed || this._disposed || this.connection._browserDisconnectedLogs)
+    if (this._crashed || this._disposed || this.connection._browserDisconnectedLogs) {
       throw new ProtocolError(this._crashed ? 'crashed' : 'closed', undefined, this.connection._browserDisconnectedLogs);
+    }
     const id = this.connection.nextMessageId();
     const messageObj = { id, method, params };
     this._rawSend(messageObj);

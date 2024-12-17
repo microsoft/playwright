@@ -98,8 +98,9 @@ export class Filter {
       }
       token.push(c);
     }
-    if (token.length)
+    if (token.length) {
       result.push(token.join('').toLowerCase());
+    }
     return result;
   }
 
@@ -107,37 +108,44 @@ export class Filter {
     const searchValues = cacheSearchValues(test);
     if (this.project.length) {
       const matches = !!this.project.find(p => searchValues.project.includes(p));
-      if (!matches)
+      if (!matches) {
         return false;
+      }
     }
     if (this.status.length) {
       const matches = !!this.status.find(s => searchValues.status.includes(s));
-      if (!matches)
+      if (!matches) {
         return false;
+      }
     } else {
-      if (searchValues.status === 'skipped')
+      if (searchValues.status === 'skipped') {
         return false;
+      }
     }
     if (this.text.length) {
       for (const text of this.text) {
-        if (searchValues.text.includes(text))
+        if (searchValues.text.includes(text)) {
           continue;
+        }
         const [fileName, line, column] = text.split(':');
-        if (searchValues.file.includes(fileName) && searchValues.line === line && (column === undefined || searchValues.column === column))
+        if (searchValues.file.includes(fileName) && searchValues.line === line && (column === undefined || searchValues.column === column)) {
           continue;
+        }
         return false;
       }
     }
     if (this.labels.length) {
       const matches = this.labels.every(l => searchValues.labels.includes(l));
-      if (!matches)
+      if (!matches) {
         return false;
+      }
     }
     if (this.annotations.length) {
       const matches = this.annotations.every(annotation =>
         searchValues.annotations.some(a => a.includes(annotation)));
-      if (!matches)
+      if (!matches) {
         return false;
+      }
     }
     return true;
   }
@@ -158,16 +166,20 @@ const searchValuesSymbol = Symbol('searchValues');
 
 function cacheSearchValues(test: TestCaseSummary & { [searchValuesSymbol]?: SearchValues }): SearchValues {
   const cached = test[searchValuesSymbol];
-  if (cached)
+  if (cached) {
     return cached;
+  }
 
   let status: SearchValues['status'] = 'passed';
-  if (test.outcome === 'unexpected')
+  if (test.outcome === 'unexpected') {
     status = 'failed';
-  if (test.outcome === 'flaky')
+  }
+  if (test.outcome === 'flaky') {
     status = 'flaky';
-  if (test.outcome === 'skipped')
+  }
+  if (test.outcome === 'skipped') {
     status = 'skipped';
+  }
   const searchValues: SearchValues = {
     text: (status + ' ' + test.projectName + ' ' + test.tags.join(' ') + ' ' + test.location.file + ' ' + test.path.join(' ') + ' ' + test.title).toLowerCase(),
     project: test.projectName.toLowerCase(),
@@ -184,19 +196,23 @@ function cacheSearchValues(test: TestCaseSummary & { [searchValuesSymbol]?: Sear
 
 export function filterWithToken(tokens: string[], token: string, append: boolean): string {
   if (append) {
-    if (!tokens.includes(token))
+    if (!tokens.includes(token)) {
       return '#?q=' + [...tokens, token].join(' ').trim();
+    }
     return '#?q=' + tokens.filter(t => t !== token).join(' ').trim();
   }
 
   // if metaKey or ctrlKey is not pressed, replace existing token with new token
   let prefix: 's:' | 'p:' | '@';
-  if (token.startsWith('s:'))
+  if (token.startsWith('s:')) {
     prefix = 's:';
-  if (token.startsWith('p:'))
+  }
+  if (token.startsWith('p:')) {
     prefix = 'p:';
-  if (token.startsWith('@'))
+  }
+  if (token.startsWith('@')) {
     prefix = '@';
+  }
 
   const newTokens = tokens.filter(t => !t.startsWith(prefix));
   newTokens.push(token);

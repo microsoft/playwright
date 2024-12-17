@@ -38,15 +38,17 @@ export function isTargetClosedError(error: Error) {
 }
 
 export function serializeError(e: any): SerializedError {
-  if (isError(e))
+  if (isError(e)) {
     return { error: { message: e.message, stack: e.stack, name: e.name } };
+  }
   return { value: serializeValue(e, value => ({ fallThrough: value })) };
 }
 
 export function parseError(error: SerializedError): Error {
   if (!error.error) {
-    if (error.value === undefined)
+    if (error.value === undefined) {
       throw new Error('Serialized error must have either an error or a value');
+    }
     return parseSerializedValue(error.value, undefined);
   }
   const e = new Error(error.error.message);

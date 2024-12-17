@@ -90,7 +90,9 @@ it('should handle exception', async ({ browserType, mode }) => {
   it.skip(mode !== 'default');
 
   const e = new Error('Dummy');
-  const options = { __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
+  const options = { __testHookBeforeCreateBrowser: () => {
+    throw e;
+  }, timeout: 9000 };
   const error = await browserType.launch(options).catch(e => e);
   expect(error!.message).toContain('Dummy');
 });
@@ -99,7 +101,9 @@ it('should report launch log', async ({ browserType, mode }) => {
   it.skip(mode !== 'default');
 
   const e = new Error('Dummy');
-  const options = { __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
+  const options = { __testHookBeforeCreateBrowser: () => {
+    throw e;
+  }, timeout: 9000 };
   const error = await browserType.launch(options).catch(e => e);
   expect(error!.message).toContain('<launching>');
 });

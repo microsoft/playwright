@@ -80,7 +80,8 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
 
 function toProtocolLogger(logger: Logger | undefined): ProtocolLogger | undefined {
   return logger ? (direction: 'send' | 'receive', message: object) => {
-    if (logger.isEnabled('protocol', 'verbose'))
+    if (logger.isEnabled('protocol', 'verbose')) {
       logger.log('protocol', 'verbose', (direction === 'send' ? 'SEND ► ' : '◀ RECV ') + JSON.stringify(message), [], {});
+    }
   } : undefined;
 }

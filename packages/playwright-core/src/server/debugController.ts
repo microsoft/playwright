@@ -82,15 +82,18 @@ export class DebugController extends SdkObject {
 
   async resetForReuse() {
     const contexts = new Set<BrowserContext>();
-    for (const page of this._playwright.allPages())
+    for (const page of this._playwright.allPages()) {
       contexts.add(page.context());
-    for (const context of contexts)
+    }
+    for (const context of contexts) {
       await context.resetForReuse(internalMetadata, null);
+    }
   }
 
   async navigate(url: string) {
-    for (const p of this._playwright.allPages())
+    for (const p of this._playwright.allPages()) {
       await p.mainFrame().goto(internalMetadata, url);
+    }
   }
 
   async setRecorderMode(params: { mode: Mode, file?: string, testIdAttributeName?: string }) {
@@ -106,8 +109,9 @@ export class DebugController extends SdkObject {
       return;
     }
 
-    if (!this._playwright.allBrowsers().length)
+    if (!this._playwright.allBrowsers().length) {
       await this._playwright.chromium.launch(internalMetadata, { headless: !!process.env.PW_DEBUG_CONTROLLER_HEADLESS });
+    }
     // Create page if none.
     const pages = this._playwright.allPages();
     if (!pages.length) {
@@ -117,56 +121,65 @@ export class DebugController extends SdkObject {
     }
     // Update test id attribute.
     if (params.testIdAttributeName) {
-      for (const page of this._playwright.allPages())
+      for (const page of this._playwright.allPages()) {
         page.context().selectors().setTestIdAttributeName(params.testIdAttributeName);
+      }
     }
     // Toggle the mode.
     for (const recorder of await this._allRecorders()) {
       recorder.hideHighlightedSelector();
-      if (params.mode !== 'inspecting')
+      if (params.mode !== 'inspecting') {
         recorder.setOutput(this._codegenId, params.file);
+      }
       recorder.setMode(params.mode);
     }
     this.setAutoCloseEnabled(true);
   }
 
   async setAutoCloseEnabled(enabled: boolean) {
-    if (!this._autoCloseAllowed)
+    if (!this._autoCloseAllowed) {
       return;
-    if (this._autoCloseTimer)
+    }
+    if (this._autoCloseTimer) {
       clearTimeout(this._autoCloseTimer);
-    if (!enabled)
+    }
+    if (!enabled) {
       return;
+    }
     const heartBeat = () => {
-      if (!this._playwright.allPages().length)
+      if (!this._playwright.allPages().length) {
         gracefullyProcessExitDoNotHang(0);
-      else
+      } else {
         this._autoCloseTimer = setTimeout(heartBeat, 5000);
+      }
     };
     this._autoCloseTimer = setTimeout(heartBeat, 30000);
   }
 
   async highlight(params: { selector?: string, ariaTemplate?: string }) {
     // Assert parameters validity.
-    if (params.selector)
+    if (params.selector) {
       unsafeLocatorOrSelectorAsSelector(this._sdkLanguage, params.selector, 'data-testid');
+    }
     let parsedYaml: ParsedYaml | undefined;
     if (params.ariaTemplate) {
       parsedYaml = parseYamlForAriaSnapshot(params.ariaTemplate);
       parseYamlTemplate(parsedYaml);
     }
     for (const recorder of await this._allRecorders()) {
-      if (parsedYaml)
+      if (parsedYaml) {
         recorder.setHighlightedAriaTemplate(parsedYaml);
-      else if (params.selector)
+      } else if (params.selector) {
         recorder.setHighlightedSelector(this._sdkLanguage, params.selector);
+      }
     }
   }
 
   async hideHighlight() {
     // Hide all active recorder highlights.
-    for (const recorder of await this._allRecorders())
+    for (const recorder of await this._allRecorders()) {
       recorder.hideHighlightedSelector();
+    }
     // Hide all locator.highlight highlights.
     await this._playwright.hideHighlight();
   }
@@ -176,8 +189,9 @@ export class DebugController extends SdkObject {
   }
 
   async resume() {
-    for (const recorder of await this._allRecorders())
+    for (const recorder of await this._allRecorders()) {
       recorder.resume();
+    }
   }
 
   async kill() {
@@ -201,8 +215,9 @@ export class DebugController extends SdkObject {
           pages: [] as any[]
         };
         b.contexts.push(c);
-        for (const page of context.pages())
+        for (const page of context.pages()) {
           c.pages.push(page.mainFrame().url());
+        }
         pageCount += context.pages().length;
       }
     }
@@ -211,8 +226,9 @@ export class DebugController extends SdkObject {
 
   private async _allRecorders(): Promise<Recorder[]> {
     const contexts = new Set<BrowserContext>();
-    for (const page of this._playwright.allPages())
+    for (const page of this._playwright.allPages()) {
       contexts.add(page.context());
+    }
     const result = await Promise.all([...contexts].map(c => Recorder.showInspector(c, { omitCallTracking: true }, () => Promise.resolve(new InspectingRecorderApp(this)))));
     return result.filter(Boolean) as Recorder[];
   }
@@ -220,11 +236,13 @@ export class DebugController extends SdkObject {
   private async _closeBrowsersWithoutPages() {
     for (const browser of this._playwright.allBrowsers()) {
       for (const context of browser.contexts()) {
-        if (!context.pages().length)
+        if (!context.pages().length) {
           await context.close({ reason: 'Browser collected' });
+        }
       }
-      if (!browser.contexts())
+      if (!browser.contexts()) {
         await browser.close({ reason: 'Browser collected' });
+      }
     }
   }
 }

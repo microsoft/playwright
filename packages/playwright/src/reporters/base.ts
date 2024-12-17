@@ -52,16 +52,18 @@ export const { isTTY, ttyWidth, colors } = (() => {
   } else if (process.env.PLAYWRIGHT_FORCE_TTY) {
     isTTY = true;
     ttyWidth = +process.env.PLAYWRIGHT_FORCE_TTY;
-    if (isNaN(ttyWidth))
+    if (isNaN(ttyWidth)) {
       ttyWidth = 100;
+    }
   }
 
   let useColors = isTTY;
   if (process.env.DEBUG_COLORS === '0' || process.env.DEBUG_COLORS === 'false' ||
-      process.env.FORCE_COLOR === '0' || process.env.FORCE_COLOR === 'false')
+      process.env.FORCE_COLOR === '0' || process.env.FORCE_COLOR === 'false') {
     useColors = false;
-  else if (process.env.DEBUG_COLORS || process.env.FORCE_COLOR)
+  } else if (process.env.DEBUG_COLORS || process.env.FORCE_COLOR) {
     useColors = true;
+  }
 
   const colors = useColors ? realColors : {
     bold: (t: string) => t,
@@ -112,15 +114,17 @@ export class BaseReporter implements ReporterV2 {
   }
 
   private _appendOutput(output: TestResultOutput, result: TestResult | undefined) {
-    if (!result)
+    if (!result) {
       return;
+    }
     (result as any)[kOutputSymbol] = (result as any)[kOutputSymbol] || [];
     (result as any)[kOutputSymbol].push(output);
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
-    if (result.status !== 'skipped' && result.status !== test.expectedStatus)
+    if (result.status !== 'skipped' && result.status !== test.expectedStatus) {
       ++this._failureCount;
+    }
     const projectName = test.titlePath()[1];
     const relativePath = relativeTestPath(this.config, test);
     const fileAndProject = (projectName ? `[${projectName}] › ` : '') + relativePath;
@@ -149,14 +153,16 @@ export class BaseReporter implements ReporterV2 {
   protected generateStartingMessage() {
     const jobs = this.config.metadata.actualWorkers ?? this.config.workers;
     const shardDetails = this.config.shard ? `, shard ${this.config.shard.current} of ${this.config.shard.total}` : '';
-    if (!this.totalTestCount)
+    if (!this.totalTestCount) {
       return '';
+    }
     return '\n' + colors.dim('Running ') + this.totalTestCount + colors.dim(` test${this.totalTestCount !== 1 ? 's' : ''} using `) + jobs + colors.dim(` worker${jobs !== 1 ? 's' : ''}${shardDetails}`);
   }
 
   protected getSlowTests(): [string, number][] {
-    if (!this.config.reportSlowTests)
+    if (!this.config.reportSlowTests) {
       return [];
+    }
     // Only pick durations that were served by single worker.
     const fileDurations = [...this.fileDurations.entries()].filter(([key, value]) => value.workers.size === 1).map(([key, value]) => [key, value.duration]) as [string, number][];
     fileDurations.sort((a, b) => b[1] - a[1]);
@@ -169,27 +175,34 @@ export class BaseReporter implements ReporterV2 {
     const tokens: string[] = [];
     if (unexpected.length) {
       tokens.push(colors.red(`  ${unexpected.length} failed`));
-      for (const test of unexpected)
+      for (const test of unexpected) {
         tokens.push(colors.red(formatTestHeader(this.config, test, { indent: '    ' })));
+      }
     }
     if (interrupted.length) {
       tokens.push(colors.yellow(`  ${interrupted.length} interrupted`));
-      for (const test of interrupted)
+      for (const test of interrupted) {
         tokens.push(colors.yellow(formatTestHeader(this.config, test, { indent: '    ' })));
+      }
     }
     if (flaky.length) {
       tokens.push(colors.yellow(`  ${flaky.length} flaky`));
-      for (const test of flaky)
+      for (const test of flaky) {
         tokens.push(colors.yellow(formatTestHeader(this.config, test, { indent: '    ' })));
+      }
     }
-    if (skipped)
+    if (skipped) {
       tokens.push(colors.yellow(`  ${skipped} skipped`));
-    if (didNotRun)
+    }
+    if (didNotRun) {
       tokens.push(colors.yellow(`  ${didNotRun} did not run`));
-    if (expected)
+    }
+    if (expected) {
       tokens.push(colors.green(`  ${expected} passed`) + colors.dim(` (${milliseconds(this.result.duration)})`));
-    if (fatalErrors.length && expected + unexpected.length + interrupted.length + flaky.length > 0)
+    }
+    if (fatalErrors.length && expected + unexpected.length + interrupted.length + flaky.length > 0) {
       tokens.push(colors.red(`  ${fatalErrors.length === 1 ? '1 error was not a part of any test' : fatalErrors.length + ' errors were not a part of any test'}, see above for details`));
+    }
 
     return tokens.join('\n');
   }
@@ -207,8 +220,9 @@ export class BaseReporter implements ReporterV2 {
       switch (test.outcome()) {
         case 'skipped': {
           if (test.results.some(result => result.status === 'interrupted')) {
-            if (test.results.some(result => !!result.error))
+            if (test.results.some(result => !!result.error)) {
               interruptedToPrint.push(test);
+            }
             interrupted.push(test);
           } else if (!test.results.length || test.expectedStatus !== 'skipped') {
             ++didNotRun;
@@ -239,8 +253,9 @@ export class BaseReporter implements ReporterV2 {
   epilogue(full: boolean) {
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
-    if (full && summary.failuresToPrint.length && !this._omitFailures)
+    if (full && summary.failuresToPrint.length && !this._omitFailures) {
       this._printFailures(summary.failuresToPrint);
+    }
     this._printSlowTests();
     this._printSummary(summaryMessage);
   }
@@ -257,13 +272,15 @@ export class BaseReporter implements ReporterV2 {
     slowTests.forEach(([file, duration]) => {
       console.log(colors.yellow('  Slow test file: ') + file + colors.yellow(` (${milliseconds(duration)})`));
     });
-    if (slowTests.length)
+    if (slowTests.length) {
       console.log(colors.yellow('  Consider splitting slow test files to speed up parallel execution'));
+    }
   }
 
   private _printSummary(summary: string) {
-    if (summary.trim())
+    if (summary.trim()) {
       console.log(summary);
+    }
   }
 
   willRetry(test: TestCase): boolean {
@@ -278,8 +295,9 @@ export function formatFailure(config: FullConfig, test: TestCase, index?: number
   for (const result of test.results) {
     const resultLines: string[] = [];
     const errors = formatResultFailure(test, result, '    ', colors.enabled);
-    if (!errors.length)
+    if (!errors.length) {
       continue;
+    }
     const retryLines = [];
     if (result.retry) {
       retryLines.push('');
@@ -290,8 +308,9 @@ export function formatFailure(config: FullConfig, test: TestCase, index?: number
     for (let i = 0; i < result.attachments.length; ++i) {
       const attachment = result.attachments[i];
       const hasPrintableContent = attachment.contentType.startsWith('text/');
-      if (!attachment.path && !hasPrintableContent)
+      if (!attachment.path && !hasPrintableContent) {
         continue;
+      }
       resultLines.push('');
       resultLines.push(colors.cyan(separator(`    attachment #${i + 1}: ${attachment.name} (${attachment.contentType})`)));
       if (attachment.path) {
@@ -308,10 +327,12 @@ export function formatFailure(config: FullConfig, test: TestCase, index?: number
       } else {
         if (attachment.contentType.startsWith('text/') && attachment.body) {
           let text = attachment.body.toString();
-          if (text.length > 300)
+          if (text.length > 300) {
             text = text.slice(0, 300) + '...';
-          for (const line of text.split('\n'))
+          }
+          for (const line of text.split('\n')) {
             resultLines.push(colors.cyan(`    ${line}`));
+          }
         }
       }
       resultLines.push(colors.cyan(separator('   ')));
@@ -332,8 +353,9 @@ export function formatRetry(result: TestResult) {
 }
 
 function quotePathIfNeeded(path: string): string {
-  if (/\s/.test(path))
+  if (/\s/.test(path)) {
     return `"${path}"`;
+  }
   return path;
 }
 
@@ -378,10 +400,11 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
   // root, project, file, ...describes, test
   const [, projectName, , ...titles] = test.titlePath();
   let location;
-  if (omitLocation)
+  if (omitLocation) {
     location = `${relativeTestPath(config, test)}`;
-  else
+  } else {
     location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
+  }
   const projectTitle = projectName ? `[${projectName}] › ` : '';
   const testTitle = `${projectTitle}${location} › ${titles.join(' › ')}`;
   const extraTags = test.tags.filter(t => !testTitle.includes(t));
@@ -400,8 +423,9 @@ export function formatTestHeader(config: FullConfig, test: TestCase, options: { 
       const stepPath: string[] = [];
       const visit = (steps: TestStep[]) => {
         const errors = steps.filter(s => s.error);
-        if (errors.length > 1)
+        if (errors.length > 1) {
           return;
+        }
         if (errors.length === 1 && errors[0].category === 'test.step') {
           stepPath.push(errors[0].title);
           visit(errors[0].steps);
@@ -418,8 +442,9 @@ export function formatTestHeader(config: FullConfig, test: TestCase, options: { 
 export function formatError(error: TestError, highlightCode: boolean): ErrorDetails {
   const message = error.message || error.value || '';
   const stack = error.stack;
-  if (!stack && !error.location)
+  if (!stack && !error.location) {
     return { message };
+  }
 
   const tokens = [];
 
@@ -430,21 +455,25 @@ export function formatError(error: TestError, highlightCode: boolean): ErrorDeta
 
   if (error.snippet) {
     let snippet = error.snippet;
-    if (!highlightCode)
+    if (!highlightCode) {
       snippet = stripAnsiEscapes(snippet);
+    }
     tokens.push('');
     tokens.push(snippet);
   }
 
-  if (parsedStack && parsedStack.stackLines.length)
+  if (parsedStack && parsedStack.stackLines.length) {
     tokens.push(colors.dim(parsedStack.stackLines.join('\n')));
+  }
 
   let location = error.location;
-  if (parsedStack && !location)
+  if (parsedStack && !location) {
     location = parsedStack.location;
+  }
 
-  if (error.cause)
+  if (error.cause) {
     tokens.push(colors.dim('[cause]: ') + formatError(error.cause, highlightCode).message);
+  }
 
   return {
     location,
@@ -453,8 +482,9 @@ export function formatError(error: TestError, highlightCode: boolean): ErrorDeta
 }
 
 export function separator(text: string = ''): string {
-  if (text)
+  if (text) {
     text += ' ';
+  }
   const columns = Math.min(100, ttyWidth || 100);
   return text + colors.dim('─'.repeat(Math.max(0, columns - text.length)));
 }
@@ -470,17 +500,20 @@ export function prepareErrorStack(stack: string): {
 } {
   const lines = stack.split('\n');
   let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
-  if (firstStackLine === -1)
+  if (firstStackLine === -1) {
     firstStackLine = lines.length;
+  }
   const message = lines.slice(0, firstStackLine).join('\n');
   const stackLines = lines.slice(firstStackLine);
   let location: Location | undefined;
   for (const line of stackLines) {
     const frame = parseStackTraceLine(line);
-    if (!frame || !frame.file)
+    if (!frame || !frame.file) {
       continue;
-    if (belongsToNodeModules(frame.file))
+    }
+    if (belongsToNodeModules(frame.file)) {
       continue;
+    }
     location = { file: frame.file, column: frame.column || 0, line: frame.line || 0 };
     break;
   }
@@ -498,8 +531,9 @@ function characterWidth(c: string) {
 
 function stringWidth(v: string) {
   let width = 0;
-  for (const { segment } of new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(v))
+  for (const { segment } of new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(v)) {
     width += characterWidth(segment);
+  }
   return width;
 }
 
@@ -508,8 +542,9 @@ function suffixOfWidth(v: string, width: number) {
   let suffixBegin = v.length;
   for (const { segment, index } of segments.reverse()) {
     const segmentWidth = stringWidth(segment);
-    if (segmentWidth > width)
+    if (segmentWidth > width) {
       break;
+    }
     width -= segmentWidth;
     suffixBegin = index;
   }
@@ -520,8 +555,9 @@ function suffixOfWidth(v: string, width: number) {
 export function fitToWidth(line: string, width: number, prefix?: string): string {
   const prefixLength = prefix ? stripAnsiEscapes(prefix).length : 0;
   width -= prefixLength;
-  if (stringWidth(line) <= width)
+  if (stringWidth(line) <= width) {
     return line;
+  }
 
   // Even items are plain text, odd items are control sequences.
   const parts = line.split(ansiRegex);
@@ -550,8 +586,9 @@ function belongsToNodeModules(file: string) {
 
 function resolveFromEnv(name: string): string | undefined {
   const value = process.env[name];
-  if (value)
+  if (value) {
     return path.resolve(process.cwd(), value);
+  }
   return undefined;
 }
 
@@ -569,22 +606,28 @@ export function resolveOutputFile(reporterName: string, options: {
   }):  { outputFile: string, outputDir?: string } |undefined {
   const name = reporterName.toUpperCase();
   let outputFile = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_FILE`);
-  if (!outputFile && options.outputFile)
+  if (!outputFile && options.outputFile) {
     outputFile = path.resolve(options.configDir, options.outputFile);
-  if (outputFile)
+  }
+  if (outputFile) {
     return { outputFile };
+  }
 
   let outputDir = resolveFromEnv(`PLAYWRIGHT_${name}_OUTPUT_DIR`);
-  if (!outputDir && options.outputDir)
+  if (!outputDir && options.outputDir) {
     outputDir = path.resolve(options.configDir, options.outputDir);
-  if (!outputDir && options.default)
+  }
+  if (!outputDir && options.default) {
     outputDir = resolveReporterOutputPath(options.default.outputDir, options.configDir, undefined);
-  if (!outputDir)
+  }
+  if (!outputDir) {
     outputDir = options.configDir;
+  }
 
   const reportName = process.env[`PLAYWRIGHT_${name}_OUTPUT_NAME`] ?? options.fileName ?? options.default?.fileName;
-  if (!reportName)
+  if (!reportName) {
     return undefined;
+  }
   outputFile = path.resolve(outputDir, reportName);
 
   return { outputFile, outputDir };

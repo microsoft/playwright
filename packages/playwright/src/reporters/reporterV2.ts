@@ -40,8 +40,9 @@ type StdIOChunk = {
 
 export function wrapReporterAsV2(reporter: Reporter | ReporterV2): ReporterV2 {
   try {
-    if ('version' in reporter && reporter.version() === 'v2')
+    if ('version' in reporter && reporter.version() === 'v2') {
       return reporter as ReporterV2;
+    }
   } catch (e) {
   }
   return new ReporterV2Wrapper(reporter as Reporter);
@@ -70,12 +71,15 @@ class ReporterV2Wrapper implements ReporterV2 {
     const deferred = this._deferred!;
     this._deferred = null;
     for (const item of deferred) {
-      if (item.error)
+      if (item.error) {
         this.onError(item.error);
-      if (item.stdout)
+      }
+      if (item.stdout) {
         this.onStdOut(item.stdout.chunk, item.stdout.test, item.stdout.result);
-      if (item.stderr)
+      }
+      if (item.stderr) {
         this.onStdErr(item.stderr.chunk, item.stderr.test, item.stderr.result);
+      }
     }
   }
 

@@ -21,8 +21,9 @@ export function bundle(): Plugin {
     name: 'playwright-bundle',
     transformIndexHtml: {
       handler(html, ctx) {
-        if (!ctx || !ctx.bundle)
+        if (!ctx || !ctx.bundle) {
           return html;
+        }
         // Workaround vite issue that we cannot exclude some scripts from preprocessing.
         return html.replace(/(?=<!--)([\s\S]*?)-->/, '').replace('<!-- <script src="stall.js"></script> -->', '<script src="stall.js"></script>');
       },

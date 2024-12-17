@@ -156,8 +156,9 @@ it('should resolve after popup load', async ({ page, server }) => {
   let resolved = false;
   const loadSatePromise = popup.waitForLoadState().then(() => resolved = true);
   // Round trips!
-  for (let i = 0; i < 5; i++)
+  for (let i = 0; i < 5; i++) {
     await page.evaluate('window');
+  }
   expect(resolved).toBe(false);
   cssResponse.end('');
   await loadSatePromise;

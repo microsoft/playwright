@@ -52,8 +52,9 @@ export class Recorder implements InstrumentationListener, IRecorder {
   private _currentLanguage: Language;
 
   static async showInspector(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams, recorderAppFactory: IRecorderAppFactory) {
-    if (isUnderTest())
+    if (isUnderTest()) {
       params.language = process.env.TEST_INSPECTOR_LANGUAGE;
+    }
     return await Recorder.show('actions', context, recorderAppFactory, params);
   }
 
@@ -105,10 +106,12 @@ export class Recorder implements InstrumentationListener, IRecorder {
         return;
       }
       if (data.event === 'highlightRequested') {
-        if (data.params.selector)
+        if (data.params.selector) {
           this.setHighlightedSelector(this._currentLanguage, data.params.selector);
-        if (data.params.ariaTemplate)
+        }
+        if (data.params.ariaTemplate) {
           this.setHighlightedAriaTemplate(data.params.ariaTemplate);
+        }
         return;
       }
       if (data.event === 'step') {
@@ -187,14 +190,16 @@ export class Recorder implements InstrumentationListener, IRecorder {
     });
 
     await this._context.exposeBinding('__pw_recorderSetMode', false, async ({ frame }, mode: Mode) => {
-      if (frame.parentFrame())
+      if (frame.parentFrame()) {
         return;
+      }
       this.setMode(mode);
     });
 
     await this._context.exposeBinding('__pw_recorderSetOverlayState', false, async ({ frame }, state: OverlayState) => {
-      if (frame.parentFrame())
+      if (frame.parentFrame()) {
         return;
+      }
       this._overlayState = state;
     });
 
@@ -205,8 +210,9 @@ export class Recorder implements InstrumentationListener, IRecorder {
 
     await this._contextRecorder.install();
 
-    if (this._debugger.isPaused())
+    if (this._debugger.isPaused()) {
       this._pausedStateChanged();
+    }
     this._debugger.on(Debugger.Events.PausedStateChanged, () => this._pausedStateChanged());
 
     (this._context as any).recorderAppForTest = this._recorderApp;
@@ -215,8 +221,9 @@ export class Recorder implements InstrumentationListener, IRecorder {
   _pausedStateChanged() {
     // If we are called upon page.pause, we don't have metadatas, populate them.
     for (const { metadata, sdkObject } of this._debugger.pausedDetails()) {
-      if (!this._currentCallsMetadata.has(metadata))
+      if (!this._currentCallsMetadata.has(metadata)) {
         this.onBeforeCall(sdkObject, metadata);
+      }
     }
     this._recorderApp?.setPaused(this._debugger.isPaused());
     this._updateUserSources();
@@ -224,15 +231,17 @@ export class Recorder implements InstrumentationListener, IRecorder {
   }
 
   setMode(mode: Mode) {
-    if (this._mode === mode)
+    if (this._mode === mode) {
       return;
+    }
     this._highlightedElement = {};
     this._mode = mode;
     this._recorderApp?.setMode(this._mode);
     this._contextRecorder.setEnabled(this._isRecording());
     this._debugger.setMuted(this._isRecording());
-    if (this._mode !== 'none' && this._mode !== 'standby' && this._context.pages().length === 1)
+    if (this._mode !== 'none' && this._mode !== 'standby' && this._context.pages().length === 1) {
       this._context.pages()[0].bringToFront().catch(() => {});
+    }
     this._refreshOverlay();
   }
 
@@ -260,22 +269,26 @@ export class Recorder implements InstrumentationListener, IRecorder {
   }
 
   private async _scopeHighlightedSelectorToFrame(frame: Frame): Promise<string | undefined> {
-    if (!this._highlightedElement.selector)
+    if (!this._highlightedElement.selector) {
       return;
+    }
     try {
       const mainFrame = frame._page.mainFrame();
       const resolved = await mainFrame.selectors.resolveFrameForSelector(this._highlightedElement.selector);
       // selector couldn't be found, don't highlight anything
-      if (!resolved)
+      if (!resolved) {
         return '';
+      }
 
       // selector points to no specific frame, highlight in all frames
-      if (resolved?.frame === mainFrame)
+      if (resolved.frame === mainFrame) {
         return stringifySelector(resolved.info.parsed);
+      }
 
       // selector points to this frame, highlight it
-      if (resolved?.frame === frame)
+      if (resolved.frame === frame) {
         return stringifySelector(resolved.info.parsed);
+      }
 
       // selector points to a different frame, highlight nothing
       return '';
@@ -290,28 +303,33 @@ export class Recorder implements InstrumentationListener, IRecorder {
 
   private _refreshOverlay() {
     for (const page of this._context.pages()) {
-      for (const frame of page.frames())
+      for (const frame of page.frames()) {
         frame.evaluateExpression('window.__pw_refreshOverlay()').catch(() => {});
+      }
     }
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (this._omitCallTracking || this._isRecording())
+    if (this._omitCallTracking || this._isRecording()) {
       return;
+    }
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._updateUserSources();
     this.updateCallLog([metadata]);
-    if (isScreenshotCommand(metadata))
+    if (isScreenshotCommand(metadata)) {
       this.hideHighlightedSelector();
-    else if (metadata.params && metadata.params.selector)
+    } else if (metadata.params && metadata.params.selector) {
       this._highlightedElement = { selector: metadata.params.selector };
+    }
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (this._omitCallTracking || this._isRecording())
+    if (this._omitCallTracking || this._isRecording()) {
       return;
-    if (!metadata.error)
+    }
+    if (!metadata.error) {
       this._currentCallsMetadata.delete(metadata);
+    }
     this._updateUserSources();
     this.updateCallLog([metadata]);
   }
@@ -326,8 +344,9 @@ export class Recorder implements InstrumentationListener, IRecorder {
     // Apply new decorations.
     let fileToSelect = undefined;
     for (const metadata of this._currentCallsMetadata.keys()) {
-      if (!metadata.location)
+      if (!metadata.location) {
         continue;
+      }
       const { file, line } = metadata.location;
       let source = this._userSources.get(file);
       if (!source) {
@@ -342,8 +361,9 @@ export class Recorder implements InstrumentationListener, IRecorder {
       }
     }
     this._pushAllSources();
-    if (fileToSelect)
+    if (fileToSelect) {
       this._recorderApp?.setRunningFile(fileToSelect);
+    }
   }
 
   private _pushAllSources() {
@@ -358,17 +378,21 @@ export class Recorder implements InstrumentationListener, IRecorder {
   }
 
   updateCallLog(metadatas: CallMetadata[]) {
-    if (this._isRecording())
+    if (this._isRecording()) {
       return;
+    }
     const logs: CallLog[] = [];
     for (const metadata of metadatas) {
-      if (!metadata.method || metadata.internal)
+      if (!metadata.method || metadata.internal) {
         continue;
+      }
       let status: CallLogStatus = 'done';
-      if (this._currentCallsMetadata.has(metadata))
+      if (this._currentCallsMetadata.has(metadata)) {
         status = 'in-progress';
-      if (this._debugger.isPaused(metadata))
+      }
+      if (this._debugger.isPaused(metadata)) {
         status = 'paused';
+      }
       logs.push(metadataToCallLog(metadata, status));
     }
     this._recorderApp?.updateCallLogs(logs);
@@ -392,11 +416,14 @@ function isScreenshotCommand(metadata: CallMetadata) {
 }
 
 function languageForFile(file: string) {
-  if (file.endsWith('.py'))
+  if (file.endsWith('.py')) {
     return 'python';
-  if (file.endsWith('.java'))
+  }
+  if (file.endsWith('.java')) {
     return 'java';
-  if (file.endsWith('.cs'))
+  }
+  if (file.endsWith('.cs')) {
     return 'csharp';
+  }
   return 'javascript';
 }

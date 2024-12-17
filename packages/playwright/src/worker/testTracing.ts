@@ -63,23 +63,29 @@ export class TestTracing {
   }
 
   private _shouldCaptureTrace() {
-    if (process.env.PW_TEST_DISABLE_TRACING)
+    if (process.env.PW_TEST_DISABLE_TRACING) {
       return false;
+    }
 
-    if (this._options?.mode === 'on')
+    if (this._options?.mode === 'on') {
       return true;
+    }
 
-    if (this._options?.mode === 'retain-on-failure')
+    if (this._options?.mode === 'retain-on-failure') {
       return true;
+    }
 
-    if (this._options?.mode === 'on-first-retry' && this._testInfo.retry === 1)
+    if (this._options?.mode === 'on-first-retry' && this._testInfo.retry === 1) {
       return true;
+    }
 
-    if (this._options?.mode === 'on-all-retries' && this._testInfo.retry > 0)
+    if (this._options?.mode === 'on-all-retries' && this._testInfo.retry > 0) {
       return true;
+    }
 
-    if (this._options?.mode === 'retain-on-first-failure' && this._testInfo.retry === 0)
+    if (this._options?.mode === 'retain-on-first-failure' && this._testInfo.retry === 0) {
       return true;
+    }
 
     return false;
   }
@@ -141,37 +147,42 @@ export class TestTracing {
   }
 
   async stopIfNeeded() {
-    if (!this._options)
+    if (!this._options) {
       return;
+    }
 
     const error = await this._liveTraceFile?.fs.syncAndGetError();
-    if (error)
+    if (error) {
       throw error;
+    }
 
     const testFailed = this._testInfo.status !== this._testInfo.expectedStatus;
     const shouldAbandonTrace = !testFailed && (this._options.mode === 'retain-on-failure' || this._options.mode === 'retain-on-first-failure');
 
     if (shouldAbandonTrace) {
-      for (const file of this._temporaryTraceFiles)
+      for (const file of this._temporaryTraceFiles) {
         await fs.promises.unlink(file).catch(() => {});
+      }
       return;
     }
 
     const zipFile = new yazl.ZipFile();
 
-    if (!this._options?.attachments) {
+    if (!this._options.attachments) {
       for (const event of this._traceEvents) {
-        if (event.type === 'after')
+        if (event.type === 'after') {
           delete event.attachments;
+        }
       }
     }
 
-    if (this._options?.sources) {
+    if (this._options.sources) {
       const sourceFiles = new Set<string>();
       for (const event of this._traceEvents) {
         if (event.type === 'before') {
-          for (const frame of event.stack || [])
+          for (const frame of event.stack || []) {
             sourceFiles.add(frame.file);
+          }
         }
       }
       for (const sourceFile of sourceFiles) {
@@ -185,21 +196,24 @@ export class TestTracing {
     for (const event of this._traceEvents.filter(e => e.type === 'after') as trace.AfterActionTraceEvent[]) {
       for (const attachment of (event.attachments || [])) {
         let contentPromise: Promise<Buffer | undefined> | undefined;
-        if (attachment.path)
+        if (attachment.path) {
           contentPromise = fs.promises.readFile(attachment.path).catch(() => undefined);
-        else if (attachment.base64)
+        } else if (attachment.base64) {
           contentPromise = Promise.resolve(Buffer.from(attachment.base64, 'base64'));
+        }
 
         const content = await contentPromise;
-        if (content === undefined)
+        if (content === undefined) {
           continue;
+        }
 
         const sha1 = calculateSha1(content);
         attachment.sha1 = sha1;
         delete attachment.path;
         delete attachment.base64;
-        if (sha1s.has(sha1))
+        if (sha1s.has(sha1)) {
           continue;
+        }
         sha1s.add(sha1);
         zipFile.addBuffer(content, 'resources/' + sha1);
       }
@@ -231,8 +245,9 @@ export class TestTracing {
 
   _formatError(error: TestInfoErrorImpl) {
     const parts: string[] = [error.message || String(error.value)];
-    if (error.cause)
+    if (error.cause) {
       parts.push('[cause]: ' + this._formatError(error.cause));
+    }
     return parts.join('\n');
   }
 
@@ -271,8 +286,9 @@ export class TestTracing {
 
   private _appendTraceEvent(event: trace.TraceEvent) {
     this._traceEvents.push(event);
-    if (this._liveTraceFile)
+    if (this._liveTraceFile) {
       this._liveTraceFile.fs.appendFile(this._liveTraceFile.file, JSON.stringify(event) + '\n', true);
+    }
   }
 }
 
@@ -288,23 +304,31 @@ function serializeAttachments(attachments: Attachment[]): trace.AfterActionTrace
 }
 
 function generatePreview(value: any, visited = new Set<any>()): string {
-  if (visited.has(value))
+  if (visited.has(value)) {
     return '';
+  }
   visited.add(value);
-  if (typeof value === 'string')
+  if (typeof value === 'string') {
     return value;
-  if (typeof value === 'number')
+  }
+  if (typeof value === 'number') {
     return value.toString();
-  if (typeof value === 'boolean')
+  }
+  if (typeof value === 'boolean') {
     return value.toString();
-  if (value === null)
+  }
+  if (value === null) {
     return 'null';
-  if (value === undefined)
+  }
+  if (value === undefined) {
     return 'undefined';
-  if (Array.isArray(value))
+  }
+  if (Array.isArray(value)) {
     return '[' + value.map(v => generatePreview(v, visited)).join(', ') + ']';
-  if (typeof value === 'object')
+  }
+  if (typeof value === 'object') {
     return 'Object';
+  }
   return String(value);
 }
 
@@ -339,8 +363,9 @@ async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) 
           entryName = i + '-' + entry.fileName;
         }
         if (entryNames.has(entryName)) {
-          if (--pendingEntries === 0)
+          if (--pendingEntries === 0) {
             promise.resolve();
+          }
           return;
         }
         entryNames.add(entryName);
@@ -350,8 +375,9 @@ async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) 
             return;
           }
           zipFile.addReadStream(readStream!, entryName);
-          if (--pendingEntries === 0)
+          if (--pendingEntries === 0) {
             promise.resolve();
+          }
         });
       });
     });

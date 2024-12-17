@@ -48,13 +48,16 @@ export class Selectors {
   }
 
   async register(name: string, source: string, contentScript: boolean = false): Promise<void> {
-    if (!name.match(/^[a-zA-Z_0-9-]+$/))
+    if (!name.match(/^[a-zA-Z_0-9-]+$/)) {
       throw new Error('Selector engine name may only contain [a-zA-Z0-9_] characters');
+    }
     // Note: we keep 'zs' for future use.
-    if (this._builtinEngines.has(name) || name === 'zs' || name === 'zs:light')
+    if (this._builtinEngines.has(name) || name === 'zs' || name === 'zs:light') {
       throw new Error(`"${name}" is a predefined selector engine`);
-    if (this._engines.has(name))
+    }
+    if (this._engines.has(name)) {
       throw new Error(`"${name}" selector engine has been already registered`);
+    }
     this._engines.set(name, { source, contentScript });
   }
 
@@ -76,12 +79,15 @@ export class Selectors {
     visitAllSelectorParts(parsed, part => {
       const name = part.name;
       const custom = this._engines.get(name);
-      if (!custom && !this._builtinEngines.has(name))
+      if (!custom && !this._builtinEngines.has(name)) {
         throw new InvalidSelectorError(`Unknown engine "${name}" while parsing selector ${stringifySelector(parsed)}`);
-      if (custom && !custom.contentScript)
+      }
+      if (custom && !custom.contentScript) {
         needsMainWorld = true;
-      if (this._builtinEnginesInMainWorld.has(name))
+      }
+      if (this._builtinEnginesInMainWorld.has(name)) {
         needsMainWorld = true;
+      }
     });
     return {
       parsed,

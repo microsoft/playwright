@@ -31,10 +31,12 @@ test('EventEmitter prototype test', () => {
   expect(ee.off).toEqual(ee.removeListener);  // Same method.
 
   Object.getOwnPropertyNames(ee).forEach(name => {
-    if (name === 'constructor' || name === 'on' || name === 'off')
+    if (name === 'constructor' || name === 'on' || name === 'off') {
       return;
-    if (typeof ee[name] !== 'function')
+    }
+    if (typeof ee[name] !== 'function') {
       return;
+    }
     expect(ee[name].name).toEqual(name);
   });
 });

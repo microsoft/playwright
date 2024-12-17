@@ -54,12 +54,15 @@ export class Clock implements api.Clock {
 }
 
 function parseTime(time: string | number | Date): { timeNumber?: number, timeString?: string } {
-  if (typeof time === 'number')
+  if (typeof time === 'number') {
     return { timeNumber: time };
-  if (typeof time === 'string')
+  }
+  if (typeof time === 'string') {
     return { timeString: time };
-  if (!isFinite(time.getTime()))
+  }
+  if (!isFinite(time.getTime())) {
     throw new Error(`Invalid date: ${time}`);
+  }
   return { timeNumber: time.getTime() };
 }
 

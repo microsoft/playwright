@@ -46,8 +46,9 @@ for (const cdn of CDNS) {
     expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit']);
     expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit']);
     const dls = parsedDownloads(result);
-    for (const software of ['chromium', 'ffmpeg', 'firefox', 'webkit'])
+    for (const software of ['chromium', 'ffmpeg', 'firefox', 'webkit']) {
       expect(dls).toContainEqual({ status: 200, name: software, url: expect.stringContaining(cdn) });
+    }
     await exec('node sanity.js playwright chromium firefox webkit');
     await exec('node esm-playwright.mjs');
   });
@@ -125,8 +126,9 @@ test(`npx playwright install should not hang when CDN TCP connection stalls`, as
     expect(retryCount).toBe(5);
     expect([...result.matchAll(/timed out after/g)]).toHaveLength(5);
   } finally {
-    for (const socket of socketsToDestroy)
+    for (const socket of socketsToDestroy) {
       socket.destroy();
+    }
     await new Promise(resolve => server.close(resolve));
   }
 });

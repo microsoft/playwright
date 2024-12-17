@@ -53,15 +53,17 @@ export async function verifyViewport(page: Page, width: number, height: number) 
 }
 
 export function expectedSSLError(browserName: string, platform: string): RegExp {
-  if (browserName === 'chromium')
+  if (browserName === 'chromium') {
     return /net::(ERR_CERT_AUTHORITY_INVALID|ERR_CERT_INVALID)/;
+  }
   if (browserName === 'webkit') {
-    if (platform === 'darwin')
+    if (platform === 'darwin') {
       return /The certificate for this server is invalid/;
-    else if (platform === 'win32')
+    } else if (platform === 'win32') {
       return /SSL peer certificate or SSH remote key was not OK/;
-    else
+    } else {
       return /Unacceptable TLS certificate|Operation was cancelled/;
+    }
   }
   return /SSL_ERROR_UNKNOWN/;
 }
@@ -70,10 +72,12 @@ export function chromiumVersionLessThan(a: string, b: string) {
   const left: number[] = a.split('.').map(e => Number(e));
   const right: number[] = b.split('.').map(e => Number(e));
   for (let i = 0; i < 4; i++) {
-    if (left[i] > right[i])
+    if (left[i] > right[i]) {
       return false;
-    if (left[i] < right[i])
+    }
+    if (left[i] < right[i]) {
       return true;
+    }
   }
   return false;
 }
@@ -81,8 +85,9 @@ export function chromiumVersionLessThan(a: string, b: string) {
 let didSuppressUnverifiedCertificateWarning = false;
 let originalEmitWarning: (warning: string | Error, ...args: any[]) => void;
 export function suppressCertificateWarning() {
-  if (didSuppressUnverifiedCertificateWarning)
+  if (didSuppressUnverifiedCertificateWarning) {
     return;
+  }
   didSuppressUnverifiedCertificateWarning = true;
   // Suppress one-time warning:
   // https://github.com/nodejs/node/blob/1bbe66f432591aea83555d27dd76c55fea040a0d/lib/internal/options.js#L37-L49
@@ -99,8 +104,9 @@ export function suppressCertificateWarning() {
 export async function parseTraceRaw(file: string): Promise<{ events: any[], resources: Map<string, Buffer>, actions: string[], actionObjects: ActionTraceEvent[], stacks: Map<string, StackFrame[]> }> {
   const zipFS = new ZipFile(file);
   const resources = new Map<string, Buffer>();
-  for (const entry of await zipFS.entries())
+  for (const entry of await zipFS.entries()) {
     resources.set(entry, await zipFS.read(entry));
+  }
   zipFS.close();
 
   const actionMap = new Map<string, ActionTraceEvent>();
@@ -135,15 +141,17 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
 
   for (const networkFile of [...resources.keys()].filter(name => name.endsWith('.network'))) {
     for (const line of resources.get(networkFile)!.toString().split('\n')) {
-      if (line)
+      if (line) {
         events.push(JSON.parse(line));
+      }
     }
   }
 
   const stacks: Map<string, StackFrame[]> = new Map();
   for (const stacksFile of [...resources.keys()].filter(name => name.endsWith('.stacks'))) {
-    for (const [key, value] of parseClientSideCallMetadata(JSON.parse(resources.get(stacksFile)!.toString())))
+    for (const [key, value] of parseClientSideCallMetadata(JSON.parse(resources.get(stacksFile)!.toString()))) {
       stacks.set(key, value);
+    }
   }
 
   const actionObjects = [...actionMap.values()];
@@ -166,8 +174,9 @@ export async function parseTrace(file: string): Promise<{ resources: Map<string,
   const actionTree: string[] = [];
   const visit = (actionItem: ActionTreeItem, indent: string) => {
     actionTree.push(`${indent}${actionItem.action?.apiName || actionItem.id}`);
-    for (const child of actionItem.children)
+    for (const child of actionItem.children) {
       visit(child, indent + '  ');
+    }
   };
   rootItem.children.forEach(a => visit(a, ''));
   return {
@@ -185,8 +194,9 @@ export async function parseTrace(file: string): Promise<{ resources: Map<string,
 export async function parseHar(file: string): Promise<Map<string, Buffer>> {
   const zipFS = new ZipFile(file);
   const resources = new Map<string, Buffer>();
-  for (const entry of await zipFS.entries())
+  for (const entry of await zipFS.entries()) {
     resources.set(entry, await zipFS.read(entry));
+  }
   zipFS.close();
   return resources;
 }
@@ -255,8 +265,9 @@ class TraceBackend implements TraceModelBackend {
 
   private async _readEntries(): Promise<Map<string, Buffer>> {
     const zipFS = new ZipFile(this._fileName);
-    for (const entry of await zipFS.entries())
+    for (const entry of await zipFS.entries()) {
       this.entries.set(entry, await zipFS.read(entry));
+    }
     zipFS.close();
     return this.entries;
   }
@@ -282,8 +293,9 @@ class TraceBackend implements TraceModelBackend {
   async readText(entryName: string): Promise<string | undefined> {
     const entries = await this._entriesPromise;
     const entry = entries.get(entryName);
-    if (!entry)
+    if (!entry) {
       return;
+    }
     return entry.toString();
   }
 

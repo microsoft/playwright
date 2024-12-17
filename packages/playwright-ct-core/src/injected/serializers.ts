@@ -47,23 +47,28 @@ export async function unwrapObject(value: any): Promise<any> {
       };
       return { result };
     }
-    if (isImportRef(v))
+    if (isImportRef(v)) {
       return { result: await window.__pwRegistry.resolveImportRef(v) };
+    }
   });
 }
 
 export function transformObject(value: any, mapping: (v: any) => { result: any } | undefined): any {
   const result = mapping(value);
-  if (result)
+  if (result) {
     return result.result;
-  if (value === null || typeof value !== 'object')
+  }
+  if (value === null || typeof value !== 'object') {
     return value;
-  if (value instanceof Date || value instanceof RegExp || value instanceof URL)
+  }
+  if (value instanceof Date || value instanceof RegExp || value instanceof URL) {
     return value;
+  }
   if (Array.isArray(value)) {
     const result = [];
-    for (const item of value)
+    for (const item of value) {
       result.push(transformObject(item, mapping));
+    }
     return result;
   }
   if (value?.__pw_type === 'jsx' && typeof value.type === 'function') {
@@ -74,27 +79,33 @@ export function transformObject(value: any, mapping: (v: any) => { result: any }
     ].join('\n'));
   }
   const result2: any = {};
-  for (const [key, prop] of Object.entries(value))
+  for (const [key, prop] of Object.entries(value)) {
     result2[key] = transformObject(prop, mapping);
+  }
   return result2;
 }
 
 export async function transformObjectAsync(value: any, mapping: (v: any) => Promise<{ result: any } | undefined>): Promise<any> {
   const result = await mapping(value);
-  if (result)
+  if (result) {
     return result.result;
-  if (value === null || typeof value !== 'object')
+  }
+  if (value === null || typeof value !== 'object') {
     return value;
-  if (value instanceof Date || value instanceof RegExp || value instanceof URL)
+  }
+  if (value instanceof Date || value instanceof RegExp || value instanceof URL) {
     return value;
+  }
   if (Array.isArray(value)) {
     const result = [];
-    for (const item of value)
+    for (const item of value) {
       result.push(await transformObjectAsync(item, mapping));
+    }
     return result;
   }
   const result2: any = {};
-  for (const [key, prop] of Object.entries(value))
+  for (const [key, prop] of Object.entries(value)) {
     result2[key] = await transformObjectAsync(prop, mapping);
+  }
   return result2;
 }

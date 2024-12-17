@@ -94,8 +94,9 @@ test.describe(() => {
     `);
 
     await recorder.recorderPage.locator('.tab-aria .CodeMirror').click();
-    for (let i = 0; i < '"Submit"'.length; i++)
+    for (let i = 0; i < '"Submit"'.length; i++) {
       await recorder.recorderPage.keyboard.press('Backspace');
+    }
 
     {
       // No accessible name => two boxes.

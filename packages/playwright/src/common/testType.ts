@@ -61,8 +61,9 @@ export class TestTypeImpl {
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
     test.info = () => {
       const result = currentTestInfo();
-      if (!result)
+      if (!result) {
         throw new Error('test.info() can only be called while test is running');
+      }
       return result;
     };
     this.test = test;
@@ -86,8 +87,9 @@ export class TestTypeImpl {
   private _createTest(type: 'default' | 'only' | 'skip' | 'fixme' | 'fail' | 'fail.only', location: Location, title: string, fnOrDetails: Function | TestDetails, fn?: Function) {
     throwIfRunningInsideJest();
     const suite = this._currentSuite(location, 'test()');
-    if (!suite)
+    if (!suite) {
       return;
+    }
 
     let details: TestDetails;
     let body: Function;
@@ -106,19 +108,22 @@ export class TestTypeImpl {
     test._tags.push(...validatedDetails.tags);
     suite._addTest(test);
 
-    if (type === 'only' || type === 'fail.only')
+    if (type === 'only' || type === 'fail.only') {
       test._only = true;
-    if (type === 'skip' || type === 'fixme' || type === 'fail')
+    }
+    if (type === 'skip' || type === 'fixme' || type === 'fail') {
       test._staticAnnotations.push({ type });
-    else if (type === 'fail.only')
+    } else if (type === 'fail.only') {
       test._staticAnnotations.push({ type: 'fail' });
+    }
   }
 
   private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, titleOrFn: string | Function, fnOrDetails?: TestDetails | Function, fn?: Function) {
     throwIfRunningInsideJest();
     const suite = this._currentSuite(location, 'test.describe()');
-    if (!suite)
+    if (!suite) {
       return;
+    }
 
     let title: string;
     let body: Function;
@@ -146,20 +151,26 @@ export class TestTypeImpl {
     child._tags.push(...validatedDetails.tags);
     suite._addSuite(child);
 
-    if (type === 'only' || type === 'serial.only' || type === 'parallel.only')
+    if (type === 'only' || type === 'serial.only' || type === 'parallel.only') {
       child._only = true;
-    if (type === 'serial' || type === 'serial.only')
+    }
+    if (type === 'serial' || type === 'serial.only') {
       child._parallelMode = 'serial';
-    if (type === 'parallel' || type === 'parallel.only')
+    }
+    if (type === 'parallel' || type === 'parallel.only') {
       child._parallelMode = 'parallel';
-    if (type === 'skip' || type === 'fixme')
+    }
+    if (type === 'skip' || type === 'fixme') {
       child._staticAnnotations.push({ type });
+    }
 
     for (let parent: Suite | undefined = suite; parent; parent = parent.parent) {
-      if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel')
+      if (parent._parallelMode === 'serial' && child._parallelMode === 'parallel') {
         throw new Error('describe.parallel cannot be nested inside describe.serial');
-      if (parent._parallelMode === 'default' && child._parallelMode === 'parallel')
+      }
+      if (parent._parallelMode === 'default' && child._parallelMode === 'parallel') {
         throw new Error('describe.parallel cannot be nested inside describe with default mode');
+      }
     }
 
     setCurrentlyLoadingFileSuite(child);
@@ -169,8 +180,9 @@ export class TestTypeImpl {
 
   private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, title: string | Function, fn?: Function) {
     const suite = this._currentSuite(location, `test.${name}()`);
-    if (!suite)
+    if (!suite) {
       return;
+    }
     if (typeof title === 'function') {
       fn = title;
       title = `${name} hook`;
@@ -182,24 +194,30 @@ export class TestTypeImpl {
   private _configure(location: Location, options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) {
     throwIfRunningInsideJest();
     const suite = this._currentSuite(location, `test.describe.configure()`);
-    if (!suite)
+    if (!suite) {
       return;
+    }
 
-    if (options.timeout !== undefined)
+    if (options.timeout !== undefined) {
       suite._timeout = options.timeout;
+    }
 
-    if (options.retries !== undefined)
+    if (options.retries !== undefined) {
       suite._retries = options.retries;
+    }
 
     if (options.mode !== undefined) {
-      if (suite._parallelMode !== 'none')
+      if (suite._parallelMode !== 'none') {
         throw new Error(`"${suite._parallelMode}" mode is already assigned for the enclosing scope.`);
+      }
       suite._parallelMode = options.mode;
       for (let parent: Suite | undefined = suite.parent; parent; parent = parent.parent) {
-        if (parent._parallelMode === 'serial' && suite._parallelMode === 'parallel')
+        if (parent._parallelMode === 'serial' && suite._parallelMode === 'parallel') {
           throw new Error('describe with parallel mode cannot be nested inside describe with serial mode');
-        if (parent._parallelMode === 'default' && suite._parallelMode === 'parallel')
+        }
+        if (parent._parallelMode === 'default' && suite._parallelMode === 'parallel') {
           throw new Error('describe with parallel mode cannot be nested inside describe with default mode');
+        }
       }
     }
   }
@@ -221,8 +239,9 @@ export class TestTypeImpl {
       if (typeof modifierArgs[0] === 'function') {
         suite._modifiers.push({ type, fn: modifierArgs[0], location, description: modifierArgs[1] });
       } else {
-        if (modifierArgs.length >= 1 && !modifierArgs[0])
+        if (modifierArgs.length >= 1 && !modifierArgs[0]) {
           return;
+        }
         const description = modifierArgs[1];
         suite._staticAnnotations.push({ type, description });
       }
@@ -230,10 +249,12 @@ export class TestTypeImpl {
     }
 
     const testInfo = currentTestInfo();
-    if (!testInfo)
+    if (!testInfo) {
       throw new Error(`test.${type}() can only be called inside test, describe block or fixture`);
-    if (typeof modifierArgs[0] === 'function')
+    }
+    if (typeof modifierArgs[0] === 'function') {
       throw new Error(`test.${type}() with a function can only be called inside describe block`);
+    }
     testInfo[type](...modifierArgs as [any, any]);
   }
 
@@ -245,28 +266,32 @@ export class TestTypeImpl {
     }
 
     const testInfo = currentTestInfo();
-    if (!testInfo)
+    if (!testInfo) {
       throw new Error(`test.setTimeout() can only be called from a test`);
+    }
     testInfo.setTimeout(timeout);
   }
 
   private _use(location: Location, fixtures: Fixtures) {
     const suite = this._currentSuite(location, `test.use()`);
-    if (!suite)
+    if (!suite) {
       return;
+    }
     suite._use.push({ fixtures, location });
   }
 
   async _step<T>(title: string, body: () => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
     const testInfo = currentTestInfo();
-    if (!testInfo)
+    if (!testInfo) {
       throw new Error(`test.step() can only be called from a test`);
+    }
     const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
     return await zones.run('stepZone', step, async () => {
       try {
         const result = await raceAgainstDeadline(async () => body(), options.timeout ? monotonicTime() + options.timeout : 0);
-        if (result.timedOut)
+        if (result.timedOut) {
           throw new errors.TimeoutError(`Step timeout ${options.timeout}ms exceeded.`);
+        }
         step.complete({});
         return result.result;
       } catch (error) {
@@ -277,8 +302,9 @@ export class TestTypeImpl {
   }
 
   private _extend(location: Location, fixtures: Fixtures) {
-    if ((fixtures as any)[testTypeSymbol])
+    if ((fixtures as any)[testTypeSymbol]) {
       throw new Error(`test.extend() accepts fixtures object, not a test object.\nDid you mean to call mergeTests()?`);
+    }
     const fixturesWithLocation: FixturesWithLocation = { fixtures, location };
     return new TestTypeImpl([...this.fixtures, fixturesWithLocation]).test;
   }
@@ -299,8 +325,9 @@ function validateTestDetails(details: TestDetails) {
   const annotations = Array.isArray(details.annotation) ? details.annotation : (details.annotation ? [details.annotation] : []);
   const tags = Array.isArray(details.tag) ? details.tag : (details.tag ? [details.tag] : []);
   for (const tag of tags) {
-    if (tag[0] !== '@')
+    if (tag[0] !== '@') {
       throw new Error(`Tag must start with "@" symbol, got "${tag}" instead.`);
+    }
   }
   return { annotations, tags };
 }
@@ -311,8 +338,9 @@ export function mergeTests(...tests: TestType<any, any>[]) {
   let result = rootTestType;
   for (const t of tests) {
     const testTypeImpl = (t as any)[testTypeSymbol] as TestTypeImpl;
-    if (!testTypeImpl)
+    if (!testTypeImpl) {
       throw new Error(`mergeTests() accepts "test" functions as parameters.\nDid you mean to call test.extend() with fixtures instead?`);
+    }
     // Filter out common ancestor fixtures.
     const newFixtures = testTypeImpl.fixtures.filter(theirs => !result.fixtures.find(ours => ours.fixtures === theirs.fixtures));
     result = new TestTypeImpl([...result.fixtures, ...newFixtures]);

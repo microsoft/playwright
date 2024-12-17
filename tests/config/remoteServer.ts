@@ -29,8 +29,9 @@ export class RunServer implements PlaywrightServer {
 
   async start(childProcess: CommonFixtures['childProcess'], mode?: 'extension' | 'default', env?: NodeJS.ProcessEnv) {
     const command = ['node', path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'cli.js'), 'run-server'];
-    if (mode === 'extension')
+    if (mode === 'extension') {
       command.push('--mode=extension');
+    }
     this._process = childProcess({
       command,
       env: {
@@ -45,8 +46,9 @@ export class RunServer implements PlaywrightServer {
     this._process.onOutput = data => {
       const prefix = 'Listening on ';
       const line = data.toString();
-      if (line.startsWith(prefix))
+      if (line.startsWith(prefix)) {
         wsEndpointCallback(line.substr(prefix.length));
+      }
     };
 
     this._wsEndpoint = await wsEndpointPromise;
@@ -129,13 +131,15 @@ export class RemoteServer implements PlaywrightServer {
     this._output.set(key, value);
     const cb = this._outputCallback.get(key);
     this._outputCallback.delete(key);
-    if (cb)
+    if (cb) {
       cb();
+    }
   }
 
   async out(key: string): Promise<string> {
-    if (!this._output.has(key))
+    if (!this._output.has(key)) {
       await new Promise<void>(f => this._outputCallback.set(key, f));
+    }
     return this._output.get(key)!;
   }
 

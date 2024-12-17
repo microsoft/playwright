@@ -58,17 +58,21 @@ it('should work with large DOM @smoke', async ({ page, server }) => {
   for (const selector of selectors) {
     const counts1 = [];
     const time1 = Date.now();
-    for (let i = 0; i < (measure ? 10 : 1); i++)
+    for (let i = 0; i < (measure ? 10 : 1); i++) {
       counts1.push(await page.$$eval(selector, els => els.length));
-    if (measure)
+    }
+    if (measure) {
       console.log('pw: ' + (Date.now() - time1));
+    }
 
     const time2 = Date.now();
     const counts2 = [];
-    for (let i = 0; i < (measure ? 10 : 1); i++)
+    for (let i = 0; i < (measure ? 10 : 1); i++) {
       counts2.push(await page.evaluate(selector => document.querySelectorAll(selector).length, selector));
-    if (measure)
+    }
+    if (measure) {
       console.log('qs: ' + (Date.now() - time2));
+    }
 
     expect(counts1).toEqual(counts2);
   }
@@ -194,8 +198,9 @@ it('should work with attribute selectors', async ({ page }) => {
     `[attr2 = "hello-''>>foo=bar[]"]`,
     `[attr2 $="foo=bar[]"]`,
   ];
-  for (const selector of selectors)
+  for (const selector of selectors) {
     expect(await page.$eval(selector, e => e === (window as any)['div'])).toBe(true);
+  }
   expect(await page.$eval(`[attr*=hello] span`, e => e.parentNode === (window as any)['div'])).toBe(true);
   expect(await page.$eval(`[attr*=hello] >> span`, e => e.parentNode === (window as any)['div'])).toBe(true);
   expect(await page.$eval(`[attr3="] span"] >> span`, e => e.parentNode === (window as any)['div'])).toBe(true);

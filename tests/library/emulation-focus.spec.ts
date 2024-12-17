@@ -33,7 +33,9 @@ it('should focus popups by default', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(url => { window.open(url); }, server.EMPTY_PAGE),
+    page.evaluate(url => {
+      window.open(url);
+    }, server.EMPTY_PAGE),
   ]);
   expect(await popup.evaluate('document.hasFocus()')).toBe(true);
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
@@ -221,14 +223,19 @@ browserTest('should trigger hover state concurrently', async ({ browserType, bro
     `);
   }
 
-  for (const page of [page1, page2, page3])
+  for (const page of [page1, page2, page3]) {
     await page.hover('span');
-  for (const page of [page1, page2, page3])
+  }
+  for (const page of [page1, page2, page3]) {
     await page.click('button');
-  for (const page of [page1, page2, page3])
+  }
+  for (const page of [page1, page2, page3]) {
     expect(await page.evaluate('window.clicked')).toBe(1);
-  for (const page of [page1, page2, page3])
+  }
+  for (const page of [page1, page2, page3]) {
     await page.click('button');
-  for (const page of [page1, page2, page3])
+  }
+  for (const page of [page1, page2, page3]) {
     expect(await page.evaluate('window.clicked')).toBe(2);
+  }
 });

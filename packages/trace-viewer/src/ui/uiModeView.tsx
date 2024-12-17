@@ -61,8 +61,9 @@ const queryParams = {
   reporters: searchParams.has('reporter') ? searchParams.getAll('reporter') : undefined,
   pathSeparator: searchParams.get('pathSeparator') || '/',
 };
-if (queryParams.updateSnapshots && !['all', 'none', 'missing'].includes(queryParams.updateSnapshots))
+if (queryParams.updateSnapshots && !['all', 'none', 'missing'].includes(queryParams.updateSnapshots)) {
   queryParams.updateSnapshots = undefined;
+}
 
 const isMac = navigator.platform === 'MacIntel';
 
@@ -124,8 +125,9 @@ export const UIModeView: React.FC<{}> = ({
 
   // Wire server connection to the auxiliary UI features.
   React.useEffect(() => {
-    if (!testServerConnection)
+    if (!testServerConnection) {
       return;
+    }
     const disposables = [
       testServerConnection.onStdio(params => {
         if (params.buffer) {
@@ -135,8 +137,9 @@ export const UIModeView: React.FC<{}> = ({
           xtermDataSource.write(params.text!);
         }
 
-        if (params.type === 'stderr')
+        if (params.type === 'stderr') {
           setOutputContainsError(true);
+        }
       }),
       testServerConnection.onClose(() => setIsDisconnected(true))
     ];
@@ -145,16 +148,18 @@ export const UIModeView: React.FC<{}> = ({
       testServerConnection.resizeTerminalNoReply({ cols, rows });
     };
     return () => {
-      for (const disposable of disposables)
+      for (const disposable of disposables) {
         disposable.dispose();
+      }
     };
   }, [testServerConnection]);
 
   // This is the main routine, every time connection updates it starts the
   // whole workflow.
   React.useEffect(() => {
-    if (!testServerConnection)
+    if (!testServerConnection) {
       return;
+    }
 
     let throttleTimer: NodeJS.Timeout | undefined;
     const teleSuiteUpdater = new TeleSuiteUpdater({
@@ -189,8 +194,9 @@ export const UIModeView: React.FC<{}> = ({
         });
         const { status, report } = await testServerConnection.runGlobalSetup({});
         teleSuiteUpdater.processGlobalReport(report);
-        if (status !== 'passed')
+        if (status !== 'passed') {
           return;
+        }
 
         const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert });
         teleSuiteUpdater.processListReport(result.report);
@@ -212,40 +218,47 @@ export const UIModeView: React.FC<{}> = ({
 
   // Update project filter default values.
   React.useEffect(() => {
-    if (!testModel)
+    if (!testModel) {
       return;
+    }
 
     const { config, rootSuite } = testModel;
     const selectedProjects = config.configFile ? settings.getObject<string[] | undefined>(config.configFile + ':projects', undefined) : undefined;
     const newFilter = new Map(projectFilters);
     for (const projectName of newFilter.keys()) {
-      if (!rootSuite.suites.find(s => s.title === projectName))
+      if (!rootSuite.suites.find(s => s.title === projectName)) {
         newFilter.delete(projectName);
+      }
     }
     for (const projectSuite of rootSuite.suites) {
-      if (!newFilter.has(projectSuite.title))
+      if (!newFilter.has(projectSuite.title)) {
         newFilter.set(projectSuite.title, !!selectedProjects?.includes(projectSuite.title));
+      }
     }
-    if (!selectedProjects && newFilter.size && ![...newFilter.values()].includes(true))
+    if (!selectedProjects && newFilter.size && ![...newFilter.values()].includes(true)) {
       newFilter.set(newFilter.entries().next().value![0], true);
-    if (projectFilters.size !== newFilter.size || [...projectFilters].some(([k, v]) => newFilter.get(k) !== v))
+    }
+    if (projectFilters.size !== newFilter.size || [...projectFilters].some(([k, v]) => newFilter.get(k) !== v)) {
       setProjectFilters(newFilter);
+    }
   }, [projectFilters, testModel]);
 
   // Update progress.
   React.useEffect(() => {
-    if (isRunningTest && testModel?.progress)
+    if (isRunningTest && testModel?.progress) {
       setProgress(testModel.progress);
-    else if (!testModel)
+    } else if (!testModel) {
       setProgress(undefined);
+    }
   }, [testModel, isRunningTest]);
 
   // Test tree is built from the model and filters.
   const { testTree } = React.useMemo(() => {
-    if (!testModel)
+    if (!testModel) {
       return { testTree: new TestTree('', new TeleSuite('', 'root'), [], projectFilters, queryParams.pathSeparator) };
+    }
     const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, queryParams.pathSeparator);
-    testTree.filterTree(filterText, statusFilters, isRunningTest ? runningState?.testIds : undefined);
+    testTree.filterTree(filterText, statusFilters, isRunningTest ? runningState.testIds : undefined);
     testTree.sortAndPropagateStatus();
     testTree.shortenRoot();
     testTree.flattenForSingleProject();
@@ -254,21 +267,24 @@ export const UIModeView: React.FC<{}> = ({
   }, [filterText, testModel, statusFilters, projectFilters, setVisibleTestIds, runningState, isRunningTest]);
 
   const runTests = React.useCallback((mode: 'queue-if-busy' | 'bounce-if-busy', testIds: Set<string>) => {
-    if (!testServerConnection || !testModel)
+    if (!testServerConnection || !testModel) {
       return;
-    if (mode === 'bounce-if-busy' && isRunningTest)
+    }
+    if (mode === 'bounce-if-busy' && isRunningTest) {
       return;
+    }
 
     runTestBacklog.current = new Set([...runTestBacklog.current, ...testIds]);
     commandQueue.current = commandQueue.current.then(async () => {
       const testIds = runTestBacklog.current;
       runTestBacklog.current = new Set();
-      if (!testIds.size)
+      if (!testIds.size) {
         return;
+      }
 
       // Clear test results.
       {
-        for (const test of testModel.rootSuite?.allTests() || []) {
+        for (const test of testModel.rootSuite.allTests() || []) {
           if (testIds.has(test.id)) {
             test.results = [];
             const result = (test as TeleTestCase)._createTestResult('pending');
@@ -296,9 +312,10 @@ export const UIModeView: React.FC<{}> = ({
         trace: 'on',
       });
       // Clear pending tests in case of interrupt.
-      for (const test of testModel.rootSuite?.allTests() || []) {
-        if (test.results[0]?.duration === -1)
+      for (const test of testModel.rootSuite.allTests() || []) {
+        if (test.results[0]?.duration === -1) {
           test.results = [];
+        }
       }
       setTestModel({ ...testModel });
       setRunningState(oldState => oldState ? ({ ...oldState, completed: true }) : undefined);
@@ -306,8 +323,9 @@ export const UIModeView: React.FC<{}> = ({
   }, [projectFilters, isRunningTest, testModel, testServerConnection, singleWorker, showBrowser, updateSnapshots]);
 
   React.useEffect(() => {
-    if (!testServerConnection || !teleSuiteUpdater)
+    if (!testServerConnection || !teleSuiteUpdater) {
       return;
+    }
     const disposable = testServerConnection.onTestFilesChanged(async params => {
       // fetch the new list of tests
       commandQueue.current = commandQueue.current.then(async () => {
@@ -324,8 +342,9 @@ export const UIModeView: React.FC<{}> = ({
       });
       await commandQueue.current;
 
-      if (params.testFiles.length === 0)
+      if (params.testFiles.length === 0) {
         return;
+      }
 
       // run affected watched tests
       const testModel = teleSuiteUpdater.asModel();
@@ -336,18 +355,21 @@ export const UIModeView: React.FC<{}> = ({
       if (watchAll) {
         const visit = (treeItem: TreeItem) => {
           const fileName = treeItem.location.file;
-          if (fileName && set.has(fileName))
+          if (fileName && set.has(fileName)) {
             testIds.push(...testTree.collectTestIds(treeItem));
-          if (treeItem.kind === 'group' && treeItem.subKind === 'folder')
+          }
+          if (treeItem.kind === 'group' && treeItem.subKind === 'folder') {
             treeItem.children.forEach(visit);
+          }
         };
         visit(testTree.rootItem);
       } else {
         for (const treeId of watchedTreeIds.value) {
           const treeItem = testTree.treeItemById(treeId);
           const fileName = treeItem?.location.file;
-          if (fileName && set.has(fileName))
+          if (fileName && set.has(fileName)) {
             testIds.push(...testTree.collectTestIds(treeItem));
+          }
         }
       }
       runTests('queue-if-busy', new Set(testIds));
@@ -357,15 +379,16 @@ export const UIModeView: React.FC<{}> = ({
 
   // Shortcuts.
   React.useEffect(() => {
-    if (!testServerConnection)
+    if (!testServerConnection) {
       return;
+    }
     const onShortcutEvent = (e: KeyboardEvent) => {
       if (e.code === 'Backquote' && e.ctrlKey) {
         e.preventDefault();
         setIsShowingOutput(!isShowingOutput);
       } else if (e.code === 'F5' && e.shiftKey) {
         e.preventDefault();
-        testServerConnection?.stopTestsNoReply({});
+        testServerConnection.stopTestsNoReply({});
       } else if (e.code === 'F5') {
         e.preventDefault();
         runTests('bounce-if-busy', visibleTestIds);
@@ -393,7 +416,7 @@ export const UIModeView: React.FC<{}> = ({
     setIsShowingOutput(true);
     testServerConnection?.installBrowsers({}).then(async () => {
       setIsShowingOutput(false);
-      const { hasBrowsers } = await testServerConnection?.checkBrowsers({});
+      const { hasBrowsers } = await testServerConnection.checkBrowsers({});
       setHasBrowsers(hasBrowsers);
     });
   }, [closeInstallDialog, testServerConnection]);
@@ -424,7 +447,9 @@ export const UIModeView: React.FC<{}> = ({
         <div className={clsx('vbox', !isShowingOutput && 'hidden')}>
           <Toolbar>
             <div className='section-title' style={{ flex: 'none' }}>Output</div>
-            <ToolbarButton icon='circle-slash' title='Clear output' onClick={() => { xtermDataSource.clear(); setOutputContainsError(false); }}></ToolbarButton>
+            <ToolbarButton icon='circle-slash' title='Clear output' onClick={() => {
+              xtermDataSource.clear(); setOutputContainsError(false);
+            }}></ToolbarButton>
             <div className='spacer'></div>
             <ToolbarButton icon='close' title='Close' onClick={() => setIsShowingOutput(false)}></ToolbarButton>
           </Toolbar>
@@ -434,7 +459,7 @@ export const UIModeView: React.FC<{}> = ({
           <TraceView
             pathSeparator={queryParams.pathSeparator}
             item={selectedItem}
-            rootDir={testModel?.config?.rootDir}
+            rootDir={testModel?.config.rootDir}
             revealSource={revealSource}
             onOpenExternally={location => testServerConnection?.openNoReply({ location: { file: location.file, line: location.line, column: location.column } })}
           />
@@ -446,7 +471,9 @@ export const UIModeView: React.FC<{}> = ({
           <div className='section-title'>Playwright</div>
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
           <div style={{ position: 'relative' }}>
-            <ToolbarButton icon={'terminal'} title={'Toggle output — ' + (isMac ? '⌃`' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
+            <ToolbarButton icon={'terminal'} title={'Toggle output — ' + (isMac ? '⌃`' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => {
+              setIsShowingOutput(!isShowingOutput);
+            }} />
             {outputContainsError && <div title='Output contains error' style={{ position: 'absolute', top: 2, right: 2, width: 7, height: 7, borderRadius: '50%', backgroundColor: 'var(--vscode-notificationsErrorIcon-foreground)' }} />}
           </div>
           {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-list-warningForeground)' }} title='Playwright browsers are missing' onClick={openInstallDialog} />}

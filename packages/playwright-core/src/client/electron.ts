@@ -74,8 +74,9 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ElectronApplicationInitializer) {
     super(parent, type, guid, initializer);
     this._context = BrowserContext.from(initializer.context);
-    for (const page of this._context._pages)
+    for (const page of this._context._pages) {
       this._onPage(page);
+    }
     this._context.on(Events.BrowserContext.Page, page => this._onPage(page));
     this._channel.on('close', () => {
       this.emit(Events.ElectronApplication.Close);
@@ -102,8 +103,9 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   }
 
   async firstWindow(options?: { timeout?: number }): Promise<Page> {
-    if (this._windows.size)
+    if (this._windows.size) {
       return this._windows.values().next().value!;
+    }
     return await this.waitForEvent('window', options);
   }
 
@@ -119,8 +121,9 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     try {
       await this._context.close();
     } catch (e) {
-      if (isTargetClosedError(e))
+      if (isTargetClosedError(e)) {
         return;
+      }
       throw e;
     }
   }
@@ -131,8 +134,9 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
-      if (event !== Events.ElectronApplication.Close)
+      if (event !== Events.ElectronApplication.Close) {
         waiter.rejectOnEvent(this, Events.ElectronApplication.Close, () => new TargetClosedError());
+      }
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;

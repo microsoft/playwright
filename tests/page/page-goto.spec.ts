@@ -58,8 +58,9 @@ it('should work cross-process', async ({ page, server }) => {
   const url = server.CROSS_PROCESS_PREFIX + '/empty.html';
   let requestFrame;
   page.on('request', r => {
-    if (r.url() === url)
+    if (r.url() === url) {
       requestFrame = r.frame();
+    }
   });
   const response = await page.goto(url);
   expect(page.url()).toBe(url);
@@ -185,8 +186,9 @@ it('should capture iframe navigation request', async ({ page, server }) => {
 
   let requestFrame;
   page.on('request', r => {
-    if (r.url() === server.PREFIX + '/frames/frame.html')
+    if (r.url() === server.PREFIX + '/frames/frame.html') {
       requestFrame = r.frame();
+    }
   });
   const response = await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.url()).toBe(server.PREFIX + '/frames/one-frame.html');
@@ -203,8 +205,9 @@ it('should capture cross-process iframe navigation request', async ({ page, serv
 
   let requestFrame;
   page.on('request', r => {
-    if (r.url() === server.CROSS_PROCESS_PREFIX + '/frames/frame.html')
+    if (r.url() === server.CROSS_PROCESS_PREFIX + '/frames/frame.html') {
       requestFrame = r.frame();
+    }
   });
   const response = await page.goto(server.CROSS_PROCESS_PREFIX + '/frames/one-frame.html');
   expect(page.url()).toBe(server.CROSS_PROCESS_PREFIX + '/frames/one-frame.html');
@@ -268,12 +271,13 @@ it('should fail when server returns 204', async ({ page, server, browserName, is
   let error = null;
   await page.goto(server.EMPTY_PAGE).catch(e => error = e);
   expect(error).not.toBe(null);
-  if (browserName === 'chromium')
+  if (browserName === 'chromium') {
     expect(error.message).toContain('net::ERR_ABORTED');
-  else if (browserName === 'webkit')
+  } else if (browserName === 'webkit') {
     expect(error.message).toContain('Aborted: 204 No Content');
-  else
+  } else {
     expect(error.message).toContain('NS_BINDING_ABORTED');
+  }
 });
 
 it('should navigate to empty page with domcontentloaded', async ({ page, server }) => {
@@ -293,10 +297,11 @@ it('should work when page calls history API in beforeunload', async ({ page, ser
 it('should fail when navigating to bad url', async ({ mode, page, browserName }) => {
   let error = null;
   await page.goto('asdfasdf').catch(e => error = e);
-  if (browserName === 'chromium' || browserName === 'webkit')
+  if (browserName === 'chromium' || browserName === 'webkit') {
     expect(error.message).toContain('Cannot navigate to invalid URL');
-  else
+  } else {
     expect(error.message).toContain('Invalid url');
+  }
 });
 
 it('should fail when navigating to bad SSL', async ({ page, browserName, httpsServer, platform }) => {
@@ -339,19 +344,21 @@ it('should fail when main resources failed to load', async ({ page, browserName,
   let error = null;
   await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
   if (browserName === 'chromium') {
-    if (mode === 'service2')
+    if (mode === 'service2') {
       expect(error.message).toContain('net::ERR_SOCKS_CONNECTION_FAILED');
-    else
+    } else {
       expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
+    }
   } else if (browserName === 'webkit' && isWindows && mode === 'service2') {
     expect(error.message).toContain(`proxy handshake error`);
   } else if (browserName === 'webkit' && isWindows) {
     expect(error.message).toContain(`Could not connect to server`);
   } else if (browserName === 'webkit') {
-    if (mode === 'service2')
+    if (mode === 'service2') {
       expect(error.message).toContain('Connection refused');
-    else
+    } else {
       expect(error.message).toContain('Could not connect');
+    }
   } else {
     expect(error.message).toContain('NS_ERROR_CONNECTION_REFUSED');
   }
@@ -585,8 +592,9 @@ it('should not leak listeners during navigation', async ({ page, server }) => {
   let warning = null;
   const warningHandler = w => warning = w;
   process.on('warning', warningHandler);
-  for (let i = 0; i < 20; ++i)
+  for (let i = 0; i < 20; ++i) {
     await page.goto(server.EMPTY_PAGE);
+  }
   process.off('warning', warningHandler);
   expect(warning).toBe(null);
 });
@@ -595,8 +603,9 @@ it('should not leak listeners during bad navigation', async ({ page, server }) =
   let warning = null;
   const warningHandler = w => warning = w;
   process.on('warning', warningHandler);
-  for (let i = 0; i < 20; ++i)
+  for (let i = 0; i < 20; ++i) {
     await page.goto('asdf').catch(e => {/* swallow navigation error */});
+  }
   process.off('warning', warningHandler);
   expect(warning).toBe(null);
 });

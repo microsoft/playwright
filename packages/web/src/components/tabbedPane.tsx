@@ -38,10 +38,12 @@ export const TabbedPane: React.FunctionComponent<{
   mode?: 'default' | 'select',
 }> = ({ tabs, selectedTab, setSelectedTab, leftToolbar, rightToolbar, dataTestId, mode }) => {
   const id = React.useId();
-  if (!selectedTab)
+  if (!selectedTab) {
     selectedTab = tabs[0].id;
-  if (!mode)
+  }
+  if (!mode) {
     mode = 'default';
+  }
   return <div className='tabbed-pane' data-testid={dataTestId}>
     <div className='vbox'>
       <Toolbar>
@@ -68,10 +70,12 @@ export const TabbedPane: React.FunctionComponent<{
           }}>
             {tabs.map(tab => {
               let suffix = '';
-              if (tab.count)
+              if (tab.count) {
                 suffix = ` (${tab.count})`;
-              if (tab.errorCount)
+              }
+              if (tab.errorCount) {
                 suffix = ` (${tab.errorCount})`;
+              }
               return <option key={tab.id} value={tab.id} selected={tab.id === selectedTab} role='tab' aria-controls={`${id}-${tab.id}`}>{tab.title}{suffix}</option>;
             })}
           </select>
@@ -83,10 +87,12 @@ export const TabbedPane: React.FunctionComponent<{
       {
         tabs.map(tab => {
           const className = 'tab-content tab-' + tab.id;
-          if (tab.component)
+          if (tab.component) {
             return <div key={tab.id} id={`${id}-${tab.id}`} role='tabpanel' aria-label={tab.title} className={className} style={{ display: selectedTab === tab.id ? 'inherit' : 'none' }}>{tab.component}</div>;
-          if (selectedTab === tab.id)
+          }
+          if (selectedTab === tab.id) {
             return <div key={tab.id} id={`${id}-${tab.id}`} role='tabpanel' aria-label={tab.title} className={className}>{tab.render!()}</div>;
+          }
         })
       }
     </div>

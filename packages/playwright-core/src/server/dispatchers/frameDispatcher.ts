@@ -39,8 +39,9 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   }
 
   static fromNullable(scope: BrowserContextDispatcher, frame: Frame | null): FrameDispatcher | undefined {
-    if (!frame)
+    if (!frame) {
       return;
+    }
     return FrameDispatcher.from(scope, frame);
   }
 
@@ -66,11 +67,13 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
       this._dispatchEvent('loadstate', { remove: lifecycleEvent });
     });
     this.addObjectListener(Frame.Events.InternalNavigation, (event: NavigationEvent) => {
-      if (!event.isPublic)
+      if (!event.isPublic) {
         return;
+      }
       const params = { url: event.url, name: event.name, error: event.error ? event.error.message : undefined };
-      if (event.newDocument)
+      if (event.newDocument) {
         (params as any).newDocument = { request: RequestDispatcher.fromNullable(this._browserContextDispatcher, event.newDocument.request || null) };
+      }
       this._dispatchEvent('navigated', params);
     });
   }
@@ -260,11 +263,13 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
   async expect(params: channels.FrameExpectParams, metadata: CallMetadata): Promise<channels.FrameExpectResult> {
     metadata.potentiallyClosesScope = true;
     let expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
-    if (params.expression === 'to.match.aria' && expectedValue)
+    if (params.expression === 'to.match.aria' && expectedValue) {
       expectedValue = parseAriaSnapshot(expectedValue);
+    }
     const result = await this._frame.expect(metadata, params.selector, { ...params, expectedValue });
-    if (result.received !== undefined)
+    if (result.received !== undefined) {
       result.received = serializeResult(result.received);
+    }
     return result;
   }
 

@@ -120,8 +120,9 @@ export class ClockController {
   private _innerSetTime(time: WallTime) {
     this._now.time  = time;
     this._now.isFixedTime = false;
-    if (this._now.origin < 0)
+    if (this._now.origin < 0) {
       this._now.origin = this._now.time;
+    }
   }
 
   private _innerSetFixedTime(time: WallTime) {
@@ -130,8 +131,9 @@ export class ClockController {
   }
 
   private _advanceNow(to: Ticks) {
-    if (!this._now.isFixedTime)
+    if (!this._now.isFixedTime) {
       this._now.time = asWallTime(this._now.time + to - this._now.ticks);
+    }
     this._now.ticks = to;
   }
 
@@ -141,28 +143,32 @@ export class ClockController {
 
   async runFor(ticks: number) {
     this._replayLogOnce();
-    if (ticks < 0)
+    if (ticks < 0) {
       throw new TypeError('Negative ticks are not supported');
+    }
     await this._runTo(shiftTicks(this._now.ticks, ticks));
   }
 
   private async _runTo(to: Ticks) {
     to = Math.ceil(to) as Ticks;
 
-    if (this._now.ticks > to)
+    if (this._now.ticks > to) {
       return;
+    }
 
     let firstException: Error | undefined;
     while (true) {
       const result = await this._callFirstTimer(to);
-      if (!result.timerFound)
+      if (!result.timerFound) {
         break;
+      }
       firstException = firstException || result.error;
     }
 
     this._advanceNow(to);
-    if (firstException)
+    if (firstException) {
       throw firstException;
+    }
   }
 
   async pauseAt(time: number): Promise<number> {
@@ -200,8 +206,9 @@ export class ClockController {
 
     // Either run the next timer or move time in 100ms chunks.
     const callAt = Math.min(firstTimer ? firstTimer.callAt : this._now.ticks + maxTimeout, this._now.ticks + 100) as Ticks;
-    if (this._currentRealTimeTimer && this._currentRealTimeTimer.callAt < callAt)
+    if (this._currentRealTimeTimer && this._currentRealTimeTimer.callAt < callAt) {
       return;
+    }
 
     if (this._currentRealTimeTimer) {
       this._currentRealTimeTimer.dispose();
@@ -228,11 +235,13 @@ export class ClockController {
 
 
   private async _innerFastForwardTo(to: Ticks) {
-    if (to < this._now.ticks)
+    if (to < this._now.ticks) {
       throw new Error('Cannot fast-forward to the past');
+    }
     for (const timer of this._timers.values()) {
-      if (to > timer.callAt)
+      if (to > timer.callAt) {
         timer.callAt = to;
+      }
     }
     await this._runTo(to);
   }
@@ -240,16 +249,20 @@ export class ClockController {
   addTimer(options: { func: TimerHandler, type: TimerType, delay?: number | string, args?: any[] }): number {
     this._replayLogOnce();
 
-    if (options.type === TimerType.AnimationFrame && !options.func)
+    if (options.type === TimerType.AnimationFrame && !options.func) {
       throw new Error('Callback must be provided to requestAnimationFrame calls');
-    if (options.type === TimerType.IdleCallback && !options.func)
+    }
+    if (options.type === TimerType.IdleCallback && !options.func) {
       throw new Error('Callback must be provided to requestIdleCallback calls');
-    if ([TimerType.Timeout, TimerType.Interval].includes(options.type) && !options.func && options.delay === undefined)
+    }
+    if ([TimerType.Timeout, TimerType.Interval].includes(options.type) && !options.func && options.delay === undefined) {
       throw new Error('Callback must be provided to timer calls');
+    }
 
     let delay = options.delay ? +options.delay : 0;
-    if (!Number.isFinite(delay))
+    if (!Number.isFinite(delay)) {
       delay = 0;
+    }
     delay = delay > maxTimeout ? 1 : delay;
     delay = Math.max(0, delay);
 
@@ -264,8 +277,9 @@ export class ClockController {
       error: new Error(),
     };
     this._timers.set(timer.id, timer);
-    if (this._realTime)
+    if (this._realTime) {
       this._updateRealTimeTimer();
+    }
     return timer.id;
   }
 
@@ -278,30 +292,34 @@ export class ClockController {
 
     for (const timer of this._timers.values()) {
       const isInRange = beforeTick === undefined || timer.callAt <= beforeTick;
-      if (isInRange && (!firstTimer || compareTimers(firstTimer, timer) === 1))
+      if (isInRange && (!firstTimer || compareTimers(firstTimer, timer) === 1)) {
         firstTimer = timer;
+      }
     }
     return firstTimer;
   }
 
   private _takeFirstTimer(beforeTick?: number): Timer | null {
     const timer = this._firstTimer(beforeTick);
-    if (!timer)
+    if (!timer) {
       return null;
+    }
 
     this._advanceNow(timer.callAt);
 
-    if (timer.type === TimerType.Interval)
+    if (timer.type === TimerType.Interval) {
       timer.callAt = shiftTicks(timer.callAt, timer.delay);
-    else
+    } else {
       this._timers.delete(timer.id);
+    }
     return timer;
   }
 
   private async _callFirstTimer(beforeTick: number): Promise<{ timerFound: boolean, error?: Error }> {
     const timer = this._takeFirstTimer(beforeTick);
-    if (!timer)
+    if (!timer) {
       return { timerFound: false };
+    }
 
     this._duringTick = true;
     try {
@@ -311,8 +329,11 @@ export class ClockController {
           // Using global this is not correct here,
           // but it is already broken since the eval scope is different from the one
           // on the original call site.
-          // eslint-disable-next-line no-restricted-globals
-          (() => { globalThis.eval(timer.func); })();
+
+          (() => {
+            // eslint-disable-next-line no-restricted-globals
+            globalThis.eval(timer.func);
+          })();
         } catch (e) {
           error = e;
         }
@@ -321,10 +342,11 @@ export class ClockController {
       }
 
       let args = timer.args;
-      if (timer.type === TimerType.AnimationFrame)
+      if (timer.type === TimerType.AnimationFrame) {
         args = [this._now.ticks];
-      else if (timer.type === TimerType.IdleCallback)
+      } else if (timer.type === TimerType.IdleCallback) {
         args = [{ didTimeout: false, timeRemaining: () => 0 }];
+      }
 
       let error: Error | undefined;
       try {
@@ -380,15 +402,17 @@ export class ClockController {
   }
 
   private _replayLogOnce() {
-    if (!this._log.length)
+    if (!this._log.length) {
       return;
+    }
 
     let lastLogTime = -1;
     let isPaused = false;
 
     for (const { type, time, param } of this._log) {
-      if (!isPaused && lastLogTime !== -1)
+      if (!isPaused && lastLogTime !== -1) {
         this._advanceNow(shiftTicks(this._now.ticks, time - lastLogTime));
+      }
       lastLogTime = time;
 
       if (type === 'install') {
@@ -409,8 +433,9 @@ export class ClockController {
       }
     }
 
-    if (!isPaused && lastLogTime > 0)
+    if (!isPaused && lastLogTime > 0) {
       this._advanceNow(shiftTicks(this._now.ticks, this._embedder.dateNow() - lastLogTime));
+    }
 
     this._log.length = 0;
   }
@@ -418,8 +443,9 @@ export class ClockController {
 
 function mirrorDateProperties(target: any, source: typeof Date): DateConstructor & Date {
   for (const prop in source) {
-    if (source.hasOwnProperty(prop))
+    if (source.hasOwnProperty(prop)) {
       target[prop] = (source as any)[prop];
+    }
   }
   target.toString = () => source.toString();
   target.prototype = source.prototype;
@@ -434,8 +460,9 @@ function createDate(clock: ClockController, NativeDate: typeof Date): DateConstr
   function ClockDate(this: typeof ClockDate, year: number, month: number, date: number, hour: number, minute: number, second: number, ms: number): Date | string {
     // the Date constructor called as a function, ref Ecma-262 Edition 5.1, section 15.9.2.
     // This remains so in the 10th edition of 2019 as well.
-    if (!(this instanceof ClockDate))
+    if (!(this instanceof ClockDate)) {
       return new NativeDate(clock.now()).toString();
+    }
 
     // if Date is called as a constructor with 'new' keyword
     // Defensive and verbose to avoid potential harm in passing
@@ -492,8 +519,9 @@ function createIntl(clock: ClockController, NativeIntl: typeof Intl): typeof Int
     * All properties of Intl are non-enumerable, so we need
     * to do a bit of work to get them out.
     */
-  for (const key of Object.getOwnPropertyNames(NativeIntl) as (keyof typeof Intl)[])
+  for (const key of Object.getOwnPropertyNames(NativeIntl) as (keyof typeof Intl)[]) {
     ClockIntl[key] = NativeIntl[key];
+  }
 
   ClockIntl.DateTimeFormat = function(...args: any[]) {
     const realFormatter = new NativeIntl.DateTimeFormat(...args);
@@ -520,28 +548,36 @@ function createIntl(clock: ClockController, NativeIntl: typeof Intl): typeof Int
 
 function compareTimers(a: Timer, b: Timer) {
   // Sort first by absolute timing
-  if (a.callAt < b.callAt)
+  if (a.callAt < b.callAt) {
     return -1;
-  if (a.callAt > b.callAt)
+  }
+  if (a.callAt > b.callAt) {
     return 1;
+  }
 
   // Sort next by immediate, immediate timers take precedence
-  if (a.type === TimerType.Immediate && b.type !== TimerType.Immediate)
+  if (a.type === TimerType.Immediate && b.type !== TimerType.Immediate) {
     return -1;
-  if (a.type !== TimerType.Immediate && b.type === TimerType.Immediate)
+  }
+  if (a.type !== TimerType.Immediate && b.type === TimerType.Immediate) {
     return 1;
+  }
 
   // Sort next by creation time, earlier-created timers take precedence
-  if (a.createdAt < b.createdAt)
+  if (a.createdAt < b.createdAt) {
     return -1;
-  if (a.createdAt > b.createdAt)
+  }
+  if (a.createdAt > b.createdAt) {
     return 1;
+  }
 
   // Sort next by id, lower-id timers take precedence
-  if (a.id < b.id)
+  if (a.id < b.id) {
     return -1;
-  if (a.id > b.id)
+  }
+  if (a.id > b.id) {
     return 1;
+  }
 
   // As timer ids are unique, no fallback `0` is necessary
 }
@@ -565,8 +601,9 @@ function platformOriginals(globalObject: WindowOrWorkerGlobalScope): { raw: Cloc
   };
   const bound = { ...raw };
   for (const key of Object.keys(bound) as (keyof ClockMethods)[]) {
-    if (key !== 'Date' && typeof bound[key] === 'function')
+    if (key !== 'Date' && typeof bound[key] === 'function') {
       bound[key] = (bound[key] as any).bind(globalObject);
+    }
   }
   return { raw, bound };
 }
@@ -575,8 +612,9 @@ function platformOriginals(globalObject: WindowOrWorkerGlobalScope): { raw: Cloc
  * Gets schedule handler name for a given timer type
  */
 function getScheduleHandler(type: TimerType) {
-  if (type === 'IdleCallback' || type === 'AnimationFrame')
+  if (type === 'IdleCallback' || type === 'AnimationFrame') {
     return `request${type}`;
+  }
 
   return `set${type}`;
 }
@@ -593,8 +631,9 @@ function createApi(clock: ClockController, originals: ClockMethods): ClockMethod
       });
     },
     clearTimeout: (timerId: number | undefined): void => {
-      if (timerId)
+      if (timerId) {
         clock.clearTimer(timerId, TimerType.Timeout);
+      }
     },
     setInterval: (func: TimerHandler, timeout?: number | undefined, ...args: any[]): number => {
       const delay = timeout ? +timeout : timeout;
@@ -606,8 +645,9 @@ function createApi(clock: ClockController, originals: ClockMethods): ClockMethod
       });
     },
     clearInterval: (timerId: number | undefined): void => {
-      if (timerId)
+      if (timerId) {
         return clock.clearTimer(timerId, TimerType.Interval);
+      }
     },
     requestAnimationFrame: (callback: FrameRequestCallback): number => {
       return clock.addTimer({
@@ -617,23 +657,26 @@ function createApi(clock: ClockController, originals: ClockMethods): ClockMethod
       });
     },
     cancelAnimationFrame: (timerId: number): void => {
-      if (timerId)
+      if (timerId) {
         return clock.clearTimer(timerId, TimerType.AnimationFrame);
+      }
     },
     requestIdleCallback: (callback: IdleRequestCallback, options?: IdleRequestOptions | undefined): number => {
       let timeToNextIdlePeriod = 0;
 
-      if (clock.countTimers() > 0)
-        timeToNextIdlePeriod = 50; // const for now
+      if (clock.countTimers() > 0) {
+        timeToNextIdlePeriod = 50;
+      } // const for now
       return clock.addTimer({
         type: TimerType.IdleCallback,
         func: callback,
-        delay: options?.timeout ? Math.min(options?.timeout, timeToNextIdlePeriod) : timeToNextIdlePeriod,
+        delay: options?.timeout ? Math.min(options.timeout, timeToNextIdlePeriod) : timeToNextIdlePeriod,
       });
     },
     cancelIdleCallback: (timerId: number): void => {
-      if (timerId)
+      if (timerId) {
         return clock.clearTimer(timerId, TimerType.IdleCallback);
+      }
     },
     Intl: originals.Intl ? createIntl(clock, originals.Intl) : undefined,
     Date: createDate(clock, originals.Date),
@@ -642,8 +685,9 @@ function createApi(clock: ClockController, originals: ClockMethods): ClockMethod
 }
 
 function getClearHandler(type: TimerType) {
-  if (type === 'IdleCallback' || type === 'AnimationFrame')
+  if (type === 'IdleCallback' || type === 'AnimationFrame') {
     return `cancel${type}`;
+  }
 
   return `clear${type}`;
 }
@@ -655,12 +699,14 @@ function fakePerformance(clock: ClockController, performance: Performance): Perf
   result.__defineGetter__('timeOrigin', () => clock._now.origin || 0);
   // eslint-disable-next-line no-proto
   for (const key of Object.keys((performance as any).__proto__)) {
-    if (key === 'now' || key === 'timeOrigin')
+    if (key === 'now' || key === 'timeOrigin') {
       continue;
-    if (key === 'getEntries' || key === 'getEntriesByName' || key === 'getEntriesByType')
+    }
+    if (key === 'getEntries' || key === 'getEntriesByName' || key === 'getEntriesByType') {
       result[key] = () => [];
-    else
+    } else {
       result[key] = () => {};
+    }
   }
   return result;
 }
@@ -705,8 +751,9 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
       const kEventTimeStamp = Symbol('playwrightEventTimeStamp');
       Object.defineProperty(Event.prototype, 'timeStamp', {
         get() {
-          if (!this[kEventTimeStamp])
+          if (!this[kEventTimeStamp]) {
             this[kEventTimeStamp] = api.performance?.now();
+          }
           return this[kEventTimeStamp];
         }
       });

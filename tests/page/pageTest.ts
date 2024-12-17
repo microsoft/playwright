@@ -28,12 +28,15 @@ export { expect } from '@playwright/test';
 let impl: TestType<PageTestFixtures & ServerFixtures & TestModeTestFixtures, PageWorkerFixtures & PlatformWorkerFixtures & TestModeWorkerFixtures & TestModeWorkerOptions & ServerWorkerOptions> = browserTest;
 export type BoundingBox = Awaited<ReturnType<Locator['boundingBox']>>;
 
-if (process.env.PWPAGE_IMPL === 'android')
+if (process.env.PWPAGE_IMPL === 'android') {
   impl = androidTest;
-if (process.env.PWPAGE_IMPL === 'electron')
+}
+if (process.env.PWPAGE_IMPL === 'electron') {
   impl = electronTest;
-if (process.env.PWPAGE_IMPL === 'webview2')
+}
+if (process.env.PWPAGE_IMPL === 'webview2') {
   impl = webView2Test;
+}
 
 export const test = impl;
 

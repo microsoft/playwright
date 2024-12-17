@@ -118,8 +118,9 @@ class TraceViewerPage {
   @step
   async snapshotFrame(actionName: string, ordinal: number = 0, hasSubframe: boolean = false): Promise<FrameLocator> {
     await this.selectAction(actionName, ordinal);
-    while (this.page.frames().length < (hasSubframe ? 4 : 3))
+    while (this.page.frames().length < (hasSubframe ? 4 : 3)) {
       await this.page.waitForEvent('frameattached');
+    }
     return this.page.frameLocator('iframe.snapshot-visible[name=snapshot]');
   }
 }
@@ -136,10 +137,12 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
       contextImpls.push(contextImpl);
       return new TraceViewerPage(browser.contexts()[0].pages()[0]);
     });
-    for (const browser of browsers)
+    for (const browser of browsers) {
       await browser.close();
-    for (const contextImpl of contextImpls)
+    }
+    for (const contextImpl of contextImpls) {
       await contextImpl._browser.close({ reason: 'Trace viewer closed' });
+    }
   },
 
   runAndTrace: async ({ context, showTraceViewer }, use, testInfo) => {

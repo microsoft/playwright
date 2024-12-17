@@ -191,8 +191,9 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
     filename: expect.stringContaining(`two${path.sep}two.spec.tsx`),
   }]);
 
-  for (const [, value] of Object.entries(metainfo.deps))
+  for (const [, value] of Object.entries(metainfo.deps)) {
     (value as string[]).sort();
+  }
 
   expect(Object.entries(metainfo.deps)).toEqual([
     [expect.stringContaining('clashingNames1.tsx'), [
@@ -496,8 +497,9 @@ test('should retain deps when test changes', async ({ runInlineTest }, testInfo)
     filename: expect.stringContaining('button.test.tsx'),
   }]);
 
-  for (const [, value] of Object.entries(metainfo.deps))
+  for (const [, value] of Object.entries(metainfo.deps)) {
     (value as string[]).sort();
+  }
 
   expect(Object.entries(metainfo.deps)).toEqual([
     [

@@ -127,18 +127,19 @@ export class TestTree {
 
         const result = test.results[0];
         let status: 'none' | 'running' | 'scheduled' | 'passed' | 'failed' | 'skipped' = 'none';
-        if ((result as any)?.[statusEx] === 'scheduled')
+        if ((result as any)?.[statusEx] === 'scheduled') {
           status = 'scheduled';
-        else if ((result as any)?.[statusEx] === 'running')
+        } else if ((result as any)?.[statusEx] === 'running') {
           status = 'running';
-        else if (result?.status === 'skipped')
+        } else if (result.status === 'skipped') {
           status = 'skipped';
-        else if (result?.status === 'interrupted')
+        } else if (result.status === 'interrupted') {
           status = 'none';
-        else if (result && test.outcome() !== 'expected')
+        } else if (result && test.outcome() !== 'expected') {
           status = 'failed';
-        else if (result && test.outcome() === 'expected')
+        } else if (result && test.outcome() === 'expected') {
           status = 'passed';
+        }
 
         testCaseItem.tests.push(test);
         const testItem: TestItem = {
@@ -160,8 +161,9 @@ export class TestTree {
     };
 
     for (const projectSuite of rootSuite?.suites || []) {
-      if (filterProjects && !projectFilters.get(projectSuite.title))
+      if (filterProjects && !projectFilters.get(projectSuite.title)) {
         continue;
+      }
       for (const fileSuite of projectSuite.suites) {
         const fileItem = this._fileItem(fileSuite.location!.file.split(pathSeparator), true);
         visitSuite(projectSuite.project()!, fileSuite, fileItem);
@@ -169,8 +171,9 @@ export class TestTree {
     }
 
     for (const loadError of loadErrors) {
-      if (!loadError.location)
+      if (!loadError.location) {
         continue;
+      }
       const fileItem = this._fileItem(loadError.location.file.split(pathSeparator), true);
       fileItem.hasLoadErrors = true;
     }
@@ -188,8 +191,9 @@ export class TestTree {
 
     const filter = (testCase: TestCaseItem) => {
       const titleWithTags = [...testCase.tests[0].titlePath(), ...testCase.tests[0].tags].join(' ').toLowerCase();
-      if (!tokens.every(token => titleWithTags.includes(token)) && !testCase.tests.some(t => runningTestIds?.has(t.id)))
+      if (!tokens.every(token => titleWithTags.includes(token)) && !testCase.tests.some(t => runningTestIds?.has(t.id))) {
         return false;
+      }
       testCase.children = (testCase.children as TestItem[]).filter(test => {
         return !filtersStatuses || runningTestIds?.has(test.test.id) || statusFilters.get(test.status);
       });
@@ -201,12 +205,14 @@ export class TestTree {
       const newChildren: (GroupItem | TestCaseItem)[] = [];
       for (const child of treeItem.children) {
         if (child.kind === 'case') {
-          if (filter(child))
+          if (filter(child)) {
             newChildren.push(child);
+          }
         } else {
           visit(child);
-          if (child.children.length || child.hasLoadErrors)
+          if (child.children.length || child.hasLoadErrors) {
             newChildren.push(child);
+          }
         }
       }
       treeItem.children = newChildren;
@@ -215,12 +221,14 @@ export class TestTree {
   }
 
   private _fileItem(filePath: string[], isFile: boolean): GroupItem {
-    if (filePath.length === 0)
+    if (filePath.length === 0) {
       return this.rootItem;
+    }
     const fileName = filePath.join(this.pathSeparator);
     const existingFileItem = this._treeItemById.get(fileName);
-    if (existingFileItem)
+    if (existingFileItem) {
       return existingFileItem as GroupItem;
+    }
     const parentFileItem = this._fileItem(filePath.slice(0, filePath.length - 1), false);
     const fileItem: GroupItem = {
       kind: 'group',
@@ -258,8 +266,9 @@ export class TestTree {
 
   shortenRoot() {
     let shortRoot = this.rootItem;
-    while (shortRoot.children.length === 1 && shortRoot.children[0].kind === 'group' && shortRoot.children[0].subKind === 'folder')
+    while (shortRoot.children.length === 1 && shortRoot.children[0].kind === 'group' && shortRoot.children[0].subKind === 'folder') {
       shortRoot = shortRoot.children[0];
+    }
     shortRoot.location = this.rootItem.location;
     this.rootItem = shortRoot;
   }
@@ -267,8 +276,9 @@ export class TestTree {
   testIds(): Set<string> {
     const result = new Set<string>();
     const visit = (treeItem: TreeItem) => {
-      if (treeItem.kind === 'case')
+      if (treeItem.kind === 'case') {
         treeItem.tests.forEach(t => result.add(t.id));
+      }
       treeItem.children.forEach(visit);
     };
     visit(this.rootItem);
@@ -278,10 +288,11 @@ export class TestTree {
   fileNames(): string[] {
     const result = new Set<string>();
     const visit = (treeItem: TreeItem) => {
-      if (treeItem.kind === 'group' && treeItem.subKind === 'file')
+      if (treeItem.kind === 'group' && treeItem.subKind === 'file') {
         result.add(treeItem.id);
-      else
+      } else {
         treeItem.children.forEach(visit);
+      }
     };
     visit(this.rootItem);
     return [...result];
@@ -307,8 +318,9 @@ export class TestTree {
 }
 
 export function sortAndPropagateStatus(treeItem: TreeItem) {
-  for (const child of treeItem.children)
+  for (const child of treeItem.children) {
     sortAndPropagateStatus(child);
+  }
 
   if (treeItem.kind === 'group') {
     treeItem.children.sort((a, b) => {
@@ -331,27 +343,29 @@ export function sortAndPropagateStatus(treeItem: TreeItem) {
     hasScheduled = hasScheduled || child.status === 'scheduled';
   }
 
-  if (hasRunning)
+  if (hasRunning) {
     treeItem.status = 'running';
-  else if (hasScheduled)
+  } else if (hasScheduled) {
     treeItem.status = 'scheduled';
-  else if (hasFailed)
+  } else if (hasFailed) {
     treeItem.status = 'failed';
-  else if (allSkipped)
+  } else if (allSkipped) {
     treeItem.status = 'skipped';
-  else if (allPassed)
+  } else if (allPassed) {
     treeItem.status = 'passed';
+  }
 }
 
 export function collectTestIds(treeItem: TreeItem): Set<string> {
   const testIds = new Set<string>();
   const visit = (treeItem: TreeItem) => {
-    if (treeItem.kind === 'case')
+    if (treeItem.kind === 'case') {
       treeItem.tests.map(t => t.id).forEach(id => testIds.add(id));
-    else if (treeItem.kind === 'test')
+    } else if (treeItem.kind === 'test') {
       testIds.add(treeItem.id);
-    else
-      treeItem.children?.forEach(visit);
+    } else {
+      treeItem.children.forEach(visit);
+    }
   };
   visit(treeItem);
   return testIds;

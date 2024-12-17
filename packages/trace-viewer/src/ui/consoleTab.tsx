@@ -47,8 +47,9 @@ const ConsoleListView = ListView<ConsoleEntry>;
 
 export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined, selectedTime: Boundaries | undefined): ConsoleTabModel {
   const { entries } = React.useMemo(() => {
-    if (!model)
+    if (!model) {
       return { entries: [] };
+    }
     const entries: ConsoleEntry[] = [];
     for (const event of model.events) {
       if (event.type === 'console') {
@@ -78,10 +79,12 @@ export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined,
     }
     for (const event of model.stdio) {
       let html = '';
-      if (event.text)
+      if (event.text) {
         html = ansi2html(event.text.trim()) || '';
-      if (event.base64)
+      }
+      if (event.base64) {
         html = ansi2html(atob(event.base64).trim()) || '';
+      }
 
       entries.push({
         nodeMessage: { html },
@@ -95,8 +98,9 @@ export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined,
   }, [model]);
 
   const filteredEntries = React.useMemo(() => {
-    if (!selectedTime)
+    if (!selectedTime) {
       return entries;
+    }
     return entries.filter(entry => entry.timestamp >= selectedTime.minimum && entry.timestamp <= selectedTime.maximum);
   }, [entries, selectedTime]);
 
@@ -110,8 +114,9 @@ export const ConsoleTab: React.FunctionComponent<{
   onEntryHovered?: (entry: ConsoleEntry | undefined) => void,
   onAccepted?: (entry: ConsoleEntry) => void,
 }> = ({ consoleModel, boundaries, onEntryHovered, onAccepted }) => {
-  if (!consoleModel.entries.length)
+  if (!consoleModel.entries.length) {
     return <PlaceholderPanel text='No console entries' />;
+  }
 
   return <div className='console-tab'>
     <ConsoleListView
@@ -147,8 +152,9 @@ export const ConsoleTab: React.FunctionComponent<{
           }
         }
 
-        if (nodeMessage)
+        if (nodeMessage) {
           messageInnerHTML = nodeMessage.html;
+        }
 
         return <div className='console-line'>
           {timestampElement}
@@ -164,8 +170,9 @@ export const ConsoleTab: React.FunctionComponent<{
 };
 
 function format(args: { preview: string, value: any }[]): JSX.Element[] {
-  if (args.length === 1)
+  if (args.length === 1) {
     return formatAnsi(args[0].preview);
+  }
 
   const hasMessageFormat = typeof args[0].value === 'string' && args[0].value.includes('%');
   const messageFormat = hasMessageFormat ? args[0].value as string : '';
@@ -188,9 +195,10 @@ function format(args: { preview: string, value: any }[]): JSX.Element[] {
     } else if (specifier === 's' || specifier === 'o' || specifier === 'O' || specifier === 'd' || specifier === 'i' || specifier === 'f') {
       const value = tail[argIndex++];
       const styleObject: any = {};
-      if (typeof value?.value !== 'string')
+      if (typeof value.value !== 'string') {
         styleObject['color'] = 'var(--vscode-debugTokenExpression-number)';
-      tokens.push(<span style={styleObject}>{value?.preview || ''}</span>);
+      }
+      tokens.push(<span style={styleObject}>{value.preview || ''}</span>);
     } else if (specifier === 'c') {
       tokens = [];
       const format = tail[argIndex++];
@@ -198,16 +206,19 @@ function format(args: { preview: string, value: any }[]): JSX.Element[] {
       formatted.push(<span style={styleObject}>{tokens}</span>);
     }
   }
-  if (formatIndex < messageFormat.length)
+  if (formatIndex < messageFormat.length) {
     tokens.push(<span>{messageFormat.substring(formatIndex)}</span>);
+  }
   for (; argIndex < tail.length; argIndex++) {
     const value = tail[argIndex];
     const styleObject: any = {};
-    if (tokens.length)
+    if (tokens.length) {
       tokens.push(<span> </span>);
-    if (typeof value?.value !== 'string')
+    }
+    if (typeof value.value !== 'string') {
       styleObject['color'] = 'var(--vscode-debugTokenExpression-number)';
-    tokens.push(<span style={styleObject}>{value?.preview || ''}</span>);
+    }
+    tokens.push(<span style={styleObject}>{value.preview || ''}</span>);
   }
   return formatted;
 }
@@ -223,13 +234,15 @@ function parseCSSStyle(cssFormat: string): Record<string, string | number> {
     const cssProperties = cssFormat.split(';');
     for (const token of cssProperties) {
       const property = token.trim();
-      if (!property)
+      if (!property) {
         continue;
+      }
       let [key, value] = property.split(':');
       key = key.trim();
       value = value.trim();
-      if (!supportProperty(key))
+      if (!supportProperty(key)) {
         continue;
+      }
       // cssProperties are background-color, JSDom ones are backgroundColor
       const cssKey = key.replace(/-([a-z])/g, g => g[1].toUpperCase());
       styleObject[cssKey] = value;

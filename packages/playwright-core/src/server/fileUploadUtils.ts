@@ -33,17 +33,21 @@ export async function prepareFilesForUpload(frame: Frame, params: channels.Eleme
   const { payloads, streams, directoryStream } = params;
   let { localPaths, localDirectory } = params;
 
-  if ([payloads, localPaths, localDirectory, streams, directoryStream].filter(Boolean).length !== 1)
+  if ([payloads, localPaths, localDirectory, streams, directoryStream].filter(Boolean).length !== 1) {
     throw new Error('Exactly one of payloads, localPaths and streams must be provided');
+  }
 
-  if (streams)
+  if (streams) {
     localPaths = streams.map(c => (c as WritableStreamDispatcher).path());
-  if (directoryStream)
+  }
+  if (directoryStream) {
     localDirectory = (directoryStream as WritableStreamDispatcher).path();
+  }
 
   if (localPaths) {
-    for (const p of localPaths)
+    for (const p of localPaths) {
       assert(path.isAbsolute(p) && path.resolve(p) === p, 'Paths provided to localPaths must be absolute and fully resolved.');
+    }
   }
 
   let fileBuffers: {
@@ -56,8 +60,9 @@ export async function prepareFilesForUpload(frame: Frame, params: channels.Eleme
   if (!frame._page._browserContext._browser._isCollocatedWithServer) {
     // If the browser is on a different machine read files into buffers.
     if (localPaths) {
-      if (await filesExceedUploadLimit(localPaths))
+      if (await filesExceedUploadLimit(localPaths)) {
         throw new Error('Cannot transfer files larger than 50Mb to a browser not co-located with the server');
+      }
       fileBuffers = await Promise.all(localPaths.map(async item => {
         return {
           name: path.basename(item),

@@ -48,7 +48,7 @@ export const FilmStrip: React.FunctionComponent<{
     pageIndex = ((previewPoint.clientY - bounds.top + lanesRef.current.scrollTop) / rowHeight) | 0;
   }
 
-  const screencastFrames = model?.pages?.[pageIndex]?.screencastFrames;
+  const screencastFrames = model?.pages[pageIndex]?.screencastFrames;
   let previewImage = undefined;
   let previewSize = undefined;
   if (previewPoint !== undefined && screencastFrames && screencastFrames.length) {

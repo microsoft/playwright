@@ -56,8 +56,9 @@ export const Recorder: React.FC<RecorderProps> = ({
   const source = React.useMemo(() => {
     if (fileId) {
       const source = sources.find(s => s.id === fileId);
-      if (source)
+      if (source) {
         return source;
+      }
     }
     return emptySource();
   }, [sources, fileId]);
@@ -68,8 +69,9 @@ export const Recorder: React.FC<RecorderProps> = ({
     setLocator(asLocator(language, elementInfo.selector));
     setAriaSnapshot(elementInfo.ariaSnapshot);
     setAriaSnapshotErrors([]);
-    if (userGesture && selectedTab !== 'locator' && selectedTab !== 'aria')
+    if (userGesture && selectedTab !== 'locator' && selectedTab !== 'aria') {
       setSelectedTab('locator');
+    }
 
     if (mode === 'inspecting' && selectedTab === 'aria') {
       // Keep exploring aria.
@@ -91,15 +93,17 @@ export const Recorder: React.FC<RecorderProps> = ({
       switch (event.key) {
         case 'F8':
           event.preventDefault();
-          if (paused)
+          if (paused) {
             window.dispatch({ event: 'resume' });
-          else
+          } else {
             window.dispatch({ event: 'pause' });
+          }
           break;
         case 'F10':
           event.preventDefault();
-          if (paused)
+          if (paused) {
             window.dispatch({ event: 'step' });
+          }
           break;
       }
     };
@@ -108,20 +112,23 @@ export const Recorder: React.FC<RecorderProps> = ({
   }, [paused]);
 
   const onEditorChange = React.useCallback((selector: string) => {
-    if (mode === 'none' || mode === 'inspecting')
+    if (mode === 'none' || mode === 'inspecting') {
       window.dispatch({ event: 'setMode', params: { mode: 'standby' } });
+    }
     setLocator(selector);
     window.dispatch({ event: 'highlightRequested', params: { selector } });
   }, [mode]);
 
   const onAriaEditorChange = React.useCallback((ariaSnapshot: string) => {
-    if (mode === 'none' || mode === 'inspecting')
+    if (mode === 'none' || mode === 'inspecting') {
       window.dispatch({ event: 'setMode', params: { mode: 'standby' } });
+    }
     const { fragment, errors } = parseAriaSnapshot(ariaSnapshot);
     setAriaSnapshotErrors(errors);
     setAriaSnapshot(ariaSnapshot);
-    if (!errors.length)
+    if (!errors.length) {
       window.dispatch({ event: 'highlightRequested', params: { ariaTemplate: fragment } });
+    }
   }, [mode]);
 
   return <div className='recorder'>
@@ -226,8 +233,9 @@ function parseAriaSnapshot(ariaSnapshot: string): { fragment?: ParsedYaml, error
     });
   }
 
-  if (yamlDoc.errors.length)
+  if (yamlDoc.errors.length) {
     return { errors };
+  }
 
   const handleKey = (key: yaml.Scalar<string>) => {
     try {
@@ -248,15 +256,18 @@ function parseAriaSnapshot(ariaSnapshot: string): { fragment?: ParsedYaml, error
       if (item instanceof yaml.YAMLMap) {
         const map = item as yaml.YAMLMap;
         for (const entry of map.items) {
-          if (entry.key instanceof yaml.Scalar)
+          if (entry.key instanceof yaml.Scalar) {
             handleKey(entry.key);
-          if (entry.value instanceof yaml.YAMLSeq)
+          }
+          if (entry.value instanceof yaml.YAMLSeq) {
             visitSeq(entry.value);
+          }
         }
         continue;
       }
-      if (item instanceof yaml.Scalar)
+      if (item instanceof yaml.Scalar) {
         handleKey(item);
+      }
     }
   };
   visitSeq(yamlDoc.contents as yaml.YAMLSeq);

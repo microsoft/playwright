@@ -81,10 +81,12 @@ class FFAXNode implements accessibility.AXNode {
   }
 
   _isPlainTextField(): boolean {
-    if (this._richlyEditable)
+    if (this._richlyEditable) {
       return false;
-    if (this._editable)
+    }
+    if (this._editable) {
       return true;
+    }
     return this._role === 'entry';
   }
 
@@ -111,29 +113,33 @@ class FFAXNode implements accessibility.AXNode {
   }
 
   _findNeedle(): FFAXNode | null {
-    if (this._payload.foundObject)
+    if (this._payload.foundObject) {
       return this;
+    }
     for (const child of this._children) {
       const found = child._findNeedle();
-      if (found)
+      if (found) {
         return found;
+      }
     }
     return null;
   }
 
   isLeafNode(): boolean {
-    if (!this._children.length)
+    if (!this._children.length) {
       return true;
-      // These types of objects may have children that we use as internal
-      // implementation details, but we want to expose them as leaves to platform
-      // accessibility APIs because screen readers might be confused if they find
-      // any children.
-    if (this._isPlainTextField() || this._isTextOnlyObject())
+    }
+    // These types of objects may have children that we use as internal
+    // implementation details, but we want to expose them as leaves to platform
+    // accessibility APIs because screen readers might be confused if they find
+    // any children.
+    if (this._isPlainTextField() || this._isTextOnlyObject()) {
       return true;
-      // Roles whose children are only presentational according to the ARIA and
-      // HTML5 Specs should be hidden from screen readers.
-      // (Note that whilst ARIA buttons can have only presentational children, HTML5
-      // buttons are allowed to have content.)
+    }
+    // Roles whose children are only presentational according to the ARIA and
+    // HTML5 Specs should be hidden from screen readers.
+    // (Note that whilst ARIA buttons can have only presentational children, HTML5
+    // buttons are allowed to have content.)
     switch (this._role) {
       case 'graphic':
       case 'scrollbar':
@@ -145,12 +151,15 @@ class FFAXNode implements accessibility.AXNode {
         break;
     }
     // Here and below: Android heuristics
-    if (this._hasFocusableChild())
+    if (this._hasFocusableChild()) {
       return false;
-    if (this._focusable && this._role !== 'document' && this._name)
+    }
+    if (this._focusable && this._role !== 'document' && this._name) {
       return true;
-    if (this._role === 'heading' && this._name)
+    }
+    if (this._role === 'heading' && this._name) {
       return true;
+    }
     return false;
   }
 
@@ -187,14 +196,17 @@ class FFAXNode implements accessibility.AXNode {
   }
 
   isInteresting(insideControl: boolean): boolean {
-    if (this._focusable || this._richlyEditable)
+    if (this._focusable || this._richlyEditable) {
       return true;
-      // If it's not focusable but has a control role, then it's interesting.
-    if (this.isControl())
+    }
+    // If it's not focusable but has a control role, then it's interesting.
+    if (this.isControl()) {
       return true;
-      // A non focusable child of a control is not interesting
-    if (insideControl)
+    }
+    // A non focusable child of a control is not interesting
+    if (insideControl) {
       return false;
+    }
     return this.isLeafNode() && !!this._name.trim();
   }
 
@@ -211,8 +223,9 @@ class FFAXNode implements accessibility.AXNode {
       'keyshortcuts',
     ];
     for (const userStringProperty of userStringProperties) {
-      if (!(userStringProperty in this._payload))
+      if (!(userStringProperty in this._payload)) {
         continue;
+      }
       node[userStringProperty] = this._payload[userStringProperty];
     }
     const booleanProperties: Array<keyof channels.AXNode & keyof Protocol.Accessibility.AXTree> = [
@@ -227,19 +240,22 @@ class FFAXNode implements accessibility.AXNode {
       'selected',
     ];
     for (const booleanProperty of booleanProperties) {
-      if (this._role === 'document' && booleanProperty === 'focused')
-        continue; // document focusing is strange
-      const value = this._payload[booleanProperty];
-      if (!value)
+      if (this._role === 'document' && booleanProperty === 'focused') {
         continue;
+      } // document focusing is strange
+      const value = this._payload[booleanProperty];
+      if (!value) {
+        continue;
+      }
       node[booleanProperty] = value;
     }
     const numericalProperties: Array<keyof channels.AXNode & keyof Protocol.Accessibility.AXTree> = [
       'level'
     ];
     for (const numericalProperty of numericalProperties) {
-      if (!(numericalProperty in this._payload))
+      if (!(numericalProperty in this._payload)) {
         continue;
+      }
       node[numericalProperty] = this._payload[numericalProperty];
     }
     const tokenProperties: Array<keyof channels.AXNode & keyof Protocol.Accessibility.AXTree> = [
@@ -249,19 +265,23 @@ class FFAXNode implements accessibility.AXNode {
     ];
     for (const tokenProperty of tokenProperties) {
       const value = this._payload[tokenProperty];
-      if (!value || value === 'false')
+      if (!value || value === 'false') {
         continue;
+      }
       node[tokenProperty] = value;
     }
 
     const axNode = node as channels.AXNode;
     axNode.valueString = this._payload.value;
-    if ('checked' in this._payload)
+    if ('checked' in this._payload) {
       axNode.checked = this._payload.checked === true ? 'checked' : this._payload.checked === 'mixed' ? 'mixed' : 'unchecked';
-    if ('pressed' in this._payload)
+    }
+    if ('pressed' in this._payload) {
       axNode.pressed = this._payload.pressed === true ? 'pressed' : 'released';
-    if ('invalid' in this._payload)
+    }
+    if ('invalid' in this._payload) {
       axNode.invalid = this._payload.invalid === true ? 'true' : 'false';
+    }
     return axNode;
   }
 }

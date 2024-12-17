@@ -95,8 +95,9 @@ class JSCoverage {
   }
 
   _onExecutionContextsCleared() {
-    if (!this._resetOnNavigation)
+    if (!this._resetOnNavigation) {
       return;
+    }
     this._scriptIds.clear();
     this._scriptSources.clear();
   }
@@ -104,12 +105,14 @@ class JSCoverage {
   async _onScriptParsed(event: Protocol.Debugger.scriptParsedPayload) {
     this._scriptIds.add(event.scriptId);
     // Ignore other anonymous scripts unless the reportAnonymousScripts option is true.
-    if (!event.url && !this._reportAnonymousScripts)
+    if (!event.url && !this._reportAnonymousScripts) {
       return;
+    }
     // This might fail if the page has already navigated away.
     const response = await this._client._sendMayFail('Debugger.getScriptSource', { scriptId: event.scriptId });
-    if (response)
+    if (response) {
       this._scriptSources.set(event.scriptId, response.scriptSource);
+    }
   }
 
   async stop(): Promise<channels.PageStopJSCoverageResult> {
@@ -125,15 +128,18 @@ class JSCoverage {
 
     const coverage: channels.PageStopJSCoverageResult = { entries: [] };
     for (const entry of profileResponse.result) {
-      if (!this._scriptIds.has(entry.scriptId))
+      if (!this._scriptIds.has(entry.scriptId)) {
         continue;
-      if (!entry.url && !this._reportAnonymousScripts)
+      }
+      if (!entry.url && !this._reportAnonymousScripts) {
         continue;
+      }
       const source = this._scriptSources.get(entry.scriptId);
-      if (source)
+      if (source) {
         coverage.entries.push({ ...entry, source });
-      else
+      } else {
         coverage.entries.push(entry);
+      }
     }
     return coverage;
   }
@@ -175,8 +181,9 @@ class CSSCoverage {
   }
 
   _onExecutionContextsCleared() {
-    if (!this._resetOnNavigation)
+    if (!this._resetOnNavigation) {
       return;
+    }
     this._stylesheetURLs.clear();
     this._stylesheetSources.clear();
   }
@@ -184,8 +191,9 @@ class CSSCoverage {
   async _onStyleSheet(event: Protocol.CSS.styleSheetAddedPayload) {
     const header = event.header;
     // Ignore anonymous scripts
-    if (!header.sourceURL)
+    if (!header.sourceURL) {
       return;
+    }
     // This might fail if the page has already navigated away.
     const response = await this._client._sendMayFail('CSS.getStyleSheetText', { styleSheetId: header.styleSheetId });
     if (response) {
@@ -243,16 +251,19 @@ function convertToDisjointRanges(nestedRanges: {
   // Sort points to form a valid parenthesis sequence.
   points.sort((a, b) => {
     // Sort with increasing offsets.
-    if (a.offset !== b.offset)
+    if (a.offset !== b.offset) {
       return a.offset - b.offset;
+    }
     // All "end" points should go before "start" points.
-    if (a.type !== b.type)
+    if (a.type !== b.type) {
       return b.type - a.type;
+    }
     const aLength = a.range.endOffset - a.range.startOffset;
     const bLength = b.range.endOffset - b.range.startOffset;
     // For two "start" points, the one with longer range goes first.
-    if (a.type === 0)
+    if (a.type === 0) {
       return bLength - aLength;
+    }
     // For two "end" points, the one with shorter range goes first.
     return aLength - bLength;
   });
@@ -264,16 +275,18 @@ function convertToDisjointRanges(nestedRanges: {
   for (const point of points) {
     if (hitCountStack.length && lastOffset < point.offset && hitCountStack[hitCountStack.length - 1] > 0) {
       const lastResult = results.length ? results[results.length - 1] : null;
-      if (lastResult && lastResult.end === lastOffset)
+      if (lastResult && lastResult.end === lastOffset) {
         lastResult.end = point.offset;
-      else
+      } else {
         results.push({ start: lastOffset, end: point.offset });
+      }
     }
     lastOffset = point.offset;
-    if (point.type === 0)
+    if (point.type === 0) {
       hitCountStack.push(point.range.count);
-    else
+    } else {
       hitCountStack.pop();
+    }
   }
   // Filter out empty ranges.
   return results.filter(range => range.end - range.start > 1);

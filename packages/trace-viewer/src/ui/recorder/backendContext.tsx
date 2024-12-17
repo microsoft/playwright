@@ -74,13 +74,15 @@ class Connection {
       const { id, result, error, method, params } = message;
       if (id) {
         const callback = this._callbacks.get(id);
-        if (!callback)
+        if (!callback) {
           return;
+        }
         this._callbacks.delete(id);
-        if (error)
+        if (error) {
           callback.reject(new Error(error));
-        else
+        } else {
           callback.resolve(result);
+        }
       } else {
         this._dispatchEvent(method, params);
       }

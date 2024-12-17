@@ -23,12 +23,13 @@ class Volume {
   }
 
   equals(other: Volume): boolean {
-    if (this.unit === other.unit)
+    if (this.unit === other.unit) {
       return this.amount === other.amount;
-    else if (this.unit === 'L' && other.unit === 'mL')
+    } else if (this.unit === 'L' && other.unit === 'mL') {
       return this.amount * 1000 === other.amount;
-    else
+    } else {
       return this.amount === other.amount * 1000;
+    }
 
   }
 }
@@ -48,18 +49,20 @@ const areVolumesEqual = (
   const isAVolume = isVolume(a);
   const isBVolume = isVolume(b);
 
-  if (isAVolume && isBVolume)
+  if (isAVolume && isBVolume) {
     return a.equals(b);
-  else if (isAVolume !== isBVolume)
+  } else if (isAVolume !== isBVolume) {
     return false;
-  else
+  } else {
     return undefined;
+  }
 
 };
 
 function* toIterator<T>(array: Array<T>): Iterator<T> {
-  for (const obj of array)
+  for (const obj of array) {
     yield obj;
+  }
 
 }
 

@@ -36,15 +36,17 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
   }
 
   static fromNullable(scope: JSHandleDispatcherParentScope, handle: ElementHandle | null): ElementHandleDispatcher | undefined {
-    if (!handle)
+    if (!handle) {
       return undefined;
+    }
     return existingDispatcher<ElementHandleDispatcher>(handle) || new ElementHandleDispatcher(scope, handle);
   }
 
   static fromJSHandle(scope: JSHandleDispatcherParentScope, handle: js.JSHandle): JSHandleDispatcher {
     const result = existingDispatcher<JSHandleDispatcher>(handle);
-    if (result)
+    if (result) {
       return result;
+    }
     return handle.asElement() ? new ElementHandleDispatcher(scope, handle.asElement()!) : new JSHandleDispatcher(scope, handle);
   }
 
@@ -212,14 +214,17 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
 
   private _browserContextDispatcher(): BrowserContextDispatcher {
     const scope = this.parentScope();
-    if (scope instanceof BrowserContextDispatcher)
+    if (scope instanceof BrowserContextDispatcher) {
       return scope;
-    if (scope instanceof PageDispatcher)
+    }
+    if (scope instanceof PageDispatcher) {
       return scope.parentScope();
+    }
     if ((scope instanceof WorkerDispatcher) || (scope instanceof FrameDispatcher))  {
       const parentScope = scope.parentScope();
-      if (parentScope instanceof BrowserContextDispatcher)
+      if (parentScope instanceof BrowserContextDispatcher) {
         return parentScope;
+      }
       return parentScope.parentScope();
     }
     throw new Error('ElementHandle belongs to unexpected scope');

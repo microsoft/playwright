@@ -400,8 +400,9 @@ const formatReceived = (
   key: string,
   expected?: string | RegExp,
 ) => {
-  if (thrown === null)
+  if (thrown === null) {
     return '';
+  }
 
 
   if (key === 'message') {
@@ -436,8 +437,9 @@ const formatReceived = (
       : '';
   }
 
-  if (key === 'value')
+  if (key === 'value') {
     return thrown.isError ? '' : `${label + printReceived(thrown.value)}\n`;
+  }
 
 
   return '';
@@ -468,8 +470,9 @@ function createMessageAndCauseMessage(error: Error): string {
 }
 
 function createMessageAndCause(error: Error) {
-  if (error.cause instanceof Error)
+  if (error.cause instanceof Error) {
     return createMessageAndCauseMessage(error);
+  }
 
   return error.message;
 }

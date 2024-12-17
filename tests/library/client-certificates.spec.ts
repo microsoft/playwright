@@ -71,8 +71,9 @@ const test = base.extend<TestOptions>({
       const host = options?.useFakeLocalhost ? 'local.playwright' : '127.0.0.1';
       return `https://${host}:${(server.address() as net.AddressInfo).port}/`;
     });
-    if (server)
+    if (server) {
       await new Promise<void>(resolve => server.close(() => resolve()));
+    }
   },
 });
 
@@ -92,8 +93,9 @@ const kValidationSubTests: [BrowserContextOptions, string][] = [
 
 test.describe('fetch', () => {
   test('validate input', async ({ playwright }) => {
-    for (const [contextOptions, expected] of kValidationSubTests)
+    for (const [contextOptions, expected] of kValidationSubTests) {
       await expect(playwright.request.newContext(contextOptions)).rejects.toThrow(expected);
+    }
   });
 
   test('should fail with no client certificates provided', async ({ playwright, startCCServer }) => {
@@ -273,8 +275,9 @@ test.describe('fetch', () => {
 
 test.describe('browser', () => {
   test('validate input', async ({ browser }) => {
-    for (const [contextOptions, expected] of kValidationSubTests)
+    for (const [contextOptions, expected] of kValidationSubTests) {
       await expect(browser.newContext(contextOptions)).rejects.toThrow(expected);
+    }
   });
 
   test('should keep supporting http', async ({ browser, server, asset }) => {
@@ -467,17 +470,19 @@ test.describe('browser', () => {
     });
 
     server.on('request', async (req, res) => {
-      if (!req.socket)
+      if (!req.socket) {
         return;
+      }
       const renegotiate = () => new Promise<void>((resolve, reject) => {
         (req.socket as tls.TLSSocket).renegotiate({
           requestCert: true,
           rejectUnauthorized: false
         }, err => {
-          if (err)
+          if (err) {
             reject(err);
-          else
+          } else {
             resolve();
+          }
         });
       });
       if (req.url === '/') {
@@ -519,10 +524,11 @@ test.describe('browser', () => {
 
         const stylesheetBuffer = await new Promise<Buffer>((resolve, reject) => {
           zlib.gzip(stylesheet, (err, buffer) => {
-            if (err)
+            if (err) {
               reject(err);
-            else
+            } else {
               resolve(buffer);
+            }
           });
         });
         for (let i = 0; i < stylesheetBuffer.length; i += 100) {
@@ -780,8 +786,9 @@ test.describe('browser', () => {
   test.describe('persistentContext', () => {
     test('validate input', async ({ launchPersistent }) => {
       test.slow();
-      for (const [contextOptions, expected] of kValidationSubTests)
+      for (const [contextOptions, expected] of kValidationSubTests) {
         await expect(launchPersistent(contextOptions)).rejects.toThrow(expected);
+      }
     });
 
     test('should pass with matching certificates', async ({ launchPersistent, startCCServer, asset, browserName, isMac }) => {

@@ -26,8 +26,9 @@ it('should output a trace', async ({ browser, server }, testInfo) => {
   const page = await browser.newPage();
   const outputTraceFile = testInfo.outputPath(path.join(`trace.json`));
   await browser.startTracing(page, { screenshots: true, path: outputTraceFile });
-  for (let i = 0; i < 20; i++)
+  for (let i = 0; i < 20; i++) {
     await page.goto(server.PREFIX + '/grid.html');
+  }
   await browser.stopTracing();
   expect(fs.existsSync(outputTraceFile)).toBe(true);
   await page.close();

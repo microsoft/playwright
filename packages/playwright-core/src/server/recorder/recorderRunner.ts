@@ -34,8 +34,9 @@ export async function performAction(callMetadata: CallMetadata, pageAliases: Map
     return;
   }
 
-  if (action.name === 'openPage')
+  if (action.name === 'openPage') {
     throw Error('Not reached');
+  }
 
   if (action.name === 'closePage') {
     await mainFrame._page.close(callMetadata);
@@ -131,13 +132,17 @@ export async function performAction(callMetadata: CallMetadata, pageAliases: Map
 export function toClickOptions(action: actions.ClickAction): types.MouseClickOptions {
   const modifiers = toKeyboardModifiers(action.modifiers);
   const options: types.MouseClickOptions = {};
-  if (action.button !== 'left')
+  if (action.button !== 'left') {
     options.button = action.button;
-  if (modifiers.length)
+  }
+  if (modifiers.length) {
     options.modifiers = modifiers;
-  if (action.clickCount > 1)
+  }
+  if (action.clickCount > 1) {
     options.clickCount = action.clickCount;
-  if (action.position)
+  }
+  if (action.position) {
     options.position = action.position;
+  }
   return options;
 }

@@ -743,13 +743,15 @@ async function assertDownloadToPDF(download: Download, filePath: string) {
   });
   expect(download.url().endsWith('/' + path.basename(filePath))).toBeTruthy();
   const expectedPrefix = '%PDF';
-  for (let i = 0; i < expectedPrefix.length; i++)
+  for (let i = 0; i < expectedPrefix.length; i++) {
     expect(data[i]).toBe(expectedPrefix.charCodeAt(i));
+  }
   assertBuffer(data, fs.readFileSync(filePath));
 }
 
 function assertBuffer(expected: Buffer, actual: Buffer) {
   expect(expected.byteLength).toBe(actual.byteLength);
-  for (let i = 0; i < expected.byteLength; i++)
+  for (let i = 0; i < expected.byteLength; i++) {
     expect(expected[i]).toBe(actual[i]);
+  }
 }

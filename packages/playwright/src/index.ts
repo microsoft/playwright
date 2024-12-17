@@ -77,22 +77,27 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       handleSIGINT: false,
       ...launchOptions,
     };
-    if (headless !== undefined)
+    if (headless !== undefined) {
       options.headless = headless;
-    if (channel !== undefined)
+    }
+    if (channel !== undefined) {
       options.channel = channel;
+    }
     options.tracesDir = tracing().tracesDir();
 
-    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit, playwright._bidiChromium, playwright._bidiFirefox])
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit, playwright._bidiChromium, playwright._bidiFirefox]) {
       (browserType as any)._defaultLaunchOptions = options;
+    }
     await use(options);
-    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit, playwright._bidiChromium, playwright._bidiFirefox])
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit, playwright._bidiChromium, playwright._bidiFirefox]) {
       (browserType as any)._defaultLaunchOptions = undefined;
+    }
   }, { scope: 'worker', auto: true, box: true }],
 
   browser: [async ({ playwright, browserName, _browserOptions, connectOptions, _reuseContext }, use, testInfo) => {
-    if (!['chromium', 'firefox', 'webkit', '_bidiChromium', '_bidiFirefox'].includes(browserName))
+    if (!['chromium', 'firefox', 'webkit', '_bidiChromium', '_bidiFirefox'].includes(browserName)) {
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
+    }
 
     if (connectOptions) {
       const browser = await playwright[browserName].connect({
@@ -174,50 +179,72 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     serviceWorkers,
   }, use) => {
     const options: BrowserContextOptions = {};
-    if (acceptDownloads !== undefined)
+    if (acceptDownloads !== undefined) {
       options.acceptDownloads = acceptDownloads;
-    if (bypassCSP !== undefined)
+    }
+    if (bypassCSP !== undefined) {
       options.bypassCSP = bypassCSP;
-    if (colorScheme !== undefined)
+    }
+    if (colorScheme !== undefined) {
       options.colorScheme = colorScheme;
-    if (deviceScaleFactor !== undefined)
+    }
+    if (deviceScaleFactor !== undefined) {
       options.deviceScaleFactor = deviceScaleFactor;
-    if (extraHTTPHeaders !== undefined)
+    }
+    if (extraHTTPHeaders !== undefined) {
       options.extraHTTPHeaders = extraHTTPHeaders;
-    if (geolocation !== undefined)
+    }
+    if (geolocation !== undefined) {
       options.geolocation = geolocation;
-    if (hasTouch !== undefined)
+    }
+    if (hasTouch !== undefined) {
       options.hasTouch = hasTouch;
-    if (httpCredentials !== undefined)
+    }
+    if (httpCredentials !== undefined) {
       options.httpCredentials = httpCredentials;
-    if (ignoreHTTPSErrors !== undefined)
+    }
+    if (ignoreHTTPSErrors !== undefined) {
       options.ignoreHTTPSErrors = ignoreHTTPSErrors;
-    if (isMobile !== undefined)
+    }
+    if (isMobile !== undefined) {
       options.isMobile = isMobile;
-    if (javaScriptEnabled !== undefined)
+    }
+    if (javaScriptEnabled !== undefined) {
       options.javaScriptEnabled = javaScriptEnabled;
-    if (locale !== undefined)
+    }
+    if (locale !== undefined) {
       options.locale = locale;
-    if (offline !== undefined)
+    }
+    if (offline !== undefined) {
       options.offline = offline;
-    if (permissions !== undefined)
+    }
+    if (permissions !== undefined) {
       options.permissions = permissions;
-    if (proxy !== undefined)
+    }
+    if (proxy !== undefined) {
       options.proxy = proxy;
-    if (storageState !== undefined)
+    }
+    if (storageState !== undefined) {
       options.storageState = storageState;
-    if (clientCertificates?.length)
+    }
+    if (clientCertificates?.length) {
       options.clientCertificates = resolveClientCerticates(clientCertificates);
-    if (timezoneId !== undefined)
+    }
+    if (timezoneId !== undefined) {
       options.timezoneId = timezoneId;
-    if (userAgent !== undefined)
+    }
+    if (userAgent !== undefined) {
       options.userAgent = userAgent;
-    if (viewport !== undefined)
+    }
+    if (viewport !== undefined) {
       options.viewport = viewport;
-    if (baseURL !== undefined)
+    }
+    if (baseURL !== undefined) {
       options.baseURL = baseURL;
-    if (serviceWorkers !== undefined)
+    }
+    if (serviceWorkers !== undefined) {
       options.serviceWorkers = serviceWorkers;
+    }
     await use({
       ...contextOptions,
       ...options,
@@ -225,11 +252,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   }, { box: true }],
 
   _setupContextOptions: [async ({ playwright, _combinedContextOptions, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
-    if (testIdAttribute)
+    if (testIdAttribute) {
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
+    }
     testInfo.snapshotSuffix = process.platform;
-    if (debugMode())
+    if (debugMode()) {
       (testInfo as TestInfoImpl)._setDebugMode();
+    }
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
       (browserType as any)._defaultContextOptions = _combinedContextOptions;
       (browserType as any)._defaultContextTimeout = actionTimeout || 0;
@@ -261,8 +290,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       onApiCallBegin: (apiName: string, params: Record<string, any>, frames: StackFrame[], userData: any, out: { stepId?: string }) => {
         userData.apiName = apiName;
         const testInfo = currentTestInfo();
-        if (!testInfo || apiName.includes('setTestIdAttribute') || apiName === 'tracing.groupEnd')
+        if (!testInfo || apiName.includes('setTestIdAttribute') || apiName === 'tracing.groupEnd') {
           return;
+        }
         const step = testInfo._addStep({
           location: frames[0] as any,
           category: 'pw:api',
@@ -272,13 +302,15 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         }, tracingGroupSteps[tracingGroupSteps.length - 1]);
         userData.step = step;
         out.stepId = step.stepId;
-        if (apiName === 'tracing.group')
+        if (apiName === 'tracing.group') {
           tracingGroupSteps.push(step);
+        }
       },
       onApiCallEnd: (userData: any, error?: Error) => {
         // "tracing.group" step will end later, when "tracing.groupEnd" finishes.
-        if (userData.apiName === 'tracing.group')
+        if (userData.apiName === 'tracing.group') {
           return;
+        }
         if (userData.apiName === 'tracing.groupEnd') {
           const step = tracingGroupSteps.pop();
           step?.complete({ error });
@@ -288,23 +320,25 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         step?.complete({ error });
       },
       onWillPause: ({ keepTestTimeout }) => {
-        if (!keepTestTimeout)
+        if (!keepTestTimeout) {
           currentTestInfo()?._setDebugMode();
+        }
       },
       runAfterCreateBrowserContext: async (context: BrowserContext) => {
-        await artifactsRecorder?.didCreateBrowserContext(context);
+        await artifactsRecorder.didCreateBrowserContext(context);
         const testInfo = currentTestInfo();
-        if (testInfo)
+        if (testInfo) {
           attachConnectedHeaderIfNeeded(testInfo, context.browser());
+        }
       },
       runAfterCreateRequestContext: async (context: APIRequestContext) => {
-        await artifactsRecorder?.didCreateRequestContext(context);
+        await artifactsRecorder.didCreateRequestContext(context);
       },
       runBeforeCloseBrowserContext: async (context: BrowserContext) => {
-        await artifactsRecorder?.willCloseBrowserContext(context);
+        await artifactsRecorder.willCloseBrowserContext(context);
       },
       runBeforeCloseRequestContext: async (context: APIRequestContext) => {
-        await artifactsRecorder?.willCloseRequestContext(context);
+        await artifactsRecorder.willCloseRequestContext(context);
       },
     };
 
@@ -342,8 +376,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       const context = await browser.newContext({ ...videoOptions, ...options });
       const contextData: { pagesWithVideo: Page[] } = { pagesWithVideo: [] };
       contexts.set(context, contextData);
-      if (captureVideo)
+      if (captureVideo) {
         context.on('page', page => contextData.pagesWithVideo.push(page));
+      }
 
       if (process.env.PW_CLOCK === 'frozen') {
         await (context as any)._wrapApiCall(async () => {
@@ -390,8 +425,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   _reuseContext: [async ({ video, _optionContextReuseMode }, use) => {
     let mode = _optionContextReuseMode;
-    if (process.env.PW_TEST_REUSE_CONTEXT)
+    if (process.env.PW_TEST_REUSE_CONTEXT) {
       mode = 'when-possible';
+    }
     const reuse = mode === 'when-possible' && normalizeVideoMode(video) === 'off';
     await use(reuse);
   }, { scope: 'worker',  title: 'context', box: true }],
@@ -419,8 +455,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     // First time we are reusing the context, we should create the page.
     let [page] = context.pages();
-    if (!page)
+    if (!page) {
       page = await context.newPage();
+    }
     await use(page);
   },
 
@@ -452,11 +489,13 @@ type ScreenshotOption = PlaywrightWorkerOptions['screenshot'] | undefined;
 type Playwright = PlaywrightWorkerArgs['playwright'];
 
 function normalizeVideoMode(video: VideoMode | 'retry-with-video' | { mode: VideoMode } | undefined): VideoMode {
-  if (!video)
+  if (!video) {
     return 'off';
+  }
   let videoMode = typeof video === 'string' ? video : video.mode;
-  if (videoMode === 'retry-with-video')
+  if (videoMode === 'retry-with-video') {
     videoMode = 'on-first-retry';
+  }
   return videoMode;
 }
 
@@ -465,33 +504,40 @@ function shouldCaptureVideo(videoMode: VideoMode, testInfo: TestInfo) {
 }
 
 function normalizeScreenshotMode(screenshot: ScreenshotOption): ScreenshotMode {
-  if (!screenshot)
+  if (!screenshot) {
     return 'off';
+  }
   return typeof screenshot === 'string' ? screenshot : screenshot.mode;
 }
 
 function attachConnectedHeaderIfNeeded(testInfo: TestInfo, browser: Browser | null) {
   const connectHeaders: { name: string, value: string }[] | undefined = (browser as any)?._connectHeaders;
-  if (!connectHeaders)
+  if (!connectHeaders) {
     return;
+  }
   for (const header of connectHeaders) {
-    if (header.name !== 'x-playwright-attachment')
+    if (header.name !== 'x-playwright-attachment') {
       continue;
+    }
     const [name, value] = header.value.split('=');
-    if (!name || !value)
+    if (!name || !value) {
       continue;
-    if (testInfo.attachments.some(attachment => attachment.name === name))
+    }
+    if (testInfo.attachments.some(attachment => attachment.name === name)) {
       continue;
+    }
     testInfo.attachments.push({ name, contentType: 'text/plain', body: Buffer.from(value) });
   }
 }
 
 function resolveFileToConfig(file: string | undefined) {
   const config = test.info().config.configFile;
-  if (!config || !file)
+  if (!config || !file) {
     return file;
-  if (path.isAbsolute(file))
+  }
+  if (path.isAbsolute(file)) {
     return file;
+  }
   return path.resolve(path.dirname(config), file);
 }
 
@@ -511,8 +557,9 @@ const kIsReusedContext = Symbol('kReusedContext');
 
 function connectOptionsFromEnv() {
   const wsEndpoint = process.env.PW_TEST_CONNECT_WS_ENDPOINT;
-  if (!wsEndpoint)
+  if (!wsEndpoint) {
     return undefined;
+  }
   const headers = process.env.PW_TEST_CONNECT_HEADERS ? JSON.parse(process.env.PW_TEST_CONNECT_HEADERS) : undefined;
   return {
     wsEndpoint,
@@ -562,10 +609,11 @@ class ArtifactsRecorder {
       const promises: (Promise<void> | undefined)[] = [];
       const existingContexts = Array.from((browserType as any)._contexts) as BrowserContext[];
       for (const context of existingContexts) {
-        if ((context as any)[kIsReusedContext])
+        if ((context as any)[kIsReusedContext]) {
           this._reusedContexts.add(context);
-        else
+        } else {
           promises.push(this.didCreateBrowserContext(context));
+        }
       }
       await Promise.all(promises);
     }
@@ -582,8 +630,9 @@ class ArtifactsRecorder {
   async willCloseBrowserContext(context: BrowserContext) {
     // When reusing context, we get all previous contexts closed at the start of next test.
     // Do not record empty traces and useless screenshots for them.
-    if (this._reusedContexts.has(context))
+    if (this._reusedContexts.has(context)) {
       return;
+    }
     await this._stopTracing(context.tracing);
     if (this._screenshotMode === 'on' || this._screenshotMode === 'only-on-failure' || (this._screenshotMode === 'on-first-failure' && this._testInfo.retry === 0)) {
       // Capture screenshot for now. We'll know whether we have to preserve them
@@ -609,18 +658,21 @@ class ArtifactsRecorder {
   }
 
   async didFinishTestFunction() {
-    if (this._shouldCaptureScreenshotUponFinish())
+    if (this._shouldCaptureScreenshotUponFinish()) {
       await this._screenshotOnTestFailure();
+    }
   }
 
   async didFinishTest() {
     const captureScreenshots = this._shouldCaptureScreenshotUponFinish();
-    if (captureScreenshots)
+    if (captureScreenshots) {
       await this._screenshotOnTestFailure();
+    }
 
     let leftoverContexts: BrowserContext[] = [];
-    for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit])
+    for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit]) {
       leftoverContexts.push(...(browserType as any)._contexts);
+    }
     leftoverContexts = leftoverContexts.filter(context => !this._reusedContexts.has(context));
     const leftoverApiRequests: APIRequestContext[] =  Array.from((this._playwright.request as any)._contexts as Set<APIRequestContext>);
 
@@ -654,18 +706,20 @@ class ArtifactsRecorder {
   }
 
   private async _screenshotPage(page: Page, temporary: boolean) {
-    if ((page as any)[this._screenshottedSymbol])
+    if ((page as any)[this._screenshottedSymbol]) {
       return;
+    }
     (page as any)[this._screenshottedSymbol] = true;
     try {
       const screenshotPath = temporary ? this._createTemporaryArtifact(createGuid() + '.png') : this._createScreenshotAttachmentPath();
       // Pass caret=initial to avoid any evaluations that might slow down the screenshot
       // and let the page modify itself from the problematic state it had at the moment of failure.
       await page.screenshot({ ...this._screenshotOptions, timeout: 5000, path: screenshotPath, caret: 'initial' });
-      if (temporary)
+      if (temporary) {
         this._temporaryScreenshots.push(screenshotPath);
-      else
+      } else {
         this._attachScreenshot(screenshotPath);
+      }
     } catch {
       // Screenshot may fail, just ignore.
     }
@@ -677,8 +731,9 @@ class ArtifactsRecorder {
 
   private async _screenshotOnTestFailure() {
     const contexts: BrowserContext[] = [];
-    for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit])
+    for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit]) {
       contexts.push(...(browserType as any)._contexts);
+    }
     const pages = contexts.map(ctx => ctx.pages()).flat();
     await Promise.all(pages.map(page => this._screenshotPage(page, false)));
   }
@@ -703,24 +758,28 @@ class ArtifactsRecorder {
   }
 
   private async _stopTracing(tracing: Tracing) {
-    if ((tracing as any)[this._startedCollectingArtifacts])
+    if ((tracing as any)[this._startedCollectingArtifacts]) {
       return;
+    }
     (tracing as any)[this._startedCollectingArtifacts] = true;
-    if (this._testInfo._tracing.traceOptions() && (tracing as any)[kTracingStarted])
+    if (this._testInfo._tracing.traceOptions() && (tracing as any)[kTracingStarted]) {
       await tracing.stopChunk({ path: this._testInfo._tracing.generateNextTraceRecordingPath() });
+    }
   }
 }
 
 const paramsToRender = ['url', 'selector', 'text', 'key'];
 
 function renderApiCall(apiName: string, params: any) {
-  if (apiName === 'tracing.group')
+  if (apiName === 'tracing.group') {
     return params.name;
+  }
   const paramsArray = [];
   if (params) {
     for (const name of paramsToRender) {
-      if (!(name in params))
+      if (!(name in params)) {
         continue;
+      }
       let value;
       if (name === 'selector' && isString(params[name]) && params[name].startsWith('internal:')) {
         const getter = asLocator('javascript', params[name]);

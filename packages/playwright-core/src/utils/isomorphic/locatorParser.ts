@@ -38,20 +38,22 @@ function parseLocator(locator: string, testIdAttributeName: string): { selector:
     while (i < locator.length) {
       if (locator[i] === '\\') {
         if (isRegexEscaping) {
-          if (locator[i + 1] !== quote)
+          if (locator[i + 1] !== quote) {
             text += locator[i];
+          }
           ++i;
           text += locator[i];
         } else {
           ++i;
-          if (locator[i] === 'n')
+          if (locator[i] === 'n') {
             text += '\n';
-          else if (locator[i] === 'r')
+          } else if (locator[i] === 'r') {
             text += '\r';
-          else if (locator[i] === 't')
+          } else if (locator[i] === 't') {
             text += '\t';
-          else
+          } else {
             text += locator[i];
+          }
         }
         ++i;
         continue;
@@ -111,20 +113,23 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
   // TODO: handle and(locator), or(locator), locator(locator), locator(has=, hasnot=, sethas(), sethasnot()).
   while (true) {
     const hasMatch = template.match(/filter\(,?(has=|hasnot=|sethas\(|sethasnot\()/);
-    if (!hasMatch)
+    if (!hasMatch) {
       break;
+    }
 
     // Extract inner locator based on balanced parens.
     const start = hasMatch.index! + hasMatch[0].length;
     let balance = 0;
     let end = start;
     for (; end < template.length; end++) {
-      if (template[end] === '(')
+      if (template[end] === '(') {
         balance++;
-      else if (template[end] === ')')
+      } else if (template[end] === ')') {
         balance--;
-      if (balance < 0)
+      }
+      if (balance < 0) {
         break;
+      }
     }
 
     // Replace Java sethas(...) and sethasnot(...) with has=... and hasnot=...
@@ -191,24 +196,31 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
 
   // Substitute params.
   return parts.map(t => {
-    if (!t.startsWith('internal:') || t === 'internal:control')
-      return t.replace(/\$(\d+)/g, (_, ordinal) => { const param = params[+ordinal - 1]; return param.text; });
+    if (!t.startsWith('internal:') || t === 'internal:control') {
+      return t.replace(/\$(\d+)/g, (_, ordinal) => {
+        const param = params[+ordinal - 1]; return param.text;
+      });
+    }
     t = t.includes('[') ? t.replace(/\]/, '') + ']' : t;
     t = t
         .replace(/(?:r)\$(\d+)(i)?/g, (_, ordinal, suffix) => {
           const param = params[+ordinal - 1];
-          if (t.startsWith('internal:attr') || t.startsWith('internal:testid') || t.startsWith('internal:role'))
+          if (t.startsWith('internal:attr') || t.startsWith('internal:testid') || t.startsWith('internal:role')) {
             return escapeForAttributeSelector(new RegExp(param.text), false) + (suffix || '');
+          }
           return escapeForTextSelector(new RegExp(param.text, suffix), false);
         })
         .replace(/\$(\d+)(i|s)?/g, (_, ordinal, suffix) => {
           const param = params[+ordinal - 1];
-          if (t.startsWith('internal:has=') || t.startsWith('internal:has-not='))
+          if (t.startsWith('internal:has=') || t.startsWith('internal:has-not=')) {
             return param.text;
-          if (t.startsWith('internal:testid'))
+          }
+          if (t.startsWith('internal:testid')) {
             return escapeForAttributeSelector(param.text, true);
-          if (t.startsWith('internal:attr') || t.startsWith('internal:role'))
+          }
+          if (t.startsWith('internal:attr') || t.startsWith('internal:role')) {
             return escapeForAttributeSelector(param.text, suffix === 's');
+          }
           return escapeForTextSelector(param.text, suffix === 's');
         });
     return t;
@@ -232,14 +244,16 @@ export function unsafeLocatorOrSelectorAsSelector(language: Language, locator: s
   const { selector, preferredQuote } = parseLocator(locator, testIdAttributeName);
   const locators = asLocators(language, selector, undefined, undefined, preferredQuote);
   const digest = digestForComparison(language, locator);
-  if (locators.some(candidate => digestForComparison(language, candidate) === digest))
+  if (locators.some(candidate => digestForComparison(language, candidate) === digest)) {
     return selector;
+  }
   return '';
 }
 
 function digestForComparison(language: Language, locator: string) {
   locator = locator.replace(/\s/g, '');
-  if (language === 'javascript')
+  if (language === 'javascript') {
     locator = locator.replace(/\\?["`]/g, '\'').replace(/,{}/g, '');
+  }
   return locator;
 }

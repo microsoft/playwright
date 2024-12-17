@@ -97,10 +97,11 @@ export class Suite extends Base {
     const result: TestCase[] = [];
     const visit = (suite: Suite) => {
       for (const entry of suite._entries) {
-        if (entry instanceof Suite)
+        if (entry instanceof Suite) {
           visit(entry);
-        else
+        } else {
           result.push(entry);
+        }
       }
     };
     visit(this);
@@ -111,12 +112,14 @@ export class Suite extends Base {
     let result = false;
     const visit = (suite: Suite) => {
       for (const entry of suite._entries) {
-        if (result)
+        if (result) {
           return;
-        if (entry instanceof Suite)
+        }
+        if (entry instanceof Suite) {
           visit(entry);
-        else
+        } else {
           result = true;
+        }
       }
     };
     visit(this);
@@ -126,25 +129,30 @@ export class Suite extends Base {
   titlePath(): string[] {
     const titlePath = this.parent ? this.parent.titlePath() : [];
     // Ignore anonymous describe blocks.
-    if (this.title || this._type !== 'describe')
+    if (this.title || this._type !== 'describe') {
       titlePath.push(this.title);
+    }
     return titlePath;
   }
 
   _collectGrepTitlePath(path: string[]) {
-    if (this.parent)
+    if (this.parent) {
       this.parent._collectGrepTitlePath(path);
-    if (this.title || this._type !== 'describe')
+    }
+    if (this.title || this._type !== 'describe') {
       path.push(this.title);
+    }
     path.push(...this._tags);
   }
 
   _getOnlyItems(): (TestCase | Suite)[] {
     const items: (TestCase | Suite)[] = [];
-    if (this._only)
+    if (this._only) {
       items.push(this);
-    for (const suite of this.suites)
+    }
+    for (const suite of this.suites) {
       items.push(...suite._getOnlyItems());
+    }
     items.push(...this.tests.filter(test => test._only));
     return items;
   }
@@ -152,10 +160,11 @@ export class Suite extends Base {
   _deepClone(): Suite {
     const suite = this._clone();
     for (const entry of this._entries) {
-      if (entry instanceof Suite)
+      if (entry instanceof Suite) {
         suite._addSuite(entry._deepClone());
-      else
+      } else {
         suite._addTest(entry._clone());
+      }
     }
     return suite;
   }
@@ -164,10 +173,11 @@ export class Suite extends Base {
     const suite = this._serialize();
     suite.entries = [];
     for (const entry of this._entries) {
-      if (entry instanceof Suite)
+      if (entry instanceof Suite) {
         suite.entries.push(entry._deepSerialize());
-      else
+      } else {
         suite.entries.push(entry._serialize());
+      }
     }
     return suite;
   }
@@ -175,20 +185,22 @@ export class Suite extends Base {
   static _deepParse(data: any): Suite {
     const suite = Suite._parse(data);
     for (const entry of data.entries) {
-      if (entry.kind === 'suite')
+      if (entry.kind === 'suite') {
         suite._addSuite(Suite._deepParse(entry));
-      else
+      } else {
         suite._addTest(TestCase._parse(entry));
+      }
     }
     return suite;
   }
 
   forEachTest(visitor: (test: TestCase, suite: Suite) => void) {
     for (const entry of this._entries) {
-      if (entry instanceof Suite)
+      if (entry instanceof Suite) {
         entry.forEachTest(visitor);
-      else
+      } else {
         visitor(entry, this);
+      }
     }
   }
 

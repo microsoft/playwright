@@ -61,14 +61,16 @@ export class WKWorkers {
       }),
       eventsHelper.addEventListener(session, 'Worker.dispatchMessageFromWorker', (event: Protocol.Worker.dispatchMessageFromWorkerPayload) => {
         const workerSession = this._workerSessions.get(event.workerId)!;
-        if (!workerSession)
+        if (!workerSession) {
           return;
+        }
         workerSession.dispatchMessage(JSON.parse(event.message));
       }),
       eventsHelper.addEventListener(session, 'Worker.workerTerminated', (event: Protocol.Worker.workerTerminatedPayload) => {
         const workerSession = this._workerSessions.get(event.workerId)!;
-        if (!workerSession)
+        if (!workerSession) {
           return;
+        }
         workerSession.dispose();
         this._workerSessions.delete(event.workerId);
         this._page._removeWorker(event.workerId);
@@ -88,10 +90,11 @@ export class WKWorkers {
   async _onConsoleMessage(worker: Worker, event: Protocol.Console.messageAddedPayload) {
     const { type, level, text, parameters, url, line: lineNumber, column: columnNumber } = event.message;
     let derivedType: string = type || '';
-    if (type === 'log')
+    if (type === 'log') {
       derivedType = level;
-    else if (type === 'timing')
+    } else if (type === 'timing') {
       derivedType = 'timeEnd';
+    }
 
     const handles = (parameters || []).map(p => {
       return worker._existingExecutionContext!.createHandle(p);

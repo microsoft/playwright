@@ -58,12 +58,13 @@ it('Page.Events.RequestFailed @smoke', async ({ page, server, browserName, platf
   if (browserName === 'chromium') {
     expect(failedRequests[0].failure().errorText).toBe('net::ERR_EMPTY_RESPONSE');
   } else if (browserName === 'webkit') {
-    if (platform === 'linux')
+    if (platform === 'linux') {
       expect(failedRequests[0].failure().errorText).toMatch(/(Message Corrupt)|(Connection terminated unexpectedly)/i);
-    else if (platform === 'darwin')
+    } else if (platform === 'darwin') {
       expect(failedRequests[0].failure().errorText).toBe('The network connection was lost.');
-    else if (platform === 'win32')
+    } else if (platform === 'win32') {
       expect(failedRequests[0].failure().errorText).toBe('Server returned nothing (no headers, no data)');
+    }
   } else {
     expect(failedRequests[0].failure().errorText).toBe('NS_ERROR_NET_RESET');
   }
@@ -152,9 +153,10 @@ it('interrupt request.response() and request.allHeaders() on page.close', async 
   await page.close();
   expect((await respPromise).message).toContain(kTargetClosedErrorMessage);
   // All headers are the same as "provisional" headers in Firefox.
-  if (browserName === 'firefox')
+  if (browserName === 'firefox') {
     expect((await headersPromise)['user-agent']).toBeTruthy();
-  else
+  } else {
     expect((await headersPromise).message).toContain(kTargetClosedErrorMessage);
+  }
 
 });

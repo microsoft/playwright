@@ -53,8 +53,9 @@ export function useNetworkTabModel(model: MultiTraceModel | undefined, selectedT
   const resources = React.useMemo(() => {
     const resources = model?.resources || [];
     const filtered = resources.filter(resource => {
-      if (!selectedTime)
+      if (!selectedTime) {
         return true;
+      }
       return !!resource._monotonicTime && (resource._monotonicTime >= selectedTime.minimum && resource._monotonicTime <= selectedTime.maximum);
     });
     return filtered;
@@ -75,8 +76,9 @@ export const NetworkTab: React.FunctionComponent<{
 
   const { renderedEntries } = React.useMemo(() => {
     const renderedEntries = networkModel.resources.map(entry => renderEntry(entry, boundaries, networkModel.contextIdMap)).filter(filterEntry(filterState));
-    if (sorting)
+    if (sorting) {
       sort(renderedEntries, sorting);
+    }
     return { renderedEntries };
   }, [networkModel.resources, networkModel.contextIdMap, filterState, sorting, boundaries]);
 
@@ -89,8 +91,9 @@ export const NetworkTab: React.FunctionComponent<{
     setSelectedEntry(undefined);
   }, []);
 
-  if (!networkModel.resources.length)
+  if (!networkModel.resources.length) {
     return <PlaceholderPanel text='No network calls' />;
+  }
 
   const grid = <NetworkGridView
     name='network'
@@ -124,51 +127,67 @@ export const NetworkTab: React.FunctionComponent<{
 };
 
 const columnTitle = (column: ColumnName) => {
-  if (column === 'contextId')
+  if (column === 'contextId') {
     return 'Source';
-  if (column === 'name')
+  }
+  if (column === 'name') {
     return 'Name';
-  if (column === 'method')
+  }
+  if (column === 'method') {
     return 'Method';
-  if (column === 'status')
+  }
+  if (column === 'status') {
     return 'Status';
-  if (column === 'contentType')
+  }
+  if (column === 'contentType') {
     return 'Content Type';
-  if (column === 'duration')
+  }
+  if (column === 'duration') {
     return 'Duration';
-  if (column === 'size')
+  }
+  if (column === 'size') {
     return 'Size';
-  if (column === 'start')
+  }
+  if (column === 'start') {
     return 'Start';
-  if (column === 'route')
+  }
+  if (column === 'route') {
     return 'Route';
+  }
   return '';
 };
 
 const columnWidth = (column: ColumnName) => {
-  if (column === 'name')
+  if (column === 'name') {
     return 200;
-  if (column === 'method')
+  }
+  if (column === 'method') {
     return 60;
-  if (column === 'status')
+  }
+  if (column === 'status') {
     return 60;
-  if (column === 'contentType')
+  }
+  if (column === 'contentType') {
     return 200;
-  if (column === 'contextId')
+  }
+  if (column === 'contextId') {
     return 60;
+  }
   return 100;
 };
 
 function visibleColumns(entrySelected: boolean, renderedEntries: RenderedEntry[]): (keyof RenderedEntry)[] {
   if (entrySelected) {
     const columns: (keyof RenderedEntry)[] = ['name'];
-    if (hasMultipleContexts(renderedEntries))
+    if (hasMultipleContexts(renderedEntries)) {
       columns.unshift('contextId');
+    }
     return columns;
   }
   let columns: (keyof RenderedEntry)[] = allColumns();
-  if (!hasMultipleContexts(renderedEntries))
+  if (!hasMultipleContexts(renderedEntries)) {
     columns = columns.filter(name => name !== 'contextId');
+  }
   return columns;
 }
 
@@ -189,24 +208,30 @@ const renderCell = (entry: RenderedEntry, column: ColumnName): RenderedGridCell 
       title: entry.name.url,
     };
   }
-  if (column === 'method')
+  if (column === 'method') {
     return { body: entry.method };
+  }
   if (column === 'status') {
     return {
       body: entry.status.code > 0 ? entry.status.code : '',
       title: entry.status.text
     };
   }
-  if (column === 'contentType')
+  if (column === 'contentType') {
     return { body: entry.contentType };
-  if (column === 'duration')
+  }
+  if (column === 'duration') {
     return { body: msToString(entry.duration) };
-  if (column === 'size')
+  }
+  if (column === 'size') {
     return { body: bytesToString(entry.size) };
-  if (column === 'start')
+  }
+  if (column === 'start') {
     return { body: msToString(entry.start) };
-  if (column === 'route')
+  }
+  if (column === 'route') {
     return { body: entry.route };
+  }
   return { body: '' };
 };
 
@@ -219,10 +244,11 @@ class ContextIdMap {
   constructor(model: MultiTraceModel | undefined) {}
 
   contextId(resource: Entry): string {
-    if (resource.pageref)
+    if (resource.pageref) {
       return this._pageId(resource.pageref);
-    else if (resource._apiRequest)
+    } else if (resource._apiRequest) {
       return this._apiRequestContextId(resource);
+    }
     return '';
   }
 
@@ -238,8 +264,9 @@ class ContextIdMap {
 
   private _apiRequestContextId(resource: Entry): string {
     const contextEntry = context(resource);
-    if (!contextEntry)
+    if (!contextEntry) {
       return '';
+    }
     let contextId = this._contextToId.get(contextEntry);
     if (!contextId) {
       ++this._lastApiRequestContextId;
@@ -254,8 +281,9 @@ function hasMultipleContexts(renderedEntries: RenderedEntry[]): boolean {
   const contextIds = new Set<string>();
   for (const entry of renderedEntries) {
     contextIds.add(entry.contextId);
-    if (contextIds.size > 1)
+    if (contextIds.size > 1) {
       return true;
+    }
   }
   return false;
 }
@@ -266,15 +294,17 @@ const renderEntry = (resource: Entry, boundaries: Boundaries, contextIdGenerator
   try {
     const url = new URL(resource.request.url);
     resourceName = url.pathname.substring(url.pathname.lastIndexOf('/') + 1);
-    if (!resourceName)
+    if (!resourceName) {
       resourceName = url.host;
+    }
   } catch {
     resourceName = resource.request.url;
   }
   let contentType = resource.response.content.mimeType;
   const charset = contentType.match(/^(.*);\s*charset=.*$/);
-  if (charset)
+  if (charset) {
     contentType = charset[1];
+  }
 
   return {
     name: { name: resourceName, url: resource.request.url },
@@ -291,34 +321,43 @@ const renderEntry = (resource: Entry, boundaries: Boundaries, contextIdGenerator
 };
 
 function formatRouteStatus(request: Entry): string {
-  if (request._wasAborted)
+  if (request._wasAborted) {
     return 'aborted';
-  if (request._wasContinued)
+  }
+  if (request._wasContinued) {
     return 'continued';
-  if (request._wasFulfilled)
+  }
+  if (request._wasFulfilled) {
     return 'fulfilled';
-  if (request._apiRequest)
+  }
+  if (request._apiRequest) {
     return 'api';
+  }
   return '';
 }
 
 function sort(resources: RenderedEntry[], sorting: Sorting) {
-  const c = comparator(sorting?.by);
-  if (c)
+  const c = comparator(sorting.by);
+  if (c) {
     resources.sort(c);
-  if (sorting.negate)
+  }
+  if (sorting.negate) {
     resources.reverse();
+  }
 }
 
 function comparator(sortBy: ColumnName) {
-  if (sortBy === 'start')
+  if (sortBy === 'start') {
     return (a: RenderedEntry, b: RenderedEntry) => a.start - b.start;
+  }
 
-  if (sortBy === 'duration')
+  if (sortBy === 'duration') {
     return (a: RenderedEntry, b: RenderedEntry) => a.duration - b.duration;
+  }
 
-  if (sortBy === 'status')
+  if (sortBy === 'status') {
     return (a: RenderedEntry, b: RenderedEntry) => a.status.code - b.status.code;
+  }
 
   if (sortBy === 'method') {
     return (a: RenderedEntry, b: RenderedEntry) => {
@@ -352,8 +391,9 @@ function comparator(sortBy: ColumnName) {
     };
   }
 
-  if (sortBy === 'contextId')
+  if (sortBy === 'contextId') {
     return (a: RenderedEntry, b: RenderedEntry) => a.contextId.localeCompare(b.contextId);
+  }
 }
 
 const resourceTypePredicates: Record<ResourceType, (contentType: string) => boolean> = {

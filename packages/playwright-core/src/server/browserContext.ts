@@ -103,8 +103,9 @@ export abstract class BrowserContext extends SdkObject {
 
     this.fetchRequest = new BrowserContextAPIRequestContext(this);
 
-    if (this._options.recordHar)
+    if (this._options.recordHar) {
       this._harRecorders.set('', new HarRecorder(this, null, this._options.recordHar));
+    }
 
     this.tracing = new Tracing(this, browser.options.tracesDir);
     this.clock = new Clock(this);
@@ -123,31 +124,38 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async _initialize() {
-    if (this.attribution.playwright.options.isInternalPlaywright)
+    if (this.attribution.playwright.options.isInternalPlaywright) {
       return;
+    }
     // Debugger will pause execution upon page.pause in headed mode.
     this._debugger = new Debugger(this);
 
     // When PWDEBUG=1, show inspector for each context.
-    if (debugMode() === 'inspector')
+    if (debugMode() === 'inspector') {
       await Recorder.show('actions', this, RecorderApp.factory(this), { pauseOnNextStatement: true });
+    }
 
     // When paused, show inspector.
-    if (this._debugger.isPaused())
+    if (this._debugger.isPaused()) {
       Recorder.showInspectorNoReply(this, RecorderApp.factory(this));
+    }
 
     this._debugger.on(Debugger.Events.PausedStateChanged, () => {
-      if (this._debugger.isPaused())
+      if (this._debugger.isPaused()) {
         Recorder.showInspectorNoReply(this, RecorderApp.factory(this));
+      }
     });
 
-    if (debugMode() === 'console')
+    if (debugMode() === 'console') {
       await this.extendInjectedScript(consoleApiSource.source);
-    if (this._options.serviceWorkers === 'block')
+    }
+    if (this._options.serviceWorkers === 'block') {
       await this.addInitScript(`\nif (navigator.serviceWorker) navigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
+    }
 
-    if (this._options.permissions)
+    if (this._options.permissions) {
       await this.grantPermissions(this._options.permissions);
+    }
   }
 
   debugger(): Debugger {
@@ -155,21 +163,24 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async _ensureVideosPath() {
-    if (this._options.recordVideo)
+    if (this._options.recordVideo) {
       await mkdirIfNeeded(path.join(this._options.recordVideo.dir, 'dummy'));
+    }
   }
 
   canResetForReuse(): boolean {
-    if (this._closedStatus !== 'open')
+    if (this._closedStatus !== 'open') {
       return false;
+    }
     return true;
   }
 
   async stopPendingOperations(reason: string) {
     // When using context reuse, stop pending operations to gracefully terminate all the actions
     // with a user-friendly error message containing operation log.
-    for (const controller of this._activeProgressControllers)
+    for (const controller of this._activeProgressControllers) {
       controller.abort(new Error(reason));
+    }
     // Let rejections in microtask generate events before returning.
     await new Promise(f => setTimeout(f, 0));
   }
@@ -179,12 +190,14 @@ export abstract class BrowserContext extends SdkObject {
 
     for (const k of Object.keys(paramsCopy)) {
       const key = k as keyof channels.BrowserNewContextForReuseParams;
-      if (paramsCopy[key] === defaultNewContextParamValues[key])
+      if (paramsCopy[key] === defaultNewContextParamValues[key]) {
         delete paramsCopy[key];
+      }
     }
 
-    for (const key of paramsThatAllowContextReuse)
+    for (const key of paramsThatAllowContextReuse) {
       delete paramsCopy[key];
+    }
     return JSON.stringify(paramsCopy);
   }
 
@@ -194,8 +207,9 @@ export abstract class BrowserContext extends SdkObject {
     this.tracing.resetForReuse();
 
     if (params) {
-      for (const key of paramsThatAllowContextReuse)
+      for (const key of paramsThatAllowContextReuse) {
         (this._options as any)[key] = params[key];
+      }
     }
 
     await this._cancelAllRoutesInFlight();
@@ -203,8 +217,9 @@ export abstract class BrowserContext extends SdkObject {
     // Close extra pages early.
     let page: Page | undefined = this.pages()[0];
     const [, ...otherPages] = this.pages();
-    for (const p of otherPages)
+    for (const p of otherPages) {
       await p.close(metadata);
+    }
     if (page && page.hasCrashed()) {
       await page.close(metadata);
       page = undefined;
@@ -222,10 +237,11 @@ export abstract class BrowserContext extends SdkObject {
     await this._removeInitScripts();
     this.clock.markAsUninstalled();
     // TODO: following can be optimized to not perform noops.
-    if (this._options.permissions)
+    if (this._options.permissions) {
       await this.grantPermissions(this._options.permissions);
-    else
+    } else {
       await this.clearPermissions();
+    }
     await this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || []);
     await this.setGeolocation(this._options.geolocation);
     await this.setOffline(!!this._options.offline);
@@ -237,8 +253,9 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   _browserClosed() {
-    for (const page of this.pages())
+    for (const page of this.pages()) {
       page._didClose();
+    }
     this._didCloseInternal();
   }
 
@@ -250,8 +267,9 @@ export abstract class BrowserContext extends SdkObject {
     }
     this._clientCertificatesProxy?.close().catch(() => {});
     this.tracing.abort();
-    if (this._isPersistentContext)
+    if (this._isPersistentContext) {
       this.onClosePersistent();
+    }
     this._closePromiseFulfill!(new Error('Context closed'));
     this.emit(BrowserContext.Events.Close);
   }
@@ -282,8 +300,9 @@ export abstract class BrowserContext extends SdkObject {
   protected abstract onClosePersistent(): void;
 
   async cookies(urls: string | string[] | undefined = []): Promise<channels.NetworkCookie[]> {
-    if (urls && !Array.isArray(urls))
+    if (urls && !Array.isArray(urls)) {
       urls = [urls];
+    }
     return await this.doGetCookies(urls as string[]);
   }
 
@@ -292,8 +311,9 @@ export abstract class BrowserContext extends SdkObject {
     await this.doClearCookies();
 
     const matches = (cookie: channels.NetworkCookie, prop: 'name' | 'domain' | 'path', value: string | RegExp | undefined) => {
-      if (!value)
+      if (!value) {
         return true;
+      }
       if (value instanceof RegExp) {
         value.lastIndex = 0;
         return value.test(cookie[prop]);
@@ -315,11 +335,13 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<void> {
-    if (this._pageBindings.has(name))
+    if (this._pageBindings.has(name)) {
       throw new Error(`Function "${name}" has been already registered`);
+    }
     for (const page of this.pages()) {
-      if (page.getBinding(name))
+      if (page.getBinding(name)) {
         throw new Error(`Function "${name}" has been already registered in one of the pages`);
+      }
     }
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
@@ -330,8 +352,9 @@ export abstract class BrowserContext extends SdkObject {
 
   async _removeExposedBindings() {
     for (const [key, binding] of this._pageBindings) {
-      if (!binding.internal)
+      if (!binding.internal) {
         this._pageBindings.delete(key);
+      }
     }
   }
 
@@ -369,19 +392,22 @@ export abstract class BrowserContext extends SdkObject {
       await Promise.race([waitForEvent.promise, this._closePromise]);
     }
     const page = this.possiblyUninitializedPages()[0];
-    if (!page)
+    if (!page) {
       return;
+    }
     const pageOrError = await page.waitForInitializedOrError();
-    if (pageOrError instanceof Error)
+    if (pageOrError instanceof Error) {
       throw pageOrError;
+    }
     await page.mainFrame()._waitForLoadState(progress, 'load');
     return page;
   }
 
   async _loadDefaultContext(progress: Progress) {
     const defaultPage = await this._loadDefaultContextAsIs(progress);
-    if (!defaultPage)
+    if (!defaultPage) {
       return;
+    }
     const browserName = this._browser.options.name;
     if ((this._options.isMobile && browserName === 'chromium') || (this._options.locale && browserName === 'webkit')) {
       // Workaround for:
@@ -407,11 +433,13 @@ export abstract class BrowserContext extends SdkObject {
 
   protected _authenticateProxyViaCredentials() {
     const proxy = this._options.proxy || this._browser.options.proxy;
-    if (!proxy)
+    if (!proxy) {
       return;
+    }
     const { username, password } = proxy;
-    if (username)
+    if (username) {
       this._options.httpCredentials = { username, password: password || '' };
+    }
   }
 
   async addInitScript(source: string) {
@@ -448,21 +476,24 @@ export abstract class BrowserContext extends SdkObject {
 
   async close(options: { reason?: string }) {
     if (this._closedStatus === 'open') {
-      if (options.reason)
+      if (options.reason) {
         this._closeReason = options.reason;
+      }
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
-      for (const harRecorder of this._harRecorders.values())
+      for (const harRecorder of this._harRecorders.values()) {
         await harRecorder.flush();
+      }
       await this.tracing.flush();
 
       // Cleanup.
       const promises: Promise<void>[] = [];
       for (const { context, artifact } of this._browser._idToVideo.values()) {
         // Wait for the videos to finish.
-        if (context === this)
+        if (context === this) {
           promises.push(artifact.finishedPromise());
+        }
       }
 
       if (this._customCloseHandler) {
@@ -479,20 +510,23 @@ export abstract class BrowserContext extends SdkObject {
       await Promise.all(promises);
 
       // Custom handler should trigger didCloseInternal itself.
-      if (!this._customCloseHandler)
+      if (!this._customCloseHandler) {
         this._didCloseInternal();
+      }
     }
     await this._closePromise;
   }
 
   async newPage(metadata: CallMetadata): Promise<Page> {
     const page = await this.doCreateNewPage();
-    if (metadata.isServerSide)
+    if (metadata.isServerSide) {
       page.markAsServerSideOnly();
+    }
     const pageOrError = await page.waitForInitializedOrError();
     if (pageOrError instanceof Page) {
-      if (pageOrError.isClosed())
+      if (pageOrError.isClosed()) {
         throw new Error('Page has been closed.');
+      }
       return pageOrError;
     }
     throw pageOrError;
@@ -512,14 +546,16 @@ export abstract class BrowserContext extends SdkObject {
     // First try collecting storage stage from existing pages.
     for (const page of this.pages()) {
       const origin = page.mainFrame().origin();
-      if (!origin || !originsToSave.has(origin))
+      if (!origin || !originsToSave.has(origin)) {
         continue;
+      }
       try {
         const storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`({
           localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
         })`, 'utility');
-        if (storage.localStorage.length)
+        if (storage.localStorage.length) {
           result.origins.push({ origin, localStorage: storage.localStorage } as channels.OriginStorage);
+        }
         originsToSave.delete(origin);
       } catch {
         // When failed on the live page, we'll retry on the blank page below.
@@ -542,8 +578,9 @@ export abstract class BrowserContext extends SdkObject {
           localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
         })`, { world: 'utility' });
         originStorage.localStorage = storage.localStorage;
-        if (storage.localStorage.length)
+        if (storage.localStorage.length) {
           result.origins.push(originStorage);
+        }
       }
       await page.close(internalMetadata);
     }
@@ -553,8 +590,9 @@ export abstract class BrowserContext extends SdkObject {
   async _resetStorage() {
     const oldOrigins = this._origins;
     const newOrigins = new Map(this._options.storageState?.origins?.map(p => [p.origin, p]) || []);
-    if (!oldOrigins.size && !newOrigins.size)
+    if (!oldOrigins.size && !newOrigins.size) {
       return;
+    }
     let page = this.pages()[0];
 
     const internalMetadata = serverSideCallMetadata();
@@ -583,8 +621,9 @@ export abstract class BrowserContext extends SdkObject {
 
   async _resetCookies() {
     await this.doClearCookies();
-    if (this._options.storageState?.cookies)
-      await this.addCookies(this._options.storageState?.cookies);
+    if (this._options.storageState?.cookies) {
+      await this.addCookies(this._options.storageState.cookies);
+    }
   }
 
   isSettingStorageState(): boolean {
@@ -594,8 +633,9 @@ export abstract class BrowserContext extends SdkObject {
   async setStorageState(metadata: CallMetadata, state: NonNullable<channels.BrowserNewContextParams['storageState']>) {
     this._settingStorageState = true;
     try {
-      if (state.cookies)
+      if (state.cookies) {
         await this.addCookies(state.cookies);
+      }
       if (state.origins && state.origins.length)  {
         const internalMetadata = serverSideCallMetadata();
         const page = await this.newPage(internalMetadata);
@@ -660,25 +700,30 @@ export abstract class BrowserContext extends SdkObject {
 
 export function assertBrowserContextIsNotOwned(context: BrowserContext) {
   for (const page of context.pages()) {
-    if (page._ownedContext)
+    if (page._ownedContext) {
       throw new Error('Please use browser.newContext() for multi-page scripts that share the context.');
+    }
   }
 }
 
 export function validateBrowserContextOptions(options: types.BrowserContextOptions, browserOptions: BrowserOptions) {
-  if (options.noDefaultViewport && options.deviceScaleFactor !== undefined)
+  if (options.noDefaultViewport && options.deviceScaleFactor !== undefined) {
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
-  if (options.noDefaultViewport && !!options.isMobile)
+  }
+  if (options.noDefaultViewport && !!options.isMobile) {
     throw new Error(`"isMobile" option is not supported with null "viewport"`);
-  if (options.acceptDownloads === undefined && browserOptions.name !== 'electron')
+  }
+  if (options.acceptDownloads === undefined && browserOptions.name !== 'electron') {
     options.acceptDownloads = 'accept';
-  // Electron requires explicit acceptDownloads: true since we wait for
-  // https://github.com/electron/electron/pull/41718 to be widely shipped.
-  // In 6-12 months, we can remove this check.
-  else if (options.acceptDownloads === undefined && browserOptions.name === 'electron')
+  } else if (options.acceptDownloads === undefined && browserOptions.name === 'electron') {
+    // Electron requires explicit acceptDownloads: true since we wait for
+    // https://github.com/electron/electron/pull/41718 to be widely shipped.
+    // In 6-12 months, we can remove this check.
     options.acceptDownloads = 'internal-browser-default';
-  if (!options.viewport && !options.noDefaultViewport)
+  }
+  if (!options.viewport && !options.noDefaultViewport) {
     options.viewport = { width: 1280, height: 720 };
+  }
   if (options.recordVideo) {
     if (!options.recordVideo.size) {
       if (options.noDefaultViewport) {
@@ -696,38 +741,49 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
     options.recordVideo.size!.width &= ~1;
     options.recordVideo.size!.height &= ~1;
   }
-  if (options.proxy)
+  if (options.proxy) {
     options.proxy = normalizeProxySettings(options.proxy);
+  }
   verifyGeolocation(options.geolocation);
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation) {
-  if (!geolocation)
+  if (!geolocation) {
     return;
+  }
   geolocation.accuracy = geolocation.accuracy || 0;
   const { longitude, latitude, accuracy } = geolocation;
-  if (longitude < -180 || longitude > 180)
+  if (longitude < -180 || longitude > 180) {
     throw new Error(`geolocation.longitude: precondition -180 <= LONGITUDE <= 180 failed.`);
-  if (latitude < -90 || latitude > 90)
+  }
+  if (latitude < -90 || latitude > 90) {
     throw new Error(`geolocation.latitude: precondition -90 <= LATITUDE <= 90 failed.`);
-  if (accuracy < 0)
+  }
+  if (accuracy < 0) {
     throw new Error(`geolocation.accuracy: precondition 0 <= ACCURACY failed.`);
+  }
 }
 
 export function verifyClientCertificates(clientCertificates?: types.BrowserContextOptions['clientCertificates']) {
-  if (!clientCertificates)
+  if (!clientCertificates) {
     return;
+  }
   for (const cert of clientCertificates) {
-    if (!cert.origin)
+    if (!cert.origin) {
       throw new Error(`clientCertificates.origin is required`);
-    if (!cert.cert && !cert.key && !cert.passphrase && !cert.pfx)
+    }
+    if (!cert.cert && !cert.key && !cert.passphrase && !cert.pfx) {
       throw new Error('None of cert, key, passphrase or pfx is specified');
-    if (cert.cert && !cert.key)
+    }
+    if (cert.cert && !cert.key) {
       throw new Error('cert is specified without key');
-    if (!cert.cert && cert.key)
+    }
+    if (!cert.cert && cert.key) {
       throw new Error('key is specified without cert');
-    if (cert.pfx && (cert.cert || cert.key))
+    }
+    if (cert.pfx && (cert.cert || cert.key)) {
       throw new Error('pfx is specified together with cert, key or passphrase');
+    }
   }
 }
 
@@ -739,18 +795,22 @@ export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxyS
     // new URL('localhost:8080') fails to parse host or protocol
     // In both of these cases, we need to try re-parse URL with `http://` prefix.
     url = new URL(server);
-    if (!url.host || !url.protocol)
+    if (!url.host || !url.protocol) {
       url = new URL('http://' + server);
+    }
   } catch (e) {
     url = new URL('http://' + server);
   }
-  if (url.protocol === 'socks4:' && (proxy.username || proxy.password))
+  if (url.protocol === 'socks4:' && (proxy.username || proxy.password)) {
     throw new Error(`Socks4 proxy protocol does not support authentication`);
-  if (url.protocol === 'socks5:' && (proxy.username || proxy.password))
+  }
+  if (url.protocol === 'socks5:' && (proxy.username || proxy.password)) {
     throw new Error(`Browser does not support socks5 proxy authentication`);
+  }
   server = url.protocol + '//' + url.host;
-  if (bypass)
+  if (bypass) {
     bypass = bypass.split(',').map(t => t.trim()).join(',');
+  }
   return { ...proxy, server, bypass };
 }
 

@@ -51,8 +51,9 @@ it.describe('pause', () => {
   it.skip(({ mode }) => mode !== 'default');
 
   it.afterEach(async ({ recorderPageGetter }, testInfo) => {
-    if (testInfo.status === 'skipped')
+    if (testInfo.status === 'skipped') {
       return;
+    }
     try {
       const recorderPage = await recorderPageGetter();
       recorderPage.click('[title="Resume (F8)"]').catch(() => {});
@@ -462,8 +463,9 @@ it.describe('pause', () => {
     await page.setContent('<div>Hello</div>');
     await page.evaluate(() => {
       (window as any).log = [];
-      for (const event of ['keydown', 'keyup', 'keypress'])
+      for (const event of ['keydown', 'keyup', 'keypress']) {
         window.addEventListener(event, e => (window as any).log.push(e.type));
+      }
     });
     const scriptPromise = (async () => {
       // @ts-ignore

@@ -38,8 +38,9 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
       contextId: this._contextId,
       returnByValue: true,
     }).catch(rewriteError);
-    if (exceptionDetails)
+    if (exceptionDetails) {
       throw new js.JavaScriptErrorInEvaluate(getExceptionMessage(exceptionDetails));
+    }
     return remoteObject.value;
   }
 
@@ -48,8 +49,9 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
       expression,
       contextId: this._contextId,
     }).catch(rewriteError);
-    if (exceptionDetails)
+    if (exceptionDetails) {
       throw new js.JavaScriptErrorInEvaluate(getExceptionMessage(exceptionDetails));
+    }
     return remoteObject.objectId!;
   }
 
@@ -66,8 +68,9 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
       awaitPromise: true,
       userGesture: true
     }).catch(rewriteError);
-    if (exceptionDetails)
+    if (exceptionDetails) {
       throw new js.JavaScriptErrorInEvaluate(getExceptionMessage(exceptionDetails));
+    }
     return returnByValue ? parseEvaluationResultValue(remoteObject.value) : utilityScript._context.createHandle(remoteObject);
   }
 
@@ -78,8 +81,9 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     });
     const result = new Map();
     for (const property of response.result) {
-      if (!property.enumerable || !property.value)
+      if (!property.enumerable || !property.value) {
         continue;
+      }
       result.set(property.name, context.createHandle(property.value));
     }
     return result;
@@ -95,15 +99,19 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
 }
 
 function rewriteError(error: Error): Protocol.Runtime.evaluateReturnValue {
-  if (error.message.includes('Object reference chain is too long'))
+  if (error.message.includes('Object reference chain is too long')) {
     throw new Error('Cannot serialize result: object reference chain is too long.');
-  if (error.message.includes('Object couldn\'t be returned by value'))
+  }
+  if (error.message.includes('Object couldn\'t be returned by value')) {
     return { result: { type: 'undefined' } };
+  }
 
-  if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
+  if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON')) {
     rewriteErrorMessage(error, error.message + ' Are you passing a nested JSHandle?');
-  if (!js.isJavaScriptErrorInEvaluate(error) && !isSessionClosedError(error))
+  }
+  if (!js.isJavaScriptErrorInEvaluate(error) && !isSessionClosedError(error)) {
     throw new Error('Execution context was destroyed, most likely because of a navigation.');
+  }
   throw error;
 }
 
@@ -114,20 +122,25 @@ function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObj
 }
 
 function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefined {
-  if (object.type === 'undefined')
+  if (object.type === 'undefined') {
     return 'undefined';
-  if ('value' in object)
+  }
+  if ('value' in object) {
     return String(object.value);
-  if (object.unserializableValue)
+  }
+  if (object.unserializableValue) {
     return String(object.unserializableValue);
+  }
 
   if (object.description === 'Object' && object.preview) {
     const tokens = [];
-    for (const { name, value } of object.preview.properties)
+    for (const { name, value } of object.preview.properties) {
       tokens.push(`${name}: ${value}`);
+    }
     return `{${tokens.join(', ')}}`;
   }
-  if (object.subtype === 'array' && object.preview)
+  if (object.subtype === 'array' && object.preview) {
     return js.sparseArrayToString(object.preview.properties);
+  }
   return object.description;
 }

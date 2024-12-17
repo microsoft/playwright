@@ -41,8 +41,9 @@ function readAllProcessesLinux(): { pid: number, ppid: number, pgrp: number }[] 
   const result: {pid: number, ppid: number, pgrp: number}[] = [];
   for (const dir of fs.readdirSync('/proc')) {
     const pid = +dir;
-    if (isNaN(pid))
+    if (isNaN(pid)) {
       continue;
+    }
     try {
       const statFile = fs.readFileSync(`/proc/${pid}/stat`, 'utf8');
       // Format of /proc/*/stat is described https://man7.org/linux/man-pages/man5/proc.5.html
@@ -68,8 +69,9 @@ function readAllProcessesMacOS(): { pid: number, ppid: number, pgrp: number }[] 
   for (const line of lines) {
     const [pid, pgrp, ppid] = line.trim().split(/\s+/).map(token => +token);
     // On linux, the very first line of `ps` is the header with "PID PGID PPID".
-    if (isNaN(pid) || isNaN(pgrp) || isNaN(ppid))
+    if (isNaN(pid) || isNaN(pgrp) || isNaN(ppid)) {
       continue;
+    }
     result.push({ pid, ppid, pgrp });
   }
   return result;
@@ -79,15 +81,17 @@ function buildProcessTreePosix(pid: number): ProcessData {
   // Certain Linux distributions might not have `ps` installed.
   const allProcesses = process.platform === 'darwin' ? readAllProcessesMacOS() : readAllProcessesLinux();
   const pidToProcess = new Map<number, ProcessData>();
-  for (const { pid, pgrp } of allProcesses)
+  for (const { pid, pgrp } of allProcesses) {
     pidToProcess.set(pid, { pid, pgrp, children: new Set() });
+  }
   for (const { pid, ppid } of allProcesses) {
     const parent = pidToProcess.get(ppid);
     const child = pidToProcess.get(pid);
     // On POSIX, certain processes might not have parent (e.g. PID=1 and occasionally PID=2)
     // or we might not have access to it proc info.
-    if (parent && child)
+    if (parent && child) {
       parent.children.add(child);
+    }
   }
   return pidToProcess.get(pid)!;
 }
@@ -119,23 +123,27 @@ export class TestChildProcess {
       // @see https://nodejs.org/api/child_process.html#child_process_options_detached
       detached: process.platform !== 'win32',
     });
-    if (process.env.PWTEST_DEBUG)
+    if (process.env.PWTEST_DEBUG) {
       process.stdout.write(`\n\nLaunching ${params.command.join(' ')}\n`);
+    }
     this.onOutput = params.onOutput;
 
     const appendChunk = (type: 'stdout' | 'stderr', chunk: string | Buffer) => {
       this.output += String(chunk);
-      if (type === 'stderr')
+      if (type === 'stderr') {
         this.stderr += String(chunk);
-      else
+      } else {
         this.stdout += String(chunk);
-      if (process.env.PWTEST_DEBUG)
+      }
+      if (process.env.PWTEST_DEBUG) {
         process.stdout.write(String(chunk));
-      else
+      } else {
         this.fullOutput += String(chunk);
+      }
       this.onOutput?.(chunk);
-      for (const cb of this._outputCallbacks)
+      for (const cb of this._outputCallbacks) {
         cb();
+      }
       this._outputCallbacks.clear();
     };
 
@@ -162,8 +170,9 @@ export class TestChildProcess {
   }
 
   private _killProcessTree(signal: 'SIGINT' | 'SIGKILL') {
-    if (!this.process.pid || !this.process.kill(0))
+    if (!this.process.pid || !this.process.kill(0)) {
       return;
+    }
 
     // On Windows, we always call `taskkill` no matter signal.
     if (process.platform === 'win32') {
@@ -204,15 +213,18 @@ export class TestChildProcess {
 
   async cleanExit() {
     const r = await this.exited;
-    if (r.exitCode)
+    if (r.exitCode) {
       throw new Error(`Process failed with exit code ${r.exitCode}`);
-    if (r.signal)
+    }
+    if (r.signal) {
       throw new Error(`Process received signal: ${r.signal}`);
+    }
   }
 
   async waitForOutput(substring: string, count = 1) {
-    while (countTimes(stripAnsi(this.output), substring) < count)
+    while (countTimes(stripAnsi(this.output), substring) < count) {
       await new Promise<void>(f => this._outputCallbacks.add(f));
+    }
   }
 
   clearOutput() {
@@ -273,8 +285,9 @@ export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {
                 resolve(true);
               });
         });
-        if (await promise)
+        if (await promise) {
           return;
+        }
         await new Promise(x => setTimeout(x, 100));
       }
     });

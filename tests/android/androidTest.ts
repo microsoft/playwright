@@ -78,8 +78,9 @@ export const androidTest = baseTest.extend<PageTestFixtures & AndroidTestFixture
 
   page: async ({ androidContext }, run) => {
     // Retain default page, otherwise Clank will re-create it.
-    while (androidContext.pages().length > 1)
+    while (androidContext.pages().length > 1) {
       await androidContext.pages()[1].close();
+    }
     const page = await androidContext.newPage();
     await run(page);
   },

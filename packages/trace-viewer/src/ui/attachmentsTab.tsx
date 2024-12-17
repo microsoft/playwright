@@ -44,8 +44,9 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
   const hasContent = !!attachment.sha1 || !!attachment.path;
 
   React.useEffect(() => {
-    if (reveal)
+    if (reveal) {
       ref.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [reveal]);
 
   React.useEffect(() => {
@@ -70,8 +71,9 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
     {hasContent && <a style={{ marginLeft: 5 }} href={downloadURL(attachment)}>download</a>}
   </span>;
 
-  if (!isTextAttachment || !hasContent)
+  if (!isTextAttachment || !hasContent) {
     return <div style={{ marginLeft: 20 }}>{title}</div>;
+  }
 
   return <>
     <Expandable title={title} expanded={expanded} setExpanded={setExpanded} expandOnTitleClick={true}>
@@ -101,14 +103,16 @@ export const AttachmentsTab: React.FunctionComponent<{
 
     for (const action of model?.actions || []) {
       const traceUrl = action.context.traceUrl;
-      for (const attachment of action.attachments || [])
+      for (const attachment of action.attachments || []) {
         attachments.add({ ...attachment, traceUrl });
+      }
     }
     const diffMap = new Map<string, { expected: Attachment | undefined, actual: Attachment | undefined, diff: Attachment | undefined }>();
 
     for (const attachment of attachments) {
-      if (!attachment.path && !attachment.sha1)
+      if (!attachment.path && !attachment.sha1) {
         continue;
+      }
       const match = attachment.name.match(/^(.*)-(expected|actual|diff)\.png$/);
       if (match) {
         const name = match[1];
@@ -125,8 +129,9 @@ export const AttachmentsTab: React.FunctionComponent<{
     return { diffMap, attachments, screenshots };
   }, [model]);
 
-  if (!diffMap.size && !screenshots.size && !attachments.size)
+  if (!diffMap.size && !screenshots.size && !attachments.size) {
     return <PlaceholderPanel text='No attachments' />;
+  }
 
   return <div className='attachments-tab'>
     {[...diffMap.values()].map(({ expected, actual, diff }) => {
@@ -177,8 +182,9 @@ function attachmentURL(attachment: Attachment, queryParams: Record<string, strin
 
 function downloadURL(attachment: Attachment) {
   const params = { dn: attachment.name } as Record<string, string>;
-  if (attachment.contentType)
+  if (attachment.contentType) {
     params.dct = attachment.contentType;
+  }
   return attachmentURL(attachment, params);
 }
 

@@ -179,8 +179,9 @@ it('should report all headers', async ({ page, server, browserName, platform, is
   const headers = await response.headersArray();
   const actualHeaders = {};
   for (const { name, value } of headers) {
-    if (!actualHeaders[name])
+    if (!actualHeaders[name]) {
       actualHeaders[name] = [];
+    }
     actualHeaders[name].push(value);
   }
   delete actualHeaders['Keep-Alive'];
@@ -230,8 +231,9 @@ it('should behave the same way for headers and allHeaders', async ({ page, serve
       'name-A': 'v3',
     };
     // Chromium does not report set-cookie headers immediately, so they are missing from .headers()
-    if (browserName === 'chromium')
+    if (browserName === 'chromium') {
       delete headers['Set-Cookie'];
+    }
 
     res.writeHead(200, headers);
     res.write('\r\n');
@@ -257,10 +259,11 @@ it('should provide a Response with a file URL', async ({ page, asset, isAndroid,
 
   const fileurl = url.pathToFileURL(asset('frames/two-frames.html')).href;
   const response = await page.goto(fileurl);
-  if (isElectron || (browserName === 'chromium') || (browserName === 'webkit' && isWindows))
+  if (isElectron || (browserName === 'chromium') || (browserName === 'webkit' && isWindows)) {
     expect(response.status()).toBe(200);
-  else
+  } else {
     expect(response.status()).toBe(0);
+  }
   expect(response.ok()).toBe(true);
 });
 

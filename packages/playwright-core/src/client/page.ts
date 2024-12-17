@@ -166,16 +166,18 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   private _onFrameAttached(frame: Frame) {
     frame._page = this;
     this._frames.add(frame);
-    if (frame._parentFrame)
+    if (frame._parentFrame) {
       frame._parentFrame._childFrames.add(frame);
+    }
     this.emit(Events.Page.FrameAttached, frame);
   }
 
   private _onFrameDetached(frame: Frame) {
     this._frames.delete(frame);
     frame._detached = true;
-    if (frame._parentFrame)
+    if (frame._parentFrame) {
       frame._parentFrame._childFrames.delete(frame);
+    }
     this.emit(Events.Page.FrameDetached, frame);
   }
 
@@ -184,20 +186,26 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
       // If the page was closed we stall all requests right away.
-      if (this._closeWasCalled || this._browserContext._closeWasCalled)
+      if (this._closeWasCalled || this._browserContext._closeWasCalled) {
         return;
-      if (!routeHandler.matches(route.request().url()))
+      }
+      if (!routeHandler.matches(route.request().url())) {
         continue;
+      }
       const index = this._routes.indexOf(routeHandler);
-      if (index === -1)
+      if (index === -1) {
         continue;
-      if (routeHandler.willExpire())
+      }
+      if (routeHandler.willExpire()) {
         this._routes.splice(index, 1);
+      }
       const handled = await routeHandler.handle(route);
-      if (!this._routes.length)
+      if (!this._routes.length) {
         this._wrapApiCall(() => this._updateInterceptionPatterns(), true).catch(() => {});
-      if (handled)
+      }
+      if (handled) {
         return;
+      }
     }
 
     await this._browserContext._onRoute(route);
@@ -205,10 +213,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   private async _onWebSocketRoute(webSocketRoute: WebSocketRoute) {
     const routeHandler = this._webSocketRoutes.find(route => route.matches(webSocketRoute.url()));
-    if (routeHandler)
+    if (routeHandler) {
       await routeHandler.handle(webSocketRoute);
-    else
+    } else {
       await this._browserContext._onWebSocketRoute(webSocketRoute);
+    }
   }
 
   async _onBinding(bindingCall: BindingCall) {
@@ -243,8 +252,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async opener(): Promise<Page | null> {
-    if (!this._opener || this._opener.isClosed())
+    if (!this._opener || this._opener.isClosed()) {
       return null;
+    }
     return this._opener;
   }
 
@@ -257,8 +267,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     const url = isObject(frameSelector) ? frameSelector.url : undefined;
     assert(name || url, 'Either name or url matcher should be specified');
     return this.frames().find(f => {
-      if (name)
+      if (name) {
         return f.name() === name;
+      }
       return urlMatches(this._browserContext._options.baseURL, f.url(), url);
     }) || null;
   }
@@ -282,8 +293,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   private _forceVideo(): Video {
-    if (!this._video)
+    if (!this._video) {
       this._video = new Video(this, this._connection);
+    }
     return this._video;
   }
 
@@ -291,8 +303,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     // Note: we are creating Video object lazily, because we do not know
     // BrowserContextOptions when constructing the page - it is assigned
     // too late during launchPersistentContext.
-    if (!this._browserContext._options.recordVideo)
+    if (!this._browserContext._options.recordVideo) {
       return null;
+    }
     return this._forceVideo();
   }
 
@@ -375,10 +388,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async addLocatorHandler(locator: Locator, handler: (locator: Locator) => any, options: { times?: number, noWaitAfter?: boolean } = {}): Promise<void> {
-    if (locator._frame !== this._mainFrame)
+    if (locator._frame !== this._mainFrame) {
       throw new Error(`Locator must belong to the main frame of this page`);
-    if (options.times === 0)
+    }
+    if (options.times === 0) {
       return;
+    }
     const { uid } = await this._channel.registerLocatorHandler({ selector: locator._selector, noWaitAfter: options.noWaitAfter });
     this._locatorHandlers.set(uid, { locator, handler, times: options.times });
   }
@@ -388,14 +403,16 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     try {
       const handler = this._locatorHandlers.get(uid);
       if (handler && handler.times !== 0) {
-        if (handler.times !== undefined)
+        if (handler.times !== undefined) {
           handler.times--;
+        }
         await handler.handler(handler.locator);
       }
       remove = handler?.times === 0;
     } finally {
-      if (remove)
+      if (remove) {
         this._locatorHandlers.delete(uid);
+      }
       this._wrapApiCall(() => this._channel.resolveLocatorHandlerNoReply({ uid, remove }), true).catch(() => {});
     }
   }
@@ -423,8 +440,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean | Promise<boolean>), options: { timeout?: number } = {}): Promise<Request> {
     const predicate = async (request: Request) => {
-      if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
+      if (isString(urlOrPredicate) || isRegExp(urlOrPredicate)) {
         return urlMatches(this._browserContext._options.baseURL, request.url(), urlOrPredicate);
+      }
       return await urlOrPredicate(request);
     };
     const trimmedUrl = trimUrl(urlOrPredicate);
@@ -434,8 +452,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean | Promise<boolean>), options: { timeout?: number } = {}): Promise<Response> {
     const predicate = async (response: Response) => {
-      if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
+      if (isString(urlOrPredicate) || isRegExp(urlOrPredicate)) {
         return urlMatches(this._browserContext._options.baseURL, response.url(), urlOrPredicate);
+      }
       return await urlOrPredicate(response);
     };
     const trimmedUrl = trimUrl(urlOrPredicate);
@@ -456,13 +475,16 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);
-      if (logLine)
+      if (logLine) {
         waiter.log(logLine);
+      }
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
-      if (event !== Events.Page.Crash)
+      if (event !== Events.Page.Crash) {
         waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
-      if (event !== Events.Page.Close)
+      }
+      if (event !== Events.Page.Close) {
         waiter.rejectOnEvent(this, Events.Page.Close, () => this._closeErrorWithReason());
+      }
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;
@@ -545,10 +567,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     const removed = [];
     const remaining = [];
     for (const route of this._routes) {
-      if (urlMatchesEqual(route.url, url) && (!handler || route.handler === handler))
+      if (urlMatchesEqual(route.url, url) && (!handler || route.handler === handler)) {
         removed.push(route);
-      else
+      } else {
         remaining.push(route);
+      }
     }
     await this._unrouteInternal(removed, remaining, 'default');
   }
@@ -556,8 +579,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   private async _unrouteInternal(removed: RouteHandler[], remaining: RouteHandler[], behavior?: 'wait'|'ignoreErrors'|'default'): Promise<void> {
     this._routes = remaining;
     await this._updateInterceptionPatterns();
-    if (!behavior || behavior === 'default')
+    if (!behavior || behavior === 'default') {
       return;
+    }
     const promises = removed.map(routeHandler => routeHandler.stop(behavior));
     await Promise.all(promises);
   }
@@ -574,8 +598,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async screenshot(options: Omit<channels.PageScreenshotOptions, 'mask'> & { path?: string, mask?: Locator[] } = {}): Promise<Buffer> {
     const copy: channels.PageScreenshotOptions = { ...options, mask: undefined };
-    if (!copy.type)
+    if (!copy.type) {
       copy.type = determineScreenshotType(options);
+    }
     if (options.mask) {
       copy.mask = options.mask.map(locator => ({
         frame: locator._frame._channel,
@@ -591,7 +616,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async _expectScreenshot(options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[], timedOut?: boolean}> {
-    const mask = options?.mask ? options?.mask.map(locator => ({
+    const mask = options.mask ? options.mask.map(locator => ({
       frame: (locator as Locator)._frame._channel,
       selector: (locator as Locator)._selector,
     })) : undefined;
@@ -623,13 +648,15 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._closeReason = options.reason;
     this._closeWasCalled = true;
     try {
-      if (this._ownedContext)
+      if (this._ownedContext) {
         await this._ownedContext.close();
-      else
+      } else {
         await this._channel.close(options);
+      }
     } catch (e) {
-      if (isTargetClosedError(e) && !options.runBeforeUnload)
+      if (isTargetClosedError(e) && !options.runBeforeUnload) {
         return;
+      }
       throw e;
     }
   }
@@ -787,13 +814,14 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async pause(_options?: { __testHookKeepTestTimeout: boolean }) {
-    if (require('inspector').url())
+    if (require('inspector').url()) {
       return;
+    }
     const defaultNavigationTimeout = this._browserContext._timeoutSettings.defaultNavigationTimeout();
     const defaultTimeout = this._browserContext._timeoutSettings.defaultTimeout();
     this._browserContext.setDefaultNavigationTimeout(0);
     this._browserContext.setDefaultTimeout(0);
-    this._instrumentation?.onWillPause({ keepTestTimeout: !!_options?.__testHookKeepTestTimeout });
+    this._instrumentation.onWillPause({ keepTestTimeout: !!_options?.__testHookKeepTestTimeout });
     await this._closedOrCrashedScope.safeRace(this.context()._channel.pause());
     this._browserContext.setDefaultNavigationTimeout(defaultNavigationTimeout);
     this._browserContext.setDefaultTimeout(defaultTimeout);
@@ -801,16 +829,20 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async pdf(options: PDFOptions = {}): Promise<Buffer> {
     const transportOptions: channels.PagePdfParams = { ...options } as channels.PagePdfParams;
-    if (transportOptions.margin)
+    if (transportOptions.margin) {
       transportOptions.margin = { ...transportOptions.margin };
-    if (typeof options.width === 'number')
+    }
+    if (typeof options.width === 'number') {
       transportOptions.width = options.width + 'px';
-    if (typeof options.height === 'number')
+    }
+    if (typeof options.height === 'number') {
       transportOptions.height  = options.height + 'px';
+    }
     for (const margin of ['top', 'right', 'bottom', 'left']) {
       const index = margin as 'top' | 'right' | 'bottom' | 'left';
-      if (options.margin && typeof options.margin[index] === 'number')
-        transportOptions.margin![index] = transportOptions.margin![index] + 'px';
+      if (options.margin && typeof options.margin[index] === 'number') {
+transportOptions.margin![index] = transportOptions.margin![index] + 'px';
+      }
     }
     const result = await this._channel.pdf(transportOptions);
     if (options.path) {
@@ -839,10 +871,11 @@ export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
         frame
       };
       let result: any;
-      if (this._initializer.handle)
+      if (this._initializer.handle) {
         result = await func(source, JSHandle.from(this._initializer.handle));
-      else
+      } else {
         result = await func(source, ...this._initializer.args!.map(parseResult));
+      }
       this._channel.resolve({ result: serializeArgument(result) }).catch(() => {});
     } catch (e) {
       this._channel.reject({ error: serializeError(e) }).catch(() => {});
@@ -851,8 +884,10 @@ export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
 }
 
 function trimUrl(param: any): string | undefined {
-  if (isRegExp(param))
+  if (isRegExp(param)) {
     return `/${trimStringWithEllipsis(param.source, 50)}/${param.flags}`;
-  if (isString(param))
+  }
+  if (isString(param)) {
     return `"${trimStringWithEllipsis(param, 50)}"`;
+  }
 }

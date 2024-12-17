@@ -15,8 +15,9 @@ import type * as Bidi from './bidiProtocol';
  */
 export class BidiDeserializer {
   static deserialize(result: Bidi.Script.RemoteValue): any {
-    if (!result)
+    if (!result) {
       return undefined;
+    }
 
     switch (result.type) {
       case 'array':

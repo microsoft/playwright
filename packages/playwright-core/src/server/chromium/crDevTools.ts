@@ -34,12 +34,14 @@ export class CRDevTools {
 
   install(session: CRSession) {
     session.on('Runtime.bindingCalled', async event => {
-      if (event.name !== kBindingName)
+      if (event.name !== kBindingName) {
         return;
+      }
       const parsed = JSON.parse(event.payload);
       let result = undefined;
-      if (this.__testHookOnBinding)
+      if (this.__testHookOnBinding) {
         this.__testHookOnBinding(parsed);
+      }
       if (parsed.method === 'getPreferences') {
         if (this._prefs === undefined) {
           try {

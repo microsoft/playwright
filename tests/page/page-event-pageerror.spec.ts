@@ -107,7 +107,9 @@ it('should handle odd values', async ({ page }) => {
     const [error] = await Promise.all([
       page.waitForEvent('pageerror'),
       page.evaluate(value => {
-        window.builtinSetTimeout(() => { throw value; }, 0);
+        window.builtinSetTimeout(() => {
+          throw value;
+        }, 0);
       }, value),
     ]);
     expect(error.message).toBe(message);
@@ -118,7 +120,9 @@ it('should handle object', async ({ page, browserName }) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => {
-      window.builtinSetTimeout(() => { throw {}; }, 0);
+      window.builtinSetTimeout(() => {
+        throw {};
+      }, 0);
     }),
   ]);
   expect(error.message).toBe(browserName === 'chromium' ? 'Object' : '[object Object]');
@@ -128,7 +132,9 @@ it('should handle window', async ({ page, browserName }) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => {
-      window.builtinSetTimeout(() => { throw window; }, 0);
+      window.builtinSetTimeout(() => {
+        throw window;
+      }, 0);
     }),
   ]);
   expect(error.message).toBe(browserName === 'chromium' ? 'Window' : '[object Window]');

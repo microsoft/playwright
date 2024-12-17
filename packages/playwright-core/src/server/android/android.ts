@@ -80,14 +80,16 @@ export class Android extends SdkObject {
     const newSerials = new Set<string>();
     for (const d of devices) {
       newSerials.add(d.serial);
-      if (this._devices.has(d.serial))
+      if (this._devices.has(d.serial)) {
         continue;
+      }
       const device = await AndroidDevice.create(this, d, options);
       this._devices.set(d.serial, device);
     }
     for (const d of this._devices.keys()) {
-      if (!newSerials.has(d))
+      if (!newSerials.has(d)) {
         this._devices.delete(d);
+      }
     }
     return [...this._devices.values()];
   }
@@ -168,10 +170,12 @@ export class AndroidDevice extends SdkObject {
   }
 
   private async _driver(): Promise<PipeTransport | undefined> {
-    if (this._isClosed)
+    if (this._isClosed) {
       return;
-    if (!this._driverPromise)
+    }
+    if (!this._driverPromise) {
       this._driverPromise = this._installDriver();
+    }
     return this._driverPromise;
   }
 
@@ -190,8 +194,9 @@ export class AndroidDevice extends SdkObject {
       const packageManagerCommand = getPackageManagerExecCommand();
       for (const file of ['android-driver.apk', 'android-driver-target.apk']) {
         const fullName = path.join(executable.directory!, file);
-        if (!fs.existsSync(fullName))
+        if (!fs.existsSync(fullName)) {
           throw new Error(`Please install Android driver apk using '${packageManagerCommand} playwright install android'`);
+        }
         await this.installApk(await fs.promises.readFile(fullName));
       }
     } else {
@@ -206,12 +211,14 @@ export class AndroidDevice extends SdkObject {
       const response = JSON.parse(message);
       const { id, result, error } = response;
       const callback = this._callbacks.get(id);
-      if (!callback)
+      if (!callback) {
         return;
-      if (error)
+      }
+      if (error) {
         callback.reject(new Error(error));
-      else
+      } else {
         callback.fulfill(result);
+      }
       this._callbacks.delete(id);
     };
     return transport;
@@ -235,8 +242,9 @@ export class AndroidDevice extends SdkObject {
     // Patch the timeout in!
     params.timeout = this._timeoutSettings.timeout(params);
     const driver = await this._driver();
-    if (!driver)
+    if (!driver) {
       throw new Error('Device is closed');
+    }
     const id = ++this._lastId;
     const result = new Promise((fulfill, reject) => this._callbacks.set(id, { fulfill, reject }));
     driver.send(JSON.stringify({ id, method, params }));
@@ -244,13 +252,16 @@ export class AndroidDevice extends SdkObject {
   }
 
   async close() {
-    if (this._isClosed)
+    if (this._isClosed) {
       return;
+    }
     this._isClosed = true;
-    if (this._pollingWebViews)
+    if (this._pollingWebViews) {
       clearTimeout(this._pollingWebViews);
-    for (const connection of this._browserConnections)
+    }
+    for (const connection of this._browserConnections) {
       await connection.close();
+    }
     if (this._driverPromise) {
       const driver = await this._driver();
       driver?.close();
@@ -292,12 +303,15 @@ export class AndroidDevice extends SdkObject {
     if (proxy) {
       chromeArguments.push(`--proxy-server=${proxy.server}`);
       const proxyBypassRules = [];
-      if (proxy.bypass)
+      if (proxy.bypass) {
         proxyBypassRules.push(...proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));
-      if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !proxyBypassRules.includes('<-loopback>'))
+      }
+      if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !proxyBypassRules.includes('<-loopback>')) {
         proxyBypassRules.push('<-loopback>');
-      if (proxyBypassRules.length > 0)
+      }
+      if (proxyBypassRules.length > 0) {
         chromeArguments.push(`--proxy-bypass-list=${proxyBypassRules.join(';')}`);
+      }
     }
     chromeArguments.push(...args);
     return chromeArguments;
@@ -305,8 +319,9 @@ export class AndroidDevice extends SdkObject {
 
   async connectToWebView(socketName: string): Promise<BrowserContext> {
     const webView = this._webViews.get(socketName);
-    if (!webView)
+    if (!webView) {
       throw new Error('WebView has been closed');
+    }
     return await this._connectToBrowser(socketName);
   }
 
@@ -319,8 +334,9 @@ export class AndroidDevice extends SdkObject {
     const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
     const cleanupArtifactsDir = async () => {
       const errors = await removeFolders([artifactsDir]);
-      for (let i = 0; i < (errors || []).length; ++i)
+      for (let i = 0; i < (errors || []).length; ++i) {
         debug('pw:android')(`exception while removing ${artifactsDir}: ${errors[i]}`);
+      }
     };
     gracefullyCloseSet.add(cleanupArtifactsDir);
     socket.on('close', async () => {
@@ -381,43 +397,50 @@ export class AndroidDevice extends SdkObject {
     };
     await send('SEND', Buffer.from(`${path},${mode}`));
     const maxChunk = 65535;
-    for (let i = 0; i < content.length; i += maxChunk)
+    for (let i = 0; i < content.length; i += maxChunk) {
       await send('DATA', content.slice(i, i + maxChunk));
+    }
     await sendHeader('DONE', (Date.now() / 1000) | 0);
     const result = await new Promise<Buffer>(f => socket.once('data', f));
     const code = result.slice(0, 4).toString();
-    if (code !== 'OKAY')
+    if (code !== 'OKAY') {
       throw new Error('Could not push: ' + code);
+    }
     socket.close();
   }
 
   private async _refreshWebViews() {
     // possible socketName, eg: webview_devtools_remote_32327, webview_devtools_remote_32327_zeus, webview_devtools_remote_zeus
     const sockets = (await this._backend.runCommand(`shell:cat /proc/net/unix | grep webview_devtools_remote`)).toString().split('\n');
-    if (this._isClosed)
+    if (this._isClosed) {
       return;
+    }
 
     const socketNames = new Set<string>();
     for (const line of sockets) {
       const matchSocketName = line.match(/[^@]+@(.*?webview_devtools_remote_?.*)/);
-      if (!matchSocketName)
+      if (!matchSocketName) {
         continue;
+      }
 
       const socketName = matchSocketName[1];
       socketNames.add(socketName);
-      if (this._webViews.has(socketName))
+      if (this._webViews.has(socketName)) {
         continue;
+      }
 
       // possible line: 0000000000000000: 00000002 00000000 00010000 0001 01 5841881 @webview_devtools_remote_zeus
       // the result: match[1] = ''
       const match = line.match(/[^@]+@.*?webview_devtools_remote_?(\d*)/);
       let pid = -1;
-      if (match && match[1])
+      if (match && match[1]) {
         pid = +match[1];
+      }
 
       const pkg = await this._extractPkg(pid);
-      if (this._isClosed)
+      if (this._isClosed) {
         return;
+      }
 
       const webView = { pid, pkg, socketName };
       this._webViews.set(socketName, webView);
@@ -433,14 +456,16 @@ export class AndroidDevice extends SdkObject {
 
   private async _extractPkg(pid: number) {
     let pkg = '';
-    if (pid === -1)
+    if (pid === -1) {
       return pkg;
+    }
 
     const procs = (await this._backend.runCommand(`shell:ps -A | grep ${pid}`)).toString().split('\n');
     for (const proc of procs) {
       const match = proc.match(/[^\s]+\s+(\d+).*$/);
-      if (!match)
+      if (!match) {
         continue;
+      }
       pkg = proc.substring(proc.lastIndexOf(' ') + 1);
     }
     return pkg;
@@ -462,15 +487,17 @@ class AndroidBrowser extends EventEmitter {
     this._socket = socket;
     this._socket.on('close', () => {
       this._waitForNextTask(() => {
-        if (this.onclose)
+        if (this.onclose) {
           this.onclose();
+        }
       });
     });
     this._receiver = new wsReceiver() as stream.Writable;
     this._receiver.on('message', message => {
       this._waitForNextTask(() => {
-        if (this.onmessage)
+        if (this.onmessage) {
           this.onmessage(JSON.parse(message));
+        }
       });
     });
   }

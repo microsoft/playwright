@@ -7,7 +7,7 @@
 
 import type * as Bidi from './bidiProtocol';
 
-/* eslint-disable curly, indent */
+/* eslint-disable indent */
 
 /**
  * @internal

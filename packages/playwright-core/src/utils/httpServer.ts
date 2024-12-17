@@ -113,8 +113,9 @@ export class HttpServer {
       try {
         await this._tryStart(options.preferredPort, host);
       } catch (e) {
-        if (!e || !e.message || !e.message.includes('EADDRINUSE'))
+        if (!e || !e.message || !e.message.includes('EADDRINUSE')) {
           throw e;
+        }
         await this._tryStart(undefined, host);
       }
     } else {
@@ -144,12 +145,14 @@ export class HttpServer {
 
   serveFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string, headers?: { [name: string]: string }): boolean {
     try {
-      for (const [name, value] of Object.entries(headers || {}))
+      for (const [name, value] of Object.entries(headers || {})) {
         response.setHeader(name, value);
-      if (request.headers.range)
+      }
+      if (request.headers.range) {
         this._serveRangeFile(request, response, absoluteFilePath);
-      else
+      } else {
         this._serveFile(response, absoluteFilePath);
+      }
       return true;
     } catch (e) {
       return false;
@@ -217,8 +220,9 @@ export class HttpServer {
     response.setHeader('Access-Control-Allow-Origin', '*');
     response.setHeader('Access-Control-Request-Method', '*');
     response.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET');
-    if (request.headers.origin)
+    if (request.headers.origin) {
       response.setHeader('Access-Control-Allow-Headers', request.headers.origin);
+    }
 
     if (request.method === 'OPTIONS') {
       response.writeHead(200);
@@ -234,10 +238,12 @@ export class HttpServer {
       }
       const url = new URL('http://localhost' + request.url);
       for (const route of this._routes) {
-        if (route.exact && url.pathname === route.exact && route.handler(request, response))
+        if (route.exact && url.pathname === route.exact && route.handler(request, response)) {
           return;
-        if (route.prefix && url.pathname.startsWith(route.prefix) && route.handler(request, response))
+        }
+        if (route.prefix && url.pathname.startsWith(route.prefix) && route.handler(request, response)) {
           return;
+        }
       }
       response.statusCode = 404;
       response.end();

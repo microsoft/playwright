@@ -26,18 +26,22 @@ export type PlatformWorkerFixtures = {
 };
 
 function platform(): 'win32' | 'darwin' | 'linux' {
-  if (process.env.PLAYWRIGHT_SERVICE_OS === 'linux')
+  if (process.env.PLAYWRIGHT_SERVICE_OS === 'linux') {
     return 'linux';
-  if (process.env.PLAYWRIGHT_SERVICE_OS === 'windows')
+  }
+  if (process.env.PLAYWRIGHT_SERVICE_OS === 'windows') {
     return 'win32';
-  if (process.env.PLAYWRIGHT_SERVICE_OS === 'macos')
+  }
+  if (process.env.PLAYWRIGHT_SERVICE_OS === 'macos') {
     return 'darwin';
+  }
   return process.platform as 'win32' | 'darwin' | 'linux';
 }
 
 function macVersion() {
-  if (process.platform !== 'darwin')
+  if (process.platform !== 'darwin') {
     return 0;
+  }
   return +os.release().split('.')[0] - 9;
 }
 

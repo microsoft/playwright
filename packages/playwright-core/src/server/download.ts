@@ -34,8 +34,9 @@ export class Download {
     this.url = url;
     this._suggestedFilename = suggestedFilename;
     page._browserContext._downloads.add(this);
-    if (suggestedFilename !== undefined)
+    if (suggestedFilename !== undefined) {
       this._fireDownloadEvent();
+    }
   }
 
   page(): Page {

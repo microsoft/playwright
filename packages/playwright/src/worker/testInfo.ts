@@ -105,8 +105,9 @@ export class TestInfoImpl implements TestInfo {
   }
 
   set error(e: TestInfoErrorImpl | undefined) {
-    if (e === undefined)
+    if (e === undefined) {
       throw new Error('Cannot assign testInfo.error undefined value!');
+    }
     this.errors[0] = e;
   }
 
@@ -167,8 +168,9 @@ export class TestInfoImpl implements TestInfo {
     this.expectedStatus = test?.expectedStatus ?? 'skipped';
 
     this._timeoutManager = new TimeoutManager(this.project.timeout);
-    if (configInternal.configCLIOverrides.debug)
+    if (configInternal.configCLIOverrides.debug) {
       this._setDebugMode();
+    }
 
     this.outputDir = (() => {
       const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile.replace(/\.(spec|test)\.(js|ts|jsx|tsx|mjs|mts|cjs|cts)$/, ''));
@@ -176,12 +178,15 @@ export class TestInfoImpl implements TestInfo {
       const fullTitleWithoutSpec = this.titlePath.slice(1).join(' ');
 
       let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec), windowsFilesystemFriendlyLength);
-      if (projectInternal.id)
+      if (projectInternal.id) {
         testOutputDir += '-' + sanitizeForFilePath(projectInternal.id);
-      if (this.retry)
+      }
+      if (this.retry) {
         testOutputDir += '-retry' + this.retry;
-      if (this.repeatEachIndex)
+      }
+      if (this.repeatEachIndex) {
         testOutputDir += '-repeat' + this.repeatEachIndex;
+      }
       return path.join(this.project.outputDir, testOutputDir);
     })();
 
@@ -192,8 +197,9 @@ export class TestInfoImpl implements TestInfo {
 
     this._attachmentsPush = this.attachments.push.bind(this.attachments);
     this.attachments.push = (...attachments: TestInfo['attachments']) => {
-      for (const a of attachments)
+      for (const a of attachments) {
         this._attach(a.name, a);
+      }
       return this.attachments.length;
     };
 
@@ -211,8 +217,9 @@ export class TestInfoImpl implements TestInfo {
       ].join('\n'));
     }
 
-    if (modifierArgs.length >= 1 && !modifierArgs[0])
+    if (modifierArgs.length >= 1 && !modifierArgs[0]) {
       return;
+    }
 
     const description = modifierArgs[1];
     this.annotations.push({ type, description });
@@ -222,8 +229,9 @@ export class TestInfoImpl implements TestInfo {
       this.expectedStatus = 'skipped';
       throw new SkipError('Test is skipped: ' + (description || ''));
     } else if (type === 'fail') {
-      if (this.expectedStatus !== 'skipped')
+      if (this.expectedStatus !== 'skipped') {
         this.expectedStatus = 'failed';
+      }
     }
   }
 
@@ -231,10 +239,12 @@ export class TestInfoImpl implements TestInfo {
     // Find the deepest step that is marked as isStage and has not finished yet.
     for (let i = steps.length - 1; i >= 0; i--) {
       const child = this._findLastStageStep(steps[i].steps);
-      if (child)
+      if (child) {
         return child;
-      if (steps[i].isStage && !steps[i].endWallTime)
+      }
+      if (steps[i].isStage && !steps[i].endWallTime) {
         return steps[i];
+      }
     }
   }
 
@@ -245,8 +255,9 @@ export class TestInfoImpl implements TestInfo {
       // Predefined stages form a fixed hierarchy - use the current one as parent.
       parentStep = this._findLastStageStep(this._steps);
     } else {
-      if (!parentStep)
+      if (!parentStep) {
         parentStep = zones.zoneData<TestStepInternal>('stepZone');
+      }
       if (!parentStep) {
         // If no parent step on stack, assume the current stage as parent.
         parentStep = this._findLastStageStep(this._steps);
@@ -266,16 +277,19 @@ export class TestInfoImpl implements TestInfo {
       ...data,
       steps: [],
       complete: result => {
-        if (step.endWallTime)
+        if (step.endWallTime) {
           return;
+        }
 
         step.endWallTime = Date.now();
         if (result.error) {
-          if (typeof result.error === 'object' && !(result.error as any)?.[stepSymbol])
+          if (typeof result.error === 'object' && !(result.error as any)?.[stepSymbol]) {
             (result.error as any)[stepSymbol] = step;
+          }
           const error = testInfoError(result.error);
-          if (data.boxedStack)
+          if (data.boxedStack) {
             error.stack = `${error.message}\n${stringifyStackFrames(data.boxedStack).join('\n')}`;
+          }
           step.error = error;
         }
 
@@ -325,17 +339,20 @@ export class TestInfoImpl implements TestInfo {
     this._wasInterrupted = true;
     this._timeoutManager.interrupt();
     // Do not overwrite existing failure (for example, unhandled rejection) with "interrupted".
-    if (this.status === 'passed')
+    if (this.status === 'passed') {
       this.status = 'interrupted';
+    }
   }
 
   _failWithError(error: Error | unknown) {
-    if (this.status === 'passed' || this.status === 'skipped')
+    if (this.status === 'passed' || this.status === 'skipped') {
       this.status = error instanceof TimeoutManagerError ? 'timedOut' : 'failed';
+    }
     const serialized = testInfoError(error);
     const step: TestStepInternal | undefined = typeof error === 'object' ? (error as any)?.[stepSymbol] : undefined;
-    if (step && step.boxedStack)
+    if (step && step.boxedStack) {
       serialized.stack = `${(error as Error).name}: ${(error as Error).message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
+    }
     this.errors.push(serialized);
     this._tracing.appendForError(serialized);
   }
@@ -353,11 +370,13 @@ export class TestInfoImpl implements TestInfo {
           await cb();
         } catch (e) {
           // Only handle errors directly thrown by the user code.
-          if (!stage.runnable)
+          if (!stage.runnable) {
             throw e;
+          }
           if (this._allowSkips && (e instanceof SkipError)) {
-            if (this.status === 'passed')
+            if (this.status === 'passed') {
               this.status = 'skipped';
+            }
           } else {
             // Unfortunately, we have to handle user errors and timeout errors differently.
             // Consider the following scenario:
@@ -375,8 +394,9 @@ export class TestInfoImpl implements TestInfo {
     } catch (error) {
       // When interrupting, we arrive here with a TimeoutManagerError, but we should not
       // consider it a timeout.
-      if (!this._wasInterrupted && (error instanceof TimeoutManagerError) && stage.runnable)
+      if (!this._wasInterrupted && (error instanceof TimeoutManagerError) && stage.runnable) {
         this._failWithError(error);
+      }
       stage.step?.complete({ error });
       throw error;
     } finally {
@@ -428,8 +448,9 @@ export class TestInfoImpl implements TestInfo {
   _getOutputPath(...pathSegments: string[]){
     const joinedPath = path.join(...pathSegments);
     const outputPath = getContainedPath(this.outputDir, joinedPath);
-    if (outputPath)
+    if (outputPath) {
       return outputPath;
+    }
     throw new Error(`The outputPath is not allowed outside of the parent directory. Please fix the defined path.\n\n\toutputPath: ${joinedPath}`);
   }
 

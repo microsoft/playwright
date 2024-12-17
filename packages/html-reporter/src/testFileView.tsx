@@ -74,8 +74,9 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
 function imageDiffBadge(test: TestCaseSummary): JSX.Element | undefined {
   for (const result of test.results) {
     for (const attachment of result.attachments) {
-      if (attachment.contentType.startsWith('image/') && !!attachment.name.match(/-(expected|actual|diff)/))
+      if (attachment.contentType.startsWith('image/') && !!attachment.name.match(/-(expected|actual|diff)/)) {
         return <Link href={testResultHref({ test, result, anchor: `attachment-${attachment.name}` })} title='View images' className='test-file-badge'>{image()}</Link>;
+      }
     }
   }
 }

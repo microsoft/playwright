@@ -58,8 +58,9 @@ export class Chromium extends BrowserType {
   constructor(parent: SdkObject) {
     super(parent, 'chromium');
 
-    if (debugMode())
+    if (debugMode()) {
       this._devtools = this._createDevTools();
+    }
   }
 
   override async connectOverCDP(metadata: CallMetadata, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray }, timeout?: number) {
@@ -72,13 +73,15 @@ export class Chromium extends BrowserType {
 
   async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray }, onClose?: () => Promise<void>) {
     let headersMap: { [key: string]: string; } | undefined;
-    if (options.headers)
+    if (options.headers) {
       headersMap = headersArrayToObject(options.headers, false);
+    }
 
-    if (!headersMap)
+    if (!headersMap) {
       headersMap = { 'User-Agent': getUserAgent() };
-    else if (headersMap && !Object.keys(headersMap).some(key => key.toLowerCase() === 'user-agent'))
+    } else if (headersMap && !Object.keys(headersMap).some(key => key.toLowerCase() === 'user-agent')) {
       headersMap['User-Agent'] = getUserAgent();
+    }
 
     const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
 
@@ -135,14 +138,17 @@ export class Chromium extends BrowserType {
   }
 
   override doRewriteStartupLog(error: ProtocolError): ProtocolError {
-    if (!error.logs)
+    if (!error.logs) {
       return error;
-    if (error.logs.includes('Missing X server'))
+    }
+    if (error.logs.includes('Missing X server')) {
       error.logs = '\n' + wrapInASCIIBox(kNoXServerRunningError, 1);
+    }
     // These error messages are taken from Chromium source code as of July, 2020:
     // https://github.com/chromium/chromium/blob/70565f67e79f79e17663ad1337dc6e63ee207ce9/content/browser/zygote_host/zygote_host_impl_linux.cc
-    if (!error.logs.includes('crbug.com/357670') && !error.logs.includes('No usable sandbox!') && !error.logs.includes('crbug.com/638180'))
+    if (!error.logs.includes('crbug.com/357670') && !error.logs.includes('No usable sandbox!') && !error.logs.includes('crbug.com/638180')) {
       return error;
+    }
     error.logs = [
       `Chromium sandboxing failed!`,
       `================================`,
@@ -167,8 +173,9 @@ export class Chromium extends BrowserType {
   override async _launchWithSeleniumHub(progress: Progress, hubUrl: string, options: types.LaunchOptions): Promise<CRBrowser> {
     await this._createArtifactDirs(options);
 
-    if (!hubUrl.endsWith('/'))
+    if (!hubUrl.endsWith('/')) {
       hubUrl = hubUrl + '/';
+    }
 
     const args = this._innerDefaultArgs(options);
     args.push('--remote-debugging-port=0');
@@ -180,15 +187,17 @@ export class Chromium extends BrowserType {
 
     if (process.env.SELENIUM_REMOTE_CAPABILITIES) {
       const remoteCapabilities = parseSeleniumRemoteParams({ name: 'capabilities', value: process.env.SELENIUM_REMOTE_CAPABILITIES }, progress);
-      if (remoteCapabilities)
+      if (remoteCapabilities) {
         desiredCapabilities = { ...desiredCapabilities, ...remoteCapabilities };
+      }
     }
 
     let headers: { [key: string]: string } = {};
     if (process.env.SELENIUM_REMOTE_HEADERS) {
       const remoteHeaders = parseSeleniumRemoteParams({ name: 'headers', value: process.env.SELENIUM_REMOTE_HEADERS }, progress);
-      if (remoteHeaders)
+      if (remoteHeaders) {
         headers = remoteHeaders;
+      }
     }
 
     progress.log(`<selenium> connecting to ${hubUrl}`);
@@ -229,8 +238,9 @@ export class Chromium extends BrowserType {
         progress.log(`<selenium> using selenium v4`);
         const endpointURLString = addProtocol(capabilities['se:cdp']);
         endpointURL = new URL(endpointURLString);
-        if (endpointURL.hostname === 'localhost' || endpointURL.hostname === '127.0.0.1')
+        if (endpointURL.hostname === 'localhost' || endpointURL.hostname === '127.0.0.1') {
           endpointURL.hostname = new URL(hubUrl).hostname;
+        }
         progress.log(`<selenium> retrieved endpoint ${endpointURL.toString()} for sessionId=${sessionId}`);
       } else {
         // Selenium 3 - resolve target node IP to use instead of localhost ws url.
@@ -274,38 +284,45 @@ export class Chromium extends BrowserType {
   override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const chromeArguments = this._innerDefaultArgs(options);
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
-    if (options.useWebSocket)
+    if (options.useWebSocket) {
       chromeArguments.push('--remote-debugging-port=0');
-    else
+    } else {
       chromeArguments.push('--remote-debugging-pipe');
-    if (isPersistent)
+    }
+    if (isPersistent) {
       chromeArguments.push('about:blank');
-    else
+    } else {
       chromeArguments.push('--no-startup-window');
+    }
     return chromeArguments;
   }
 
   private _innerDefaultArgs(options: types.LaunchOptions): string[] {
     const { args = [] } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
-    if (userDataDirArg)
+    if (userDataDirArg) {
       throw this._createUserDataDirArgMisuseError('--user-data-dir');
-    if (args.find(arg => arg.startsWith('--remote-debugging-pipe')))
+    }
+    if (args.find(arg => arg.startsWith('--remote-debugging-pipe'))) {
       throw new Error('Playwright manages remote debugging connection itself.');
-    if (args.find(arg => !arg.startsWith('-')))
+    }
+    if (args.find(arg => !arg.startsWith('-'))) {
       throw new Error('Arguments can not specify page to be opened');
+    }
     const chromeArguments = [...chromiumSwitches];
 
     if (os.platform() === 'darwin') {
       // See https://github.com/microsoft/playwright/issues/7362
       chromeArguments.push('--enable-use-zoom-for-dsf=false');
       // See https://bugs.chromium.org/p/chromium/issues/detail?id=1407025.
-      if (options.headless && (!options.channel || options.channel === 'chromium-headless-shell'))
+      if (options.headless && (!options.channel || options.channel === 'chromium-headless-shell')) {
         chromeArguments.push('--use-angle');
+      }
     }
 
-    if (options.devtools)
+    if (options.devtools) {
       chromeArguments.push('--auto-open-devtools-for-tabs');
+    }
     if (options.headless) {
       chromeArguments.push('--headless');
 
@@ -315,8 +332,9 @@ export class Chromium extends BrowserType {
           '--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4',
       );
     }
-    if (options.chromiumSandbox !== true)
+    if (options.chromiumSandbox !== true) {
       chromeArguments.push('--no-sandbox');
+    }
     const proxy = options.proxyOverride || options.proxy;
     if (proxy) {
       const proxyURL = new URL(proxy.server);
@@ -329,28 +347,34 @@ export class Chromium extends BrowserType {
       chromeArguments.push(`--proxy-server=${proxy.server}`);
       const proxyBypassRules = [];
       // https://source.chromium.org/chromium/chromium/src/+/master:net/docs/proxy.md;l=548;drc=71698e610121078e0d1a811054dcf9fd89b49578
-      if (this.attribution.playwright.options.socksProxyPort)
+      if (this.attribution.playwright.options.socksProxyPort) {
         proxyBypassRules.push('<-loopback>');
-      if (proxy.bypass)
+      }
+      if (proxy.bypass) {
         proxyBypassRules.push(...proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));
-      if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !proxyBypassRules.includes('<-loopback>'))
+      }
+      if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !proxyBypassRules.includes('<-loopback>')) {
         proxyBypassRules.push('<-loopback>');
-      if (proxyBypassRules.length > 0)
+      }
+      if (proxyBypassRules.length > 0) {
         chromeArguments.push(`--proxy-bypass-list=${proxyBypassRules.join(';')}`);
+      }
     }
     chromeArguments.push(...args);
     return chromeArguments;
   }
 
   override readyState(options: types.LaunchOptions): BrowserReadyState | undefined {
-    if (options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port')))
+    if (options.useWebSocket || options.args?.some(a => a.startsWith('--remote-debugging-port'))) {
       return new ChromiumReadyState();
+    }
     return undefined;
   }
 
   override getExecutableName(options: types.LaunchOptions): string {
-    if (options.channel)
+    if (options.channel) {
       return options.channel;
+    }
     return options.headless ? 'chromium-headless-shell' : 'chromium';
   }
 }
@@ -358,14 +382,16 @@ export class Chromium extends BrowserType {
 class ChromiumReadyState extends BrowserReadyState {
   override onBrowserOutput(message: string): void {
     const match = message.match(/DevTools listening on (.*)/);
-    if (match)
+    if (match) {
       this._wsEndpoint.resolve(match[1]);
+    }
   }
 }
 
 async function urlToWSEndpoint(progress: Progress, endpointURL: string, headers: { [key: string]: string; }) {
-  if (endpointURL.startsWith('ws'))
+  if (endpointURL.startsWith('ws')) {
     return endpointURL;
+  }
   progress.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
   const httpURL = endpointURL.endsWith('/') ? `${endpointURL}json/version/` : `${endpointURL}/json/version/`;
   const json = await fetchData({
@@ -389,8 +415,9 @@ async function seleniumErrorHandler(params: HTTPRequestParams, response: http.In
 }
 
 function addProtocol(url: string) {
-  if (!['ws://', 'wss://', 'http://', 'https://'].some(protocol => url.startsWith(protocol)))
+  if (!['ws://', 'wss://', 'http://', 'https://'].some(protocol => url.startsWith(protocol))) {
     return 'http://' + url;
+  }
   return url;
 }
 

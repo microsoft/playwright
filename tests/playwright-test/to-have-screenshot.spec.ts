@@ -655,8 +655,9 @@ test('should write missing expectations locally twice and attach them', async ({
   expect(stackLines.length).toBe(0);
 
   const attachments = result.outputLines.map(l => JSON.parse(l))[0];
-  for (const attachment of attachments)
+  for (const attachment of attachments) {
     attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '').replace(/.*__screenshots__/, '__screenshots__');
+  }
   expect(attachments).toEqual([
     {
       name: 'snapshot-expected.png',
@@ -1097,8 +1098,9 @@ test('should attach expected/actual/diff when sizes are different', async ({ run
   expect(outputText).toContain('Expected an image 2px by 2px, received 1280px by 720px.');
   expect(outputText).toContain('4 pixels (ratio 0.01 of all image pixels) are different.');
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
-  for (const attachment of attachments)
+  for (const attachment of attachments) {
     attachment.path = attachment.path.replace(testInfo.outputDir, '').substring(1).replace(/\\/g, '/');
+  }
   expect(attachments).toEqual([
     {
       name: 'snapshot-expected.png',

@@ -34,8 +34,9 @@ export class DragManager {
   }
 
   async cancelDrag() {
-    if (!this._dragState)
+    if (!this._dragState) {
       return false;
+    }
     await this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {
       type: 'dragCancel',
       x: this._lastPosition.x,
@@ -61,8 +62,9 @@ export class DragManager {
       });
       return;
     }
-    if (button !== 'left')
+    if (button !== 'left') {
       return moveCallback();
+    }
 
     const client = this._crPage._mainFrameSession._client;
     let onDragIntercepted: (payload: Protocol.Input.dragInterceptedPayload) => void;

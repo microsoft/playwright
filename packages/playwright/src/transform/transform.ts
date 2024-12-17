@@ -83,10 +83,12 @@ function validateTsConfig(tsconfig: LoadedTsConfig): ParsedTsConfigData {
 }
 
 function loadAndValidateTsconfigsForFile(file: string): ParsedTsConfigData[] {
-  if (_singleTSConfigPath && !_singleTSConfig)
+  if (_singleTSConfigPath && !_singleTSConfig) {
     _singleTSConfig = loadTsConfig(_singleTSConfigPath).map(validateTsConfig);
-  if (_singleTSConfig)
+  }
+  if (_singleTSConfig) {
     return _singleTSConfig;
+  }
   return loadAndValidateTsconfigsForFolder(path.dirname(file));
 }
 
@@ -111,18 +113,21 @@ function loadAndValidateTsconfigsForFolder(folder: string): ParsedTsConfigData[]
         break;
       }
     }
-    if (result)
+    if (result) {
       break;
+    }
 
     const parentFolder = path.resolve(currentFolder, '../');
-    if (currentFolder === parentFolder)
+    if (currentFolder === parentFolder) {
       break;
+    }
     currentFolder = parentFolder;
   }
 
   result = result || [];
-  for (const folder of foldersWithConfig)
+  for (const folder of foldersWithConfig) {
     cachedTSConfigs.set(folder, result);
+  }
   return result;
 }
 
@@ -130,13 +135,16 @@ const pathSeparator = process.platform === 'win32' ? ';' : ':';
 const builtins = new Set(Module.builtinModules);
 
 export function resolveHook(filename: string, specifier: string): string | undefined {
-  if (specifier.startsWith('node:') || builtins.has(specifier))
+  if (specifier.startsWith('node:') || builtins.has(specifier)) {
     return;
-  if (!shouldTransform(filename))
+  }
+  if (!shouldTransform(filename)) {
     return;
+  }
 
-  if (isRelativeSpecifier(specifier))
+  if (isRelativeSpecifier(specifier)) {
     return resolveImportSpecifierAfterMapping(path.resolve(path.dirname(filename), specifier), false);
+  }
 
   /**
    * TypeScript discourages path-mapping into node_modules:
@@ -146,8 +154,9 @@ export function resolveHook(filename: string, specifier: string): string | undef
   const isTypeScript = filename.endsWith('.ts') || filename.endsWith('.tsx');
   const tsconfigs = loadAndValidateTsconfigsForFile(filename);
   for (const tsconfig of tsconfigs) {
-    if (!isTypeScript && !tsconfig.allowJs)
+    if (!isTypeScript && !tsconfig.allowJs) {
       continue;
+    }
     let longestPrefixLength = -1;
     let pathMatchedByLongestPrefix: string | undefined;
 
@@ -161,28 +170,33 @@ export function resolveHook(filename: string, specifier: string): string | undef
         // * If module name can be matches with multiple patterns then pattern with the longest prefix will be picked.
         // https://github.com/microsoft/TypeScript/blob/f82d0cb3299c04093e3835bc7e29f5b40475f586/src/compiler/moduleNameResolver.ts#L1049
         if (keyPrefix) {
-          if (!specifier.startsWith(keyPrefix))
+          if (!specifier.startsWith(keyPrefix)) {
             continue;
+          }
           matchedPartOfSpecifier = matchedPartOfSpecifier.substring(keyPrefix.length, matchedPartOfSpecifier.length);
         }
         if (keySuffix) {
-          if (!specifier.endsWith(keySuffix))
+          if (!specifier.endsWith(keySuffix)) {
             continue;
+          }
           matchedPartOfSpecifier = matchedPartOfSpecifier.substring(0, matchedPartOfSpecifier.length - keySuffix.length);
         }
       } else {
-        if (specifier !== key)
+        if (specifier !== key) {
           continue;
+        }
         matchedPartOfSpecifier = specifier;
       }
 
-      if (keyPrefix.length <= longestPrefixLength)
+      if (keyPrefix.length <= longestPrefixLength) {
         continue;
+      }
 
       for (const value of values) {
         let candidate = value;
-        if (value.includes('*'))
+        if (value.includes('*')) {
           candidate = candidate.replace('*', matchedPartOfSpecifier);
+        }
         candidate = path.resolve(tsconfig.pathsBase!, candidate);
         const existing = resolveImportSpecifierAfterMapping(candidate, true);
         if (existing) {
@@ -191,8 +205,9 @@ export function resolveHook(filename: string, specifier: string): string | undef
         }
       }
     }
-    if (pathMatchedByLongestPrefix)
+    if (pathMatchedByLongestPrefix) {
       return pathMatchedByLongestPrefix;
+    }
   }
 
   if (path.isAbsolute(specifier)) {
@@ -203,8 +218,9 @@ export function resolveHook(filename: string, specifier: string): string | undef
 }
 
 export function shouldTransform(filename: string): boolean {
-  if (_externalMatcher(filename))
+  if (_externalMatcher(filename)) {
     return false;
+  }
   return !belongsToNodeModules(filename);
 }
 
@@ -223,8 +239,9 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   const pluginsEpilogue = hasPreprocessor ? [[process.env.PW_TEST_SOURCE_TRANSFORM!]] as BabelPlugin[] : [];
   const hash = calculateHash(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
   const { cachedCode, addToCache, serializedCache } = getFromCompilationCache(filename, hash, moduleUrl);
-  if (cachedCode !== undefined)
+  if (cachedCode !== undefined) {
     return { code: cachedCode, serializedCache };
+  }
 
   // We don't use any browserslist data, but babel checks it anyway.
   // Silence the annoying warning.
@@ -233,8 +250,9 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
   transformData = new Map<string, any>();
   const { code, map } = babelTransform(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
-  if (!code)
+  if (!code) {
     return { code: '', serializedCache };
+  }
   const added = addToCache!(code, map, transformData);
   return { code, serializedCache: added.serializedCache };
 }
@@ -255,14 +273,16 @@ export async function requireOrImport(file: string) {
   installTransformIfNeeded();
   const isModule = fileIsModule(file);
   const esmImport = () => eval(`import(${JSON.stringify(url.pathToFileURL(file))})`);
-  if (isModule)
+  if (isModule) {
     return await esmImport();
+  }
   const result = require(file);
   const depsCollector = currentFileDepsCollector();
   if (depsCollector) {
     const module = require.cache[file];
-    if (module)
+    if (module) {
       collectCJSDependencies(module, depsCollector);
+    }
   }
   return result;
 }
@@ -270,8 +290,9 @@ export async function requireOrImport(file: string) {
 let transformInstalled = false;
 
 function installTransformIfNeeded() {
-  if (transformInstalled)
+  if (transformInstalled) {
     return;
+  }
   transformInstalled = true;
 
   installSourceMapSupport();
@@ -280,16 +301,18 @@ function installTransformIfNeeded() {
   function resolveFilename(this: any, specifier: string, parent: Module, ...rest: any[]) {
     if (parent) {
       const resolved = resolveHook(parent.filename, specifier);
-      if (resolved !== undefined)
+      if (resolved !== undefined) {
         specifier = resolved;
+      }
     }
     return originalResolveFilename.call(this, specifier, parent, ...rest);
   }
   (Module as any)._resolveFilename = resolveFilename;
 
   pirates.addHook((code: string, filename: string) => {
-    if (!shouldTransform(filename))
+    if (!shouldTransform(filename)) {
       return code;
+    }
     return transformHook(code, filename).code;
   }, { exts: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts', '.cjs', '.cts'] });
 }

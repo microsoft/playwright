@@ -27,32 +27,39 @@ export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
 export type Comparator = (actualBuffer: Buffer | string, expectedBuffer: Buffer, options?: any) => ComparatorResult;
 
 export function getComparator(mimeType: string): Comparator {
-  if (mimeType === 'image/png')
+  if (mimeType === 'image/png') {
     return compareImages.bind(null, 'image/png');
-  if (mimeType === 'image/jpeg')
+  }
+  if (mimeType === 'image/jpeg') {
     return compareImages.bind(null, 'image/jpeg');
-  if (mimeType === 'text/plain')
+  }
+  if (mimeType === 'text/plain') {
     return compareText;
+  }
   return compareBuffersOrStrings;
 }
 
 const JPEG_JS_MAX_BUFFER_SIZE_IN_MB = 5 * 1024; // ~5 GB
 
 export function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
-  if (typeof actualBuffer === 'string')
+  if (typeof actualBuffer === 'string') {
     return compareText(actualBuffer, expectedBuffer);
-  if (!actualBuffer || !(actualBuffer instanceof Buffer))
+  }
+  if (!actualBuffer || !(actualBuffer instanceof Buffer)) {
     return { errorMessage: 'Actual result should be a Buffer or a string.' };
-  if (Buffer.compare(actualBuffer, expectedBuffer))
+  }
+  if (Buffer.compare(actualBuffer, expectedBuffer)) {
     return { errorMessage: 'Buffers differ' };
+  }
   return null;
 }
 
 type ImageData = { width: number, height: number, data: Buffer };
 
 function compareImages(mimeType: string, actualBuffer: Buffer | string, expectedBuffer: Buffer, options: ImageComparatorOptions = {}): ComparatorResult {
-  if (!actualBuffer || !(actualBuffer instanceof Buffer))
+  if (!actualBuffer || !(actualBuffer instanceof Buffer)) {
     return { errorMessage: 'Actual result should be a Buffer.' };
+  }
   validateBuffer(expectedBuffer, mimeType);
 
   let actual: ImageData = mimeType === 'image/png' ? PNG.sync.read(actualBuffer) : jpegjs.decode(actualBuffer, { maxMemoryUsageInMB: JPEG_JS_MAX_BUFFER_SIZE_IN_MB });
@@ -83,49 +90,60 @@ function compareImages(mimeType: string, actualBuffer: Buffer | string, expected
   const maxDiffPixels1 = options.maxDiffPixels;
   const maxDiffPixels2 = options.maxDiffPixelRatio !== undefined ? expected.width * expected.height * options.maxDiffPixelRatio : undefined;
   let maxDiffPixels;
-  if (maxDiffPixels1 !== undefined && maxDiffPixels2 !== undefined)
+  if (maxDiffPixels1 !== undefined && maxDiffPixels2 !== undefined) {
     maxDiffPixels = Math.min(maxDiffPixels1, maxDiffPixels2);
-  else
+  } else {
     maxDiffPixels = maxDiffPixels1 ?? maxDiffPixels2 ?? 0;
+  }
   const ratio = Math.ceil(count / (expected.width * expected.height) * 100) / 100;
   const pixelsMismatchError = count > maxDiffPixels ? `${count} pixels (ratio ${ratio.toFixed(2)} of all image pixels) are different.` : '';
-  if (pixelsMismatchError || sizesMismatchError)
+  if (pixelsMismatchError || sizesMismatchError) {
     return { errorMessage: sizesMismatchError + pixelsMismatchError, diff: PNG.sync.write(diff) };
+  }
   return null;
 }
 
 function validateBuffer(buffer: Buffer, mimeType: string): void {
   if (mimeType === 'image/png') {
     const pngMagicNumber = [137, 80, 78, 71, 13, 10, 26, 10];
-    if (buffer.length < pngMagicNumber.length || !pngMagicNumber.every((byte, index) => buffer[index] === byte))
+    if (buffer.length < pngMagicNumber.length || !pngMagicNumber.every((byte, index) => buffer[index] === byte)) {
       throw new Error('could not decode image as PNG.');
+    }
   } else if (mimeType === 'image/jpeg') {
     const jpegMagicNumber = [255, 216];
-    if (buffer.length < jpegMagicNumber.length || !jpegMagicNumber.every((byte, index) => buffer[index] === byte))
+    if (buffer.length < jpegMagicNumber.length || !jpegMagicNumber.every((byte, index) => buffer[index] === byte)) {
       throw new Error('could not decode image as JPEG.');
+    }
   }
 }
 
 function compareText(actual: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
-  if (typeof actual !== 'string')
+  if (typeof actual !== 'string') {
     return { errorMessage: 'Actual result should be a string' };
+  }
   let expected = expectedBuffer.toString('utf-8');
-  if (expected === actual)
+  if (expected === actual) {
     return null;
+  }
   // Eliminate '\\ No newline at end of file'
-  if (!actual.endsWith('\n'))
+  if (!actual.endsWith('\n')) {
     actual += '\n';
-  if (!expected.endsWith('\n'))
+  }
+  if (!expected.endsWith('\n')) {
     expected += '\n';
+  }
 
   const lines = diff.createPatch('file', expected, actual, undefined, undefined, { context: 5 }).split('\n');
   const coloredLines = lines.slice(4).map(line => {
-    if (line.startsWith('-'))
+    if (line.startsWith('-')) {
       return colors.red(line);
-    if (line.startsWith('+'))
+    }
+    if (line.startsWith('+')) {
       return colors.green(line);
-    if (line.startsWith('@@'))
+    }
+    if (line.startsWith('@@')) {
       return colors.dim(line);
+    }
     return line;
   });
   const errorMessage = coloredLines.join('\n');
@@ -133,8 +151,9 @@ function compareText(actual: Buffer | string, expectedBuffer: Buffer): Comparato
 }
 
 function resizeImage(image: ImageData, size: { width: number, height: number }): ImageData {
-  if (image.width === size.width && image.height === size.height)
+  if (image.width === size.width && image.height === size.height) {
     return image;
+  }
   const buffer = new Uint8Array(size.width * size.height * 4);
   for (let y = 0; y < size.height; y++) {
     for (let x = 0; x < size.width; x++) {

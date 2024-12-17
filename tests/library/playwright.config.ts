@@ -25,12 +25,15 @@ import type { TestModeName } from '../config/testMode';
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 
 const getExecutablePath = (browserName: BrowserName) => {
-  if (browserName === 'chromium' && process.env.CRPATH)
+  if (browserName === 'chromium' && process.env.CRPATH) {
     return process.env.CRPATH;
-  if (browserName === 'firefox' && process.env.FFPATH)
+  }
+  if (browserName === 'firefox' && process.env.FFPATH) {
     return process.env.FFPATH;
-  if (browserName === 'webkit' && process.env.WKPATH)
+  }
+  if (browserName === 'webkit' && process.env.WKPATH) {
     return process.env.WKPATH;
+  }
 };
 
 const mode = (process.env.PWTEST_MODE ?? 'default') as TestModeName;
@@ -103,8 +106,9 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
 const browserNames = ['chromium', 'webkit', 'firefox'] as BrowserName[];
 for (const browserName of browserNames) {
   const executablePath = getExecutablePath(browserName);
-  if (executablePath && !process.env.TEST_WORKER_INDEX)
+  if (executablePath && !process.env.TEST_WORKER_INDEX) {
     console.error(`Using executable at ${executablePath}`);
+  }
   const devtools = process.env.DEVTOOLS === '1';
   const testIgnore: RegExp[] = browserNames.filter(b => b !== browserName).map(b => new RegExp(b));
 

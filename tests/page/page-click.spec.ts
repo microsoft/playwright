@@ -44,10 +44,11 @@ it('should issue clicks in parallel in page and popup', async ({ page, server })
   ]);
   const clickPromises = [];
   for (let i = 0; i < 21; ++i) {
-    if (i % 3 === 0)
+    if (i % 3 === 0) {
       clickPromises.push(popup.locator('button').click());
-    else
+    } else {
       clickPromises.push(page.locator('button').click());
+    }
   }
   await Promise.all(clickPromises);
   expect(await page.evaluate(() => window['count'])).toBe(14);
@@ -669,8 +670,9 @@ it('should wait for LABEL to be clickable when it has pointer-events:none', asyn
   await page.setContent('<label onclick="javascript:window.__CLICKED=true;" style="pointer-events:none"><span>Click target</span></label>');
   const clickPromise = page.click('text=Click target');
   // Do a few roundtrips to the page.
-  for (let i = 0; i < 5; ++i)
+  for (let i = 0; i < 5; ++i) {
     expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
+  }
   // remove `pointer-events: none` css from button.
   await page.evaluate(() => document.querySelector('label').style.removeProperty('pointer-events'));
   await clickPromise;
@@ -851,8 +853,9 @@ it('should not throw protocol error when navigating during the click', async ({ 
   await page.goto(server.PREFIX + '/input/button.html');
   let firstTime = true;
   const __testHookBeforeStable = async () => {
-    if (!firstTime)
+    if (!firstTime) {
       return;
+    }
     firstTime = false;
     await page.goto(server.PREFIX + '/input/button.html');
   };
@@ -867,8 +870,9 @@ it('should retry when navigating during the click', async ({ page, server, mode,
   await page.goto(server.PREFIX + '/input/button.html');
   let firstTime = true;
   const __testHookBeforeStable = async () => {
-    if (!firstTime)
+    if (!firstTime) {
       return;
+    }
     firstTime = false;
     await page.goto(server.EMPTY_PAGE);
   };
@@ -894,8 +898,9 @@ it('should not hang when frame is detached', async ({ page, server, mode }) => {
   let firstTime = true;
   const __testHookBeforeStable = () => {
     // Detach the frame after "waiting for stable" has started.
-    if (!firstTime)
+    if (!firstTime) {
       return;
+    }
     firstTime = false;
     setTimeout(async () => {
       await detachFrame(page, 'frame1');
@@ -1036,8 +1041,9 @@ it('should click a button that is overlaid by a permission popup', async ({ page
     navigator.geolocation.getCurrentPosition(position => { });
   });
   // If popup blocks the click, then some of the `page.click` calls below will hang.
-  for (let i = 0; i < 100; ++i)
+  for (let i = 0; i < 100; ++i) {
     await page.click(`text=${i}`);
+  }
 });
 
 it('should click in a transformed iframe with force', async ({ page }) => {

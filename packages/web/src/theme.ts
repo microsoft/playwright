@@ -24,12 +24,14 @@ declare global {
 }
 
 export function applyTheme() {
-  if (document.playwrightThemeInitialized)
+  if (document.playwrightThemeInitialized) {
     return;
+  }
   document.playwrightThemeInitialized = true;
   document!.defaultView!.addEventListener('focus', (event: any) => {
-    if (event.target.document.nodeType === Node.DOCUMENT_NODE)
+    if (event.target.document.nodeType === Node.DOCUMENT_NODE) {
       document.body.classList.remove('inactive');
+    }
   }, false);
   document!.defaultView!.addEventListener('blur', event => {
     document.body.classList.add('inactive');
@@ -37,8 +39,9 @@ export function applyTheme() {
 
   const currentTheme = settings.getString('theme', 'light-mode');
   const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-  if (currentTheme === 'dark-mode' || prefersDarkScheme.matches)
+  if (currentTheme === 'dark-mode' || prefersDarkScheme.matches) {
     document.body.classList.add('dark-mode');
+  }
 }
 
 type Theme = 'dark-mode' | 'light-mode';
@@ -48,12 +51,14 @@ export function toggleTheme() {
   const oldTheme = currentTheme();
   const newTheme = oldTheme === 'dark-mode' ? 'light-mode' : 'dark-mode';
 
-  if (oldTheme)
+  if (oldTheme) {
     document.body.classList.remove(oldTheme);
+  }
   document.body.classList.add(newTheme);
   settings.setString('theme', newTheme);
-  for (const listener of listeners)
+  for (const listener of listeners) {
     listener(newTheme);
+  }
 }
 
 export function addThemeListener(listener: (theme: 'light-mode' | 'dark-mode') => void) {
@@ -72,8 +77,9 @@ export function useDarkModeSetting(): [boolean, (value: boolean) => void] {
   const [theme, setTheme] = React.useState(currentTheme() === 'dark-mode');
   return [theme, (value: boolean) => {
     const current = currentTheme() === 'dark-mode';
-    if (current !== value)
+    if (current !== value) {
       toggleTheme();
+    }
     setTheme(value);
   }];
 }

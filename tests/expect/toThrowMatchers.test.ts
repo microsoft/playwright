@@ -499,13 +499,15 @@ for (const toThrow of ['toThrowError', 'toThrow'] as const) {
     test.describe('promise/async throws if Error-like object is returned', () => {
       const asyncFn = async (shouldThrow?: boolean, resolve?: boolean) => {
         let err;
-        if (shouldThrow)
+        if (shouldThrow) {
           err = new Err('async apple');
+        }
 
-        if (resolve)
+        if (resolve) {
           return Promise.resolve(err || 'apple');
-        else
+        } else {
           return Promise.reject(err || 'apple');
+        }
       };
 
       test('passes', async () => {

@@ -89,29 +89,36 @@ function isRegExp(obj: any): obj is RegExp {
 export type URLMatch = string | RegExp | ((url: URL) => boolean);
 
 export function urlMatchesEqual(match1: URLMatch, match2: URLMatch) {
-  if (isRegExp(match1) && isRegExp(match2))
+  if (isRegExp(match1) && isRegExp(match2)) {
     return match1.source === match2.source && match1.flags === match2.flags;
+  }
   return match1 === match2;
 }
 
 export function urlMatches(baseURL: string | undefined, urlString: string, match: URLMatch | undefined): boolean {
-  if (match === undefined || match === '')
+  if (match === undefined || match === '') {
     return true;
+  }
   if (isString(match) && !match.startsWith('*')) {
     // Allow http(s) baseURL to match ws(s) urls.
-    if (baseURL && /^https?:\/\//.test(baseURL) && /^wss?:\/\//.test(urlString))
+    if (baseURL && /^https?:\/\//.test(baseURL) && /^wss?:\/\//.test(urlString)) {
       baseURL = baseURL.replace(/^http/, 'ws');
+    }
     match = constructURLBasedOnBaseURL(baseURL, match);
   }
-  if (isString(match))
+  if (isString(match)) {
     match = globToRegex(match);
-  if (isRegExp(match))
+  }
+  if (isRegExp(match)) {
     return match.test(urlString);
+  }
   const url = parseURL(urlString);
-  if (!url)
+  if (!url) {
     return false;
-  if (typeof match !== 'function')
+  }
+  if (typeof match !== 'function') {
     throw new Error('url parameter should be string, RegExp or function');
+  }
   return match(url);
 }
 

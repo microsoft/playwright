@@ -42,23 +42,27 @@ export class Locator implements api.Locator {
     this._frame = frame;
     this._selector = selector;
 
-    if (options?.hasText)
+    if (options?.hasText) {
       this._selector += ` >> internal:has-text=${escapeForTextSelector(options.hasText, false)}`;
+    }
 
-    if (options?.hasNotText)
+    if (options?.hasNotText) {
       this._selector += ` >> internal:has-not-text=${escapeForTextSelector(options.hasNotText, false)}`;
+    }
 
     if (options?.has) {
       const locator = options.has;
-      if (locator._frame !== frame)
+      if (locator._frame !== frame) {
         throw new Error(`Inner "has" locator must belong to the same frame.`);
+      }
       this._selector += ` >> internal:has=` + JSON.stringify(locator._selector);
     }
 
     if (options?.hasNot) {
       const locator = options.hasNot;
-      if (locator._frame !== frame)
+      if (locator._frame !== frame) {
         throw new Error(`Inner "hasNot" locator must belong to the same frame.`);
+      }
       this._selector += ` >> internal:has-not=` + JSON.stringify(locator._selector);
     }
   }
@@ -70,8 +74,9 @@ export class Locator implements api.Locator {
     return await this._frame._wrapApiCall<R>(async () => {
       const result = await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, state: 'attached', timeout });
       const handle = ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
-      if (!handle)
+      if (!handle) {
         throw new Error(`Could not resolve ${this._selector} to DOM Element`);
+      }
       try {
         return await task(handle, deadline ? deadline - monotonicTime() : 0);
       } finally {
@@ -145,10 +150,12 @@ export class Locator implements api.Locator {
   }
 
   locator(selectorOrLocator: string | Locator, options?: LocatorOptions): Locator {
-    if (isString(selectorOrLocator))
+    if (isString(selectorOrLocator)) {
       return new Locator(this._frame, this._selector + ' >> ' + selectorOrLocator, options);
-    if (selectorOrLocator._frame !== this._frame)
+    }
+    if (selectorOrLocator._frame !== this._frame) {
       throw new Error(`Locators must belong to the same frame.`);
+    }
     return new Locator(this._frame, this._selector + ' >> internal:chain=' + JSON.stringify(selectorOrLocator._selector), options);
   }
 
@@ -213,14 +220,16 @@ export class Locator implements api.Locator {
   }
 
   and(locator: Locator): Locator {
-    if (locator._frame !== this._frame)
+    if (locator._frame !== this._frame) {
       throw new Error(`Locators must belong to the same frame.`);
+    }
     return new Locator(this._frame, this._selector + ` >> internal:and=` + JSON.stringify(locator._selector));
   }
 
   or(locator: Locator): Locator {
-    if (locator._frame !== this._frame)
+    if (locator._frame !== this._frame) {
       throw new Error(`Locators must belong to the same frame.`);
+    }
     return new Locator(this._frame, this._selector + ` >> internal:or=` + JSON.stringify(locator._selector));
   }
 
@@ -306,10 +315,11 @@ export class Locator implements api.Locator {
   }
 
   async setChecked(checked: boolean, options?: channels.ElementHandleCheckOptions) {
-    if (checked)
+    if (checked) {
       await this.check(options);
-    else
+    } else {
       await this.uncheck(options);
+    }
   }
 
   async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions = {}) {
@@ -358,8 +368,9 @@ export class Locator implements api.Locator {
     const params: channels.FrameExpectParams = { selector: this._selector, expression, ...options, isNot: !!options.isNot };
     params.expectedValue = serializeArgument(options.expectedValue);
     const result = (await this._frame._channel.expect(params));
-    if (result.received !== undefined)
+    if (result.received !== undefined) {
       result.received = parseResult(result.received);
+    }
     return result;
   }
 
@@ -382,10 +393,12 @@ export class FrameLocator implements api.FrameLocator {
   }
 
   locator(selectorOrLocator: string | Locator, options?: LocatorOptions): Locator {
-    if (isString(selectorOrLocator))
+    if (isString(selectorOrLocator)) {
       return new Locator(this._frame, this._frameSelector + ' >> internal:control=enter-frame >> ' + selectorOrLocator, options);
-    if (selectorOrLocator._frame !== this._frame)
+    }
+    if (selectorOrLocator._frame !== this._frame) {
       throw new Error(`Locators must belong to the same frame.`);
+    }
     return new Locator(this._frame, this._frameSelector + ' >> internal:control=enter-frame >> ' + selectorOrLocator._selector, options);
   }
 

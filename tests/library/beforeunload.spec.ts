@@ -64,12 +64,13 @@ it('should run beforeunload if asked for @smoke', async ({ context, server, brow
   ]);
   expect(dialog.type()).toBe('beforeunload');
   expect(dialog.defaultValue()).toBe('');
-  if (browserName === 'chromium')
+  if (browserName === 'chromium') {
     expect(dialog.message()).toBe('');
-  else if (browserName === 'webkit')
+  } else if (browserName === 'webkit') {
     expect(dialog.message()).toBe('Leave?');
-  else
+  } else {
     expect(dialog.message()).toContain('This page is asking you to confirm that you want to leave');
+  }
   await Promise.all([
     dialog.accept(),
     newPage.waitForEvent('close'),

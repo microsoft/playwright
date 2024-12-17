@@ -18,12 +18,15 @@
 export function escapeWithQuotes(text: string, char: string = '\'') {
   const stringified = JSON.stringify(text);
   const escapedText = stringified.substring(1, stringified.length - 1).replace(/\\"/g, '"');
-  if (char === '\'')
+  if (char === '\'') {
     return char + escapedText.replace(/[']/g, '\\\'') + char;
-  if (char === '"')
+  }
+  if (char === '"') {
     return char + escapedText.replace(/["]/g, '\\"') + char;
-  if (char === '`')
+  }
+  if (char === '`') {
     return char + escapedText.replace(/[`]/g, '`') + char;
+  }
   throw new Error('Invalid escape char');
 }
 
@@ -49,8 +52,9 @@ export function toSnakeCase(name: string): string {
 
 export function cssEscape(s: string): string {
   let result = '';
-  for (let i = 0; i < s.length; i++)
+  for (let i = 0; i < s.length; i++) {
     result += cssEscapeOne(s, i);
+  }
   return result;
 }
 
@@ -61,16 +65,20 @@ export function quoteCSSAttributeValue(text: string): string {
 function cssEscapeOne(s: string, i: number): string {
   // https://drafts.csswg.org/cssom/#serialize-an-identifier
   const c = s.charCodeAt(i);
-  if (c === 0x0000)
+  if (c === 0x0000) {
     return '\uFFFD';
+  }
   if ((c >= 0x0001 && c <= 0x001f) ||
-      (c >= 0x0030 && c <= 0x0039 && (i === 0 || (i === 1 && s.charCodeAt(0) === 0x002d))))
+      (c >= 0x0030 && c <= 0x0039 && (i === 0 || (i === 1 && s.charCodeAt(0) === 0x002d)))) {
     return '\\' + c.toString(16) + ' ';
-  if (i === 0 && c === 0x002d && s.length === 1)
+  }
+  if (i === 0 && c === 0x002d && s.length === 1) {
     return '\\' + s.charAt(i);
+  }
   if (c >= 0x0080 || c === 0x002d || c === 0x005f || (c >= 0x0030 && c <= 0x0039) ||
-      (c >= 0x0041 && c <= 0x005a) || (c >= 0x0061 && c <= 0x007a))
+      (c >= 0x0041 && c <= 0x005a) || (c >= 0x0061 && c <= 0x007a)) {
     return s.charAt(i);
+  }
   return '\\' + s.charAt(i);
 }
 
@@ -100,21 +108,24 @@ function escapeRegexForSelector(re: RegExp): string {
   // hope that it does not contain quotes and/or >> signs.
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Character_escape
   // TODO: rework RE usages in internal selectors away from literal representation to json, e.g. {source,flags}.
-  if (re.unicode || (re as any).unicodeSets)
+  if (re.unicode || (re as any).unicodeSets) {
     return String(re);
+  }
   // Even number of backslashes followed by the quote -> insert a backslash.
   return String(re).replace(/(^|[^\\])(\\\\)*(["'`])/g, '$1$2\\$3').replace(/>>/g, '\\>\\>');
 }
 
 export function escapeForTextSelector(text: string | RegExp, exact: boolean): string {
-  if (typeof text !== 'string')
+  if (typeof text !== 'string') {
     return escapeRegexForSelector(text);
+  }
   return `${JSON.stringify(text)}${exact ? 's' : 'i'}`;
 }
 
 export function escapeForAttributeSelector(value: string | RegExp, exact: boolean): string {
-  if (typeof value !== 'string')
+  if (typeof value !== 'string') {
     return escapeRegexForSelector(value);
+  }
   // TODO: this should actually be
   //   cssEscape(value).replace(/\\ /g, ' ')
   // However, our attribute selectors do not conform to CSS parsing spec,
@@ -123,11 +134,13 @@ export function escapeForAttributeSelector(value: string | RegExp, exact: boolea
 }
 
 export function trimString(input: string, cap: number, suffix: string = ''): string {
-  if (input.length <= cap)
+  if (input.length <= cap) {
     return input;
+  }
   const chars = [...input];
-  if (chars.length > cap)
+  if (chars.length > cap) {
     return chars.slice(0, cap - suffix.length).join('') + suffix;
+  }
   return chars.join('');
 }
 

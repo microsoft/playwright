@@ -287,10 +287,11 @@ it.describe('page screenshot', () => {
     await page.goto(server.PREFIX + '/screenshots/canvas.html');
     const screenshot = await page.screenshot();
     if ((!isHeadlessShell && browserName === 'chromium' && isMac && os.arch() === 'arm64' && macVersion >= 14) ||
-        (browserName === 'webkit' && isLinux && os.arch() === 'x64'))
+        (browserName === 'webkit' && isLinux && os.arch() === 'x64')) {
       expect(screenshot).toMatchSnapshot('screenshot-canvas-with-accurate-corners.png');
-    else
+    } else {
       expect(screenshot).toMatchSnapshot('screenshot-canvas.png');
+    }
   });
 
   it('should capture canvas changes', async ({ page, isElectron, browserName, isMac }) => {
@@ -347,8 +348,9 @@ it.describe('page screenshot', () => {
     await page.goto(server.PREFIX + '/redirectloop1.html');
     for (let i = 0; i < 10; i++) {
       const screenshot = await page.screenshot({ fullPage: true }).catch(e => {
-        if (e.message.includes('Cannot take a screenshot while page is navigating'))
+        if (e.message.includes('Cannot take a screenshot while page is navigating')) {
           return Buffer.from('');
+        }
         throw e;
       });
       expect(screenshot).toBeInstanceOf(Buffer);
@@ -434,12 +436,14 @@ it.describe('page screenshot', () => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');
     const reloadSeveralTimes = async () => {
-      for (let i = 0; i < 5; ++i)
+      for (let i = 0; i < 5; ++i) {
         await page.reload();
+      }
     };
     const screenshotSeveralTimes = async () => {
-      for (let i = 0; i < 5; ++i)
+      for (let i = 0; i < 5; ++i) {
         await page.screenshot({ fullPage: true });
+      }
     };
     await Promise.all([
       reloadSeveralTimes(),
@@ -903,8 +907,9 @@ it('should throw if screenshot size is too large', async ({ page, browserName, i
   {
     await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: 32768px; background: red;'></div>`);
     const exception = await page.screenshot({ fullPage: true }).catch(e => e);
-    if (browserName === 'firefox' || (browserName === 'webkit' && !isMac))
+    if (browserName === 'firefox' || (browserName === 'webkit' && !isMac)) {
       expect(exception.message).toContain('Cannot take screenshot larger than 32767');
+    }
   }
 });
 

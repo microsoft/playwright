@@ -21,11 +21,13 @@ export function useAsyncMemo<T>(fn: () => Promise<T>, deps: React.DependencyList
   const [value, setValue] = React.useState<T>(initialValue);
   React.useEffect(() => {
     let canceled = false;
-    if (resetValue !== undefined)
+    if (resetValue !== undefined) {
       setValue(resetValue);
+    }
     fn().then(value => {
-      if (!canceled)
+      if (!canceled) {
         setValue(value);
+      }
     });
     return () => {
       canceled = true;
@@ -41,12 +43,14 @@ export function useMeasure<T extends Element>() {
   const [measure, setMeasure] = React.useState(new DOMRect(0, 0, 10, 10));
   React.useLayoutEffect(() => {
     const target = ref.current;
-    if (!target)
+    if (!target) {
       return;
+    }
     const resizeObserver = new ResizeObserver((entries: any) => {
       const entry = entries[entries.length - 1];
-      if (entry && entry.contentRect)
+      if (entry && entry.contentRect) {
         setMeasure(entry.contentRect);
+      }
     });
     resizeObserver.observe(target);
     return () => resizeObserver.disconnect();
@@ -55,48 +59,59 @@ export function useMeasure<T extends Element>() {
 }
 
 export function msToString(ms: number): string {
-  if (ms < 0 || !isFinite(ms))
+  if (ms < 0 || !isFinite(ms)) {
     return '-';
+  }
 
-  if (ms === 0)
+  if (ms === 0) {
     return '0';
+  }
 
-  if (ms < 1000)
+  if (ms < 1000) {
     return ms.toFixed(0) + 'ms';
+  }
 
   const seconds = ms / 1000;
-  if (seconds < 60)
+  if (seconds < 60) {
     return seconds.toFixed(1) + 's';
+  }
 
   const minutes = seconds / 60;
-  if (minutes < 60)
+  if (minutes < 60) {
     return minutes.toFixed(1) + 'm';
+  }
 
   const hours = minutes / 60;
-  if (hours < 24)
+  if (hours < 24) {
     return hours.toFixed(1) + 'h';
+  }
 
   const days = hours / 24;
   return days.toFixed(1) + 'd';
 }
 
 export function bytesToString(bytes: number): string {
-  if (bytes < 0 || !isFinite(bytes))
+  if (bytes < 0 || !isFinite(bytes)) {
     return '-';
+  }
 
-  if (bytes === 0)
+  if (bytes === 0) {
     return '0';
+  }
 
-  if (bytes < 1000)
+  if (bytes < 1000) {
     return bytes.toFixed(0);
+  }
 
   const kb = bytes / 1024;
-  if (kb < 1000)
+  if (kb < 1000) {
     return kb.toFixed(1) + 'K';
+  }
 
   const mb = kb / 1024;
-  if (mb < 1000)
+  if (mb < 1000) {
     return mb.toFixed(1) + 'M';
+  }
 
   const gb = mb / 1024;
   return gb.toFixed(1) + 'G';
@@ -107,10 +122,11 @@ export function lowerBound<S, T>(array: S[], object: T, comparator: (object: T, 
   let r = right !== undefined ? right : array.length;
   while (l < r) {
     const m = (l + r) >> 1;
-    if (comparator(object, array[m]) > 0)
+    if (comparator(object, array[m]) > 0) {
       l = m + 1;
-    else
+    } else {
       r = m;
+    }
   }
   return r;
 }
@@ -120,10 +136,11 @@ export function upperBound<S, T>(array: S[], object: T, comparator: (object: T, 
   let r = right !== undefined ? right : array.length;
   while (l < r) {
     const m = (l + r) >> 1;
-    if (comparator(object, array[m]) >= 0)
+    if (comparator(object, array[m]) >= 0) {
       l = m + 1;
-    else
+    } else {
       r = m;
+    }
   }
   return r;
 }
@@ -140,14 +157,16 @@ export function copy(text: string) {
 }
 
 export function useSetting<S>(name: string | undefined, defaultValue: S): [S, React.Dispatch<React.SetStateAction<S>>] {
-  if (name)
+  if (name) {
     defaultValue = settings.getObject(name, defaultValue);
+  }
   const [value, setValue] = React.useState<S>(defaultValue);
   const setValueWrapper = React.useCallback((value: React.SetStateAction<S>) => {
-    if (name)
+    if (name) {
       settings.setObject(name, value);
-    else
+    } else {
       setValue(value);
+    }
   }, [name, setValue]);
 
   React.useEffect(() => {
@@ -180,8 +199,9 @@ export class Settings {
   }
 
   getObject<T>(name: string, defaultValue: T): T {
-    if (!localStorage[name])
+    if (!localStorage[name]) {
       return defaultValue;
+    }
     try {
       return JSON.parse(localStorage[name]);
     } catch {
@@ -209,12 +229,14 @@ export async function sha1(str: string): Promise<string> {
 }
 
 export function scrollIntoViewIfNeeded(element: Element | undefined) {
-  if (!element)
+  if (!element) {
     return;
-  if ((element as any)?.scrollIntoViewIfNeeded)
+  }
+  if ((element as any)?.scrollIntoViewIfNeeded) {
     (element as any).scrollIntoViewIfNeeded(false);
-  else
-    element?.scrollIntoView();
+  } else {
+    element.scrollIntoView();
+  }
 }
 
 const kControlCodesRe = '\\u0000-\\u0020\\u007f-\\u009f';

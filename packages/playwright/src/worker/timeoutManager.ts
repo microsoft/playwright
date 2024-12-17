@@ -60,13 +60,15 @@ export class TimeoutManager {
 
   setIgnoreTimeouts() {
     this._ignoreTimeouts = true;
-    if (this._running)
+    if (this._running) {
       this._updateTimeout(this._running);
+    }
   }
 
   interrupt() {
-    if (this._running)
+    if (this._running) {
       this._running.timeoutPromise.reject(this._createTimeoutError(this._running));
+    }
   }
 
   isTimeExhaustedFor(runnable: RunnableDescription) {
@@ -76,10 +78,12 @@ export class TimeoutManager {
   }
 
   async withRunnable<T>(runnable: RunnableDescription | undefined, cb: () => Promise<T>): Promise<T> {
-    if (!runnable)
+    if (!runnable) {
       return await cb();
-    if (this._running)
+    }
+    if (this._running) {
       throw new Error(`Internal error: duplicate runnable`);
+    }
     const running = this._running = {
       runnable,
       slot: runnable.fixture?.slot || runnable.slot || this._defaultSlot,
@@ -95,8 +99,9 @@ export class TimeoutManager {
         running.timeoutPromise,
       ]);
     } finally {
-      if (running.timer)
+      if (running.timer) {
         clearTimeout(running.timer);
+      }
       running.timer = undefined;
       running.slot.elapsed += monotonicTime() - running.start;
       this._running = undefined;
@@ -104,8 +109,9 @@ export class TimeoutManager {
   }
 
   private _updateTimeout(running: Running) {
-    if (running.timer)
+    if (running.timer) {
       clearTimeout(running.timer);
+    }
     running.timer = undefined;
     if (this._ignoreTimeouts || !running.slot.timeout) {
       running.deadline = kMaxDeadline;
@@ -116,10 +122,11 @@ export class TimeoutManager {
     // We add an extra millisecond which seems to be enough.
     // See https://github.com/nodejs/node/issues/26578.
     const timeout = running.deadline - monotonicTime() + 1;
-    if (timeout <= 0)
+    if (timeout <= 0) {
       running.timeoutPromise.reject(this._createTimeoutError(running));
-    else
+    } else {
       running.timer = setTimeout(() => running.timeoutPromise.reject(this._createTimeoutError(running)), timeout);
+    }
   }
 
   defaultSlot() {
@@ -129,15 +136,17 @@ export class TimeoutManager {
   slow() {
     const slot = this._running ? this._running.slot : this._defaultSlot;
     slot.timeout = slot.timeout * 3;
-    if (this._running)
+    if (this._running) {
       this._updateTimeout(this._running);
+    }
   }
 
   setTimeout(timeout: number) {
     const slot = this._running ? this._running.slot : this._defaultSlot;
     slot.timeout = timeout;
-    if (this._running)
+    if (this._running) {
       this._updateTimeout(this._running);
+    }
   }
 
   currentSlotDeadline() {
@@ -155,10 +164,11 @@ export class TimeoutManager {
     switch (runnable.type) {
       case 'test': {
         if (runnable.fixture) {
-          if (runnable.fixture.phase === 'setup')
+          if (runnable.fixture.phase === 'setup') {
             message = `Test timeout of ${timeout}ms exceeded while setting up "${runnable.fixture.title}".`;
-          else
+          } else {
             message = `Tearing down "${runnable.fixture.title}" exceeded the test timeout of ${timeout}ms.`;
+          }
         } else {
           message = `Test timeout of ${timeout}ms exceeded.`;
         }
@@ -173,10 +183,11 @@ export class TimeoutManager {
         message = `"${runnable.type}" hook timeout of ${timeout}ms exceeded.`;
         break;
       case 'teardown': {
-        if (runnable.fixture)
+        if (runnable.fixture) {
           message = `Worker teardown timeout of ${timeout}ms exceeded while ${runnable.fixture.phase === 'setup' ? 'setting up' : 'tearing down'} "${runnable.fixture.title}".`;
-        else
+        } else {
           message = `Worker teardown timeout of ${timeout}ms exceeded.`;
+        }
         break;
       }
       case 'skip':
@@ -187,8 +198,9 @@ export class TimeoutManager {
         break;
     }
     const fixtureWithSlot = runnable.fixture?.slot ? runnable.fixture : undefined;
-    if (fixtureWithSlot)
+    if (fixtureWithSlot) {
       message = `Fixture "${fixtureWithSlot.title}" timeout of ${timeout}ms exceeded during ${fixtureWithSlot.phase}.`;
+    }
     message = colors.red(message);
     const location = (fixtureWithSlot || runnable).location;
     const error = new TimeoutManagerError(message);

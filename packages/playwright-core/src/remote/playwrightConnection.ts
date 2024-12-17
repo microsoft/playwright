@@ -61,10 +61,12 @@ export class PlaywrightConnection {
     this._preLaunched = preLaunched;
     this._options = options;
     options.launchOptions = filterLaunchOptions(options.launchOptions);
-    if (clientType === 'reuse-browser' || clientType === 'pre-launched-browser-or-android')
+    if (clientType === 'reuse-browser' || clientType === 'pre-launched-browser-or-android') {
       assert(preLaunched.playwright);
-    if (clientType === 'pre-launched-browser-or-android')
+    }
+    if (clientType === 'pre-launched-browser-or-android') {
       assert(preLaunched.browser || preLaunched.androidDevice);
+    }
     this._onClose = onClose;
     this._id = id;
     this._profileName = `${new Date().toISOString()}-${clientType}`;
@@ -74,10 +76,12 @@ export class PlaywrightConnection {
       await lock;
       if (ws.readyState !== ws.CLOSING) {
         const messageString = JSON.stringify(message);
-        if (debugLogger.isEnabled('server:channel'))
+        if (debugLogger.isEnabled('server:channel')) {
           debugLogger.log('server:channel', `[${this._id}] ${monotonicTime() * 1000} SEND ► ${messageString}`);
-        if (debugLogger.isEnabled('server:metadata'))
+        }
+        if (debugLogger.isEnabled('server:metadata')) {
           this.logServerMetadata(message, messageString, 'SEND');
+        }
         ws.send(messageString);
       }
     };
@@ -85,10 +89,12 @@ export class PlaywrightConnection {
       await lock;
       const messageString = Buffer.from(message).toString();
       const jsonMessage = JSON.parse(messageString);
-      if (debugLogger.isEnabled('server:channel'))
+      if (debugLogger.isEnabled('server:channel')) {
         debugLogger.log('server:channel', `[${this._id}] ${monotonicTime() * 1000} ◀ RECV ${messageString}`);
-      if (debugLogger.isEnabled('server:metadata'))
+      }
+      if (debugLogger.isEnabled('server:metadata')) {
         this.logServerMetadata(jsonMessage, messageString, 'RECV');
+      }
       this._dispatcherConnection.dispatch(jsonMessage);
     });
 
@@ -102,12 +108,15 @@ export class PlaywrightConnection {
 
     this._root = new RootDispatcher(this._dispatcherConnection, async (scope, options) => {
       await startProfiling();
-      if (clientType === 'reuse-browser')
+      if (clientType === 'reuse-browser') {
         return await this._initReuseBrowsersMode(scope);
-      if (clientType === 'pre-launched-browser-or-android')
+      }
+      if (clientType === 'pre-launched-browser-or-android') {
         return this._preLaunched.browser ? await this._initPreLaunchedBrowserMode(scope) : await this._initPreLaunchedAndroidMode(scope);
-      if (clientType === 'launch-browser')
+      }
+      if (clientType === 'launch-browser') {
         return await this._initLaunchBrowserMode(scope, options);
+      }
       throw new Error('Unsupported client type: ' + clientType);
     });
   }
@@ -120,8 +129,9 @@ export class PlaywrightConnection {
     const browser = await playwright[this._options.browserName as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
 
     this._cleanups.push(async () => {
-      for (const browser of playwright.allBrowsers())
+      for (const browser of playwright.allBrowsers()) {
         await browser.close({ reason: 'Connection terminated' });
+      }
     });
     browser.on(Browser.Events.Disconnected, () => {
       // Underlying browser did close for some reason - force disconnect the client.
@@ -147,8 +157,9 @@ export class PlaywrightConnection {
     const playwrightDispatcher = new PlaywrightDispatcher(scope, playwright, this._preLaunched.socksProxy, browser);
     // In pre-launched mode, keep only the pre-launched browser.
     for (const b of playwright.allBrowsers()) {
-      if (b !== browser)
+      if (b !== browser) {
         await b.close({ reason: 'Connection terminated' });
+      }
     }
     this._cleanups.push(() => playwrightDispatcher.cleanup());
     return playwrightDispatcher;
@@ -183,18 +194,21 @@ export class PlaywrightConnection {
 
     const requestedOptions = launchOptionsHash(this._options.launchOptions);
     let browser = playwright.allBrowsers().find(b => {
-      if (b.options.name !== this._options.browserName)
+      if (b.options.name !== this._options.browserName) {
         return false;
+      }
       const existingOptions = launchOptionsHash(b.options.originalLaunchOptions);
       return existingOptions === requestedOptions;
     });
 
     // Close remaining browsers of this type+channel. Keep different browser types for the speed.
     for (const b of playwright.allBrowsers()) {
-      if (b === browser)
+      if (b === browser) {
         continue;
-      if (b.options.name === this._options.browserName && b.options.channel === this._options.launchOptions.channel)
+      }
+      if (b.options.name === this._options.browserName && b.options.channel === this._options.launchOptions.channel) {
         await b.close({ reason: 'Connection terminated' });
+      }
     }
 
     if (!browser) {
@@ -213,13 +227,15 @@ export class PlaywrightConnection {
       // but close all the empty browsers and contexts to clean up.
       for (const browser of playwright.allBrowsers()) {
         for (const context of browser.contexts()) {
-          if (!context.pages().length)
+          if (!context.pages().length) {
             await context.close({ reason: 'Connection terminated' });
-          else
+          } else {
             await context.stopPendingOperations('Connection closed');
+          }
         }
-        if (!browser.contexts())
+        if (!browser.contexts()) {
           await browser.close({ reason: 'Connection terminated' });
+        }
       }
     });
 
@@ -228,8 +244,9 @@ export class PlaywrightConnection {
   }
 
   private async _createOwnedSocksProxy(playwright: Playwright): Promise<SocksProxy | undefined> {
-    if (!this._options.socksProxyPattern)
+    if (!this._options.socksProxyPattern) {
       return;
+    }
     const socksProxy = new SocksProxy();
     socksProxy.setPattern(this._options.socksProxyPattern);
     playwright.options.socksProxyPort = await socksProxy.listen(0);
@@ -243,8 +260,9 @@ export class PlaywrightConnection {
     debugLogger.log('server', `[${this._id}] disconnected. error: ${error}`);
     this._root._dispose();
     debugLogger.log('server', `[${this._id}] starting cleanup`);
-    for (const cleanup of this._cleanups)
+    for (const cleanup of this._cleanups) {
       await cleanup().catch(() => {});
+    }
     await stopProfiling(this._profileName);
     this._onClose();
     debugLogger.log('server', `[${this._id}] finished cleanup`);
@@ -262,8 +280,9 @@ export class PlaywrightConnection {
   }
 
   async close(reason?: { code: number, reason: string }) {
-    if (this._disconnected)
+    if (this._disconnected) {
       return;
+    }
     debugLogger.log('server', `[${this._id}] force closing connection: ${reason?.reason || ''} (${reason?.code || 0})`);
     try {
       this._ws.close(reason?.code, reason?.reason);
@@ -276,11 +295,13 @@ function launchOptionsHash(options: LaunchOptions) {
   const copy = { ...options };
   for (const k of Object.keys(copy)) {
     const key = k as keyof LaunchOptions;
-    if (copy[key] === defaultLaunchOptions[key])
+    if (copy[key] === defaultLaunchOptions[key]) {
       delete copy[key];
+    }
   }
-  for (const key of optionsThatAllowBrowserReuse)
+  for (const key of optionsThatAllowBrowserReuse) {
     delete copy[key];
+  }
   return JSON.stringify(copy);
 }
 

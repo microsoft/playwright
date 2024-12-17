@@ -46,22 +46,26 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
         debugLogger.log('install', `SUCCESS installing ${title}`);
         break;
       }
-      if (await existsAsync(zipPath))
+      if (await existsAsync(zipPath)) {
         await fs.promises.unlink(zipPath);
-      if (await existsAsync(browserDirectory))
+      }
+      if (await existsAsync(browserDirectory)) {
         await fs.promises.rmdir(browserDirectory, { recursive: true });
-      const errorMessage = error?.message || '';
+      }
+      const errorMessage = error.message || '';
       debugLogger.log('install', `attempt #${attempt} - ERROR: ${errorMessage}`);
-      if (attempt >= retryCount)
+      if (attempt >= retryCount) {
         throw error;
+      }
     }
   } catch (e) {
     debugLogger.log('install', `FAILED installation ${title} with error: ${e}`);
     process.exitCode = 1;
     throw e;
   } finally {
-    if (await existsAsync(zipPath))
+    if (await existsAsync(zipPath)) {
       await fs.promises.unlink(zipPath);
+    }
   }
   logPolitely(`${title} downloaded to ${browserDirectory}`);
   return true;
@@ -77,20 +81,23 @@ function downloadBrowserWithProgressBarOutOfProcess(title: string, browserDirect
   const promise = new ManualPromise<{ error: Error | null }>();
   const progress = getDownloadProgress();
   cp.on('message', (message: any) => {
-    if (message?.method === 'log')
+    if (message?.method === 'log') {
       debugLogger.log('install', message.params.message);
-    if (message?.method === 'progress')
+    }
+    if (message?.method === 'progress') {
       progress(message.params.done, message.params.total);
+    }
   });
   cp.on('exit', code => {
     if (code !== 0) {
       promise.resolve({ error: new Error(`Download failure, code=${code}`) });
       return;
     }
-    if (!fs.existsSync(browserDirectoryToMarkerFilePath(browserDirectory)))
+    if (!fs.existsSync(browserDirectoryToMarkerFilePath(browserDirectory))) {
       promise.resolve({ error: new Error(`Download failure, ${browserDirectoryToMarkerFilePath(browserDirectory)} does not exist`) });
-    else
+    } else {
       promise.resolve({ error: null });
+    }
   });
   cp.on('error', error => {
     promise.resolve({ error });
@@ -116,15 +123,17 @@ export function logPolitely(toBeLogged: string) {
   const logLevel = process.env.npm_config_loglevel;
   const logLevelDisplay = ['silent', 'error', 'warn'].indexOf(logLevel || '') > -1;
 
-  if (!logLevelDisplay)
-    console.log(toBeLogged);  // eslint-disable-line no-console
+  if (!logLevelDisplay) {
+    console.log(toBeLogged); // eslint-disable-line no-console
+  }
 }
 
 type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 
 function getDownloadProgress(): OnProgressCallback {
-  if (process.stdout.isTTY)
+  if (process.stdout.isTTY) {
     return getAnimatedDownloadProgress();
+  }
   return getBasicDownloadProgress();
 }
 

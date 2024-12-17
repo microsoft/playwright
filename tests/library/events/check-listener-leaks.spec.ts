@@ -31,8 +31,9 @@ setUnderTest();
 test('defaultMaxListeners', () => {
   const e = new EventEmitter();
 
-  for (let i = 0; i < 10; i++)
+  for (let i = 0; i < 10; i++) {
     e.on('default', common.mustNotCall());
+  }
 
 
   expect(e._events['default']).not.toHaveProperty('warned');
@@ -40,8 +41,9 @@ test('defaultMaxListeners', () => {
   expect(e._events['default'].hasOwnProperty('warned')).toBeTruthy();
 
   e.setMaxListeners(5);
-  for (let i = 0; i < 5; i++)
+  for (let i = 0; i < 5; i++) {
     e.on('specific', common.mustNotCall());
+  }
 
   expect(e._events['specific']).not.toHaveProperty('warned');
   e.on('specific', common.mustNotCall());
@@ -56,8 +58,9 @@ test('defaultMaxListeners', () => {
 
   // unlimited
   e.setMaxListeners(0);
-  for (let i = 0; i < 1000; i++)
+  for (let i = 0; i < 1000; i++) {
     e.on('unlimited', common.mustNotCall());
+  }
 
   expect(e._events['unlimited']).not.toHaveProperty('warned');
 });
@@ -66,8 +69,9 @@ test('process-wide', () => {
   events.EventEmitter.defaultMaxListeners = 42;
   const e = new EventEmitter();
 
-  for (let i = 0; i < 42; ++i)
+  for (let i = 0; i < 42; ++i) {
     e.on('fortytwo', common.mustNotCall());
+  }
 
   expect(e._events['fortytwo']).not.toHaveProperty('warned');
   e.on('fortytwo', common.mustNotCall());

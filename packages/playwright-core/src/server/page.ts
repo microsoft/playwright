@@ -187,16 +187,18 @@ export class Page extends SdkObject {
     this._timeoutSettings = new TimeoutSettings(browserContext._timeoutSettings);
     this._screenshotter = new Screenshotter(this);
     this._frameManager = new frames.FrameManager(this);
-    if (delegate.pdf)
+    if (delegate.pdf) {
       this.pdf = delegate.pdf.bind(delegate);
+    }
     this.coverage = delegate.coverage ? delegate.coverage() : null;
   }
 
   async reportAsNew(opener: Page | undefined, error: Error | undefined = undefined, contextEvent: string = BrowserContext.Events.Page) {
     if (opener) {
       const openerPageOrError = await opener.waitForInitializedOrError();
-      if (openerPageOrError instanceof Page && !openerPageOrError.isClosed())
+      if (openerPageOrError instanceof Page && !openerPageOrError.isClosed()) {
         this._opener = openerPageOrError;
+      }
     }
     this._markInitialized(error, contextEvent);
   }
@@ -205,24 +207,27 @@ export class Page extends SdkObject {
     if (error) {
       // Initialization error could have happened because of
       // context/browser closure. Just ignore the page.
-      if (this._browserContext.isClosingOrClosed())
+      if (this._browserContext.isClosingOrClosed()) {
         return;
+      }
       this._frameManager.createDummyMainFrameIfNeeded();
     }
     this._initialized = error || this;
     this.emitOnContext(contextEvent, this);
 
-    for (const { event, args } of this._eventsToEmitAfterInitialized)
+    for (const { event, args } of this._eventsToEmitAfterInitialized) {
       this._browserContext.emit(event, ...args);
+    }
     this._eventsToEmitAfterInitialized = [];
 
     // It may happen that page initialization finishes after Close event has already been sent,
     // in that case we fire another Close event to ensure that each reported Page will have
     // corresponding Close event after it is reported on the context.
-    if (this.isClosed())
+    if (this.isClosed()) {
       this.emit(Page.Events.Close);
-    else
+    } else {
       this.instrumentation.onPageOpen(this);
+    }
 
     // Note: it is important to resolve _initializedPromise at the end,
     // so that anyone who awaits waitForInitializedOrError got a ready and reported page.
@@ -238,22 +243,25 @@ export class Page extends SdkObject {
   }
 
   emitOnContext(event: string | symbol, ...args: any[]) {
-    if (this._isServerSideOnly)
+    if (this._isServerSideOnly) {
       return;
+    }
     this._browserContext.emit(event, ...args);
   }
 
   emitOnContextOnceInitialized(event: string | symbol, ...args: any[]) {
-    if (this._isServerSideOnly)
+    if (this._isServerSideOnly) {
       return;
+    }
     // Some events, like console messages, may come before page is ready.
     // In this case, postpone the event until page is initialized,
     // and dispatch it to the client later, either on the live Page,
     // or on the "errored" Page.
-    if (this._initialized)
+    if (this._initialized) {
       this._browserContext.emit(event, ...args);
-    else
+    } else {
       this._eventsToEmitAfterInitialized.push({ event, args });
+    }
   }
 
   async resetForReuse(metadata: CallMetadata) {
@@ -343,10 +351,12 @@ export class Page extends SdkObject {
   }
 
   async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource) {
-    if (this._pageBindings.has(name))
+    if (this._pageBindings.has(name)) {
       throw new Error(`Function "${name}" has been already registered`);
-    if (this._browserContext._pageBindings.has(name))
+    }
+    if (this._browserContext._pageBindings.has(name)) {
       throw new Error(`Function "${name}" has been already registered in the browser context`);
+    }
     const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
     await this._delegate.addInitScript(binding.initScript);
@@ -355,8 +365,9 @@ export class Page extends SdkObject {
 
   async _removeExposedBindings() {
     for (const [key, binding] of this._pageBindings) {
-      if (!binding.internal)
+      if (!binding.internal) {
         this._pageBindings.delete(key);
+      }
     }
   }
 
@@ -370,8 +381,9 @@ export class Page extends SdkObject {
   }
 
   async _onBindingCalled(payload: string, context: dom.FrameExecutionContext) {
-    if (this._closedState === 'closed')
+    if (this._closedState === 'closed') {
       return;
+    }
     await PageBinding.dispatch(this, payload, context);
   }
 
@@ -410,11 +422,13 @@ export class Page extends SdkObject {
         return null;
       });
       const result = await this._delegate.goBack();
-      if (!result)
+      if (!result) {
         return null;
+      }
       const response = await waitPromise;
-      if (error)
+      if (error) {
         throw error;
+      }
       return response;
     }), this._timeoutSettings.navigationTimeout(options));
   }
@@ -430,11 +444,13 @@ export class Page extends SdkObject {
         return null;
       });
       const result = await this._delegate.goForward();
-      if (!result)
+      if (!result) {
         return null;
+      }
       const response = await waitPromise;
-      if (error)
+      if (error) {
         throw error;
+      }
       return response;
     }), this._timeoutSettings.navigationTimeout(options));
   }
@@ -451,8 +467,9 @@ export class Page extends SdkObject {
 
   resolveLocatorHandler(uid: number, remove: boolean | undefined) {
     const handler = this._locatorHandlers.get(uid);
-    if (remove)
+    if (remove) {
       this._locatorHandlers.delete(uid);
+    }
     if (handler) {
       handler.resolved?.resolve();
       handler.resolved = undefined;
@@ -473,27 +490,32 @@ export class Page extends SdkObject {
   }
 
   private async _performWaitForNavigationCheck(progress: Progress) {
-    if (process.env.PLAYWRIGHT_SKIP_NAVIGATION_CHECK)
+    if (process.env.PLAYWRIGHT_SKIP_NAVIGATION_CHECK) {
       return;
+    }
     const mainFrame = this._frameManager.mainFrame();
-    if (!mainFrame || !mainFrame.pendingDocument())
+    if (!mainFrame || !mainFrame.pendingDocument()) {
       return;
+    }
     const url = mainFrame.pendingDocument()?.request?.url();
     const toUrl = url ? `" ${trimStringWithEllipsis(url, 200)}"` : '';
     progress.log(`  waiting for${toUrl} navigation to finish...`);
     await helper.waitForEvent(progress, mainFrame, frames.Frame.Events.InternalNavigation, (e: frames.NavigationEvent) => {
-      if (!e.isPublic)
+      if (!e.isPublic) {
         return false;
-      if (!e.error)
+      }
+      if (!e.error) {
         progress.log(`  navigated to "${trimStringWithEllipsis(mainFrame.url(), 200)}"`);
+      }
       return true;
     }).promise;
   }
 
   private async _performLocatorHandlersCheckpoint(progress: Progress) {
     // Do not run locator handlers from inside locator handler callbacks to avoid deadlocks.
-    if (this._locatorHandlerRunningCounter)
+    if (this._locatorHandlerRunningCounter) {
       return;
+    }
     for (const [uid, handler] of this._locatorHandlers) {
       if (!handler.resolved) {
         if (await this.mainFrame().isVisibleInternal(handler.selector, { strict: true })) {
@@ -522,14 +544,18 @@ export class Page extends SdkObject {
   }
 
   async emulateMedia(options: Partial<EmulatedMedia>) {
-    if (options.media !== undefined)
+    if (options.media !== undefined) {
       this._emulatedMedia.media = options.media;
-    if (options.colorScheme !== undefined)
+    }
+    if (options.colorScheme !== undefined) {
       this._emulatedMedia.colorScheme = options.colorScheme;
-    if (options.reducedMotion !== undefined)
+    }
+    if (options.reducedMotion !== undefined) {
       this._emulatedMedia.reducedMotion = options.reducedMotion;
-    if (options.forcedColors !== undefined)
+    }
+    if (options.forcedColors !== undefined) {
       this._emulatedMedia.forcedColors = options.forcedColors;
+    }
 
     await this._delegate.updateEmulateMedia();
   }
@@ -554,8 +580,9 @@ export class Page extends SdkObject {
   }
 
   emulatedSize(): EmulatedSize | null {
-    if (this._emulatedSize)
+    if (this._emulatedSize) {
       return this._emulatedSize;
+    }
     const contextOptions = this._browserContext._options;
     return contextOptions.viewport ? { viewport: contextOptions.viewport, screen: contextOptions.screen || contextOptions.viewport } : null;
   }
@@ -601,12 +628,14 @@ export class Page extends SdkObject {
 
     const comparator = getComparator('image/png');
     const controller = new ProgressController(metadata, this);
-    if (!options.expected && options.isNot)
+    if (!options.expected && options.isNot) {
       return { errorMessage: '"not" matcher requires expected result' };
+    }
     try {
       const format = validateScreenshotOptions(options || {});
-      if (format !== 'png')
+      if (format !== 'png') {
         throw new Error('Only PNG screenshots are supported');
+      }
     } catch (error) {
       return { errorMessage: error.message };
     }
@@ -618,10 +647,12 @@ export class Page extends SdkObject {
     } | undefined = undefined;
     const areEqualScreenshots = (actual: Buffer | undefined, expected: Buffer | undefined, previous: Buffer | undefined) => {
       const comparatorResult = actual && expected ? comparator(actual, expected, options) : undefined;
-      if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot)
+      if (comparatorResult !== undefined && !!comparatorResult === !!options.isNot) {
         return true;
-      if (comparatorResult)
+      }
+      if (comparatorResult) {
         intermediateResult = { errorMessage: comparatorResult.errorMessage, diff: comparatorResult.diff, actual, previous };
+      }
       return false;
     };
     const callTimeout = this._timeoutSettings.timeout(options);
@@ -630,39 +661,47 @@ export class Page extends SdkObject {
       let previous: Buffer | undefined;
       const pollIntervals = [0, 100, 250, 500];
       progress.log(`${metadata.apiName}${callTimeout ? ` with timeout ${callTimeout}ms` : ''}`);
-      if (options.expected)
+      if (options.expected) {
         progress.log(`  verifying given screenshot expectation`);
-      else
+      } else {
         progress.log(`  generating new stable screenshot expectation`);
+      }
       let isFirstIteration = true;
       while (true) {
         progress.throwIfAborted();
-        if (this.isClosed())
+        if (this.isClosed()) {
           throw new Error('The page has closed');
+        }
         const screenshotTimeout = pollIntervals.shift() ?? 1000;
-        if (screenshotTimeout)
+        if (screenshotTimeout) {
           progress.log(`waiting ${screenshotTimeout}ms before taking screenshot`);
+        }
         previous = actual;
         actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => {
           progress.log(`failed to take screenshot - ` + e.message);
           return undefined;
         });
-        if (!actual)
+        if (!actual) {
           continue;
+        }
         // Compare against expectation for the first iteration.
         const expectation = options.expected && isFirstIteration ? options.expected : previous;
-        if (areEqualScreenshots(actual, expectation, previous))
+        if (areEqualScreenshots(actual, expectation, previous)) {
           break;
-        if (intermediateResult)
+        }
+        if (intermediateResult) {
           progress.log(intermediateResult.errorMessage);
+        }
         isFirstIteration = false;
       }
 
-      if (!isFirstIteration)
+      if (!isFirstIteration) {
         progress.log(`captured a stable screenshot`);
+      }
 
-      if (!options.expected)
+      if (!options.expected) {
         return { actual };
+      }
 
       if (isFirstIteration) {
         progress.log(`screenshot matched expectation`);
@@ -677,11 +716,13 @@ export class Page extends SdkObject {
     }, callTimeout).catch(e => {
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
       // A: We want user to receive a friendly diff between actual and expected/previous.
-      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
+      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e)) {
         throw e;
+      }
       let errorMessage = e.message;
-      if (e instanceof TimeoutError && intermediateResult?.previous)
+      if (e instanceof TimeoutError && intermediateResult?.previous) {
         errorMessage = `Failed to take two consecutive stable screenshots.`;
+      }
       return {
         log: compressCallLog(e.message ? [...metadata.log, e.message] : metadata.log),
         ...intermediateResult,
@@ -699,10 +740,12 @@ export class Page extends SdkObject {
   }
 
   async close(metadata: CallMetadata, options: { runBeforeUnload?: boolean, reason?: string } = {}) {
-    if (this._closedState === 'closed')
+    if (this._closedState === 'closed') {
       return;
-    if (options.reason)
+    }
+    if (options.reason) {
       this._closeReason = options.reason;
+    }
     const runBeforeUnload = !!options.runBeforeUnload;
     if (this._closedState !== 'closing') {
       this._closedState = 'closing';
@@ -710,10 +753,12 @@ export class Page extends SdkObject {
       // while we are trying to close the page.
       await this._delegate.closePage(runBeforeUnload).catch(e => debugLogger.log('error', e));
     }
-    if (!runBeforeUnload)
+    if (!runBeforeUnload) {
       await this._closedPromise;
-    if (this._ownedContext)
+    }
+    if (this._ownedContext) {
       await this._ownedContext.close(options);
+    }
   }
 
   isClosed(): boolean {
@@ -735,8 +780,9 @@ export class Page extends SdkObject {
 
   _removeWorker(workerId: string) {
     const worker = this._workers.get(workerId);
-    if (!worker)
+    if (!worker) {
       return;
+    }
     worker.didClose();
     this._workers.delete(workerId);
   }
@@ -760,8 +806,9 @@ export class Page extends SdkObject {
   frameNavigatedToNewDocument(frame: frames.Frame) {
     this.emit(Page.Events.InternalFrameNavigatedToNewDocument, frame);
     const origin = frame.origin();
-    if (origin)
+    if (origin) {
       this._browserContext.addVisitedOrigin(origin);
+    }
   }
 
   allInitScripts() {
@@ -792,8 +839,9 @@ export class Page extends SdkObject {
       try {
         await frame.nonStallingEvaluateInExistingContext(expression, world);
       } catch (e) {
-        if (options.throwOnJSErrors && js.isJavaScriptErrorInEvaluate(e))
+        if (options.throwOnJSErrors && js.isJavaScriptErrorInEvaluate(e)) {
           throw e;
+        }
       }
     }));
   }
@@ -835,8 +883,9 @@ export class Worker extends SdkObject {
   }
 
   didClose() {
-    if (this._existingExecutionContext)
+    if (this._existingExecutionContext) {
       this._existingExecutionContext.contextDestroyed('Worker was closed');
+    }
     this.emit(Worker.Events.Close, this);
     this.openScope.close(new Error('Worker closed'));
   }
@@ -878,15 +927,17 @@ export class PageBinding {
     try {
       assert(context.world);
       const binding = page.getBinding(name);
-      if (!binding)
+      if (!binding) {
         throw new Error(`Function "${name}" is not exposed`);
+      }
       let result: any;
       if (binding.needsHandle) {
         const handle = await context.evaluateHandle(takeHandle, { name, seq }).catch(e => null);
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, handle);
       } else {
-        if (!Array.isArray(serializedArgs))
+        if (!Array.isArray(serializedArgs)) {
           throw new Error(`serializedArgs is not an array. This can happen when Array.prototype.toJSON is defined incorrectly`);
+        }
         const args = serializedArgs!.map(a => parseEvaluationResultValue(a));
         result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
       }
@@ -903,10 +954,11 @@ export class PageBinding {
 
     function deliverResult(arg: { name: string, seq: number, result?: any, error?: any }) {
       const callbacks = (globalThis as any)[arg.name]['callbacks'];
-      if ('error' in arg)
+      if ('error' in arg) {
         callbacks.get(arg.seq).reject(arg.error);
-      else
+      } else {
         callbacks.get(arg.seq).resolve(arg.result);
+      }
       callbacks.delete(arg.seq);
     }
   }
@@ -916,8 +968,9 @@ function addPageBinding(playwrightBinding: string, bindingName: string, needsHan
   const binding = (globalThis as any)[playwrightBinding];
   (globalThis as any)[bindingName] = (...args: any[]) => {
     const me = (globalThis as any)[bindingName];
-    if (needsHandle && args.slice(1).some(arg => arg !== undefined))
+    if (needsHandle && args.slice(1).some(arg => arg !== undefined)) {
       throw new Error(`exposeBindingHandle supports a single argument, ${args.length} received`);
+    }
     let callbacks = me['callbacks'];
     if (!callbacks) {
       callbacks = new Map();
@@ -998,8 +1051,9 @@ class FrameThrottler {
 
   recharge() {
     // Send all acks, reset budget.
-    for (const ack of this._acks)
+    for (const ack of this._acks) {
       ack();
+    }
     this._acks = [];
     this._budget = this._nonThrottledFrames;
     if (this._timeoutId) {

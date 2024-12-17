@@ -392,8 +392,9 @@ await page1.GotoAsync("about:blank?foo");`);
 
     const messages: any[] = [];
     page.on('console', message => {
-      if (message.type() !== 'error')
+      if (message.type() !== 'error') {
         messages.push(message.text());
+      }
     });
     await Promise.all([
       page.click('button'),
@@ -446,8 +447,9 @@ await page1.GotoAsync("about:blank?foo");`);
       history.pushState({}, 'title', '${server.PREFIX}');
     }
     </script>`, server.PREFIX);
-    for (let i = 1; i < 3; ++i)
+    for (let i = 1; i < 3; ++i) {
       await page.evaluate('pushState()');
+    }
 
     await page.goto(server.PREFIX + '/page2.html');
     await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/page2.html');`);

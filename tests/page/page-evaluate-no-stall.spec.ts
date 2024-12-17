@@ -42,8 +42,9 @@ test('should throw when no main execution context', async ({ page, toImpl }) => 
   await page.setContent('<iframe></iframe>');
   const error = await errorPromise;
   // bail out if we accidentally succeeded
-  if (error === 4)
+  if (error === 4) {
     return;
+  }
   // Testing this as a race.
   expect([
     'Frame does not yet have a main execution context',

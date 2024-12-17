@@ -55,14 +55,17 @@ export class BidiNetworkManager {
   }
 
   private _onBeforeRequestSent(param: bidi.Network.BeforeRequestSentParameters) {
-    if (param.request.url.startsWith('data:'))
+    if (param.request.url.startsWith('data:')) {
       return;
+    }
     const redirectedFrom = param.redirectCount ? (this._requests.get(param.request.request) || null) : null;
     const frame = redirectedFrom ? redirectedFrom.request.frame() : (param.context ? this._page._frameManager.frame(param.context) : null);
-    if (!frame)
+    if (!frame) {
       return;
-    if (redirectedFrom)
+    }
+    if (redirectedFrom) {
       this._requests.delete(redirectedFrom._id);
+    }
     let route;
     if (param.intercepts) {
       // We do not support intercepting redirects.
@@ -82,16 +85,18 @@ export class BidiNetworkManager {
 
   private _onResponseStarted(params: bidi.Network.ResponseStartedParameters) {
     const request = this._requests.get(params.request.request);
-    if (!request)
+    if (!request) {
       return;
+    }
     const getResponseBody = async () => {
       throw new Error(`Response body is not available for requests in Bidi`);
     };
     const timings = params.request.timings;
     const startTime = timings.requestTime;
     function relativeToStart(time: number): number {
-      if (!time)
+      if (!time) {
         return -1;
+      }
       return (time - startTime) / 1000;
     }
     const timing: network.ResourceTiming = {
@@ -111,14 +116,16 @@ export class BidiNetworkManager {
     response.setRawResponseHeaders(null);
     response.setResponseHeadersSize(params.response.headersSize);
     this._page._frameManager.requestReceivedResponse(response);
-    if (params.navigation)
+    if (params.navigation) {
       this._onNavigationResponseStarted(params);
+    }
   }
 
   private _onResponseCompleted(params: bidi.Network.ResponseCompletedParameters) {
     const request = this._requests.get(params.request.request);
-    if (!request)
+    if (!request) {
       return;
+    }
     const response = request.request._existingResponse()!;
     // TODO: body size is the encoded size
     response.setTransferSize(params.response.bodySize);
@@ -140,8 +147,9 @@ export class BidiNetworkManager {
 
   private _onFetchError(params: bidi.Network.FetchErrorParameters) {
     const request = this._requests.get(params.request.request);
-    if (!request)
+    if (!request) {
       return;
+    }
     this._requests.delete(request._id);
     const response = request.request._existingResponse();
     if (response) {
@@ -187,11 +195,13 @@ export class BidiNetworkManager {
 
   async _updateProtocolRequestInterception(initial?: boolean) {
     const enabled = this._userRequestInterceptionEnabled || !!this._credentials;
-    if (enabled === this._protocolRequestInterceptionEnabled)
+    if (enabled === this._protocolRequestInterceptionEnabled) {
       return;
+    }
     this._protocolRequestInterceptionEnabled = enabled;
-    if (initial && !enabled)
+    if (initial && !enabled) {
       return;
+    }
     const cachePromise = this._session.send('network.setCacheBehavior', { cacheBehavior: enabled ? 'bypass' : 'default' });
     let interceptPromise = Promise.resolve<any>(undefined);
     if (enabled) {
@@ -221,8 +231,9 @@ class BidiRequest {
 
   constructor(frame: frames.Frame, redirectedFrom: BidiRequest | null, payload: bidi.Network.BeforeRequestSentParameters, route: BidiRouteImpl | undefined) {
     this._id = payload.request.request;
-    if (redirectedFrom)
+    if (redirectedFrom) {
       redirectedFrom._redirectedTo = this;
+    }
     // TODO: missing in the spec?
     const postDataBuffer = null;
     this.request = new network.Request(frame._page._browserContext, frame, null, redirectedFrom ? redirectedFrom.request : null, payload.navigation ?? undefined,
@@ -236,8 +247,9 @@ class BidiRequest {
 
   _finalRequest(): BidiRequest {
     let request: BidiRequest = this;
-    while (request._redirectedTo)
+    while (request._redirectedTo) {
       request = request._redirectedTo;
+    }
     return request;
   }
 }
@@ -262,8 +274,9 @@ class BidiRouteImpl implements network.RouteDelegate {
     let headers = overrides.headers || this._request.headers();
     if (overrides.postData && headers) {
       headers = headers.map(header => {
-        if (header.name.toLowerCase() === 'content-length')
+        if (header.name.toLowerCase() === 'content-length') {
           return { name: header.name, value: overrides.postData!.byteLength.toString() };
+        }
         return header;
       });
     }
@@ -297,8 +310,9 @@ class BidiRouteImpl implements network.RouteDelegate {
 
 function fromBidiHeaders(bidiHeaders: bidi.Network.Header[]): types.HeadersArray {
   const result: types.HeadersArray = [];
-  for (const { name, value } of bidiHeaders)
+  for (const { name, value } of bidiHeaders) {
     result.push({ name, value: bidiBytesValueToString(value) });
+  }
   return result;
 }
 
@@ -328,20 +342,25 @@ function toBidiHeaders(headers: types.HeadersArray): bidi.Network.Header[] {
 }
 
 export function bidiBytesValueToString(value: bidi.Network.BytesValue): string {
-  if (value.type === 'string')
+  if (value.type === 'string') {
     return value.value;
-  if (value.type === 'base64')
+  }
+  if (value.type === 'base64') {
     return Buffer.from(value.type, 'base64').toString('binary');
+  }
   return 'unknown value type: ' + (value as any).type;
 
 }
 
 function toBidiSameSite(sameSite?: 'Strict' | 'Lax' | 'None'): bidi.Network.SameSite | undefined {
-  if (!sameSite)
+  if (!sameSite) {
     return undefined;
-  if (sameSite === 'Strict')
+  }
+  if (sameSite === 'Strict') {
     return bidi.Network.SameSite.Strict;
-  if (sameSite === 'Lax')
+  }
+  if (sameSite === 'Lax') {
     return bidi.Network.SameSite.Lax;
+  }
   return bidi.Network.SameSite.None;
 }

@@ -43,8 +43,9 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
     method: params.method || 'GET',
     headers: params.headers,
   };
-  if (params.rejectUnauthorized !== undefined)
+  if (params.rejectUnauthorized !== undefined) {
     options.rejectUnauthorized = params.rejectUnauthorized;
+  }
 
   const timeout = params.timeout ?? NET_DEFAULT_TIMEOUT;
 
@@ -69,10 +70,11 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
 
   const requestCallback = (res: http.IncomingMessage) => {
     const statusCode = res.statusCode || 0;
-    if (statusCode >= 300 && statusCode < 400 && res.headers.location)
+    if (statusCode >= 300 && statusCode < 400 && res.headers.location) {
       httpRequest({ ...params, url: new URL(res.headers.location, params.url).toString() }, onResponse, onError);
-    else
+    } else {
       onResponse(res);
+    }
   };
   const request = options.protocol === 'https:' ?
     https.request(options, requestCallback) :
@@ -155,8 +157,9 @@ async function httpStatusCode(url: URL, ignoreHTTPSErrors: boolean, onLog?: (dat
       onLog?.(`HTTP Status: ${statusCode}`);
       resolve(statusCode);
     }, error => {
-      if ((error as NodeJS.ErrnoException).code === 'DEPTH_ZERO_SELF_SIGNED_CERT')
+      if ((error as NodeJS.ErrnoException).code === 'DEPTH_ZERO_SELF_SIGNED_CERT') {
         onStdErr?.(`[WebServer] Self-signed certificate detected. Try adding ignoreHTTPSErrors: true to config.webServer.`);
+      }
       onLog?.(`Error while checking if ${url} is available: ${error.message}`);
       resolve(0);
     });
@@ -172,8 +175,9 @@ function decorateServer(server: net.Server) {
 
   const close = server.close;
   server.close = (callback?: (err?: Error) => void) => {
-    for (const socket of sockets)
+    for (const socket of sockets) {
       socket.destroy();
+    }
     sockets.clear();
     return close.call(server, callback);
   };

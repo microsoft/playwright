@@ -40,13 +40,15 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
   let tokens: css.CSSTokenInterface[];
   try {
     tokens = css.tokenize(selector);
-    if (!(tokens[tokens.length - 1] instanceof css.EOFToken))
+    if (!(tokens[tokens.length - 1] instanceof css.EOFToken)) {
       tokens.push(new css.EOFToken());
+    }
   } catch (e) {
     const newMessage = e.message + ` while parsing selector "${selector}"`;
     const index = (e.stack || '').indexOf(e.message);
-    if (index !== -1)
+    if (index !== -1) {
       e.stack = e.stack.substring(0, index) + newMessage + e.stack.substring(index + e.message.length);
+    }
     e.message = newMessage;
     throw e;
   }
@@ -67,8 +69,9 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
       (token instanceof css.URLToken) ||
       (token instanceof css.PercentageToken);
   });
-  if (unsupportedToken)
+  if (unsupportedToken) {
     throw new InvalidSelectorError(`Unsupported token "${unsupportedToken.toSource()}" while parsing selector "${selector}"`);
+  }
 
   let pos = 0;
   const names = new Set<string>();
@@ -78,8 +81,9 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
   }
 
   function skipWhitespace() {
-    while (tokens[pos] instanceof css.WhitespaceToken)
+    while (tokens[pos] instanceof css.WhitespaceToken) {
       pos++;
+    }
   }
 
   function isIdent(p = pos) {
@@ -130,8 +134,9 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
     const result = [consumeArgument()];
     while (true) {
       skipWhitespace();
-      if (!isComma())
+      if (!isComma()) {
         break;
+      }
       pos++;
       result.push(consumeArgument());
     }
@@ -140,10 +145,12 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
 
   function consumeArgument(): CSSFunctionArgument {
     skipWhitespace();
-    if (isNumber())
+    if (isNumber()) {
       return tokens[pos++].value!;
-    if (isString())
+    }
+    if (isString()) {
       return tokens[pos++].value!;
+    }
     return consumeComplexSelector();
   }
 
@@ -180,10 +187,11 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
         rawCSSString += tokens[pos++].toSource();
       } else if ((tokens[pos] instanceof css.DelimToken) && tokens[pos].value === '.') {
         pos++;
-        if (isIdent())
+        if (isIdent()) {
           rawCSSString += '.' + tokens[pos++].toSource();
-        else
+        } else {
           throw unexpected();
+        }
       } else if (tokens[pos] instanceof css.ColonToken) {
         pos++;
         if (isIdent()) {
@@ -203,8 +211,9 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
             names.add(name);
           }
           skipWhitespace();
-          if (!isCloseParen())
+          if (!isCloseParen()) {
             throw unexpected();
+          }
           pos++;
         } else {
           throw unexpected();
@@ -212,18 +221,21 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
       } else if (tokens[pos] instanceof css.OpenSquareToken) {
         rawCSSString += '[';
         pos++;
-        while (!(tokens[pos] instanceof css.CloseSquareToken) && !isEOF())
+        while (!(tokens[pos] instanceof css.CloseSquareToken) && !isEOF()) {
           rawCSSString += tokens[pos++].toSource();
-        if (!(tokens[pos] instanceof css.CloseSquareToken))
+        }
+        if (!(tokens[pos] instanceof css.CloseSquareToken)) {
           throw unexpected();
+        }
         rawCSSString += ']';
         pos++;
       } else {
         throw unexpected();
       }
     }
-    if (!rawCSSString && !functions.length)
+    if (!rawCSSString && !functions.length) {
       throw unexpected();
+    }
     return { css: rawCSSString || undefined, functions };
   }
 
@@ -231,36 +243,44 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
     let s = '';
     let balance = 1;  // First open paren is a part of a function token.
     while (!isEOF()) {
-      if (isOpenParen() || isFunction())
+      if (isOpenParen() || isFunction()) {
         balance++;
-      if (isCloseParen())
+      }
+      if (isCloseParen()) {
         balance--;
-      if (!balance)
+      }
+      if (!balance) {
         break;
+      }
       s += tokens[pos++].toSource();
     }
     return s;
   }
 
   const result = consumeFunctionArguments();
-  if (!isEOF())
+  if (!isEOF()) {
     throw unexpected();
-  if (result.some(arg => typeof arg !== 'object' || !('simples' in arg)))
+  }
+  if (result.some(arg => typeof arg !== 'object' || !('simples' in arg))) {
     throw new InvalidSelectorError(`Error while parsing selector "${selector}"`);
+  }
   return { selector: result as CSSComplexSelector[], names: Array.from(names) };
 }
 
 export function serializeSelector(args: CSSFunctionArgument[]) {
   return args.map(arg => {
-    if (typeof arg === 'string')
+    if (typeof arg === 'string') {
       return `"${arg}"`;
-    if (typeof arg === 'number')
+    }
+    if (typeof arg === 'number') {
       return String(arg);
+    }
     return arg.simples.map(({ selector, combinator }) => {
       let s = selector.css || '';
       s = s + selector.functions.map(func => `:${func.name}(${serializeSelector(func.args)})`).join('');
-      if (combinator)
+      if (combinator) {
         s += ' ' + combinator;
+      }
       return s;
     }).join(' ');
   }).join(', ');

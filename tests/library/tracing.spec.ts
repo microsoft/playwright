@@ -155,8 +155,9 @@ test('should exclude internal pages', async ({ browserName, context, page, serve
   const pageIds = new Set();
   trace.events.forEach(e => {
     const pageId = e.pageId;
-    if (pageId)
+    if (pageId) {
       pageIds.add(pageId);
+    }
   });
   expect(pageIds.size).toBe(1);
 });
@@ -378,8 +379,9 @@ test('should survive browser.close with auto-created traces dir', async ({ brows
   async function go() {
     while (!done.value) {
       // Produce a lot of operations to make sure tracing operations are enqueued.
-      for (let i = 0; i < 100; i++)
+      for (let i = 0; i < 100; i++) {
         page.evaluate('1 + 1').catch(() => {});
+      }
       await new Promise(f => setTimeout(f, 250));
     }
   }
@@ -607,8 +609,9 @@ test('should hide internal stack frames', async ({ context, page }, testInfo) =>
   const trace = await parseTraceRaw(tracePath);
   const actions = trace.actionObjects.filter(a => !a.apiName.startsWith('tracing.'));
   expect(actions).toHaveLength(4);
-  for (const action of actions)
+  for (const action of actions) {
     expect(relativeStack(action, trace.stacks)).toEqual(['tracing.spec.ts']);
+  }
 });
 
 test('should hide internal stack frames in expect', async ({ context, page }, testInfo) => {
@@ -628,8 +631,9 @@ test('should hide internal stack frames in expect', async ({ context, page }, te
   const trace = await parseTraceRaw(tracePath);
   const actions = trace.actionObjects.filter(a => !a.apiName.startsWith('tracing.'));
   expect(actions).toHaveLength(5);
-  for (const action of actions)
+  for (const action of actions) {
     expect(relativeStack(action, trace.stacks)).toEqual(['tracing.spec.ts']);
+  }
 });
 
 test('should record global request trace', async ({ request, context, server }, testInfo) => {
@@ -723,15 +727,17 @@ test('should not flush console events', async ({ context, page, mode }, testInfo
   const promise = new Promise<void>(f => {
     let counter = 0;
     page.on('console', () => {
-      if (++counter === 100)
+      if (++counter === 100) {
         f();
+      }
     });
   });
 
   await page.evaluate(() => {
     window.builtinSetTimeout(() => {
-      for (let i = 0; i < 100; ++i)
+      for (let i = 0; i < 100; ++i) {
         console.log('hello ' + i);
+      }
     }, 10);
     return 31415926;
   });
@@ -764,14 +770,16 @@ test('should flush console events on tracing stop', async ({ context, page }, te
   const promise = new Promise<void>(f => {
     let counter = 0;
     page.on('console', () => {
-      if (++counter === 100)
+      if (++counter === 100) {
         f();
+      }
     });
   });
   await page.evaluate(() => {
     window.builtinSetTimeout(() => {
-      for (let i = 0; i < 100; ++i)
+      for (let i = 0; i < 100; ++i) {
         console.log('hello ' + i);
+      }
     });
   });
   await promise;

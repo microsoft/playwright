@@ -617,10 +617,11 @@ it('should have security details', async ({ contextFactory, httpsServer, browser
     expect(serverIPAddress).toMatch(/^127\.0\.0\.1|\[::1\]/);
     expect(port).toBe(httpsServer.PORT);
   }
-  if (browserName === 'webkit' && platform === 'darwin')
+  if (browserName === 'webkit' && platform === 'darwin') {
     expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
-  else
+  } else {
     expect(securityDetails).toEqual({ issuer: 'playwright-test', protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
+  }
 
   expect(log.entries[1]._securityDetails).toEqual({ issuer: 'playwright-test', protocol: 'TLSv1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
 });
@@ -680,12 +681,13 @@ it('should return security details directly from response', async ({ contextFact
   const page = await context.newPage();
   const response = await page.goto(httpsServer.EMPTY_PAGE);
   const securityDetails = await response!.securityDetails();
-  if (browserName === 'webkit' && platform === 'win32')
+  if (browserName === 'webkit' && platform === 'win32') {
     expect({ ...securityDetails, protocol: undefined }).toEqual({ subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
-  else if (browserName === 'webkit')
+  } else if (browserName === 'webkit') {
     expect(securityDetails).toEqual({ protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
-  else
+  } else {
     expect(securityDetails).toEqual({ issuer: 'playwright-test', protocol: 'TLS 1.3', subjectName: 'playwright-test', validFrom: 1691708270, validTo: 2007068270 });
+  }
 });
 
 it('should contain http2 for http2 requests', async ({ contextFactory }, testInfo) => {
@@ -922,10 +924,11 @@ it('should not hang on resources served from cache', async ({ contextFactory, se
   const log = await getLog();
   const entries = log.entries.filter(e => e.request.url.endsWith('one-style.css'));
   // In firefox no request events are fired for cached resources.
-  if (browserName === 'firefox')
+  if (browserName === 'firefox') {
     expect(entries.length).toBe(1);
-  else
+  } else {
     expect(entries.length).toBe(2);
+  }
 });
 
 it('should not hang on slow chunked response', async ({ browserName, browser, contextFactory, server }, testInfo) => {

@@ -26,10 +26,11 @@ it('should work for primitives', async ({ page }) => {
 
 it('should work for complicated objects', async ({ page, browserName }) => {
   const aHandle = await page.evaluateHandle(() => window);
-  if (browserName !== 'firefox')
+  if (browserName !== 'firefox') {
     expect(aHandle.toString()).toBe('Window');
-  else
+  } else {
     expect(aHandle.toString()).toBe('JSHandle@object');
+  }
 });
 
 it('should beautifully render sparse arrays', async ({ page, browserName }) => {
@@ -43,10 +44,11 @@ it('should beautifully render sparse arrays', async ({ page, browserName }) => {
       console.log(a);
     }),
   ]);
-  if (browserName === 'firefox')
+  if (browserName === 'firefox') {
     expect(msg.text()).toBe('Array');
-  else
+  } else {
     expect(msg.text()).toBe('[empty, 1, empty x 8, 2, empty x 89, 3]');
+  }
 });
 
 it('should work for promises', async ({ page }) => {

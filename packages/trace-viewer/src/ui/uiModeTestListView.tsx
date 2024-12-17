@@ -61,8 +61,9 @@ export const TestListView: React.FC<{
     // If collapse was requested, clear the expanded items and return w/o selected item.
     if (collapseAllCount !== requestedCollapseAllCount) {
       treeState.expandedItems.clear();
-      for (const item of testTree.flatTreeItems())
+      for (const item of testTree.flatTreeItems()) {
         treeState.expandedItems.set(item.id, false);
+      }
       setCollapseAllCount(requestedCollapseAllCount);
       setSelectedTreeItemId(undefined);
       setTreeState({ ...treeState });
@@ -71,58 +72,67 @@ export const TestListView: React.FC<{
 
     if (expandAllCount !== requestedExpandAllCount) {
       treeState.expandedItems.clear();
-      for (const item of testTree.flatTreeItems())
+      for (const item of testTree.flatTreeItems()) {
         treeState.expandedItems.set(item.id, true);
+      }
       setExpandAllCount(requestedExpandAllCount);
       setSelectedTreeItemId(undefined);
       setTreeState({ ...treeState });
       return;
     }
 
-    if (!runningState || runningState.itemSelectedByUser)
+    if (!runningState || runningState.itemSelectedByUser) {
       return;
+    }
     let selectedTreeItem: TreeItem | undefined;
     const visit = (treeItem: TreeItem) => {
       treeItem.children.forEach(visit);
-      if (selectedTreeItem)
+      if (selectedTreeItem) {
         return;
+      }
       if (treeItem.status === 'failed') {
-        if (treeItem.kind === 'test' && runningState.testIds.has(treeItem.test.id))
+        if (treeItem.kind === 'test' && runningState.testIds.has(treeItem.test.id)) {
           selectedTreeItem = treeItem;
-        else if (treeItem.kind === 'case' && runningState.testIds.has(treeItem.tests[0]?.id))
+        } else if (treeItem.kind === 'case' && runningState.testIds.has(treeItem.tests[0]?.id)) {
           selectedTreeItem = treeItem;
+        }
       }
     };
     visit(testTree.rootItem);
 
-    if (selectedTreeItem)
+    if (selectedTreeItem) {
       setSelectedTreeItemId(selectedTreeItem.id);
+    }
   }, [runningState, setSelectedTreeItemId, testTree, collapseAllCount, setCollapseAllCount, requestedCollapseAllCount, expandAllCount, setExpandAllCount, requestedExpandAllCount, treeState, setTreeState]);
 
   // Compute selected item
   const selectedTreeItem = React.useMemo(() => {
-    if (!selectedTreeItemId)
+    if (!selectedTreeItemId) {
       return undefined;
+    }
     return testTree.treeItemById(selectedTreeItemId);
   }, [selectedTreeItemId, testTree]);
 
   // Handle selection effects separately
   React.useEffect(() => {
-    if (!testModel)
+    if (!testModel) {
       return;
+    }
     const testFile = itemLocation(selectedTreeItem, testModel);
     let selectedTest: reporterTypes.TestCase | undefined;
-    if (selectedTreeItem?.kind === 'test')
+    if (selectedTreeItem?.kind === 'test') {
       selectedTest = selectedTreeItem.test;
-    else if (selectedTreeItem?.kind === 'case' && selectedTreeItem.tests.length === 1)
+    } else if (selectedTreeItem?.kind === 'case' && selectedTreeItem.tests.length === 1) {
       selectedTest = selectedTreeItem.tests[0];
+    }
     onItemSelected({ treeItem: selectedTreeItem, testCase: selectedTest, testFile });
   }, [testModel, selectedTreeItem, onItemSelected]);
 
   // Update watch all.
   React.useEffect(() => {
-    if (isLoading)
+    if (isLoading) {
       return;
+    }
     if (watchAll) {
       testServerConnection?.watchNoReply({ fileNames: testTree.fileNames() });
     } else {
@@ -130,8 +140,9 @@ export const TestListView: React.FC<{
       for (const itemId of watchedTreeIds.value) {
         const treeItem = testTree.treeItemById(itemId);
         const fileName = treeItem?.location.file;
-        if (fileName)
+        if (fileName) {
           fileNames.add(fileName);
+        }
       }
       testServerConnection?.watchNoReply({ fileNames: [...fileNames] });
     }
@@ -147,10 +158,11 @@ export const TestListView: React.FC<{
     e.stopPropagation();
     if (e.metaKey || e.ctrlKey) {
       const parts = filterText.split(' ');
-      if (parts.includes(tag))
+      if (parts.includes(tag)) {
         setFilterText(parts.filter(t => t !== tag).join(' ').trim());
-      else
+      } else {
         setFilterText((filterText + ' ' + tag).trim());
+      }
     } else {
       // Replace all existing tags with this tag.
       setFilterText((filterText.split(' ').filter(t => !t.startsWith('@')).join(' ') + ' ' + tag).trim());
@@ -177,10 +189,11 @@ export const TestListView: React.FC<{
           <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState && !runningState.completed}></ToolbarButton>
           <ToolbarButton icon='go-to-file' title='Show source' onClick={onRevealSource} style={(treeItem.kind === 'group' && treeItem.subKind === 'folder') ? { visibility: 'hidden' } : {}}></ToolbarButton>
           {!watchAll && <ToolbarButton icon='eye' title='Watch' onClick={() => {
-            if (watchedTreeIds.value.has(treeItem.id))
+            if (watchedTreeIds.value.has(treeItem.id)) {
               watchedTreeIds.value.delete(treeItem.id);
-            else
+            } else {
               watchedTreeIds.value.add(treeItem.id);
+            }
             setWatchedTreeIds({ ...watchedTreeIds });
           }} toggled={watchedTreeIds.value.has(treeItem.id)}></ToolbarButton>}
         </Toolbar>
@@ -191,8 +204,9 @@ export const TestListView: React.FC<{
     selectedItem={selectedTreeItem}
     onAccepted={runTreeItem}
     onSelected={treeItem => {
-      if (runningState)
+      if (runningState) {
         runningState.itemSelectedByUser = true;
+      }
       setSelectedTreeItemId(treeItem.id);
     }}
     isError={treeItem => treeItem.kind === 'group' ? treeItem.hasLoadErrors : false}
@@ -201,8 +215,9 @@ export const TestListView: React.FC<{
 };
 
 function itemLocation(item: TreeItem | undefined, model: TeleSuiteUpdaterTestModel | undefined): SourceLocation | undefined {
-  if (!item || !model)
+  if (!item || !model) {
     return;
+  }
   return {
     file: item.location.file,
     line: item.location.line,

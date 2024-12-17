@@ -22,35 +22,45 @@ import type { FFSession } from './ffConnection';
 
 function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
   let mask = 0;
-  if (modifiers.has('Alt'))
+  if (modifiers.has('Alt')) {
     mask |= 1;
-  if (modifiers.has('Control'))
+  }
+  if (modifiers.has('Control')) {
     mask |= 2;
-  if (modifiers.has('Shift'))
+  }
+  if (modifiers.has('Shift')) {
     mask |= 4;
-  if (modifiers.has('Meta'))
+  }
+  if (modifiers.has('Meta')) {
     mask |= 8;
+  }
   return mask;
 }
 
 function toButtonNumber(button: types.MouseButton): number {
-  if (button === 'left')
+  if (button === 'left') {
     return 0;
-  if (button === 'middle')
+  }
+  if (button === 'middle') {
     return 1;
-  if (button === 'right')
+  }
+  if (button === 'right') {
     return 2;
+  }
   return 0;
 }
 
 function toButtonsMask(buttons: Set<types.MouseButton>): number {
   let mask = 0;
-  if (buttons.has('left'))
+  if (buttons.has('left')) {
     mask |= 1;
-  if (buttons.has('right'))
+  }
+  if (buttons.has('right')) {
     mask |= 2;
-  if (buttons.has('middle'))
+  }
+  if (buttons.has('middle')) {
     mask |= 4;
+  }
   return mask;
 }
 
@@ -63,8 +73,9 @@ export class RawKeyboardImpl implements input.RawKeyboard {
 
   async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
     // Firefox will figure out Enter by itself
-    if (text === '\r')
+    if (text === '\r') {
       text = '';
+    }
     await this._client.send('Page.dispatchKeyEvent', {
       type: 'keydown',
       keyCode: keyCodeWithoutLocation,

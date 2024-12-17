@@ -65,15 +65,17 @@ export class LongStandingScope {
   reject(error: Error) {
     this._isClosed = true;
     this._terminateError = error;
-    for (const p of this._terminatePromises.keys())
+    for (const p of this._terminatePromises.keys()) {
       p.resolve(error);
+    }
   }
 
   close(error: Error) {
     this._isClosed = true;
     this._closeError = error;
-    for (const [p, frames] of this._terminatePromises)
+    for (const [p, frames] of this._terminatePromises) {
       p.resolve(cloneError(error, frames));
+    }
   }
 
   isClosed() {
@@ -95,10 +97,12 @@ export class LongStandingScope {
   private async _race(promises: Promise<any>[], safe: boolean, defaultValue?: any): Promise<any> {
     const terminatePromise = new ManualPromise<Error>();
     const frames = captureRawStack();
-    if (this._terminateError)
+    if (this._terminateError) {
       terminatePromise.resolve(this._terminateError);
-    if (this._closeError)
+    }
+    if (this._closeError) {
       terminatePromise.resolve(cloneError(this._closeError, frames));
+    }
     this._terminatePromises.set(terminatePromise, frames);
     try {
       return await Promise.race([

@@ -7,7 +7,7 @@
 import fs from 'fs';
 import path from 'path';
 
-/* eslint-disable curly, indent */
+/* eslint-disable indent */
 
 interface ProfileOptions {
   preferences: Record<string, unknown>;

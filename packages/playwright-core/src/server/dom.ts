@@ -59,8 +59,9 @@ export class FrameExecutionContext extends js.ExecutionContext {
   }
 
   override adoptIfNeeded(handle: js.JSHandle): Promise<js.JSHandle> | null {
-    if (handle instanceof ElementHandle && handle._context !== this)
+    if (handle instanceof ElementHandle && handle._context !== this) {
       return this.frame._page._delegate.adoptElementHandle(handle, this);
+    }
     return null;
   }
 
@@ -81,8 +82,9 @@ export class FrameExecutionContext extends js.ExecutionContext {
   }
 
   override createHandle(remoteObject: js.RemoteObject): js.JSHandle {
-    if (this.frame._page._delegate.isElementHandle(remoteObject))
+    if (this.frame._page._delegate.isElementHandle(remoteObject)) {
       return new ElementHandle(this, remoteObject.objectId!);
+    }
     return super.createHandle(remoteObject);
   }
 
@@ -90,8 +92,9 @@ export class FrameExecutionContext extends js.ExecutionContext {
     if (!this._injectedScriptPromise) {
       const custom: string[] = [];
       const selectorsRegistry = this.frame._page.context().selectors();
-      for (const [name, { source }] of selectorsRegistry._engines)
+      for (const [name, { source }] of selectorsRegistry._engines) {
         custom.push(`{ name: '${name}', engine: (${source}) }`);
+      }
       const sdkLanguage = this.frame.attribution.playwright.options.sdkLanguage;
       const source = `
         (() => {
@@ -142,8 +145,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const utility = await this._frame._utilityContext();
       return await utility.evaluate(pageFunction, [await utility.injectedScript(), this, arg]);
     } catch (e) {
-      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
+      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e)) {
         throw e;
+      }
       return 'error:notconnected';
     }
   }
@@ -153,23 +157,27 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const utility = await this._frame._utilityContext();
       return await utility.evaluateHandle(pageFunction, [await utility.injectedScript(), this, arg]);
     } catch (e) {
-      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
+      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e)) {
         throw e;
+      }
       return 'error:notconnected';
     }
   }
 
   async ownerFrame(): Promise<frames.Frame | null> {
     const frameId = await this._page._delegate.getOwnerFrame(this);
-    if (!frameId)
+    if (!frameId) {
       return null;
+    }
     const frame = this._page._frameManager.frame(frameId);
-    if (frame)
+    if (frame) {
       return frame;
+    }
     for (const page of this._page._browserContext.pages()) {
       const frame = page._frameManager.frame(frameId);
-      if (frame)
+      if (frame) {
         return frame;
+      }
     }
     return null;
   }
@@ -180,8 +188,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async contentFrame(): Promise<frames.Frame | null> {
     const isFrameElement = throwRetargetableDOMError(await this.isIframeElement());
-    if (!isFrameElement)
+    if (!isFrameElement) {
       return null;
+    }
     return this._page._delegate.getContentFrame(this);
   }
 
@@ -219,8 +228,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const waitResult = await this.evaluateInUtility(async ([injected, node, { waitForVisible }]) => {
         return await injected.checkElementStates(node, waitForVisible ? ['visible', 'stable'] : ['stable']);
       }, { waitForVisible });
-      if (waitResult)
+      if (waitResult) {
         return waitResult;
+      }
       return await this._scrollRectIntoViewIfNeeded();
     }, {});
     assertDone(throwRetargetableDOMError(result));
@@ -257,15 +267,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       this._page._delegate.getContentQuads(this),
       this._page.mainFrame()._utilityContext().then(utility => utility.evaluate(() => ({ width: innerWidth, height: innerHeight }))),
     ] as const);
-    if (quads === 'error:notconnected')
+    if (quads === 'error:notconnected') {
       return quads;
-    if (!quads || !quads.length)
+    }
+    if (!quads || !quads.length) {
       return 'error:notvisible';
+    }
 
     // Allow 1x1 elements. Compensate for rounding errors by comparing with 0.99 instead.
     const filtered = quads.map(quad => intersectQuadWithViewport(quad)).filter(quad => computeQuadArea(quad) > 0.99);
-    if (!filtered.length)
+    if (!filtered.length) {
       return 'error:notinviewport';
+    }
     if (this._page._browserContext._browser.options.name === 'firefox') {
       // Firefox internally uses integer coordinates, so 8.x is converted to 8 or 9 when clicking.
       //
@@ -276,8 +289,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       // Therefore, we try to find an integer point within a quad to make sure we click inside the element.
       for (const quad of filtered) {
         const integerPoint = findIntegerPointInsideQuad(quad);
-        if (integerPoint)
+        if (integerPoint) {
           return integerPoint;
+        }
       }
     }
     // Return the middle point of the first quad.
@@ -289,10 +303,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       this.boundingBox(),
       this.evaluateInUtility(([injected, node]) => injected.getElementBorderWidth(node), {}).catch(e => {}),
     ]);
-    if (!box || !border)
+    if (!box || !border) {
       return 'error:notvisible';
-    if (border === 'error:notconnected')
+    }
+    if (border === 'error:notconnected') {
       return border;
+    }
     // Make point relative to the padding box to align with offsetX/offsetY.
     return {
       x: box.x + border.left + offset.x,
@@ -312,25 +328,29 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         if (timeout) {
           progress.log(`  waiting ${timeout}ms`);
           const result = await this.evaluateInUtility(([injected, node, timeout]) => new Promise<void>(f => setTimeout(f, timeout)), timeout);
-          if (result === 'error:notconnected')
+          if (result === 'error:notconnected') {
             return result;
+          }
         }
       } else {
         progress.log(`attempting ${actionName} action${options.trial ? ' (trial run)' : ''}`);
       }
-      if (!options.skipActionPreChecks && !options.force)
+      if (!options.skipActionPreChecks && !options.force) {
         await this._frame._page.performActionPreChecks(progress);
+      }
       const result = await action(retry);
       ++retry;
       if (result === 'error:notvisible') {
-        if (options.force)
+        if (options.force) {
           throw new NonRecoverableDOMError('Element is not visible');
+        }
         progress.log('  element is not visible');
         continue;
       }
       if (result === 'error:notinviewport') {
-        if (options.force)
+        if (options.force) {
           throw new NonRecoverableDOMError('Element is outside of the viewport');
+        }
         progress.log('  element is outside of the viewport');
         continue;
       }
@@ -384,8 +404,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const doScrollIntoView = async () => {
       if (forceScrollOptions) {
         return await this.evaluateInUtility(([injected, node, options]) => {
-          if (node.nodeType === 1 /* Node.ELEMENT_NODE */)
+          if (node.nodeType === 1 /* Node.ELEMENT_NODE */) {
             (node as Node as Element).scrollIntoView(options);
+          }
           return 'done' as const;
         }, forceScrollOptions);
       }
@@ -400,8 +421,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await doScrollIntoView().catch(() => {});
     }
 
-    if ((options as any).__testHookBeforeStable)
+    if ((options as any).__testHookBeforeStable) {
       await (options as any).__testHookBeforeStable();
+    }
 
     if (!force) {
       const elementStates: ElementState[] = waitForEnabled ? ['visible', 'enabled', 'stable'] : ['visible', 'stable'];
@@ -409,24 +431,28 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const result = await this.evaluateInUtility(async ([injected, node, { elementStates }]) => {
         return await injected.checkElementStates(node, elementStates);
       }, { elementStates });
-      if (result)
+      if (result) {
         return result;
+      }
       progress.log(`  element is ${waitForEnabled ? 'visible, enabled and stable' : 'visible and stable'}`);
     }
 
-    if ((options as any).__testHookAfterStable)
+    if ((options as any).__testHookAfterStable) {
       await (options as any).__testHookAfterStable();
+    }
 
     progress.log('  scrolling into view if needed');
     progress.throwIfAborted();  // Avoid action that has side-effects.
     const scrolled = await doScrollIntoView();
-    if (scrolled !== 'done')
+    if (scrolled !== 'done') {
       return scrolled;
+    }
     progress.log('  done scrolling');
 
     const maybePoint = position ? await this._offsetPoint(position) : await this._clickablePoint();
-    if (typeof maybePoint === 'string')
+    if (typeof maybePoint === 'string') {
       return maybePoint;
+    }
     const point = roundPoint(maybePoint);
     progress.metadata.point = point;
     await this.instrumentation.onBeforeInputAction(this, progress.metadata);
@@ -435,21 +461,25 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (force) {
       progress.log(`  forcing action`);
     } else {
-      if ((options as any).__testHookBeforeHitTarget)
+      if ((options as any).__testHookBeforeHitTarget) {
         await (options as any).__testHookBeforeHitTarget();
+      }
 
       const frameCheckResult = await this._checkFrameIsHitTarget(point);
-      if (frameCheckResult === 'error:notconnected' || ('hitTargetDescription' in frameCheckResult))
+      if (frameCheckResult === 'error:notconnected' || ('hitTargetDescription' in frameCheckResult)) {
         return frameCheckResult;
+      }
       const hitPoint = frameCheckResult.framePoint;
       const actionType = actionName === 'move and up' ? 'drag' : ((actionName === 'hover' || actionName === 'tap') ? actionName : 'mouse');
       const handle = await this.evaluateHandleInUtility(([injected, node, { actionType, hitPoint, trial }]) => injected.setupHitTargetInterceptor(node, actionType, hitPoint, trial), { actionType, hitPoint, trial: !!options.trial } as const);
-      if (handle === 'error:notconnected')
+      if (handle === 'error:notconnected') {
         return handle;
+      }
       if (!handle._objectId) {
         const error = handle.rawValue() as string;
-        if (error === 'error:notconnected')
+        if (error === 'error:notconnected') {
           return error;
+        }
         return { hitTargetDescription: error };
       }
       hitTargetInterceptionHandle = handle as any;
@@ -462,48 +492,56 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }
 
     const actionResult = await this._page._frameManager.waitForSignalsCreatedBy(progress, options.waitAfter === true, async () => {
-      if ((options as any).__testHookBeforePointerAction)
+      if ((options as any).__testHookBeforePointerAction) {
         await (options as any).__testHookBeforePointerAction();
+      }
       progress.throwIfAborted();  // Avoid action that has side-effects.
       let restoreModifiers: types.KeyboardModifier[] | undefined;
-      if (options && options.modifiers)
+      if (options && options.modifiers) {
         restoreModifiers = await this._page.keyboard.ensureModifiers(options.modifiers);
+      }
       progress.log(`  performing ${actionName} action`);
       await action(point);
-      if (restoreModifiers)
+      if (restoreModifiers) {
         await this._page.keyboard.ensureModifiers(restoreModifiers);
+      }
       if (hitTargetInterceptionHandle) {
         const stopHitTargetInterception = this._frame.raceAgainstEvaluationStallingEvents(() => {
           return hitTargetInterceptionHandle.evaluate(h => h.stop());
         }).catch(e => 'done' as const).finally(() => {
-          hitTargetInterceptionHandle?.dispose();
+          hitTargetInterceptionHandle.dispose();
         });
         if (options.waitAfter !== false) {
           // When noWaitAfter is passed, we do not want to accidentally stall on
           // non-committed navigation blocking the evaluate.
           const hitTargetResult = await stopHitTargetInterception;
-          if (hitTargetResult !== 'done')
+          if (hitTargetResult !== 'done') {
             return hitTargetResult;
+          }
         }
       }
       progress.log(`  ${options.trial ? 'trial ' : ''}${actionName} action done`);
       progress.log('  waiting for scheduled navigations to finish');
-      if ((options as any).__testHookAfterPointerAction)
+      if ((options as any).__testHookAfterPointerAction) {
         await (options as any).__testHookAfterPointerAction();
+      }
       return 'done';
     });
-    if (actionResult !== 'done')
+    if (actionResult !== 'done') {
       return actionResult;
+    }
     progress.log('  navigations have finished');
     return 'done';
   }
 
   private async _markAsTargetElement(metadata: CallMetadata) {
-    if (!metadata.id)
+    if (!metadata.id) {
       return;
+    }
     await this.evaluateInUtility(([injected, node, callId]) => {
-      if (node.nodeType === 1 /* Node.ELEMENT_NODE */)
+      if (node.nodeType === 1 /* Node.ELEMENT_NODE */) {
         injected.markTargetElements(new Set([node as Node as Element]), callId);
+      }
     }, metadata.id);
   }
 
@@ -572,14 +610,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     let resultingOptions: string[] = [];
     await this._retryAction(progress, 'select option', async () => {
       await this.instrumentation.onBeforeInputAction(this, progress.metadata);
-      if (!options.force)
+      if (!options.force) {
         progress.log(`  waiting for element to be visible and enabled`);
+      }
       const optionsToSelect = [...elements, ...values];
       const result = await this.evaluateInUtility(async ([injected, node, { optionsToSelect, force }]) => {
         if (!force) {
           const checkResult = await injected.checkElementStates(node, ['visible', 'enabled']);
-          if (checkResult)
+          if (checkResult) {
             return checkResult;
+          }
         }
         return injected.selectOptions(node, optionsToSelect);
       }, { optionsToSelect, force: options.force });
@@ -606,22 +646,25 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     progress.log(`  fill("${value}")`);
     return await this._retryAction(progress, 'fill', async () => {
       await this.instrumentation.onBeforeInputAction(this, progress.metadata);
-      if (!options.force)
+      if (!options.force) {
         progress.log('  waiting for element to be visible, enabled and editable');
+      }
       const result = await this.evaluateInUtility(async ([injected, node, { value, force }]) => {
         if (!force) {
           const checkResult = await injected.checkElementStates(node, ['visible', 'enabled', 'editable']);
-          if (checkResult)
+          if (checkResult) {
             return checkResult;
+          }
         }
         return injected.fill(node, value);
       }, { value, force: options.force });
       progress.throwIfAborted();  // Avoid action that has side-effects.
       if (result === 'needsinput') {
-        if (value)
+        if (value) {
           await this._page.keyboard.insertText(value);
-        else
+        } else {
           await this._page.keyboard.press('Delete');
+        }
         return 'done';
       } else {
         return result;
@@ -633,13 +676,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       const result = await this._retryAction(progress, 'selectText', async () => {
-        if (!options.force)
+        if (!options.force) {
           progress.log('  waiting for element to be visible');
+        }
         return await this.evaluateInUtility(async ([injected, node, { force }]) => {
           if (!force) {
             const checkResult = await injected.checkElementStates(node, ['visible']);
-            if (checkResult)
+            if (checkResult) {
               return checkResult;
+            }
           }
           return injected.selectText(node);
         }, { force: options.force });
@@ -663,21 +708,27 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const multiple = filePayloads && filePayloads.length > 1 || localPaths && localPaths.length > 1;
     const result = await this.evaluateHandleInUtility(([injected, node, { multiple, directoryUpload }]): Element | undefined => {
       const element = injected.retarget(node, 'follow-label');
-      if (!element)
+      if (!element) {
         return;
-      if (element.tagName !== 'INPUT')
+      }
+      if (element.tagName !== 'INPUT') {
         throw injected.createStacklessError('Node is not an HTMLInputElement');
+      }
       const inputElement = element as HTMLInputElement;
-      if (multiple && !inputElement.multiple && !inputElement.webkitdirectory)
+      if (multiple && !inputElement.multiple && !inputElement.webkitdirectory) {
         throw injected.createStacklessError('Non-multiple file input can only accept single file');
-      if (directoryUpload && !inputElement.webkitdirectory)
+      }
+      if (directoryUpload && !inputElement.webkitdirectory) {
         throw injected.createStacklessError('File input does not support directories, pass individual files instead');
-      if (!directoryUpload && inputElement.webkitdirectory)
+      }
+      if (!directoryUpload && inputElement.webkitdirectory) {
         throw injected.createStacklessError('[webkitdirectory] input requires passing a path to a directory');
+      }
       return inputElement;
     }, { multiple, directoryUpload: !!localDirectory });
-    if (result === 'error:notconnected' || !result.asElement())
+    if (result === 'error:notconnected' || !result.asElement()) {
       return 'error:notconnected';
+    }
     const retargeted = result.asElement() as ElementHandle<HTMLInputElement>;
     await this.instrumentation.onBeforeInputAction(this, progress.metadata);
     progress.throwIfAborted();  // Avoid action that has side-effects.
@@ -730,8 +781,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     progress.log(`elementHandle.type("${text}")`);
     await this.instrumentation.onBeforeInputAction(this, progress.metadata);
     const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
-    if (result !== 'done')
+    if (result !== 'done') {
       return result;
+    }
     progress.throwIfAborted();  // Avoid action that has side-effects.
     await this._page.keyboard.type(text, options);
     return 'done';
@@ -751,8 +803,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     await this.instrumentation.onBeforeInputAction(this, progress.metadata);
     return this._page._frameManager.waitForSignalsCreatedBy(progress, !options.noWaitAfter, async () => {
       const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
-      if (result !== 'done')
+      if (result !== 'done') {
         return result;
+      }
       progress.throwIfAborted();  // Avoid action that has side-effects.
       await this._page.keyboard.press(key, options);
       return 'done';
@@ -781,15 +834,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return throwRetargetableDOMError(result);
     };
     await this._markAsTargetElement(progress.metadata);
-    if (await isChecked() === state)
+    if (await isChecked() === state) {
       return 'done';
+    }
     const result = await this._click(progress, { ...options, waitAfter: 'disabled' });
-    if (result !== 'done')
+    if (result !== 'done') {
       return result;
-    if (options.trial)
+    }
+    if (options.trial) {
       return 'done';
-    if (await isChecked() !== state)
+    }
+    if (await isChecked() !== state) {
       throw new NonRecoverableDOMError('Clicking the checkbox did not change its state');
+    }
     return 'done';
   }
 
@@ -881,8 +938,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const frameElement = await frame.frameElement() as ElementHandle<Element>;
       const box = await frameElement.boundingBox();
       const style = await frameElement.evaluateInUtility(([injected, iframe]) => injected.describeIFrameStyle(iframe), {}).catch(e => 'error:notconnected' as const);
-      if (!box || style === 'error:notconnected')
+      if (!box || style === 'error:notconnected') {
         return 'error:notconnected';
+      }
       if (style === 'transformed') {
         // We cannot translate coordinates when iframe has any transform applied.
         // The best we can do right now is to skip the hitPoint check,
@@ -904,16 +962,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const hitTargetResult = await element.evaluateInUtility(([injected, element, hitPoint]) => {
         return injected.expectHitTarget(hitPoint, element);
       }, point);
-      if (hitTargetResult !== 'done')
+      if (hitTargetResult !== 'done') {
         return hitTargetResult;
+      }
     }
     return { framePoint: data[0].pointInFrame };
   }
 }
 
 export function throwRetargetableDOMError<T>(result: T | 'error:notconnected'): T {
-  if (result === 'error:notconnected')
+  if (result === 'error:notconnected') {
     throw new Error('Element is not attached to the DOM');
+  }
   return result;
 }
 
@@ -945,8 +1005,9 @@ function isPointInsideQuad(point: types.Point, quad: types.Quad): boolean {
   const area1 = triangleArea(point, quad[0], quad[1]) + triangleArea(point, quad[1], quad[2]) + triangleArea(point, quad[2], quad[3]) + triangleArea(point, quad[3], quad[0]);
   const area2 = triangleArea(quad[0], quad[1], quad[2]) + triangleArea(quad[1], quad[2], quad[3]);
   // Check that point is inside the quad.
-  if (Math.abs(area1 - area2) > 0.1)
+  if (Math.abs(area1 - area2) > 0.1) {
     return false;
+  }
   // Check that point is not on the right/bottom edge, because clicking
   // there does not actually click the element.
   return point.x < Math.max(quad[0].x, quad[1].x, quad[2].x, quad[3].x) &&
@@ -958,17 +1019,21 @@ function findIntegerPointInsideQuad(quad: types.Quad): types.Point | undefined {
   const point = quadMiddlePoint(quad);
   point.x = Math.floor(point.x);
   point.y = Math.floor(point.y);
-  if (isPointInsideQuad(point, quad))
+  if (isPointInsideQuad(point, quad)) {
     return point;
+  }
   point.x += 1;
-  if (isPointInsideQuad(point, quad))
+  if (isPointInsideQuad(point, quad)) {
     return point;
+  }
   point.y += 1;
-  if (isPointInsideQuad(point, quad))
+  if (isPointInsideQuad(point, quad)) {
     return point;
+  }
   point.x -= 1;
-  if (isPointInsideQuad(point, quad))
+  if (isPointInsideQuad(point, quad)) {
     return point;
+  }
 }
 
 export const kUnableToAdoptErrorMessage = 'Unable to adopt element handle from a different document';

@@ -30,8 +30,9 @@ test('cycle frames', async ({ page, server }) => {
   page.on('frameattached', async () => {
     // Make sure we can access page.
     await page.title();
-    if (++counter === kFrameCount)
+    if (++counter === kFrameCount) {
       cb();
+    }
   });
 
   page.evaluate(async ({ url, count }) => {

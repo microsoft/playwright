@@ -29,8 +29,9 @@ export const CallTab: React.FunctionComponent<{
   action: ActionTraceEventInContext | undefined,
   sdkLanguage: Language | undefined,
 }> = ({ action, sdkLanguage }) => {
-  if (!action)
+  if (!action) {
     return <PlaceholderPanel text='No action selected' />;
+  }
   const params = { ...action.params };
   // Strip down the waitForEventInfo data, we never need it.
   delete params.info;
@@ -67,8 +68,9 @@ type Property = {
 
 function renderProperty(property: Property, key: string) {
   let text = property.text.replace(/\n/g, '↵');
-  if (property.type === 'string')
+  if (property.type === 'string') {
     text = `"${text}"`;
+  }
   return (
     <div key={key} className='call-line'>
       {property.name}:<span className={clsx('call-value', property.type)} title={property.text}>{text}</span>
@@ -81,58 +83,78 @@ function renderProperty(property: Property, key: string) {
 
 function propertyToString(event: ActionTraceEvent, name: string, value: any, sdkLanguage: Language | undefined): Property {
   const isEval = event.method.includes('eval') || event.method === 'waitForFunction';
-  if (name === 'files')
+  if (name === 'files') {
     return { text: '<files>', type: 'string', name };
-  if (name === 'eventInit' || name === 'expectedValue' || (name === 'arg' && isEval))
+  }
+  if (name === 'eventInit' || name === 'expectedValue' || (name === 'arg' && isEval)) {
     value = parseSerializedValue(value.value, new Array(10).fill({ handle: '<handle>' }));
-  if ((name === 'value' && isEval) || (name === 'received' && event.method === 'expect'))
+  }
+  if ((name === 'value' && isEval) || (name === 'received' && event.method === 'expect')) {
     value = parseSerializedValue(value, new Array(10).fill({ handle: '<handle>' }));
-  if (name === 'selector')
+  }
+  if (name === 'selector') {
     return { text: asLocator(sdkLanguage || 'javascript', event.params.selector), type: 'locator', name: 'locator' };
+  }
   const type = typeof value;
-  if (type !== 'object' || value === null)
+  if (type !== 'object' || value === null) {
     return { text: String(value), type, name };
-  if (value.guid)
+  }
+  if (value.guid) {
     return { text: '<handle>', type: 'handle', name };
+  }
   return { text: JSON.stringify(value).slice(0, 1000), type: 'object', name };
 }
 
 function parseSerializedValue(value: SerializedValue, handles: any[] | undefined): any {
-  if (value.n !== undefined)
+  if (value.n !== undefined) {
     return value.n;
-  if (value.s !== undefined)
-    return value.s;
-  if (value.b !== undefined)
-    return value.b;
-  if (value.v !== undefined) {
-    if (value.v === 'undefined')
-      return undefined;
-    if (value.v === 'null')
-      return null;
-    if (value.v === 'NaN')
-      return NaN;
-    if (value.v === 'Infinity')
-      return Infinity;
-    if (value.v === '-Infinity')
-      return -Infinity;
-    if (value.v === '-0')
-      return -0;
   }
-  if (value.d !== undefined)
+  if (value.s !== undefined) {
+    return value.s;
+  }
+  if (value.b !== undefined) {
+    return value.b;
+  }
+  if (value.v !== undefined) {
+    if (value.v === 'undefined') {
+      return undefined;
+    }
+    if (value.v === 'null') {
+      return null;
+    }
+    if (value.v === 'NaN') {
+      return NaN;
+    }
+    if (value.v === 'Infinity') {
+      return Infinity;
+    }
+    if (value.v === '-Infinity') {
+      return -Infinity;
+    }
+    if (value.v === '-0') {
+      return -0;
+    }
+  }
+  if (value.d !== undefined) {
     return new Date(value.d);
-  if (value.r !== undefined)
+  }
+  if (value.r !== undefined) {
     return new RegExp(value.r.p, value.r.f);
-  if (value.a !== undefined)
+  }
+  if (value.a !== undefined) {
     return value.a.map((a: any) => parseSerializedValue(a, handles));
+  }
   if (value.o !== undefined) {
     const result: any = {};
-    for (const { k, v } of value.o)
+    for (const { k, v } of value.o) {
       result[k] = parseSerializedValue(v, handles);
+    }
     return result;
   }
   if (value.h !== undefined) {
-    if (handles === undefined)
+    if (handles === undefined) {
       return '<object>';
+    }
     return handles[value.h];
   }
   return '<object>';

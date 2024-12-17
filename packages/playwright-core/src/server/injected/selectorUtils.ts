@@ -20,8 +20,9 @@ import { getAriaLabelledByElements } from './roleUtils';
 
 export function matchesComponentAttribute(obj: any, attr: AttributeSelectorPart) {
   for (const token of attr.jsonPath) {
-    if (obj !== undefined && obj !== null)
+    if (obj !== undefined && obj !== null) {
       obj = obj[token];
+    }
   }
   return matchesAttributePart(obj, attr);
 }
@@ -30,25 +31,33 @@ export function matchesAttributePart(value: any, attr: AttributeSelectorPart) {
   const objValue = typeof value === 'string' && !attr.caseSensitive ? value.toUpperCase() : value;
   const attrValue = typeof attr.value === 'string' && !attr.caseSensitive ? attr.value.toUpperCase() : attr.value;
 
-  if (attr.op === '<truthy>')
+  if (attr.op === '<truthy>') {
     return !!objValue;
+  }
   if (attr.op === '=') {
-    if (attrValue instanceof RegExp)
+    if (attrValue instanceof RegExp) {
       return typeof objValue === 'string' && !!objValue.match(attrValue);
+    }
     return objValue === attrValue;
   }
-  if (typeof objValue !== 'string' || typeof attrValue !== 'string')
+  if (typeof objValue !== 'string' || typeof attrValue !== 'string') {
     return false;
-  if (attr.op === '*=')
+  }
+  if (attr.op === '*=') {
     return objValue.includes(attrValue);
-  if (attr.op === '^=')
+  }
+  if (attr.op === '^=') {
     return objValue.startsWith(attrValue);
-  if (attr.op === '$=')
+  }
+  if (attr.op === '$=') {
     return objValue.endsWith(attrValue);
-  if (attr.op === '|=')
+  }
+  if (attr.op === '|=') {
     return objValue === attrValue || objValue.startsWith(attrValue + '-');
-  if (attr.op === '~=')
+  }
+  if (attr.op === '~=') {
     return objValue.split(' ').includes(attrValue);
+  }
   return false;
 }
 
@@ -76,19 +85,24 @@ export function elementText(cache: Map<Element | ShadowRoot, ElementText>, root:
           } else if (child.nodeType === Node.COMMENT_NODE) {
             continue;
           } else {
-            if (currentImmediate)
+            if (currentImmediate) {
               value.immediate.push(currentImmediate);
+            }
             currentImmediate = '';
-            if (child.nodeType === Node.ELEMENT_NODE)
+            if (child.nodeType === Node.ELEMENT_NODE) {
               value.full += elementText(cache, child as Element).full;
+            }
           }
         }
-        if (currentImmediate)
+        if (currentImmediate) {
           value.immediate.push(currentImmediate);
-        if ((root as Element).shadowRoot)
+        }
+        if ((root as Element).shadowRoot) {
           value.full += elementText(cache, (root as Element).shadowRoot!).full;
-        if (value.full)
+        }
+        if (value.full) {
           value.normalized = normalizeWhiteSpace(value.full);
+        }
       }
     }
     cache.set(root, value);
@@ -97,33 +111,40 @@ export function elementText(cache: Map<Element | ShadowRoot, ElementText>, root:
 }
 
 export function elementMatchesText(cache: Map<Element | ShadowRoot, ElementText>, element: Element, matcher: TextMatcher): 'none' | 'self' | 'selfAndChildren' {
-  if (shouldSkipForTextMatching(element))
+  if (shouldSkipForTextMatching(element)) {
     return 'none';
-  if (!matcher(elementText(cache, element)))
-    return 'none';
-  for (let child = element.firstChild; child; child = child.nextSibling) {
-    if (child.nodeType === Node.ELEMENT_NODE && matcher(elementText(cache, child as Element)))
-      return 'selfAndChildren';
   }
-  if (element.shadowRoot && matcher(elementText(cache, element.shadowRoot)))
+  if (!matcher(elementText(cache, element))) {
+    return 'none';
+  }
+  for (let child = element.firstChild; child; child = child.nextSibling) {
+    if (child.nodeType === Node.ELEMENT_NODE && matcher(elementText(cache, child as Element))) {
+      return 'selfAndChildren';
+    }
+  }
+  if (element.shadowRoot && matcher(elementText(cache, element.shadowRoot))) {
     return 'selfAndChildren';
+  }
   return 'self';
 }
 
 export function getElementLabels(textCache: Map<Element | ShadowRoot, ElementText>, element: Element): ElementText[] {
   const labels = getAriaLabelledByElements(element);
-  if (labels)
+  if (labels) {
     return labels.map(label => elementText(textCache, label));
+  }
   const ariaLabel = element.getAttribute('aria-label');
-  if (ariaLabel !== null && !!ariaLabel.trim())
+  if (ariaLabel !== null && !!ariaLabel.trim()) {
     return [{ full: ariaLabel, normalized: normalizeWhiteSpace(ariaLabel), immediate: [ariaLabel] }];
+  }
 
   // https://html.spec.whatwg.org/multipage/forms.html#category-label
   const isNonHiddenInput = element.nodeName === 'INPUT' && (element as HTMLInputElement).type !== 'hidden';
   if (['BUTTON', 'METER', 'OUTPUT', 'PROGRESS', 'SELECT', 'TEXTAREA'].includes(element.nodeName) || isNonHiddenInput) {
     const labels = (element as HTMLInputElement).labels;
-    if (labels)
+    if (labels) {
       return [...labels].map(label => elementText(textCache, label));
+    }
   }
   return [];
 }

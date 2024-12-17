@@ -47,8 +47,9 @@ export async function resolveDirs(configDir: string, config: FullConfig): Promis
   // This regressed in https://github.com/microsoft/playwright/pull/26526
   const relativeTemplateDir = use.ctTemplateDir || 'playwright';
   const templateDir = await fs.promises.realpath(path.normalize(path.join(configDir, relativeTemplateDir))).catch(() => undefined);
-  if (!templateDir)
+  if (!templateDir) {
     return null;
+  }
   const outDir = use.ctCacheDir ? path.resolve(configDir, use.ctCacheDir) : path.resolve(templateDir, '.cache');
   return {
     configDir,
@@ -135,8 +136,9 @@ export async function createConfig(dirs: ComponentDirs, config: FullConfig, fram
   };
 
   // We assume that any non-empty plugin list includes `vite-react` or similar.
-  if (frameworkPluginFactory && !baseAndUserConfig.plugins?.length)
+  if (frameworkPluginFactory && !baseAndUserConfig.plugins?.length) {
     frameworkOverrides.plugins = [await frameworkPluginFactory()];
+  }
 
   return mergeConfig(baseAndUserConfig, frameworkOverrides);
 }
@@ -144,10 +146,12 @@ export async function createConfig(dirs: ComponentDirs, config: FullConfig, fram
 export async function populateComponentsFromTests(componentRegistry: ComponentRegistry, componentsByImportingFile?: Map<string, string[]>) {
   const importInfos: Map<string, ImportInfo[]> = await getUserData('playwright-ct-core');
   for (const [file, importList] of importInfos) {
-    for (const importInfo of importList)
+    for (const importInfo of importList) {
       componentRegistry.set(importInfo.id, importInfo);
-    if (componentsByImportingFile)
+    }
+    if (componentsByImportingFile) {
       componentsByImportingFile.set(file, importList.map(i => resolveHook(i.filename, i.importSource)).filter(Boolean) as string[]);
+    }
   }
 }
 
@@ -155,8 +159,9 @@ export function hasJSComponents(components: ImportInfo[]): boolean {
   for (const component of components) {
     const importPath = resolveHook(component.filename, component.importSource);
     const extname = importPath ? path.extname(importPath) : '';
-    if (extname === '.js' || (importPath && !extname && fs.existsSync(importPath + '.js')))
+    if (extname === '.js' || (importPath && !extname && fs.existsSync(importPath + '.js'))) {
       return true;
+    }
   }
   return false;
 }
@@ -176,15 +181,16 @@ export function transformIndexFile(id: string, content: string, templateDir: str
   const indexJs = path.join(templateDir, 'index.js');
   const indexJsx = path.join(templateDir, 'index.jsx');
   const idResolved = path.resolve(id);
-  if (!idResolved.endsWith(indexTs) && !idResolved.endsWith(indexTsx) && !idResolved.endsWith(indexJs) && !idResolved.endsWith(indexJsx))
+  if (!idResolved.endsWith(indexTs) && !idResolved.endsWith(indexTsx) && !idResolved.endsWith(indexJs) && !idResolved.endsWith(indexJsx)) {
     return null;
+  }
 
   const lines = [content, ''];
   lines.push(registerSource);
 
   for (const value of importInfos.values()) {
     const importPath = resolveHook(value.filename, value.importSource) || value.importSource;
-    lines.push(`const ${value.id} = () => import('${importPath?.replaceAll(path.sep, '/')}').then((mod) => mod.${value.remoteName || 'default'});`);
+    lines.push(`const ${value.id} = () => import('${importPath.replaceAll(path.sep, '/')}').then((mod) => mod.${value.remoteName || 'default'});`);
   }
 
   lines.push(`__pwRegistry.initialize({ ${[...importInfos.keys()].join(',\n  ')} });`);

@@ -51,10 +51,12 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       awaitPromise: true,
       userActivation: true,
     });
-    if (response.type === 'success')
+    if (response.type === 'success') {
       return BidiDeserializer.deserialize(response.result);
-    if (response.type === 'exception')
+    }
+    if (response.type === 'exception') {
       throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
+    }
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 
@@ -68,12 +70,14 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       userActivation: true,
     });
     if (response.type === 'success') {
-      if ('handle' in response.result)
+      if ('handle' in response.result) {
         return response.result.handle!;
+      }
       throw new js.JavaScriptErrorInEvaluate('Cannot get handle: ' + JSON.stringify(response.result));
     }
-    if (response.type === 'exception')
+    if (response.type === 'exception') {
       throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
+    }
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 
@@ -91,11 +95,13 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       awaitPromise: true,
       userActivation: true,
     });
-    if (response.type === 'exception')
+    if (response.type === 'exception') {
       throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
+    }
     if (response.type === 'success') {
-      if (returnByValue)
+      if (returnByValue) {
         return parseEvaluationResultValue(BidiDeserializer.deserialize(response.result));
+      }
       const objectId = 'handle' in response.result ? response.result.handle : undefined ;
       return utilityScript._context.createHandle({ objectId, ...response.result });
     }
@@ -128,32 +134,41 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       awaitPromise: true,
       userActivation: true,
     });
-    if (response.type === 'exception')
+    if (response.type === 'exception') {
       throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
-    if (response.type === 'success')
+    }
+    if (response.type === 'success') {
       return response.result;
+    }
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 }
 
 function renderPreview(remoteObject: bidi.Script.RemoteValue): string | undefined {
-  if (remoteObject.type === 'undefined')
+  if (remoteObject.type === 'undefined') {
     return 'undefined';
-  if (remoteObject.type === 'null')
+  }
+  if (remoteObject.type === 'null') {
     return 'null';
-  if ('value' in remoteObject)
+  }
+  if ('value' in remoteObject) {
     return String(remoteObject.value);
+  }
   return `<${remoteObject.type}>`;
 }
 
 function remoteObjectValue(remoteObject: bidi.Script.RemoteValue): any {
-  if (remoteObject.type === 'undefined')
+  if (remoteObject.type === 'undefined') {
     return undefined;
-  if (remoteObject.type === 'null')
+  }
+  if (remoteObject.type === 'null') {
     return null;
-  if (remoteObject.type === 'number' && typeof remoteObject.value === 'string')
+  }
+  if (remoteObject.type === 'number' && typeof remoteObject.value === 'string') {
     return js.parseUnserializableValue(remoteObject.value);
-  if ('value' in remoteObject)
+  }
+  if ('value' in remoteObject) {
     return remoteObject.value;
+  }
   return undefined;
 }

@@ -58,8 +58,9 @@ export class TaskRunner<Context> {
     const taskLoop = async () => {
       for (const task of this._tasks) {
         currentTaskName = task.title;
-        if (this._interrupted)
+        if (this._interrupted) {
           break;
+        }
         debug('pw:test:task')(`"${task.title}" started`);
         const errors: TestError[] = [];
         const softErrors: TestError[] = [];
@@ -70,11 +71,13 @@ export class TaskRunner<Context> {
           debug('pw:test:task')(`error in "${task.title}": `, e);
           errors.push(serializeError(e));
         } finally {
-          for (const error of [...softErrors, ...errors])
-            this._reporter.onError?.(error);
+          for (const error of [...softErrors, ...errors]) {
+            this._reporter.onError(error);
+          }
           if (errors.length) {
-            if (!this._isTearDown)
+            if (!this._isTearDown) {
               this._interrupted = true;
+            }
             this._hasErrors = true;
           }
         }
@@ -96,15 +99,15 @@ export class TaskRunner<Context> {
     this._interrupted = true;
 
     let status: FullResult['status'] = 'passed';
-    if (sigintWatcher.hadSignal() || cancelPromise?.isDone()) {
+    if (sigintWatcher.hadSignal() || cancelPromise.isDone()) {
       status = 'interrupted';
     } else if (timeoutWatcher.timedOut()) {
-      this._reporter.onError?.({ message: colors.red(`Timed out waiting ${this._globalTimeoutForError / 1000}s for the ${currentTaskName} to run`) });
+      this._reporter.onError({ message: colors.red(`Timed out waiting ${this._globalTimeoutForError / 1000}s for the ${currentTaskName} to run`) });
       status = 'timedout';
     } else if (this._hasErrors) {
       status = 'failed';
     }
-    cancelPromise?.resolve();
+    cancelPromise.resolve();
     // Note that upon hitting deadline, we "run cleanup", but it exits immediately
     // because of the same deadline. Essentially, we're not performing any cleanup.
     const cleanup = () => teardownRunner.runDeferCleanup(context, deadline).then(r => r.status);
@@ -118,8 +121,9 @@ class TimeoutWatcher {
   private _timer: NodeJS.Timeout | undefined;
 
   constructor(deadline: number) {
-    if (!deadline)
+    if (!deadline) {
       return;
+    }
 
     if (deadline - monotonicTime() <= 0) {
       this._timedOut = true;

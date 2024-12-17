@@ -36,8 +36,9 @@ export class ZipTraceModelBackend implements TraceModelBackend {
         { useWebWorkers: false });
     this._entriesPromise = this._zipReader.getEntries({ onprogress: progress }).then(entries => {
       const map = new Map<string, zip.Entry>();
-      for (const entry of entries)
+      for (const entry of entries) {
         map.set(entry.filename, entry);
+      }
       return map;
     });
   }
@@ -63,8 +64,9 @@ export class ZipTraceModelBackend implements TraceModelBackend {
   async readText(entryName: string): Promise<string | undefined> {
     const entries = await this._entriesPromise;
     const entry = entries.get(entryName);
-    if (!entry)
+    if (!entry) {
       return;
+    }
     const writer = new zipjs.TextWriter();
     await entry.getData?.(writer);
     return writer.getData();
@@ -73,8 +75,9 @@ export class ZipTraceModelBackend implements TraceModelBackend {
   async readBlob(entryName: string): Promise<Blob | undefined> {
     const entries = await this._entriesPromise;
     const entry = entries.get(entryName);
-    if (!entry)
+    if (!entry) {
       return;
+    }
     const writer = new zipjs.BlobWriter() as zip.BlobWriter;
     await entry.getData!(writer);
     return writer.getData();
@@ -90,12 +93,14 @@ export class FetchTraceModelBackend implements TraceModelBackend {
     this._path  = path;
     this._server = server;
     this._entriesPromise = server.readFile(path).then(async response => {
-      if (!response)
+      if (!response) {
         throw new Error('File not found');
+      }
       const json = await response.json();
       const entries = new Map<string, string>();
-      for (const entry of json.entries)
+      for (const entry of json.entries) {
         entries.set(entry.name, entry.path);
+      }
       return entries;
     });
   }
@@ -125,14 +130,15 @@ export class FetchTraceModelBackend implements TraceModelBackend {
 
   async readBlob(entryName: string): Promise<Blob | undefined> {
     const response = await this._readEntry(entryName);
-    return response?.status === 200 ? await response?.blob() : undefined;
+    return response?.status === 200 ? await response.blob() : undefined;
   }
 
   private async _readEntry(entryName: string): Promise<Response | undefined> {
     const entries = await this._entriesPromise;
     const fileName = entries.get(entryName);
-    if (!fileName)
+    if (!fileName) {
       return;
+    }
     return this._server.readFile(fileName);
   }
 }
@@ -140,8 +146,9 @@ export class FetchTraceModelBackend implements TraceModelBackend {
 function formatUrl(trace: string, server: TraceViewerServer) {
   let url = trace.startsWith('http') || trace.startsWith('blob') ? trace : server.getFileURL(trace).toString();
   // Dropbox does not support cors.
-  if (url.startsWith('https://www.dropbox.com/'))
+  if (url.startsWith('https://www.dropbox.com/')) {
     url = 'https://dl.dropboxusercontent.com/' + url.substring('https://www.dropbox.com/'.length);
+  }
   return url;
 }
 
@@ -156,8 +163,9 @@ export class TraceViewerServer {
 
   async readFile(path: string): Promise<Response | undefined> {
     const response = await fetch(this.getFileURL(path));
-    if (response.status === 404)
+    if (response.status === 404) {
       return;
+    }
     return response;
   }
 }

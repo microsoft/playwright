@@ -51,13 +51,15 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     const offset = this._mode === 'junit' ? 4 : 6;
     const formatter = new JavaScriptFormatter(offset);
 
-    if (this._mode !== 'library' && (action.name === 'openPage' || action.name === 'closePage'))
+    if (this._mode !== 'library' && (action.name === 'openPage' || action.name === 'closePage')) {
       return '';
+    }
 
     if (action.name === 'openPage') {
       formatter.add(`Page ${pageAlias} = context.newPage();`);
-      if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
+      if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/') {
         formatter.add(`${pageAlias}.navigate(${quote(action.url)});`);
+      }
       return formatter.format();
     }
 
@@ -100,8 +102,9 @@ export class JavaLanguageGenerator implements LanguageGenerator {
         return `${subject}.close();`;
       case 'click': {
         let method = 'click';
-        if (action.clickCount === 2)
+        if (action.clickCount === 2) {
           method = 'dblclick';
+        }
         const options = toClickOptionsForSourceCode(action);
         const optionsText = formatClickOptions(options);
         return `${subject}.${this._asLocator(action.selector, inFrameLocator)}.${method}(${optionsText});`;
@@ -170,8 +173,9 @@ export class JavaLanguageGenerator implements LanguageGenerator {
         try (Playwright playwright = Playwright.create()) {
           Browser browser = playwright.${options.browserName}().launch(${formatLaunchOptions(options.launchOptions)});
           BrowserContext context = browser.newContext(${formatContextOptions(options.contextOptions, options.deviceName)});`);
-    if (options.contextOptions.recordHar)
+    if (options.contextOptions.recordHar) {
       formatter.add(`          context.routeFromHAR(${quote(options.contextOptions.recordHar.path)});`);
+    }
     return formatter.format();
   }
 
@@ -189,8 +193,9 @@ export class JavaLanguageGenerator implements LanguageGenerator {
 
 function formatPath(files: string | string[]): string {
   if (Array.isArray(files)) {
-    if (files.length === 0)
+    if (files.length === 0) {
       return 'new Path[0]';
+    }
     return `new Path[] {${files.map(s => 'Paths.get(' + quote(s) + ')').join(', ')}}`;
   }
   return `Paths.get(${quote(files)})`;
@@ -198,8 +203,9 @@ function formatPath(files: string | string[]): string {
 
 function formatSelectOption(options: string | string[]): string {
   if (Array.isArray(options)) {
-    if (options.length === 0)
+    if (options.length === 0) {
       return 'new String[0]';
+    }
     return `new String[] {${options.map(s => quote(s)).join(', ')}}`;
   }
   return quote(options);
@@ -207,66 +213,89 @@ function formatSelectOption(options: string | string[]): string {
 
 function formatLaunchOptions(options: any): string {
   const lines = [];
-  if (!Object.keys(options).filter(key => options[key] !== undefined).length)
+  if (!Object.keys(options).filter(key => options[key] !== undefined).length) {
     return '';
+  }
   lines.push('new BrowserType.LaunchOptions()');
-  if (options.channel)
+  if (options.channel) {
     lines.push(`  .setChannel(${quote(options.channel)})`);
-  if (typeof options.headless === 'boolean')
+  }
+  if (typeof options.headless === 'boolean') {
     lines.push(`  .setHeadless(false)`);
+  }
   return lines.join('\n');
 }
 
 function formatContextOptions(contextOptions: BrowserContextOptions, deviceName: string | undefined): string {
   const lines = [];
-  if (!Object.keys(contextOptions).length && !deviceName)
+  if (!Object.keys(contextOptions).length && !deviceName) {
     return '';
+  }
   const device = deviceName ? deviceDescriptors[deviceName] : {};
   const options: BrowserContextOptions = { ...device, ...contextOptions };
   lines.push('new Browser.NewContextOptions()');
-  if (options.acceptDownloads)
+  if (options.acceptDownloads) {
     lines.push(`  .setAcceptDownloads(true)`);
-  if (options.bypassCSP)
+  }
+  if (options.bypassCSP) {
     lines.push(`  .setBypassCSP(true)`);
-  if (options.colorScheme)
+  }
+  if (options.colorScheme) {
     lines.push(`  .setColorScheme(ColorScheme.${options.colorScheme.toUpperCase()})`);
-  if (options.deviceScaleFactor)
+  }
+  if (options.deviceScaleFactor) {
     lines.push(`  .setDeviceScaleFactor(${options.deviceScaleFactor})`);
-  if (options.geolocation)
+  }
+  if (options.geolocation) {
     lines.push(`  .setGeolocation(${options.geolocation.latitude}, ${options.geolocation.longitude})`);
-  if (options.hasTouch)
+  }
+  if (options.hasTouch) {
     lines.push(`  .setHasTouch(${options.hasTouch})`);
-  if (options.isMobile)
+  }
+  if (options.isMobile) {
     lines.push(`  .setIsMobile(${options.isMobile})`);
-  if (options.locale)
+  }
+  if (options.locale) {
     lines.push(`  .setLocale(${quote(options.locale)})`);
-  if (options.proxy)
+  }
+  if (options.proxy) {
     lines.push(`  .setProxy(new Proxy(${quote(options.proxy.server)}))`);
-  if (options.serviceWorkers)
+  }
+  if (options.serviceWorkers) {
     lines.push(`  .setServiceWorkers(ServiceWorkerPolicy.${options.serviceWorkers.toUpperCase()})`);
-  if (options.storageState)
+  }
+  if (options.storageState) {
     lines.push(`  .setStorageStatePath(Paths.get(${quote(options.storageState as string)}))`);
-  if (options.timezoneId)
+  }
+  if (options.timezoneId) {
     lines.push(`  .setTimezoneId(${quote(options.timezoneId)})`);
-  if (options.userAgent)
+  }
+  if (options.userAgent) {
     lines.push(`  .setUserAgent(${quote(options.userAgent)})`);
-  if (options.viewport)
+  }
+  if (options.viewport) {
     lines.push(`  .setViewportSize(${options.viewport.width}, ${options.viewport.height})`);
+  }
   return lines.join('\n');
 }
 
 function formatClickOptions(options: types.MouseClickOptions) {
   const lines = [];
-  if (options.button)
+  if (options.button) {
     lines.push(`  .setButton(MouseButton.${options.button.toUpperCase()})`);
-  if (options.modifiers)
+  }
+  if (options.modifiers) {
     lines.push(`  .setModifiers(Arrays.asList(${options.modifiers.map(m => `KeyboardModifier.${m.toUpperCase()}`).join(', ')}))`);
-  if (options.clickCount)
+  }
+  if (options.clickCount) {
     lines.push(`  .setClickCount(${options.clickCount})`);
-  if (options.position)
+  }
+  if (options.position) {
     lines.push(`  .setPosition(${options.position.x}, ${options.position.y})`);
-  if (!lines.length)
+  }
+  if (!lines.length) {
     return '';
+  }
   lines.unshift(`new Locator.ClickOptions()`);
   return lines.join('\n');
 }

@@ -82,8 +82,9 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       defineCustomMode(CodeMirror);
 
       const element = codemirrorElement.current;
-      if (!element)
+      if (!element) {
         return;
+      }
 
       const mode = languageToMode(language) || mimeTypeToMode(mimeType) || (linkify ? 'text/linkified' : '');
 
@@ -98,7 +99,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       }
 
       // Either configuration is different or we don't have a codemirror yet.
-      codemirrorRef.current?.cm?.getWrapperElement().remove();
+      codemirrorRef.current?.cm.getWrapperElement().remove();
       const cm = CodeMirror(element, {
         value: '',
         mode,
@@ -108,21 +109,24 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
         placeholder,
       });
       codemirrorRef.current = { cm };
-      if (isFocused)
+      if (isFocused) {
         cm.focus();
+      }
       setCodemirror(cm);
       return cm;
     })();
   }, [modulePromise, codemirror, codemirrorElement, language, mimeType, linkify, lineNumbers, wrapLines, readOnly, isFocused, placeholder]);
 
   React.useEffect(() => {
-    if (codemirrorRef.current)
+    if (codemirrorRef.current) {
       codemirrorRef.current.cm.setSize(measure.width, measure.height);
+    }
   }, [measure]);
 
   React.useLayoutEffect(() => {
-    if (!codemirror)
+    if (!codemirror) {
       return;
+    }
 
     let valueChanged = false;
     if (codemirror.getValue() !== text) {
@@ -136,21 +140,26 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
 
     if (valueChanged || JSON.stringify(highlight) !== JSON.stringify(codemirrorRef.current!.highlight)) {
       // Line highlight.
-      for (const h of codemirrorRef.current!.highlight || [])
+      for (const h of codemirrorRef.current!.highlight || []) {
         codemirror.removeLineClass(h.line - 1, 'wrap');
-      for (const h of highlight || [])
+      }
+      for (const h of highlight || []) {
         codemirror.addLineClass(h.line - 1, 'wrap', `source-line-${h.type}`);
+      }
 
       // Error widgets.
-      for (const w of codemirrorRef.current!.widgets || [])
+      for (const w of codemirrorRef.current!.widgets || []) {
         codemirror.removeLineWidget(w);
-      for (const m of codemirrorRef.current!.markers || [])
+      }
+      for (const m of codemirrorRef.current!.markers || []) {
         m.clear();
+      }
       const widgets: CodeMirror.LineWidget[] = [];
       const markers: CodeMirror.TextMarker[] = [];
       for (const h of highlight || []) {
-        if (h.type !== 'subtle-error' && h.type !== 'error')
+        if (h.type !== 'subtle-error' && h.type !== 'error') {
           continue;
+        }
 
         const line = codemirrorRef.current?.cm.getLine(h.line - 1);
         if (line) {
@@ -177,8 +186,9 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
     }
 
     // Line-less locations have line = 0, but they mean to reveal the file.
-    if (typeof revealLine === 'number' && codemirrorRef.current!.cm.lineCount() >= revealLine)
+    if (typeof revealLine === 'number' && codemirrorRef.current!.cm.lineCount() >= revealLine) {
       codemirror.scrollIntoView({ line: Math.max(0, revealLine - 1), ch: 0 }, 50);
+    }
 
     let changeListener: () => void | undefined;
     if (onChange) {
@@ -187,8 +197,9 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
     }
 
     return () => {
-      if (changeListener)
+      if (changeListener) {
         codemirror.off('change', changeListener);
+      }
     };
   }, [codemirror, text, highlight, revealLine, focusOnChange, onChange]);
 
@@ -196,8 +207,9 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
 };
 
 function onCodeMirrorClick(event: React.MouseEvent) {
-  if (!(event.target instanceof HTMLElement))
+  if (!(event.target instanceof HTMLElement)) {
     return;
+  }
   let url: string | undefined;
   if (event.target.classList.contains('cm-linkified')) {
     // 'text/linkified' custom mode
@@ -215,8 +227,9 @@ function onCodeMirrorClick(event: React.MouseEvent) {
 
 let customModeDefined = false;
 function defineCustomMode(cm: CodeMirror) {
-  if (customModeDefined)
+  if (customModeDefined) {
     return;
+  }
   customModeDefined = true;
   (cm as any).defineSimpleMode('text/linkified', {
     start: [
@@ -226,27 +239,36 @@ function defineCustomMode(cm: CodeMirror) {
 }
 
 function mimeTypeToMode(mimeType: string | undefined): string | undefined {
-  if (!mimeType)
+  if (!mimeType) {
     return;
-  if (mimeType.includes('javascript') || mimeType.includes('json'))
+  }
+  if (mimeType.includes('javascript') || mimeType.includes('json')) {
     return 'javascript';
-  if (mimeType.includes('python'))
+  }
+  if (mimeType.includes('python')) {
     return 'python';
-  if (mimeType.includes('csharp'))
+  }
+  if (mimeType.includes('csharp')) {
     return 'text/x-csharp';
-  if (mimeType.includes('java'))
+  }
+  if (mimeType.includes('java')) {
     return 'text/x-java';
-  if (mimeType.includes('markdown'))
+  }
+  if (mimeType.includes('markdown')) {
     return 'markdown';
-  if (mimeType.includes('html') || mimeType.includes('svg'))
+  }
+  if (mimeType.includes('html') || mimeType.includes('svg')) {
     return 'htmlmixed';
-  if (mimeType.includes('css'))
+  }
+  if (mimeType.includes('css')) {
     return 'css';
+  }
 }
 
 function languageToMode(language: Language | undefined): string | undefined {
-  if (!language)
+  if (!language) {
     return;
+  }
   return {
     javascript: 'javascript',
     jsonl: 'javascript',

@@ -46,12 +46,15 @@ const stackUtils = new StackUtils({ internals: StackUtils.nodeInternals() });
 
 export function parseStackTraceLine(line: string): StackFrame | null {
   const frame = stackUtils.parseLine(line);
-  if (!frame)
+  if (!frame) {
     return null;
-  if (!process.env.PWDEBUGIMPL && (frame.file?.startsWith('internal') || frame.file?.startsWith('node:')))
+  }
+  if (!process.env.PWDEBUGIMPL && (frame.file?.startsWith('internal') || frame.file?.startsWith('node:'))) {
     return null;
-  if (!frame.file)
+  }
+  if (!frame.file) {
     return null;
+  }
   // ESM files return file:// URLs, see here: https://github.com/tapjs/stack-utils/issues/60
   const file = frame.file.startsWith('file://') ? url.fileURLToPath(frame.file) : path.resolve(process.cwd(), frame.file);
   return {
@@ -63,26 +66,32 @@ export function parseStackTraceLine(line: string): StackFrame | null {
 }
 
 export function ms(ms: number): string {
-  if (!isFinite(ms))
+  if (!isFinite(ms)) {
     return '-';
+  }
 
-  if (ms === 0)
+  if (ms === 0) {
     return '0ms';
+  }
 
-  if (ms < 1000)
+  if (ms < 1000) {
     return ms.toFixed(0) + 'ms';
+  }
 
   const seconds = ms / 1000;
-  if (seconds < 60)
+  if (seconds < 60) {
     return seconds.toFixed(1) + 's';
+  }
 
   const minutes = seconds / 60;
-  if (minutes < 60)
+  if (minutes < 60) {
     return minutes.toFixed(1) + 'm';
+  }
 
   const hours = minutes / 60;
-  if (hours < 24)
+  if (hours < 24) {
     return hours.toFixed(1) + 'h';
+  }
 
   const days = hours / 24;
   return days.toFixed(1) + 'd';

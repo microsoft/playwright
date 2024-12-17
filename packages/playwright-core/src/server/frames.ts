@@ -107,8 +107,9 @@ export class FrameManager {
   }
 
   createDummyMainFrameIfNeeded() {
-    if (!this._mainFrame)
+    if (!this._mainFrame) {
       this.frameAttached(kDummyFrameId, null);
+    }
   }
 
   dispose() {
@@ -129,8 +130,9 @@ export class FrameManager {
 
     function collect(frame: Frame) {
       frames.push(frame);
-      for (const subframe of frame.childFrames())
+      for (const subframe of frame.childFrames()) {
         collect(subframe);
+      }
     }
   }
 
@@ -161,12 +163,14 @@ export class FrameManager {
   }
 
   async waitForSignalsCreatedBy<T>(progress: Progress | null, waitAfter: boolean, action: () => Promise<T>): Promise<T> {
-    if (!waitAfter)
+    if (!waitAfter) {
       return action();
+    }
     const barrier = new SignalBarrier(progress);
     this._signalBarriers.add(barrier);
-    if (progress)
+    if (progress) {
       progress.cleanupWhenAborted(() => this._signalBarriers.delete(barrier));
+    }
     const result = await action();
     await this._page._delegate.inputActionEpilogue();
     await barrier.waitFor();
@@ -177,21 +181,25 @@ export class FrameManager {
   }
 
   frameWillPotentiallyRequestNavigation() {
-    for (const barrier of this._signalBarriers)
+    for (const barrier of this._signalBarriers) {
       barrier.retain();
+    }
   }
 
   frameDidPotentiallyRequestNavigation() {
-    for (const barrier of this._signalBarriers)
+    for (const barrier of this._signalBarriers) {
       barrier.release();
+    }
   }
 
   frameRequestedNavigation(frameId: string, documentId?: string) {
     const frame = this._frames.get(frameId);
-    if (!frame)
+    if (!frame) {
       return;
-    for (const barrier of this._signalBarriers)
+    }
+    for (const barrier of this._signalBarriers) {
       barrier.addFrameNavigation(frame);
+    }
     if (frame.pendingDocument() && frame.pendingDocument()!.documentId === documentId) {
       // Do not override request with undefined.
       return;
@@ -246,8 +254,9 @@ export class FrameManager {
 
   frameCommittedSameDocumentNavigation(frameId: string, url: string) {
     const frame = this._frames.get(frameId);
-    if (!frame)
+    if (!frame) {
       return;
+    }
     const pending = frame.pendingDocument();
     if (pending && pending.documentId === undefined && pending.request === undefined) {
       // WebKit has notified about the same-document navigation being requested, so clear it.
@@ -261,10 +270,12 @@ export class FrameManager {
 
   frameAbortedNavigation(frameId: string, errorText: string, documentId?: string) {
     const frame = this._frames.get(frameId);
-    if (!frame || !frame.pendingDocument())
+    if (!frame || !frame.pendingDocument()) {
       return;
-    if (documentId !== undefined && frame.pendingDocument()!.documentId !== documentId)
+    }
+    if (documentId !== undefined && frame.pendingDocument()!.documentId !== documentId) {
       return;
+    }
     const navigationEvent: NavigationEvent = {
       url: frame._url,
       name: frame._name,
@@ -286,15 +297,17 @@ export class FrameManager {
 
   frameLifecycleEvent(frameId: string, event: RegularLifecycleEvent) {
     const frame = this._frames.get(frameId);
-    if (frame)
+    if (frame) {
       frame._onLifecycleEvent(event);
+    }
   }
 
   requestStarted(request: network.Request, route?: network.RouteDelegate) {
     const frame = request.frame()!;
     this._inflightRequestStarted(request);
-    if (request._documentId)
+    if (request._documentId) {
       frame.setPendingDocument({ documentId: request._documentId, request });
+    }
     if (request._isFavicon) {
       // Abort favicon requests to avoid network access in case of interception.
       route?.abort('aborted').catch(() => {});
@@ -303,26 +316,31 @@ export class FrameManager {
     this._page.emitOnContext(BrowserContext.Events.Request, request);
     if (route) {
       const r = new network.Route(request, route);
-      if (this._page._serverRequestInterceptor?.(r, request))
+      if (this._page._serverRequestInterceptor?.(r, request)) {
         return;
-      if (this._page._clientRequestInterceptor?.(r, request))
+      }
+      if (this._page._clientRequestInterceptor?.(r, request)) {
         return;
-      if (this._page._browserContext._requestInterceptor?.(r, request))
+      }
+      if (this._page._browserContext._requestInterceptor?.(r, request)) {
         return;
+      }
       r.continue({ isFallback: true }).catch(() => {});
     }
   }
 
   requestReceivedResponse(response: network.Response) {
-    if (response.request()._isFavicon)
+    if (response.request()._isFavicon) {
       return;
+    }
     this._page.emitOnContext(BrowserContext.Events.Response, response);
   }
 
   reportRequestFinished(request: network.Request, response: network.Response | null) {
     this._inflightRequestFinished(request);
-    if (request._isFavicon)
+    if (request._isFavicon) {
       return;
+    }
     this._page.emitOnContext(BrowserContext.Events.RequestFinished, { request, response });
   }
 
@@ -331,23 +349,27 @@ export class FrameManager {
     this._inflightRequestFinished(request);
     if (frame.pendingDocument() && frame.pendingDocument()!.request === request) {
       let errorText = request.failure()!.errorText;
-      if (canceled)
+      if (canceled) {
         errorText += '; maybe frame was detached?';
+      }
       this.frameAbortedNavigation(frame._id, errorText, frame.pendingDocument()!.documentId);
     }
-    if (request._isFavicon)
+    if (request._isFavicon) {
       return;
+    }
     this._page.emitOnContext(BrowserContext.Events.RequestFailed, request);
   }
 
   dialogDidOpen(dialog: Dialog) {
     // Any ongoing evaluations will be stalled until the dialog is closed.
-    for (const frame of this._frames.values())
+    for (const frame of this._frames.values()) {
       frame._invalidateNonStallingEvaluations('JavaScript dialog interrupted evaluation');
-    if (this._closeAllOpeningDialogs)
+    }
+    if (this._closeAllOpeningDialogs) {
       dialog.close().then(() => {});
-    else
+    } else {
       this._openedDialogs.add(dialog);
+    }
   }
 
   dialogWillClose(dialog: Dialog) {
@@ -364,45 +386,54 @@ export class FrameManager {
   }
 
   removeChildFramesRecursively(frame: Frame) {
-    for (const child of frame.childFrames())
+    for (const child of frame.childFrames()) {
       this._removeFramesRecursively(child);
+    }
   }
 
   private _removeFramesRecursively(frame: Frame) {
     this.removeChildFramesRecursively(frame);
     frame._onDetached();
     this._frames.delete(frame._id);
-    if (!this._page.isClosed())
+    if (!this._page.isClosed()) {
       this._page.emit(Page.Events.FrameDetached, frame);
+    }
   }
 
   private _inflightRequestFinished(request: network.Request) {
     const frame = request.frame()!;
-    if (request._isFavicon)
+    if (request._isFavicon) {
       return;
-    if (!frame._inflightRequests.has(request))
+    }
+    if (!frame._inflightRequests.has(request)) {
       return;
+    }
     frame._inflightRequests.delete(request);
-    if (frame._inflightRequests.size === 0)
+    if (frame._inflightRequests.size === 0) {
       frame._startNetworkIdleTimer();
+    }
   }
 
   private _inflightRequestStarted(request: network.Request) {
     const frame = request.frame()!;
-    if (request._isFavicon)
+    if (request._isFavicon) {
       return;
+    }
     frame._inflightRequests.add(request);
-    if (frame._inflightRequests.size === 1)
+    if (frame._inflightRequests.size === 1) {
       frame._stopNetworkIdleTimer();
+    }
   }
 
   interceptConsoleMessage(message: ConsoleMessage): boolean {
-    if (message.type() !== 'debug')
+    if (message.type() !== 'debug') {
       return false;
+    }
     const tag = message.text();
     const handler = this._consoleMessageTags.get(tag);
-    if (!handler)
+    if (!handler) {
       return false;
+    }
     this._consoleMessageTags.delete(tag);
     handler();
     return true;
@@ -410,8 +441,9 @@ export class FrameManager {
 
   clearWebSockets(frame: Frame) {
     // TODO: attribute sockets to frames.
-    if (frame.parentFrame())
+    if (frame.parentFrame()) {
       return;
+    }
     this._webSockets.clear();
   }
 
@@ -422,41 +454,48 @@ export class FrameManager {
 
   onWebSocketRequest(requestId: string) {
     const ws = this._webSockets.get(requestId);
-    if (ws && ws.markAsNotified())
+    if (ws && ws.markAsNotified()) {
       this._page.emit(Page.Events.WebSocket, ws);
+    }
   }
 
   onWebSocketResponse(requestId: string, status: number, statusText: string) {
     const ws = this._webSockets.get(requestId);
-    if (status < 400)
+    if (status < 400) {
       return;
-    if (ws)
+    }
+    if (ws) {
       ws.error(`${statusText}: ${status}`);
+    }
   }
 
   onWebSocketFrameSent(requestId: string, opcode: number, data: string) {
     const ws = this._webSockets.get(requestId);
-    if (ws)
+    if (ws) {
       ws.frameSent(opcode, data);
+    }
   }
 
   webSocketFrameReceived(requestId: string, opcode: number, data: string) {
     const ws = this._webSockets.get(requestId);
-    if (ws)
+    if (ws) {
       ws.frameReceived(opcode, data);
+    }
   }
 
   webSocketClosed(requestId: string) {
     const ws = this._webSockets.get(requestId);
-    if (ws)
+    if (ws) {
       ws.closed();
+    }
     this._webSockets.delete(requestId);
   }
 
   webSocketError(requestId: string, errorMessage: string): void {
     const ws = this._webSockets.get(requestId);
-    if (ws)
+    if (ws) {
       ws.error(errorMessage);
+    }
   }
 
   private _fireInternalFrameNavigation(frame: Frame, event: NavigationEvent) {
@@ -504,12 +543,14 @@ export class Frame extends SdkObject {
     this._setContext('main', null);
     this._setContext('utility', null);
 
-    if (this._parentFrame)
+    if (this._parentFrame) {
       this._parentFrame._childFrames.add(this);
+    }
 
     this._firedLifecycleEvents.add('commit');
-    if (id !== kDummyFrameId)
+    if (id !== kDummyFrameId) {
       this._startNetworkIdleTimer();
+    }
   }
 
   isDetached(): boolean {
@@ -517,32 +558,37 @@ export class Frame extends SdkObject {
   }
 
   _onLifecycleEvent(event: RegularLifecycleEvent) {
-    if (this._firedLifecycleEvents.has(event))
+    if (this._firedLifecycleEvents.has(event)) {
       return;
+    }
     this._firedLifecycleEvents.add(event);
     this.emit(Frame.Events.AddLifecycle, event);
-    if (this === this._page.mainFrame() && this._url !== 'about:blank')
+    if (this === this._page.mainFrame() && this._url !== 'about:blank') {
       debugLogger.log('api', `  "${event}" event fired`);
+    }
     this._page.mainFrame()._recalculateNetworkIdle();
   }
 
   _onClearLifecycle() {
-    for (const event of this._firedLifecycleEvents)
+    for (const event of this._firedLifecycleEvents) {
       this.emit(Frame.Events.RemoveLifecycle, event);
+    }
     this._firedLifecycleEvents.clear();
     // Keep the current navigation request if any.
     this._inflightRequests = new Set(Array.from(this._inflightRequests).filter(request => request === this._currentDocument.request));
     this._stopNetworkIdleTimer();
-    if (this._inflightRequests.size === 0)
+    if (this._inflightRequests.size === 0) {
       this._startNetworkIdleTimer();
+    }
     this._page.mainFrame()._recalculateNetworkIdle(this);
     this._onLifecycleEvent('commit');
   }
 
   setPendingDocument(documentInfo: DocumentInfo | undefined) {
     this._pendingDocument = documentInfo;
-    if (documentInfo)
+    if (documentInfo) {
       this._invalidateNonStallingEvaluations('Navigation interrupted the evaluation');
+    }
   }
 
   pendingDocument(): DocumentInfo | undefined {
@@ -550,18 +596,22 @@ export class Frame extends SdkObject {
   }
 
   _invalidateNonStallingEvaluations(message: string) {
-    if (!this._raceAgainstEvaluationStallingEventsPromises.size)
+    if (!this._raceAgainstEvaluationStallingEventsPromises.size) {
       return;
+    }
     const error = new Error(message);
-    for (const promise of this._raceAgainstEvaluationStallingEventsPromises)
+    for (const promise of this._raceAgainstEvaluationStallingEventsPromises) {
       promise.reject(error);
+    }
   }
 
   async raceAgainstEvaluationStallingEvents<T>(cb: () => Promise<T>): Promise<T> {
-    if (this._pendingDocument)
+    if (this._pendingDocument) {
       throw new Error('Frame is currently attempting a navigation');
-    if (this._page._frameManager._openedDialogs.size)
+    }
+    if (this._page._frameManager._openedDialogs.size) {
       throw new Error('Open JavaScript dialog prevents evaluation');
+    }
 
     const promise = new ManualPromise<T>();
     this._raceAgainstEvaluationStallingEventsPromises.add(promise);
@@ -578,8 +628,9 @@ export class Frame extends SdkObject {
   nonStallingRawEvaluateInExistingMainContext(expression: string): Promise<any> {
     return this.raceAgainstEvaluationStallingEvents(() => {
       const context = this._existingMainContext();
-      if (!context)
+      if (!context) {
         throw new Error('Frame does not yet have a main execution context');
+      }
       return context.rawEvaluateJSON(expression);
     });
   }
@@ -587,8 +638,9 @@ export class Frame extends SdkObject {
   nonStallingEvaluateInExistingContext(expression: string, world: types.World): Promise<any> {
     return this.raceAgainstEvaluationStallingEvents(() => {
       const context = this._contextData.get(world)?.context;
-      if (!context)
+      if (!context) {
         throw new Error('Frame does not yet have the execution context');
+      }
       return context.evaluateExpression(expression, { isFunction: false });
     });
   }
@@ -598,14 +650,16 @@ export class Frame extends SdkObject {
     for (const child of this._childFrames) {
       child._recalculateNetworkIdle(frameThatAllowsRemovingNetworkIdle);
       // We require networkidle event to be fired in the whole frame subtree, and then consider it done.
-      if (!child._firedLifecycleEvents.has('networkidle'))
+      if (!child._firedLifecycleEvents.has('networkidle')) {
         isNetworkIdle = false;
+      }
     }
     if (isNetworkIdle && !this._firedLifecycleEvents.has('networkidle')) {
       this._firedLifecycleEvents.add('networkidle');
       this.emit(Frame.Events.AddLifecycle, 'networkidle');
-      if (this === this._page.mainFrame() && this._url !== 'about:blank')
+      if (this === this._page.mainFrame() && this._url !== 'about:blank') {
         debugLogger.log('api', `  "networkidle" event fired`);
+      }
     }
     if (frameThatAllowsRemovingNetworkIdle !== this && this._firedLifecycleEvents.has('networkidle') && !isNetworkIdle) {
       // Usually, networkidle is fired once and not removed after that.
@@ -658,8 +712,9 @@ export class Frame extends SdkObject {
     const refererHeader = headers.find(h => h.name.toLowerCase() === 'referer');
     let referer = refererHeader ? refererHeader.value : undefined;
     if (options.referer !== undefined) {
-      if (referer !== undefined && referer !== options.referer)
+      if (referer !== undefined && referer !== options.referer) {
         throw new Error('"referer" is already specified as extra HTTP header');
+      }
       referer = options.referer;
     }
     url = helper.completeUserURL(url);
@@ -678,29 +733,33 @@ export class Frame extends SdkObject {
         return event.newDocument && (event.newDocument.documentId === navigateResult.newDocumentId || !event.error);
       };
       const events = navigationEvents.filter(predicate);
-      if (events.length)
+      if (events.length) {
         event = events[0];
-      else
+      } else {
         event = await helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, predicate).promise;
+      }
       if (event.newDocument!.documentId !== navigateResult.newDocumentId) {
         // This is just a sanity check. In practice, new navigation should
         // cancel the previous one and report "request cancelled"-like error.
         throw new NavigationAbortedError(navigateResult.newDocumentId, `Navigation to "${url}" is interrupted by another navigation to "${event.url}"`);
       }
-      if (event.error)
+      if (event.error) {
         throw event.error;
+      }
     } else {
       // Wait for same document navigation.
       const predicate = (e: NavigationEvent) => !e.newDocument;
       const events = navigationEvents.filter(predicate);
-      if (events.length)
+      if (events.length) {
         event = events[0];
-      else
+      } else {
         event = await helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, predicate).promise;
+      }
     }
 
-    if (!this._firedLifecycleEvents.has(waitUntil))
+    if (!this._firedLifecycleEvents.has(waitUntil)) {
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
+    }
 
     const request = event.newDocument ? event.newDocument.request : undefined;
     const response = request ? request._finalRequest().response() : null;
@@ -713,18 +772,22 @@ export class Frame extends SdkObject {
 
     const navigationEvent: NavigationEvent = await helper.waitForEvent(progress, this, Frame.Events.InternalNavigation, (event: NavigationEvent) => {
       // Any failed navigation results in a rejection.
-      if (event.error)
+      if (event.error) {
         return true;
-      if (requiresNewDocument && !event.newDocument)
+      }
+      if (requiresNewDocument && !event.newDocument) {
         return false;
+      }
       progress.log(`  navigated to "${this._url}"`);
       return true;
     }).promise;
-    if (navigationEvent.error)
+    if (navigationEvent.error) {
       throw navigationEvent.error;
+    }
 
-    if (!this._firedLifecycleEvents.has(waitUntil))
+    if (!this._firedLifecycleEvents.has(waitUntil)) {
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
+    }
 
     const request = navigationEvent.newDocument ? navigationEvent.newDocument.request : undefined;
     return request ? request._finalRequest().response() : null;
@@ -732,8 +795,9 @@ export class Frame extends SdkObject {
 
   async _waitForLoadState(progress: Progress, state: types.LifecycleEvent): Promise<void> {
     const waitUntil = verifyLifecycle('state', state);
-    if (!this._firedLifecycleEvents.has(waitUntil))
+    if (!this._firedLifecycleEvents.has(waitUntil)) {
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
+    }
   }
 
   async frameElement(): Promise<dom.ElementHandle> {
@@ -742,8 +806,9 @@ export class Frame extends SdkObject {
 
   _context(world: types.World): Promise<dom.FrameExecutionContext> {
     return this._contextData.get(world)!.contextPromise.then(contextOrDestroyedReason => {
-      if (contextOrDestroyedReason instanceof js.ExecutionContext)
+      if (contextOrDestroyedReason instanceof js.ExecutionContext) {
         return contextOrDestroyedReason;
+      }
       throw new Error(contextOrDestroyedReason.destroyedReason);
     });
   }
@@ -779,13 +844,16 @@ export class Frame extends SdkObject {
 
   async waitForSelector(metadata: CallMetadata, selector: string, options: types.WaitForElementOptions, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
     const controller = new ProgressController(metadata, this);
-    if ((options as any).visibility)
+    if ((options as any).visibility) {
       throw new Error('options.visibility is not supported, did you mean options.state?');
-    if ((options as any).waitFor && (options as any).waitFor !== 'visible')
+    }
+    if ((options as any).waitFor && (options as any).waitFor !== 'visible') {
       throw new Error('options.waitFor is not supported, did you mean options.state?');
+    }
     const { state = 'visible' } = options;
-    if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
+    if (!['attached', 'detached', 'visible', 'hidden'].includes(state)) {
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
+    }
     return controller.run(async progress => {
       progress.log(`waiting for ${this._asLocator(selector)}${state === 'attached' ? '' : ' to be ' + state}`);
       return await this.waitForSelectorInternal(progress, selector, true, options, scope);
@@ -795,26 +863,30 @@ export class Frame extends SdkObject {
   async waitForSelectorInternal(progress: Progress, selector: string, performActionPreChecks: boolean, options: types.WaitForElementOptions, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
     const { state = 'visible' } = options;
     const promise = this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async continuePolling => {
-      if (performActionPreChecks)
+      if (performActionPreChecks) {
         await this._page.performActionPreChecks(progress);
+      }
 
       const resolved = await this.selectors.resolveInjectedForSelector(selector, options, scope);
       progress.throwIfAborted();
       if (!resolved) {
-        if (state === 'hidden' || state === 'detached')
+        if (state === 'hidden' || state === 'detached') {
           return null;
+        }
         return continuePolling;
       }
       const result = await resolved.injected.evaluateHandle((injected, { info, root }) => {
-        if (root && !root.isConnected)
+        if (root && !root.isConnected) {
           throw injected.createStacklessError('Element is not attached to the DOM');
+        }
         const elements = injected.querySelectorAll(info.parsed, root || document);
         const element: Element | undefined  = elements[0];
         const visible = element ? injected.utils.isElementVisible(element) : false;
         let log = '';
         if (elements.length > 1) {
-          if (info.strict)
+          if (info.strict) {
             throw injected.strictModeViolationError(info.parsed, elements);
+          }
           log = `  locator resolved to ${elements.length} elements. Proceeding with the first one: ${injected.previewNode(elements[0])}`;
         } else if (element) {
           log = `  locator resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`;
@@ -822,8 +894,9 @@ export class Frame extends SdkObject {
         return { log, element, visible, attached: !!element };
       }, { info: resolved.info, root: resolved.frame === this ? scope : undefined });
       const { log, visible, attached } = await result.evaluate(r => ({ log: r.log, visible: r.visible, attached: r.attached }));
-      if (log)
+      if (log) {
         progress.log(log);
+      }
       const success = { attached, detached: !attached, visible, hidden: !visible }[state];
       if (!success) {
         result.dispose();
@@ -835,10 +908,12 @@ export class Frame extends SdkObject {
       }
       const element = state === 'attached' || state === 'visible' ? await result.evaluateHandle(r => r.element) : null;
       result.dispose();
-      if (!element)
+      if (!element) {
         return null;
-      if ((options as any).__testHookBeforeAdoptNode)
+      }
+      if ((options as any).__testHookBeforeAdoptNode) {
         await (options as any).__testHookBeforeAdoptNode();
+      }
       try {
         return await element._adoptTo(await resolved.frame._mainContext());
       } catch (e) {
@@ -856,8 +931,9 @@ export class Frame extends SdkObject {
 
   async evalOnSelector(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any, scope?: dom.ElementHandle): Promise<any> {
     const handle = await this.selectors.query(selector, { strict }, scope);
-    if (!handle)
+    if (!handle) {
       throw new Error(`Failed to find element matching selector "${selector}"`);
+    }
     const result = await handle.evaluateExpression(expression, { isFunction }, arg);
     handle.dispose();
     return result;
@@ -891,15 +967,18 @@ export class Frame extends SdkObject {
       const context = await this._utilityContext();
       return await context.evaluate(() => {
         let retVal = '';
-        if (document.doctype)
+        if (document.doctype) {
           retVal = new XMLSerializer().serializeToString(document.doctype);
-        if (document.documentElement)
+        }
+        if (document.documentElement) {
           retVal += document.documentElement.outerHTML;
+        }
         return retVal;
       });
     } catch (e) {
-      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
+      if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e)) {
         throw e;
+      }
       throw new Error(`Unable to retrieve content because the page is navigating and changing the content.`);
     }
   }
@@ -940,8 +1019,9 @@ export class Frame extends SdkObject {
   }
 
   origin(): string | undefined {
-    if (!this._url.startsWith('http'))
+    if (!this._url.startsWith('http')) {
       return;
+    }
     return network.parseURL(this._url)?.origin;
   }
 
@@ -963,26 +1043,30 @@ export class Frame extends SdkObject {
       content = null,
       type = ''
     } = params;
-    if (!url && !content)
+    if (!url && !content) {
       throw new Error('Provide an object with a `url`, `path` or `content` property');
+    }
 
     const context = await this._mainContext();
     return this._raceWithCSPError(async () => {
-      if (url !== null)
+      if (url !== null) {
         return (await context.evaluateHandle(addScriptUrl, { url, type })).asElement()!;
+      }
       const result = (await context.evaluateHandle(addScriptContent, { content: content!, type })).asElement()!;
       // Another round trip to the browser to ensure that we receive CSP error messages
       // (if any) logged asynchronously in a separate task on the content main thread.
-      if (this._page._delegate.cspErrorsAsynchronousForInlineScripts)
+      if (this._page._delegate.cspErrorsAsynchronousForInlineScripts) {
         await context.evaluate(() => true);
+      }
       return result;
     });
 
     async function addScriptUrl(params: { url: string, type: string }): Promise<HTMLElement> {
       const script = document.createElement('script');
       script.src = params.url;
-      if (params.type)
+      if (params.type) {
         script.type = params.type;
+      }
       const promise = new Promise((res, rej) => {
         script.onload = res;
         script.onerror = e => rej(typeof e === 'string' ? new Error(e) : new Error(`Failed to load script at ${script.src}`));
@@ -999,8 +1083,9 @@ export class Frame extends SdkObject {
       let error = null;
       script.onerror = e => error = e;
       document.head.appendChild(script);
-      if (error)
+      if (error) {
         throw error;
+      }
       return script;
     }
   }
@@ -1010,13 +1095,15 @@ export class Frame extends SdkObject {
       url = null,
       content = null
     } = params;
-    if (!url && !content)
+    if (!url && !content) {
       throw new Error('Provide an object with a `url`, `path` or `content` property');
+    }
 
     const context = await this._mainContext();
     return this._raceWithCSPError(async () => {
-      if (url !== null)
+      if (url !== null) {
         return (await context.evaluateHandle(addStyleUrl, url)).asElement()!;
+      }
       return (await context.evaluateHandle(addStyleContent, content!)).asElement()!;
     });
 
@@ -1055,8 +1142,9 @@ export class Frame extends SdkObject {
     const actionPromise = func().then(r => result = r).catch(e => error = e);
     const errorPromise = new Promise<void>(resolve => {
       listeners.push(eventsHelper.addEventListener(this._page._browserContext, BrowserContext.Events.Console, (message: ConsoleMessage) => {
-        if (message.page() !== this._page || message.type() !== 'error')
+        if (message.page() !== this._page || message.type() !== 'error') {
           return;
+        }
         if (message.text().includes('Content-Security-Policy') || message.text().includes('Content Security Policy')) {
           cspMessage = message;
           resolve();
@@ -1065,10 +1153,12 @@ export class Frame extends SdkObject {
     });
     await Promise.race([actionPromise, errorPromise]);
     eventsHelper.removeEventListeners(listeners);
-    if (cspMessage)
+    if (cspMessage) {
       throw new Error(cspMessage.text());
-    if (error)
+    }
+    if (error) {
       throw error;
+    }
     return result!;
   }
 
@@ -1090,12 +1180,14 @@ export class Frame extends SdkObject {
       progress.throwIfAborted();
       try {
         const result = await action(continuePolling);
-        if (result === continuePolling)
+        if (result === continuePolling) {
           continue;
+        }
         return result as R;
       } catch (e) {
-        if (this._isErrorThatCannotBeRetried(e))
+        if (this._isErrorThatCannotBeRetried(e)) {
           throw e;
+        }
         continue;
       }
     }
@@ -1105,14 +1197,17 @@ export class Frame extends SdkObject {
 
   private _isErrorThatCannotBeRetried(e: Error) {
     // Always fail on JavaScript errors or when the main connection is closed.
-    if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e))
+    if (js.isJavaScriptErrorInEvaluate(e) || isSessionClosedError(e)) {
       return true;
+    }
     // Certain errors opt-out of the retries, throw.
-    if (dom.isNonRecoverableDOMError(e) || isInvalidSelectorError(e))
+    if (dom.isNonRecoverableDOMError(e) || isInvalidSelectorError(e)) {
       return true;
+    }
     // If the call is made on the detached frame - throw.
-    if (this.isDetached())
+    if (this.isDetached()) {
       return true;
+    }
     // Retry upon all other errors.
     return false;
   }
@@ -1125,22 +1220,26 @@ export class Frame extends SdkObject {
     action: (handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
     progress.log(`waiting for ${this._asLocator(selector)}`);
     return this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async continuePolling => {
-      if (performActionPreChecks)
+      if (performActionPreChecks) {
         await this._page.performActionPreChecks(progress);
+      }
 
       const resolved = await this.selectors.resolveInjectedForSelector(selector, { strict });
       progress.throwIfAborted();
-      if (!resolved)
+      if (!resolved) {
         return continuePolling;
+      }
       const result = await resolved.injected.evaluateHandle((injected, { info, callId }) => {
         const elements = injected.querySelectorAll(info.parsed, document);
-        if (callId)
+        if (callId) {
           injected.markTargetElements(new Set(elements), callId);
+        }
         const element = elements[0] as Element | undefined;
         let log = '';
         if (elements.length > 1) {
-          if (info.strict)
+          if (info.strict) {
             throw injected.strictModeViolationError(info.parsed, elements);
+          }
           log = `  locator resolved to ${elements.length} elements. Proceeding with the first one: ${injected.previewNode(elements[0])}`;
         } else if (element) {
           log = `  locator resolved to ${injected.previewNode(element)}`;
@@ -1148,8 +1247,9 @@ export class Frame extends SdkObject {
         return { log, success: !!element, element };
       }, { info: resolved.info, callId: progress.metadata.id });
       const { log, success } = await result.evaluate(r => ({ log: r.log, success: r.success }));
-      if (log)
+      if (log) {
         progress.log(log);
+      }
       if (!success) {
         result.dispose();
         return continuePolling;
@@ -1164,7 +1264,7 @@ export class Frame extends SdkObject {
         }
         return result;
       } finally {
-        element?.dispose();
+        element.dispose();
       }
     });
   }
@@ -1220,8 +1320,9 @@ export class Frame extends SdkObject {
   }
 
   async tap(metadata: CallMetadata, selector: string, options: types.PointerActionWaitOptions) {
-    if (!this._page._browserContext._options.hasTouch)
+    if (!this._page._browserContext._options.hasTouch) {
       throw new Error('The page does not support tap. Use hasTouch context option to enable touch support.');
+    }
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._tap(progress, options)));
@@ -1255,8 +1356,9 @@ export class Frame extends SdkObject {
 
   async innerText(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}, scope?: dom.ElementHandle): Promise<string> {
     return this._callOnElementOnceMatches(metadata, selector, (injectedScript, element) => {
-      if (element.namespaceURI !== 'http://www.w3.org/1999/xhtml')
+      if (element.namespaceURI !== 'http://www.w3.org/1999/xhtml') {
         throw injectedScript.createStacklessError('Node is not an HTMLElement');
+      }
       return (element as HTMLElement).innerText;
     }, undefined, options, scope);
   }
@@ -1272,16 +1374,18 @@ export class Frame extends SdkObject {
   async inputValue(metadata: CallMetadata, selector: string, options: types.TimeoutOptions & types.StrictOptions = {}, scope?: dom.ElementHandle): Promise<string> {
     return this._callOnElementOnceMatches(metadata, selector, (injectedScript, node) => {
       const element = injectedScript.retarget(node, 'follow-label');
-      if (!element || (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT'))
+      if (!element || (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')) {
         throw injectedScript.createStacklessError('Node is not an <input>, <textarea> or <select> element');
+      }
       return (element as any).value;
     }, undefined, options, scope);
   }
 
   async highlight(selector: string) {
     const resolved = await this.selectors.resolveInjectedForSelector(selector);
-    if (!resolved)
+    if (!resolved) {
       return;
+    }
     return await resolved.injected.evaluate((injected, { info }) => {
       return injected.highlight(info.parsed);
     }, { info: resolved.info });
@@ -1315,16 +1419,18 @@ export class Frame extends SdkObject {
   async isVisibleInternal(selector: string, options: types.StrictOptions = {}, scope?: dom.ElementHandle): Promise<boolean> {
     try {
       const resolved = await this.selectors.resolveInjectedForSelector(selector, options, scope);
-      if (!resolved)
+      if (!resolved) {
         return false;
+      }
       return await resolved.injected.evaluate((injected, { info, root }) => {
         const element = injected.querySelector(info.parsed, root || document, info.strict);
         const state = element ? injected.elementState(element, 'visible') : false;
         return state === 'error:notconnected' ? false : state;
       }, { info: resolved.info, root: resolved.frame === this ? scope : undefined });
     } catch (e) {
-      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e) || isSessionClosedError(e))
+      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e) || isSessionClosedError(e)) {
         throw e;
+      }
       return false;
     }
   }
@@ -1416,8 +1522,9 @@ export class Frame extends SdkObject {
   async expect(metadata: CallMetadata, selector: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }> {
     const result = await this._expectImpl(metadata, selector, options);
     // Library mode special case for the expect errors which are return values, not exceptions.
-    if (result.matches === options.isNot)
+    if (result.matches === options.isNot) {
       metadata.error = { error: { name: 'Expect', message: 'Expect failed' } };
+    }
     return result;
   }
 
@@ -1441,19 +1548,22 @@ export class Frame extends SdkObject {
         const resultOneShot = await (new ProgressController(metadata, this)).run(async progress => {
           return await this._expectInternal(progress, selector, options, lastIntermediateResult);
         });
-        if (resultOneShot.matches !== options.isNot)
+        if (resultOneShot.matches !== options.isNot) {
           return resultOneShot;
+        }
       } catch (e) {
-        if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
+        if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e)) {
           throw e;
+        }
         // Ignore any other errors from one-shot, we'll handle them during retries.
       }
       if (timeout > 0) {
         const elapsed = monotonicTime() - start;
         timeout -= elapsed;
       }
-      if (timeout < 0)
+      if (timeout < 0) {
         return { matches: options.isNot, log: compressCallLog(metadata.log), timedOut: true, received: lastIntermediateResult.received };
+      }
 
       // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
       return await (new ProgressController(metadata, this)).run(async progress => {
@@ -1472,13 +1582,16 @@ export class Frame extends SdkObject {
     } catch (e) {
       // Q: Why not throw upon isSessionClosedError(e) as in other places?
       // A: We want user to receive a friendly message containing the last intermediate result.
-      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e))
+      if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e)) {
         throw e;
+      }
       const result: { matches: boolean, received?: any, log?: string[], timedOut?: boolean } = { matches: options.isNot, log: compressCallLog(metadata.log) };
-      if (lastIntermediateResult.isSet)
+      if (lastIntermediateResult.isSet) {
         result.received = lastIntermediateResult.received;
-      if (e instanceof TimeoutError)
+      }
+      if (e instanceof TimeoutError) {
         result.timedOut = true;
+      }
       return result;
     }
   }
@@ -1495,35 +1608,40 @@ export class Frame extends SdkObject {
 
     const { log, matches, received, missingReceived } = await injected.evaluate(async (injected, { info, options, callId }) => {
       const elements = info ? injected.querySelectorAll(info.parsed, document) : [];
-      if (callId)
+      if (callId) {
         injected.markTargetElements(new Set(elements), callId);
+      }
       const isArray = options.expression === 'to.have.count' || options.expression.endsWith('.array');
       let log = '';
-      if (isArray)
+      if (isArray) {
         log = `  locator resolved to ${elements.length} element${elements.length === 1 ? '' : 's'}`;
-      else if (elements.length > 1)
+      } else if (elements.length > 1) {
         throw injected.strictModeViolationError(info!.parsed, elements);
-      else if (elements.length)
+      } else if (elements.length) {
         log = `  locator resolved to ${injected.previewNode(elements[0])}`;
+      }
       return { log, ...await injected.expect(elements[0], options, elements) };
     }, { info, options, callId: progress.metadata.id });
 
-    if (log)
+    if (log) {
       progress.log(log);
+    }
     // Note: missingReceived avoids `unexpected value "undefined"` when element was not found.
     if (matches === options.isNot) {
       lastIntermediateResult.received = missingReceived ? '<element(s) not found>' : received;
       lastIntermediateResult.isSet = true;
-      if (!missingReceived && !Array.isArray(received))
+      if (!missingReceived && !Array.isArray(received)) {
         progress.log(`  unexpected value "${renderUnexpectedValue(options.expression, received)}"`);
+      }
     }
     return { matches, received };
   }
 
   async _waitForFunctionExpression<R>(metadata: CallMetadata, expression: string, isFunction: boolean | undefined, arg: any, options: types.WaitForFunctionOptions, world: types.World = 'main'): Promise<js.SmartHandle<R>> {
     const controller = new ProgressController(metadata, this);
-    if (typeof options.pollingInterval === 'number')
+    if (typeof options.pollingInterval === 'number') {
       assert(options.pollingInterval > 0, 'Cannot poll with non-positive interval: ' + options.pollingInterval);
+    }
     expression = js.normalizeEvaluationExpression(expression, isFunction);
     return controller.run(async progress => {
       return this.retryWithProgressAndTimeouts(progress, [100], async () => {
@@ -1541,8 +1659,9 @@ export class Frame extends SdkObject {
               result = result;
             } else {
               // auto detect.
-              if (typeof result === 'function')
+              if (typeof result === 'function') {
                 result = result(arg);
+              }
             }
             return result;
           };
@@ -1550,21 +1669,25 @@ export class Frame extends SdkObject {
           let fulfill: (result: R) => void;
           let reject: (error: Error) => void;
           let aborted = false;
-          const result = new Promise<R>((f, r) => { fulfill = f; reject = r; });
+          const result = new Promise<R>((f, r) => {
+            fulfill = f; reject = r;
+          });
 
           const next = () => {
-            if (aborted)
+            if (aborted) {
               return;
+            }
             try {
               const success = predicate();
               if (success) {
                 fulfill(success);
                 return;
               }
-              if (typeof polling !== 'number')
+              if (typeof polling !== 'number') {
                 injected.builtinRequestAnimationFrame(next);
-              else
+              } else {
                 injected.builtinSetTimeout(next, polling);
+              }
             } catch (e) {
               reject(e);
             }
@@ -1596,8 +1719,9 @@ export class Frame extends SdkObject {
   }
 
   async rafrafTimeout(timeout: number): Promise<void> {
-    if (timeout === 0)
+    if (timeout === 0) {
       return;
+    }
     const context = await this._utilityContext();
     await Promise.all([
       // wait for double raf
@@ -1614,12 +1738,14 @@ export class Frame extends SdkObject {
     this._stopNetworkIdleTimer();
     this._detachedScope.close(new Error('Frame was detached'));
     for (const data of this._contextData.values()) {
-      if (data.context)
+      if (data.context) {
         data.context.contextDestroyed('Frame was detached');
+      }
       data.contextPromise.resolve({ destroyedReason: 'Frame was detached' });
     }
-    if (this._parentFrame)
+    if (this._parentFrame) {
       this._parentFrame._childFrames.delete(this);
+    }
     this._parentFrame = null;
   }
 
@@ -1631,23 +1757,28 @@ export class Frame extends SdkObject {
       const promise = this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async continuePolling => {
         const resolved = await this.selectors.resolveInjectedForSelector(selector, options, scope);
         progress.throwIfAborted();
-        if (!resolved)
+        if (!resolved) {
           return continuePolling;
+        }
         const { log, success, value } = await resolved.injected.evaluate((injected, { info, callbackText, taskData, callId, root }) => {
           const callback = injected.eval(callbackText) as ElementCallback<T, R>;
           const element = injected.querySelector(info.parsed, root || document, info.strict);
-          if (!element)
+          if (!element) {
             return { success: false };
+          }
           const log = `  locator resolved to ${injected.previewNode(element)}`;
-          if (callId)
+          if (callId) {
             injected.markTargetElements(new Set([element]), callId);
+          }
           return { log, success: true, value: callback(injected, element, taskData as T) };
         }, { info: resolved.info, callbackText, taskData, callId: progress.metadata.id, root: resolved.frame === this ? scope : undefined });
 
-        if (log)
+        if (log) {
           progress.log(log);
-        if (!success)
+        }
+        if (!success) {
           return continuePolling;
+        }
         return value!;
       });
       return scope ? scope._context._raceAgainstContextDestroyed(promise) : promise;
@@ -1657,10 +1788,11 @@ export class Frame extends SdkObject {
   private _setContext(world: types.World, context: dom.FrameExecutionContext | null) {
     const data = this._contextData.get(world)!;
     data.context = context;
-    if (context)
+    if (context) {
       data.contextPromise.resolve(context);
-    else
+    } else {
       data.contextPromise = new ManualPromise();
+    }
   }
 
   _contextCreated(world: types.World, context: dom.FrameExecutionContext) {
@@ -1678,12 +1810,14 @@ export class Frame extends SdkObject {
   _contextDestroyed(context: dom.FrameExecutionContext) {
     // Sometimes we get this after detach, in which case we should not reset
     // our already destroyed contexts to something that will never resolve.
-    if (this._detachedScope.isClosed())
+    if (this._detachedScope.isClosed()) {
       return;
+    }
     context.contextDestroyed('Execution context was destroyed, most likely because of a navigation');
     for (const [world, data] of this._contextData) {
-      if (data.context === context)
+      if (data.context === context) {
         this._setContext(world, null);
+      }
     }
   }
 
@@ -1692,8 +1826,9 @@ export class Frame extends SdkObject {
     // We should not start a timer and report networkidle in detached frames.
     // This happens at least in Firefox for child frames, where we may get requestFinished
     // after the frame was detached - probably a race in the Firefox itself.
-    if (this._firedLifecycleEvents.has('networkidle') || this._detachedScope.isClosed())
+    if (this._firedLifecycleEvents.has('networkidle') || this._detachedScope.isClosed()) {
       return;
+    }
     this._networkIdleTimer = setTimeout(() => {
       this._firedNetworkIdleSelf = true;
       this._page.mainFrame()._recalculateNetworkIdle();
@@ -1701,8 +1836,9 @@ export class Frame extends SdkObject {
   }
 
   _stopNetworkIdleTimer() {
-    if (this._networkIdleTimer)
+    if (this._networkIdleTimer) {
       clearTimeout(this._networkIdleTimer);
+    }
     this._networkIdleTimer = undefined;
     this._firedNetworkIdleSelf = false;
   }
@@ -1723,8 +1859,9 @@ export class Frame extends SdkObject {
       localStorage.clear();
 
       // Add new DOM Storage values.
-      for (const entry of ls || [])
+      for (const entry of ls || []) {
         localStorage[entry.name] = entry.value;
+      }
 
       // Clean Service Workers
       const registrations = navigator.serviceWorker ? await navigator.serviceWorker.getRegistrations() : [];
@@ -1734,17 +1871,19 @@ export class Frame extends SdkObject {
         // However, they will unregister immediately after fetch finishes and should not affect next page load.
         // Unfortunately, loading next page in Chromium still takes 5 seconds waiting for
         // some operation on this bogus service worker to finish.
-        if (!r.installing && !r.waiting && !r.active)
+        if (!r.installing && !r.waiting && !r.active) {
           r.unregister().catch(() => {});
-        else
+        } else {
           await r.unregister().catch(() => {});
+        }
       }));
 
       // Clean IndexedDB
-      for (const db of await indexedDB.databases?.() || []) {
+      for (const db of await indexedDB.databases() || []) {
         // Do not wait for the callback - it is called on timer in Chromium (slow).
-        if (db.name)
+        if (db.name) {
           indexedDB.deleteDatabase(db.name!);
+        }
       }
     }, { ls: newStorage?.localStorage }).catch(() => {});
   }
@@ -1771,14 +1910,17 @@ class SignalBarrier {
 
   async addFrameNavigation(frame: Frame) {
     // Auto-wait top-level navigations only.
-    if (frame.parentFrame())
+    if (frame.parentFrame()) {
       return;
+    }
     this.retain();
     const waiter = helper.waitForEvent(null, frame, Frame.Events.InternalNavigation, (e: NavigationEvent) => {
-      if (!e.isPublic)
+      if (!e.isPublic) {
         return false;
-      if (!e.error && this._progress)
+      }
+      if (!e.error && this._progress) {
         this._progress.log(`  navigated to "${frame._url}"`);
+      }
       return true;
     });
     await LongStandingScope.raceMultiple([
@@ -1795,41 +1937,55 @@ class SignalBarrier {
 
   release() {
     --this._protectCount;
-    if (!this._protectCount)
+    if (!this._protectCount) {
       this._promise.resolve();
+    }
   }
 }
 
 function verifyLifecycle(name: string, waitUntil: types.LifecycleEvent): types.LifecycleEvent {
-  if (waitUntil as unknown === 'networkidle0')
+  if (waitUntil as unknown === 'networkidle0') {
     waitUntil = 'networkidle';
-  if (!types.kLifecycleEvents.has(waitUntil))
+  }
+  if (!types.kLifecycleEvents.has(waitUntil)) {
     throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle|commit)`);
+  }
   return waitUntil;
 }
 
 function renderUnexpectedValue(expression: string, received: any): string {
-  if (expression === 'to.be.checked')
+  if (expression === 'to.be.checked') {
     return received ? 'checked' : 'unchecked';
-  if (expression === 'to.be.unchecked')
+  }
+  if (expression === 'to.be.unchecked') {
     return received ? 'unchecked' : 'checked';
-  if (expression === 'to.be.visible')
+  }
+  if (expression === 'to.be.visible') {
     return received ? 'visible' : 'hidden';
-  if (expression === 'to.be.hidden')
+  }
+  if (expression === 'to.be.hidden') {
     return received ? 'hidden' : 'visible';
-  if (expression === 'to.be.enabled')
+  }
+  if (expression === 'to.be.enabled') {
     return received ? 'enabled' : 'disabled';
-  if (expression === 'to.be.disabled')
+  }
+  if (expression === 'to.be.disabled') {
     return received ? 'disabled' : 'enabled';
-  if (expression === 'to.be.editable')
+  }
+  if (expression === 'to.be.editable') {
     return received ? 'editable' : 'readonly';
-  if (expression === 'to.be.readonly')
+  }
+  if (expression === 'to.be.readonly') {
     return received ? 'readonly' : 'editable';
-  if (expression === 'to.be.empty')
+  }
+  if (expression === 'to.be.empty') {
     return received ? 'empty' : 'not empty';
-  if (expression === 'to.be.focused')
+  }
+  if (expression === 'to.be.focused') {
     return received ? 'focused' : 'not focused';
-  if (expression === 'to.match.aria')
+  }
+  if (expression === 'to.match.aria') {
     return received ? received.raw : received;
+  }
   return received;
 }

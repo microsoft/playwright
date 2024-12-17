@@ -103,8 +103,9 @@ export class CRPage implements PageDelegate {
     if (opener && !browserContext._options.noDefaultViewport) {
       const features = opener._nextWindowOpenPopupFeatures.shift() || [];
       const viewportSize = helper.getViewportSizeFromWindowFeatures(features);
-      if (viewportSize)
+      if (viewportSize) {
         this._page._emulatedSize = { viewport: viewportSize, screen: viewportSize };
+      }
     }
 
     const createdEvent = this._isBackgroundPage ? CRBrowserContext.CREvents.BackgroundPage : BrowserContext.Events.Page;
@@ -116,12 +117,14 @@ export class CRPage implements PageDelegate {
   private async _forAllFrameSessions(cb: (frame: FrameSession) => Promise<any>) {
     const frameSessions = Array.from(this._sessions.values());
     await Promise.all(frameSessions.map(frameSession => {
-      if (frameSession._isMainFrame())
+      if (frameSession._isMainFrame()) {
         return cb(frameSession);
+      }
       return cb(frameSession).catch(e => {
         // Broadcasting a message to the closed iframe should be a noop.
-        if (isSessionClosedError(e))
+        if (isSessionClosedError(e)) {
           return;
+        }
         throw e;
       });
     }));
@@ -131,8 +134,9 @@ export class CRPage implements PageDelegate {
     // Frame id equals target id.
     while (!this._sessions.has(frame._id)) {
       const parent = frame.parentFrame();
-      if (!parent)
+      if (!parent) {
         throw new Error(`Frame has been detached.`);
+      }
       frame = parent;
     }
     return this._sessions.get(frame._id)!;
@@ -148,8 +152,9 @@ export class CRPage implements PageDelegate {
   }
 
   didClose() {
-    for (const session of this._sessions.values())
+    for (const session of this._sessions.values()) {
       session.dispose();
+    }
     this._page._didClose();
   }
 
@@ -208,8 +213,9 @@ export class CRPage implements PageDelegate {
   private async _go(delta: number): Promise<boolean> {
     const history = await this._mainFrameSession._client.send('Page.getNavigationHistory');
     const entry = history.entries[history.currentIndex + delta];
-    if (!entry)
+    if (!entry) {
       return false;
+    }
     await this._mainFrameSession._client.send('Page.navigateToHistoryEntry', { entryId: entry.id });
     return true;
   }
@@ -235,10 +241,11 @@ export class CRPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    if (runBeforeUnload)
+    if (runBeforeUnload) {
       await this._mainFrameSession._client.send('Page.close');
-    else
+    } else {
       await this._browserContext._browser._closePage(this);
+    }
   }
 
   async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
@@ -317,8 +324,9 @@ export class CRPage implements PageDelegate {
 
   async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void> {
     const frame = await handle.ownerFrame();
-    if (!frame)
+    if (!frame) {
       throw new Error('Cannot set input files to detached input element');
+    }
     const parentSession = this._sessionForFrame(frame);
     await parentSession._client.send('DOM.setFileInputFiles', {
       objectId: handle._objectId,
@@ -353,17 +361,20 @@ export class CRPage implements PageDelegate {
 
   async getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle> {
     let parent = frame.parentFrame();
-    if (!parent)
+    if (!parent) {
       throw new Error('Frame has been detached.');
+    }
     const parentSession = this._sessionForFrame(parent);
     const { backendNodeId } = await parentSession._client.send('DOM.getFrameOwner', { frameId: frame._id }).catch(e => {
-      if (e instanceof Error && e.message.includes('Frame with the given id was not found.'))
+      if (e instanceof Error && e.message.includes('Frame with the given id was not found.')) {
         rewriteErrorMessage(e, 'Frame has been detached.');
+      }
       throw e;
     });
     parent = frame.parentFrame();
-    if (!parent)
+    if (!parent) {
       throw new Error('Frame has been detached.');
+    }
     return parentSession._adoptBackendNodeId(backendNodeId, await parent._mainContext());
   }
 
@@ -401,8 +412,9 @@ class FrameSession {
     this._page = crPage._page;
     this._targetId = targetId;
     this._parentSession = parentSession;
-    if (parentSession)
+    if (parentSession) {
       parentSession._childSessions.add(this);
+    }
     this._firstNonInitialNavigationCommittedPromise = new Promise((f, r) => {
       this._firstNonInitialNavigationCommittedFulfill = f;
       this._firstNonInitialNavigationCommittedReject = r;
@@ -468,14 +480,16 @@ class FrameSession {
       // and it is equally important to send Page.startScreencast before sending Runtime.runIfWaitingForDebugger.
       await this._createVideoRecorder(screencastId, screencastOptions);
       this._crPage._page.waitForInitializedOrError().then(p => {
-        if (p instanceof Error)
+        if (p instanceof Error) {
           this._stopVideoRecording().catch(() => {});
+        }
       });
     }
 
     let lifecycleEventsEnabled: Promise<any>;
-    if (!this._isMainFrame())
+    if (!this._isMainFrame()) {
       this._addRendererListeners();
+    }
     this._addBrowserListeners();
     const promises: Promise<any>[] = [
       this._client.send('Page.enable'),
@@ -493,8 +507,9 @@ class FrameSession {
             grantUniveralAccess: true,
             worldName: UTILITY_WORLD_NAME,
           });
-          for (const initScript of this._crPage._page.allInitScripts())
+          for (const initScript of this._crPage._page.allInitScripts()) {
             frame.evaluateExpression(initScript.source).catch(e => {});
+          }
         }
 
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
@@ -522,34 +537,46 @@ class FrameSession {
       this._client.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true }),
     ];
     if (!isSettingStorageState) {
-      if (this._isMainFrame())
+      if (this._isMainFrame()) {
         promises.push(this._client.send('Emulation.setFocusEmulationEnabled', { enabled: true }));
+      }
       const options = this._crPage._browserContext._options;
-      if (options.bypassCSP)
+      if (options.bypassCSP) {
         promises.push(this._client.send('Page.setBypassCSP', { enabled: true }));
-      if (options.ignoreHTTPSErrors || options.internalIgnoreHTTPSErrors)
+      }
+      if (options.ignoreHTTPSErrors || options.internalIgnoreHTTPSErrors) {
         promises.push(this._client.send('Security.setIgnoreCertificateErrors', { ignore: true }));
-      if (this._isMainFrame())
+      }
+      if (this._isMainFrame()) {
         promises.push(this._updateViewport());
-      if (options.hasTouch)
+      }
+      if (options.hasTouch) {
         promises.push(this._client.send('Emulation.setTouchEmulationEnabled', { enabled: true }));
-      if (options.javaScriptEnabled === false)
+      }
+      if (options.javaScriptEnabled === false) {
         promises.push(this._client.send('Emulation.setScriptExecutionDisabled', { value: true }));
-      if (options.userAgent || options.locale)
+      }
+      if (options.userAgent || options.locale) {
         promises.push(this._updateUserAgent());
-      if (options.locale)
+      }
+      if (options.locale) {
         promises.push(emulateLocale(this._client, options.locale));
-      if (options.timezoneId)
+      }
+      if (options.timezoneId) {
         promises.push(emulateTimezone(this._client, options.timezoneId));
-      if (!this._crPage._browserContext._browser.options.headful)
+      }
+      if (!this._crPage._browserContext._browser.options.headful) {
         promises.push(this._setDefaultFontFamilies(this._client));
+      }
       promises.push(this._updateGeolocation(true));
       promises.push(this._updateEmulateMedia());
       promises.push(this._updateFileChooserInterception(true));
-      for (const initScript of this._crPage._page.allInitScripts())
+      for (const initScript of this._crPage._page.allInitScripts()) {
         promises.push(this._evaluateOnNewDocument(initScript, 'main'));
-      if (screencastOptions)
+      }
+      if (screencastOptions) {
         promises.push(this._startVideoRecording(screencastOptions));
+      }
     }
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     promises.push(this._firstNonInitialNavigationCommittedPromise);
@@ -558,10 +585,12 @@ class FrameSession {
 
   dispose() {
     this._firstNonInitialNavigationCommittedReject(new TargetClosedError());
-    for (const childSession of this._childSessions)
+    for (const childSession of this._childSessions) {
       childSession.dispose();
-    if (this._parentSession)
+    }
+    if (this._parentSession) {
       this._parentSession._childSessions.delete(this);
+    }
     eventsHelper.removeEventListeners(this._eventListeners);
     this._crPage._networkManager.removeSession(this._client);
     this._crPage._sessions.delete(this._targetId);
@@ -570,35 +599,41 @@ class FrameSession {
 
   async _navigate(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
     const response = await this._client.send('Page.navigate', { url, referrer, frameId: frame._id, referrerPolicy: 'unsafeUrl' });
-    if (response.errorText)
+    if (response.errorText) {
       throw new frames.NavigationAbortedError(response.loaderId, `${response.errorText} at ${url}`);
+    }
     return { newDocumentId: response.loaderId };
   }
 
   _onLifecycleEvent(event: Protocol.Page.lifecycleEventPayload) {
-    if (this._eventBelongsToStaleFrame(event.frameId))
+    if (this._eventBelongsToStaleFrame(event.frameId)) {
       return;
-    if (event.name === 'load')
+    }
+    if (event.name === 'load') {
       this._page._frameManager.frameLifecycleEvent(event.frameId, 'load');
-    else if (event.name === 'DOMContentLoaded')
+    } else if (event.name === 'DOMContentLoaded') {
       this._page._frameManager.frameLifecycleEvent(event.frameId, 'domcontentloaded');
+    }
   }
 
   _handleFrameTree(frameTree: Protocol.Page.FrameTree) {
     this._onFrameAttached(frameTree.frame.id, frameTree.frame.parentId || null);
     this._onFrameNavigated(frameTree.frame, true);
-    if (!frameTree.childFrames)
+    if (!frameTree.childFrames) {
       return;
+    }
 
-    for (const child of frameTree.childFrames)
+    for (const child of frameTree.childFrames) {
       this._handleFrameTree(child);
+    }
   }
 
   private _eventBelongsToStaleFrame(frameId: string)  {
     const frame = this._page._frameManager.frame(frameId);
     // Subtree may be already gone because some ancestor navigation destroyed the oopif.
-    if (!frame)
+    if (!frame) {
       return true;
+    }
     // When frame goes remote, parent process may still send some events
     // related to the local frame before it sends frameDetached.
     // In this case, we already have a new session for this frame, so events
@@ -614,8 +649,9 @@ class FrameSession {
       frameSession._swappedIn = true;
       const frame = this._page._frameManager.frame(frameId);
       // Frame or even a whole subtree may be already gone, because some ancestor did navigate.
-      if (frame)
+      if (frame) {
         this._page._frameManager.removeChildFramesRecursively(frame);
+      }
       return;
     }
     if (parentFrameId && !this._page._frameManager.frame(parentFrameId)) {
@@ -629,23 +665,28 @@ class FrameSession {
   }
 
   _onFrameNavigated(framePayload: Protocol.Page.Frame, initial: boolean) {
-    if (this._eventBelongsToStaleFrame(framePayload.id))
+    if (this._eventBelongsToStaleFrame(framePayload.id)) {
       return;
+    }
     this._page._frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url + (framePayload.urlFragment || ''), framePayload.name || '', framePayload.loaderId, initial);
-    if (!initial)
+    if (!initial) {
       this._firstNonInitialNavigationCommittedFulfill();
+    }
   }
 
   _onFrameRequestedNavigation(payload: Protocol.Page.frameRequestedNavigationPayload) {
-    if (this._eventBelongsToStaleFrame(payload.frameId))
+    if (this._eventBelongsToStaleFrame(payload.frameId)) {
       return;
-    if (payload.disposition === 'currentTab')
+    }
+    if (payload.disposition === 'currentTab') {
       this._page._frameManager.frameRequestedNavigation(payload.frameId);
+    }
   }
 
   _onFrameNavigatedWithinDocument(frameId: string, url: string) {
-    if (this._eventBelongsToStaleFrame(frameId))
+    if (this._eventBelongsToStaleFrame(frameId)) {
       return;
+    }
     this._page._frameManager.frameCommittedSameDocumentNavigation(frameId, url);
   }
 
@@ -661,8 +702,9 @@ class FrameSession {
       // Page.frameDetached arrives before Target.attachedToTarget.
       // We should keep the frame in the tree, and it will be used for the new target.
       const frame = this._page._frameManager.frame(frameId);
-      if (frame)
+      if (frame) {
         this._page._frameManager.removeChildFramesRecursively(frame);
+      }
       return;
     }
     // Just a regular frame detach.
@@ -671,32 +713,37 @@ class FrameSession {
 
   _onExecutionContextCreated(contextPayload: Protocol.Runtime.ExecutionContextDescription) {
     const frame = contextPayload.auxData ? this._page._frameManager.frame(contextPayload.auxData.frameId) : null;
-    if (!frame || this._eventBelongsToStaleFrame(frame._id))
+    if (!frame || this._eventBelongsToStaleFrame(frame._id)) {
       return;
+    }
     const delegate = new CRExecutionContext(this._client, contextPayload);
     let worldName: types.World|null = null;
-    if (contextPayload.auxData && !!contextPayload.auxData.isDefault)
+    if (contextPayload.auxData && !!contextPayload.auxData.isDefault) {
       worldName = 'main';
-    else if (contextPayload.name === UTILITY_WORLD_NAME)
+    } else if (contextPayload.name === UTILITY_WORLD_NAME) {
       worldName = 'utility';
+    }
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
     (context as any)[contextDelegateSymbol] = delegate;
-    if (worldName)
+    if (worldName) {
       frame._contextCreated(worldName, context);
+    }
     this._contextIdToContext.set(contextPayload.id, context);
   }
 
   _onExecutionContextDestroyed(executionContextId: number) {
     const context = this._contextIdToContext.get(executionContextId);
-    if (!context)
+    if (!context) {
       return;
+    }
     this._contextIdToContext.delete(executionContextId);
     context.frame._contextDestroyed(context);
   }
 
   _onExecutionContextsCleared() {
-    for (const contextId of Array.from(this._contextIdToContext.keys()))
+    for (const contextId of Array.from(this._contextIdToContext.keys())) {
       this._onExecutionContextDestroyed(contextId);
+    }
   }
 
   _onAttachedToTarget(event: Protocol.Target.attachedToTargetPayload) {
@@ -706,12 +753,14 @@ class FrameSession {
       // Frame id equals target id.
       const targetId = event.targetInfo.targetId;
       const frame = this._page._frameManager.frame(targetId);
-      if (!frame)
-        return; // Subtree may be already gone due to renderer/browser race.
+      if (!frame) {
+        return;
+      } // Subtree may be already gone due to renderer/browser race.
       this._page._frameManager.removeChildFramesRecursively(frame);
       for (const [contextId, context] of this._contextIdToContext) {
-        if (context.frame === frame)
+        if (context.frame === frame) {
           this._onExecutionContextDestroyed(contextId);
+        }
       }
       const frameSession = new FrameSession(this._crPage, session, targetId, this);
       this._crPage._sessions.set(targetId, frameSession);
@@ -757,8 +806,9 @@ class FrameSession {
 
     // ... or an oopif.
     const childFrameSession = this._crPage._sessions.get(event.targetId!);
-    if (!childFrameSession)
+    if (!childFrameSession) {
       return;
+    }
 
     // Usually, we get frameAttached in this session first and mark child as swappedIn.
     if (childFrameSession._swappedIn) {
@@ -773,8 +823,9 @@ class FrameSession {
     this._client.send('Page.enable').catch(e => null).then(() => {
       // Child was not swapped in - that means frameAttached did not happen and
       // this is remote detach rather than remote -> local swap.
-      if (!childFrameSession._swappedIn)
+      if (!childFrameSession._swappedIn) {
         this._page._frameManager.frameDetached(event.targetId!);
+      }
       childFrameSession.dispose();
     });
   }
@@ -801,8 +852,9 @@ class FrameSession {
       return;
     }
     const context = this._contextIdToContext.get(event.executionContextId);
-    if (!context)
+    if (!context) {
       return;
+    }
     const values = event.args.map(arg => context.createHandle(arg));
     this._page._addConsoleMessage(event.type, values, toConsoleMessageLocation(event.stackTrace));
   }
@@ -811,22 +863,25 @@ class FrameSession {
     const pageOrError = await this._crPage._page.waitForInitializedOrError();
     if (!(pageOrError instanceof Error)) {
       const context = this._contextIdToContext.get(event.executionContextId);
-      if (context)
+      if (context) {
         await this._page._onBindingCalled(event.payload, context);
+      }
     }
   }
 
   _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {
-    if (!this._page._frameManager.frame(this._targetId))
-      return; // Our frame/subtree may be gone already.
+    if (!this._page._frameManager.frame(this._targetId)) {
+      return;
+    } // Our frame/subtree may be gone already.
     this._page.emitOnContext(BrowserContext.Events.Dialog, new dialog.Dialog(
         this._page,
         event.type,
         event.message,
         async (accept: boolean, promptText?: string) => {
           // TODO: this should actually be a CDP event that notifies about a cancelled navigation attempt.
-          if (this._isMainFrame() && event.type === 'beforeunload' && !accept)
+          if (this._isMainFrame() && event.type === 'beforeunload' && !accept) {
             this._page._frameManager.frameAbortedNavigation(this._page.mainFrame()._id, 'navigation cancelled by beforeunload dialog');
+          }
           await this._client.send('Page.handleJavaScriptDialog', { accept, promptText });
         },
         event.defaultPrompt));
@@ -843,8 +898,9 @@ class FrameSession {
 
   _onLogEntryAdded(event: Protocol.Log.entryAddedPayload) {
     const { level, text, args, source, url, lineNumber } = event.entry;
-    if (args)
+    if (args) {
       args.map(arg => releaseObject(this._client, arg.objectId!));
+    }
     if (source !== 'worker') {
       const location: types.ConsoleMessageLocation = {
         url: url || '',
@@ -856,11 +912,13 @@ class FrameSession {
   }
 
   async _onFileChooserOpened(event: Protocol.Page.fileChooserOpenedPayload) {
-    if (!event.backendNodeId)
+    if (!event.backendNodeId) {
       return;
+    }
     const frame = this._page._frameManager.frame(event.frameId);
-    if (!frame)
+    if (!frame) {
       return;
+    }
     let handle;
     try {
       const utilityContext = await frame._utilityContext();
@@ -918,8 +976,9 @@ class FrameSession {
   }
 
   async _stopVideoRecording(): Promise<void> {
-    if (!this._screencastId)
+    if (!this._screencastId) {
       return;
+    }
     const screencastId = this._screencastId;
     this._screencastId = null;
     const recorder = this._videoRecorder!;
@@ -934,30 +993,35 @@ class FrameSession {
 
   async _startScreencast(client: any, options: Protocol.Page.startScreencastParameters = {}) {
     this._screencastClients.add(client);
-    if (this._screencastClients.size === 1)
+    if (this._screencastClients.size === 1) {
       await this._client.send('Page.startScreencast', options);
+    }
   }
 
   async _stopScreencast(client: any) {
     this._screencastClients.delete(client);
-    if (!this._screencastClients.size)
+    if (!this._screencastClients.size) {
       await this._client._sendMayFail('Page.stopScreencast');
+    }
   }
 
   async _updateGeolocation(initial: boolean): Promise<void> {
     const geolocation = this._crPage._browserContext._options.geolocation;
-    if (!initial || geolocation)
+    if (!initial || geolocation) {
       await this._client.send('Emulation.setGeolocationOverride', geolocation || {});
+    }
   }
 
   async _updateViewport(preserveWindowBoundaries?: boolean): Promise<void> {
-    if (this._crPage._browserContext._browser.isClank())
+    if (this._crPage._browserContext._browser.isClank()) {
       return;
+    }
     assert(this._isMainFrame());
     const options = this._crPage._browserContext._options;
     const emulatedSize = this._page.emulatedSize();
-    if (emulatedSize === null)
+    if (emulatedSize === null) {
       return;
+    }
     const viewportSize = emulatedSize.viewport;
     const screenSize = emulatedSize.screen;
     const isLandscape = screenSize.width > screenSize.height;
@@ -973,8 +1037,9 @@ class FrameSession {
       ) : { angle: 0, type: 'landscapePrimary' },
       dontSetVisibleSize: preserveWindowBoundaries
     };
-    if (JSON.stringify(this._metricsOverride) === JSON.stringify(metricsOverride))
+    if (JSON.stringify(this._metricsOverride) === JSON.stringify(metricsOverride)) {
       return;
+    }
     const promises = [
       this._client.send('Emulation.setDeviceMetricsOverride', metricsOverride),
     ];
@@ -983,12 +1048,13 @@ class FrameSession {
       if (this._crPage._browserContext._browser.options.headful) {
         // TODO: popup windows have their own insets.
         insets = { width: 24, height: 88 };
-        if (process.platform === 'win32')
+        if (process.platform === 'win32') {
           insets = { width: 16, height: 88 };
-        else if (process.platform === 'linux')
+        } else if (process.platform === 'linux') {
           insets = { width: 8, height: 85 };
-        else if (process.platform === 'darwin')
+        } else if (process.platform === 'darwin') {
           insets = { width: 2, height: 80 };
+        }
         if (this._crPage._browserContext.isPersistentContext()) {
           // FIXME: Chrome bug: OOPIF router is confused when hit target is
           // outside browser window.
@@ -1050,16 +1116,18 @@ class FrameSession {
 
   async _updateFileChooserInterception(initial: boolean) {
     const enabled = this._page.fileChooserIntercepted();
-    if (initial && !enabled)
+    if (initial && !enabled) {
       return;
+    }
     await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(() => {}); // target can be closed.
   }
 
   async _evaluateOnNewDocument(initScript: InitScript, world: types.World): Promise<void> {
     const worldName = world === 'utility' ? UTILITY_WORLD_NAME : undefined;
     const { identifier } = await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: initScript.source, worldName });
-    if (!initScript.internal)
+    if (!initScript.internal) {
       this._evaluateOnNewDocumentIdentifiers.push(identifier);
+    }
   }
 
   async _removeEvaluatesOnNewDocument(): Promise<void> {
@@ -1072,8 +1140,9 @@ class FrameSession {
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: handle._objectId
     });
-    if (!nodeInfo || typeof nodeInfo.node.frameId !== 'string')
+    if (!nodeInfo || typeof nodeInfo.node.frameId !== 'string') {
       return null;
+    }
     return this._page._frameManager.frame(nodeInfo.node.frameId);
   }
 
@@ -1081,14 +1150,17 @@ class FrameSession {
     // document.documentElement has frameId of the owner frame.
     const documentElement = await handle.evaluateHandle(node => {
       const doc = node as Document;
-      if (doc.documentElement && doc.documentElement.ownerDocument === doc)
+      if (doc.documentElement && doc.documentElement.ownerDocument === doc) {
         return doc.documentElement;
+      }
       return node.ownerDocument ? node.ownerDocument.documentElement : null;
     });
-    if (!documentElement)
+    if (!documentElement) {
       return null;
-    if (!documentElement._objectId)
+    }
+    if (!documentElement._objectId) {
       return null;
+    }
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: documentElement._objectId
     });
@@ -1102,25 +1174,29 @@ class FrameSession {
     const result = await this._client._sendMayFail('DOM.getBoxModel', {
       objectId: handle._objectId
     });
-    if (!result)
+    if (!result) {
       return null;
+    }
     const quad = result.model.border;
     const x = Math.min(quad[0], quad[2], quad[4], quad[6]);
     const y = Math.min(quad[1], quad[3], quad[5], quad[7]);
     const width = Math.max(quad[0], quad[2], quad[4], quad[6]) - x;
     const height = Math.max(quad[1], quad[3], quad[5], quad[7]) - y;
     const position = await this._framePosition();
-    if (!position)
+    if (!position) {
       return null;
+    }
     return { x: x + position.x, y: y + position.y, width, height };
   }
 
   private async _framePosition(): Promise<types.Point | null> {
     const frame = this._page._frameManager.frame(this._targetId);
-    if (!frame)
+    if (!frame) {
       return null;
-    if (frame === this._page.mainFrame())
+    }
+    if (frame === this._page.mainFrame()) {
       return { x: 0, y: 0 };
+    }
     const element = await frame.frameElement();
     const box = await element.boundingBox();
     return box;
@@ -1131,10 +1207,12 @@ class FrameSession {
       objectId: handle._objectId,
       rect,
     }).then(() => 'done' as const).catch(e => {
-      if (e instanceof Error && e.message.includes('Node does not have a layout object'))
+      if (e instanceof Error && e.message.includes('Node does not have a layout object')) {
         return 'error:notvisible';
-      if (e instanceof Error && e.message.includes('Node is detached from document'))
+      }
+      if (e instanceof Error && e.message.includes('Node is detached from document')) {
         return 'error:notconnected';
+      }
       throw e;
     });
   }
@@ -1143,11 +1221,13 @@ class FrameSession {
     const result = await this._client._sendMayFail('DOM.getContentQuads', {
       objectId: handle._objectId
     });
-    if (!result)
+    if (!result) {
       return null;
+    }
     const position = await this._framePosition();
-    if (!position)
+    if (!position) {
       return null;
+    }
     return result.quads.map(quad => [
       { x: quad[0] + position.x, y: quad[1] + position.y },
       { x: quad[2] + position.x, y: quad[3] + position.y },
@@ -1168,8 +1248,9 @@ class FrameSession {
       backendNodeId,
       executionContextId: ((to as any)[contextDelegateSymbol] as CRExecutionContext)._contextId,
     });
-    if (!result || result.object.subtype === 'null')
+    if (!result || result.object.subtype === 'null') {
       throw new Error(dom.kUnableToAdoptErrorMessage);
+    }
     return to.createHandle(result.object).asElement()!;
   }
 }
@@ -1181,8 +1262,9 @@ async function emulateLocale(session: CRSession, locale: string) {
     // All pages in the same renderer share locale. All such pages belong to the same
     // context and if locale is overridden for one of them its value is the same as
     // we are trying to set so it's not a problem.
-    if (exception.message.includes('Another locale override is already in effect'))
+    if (exception.message.includes('Another locale override is already in effect')) {
       return;
+    }
     throw exception;
   }
 }
@@ -1191,10 +1273,12 @@ async function emulateTimezone(session: CRSession, timezoneId: string) {
   try {
     await session.send('Emulation.setTimezoneOverride', { timezoneId: timezoneId });
   } catch (exception) {
-    if (exception.message.includes('Timezone override is already in effect'))
+    if (exception.message.includes('Timezone override is already in effect')) {
       return;
-    if (exception.message.includes('Invalid timezone'))
+    }
+    if (exception.message.includes('Invalid timezone')) {
       throw new Error(`Invalid timezone ID: ${timezoneId}`);
+    }
     throw exception;
   }
 }
@@ -1204,8 +1288,9 @@ const contextDelegateSymbol = Symbol('delegate');
 // Chromium reference: https://source.chromium.org/chromium/chromium/src/+/main:components/embedder_support/user_agent_utils.cc;l=434;drc=70a6711e08e9f9e0d8e4c48e9ba5cab62eb010c2
 function calculateUserAgentMetadata(options: types.BrowserContextOptions) {
   const ua = options.userAgent;
-  if (!ua)
+  if (!ua) {
     return undefined;
+  }
   const metadata: Protocol.Emulation.UserAgentMetadata = {
     mobile: !!options.isMobile,
     model: '',
@@ -1233,15 +1318,17 @@ function calculateUserAgentMetadata(options: types.BrowserContextOptions) {
   } else if (macOSMatch) {
     metadata.platform = 'macOS';
     metadata.platformVersion = macOSMatch[1];
-    if (!ua.includes('Intel'))
+    if (!ua.includes('Intel')) {
       metadata.architecture = 'arm';
+    }
   } else if (windowsMatch) {
     metadata.platform = 'Windows';
     metadata.platformVersion = windowsMatch[1];
   } else if (ua.toLowerCase().includes('linux')) {
     metadata.platform = 'Linux';
   }
-  if (ua.includes('ARM'))
+  if (ua.includes('ARM')) {
     metadata.architecture = 'arm';
+  }
   return metadata;
 }

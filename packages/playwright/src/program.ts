@@ -74,8 +74,9 @@ function addClearCacheCommand(program: Command) {
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async opts => {
     const config = await loadConfigFromFileRestartIfNeeded(opts.config);
-    if (!config)
+    if (!config) {
       return;
+    }
     const runner = new Runner(config);
     const { status } = await runner.clearCache();
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
@@ -99,8 +100,9 @@ function addDevServerCommand(program: Command) {
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.action(async options => {
     const config = await loadConfigFromFileRestartIfNeeded(options.config);
-    if (!config)
+    if (!config) {
       return;
+    }
     const runner = new Runner(config);
     const { status } = await runner.runDevServer();
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
@@ -158,8 +160,9 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   const cliOverrides = overridesFromOptions(opts);
 
   if (opts.ui || opts.uiHost || opts.uiPort) {
-    if (opts.onlyChanged)
+    if (opts.onlyChanged) {
       throw new Error(`--only-changed is not supported in UI mode. If you'd like that to change, see https://github.com/microsoft/playwright/issues/15075 for more details.`);
+    }
 
     const status = await testServer.runUIMode(opts.config, cliOverrides, {
       host: opts.uiHost,
@@ -171,16 +174,18 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
       reporter: Array.isArray(opts.reporter) ? opts.reporter : opts.reporter ? [opts.reporter] : undefined,
     });
     await stopProfiling('runner');
-    if (status === 'restarted')
+    if (status === 'restarted') {
       return;
+    }
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
     gracefullyProcessExitDoNotHang(exitCode);
     return;
   }
 
   if (process.env.PWTEST_WATCH) {
-    if (opts.onlyChanged)
+    if (opts.onlyChanged) {
       throw new Error(`--only-changed is not supported in watch mode. If you'd like that to change, file an issue and let us know about your usecase for it.`);
+    }
 
     const status = await runWatchModeLoop(
         resolveConfigLocation(opts.config),
@@ -191,16 +196,18 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
         }
     );
     await stopProfiling('runner');
-    if (status === 'restarted')
+    if (status === 'restarted') {
       return;
+    }
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
     gracefullyProcessExitDoNotHang(exitCode);
     return;
   }
 
   const config = await loadConfigFromFileRestartIfNeeded(opts.config, cliOverrides, opts.deps === false);
-  if (!config)
+  if (!config) {
     return;
+  }
 
   config.cliArgs = args;
   config.cliGrep = opts.grep as string | undefined;
@@ -223,8 +230,9 @@ async function runTestServer(opts: { [key: string]: any }) {
   const host = opts.host || 'localhost';
   const port = opts.port ? +opts.port : 0;
   const status = await testServer.runTestServer(opts.config, { }, { host, port });
-  if (status === 'restarted')
+  if (status === 'restarted') {
     return;
+  }
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);
 }
@@ -235,8 +243,9 @@ export async function withRunnerAndMutedWrite(configFile: string | undefined, ca
   process.stdout.write = ((a: any, b: any, c: any) => process.stderr.write(a, b, c)) as any;
   try {
     const config = await loadConfigFromFileRestartIfNeeded(configFile);
-    if (!config)
+    if (!config) {
       return;
+    }
     const runner = new Runner(config);
     const result = await callback(runner);
     stdoutWrite(JSON.stringify(result, undefined, 2), () => {
@@ -260,20 +269,25 @@ async function listTestFiles(opts: { [key: string]: any }) {
 async function mergeReports(reportDir: string | undefined, opts: { [key: string]: any }) {
   const configFile = opts.config;
   const config = configFile ? await loadConfigFromFileRestartIfNeeded(configFile) : await loadEmptyConfigForMergeReports();
-  if (!config)
+  if (!config) {
     return;
+  }
 
   const dir = path.resolve(process.cwd(), reportDir || '');
   const dirStat = await fs.promises.stat(dir).catch(e => null);
-  if (!dirStat)
+  if (!dirStat) {
     throw new Error('Directory does not exist: ' + dir);
-  if (!dirStat.isDirectory())
+  }
+  if (!dirStat.isDirectory()) {
     throw new Error(`"${dir}" is not a directory`);
+  }
   let reporterDescriptions: ReporterDescription[] | undefined = resolveReporterOption(opts.reporter);
-  if (!reporterDescriptions && configFile)
+  if (!reporterDescriptions && configFile) {
     reporterDescriptions = config.config.reporter;
-  if (!reporterDescriptions)
+  }
+  if (!reporterDescriptions) {
     reporterDescriptions = [[defaultReporter]];
+  }
   const rootDirOverride = configFile ? config.config.rootDir : undefined;
   await createMergedReport(config, dir, reporterDescriptions!, rootDirOverride);
   gracefullyProcessExitDoNotHang(0);
@@ -283,10 +297,11 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
   const shardPair = options.shard ? options.shard.split('/').map((t: string) => parseInt(t, 10)) : undefined;
 
   let updateSnapshots: 'all' | 'changed' | 'missing' | 'none';
-  if (['all', 'changed', 'missing', 'none'].includes(options.updateSnapshots))
+  if (['all', 'changed', 'missing', 'none'].includes(options.updateSnapshots)) {
     updateSnapshots = options.updateSnapshots;
-  else
+  } else {
     updateSnapshots = 'updateSnapshots' in options ? 'changed' : 'missing';
+  }
 
   const overrides: ConfigCLIOverrides = {
     forbidOnly: options.forbidOnly ? true : undefined,
@@ -309,8 +324,9 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
 
   if (options.browser) {
     const browserOpt = options.browser.toLowerCase();
-    if (!['all', 'chromium', 'firefox', 'webkit'].includes(browserOpt))
+    if (!['all', 'chromium', 'firefox', 'webkit'].includes(browserOpt)) {
       throw new Error(`Unsupported browser "${options.browser}", must be one of "all", "chromium", "firefox" or "webkit"`);
+    }
     const browserNames = browserOpt === 'all' ? ['chromium', 'firefox', 'webkit'] : [browserOpt];
     overrides.projects = browserNames.map(browserName => {
       return {
@@ -320,15 +336,17 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     });
   }
 
-  if (options.headed || options.debug)
+  if (options.headed || options.debug) {
     overrides.use = { headless: false };
+  }
   if (!options.ui && options.debug) {
     overrides.debug = true;
     process.env.PWDEBUG = '1';
   }
   if (!options.ui && options.trace) {
-    if (!kTraceModes.includes(options.trace))
+    if (!kTraceModes.includes(options.trace)) {
       throw new Error(`Unsupported trace mode "${options.trace}", must be one of ${kTraceModes.map(mode => `"${mode}"`).join(', ')}`);
+    }
     overrides.use = overrides.use || {};
     overrides.use.trace = options.trace;
   }
@@ -336,17 +354,20 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
 }
 
 function resolveReporterOption(reporter?: string): ReporterDescription[] | undefined {
-  if (!reporter || !reporter.length)
+  if (!reporter || !reporter.length) {
     return undefined;
+  }
   return reporter.split(',').map((r: string) => [resolveReporter(r)]);
 }
 
 function resolveReporter(id: string) {
-  if (builtInReporters.includes(id as any))
+  if (builtInReporters.includes(id as any)) {
     return id;
+  }
   const localPath = path.resolve(process.cwd(), id);
-  if (fs.existsSync(localPath))
+  if (fs.existsSync(localPath)) {
     return localPath;
+  }
   return require.resolve(id, { paths: [process.cwd()] });
 }
 

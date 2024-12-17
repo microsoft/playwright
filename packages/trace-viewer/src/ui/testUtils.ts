@@ -17,29 +17,39 @@
 export type UITestStatus = 'none' | 'running' | 'scheduled' | 'passed' | 'failed' | 'skipped';
 
 export function testStatusIcon(status: UITestStatus): string {
-  if (status === 'scheduled')
+  if (status === 'scheduled') {
     return 'codicon-clock';
-  if (status === 'running')
+  }
+  if (status === 'running') {
     return 'codicon-loading';
-  if (status === 'failed')
+  }
+  if (status === 'failed') {
     return 'codicon-error';
-  if (status === 'passed')
+  }
+  if (status === 'passed') {
     return 'codicon-check';
-  if (status === 'skipped')
+  }
+  if (status === 'skipped') {
     return 'codicon-circle-slash';
+  }
   return 'codicon-circle-outline';
 }
 
 export function testStatusText(status: UITestStatus): string {
-  if (status === 'scheduled')
+  if (status === 'scheduled') {
     return 'Pending';
-  if (status === 'running')
+  }
+  if (status === 'running') {
     return 'Running';
-  if (status === 'failed')
+  }
+  if (status === 'failed') {
     return 'Failed';
-  if (status === 'passed')
+  }
+  if (status === 'passed') {
     return 'Passed';
-  if (status === 'skipped')
+  }
+  if (status === 'skipped') {
     return 'Skipped';
+  }
   return 'Did not run';
 }

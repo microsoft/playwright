@@ -102,8 +102,9 @@ export abstract class APIRequestContext extends SdkObject {
   static findResponseBody(guid: string): Buffer | undefined {
     for (const request of APIRequestContext.allInstances) {
       const body = request.fetchResponses.get(guid);
-      if (body)
+      if (body) {
         return body;
+      }
     }
     return undefined;
   }
@@ -149,34 +150,39 @@ export abstract class APIRequestContext extends SdkObject {
     };
 
     if (defaults.extraHTTPHeaders) {
-      for (const { name, value } of defaults.extraHTTPHeaders)
+      for (const { name, value } of defaults.extraHTTPHeaders) {
         setHeader(headers, name, value);
+      }
     }
 
     if (params.headers) {
-      for (const { name, value } of params.headers)
+      for (const { name, value } of params.headers) {
         setHeader(headers, name, value);
+      }
     }
 
     const requestUrl = new URL(constructURLBasedOnBaseURL(defaults.baseURL, params.url));
     if (params.encodedParams) {
       requestUrl.search = params.encodedParams;
     } else if (params.params) {
-      for (const { name, value } of params.params)
+      for (const { name, value } of params.params) {
         requestUrl.searchParams.append(name, value);
+      }
     }
 
     const credentials = this._getHttpCredentials(requestUrl);
-    if (credentials?.send === 'always')
+    if (credentials?.send === 'always') {
       setBasicAuthorizationHeader(headers, credentials);
+    }
 
     const method = params.method?.toUpperCase() || 'GET';
     const proxy = defaults.proxy;
     let agent;
     // We skip 'per-context' in order to not break existing users. 'per-context' was previously used to
     // workaround an upstream Chromium bug. Can be removed in the future.
-    if (proxy && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass))
+    if (proxy && proxy.server !== 'per-context' && !shouldBypassProxy(requestUrl, proxy.bypass)) {
       agent = createProxyAgent(proxy);
+    }
 
 
     const timeout = defaults.timeoutSettings.timeout(params);
@@ -193,12 +199,14 @@ export abstract class APIRequestContext extends SdkObject {
       __testHookLookup: (params as any).__testHookLookup,
     };
     // rejectUnauthorized = undefined is treated as true in Node.js 12.
-    if (params.ignoreHTTPSErrors || defaults.ignoreHTTPSErrors)
+    if (params.ignoreHTTPSErrors || defaults.ignoreHTTPSErrors) {
       options.rejectUnauthorized = false;
+    }
 
     const postData = serializePostData(params, headers);
-    if (postData)
+    if (postData) {
       setHeader(headers, 'content-length', String(postData.byteLength));
+    }
     const controller = new ProgressController(metadata, this);
     const fetchResponse = await controller.run(progress => {
       return this._sendRequestWithRetries(progress, requestUrl, options, postData, params.maxRetries);
@@ -209,8 +217,9 @@ export abstract class APIRequestContext extends SdkObject {
       let responseText = '';
       if (fetchResponse.body.byteLength) {
         let text = fetchResponse.body.toString('utf8');
-        if (text.length > 1000)
+        if (text.length > 1000) {
           text = text.substring(0, 997) + '...';
+        }
         responseText = `\nResponse text:\n${text}`;
       }
       throw new Error(`${fetchResponse.status} ${fetchResponse.statusText}${responseText}`);
@@ -219,8 +228,9 @@ export abstract class APIRequestContext extends SdkObject {
   }
 
   private _parseSetCookieHeader(responseUrl: string, setCookie: string[] | undefined): channels.NetworkCookie[] {
-    if (!setCookie)
+    if (!setCookie) {
       return [];
+    }
     const url = new URL(responseUrl);
     // https://datatracker.ietf.org/doc/html/rfc6265#section-5.1.4
     const defaultPath = '/' + url.pathname.substr(1).split('/').slice(0, -1).join('/');
@@ -228,26 +238,31 @@ export abstract class APIRequestContext extends SdkObject {
     for (const header of setCookie) {
       // Decode cookie value?
       const cookie: channels.NetworkCookie | null = parseCookie(header);
-      if (!cookie)
+      if (!cookie) {
         continue;
+      }
       // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.3
-      if (!cookie.domain)
+      if (!cookie.domain) {
         cookie.domain = url.hostname;
-      else
+      } else {
         assert(cookie.domain.startsWith('.') || !cookie.domain.includes('.'));
-      if (!domainMatches(url.hostname, cookie.domain!))
+      }
+      if (!domainMatches(url.hostname, cookie.domain!)) {
         continue;
+      }
       // https://datatracker.ietf.org/doc/html/rfc6265#section-5.2.4
-      if (!cookie.path || !cookie.path.startsWith('/'))
+      if (!cookie.path || !cookie.path.startsWith('/')) {
         cookie.path = defaultPath;
+      }
       cookies.push(cookie);
     }
     return cookies;
   }
 
   private async _updateRequestCookieHeader(url: URL, headers: HeadersObject) {
-    if (getHeader(headers, 'cookie') !== undefined)
+    if (getHeader(headers, 'cookie') !== undefined) {
       return;
+    }
     const cookies = await this._cookies(url);
     if (cookies.length) {
       const valueArray = cookies.map(c => `${c.name}=${c.value}`);
@@ -263,13 +278,16 @@ export abstract class APIRequestContext extends SdkObject {
         return await this._sendRequest(progress, url, options, postData);
       } catch (e) {
         e = rewriteOpenSSLErrorIfNeeded(e);
-        if (maxRetries === 0)
+        if (maxRetries === 0) {
           throw e;
-        if (i === maxRetries || (options.deadline && monotonicTime() + backoff > options.deadline))
+        }
+        if (i === maxRetries || (options.deadline && monotonicTime() + backoff > options.deadline)) {
           throw new Error(`Failed after ${i + 1} attempt(s): ${e}`);
+        }
         // Retry on connection reset only.
-        if (e.code !== 'ECONNRESET')
+        if (e.code !== 'ECONNRESET') {
           throw e;
+        }
         progress.log(`  Received ECONNRESET, will retry after ${backoff}ms.`);
         await new Promise(f => setTimeout(f, backoff));
         backoff *= 2;
@@ -348,8 +366,9 @@ export abstract class APIRequestContext extends SdkObject {
           this.emit(APIRequestContext.Events.RequestFinished, requestFinishedEvent);
         };
         progress.log(`← ${response.statusCode} ${response.statusMessage}`);
-        for (const [name, value] of Object.entries(response.headers))
+        for (const [name, value] of Object.entries(response.headers)) {
           progress.log(`  ${name}: ${value}`);
+        }
 
         const cookies = this._parseSetCookieHeader(response.url || url.toString(), response.headers['set-cookie']) ;
         if (cookies.length) {
@@ -397,8 +416,9 @@ export abstract class APIRequestContext extends SdkObject {
             __testHookLookup: options.__testHookLookup,
           };
           // rejectUnauthorized = undefined is treated as true in node 12.
-          if (options.rejectUnauthorized === false)
+          if (options.rejectUnauthorized === false) {
             redirectOptions.rejectUnauthorized = false;
+          }
 
           // HTTP-redirect fetch step 4: If locationURL is null, then return response.
           // Best-effort UTF-8 decoding, per spec it's US-ASCII only, but browsers are more lenient.
@@ -414,8 +434,9 @@ export abstract class APIRequestContext extends SdkObject {
               return;
             }
 
-            if (headers['host'])
+            if (headers['host']) {
               headers['host'] = locationURL.host;
+            }
 
             notifyRequestFinished();
             fulfill(this._sendRequest(progress, locationURL, redirectOptions, postData));
@@ -469,8 +490,9 @@ export abstract class APIRequestContext extends SdkObject {
           // Brotli and deflate decompressors throw if the input stream is empty.
           const emptyStreamTransform = new SafeEmptyStreamTransform(notifyBodyFinished);
           body = pipeline(response, emptyStreamTransform, transform, e => {
-            if (e)
+            if (e) {
               reject(new Error(`failed to decompress '${encoding}' encoding: ${e.message}`));
+            }
           });
           body.on('error', e => reject(new Error(`failed to decompress '${encoding}' encoding: ${e}`)));
         } else {
@@ -503,8 +525,12 @@ export abstract class APIRequestContext extends SdkObject {
 
         // non-happy-eyeballs sockets
         listeners.push(
-            eventsHelper.addEventListener(socket, 'lookup', () => { dnsLookupAt = monotonicTime(); }),
-            eventsHelper.addEventListener(socket, 'connect', () => { tcpConnectionAt ??= monotonicTime(); }),
+            eventsHelper.addEventListener(socket, 'lookup', () => {
+              dnsLookupAt = monotonicTime();
+            }),
+            eventsHelper.addEventListener(socket, 'connect', () => {
+              tcpConnectionAt ??= monotonicTime();
+            }),
             eventsHelper.addEventListener(socket, 'secureConnect', () => {
               tlsHandshakeAt = monotonicTime();
 
@@ -522,13 +548,16 @@ export abstract class APIRequestContext extends SdkObject {
         );
 
         // when using socks proxy, having the socket means the connection got established
-        if (agent instanceof SocksProxyAgent)
+        if (agent instanceof SocksProxyAgent) {
           tcpConnectionAt ??= monotonicTime();
+        }
 
         serverIPAddress = socket.remoteAddress;
         serverPort = socket.remotePort;
       });
-      request.on('finish', () => { requestFinishAt = monotonicTime(); });
+      request.on('finish', () => {
+        requestFinishAt = monotonicTime();
+      });
 
       // http proxy
       request.on('proxyConnect', () => {
@@ -538,8 +567,9 @@ export abstract class APIRequestContext extends SdkObject {
 
       progress.log(`→ ${options.method} ${url.toString()}`);
       if (options.headers) {
-        for (const [name, value] of Object.entries(options.headers))
+        for (const [name, value] of Object.entries(options.headers)) {
           progress.log(`  ${name}: ${value}`);
+        }
       }
 
       if (options.deadline) {
@@ -555,15 +585,17 @@ export abstract class APIRequestContext extends SdkObject {
         request.setTimeout(remaining, rejectOnTimeout);
       }
 
-      if (postData)
+      if (postData) {
         request.write(postData);
+      }
       request.end();
     });
   }
 
   private _getHttpCredentials(url: URL) {
-    if (!this._defaultOptions().httpCredentials?.origin || url.origin.toLowerCase() === this._defaultOptions().httpCredentials?.origin?.toLowerCase())
+    if (!this._defaultOptions().httpCredentials?.origin || url.origin.toLowerCase() === this._defaultOptions().httpCredentials?.origin?.toLowerCase()) {
       return this._defaultOptions().httpCredentials;
+    }
     return undefined;
   }
 }
@@ -581,10 +613,11 @@ class SafeEmptyStreamTransform extends Transform {
     callback(null, chunk);
   }
   override _flush(callback: TransformCallback): void {
-    if (this._receivedSomeData)
+    if (this._receivedSomeData) {
       callback(null);
-    else
+    } else {
       this._onEmptyStreamCallback();
+    }
   }
 }
 
@@ -643,13 +676,15 @@ export class GlobalAPIRequestContext extends APIRequestContext {
     super(playwright);
     this.attribution.context = this;
     const timeoutSettings = new TimeoutSettings();
-    if (options.timeout !== undefined)
+    if (options.timeout !== undefined) {
       timeoutSettings.setDefaultTimeout(options.timeout);
+    }
     const proxy = options.proxy;
     if (proxy?.server) {
-      let url = proxy?.server.trim();
-      if (!/^\w+:\/\//.test(url))
+      let url = proxy.server.trim();
+      if (!/^\w+:\/\//.test(url)) {
         url = 'http://' + url;
+      }
       proxy.server = url;
     }
     if (options.storageState) {
@@ -703,21 +738,25 @@ export class GlobalAPIRequestContext extends APIRequestContext {
 
 export function createProxyAgent(proxy: types.ProxySettings) {
   const proxyURL = new URL(proxy.server);
-  if (proxyURL.protocol?.startsWith('socks'))
+  if (proxyURL.protocol.startsWith('socks')) {
     return new SocksProxyAgent(proxyURL);
+  }
 
-  if (proxy.username)
+  if (proxy.username) {
     proxyURL.username = proxy.username;
-  if (proxy.password)
+  }
+  if (proxy.password) {
     proxyURL.password = proxy.password;
+  }
   // TODO: We should use HttpProxyAgent conditional on proxyURL.protocol instead of always using CONNECT method.
   return new HttpsProxyAgent(proxyURL);
 }
 
 function toHeadersArray(rawHeaders: string[]): types.HeadersArray {
   const result: types.HeadersArray = [];
-  for (let i = 0; i < rawHeaders.length; i += 2)
+  for (let i = 0; i < rawHeaders.length; i += 2) {
     result.push({ name: rawHeaders[i], value: rawHeaders[i + 1] });
+  }
   return result;
 }
 
@@ -725,8 +764,9 @@ const redirectStatus = [301, 302, 303, 307, 308];
 
 function parseCookie(header: string): channels.NetworkCookie | null {
   const raw = parseRawCookie(header);
-  if (!raw)
+  if (!raw) {
     return null;
+  }
   const cookie: channels.NetworkCookie = {
     domain: '',
     path: '',
@@ -748,17 +788,19 @@ function serializePostData(params: channels.APIRequestContextFetchParams, header
     return Buffer.from(params.jsonData, 'utf8');
   } else if (params.formData) {
     const searchParams = new URLSearchParams();
-    for (const { name, value } of params.formData)
+    for (const { name, value } of params.formData) {
       searchParams.append(name, value);
+    }
     setHeader(headers, 'content-type', 'application/x-www-form-urlencoded', true);
     return Buffer.from(searchParams.toString(), 'utf8');
   } else if (params.multipartData) {
     const formData = new MultipartFormData();
     for (const field of params.multipartData) {
-      if (field.file)
+      if (field.file) {
         formData.addFileField(field.name, field.file);
-      else if (field.value)
+      } else if (field.value) {
         formData.addField(field.name, field.value);
+      }
     }
     setHeader(headers, 'content-type', formData.contentTypeHeader(), true);
     return formData.finish();
@@ -771,10 +813,11 @@ function serializePostData(params: channels.APIRequestContextFetchParams, header
 
 function setHeader(headers: { [name: string]: string }, name: string, value: string, keepExisting = false) {
   const existing = Object.entries(headers).find(pair => pair[0].toLowerCase() === name.toLowerCase());
-  if (!existing)
+  if (!existing) {
     headers[name] = value;
-  else if (!keepExisting)
+  } else if (!keepExisting) {
     headers[existing[0]] = value;
+  }
 }
 
 function getHeader(headers: HeadersObject, name: string) {
@@ -787,12 +830,14 @@ function removeHeader(headers: { [name: string]: string }, name: string) {
 }
 
 function shouldBypassProxy(url: URL, bypass?: string): boolean {
-  if (!bypass)
+  if (!bypass) {
     return false;
+  }
   const domains = bypass.split(',').map(s => {
     s = s.trim();
-    if (!s.startsWith('.'))
+    if (!s.startsWith('.')) {
       s = '.' + s;
+    }
     return s;
   });
   const domain = '.' + url.hostname;

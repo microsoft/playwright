@@ -56,14 +56,19 @@ export class Waiter {
 
   rejectOnEvent<T = void>(emitter: EventEmitter, event: string, error: Error | (() => Error), predicate?: (arg: T) => boolean | Promise<boolean>) {
     const { promise, dispose } = waitForEvent(emitter, event, this._savedZone, predicate);
-    this._rejectOn(promise.then(() => { throw (typeof error === 'function' ? error() : error); }), dispose);
+    this._rejectOn(promise.then(() => {
+      throw (typeof error === 'function' ? error() : error);
+    }), dispose);
   }
 
   rejectOnTimeout(timeout: number, message: string) {
-    if (!timeout)
+    if (!timeout) {
       return;
+    }
     const { promise, dispose } = waitForTimeout(timeout);
-    this._rejectOn(promise.then(() => { throw new TimeoutError(message); }), dispose);
+    this._rejectOn(promise.then(() => {
+      throw new TimeoutError(message);
+    }), dispose);
   }
 
   rejectImmediately(error: Error) {
@@ -71,21 +76,25 @@ export class Waiter {
   }
 
   dispose() {
-    for (const dispose of this._dispose)
+    for (const dispose of this._dispose) {
       dispose();
+    }
   }
 
   async waitForPromise<T>(promise: Promise<T>, dispose?: () => void): Promise<T> {
     try {
-      if (this._immediateError)
+      if (this._immediateError) {
         throw this._immediateError;
+      }
       const result = await Promise.race([promise, ...this._failures]);
-      if (dispose)
+      if (dispose) {
         dispose();
+      }
       return result;
     } catch (e) {
-      if (dispose)
+      if (dispose) {
         dispose();
+      }
       this._error = e.message;
       this.dispose();
       rewriteErrorMessage(e, e.message + formatLogRecording(this._logs));
@@ -102,8 +111,9 @@ export class Waiter {
 
   private _rejectOn(promise: Promise<any>, dispose?: () => void) {
     this._failures.push(promise);
-    if (dispose)
+    if (dispose) {
       this._dispose.push(dispose);
+    }
   }
 }
 
@@ -113,8 +123,9 @@ function waitForEvent<T = void>(emitter: EventEmitter, event: string, savedZone:
     listener = async (eventArg: any) => {
       await savedZone.run(async () => {
         try {
-          if (predicate && !(await predicate(eventArg)))
+          if (predicate && !(await predicate(eventArg))) {
             return;
+          }
           emitter.removeListener(event, listener);
           resolve(eventArg);
         } catch (e) {
@@ -137,8 +148,9 @@ function waitForTimeout(timeout: number): { promise: Promise<void>, dispose: () 
 }
 
 function formatLogRecording(log: string[]): string {
-  if (!log.length)
+  if (!log.length) {
     return '';
+  }
   const header = ` logs `;
   const headerLength = 60;
   const leftLength = (headerLength - header.length) / 2;

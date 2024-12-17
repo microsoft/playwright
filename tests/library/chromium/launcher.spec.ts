@@ -40,8 +40,9 @@ it('should open devtools when "devtools: true" option is given', async ({ browse
   let devtoolsCallback;
   const devtoolsPromise = new Promise(f => devtoolsCallback = f);
   const __testHookForDevTools = devtools => devtools.__testHookOnBinding = parsed => {
-    if (parsed.method === 'getPreferences')
+    if (parsed.method === 'getPreferences') {
       devtoolsCallback();
+    }
   };
   const browser = await browserType.launch({ headless: false, devtools: true, __testHookForDevTools } as any);
   const context = await browser.newContext();
@@ -180,8 +181,9 @@ it('should not create pages automatically', async ({ browserType }) => {
   const browserSession = await browser.newBrowserCDPSession();
   const targets = [];
   browserSession.on('Target.targetCreated', async ({ targetInfo }) => {
-    if (targetInfo.type !== 'browser')
+    if (targetInfo.type !== 'browser') {
       targets.push(targetInfo);
+    }
   });
   await browserSession.send('Target.setDiscoverTargets', { discover: true });
   await browser.newContext();

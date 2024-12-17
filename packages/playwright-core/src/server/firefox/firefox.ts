@@ -39,19 +39,23 @@ export class Firefox extends BrowserType {
   }
 
   override doRewriteStartupLog(error: ProtocolError): ProtocolError {
-    if (!error.logs)
+    if (!error.logs) {
       return error;
+    }
     // https://github.com/microsoft/playwright/issues/6500
-    if (error.logs.includes(`as root in a regular user's session is not supported.`))
+    if (error.logs.includes(`as root in a regular user's session is not supported.`)) {
       error.logs = '\n' + wrapInASCIIBox(`Firefox is unable to launch if the $HOME folder isn't owned by the current user.\nWorkaround: Set the HOME=/root environment variable${process.env.GITHUB_ACTION ? ' in your GitHub Actions workflow file' : ''} when running Playwright.`, 1);
-    if (error.logs.includes('no DISPLAY environment variable specified'))
+    }
+    if (error.logs.includes('no DISPLAY environment variable specified')) {
       error.logs = '\n' + wrapInASCIIBox(kNoXServerRunningError, 1);
+    }
     return error;
   }
 
   override amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
-    if (!path.isAbsolute(os.homedir()))
+    if (!path.isAbsolute(os.homedir())) {
       throw new Error(`Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
+    }
     if (os.platform() === 'linux') {
       // Always remove SNAP_NAME and SNAP_INSTANCE_NAME env variables since they
       // confuse Firefox: in our case, builds never come from SNAP.
@@ -69,10 +73,12 @@ export class Firefox extends BrowserType {
   override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { args = [], headless } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
-    if (userDataDirArg)
+    if (userDataDirArg) {
       throw this._createUserDataDirArgMisuseError('--profile');
-    if (args.find(arg => arg.startsWith('-juggler')))
+    }
+    if (args.find(arg => arg.startsWith('-juggler'))) {
       throw new Error('Use the port parameter instead of -juggler argument');
+    }
     const firefoxArguments = ['-no-remote'];
     if (headless) {
       firefoxArguments.push('-headless');
@@ -83,10 +89,11 @@ export class Firefox extends BrowserType {
     firefoxArguments.push(`-profile`, userDataDir);
     firefoxArguments.push('-juggler-pipe');
     firefoxArguments.push(...args);
-    if (isPersistent)
+    if (isPersistent) {
       firefoxArguments.push('about:blank');
-    else
+    } else {
       firefoxArguments.push('-silent');
+    }
     return firefoxArguments;
   }
 
@@ -97,8 +104,9 @@ export class Firefox extends BrowserType {
 
 class JugglerReadyState extends BrowserReadyState {
   override onBrowserOutput(message: string): void {
-    if (message.includes('Juggler listening to the pipe'))
+    if (message.includes('Juggler listening to the pipe')) {
       this._wsEndpoint.resolve(undefined);
+    }
   }
 }
 

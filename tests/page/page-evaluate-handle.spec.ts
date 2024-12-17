@@ -80,14 +80,17 @@ it('should accept object handle to unserializable value', async ({ page }) => {
 
 it('should pass configurable args', async ({ page }) => {
   const result = await page.evaluate(arg => {
-    if (arg.foo !== 42)
+    if (arg.foo !== 42) {
       throw new Error('Not a 42');
+    }
     arg.foo = 17;
-    if (arg.foo !== 17)
+    if (arg.foo !== 17) {
       throw new Error('Not 17');
+    }
     delete arg.foo;
-    if (arg.foo === 17)
+    if (arg.foo === 17) {
       throw new Error('Still 17');
+    }
     return arg;
   }, { foo: 42 });
   expect(result).toEqual({});

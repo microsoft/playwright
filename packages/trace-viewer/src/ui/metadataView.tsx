@@ -22,8 +22,9 @@ import './callTab.css';
 export const MetadataView: React.FunctionComponent<{
   model?: MultiTraceModel,
 }> = ({ model }) => {
-  if (!model)
+  if (!model) {
     return <></>;
+  }
 
   return <div data-testid='metadata-view' className='vbox' style={{ flexShrink: 0 }}>
     <div className='call-section' style={{ paddingTop: 2 }}>Time</div>
@@ -41,8 +42,8 @@ export const MetadataView: React.FunctionComponent<{
       </>
     )}
     <div className='call-section'>Viewport</div>
-    {model.options.viewport && <div className='call-line'>width:<span className='call-value number' title={String(!!model.options.viewport?.width)}>{model.options.viewport.width}</span></div>}
-    {model.options.viewport && <div className='call-line'>height:<span className='call-value number' title={String(!!model.options.viewport?.height)}>{model.options.viewport.height}</span></div>}
+    {model.options.viewport && <div className='call-line'>width:<span className='call-value number' title={String(!!model.options.viewport.width)}>{model.options.viewport.width}</span></div>}
+    {model.options.viewport && <div className='call-line'>height:<span className='call-value number' title={String(!!model.options.viewport.height)}>{model.options.viewport.height}</span></div>}
     <div className='call-line'>is mobile:<span className='call-value boolean' title={String(!!model.options.isMobile)}>{String(!!model.options.isMobile)}</span></div>
     {model.options.deviceScaleFactor && <div className='call-line'>device scale:<span className='call-value number' title={String(model.options.deviceScaleFactor)}>{String(model.options.deviceScaleFactor)}</span></div>}
     <div className='call-section'>Counts</div>

@@ -56,8 +56,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   }
 
   executablePath(): string {
-    if (!this._initializer.executablePath)
+    if (!this._initializer.executablePath) {
       throw new Error('Browser is not supported on current platform');
+    }
     return this._initializer.executablePath;
   }
 
@@ -85,8 +86,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<api.BrowserServer> {
-    if (!this._serverLauncher)
+    if (!this._serverLauncher) {
       throw new Error('Launching server is not supported');
+    }
     options = { ...this._defaultLaunchOptions, ...options };
     return await this._serverLauncher.launchServer(options);
   }
@@ -115,8 +117,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   connect(options: api.ConnectOptions & { wsEndpoint: string }): Promise<api.Browser>;
   connect(wsEndpoint: string, options?: api.ConnectOptions): Promise<api.Browser>;
   async connect(optionsOrWsEndpoint: string | (api.ConnectOptions & { wsEndpoint: string }), options?: api.ConnectOptions): Promise<Browser>{
-    if (typeof optionsOrWsEndpoint === 'string')
+    if (typeof optionsOrWsEndpoint === 'string') {
       return await this._connect({ ...options, wsEndpoint: optionsOrWsEndpoint });
+    }
     assert(optionsOrWsEndpoint.wsEndpoint, 'options.wsEndpoint is required');
     return await this._connect(optionsOrWsEndpoint);
   }
@@ -134,8 +137,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         slowMo: params.slowMo,
         timeout: params.timeout,
       };
-      if ((params as any).__testHookRedirectPortForwarding)
+      if ((params as any).__testHookRedirectPortForwarding) {
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
+      }
       const { pipe, headers: connectHeaders } = await localUtils._channel.connect(connectParams);
       const closePipe = () => pipe.close().catch(() => {});
       const connection = new Connection(localUtils, this._instrumentation);
@@ -146,9 +150,10 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       let closeError: string | undefined;
       const onPipeClosed = (reason?: string) => {
         // Emulate all pages, contexts and the browser closing upon disconnect.
-        for (const context of browser?.contexts() || []) {
-          for (const page of context.pages())
+        for (const context of browser.contexts() || []) {
+          for (const page of context.pages()) {
             page._onClose();
+          }
           context._onClose();
         }
         connection.close(reason || closeError);
@@ -158,7 +163,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         // here and promises did not have a chance to reject.
         // The order of rejects vs closure is a part of the API contract and our test runner
         // relies on it to attribute rejections to the right test.
-        setTimeout(() => browser?._didClose(), 0);
+        setTimeout(() => browser._didClose(), 0);
       };
       pipe.on('closed', params => onPipeClosed(params.reason));
       connection.onmessage = message => this._wrapApiCall(() => pipe.send({ message }).catch(() => onPipeClosed()), /* isInternal */ true);
@@ -174,8 +179,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
 
       const result = await raceAgainstDeadline(async () => {
         // For tests.
-        if ((params as any).__testHookBeforeCreateBrowser)
+        if ((params as any).__testHookBeforeCreateBrowser) {
           await (params as any).__testHookBeforeCreateBrowser();
+        }
 
         const playwright = await connection!.initializePlaywright();
         if (!playwright._initializer.preLaunchedBrowser) {
@@ -202,16 +208,18 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   async connectOverCDP(options: api.ConnectOverCDPOptions  & { wsEndpoint?: string }): Promise<api.Browser>;
   async connectOverCDP(endpointURL: string, options?: api.ConnectOverCDPOptions): Promise<api.Browser>;
   async connectOverCDP(endpointURLOrOptions: (api.ConnectOverCDPOptions & { wsEndpoint?: string })|string, options?: api.ConnectOverCDPOptions) {
-    if (typeof endpointURLOrOptions === 'string')
+    if (typeof endpointURLOrOptions === 'string') {
       return await this._connectOverCDP(endpointURLOrOptions, options);
+    }
     const endpointURL = 'endpointURL' in endpointURLOrOptions ? endpointURLOrOptions.endpointURL : endpointURLOrOptions.wsEndpoint;
     assert(endpointURL, 'Cannot connect over CDP without wsEndpoint.');
     return await this.connectOverCDP(endpointURL, endpointURLOrOptions);
   }
 
   async _connectOverCDP(endpointURL: string, params: api.ConnectOverCDPOptions = {}): Promise<Browser>  {
-    if (this.name() !== 'chromium')
+    if (this.name() !== 'chromium') {
       throw new Error('Connecting over CDP is only supported in Chromium.');
+    }
     const headers = params.headers ? headersObjectToArray(params.headers) : undefined;
     const result = await this._channel.connectOverCDP({
       endpointURL,
@@ -221,8 +229,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     });
     const browser = Browser.from(result.browser);
     this._didLaunchBrowser(browser, {}, params.logger);
-    if (result.defaultContext)
+    if (result.defaultContext) {
       await this._didCreateContext(BrowserContext.from(result.defaultContext), {}, {}, params.logger);
+    }
     return browser;
   }
 
@@ -237,10 +246,12 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     context._browserType = this;
     this._contexts.add(context);
     context._setOptions(contextOptions, browserOptions);
-    if (this._defaultContextTimeout !== undefined)
+    if (this._defaultContextTimeout !== undefined) {
       context.setDefaultTimeout(this._defaultContextTimeout);
-    if (this._defaultContextNavigationTimeout !== undefined)
+    }
+    if (this._defaultContextNavigationTimeout !== undefined) {
       context.setDefaultNavigationTimeout(this._defaultContextNavigationTimeout);
+    }
     await this._instrumentation.runAfterCreateBrowserContext(context);
   }
 

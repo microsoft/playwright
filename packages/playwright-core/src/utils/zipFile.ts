@@ -52,8 +52,9 @@ export class ZipFile {
   async read(entryPath: string): Promise<Buffer> {
     await this._openedPromise;
     const entry = this._entries.get(entryPath)!;
-    if (!entry)
+    if (!entry) {
       throw new Error(`${entryPath} not found in file ${this._fileName}`);
+    }
 
     return new Promise((resolve, reject) => {
       this._zipFile!.openReadStream(entry, (error, readStream) => {

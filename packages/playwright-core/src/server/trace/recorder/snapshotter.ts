@@ -65,8 +65,9 @@ export class Snapshotter {
   }
 
   async reset() {
-    if (this._started)
+    if (this._started) {
       await this._runInAllFrames(`window["${this._snapshotStreamer}"].reset()`);
+    }
   }
 
   async stop() {
@@ -79,8 +80,9 @@ export class Snapshotter {
   }
 
   async _initialize() {
-    for (const page of this._context.pages())
+    for (const page of this._context.pages()) {
       this._onPage(page);
+    }
     this._eventListeners = [
       eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this)),
     ];
@@ -93,8 +95,9 @@ export class Snapshotter {
 
   private async _runInAllFrames(expression: string) {
     const frames = [];
-    for (const page of this._context.pages())
+    for (const page of this._context.pages()) {
       frames.push(...page.frames());
+    }
     await Promise.all(frames.map(frame => {
       return frame.nonStallingRawEvaluateInExistingMainContext(expression).catch(e => debugLogger.log('error', e));
     }));
@@ -112,8 +115,9 @@ export class Snapshotter {
     const snapshots = page.frames().map(async frame => {
       const data = await frame.nonStallingRawEvaluateInExistingMainContext(expression).catch(e => debugLogger.log('error', e)) as SnapshotData;
       // Something went wrong -> bail out, our snapshots are best-efforty.
-      if (!data || !this._started)
+      if (!data || !this._started) {
         return;
+      }
 
       const snapshot: FrameSnapshot = {
         callId,
@@ -147,8 +151,9 @@ export class Snapshotter {
 
   private _onPage(page: Page) {
     // Annotate frame hierarchy so that snapshots could include frame ids.
-    for (const frame of page.frames())
+    for (const frame of page.frames()) {
       this._annotateFrameHierarchy(frame);
+    }
     this._eventListeners.push(eventsHelper.addEventListener(page, Page.Events.FrameAttached, frame => this._annotateFrameHierarchy(frame)));
   }
 
@@ -156,10 +161,11 @@ export class Snapshotter {
     try {
       const frameElement = await frame.frameElement();
       const parent = frame.parentFrame();
-      if (!parent)
+      if (!parent) {
         return;
+      }
       const context = await parent._mainContext();
-      await context?.evaluate(({ snapshotStreamer, frameElement, frameId }) => {
+      await context.evaluate(({ snapshotStreamer, frameElement, frameId }) => {
         (window as any)[snapshotStreamer].markIframe(frameElement, frameId);
       }, { snapshotStreamer: this._snapshotStreamer, frameElement, frameId: frame.guid });
       frameElement.dispose();

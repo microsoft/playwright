@@ -52,8 +52,9 @@ export function createPlugin(): TestRunnerPlugin {
 
     begin: async (suite: Suite) => {
       const result = await buildBundle(config, configDir);
-      if (!result)
+      if (!result) {
         return;
+      }
 
       const { viteConfig } = result;
       const { preview } = await import('vite');
@@ -68,8 +69,9 @@ export function createPlugin(): TestRunnerPlugin {
     },
 
     end: async () => {
-      if (stoppableServer)
+      if (stoppableServer) {
         await new Promise(f => stoppableServer.stop(f));
+      }
     },
 
     populateDependencies: async () => {
@@ -83,8 +85,9 @@ export function createPlugin(): TestRunnerPlugin {
     clearCache: async () => {
       const configDir = config.configFile ? path.dirname(config.configFile) : config.rootDir;
       const dirs = await resolveDirs(configDir, config);
-      if (dirs)
+      if (dirs) {
         await removeDirAndLogToConsole(dirs.outDir);
+      }
     },
   };
 }
@@ -189,8 +192,9 @@ export async function buildBundle(config: FullConfig, configDir: string): Promis
     for (const [importingFile, components] of componentsByImportingFile) {
       const deps = new Set<string>();
       for (const component of components) {
-        for (const d of buildInfo.deps[component])
+        for (const d of buildInfo.deps[component]) {
           deps.add(d);
+        }
       }
       setExternalDependencies(importingFile, [...deps]);
     }
@@ -230,8 +234,9 @@ async function checkNewComponents(buildInfo: BuildInfo, componentRegistry: Compo
       break;
     }
   }
-  for (const c of oldComponents.values())
+  for (const c of oldComponents.values()) {
     componentRegistry.set(c.id, c);
+  }
 
   return hasNewComponents;
 }
@@ -263,12 +268,14 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
     async writeBundle(this: PluginContext) {
       for (const importInfo of importInfos.values()) {
         const importPath = resolveHook(importInfo.filename, importInfo.importSource);
-        if (!importPath)
+        if (!importPath) {
           continue;
+        }
         const deps = new Set<string>();
         const id = await moduleResolver(importPath);
-        if (!id)
+        if (!id) {
           continue;
+        }
         collectViteModuleDependencies(this, id, deps);
         depsCollector.set(importPath, [...deps]);
       }
@@ -277,15 +284,19 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
 }
 
 function collectViteModuleDependencies(context: PluginContext, id: string, deps: Set<string>) {
-  if (!path.isAbsolute(id))
+  if (!path.isAbsolute(id)) {
     return;
+  }
   const normalizedId = path.normalize(id);
-  if (deps.has(normalizedId))
+  if (deps.has(normalizedId)) {
     return;
+  }
   deps.add(normalizedId);
   const module = context.getModuleInfo(id);
-  for (const importedId of module?.importedIds || [])
+  for (const importedId of module?.importedIds || []) {
     collectViteModuleDependencies(context, importedId, deps);
-  for (const importedId of module?.dynamicallyImportedIds || [])
+  }
+  for (const importedId of module?.dynamicallyImportedIds || []) {
     collectViteModuleDependencies(context, importedId, deps);
+  }
 }

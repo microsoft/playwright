@@ -31,18 +31,23 @@ export function filterCookies(cookies: channels.NetworkCookie[], urls: string[])
   const parsedURLs = urls.map(s => new URL(s));
   // Chromiums's cookies are missing sameSite when it is 'None'
   return cookies.filter(c => {
-    if (!parsedURLs.length)
+    if (!parsedURLs.length) {
       return true;
+    }
     for (const parsedURL of parsedURLs) {
       let domain = c.domain;
-      if (!domain.startsWith('.'))
+      if (!domain.startsWith('.')) {
         domain = '.' + domain;
-      if (!('.' + parsedURL.hostname).endsWith(domain))
+      }
+      if (!('.' + parsedURL.hostname).endsWith(domain)) {
         continue;
-      if (!parsedURL.pathname.startsWith(c.path))
+      }
+      if (!parsedURL.pathname.startsWith(c.path)) {
         continue;
-      if (parsedURL.protocol !== 'https:' && parsedURL.hostname !== 'localhost' && c.secure)
+      }
+      if (parsedURL.protocol !== 'https:' && parsedURL.hostname !== 'localhost' && c.secure) {
         continue;
+      }
       return true;
     }
     return false;
@@ -83,8 +88,9 @@ export function parseURL(url: string): URL | null {
 }
 
 export function stripFragmentFromUrl(url: string): string {
-  if (!url.includes('#'))
+  if (!url.includes('#')) {
     return url;
+  }
   return url.substring(0, url.indexOf('#'));
 }
 
@@ -118,8 +124,9 @@ export class Request extends SdkObject {
     this._frame = frame;
     this._serviceWorker = serviceWorker;
     this._redirectedFrom = redirectedFrom;
-    if (redirectedFrom)
+    if (redirectedFrom) {
       redirectedFrom._redirectedTo = this;
+    }
     this._documentId = documentId;
     this._url = stripFragmentFromUrl(url);
     this._resourceType = resourceType;
@@ -141,8 +148,9 @@ export class Request extends SdkObject {
   }
 
   private _updateHeadersMap() {
-    for (const { name, value } of this.headers())
+    for (const { name, value } of this.headers()) {
       this._headersMap.set(name.toLowerCase(), value);
+    }
   }
 
   _hasOverrides() {
@@ -175,8 +183,9 @@ export class Request extends SdkObject {
 
   // "null" means no raw headers available - we'll use provisional headers as raw headers.
   setRawRequestHeaders(headers: HeadersArray | null) {
-    if (!this._rawRequestHeadersPromise.isDone())
+    if (!this._rawRequestHeadersPromise.isDone()) {
       this._rawRequestHeadersPromise.resolve(headers || this._headers);
+    }
   }
 
   async rawRequestHeaders(): Promise<HeadersArray> {
@@ -217,8 +226,9 @@ export class Request extends SdkObject {
   }
 
   failure(): { errorText: string } | null {
-    if (this._failureText === null)
+    if (this._failureText === null) {
       return null;
+    }
     return {
       errorText: this._failureText
     };
@@ -239,8 +249,9 @@ export class Request extends SdkObject {
     headersSize += (new URL(this.url())).pathname.length;
     headersSize += 8; // httpVersion
     const headers = await this.rawRequestHeaders();
-    for (const header of headers)
-      headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
+    for (const header of headers) {
+      headersSize += header.name.length + header.value.length + 4;
+    } // 4 = ': ' + '\r\n'
     return headersSize;
   }
 }
@@ -304,16 +315,20 @@ export class Route extends SdkObject {
   // See https://github.com/microsoft/playwright/issues/12929
   private _maybeAddCorsHeaders(headers: NameValue[]) {
     const origin = this._request.headerValue('origin');
-    if (!origin)
+    if (!origin) {
       return;
+    }
     const requestUrl = new URL(this._request.url());
-    if (!requestUrl.protocol.startsWith('http'))
+    if (!requestUrl.protocol.startsWith('http')) {
       return;
-    if (requestUrl.origin === origin.trim())
+    }
+    if (requestUrl.origin === origin.trim()) {
       return;
+    }
     const corsHeader = headers.find(({ name }) => name === 'access-control-allow-origin');
-    if (corsHeader)
+    if (corsHeader) {
       return;
+    }
     headers.push({ name: 'access-control-allow-origin', value: origin });
     headers.push({ name: 'access-control-allow-credentials', value: 'true' });
     headers.push({ name: 'vary', value: 'Origin' });
@@ -324,12 +339,14 @@ export class Route extends SdkObject {
     if (overrides.url) {
       const newUrl = new URL(overrides.url);
       const oldUrl = new URL(this._request.url());
-      if (oldUrl.protocol !== newUrl.protocol)
+      if (oldUrl.protocol !== newUrl.protocol) {
         throw new Error('New URL must have same protocol as overridden URL');
+      }
     }
     this._request._setOverrides(overrides);
-    if (!overrides.isFallback)
+    if (!overrides.isFallback) {
       this._request._context.emit(BrowserContext.Events.RequestContinued, this._request);
+    }
     await this._delegate.continue(overrides);
     this._endHandling();
   }
@@ -408,8 +425,9 @@ export class Response extends SdkObject {
     this._statusText = statusText;
     this._url = request.url();
     this._headers = headers;
-    for (const { name, value } of this._headers)
+    for (const { name, value } of this._headers) {
       this._headersMap.set(name.toLowerCase(), value);
+    }
     this._getResponseBodyCallback = getResponseBodyCallback;
     this._request._setResponse(this);
     this._httpVersion = httpVersion;
@@ -427,8 +445,9 @@ export class Response extends SdkObject {
   _requestFinished(responseEndTiming: number) {
     this._request._responseEndTiming = Math.max(responseEndTiming, this._timing.responseStart);
     // Set start time equal to end when request is served from memory cache.
-    if (this._timing.requestStart === -1)
+    if (this._timing.requestStart === -1) {
       this._timing.requestStart = this._request._responseEndTiming;
+    }
     this._finishedPromise.resolve();
   }
 
@@ -462,8 +481,9 @@ export class Response extends SdkObject {
 
   // "null" means no raw headers available - we'll use provisional headers as raw headers.
   setRawResponseHeaders(headers: HeadersArray | null) {
-    if (!this._rawResponseHeadersPromise.isDone())
+    if (!this._rawResponseHeadersPromise.isDone()) {
       this._rawResponseHeadersPromise.resolve(headers || this._headers);
+    }
   }
 
   setTransferSize(size: number | null) {
@@ -493,8 +513,9 @@ export class Response extends SdkObject {
   body(): Promise<Buffer> {
     if (!this._contentPromise) {
       this._contentPromise = this._finishedPromise.then(async () => {
-        if (this._status >= 300 && this._status <= 399)
+        if (this._status >= 300 && this._status <= 399) {
           throw new Error('Response body is unavailable for redirect responses');
+        }
         return this._getResponseBodyCallback();
       });
     }
@@ -510,12 +531,15 @@ export class Response extends SdkObject {
   }
 
   httpVersion(): string {
-    if (!this._httpVersion)
+    if (!this._httpVersion) {
       return 'HTTP/1.1';
-    if (this._httpVersion === 'http/1.1')
+    }
+    if (this._httpVersion === 'http/1.1') {
       return 'HTTP/1.1';
-    if (this._httpVersion === 'h2')
+    }
+    if (this._httpVersion === 'h2') {
       return 'HTTP/2.0';
+    }
     return this._httpVersion;
   }
 
@@ -525,8 +549,9 @@ export class Response extends SdkObject {
 
   async responseHeadersSize(): Promise<number> {
     const availableSize = await this._responseHeadersSizePromise;
-    if (availableSize !== null)
+    if (availableSize !== null) {
       return availableSize;
+    }
 
     // Fallback to calculating it manually.
     let headersSize = 4; // 4 = 2 spaces + 2 line breaks (HTTP/1.1 200 Ok\r\n)
@@ -534,8 +559,9 @@ export class Response extends SdkObject {
     headersSize += 3; // statusCode;
     headersSize += this.statusText().length;
     const headers = await this._rawResponseHeadersPromise;
-    for (const header of headers)
-      headersSize += header.name.length + header.value.length + 4; // 4 = ': ' + '\r\n'
+    for (const header of headers) {
+      headersSize += header.name.length + header.value.length + 4;
+    } // 4 = ': ' + '\r\n'
     headersSize += 2; // '\r\n'
     return headersSize;
   }
@@ -588,8 +614,9 @@ export class WebSocket extends SdkObject {
     // Sometimes we get "onWebSocketRequest" twice, at least in Chromium.
     // Perhaps websocket is restarted because of chrome.webRequest extensions api?
     // Or maybe the handshake response was a redirect?
-    if (this._notified)
+    if (this._notified) {
       return false;
+    }
     this._notified = true;
     return true;
   }
@@ -700,8 +727,9 @@ export function mergeHeaders(headers: (HeadersArray | undefined | null)[]): Head
   const lowerCaseToValue = new Map<string, string>();
   const lowerCaseToOriginalCase = new Map<string, string>();
   for (const h of headers) {
-    if (!h)
+    if (!h) {
       continue;
+    }
     for (const { name, value } of h) {
       const lower = name.toLowerCase();
       lowerCaseToOriginalCase.set(lower, name);
@@ -709,7 +737,8 @@ export function mergeHeaders(headers: (HeadersArray | undefined | null)[]): Head
     }
   }
   const result: HeadersArray = [];
-  for (const [lower, value] of lowerCaseToValue)
+  for (const [lower, value] of lowerCaseToValue) {
     result.push({ name: lowerCaseToOriginalCase.get(lower)!, value });
+  }
   return result;
 }

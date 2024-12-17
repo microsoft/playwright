@@ -35,21 +35,24 @@ export class JsonStringInternalizer {
   }
 
   traverse(value: any) {
-    if (typeof value !== 'object')
+    if (typeof value !== 'object') {
       return;
+    }
     if (Array.isArray(value)) {
       for (let i = 0; i < value.length; i++) {
-        if (typeof value[i] === 'string')
+        if (typeof value[i] === 'string') {
           value[i] = this.intern(value[i]);
-        else
+        } else {
           this.traverse(value[i]);
+        }
       }
     } else {
       for (const name in value) {
-        if (typeof value[name] === 'string')
+        if (typeof value[name] === 'string') {
           value[name] = this.intern(value[name]);
-        else
+        } else {
           this.traverse(value[name]);
+        }
       }
     }
   }

@@ -37,10 +37,12 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.WorkerInitializer) {
     super(parent, type, guid, initializer);
     this._channel.on('close', () => {
-      if (this._page)
+      if (this._page) {
         this._page._workers.delete(this);
-      if (this._context)
+      }
+      if (this._context) {
         this._context._serviceWorkers.delete(this);
+      }
       this.emit(Events.Worker.Close, this);
     });
     this.once(Events.Worker.Close, () => this._closedScope.close(this._page?._closeErrorWithReason() || new TargetClosedError()));

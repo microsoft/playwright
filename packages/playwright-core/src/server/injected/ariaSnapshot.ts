@@ -51,38 +51,44 @@ export function generateAriaTree(rootElement: Element): AriaSnapshot {
   addElement(rootElement);
 
   const visit = (ariaNode: AriaNode, node: Node) => {
-    if (visited.has(node))
+    if (visited.has(node)) {
       return;
+    }
     visited.add(node);
 
     if (node.nodeType === Node.TEXT_NODE && node.nodeValue) {
       const text = node.nodeValue;
-      if (text)
+      if (text) {
         ariaNode.children.push(node.nodeValue || '');
+      }
       return;
     }
 
-    if (node.nodeType !== Node.ELEMENT_NODE)
+    if (node.nodeType !== Node.ELEMENT_NODE) {
       return;
+    }
 
     const element = node as Element;
-    if (roleUtils.isElementHiddenForAria(element))
+    if (roleUtils.isElementHiddenForAria(element)) {
       return;
+    }
 
     const ariaChildren: Element[] = [];
     if (element.hasAttribute('aria-owns')) {
       const ids = element.getAttribute('aria-owns')!.split(/\s+/);
       for (const id of ids) {
         const ownedElement = rootElement.ownerDocument.getElementById(id);
-        if (ownedElement)
+        if (ownedElement) {
           ariaChildren.push(ownedElement);
+        }
       }
     }
 
     addElement(element);
     const childAriaNode = toAriaNode(element);
-    if (childAriaNode)
+    if (childAriaNode) {
       ariaNode.children.push(childAriaNode);
+    }
     processElement(childAriaNode || ariaNode, element, ariaChildren);
   };
 
@@ -90,35 +96,42 @@ export function generateAriaTree(rootElement: Element): AriaSnapshot {
     // Surround every element with spaces for the sake of concatenated text nodes.
     const display = getElementComputedStyle(element)?.display || 'inline';
     const treatAsBlock = (display !== 'inline' || element.nodeName === 'BR') ? ' ' : '';
-    if (treatAsBlock)
+    if (treatAsBlock) {
       ariaNode.children.push(treatAsBlock);
+    }
 
     ariaNode.children.push(roleUtils.getPseudoContent(element, '::before'));
     const assignedNodes = element.nodeName === 'SLOT' ? (element as HTMLSlotElement).assignedNodes() : [];
     if (assignedNodes.length) {
-      for (const child of assignedNodes)
+      for (const child of assignedNodes) {
         visit(ariaNode, child);
+      }
     } else {
       for (let child = element.firstChild; child; child = child.nextSibling) {
-        if (!(child as Element | Text).assignedSlot)
+        if (!(child as Element | Text).assignedSlot) {
           visit(ariaNode, child);
+        }
       }
       if (element.shadowRoot) {
-        for (let child = element.shadowRoot.firstChild; child; child = child.nextSibling)
+        for (let child = element.shadowRoot.firstChild; child; child = child.nextSibling) {
           visit(ariaNode, child);
+        }
       }
     }
 
-    for (const child of ariaChildren)
+    for (const child of ariaChildren) {
       visit(ariaNode, child);
+    }
 
     ariaNode.children.push(roleUtils.getPseudoContent(element, '::after'));
 
-    if (treatAsBlock)
+    if (treatAsBlock) {
       ariaNode.children.push(treatAsBlock);
+    }
 
-    if (ariaNode.children.length === 1 && ariaNode.name === ariaNode.children[0])
+    if (ariaNode.children.length === 1 && ariaNode.name === ariaNode.children[0]) {
       ariaNode.children = [];
+    }
   }
 
   roleUtils.beginAriaCaches();
@@ -134,33 +147,41 @@ export function generateAriaTree(rootElement: Element): AriaSnapshot {
 
 function toAriaNode(element: Element): AriaNode | null {
   const role = roleUtils.getAriaRole(element);
-  if (!role || role === 'presentation' || role === 'none')
+  if (!role || role === 'presentation' || role === 'none') {
     return null;
+  }
 
   const name = roleUtils.getElementAccessibleName(element, false) || '';
   const result: AriaNode = { role, name, children: [], element };
 
-  if (roleUtils.kAriaCheckedRoles.includes(role))
+  if (roleUtils.kAriaCheckedRoles.includes(role)) {
     result.checked = roleUtils.getAriaChecked(element);
+  }
 
-  if (roleUtils.kAriaDisabledRoles.includes(role))
+  if (roleUtils.kAriaDisabledRoles.includes(role)) {
     result.disabled = roleUtils.getAriaDisabled(element);
+  }
 
-  if (roleUtils.kAriaExpandedRoles.includes(role))
+  if (roleUtils.kAriaExpandedRoles.includes(role)) {
     result.expanded = roleUtils.getAriaExpanded(element);
+  }
 
-  if (roleUtils.kAriaLevelRoles.includes(role))
+  if (roleUtils.kAriaLevelRoles.includes(role)) {
     result.level = roleUtils.getAriaLevel(element);
+  }
 
-  if (roleUtils.kAriaPressedRoles.includes(role))
+  if (roleUtils.kAriaPressedRoles.includes(role)) {
     result.pressed = roleUtils.getAriaPressed(element);
+  }
 
-  if (roleUtils.kAriaSelectedRoles.includes(role))
+  if (roleUtils.kAriaSelectedRoles.includes(role)) {
     result.selected = roleUtils.getAriaSelected(element);
+  }
 
   if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
-    if (element.type !== 'checkbox' && element.type !== 'radio')
+    if (element.type !== 'checkbox' && element.type !== 'radio') {
       result.children = [element.value];
+    }
   }
 
   return result;
@@ -168,11 +189,13 @@ function toAriaNode(element: Element): AriaNode | null {
 
 function normalizeStringChildren(rootA11yNode: AriaNode) {
   const flushChildren = (buffer: string[], normalizedChildren: (AriaNode | string)[]) => {
-    if (!buffer.length)
+    if (!buffer.length) {
       return;
+    }
     const text = normalizeWhitespaceWithin(buffer.join('')).trim();
-    if (text)
+    if (text) {
       normalizedChildren.push(text);
+    }
     buffer.length = 0;
   };
 
@@ -190,8 +213,9 @@ function normalizeStringChildren(rootA11yNode: AriaNode) {
     }
     flushChildren(buffer, normalizedChildren);
     ariaNode.children = normalizedChildren.length ? normalizedChildren : [];
-    if (ariaNode.children.length === 1 && ariaNode.children[0] === ariaNode.name)
+    if (ariaNode.children.length === 1 && ariaNode.children[0] === ariaNode.name) {
       ariaNode.children = [];
+    }
   };
   visit(rootA11yNode);
 }
@@ -199,12 +223,15 @@ function normalizeStringChildren(rootA11yNode: AriaNode) {
 const normalizeWhitespaceWithin = (text: string) => text.replace(/[\u200b\s\t\r\n]+/g, ' ');
 
 function matchesText(text: string, template: RegExp | string | undefined): boolean {
-  if (!template)
+  if (!template) {
     return true;
-  if (!text)
+  }
+  if (!text) {
     return false;
-  if (typeof template === 'string')
+  }
+  if (typeof template === 'string') {
     return text === template;
+  }
   return !!text.match(template);
 }
 
@@ -240,47 +267,60 @@ export function getAllByAria(rootElement: Element, template: AriaTemplateNode): 
 }
 
 function matchesNode(node: AriaNode | string, template: AriaTemplateNode, depth: number): boolean {
-  if (typeof node === 'string' && template.kind === 'text')
+  if (typeof node === 'string' && template.kind === 'text') {
     return matchesTextNode(node, template);
+  }
 
   if (typeof node === 'object' && template.kind === 'role') {
-    if (template.role !== 'fragment' && template.role !== node.role)
+    if (template.role !== 'fragment' && template.role !== node.role) {
       return false;
-    if (template.checked !== undefined && template.checked !== node.checked)
+    }
+    if (template.checked !== undefined && template.checked !== node.checked) {
       return false;
-    if (template.disabled !== undefined && template.disabled !== node.disabled)
+    }
+    if (template.disabled !== undefined && template.disabled !== node.disabled) {
       return false;
-    if (template.expanded !== undefined && template.expanded !== node.expanded)
+    }
+    if (template.expanded !== undefined && template.expanded !== node.expanded) {
       return false;
-    if (template.level !== undefined && template.level !== node.level)
+    }
+    if (template.level !== undefined && template.level !== node.level) {
       return false;
-    if (template.pressed !== undefined && template.pressed !== node.pressed)
+    }
+    if (template.pressed !== undefined && template.pressed !== node.pressed) {
       return false;
-    if (template.selected !== undefined && template.selected !== node.selected)
+    }
+    if (template.selected !== undefined && template.selected !== node.selected) {
       return false;
-    if (!matchesName(node.name, template))
+    }
+    if (!matchesName(node.name, template)) {
       return false;
-    if (!containsList(node.children || [], template.children || [], depth))
+    }
+    if (!containsList(node.children || [], template.children || [], depth)) {
       return false;
+    }
     return true;
   }
   return false;
 }
 
 function containsList(children: (AriaNode | string)[], template: AriaTemplateNode[], depth: number): boolean {
-  if (template.length > children.length)
+  if (template.length > children.length) {
     return false;
+  }
   const cc = children.slice();
   const tt = template.slice();
   for (const t of tt) {
     let c = cc.shift();
     while (c) {
-      if (matchesNode(c, t, depth + 1))
+      if (matchesNode(c, t, depth + 1)) {
         break;
+      }
       c = cc.shift();
     }
-    if (!c)
+    if (!c) {
       return false;
+    }
   }
   return true;
 }
@@ -292,11 +332,13 @@ function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode, collectAll:
       results.push(node as AriaNode);
       return !collectAll;
     }
-    if (typeof node === 'string')
+    if (typeof node === 'string') {
       return false;
+    }
     for (const child of node.children || []) {
-      if (visit(child))
+      if (visit(child)) {
         return true;
+      }
     }
     return false;
   };
@@ -310,11 +352,13 @@ export function renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'r
   const renderString = options?.mode === 'regex' ? convertToBestGuessRegex : (str: string) => str;
   const visit = (ariaNode: AriaNode | string, parentAriaNode: AriaNode | null, indent: string) => {
     if (typeof ariaNode === 'string') {
-      if (parentAriaNode && !includeText(parentAriaNode, ariaNode))
+      if (parentAriaNode && !includeText(parentAriaNode, ariaNode)) {
         return;
+      }
       const text = yamlEscapeValueIfNeeded(renderString(ariaNode));
-      if (text)
+      if (text) {
         lines.push(indent + '- text: ' + text);
+      }
       return;
     }
 
@@ -327,26 +371,35 @@ export function renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'r
         key += ' ' + stringifiedName;
       }
     }
-    if (ariaNode.checked === 'mixed')
+    if (ariaNode.checked === 'mixed') {
       key += ` [checked=mixed]`;
-    if (ariaNode.checked === true)
+    }
+    if (ariaNode.checked === true) {
       key += ` [checked]`;
-    if (ariaNode.disabled)
+    }
+    if (ariaNode.disabled) {
       key += ` [disabled]`;
-    if (ariaNode.expanded)
+    }
+    if (ariaNode.expanded) {
       key += ` [expanded]`;
-    if (ariaNode.level)
+    }
+    if (ariaNode.level) {
       key += ` [level=${ariaNode.level}]`;
-    if (ariaNode.pressed === 'mixed')
+    }
+    if (ariaNode.pressed === 'mixed') {
       key += ` [pressed=mixed]`;
-    if (ariaNode.pressed === true)
+    }
+    if (ariaNode.pressed === true) {
       key += ` [pressed]`;
-    if (ariaNode.selected === true)
+    }
+    if (ariaNode.selected === true) {
       key += ` [selected]`;
+    }
     if (options?.ids) {
-      const id = options?.ids.get(ariaNode.element);
-      if (id)
+      const id = options.ids.get(ariaNode.element);
+      if (id) {
         key += ` [id=${id}]`;
+      }
     }
 
     const escapedKey = indent + '- ' + yamlEscapeKeyIfNeeded(key);
@@ -354,21 +407,24 @@ export function renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'r
       lines.push(escapedKey);
     } else if (ariaNode.children.length === 1 && typeof ariaNode.children[0] === 'string') {
       const text = includeText(ariaNode, ariaNode.children[0]) ? renderString(ariaNode.children[0] as string) : null;
-      if (text)
+      if (text) {
         lines.push(escapedKey + ': ' + yamlEscapeValueIfNeeded(text));
-      else
+      } else {
         lines.push(escapedKey);
+      }
     } else {
       lines.push(escapedKey + ':');
-      for (const child of ariaNode.children || [])
+      for (const child of ariaNode.children || []) {
         visit(child, ariaNode, indent + '  ');
+      }
     }
   };
 
   if (ariaNode.role === 'fragment') {
     // Render fragment.
-    for (const child of ariaNode.children || [])
+    for (const child of ariaNode.children || []) {
       visit(child, ariaNode, '');
+    }
   } else {
     visit(ariaNode, null, '');
   }
@@ -408,27 +464,32 @@ function convertToBestGuessRegex(text: string): string {
     lastIndex = offset + match.length;
     return match;
   });
-  if (!pattern)
+  if (!pattern) {
     return text;
+  }
 
   pattern += escapeRegExp(text.slice(lastIndex));
   return String(new RegExp(pattern));
 }
 
 function textContributesInfo(node: AriaNode, text: string): boolean {
-  if (!text.length)
+  if (!text.length) {
     return false;
+  }
 
-  if (!node.name)
+  if (!node.name) {
     return true;
+  }
 
-  if (node.name.length > text.length)
+  if (node.name.length > text.length) {
     return false;
+  }
 
   // Figure out if text adds any value. "longestCommonSubstring" is expensive, so limit strings length.
   const substr = (text.length <= 200 && node.name.length <= 200) ? longestCommonSubstring(text, node.name) : '';
   let filtered = text;
-  while (substr && filtered.includes(substr))
+  while (substr && filtered.includes(substr)) {
     filtered = filtered.replace(substr, '');
+  }
   return filtered.trim().length / text.length > 0.1;
 }

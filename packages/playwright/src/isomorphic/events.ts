@@ -16,8 +16,9 @@
 
 export namespace Disposable {
   export function disposeAll(disposables: Disposable[]): void {
-    for (const disposable of disposables.splice(0))
+    for (const disposable of disposables.splice(0)) {
       disposable.dispose();
+    }
   }
 }
 
@@ -48,20 +49,24 @@ export class EventEmitter<T> {
           }
         }
       };
-      if (disposables)
+      if (disposables) {
         disposables.push(result);
+      }
       return result;
     };
   }
 
   fire(event: T): void {
     const dispatch = !this._deliveryQueue;
-    if (!this._deliveryQueue)
+    if (!this._deliveryQueue) {
       this._deliveryQueue = [];
-    for (const listener of this._listeners)
+    }
+    for (const listener of this._listeners) {
       this._deliveryQueue.push({ listener, event });
-    if (!dispatch)
+    }
+    if (!dispatch) {
       return;
+    }
     for (let index = 0; index < this._deliveryQueue.length; index++) {
       const { listener, event } = this._deliveryQueue[index];
       listener.call(null, event);
@@ -71,7 +76,8 @@ export class EventEmitter<T> {
 
   dispose() {
     this._listeners.clear();
-    if (this._deliveryQueue)
+    if (this._deliveryQueue) {
       this._deliveryQueue = [];
+    }
   }
 }

@@ -147,8 +147,9 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
 
   async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions = {}) {
     const frame = await this.ownerFrame();
-    if (!frame)
+    if (!frame) {
       throw new Error('Cannot set input files to detached element');
+    }
     const converted = await convertInputFiles(files, frame.page().context());
     await this._elementChannel.setInputFiles({ ...converted, ...options });
   }
@@ -174,10 +175,11 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
   }
 
   async setChecked(checked: boolean, options?: channels.ElementHandleCheckOptions) {
-    if (checked)
+    if (checked) {
       await this.check(options);
-    else
+    } else {
       await this.uncheck(options);
+    }
   }
 
   async boundingBox(): Promise<Rect | null> {
@@ -187,8 +189,9 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
 
   async screenshot(options: Omit<channels.ElementHandleScreenshotOptions, 'mask'> & { path?: string, mask?: Locator[] } = {}): Promise<Buffer> {
     const copy: channels.ElementHandleScreenshotOptions = { ...options, mask: undefined };
-    if (!copy.type)
+    if (!copy.type) {
       copy.type = determineScreenshotType(options);
+    }
     if (options.mask) {
       copy.mask = options.mask.map(locator => ({
         frame: locator._frame._channel,
@@ -235,18 +238,24 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
 }
 
 export function convertSelectOptionValues(values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null): { elements?: channels.ElementHandleChannel[], options?: SelectOption[] } {
-  if (values === null)
+  if (values === null) {
     return {};
-  if (!Array.isArray(values))
+  }
+  if (!Array.isArray(values)) {
     values = [values as any];
-  if (!values.length)
+  }
+  if (!values.length) {
     return {};
-  for (let i = 0; i < values.length; i++)
+  }
+  for (let i = 0; i < values.length; i++) {
     assert(values[i] !== null, `options[${i}]: expected object, got null`);
-  if (values[0] instanceof ElementHandle)
+  }
+  if (values[0] instanceof ElementHandle) {
     return { elements: (values as ElementHandle[]).map((v: ElementHandle) => v._elementChannel) };
-  if (isString(values[0]))
+  }
+  if (isString(values[0])) {
     return { options: (values as string[]).map(valueOrLabel => ({ valueOrLabel })) };
+  }
   return { options: values as SelectOption[] };
 }
 
@@ -262,16 +271,18 @@ async function resolvePathsAndDirectoryForInputFiles(items: string[]): Promise<[
   for (const item of items) {
     const stat = await fs.promises.stat(item as string);
     if (stat.isDirectory()) {
-      if (localDirectory)
+      if (localDirectory) {
         throw new Error('Multiple directories are not supported');
+      }
       localDirectory = path.resolve(item as string);
     } else {
       localPaths ??= [];
       localPaths.push(path.resolve(item as string));
     }
   }
-  if (localPaths?.length && localDirectory)
+  if (localPaths?.length && localDirectory) {
     throw new Error('File paths must be all files or a single directory');
+  }
   return [localPaths, localDirectory];
 }
 
@@ -279,8 +290,9 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
   const items: (string | FilePayload)[] = Array.isArray(files) ? files.slice() : [files];
 
   if (items.some(item => typeof item === 'string')) {
-    if (!items.every(item => typeof item === 'string'))
+    if (!items.every(item => typeof item === 'string')) {
       throw new Error('File paths cannot be mixed with buffers');
+    }
 
     const [localPaths, localDirectory] = await resolvePathsAndDirectoryForInputFiles(items);
 
@@ -312,18 +324,20 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
   }
 
   const payloads = items as FilePayload[];
-  if (filePayloadExceedsSizeLimit(payloads))
+  if (filePayloadExceedsSizeLimit(payloads)) {
     throw new Error('Cannot set buffer larger than 50Mb, please write it to a file and pass its path instead.');
+  }
   return { payloads };
 }
 
 export function determineScreenshotType(options: { path?: string, type?: 'png' | 'jpeg' }): 'png' | 'jpeg' | undefined {
   if (options.path) {
     const mimeType = mime.getType(options.path);
-    if (mimeType === 'image/png')
+    if (mimeType === 'image/png') {
       return 'png';
-    else if (mimeType === 'image/jpeg')
+    } else if (mimeType === 'image/jpeg') {
       return 'jpeg';
+    }
     throw new Error(`path: unsupported mime type "${mimeType}"`);
   }
   return options.type;

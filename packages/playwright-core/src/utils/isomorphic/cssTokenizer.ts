@@ -17,18 +17,42 @@ export interface CSSTokenInterface {
   value: string | number | undefined;
 }
 
-const between = function(num: number, first: number, last: number) { return num >= first && num <= last; };
-function digit(code: number) { return between(code, 0x30, 0x39); }
-function hexdigit(code: number) { return digit(code) || between(code, 0x41, 0x46) || between(code, 0x61, 0x66); }
-function uppercaseletter(code: number) { return between(code, 0x41, 0x5a); }
-function lowercaseletter(code: number) { return between(code, 0x61, 0x7a); }
-function letter(code: number) { return uppercaseletter(code) || lowercaseletter(code); }
-function nonascii(code: number) { return code >= 0x80; }
-function namestartchar(code: number) { return letter(code) || nonascii(code) || code === 0x5f; }
-function namechar(code: number) { return namestartchar(code) || digit(code) || code === 0x2d; }
-function nonprintable(code: number) { return between(code, 0, 8) || code === 0xb || between(code, 0xe, 0x1f) || code === 0x7f; }
-function newline(code: number) { return code === 0xa; }
-function whitespace(code: number) { return newline(code) || code === 9 || code === 0x20; }
+const between = function(num: number, first: number, last: number) {
+  return num >= first && num <= last;
+};
+function digit(code: number) {
+  return between(code, 0x30, 0x39);
+}
+function hexdigit(code: number) {
+  return digit(code) || between(code, 0x41, 0x46) || between(code, 0x61, 0x66);
+}
+function uppercaseletter(code: number) {
+  return between(code, 0x41, 0x5a);
+}
+function lowercaseletter(code: number) {
+  return between(code, 0x61, 0x7a);
+}
+function letter(code: number) {
+  return uppercaseletter(code) || lowercaseletter(code);
+}
+function nonascii(code: number) {
+  return code >= 0x80;
+}
+function namestartchar(code: number) {
+  return letter(code) || nonascii(code) || code === 0x5f;
+}
+function namechar(code: number) {
+  return namestartchar(code) || digit(code) || code === 0x2d;
+}
+function nonprintable(code: number) {
+  return between(code, 0, 8) || code === 0xb || between(code, 0xe, 0x1f) || code === 0x7f;
+}
+function newline(code: number) {
+  return code === 0xa;
+}
+function whitespace(code: number) {
+  return newline(code) || code === 9 || code === 0x20;
+}
 
 const maximumallowedcodepoint = 0x10ffff;
 
@@ -48,10 +72,12 @@ function preprocess(str: string): number[] {
     if (code === 0xd && str.charCodeAt(i + 1) === 0xa) {
       code = 0xa; i++;
     }
-    if (code === 0xd || code === 0xc)
+    if (code === 0xd || code === 0xc) {
       code = 0xa;
-    if (code === 0x0)
+    }
+    if (code === 0x0) {
       code = 0xfffd;
+    }
     if (between(code, 0xd800, 0xdbff) && between(str.charCodeAt(i + 1), 0xdc00, 0xdfff)) {
       // Decode a surrogate pair into an astral codepoint.
       const lead = code - 0xd800;
@@ -65,8 +91,9 @@ function preprocess(str: string): number[] {
 }
 
 function stringFromCode(code: number) {
-  if (code <= 0xffff)
+  if (code <= 0xffff) {
     return String.fromCharCode(code);
+  }
   // Otherwise, encode astral char as surrogate pair.
   code -= Math.pow(2, 16);
   const lead = Math.floor(code / Math.pow(2, 10)) + 0xd800;
@@ -93,27 +120,32 @@ export function tokenize(str1: string): CSSTokenInterface[] {
   const locStart = { line: line, column: column };
 
   const codepoint = function(i: number): number {
-    if (i >= str.length)
+    if (i >= str.length) {
       return -1;
+    }
 
     return str[i];
   };
   const next = function(num?: number) {
-    if (num === undefined)
+    if (num === undefined) {
       num = 1;
-    if (num > 3)
+    }
+    if (num > 3) {
       throw 'Spec Error: no more than three codepoints of lookahead.';
+    }
     return codepoint(i + num);
   };
   const consume = function(num?: number): boolean {
-    if (num === undefined)
+    if (num === undefined) {
       num = 1;
+    }
     i += num;
     code = codepoint(i);
-    if (newline(code))
+    if (newline(code)) {
       incrLineno();
-    else
+    } else {
       column += num;
+    }
     // console.log('Consume '+i+' '+String.fromCharCode(code) + ' 0x' + code.toString(16));
     return true;
   };
@@ -130,8 +162,9 @@ export function tokenize(str1: string): CSSTokenInterface[] {
     return true;
   };
   const eof = function(codepoint?: number): boolean {
-    if (codepoint === undefined)
+    if (codepoint === undefined) {
       codepoint = code;
+    }
     return codepoint === -1;
   };
   const donothing = function() { };
@@ -144,14 +177,18 @@ export function tokenize(str1: string): CSSTokenInterface[] {
     consumeComments();
     consume();
     if (whitespace(code)) {
-      while (whitespace(next()))
+      while (whitespace(next())) {
         consume();
+      }
       return new WhitespaceToken();
-    } else if (code === 0x22) {return consumeAStringToken();} else if (code === 0x23) {
+    } else if (code === 0x22) {
+      return consumeAStringToken();
+    } else if (code === 0x23) {
       if (namechar(next()) || areAValidEscape(next(1), next(2))) {
         const token = new HashToken('');
-        if (wouldStartAnIdentifier(next(1), next(2), next(3)))
+        if (wouldStartAnIdentifier(next(1), next(2), next(3))) {
           token.type = 'id';
+        }
         token.value = consumeAName();
         return token;
       } else {
@@ -164,7 +201,13 @@ export function tokenize(str1: string): CSSTokenInterface[] {
       } else {
         return new DelimToken(code);
       }
-    } else if (code === 0x27) {return consumeAStringToken();} else if (code === 0x28) {return new OpenParenToken();} else if (code === 0x29) {return new CloseParenToken();} else if (code === 0x2a) {
+    } else if (code === 0x27) {
+      return consumeAStringToken();
+    } else if (code === 0x28) {
+      return new OpenParenToken();
+    } else if (code === 0x29) {
+      return new CloseParenToken();
+    } else if (code === 0x2a) {
       if (next() === 0x3d) {
         consume();
         return new SubstringMatchToken();
@@ -178,7 +221,9 @@ export function tokenize(str1: string): CSSTokenInterface[] {
       } else {
         return new DelimToken(code);
       }
-    } else if (code === 0x2c) {return new CommaToken();} else if (code === 0x2d) {
+    } else if (code === 0x2c) {
+      return new CommaToken();
+    } else if (code === 0x2d) {
       if (startsWithANumber()) {
         reconsume();
         return consumeANumericToken();
@@ -198,7 +243,11 @@ export function tokenize(str1: string): CSSTokenInterface[] {
       } else {
         return new DelimToken(code);
       }
-    } else if (code === 0x3a) {return new ColonToken();} else if (code === 0x3b) {return new SemicolonToken();} else if (code === 0x3c) {
+    } else if (code === 0x3a) {
+      return new ColonToken();
+    } else if (code === 0x3b) {
+      return new SemicolonToken();
+    } else if (code === 0x3c) {
       if (next(1) === 0x21 && next(2) === 0x2d && next(3) === 0x2d) {
         consume(3);
         return new CDOToken();
@@ -206,12 +255,15 @@ export function tokenize(str1: string): CSSTokenInterface[] {
         return new DelimToken(code);
       }
     } else if (code === 0x40) {
-      if (wouldStartAnIdentifier(next(1), next(2), next(3)))
+      if (wouldStartAnIdentifier(next(1), next(2), next(3))) {
         return new AtKeywordToken(consumeAName());
-      else
+      } else {
         return new DelimToken(code);
+      }
 
-    } else if (code === 0x5b) {return new OpenSquareToken();} else if (code === 0x5c) {
+    } else if (code === 0x5b) {
+      return new OpenSquareToken();
+    } else if (code === 0x5c) {
       if (startsWithAValidEscape()) {
         reconsume();
         return consumeAnIdentlikeToken();
@@ -219,14 +271,18 @@ export function tokenize(str1: string): CSSTokenInterface[] {
         parseerror();
         return new DelimToken(code);
       }
-    } else if (code === 0x5d) {return new CloseSquareToken();} else if (code === 0x5e) {
+    } else if (code === 0x5d) {
+      return new CloseSquareToken();
+    } else if (code === 0x5e) {
       if (next() === 0x3d) {
         consume();
         return new PrefixMatchToken();
       } else {
         return new DelimToken(code);
       }
-    } else if (code === 0x7b) {return new OpenCurlyToken();} else if (code === 0x7c) {
+    } else if (code === 0x7b) {
+      return new OpenCurlyToken();
+    } else if (code === 0x7c) {
       if (next() === 0x3d) {
         consume();
         return new DashMatchToken();
@@ -236,7 +292,9 @@ export function tokenize(str1: string): CSSTokenInterface[] {
       } else {
         return new DelimToken(code);
       }
-    } else if (code === 0x7d) {return new CloseCurlyToken();} else if (code === 0x7e) {
+    } else if (code === 0x7d) {
+      return new CloseCurlyToken();
+    } else if (code === 0x7e) {
       if (next() === 0x3d) {
         consume();
         return new IncludeMatchToken();
@@ -249,7 +307,11 @@ export function tokenize(str1: string): CSSTokenInterface[] {
     } else if (namestartchar(code)) {
       reconsume();
       return consumeAnIdentlikeToken();
-    } else if (eof()) {return new EOFToken();} else {return new DelimToken(code);}
+    } else if (eof()) {
+      return new EOFToken();
+    } else {
+      return new DelimToken(code);
+    }
   };
 
   const consumeComments = function() {
@@ -296,14 +358,16 @@ export function tokenize(str1: string): CSSTokenInterface[] {
     const str = consumeAName();
     if (str.toLowerCase() === 'url' && next() === 0x28) {
       consume();
-      while (whitespace(next(1)) && whitespace(next(2)))
+      while (whitespace(next(1)) && whitespace(next(2))) {
         consume();
-      if (next() === 0x22 || next() === 0x27)
+      }
+      if (next() === 0x22 || next() === 0x27) {
         return new FunctionToken(str);
-      else if (whitespace(next()) && (next(2) === 0x22 || next(2) === 0x27))
+      } else if (whitespace(next()) && (next(2) === 0x22 || next(2) === 0x27)) {
         return new FunctionToken(str);
-      else
+      } else {
         return consumeAURLToken();
+      }
 
     } else if (next() === 0x28) {
       consume();
@@ -314,8 +378,9 @@ export function tokenize(str1: string): CSSTokenInterface[] {
   };
 
   const consumeAStringToken = function(endingCodePoint?: number): CSSParserToken {
-    if (endingCodePoint === undefined)
+    if (endingCodePoint === undefined) {
       endingCodePoint = code;
+    }
     let string = '';
     while (consume()) {
       if (code === endingCodePoint || eof()) {
@@ -325,12 +390,13 @@ export function tokenize(str1: string): CSSTokenInterface[] {
         reconsume();
         return new BadStringToken();
       } else if (code === 0x5c) {
-        if (eof(next()))
+        if (eof(next())) {
           donothing();
-        else if (newline(next()))
+        } else if (newline(next())) {
           consume();
-        else
+        } else {
           string += stringFromCode(consumeEscape());
+        }
 
       } else {
         string += stringFromCode(code);
@@ -341,16 +407,19 @@ export function tokenize(str1: string): CSSTokenInterface[] {
 
   const consumeAURLToken = function(): CSSTokenInterface {
     const token = new URLToken('');
-    while (whitespace(next()))
+    while (whitespace(next())) {
       consume();
-    if (eof(next()))
+    }
+    if (eof(next())) {
       return token;
+    }
     while (consume()) {
       if (code === 0x29 || eof()) {
         return token;
       } else if (whitespace(code)) {
-        while (whitespace(next()))
+        while (whitespace(next())) {
           consume();
+        }
         if (next() === 0x29 || eof(next())) {
           consume();
           return token;
@@ -392,11 +461,15 @@ export function tokenize(str1: string): CSSTokenInterface[] {
           break;
         }
       }
-      if (whitespace(next()))
+      if (whitespace(next())) {
         consume();
-      let value = parseInt(digits.map(function(x) { return String.fromCharCode(x); }).join(''), 16);
-      if (value > maximumallowedcodepoint)
+      }
+      let value = parseInt(digits.map(function(x) {
+        return String.fromCharCode(x);
+      }).join(''), 16);
+      if (value > maximumallowedcodepoint) {
         value = 0xfffd;
+      }
       return value;
     } else if (eof()) {
       return 0xfffd;
@@ -406,10 +479,12 @@ export function tokenize(str1: string): CSSTokenInterface[] {
   };
 
   const areAValidEscape = function(c1: number, c2: number) {
-    if (c1 !== 0x5c)
+    if (c1 !== 0x5c) {
       return false;
-    if (newline(c2))
+    }
+    if (newline(c2)) {
       return false;
+    }
     return true;
   };
   const startsWithAValidEscape = function() {
@@ -417,14 +492,15 @@ export function tokenize(str1: string): CSSTokenInterface[] {
   };
 
   const wouldStartAnIdentifier = function(c1: number, c2: number, c3: number) {
-    if (c1 === 0x2d)
+    if (c1 === 0x2d) {
       return namestartchar(c2) || c2 === 0x2d || areAValidEscape(c2, c3);
-    else if (namestartchar(c1))
+    } else if (namestartchar(c1)) {
       return true;
-    else if (c1 === 0x5c)
+    } else if (c1 === 0x5c) {
       return areAValidEscape(c1, c2);
-    else
+    } else {
       return false;
+    }
 
   };
   const startsWithAnIdentifier = function() {
@@ -433,14 +509,17 @@ export function tokenize(str1: string): CSSTokenInterface[] {
 
   const wouldStartANumber = function(c1: number, c2: number, c3: number) {
     if (c1 === 0x2b || c1 === 0x2d) {
-      if (digit(c2))
+      if (digit(c2)) {
         return true;
-      if (c2 === 0x2e && digit(c3))
+      }
+      if (c2 === 0x2e && digit(c3)) {
         return true;
+      }
       return false;
     } else if (c1 === 0x2e) {
-      if (digit(c2))
+      if (digit(c2)) {
         return true;
+      }
       return false;
     } else if (digit(c1)) {
       return true;
@@ -539,8 +618,9 @@ export function tokenize(str1: string): CSSTokenInterface[] {
   while (!eof(next())) {
     tokens.push(consumeAToken());
     iterationCount++;
-    if (iterationCount > str.length * 2)
+    if (iterationCount > str.length * 2) {
       throw new Error("I'm infinite-looping!");
+    }
   }
   return tokens;
 }
@@ -551,8 +631,12 @@ export class CSSParserToken implements CSSTokenInterface {
   toJSON(): any {
     return { token: this.tokenType };
   }
-  toString() { return this.tokenType; }
-  toSource() { return '' + this; }
+  toString() {
+    return this.tokenType;
+  }
+  toSource() {
+    return '' + this;
+  }
 }
 
 export class BadStringToken extends CSSParserToken {
@@ -565,18 +649,26 @@ export class BadURLToken extends CSSParserToken {
 
 export class WhitespaceToken extends CSSParserToken {
   override tokenType = 'WHITESPACE';
-  override toString() { return 'WS'; }
-  override toSource() { return ' '; }
+  override toString() {
+    return 'WS';
+  }
+  override toSource() {
+    return ' ';
+  }
 }
 
 export class CDOToken extends CSSParserToken {
   override tokenType = 'CDO';
-  override toSource() { return '<!--'; }
+  override toSource() {
+    return '<!--';
+  }
 }
 
 export class CDCToken extends CSSParserToken {
   override tokenType = 'CDC';
-  override toSource() { return '-->'; }
+  override toSource() {
+    return '-->';
+  }
 }
 
 export class ColonToken extends CSSParserToken {
@@ -676,7 +768,9 @@ export class ColumnToken extends CSSParserToken {
 
 export class EOFToken extends CSSParserToken {
   override tokenType = 'EOF';
-  override toSource() { return ''; }
+  override toSource() {
+    return '';
+  }
 }
 
 export class DelimToken extends CSSParserToken {
@@ -688,7 +782,9 @@ export class DelimToken extends CSSParserToken {
     this.value = stringFromCode(code);
   }
 
-  override toString() { return 'DELIM(' + this.value + ')'; }
+  override toString() {
+    return 'DELIM(' + this.value + ')';
+  }
 
   override toJSON() {
     const json = this.constructor.prototype.constructor.prototype.toJSON.call(this);
@@ -697,10 +793,11 @@ export class DelimToken extends CSSParserToken {
   }
 
   override toSource() {
-    if (this.value === '\\')
+    if (this.value === '\\') {
       return '\\\n';
-    else
+    } else {
       return this.value;
+    }
   }
 }
 
@@ -724,7 +821,9 @@ export class IdentToken extends StringValuedToken {
   }
 
   override tokenType = 'IDENT';
-  override toString() { return 'IDENT(' + this.value + ')'; }
+  override toString() {
+    return 'IDENT(' + this.value + ')';
+  }
   override toSource() {
     return escapeIdent(this.value);
   }
@@ -739,7 +838,9 @@ export class FunctionToken extends StringValuedToken {
     this.mirror = ')';
   }
 
-  override toString() { return 'FUNCTION(' + this.value + ')'; }
+  override toString() {
+    return 'FUNCTION(' + this.value + ')';
+  }
 
   override toSource() {
     return escapeIdent(this.value) + '(';
@@ -752,7 +853,9 @@ export class AtKeywordToken extends StringValuedToken {
     super();
     this.value = val;
   }
-  override toString() { return 'AT(' + this.value + ')'; }
+  override toString() {
+    return 'AT(' + this.value + ')';
+  }
   override toSource() {
     return '@' + escapeIdent(this.value);
   }
@@ -767,7 +870,9 @@ export class HashToken extends StringValuedToken {
     this.type = 'unrestricted';
   }
 
-  override toString() { return 'HASH(' + this.value + ')'; }
+  override toString() {
+    return 'HASH(' + this.value + ')';
+  }
 
   override toJSON() {
     const json = this.constructor.prototype.constructor.prototype.toJSON.call(this);
@@ -777,10 +882,11 @@ export class HashToken extends StringValuedToken {
   }
 
   override toSource() {
-    if (this.type === 'id')
+    if (this.type === 'id') {
       return '#' + escapeIdent(this.value);
-    else
+    } else {
       return '#' + escapeHash(this.value);
+    }
 
   }
 }
@@ -803,7 +909,9 @@ export class URLToken extends StringValuedToken {
     super();
     this.value = val;
   }
-  override toString() { return 'URL(' + this.value + ')'; }
+  override toString() {
+    return 'URL(' + this.value + ')';
+  }
   override toSource() {
     return 'url("' + escapeString(this.value) + '")';
   }
@@ -821,8 +929,9 @@ export class NumberToken extends CSSParserToken {
   }
 
   override toString() {
-    if (this.type === 'integer')
+    if (this.type === 'integer') {
       return 'INT(' + this.value + ')';
+    }
     return 'NUMBER(' + this.value + ')';
   }
   override toJSON() {
@@ -832,7 +941,9 @@ export class NumberToken extends CSSParserToken {
     json.repr = this.repr;
     return json;
   }
-  override toSource() { return this.repr; }
+  override toSource() {
+    return this.repr;
+  }
 }
 
 
@@ -843,14 +954,18 @@ export class PercentageToken extends CSSParserToken {
     super();
     this.repr = '';
   }
-  override toString() { return 'PERCENTAGE(' + this.value + ')'; }
+  override toString() {
+    return 'PERCENTAGE(' + this.value + ')';
+  }
   override toJSON() {
     const json = this.constructor.prototype.constructor.prototype.toJSON.call(this);
     json.value = this.value;
     json.repr = this.repr;
     return json;
   }
-  override toSource() { return this.repr + '%'; }
+  override toSource() {
+    return this.repr + '%';
+  }
 }
 
 export class DimensionToken extends CSSParserToken {
@@ -866,7 +981,9 @@ export class DimensionToken extends CSSParserToken {
     this.unit = '';
   }
 
-  override toString() { return 'DIM(' + this.value + ',' + this.unit + ')'; }
+  override toString() {
+    return 'DIM(' + this.value + ',' + this.unit + ')';
+  }
   override toJSON() {
     const json = this.constructor.prototype.constructor.prototype.toJSON.call(this);
     json.value = this.value;
@@ -893,26 +1010,28 @@ function escapeIdent(string: string) {
   const firstcode = string.charCodeAt(0);
   for (let i = 0; i < string.length; i++) {
     const code = string.charCodeAt(i);
-    if (code === 0x0)
+    if (code === 0x0) {
       throw new InvalidCharacterError('Invalid character: the input contains U+0000.');
+    }
 
     if (
       between(code, 0x1, 0x1f) || code === 0x7f ||
       (i === 0 && between(code, 0x30, 0x39)) ||
       (i === 1 && between(code, 0x30, 0x39) && firstcode === 0x2d)
-    )
+    ) {
       result += '\\' + code.toString(16) + ' ';
-    else if (
+    } else if (
       code >= 0x80 ||
       code === 0x2d ||
       code === 0x5f ||
       between(code, 0x30, 0x39) ||
       between(code, 0x41, 0x5a) ||
       between(code, 0x61, 0x7a)
-    )
+    ) {
       result += string[i];
-    else
+    } else {
       result += '\\' + string[i];
+    }
 
   }
   return result;
@@ -926,8 +1045,9 @@ function escapeHash(string: string) {
   let result = '';
   for (let i = 0; i < string.length; i++) {
     const code = string.charCodeAt(i);
-    if (code === 0x0)
+    if (code === 0x0) {
       throw new InvalidCharacterError('Invalid character: the input contains U+0000.');
+    }
 
     if (
       code >= 0x80 ||
@@ -936,10 +1056,11 @@ function escapeHash(string: string) {
       between(code, 0x30, 0x39) ||
       between(code, 0x41, 0x5a) ||
       between(code, 0x61, 0x7a)
-    )
+    ) {
       result += string[i];
-    else
+    } else {
       result += '\\' + code.toString(16) + ' ';
+    }
 
   }
   return result;
@@ -951,15 +1072,17 @@ function escapeString(string: string) {
   for (let i = 0; i < string.length; i++) {
     const code = string.charCodeAt(i);
 
-    if (code === 0x0)
+    if (code === 0x0) {
       throw new InvalidCharacterError('Invalid character: the input contains U+0000.');
+    }
 
-    if (between(code, 0x1, 0x1f) || code === 0x7f)
+    if (between(code, 0x1, 0x1f) || code === 0x7f) {
       result += '\\' + code.toString(16) + ' ';
-    else if (code === 0x22 || code === 0x5c)
+    } else if (code === 0x22 || code === 0x5c) {
       result += '\\' + string[i];
-    else
+    } else {
       result += string[i];
+    }
 
   }
   return result;

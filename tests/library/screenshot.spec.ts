@@ -33,11 +33,13 @@ browserTest.describe('page screenshot', () => {
       return page;
     }));
     const promises = [];
-    for (let i = 0; i < N; ++i)
+    for (let i = 0; i < N; ++i) {
       promises.push(pages[i].screenshot({ clip: { x: 50 * (i % 2), y: 0, width: 50, height: 50 } }));
+    }
     const screenshots = await Promise.all(promises);
-    for (let i = 0; i < N; ++i)
+    for (let i = 0; i < N; ++i) {
       expect(screenshots[i]).toMatchSnapshot(`grid-cell-${i % 2}.png`);
+    }
     await Promise.all(pages.map(page => page.close()));
   });
 
@@ -123,8 +125,9 @@ browserTest.describe('page screenshot', () => {
     {
       await page.setContent(`<style>body {margin: 0; padding: 0;}</style><div style='min-height: 16384px; background: red;'></div>`);
       const exception = await page.screenshot({ fullPage: true }).catch(e => e);
-      if (browserName === 'firefox' || (browserName === 'webkit' && !isMac))
+      if (browserName === 'firefox' || (browserName === 'webkit' && !isMac)) {
         expect(exception.message).toContain('Cannot take screenshot larger than 32767');
+      }
 
       const image = await page.screenshot({ fullPage: true, scale: 'css' });
       expect(image).toBeTruthy();
@@ -281,7 +284,9 @@ browserTest.describe('element screenshot', () => {
     const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/grid.html');
-    const __testHookBeforeScreenshot = () => { throw new Error('oh my'); };
+    const __testHookBeforeScreenshot = () => {
+      throw new Error('oh my');
+    };
     const error = await page.screenshot({ fullPage: true, __testHookBeforeScreenshot } as any).catch(e => e);
     expect(error.message).toContain('oh my');
     await verifyViewport(page, 350, 360);
@@ -341,7 +346,9 @@ browserTest.describe('element screenshot', () => {
     const page = await context.newPage();
     await page.setContent(`<div style="width:600px;height:600px;"></div>`);
     const elementHandle = await page.$('div');
-    const __testHookBeforeScreenshot = () => { throw new Error('oh my'); };
+    const __testHookBeforeScreenshot = () => {
+      throw new Error('oh my');
+    };
     const error = await elementHandle.screenshot({ __testHookBeforeScreenshot } as any).catch(e => e);
     expect(error.message).toContain('oh my');
     await verifyViewport(page, 350, 360);

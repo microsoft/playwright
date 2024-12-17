@@ -41,11 +41,13 @@ export async function toMatchAriaSnapshot(
   const matcherName = 'toMatchAriaSnapshot';
 
   const testInfo = currentTestInfo();
-  if (!testInfo)
+  if (!testInfo) {
     throw new Error(`toMatchAriaSnapshot() must be called during the test`);
+  }
 
-  if (testInfo._projectInternal.ignoreSnapshots)
+  if (testInfo._projectInternal.ignoreSnapshots) {
     return { pass: !this.isNot, message: () => '', name: 'toMatchAriaSnapshot', expected: '' };
+  }
 
   const updateSnapshots = testInfo.config.updateSnapshots;
 
@@ -59,9 +61,9 @@ export async function toMatchAriaSnapshot(
   if (isString(expectedParam)) {
     expected = expectedParam;
   } else {
-    if (expectedParam?.path) {
+    if (expectedParam.path) {
       expectedPath = expectedParam.path;
-    } else if (expectedParam?.name) {
+    } else if (expectedParam.name) {
       expectedPath = testInfo.snapshotPath(sanitizeFilePathBeforeExtension(expectedParam.name));
     } else {
       let snapshotNames = (testInfo as any)[snapshotNamesSymbol] as SnapshotNames;
@@ -105,14 +107,16 @@ export async function toMatchAriaSnapshot(
   const receivedText = typedReceived.raw;
   const message = () => {
     if (pass) {
-      if (notFound)
+      if (notFound) {
         return messagePrefix + `Expected: not ${this.utils.printExpected(expected)}\nReceived: ${receivedText}` + callLogText(log);
+      }
       const printedReceived = printReceivedStringContainExpectedSubstring(receivedText, receivedText.indexOf(expected), expected.length);
       return messagePrefix + `Expected: not ${this.utils.printExpected(expected)}\nReceived: ${printedReceived}` + callLogText(log);
     } else {
       const labelExpected = `Expected`;
-      if (notFound)
+      if (notFound) {
         return messagePrefix + `${labelExpected}: ${this.utils.printExpected(expected)}\nReceived: ${receivedText}` + callLogText(log);
+      }
       return messagePrefix + this.utils.printDiffOrStringify(expected, receivedText, labelExpected, 'Received', false) + callLogText(log);
     }
   };
@@ -157,11 +161,13 @@ function unshift(snapshot: string): string {
   const lines = snapshot.split('\n');
   let whitespacePrefixLength = 100;
   for (const line of lines) {
-    if (!line.trim())
+    if (!line.trim()) {
       continue;
+    }
     const match = line.match(/^(\s*)/);
-    if (match && match[1].length < whitespacePrefixLength)
+    if (match && match[1].length < whitespacePrefixLength) {
       whitespacePrefixLength = match[1].length;
+    }
   }
   return lines.filter(t => t.trim()).map(line => line.substring(whitespacePrefixLength)).join('\n');
 }

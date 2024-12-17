@@ -66,8 +66,9 @@ test('once() has different code paths based on the number of arguments being emi
     const ee = new EventEmitter();
     const args: any[] = ['foo'];
 
-    for (let j = 0; j < i; j++)
+    for (let j = 0; j < i; j++) {
       args.push(j);
+    }
 
     ee.once('foo', common.mustCall((...params) => {
       const restArgs = args.slice(1);

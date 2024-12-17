@@ -69,14 +69,16 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
 
     const addFile = (file: string, name: string) => {
       try {
-        if (fs.statSync(file).isFile())
+        if (fs.statSync(file).isFile()) {
           zipFile.addFile(file, name);
+        }
       } catch (e) {
       }
     };
 
-    for (const entry of params.entries)
+    for (const entry of params.entries) {
       addFile(entry.value, entry.name);
+    }
 
     // Add stacks and the sources.
     const stackSession = params.stacksId ? this._stackSessions.get(params.stacksId) : undefined;
@@ -94,13 +96,16 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
     if (params.includeSources) {
       const sourceFiles = new Set<string>();
       for (const { stack } of stackSession?.callStacks || []) {
-        if (!stack)
+        if (!stack) {
           continue;
-        for (const { file } of stack)
+        }
+        for (const { file } of stack) {
           sourceFiles.add(file);
+        }
       }
-      for (const sourceFile of sourceFiles)
+      for (const sourceFile of sourceFiles) {
         addFile(sourceFile, 'resources/src@' + calculateSha1(sourceFile) + '.txt');
+      }
     }
 
     if (params.mode === 'write') {
@@ -156,8 +161,9 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
       const zipFile = new ZipFile(params.file);
       const entryNames = await zipFile.entries();
       const harEntryName = entryNames.find(e => e.endsWith('.har'));
-      if (!harEntryName)
+      if (!harEntryName) {
         return { error: 'Specified archive does not have a .har file' };
+      }
       const har = await zipFile.read(harEntryName);
       const harFile = JSON.parse(har.toString()) as har.HARFile;
       harBackend = new HarBackend(harFile, null, zipFile);
@@ -171,8 +177,9 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
 
   async harLookup(params: channels.LocalUtilsHarLookupParams, metadata: CallMetadata): Promise<channels.LocalUtilsHarLookupResult> {
     const harBackend = this._harBackends.get(params.harId);
-    if (!harBackend)
+    if (!harBackend) {
       return { action: 'error', message: `Internal error: har was not opened` };
+    }
     return await harBackend.lookup(params.url, params.method, params.headers, params.postData, params.isNavigationRequest);
   }
 
@@ -189,10 +196,11 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
     const zipFile = new ZipFile(params.zipFile);
     for (const entry of await zipFile.entries()) {
       const buffer = await zipFile.read(entry);
-      if (entry === 'har.har')
+      if (entry === 'har.har') {
         await fs.promises.writeFile(params.harFile, buffer);
-      else
+      } else {
         await fs.promises.writeFile(path.join(dir, entry), buffer);
+      }
     }
     zipFile.close();
     await fs.promises.unlink(params.zipFile);
@@ -213,8 +221,9 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
       const socksInterceptor = new SocksInterceptor(transport, params.exposeNetwork, params.socksProxyRedirectPortForTest);
       const pipe = new JsonPipeDispatcher(this);
       transport.onmessage = json => {
-        if (socksInterceptor.interceptMessage(json))
+        if (socksInterceptor.interceptMessage(json)) {
           return;
+        }
         const cb = () => {
           try {
             pipe.dispatch(json);
@@ -222,16 +231,17 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
             transport.close();
           }
         };
-        if (params.slowMo)
+        if (params.slowMo) {
           setTimeout(cb, params.slowMo);
-        else
+        } else {
           cb();
+        }
       };
       pipe.on('message', message => {
         transport.send(message);
       });
       transport.onclose = (reason?: string) => {
-        socksInterceptor?.cleanup();
+        socksInterceptor.cleanup();
         pipe.wasClosed(reason);
       };
       pipe.on('close', () => transport.close());
@@ -241,8 +251,9 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
 
   async tracingStarted(params: channels.LocalUtilsTracingStartedParams, metadata?: CallMetadata | undefined): Promise<channels.LocalUtilsTracingStartedResult> {
     let tmpDir = undefined;
-    if (!params.tracesDir)
+    if (!params.tracesDir) {
       tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-tracing-'));
+    }
     const traceStacksFile = path.join(params.tracesDir || tmpDir!, params.traceName + '.stacks');
     this._stackSessions.set(traceStacksFile, { callStacks: [], file: traceStacksFile, writer: Promise.resolve(), tmpDir });
     return { stacksId: traceStacksFile };
@@ -266,11 +277,13 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
 
   private async _deleteStackSession(stacksId?: string) {
     const session = stacksId ? this._stackSessions.get(stacksId) : undefined;
-    if (!session)
+    if (!session) {
       return;
+    }
     await session.writer;
-    if (session.tmpDir)
+    if (session.tmpDir) {
       await removeFolders([session.tmpDir]);
+    }
     this._stackSessions.delete(stacksId!);
   }
 }
@@ -303,12 +316,14 @@ class HarBackend {
       return { action: 'error', message: 'HAR error: ' + e.message };
     }
 
-    if (!entry)
+    if (!entry) {
       return { action: 'noentry' };
+    }
 
     // If navigation is being redirected, restart it with the final url to ensure the document's url changes.
-    if (entry.request.url !== url && isNavigationRequest)
+    if (entry.request.url !== url && isNavigationRequest) {
       return { action: 'redirect', redirectURL: entry.request.url };
+    }
 
     const response = entry.response;
     try {
@@ -328,10 +343,11 @@ class HarBackend {
     const file = content._file;
     let buffer: Buffer;
     if (file) {
-      if (this._zipFile)
+      if (this._zipFile) {
         buffer = await this._zipFile.read(file);
-      else
+      } else {
         buffer = await fs.promises.readFile(path.resolve(this._baseDir!, file));
+      }
     } else {
       buffer = Buffer.from(content.text || '', content.encoding === 'base64' ? 'base64' : 'utf-8');
     }
@@ -344,27 +360,32 @@ class HarBackend {
     while (true) {
       const entries: har.Entry[] = [];
       for (const candidate of harLog.entries) {
-        if (candidate.request.url !== url || candidate.request.method !== method)
+        if (candidate.request.url !== url || candidate.request.method !== method) {
           continue;
+        }
         if (method === 'POST' && postData && candidate.request.postData) {
           const buffer = await this._loadContent(candidate.request.postData);
           if (!buffer.equals(postData)) {
             const boundary = multipartBoundary(headers);
-            if (!boundary)
+            if (!boundary) {
               continue;
+            }
             const candidataBoundary = multipartBoundary(candidate.request.headers);
-            if (!candidataBoundary)
+            if (!candidataBoundary) {
               continue;
+            }
             // Try to match multipart/form-data ignroing boundary as it changes between requests.
-            if (postData.toString().replaceAll(boundary, '') !== buffer.toString().replaceAll(candidataBoundary, ''))
+            if (postData.toString().replaceAll(boundary, '') !== buffer.toString().replaceAll(candidataBoundary, '')) {
               continue;
+            }
           }
         }
         entries.push(candidate);
       }
 
-      if (!entries.length)
+      if (!entries.length) {
         return;
+      }
 
       let entry = entries[0];
 
@@ -379,8 +400,9 @@ class HarBackend {
         entry = list[0].candidate;
       }
 
-      if (visited.has(entry))
+      if (visited.has(entry)) {
         throw new Error(`Found redirect cycle for ${url}`);
+      }
 
       visited.add(entry);
 
@@ -410,20 +432,23 @@ function countMatchingHeaders(harHeaders: har.Header[], headers: HeadersArray): 
   const set = new Set(headers.map(h => h.name.toLowerCase() + ':' + h.value));
   let matches = 0;
   for (const h of harHeaders) {
-    if (set.has(h.name.toLowerCase() + ':' + h.value))
+    if (set.has(h.name.toLowerCase() + ':' + h.value)) {
       ++matches;
+    }
   }
   return matches;
 }
 
 export async function urlToWSEndpoint(progress: Progress|undefined, endpointURL: string): Promise<string> {
-  if (endpointURL.startsWith('ws'))
+  if (endpointURL.startsWith('ws')) {
     return endpointURL;
+  }
 
   progress?.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
   const fetchUrl = new URL(endpointURL);
-  if (!fetchUrl.pathname.endsWith('/'))
+  if (!fetchUrl.pathname.endsWith('/')) {
     fetchUrl.pathname += '/';
+  }
   fetchUrl.pathname += 'json';
   const json = await fetchData({
     url: fetchUrl.toString(),
@@ -438,10 +463,12 @@ export async function urlToWSEndpoint(progress: Progress|undefined, endpointURL:
 
   const wsUrl = new URL(endpointURL);
   let wsEndpointPath = JSON.parse(json).wsEndpointPath;
-  if (wsEndpointPath.startsWith('/'))
+  if (wsEndpointPath.startsWith('/')) {
     wsEndpointPath = wsEndpointPath.substring(1);
-  if (!wsUrl.pathname.endsWith('/'))
+  }
+  if (!wsUrl.pathname.endsWith('/')) {
     wsUrl.pathname += '/';
+  }
   wsUrl.pathname += wsEndpointPath;
   wsUrl.protocol = wsUrl.protocol === 'https:' ? 'wss:' : 'ws:';
   return wsUrl.toString();
@@ -449,10 +476,12 @@ export async function urlToWSEndpoint(progress: Progress|undefined, endpointURL:
 
 function multipartBoundary(headers: HeadersArray) {
   const contentType = headers.find(h => h.name.toLowerCase() === 'content-type');
-  if (!contentType?.value.includes('multipart/form-data'))
+  if (!contentType?.value.includes('multipart/form-data')) {
     return undefined;
+  }
   const boundary = contentType.value.match(/boundary=(\S+)/);
-  if (boundary)
+  if (boundary) {
     return boundary[1];
+  }
   return undefined;
 }

@@ -21,17 +21,20 @@ import type { Frame } from 'playwright-core';
 
 function dumpFrames(frame: Frame, indentation: string = ''): string[] {
   let description = frame.url().replace(/:\d+\//, ':<PORT>/');
-  if (frame.name())
+  if (frame.name()) {
     description += ' (' + frame.name() + ')';
+  }
   const result = [indentation + description];
   const childFrames = frame.childFrames();
   childFrames.sort((a, b) => {
-    if (a.url() !== b.url())
+    if (a.url() !== b.url()) {
       return a.url() < b.url() ? -1 : 1;
+    }
     return a.name() < b.name() ? -1 : 1;
   });
-  for (const child of childFrames)
+  for (const child of childFrames) {
     result.push(...dumpFrames(child, '    ' + indentation));
+  }
   return result;
 }
 
@@ -203,8 +206,9 @@ it('should refuse to display x-frame-options:deny iframe', async ({ page, server
   await page.goto(server.EMPTY_PAGE);
   const refusalText = new Promise(f => {
     page.on('console', msg => {
-      if (msg.text().match(/Refused to display/i))
+      if (msg.text().match(/Refused to display/i)) {
         f(msg.text());
+      }
     });
   });
   await page.setContent(`<iframe src="${server.CROSS_PROCESS_PREFIX}/x-frame-options-deny.html"></iframe>`);

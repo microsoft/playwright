@@ -62,15 +62,17 @@ export class HarRecorder implements HarTracerDelegate {
   }
 
   onContentBlob(sha1: string, buffer: Buffer) {
-    if (!this._zipFile || this._writtenZipEntries.has(sha1))
+    if (!this._zipFile || this._writtenZipEntries.has(sha1)) {
       return;
+    }
     this._writtenZipEntries.add(sha1);
     this._zipFile!.addBuffer(buffer, sha1);
   }
 
   async flush() {
-    if (this._isFlushed)
+    if (this._isFlushed) {
       return;
+    }
     this._isFlushed = true;
     await this._tracer.flush();
 
@@ -126,19 +128,22 @@ function innerJsonStringify(object: any, tokens: string[], indent: string, flat:
 
   const childIndent = `${indent}  `;
   let brackets: { open: string, close: string };
-  if (isArray)
+  if (isArray) {
     brackets = flat ? { open: '[', close: ']' } : { open: `[\n${childIndent}`, close: `\n${indent}]` };
-  else
+  } else {
     brackets = flat ? { open: '{ ', close: ' }' } : { open: `{\n${childIndent}`, close: `\n${indent}}` };
+  }
 
   tokens.push(brackets.open);
 
   for (let i = 0; i < entries.length; ++i) {
     const entry = entries[i];
-    if (i)
+    if (i) {
       tokens.push(flat ? `, ` : `,\n${childIndent}`);
-    if (!isArray)
+    }
+    if (!isArray) {
       tokens.push(`${JSON.stringify(entry[0])}: `);
+    }
     const key = isArray ? undefined : entry[0];
     const flatten = flat || key === 'timings' || parentKey === 'headers';
     innerJsonStringify(isArray ? entry : entry[1], tokens, childIndent, flatten, key);

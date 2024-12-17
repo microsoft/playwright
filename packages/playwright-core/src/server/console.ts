@@ -42,8 +42,9 @@ export class ConsoleMessage {
   }
 
   text(): string {
-    if (this._text === undefined)
+    if (this._text === undefined) {
       this._text = this._args.map(arg => arg.preview()).join(' ');
+    }
     return this._text;
   }
 

@@ -74,8 +74,9 @@ export class Runner {
 
     const reporters = await createReporters(config, listOnly ? 'list' : 'test', false);
     const lastRun = new LastRunReporter(config);
-    if (config.cliLastFailed)
+    if (config.cliLastFailed) {
       await lastRun.filterLastFailed();
+    }
 
     const reporter = new InternalReporter([...reporters, lastRun]);
     const tasks = listOnly ? [
@@ -104,8 +105,9 @@ export class Runner {
       ...createPluginSetupTasks(this._config),
       createLoadTask('in-process', { failOnLoadErrors: true, filterOnly: false, populateDependencies: true }),
     ]);
-    if (status !== 'passed')
+    if (status !== 'passed') {
       return { errors: errorReporter.errors(), testFiles: [] };
+    }
     return { testFiles: affectedTestFiles(files) };
   }
 

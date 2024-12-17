@@ -21,8 +21,9 @@ export function serializeClientSideCallMetadata(metadatas: ClientSideCallMetadat
   const fileNames = new Map<string, number>();
   const stacks: SerializedStack[] = [];
   for (const m of metadatas) {
-    if (!m.stack || !m.stack.length)
+    if (!m.stack || !m.stack.length) {
       continue;
+    }
     const stack: SerializedStackFrame[] = [];
     for (const frame of m.stack) {
       let ordinal = fileNames.get(frame.file);

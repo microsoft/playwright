@@ -53,8 +53,9 @@ export class WKInterceptableRequest {
     let postDataBuffer = null;
     this._timestamp = event.timestamp;
     this._wallTime = event.walltime * 1000;
-    if (event.request.postData)
+    if (event.request.postData) {
       postDataBuffer = Buffer.from(event.request.postData, 'base64');
+    }
     this.request = new network.Request(frame._page._browserContext, frame, null, redirectedFrom?.request || null, documentId, event.request.url,
         resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
   }
@@ -90,8 +91,9 @@ export class WKInterceptableRequest {
 
     if (responsePayload.requestHeaders && Object.keys(responsePayload.requestHeaders).length) {
       const headers = { ...responsePayload.requestHeaders };
-      if (!headers['host'])
+      if (!headers['host']) {
         headers['Host'] = new URL(this.request.url()).host;
+      }
       this.request.setRawRequestHeaders(headersObjectToArray(headers));
     } else {
       // No raw headers available, use provisional ones.
@@ -119,16 +121,18 @@ export class WKRouteImpl implements network.RouteDelegate {
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {
-    if (300 <= response.status && response.status < 400)
+    if (300 <= response.status && response.status < 400) {
       throw new Error('Cannot fulfill with redirect status: ' + response.status);
+    }
 
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
     let mimeType = response.isBase64 ? 'application/octet-stream' : 'text/plain';
     const headers = headersArrayToObject(response.headers, true /* lowerCase */);
     const contentType = headers['content-type'];
-    if (contentType)
+    if (contentType) {
       mimeType = contentType.split(';')[0].trim();
+    }
 
     await this._session.sendMayFail('Network.interceptRequestWithResponse', {
       requestId: this._requestId,
@@ -156,8 +160,9 @@ export class WKRouteImpl implements network.RouteDelegate {
 
 function wkMillisToRoundishMillis(value: number): number {
   // WebKit uses -1000 for unavailable.
-  if (value === -1000)
+  if (value === -1000) {
     return -1;
+  }
 
   // WebKit has a bug, instead of -1 it sends -1000 to be in ms.
   if (value <= 0) {

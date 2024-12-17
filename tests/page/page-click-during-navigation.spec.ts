@@ -21,8 +21,9 @@ it('should not fail with internal error upon navigation', async ({ page, server 
   await page.goto(server.PREFIX + '/input/button.html');
   let triggered = false;
   const __testHookAfterStable = () => {
-    if (triggered)
+    if (triggered) {
       return;
+    }
     triggered = true;
     return page.goto(server.PREFIX + '/input/button.html');
   };

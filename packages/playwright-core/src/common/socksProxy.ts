@@ -174,8 +174,9 @@ class SocksConnection {
       case SocksAddressType.IPv6:
         const bytes = await this._readBytes(16);
         const tokens: string[] = [];
-        for (let i = 0; i < 8; ++i)
+        for (let i = 0; i < 8; ++i) {
           tokens.push(bytes.readUInt16BE(i * 2).toString(16));
+        }
         host = tokens.join(':');
         break;
     }
@@ -199,15 +200,17 @@ class SocksConnection {
 
   private async _readBytes(length: number): Promise<Buffer> {
     this._fence = this._offset + length;
-    if (!this._buffer || this._buffer.length < this._fence)
+    if (!this._buffer || this._buffer.length < this._fence) {
       await new Promise<void>(f => this._fenceCallback = f);
+    }
     this._offset += length;
     return this._buffer.slice(this._offset - length, this._offset);
   }
 
   private _writeBytes(buffer: Buffer) {
-    if (this._socket.writable)
+    if (this._socket.writable) {
       this._socket.write(buffer);
+    }
   }
 
   private _onClose() {
@@ -280,12 +283,18 @@ function hexToNumber(hex: string): number {
   // Note: parseInt has a few issues including ignoring trailing characters and allowing leading 0x.
   return [...hex].reduce((value, digit) => {
     const code = digit.charCodeAt(0);
-    if (code >= 48 && code <= 57) // 0..9
+    if (code >= 48 && code <= 57) {
+      // 0..9
       return value + code;
-    if (code >= 97 && code <= 102) // a..f
+    }
+    if (code >= 97 && code <= 102) {
+      // a..f
       return value + (code - 97) + 10;
-    if (code >= 65 && code <= 70) // A..F
+    }
+    if (code >= 65 && code <= 70) {
+      // A..F
       return value + (code - 65) + 10;
+    }
     throw new Error('Invalid IPv6 token ' + hex);
   }, 0);
 }
@@ -300,8 +309,9 @@ function ipToSocksAddress(address: string): number[] {
   if (net.isIPv6(address)) {
     const result = [0x04]; // IPv6
     const tokens = address.split(':', 8);
-    while (tokens.length < 8)
+    while (tokens.length < 8) {
       tokens.unshift('');
+    }
     for (const token of tokens) {
       const value = hexToNumber(token);
       result.push((value >> 8) & 0xFF, value & 0xFF);  // Big-endian
@@ -324,21 +334,24 @@ function starMatchToRegex(pattern: string) {
 // This follows "Proxy bypass rules" syntax without implicit and negative rules.
 // https://source.chromium.org/chromium/chromium/src/+/main:net/docs/proxy.md;l=331
 export function parsePattern(pattern: string | undefined): PatternMatcher {
-  if (!pattern)
+  if (!pattern) {
     return () => false;
+  }
 
   const matchers: PatternMatcher[] = pattern.split(',').map(token => {
     const match = token.match(/^(.*?)(?::(\d+))?$/);
-    if (!match)
+    if (!match) {
       throw new Error(`Unsupported token "${token}" in pattern "${pattern}"`);
+    }
     const tokenPort = match[2] ? +match[2] : undefined;
     const portMatches = (port: number) => tokenPort === undefined || tokenPort === port;
     let tokenHost = match[1];
 
     if (tokenHost === '<loopback>') {
       return (host, port) => {
-        if (!portMatches(port))
+        if (!portMatches(port)) {
           return false;
+        }
         return host === 'localhost'
             || host.endsWith('.localhost')
             || host === '127.0.0.1'
@@ -346,20 +359,25 @@ export function parsePattern(pattern: string | undefined): PatternMatcher {
       };
     }
 
-    if (tokenHost === '*')
+    if (tokenHost === '*') {
       return (host, port) => portMatches(port);
+    }
 
-    if (net.isIPv4(tokenHost) || net.isIPv6(tokenHost))
+    if (net.isIPv4(tokenHost) || net.isIPv6(tokenHost)) {
       return (host, port) => host === tokenHost && portMatches(port);
+    }
 
-    if (tokenHost[0] === '.')
+    if (tokenHost[0] === '.') {
       tokenHost = '*' + tokenHost;
+    }
     const tokenRegex = starMatchToRegex(tokenHost);
     return (host, port) => {
-      if (!portMatches(port))
+      if (!portMatches(port)) {
         return false;
-      if (net.isIPv4(host) || net.isIPv6(host))
+      }
+      if (net.isIPv4(host) || net.isIPv6(host)) {
         return false;
+      }
       return !!host.match(tokenRegex);
     };
   });
@@ -442,11 +460,13 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
   }
 
   async close() {
-    if (this._closed)
+    if (this._closed) {
       return;
+    }
     this._closed = true;
-    for (const socket of this._sockets)
+    for (const socket of this._sockets) {
       socket.destroy();
+    }
     this._sockets.clear();
     await new Promise(f => this._server.close(f));
   }
@@ -519,8 +539,9 @@ export class SocksProxyHandler extends EventEmitter {
   }
 
   cleanup() {
-    for (const uid of this._sockets.keys())
+    for (const uid of this._sockets.keys()) {
       this.socketClosed({ uid });
+    }
   }
 
   async socketRequested({ uid, host, port }: SocksSocketRequestedPayload): Promise<void> {
@@ -532,11 +553,13 @@ export class SocksProxyHandler extends EventEmitter {
       return;
     }
 
-    if (host === 'local.playwright')
+    if (host === 'local.playwright') {
       host = 'localhost';
+    }
     try {
-      if (this._redirectPortForTest)
+      if (this._redirectPortForTest) {
         port = this._redirectPortForTest;
+      }
       const socket = await createSocket(host, port);
       socket.on('data', data => {
         const payload: SocksSocketDataPayload = { uid, data };

@@ -43,26 +43,36 @@ export function dumpTestTree(page: Page, options: { time?: boolean } = {}): () =
   return () => page.getByTestId('test-tree').evaluate(async (treeElement, options) => {
     function iconName(iconElement: Element): string {
       const icon = iconElement.className.replace('codicon codicon-', '');
-      if (icon === 'chevron-right')
+      if (icon === 'chevron-right') {
         return '►';
-      if (icon === 'chevron-down')
+      }
+      if (icon === 'chevron-down') {
         return '▼';
-      if (icon === 'blank')
+      }
+      if (icon === 'blank') {
         return ' ';
-      if (icon === 'circle-outline')
+      }
+      if (icon === 'circle-outline') {
         return '◯';
-      if (icon === 'circle-slash')
+      }
+      if (icon === 'circle-slash') {
         return '⊘';
-      if (icon === 'check')
+      }
+      if (icon === 'check') {
         return '✅';
-      if (icon === 'error')
+      }
+      if (icon === 'error') {
         return '❌';
-      if (icon === 'eye')
+      }
+      if (icon === 'eye') {
         return '👁';
-      if (icon === 'loading')
+      }
+      if (icon === 'loading') {
         return '↻';
-      if (icon === 'clock')
+      }
+      if (icon === 'clock') {
         return '🕦';
+      }
       return icon;
     }
 
@@ -88,8 +98,9 @@ export function dumpTestTree(page: Page, options: { time?: boolean } = {}): () =
 export const test = base
     .extend<Fixtures>({
       runUITest: async ({ childProcess, headless }, use, testInfo: TestInfo) => {
-        if (process.env.CI)
+        if (process.env.CI) {
           testInfo.slow();
+        }
         const cacheDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-test-cache-'));
         let testProcess: TestChildProcess | undefined;
         let browser: Browser | undefined;
@@ -148,6 +159,7 @@ export const retries = process.env.CI ? 3 : 0;
 
 async function waitForLatch(latchFile: string) {
   const fs = require('fs');
-  while (!fs.existsSync(latchFile))
+  while (!fs.existsSync(latchFile)) {
     await new Promise(f => setTimeout(f, 250));
+  }
 }

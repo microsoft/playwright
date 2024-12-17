@@ -23,24 +23,27 @@ export function linkifyText(description: string) {
 
   while ((match = kWebLinkRe.exec(description)) !== null) {
     const stringBeforeMatch = description.substring(currentIndex, match.index);
-    if (stringBeforeMatch)
+    if (stringBeforeMatch) {
       result.push(stringBeforeMatch);
+    }
 
     const value = match[0];
     result.push(renderLink(value));
     currentIndex = match.index + value.length;
   }
   const stringAfterMatches = description.substring(currentIndex);
-  if (stringAfterMatches)
+  if (stringAfterMatches) {
     result.push(stringAfterMatches);
+  }
 
   return result;
 }
 
 function renderLink(text: string) {
   let link = text;
-  if (link.startsWith('www.'))
+  if (link.startsWith('www.')) {
     link = 'https://' + link;
+  }
 
   return <a href={link} target='_blank' rel='noopener noreferrer'>{text}</a>;
 }

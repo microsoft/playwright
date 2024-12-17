@@ -27,8 +27,9 @@ export class ThrottledFile {
 
   setContent(text: string) {
     this._text = text;
-    if (!this._timer)
+    if (!this._timer) {
       this._timer = setTimeout(() => this.flush(), 250);
+    }
   }
 
   flush(): void {
@@ -36,8 +37,9 @@ export class ThrottledFile {
       clearTimeout(this._timer);
       this._timer = undefined;
     }
-    if (this._text)
+    if (this._text) {
       fs.writeFileSync(this._file, this._text);
+    }
     this._text = undefined;
   }
 }
