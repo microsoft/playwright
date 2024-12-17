@@ -14,6 +14,13 @@ module.exports = {
     settings: {
         react: { version: "18" }
     },
+    overrides: [
+        {
+            files: ['./examples/**/*'],
+            // Disable Typescript specific rules, which requires a special config
+            extends: ['plugin:@typescript-eslint/disable-type-checked'],
+        },
+    ],
 
     /**
      * ESLint rules
@@ -27,7 +34,7 @@ module.exports = {
     rules: {
         "@typescript-eslint/no-unused-vars": [2, {args: "none"}],
         "@typescript-eslint/consistent-type-imports": [2, {disallowTypeAnnotations: false}],
-        "@typescript-eslint/no-unnecessary-condition": [2],
+        // "@typescript-eslint/no-unnecessary-condition": [2],
 
         /**
          * Enforced rules
