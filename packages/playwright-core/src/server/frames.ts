@@ -908,7 +908,7 @@ export class Frame extends SdkObject {
         result.dispose();
         return null;
       }
-      const element = state === 'attached' || state === 'visible' ? await result.evaluateHandle(r => r.element) : null;
+      const element = state === 'attached' || state === 'visible' ? await result.evaluateHandle(r => r.element as Element) : null;
       result.dispose();
       if (!element) {
         return null;

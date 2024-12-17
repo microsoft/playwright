@@ -162,7 +162,8 @@ export class TeleSuiteUpdater {
   processTestReportEvent(message: any) {
     // The order of receiver dispatches matters here, we want to assign `lastRunTestCount`
     // before we use it.
-    this._lastRunReceiver?.dispatch(message).catch(() => { });
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    this._lastRunReceiver?.dispatch(message)?.catch(() => { });
     this._receiver.dispatch(message)?.catch(() => { });
   }
 
