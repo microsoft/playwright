@@ -70,14 +70,16 @@ export const Workbench: React.FunctionComponent = () => {
 
   React.useEffect(() => {
     const callId = model?.actions.find(a => a.endTime && a.endTime === selectedAction?.endTime)?.callId;
-    if (callId)
+    if (callId) {
       setTraceCallId(callId);
+    }
   }, [model, selectedAction]);
 
   const source = React.useMemo(() => backend?.sources.find(s => s.id === fileId) || backend?.sources[0], [backend?.sources, fileId]);
   const sourceLocation = React.useMemo(() => {
-    if (!source)
+    if (!source) {
       return undefined;
+    }
     const sourceLocation: SourceLocation = {
       file: '',
       line: 0,
@@ -140,8 +142,9 @@ export const Workbench: React.FunctionComponent = () => {
     }} />
     <ToolbarSeparator />
     <ToolbarButton icon='files' title='Copy' disabled={!source || !source.text} onClick={() => {
-      if (source?.text)
+      if (source?.text) {
         copy(source.text);
+      }
     }}></ToolbarButton>
     <div style={{ flex: 'auto' }}></div>
     <div>Target:</div>

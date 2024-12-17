@@ -530,7 +530,9 @@ it('should ignore aborted requests', async ({ contextFactory, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29311' });
   const path = it.info().outputPath('test.har');
   {
-    server.setRoute('/x', (req, res) => { req.destroy(); });
+    server.setRoute('/x', (req, res) => {
+      req.destroy();
+    });
     const context1 = await contextFactory();
     await context1.routeFromHAR(path, { update: true });
     const page1 = await context1.newPage();

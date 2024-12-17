@@ -36,8 +36,9 @@ document.head.appendChild(link);
 const ReportLoader: React.FC = () => {
   const [report, setReport] = React.useState<LoadedReport | undefined>();
   React.useEffect(() => {
-    if (report)
+    if (report) {
       return;
+    }
     const zipReport = new ZipReport();
     zipReport.load().then(() => setReport(zipReport));
   }, [report]);
@@ -58,8 +59,9 @@ class ZipReport implements LoadedReport {
 
   async load() {
     const zipURI = await new Promise<string>(resolve => {
-      if (window.playwrightReportBase64)
+      if (window.playwrightReportBase64) {
         return resolve(window.playwrightReportBase64);
+      }
       if (window.opener) {
         window.addEventListener('message', event => {
           if (event.source === window.opener) {
@@ -70,15 +72,17 @@ class ZipReport implements LoadedReport {
         window.opener.postMessage('ready', '*');
       } else {
         const oldReport = localStorage.getItem(kPlaywrightReportStorageForHMR);
-        if (oldReport)
+        if (oldReport) {
           return resolve(oldReport);
+        }
         alert('couldnt find report, something with HMR is broken');
       }
     });
 
     const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(zipURI), { useWebWorkers: false });
-    for (const entry of await zipReader.getEntries())
+    for (const entry of await zipReader.getEntries()) {
       this._entries.set(entry.filename, entry);
+    }
     this._json = await this.entry('report.json') as HTMLReport;
   }
 

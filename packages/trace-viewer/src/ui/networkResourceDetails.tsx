@@ -168,10 +168,12 @@ const FontPreview: React.FunctionComponent<{
       // note: constant font family name will lead to bugs
       // when displaying two font previews.
       fontFace = new FontFace('font-preview', font);
-      if (fontFace.status === 'loaded')
+      if (fontFace.status === 'loaded') {
         document.fonts.add(fontFace);
-      if (fontFace.status === 'error')
+      }
+      if (fontFace.status === 'error') {
         setIsError(true);
+      }
     } catch {
       setIsError(true);
     }
@@ -181,8 +183,9 @@ const FontPreview: React.FunctionComponent<{
     };
   }, [font]);
 
-  if (isError)
+  if (isError) {
     return <div className='network-font-preview-error'>Could not load font preview</div>;
+  }
 
   return <div className='network-font-preview'>
     ABCDEFGHIJKLM<br />
@@ -194,20 +197,24 @@ const FontPreview: React.FunctionComponent<{
 };
 
 function statusClass(statusCode: number): string {
-  if (statusCode < 300 || statusCode === 304)
+  if (statusCode < 300 || statusCode === 304) {
     return 'green-circle';
-  if (statusCode < 400)
+  }
+  if (statusCode < 400) {
     return 'yellow-circle';
+  }
   return 'red-circle';
 }
 
 function formatBody(body: string | null, contentType: string): string {
-  if (body === null)
+  if (body === null) {
     return 'Loading...';
+  }
 
   const bodyStr = body;
-  if (bodyStr === '')
+  if (bodyStr === '') {
     return '<Empty>';
+  }
 
   if (contentType.includes('application/json')) {
     try {
@@ -217,8 +224,9 @@ function formatBody(body: string | null, contentType: string): string {
     }
   }
 
-  if (contentType.includes('application/x-www-form-urlencoded'))
+  if (contentType.includes('application/x-www-form-urlencoded')) {
     return decodeURIComponent(bodyStr);
+  }
 
   return bodyStr;
 }

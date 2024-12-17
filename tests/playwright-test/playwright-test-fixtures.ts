@@ -78,8 +78,9 @@ export async function writeFiles(testInfo: TestInfo, files: Files, initial: bool
 
   await Promise.all(Object.keys(files).map(async name => {
     const fullName = path.join(baseDir, name);
-    if (files[name] === undefined)
+    if (files[name] === undefined) {
       return;
+    }
     await fs.promises.mkdir(path.dirname(fullName), { recursive: true });
     await fs.promises.writeFile(fullName, files[name]);
   }));
@@ -92,16 +93,18 @@ export const cliEntrypoint = path.join(__dirname, '../../packages/playwright-tes
 const configFile = (baseDir: string, files: Files): string | undefined => {
   for (const [name, content] of Object.entries(files)) {
     if (name.includes('playwright.config')) {
-      if (content.includes('reporter:') || content.includes('reportSlowTests:'))
+      if (content.includes('reporter:') || content.includes('reportSlowTests:')) {
         return path.resolve(baseDir, name);
+      }
     }
   }
   return undefined;
 };
 
 function findPackageJSONDir(files: Files, dir: string) {
-  while (dir && !files[dir + '/package.json'])
+  while (dir && !files[dir + '/package.json']) {
     dir = path.dirname(dir);
+  }
   return dir;
 }
 
@@ -123,8 +126,9 @@ function startPlaywrightTest(childProcess: CommonFixtures['childProcess'], baseD
       '--workers=2',
       ...paramList
   );
-  if (options.additionalArgs)
+  if (options.additionalArgs) {
     args.push(...options.additionalArgs);
+  }
   return startPlaywrightChildProcess(childProcess, baseDir, args, env, options);
 }
 
@@ -155,11 +159,13 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
 
   if (useIntermediateMergeReport) {
     const additionalArgs = [];
-    if (reporter)
+    if (reporter) {
       additionalArgs.push('--reporter', reporter);
+    }
     const config = configFile(baseDir, files);
-    if (config)
+    if (config) {
       additionalArgs.push('--config', config);
+    }
     const cwd = options.cwd ? path.resolve(baseDir, options.cwd) : baseDir;
     const packageRoot = path.resolve(baseDir, findPackageJSONDir(files, options.cwd ?? ''));
     const relativeBlobReportPath = path.relative(cwd, path.join(packageRoot, 'blob-report'));
@@ -179,18 +185,21 @@ async function runPlaywrightTest(childProcess: CommonFixtures['childProcess'], b
 
   const results: JSONReportTestResult[] = [];
   function visitSuites(suites?: JSONReportSuite[]) {
-    if (!suites)
+    if (!suites) {
       return;
+    }
     for (const suite of suites) {
       for (const spec of suite.specs) {
-        for (const test of spec.tests)
+        for (const test of spec.tests) {
           results.push(...test.results);
+        }
       }
       visitSuites(suite.suites);
     }
   }
-  if (report)
+  if (report) {
     visitSuites(report.suites);
+  }
 
   return {
     ...parsed,
@@ -335,8 +344,9 @@ export const test = base
       mergeReports: async ({ childProcess }, use) => {
         await use(async (reportFolder: string, env: NodeJS.ProcessEnv = {}, options: RunOptions = {}) => {
           const command = ['node', cliEntrypoint, 'merge-reports', reportFolder];
-          if (options.additionalArgs)
+          if (options.additionalArgs) {
             command.push(...options.additionalArgs);
+          }
 
           const cwd = options.cwd ? path.resolve(test.info().outputDir, options.cwd) : test.info().outputDir;
           const testProcess = childProcess({
@@ -408,8 +418,9 @@ export function createWhiteImage(width: number, height: number) {
 export function paintBlackPixels(image: Buffer, blackPixelsCount: number): Buffer {
   const png = PNG.sync.read(image);
   for (let i = 0; i < blackPixelsCount; ++i) {
-    for (let j = 0; j < 3; ++j)
+    for (let j = 0; j < 3; ++j) {
       png.data[i * 4 + j] = 0;
+    }
   }
   return PNG.sync.write(png);
 }
@@ -417,8 +428,9 @@ export function paintBlackPixels(image: Buffer, blackPixelsCount: number): Buffe
 function filterTests(result: RunResult, filter: (spec: JSONReportSpec) => boolean) {
   const tests: JSONReportTest[] = [];
   const visit = (suite: JSONReportSuite) => {
-    for (const spec of suite.specs)
+    for (const spec of suite.specs) {
       spec.tests.forEach(t => filter(spec) && tests.push(t));
+    }
     suite.suites?.forEach(s => visit(s));
   };
   visit(result.report.suites[0]);

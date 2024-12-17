@@ -101,11 +101,13 @@ export const SearchParamsProvider: React.FunctionComponent<React.PropsWithChildr
 };
 
 function downloadFileNameForAttachment(attachment: TestAttachment): string {
-  if (attachment.name.includes('.') || !attachment.path)
+  if (attachment.name.includes('.') || !attachment.path) {
     return attachment.name;
+  }
   const firstDotIndex = attachment.path.indexOf('.');
-  if (firstDotIndex === -1)
+  if (firstDotIndex === -1) {
     return attachment.name;
+  }
   return attachment.name + attachment.path.slice(firstDotIndex, attachment.path.length);
 }
 
@@ -121,22 +123,27 @@ export function useAnchor(id: AnchorID, onReveal: () => void) {
   const searchParams = React.useContext(SearchParamsContext);
   const isAnchored = useIsAnchored(id);
   React.useEffect(() => {
-    if (isAnchored)
+    if (isAnchored) {
       onReveal();
+    }
   }, [isAnchored, onReveal, searchParams]);
 }
 
 export function useIsAnchored(id: AnchorID) {
   const searchParams = React.useContext(SearchParamsContext);
   const anchor = searchParams.get('anchor');
-  if (anchor === null)
+  if (anchor === null) {
     return false;
-  if (typeof id === 'undefined')
+  }
+  if (typeof id === 'undefined') {
     return false;
-  if (typeof id === 'string')
+  }
+  if (typeof id === 'string') {
     return id === anchor;
-  if (Array.isArray(id))
+  }
+  if (Array.isArray(id)) {
     return id.includes(anchor);
+  }
   return id(anchor);
 }
 
@@ -152,11 +159,14 @@ export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID 
 
 export function testResultHref({ test, result, anchor }: { test?: TestCase | TestCaseSummary, result?: TestResult | TestResultSummary, anchor?: string }) {
   const params = new URLSearchParams();
-  if (test)
+  if (test) {
     params.set('testId', test.testId);
-  if (test && result)
+  }
+  if (test && result) {
     params.set('run', '' + test.results.indexOf(result as any));
-  if (anchor)
+  }
+  if (anchor) {
     params.set('anchor', anchor);
+  }
   return `#?` + params;
 }

@@ -59,8 +59,9 @@ export class InMemorySnapshotter implements SnapshotterDelegate, HarTracerDelega
   }
 
   async captureSnapshot(page: Page, callId: string, snapshotName: string): Promise<SnapshotRenderer> {
-    if (this._snapshotReadyPromises.has(snapshotName))
+    if (this._snapshotReadyPromises.has(snapshotName)) {
       throw new Error('Duplicate snapshot name: ' + snapshotName);
+    }
 
     this._snapshotter.captureSnapshot(page, callId, snapshotName).catch(() => {});
     const promise = new ManualPromise<SnapshotRenderer>();

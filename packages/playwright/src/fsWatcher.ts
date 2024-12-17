@@ -32,11 +32,13 @@ export class Watcher {
   }
 
   async update(watchedPaths: string[], ignoredFolders: string[], reportPending: boolean) {
-    if (JSON.stringify([this._watchedPaths, this._ignoredFolders]) === JSON.stringify(watchedPaths, ignoredFolders))
+    if (JSON.stringify([this._watchedPaths, this._ignoredFolders]) === JSON.stringify(watchedPaths, ignoredFolders)) {
       return;
+    }
 
-    if (reportPending)
+    if (reportPending) {
       this._reportEventsIfAny();
+    }
 
     this._watchedPaths = watchedPaths;
     this._ignoredFolders = ignoredFolders;
@@ -46,13 +48,15 @@ export class Watcher {
     clearTimeout(this._throttleTimer);
     this._throttleTimer = undefined;
 
-    if (!this._watchedPaths.length)
+    if (!this._watchedPaths.length) {
       return;
+    }
 
     const ignored = [...this._ignoredFolders, '**/node_modules/**'];
     this._fsWatcher = chokidar.watch(watchedPaths, { ignoreInitial: true, ignored }).on('all', async (event, file) => {
-      if (this._throttleTimer)
+      if (this._throttleTimer) {
         clearTimeout(this._throttleTimer);
+      }
       this._collector.push({ event, file });
       this._throttleTimer = setTimeout(() => this._reportEventsIfAny(), 250);
     });
@@ -65,8 +69,9 @@ export class Watcher {
   }
 
   private _reportEventsIfAny() {
-    if (this._collector.length)
+    if (this._collector.length) {
       this._onChange(this._collector.slice());
+    }
     this._collector.length = 0;
   }
 }

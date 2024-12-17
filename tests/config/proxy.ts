@@ -52,8 +52,9 @@ export class TestProxy {
 
   async stop(): Promise<void> {
     this.reset();
-    for (const socket of this._sockets)
+    for (const socket of this._sockets) {
       socket.destroy();
+    }
     this._sockets.clear();
     await new Promise(x => this._server.close(x));
   }
@@ -66,10 +67,12 @@ export class TestProxy {
       req.url = url.toString();
     });
     this._prependHandler('connect', (req: IncomingMessage) => {
-      if (!options?.allowConnectRequests)
+      if (!options?.allowConnectRequests) {
         return;
-      if (kConnectHostsToIgnore.has(req.url))
+      }
+      if (kConnectHostsToIgnore.has(req.url)) {
         return;
+      }
       this.connectHosts.push(req.url);
       req.url = `127.0.0.1:${port}`;
     });
@@ -88,8 +91,9 @@ export class TestProxy {
   reset() {
     this.connectHosts = [];
     this.requestUrls = [];
-    for (const { event, handler } of this._handlers)
+    for (const { event, handler } of this._handlers) {
       this._server.removeListener(event, handler);
+    }
     this._handlers = [];
     this._server.authenticate = undefined;
   }
@@ -104,8 +108,9 @@ export class TestProxy {
     // ECONNRESET and HPE_INVALID_EOF_STATE are legit errors given
     // that tab closing aborts outgoing connections to the server.
     socket.on('error', (error: any) => {
-      if (error.code !== 'ECONNRESET' && error.code !== 'HPE_INVALID_EOF_STATE')
+      if (error.code !== 'ECONNRESET' && error.code !== 'HPE_INVALID_EOF_STATE') {
         throw error;
+      }
     });
     socket.once('close', () => this._sockets.delete(socket));
   }
@@ -133,8 +138,9 @@ export async function setupSocksForwardingServer({
     target.connect(forwardPort, '127.0.0.1');
     target.on('connect', () => {
       connections.set(payload.uid, target);
-      if (!connectHosts.includes(`${payload.host}:${payload.port}`))
+      if (!connectHosts.includes(`${payload.host}:${payload.port}`)) {
         connectHosts.push(`${payload.host}:${payload.port}`);
+      }
       socksProxy.socketConnected({ uid: payload.uid, host: target.localAddress, port: target.localPort });
     });
   });

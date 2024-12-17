@@ -33,8 +33,9 @@ export class SnapshotServer {
 
   serveSnapshot(pathname: string, searchParams: URLSearchParams, snapshotUrl: string): Response {
     const snapshot = this._snapshot(pathname.substring('/snapshot'.length), searchParams);
-    if (!snapshot)
+    if (!snapshot) {
       return new Response(null, { status: 404 });
+    }
 
     const renderedSnapshot = snapshot.render();
     this._snapshotIds.set(snapshotUrl, snapshot);
@@ -44,8 +45,9 @@ export class SnapshotServer {
   async serveClosestScreenshot(pathname: string, searchParams: URLSearchParams): Promise<Response> {
     const snapshot = this._snapshot(pathname.substring('/closest-screenshot'.length), searchParams);
     const sha1 = snapshot?.closestScreenshot();
-    if (!sha1)
+    if (!sha1) {
       return new Response(null, { status: 404 });
+    }
     return new Response(await this._resourceLoader(sha1));
   }
 
@@ -80,27 +82,32 @@ export class SnapshotServer {
     let resource: ResourceSnapshot | undefined;
     const snapshot = this._snapshotIds.get(snapshotUrl)!;
     for (const requestUrl of requestUrlAlternatives) {
-      resource = snapshot?.resourceByUrl(removeHash(requestUrl), method);
-      if (resource)
+      resource = snapshot.resourceByUrl(removeHash(requestUrl), method);
+      if (resource) {
         break;
+      }
     }
-    if (!resource)
+    if (!resource) {
       return new Response(null, { status: 404 });
+    }
 
     const sha1 = resource.response.content._sha1;
     const content = sha1 ? await this._resourceLoader(sha1) || new Blob([]) : new Blob([]);
 
     let contentType = resource.response.content.mimeType;
     const isTextEncoding = /^text\/|^application\/(javascript|json)/.test(contentType);
-    if (isTextEncoding && !contentType.includes('charset'))
+    if (isTextEncoding && !contentType.includes('charset')) {
       contentType = `${contentType}; charset=utf-8`;
+    }
 
     const headers = new Headers();
     // "x-unknown" in the har means "no content type".
-    if (contentType !== 'x-unknown')
+    if (contentType !== 'x-unknown') {
       headers.set('Content-Type', contentType);
-    for (const { name, value } of resource.response.headers)
+    }
+    for (const { name, value } of resource.response.headers) {
       headers.set(name, value);
+    }
     headers.delete('Content-Encoding');
     headers.delete('Access-Control-Allow-Origin');
     headers.set('Access-Control-Allow-Origin', '*');

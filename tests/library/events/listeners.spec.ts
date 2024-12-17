@@ -25,8 +25,12 @@ import { test, expect } from '@playwright/test';
 
 const listener = () => {};
 const listener2 = () => {};
-const listener3 = () => { return 0; };
-const listener4 = () => { return 1; };
+const listener3 = () => {
+  return 0;
+};
+const listener4 = () => {
+  return 1;
+};
 
 class TestStream extends EventEmitter {}
 

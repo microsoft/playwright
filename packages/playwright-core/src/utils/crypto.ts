@@ -33,8 +33,9 @@ function encodeBase128(value: number): Buffer {
   do {
     let byte = value & 0x7f;
     value >>>= 7;
-    if (bytes.length > 0)
+    if (bytes.length > 0) {
       byte |= 0x80;
+    }
     bytes.push(byte);
   } while (value > 0);
   return Buffer.from(bytes.reverse());
@@ -54,8 +55,9 @@ class DER {
     // Encode the second part, which could be large, using base-128 encoding if necessary
     const output = [encodeBase128(40 * parts[0] + parts[1])];
 
-    for (let i = 2; i < parts.length; i++)
+    for (let i = 2; i < parts.length; i++) {
       output.push(encodeBase128(parts[i]));
+    }
 
 
     return this._encode(0x06, Buffer.concat(output));

@@ -92,8 +92,9 @@ it('should click the button with offset with page scale', async ({ browser, serv
   await page.click('button', { position: { x: 20, y: 10 } });
   expect(await page.evaluate('result')).toBe('Clicked');
   const expectCloseTo = (expected: number, actual: number) => {
-    if (Math.abs(expected - actual) > 2)
+    if (Math.abs(expected - actual) > 2) {
       throw new Error(`Expected: ${expected}, received: ${actual}`);
+    }
   };
   // Expect 20;10 + 8px of border in each direction. Allow some delta as different
   // browsers round up or down differently during css -> dip -> css conversion.

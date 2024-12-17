@@ -32,8 +32,9 @@ export class FailureTracker {
 
   onTestEnd(test: TestCase, result: TestResult) {
     // Test is considered failing after the last retry.
-    if (test.outcome() === 'unexpected' && test.results.length > test.retries)
+    if (test.outcome() === 'unexpected' && test.results.length > test.retries) {
       ++this._failureCount;
+    }
   }
 
   onWorkerError() {

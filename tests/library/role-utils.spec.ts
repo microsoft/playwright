@@ -59,11 +59,13 @@ for (let range = 0; range <= ranges.length; range++) {
         constructor(data) {
           self.steps = [];
           for (const step of data.steps) {
-            if (!step.test.ATK)
+            if (!step.test.ATK) {
               continue;
+            }
             for (const atk of step.test.ATK) {
-              if (atk[0] !== 'property' || (atk[1] !== 'name' && atk[1] !== 'description') || atk[2] !== 'is' || typeof atk[3] !== 'string')
+              if (atk[0] !== 'property' || (atk[1] !== 'name' && atk[1] !== 'description') || atk[2] !== 'is' || typeof atk[3] !== 'string') {
                 continue;
+              }
               self.steps.push({ selector: '#' + step.element, property: atk[1], value: atk[3] });
             }
           }
@@ -74,11 +76,13 @@ for (let range = 0; range <= ranges.length; range++) {
     const testDir = asset('wpt/accname/manual');
     const testFiles = fs.readdirSync(testDir, { withFileTypes: true }).filter(e => e.isFile() && e.name.endsWith('.html')).map(e => e.name);
     for (const testFile of testFiles) {
-      if (skipped.includes(testFile))
+      if (skipped.includes(testFile)) {
         continue;
+      }
       const included = (range === 0 || testFile >= ranges[range - 1]) && (range === ranges.length || testFile < ranges[range]);
-      if (!included)
+      if (!included) {
         continue;
+      }
       await test.step(testFile, async () => {
         await page.goto(server.PREFIX + `/wpt/accname/manual/` + testFile);
         // Use $eval to force injected script.
@@ -86,16 +90,18 @@ for (let range = 0; range <= ranges.length; range++) {
           const result = [];
           for (const step of (window as any).steps) {
             const element = document.querySelector(step.selector);
-            if (!element)
+            if (!element) {
               throw new Error(`Unable to resolve "${step.selector}"`);
+            }
             const injected = (window as any).__injectedScript;
             const received = step.property === 'name' ? injected.utils.getElementAccessibleName(element) : injected.utils.getElementAccessibleDescription(element);
             result.push({ selector: step.selector, expected: step.value, received });
           }
           return result;
         });
-        for (const { selector, expected, received } of result)
+        for (const { selector, expected, received } of result) {
           expect.soft(received, `checking "${selector}" in ${testFile}`).toBe(expected);
+        }
       });
     }
   });
@@ -158,8 +164,9 @@ test('wpt accname non-manual', async ({ page, asset, server }) => {
         return result;
       });
       for (const { title, expected, received } of result) {
-        if (!failing.includes(title))
+        if (!failing.includes(title)) {
           expect.soft(received, `${testFile}: ${title}`).toBe(expected);
+        }
       }
     });
   }
@@ -178,8 +185,9 @@ test('axe-core implicit-role', async ({ page, asset, server }) => {
       // Use $eval to force injected script.
       const received = await page.$eval('body', (_, selector) => {
         const element = document.querySelector(selector);
-        if (!element)
+        if (!element) {
           throw new Error(`Unable to resolve "${selector}"`);
+        }
         return (window as any).__injectedScript.utils.getAriaRole(element);
       }, testCase.target);
       expect.soft(received, `checking ${JSON.stringify(testCase)}`).toBe(testCase.role);
@@ -211,8 +219,9 @@ test('axe-core accessible-text', async ({ page, asset, server }) => {
         return selectors.map(selector => {
           const injected = (window as any).__injectedScript;
           const element = injected.querySelector(injected.parseSelector('css=' + selector), document, false);
-          if (!element)
+          if (!element) {
             throw new Error(`Unable to resolve "${selector}"`);
+          }
           return injected.utils.getElementAccessibleName(element);
         });
       }, targets);

@@ -22,8 +22,9 @@ const profileDir = process.env.PWTEST_PROFILE_DIR || '';
 let session: import('inspector').Session;
 
 export async function startProfiling() {
-  if (!profileDir)
+  if (!profileDir) {
     return;
+  }
 
   session = new (require('inspector').Session)();
   session.connect();
@@ -35,8 +36,9 @@ export async function startProfiling() {
 }
 
 export async function stopProfiling(profileName: string) {
-  if (!profileDir)
+  if (!profileDir) {
     return;
+  }
 
   await new Promise<void>(f => session.post('Profiler.stop', (err, { profile }) => {
     if (!err) {

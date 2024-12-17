@@ -97,7 +97,9 @@ it.describe('runFor', () => {
 
   it('triggers event when some throw', async ({ page, calls }) => {
     await page.evaluate(async () => {
-      setTimeout(() => { throw new Error(); }, 100);
+      setTimeout(() => {
+        throw new Error();
+      }, 100);
       setTimeout(window.stub, 120);
     });
     await expect(page.clock.runFor(120)).rejects.toThrow();

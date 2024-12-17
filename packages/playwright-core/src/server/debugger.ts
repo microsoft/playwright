@@ -39,8 +39,9 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
     this._context = context;
     (this._context as any)[symbol] = this;
     this._enabled = debugMode() === 'inspector';
-    if (this._enabled)
+    if (this._enabled) {
       this.pauseOnNextStatement();
+    }
     context.instrumentation.addListener(this, context);
     this._context.once(BrowserContext.Events.Close, () => {
       this._context.instrumentation.removeListener(this);
@@ -53,10 +54,12 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (this._muted)
+    if (this._muted) {
       return;
-    if (shouldPauseOnCall(sdkObject, metadata) || (this._pauseOnNextStatement && shouldPauseBeforeStep(metadata)))
+    }
+    if (shouldPauseOnCall(sdkObject, metadata) || (this._pauseOnNextStatement && shouldPauseBeforeStep(metadata))) {
       await this.pause(sdkObject, metadata);
+    }
   }
 
   async _doSlowMo() {
@@ -64,20 +67,24 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (this._slowMo && shouldSlowMo(metadata))
+    if (this._slowMo && shouldSlowMo(metadata)) {
       await this._doSlowMo();
+    }
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (this._muted)
+    if (this._muted) {
       return;
-    if (this._enabled && this._pauseOnNextStatement)
+    }
+    if (this._enabled && this._pauseOnNextStatement) {
       await this.pause(sdkObject, metadata);
+    }
   }
 
   async pause(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (this._muted)
+    if (this._muted) {
       return;
+    }
     this._enabled = true;
     metadata.pauseStartTime = monotonicTime();
     const result = new Promise<void>(resolve => {
@@ -88,8 +95,9 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
   }
 
   resume(step: boolean) {
-    if (!this.isPaused())
+    if (!this.isPaused()) {
       return;
+    }
 
     this._pauseOnNextStatement = step;
     const endTime = monotonicTime();
@@ -106,36 +114,43 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
   }
 
   isPaused(metadata?: CallMetadata): boolean {
-    if (metadata)
+    if (metadata) {
       return this._pausedCallsMetadata.has(metadata);
+    }
     return !!this._pausedCallsMetadata.size;
   }
 
   pausedDetails(): { metadata: CallMetadata, sdkObject: SdkObject }[] {
     const result: { metadata: CallMetadata, sdkObject: SdkObject }[] = [];
-    for (const [metadata, { sdkObject }] of this._pausedCallsMetadata)
+    for (const [metadata, { sdkObject }] of this._pausedCallsMetadata) {
       result.push({ metadata, sdkObject });
+    }
     return result;
   }
 }
 
 function shouldPauseOnCall(sdkObject: SdkObject, metadata: CallMetadata): boolean {
-  if (sdkObject.attribution.playwright.options.isServer)
+  if (sdkObject.attribution.playwright.options.isServer) {
     return false;
-  if (!sdkObject.attribution.browser?.options.headful && !isUnderTest())
+  }
+  if (!sdkObject.attribution.browser?.options.headful && !isUnderTest()) {
     return false;
+  }
   return metadata.method === 'pause';
 }
 
 function shouldPauseBeforeStep(metadata: CallMetadata): boolean {
   // Don't stop on internal.
-  if (!metadata.apiName)
+  if (!metadata.apiName) {
     return false;
+  }
   // Always stop on 'close'
-  if (metadata.method === 'close')
+  if (metadata.method === 'close') {
     return true;
-  if (metadata.method === 'waitForSelector' || metadata.method === 'waitForEventInfo')
-    return false;  // Never stop on those, primarily for the test harness.
+  }
+  if (metadata.method === 'waitForSelector' || metadata.method === 'waitForEventInfo') {
+    return false;
+  }  // Never stop on those, primarily for the test harness.
   const step = metadata.type + '.' + metadata.method;
   // Stop before everything that generates snapshot. But don't stop before those marked as pausesBeforeInputActions
   // since we stop in them on a separate instrumentation signal.

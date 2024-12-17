@@ -309,15 +309,18 @@ it('should work with large DOM', async ({ page }) => {
   const measure = false;
   for (const selector of selectors) {
     const time1 = Date.now();
-    for (let i = 0; i < (measure ? 10 : 1); i++)
+    for (let i = 0; i < (measure ? 10 : 1); i++) {
       await page.$$eval(selector, els => els.length);
-    if (measure)
+    }
+    if (measure) {
       console.log(`pw("${selector}"): ` + (Date.now() - time1));
+    }
 
     if (measure && !selector.includes('text')) {
       const time2 = Date.now();
-      for (let i = 0; i < (measure ? 10 : 1); i++)
+      for (let i = 0; i < (measure ? 10 : 1); i++) {
         await page.evaluate(selector => document.querySelectorAll(selector).length, selector);
+      }
       console.log(`qs("${selector}"): ` + (Date.now() - time2));
     }
   }

@@ -44,12 +44,13 @@ async function setupWS(target: Page | Frame, port: number, binaryType: 'blob' | 
     window.ws.addEventListener('error', event => window.log.push(`error`));
     window.ws.addEventListener('message', async event => {
       let data;
-      if (typeof event.data === 'string')
+      if (typeof event.data === 'string') {
         data = event.data;
-      else if (event.data instanceof Blob)
+      } else if (event.data instanceof Blob) {
         data = 'blob:' + await event.data.text();
-      else
+      } else {
         data = 'arraybuffer:' + await (new Blob([event.data])).text();
+      }
       window.log.push(`message: data=${data} origin=${event.origin} lastEventId=${event.lastEventId}`);
     });
     window.wsOpened = new Promise(f => window.ws.addEventListener('open', () => f()));

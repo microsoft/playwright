@@ -79,8 +79,9 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
       this._parent._dispatchers.set(guid, this);
     }
 
-    if (this._parent)
+    if (this._parent) {
       this._connection.sendCreate(this._parent, type, guid, initializer);
+    }
     this._connection.maybeDisposeStaleDispatchers(this._gcBucket);
   }
 
@@ -93,8 +94,9 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
   }
 
   adopt(child: DispatcherScope) {
-    if (child._parent === this)
+    if (child._parent === this) {
       return;
+    }
     const oldParent = child._parent!;
     oldParent._dispatchers.delete(child._guid);
     this._dispatchers.set(child._guid, child);
@@ -107,16 +109,18 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
     try {
       return await this._openScope.race(commandPromise);
     } catch (e) {
-      if (callMetadata.potentiallyClosesScope && isTargetClosedError(e))
+      if (callMetadata.potentiallyClosesScope && isTargetClosedError(e)) {
         return await commandPromise;
+      }
       throw e;
     }
   }
 
   _dispatchEvent<T extends keyof channels.EventsTraits<ChannelType>>(method: T, params?: channels.EventsTraits<ChannelType>[T]) {
     if (this._disposed) {
-      if (isUnderTest())
+      if (isUnderTest()) {
         throw new Error(`${this._guid} is sending "${String(method)}" event after being disposed`);
+      }
       // Just ignore this event outside of tests.
       return;
     }
@@ -144,8 +148,9 @@ export class Dispatcher<Type extends { guid: string }, ChannelType, ParentScopeT
     this._connection._dispatchers.delete(this._guid);
 
     // Dispose all children.
-    for (const dispatcher of [...this._dispatchers.values()])
+    for (const dispatcher of [...this._dispatchers.values()]) {
       dispatcher._disposeRecursively(error);
+    }
     this._dispatchers.clear();
     delete (this._object as any)[dispatcherSymbol];
     this._openScope.close(error);
@@ -217,10 +222,12 @@ export class DispatcherConnection {
     if (arg && typeof arg === 'object' && typeof arg.guid === 'string') {
       const guid = arg.guid;
       const dispatcher = this._dispatchers.get(guid);
-      if (!dispatcher)
+      if (!dispatcher) {
         throw new ValidationError(`${path}: no object with guid ${guid}`);
-      if (names !== '*' && !names.includes(dispatcher._type))
+      }
+      if (names !== '*' && !names.includes(dispatcher._type)) {
         throw new ValidationError(`${path}: object with guid ${guid} has type ${dispatcher._type}, expected ${names.toString()}`);
+      }
       return dispatcher;
     }
     throw new ValidationError(`${path}: expected guid for ${names.toString()}`);
@@ -228,8 +235,9 @@ export class DispatcherConnection {
 
   private _tChannelImplToWire(names: '*' | string[], arg: any, path: string, context: ValidatorContext): any {
     if (arg instanceof Dispatcher)  {
-      if (names !== '*' && !names.includes(arg._type))
+      if (names !== '*' && !names.includes(arg._type)) {
         throw new ValidationError(`${path}: dispatcher with guid ${arg._guid} has type ${arg._type}, expected ${names.toString()}`);
+      }
       return { guid: arg._guid };
     }
     throw new ValidationError(`${path}: expected dispatcher ${names.toString()}`);
@@ -249,15 +257,17 @@ export class DispatcherConnection {
   maybeDisposeStaleDispatchers(gcBucket: string) {
     const maxDispatchers = maxDispatchersForBucket(gcBucket);
     const list = this._dispatchersByBucket.get(gcBucket);
-    if (!list || list.size <= maxDispatchers)
+    if (!list || list.size <= maxDispatchers) {
       return;
+    }
     const dispatchersArray = [...list];
     const disposeCount = (maxDispatchers / 10) | 0;
     this._dispatchersByBucket.set(gcBucket, new Set(dispatchersArray.slice(disposeCount)));
     for (let i = 0; i < disposeCount; ++i) {
       const d = this._dispatchers.get(dispatchersArray[i]);
-      if (!d)
+      if (!d) {
         continue;
+      }
       d._dispose('gc');
     }
   }
@@ -276,8 +286,9 @@ export class DispatcherConnection {
       const validator = findValidator(dispatcher._type, method, 'Params');
       validParams = validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._isLocal ? 'buffer' : 'fromBase64' });
       validMetadata = metadataValidator(metadata, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._isLocal ? 'buffer' : 'fromBase64' });
-      if (typeof (dispatcher as any)[method] !== 'function')
+      if (typeof (dispatcher as any)[method] !== 'function') {
         throw new Error(`Mismatching dispatcher: "${dispatcher._type}" does not implement "${method}"`);
+      }
     } catch (e) {
       this.onmessage({ id, error: serializeError(e) });
       return;
@@ -291,8 +302,8 @@ export class DispatcherConnection {
       internal: validMetadata.internal,
       stepId: validMetadata.stepId,
       objectId: sdkObject?.guid,
-      pageId: sdkObject?.attribution?.page?.guid,
-      frameId: sdkObject?.attribution?.frame?.guid,
+      pageId: sdkObject?.attribution.page?.guid,
+      frameId: sdkObject?.attribution.frame?.guid,
       startTime: monotonicTime(),
       endTime: 0,
       type: dispatcher._type,
@@ -338,8 +349,9 @@ export class DispatcherConnection {
     } catch (e) {
       if (isTargetClosedError(e) && sdkObject) {
         const reason = closeReason(sdkObject);
-        if (reason)
+        if (reason) {
           rewriteErrorMessage(e, reason);
+        }
       } else if (isProtocolError(e)) {
         if (e.type === 'closed') {
           const reason = sdkObject ? closeReason(sdkObject) : undefined;
@@ -356,8 +368,9 @@ export class DispatcherConnection {
       await sdkObject?.instrumentation.onAfterCall(sdkObject, callMetadata);
     }
 
-    if (response.error)
+    if (response.error) {
       response.log = compressCallLog(callMetadata.log);
+    }
     this.onmessage(response);
   }
 }

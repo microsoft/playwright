@@ -113,13 +113,15 @@ const printReceivedCallsNegative = (
   isOnlyCall: boolean,
   iExpectedCall?: number,
 ) => {
-  if (indexedCalls.length === 0)
+  if (indexedCalls.length === 0) {
     return '';
+  }
 
 
   const label = 'Received:     ';
-  if (isOnlyCall)
+  if (isOnlyCall) {
     return `${label + printReceivedArgs(indexedCalls[0], expected)}\n`;
+  }
 
 
   const printAligned = getRightAlignedPrinter(label);
@@ -142,8 +144,9 @@ const printExpectedReceivedCallsPositive = (
   iExpectedCall?: number,
 ) => {
   const expectedLine = `Expected: ${printExpectedArgs(expected)}\n`;
-  if (indexedCalls.length === 0)
+  if (indexedCalls.length === 0) {
     return expectedLine;
+  }
 
 
   const label = 'Received: ';
@@ -180,11 +183,13 @@ const printExpectedReceivedCallsPositive = (
           }
         }
 
-        if (i < expected.length)
+        if (i < expected.length) {
           lines.push(`${EXPECTED_COLOR(`- ${stringify(expected[i])}`)},`);
+        }
 
-        if (i < received.length)
+        if (i < received.length) {
           lines.push(`${RECEIVED_COLOR(`+ ${stringify(received[i])}`)},`);
+        }
 
       }
 
@@ -223,8 +228,9 @@ const printDiffCall = (
   received
       .map((arg, i) => {
         if (i < expected.length) {
-          if (isEqualValue(expected[i], arg))
+          if (isEqualValue(expected[i], arg)) {
             return `${indentation}  ${printCommon(arg)},`;
+          }
 
 
           if (isLineDiffableArg(expected[i], arg)) {
@@ -269,38 +275,44 @@ const isLineDiffableArg = (expected: unknown, received: unknown): boolean => {
   const expectedType = getType(expected);
   const receivedType = getType(received);
 
-  if (expectedType !== receivedType)
+  if (expectedType !== receivedType) {
     return false;
+  }
 
 
-  if (isPrimitive(expected))
+  if (isPrimitive(expected)) {
     return false;
+  }
 
 
   if (
     expectedType === 'date' ||
     expectedType === 'function' ||
     expectedType === 'regexp'
-  )
+  ) {
     return false;
+  }
 
 
-  if (expected instanceof Error && received instanceof Error)
+  if (expected instanceof Error && received instanceof Error) {
     return false;
+  }
 
 
   if (
     expectedType === 'object' &&
     typeof (expected as any).asymmetricMatch === 'function'
-  )
+  ) {
     return false;
+  }
 
 
   if (
     receivedType === 'object' &&
     typeof (received as any).asymmetricMatch === 'function'
-  )
+  ) {
     return false;
+  }
 
 
   return true;
@@ -326,12 +338,14 @@ const printReceivedResults = (
   isOnlyCall: boolean,
   iExpectedCall?: number,
 ) => {
-  if (indexedResults.length === 0)
+  if (indexedResults.length === 0) {
     return '';
+  }
 
 
-  if (isOnlyCall && (iExpectedCall === 0 || iExpectedCall === undefined))
+  if (isOnlyCall && (iExpectedCall === 0 || iExpectedCall === undefined)) {
     return `${label + printResult(indexedResults[0][1], expected)}\n`;
+  }
 
 
   const printAligned = getRightAlignedPrinter(label);
@@ -381,8 +395,9 @@ const createToBeCalledMatcher = (
         `Received number of calls: ${printReceived(count)}\n\n` +
         calls
             .reduce((lines: Array<string>, args: any, i: number) => {
-              if (lines.length < PRINT_LIMIT)
+              if (lines.length < PRINT_LIMIT) {
                 lines.push(`${i + 1}: ${printReceivedArgs(args)}`);
+              }
 
 
               return lines;
@@ -429,8 +444,9 @@ const createToReturnMatcher = (
         `Received number of returns: ${printReceived(count)}\n\n` +
         received.mock.results
             .reduce((lines: Array<string>, result: any, i: number) => {
-              if (result.type === 'return' && lines.length < PRINT_LIMIT)
+              if (result.type === 'return' && lines.length < PRINT_LIMIT) {
                 lines.push(`${i + 1}: ${printReceived(result.value)}`);
+              }
 
 
               return lines;
@@ -566,8 +582,9 @@ const createToBeCalledWithMatcher = (
         const indexedCalls: Array<IndexedCall> = [];
         let i = 0;
         while (i < calls.length && indexedCalls.length < PRINT_LIMIT) {
-          if (isEqualCall(expected, calls[i]))
+          if (isEqualCall(expected, calls[i])) {
             indexedCalls.push([i, calls[i]]);
+          }
 
           i += 1;
         }
@@ -635,8 +652,9 @@ const createToReturnWithMatcher = (
         const indexedResults: Array<IndexedResult> = [];
         let i = 0;
         while (i < results.length && indexedResults.length < PRINT_LIMIT) {
-          if (isEqualReturn(expected, results[i]))
+          if (isEqualReturn(expected, results[i])) {
             indexedResults.push([i, results[i]]);
+          }
 
           i += 1;
         }
@@ -738,11 +756,13 @@ const createLastCalledWithMatcher = (
           if (iLast > 0) {
             let i = iLast - 1;
             // Is there a preceding call that is equal to expected args?
-            while (i >= 0 && !isEqualCall(expected, calls[i]))
+            while (i >= 0 && !isEqualCall(expected, calls[i])) {
               i -= 1;
+            }
 
-            if (i < 0)
-              i = iLast - 1; // otherwise, preceding call
+            if (i < 0) {
+              i = iLast - 1;
+            } // otherwise, preceding call
 
 
             indexedCalls.push([i, calls[i]]);
@@ -821,11 +841,13 @@ const createLastReturnedMatcher = (
           if (iLast > 0) {
             let i = iLast - 1;
             // Is there a preceding result that is equal to expected value?
-            while (i >= 0 && !isEqualReturn(expected, results[i]))
+            while (i >= 0 && !isEqualReturn(expected, results[i])) {
               i -= 1;
+            }
 
-            if (i < 0)
-              i = iLast - 1; // otherwise, preceding result
+            if (i < 0) {
+              i = iLast - 1;
+            } // otherwise, preceding result
 
 
             indexedResults.push([i, results[i]]);
@@ -892,12 +914,14 @@ const createNthCalledWithMatcher = (
         // Display preceding and following calls,
         // in case assertions fails because index is off by one.
         const indexedCalls: Array<IndexedCall> = [];
-        if (iNth - 1 >= 0)
+        if (iNth - 1 >= 0) {
           indexedCalls.push([iNth - 1, calls[iNth - 1]]);
+        }
 
         indexedCalls.push([iNth, calls[iNth]]);
-        if (iNth + 1 < length)
+        if (iNth + 1 < length) {
           indexedCalls.push([iNth + 1, calls[iNth + 1]]);
+        }
 
 
         return (
@@ -927,11 +951,13 @@ const createNthCalledWithMatcher = (
           if (iNth - 1 >= 0) {
             let i = iNth - 1;
             // Is there a preceding call that is equal to expected args?
-            while (i >= 0 && !isEqualCall(expected, calls[i]))
+            while (i >= 0 && !isEqualCall(expected, calls[i])) {
               i -= 1;
+            }
 
-            if (i < 0)
-              i = iNth - 1; // otherwise, adjacent call
+            if (i < 0) {
+              i = iNth - 1;
+            } // otherwise, adjacent call
 
 
             indexedCalls.push([i, calls[i]]);
@@ -940,11 +966,13 @@ const createNthCalledWithMatcher = (
           if (iNth + 1 < length) {
             let i = iNth + 1;
             // Is there a following call that is equal to expected args?
-            while (i < length && !isEqualCall(expected, calls[i]))
+            while (i < length && !isEqualCall(expected, calls[i])) {
               i += 1;
+            }
 
-            if (i >= length)
-              i = iNth + 1; // otherwise, adjacent call
+            if (i >= length) {
+              i = iNth + 1;
+            } // otherwise, adjacent call
 
 
             indexedCalls.push([i, calls[i]]);
@@ -953,11 +981,13 @@ const createNthCalledWithMatcher = (
           // The number of received calls is fewer than the expected number.
           let i = length - 1;
           // Is there a call that is equal to expected args?
-          while (i >= 0 && !isEqualCall(expected, calls[i]))
+          while (i >= 0 && !isEqualCall(expected, calls[i])) {
             i -= 1;
+          }
 
-          if (i < 0)
-            i = length - 1; // otherwise, last call
+          if (i < 0) {
+            i = length - 1;
+          } // otherwise, last call
 
 
           indexedCalls.push([i, calls[i]]);
@@ -1017,12 +1047,14 @@ const createNthReturnedWithMatcher = (
         // Display preceding and following results,
         // in case assertions fails because index is off by one.
         const indexedResults: Array<IndexedResult> = [];
-        if (iNth - 1 >= 0)
+        if (iNth - 1 >= 0) {
           indexedResults.push([iNth - 1, results[iNth - 1]]);
+        }
 
         indexedResults.push([iNth, results[iNth]]);
-        if (iNth + 1 < length)
+        if (iNth + 1 < length) {
           indexedResults.push([iNth + 1, results[iNth + 1]]);
+        }
 
 
         return (
@@ -1055,11 +1087,13 @@ const createNthReturnedWithMatcher = (
           if (iNth - 1 >= 0) {
             let i = iNth - 1;
             // Is there a preceding result that is equal to expected value?
-            while (i >= 0 && !isEqualReturn(expected, results[i]))
+            while (i >= 0 && !isEqualReturn(expected, results[i])) {
               i -= 1;
+            }
 
-            if (i < 0)
-              i = iNth - 1; // otherwise, adjacent result
+            if (i < 0) {
+              i = iNth - 1;
+            } // otherwise, adjacent result
 
 
             indexedResults.push([i, results[i]]);
@@ -1068,11 +1102,13 @@ const createNthReturnedWithMatcher = (
           if (iNth + 1 < length) {
             let i = iNth + 1;
             // Is there a following result that is equal to expected value?
-            while (i < length && !isEqualReturn(expected, results[i]))
+            while (i < length && !isEqualReturn(expected, results[i])) {
               i += 1;
+            }
 
-            if (i >= length)
-              i = iNth + 1; // otherwise, adjacent result
+            if (i >= length) {
+              i = iNth + 1;
+            } // otherwise, adjacent result
 
 
             indexedResults.push([i, results[i]]);
@@ -1081,11 +1117,13 @@ const createNthReturnedWithMatcher = (
           // The number of received calls is fewer than the expected number.
           let i = length - 1;
           // Is there a result that is equal to expected value?
-          while (i >= 0 && !isEqualReturn(expected, results[i]))
+          while (i >= 0 && !isEqualReturn(expected, results[i])) {
             i -= 1;
+          }
 
-          if (i < 0)
-            i = length - 1; // otherwise, last result
+          if (i < 0) {
+            i = length - 1;
+          } // otherwise, last result
 
 
           indexedResults.push([i, results[i]]);

@@ -107,11 +107,13 @@ export function ansi2html(text: string, defaultColors?: { bg: string, fg: string
     } else if (text) {
       const styleCopy = { ...style };
       const color = reverse ? bg : fg;
-      if (color !== undefined)
+      if (color !== undefined) {
         styleCopy['color'] = color;
+      }
       const backgroundColor = reverse ? fg : bg;
-      if (backgroundColor !== undefined)
+      if (backgroundColor !== undefined) {
         styleCopy['background-color'] = backgroundColor;
+      }
       tokens.push(`<span style="${styleBody(styleCopy)}">${escapeHTML(text)}</span>`);
     }
   }

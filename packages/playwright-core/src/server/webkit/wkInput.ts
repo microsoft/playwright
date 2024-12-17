@@ -25,25 +25,32 @@ import type { Page } from '../page';
 function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
   // From Source/WebKit/Shared/WebEvent.h
   let mask = 0;
-  if (modifiers.has('Shift'))
+  if (modifiers.has('Shift')) {
     mask |= 1;
-  if (modifiers.has('Control'))
+  }
+  if (modifiers.has('Control')) {
     mask |= 2;
-  if (modifiers.has('Alt'))
+  }
+  if (modifiers.has('Alt')) {
     mask |= 4;
-  if (modifiers.has('Meta'))
+  }
+  if (modifiers.has('Meta')) {
     mask |= 8;
+  }
   return mask;
 }
 
 function toButtonsMask(buttons: Set<types.MouseButton>): number {
   let mask = 0;
-  if (buttons.has('left'))
+  if (buttons.has('left')) {
     mask |= 1;
-  if (buttons.has('right'))
+  }
+  if (buttons.has('right')) {
     mask |= 2;
-  if (buttons.has('middle'))
+  }
+  if (buttons.has('middle')) {
     mask |= 4;
+  }
   return mask;
 }
 
@@ -62,14 +69,16 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
     const parts = [];
     for (const modifier of (['Shift', 'Control', 'Alt', 'Meta']) as types.KeyboardModifier[]) {
-      if (modifiers.has(modifier))
+      if (modifiers.has(modifier)) {
         parts.push(modifier);
+      }
     }
     parts.push(code);
     const shortcut = parts.join('+');
     let commands = macEditingCommands[shortcut];
-    if (isString(commands))
+    if (isString(commands)) {
       commands = [commands];
+    }
     await this._pageProxySession.send('Input.dispatchKeyEvent', {
       type: 'keyDown',
       modifiers: toModifiersMask(modifiers),
@@ -149,8 +158,9 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async wheel(x: number, y: number, buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, deltaX: number, deltaY: number): Promise<void> {
-    if (this._page?._browserContext._options.isMobile)
+    if (this._page?._browserContext._options.isMobile) {
       throw new Error('Mouse wheel is not supported in mobile WebKit');
+    }
     await this._session!.send('Page.updateScrollingState');
     // Wheel events hit the compositor first, so wait one frame for it to be synced.
     await this._page!.mainFrame().evaluateExpression(`new Promise(requestAnimationFrame)`, { world: 'utility' });

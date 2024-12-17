@@ -41,8 +41,9 @@ export function runDriver() {
   // Certain Language Binding JSON parsers (e.g. .NET) do not like strings with lone surrogates.
   const isJavaScriptLanguageBinding = !process.env.PW_LANG_NAME || process.env.PW_LANG_NAME === 'javascript';
   const replacer = !isJavaScriptLanguageBinding && (String.prototype as any).toWellFormed ? (key: string, value: any): any => {
-    if (typeof value === 'string')
+    if (typeof value === 'string') {
       return value.toWellFormed();
+    }
     return value;
   } : undefined;
   dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message, replacer));
@@ -85,8 +86,9 @@ export async function runServer(options: RunServerOptions) {
 
 export async function launchBrowserServer(browserName: string, configFile?: string) {
   let options: LaunchServerOptions = {};
-  if (configFile)
+  if (configFile) {
     options = JSON.parse(fs.readFileSync(configFile).toString());
+  }
   const browserType = (playwright as any)[browserName] as BrowserType;
   const server = await browserType.launchServer(options);
   console.log(server.wsEndpoint());

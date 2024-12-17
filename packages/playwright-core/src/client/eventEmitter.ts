@@ -48,8 +48,9 @@ export class EventEmitter implements EventEmitterType {
   }
 
   setMaxListeners(n: number): this {
-    if (typeof n !== 'number' || n < 0 || Number.isNaN(n))
+    if (typeof n !== 'number' || n < 0 || Number.isNaN(n)) {
       throw new RangeError('The value of "n" is out of range. It must be a non-negative number. Received ' + n + '.');
+    }
     this._maxListeners = n;
     return this;
   }
@@ -60,28 +61,33 @@ export class EventEmitter implements EventEmitterType {
 
   emit(type: EventType, ...args: any[]): boolean {
     const events = this._events;
-    if (events === undefined)
+    if (events === undefined) {
       return false;
+    }
 
-    const handler = events?.[type];
-    if (handler === undefined)
+    const handler = events[type];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (handler === undefined) {
       return false;
+    }
 
     if (typeof handler === 'function') {
       this._callHandler(type, handler, args);
     } else {
       const len = handler.length;
       const listeners = handler.slice();
-      for (let i = 0; i < len; ++i)
+      for (let i = 0; i < len; ++i) {
         this._callHandler(type, listeners[i], args);
+      }
     }
     return true;
   }
 
   private _callHandler(type: EventType, handler: Listener, args: any[]): void {
     const promise = Reflect.apply(handler, this, args);
-    if (!(promise instanceof Promise))
+    if (!(promise instanceof Promise)) {
       return;
+    }
     let set = this._pendingHandlers.get(type);
     if (!set) {
       set = new Set();
@@ -89,10 +95,11 @@ export class EventEmitter implements EventEmitterType {
     }
     set.add(promise);
     promise.catch(e => {
-      if (this._rejectionHandler)
+      if (this._rejectionHandler) {
         this._rejectionHandler(e);
-      else
+      } else {
         throw e;
+      }
     }).finally(() => set.delete(promise));
   }
 
@@ -114,6 +121,7 @@ export class EventEmitter implements EventEmitterType {
     } else {
       // To avoid recursion in the case that type === "newListener"! Before
       // adding it to the listeners, first emit "newListener".
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (events.newListener !== undefined) {
         this.emit('newListener', type, unwrapListener(listener));
 
@@ -183,20 +191,25 @@ export class EventEmitter implements EventEmitterType {
     checkListener(listener);
 
     const events = this._events;
-    if (events === undefined)
+    if (events === undefined) {
       return this;
+    }
 
     const list = events[type];
-    if (list === undefined)
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (list === undefined) {
       return this;
+    }
 
     if (list === listener || (list as any).listener === listener) {
       if (--this._eventsCount === 0) {
         this._events = Object.create(null);
       } else {
         delete events[type];
-        if (events.removeListener)
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (events.removeListener) {
           this.emit('removeListener', type, (list as any).listener ?? listener);
+        }
       }
     } else if (typeof list !== 'function') {
       let position = -1;
@@ -210,19 +223,24 @@ export class EventEmitter implements EventEmitterType {
         }
       }
 
-      if (position < 0)
+      if (position < 0) {
         return this;
+      }
 
-      if (position === 0)
+      if (position === 0) {
         list.shift();
-      else
+      } else {
         list.splice(position, 1);
+      }
 
-      if (list.length === 1)
+      if (list.length === 1) {
         events[type] = list[0];
+      }
 
-      if (events.removeListener !== undefined)
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (events.removeListener !== undefined) {
         this.emit('removeListener', type, originalListener || listener);
+      }
     }
 
     return this;
@@ -237,21 +255,24 @@ export class EventEmitter implements EventEmitterType {
   removeAllListeners(type: EventType | undefined, options: { behavior?: 'wait'|'ignoreErrors'|'default' }): Promise<void>;
   removeAllListeners(type?: string, options?: { behavior?: 'wait'|'ignoreErrors'|'default' }): this | Promise<void> {
     this._removeAllListeners(type);
-    if (!options)
+    if (!options) {
       return this;
+    }
 
     if (options.behavior === 'wait') {
       const errors: Error[] = [];
       this._rejectionHandler = error => errors.push(error);
       // eslint-disable-next-line internal-playwright/await-promise-in-class-returns
       return this._waitFor(type).then(() => {
-        if (errors.length)
+        if (errors.length) {
           throw errors[0];
+        }
       });
     }
 
-    if (options.behavior === 'ignoreErrors')
+    if (options.behavior === 'ignoreErrors') {
       this._rejectionHandler = () => {};
+    }
 
     // eslint-disable-next-line internal-playwright/await-promise-in-class-returns
     return Promise.resolve();
@@ -259,19 +280,23 @@ export class EventEmitter implements EventEmitterType {
 
   private _removeAllListeners(type?: string) {
     const events = this._events;
-    if (!events)
+    if (!events) {
       return;
+    }
 
     // not listening for removeListener, no need to emit
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!events.removeListener) {
       if (type === undefined) {
         this._events = Object.create(null);
         this._eventsCount = 0;
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       } else if (events[type] !== undefined) {
-        if (--this._eventsCount === 0)
+        if (--this._eventsCount === 0) {
           this._events = Object.create(null);
-        else
+        } else {
           delete events[type];
+        }
       }
       return;
     }
@@ -282,8 +307,9 @@ export class EventEmitter implements EventEmitterType {
       let key;
       for (let i = 0; i < keys.length; ++i) {
         key = keys[i];
-        if (key === 'removeListener')
+        if (key === 'removeListener') {
           continue;
+        }
         this._removeAllListeners(key);
       }
       this._removeAllListeners('removeListener');
@@ -296,10 +322,12 @@ export class EventEmitter implements EventEmitterType {
 
     if (typeof listeners === 'function') {
       this.removeListener(type, listeners);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     } else if (listeners !== undefined) {
       // LIFO order
-      for (let i = listeners.length - 1; i >= 0; i--)
+      for (let i = listeners.length - 1; i >= 0; i--) {
         this.removeListener(type, listeners[i]);
+      }
     }
   }
 
@@ -315,10 +343,13 @@ export class EventEmitter implements EventEmitterType {
     const events = this._events;
     if (events !== undefined) {
       const listener = events[type];
-      if (typeof listener === 'function')
+      if (typeof listener === 'function') {
         return 1;
-      if (listener !== undefined)
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (listener !== undefined) {
         return listener.length;
+      }
     }
     return 0;
   }
@@ -333,8 +364,9 @@ export class EventEmitter implements EventEmitterType {
       promises = [...(this._pendingHandlers.get(type) || [])];
     } else {
       promises = [];
-      for (const [, pending] of this._pendingHandlers)
+      for (const [, pending] of this._pendingHandlers) {
         promises.push(...pending);
+      }
     }
     await Promise.all(promises);
   }
@@ -342,23 +374,28 @@ export class EventEmitter implements EventEmitterType {
   private _listeners(target: EventEmitter, type: EventType, unwrap: boolean): Listener[] {
     const events = target._events;
 
-    if (events === undefined)
+    if (events === undefined) {
       return [];
+    }
 
     const listener = events[type];
-    if (listener === undefined)
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (listener === undefined) {
       return [];
+    }
 
-    if (typeof listener === 'function')
+    if (typeof listener === 'function') {
       return unwrap ? [unwrapListener(listener)] : [listener];
+    }
 
     return unwrap ? unwrapListeners(listener) : listener.slice();
   }
 }
 
 function checkListener(listener: any) {
-  if (typeof listener !== 'function')
+  if (typeof listener !== 'function') {
     throw new TypeError('The "listener" argument must be of type Function. Received type ' + typeof listener);
+  }
 }
 
 class OnceWrapper {
@@ -377,8 +414,9 @@ class OnceWrapper {
   }
 
   private _handle(...args: any[]) {
-    if (this._fired)
+    if (this._fired) {
       return;
+    }
     this._fired = true;
     this._eventEmitter.removeListener(this._eventType, this.wrapperFunction);
     return this._listener.apply(this._eventEmitter, args);
@@ -393,6 +431,6 @@ function unwrapListeners(arr: Listener[]): Listener[] {
   return arr.map(l => wrappedListener(l) ?? l);
 }
 
-function wrappedListener(l: Listener): Listener {
+function wrappedListener(l: Listener): Listener | undefined {
   return (l as any).listener;
 }

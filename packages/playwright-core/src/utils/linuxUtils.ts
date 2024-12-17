@@ -24,8 +24,9 @@ let osRelease: {
 } | undefined;
 
 export async function getLinuxDistributionInfo(): Promise<{ id: string, version: string } | undefined> {
-  if (process.platform !== 'linux')
+  if (process.platform !== 'linux') {
     return undefined;
+  }
   if (!osRelease && !didFailToReadOSRelease) {
     try {
       // List of /etc/os-release values for different distributions could be
@@ -44,8 +45,9 @@ export async function getLinuxDistributionInfo(): Promise<{ id: string, version:
 }
 
 export function getLinuxDistributionInfoSync(): { id: string, version: string } | undefined {
-  if (process.platform !== 'linux')
+  if (process.platform !== 'linux') {
     return undefined;
+  }
   if (!osRelease && !didFailToReadOSRelease) {
     try {
       // List of /etc/os-release values for different distributions could be
@@ -69,10 +71,12 @@ function parseOSReleaseText(osReleaseText: string): Map<string, string> {
     const tokens = line.split('=');
     const name = tokens.shift();
     let value = tokens.join('=').trim();
-    if (value.startsWith('"') && value.endsWith('"'))
+    if (value.startsWith('"') && value.endsWith('"')) {
       value = value.substring(1, value.length - 1);
-    if (!name)
+    }
+    if (!name) {
       continue;
+    }
     fields.set(name.toLowerCase(), value);
   }
   return fields;

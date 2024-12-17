@@ -73,10 +73,11 @@ export class TestServer {
   }
 
   constructor(dirPath: string, port: number, loopback?: string, sslOptions?: object) {
-    if (sslOptions)
+    if (sslOptions) {
       this._server = createHttpsServer(sslOptions, this._onRequest.bind(this));
-    else
+    } else {
       this._server = createHttpServer(this._onRequest.bind(this));
+    }
     this._server.on('connection', socket => this._onSocket(socket));
     this._wsServer = new ws.WebSocketServer({ noServer: true });
     this._server.on('upgrade', async (request, socket, head) => {
@@ -96,8 +97,9 @@ export class TestServer {
         socket.destroy();
         return;
       }
-      if (pathname === '/ws-slow')
+      if (pathname === '/ws-slow') {
         await new Promise(f => setTimeout(f, 2000));
+      }
       if (!['/ws', '/ws-slow'].includes(pathname)) {
         socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
         socket.destroy();
@@ -127,8 +129,9 @@ export class TestServer {
     // HPE_INVALID_METHOD is a legit error when a client (e.g. Chromium which
     // makes https requests to http sites) makes a https connection to a http server.
     socket.on('error', error => {
-      if (!['ECONNRESET', 'HPE_INVALID_EOF_STATE', 'HPE_INVALID_METHOD'].includes((error as any).code))
+      if (!['ECONNRESET', 'HPE_INVALID_EOF_STATE', 'HPE_INVALID_METHOD'].includes((error as any).code)) {
         throw error;
+      }
     });
   }
 
@@ -172,8 +175,9 @@ export class TestServer {
 
   waitForRequest(path: string): Promise<http.IncomingMessage & { postBody: Promise<Buffer> }> {
     let promise = this._requestSubscribers.get(path);
-    if (promise)
+    if (promise) {
       return promise;
+    }
     let fulfill, reject;
     promise = new Promise((f, r) => {
       fulfill = f;
@@ -195,17 +199,19 @@ export class TestServer {
     this._wsServer.removeAllListeners('connection');
     this._server.closeAllConnections();
     const error = new Error('Static Server has been reset');
-    for (const subscriber of this._requestSubscribers.values())
+    for (const subscriber of this._requestSubscribers.values()) {
       subscriber[rejectSymbol].call(null, error);
+    }
     this._requestSubscribers.clear();
   }
 
   _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
     request.on('error', error => {
-      if ((error as any).code === 'ECONNRESET')
+      if ((error as any).code === 'ECONNRESET') {
         response.end();
-      else
+      } else {
         throw error;
+      }
     });
     (request as any).postBody = new Promise(resolve => {
       const chunks: Buffer[] = [];
@@ -234,10 +240,11 @@ export class TestServer {
       this._requestSubscribers.delete(path);
     }
     const handler = this._routes.get(path);
-    if (handler)
+    if (handler) {
       handler.call(null, request, response);
-    else
+    } else {
       this.serveFile(request, response);
+    }
   }
 
   serveFile(request: http.IncomingMessage, response: http.ServerResponse, filePath?: string): void {
@@ -249,8 +256,9 @@ export class TestServer {
   private async _serveFile(request: http.IncomingMessage, response: http.ServerResponse, filePath?: string): Promise<void> {
     let pathName = url.parse(request.url!).path;
     if (!filePath) {
-      if (pathName === '/')
+      if (pathName === '/') {
         pathName = '/index.html';
+      }
       filePath = path.join(this._dirPath, pathName.substring(1));
     }
 
@@ -265,19 +273,22 @@ export class TestServer {
     } else {
       response.setHeader('Cache-Control', 'no-cache, no-store');
     }
-    if (this._csp.has(pathName))
+    if (this._csp.has(pathName)) {
       response.setHeader('Content-Security-Policy', this._csp.get(pathName)!);
+    }
 
     if (this._extraHeaders.has(pathName)) {
       const object = this._extraHeaders.get(pathName);
-      for (const key in object)
+      for (const key in object) {
         response.setHeader(key, object[key]);
+      }
     }
 
     const { err, data } = await fs.promises.readFile(filePath).then(data => ({ data, err: undefined })).catch(err => ({ data: undefined, err }));
     // The HTTP transaction might be already terminated after async hop here - do nothing in this case.
-    if (response.writableEnded)
+    if (response.writableEnded) {
       return;
+    }
     if (err) {
       response.statusCode = 404;
       response.setHeader('Content-Type', 'text/plain');
@@ -293,8 +304,9 @@ export class TestServer {
       response.setHeader('Content-Encoding', 'gzip');
       const result = await gzipAsync(data);
       // The HTTP transaction might be already terminated after async hop here.
-      if (!response.writableEnded)
+      if (!response.writableEnded) {
         response.end(request.method !== 'HEAD' ? result : null);
+      }
     } else {
       response.end(request.method !== 'HEAD' ? data : null);
     }

@@ -82,10 +82,12 @@ class InspectTool implements RecorderTool {
 
   onClick(event: MouseEvent) {
     consumeEvent(event);
-    if (event.button !== 0)
+    if (event.button !== 0) {
       return;
-    if (this._hoveredModel?.selector)
+    }
+    if (this._hoveredModel?.selector) {
       this._commit(this._hoveredModel.selector, this._hoveredModel);
+    }
   }
 
   onContextMenu(event: MouseEvent) {
@@ -97,10 +99,11 @@ class InspectTool implements RecorderTool {
       this._hoveredModel.tooltipFooter = undefined;
       this._hoveredModel.tooltipList = selectors.map(selector => this._recorder.injectedScript.utils.asLocator(this._recorder.state.language, selector));
       this._hoveredModel.tooltipListItemSelected = (index: number | undefined) => {
-        if (index === undefined)
+        if (index === undefined) {
           this._reset(true);
-        else
+        } else {
           this._commit(selectors[index], hoveredModel);
+        }
       };
       this._recorder.updateHighlight(this._hoveredModel, true);
     }
@@ -125,10 +128,12 @@ class InspectTool implements RecorderTool {
   onMouseMove(event: MouseEvent) {
     consumeEvent(event);
     let target: HTMLElement | null = this._recorder.deepEventTarget(event);
-    if (!target.isConnected)
+    if (!target.isConnected) {
       target = null;
-    if (this._hoveredElement === target)
+    }
+    if (this._hoveredElement === target) {
       return;
+    }
     this._hoveredElement = target;
 
     let model: HighlightModel | null = null;
@@ -145,8 +150,9 @@ class InspectTool implements RecorderTool {
       };
     }
 
-    if (this._hoveredModel?.selector === model?.selector)
+    if (this._hoveredModel?.selector === model?.selector) {
       return;
+    }
     this._hoveredModel = model;
     this._hoveredSelectors = selectors;
     this._recorder.updateHighlight(model, true);
@@ -160,17 +166,19 @@ class InspectTool implements RecorderTool {
     consumeEvent(event);
     const window = this._recorder.injectedScript.window;
     // Leaving iframe.
-    if (window.top !== window && this._recorder.deepEventTarget(event).nodeType === Node.DOCUMENT_NODE)
+    if (window.top !== window && this._recorder.deepEventTarget(event).nodeType === Node.DOCUMENT_NODE) {
       this._reset(true);
+    }
   }
 
   onKeyDown(event: KeyboardEvent) {
     consumeEvent(event);
     if (event.key === 'Escape') {
-      if (this._hoveredModel?.tooltipListItemSelected)
+      if (this._hoveredModel?.tooltipListItemSelected) {
         this._reset(true);
-      else if (this._assertVisibility)
+      } else if (this._assertVisibility) {
         this._recorder.setMode('recording');
+      }
     }
   }
 
@@ -231,17 +239,22 @@ class RecordActionTool implements RecorderTool {
   onClick(event: MouseEvent) {
     // in webkit, sliding a range element may trigger a click event with a different target if the mouse is released outside the element bounding box.
     // So we check the hovered element instead, and if it is a range input, we skip click handling
-    if (isRangeInput(this._hoveredElement))
+    if (isRangeInput(this._hoveredElement)) {
       return;
+    }
     // Right clicks are handled by 'contextmenu' event if its auxclick
-    if (event.button === 2 && event.type === 'auxclick')
+    if (event.button === 2 && event.type === 'auxclick') {
       return;
-    if (this._shouldIgnoreMouseEvent(event))
+    }
+    if (this._shouldIgnoreMouseEvent(event)) {
       return;
-    if (this._actionInProgress(event))
+    }
+    if (this._actionInProgress(event)) {
       return;
-    if (this._consumedDueToNoModel(event, this._hoveredModel))
+    }
+    if (this._consumedDueToNoModel(event, this._hoveredModel)) {
       return;
+    }
 
     const checkbox = asCheckbox(this._recorder.deepEventTarget(event));
     if (checkbox) {
@@ -274,15 +287,19 @@ class RecordActionTool implements RecorderTool {
   }
 
   onDblClick(event: MouseEvent) {
-    if (isRangeInput(this._hoveredElement))
+    if (isRangeInput(this._hoveredElement)) {
       return;
-    if (this._shouldIgnoreMouseEvent(event))
+    }
+    if (this._shouldIgnoreMouseEvent(event)) {
       return;
+    }
     // Only allow double click dispatch while action is in progress.
-    if (this._actionInProgress(event))
+    if (this._actionInProgress(event)) {
       return;
-    if (this._consumedDueToNoModel(event, this._hoveredModel))
+    }
+    if (this._consumedDueToNoModel(event, this._hoveredModel)) {
       return;
+    }
 
     this._cancelPendingClickAction();
 
@@ -298,14 +315,16 @@ class RecordActionTool implements RecorderTool {
   }
 
   private _commitPendingClickAction() {
-    if (this._pendingClickAction)
+    if (this._pendingClickAction) {
       this._performAction(this._pendingClickAction.action);
+    }
     this._cancelPendingClickAction();
   }
 
   private _cancelPendingClickAction() {
-    if (this._pendingClickAction)
+    if (this._pendingClickAction) {
       clearTimeout(this._pendingClickAction.timeout);
+    }
     this._pendingClickAction = undefined;
   }
 
@@ -313,12 +332,15 @@ class RecordActionTool implements RecorderTool {
     // the 'contextmenu' event is triggered by a right-click or equivalent action,
     // and it prevents the click event from firing for that action, so we always
     // convert 'contextmenu' into a right-click.
-    if (this._shouldIgnoreMouseEvent(event))
+    if (this._shouldIgnoreMouseEvent(event)) {
       return;
-    if (this._actionInProgress(event))
+    }
+    if (this._actionInProgress(event)) {
       return;
-    if (this._consumedDueToNoModel(event, this._hoveredModel))
+    }
+    if (this._consumedDueToNoModel(event, this._hoveredModel)) {
       return;
+    }
 
     this._performAction({
       name: 'click',
@@ -332,38 +354,47 @@ class RecordActionTool implements RecorderTool {
   }
 
   onPointerDown(event: PointerEvent) {
-    if (this._shouldIgnoreMouseEvent(event))
+    if (this._shouldIgnoreMouseEvent(event)) {
       return;
-    if (!this._performingActions.size)
+    }
+    if (!this._performingActions.size) {
       consumeEvent(event);
+    }
   }
 
   onPointerUp(event: PointerEvent) {
-    if (this._shouldIgnoreMouseEvent(event))
+    if (this._shouldIgnoreMouseEvent(event)) {
       return;
-    if (!this._performingActions.size)
+    }
+    if (!this._performingActions.size) {
       consumeEvent(event);
+    }
   }
 
   onMouseDown(event: MouseEvent) {
-    if (this._shouldIgnoreMouseEvent(event))
+    if (this._shouldIgnoreMouseEvent(event)) {
       return;
-    if (!this._performingActions.size)
+    }
+    if (!this._performingActions.size) {
       consumeEvent(event);
+    }
     this._activeModel = this._hoveredModel;
   }
 
   onMouseUp(event: MouseEvent) {
-    if (this._shouldIgnoreMouseEvent(event))
+    if (this._shouldIgnoreMouseEvent(event)) {
       return;
-    if (!this._performingActions.size)
+    }
+    if (!this._performingActions.size) {
       consumeEvent(event);
+    }
   }
 
   onMouseMove(event: MouseEvent) {
     const target = this._recorder.deepEventTarget(event);
-    if (this._hoveredElement === target)
+    if (this._hoveredElement === target) {
       return;
+    }
     this._hoveredElement = target;
     this._updateModelForHoveredElement();
   }
@@ -412,8 +443,9 @@ class RecordActionTool implements RecorderTool {
       }
 
       // Non-navigating actions are simply recorded by Playwright.
-      if (this._consumedDueWrongTarget(event))
+      if (this._consumedDueWrongTarget(event)) {
         return;
+      }
       this._recorder.recordAction({
         name: 'fill',
         selector: this._activeModel!.selector,
@@ -424,8 +456,9 @@ class RecordActionTool implements RecorderTool {
 
     if (target.nodeName === 'SELECT') {
       const selectElement = target as HTMLSelectElement;
-      if (this._actionInProgress(event))
+      if (this._actionInProgress(event)) {
         return;
+      }
       this._performAction({
         name: 'select',
         selector: this._activeModel!.selector,
@@ -436,14 +469,16 @@ class RecordActionTool implements RecorderTool {
   }
 
   onKeyDown(event: KeyboardEvent) {
-    if (!this._shouldGenerateKeyPressFor(event))
+    if (!this._shouldGenerateKeyPressFor(event)) {
       return;
+    }
     if (this._actionInProgress(event)) {
       this._expectProgrammaticKeyUp = true;
       return;
     }
-    if (this._consumedDueWrongTarget(event))
+    if (this._consumedDueWrongTarget(event)) {
       return;
+    }
     // Similarly to click, trigger checkbox on key event, not input.
     if (event.key === ' ') {
       const checkbox = asCheckbox(this._recorder.deepEventTarget(event));
@@ -467,8 +502,9 @@ class RecordActionTool implements RecorderTool {
   }
 
   onKeyUp(event: KeyboardEvent) {
-    if (!this._shouldGenerateKeyPressFor(event))
+    if (!this._shouldGenerateKeyPressFor(event)) {
       return;
+    }
 
     // Only allow programmatic keyups, ignore user input.
     if (!this._expectProgrammaticKeyUp) {
@@ -488,8 +524,9 @@ class RecordActionTool implements RecorderTool {
     const activeElement = deepActiveElement(this._recorder.document);
     // Firefox dispatches "focus" event to body when clicking on a backgrounded headed browser window.
     // We'd like to ignore this stray event.
-    if (userGesture && activeElement === this._recorder.document.body)
+    if (userGesture && activeElement === this._recorder.document.body) {
       return;
+    }
     const result = activeElement ? this._recorder.injectedScript.generateSelector(activeElement, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : null;
     this._activeModel = result && result.selector ? result : null;
     if (userGesture) {
@@ -501,10 +538,12 @@ class RecordActionTool implements RecorderTool {
   private _shouldIgnoreMouseEvent(event: MouseEvent): boolean {
     const target = this._recorder.deepEventTarget(event);
     const nodeName = target.nodeName;
-    if (nodeName === 'SELECT' || nodeName === 'OPTION')
+    if (nodeName === 'SELECT' || nodeName === 'OPTION') {
       return true;
-    if (nodeName === 'INPUT' && ['date', 'range'].includes((target as HTMLInputElement).type))
+    }
+    if (nodeName === 'INPUT' && ['date', 'range'].includes((target as HTMLInputElement).type)) {
       return true;
+    }
     return false;
   }
 
@@ -513,10 +552,12 @@ class RecordActionTool implements RecorderTool {
     const isKeyEvent = event instanceof KeyboardEvent;
     const isMouseOrPointerEvent = event instanceof MouseEvent || event instanceof PointerEvent;
     for (const action of this._performingActions) {
-      if (isKeyEvent && action.name === 'press' && event.key === action.key)
+      if (isKeyEvent && action.name === 'press' && event.key === action.key) {
         return true;
-      if (isMouseOrPointerEvent && (action.name === 'click' || action.name === 'check' || action.name === 'uncheck'))
+      }
+      if (isMouseOrPointerEvent && (action.name === 'click' || action.name === 'check' || action.name === 'uncheck')) {
         return true;
+      }
     }
 
     // Consume event if action is not being executed.
@@ -525,15 +566,17 @@ class RecordActionTool implements RecorderTool {
   }
 
   private _consumedDueToNoModel(event: Event, model: HighlightModel | null): boolean {
-    if (model)
+    if (model) {
       return false;
+    }
     consumeEvent(event);
     return true;
   }
 
   private _consumedDueWrongTarget(event: Event): boolean {
-    if (this._activeModel && this._activeModel.elements[0] === this._recorder.deepEventTarget(event))
+    if (this._activeModel && this._activeModel.elements[0] === this._recorder.deepEventTarget(event)) {
       return false;
+    }
     consumeEvent(event);
     return true;
   }
@@ -563,35 +606,44 @@ class RecordActionTool implements RecorderTool {
 
   private _shouldGenerateKeyPressFor(event: KeyboardEvent): boolean {
     // Enter aka. new line is handled in input event.
-    if (event.key === 'Enter' && (this._recorder.deepEventTarget(event).nodeName === 'TEXTAREA' || this._recorder.deepEventTarget(event).isContentEditable))
+    if (event.key === 'Enter' && (this._recorder.deepEventTarget(event).nodeName === 'TEXTAREA' || this._recorder.deepEventTarget(event).isContentEditable)) {
       return false;
+    }
     // Backspace, Delete, AltGraph are changing input, will handle it there.
-    if (['Backspace', 'Delete', 'AltGraph'].includes(event.key))
+    if (['Backspace', 'Delete', 'AltGraph'].includes(event.key)) {
       return false;
+    }
     // Ignore the QWERTZ shortcut for creating a at sign on MacOS
-    if (event.key === '@' && event.code === 'KeyL')
+    if (event.key === '@' && event.code === 'KeyL') {
       return false;
+    }
     // Allow and ignore common used shortcut for pasting.
     if (navigator.platform.includes('Mac')) {
-      if (event.key === 'v' && event.metaKey)
+      if (event.key === 'v' && event.metaKey) {
         return false;
+      }
     } else {
-      if (event.key === 'v' && event.ctrlKey)
+      if (event.key === 'v' && event.ctrlKey) {
         return false;
-      if (event.key === 'Insert' && event.shiftKey)
+      }
+      if (event.key === 'Insert' && event.shiftKey) {
         return false;
+      }
     }
-    if (['Shift', 'Control', 'Meta', 'Alt', 'Process'].includes(event.key))
+    if (['Shift', 'Control', 'Meta', 'Alt', 'Process'].includes(event.key)) {
       return false;
+    }
     const hasModifier = event.ctrlKey || event.altKey || event.metaKey;
-    if (event.key.length === 1 && !hasModifier)
+    if (event.key.length === 1 && !hasModifier) {
       return !!asCheckbox(this._recorder.deepEventTarget(event));
+    }
     return true;
   }
 
   private _updateModelForHoveredElement() {
-    if (this._performingActions.size)
+    if (this._performingActions.size) {
       return;
+    }
     if (!this._hoveredElement || !this._hoveredElement.isConnected) {
       this._hoveredModel = null;
       this._hoveredElement = null;
@@ -599,8 +651,9 @@ class RecordActionTool implements RecorderTool {
       return;
     }
     const { selector, elements } = this._recorder.injectedScript.generateSelector(this._hoveredElement, { testIdAttributeName: this._recorder.state.testIdAttributeName });
-    if (this._hoveredModel && this._hoveredModel.selector === selector)
+    if (this._hoveredModel && this._hoveredModel.selector === selector) {
       return;
+    }
     this._hoveredModel = selector ? { selector, elements, color: '#dc6f6f7f' } : null;
     this._recorder.updateHighlight(this._hoveredModel, true);
   }
@@ -634,15 +687,17 @@ class TextAssertionTool implements RecorderTool {
     if (this._kind === 'value') {
       this._commitAssertValue();
     } else {
-      if (!this._dialog.isShowing())
+      if (!this._dialog.isShowing()) {
         this._showDialog();
+      }
     }
   }
 
   onMouseDown(event: MouseEvent) {
     const target = this._recorder.deepEventTarget(event);
-    if (this._elementHasValue(target))
+    if (this._elementHasValue(target)) {
       event.preventDefault();
+    }
   }
 
   onPointerUp(event: PointerEvent) {
@@ -655,23 +710,28 @@ class TextAssertionTool implements RecorderTool {
   }
 
   onMouseMove(event: MouseEvent) {
-    if (this._dialog.isShowing())
+    if (this._dialog.isShowing()) {
       return;
+    }
     const target = this._recorder.deepEventTarget(event);
-    if (this._hoverHighlight?.elements[0] === target)
+    if (this._hoverHighlight?.elements[0] === target) {
       return;
-    if (this._kind === 'text' || this._kind === 'snapshot')
+    }
+    if (this._kind === 'text' || this._kind === 'snapshot') {
       this._hoverHighlight = this._recorder.injectedScript.utils.elementText(this._textCache, target).full ? { elements: [target], selector: '' } : null;
-    else
+    } else {
       this._hoverHighlight = this._elementHasValue(target) ? this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : null;
-    if (this._hoverHighlight)
+    }
+    if (this._hoverHighlight) {
       this._hoverHighlight.color = '#8acae480';
+    }
     this._recorder.updateHighlight(this._hoverHighlight, true);
   }
 
   onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Escape')
+    if (event.key === 'Escape') {
       this._recorder.setMode('recording');
+    }
     consumeEvent(event);
   }
 
@@ -686,11 +746,13 @@ class TextAssertionTool implements RecorderTool {
   private _generateAction(): actions.AssertAction | null {
     this._textCache.clear();
     const target = this._hoverHighlight?.elements[0];
-    if (!target)
+    if (!target) {
       return null;
+    }
     if (this._kind === 'value') {
-      if (!this._elementHasValue(target))
+      if (!this._elementHasValue(target)) {
         return null;
+      }
       const { selector } = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
       if (target.nodeName === 'INPUT' && ['checkbox', 'radio'].includes((target as HTMLInputElement).type.toLowerCase())) {
         return {
@@ -737,28 +799,34 @@ class TextAssertionTool implements RecorderTool {
   }
 
   private _renderValue(action: actions.Action) {
-    if (action?.name === 'assertText')
+    if (action.name === 'assertText') {
       return this._recorder.injectedScript.utils.normalizeWhiteSpace(action.text);
-    if (action?.name === 'assertChecked')
+    }
+    if (action.name === 'assertChecked') {
       return String(action.checked);
-    if (action?.name === 'assertValue')
+    }
+    if (action.name === 'assertValue') {
       return action.value;
-    if (action?.name === 'assertSnapshot')
+    }
+    if (action.name === 'assertSnapshot') {
       return action.snapshot;
+    }
     return '';
   }
 
   private _commit() {
-    if (!this._action || !this._dialog.isShowing())
+    if (!this._action || !this._dialog.isShowing()) {
       return;
+    }
     this._dialog.close();
     this._recorder.recordAction(this._action);
     this._recorder.setMode('recording');
   }
 
   private _showDialog() {
-    if (!this._hoverHighlight?.elements[0])
+    if (!this._hoverHighlight?.elements[0]) {
       return;
+    }
     this._action = this._generateAction();
     if (this._action?.name === 'assertText') {
       this._showTextDialog(this._action);
@@ -778,8 +846,9 @@ class TextAssertionTool implements RecorderTool {
     const updateAndValidate = () => {
       const newValue = this._recorder.injectedScript.utils.normalizeWhiteSpace(textElement.value);
       const target = this._hoverHighlight?.elements[0];
-      if (!target)
+      if (!target) {
         return;
+      }
       action.text = newValue;
       const targetText = this._recorder.injectedScript.utils.elementText(this._textCache, target).normalized;
       const matches = newValue && targetText.includes(newValue);
@@ -799,11 +868,13 @@ class TextAssertionTool implements RecorderTool {
   }
 
   private _commitAssertValue() {
-    if (this._kind !== 'value')
+    if (this._kind !== 'value') {
       return;
+    }
     const action = this._generateAction();
-    if (!action)
+    if (!action) {
       return;
+    }
     this._recorder.recordAction(action);
     this._recorder.setMode('recording');
     this._recorder.overlay?.flashToolSucceeded('assertingValue');
@@ -883,13 +954,15 @@ class Overlay {
         this._dragState = { offsetX: this._offsetX, dragStart: { x: (event as MouseEvent).clientX, y: 0 } };
       }),
       addEventListener(this._recordToggle, 'click', () => {
-        if (this._recordToggle.classList.contains('disabled'))
+        if (this._recordToggle.classList.contains('disabled')) {
           return;
+        }
         this._recorder.setMode(this._recorder.state.mode === 'none' || this._recorder.state.mode === 'standby' || this._recorder.state.mode === 'inspecting' ? 'recording' : 'standby');
       }),
       addEventListener(this._pickLocatorToggle, 'click', () => {
-        if (this._pickLocatorToggle.classList.contains('disabled'))
+        if (this._pickLocatorToggle.classList.contains('disabled')) {
           return;
+        }
         const newMode: Record<Mode, Mode> = {
           'inspecting': 'standby',
           'none': 'inspecting',
@@ -904,20 +977,24 @@ class Overlay {
         this._recorder.setMode(newMode[this._recorder.state.mode]);
       }),
       addEventListener(this._assertVisibilityToggle, 'click', () => {
-        if (!this._assertVisibilityToggle.classList.contains('disabled'))
+        if (!this._assertVisibilityToggle.classList.contains('disabled')) {
           this._recorder.setMode(this._recorder.state.mode === 'assertingVisibility' ? 'recording' : 'assertingVisibility');
+        }
       }),
       addEventListener(this._assertTextToggle, 'click', () => {
-        if (!this._assertTextToggle.classList.contains('disabled'))
+        if (!this._assertTextToggle.classList.contains('disabled')) {
           this._recorder.setMode(this._recorder.state.mode === 'assertingText' ? 'recording' : 'assertingText');
+        }
       }),
       addEventListener(this._assertValuesToggle, 'click', () => {
-        if (!this._assertValuesToggle.classList.contains('disabled'))
+        if (!this._assertValuesToggle.classList.contains('disabled')) {
           this._recorder.setMode(this._recorder.state.mode === 'assertingValue' ? 'recording' : 'assertingValue');
+        }
       }),
       addEventListener(this._assertSnapshotToggle, 'click', () => {
-        if (!this._assertSnapshotToggle.classList.contains('disabled'))
+        if (!this._assertSnapshotToggle.classList.contains('disabled')) {
           this._recorder.setMode(this._recorder.state.mode === 'assertingSnapshot' ? 'recording' : 'assertingSnapshot');
+        }
       }),
     ];
   }
@@ -947,20 +1024,22 @@ class Overlay {
       this._offsetX = state.overlay.offsetX;
       this._updateVisualPosition();
     }
-    if (state.mode === 'none')
+    if (state.mode === 'none') {
       this._hideOverlay();
-    else
+    } else {
       this._showOverlay();
+    }
   }
 
   flashToolSucceeded(tool: 'assertingVisibility' | 'assertingSnapshot' | 'assertingValue') {
     let element: Element;
-    if (tool === 'assertingVisibility')
+    if (tool === 'assertingVisibility') {
       element = this._assertVisibilityToggle;
-    else if (tool === 'assertingSnapshot')
+    } else if (tool === 'assertingSnapshot') {
       element = this._assertSnapshotToggle;
-    else
+    } else {
       element = this._assertValuesToggle;
+    }
     element.classList.add('succeeded');
     this._recorder.injectedScript.builtinSetTimeout(() => element.classList.remove('succeeded'), 2000);
   }
@@ -970,8 +1049,9 @@ class Overlay {
   }
 
   private _showOverlay() {
-    if (!this._overlayElement.hasAttribute('hidden'))
+    if (!this._overlayElement.hasAttribute('hidden')) {
       return;
+    }
     this._overlayElement.removeAttribute('hidden');
     this._updateVisualPosition();
   }
@@ -1066,8 +1146,9 @@ export class Recorder {
     `);
     this.installListeners();
     injectedScript.utils.cacheNormalizedWhitespaces();
-    if (injectedScript.isUnderTest)
+    if (injectedScript.isUnderTest) {
       console.error('Recorder script ready for test'); // eslint-disable-line no-console
+    }
   }
 
   installListeners() {
@@ -1109,12 +1190,13 @@ export class Recorder {
 
   private _switchCurrentTool() {
     const newTool = this._tools[this.state.mode];
-    if (newTool === this._currentTool)
+    if (newTool === this._currentTool) {
       return;
+    }
     this._currentTool.cleanup?.();
     this.clearHighlight();
     this._currentTool = newTool;
-    this.injectedScript.document.body?.setAttribute('data-pw-cursor', newTool.cursor());
+    this.injectedScript.document.body.setAttribute('data-pw-cursor', newTool.cursor());
   }
 
   setUIState(state: UIState, delegate: RecorderDelegate) {
@@ -1125,10 +1207,11 @@ export class Recorder {
     } else if (!state.actionPoint && !this.state.actionPoint) {
       // All good.
     } else {
-      if (state.actionPoint)
+      if (state.actionPoint) {
         this.highlight.showActionPoint(state.actionPoint.x, state.actionPoint.y);
-      else
+      } else {
         this.highlight.hideActionPoint();
+      }
     }
 
     this.state = state;
@@ -1148,16 +1231,18 @@ export class Recorder {
       this._lastHighlightedAriaTemplateJSON = ariaTemplateJSON;
       const template = state.ariaTemplate ? this.injectedScript.utils.parseYamlTemplate(state.ariaTemplate) : undefined;
       const elements = template ? this.injectedScript.getAllByAria(this.document, template) : [];
-      if (elements.length)
+      if (elements.length) {
         highlight = { elements };
-      else
+      } else {
         highlight = 'clear';
+      }
     }
 
-    if (highlight === 'clear')
+    if (highlight === 'clear') {
       this.clearHighlight();
-    else if (highlight !== 'noop')
+    } else if (highlight !== 'noop') {
       this.updateHighlight(highlight, false);
+    }
   }
 
   clearHighlight() {
@@ -1165,112 +1250,141 @@ export class Recorder {
   }
 
   private _onClick(event: MouseEvent) {
-    if (!event.isTrusted)
+    if (!event.isTrusted) {
       return;
-    if (this.overlay?.onClick(event))
+    }
+    if (this.overlay?.onClick(event)) {
       return;
-    if (this._ignoreOverlayEvent(event))
+    }
+    if (this._ignoreOverlayEvent(event)) {
       return;
+    }
     this._currentTool.onClick?.(event);
   }
 
   private _onDblClick(event: MouseEvent) {
-    if (!event.isTrusted)
+    if (!event.isTrusted) {
       return;
-    if (this.overlay?.onDblClick(event))
+    }
+    if (this.overlay?.onDblClick(event)) {
       return;
-    if (this._ignoreOverlayEvent(event))
+    }
+    if (this._ignoreOverlayEvent(event)) {
       return;
+    }
     this._currentTool.onDblClick?.(event);
   }
 
   private _onContextMenu(event: MouseEvent) {
-    if (!event.isTrusted)
+    if (!event.isTrusted) {
       return;
-    if (this._ignoreOverlayEvent(event))
+    }
+    if (this._ignoreOverlayEvent(event)) {
       return;
+    }
     this._currentTool.onContextMenu?.(event);
   }
 
   private _onDragStart(event: DragEvent) {
-    if (!event.isTrusted)
+    if (!event.isTrusted) {
       return;
-    if (this._ignoreOverlayEvent(event))
+    }
+    if (this._ignoreOverlayEvent(event)) {
       return;
+    }
     this._currentTool.onDragStart?.(event);
   }
 
   private _onPointerDown(event: PointerEvent) {
-    if (!event.isTrusted)
+    if (!event.isTrusted) {
       return;
-    if (this._ignoreOverlayEvent(event))
+    }
+    if (this._ignoreOverlayEvent(event)) {
       return;
+    }
     this._currentTool.onPointerDown?.(event);
   }
 
   private _onPointerUp(event: PointerEvent) {
-    if (!event.isTrusted)
+    if (!event.isTrusted) {
       return;
-    if (this._ignoreOverlayEvent(event))
+    }
+    if (this._ignoreOverlayEvent(event)) {
       return;
+    }
     this._currentTool.onPointerUp?.(event);
   }
 
   private _onMouseDown(event: MouseEvent) {
-    if (!event.isTrusted)
+    if (!event.isTrusted) {
       return;
-    if (this._ignoreOverlayEvent(event))
+    }
+    if (this._ignoreOverlayEvent(event)) {
       return;
+    }
     this._currentTool.onMouseDown?.(event);
   }
 
   private _onMouseUp(event: MouseEvent) {
-    if (!event.isTrusted)
+    if (!event.isTrusted) {
       return;
-    if (this.overlay?.onMouseUp(event))
+    }
+    if (this.overlay?.onMouseUp(event)) {
       return;
-    if (this._ignoreOverlayEvent(event))
+    }
+    if (this._ignoreOverlayEvent(event)) {
       return;
+    }
     this._currentTool.onMouseUp?.(event);
   }
 
   private _onMouseMove(event: MouseEvent) {
-    if (!event.isTrusted)
+    if (!event.isTrusted) {
       return;
-    if (this.overlay?.onMouseMove(event))
+    }
+    if (this.overlay?.onMouseMove(event)) {
       return;
-    if (this._ignoreOverlayEvent(event))
+    }
+    if (this._ignoreOverlayEvent(event)) {
       return;
+    }
     this._currentTool.onMouseMove?.(event);
   }
 
   private _onMouseEnter(event: MouseEvent) {
-    if (!event.isTrusted)
+    if (!event.isTrusted) {
       return;
-    if (this._ignoreOverlayEvent(event))
+    }
+    if (this._ignoreOverlayEvent(event)) {
       return;
+    }
     this._currentTool.onMouseEnter?.(event);
   }
 
   private _onMouseLeave(event: MouseEvent) {
-    if (!event.isTrusted)
+    if (!event.isTrusted) {
       return;
-    if (this._ignoreOverlayEvent(event))
+    }
+    if (this._ignoreOverlayEvent(event)) {
       return;
+    }
     this._currentTool.onMouseLeave?.(event);
   }
 
   private _onFocus(event: Event) {
-    if (!event.isTrusted)
+    if (!event.isTrusted) {
       return;
-    if (this._ignoreOverlayEvent(event))
+    }
+    if (this._ignoreOverlayEvent(event)) {
       return;
+    }
     this._currentTool.onFocus?.(event);
   }
 
   private _onScroll(event: Event) {
-    if (!event.isTrusted)
+    if (!event.isTrusted) {
       return;
+    }
     this._lastHighlightedSelector = undefined;
     this._lastHighlightedAriaTemplateJSON = 'undefined';
     this.highlight.hideActionPoint();
@@ -1278,34 +1392,41 @@ export class Recorder {
   }
 
   private _onInput(event: Event) {
-    if (this._ignoreOverlayEvent(event))
+    if (this._ignoreOverlayEvent(event)) {
       return;
+    }
     this._currentTool.onInput?.(event);
   }
 
   private _onKeyDown(event: KeyboardEvent) {
-    if (!event.isTrusted)
+    if (!event.isTrusted) {
       return;
-    if (this._ignoreOverlayEvent(event))
+    }
+    if (this._ignoreOverlayEvent(event)) {
       return;
+    }
     this._currentTool.onKeyDown?.(event);
   }
 
   private _onKeyUp(event: KeyboardEvent) {
-    if (!event.isTrusted)
+    if (!event.isTrusted) {
       return;
-    if (this._ignoreOverlayEvent(event))
+    }
+    if (this._ignoreOverlayEvent(event)) {
       return;
+    }
     this._currentTool.onKeyUp?.(event);
   }
 
   updateHighlight(model: HighlightModel | null, userGesture: boolean) {
     let tooltipText = model?.tooltipText;
-    if (tooltipText === undefined && !model?.tooltipList && model?.selector)
+    if (tooltipText === undefined && !model?.tooltipList && model?.selector) {
       tooltipText = this.injectedScript.utils.asLocator(this.state.language, model.selector);
+    }
     this.highlight.updateHighlight(model?.elements || [], { ...model, tooltipText });
-    if (userGesture)
+    if (userGesture) {
       this._delegate.highlightUpdated?.();
+    }
   }
 
   private _ignoreOverlayEvent(event: Event) {
@@ -1317,8 +1438,9 @@ export class Recorder {
 
   deepEventTarget(event: Event): HTMLElement {
     for (const element of event.composedPath()) {
-      if (!this.overlay?.contains(element as Element))
+      if (!this.overlay?.contains(element as Element)) {
         return element as HTMLElement;
+      }
     }
     return event.composedPath()[0] as HTMLElement;
   }
@@ -1387,8 +1509,9 @@ class Dialog {
         return;
       }
       if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
-        if (this._dialogElement)
+        if (this._dialogElement) {
           options.onCommit();
+        }
         return;
       }
     };
@@ -1411,15 +1534,17 @@ class Dialog {
   }
 
   moveTo(top: number, left: number) {
-    if (!this._dialogElement)
+    if (!this._dialogElement) {
       return;
+    }
     this._dialogElement.style.top = top + 'px';
     this._dialogElement.style.left = left + 'px';
   }
 
   close() {
-    if (!this._dialogElement)
+    if (!this._dialogElement) {
       return;
+    }
     this._dialogElement.remove();
     this._recorder.document.removeEventListener('keydown', this._keyboardListener!);
     this._dialogElement = null;
@@ -1428,8 +1553,9 @@ class Dialog {
 
 function deepActiveElement(document: Document): Element | null {
   let activeElement = document.activeElement;
-  while (activeElement && activeElement.shadowRoot && activeElement.shadowRoot.activeElement)
+  while (activeElement && activeElement.shadowRoot && activeElement.shadowRoot.activeElement) {
     activeElement = activeElement.shadowRoot.activeElement;
+  }
   return activeElement;
 }
 
@@ -1448,8 +1574,9 @@ function buttonForEvent(event: MouseEvent): 'left' | 'middle' | 'right' {
 
 function positionForEvent(event: MouseEvent): Point |undefined {
   const targetElement = (event.target as HTMLElement);
-  if (targetElement.nodeName !== 'CANVAS')
+  if (targetElement.nodeName !== 'CANVAS') {
     return;
+  }
   return {
     x: event.offsetX,
     y: event.offsetY,
@@ -1472,15 +1599,17 @@ type HighlightModelWithSelector = HighlightModel & {
 };
 
 function asCheckbox(node: Node | null): HTMLInputElement | null {
-  if (!node || node.nodeName !== 'INPUT')
+  if (!node || node.nodeName !== 'INPUT') {
     return null;
+  }
   const inputElement = node as HTMLInputElement;
   return ['checkbox', 'radio'].includes(inputElement.type) ? inputElement : null;
 }
 
 function isRangeInput(node: Node | null): node is HTMLInputElement {
-  if (!node || node.nodeName !== 'INPUT')
+  if (!node || node.nodeName !== 'INPUT') {
     return false;
+  }
   const inputElement = node as HTMLInputElement;
   return inputElement.type.toLowerCase() === 'range';
 }
@@ -1494,8 +1623,9 @@ function addEventListener(target: EventTarget, eventName: string, listener: Even
 }
 
 function removeEventListeners(listeners: (() => void)[]) {
-  for (const listener of listeners)
+  for (const listener of listeners) {
     listener();
+  }
   listeners.splice(0, listeners.length);
 }
 
@@ -1524,12 +1654,14 @@ export type SvgJson = {
 function createSvgElement(doc: Document, { tagName, attrs, children }: SvgJson): SVGElement {
   const elem = doc.createElementNS('http://www.w3.org/2000/svg', tagName);
   if (attrs) {
-    for (const [k, v] of Object.entries(attrs))
+    for (const [k, v] of Object.entries(attrs)) {
       elem.setAttribute(k, v);
+    }
   }
   if (children) {
-    for (const c of children)
+    for (const c of children) {
       elem.appendChild(createSvgElement(doc, c));
+    }
   }
 
   return elem;

@@ -43,14 +43,17 @@ export class BidiChromium extends BrowserType {
   }
 
   override doRewriteStartupLog(error: ProtocolError): ProtocolError {
-    if (!error.logs)
+    if (!error.logs) {
       return error;
-    if (error.logs.includes('Missing X server'))
+    }
+    if (error.logs.includes('Missing X server')) {
       error.logs = '\n' + wrapInASCIIBox(kNoXServerRunningError, 1);
+    }
     // These error messages are taken from Chromium source code as of July, 2020:
     // https://github.com/chromium/chromium/blob/70565f67e79f79e17663ad1337dc6e63ee207ce9/content/browser/zygote_host/zygote_host_impl_linux.cc
-    if (!error.logs.includes('crbug.com/357670') && !error.logs.includes('No usable sandbox!') && !error.logs.includes('crbug.com/638180'))
+    if (!error.logs.includes('crbug.com/357670') && !error.logs.includes('No usable sandbox!') && !error.logs.includes('crbug.com/638180')) {
       return error;
+    }
     error.logs = [
       `Chromium sandboxing failed!`,
       `================================`,
@@ -69,8 +72,9 @@ export class BidiChromium extends BrowserType {
 
   override attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
     const bidiTransport = (transport as any)[kBidiOverCdpWrapper];
-    if (bidiTransport)
+    if (bidiTransport) {
       transport = bidiTransport;
+    }
     transport.send({ method: 'browser.close', params: {}, id: kBrowserCloseMessageId });
   }
 
@@ -78,10 +82,11 @@ export class BidiChromium extends BrowserType {
     const chromeArguments = this._innerDefaultArgs(options);
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
     chromeArguments.push('--remote-debugging-port=0');
-    if (isPersistent)
+    if (isPersistent) {
       chromeArguments.push('about:blank');
-    else
+    } else {
       chromeArguments.push('--no-startup-window');
+    }
     return chromeArguments;
   }
 
@@ -93,24 +98,29 @@ export class BidiChromium extends BrowserType {
   private _innerDefaultArgs(options: types.LaunchOptions): string[] {
     const { args = [] } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
-    if (userDataDirArg)
+    if (userDataDirArg) {
       throw this._createUserDataDirArgMisuseError('--user-data-dir');
-    if (args.find(arg => arg.startsWith('--remote-debugging-pipe')))
+    }
+    if (args.find(arg => arg.startsWith('--remote-debugging-pipe'))) {
       throw new Error('Playwright manages remote debugging connection itself.');
-    if (args.find(arg => !arg.startsWith('-')))
+    }
+    if (args.find(arg => !arg.startsWith('-'))) {
       throw new Error('Arguments can not specify page to be opened');
+    }
     const chromeArguments = [...chromiumSwitches];
 
     if (os.platform() === 'darwin') {
       // See https://github.com/microsoft/playwright/issues/7362
       chromeArguments.push('--enable-use-zoom-for-dsf=false');
       // See https://bugs.chromium.org/p/chromium/issues/detail?id=1407025.
-      if (options.headless)
+      if (options.headless) {
         chromeArguments.push('--use-angle');
+      }
     }
 
-    if (options.devtools)
+    if (options.devtools) {
       chromeArguments.push('--auto-open-devtools-for-tabs');
+    }
     if (options.headless) {
       chromeArguments.push('--headless');
 
@@ -120,8 +130,9 @@ export class BidiChromium extends BrowserType {
           '--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4',
       );
     }
-    if (options.chromiumSandbox !== true)
+    if (options.chromiumSandbox !== true) {
       chromeArguments.push('--no-sandbox');
+    }
     const proxy = options.proxyOverride || options.proxy;
     if (proxy) {
       const proxyURL = new URL(proxy.server);
@@ -134,14 +145,18 @@ export class BidiChromium extends BrowserType {
       chromeArguments.push(`--proxy-server=${proxy.server}`);
       const proxyBypassRules = [];
       // https://source.chromium.org/chromium/chromium/src/+/master:net/docs/proxy.md;l=548;drc=71698e610121078e0d1a811054dcf9fd89b49578
-      if (this.attribution.playwright.options.socksProxyPort)
+      if (this.attribution.playwright.options.socksProxyPort) {
         proxyBypassRules.push('<-loopback>');
-      if (proxy.bypass)
+      }
+      if (proxy.bypass) {
         proxyBypassRules.push(...proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));
-      if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !proxyBypassRules.includes('<-loopback>'))
+      }
+      if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !proxyBypassRules.includes('<-loopback>')) {
         proxyBypassRules.push('<-loopback>');
-      if (proxyBypassRules.length > 0)
+      }
+      if (proxyBypassRules.length > 0) {
         chromeArguments.push(`--proxy-bypass-list=${proxyBypassRules.join(';')}`);
+      }
     }
     chromeArguments.push(...args);
     return chromeArguments;
@@ -151,8 +166,9 @@ export class BidiChromium extends BrowserType {
 class ChromiumReadyState extends BrowserReadyState {
   override onBrowserOutput(message: string): void {
     const match = message.match(/DevTools listening on (.*)/);
-    if (match)
+    if (match) {
       this._wsEndpoint.resolve(match[1]);
+    }
   }
 }
 

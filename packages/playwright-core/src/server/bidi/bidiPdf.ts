@@ -41,8 +41,9 @@ const unitToPixels: { [key: string]: number } = {
 };
 
 function convertPrintParameterToInches(text: string | undefined): number | undefined {
-  if (text === undefined)
+  if (text === undefined) {
     return undefined;
+  }
   let unit = text.substring(text.length - 2).toLowerCase();
   let valueText = '';
   if (unitToPixels.hasOwnProperty(unit)) {

@@ -372,8 +372,9 @@ it('should intercept response body from oopif', async function({ page, browser, 
 });
 
 async function assertOOPIFCount(browser: Browser, count: number) {
-  if (browser.browserType().name() !== 'chromium')
+  if (browser.browserType().name() !== 'chromium') {
     return;
+  }
   expect(await countOOPIFs(browser)).toBe(count);
 }
 
@@ -381,8 +382,9 @@ async function countOOPIFs(browser: Browser) {
   const browserSession = await browser.newBrowserCDPSession();
   const oopifs = [];
   browserSession.on('Target.targetCreated', async ({ targetInfo }) => {
-    if (targetInfo.type === 'iframe')
+    if (targetInfo.type === 'iframe') {
       oopifs.push(targetInfo);
+    }
   });
   await browserSession.send('Target.setDiscoverTargets', { discover: true });
   await browserSession.detach();

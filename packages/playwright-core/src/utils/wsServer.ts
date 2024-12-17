@@ -90,8 +90,9 @@ export class WSServer {
       perMessageDeflate,
     });
 
-    if (this._delegate.onHeaders)
+    if (this._delegate.onHeaders) {
       this._wsServer.on('headers', headers => this._delegate.onHeaders!(headers));
+    }
 
     server.on('upgrade', (request, socket, head) => {
       const pathname = new URL('http://localhost' + request.url!).pathname;
@@ -123,15 +124,17 @@ export class WSServer {
 
   async close() {
     const server = this._wsServer;
-    if (!server)
+    if (!server) {
       return;
+    }
     debugLogger.log('server', 'closing websocket server');
     const waitForClose = new Promise(f => server.close(f));
     // First disconnect all remaining clients.
     await Promise.all(Array.from(server.clients).map(async ws => {
       const connection = (ws as any)[kConnectionSymbol] as WSConnection | undefined;
-      if (connection)
+      if (connection) {
         await connection.close();
+      }
       try {
         ws.terminate();
       } catch (e) {
@@ -139,8 +142,9 @@ export class WSServer {
     }));
     await waitForClose;
     debugLogger.log('server', 'closing http server');
-    if (this.server)
+    if (this.server) {
       await new Promise(f => this.server!.close(f));
+    }
     this._wsServer = undefined;
     this.server = undefined;
     debugLogger.log('server', 'closed server');

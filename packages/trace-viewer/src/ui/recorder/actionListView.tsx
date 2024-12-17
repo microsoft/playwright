@@ -50,6 +50,7 @@ export const ActionListView: React.FC<{
 
 export const renderAction = (sdkLanguage: Language, action: actionTypes.ActionInContext) => {
   const { method, apiName, params } = traceParamsForAction(action);
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const locator = params.selector ? asLocator(sdkLanguage || 'javascript', params.selector) : undefined;
 
   return <>

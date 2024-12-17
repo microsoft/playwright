@@ -27,8 +27,9 @@ const hasDebugOutput = process.env.DEBUG?.includes('pw:');
 
 function firefoxUserPrefs() {
   const prefsString = process.env.PWTEST_FIREFOX_USER_PREFS;
-  if (!prefsString)
+  if (!prefsString) {
     return undefined;
+  }
   return JSON.parse(prefsString);
 }
 
@@ -64,8 +65,9 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
 };
 
 const executablePath = process.env.BIDIPATH;
-if (executablePath && !process.env.TEST_WORKER_INDEX)
+if (executablePath && !process.env.TEST_WORKER_INDEX) {
   console.error(`Using executable at ${executablePath}`);
+}
 const testIgnore: RegExp[] = [];
 const browserToChannels = {
   '_bidiChromium': ['bidi-chromium', 'bidi-chrome-canary', 'bidi-chrome-stable'],

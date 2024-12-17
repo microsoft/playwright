@@ -46,8 +46,9 @@ export class TraceModernizer {
   }
 
   appendTrace(trace: string) {
-    for (const line of trace.split('\n'))
+    for (const line of trace.split('\n')) {
       this._appendEvent(line);
+    }
   }
 
   actions(): ActionEntry[] {
@@ -68,19 +69,22 @@ export class TraceModernizer {
   }
 
   private _appendEvent(line: string) {
-    if (!line)
+    if (!line) {
       return;
+    }
     const events = this._modernize(JSON.parse(line));
-    for (const event of events)
+    for (const event of events) {
       this._innerAppendEvent(event);
+    }
   }
 
   private _innerAppendEvent(event: trace.TraceEvent) {
     const contextEntry = this._contextEntry;
     switch (event.type) {
       case 'context-options': {
-        if (event.version > latestVersion)
+        if (event.version > latestVersion) {
           throw new TraceVersionError('The trace was created by a newer version of Playwright and is not supported by this version of the viewer. Please use latest Playwright to open the trace.');
+        }
         this._version = event.version;
         contextEntry.origin = event.origin;
         contextEntry.browserName = event.browserName;
@@ -111,8 +115,9 @@ export class TraceModernizer {
       case 'log': {
         const existing = this._actionMap.get(event.callId);
         // We have some corrupted traces out there, tolerate them.
-        if (!existing)
+        if (!existing) {
           return;
+        }
         existing.log.push({
           time: event.time,
           message: event.message,
@@ -126,8 +131,9 @@ export class TraceModernizer {
         existing!.result = event.result;
         existing!.error = event.error;
         existing!.attachments = event.attachments;
-        if (event.point)
-          existing!.point = event.point;
+        if (event.point) {
+existing!.point = event.point;
+        }
         break;
       }
       case 'action': {
@@ -164,12 +170,15 @@ export class TraceModernizer {
     }
     // Make sure there is a page entry for each page, even without screencast frames,
     // to show in the metadata view.
-    if (('pageId' in event) && event.pageId)
+    if (('pageId' in event) && event.pageId) {
       this._pageEntry(event.pageId);
-    if (event.type === 'action' || event.type === 'before')
+    }
+    if (event.type === 'action' || event.type === 'before') {
       contextEntry.startTime = Math.min(contextEntry.startTime, event.startTime);
-    if (event.type === 'action' || event.type === 'after')
+    }
+    if (event.type === 'action' || event.type === 'after') {
       contextEntry.endTime = Math.max(contextEntry.endTime, event.endTime);
+    }
     if (event.type === 'event') {
       contextEntry.startTime = Math.min(contextEntry.startTime, event.time);
       contextEntry.endTime = Math.max(contextEntry.endTime, event.time);
@@ -187,38 +196,44 @@ export class TraceModernizer {
   private _modernize(event: any): trace.TraceEvent[] {
     // In trace 6->7 we also need to modernize context-options event.
     let version = this._version || event.version;
-    if (version === undefined)
+    if (version === undefined) {
       return [event];
+    }
     let events = [event];
-    for (; version < latestVersion; ++version)
+    for (; version < latestVersion; ++version) {
       events = (this as any)[`_modernize_${version}_to_${version + 1}`].call(this, events);
+    }
     return events;
   }
 
   _modernize_0_to_1(events: any[]): any[] {
     for (const event of events) {
-      if (event.type !== 'action')
+      if (event.type !== 'action') {
         continue;
-      if (typeof event.metadata.error === 'string')
+      }
+      if (typeof event.metadata.error === 'string') {
         event.metadata.error = { error: { name: 'Error', message: event.metadata.error } };
+      }
     }
     return events;
   }
 
   _modernize_1_to_2(events: any[]): any[] {
     for (const event of events) {
-      if (event.type !== 'frame-snapshot' || !event.snapshot.isMainFrame)
+      if (event.type !== 'frame-snapshot' || !event.snapshot.isMainFrame) {
         continue;
+      }
       // Old versions had completely wrong viewport.
-      event.snapshot.viewport = this._contextEntry.options?.viewport || { width: 1280, height: 720 };
+      event.snapshot.viewport = this._contextEntry.options.viewport || { width: 1280, height: 720 };
     }
     return events;
   }
 
   _modernize_2_to_3(events: any[]): any[] {
     for (const event of events) {
-      if (event.type !== 'resource-snapshot' || event.snapshot.request)
+      if (event.type !== 'resource-snapshot' || event.snapshot.request) {
         continue;
+      }
       // Migrate from old ResourceSnapshot to new har entry format.
       const resource = event.snapshot;
       event.snapshot = {
@@ -247,8 +262,9 @@ export class TraceModernizer {
     const result: traceV4.TraceEvent[] = [];
     for (const event of events) {
       const e = this._modernize_event_3_to_4(event);
-      if (e)
+      if (e) {
         result.push(e);
+      }
     }
     return result;
   }
@@ -262,8 +278,9 @@ export class TraceModernizer {
     }
 
     const metadata = event.metadata;
-    if (metadata.internal || metadata.method.startsWith('tracing'))
+    if (metadata.internal || metadata.method.startsWith('tracing')) {
       return null;
+    }
 
     if (event.type === 'event') {
       if (metadata.method === '__create__' && metadata.type === 'ConsoleMessage') {
@@ -309,19 +326,22 @@ export class TraceModernizer {
     const result: traceV5.TraceEvent[] = [];
     for (const event of events) {
       const e = this._modernize_event_4_to_5(event);
-      if (e)
+      if (e) {
         result.push(e);
+      }
     }
     return result;
   }
 
   _modernize_event_4_to_5(event: traceV4.TraceEvent): traceV5.TraceEvent | null {
-    if (event.type === 'event' && event.method === '__create__' && event.class === 'JSHandle')
+    if (event.type === 'event' && event.method === '__create__' && event.class === 'JSHandle') {
       this._jsHandles.set(event.params.guid, event.params.initializer);
+    }
     if (event.type === 'object') {
       // We do not expect any other 'object' events.
-      if (event.class !== 'ConsoleMessage')
+      if (event.class !== 'ConsoleMessage') {
         return null;
+      }
       // Older traces might have `args` inherited from the protocol initializer - guid of JSHandle,
       // but might also have modern `args` with preview and value.
       const args: { preview: string, value: string }[] = (event.initializer as any).args?.map((arg: any) => {
@@ -341,8 +361,9 @@ export class TraceModernizer {
     }
     if (event.type === 'event' && event.method === 'console') {
       const consoleMessage = this._consoleObjects.get(event.params.message?.guid || '');
-      if (!consoleMessage)
+      if (!consoleMessage) {
         return null;
+      }
       return {
         type: 'console',
         time: event.time,
@@ -360,8 +381,9 @@ export class TraceModernizer {
     const result: traceV6.TraceEvent[] = [];
     for (const event of events) {
       result.push(event);
-      if (event.type !== 'after' || !event.log.length)
+      if (event.type !== 'after' || !event.log.length) {
         continue;
+      }
       for (const log of event.log) {
         result.push({
           type: 'log',
@@ -396,10 +418,12 @@ export class TraceModernizer {
         continue;
       }
       // Take wall and monotonic time from the first event.
-      if (!this._contextEntry.wallTime && event.type === 'before')
+      if (!this._contextEntry.wallTime && event.type === 'before') {
         this._contextEntry.wallTime = event.wallTime;
-      if (!this._contextEntry.startTime && event.type === 'before')
+      }
+      if (!this._contextEntry.startTime && event.type === 'before') {
         this._contextEntry.startTime = event.startTime;
+      }
       result.push(event);
     }
     return result;

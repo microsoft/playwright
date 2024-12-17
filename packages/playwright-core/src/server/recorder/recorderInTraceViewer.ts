@@ -81,8 +81,9 @@ export class RecorderInTraceViewer extends EventEmitter implements IRecorderApp 
   async setSources(sources: Source[]): Promise<void> {
     this._transport.deliverEvent('setSources', { sources });
     if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length) {
-      if ((process as any)._didSetSourcesForTest(sources[0].text))
+      if ((process as any)._didSetSourcesForTest(sources[0].text)) {
         this.close();
+      }
     }
   }
 

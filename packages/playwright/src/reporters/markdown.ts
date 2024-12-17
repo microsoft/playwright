@@ -42,8 +42,9 @@ class MarkdownReporter extends BaseReporter {
     await super.onEnd(result);
     const summary = this.generateSummary();
     const lines: string[] = [];
-    if (summary.fatalErrors.length)
+    if (summary.fatalErrors.length) {
       lines.push(`**${summary.fatalErrors.length} fatal errors, not part of any test**`);
+    }
     if (summary.unexpected.length) {
       lines.push(`**${summary.unexpected.length} failed**`);
       this._printTestList(':x:', summary.unexpected, lines);
@@ -74,8 +75,9 @@ class MarkdownReporter extends BaseReporter {
   }
 
   private _printTestList(prefix: string, tests: TestCase[], lines: string[], suffix?: string) {
-    for (const test of tests)
+    for (const test of tests) {
       lines.push(`${prefix} ${formatTestTitle(this.config, test)}${suffix || ''}`);
+    }
     lines.push(``);
   }
 }

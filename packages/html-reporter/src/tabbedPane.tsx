@@ -45,8 +45,9 @@ export const TabbedPane: React.FunctionComponent<{
       </div>
       {
         tabs.map(tab => {
-          if (selectedTab === tab.id)
+          if (selectedTab === tab.id) {
             return <div key={tab.id} className='tab-content'>{tab.render()}</div>;
+          }
         })
       }
     </div>

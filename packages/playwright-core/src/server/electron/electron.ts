@@ -71,8 +71,9 @@ export class ElectronApplication extends SdkObject {
     this._nodeConnection = nodeConnection;
     this._nodeSession = nodeConnection.rootSession;
     this._nodeSession.on('Runtime.executionContextCreated', async (event: Protocol.Runtime.executionContextCreatedPayload) => {
-      if (!event.context.auxData || !event.context.auxData.isDefault)
+      if (!event.context.auxData || !event.context.auxData.isDefault) {
         return;
+      }
       const crExecutionContext = new CRExecutionContext(this._nodeSession, event.context);
       this._nodeExecutionContext = new js.ExecutionContext(this, crExecutionContext, 'electron');
       const { result: remoteObject } = await crExecutionContext._client.send('Runtime.evaluate', {
@@ -111,8 +112,9 @@ export class ElectronApplication extends SdkObject {
       // @see https://github.com/GoogleChrome/puppeteer/issues/3865
       return;
     }
-    if (!this._nodeExecutionContext)
+    if (!this._nodeExecutionContext) {
       return;
+    }
     const args = event.args.map(arg => this._nodeExecutionContext!.createHandle(arg));
     const message = new ConsoleMessage(null, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
     this.emit(ElectronApplication.Events.Console, message);
@@ -166,8 +168,9 @@ export class Electron extends SdkObject {
 
       if (os.platform() === 'linux') {
         const runningAsRoot = process.geteuid && process.geteuid() === 0;
-        if (runningAsRoot && electronArguments.indexOf('--no-sandbox') === -1)
+        if (runningAsRoot && electronArguments.indexOf('--no-sandbox') === -1) {
           electronArguments.unshift('--no-sandbox');
+        }
       }
 
       const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
@@ -184,7 +187,7 @@ export class Electron extends SdkObject {
           // 'electron/index.js' resolves to the actual Electron App.
           command = require('electron/index.js');
         } catch (error: any) {
-          if ((error as NodeJS.ErrnoException)?.code === 'MODULE_NOT_FOUND') {
+          if ((error as NodeJS.ErrnoException).code === 'MODULE_NOT_FOUND') {
             throw new Error('\n' + wrapInASCIIBox([
               'Electron executablePath not found!',
               'Please install it using `npm install -D electron` or set the executablePath to your Electron executable.',
@@ -308,8 +311,9 @@ function waitForLine(progress: Progress, process: childProcess.ChildProcess, reg
 
     function onLine(line: string) {
       const match = line.match(regex);
-      if (!match)
+      if (!match) {
         return;
+      }
       cleanup();
       resolve(match);
     }

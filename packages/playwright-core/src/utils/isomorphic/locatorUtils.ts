@@ -58,21 +58,29 @@ export function getByTextSelector(text: string | RegExp, options?: { exact?: boo
 
 export function getByRoleSelector(role: string, options: ByRoleOptions = {}): string {
   const props: string[][] = [];
-  if (options.checked !== undefined)
+  if (options.checked !== undefined) {
     props.push(['checked', String(options.checked)]);
-  if (options.disabled !== undefined)
+  }
+  if (options.disabled !== undefined) {
     props.push(['disabled', String(options.disabled)]);
-  if (options.selected !== undefined)
+  }
+  if (options.selected !== undefined) {
     props.push(['selected', String(options.selected)]);
-  if (options.expanded !== undefined)
+  }
+  if (options.expanded !== undefined) {
     props.push(['expanded', String(options.expanded)]);
-  if (options.includeHidden !== undefined)
+  }
+  if (options.includeHidden !== undefined) {
     props.push(['include-hidden', String(options.includeHidden)]);
-  if (options.level !== undefined)
+  }
+  if (options.level !== undefined) {
     props.push(['level', String(options.level)]);
-  if (options.name !== undefined)
+  }
+  if (options.name !== undefined) {
     props.push(['name', escapeForAttributeSelector(options.name, !!options.exact)]);
-  if (options.pressed !== undefined)
+  }
+  if (options.pressed !== undefined) {
     props.push(['pressed', String(options.pressed)]);
+  }
   return `internal:role=${role}${props.map(([n, v]) => `[${n}=${v}]`).join('')}`;
 }

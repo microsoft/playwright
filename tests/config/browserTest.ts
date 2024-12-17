@@ -65,23 +65,26 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   }, { scope: 'worker' }],
 
   allowsThirdParty: [async ({ browserName }, run) => {
-    if (browserName === 'firefox')
+    if (browserName === 'firefox') {
       await run(true);
-    else
+    } else {
       await run(false);
+    }
   }, { scope: 'worker' }],
 
   defaultSameSiteCookieValue: [async ({ browserName, platform, macVersion }, run) => {
-    if (browserName === 'chromium' || browserName as any === '_bidiChromium')
+    if (browserName === 'chromium' || browserName as any === '_bidiChromium') {
       await run('Lax');
-    else if (browserName === 'webkit' && platform === 'linux')
+    } else if (browserName === 'webkit' && platform === 'linux') {
       await run('Lax');
-    else if (browserName === 'webkit')
-      await run('None'); // Windows + older macOS
-    else if (browserName === 'firefox' || browserName as any === '_bidiFirefox')
+    } else if (browserName === 'webkit') {
+      // Windows + older macOS
       await run('None');
-    else
+    } else if (browserName === 'firefox' || browserName as any === '_bidiFirefox') {
+      await run('None');
+    } else {
       throw new Error('unknown browser - ' + browserName);
+    }
   }, { scope: 'worker' }],
 
   browserMajorVersion: [async ({ browserVersion }, run) => {
@@ -126,22 +129,25 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   launchPersistent: async ({ createUserDataDir, browserType }, run) => {
     let persistentContext: BrowserContext | undefined;
     await run(async options => {
-      if (persistentContext)
+      if (persistentContext) {
         throw new Error('can only launch one persistent context');
+      }
       const userDataDir = await createUserDataDir();
       persistentContext = await browserType.launchPersistentContext(userDataDir, { ...options });
       const page = persistentContext.pages()[0];
       return { context: persistentContext, page };
     });
-    if (persistentContext)
+    if (persistentContext) {
       await persistentContext.close();
+    }
   },
 
   startRemoteServer: async ({ childProcess, browserType }, run) => {
     let server: PlaywrightServer | undefined;
     const fn = async (kind: 'launchServer' | 'run-server', options?: RemoteServerOptions) => {
-      if (server)
+      if (server) {
         throw new Error('can only start one remote server');
+      }
       if (kind === 'launchServer') {
         const remoteServer = new RemoteServer();
         await remoteServer._start(childProcess, browserType, options);
@@ -188,8 +194,9 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   }, { scope: 'worker' }],
 
   autoSkipBidiTest: [async ({ bidiTestSkipPredicate }, run) => {
-    if (bidiTestSkipPredicate(test.info()))
+    if (bidiTestSkipPredicate(test.info())) {
       test.skip(true);
+    }
     await run();
   }, { auto: true, scope: 'test' }],
 });

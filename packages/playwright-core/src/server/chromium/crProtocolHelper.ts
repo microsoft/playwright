@@ -23,8 +23,9 @@ import { mkdirIfNeeded } from '../../utils/fileUtils';
 import { splitErrorMessage } from '../../utils/stackTrace';
 
 export function getExceptionMessage(exceptionDetails: Protocol.Runtime.ExceptionDetails): string {
-  if (exceptionDetails.exception)
+  if (exceptionDetails.exception) {
     return exceptionDetails.exception.description || String(exceptionDetails.exception.value);
+  }
   let message = exceptionDetails.text;
   if (exceptionDetails.stackTrace) {
     for (const callframe of exceptionDetails.stackTrace.callFrames) {
@@ -98,24 +99,31 @@ export function exceptionToError(exceptionDetails: Protocol.Runtime.ExceptionDet
 
 export function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
   let mask = 0;
-  if (modifiers.has('Alt'))
+  if (modifiers.has('Alt')) {
     mask |= 1;
-  if (modifiers.has('Control'))
+  }
+  if (modifiers.has('Control')) {
     mask |= 2;
-  if (modifiers.has('Meta'))
+  }
+  if (modifiers.has('Meta')) {
     mask |= 4;
-  if (modifiers.has('Shift'))
+  }
+  if (modifiers.has('Shift')) {
     mask |= 8;
+  }
   return mask;
 }
 
 export function toButtonsMask(buttons: Set<types.MouseButton>): number {
   let mask = 0;
-  if (buttons.has('left'))
+  if (buttons.has('left')) {
     mask |= 1;
-  if (buttons.has('right'))
+  }
+  if (buttons.has('right')) {
     mask |= 2;
-  if (buttons.has('middle'))
+  }
+  if (buttons.has('middle')) {
     mask |= 4;
+  }
   return mask;
 }

@@ -12,5 +12,7 @@ module.exports = {
   rules: {
     '@typescript-eslint/no-floating-promises': 'error',
     "@typescript-eslint/no-unnecessary-boolean-literal-compare": 2,
+    // Not strictly necessary for tests and there are some config issues with it
+    "@typescript-eslint/no-unnecessary-condition": 0,
   },
 };

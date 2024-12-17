@@ -469,8 +469,9 @@ it('generate multiple locators', async ({ page }) => {
   };
   for (const lang of ['javascript', 'java', 'python', 'csharp'] as const) {
     expect.soft(asLocators(lang, selector)).toEqual(locators[lang]);
-    for (const locator of locators[lang])
+    for (const locator of locators[lang]) {
       expect.soft(parseLocator(lang, locator, 'data-testid'), `parse(${lang}): ${locator}`).toBe(selector);
+    }
   }
 });
 

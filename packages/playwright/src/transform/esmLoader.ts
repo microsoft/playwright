@@ -27,14 +27,16 @@ async function resolve(specifier: string, context: { parentURL?: string }, defau
   if (context.parentURL && context.parentURL.startsWith('file://')) {
     const filename = url.fileURLToPath(context.parentURL);
     const resolved = resolveHook(filename, specifier);
-    if (resolved !== undefined)
+    if (resolved !== undefined) {
       specifier = url.pathToFileURL(resolved).toString();
+    }
   }
   const result = await defaultResolve(specifier, context, defaultResolve);
   // Note: we collect dependencies here that will be sent to the main thread
   // (and optionally runner process) after the loading finishes.
-  if (result?.url && result.url.startsWith('file://'))
+  if (result?.url && result.url.startsWith('file://')) {
     currentFileDepsCollector()?.add(url.fileURLToPath(result.url));
+  }
 
   return result;
 }
@@ -44,24 +46,28 @@ async function resolve(specifier: string, context: { parentURL?: string }, defau
 async function load(moduleUrl: string, context: { format?: string }, defaultLoad: Function) {
   // Bail out for wasm, json, etc.
   // non-js files have context.format === undefined
-  if (context.format !== 'commonjs' && context.format !== 'module' && context.format !== undefined)
+  if (context.format !== 'commonjs' && context.format !== 'module' && context.format !== undefined) {
     return defaultLoad(moduleUrl, context, defaultLoad);
+  }
 
   // Bail for built-in modules.
-  if (!moduleUrl.startsWith('file://'))
+  if (!moduleUrl.startsWith('file://')) {
     return defaultLoad(moduleUrl, context, defaultLoad);
+  }
 
   const filename = url.fileURLToPath(moduleUrl);
   // Bail for node_modules.
-  if (!shouldTransform(filename))
+  if (!shouldTransform(filename)) {
     return defaultLoad(moduleUrl, context, defaultLoad);
+  }
 
   const code = fs.readFileSync(filename, 'utf-8');
   const transformed = transformHook(code, filename, moduleUrl);
 
   // Flush the source maps to the main thread, so that errors during import() are source-mapped.
-  if (transformed.serializedCache)
+  if (transformed.serializedCache) {
     await transport?.send('pushToCompilationCache', { cache: transformed.serializedCache });
+  }
 
   // Output format is required, so we determine it manually when unknown.
   // shortCircuit is required by Node >= 18.6 to designate no more loaders should be called.
@@ -84,7 +90,7 @@ function globalPreload(context: { port: MessagePort }) {
 
 // Node.js >= 20
 function initialize(data: { port: MessagePort }) {
-  transport = createTransport(data?.port);
+  transport = createTransport(data.port);
 }
 
 function createTransport(port: MessagePort) {
@@ -104,8 +110,9 @@ function createTransport(port: MessagePort) {
       return;
     }
 
-    if (method === 'getCompilationCache')
+    if (method === 'getCompilationCache') {
       return { cache: serializeCompilationCache() };
+    }
 
     if (method === 'startCollectingFileDeps') {
       startCollectingFileDeps();

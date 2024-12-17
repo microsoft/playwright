@@ -22,7 +22,9 @@ test.describe('toHaveCount', () => {
     await page.setContent('<select><option>One</option></select>');
     const locator = page.locator('option');
     let done = false;
-    const promise = expect(locator).toHaveCount(2).then(() => { done = true; });
+    const promise = expect(locator).toHaveCount(2).then(() => {
+      done = true;
+    });
     await page.waitForTimeout(1000);
     expect(done).toBe(false);
     await page.setContent('<select><option>One</option><option>Two</option></select>');

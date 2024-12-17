@@ -42,8 +42,9 @@ async function getSnapshotPaths(runInlineTest, testInfo, playwrightConfig, pathA
   expect(result.exitCode).toBe(0);
   const allSegments = result.output.split(SEPARATOR);
   const projToSnapshot = {};
-  for (let i = 1; i < allSegments.length; i += 3)
+  for (let i = 1; i < allSegments.length; i += 3) {
     projToSnapshot[allSegments[i]] = path.relative(testInfo.outputDir, allSegments[i + 1]);
+  }
   return projToSnapshot;
 }
 

@@ -123,16 +123,18 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], customMatchers: Re
       const message = isString(messageOrOptions) ? messageOrOptions : messageOrOptions?.message || info.message;
       const newInfo = { ...info, message };
       if (newInfo.poll) {
-        if (typeof actual !== 'function')
+        if (typeof actual !== 'function') {
           throw new Error('`expect.poll()` accepts only function as a first argument');
+        }
         newInfo.poll.generator = actual as any;
       }
       return createMatchers(actual, newInfo, prefix);
     },
 
     get: function(target: any, property: string | typeof getCustomMatchersSymbol) {
-      if (property === 'configure')
+      if (property === 'configure') {
         return configure;
+      }
 
       if (property === 'extend') {
         return (matchers: any) => {
@@ -169,8 +171,9 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], customMatchers: Re
         };
       }
 
-      if (property === getCustomMatchersSymbol)
+      if (property === getCustomMatchersSymbol) {
         return customMatchers;
+      }
 
       if (property === 'poll') {
         return (actual: unknown, messageOrOptions?: ExpectMessage & { timeout?: number, intervals?: number[] }) => {
@@ -184,12 +187,15 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], customMatchers: Re
 
   const configure = (configuration: { message?: string, timeout?: number, soft?: boolean, _poll?: boolean | { timeout?: number, intervals?: number[] } }) => {
     const newInfo = { ...info };
-    if ('message' in configuration)
+    if ('message' in configuration) {
       newInfo.message = configuration.message;
-    if ('timeout' in configuration)
+    }
+    if ('timeout' in configuration) {
       newInfo.timeout = configuration.timeout;
-    if ('soft' in configuration)
+    }
+    if ('soft' in configuration) {
       newInfo.isSoft = configuration.soft;
+    }
     if ('_poll' in configuration) {
       newInfo.poll = configuration._poll ? { ...info.poll, generator: () => {} } : undefined;
       if (typeof configuration._poll === 'object') {
@@ -271,8 +277,9 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
   get(target: Object, matcherName: string | symbol, receiver: any): any {
     let matcher = Reflect.get(target, matcherName, receiver);
-    if (typeof matcherName !== 'string')
+    if (typeof matcherName !== 'string') {
       return matcher;
+    }
 
     let resolvedMatcherName = matcherName;
     for (let i = this._prefix.length; i > 0; i--) {
@@ -284,24 +291,28 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       }
     }
 
-    if (matcher === undefined)
+    if (matcher === undefined) {
       throw new Error(`expect: Property '${matcherName}' not found.`);
+    }
     if (typeof matcher !== 'function') {
-      if (matcherName === 'not')
+      if (matcherName === 'not') {
         this._info.isNot = !this._info.isNot;
+      }
       return new Proxy(matcher, this);
     }
     if (this._info.poll) {
-      if ((customAsyncMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects')
+      if ((customAsyncMatchers as any)[matcherName] || matcherName === 'resolves' || matcherName === 'rejects') {
         throw new Error(`\`expect.poll()\` does not support "${matcherName}" matcher.`);
+      }
       matcher = (...args: any[]) => pollMatcher(resolvedMatcherName, this._info, this._prefix, ...args);
     }
     return (...args: any[]) => {
       const testInfo = currentTestInfo();
       // We assume that the matcher will read the current expect timeout the first thing.
       setCurrentExpectConfigureTimeout(this._info.timeout);
-      if (!testInfo)
+      if (!testInfo) {
         return matcher.call(target, ...args);
+      }
 
       const customMessage = this._info.message || '';
       const argsSuffix = computeArgsSuffix(matcherName, args);
@@ -327,14 +338,15 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         const jestError = isJestError(e) ? e : null;
         const error = jestError ? new ExpectError(jestError, customMessage, stackFrames) : e;
         if (jestError?.matcherResult.suggestedRebaseline) {
-          step.complete({ suggestedRebaseline: jestError?.matcherResult.suggestedRebaseline });
+          step.complete({ suggestedRebaseline: jestError.matcherResult.suggestedRebaseline });
           return;
         }
         step.complete({ error });
-        if (this._info.isSoft)
+        if (this._info.isSoft) {
           testInfo._failWithError(error);
-        else
+        } else {
           throw error;
+        }
       };
 
       const finalizer = () => {
@@ -348,8 +360,9 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         const result = (matcherName === 'toPass' || this._info.poll) ?
           zones.run('stepZone', step, callback) :
           zones.run<ExpectZone, any>('expectZone', { title, stepId: step.stepId }, callback);
-        if (result instanceof Promise)
+        if (result instanceof Promise) {
           return result.then(finalizer).catch(reportStepError);
+        }
         finalizer();
         return result;
       } catch (e) {
@@ -366,8 +379,9 @@ async function pollMatcher(qualifiedMatcherName: string, info: ExpectMetaInfo, p
   const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
 
   const result = await pollAgainstDeadline<Error|undefined>(async () => {
-    if (testInfo && currentTestInfo() !== testInfo)
+    if (testInfo && currentTestInfo() !== testInfo) {
       return { continuePolling: false, result: undefined };
+    }
 
     const innerInfo: ExpectMetaInfo = {
       ...info,
@@ -377,8 +391,9 @@ async function pollMatcher(qualifiedMatcherName: string, info: ExpectMetaInfo, p
     const value = await poll.generator();
     try {
       let matchers = createMatchers(value, innerInfo, prefix);
-      if (info.isNot)
+      if (info.isNot) {
         matchers = matchers.not;
+      }
       matchers[qualifiedMatcherName](...args);
       return { continuePolling: false, result: undefined };
     } catch (error) {
@@ -405,19 +420,22 @@ function setCurrentExpectConfigureTimeout(timeout: number | undefined) {
 }
 
 function currentExpectTimeout() {
-  if (currentExpectConfigureTimeout !== undefined)
+  if (currentExpectConfigureTimeout !== undefined) {
     return currentExpectConfigureTimeout;
+  }
   const testInfo = currentTestInfo();
-  let defaultExpectTimeout = testInfo?._projectInternal?.expect?.timeout;
-  if (typeof defaultExpectTimeout === 'undefined')
+  let defaultExpectTimeout = testInfo?._projectInternal.expect?.timeout;
+  if (typeof defaultExpectTimeout === 'undefined') {
     defaultExpectTimeout = 5000;
+  }
   return defaultExpectTimeout;
 }
 
 function computeArgsSuffix(matcherName: string, args: any[]) {
   let value = '';
-  if (matcherName === 'toHaveScreenshot')
+  if (matcherName === 'toHaveScreenshot') {
     value = toHaveScreenshotStepTitle(...args);
+  }
   return value ? `(${value})` : '';
 }
 
@@ -427,8 +445,10 @@ export function mergeExpects(...expects: any[]) {
   let merged = expect;
   for (const e of expects) {
     const internals = e[getCustomMatchersSymbol];
-    if (!internals) // non-playwright expects mutate the global expect, so we don't need to do anything special
+    if (!internals) {
+      // non-playwright expects mutate the global expect, so we don't need to do anything special
       continue;
+    }
     merged = merged.extend(internals);
   }
   return merged;

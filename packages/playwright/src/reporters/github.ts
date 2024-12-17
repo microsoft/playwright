@@ -76,8 +76,9 @@ export class GitHubReporter extends BaseReporter {
   private _printAnnotations() {
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
-    if (summary.failuresToPrint.length)
+    if (summary.failuresToPrint.length) {
       this._printFailureAnnotations(summary.failuresToPrint);
+    }
     this._printSlowTestAnnotations();
     this._printSummaryAnnotation(summaryMessage);
   }

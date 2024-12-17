@@ -37,8 +37,9 @@ class EventsHelper {
       eventName: (string | symbol);
       handler: (...args: any[]) => void;
     }>) {
-    for (const listener of listeners)
+    for (const listener of listeners) {
       listener.emitter.removeListener(listener.eventName, listener.handler);
+    }
     listeners.splice(0, listeners.length);
   }
 }

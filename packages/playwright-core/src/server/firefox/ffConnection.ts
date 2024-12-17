@@ -70,11 +70,13 @@ export class FFConnection extends EventEmitter {
 
   async _onMessage(message: ProtocolResponse) {
     this._protocolLogger('receive', message);
-    if (message.id === kBrowserCloseMessageId)
+    if (message.id === kBrowserCloseMessageId) {
       return;
+    }
     const session = this._sessions.get(message.sessionId || '');
-    if (session)
+    if (session) {
       session.dispatchMessage(message);
+    }
   }
 
   _onClose(reason?: string) {
@@ -87,8 +89,9 @@ export class FFConnection extends EventEmitter {
   }
 
   close() {
-    if (!this._closed)
+    if (!this._closed) {
       this._transport.close();
+    }
   }
 
   createSession(sessionId: string): FFSession {
@@ -134,8 +137,9 @@ export class FFSession extends EventEmitter {
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
-    if (this._crashed || this._disposed || this._connection._closed || this._connection._browserDisconnectedLogs)
+    if (this._crashed || this._disposed || this._connection._closed || this._connection._browserDisconnectedLogs) {
       throw new ProtocolError(this._crashed ? 'crashed' : 'closed', undefined, this._connection._browserDisconnectedLogs);
+    }
     const id = this._connection.nextMessageId();
     this._rawSend({ method, params, id });
     return new Promise((resolve, reject) => {

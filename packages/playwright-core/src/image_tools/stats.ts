@@ -67,12 +67,15 @@ export class FastStats implements Stats {
 
     const recalc = (mx: number[], idx: number, initial: number, x: number, y: number) => {
       mx[idx] = initial;
-      if (y > 0)
+      if (y > 0) {
         mx[idx] += mx[(y - 1) * width + x];
-      if (x > 0)
+      }
+      if (x > 0) {
         mx[idx] += mx[y * width + x - 1];
-      if (x > 0 && y > 0)
+      }
+      if (x > 0 && y > 0) {
         mx[idx] -= mx[(y - 1) * width + x - 1];
+      }
     };
 
     for (let y = 0; y < height; ++y) {
@@ -90,12 +93,15 @@ export class FastStats implements Stats {
   _sum(partialSum: number[], x1: number, y1: number, x2: number, y2: number): number {
     const width = this.c1.width;
     let result = partialSum[y2 * width + x2];
-    if (y1 > 0)
+    if (y1 > 0) {
       result -= partialSum[(y1 - 1) * width + x2];
-    if (x1 > 0)
+    }
+    if (x1 > 0) {
       result -= partialSum[y2 * width + x1 - 1];
-    if (x1 > 0 && y1 > 0)
+    }
+    if (x1 > 0 && y1 > 0) {
       result += partialSum[(y1 - 1) * width + x1 - 1];
+    }
     return result;
   }
 

@@ -19,10 +19,12 @@ export function makeWaitForNextTask() {
   // As of Mar 2021, Electron v12 doesn't create new task with `setImmediate` despite
   // using Node 14 internally, so we fallback to `setTimeout(0)` instead.
   // @see https://github.com/electron/electron/issues/28261
-  if ((process.versions as any).electron)
+  if ((process.versions as any).electron) {
     return (callback: () => void) => setTimeout(callback, 0);
-  if (parseInt(process.versions.node, 10) >= 11)
+  }
+  if (parseInt(process.versions.node, 10) >= 11) {
     return setImmediate;
+  }
 
   // Unlike Node 11, Node 10 and less have a bug with Task and MicroTask execution order:
   // - https://github.com/nodejs/node/issues/22257

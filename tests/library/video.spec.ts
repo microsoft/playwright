@@ -43,8 +43,9 @@ export class VideoPlayer {
 
     const lines = this.output.split('\n');
     let framesLine = lines.find(l => l.startsWith('frame='))!;
-    if (!framesLine)
+    if (!framesLine) {
       throw new Error(`No frame data in the output:\n${this.output}`);
+    }
     framesLine = framesLine.substring(framesLine.lastIndexOf('frame='));
     const framesMatch = framesLine.match(/frame=\s+(\d+)/);
     const streamLine = lines.find(l => l.trim().startsWith('Stream #0:0'));
@@ -66,8 +67,9 @@ export class VideoPlayer {
           break;
         }
       }
-      if (hasColor)
+      if (hasColor) {
         return this.frame(f, offset);
+      }
     }
   }
 
@@ -121,8 +123,9 @@ function expectAll(pixels: Buffer, rgbaPredicate) {
     rgbaPredicate(r, g, b, alpha);
   };
   try {
-    for (let i = 0, n = pixels.length; i < n; i += 4)
+    for (let i = 0, n = pixels.length; i < n; i += 4) {
       checkPixel(i);
+    }
   } catch (e) {
     // Log pixel values on failure.
     rewriteErrorMessage(e, e.message + `\n\nActual pixels=[${pixels.join(',')}]`);
@@ -279,8 +282,9 @@ it.describe('screencast', () => {
     const error = await popup.video().saveAs(saveAsPath).catch(e => e);
     // WebKit pauses renderer before win.close() and actually writes something,
     // and other browsers are sometimes fast as well.
-    if (!fs.existsSync(saveAsPath))
+    if (!fs.existsSync(saveAsPath)) {
       expect(error.message).toContain('Page did not produce any video frames');
+    }
     await context.close();
   });
 
@@ -455,7 +459,9 @@ it.describe('screencast', () => {
     await page.goto(server.EMPTY_PAGE);
     const [popup] = await Promise.all([
       page.waitForEvent('popup'),
-      page.evaluate(() => { window.open('about:blank'); }),
+      page.evaluate(() => {
+        window.open('about:blank');
+      }),
     ]);
     await popup.evaluate(() => document.body.style.backgroundColor = 'red');
     await Promise.all([
@@ -857,10 +863,11 @@ async function waitForRafs(page: Page, count: number): Promise<void> {
   await page.evaluate(count => new Promise<void>(resolve => {
     const onRaf = () => {
       --count;
-      if (!count)
+      if (!count) {
         resolve();
-      else
+      } else {
         window.builtinRequestAnimationFrame(onRaf);
+      }
     };
     window.builtinRequestAnimationFrame(onRaf);
   }), count);

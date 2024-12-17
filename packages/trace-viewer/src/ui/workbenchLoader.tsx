@@ -40,8 +40,9 @@ export const WorkbenchLoader: React.FunctionComponent<{
     const url = new URL(window.location.href);
     for (let i = 0; i < files.length; i++) {
       const file = files.item(i);
-      if (!file)
+      if (!file) {
         continue;
+      }
       const blobTraceURL = URL.createObjectURL(file);
       blobUrls.push(blobTraceURL);
       fileNames.push(file.name);
@@ -60,11 +61,13 @@ export const WorkbenchLoader: React.FunctionComponent<{
 
   React.useEffect(() => {
     const listener = async (e: ClipboardEvent) => {
-      if (!e.clipboardData?.files.length)
+      if (!e.clipboardData?.files.length) {
         return;
+      }
       for (const file of e.clipboardData.files) {
-        if (file.type !== 'application/zip')
+        if (file.type !== 'application/zip') {
           return;
+        }
       }
       e.preventDefault();
       processTraceFiles(e.clipboardData.files);
@@ -80,8 +83,9 @@ export const WorkbenchLoader: React.FunctionComponent<{
 
   const handleFileInputChange = React.useCallback((event: any) => {
     event.preventDefault();
-    if (!event.target.files)
+    if (!event.target.files) {
       return;
+    }
     processTraceFiles(event.target.files);
   }, [processTraceFiles]);
 
@@ -119,8 +123,9 @@ export const WorkbenchLoader: React.FunctionComponent<{
     (async () => {
       if (traceURLs.length) {
         const swListener = (event: any) => {
-          if (event.data.method === 'progress')
+          if (event.data.method === 'progress') {
             setProgress(event.data.params);
+          }
         };
         navigator.serviceWorker.addEventListener('message', swListener);
         setProgress({ done: 0, total: 1 });
@@ -129,13 +134,15 @@ export const WorkbenchLoader: React.FunctionComponent<{
           const url = traceURLs[i];
           const params = new URLSearchParams();
           params.set('trace', url);
-          if (uploadedTraceNames.length)
+          if (uploadedTraceNames.length) {
             params.set('traceFileName', uploadedTraceNames[i]);
+          }
           params.set('limit', String(traceURLs.length));
           const response = await fetch(`contexts?${params.toString()}`);
           if (!response.ok) {
-            if (!isServer)
+            if (!isServer) {
               setTraceURLs([]);
+            }
             setProcessingErrorMessage((await response.json()).error);
             return;
           }
@@ -153,7 +160,9 @@ export const WorkbenchLoader: React.FunctionComponent<{
 
   const showFileUploadDropArea = !!(!isServer && !dragOver && !fileForLocalModeError && (!traceURLs.length || processingErrorMessage));
 
-  return <div className='vbox workbench-loader' onDragOver={event => { event.preventDefault(); setDragOver(true); }}>
+  return <div className='vbox workbench-loader' onDragOver={event => {
+    event.preventDefault(); setDragOver(true);
+  }}>
     <div className='hbox header' {...(showFileUploadDropArea ? { inert: 'true' } : {})}>
       <div className='logo'>
         <img src='playwright-logo.svg' alt='Playwright logo' />
@@ -193,7 +202,9 @@ export const WorkbenchLoader: React.FunctionComponent<{
       <div className='title'>Select test to see the trace</div>
     </div>}
     {dragOver && <div className='drop-target'
-      onDragLeave={() => { setDragOver(false); }}
+      onDragLeave={() => {
+        setDragOver(false);
+      }}
       onDrop={event => handleDropEvent(event)}>
       <div className='title'>Release to analyse the Playwright Trace</div>
     </div>}

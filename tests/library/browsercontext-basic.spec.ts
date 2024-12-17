@@ -46,8 +46,9 @@ it('should be able to click across browser contexts', async function({ browser }
   };
 
   const clickInPage = async (page, count) => {
-    for (let i = 0; i < count; ++i)
+    for (let i = 0; i < count; ++i) {
       await page.locator('button').click();
+    }
   };
 
   const getClicks = async page => page.evaluate(() => window['clicks']);
@@ -230,10 +231,11 @@ it('should disable javascript', async ({ browser, browserName }) => {
     await page.goto('data:text/html, <script>var something = "forbidden"</script>');
     let error = null;
     await page.evaluate('something').catch(e => error = e);
-    if (browserName === 'webkit')
+    if (browserName === 'webkit') {
       expect(error!.message).toContain('Can\'t find variable: something');
-    else
+    } else {
       expect(error!.message).toContain('something is not defined');
+    }
     await context.close();
   }
 
@@ -309,7 +311,9 @@ it('should emulate media in popup', async ({ browser, server }) => {
     await page.goto(server.EMPTY_PAGE);
     const [popup] = await Promise.all([
       page.waitForEvent('popup'),
-      page.evaluate(url => { window.open(url); }, server.EMPTY_PAGE),
+      page.evaluate(url => {
+        window.open(url);
+      }, server.EMPTY_PAGE),
     ]);
     expect(await popup.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
     expect(await popup.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
@@ -320,7 +324,9 @@ it('should emulate media in popup', async ({ browser, server }) => {
     await page.goto(server.EMPTY_PAGE);
     const [popup] = await Promise.all([
       page.waitForEvent('popup'),
-      page.evaluate(url => { window.open(url); }, server.EMPTY_PAGE),
+      page.evaluate(url => {
+        window.open(url);
+      }, server.EMPTY_PAGE),
     ]);
     expect(await popup.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
     expect(await popup.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);

@@ -55,20 +55,25 @@ class CRAXNode implements accessibility.AXNode {
         this._richlyEditable = property.value.value === 'richtext';
         this._editable = true;
       }
-      if (property.name === 'focusable')
+      if (property.name === 'focusable') {
         this._focusable = property.value.value;
-      if (property.name === 'expanded')
+      }
+      if (property.name === 'expanded') {
         this._expanded = property.value.value;
-      if (property.name === 'hidden')
+      }
+      if (property.name === 'hidden') {
         this._hidden = property.value.value;
+      }
     }
   }
 
   private _isPlainTextField(): boolean {
-    if (this._richlyEditable)
+    if (this._richlyEditable) {
       return false;
-    if (this._editable)
+    }
+    if (this._editable) {
       return true;
+    }
     return this._role === 'textbox' || this._role === 'ComboBox' || this._role === 'searchbox';
   }
 
@@ -103,26 +108,30 @@ class CRAXNode implements accessibility.AXNode {
   }
 
   find(predicate: (arg0: CRAXNode) => boolean): CRAXNode | null {
-    if (predicate(this))
+    if (predicate(this)) {
       return this;
+    }
     for (const child of this._children) {
       const result = child.find(predicate);
-      if (result)
+      if (result) {
         return result;
+      }
     }
     return null;
   }
 
   isLeafNode(): boolean {
-    if (!this._children.length)
+    if (!this._children.length) {
       return true;
+    }
 
     // These types of objects may have children that we use as internal
     // implementation details, but we want to expose them as leaves to platform
     // accessibility APIs because screen readers might be confused if they find
     // any children.
-    if (this._isPlainTextField() || this._isTextOnlyObject())
+    if (this._isPlainTextField() || this._isTextOnlyObject()) {
       return true;
+    }
 
     // Roles whose children are only presentational according to the ARIA and
     // HTML5 Specs should be hidden from screen readers.
@@ -143,12 +152,15 @@ class CRAXNode implements accessibility.AXNode {
     }
 
     // Here and below: Android heuristics
-    if (this._hasFocusableChild())
+    if (this._hasFocusableChild()) {
       return false;
-    if (this._focusable && this._role !== 'WebArea' && this._role !== 'RootWebArea' && this._name)
+    }
+    if (this._focusable && this._role !== 'WebArea' && this._role !== 'RootWebArea' && this._name) {
       return true;
-    if (this._role === 'heading' && this._name)
+    }
+    if (this._role === 'heading' && this._name) {
       return true;
+    }
     return false;
   }
 
@@ -182,19 +194,23 @@ class CRAXNode implements accessibility.AXNode {
 
   isInteresting(insideControl: boolean): boolean {
     const role = this._role;
-    if (role === 'Ignored' || this._hidden)
+    if (role === 'Ignored' || this._hidden) {
       return false;
+    }
 
-    if (this._focusable || this._richlyEditable)
+    if (this._focusable || this._richlyEditable) {
       return true;
+    }
 
     // If it's not focusable but has a control role, then it's interesting.
-    if (this.isControl())
+    if (this.isControl()) {
       return true;
+    }
 
     // A non focusable child of a control is not interesting
-    if (insideControl)
+    if (insideControl) {
       return false;
+    }
 
     return this.isLeafNode() && !!this._name;
   }
@@ -212,10 +228,12 @@ class CRAXNode implements accessibility.AXNode {
 
   serialize(): channels.AXNode {
     const properties: Map<string, number | string | boolean> = new Map();
-    for (const property of this._payload.properties || [])
+    for (const property of this._payload.properties || []) {
       properties.set(property.name.toLowerCase(), property.value.value);
-    if (this._payload.description)
+    }
+    if (this._payload.description) {
       properties.set('description', this._payload.description.value);
+    }
 
     const node: {[x in keyof channels.AXNode]: any} = {
       role: this.normalizedRole(),
@@ -229,8 +247,9 @@ class CRAXNode implements accessibility.AXNode {
       'valuetext',
     ];
     for (const userStringProperty of userStringProperties) {
-      if (!properties.has(userStringProperty))
+      if (!properties.has(userStringProperty)) {
         continue;
+      }
       node[userStringProperty] = properties.get(userStringProperty);
     }
     const booleanProperties: Array<keyof channels.AXNode> = [
@@ -247,11 +266,13 @@ class CRAXNode implements accessibility.AXNode {
     for (const booleanProperty of booleanProperties) {
       // WebArea's treat focus differently than other nodes. They report whether their frame  has focus,
       // not whether focus is specifically on the root node.
-      if (booleanProperty === 'focused' && (this._role === 'WebArea' || this._role === 'RootWebArea'))
+      if (booleanProperty === 'focused' && (this._role === 'WebArea' || this._role === 'RootWebArea')) {
         continue;
+      }
       const value = properties.get(booleanProperty);
-      if (!value)
+      if (!value) {
         continue;
+      }
       node[booleanProperty] = value;
     }
     const numericalProperties: Array<keyof channels.AXNode> = [
@@ -260,8 +281,9 @@ class CRAXNode implements accessibility.AXNode {
       'valuemin',
     ];
     for (const numericalProperty of numericalProperties) {
-      if (!properties.has(numericalProperty))
+      if (!properties.has(numericalProperty)) {
         continue;
+      }
       node[numericalProperty] = properties.get(numericalProperty);
     }
     const tokenProperties: Array<keyof channels.AXNode> = [
@@ -272,32 +294,39 @@ class CRAXNode implements accessibility.AXNode {
     ];
     for (const tokenProperty of tokenProperties) {
       const value = properties.get(tokenProperty);
-      if (!value || value === 'false')
+      if (!value || value === 'false') {
         continue;
+      }
       node[tokenProperty] = value;
     }
 
     const axNode = node as channels.AXNode;
     if (this._payload.value) {
-      if (typeof this._payload.value.value === 'string')
+      if (typeof this._payload.value.value === 'string') {
         axNode.valueString = this._payload.value.value;
-      if (typeof this._payload.value.value === 'number')
+      }
+      if (typeof this._payload.value.value === 'number') {
         axNode.valueNumber = this._payload.value.value;
+      }
     }
-    if (properties.has('checked'))
+    if (properties.has('checked')) {
       axNode.checked = properties.get('checked') === 'true' ? 'checked' : properties.get('checked') === 'false' ? 'unchecked' : 'mixed';
-    if (properties.has('pressed'))
+    }
+    if (properties.has('pressed')) {
       axNode.pressed = properties.get('pressed') === 'true' ? 'pressed' : properties.get('pressed') === 'false' ? 'released' : 'mixed';
+    }
     return axNode;
   }
 
   static createTree(client: CRSession, payloads: Protocol.Accessibility.AXNode[]): CRAXNode {
     const nodeById: Map<string, CRAXNode> = new Map();
-    for (const payload of payloads)
+    for (const payload of payloads) {
       nodeById.set(payload.nodeId, new CRAXNode(client, payload));
+    }
     for (const node of nodeById.values()) {
-      for (const childId of node._payload.childIds || [])
+      for (const childId of node._payload.childIds || []) {
         node._children.push(nodeById.get(childId)!);
+      }
     }
     return nodeById.values().next().value!;
   }

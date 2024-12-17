@@ -42,8 +42,9 @@ test('install command should work', async ({ exec, installedSoftwareOnDisk }) =>
     await test.step(pkg, async () => {
       const result = await exec(`npm i ${pkg}`);
       expect(result).toHaveLoggedSoftwareDownload([]);
-      if (!pkg.includes('@playwright/browser-'))
+      if (!pkg.includes('@playwright/browser-')) {
         await exec('node sanity.js', pkg, 'chromium firefox webkit');
+      }
     });
   }
 });

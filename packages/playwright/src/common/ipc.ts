@@ -147,9 +147,11 @@ export function serializeConfig(config: FullConfigInternal, passCompilationCache
 }
 
 export function stdioChunkToParams(chunk: Uint8Array | string): TestOutputPayload {
-  if (chunk instanceof Uint8Array)
+  if (chunk instanceof Uint8Array) {
     return { buffer: Buffer.from(chunk).toString('base64') };
-  if (typeof chunk !== 'string')
+  }
+  if (typeof chunk !== 'string') {
     return { text: util.inspect(chunk) };
+  }
   return { text: chunk };
 }

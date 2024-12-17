@@ -50,15 +50,18 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
       // Always load the module first.
       const { Terminal, FitAddon } = await modulePromise;
       const element = xtermElement.current;
-      if (!element)
+      if (!element) {
         return;
+      }
 
       const terminalTheme = theme === 'dark-mode' ? darkTheme : lightTheme;
-      if (terminal.current && terminal.current.terminal.options.theme === terminalTheme)
+      if (terminal.current && terminal.current.terminal.options.theme === terminalTheme) {
         return;
+      }
 
-      if (terminal.current)
+      if (terminal.current) {
         element.textContent = '';
+      }
 
       const newTerminal = new Terminal({
         convertEol: true,
@@ -70,8 +73,9 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
 
       const fitAddon = new FitAddon();
       newTerminal.loadAddon(fitAddon);
-      for (const p of source.pending)
+      for (const p of source.pending) {
         newTerminal.write(p);
+      }
       source.write = (data => {
         source.pending.push(data);
         newTerminal.write(data);
@@ -94,8 +98,9 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
     // Fit reads data from the terminal itself, which updates lazily, probably on some timer
     // or mutation observer. Work around it.
     setTimeout(() => {
-      if (!terminal.current)
+      if (!terminal.current) {
         return;
+      }
       terminal.current.fitAddon.fit();
       source.resize(terminal.current.terminal.cols, terminal.current.terminal.rows);
     }, 250);

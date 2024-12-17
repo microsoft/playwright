@@ -20,8 +20,9 @@ import { attachFrame } from '../config/utils';
 import fs from 'fs';
 
 function adjustServerHeaders(headers: Object, browserName: string) {
-  if (browserName === 'firefox')
+  if (browserName === 'firefox') {
     delete headers['priority'];
+  }
   return headers;
 }
 
@@ -80,12 +81,13 @@ it('should not work for a redirect and interception', async ({ page, server }) =
 
 it('should return headers', async ({ page, server, browserName }) => {
   const response = await page.goto(server.EMPTY_PAGE);
-  if (browserName === 'chromium')
+  if (browserName === 'chromium') {
     expect(response.request().headers()['user-agent']).toContain('Chrome');
-  else if (browserName === 'firefox')
+  } else if (browserName === 'firefox') {
     expect(response.request().headers()['user-agent']).toContain('Firefox');
-  else if (browserName === 'webkit')
+  } else if (browserName === 'webkit') {
     expect(response.request().headers()['user-agent']).toContain('WebKit');
+  }
 });
 
 it('should get the same headers as the server', async ({ page, server, browserName, platform, isElectron, browserMajorVersion }) => {
@@ -200,10 +202,11 @@ it('should not get preflight CORS requests when intercepting', async ({ page, se
     expect(text).toBe('done');
     // Check that there was no preflight (OPTIONS) request.
     expect(routed).toEqual(['DELETE']);
-    if (browserName === 'firefox')
+    if (browserName === 'firefox') {
       expect(requests).toEqual(['OPTIONS', 'DELETE']);
-    else
+    } else {
       expect(requests).toEqual(['DELETE']);
+    }
   }
 });
 
@@ -228,8 +231,9 @@ it('should work with binary post data', async ({ page, server }) => {
   expect(request).toBeTruthy();
   const buffer = request.postDataBuffer();
   expect(buffer.length).toBe(256);
-  for (let i = 0; i < 256; ++i)
+  for (let i = 0; i < 256; ++i) {
     expect(buffer[i]).toBe(i);
+  }
 });
 
 it('should work with binary post data and interception', async ({ page, server }) => {
@@ -244,8 +248,9 @@ it('should work with binary post data and interception', async ({ page, server }
   expect(request).toBeTruthy();
   const buffer = request.postDataBuffer();
   expect(buffer.length).toBe(256);
-  for (let i = 0; i < 256; ++i)
+  for (let i = 0; i < 256; ++i) {
     expect(buffer[i]).toBe(i);
+  }
 });
 
 it('should override post data content type', async ({ page, server }) => {
@@ -390,25 +395,30 @@ it('should report raw headers', async ({ page, server, browserName, platform, is
   let expectedHeaders: { name: string, value: string }[];
   server.setRoute('/headers', (req, res) => {
     expectedHeaders = [];
-    for (let i = 0; i < req.rawHeaders.length; i += 2)
+    for (let i = 0; i < req.rawHeaders.length; i += 2) {
       expectedHeaders.push({ name: req.rawHeaders[i], value: req.rawHeaders[i + 1] });
+    }
     if (browserName === 'webkit' && platform === 'win32') {
       expectedHeaders = expectedHeaders.filter(({ name }) => name.toLowerCase() !== 'accept-encoding');
       // Convert "value": "en-US, en-US" => "en-US"
       expectedHeaders = expectedHeaders.map(e => {
         const { name, value } = e;
-        if (name.toLowerCase() !== 'accept-language')
+        if (name.toLowerCase() !== 'accept-language') {
           return e;
+        }
         const values = value.split(',').map(v => v.trim());
-        if (values.length === 1)
+        if (values.length === 1) {
           return e;
-        if (values[0] !== values[1])
+        }
+        if (values[0] !== values[1]) {
           return e;
+        }
         return { name, value: values[0] };
       });
     }
-    if (browserName === 'firefox')
+    if (browserName === 'firefox') {
       expectedHeaders = expectedHeaders.filter(({ name }) => name.toLowerCase() !== 'priority');
+    }
 
     res.end();
   });
@@ -460,8 +470,9 @@ it('should report all cookies in one header', async ({ page, server, isElectron,
 
   const expectedHeaders = {};
   server.setRoute('/headers', (req, res) => {
-    for (let i = 0; i < req.rawHeaders.length; i += 2)
+    for (let i = 0; i < req.rawHeaders.length; i += 2) {
       expectedHeaders[req.rawHeaders[i]] = req.rawHeaders[i + 1];
+    }
     res.end();
   });
 
@@ -511,10 +522,11 @@ it('page.reload return 304 status code', async ({ page, server, browserName }) =
       'Last-Modified': 'Fri, 05 Jan 2024 01:56:20 GMT',
       'Vary': 'Access-Control-Request-Headers',
     };
-    if (requestNumber === 1)
+    if (requestNumber === 1) {
       res.writeHead(200, headers);
-    else
+    } else {
       res.writeHead(304, 'Not Modified', headers);
+    }
     res.write(`<div>Test</div>`);
     res.end();
   });

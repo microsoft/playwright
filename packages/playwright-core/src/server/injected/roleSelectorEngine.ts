@@ -38,18 +38,21 @@ const kSupportedAttributes = ['selected', 'checked', 'pressed', 'expanded', 'lev
 kSupportedAttributes.sort();
 
 function validateSupportedRole(attr: string, roles: string[], role: string) {
-  if (!roles.includes(role))
+  if (!roles.includes(role)) {
     throw new Error(`"${attr}" attribute is only supported for roles: ${roles.slice().sort().map(role => `"${role}"`).join(', ')}`);
+  }
 }
 
 function validateSupportedValues(attr: AttributeSelectorPart, values: any[]) {
-  if (attr.op !== '<truthy>' && !values.includes(attr.value))
+  if (attr.op !== '<truthy>' && !values.includes(attr.value)) {
     throw new Error(`"${attr.name}" must be one of ${values.map(v => JSON.stringify(v)).join(', ')}`);
+  }
 }
 
 function validateSupportedOp(attr: AttributeSelectorPart, ops: AttributeSelectorOperator[]) {
-  if (!ops.includes(attr.op))
+  if (!ops.includes(attr.op)) {
     throw new Error(`"${attr.name}" does not support "${attr.op}" matcher`);
+  }
 }
 
 function validateAttributes(attrs: AttributeSelectorPart[], role: string): RoleEngineOptions {
@@ -87,10 +90,12 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string): RoleE
       case 'level': {
         validateSupportedRole(attr.name, kAriaLevelRoles, role);
         // Level is a number, convert it from string.
-        if (typeof attr.value === 'string')
+        if (typeof attr.value === 'string') {
           attr.value = +attr.value;
-        if (attr.op !== '=' || typeof attr.value !== 'number' || Number.isNaN(attr.value))
+        }
+        if (attr.op !== '=' || typeof attr.value !== 'number' || Number.isNaN(attr.value)) {
           throw new Error(`"level" attribute must be compared to a number`);
+        }
         options.level = attr.value;
         break;
       }
@@ -101,10 +106,12 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string): RoleE
         break;
       }
       case 'name': {
-        if (attr.op === '<truthy>')
+        if (attr.op === '<truthy>') {
           throw new Error(`"name" attribute must have a value`);
-        if (typeof attr.value !== 'string' && !(attr.value instanceof RegExp))
+        }
+        if (typeof attr.value !== 'string' && !(attr.value instanceof RegExp)) {
           throw new Error(`"name" attribute must be a string or a regular expression`);
+        }
         options.name = attr.value;
         options.nameOp = attr.op;
         options.exact = attr.caseSensitive;
@@ -127,47 +134,60 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string): RoleE
 function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: boolean): Element[] {
   const result: Element[] = [];
   const match = (element: Element) => {
-    if (getAriaRole(element) !== options.role)
+    if (getAriaRole(element) !== options.role) {
       return;
-    if (options.selected !== undefined && getAriaSelected(element) !== options.selected)
+    }
+    if (options.selected !== undefined && getAriaSelected(element) !== options.selected) {
       return;
-    if (options.checked !== undefined && getAriaChecked(element) !== options.checked)
+    }
+    if (options.checked !== undefined && getAriaChecked(element) !== options.checked) {
       return;
-    if (options.pressed !== undefined && getAriaPressed(element) !== options.pressed)
+    }
+    if (options.pressed !== undefined && getAriaPressed(element) !== options.pressed) {
       return;
-    if (options.expanded !== undefined && getAriaExpanded(element) !== options.expanded)
+    }
+    if (options.expanded !== undefined && getAriaExpanded(element) !== options.expanded) {
       return;
-    if (options.level !== undefined && getAriaLevel(element) !== options.level)
+    }
+    if (options.level !== undefined && getAriaLevel(element) !== options.level) {
       return;
-    if (options.disabled !== undefined && getAriaDisabled(element) !== options.disabled)
+    }
+    if (options.disabled !== undefined && getAriaDisabled(element) !== options.disabled) {
       return;
+    }
     if (!options.includeHidden) {
       const isHidden = isElementHiddenForAria(element);
-      if (isHidden)
+      if (isHidden) {
         return;
+      }
     }
     if (options.name !== undefined) {
       // Always normalize whitespace in the accessible name.
       const accessibleName = normalizeWhiteSpace(getElementAccessibleName(element, !!options.includeHidden));
-      if (typeof options.name === 'string')
+      if (typeof options.name === 'string') {
         options.name = normalizeWhiteSpace(options.name);
+      }
       // internal:role assumes that [name="foo"i] also means substring.
-      if (internal && !options.exact && options.nameOp === '=')
+      if (internal && !options.exact && options.nameOp === '=') {
         options.nameOp = '*=';
-      if (!matchesAttributePart(accessibleName, { name: '', jsonPath: [], op: options.nameOp || '=', value: options.name, caseSensitive: !!options.exact }))
+      }
+      if (!matchesAttributePart(accessibleName, { name: '', jsonPath: [], op: options.nameOp || '=', value: options.name, caseSensitive: !!options.exact })) {
         return;
+      }
     }
     result.push(element);
   };
 
   const query = (root: Element | ShadowRoot | Document) => {
     const shadows: ShadowRoot[] = [];
-    if ((root as Element).shadowRoot)
+    if ((root as Element).shadowRoot) {
       shadows.push((root as Element).shadowRoot!);
+    }
     for (const element of root.querySelectorAll('*')) {
       match(element);
-      if (element.shadowRoot)
+      if (element.shadowRoot) {
         shadows.push(element.shadowRoot);
+      }
     }
     shadows.forEach(query);
   };
@@ -181,8 +201,9 @@ export function createRoleEngine(internal: boolean): SelectorEngine {
     queryAll: (scope: SelectorRoot, selector: string): Element[] => {
       const parsed = parseAttributeSelector(selector, true);
       const role = parsed.name.toLowerCase();
-      if (!role)
+      if (!role) {
         throw new Error(`Role must not be empty`);
+      }
       const options = validateAttributes(parsed.attributes, role);
       beginAriaCaches();
       try {

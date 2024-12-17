@@ -54,8 +54,9 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
       model: device.model,
       serial: device.serial,
     });
-    for (const webView of device.webViews())
+    for (const webView of device.webViews()) {
       this._dispatchEvent('webViewAdded', { webView });
+    }
     this.addObjectListener(AndroidDevice.Events.WebViewAdded, webView => this._dispatchEvent('webViewAdded', { webView }));
     this.addObjectListener(AndroidDevice.Events.WebViewRemoved, socketName => this._dispatchEvent('webViewRemoved', { socketName }));
     this.addObjectListener(AndroidDevice.Events.Close, socketName => this._dispatchEvent('close'));
@@ -113,16 +114,18 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
     const keyCodes: number[] = [];
     for (let i = 0; i < text.length; ++i) {
       const code = keyMap.get(text[i].toUpperCase());
-      if (code === undefined)
+      if (code === undefined) {
         throw new Error('No mapping for ' + text[i] + ' found');
+      }
       keyCodes.push(code);
     }
     await Promise.all(keyCodes.map(keyCode => this._object.send('inputPress', { keyCode })));
   }
 
   async inputPress(params: channels.AndroidDeviceInputPressParams) {
-    if (!keyMap.has(params.key))
+    if (!keyMap.has(params.key)) {
       throw new Error('Unknown key: ' + params.key);
+    }
     await this._object.send('inputPress', { keyCode: keyMap.get(params.key) });
   }
 
@@ -315,6 +318,7 @@ function fixupAndroidElementInfo(info: channels.AndroidElementInfo) {
   info.res = info.res || '';
   info.desc = info.desc || '';
   info.text = info.text || '';
-  for (const child of info.children || [])
+  for (const child of info.children || []) {
     fixupAndroidElementInfo(child);
+  }
 }

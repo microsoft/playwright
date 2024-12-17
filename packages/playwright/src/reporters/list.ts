@@ -52,8 +52,9 @@ class ListReporter extends BaseReporter {
     const index = String(this._resultIndex.size + 1);
     this._resultIndex.set(result, index);
 
-    if (!isTTY)
+    if (!isTTY) {
       return;
+    }
     this._maybeWriteNewLine();
     this._testRows.set(test, this._lastRow);
     const prefix = this._testPrefix(index, '');
@@ -72,8 +73,9 @@ class ListReporter extends BaseReporter {
   }
 
   private getStepIndex(testIndex: string, result: TestResult, step: TestStep): string {
-    if (this._stepIndex.has(step))
+    if (this._stepIndex.has(step)) {
       return this._stepIndex.get(step)!;
+    }
 
     const ordinal = ((result as any)[lastStepOrdinalSymbol] || 0) + 1;
     (result as any)[lastStepOrdinalSymbol] = ordinal;
@@ -83,12 +85,14 @@ class ListReporter extends BaseReporter {
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
-    if (step.category !== 'test.step')
+    if (step.category !== 'test.step') {
       return;
+    }
     const testIndex = this._resultIndex.get(result) || '';
 
-    if (!isTTY)
+    if (!isTTY) {
       return;
+    }
 
     if (this._printSteps) {
       this._maybeWriteNewLine();
@@ -102,13 +106,15 @@ class ListReporter extends BaseReporter {
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-    if (step.category !== 'test.step')
+    if (step.category !== 'test.step') {
       return;
+    }
 
     const testIndex = this._resultIndex.get(result) || '';
     if (!this._printSteps) {
-      if (isTTY)
+      if (isTTY) {
         this._updateLine(this._testRows.get(test)!, colors.dim(formatTestTitle(this.config, test, step.parent)) + this._retrySuffix(result), this._testPrefix(testIndex, ''));
+      }
       return;
     }
 
@@ -116,10 +122,11 @@ class ListReporter extends BaseReporter {
     const title = isTTY ? test.title + colors.dim(stepSuffix(step)) : formatTestTitle(this.config, test, step);
     const prefix = this._testPrefix(index, '');
     let text = '';
-    if (step.error)
+    if (step.error) {
       text = colors.red(title);
-    else
+    } else {
       text = title;
+    }
     text += colors.dim(` (${milliseconds(step.duration)})`);
 
     this._updateOrAppendLine(this._stepRows.get(step)!, text, prefix);
@@ -134,8 +141,9 @@ class ListReporter extends BaseReporter {
 
   private _updateLineCountAndNewLineFlagForOutput(text: string) {
     this._needNewLine = text[text.length - 1] !== '\n';
-    if (!ttyWidth)
+    if (!ttyWidth) {
       return;
+    }
     for (const ch of text) {
       if (ch === '\n') {
         this._lastColumn = 0;
@@ -151,8 +159,9 @@ class ListReporter extends BaseReporter {
   }
 
   private _dumpToStdio(test: TestCase | undefined, chunk: string | Buffer, stream: NodeJS.WriteStream) {
-    if (this.config.quiet)
+    if (this.config.quiet) {
       return;
+    }
     const text = chunk.toString('utf-8');
     this._updateLineCountAndNewLineFlagForOutput(text);
     stream.write(chunk);
@@ -214,22 +223,25 @@ class ListReporter extends BaseReporter {
 
   private _updateLine(row: number, text: string, prefix: string) {
     const line = prefix + this.fitToScreen(text, prefix);
-    if (process.env.PW_TEST_DEBUG_REPORTERS)
+    if (process.env.PW_TEST_DEBUG_REPORTERS) {
       process.stdout.write('#' + row + ' : ' + line + '\n');
-    else
+    } else {
       this._updateLineForTTY(row, line);
+    }
   }
 
   private _updateLineForTTY(row: number, line: string) {
     // Go up if needed
-    if (row !== this._lastRow)
+    if (row !== this._lastRow) {
       process.stdout.write(`\u001B[${this._lastRow - row}A`);
+    }
     // Erase line, go to the start
     process.stdout.write('\u001B[2K\u001B[0G');
     process.stdout.write(line);
     // Go down if needed.
-    if (row !== this._lastRow)
+    if (row !== this._lastRow) {
       process.stdout.write(`\u001B[${this._lastRow - row}E`);
+    }
   }
 
   private _testPrefix(index: string, statusMark: string) {

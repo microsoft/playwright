@@ -56,8 +56,9 @@ export const testModeTest = test.extend<TestModeTestFixtures, TestModeWorkerOpti
   }, { scope: 'worker' }],
 
   toImpl: async ({ toImplInWorkerScope: toImplWorker, mode }, use, testInfo) => {
-    if (mode !== 'default' || process.env.PW_TEST_REUSE_CONTEXT)
+    if (mode !== 'default' || process.env.PW_TEST_REUSE_CONTEXT) {
       testInfo.skip();
+    }
     await use(toImplWorker);
   },
 });

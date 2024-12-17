@@ -62,8 +62,9 @@ export class FullConfigInternal {
   globalTeardowns: string[] = [];
 
   constructor(location: ConfigLocation, userConfig: Config, configCLIOverrides: ConfigCLIOverrides) {
-    if (configCLIOverrides.projects && userConfig.projects)
+    if (configCLIOverrides.projects && userConfig.projects) {
       throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
+    }
 
     const { resolvedConfigFile, configDir } = location;
     const packageJsonPath = getPackageJsonPath(configDir);
@@ -103,8 +104,9 @@ export class FullConfigInternal {
       webServer: null,
     };
     for (const key in userConfig) {
-      if (key.startsWith('@'))
+      if (key.startsWith('@')) {
         (this.config as any)[key] = (userConfig as any)[key];
+      }
     }
 
     (this.config as any)[configInternalSymbol] = this;
@@ -146,8 +148,9 @@ export class FullConfigInternal {
       const name = p.project.name || '';
       for (let i = 0; i < projects.length; ++i) {
         const candidate = name + (i ? i : '');
-        if (usedNames.has(candidate))
+        if (usedNames.has(candidate)) {
           continue;
+        }
         p.id = candidate;
         (p.project as any).__projectId = p.id;
         usedNames.add(candidate);
@@ -207,30 +210,34 @@ export class FullProjectInternal {
 
 export function takeFirst<T>(...args: (T | undefined)[]): T {
   for (const arg of args) {
-    if (arg !== undefined)
+    if (arg !== undefined) {
       return arg;
+    }
   }
   return undefined as any as T;
 }
 
 function pathResolve(baseDir: string, relative: string | undefined): string | undefined {
-  if (!relative)
+  if (!relative) {
     return undefined;
+  }
   return path.resolve(baseDir, relative);
 }
 
 function resolveReporters(reporters: Config['reporter'], rootDir: string): ReporterDescription[] | undefined {
   return toReporters(reporters as any)?.map(([id, arg]) => {
-    if (builtInReporters.includes(id as any))
+    if (builtInReporters.includes(id as any)) {
       return [id, arg];
+    }
     return [require.resolve(id, { paths: [rootDir] }), arg];
   });
 }
 
 function parseWorkers(workers: string) {
   const parsedWorkers = parseInt(workers, 10);
-  if (isNaN(parsedWorkers))
+  if (isNaN(parsedWorkers)) {
     throw new Error(`Workers ${workers} must be a number or percentage.`);
+  }
 
   return parsedWorkers;
 }
@@ -240,40 +247,48 @@ function resolveProjectDependencies(projects: FullProjectInternal[]) {
   for (const project of projects) {
     for (const dependencyName of project.project.dependencies) {
       const dependencies = projects.filter(p => p.project.name === dependencyName);
-      if (!dependencies.length)
+      if (!dependencies.length) {
         throw new Error(`Project '${project.project.name}' depends on unknown project '${dependencyName}'`);
-      if (dependencies.length > 1)
+      }
+      if (dependencies.length > 1) {
         throw new Error(`Project dependencies should have unique names, reading ${dependencyName}`);
+      }
       project.deps.push(...dependencies);
     }
     if (project.project.teardown) {
       const teardowns = projects.filter(p => p.project.name === project.project.teardown);
-      if (!teardowns.length)
+      if (!teardowns.length) {
         throw new Error(`Project '${project.project.name}' has unknown teardown project '${project.project.teardown}'`);
-      if (teardowns.length > 1)
+      }
+      if (teardowns.length > 1) {
         throw new Error(`Project teardowns should have unique names, reading ${project.project.teardown}`);
+      }
       const teardown = teardowns[0];
       project.teardown = teardown;
       teardownSet.add(teardown);
     }
   }
   for (const teardown of teardownSet) {
-    if (teardown.deps.length)
+    if (teardown.deps.length) {
       throw new Error(`Teardown project ${teardown.project.name} must not have dependencies`);
+    }
   }
   for (const project of projects) {
     for (const dep of project.deps) {
-      if (teardownSet.has(dep))
+      if (teardownSet.has(dep)) {
         throw new Error(`Project ${project.project.name} must not depend on a teardown project ${dep.project.name}`);
+      }
     }
   }
 }
 
 export function toReporters(reporters: BuiltInReporter | ReporterDescription[] | undefined): ReporterDescription[] | undefined {
-  if (!reporters)
+  if (!reporters) {
     return;
-  if (typeof reporters === 'string')
+  }
+  if (typeof reporters === 'string') {
     return [[reporters]];
+  }
   return reporters;
 }
 
@@ -283,11 +298,13 @@ export type BuiltInReporter = typeof builtInReporters[number];
 export type ContextReuseMode = 'none' | 'when-possible';
 
 function resolveScript(id: string | undefined, rootDir: string): string | undefined {
-  if (!id)
+  if (!id) {
     return undefined;
+  }
   const localPath = path.resolve(rootDir, id);
-  if (fs.existsSync(localPath))
+  if (fs.existsSync(localPath)) {
     return localPath;
+  }
   return require.resolve(id, { paths: [rootDir] });
 }
 

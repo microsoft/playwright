@@ -70,22 +70,25 @@ export class ProgressController {
 
     const progress: Progress = {
       log: message => {
-        if (this._state === 'running')
+        if (this._state === 'running') {
           this.metadata.log.push(message);
+        }
         // Note: we might be sending logs after progress has finished, for example browser logs.
         this.instrumentation.onCallLog(this.sdkObject, this.metadata, this._logName, message);
       },
       timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
       isRunning: () => this._state === 'running',
       cleanupWhenAborted: (cleanup: () => any) => {
-        if (this._state === 'running')
+        if (this._state === 'running') {
           this._cleanups.push(cleanup);
-        else
+        } else {
           runCleanup(cleanup);
+        }
       },
       throwIfAborted: () => {
-        if (this._state === 'aborted')
+        if (this._state === 'aborted') {
           throw new AbortedError();
+        }
       },
       metadata: this.metadata
     };

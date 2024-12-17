@@ -35,8 +35,9 @@ export class LoaderMain extends ProcessRunner {
   }
 
   private _config(): Promise<FullConfigInternal> {
-    if (!this._configPromise)
+    if (!this._configPromise) {
       this._configPromise = deserializeConfig(this._serializedConfig);
+    }
     return this._configPromise;
   }
 

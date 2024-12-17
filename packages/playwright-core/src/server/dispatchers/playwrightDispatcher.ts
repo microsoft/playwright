@@ -88,23 +88,23 @@ class SocksSupportDispatcher extends Dispatcher<{ guid: string }, channels.Socks
   }
 
   async socksConnected(params: channels.SocksSupportSocksConnectedParams): Promise<void> {
-    this._socksProxy?.socketConnected(params);
+    this._socksProxy.socketConnected(params);
   }
 
   async socksFailed(params: channels.SocksSupportSocksFailedParams): Promise<void> {
-    this._socksProxy?.socketFailed(params);
+    this._socksProxy.socketFailed(params);
   }
 
   async socksData(params: channels.SocksSupportSocksDataParams): Promise<void> {
-    this._socksProxy?.sendSocketData(params);
+    this._socksProxy.sendSocketData(params);
   }
 
   async socksError(params: channels.SocksSupportSocksErrorParams): Promise<void> {
-    this._socksProxy?.sendSocketError(params);
+    this._socksProxy.sendSocketError(params);
   }
 
   async socksEnd(params: channels.SocksSupportSocksEndParams): Promise<void> {
-    this._socksProxy?.sendSocketEnd(params);
+    this._socksProxy.sendSocketEnd(params);
   }
 
   override _onDispose() {

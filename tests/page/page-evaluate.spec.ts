@@ -128,8 +128,12 @@ it('should return undefined for objects with symbols', async ({ page }) => {
 
 it('should work with function shorthands', async ({ page }) => {
   const a = {
-    sum([a, b]: number[]) { return a + b; },
-    async mult([a, b]: number[]) { return a * b; }
+    sum([a, b]: number[]) {
+      return a + b;
+    },
+    async mult([a, b]: number[]) {
+      return a * b;
+    }
   };
   expect(await page.evaluate(a.sum, [1, 2])).toBe(3);
   expect(await page.evaluate(a.mult, [2, 4])).toBe(8);
@@ -206,14 +210,18 @@ it('should reject promise with exception', async ({ page }) => {
 
 it('should support thrown strings as error messages', async ({ page }) => {
   let error = null;
-  await page.evaluate(() => { throw 'qwerty'; }).catch(e => error = e);
+  await page.evaluate(() => {
+    throw 'qwerty';
+  }).catch(e => error = e);
   expect(error).toBeTruthy();
   expect(error.message).toContain('qwerty');
 });
 
 it('should support thrown numbers as error messages', async ({ page }) => {
   let error = null;
-  await page.evaluate(() => { throw 100500; }).catch(e => error = e);
+  await page.evaluate(() => {
+    throw 100500;
+  }).catch(e => error = e);
   expect(error).toBeTruthy();
   expect(error.message).toContain('100500');
 });
@@ -539,7 +547,9 @@ it('should throw error with detailed information on exception inside promise ', 
 });
 
 it('should work even when JSON is set to null', async ({ page }) => {
-  await page.evaluate(() => { window.JSON.stringify = null; window.JSON = null; });
+  await page.evaluate(() => {
+    window.JSON.stringify = null; window.JSON = null;
+  });
   const result = await page.evaluate(() => ({ abc: 123 }));
   expect(result).toEqual({ abc: 123 });
 });

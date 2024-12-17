@@ -54,8 +54,9 @@ export class JSHandleDispatcher extends Dispatcher<js.JSHandle, channels.JSHandl
   async getPropertyList(): Promise<channels.JSHandleGetPropertyListResult> {
     const map = await this._object.getProperties();
     const properties = [];
-    for (const [name, value] of map)
+    for (const [name, value] of map) {
       properties.push({ name, value: ElementHandleDispatcher.fromJSHandle(this.parentScope(), value) });
+    }
     return { properties };
   }
 

@@ -27,10 +27,11 @@ import { kTargetClosedErrorMessage } from 'tests/config/errors';
 it.skip(({ mode }) => mode !== 'default');
 
 const __testHookLookup = (hostname: string): LookupAddress[] => {
-  if (hostname === 'localhost' || hostname.endsWith('playwright.dev'))
+  if (hostname === 'localhost' || hostname.endsWith('playwright.dev')) {
     return [{ address: '127.0.0.1', family: 4 }];
-  else
+  } else {
     throw new Error(`Failed to resolve hostname: ${hostname}`);
+  }
 };
 
 it('get should work @smoke', async ({ context, server, mode }) => {
@@ -190,8 +191,9 @@ for (const method of ['fetch', 'delete', 'get', 'head', 'patch', 'post', 'put'] 
       failOnStatusCode: true
     }).catch(e => e);
     expect(error.message).toContain('404 Not Found');
-    if (method !== 'head')
+    if (method !== 'head') {
       expect(error.message).toContain('Response text:\nFile not found:');
+    }
   });
 
   it(`${method}should support ignoreHTTPSErrors option`, async ({ context, httpsServer }) => {
@@ -622,8 +624,9 @@ it('should add default headers', async ({ context, server, page }) => {
 
 it('should send content-length', async function({ context, asset, server }) {
   const bytes = [];
-  for (let i = 0; i < 256; i++)
+  for (let i = 0; i < 256; i++) {
     bytes.push(i);
+  }
   const [request] = await Promise.all([
     server.waitForRequest('/empty.html'),
     context.request.post(server.EMPTY_PAGE, {
@@ -744,8 +747,9 @@ it('should support gzip compression', async function({ context, server }) {
 
     const gzip = zlib.createGzip();
     pipeline(gzip, res, err => {
-      if (err)
+      if (err) {
         console.log(`Server error: ${err}`);
+      }
     });
     gzip.write('Hello, world!');
     gzip.end();
@@ -778,8 +782,9 @@ it('should support brotli compression', async function({ context, server }) {
 
     const brotli = zlib.createBrotliCompress();
     pipeline(brotli, res, err => {
-      if (err)
+      if (err) {
         console.log(`Server error: ${err}`);
+      }
     });
     brotli.write('Hello, world!');
     brotli.end();
@@ -812,8 +817,9 @@ it('should support deflate compression', async function({ context, server }) {
 
     const deflate = zlib.createDeflate();
     pipeline(deflate, res, err => {
-      if (err)
+      if (err) {
         console.log(`Server error: ${err}`);
+      }
     });
     deflate.write('Hello, world!');
     deflate.end();
@@ -1258,10 +1264,11 @@ it('should support SameSite cookie attribute over https', async ({ contextFactor
       });
       await page.request.get(httpsServer.EMPTY_PAGE);
       const [cookie] = await page.context().cookies();
-      if (browserName === 'webkit' && isWindows)
+      if (browserName === 'webkit' && isWindows) {
         expect(cookie.sameSite).toBe('None');
-      else
+      } else {
         expect(cookie.sameSite).toBe(value);
+      }
     });
   }
 });
@@ -1298,14 +1305,15 @@ it('should support set-cookie with SameSite and without Secure attribute over HT
       });
       await page.request.get(server.EMPTY_PAGE);
       const [cookie] = await page.context().cookies();
-      if (browserName === 'chromium' && value === 'None')
+      if (browserName === 'chromium' && value === 'None') {
         expect(cookie).toBeFalsy();
-      else if (browserName === 'webkit' && isLinux && value === 'None')
+      } else if (browserName === 'webkit' && isLinux && value === 'None') {
         expect(cookie).toBeFalsy();
-      else if (browserName === 'webkit' && isWindows)
+      } else if (browserName === 'webkit' && isWindows) {
         expect(cookie.sameSite).toBe('None');
-      else
+      } else {
         expect(cookie.sameSite).toBe(value);
+      }
     });
   }
 });

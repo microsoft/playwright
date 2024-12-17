@@ -29,15 +29,17 @@ export const ModelProvider: React.FunctionComponent<React.PropsWithChildren<{
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
 
   React.useEffect(() => {
-    if (pollTimer.current)
+    if (pollTimer.current) {
       clearTimeout(pollTimer.current);
+    }
 
     // Start polling running test.
     pollTimer.current = setTimeout(async () => {
       try {
         const result = await loadSingleTraceFile(trace);
-        if (result.sha1 !== model?.sha1)
+        if (result.sha1 !== model?.sha1) {
           setModel(result);
+        }
       } catch {
         setModel(undefined);
       } finally {
@@ -45,8 +47,9 @@ export const ModelProvider: React.FunctionComponent<React.PropsWithChildren<{
       }
     }, 500);
     return () => {
-      if (pollTimer.current)
+      if (pollTimer.current) {
         clearTimeout(pollTimer.current);
+      }
     };
   }, [counter, model, trace]);
 

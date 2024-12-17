@@ -146,7 +146,9 @@ it('page.reload should not resolve with same-document navigation', async ({ page
 
   // 2. Stall the reload request.
   let response;
-  server.setRoute('/empty.html', (req, res) => { response = res; });
+  server.setRoute('/empty.html', (req, res) => {
+    response = res;
+  });
   const requestPromise = server.waitForRequest('/empty.html');
 
   // 3. Trigger push state that could resolve the reload.

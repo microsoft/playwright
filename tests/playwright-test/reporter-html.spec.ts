@@ -1104,8 +1104,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         const execGit = async (args: string[]) => {
           const { code, stdout, stderr } = await spawnAsync('git', args, { stdio: 'pipe', cwd: baseDir });
-          if (!!code)
+          if (!!code) {
             throw new Error(`Non-zero exit of:\n$ git ${args.join(' ')}\nConsole:\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\n`);
+          }
           return;
         };
 
@@ -1746,11 +1747,13 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           let total = 0;
           for (const suite of result.report.suites) {
             for (const spec of suite.specs) {
-              if (!testNames.includes(spec.title))
+              if (!testNames.includes(spec.title)) {
                 continue;
+              }
               for (const test of spec.tests) {
-                for (const result of test.results)
+                for (const result of test.results) {
                   total += result.duration;
+                }
               }
             }
           }

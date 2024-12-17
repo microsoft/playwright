@@ -102,22 +102,26 @@ export class InternalReporter implements ReporterV2 {
   }
 
   private _addSnippetToTestErrors(test: TestCase, result: TestResult) {
-    for (const error of result.errors)
+    for (const error of result.errors) {
       addLocationAndSnippetToError(this._config, error, test.location.file);
+    }
   }
 
   private _addSnippetToStepError(test: TestCase, step: TestStep) {
-    if (step.error)
+    if (step.error) {
       addLocationAndSnippetToError(this._config, step.error, test.location.file);
+    }
   }
 }
 
 function addLocationAndSnippetToError(config: FullConfig, error: TestError, file?: string) {
-  if (error.stack && !error.location)
+  if (error.stack && !error.location) {
     error.location = prepareErrorStack(error.stack).location;
+  }
   const location = error.location;
-  if (!location)
+  if (!location) {
     return;
+  }
 
   try {
     const tokens = [];

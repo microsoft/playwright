@@ -28,7 +28,7 @@ export class ConsoleMessage implements api.ConsoleMessage {
   private _event: channels.BrowserContextConsoleEvent | channels.ElectronApplicationConsoleEvent;
 
   constructor(event: channels.BrowserContextConsoleEvent | channels.ElectronApplicationConsoleEvent) {
-    this._page = ('page' in event && event.page) ? Page.from(event.page) : null;
+    this._page = 'page' in event ? Page.from(event.page) : null;
     this._event = event;
   }
 

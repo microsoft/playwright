@@ -28,10 +28,11 @@ it('should fail without credentials', async ({ browser, server, failsOn401 }) =>
   const context = await browser.newContext();
   const page = await context.newPage();
   const responseOrError = await page.goto(server.EMPTY_PAGE).catch(e => e);
-  if (failsOn401)
+  if (failsOn401) {
     expect(responseOrError.message).toContain('net::ERR_INVALID_AUTH_CREDENTIALS');
-  else
+  } else {
     expect(responseOrError.status()).toBe(401);
+  }
 });
 
 it('should work with setHTTPCredentials', async ({ browser, server, failsOn401 }) => {
@@ -40,10 +41,11 @@ it('should work with setHTTPCredentials', async ({ browser, server, failsOn401 }
   const page = await context.newPage();
 
   let responseOrError = await page.goto(server.EMPTY_PAGE).catch(e => e);
-  if (failsOn401)
+  if (failsOn401) {
     expect(responseOrError.message).toContain('net::ERR_INVALID_AUTH_CREDENTIALS');
-  else
+  } else {
     expect(responseOrError.status()).toBe(401);
+  }
 
   await context.setHTTPCredentials({ username: 'user', password: 'pass' });
   responseOrError = await page.reload();
@@ -115,10 +117,11 @@ it('should fail with correct credentials and mismatching scheme', async ({ brows
   });
   const page = await context.newPage();
   const responseOrError = await page.goto(server.EMPTY_PAGE).catch(e => e);
-  if (failsOn401)
+  if (failsOn401) {
     expect(responseOrError.message).toContain('net::ERR_INVALID_AUTH_CREDENTIALS');
-  else
+  } else {
     expect(responseOrError.status()).toBe(401);
+  }
   await context.close();
 });
 
@@ -131,10 +134,11 @@ it('should fail with correct credentials and mismatching hostname', async ({ bro
   });
   const page = await context.newPage();
   const responseOrError = await page.goto(server.EMPTY_PAGE).catch(e => e);
-  if (failsOn401)
+  if (failsOn401) {
     expect(responseOrError.message).toContain('net::ERR_INVALID_AUTH_CREDENTIALS');
-  else
+  } else {
     expect(responseOrError.status()).toBe(401);
+  }
   await context.close();
 });
 
@@ -146,9 +150,10 @@ it('should fail with correct credentials and mismatching port', async ({ browser
   });
   const page = await context.newPage();
   const responseOrError = await page.goto(server.EMPTY_PAGE).catch(e => e);
-  if (failsOn401)
+  if (failsOn401) {
     expect(responseOrError.message).toContain('net::ERR_INVALID_AUTH_CREDENTIALS');
-  else
+  } else {
     expect(responseOrError.status()).toBe(401);
+  }
   await context.close();
 });

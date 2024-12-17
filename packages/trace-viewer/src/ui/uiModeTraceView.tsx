@@ -42,8 +42,9 @@ export const TraceView: React.FC<{
   }, [item]);
 
   React.useEffect(() => {
-    if (pollTimer.current)
+    if (pollTimer.current) {
       clearTimeout(pollTimer.current);
+    }
 
     const result = item.testCase?.results[0];
     if (!result) {
@@ -52,7 +53,7 @@ export const TraceView: React.FC<{
     }
 
     // Test finished.
-    const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
+    const attachment = result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
       loadSingleTraceFile(attachment.path).then(model => setModel({ model, isLive: false }));
       return;
@@ -81,8 +82,9 @@ export const TraceView: React.FC<{
       }
     }, 500);
     return () => {
-      if (pollTimer.current)
+      if (pollTimer.current) {
         clearTimeout(pollTimer.current);
+      }
     };
   }, [outputDir, item, setModel, counter, setCounter, pathSeparator]);
 
@@ -102,8 +104,9 @@ export const TraceView: React.FC<{
 
 const outputDirForTestCase = (testCase: reporterTypes.TestCase): string | undefined => {
   for (let suite: reporterTypes.Suite | undefined = testCase.parent; suite; suite = suite.parent) {
-    if (suite.project())
+    if (suite.project()) {
       return suite.project()?.outputDir;
+    }
   }
   return undefined;
 };

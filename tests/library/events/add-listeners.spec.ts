@@ -52,7 +52,9 @@ test.describe('EventEmitter tests', () => {
     });
 
     ee.on('hello', hello);
-    ee.once('foo', () => { throw new Error('foo error'); });
+    ee.once('foo', () => {
+      throw new Error('foo error');
+    });
 
     expect(Array.isArray(events_new_listener_emitted)).toBeTruthy();
     expect(events_new_listener_emitted).toHaveLength(2);

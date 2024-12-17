@@ -23,14 +23,16 @@ it('textContent should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     query(root, selector) {
       const result = root.querySelector(selector);
-      if (result)
+      if (result) {
         void Promise.resolve().then(() => result.textContent = 'modified');
+      }
       return result;
     },
     queryAll(root: HTMLElement, selector: string) {
       const result = Array.from(root.querySelectorAll(selector));
-      for (const e of result)
+      for (const e of result) {
         void Promise.resolve().then(() => e.textContent = 'modified');
+      }
       return result;
     }
   });
@@ -45,14 +47,16 @@ it('innerText should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     query(root: HTMLElement, selector: string) {
       const result = root.querySelector(selector);
-      if (result)
+      if (result) {
         void Promise.resolve().then(() => result.textContent = 'modified');
+      }
       return result;
     },
     queryAll(root: HTMLElement, selector: string) {
       const result = Array.from(root.querySelectorAll(selector));
-      for (const e of result)
+      for (const e of result) {
         void Promise.resolve().then(() => e.textContent = 'modified');
+      }
       return result;
     }
   });
@@ -67,14 +71,16 @@ it('innerHTML should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     query(root, selector) {
       const result = root.querySelector(selector);
-      if (result)
+      if (result) {
         void Promise.resolve().then(() => result.textContent = 'modified');
+      }
       return result;
     },
     queryAll(root: HTMLElement, selector: string) {
       const result = Array.from(root.querySelectorAll(selector));
-      for (const e of result)
+      for (const e of result) {
         void Promise.resolve().then(() => e.textContent = 'modified');
+      }
       return result;
     }
   });
@@ -89,14 +95,16 @@ it('getAttribute should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     query(root: HTMLElement, selector: string) {
       const result = root.querySelector(selector);
-      if (result)
+      if (result) {
         void Promise.resolve().then(() => result.setAttribute('foo', 'modified'));
+      }
       return result;
     },
     queryAll(root: HTMLElement, selector: string) {
       const result = Array.from(root.querySelectorAll(selector));
-      for (const e of result)
+      for (const e of result) {
         void Promise.resolve().then(() => (e as HTMLElement).setAttribute('foo', 'modified'));
+      }
       return result;
     }
   });
@@ -111,14 +119,16 @@ it('isVisible should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
     query(root, selector) {
       const result = root.querySelector(selector);
-      if (result)
+      if (result) {
         void Promise.resolve().then(() => result.style.display = 'none');
+      }
       return result;
     },
     queryAll(root: HTMLElement, selector: string) {
       const result = Array.from(root.querySelectorAll(selector));
-      for (const e of result)
+      for (const e of result) {
         void Promise.resolve().then(() => (e as HTMLElement).style.display = 'none');
+      }
       return result;
     }
   });

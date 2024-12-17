@@ -37,8 +37,9 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
         contextId: this._contextId,
         returnByValue: true
       });
-      if (response.wasThrown)
+      if (response.wasThrown) {
         throw new js.JavaScriptErrorInEvaluate(response.result.description);
+      }
       return response.result.value;
     } catch (error) {
       throw rewriteError(error);
@@ -52,8 +53,9 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
         contextId: this._contextId,
         returnByValue: false
       });
-      if (response.wasThrown)
+      if (response.wasThrown) {
         throw new js.JavaScriptErrorInEvaluate(response.result.description);
+      }
       return response.result.objectId!;
     } catch (error) {
       throw rewriteError(error);
@@ -74,10 +76,12 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
         emulateUserGesture: true,
         awaitPromise: true
       });
-      if (response.wasThrown)
+      if (response.wasThrown) {
         throw new js.JavaScriptErrorInEvaluate(response.result.description);
-      if (returnByValue)
+      }
+      if (returnByValue) {
         return parseEvaluationResultValue(response.result.value);
+      }
       return utilityScript._context.createHandle(response.result);
     } catch (error) {
       throw rewriteError(error);
@@ -91,8 +95,9 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     });
     const result = new Map();
     for (const property of response.properties) {
-      if (!property.enumerable || !property.value)
+      if (!property.enumerable || !property.value) {
         continue;
+      }
       result.set(property.name, context.createHandle(property.value));
     }
     return result;
@@ -115,26 +120,32 @@ function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObj
 }
 
 function rewriteError(error: Error): Error {
-  if (error.message.includes('Object has too long reference chain'))
+  if (error.message.includes('Object has too long reference chain')) {
     throw new Error('Cannot serialize result: object reference chain is too long.');
-  if (!js.isJavaScriptErrorInEvaluate(error) && !isSessionClosedError(error))
+  }
+  if (!js.isJavaScriptErrorInEvaluate(error) && !isSessionClosedError(error)) {
     return new Error('Execution context was destroyed, most likely because of a navigation.');
+  }
   return error;
 }
 
 function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefined {
-  if (object.type === 'undefined')
+  if (object.type === 'undefined') {
     return 'undefined';
-  if ('value' in object)
+  }
+  if ('value' in object) {
     return String(object.value);
+  }
 
   if (object.description === 'Object' && object.preview) {
     const tokens = [];
-    for (const { name, value } of object.preview.properties!)
+    for (const { name, value } of object.preview.properties!) {
       tokens.push(`${name}: ${value}`);
+    }
     return `{${tokens.join(', ')}}`;
   }
-  if (object.subtype === 'array' && object.preview)
+  if (object.subtype === 'array' && object.preview) {
     return js.sparseArrayToString(object.preview.properties!);
+  }
   return object.description;
 }

@@ -142,8 +142,9 @@ export class JSHandle<T = any> extends SdkObject {
     this._value = value;
     this._objectType = type;
     this._preview = this._objectId ? preview || `JSHandle@${this._objectType}` : String(value);
-    if (this._objectId && (globalThis as any).leakedJSHandles)
+    if (this._objectId && (globalThis as any).leakedJSHandles) {
       (globalThis as any).leakedJSHandles.set(this, new Error('Leaked JSHandle'));
+    }
   }
 
   async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg?: Arg): Promise<R> {
@@ -179,8 +180,9 @@ export class JSHandle<T = any> extends SdkObject {
   }
 
   async getProperties(): Promise<Map<string, JSHandle>> {
-    if (!this._objectId)
+    if (!this._objectId) {
       return new Map();
+    }
     return this._context.getProperties(this._context, this._objectId);
   }
 
@@ -189,8 +191,9 @@ export class JSHandle<T = any> extends SdkObject {
   }
 
   async jsonValue(): Promise<T> {
-    if (!this._objectId)
+    if (!this._objectId) {
       return this._value;
+    }
     const utilityScript = await this._context.utilityScript();
     const script = `(utilityScript, ...args) => utilityScript.jsonValue(...args)`;
     return this._context.evaluateWithArguments(script, true, utilityScript, [true], [this._objectId]);
@@ -201,13 +204,15 @@ export class JSHandle<T = any> extends SdkObject {
   }
 
   dispose() {
-    if (this._disposed)
+    if (this._disposed) {
       return;
+    }
     this._disposed = true;
     if (this._objectId) {
       this._context.releaseHandle(this._objectId).catch(e => {});
-      if ((globalThis as any).leakedJSHandles)
+      if ((globalThis as any).leakedJSHandles) {
         (globalThis as any).leakedJSHandles.delete(this);
+      }
     }
   }
 
@@ -229,8 +234,9 @@ export class JSHandle<T = any> extends SdkObject {
 
   _setPreview(preview: string) {
     this._preview = preview;
-    if (this._previewCallback)
+    if (this._previewCallback) {
       this._previewCallback(preview);
+    }
   }
 }
 
@@ -250,13 +256,16 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
 
   args = args.map(arg => serializeAsCallArgument(arg, handle => {
     if (handle instanceof JSHandle) {
-      if (!handle._objectId)
+      if (!handle._objectId) {
         return { fallThrough: handle._value };
-      if (handle._disposed)
+      }
+      if (handle._disposed) {
         throw new JavaScriptErrorInEvaluate('JSHandle is disposed!');
+      }
       const adopted = context.adoptIfNeeded(handle);
-      if (adopted === null)
+      if (adopted === null) {
         return { h: pushHandle(Promise.resolve(handle)) };
+      }
       toDispose.push(adopted);
       return { h: pushHandle(adopted) };
     }
@@ -265,8 +274,9 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
 
   const utilityScriptObjectIds: ObjectId[] = [];
   for (const handle of await Promise.all(handles)) {
-    if (handle._context !== context)
+    if (handle._context !== context) {
       throw new JavaScriptErrorInEvaluate('JSHandles can be evaluated only in the context they were created!');
+    }
     utilityScriptObjectIds.push(handle._objectId!);
   }
 
@@ -282,14 +292,18 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
 }
 
 export function parseUnserializableValue(unserializableValue: string): any {
-  if (unserializableValue === 'NaN')
+  if (unserializableValue === 'NaN') {
     return NaN;
-  if (unserializableValue === 'Infinity')
+  }
+  if (unserializableValue === 'Infinity') {
     return Infinity;
-  if (unserializableValue === '-Infinity')
+  }
+  if (unserializableValue === '-Infinity') {
     return -Infinity;
-  if (unserializableValue === '-0')
+  }
+  if (unserializableValue === '-0') {
     return -0;
+  }
 }
 
 export function normalizeEvaluationExpression(expression: string, isFunction: boolean | undefined): string {
@@ -301,10 +315,11 @@ export function normalizeEvaluationExpression(expression: string, isFunction: bo
     } catch (e1) {
       // This means we might have a function shorthand. Try another
       // time prefixing 'function '.
-      if (expression.startsWith('async '))
+      if (expression.startsWith('async ')) {
         expression = 'async function ' + expression.substring('async '.length);
-      else
+      } else {
         expression = 'function ' + expression;
+      }
       try {
         new Function('(' + expression  + ')');
       } catch (e2) {
@@ -314,8 +329,9 @@ export function normalizeEvaluationExpression(expression: string, isFunction: bo
     }
   }
 
-  if (/^(async)?\s*function(\s|\()/.test(expression))
+  if (/^(async)?\s*function(\s|\()/.test(expression)) {
     expression = '(' + expression + ')';
+  }
   return expression;
 }
 
@@ -331,8 +347,9 @@ export function sparseArrayToString(entries: { name: string, value?: any }[]): s
   const arrayEntries = [];
   for (const { name, value } of entries) {
     const index = +name;
-    if (isNaN(index) || index < 0)
+    if (isNaN(index) || index < 0) {
       continue;
+    }
     arrayEntries.push({ index, value });
   }
   arrayEntries.sort((a, b) => a.index - b.index);
@@ -340,10 +357,11 @@ export function sparseArrayToString(entries: { name: string, value?: any }[]): s
   const tokens = [];
   for (const { index, value } of arrayEntries) {
     const emptyItems = index - lastIndex - 1;
-    if (emptyItems === 1)
+    if (emptyItems === 1) {
       tokens.push(`empty`);
-    else if (emptyItems > 1)
+    } else if (emptyItems > 1) {
       tokens.push(`empty x ${emptyItems}`);
+    }
     tokens.push(String(value));
     lastIndex = index;
   }

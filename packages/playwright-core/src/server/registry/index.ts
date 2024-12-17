@@ -363,14 +363,15 @@ export const registryDirectory = (() => {
     result = envDefined;
   } else {
     let cacheDirectory: string;
-    if (process.platform === 'linux')
+    if (process.platform === 'linux') {
       cacheDirectory = process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
-    else if (process.platform === 'darwin')
+    } else if (process.platform === 'darwin') {
       cacheDirectory = path.join(os.homedir(), 'Library', 'Caches');
-    else if (process.platform === 'win32')
+    } else if (process.platform === 'win32') {
       cacheDirectory = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
-    else
+    } else {
       throw new Error('Unsupported platform: ' + process.platform);
+    }
     result = path.join(cacheDirectory, 'ms-playwright');
   }
 
@@ -388,8 +389,9 @@ export const registryDirectory = (() => {
 function isBrowserDirectory(browserDirectory: string): boolean {
   const baseName = path.basename(browserDirectory);
   for (const browserName of allDownloadable) {
-    if (baseName.startsWith(browserName.replace(/-/g, '_') + '-'))
+    if (baseName.startsWith(browserName.replace(/-/g, '_') + '-')) {
       return true;
+    }
   }
   return false;
 }
@@ -477,17 +479,19 @@ export class Registry {
     const descriptors = readDescriptors(browsersJSON);
     const findExecutablePath = (dir: string, name: keyof typeof EXECUTABLE_PATHS) => {
       let tokens = undefined;
-      if (process.platform === 'linux')
+      if (process.platform === 'linux') {
         tokens = EXECUTABLE_PATHS[name]['linux'];
-      else if (process.platform === 'darwin')
+      } else if (process.platform === 'darwin') {
         tokens = EXECUTABLE_PATHS[name]['mac'];
-      else if (process.platform === 'win32')
+      } else if (process.platform === 'win32') {
         tokens = EXECUTABLE_PATHS[name]['win'];
+      }
       return tokens ? path.join(dir, ...tokens) : undefined;
     };
     const executablePathOrDie = (name: string, e: string | undefined, installByDefault: boolean, sdkLanguage: string) => {
-      if (!e)
+      if (!e) {
         throw new Error(`${name} is not supported on ${hostPlatform}`);
+      }
       const installCommand = buildPlaywrightCLICommand(sdkLanguage, `install${installByDefault ? '' : ' ' + name}`);
       if (!canAccessFile(e)) {
         const currentDockerVersion = readDockerVersionSync();
@@ -812,8 +816,9 @@ export class Registry {
     const executablePath = (sdkLanguage: string, shouldThrow: boolean) => {
       const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
       if (!suffix) {
-        if (shouldThrow)
+        if (shouldThrow) {
           throw new Error(`Chromium distribution '${name}' is not supported on ${process.platform}`);
+        }
         return undefined;
       }
       const prefixes = (process.platform === 'win32' ? [
@@ -822,11 +827,13 @@ export class Registry {
 
       for (const prefix of prefixes) {
         const executablePath = path.join(prefix, suffix);
-        if (canAccessFile(executablePath))
+        if (canAccessFile(executablePath)) {
           return executablePath;
+        }
       }
-      if (!shouldThrow)
+      if (!shouldThrow) {
         return undefined;
+      }
 
       const location = prefixes.length ? ` at ${path.join(prefixes[0], suffix)}` : ``;
       const installation = install ? `\nRun "${buildPlaywrightCLICommand(sdkLanguage, 'install ' + name)}"` : '';
@@ -850,28 +857,33 @@ export class Registry {
     const executablePath = (sdkLanguage: string, shouldThrow: boolean) => {
       const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
       if (!suffix) {
-        if (shouldThrow)
+        if (shouldThrow) {
           throw new Error(`Firefox distribution '${name}' is not supported on ${process.platform}`);
+        }
         return undefined;
       }
       const folder = path.resolve('firefox');
       let channelName = 'stable';
-      if (name.includes('beta'))
+      if (name.includes('beta')) {
         channelName = 'beta';
-      else if (name.includes('nightly'))
+      } else if (name.includes('nightly')) {
         channelName = 'nightly';
+      }
       const installedVersions = fs.readdirSync(folder);
       const found = installedVersions.filter(e => e.includes(channelName));
-      if (found.length === 1)
+      if (found.length === 1) {
         return path.join(folder, found[0], suffix);
-      if (found.length > 1) {
-        if (shouldThrow)
-          throw new Error(`Multiple Firefox installations found for channel '${name}': ${found.join(', ')}`);
-        else
-          return undefined;
       }
-      if (shouldThrow)
+      if (found.length > 1) {
+        if (shouldThrow) {
+          throw new Error(`Multiple Firefox installations found for channel '${name}': ${found.join(', ')}`);
+        } else {
+          return undefined;
+        }
+      }
+      if (shouldThrow) {
         throw new Error(`Cannot find Firefox installation for channel '${name}' under ${folder}`);
+      }
       return undefined;
     };
     return {
@@ -892,8 +904,9 @@ export class Registry {
     const executablePath = (sdkLanguage: string, shouldThrow: boolean) => {
       const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
       if (!suffix) {
-        if (shouldThrow)
+        if (shouldThrow) {
           throw new Error(`Firefox distribution '${name}' is not supported on ${process.platform}`);
+        }
         return undefined;
       }
       const prefixes = (process.platform === 'win32' ? [
@@ -902,11 +915,13 @@ export class Registry {
 
       for (const prefix of prefixes) {
         const executablePath = path.join(prefix, suffix);
-        if (canAccessFile(executablePath))
+        if (canAccessFile(executablePath)) {
           return executablePath;
+        }
       }
-      if (!shouldThrow)
+      if (!shouldThrow) {
         return undefined;
+      }
 
       const location = prefixes.length ? ` at ${path.join(prefixes[0], suffix)}` : ``;
       const installation = install ? `\nRun "${buildPlaywrightCLICommand(sdkLanguage, 'install ' + name)}"` : '';
@@ -945,24 +960,29 @@ export class Registry {
   }
 
   private async _validateHostRequirements(sdkLanguage: string, browserDirectory: string, linuxLddDirectories: string[], dlOpenLibraries: string[], windowsExeAndDllDirectories: string[]) {
-    if (os.platform() === 'linux')
+    if (os.platform() === 'linux') {
       return await validateDependenciesLinux(sdkLanguage, linuxLddDirectories.map(d => path.join(browserDirectory, d)), dlOpenLibraries);
-    if (os.platform() === 'win32' && os.arch() === 'x64')
+    }
+    if (os.platform() === 'win32' && os.arch() === 'x64') {
       return await validateDependenciesWindows(windowsExeAndDllDirectories.map(d => path.join(browserDirectory, d)));
+    }
   }
 
   async installDeps(executablesToInstallDeps: Executable[], dryRun: boolean) {
     const executables = this._dedupe(executablesToInstallDeps);
     const targets = new Set<DependencyGroup>();
     for (const executable of executables) {
-      if (executable._dependencyGroup)
+      if (executable._dependencyGroup) {
         targets.add(executable._dependencyGroup);
+      }
     }
     targets.add('tools');
-    if (os.platform() === 'win32')
+    if (os.platform() === 'win32') {
       return await installDependenciesWindows(targets, dryRun);
-    if (os.platform() === 'linux')
+    }
+    if (os.platform() === 'linux') {
       return await installDependenciesLinux(targets, dryRun);
+    }
   }
 
   async install(executablesToInstall: Executable[], forceReinstall: boolean) {
@@ -995,8 +1015,9 @@ export class Registry {
 
       // Install browsers for this package.
       for (const executable of executables) {
-        if (!executable._install)
+        if (!executable._install) {
           throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
+        }
 
         const { embedderName } = getEmbedderName();
         if (!getAsBooleanFromENV('CI') && !executable._isHermeticInstallation && !forceReinstall && executable.executablePath(embedderName)) {
@@ -1039,8 +1060,9 @@ export class Registry {
         throw e;
       }
     } finally {
-      if (releaseLock)
+      if (releaseLock) {
         await releaseLock();
+      }
     }
   }
 
@@ -1048,8 +1070,9 @@ export class Registry {
     const linksDir = path.join(registryDirectory, '.links');
     if (all) {
       const links = await fs.promises.readdir(linksDir).catch(() => []);
-      for (const link of links)
+      for (const link of links) {
         await fs.promises.unlink(path.join(linksDir, link));
+      }
     } else {
       await fs.promises.unlink(path.join(linksDir, calculateSha1(PACKAGE_PATH))).catch(() => {});
     }
@@ -1066,19 +1089,22 @@ export class Registry {
       process.stderr.write('Skipping host requirements validation logic because `PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS` env variable is set.\n');
       return;
     }
-    for (const executable of executables)
+    for (const executable of executables) {
       await this._validateHostRequirementsForExecutableIfNeeded(executable, sdkLanguage);
+    }
   }
 
   private async _validateHostRequirementsForExecutableIfNeeded(executable: Executable, sdkLanguage: string) {
     const kMaximumReValidationPeriod = 30 * 24 * 60 * 60 * 1000; // 30 days
     // Executable does not require validation.
-    if (!executable.directory)
+    if (!executable.directory) {
       return;
+    }
     const markerFile = path.join(executable.directory, 'DEPENDENCIES_VALIDATED');
     // Executable is already validated.
-    if (await fs.promises.stat(markerFile).then(stat => (Date.now() - stat.mtime.getTime()) < kMaximumReValidationPeriod).catch(() => false))
+    if (await fs.promises.stat(markerFile).then(stat => (Date.now() - stat.mtime.getTime()) < kMaximumReValidationPeriod).catch(() => false)) {
       return;
+    }
 
     debugLogger.log('install', `validating host requirements for "${executable.name}"`);
     try {
@@ -1095,37 +1121,43 @@ export class Registry {
   private _downloadURLs(descriptor: BrowsersJSONDescriptor): string[] {
     const paths = (DOWNLOAD_PATHS as any)[descriptor.name];
     const downloadPathTemplate: string|undefined = paths[hostPlatform] || paths['<unknown>'];
-    if (!downloadPathTemplate)
+    if (!downloadPathTemplate) {
       return [];
+    }
     const downloadPath = util.format(downloadPathTemplate, descriptor.revision);
 
     let downloadURLs = PLAYWRIGHT_CDN_MIRRORS.map(mirror => `${mirror}/${downloadPath}`) ;
     let downloadHostEnv;
-    if (descriptor.name.startsWith('chromium'))
+    if (descriptor.name.startsWith('chromium')) {
       downloadHostEnv = 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST';
-    else if (descriptor.name.startsWith('firefox'))
+    } else if (descriptor.name.startsWith('firefox')) {
       downloadHostEnv = 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST';
-    else if (descriptor.name.startsWith('webkit'))
+    } else if (descriptor.name.startsWith('webkit')) {
       downloadHostEnv = 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST';
+    }
 
     const customHostOverride = (downloadHostEnv && getFromENV(downloadHostEnv)) || getFromENV('PLAYWRIGHT_DOWNLOAD_HOST');
-    if (customHostOverride)
+    if (customHostOverride) {
       downloadURLs = [`${customHostOverride}/${downloadPath}`];
+    }
     return downloadURLs;
   }
 
   private async _downloadExecutable(descriptor: BrowsersJSONDescriptor, executablePath?: string) {
     const downloadURLs = this._downloadURLs(descriptor);
-    if (!downloadURLs.length)
+    if (!downloadURLs.length) {
       throw new Error(`ERROR: Playwright does not support ${descriptor.name} on ${hostPlatform}`);
-    if (!isOfficiallySupportedPlatform)
+    }
+    if (!isOfficiallySupportedPlatform) {
       logPolitely(`BEWARE: your OS is not officially supported by Playwright; downloading fallback build for ${hostPlatform}.`);
+    }
     if (descriptor.hasRevisionOverride) {
       const message = `You are using a frozen ${descriptor.name} browser which does not receive updates anymore on ${hostPlatform}. Please update to the latest version of your operating system to test up-to-date browsers.`;
-      if (process.env.GITHUB_ACTIONS)
-        console.log(`::warning title=Playwright::${message}`);  // eslint-disable-line no-console
-      else
+      if (process.env.GITHUB_ACTIONS) {
+        console.log(`::warning title=Playwright::${message}`); // eslint-disable-line no-console
+      } else {
         logPolitely(message);
+      }
     }
 
     const displayName = descriptor.name.split('-').map(word => {
@@ -1160,18 +1192,20 @@ export class Registry {
       } as any)[process.platform];
       const release = searchConfig ? product.releases.find((release: any) => release.platform === searchConfig.platform && release.architecture === searchConfig.arch && release.artifacts.length > 0) : null;
       const artifact = release ? release.artifacts.find((artifact: any) => artifact.artifactname === searchConfig.artifact) : null;
-      if (artifact)
+      if (artifact) {
         scriptArgs.push(artifact.location /* url */);
-      else
+      } else {
         throw new Error(`Cannot install ${channel} on ${process.platform}`);
+      }
     }
     await this._installChromiumChannel(channel, scripts, scriptArgs);
   }
 
   private async _installChromiumChannel(channel: string, scripts: Record<'linux' | 'darwin' | 'win32', string>, scriptArgs: string[] = []) {
     const scriptName = scripts[process.platform as 'linux' | 'darwin' | 'win32'];
-    if (!scriptName)
+    if (!scriptName) {
       throw new Error(`Cannot install ${channel} on ${process.platform}`);
+    }
     const cwd = BIN_PATH;
     const isPowerShell = scriptName.endsWith('.ps1');
     if (isPowerShell) {
@@ -1181,15 +1215,18 @@ export class Registry {
         ...scriptArgs
       ];
       const { code } = await spawnAsync('powershell.exe', args, { cwd, stdio: 'inherit' });
-      if (code !== 0)
+      if (code !== 0) {
         throw new Error(`Failed to install ${channel}`);
+      }
     } else {
       const { command, args, elevatedPermissions } = await transformCommandsForRoot([`bash "${path.join(BIN_PATH, scriptName)}" ${scriptArgs.join('')}`]);
-      if (elevatedPermissions)
+      if (elevatedPermissions) {
         console.log('Switching to root user to install dependencies...'); // eslint-disable-line no-console
+      }
       const { code } = await spawnAsync(command, args, { cwd, stdio: 'inherit' });
-      if (code !== 0)
+      if (code !== 0) {
         throw new Error(`Failed to install ${channel}`);
+      }
     }
   }
 
@@ -1210,8 +1247,9 @@ export class Registry {
           // to retain and download browsers.
           // As of v1.10, we decided to abandon "download" field.
           const descriptor = descriptors.find(d => d.name === browserName);
-          if (!descriptor)
+          if (!descriptor) {
             continue;
+          }
           const usedBrowserPath = descriptor.dir;
           const browserRevision = parseInt(descriptor.revision, 10);
           // Old browser installations don't have marker file.
@@ -1221,8 +1259,9 @@ export class Registry {
               (browserName === 'webkit' && browserRevision >= 1307) ||
               // All new applications have a marker file right away.
               (browserName !== 'firefox' && browserName !== 'chromium' && browserName !== 'webkit');
-          if (!shouldHaveMarkerFile || (await existsAsync(browserDirectoryToMarkerFilePath(usedBrowserPath))))
+          if (!shouldHaveMarkerFile || (await existsAsync(browserDirectoryToMarkerFilePath(usedBrowserPath)))) {
             usedBrowserPaths.add(usedBrowserPath);
+          }
         }
       } catch (e) {
         await fs.promises.unlink(linkPath).catch(e => {});
@@ -1234,10 +1273,12 @@ export class Registry {
       let downloadedBrowsers = (await fs.promises.readdir(registryDirectory)).map(file => path.join(registryDirectory, file));
       downloadedBrowsers = downloadedBrowsers.filter(file => isBrowserDirectory(file));
       const directories = new Set<string>(downloadedBrowsers);
-      for (const browserDirectory of usedBrowserPaths)
+      for (const browserDirectory of usedBrowserPaths) {
         directories.delete(browserDirectory);
-      for (const directory of directories)
+      }
+      for (const directory of directories) {
         logPolitely('Removing unused browser at ' + directory);
+      }
       await removeFolders([...directories]);
     }
   }
@@ -1271,8 +1312,9 @@ export async function installBrowsersForNpmInstall(browsers: string[]) {
   const executables: Executable[] = [];
   for (const browserName of browsers) {
     const executable = registry.findExecutable(browserName);
-    if (!executable || executable.installType === 'none')
+    if (!executable || executable.installType === 'none') {
       throw new Error(`Cannot install ${browserName}`);
+    }
     executables.push(executable);
   }
 
@@ -1308,15 +1350,18 @@ export function findChromiumChannel(sdkLanguage: string): string | undefined {
 }
 
 function lowercaseAllKeys(json: any): any {
-  if (typeof json !== 'object' || !json)
+  if (typeof json !== 'object' || !json) {
     return json;
+  }
 
-  if (Array.isArray(json))
+  if (Array.isArray(json)) {
     return json.map(lowercaseAllKeys);
+  }
 
   const result: any = {};
-  for (const [key, value] of Object.entries(json))
+  for (const [key, value] of Object.entries(json)) {
     result[key.toLowerCase()] = lowercaseAllKeys(value);
+  }
   return result;
 }
 

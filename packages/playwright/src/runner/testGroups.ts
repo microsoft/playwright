@@ -82,8 +82,9 @@ export function createTestGroups(projectSuite: Suite, expectedParallelism: numbe
     let outerMostSequentialSuite: Suite | undefined;
     let hasAllHooks = false;
     for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
-      if (parent._parallelMode === 'serial' || parent._parallelMode === 'default')
+      if (parent._parallelMode === 'serial' || parent._parallelMode === 'default') {
         outerMostSequentialSuite = parent;
+      }
       insideParallel = insideParallel || parent._parallelMode === 'parallel';
       hasAllHooks = hasAllHooks || parent._hooks.some(hook => hook.type === 'beforeAll' || hook.type === 'afterAll');
     }
@@ -109,8 +110,9 @@ export function createTestGroups(projectSuite: Suite, expectedParallelism: numbe
   for (const withWorkerHash of groups.values()) {
     for (const withRequireFile of withWorkerHash.values()) {
       // Tests without parallel mode should run serially as a single group.
-      if (withRequireFile.general.tests.length)
+      if (withRequireFile.general.tests.length) {
         result.push(withRequireFile.general);
+      }
 
       // Parallel test groups without beforeAll/afterAll can be run independently.
       result.push(...withRequireFile.parallel.values());
@@ -139,8 +141,9 @@ export function filterForShard(shard: { total: number, current: number }, testGr
   // even in the case of non-paralleled files.
 
   let shardableTotal = 0;
-  for (const group of testGroups)
+  for (const group of testGroups) {
     shardableTotal += group.tests.length;
+  }
 
   // Each shard gets some tests.
   const shardSize = Math.floor(shardableTotal / shard.total);
@@ -156,8 +159,9 @@ export function filterForShard(shard: { total: number, current: number }, testGr
   for (const group of testGroups) {
     // Any test group goes to the shard that contains the first test of this group.
     // So, this shard gets any group that starts at [from; to)
-    if (current >= from && current < to)
+    if (current >= from && current < to) {
       result.add(group);
+    }
     current += group.tests.length;
   }
   return result;

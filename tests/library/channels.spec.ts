@@ -259,23 +259,26 @@ it('should work with the domain module', async ({ browserType, server, browserNa
     new WebSocket('ws://localhost:' + port + '/bogus-ws');
   }, server.PORT);
   const message = await result;
-  if (browserName === 'firefox')
+  if (browserName === 'firefox') {
     expect(message).toBe('CLOSE_ABNORMAL');
-  else
+  } else {
     expect(message).toContain(channel?.includes('msedge') ? '' : ': 400');
+  }
 
   await browser.close();
 
-  if (err)
+  if (err) {
     throw err;
+  }
 });
 
 it('exposeFunction should not leak', async ({ page, expectScopeState, server }) => {
   await page.goto(server.EMPTY_PAGE);
   let called = 0;
   await page.exposeFunction('myFunction', () => ++called);
-  for (let i = 0; i < 10; ++i)
+  for (let i = 0; i < 10; ++i) {
     await page.evaluate(() => (window as any).myFunction({ foo: 'bar' }));
+  }
   expect(called).toBe(10);
   expectScopeState(page, {
     '_guid': '',
@@ -362,21 +365,25 @@ it('exposeFunction should not leak', async ({ page, expectScopeState, server }) 
 });
 
 function compareObjects(a, b) {
-  if (a._guid !== b._guid)
+  if (a._guid !== b._guid) {
     return a._guid.localeCompare(b._guid);
+  }
   return a.objects.length - b.objects.length;
 }
 
 function trimGuids(object) {
-  if (Array.isArray(object))
+  if (Array.isArray(object)) {
     return object.map(trimGuids).sort(compareObjects);
+  }
   if (typeof object === 'object') {
     const result = {};
-    for (const key in object)
+    for (const key in object) {
       result[key] = trimGuids(object[key]);
+    }
     return result;
   }
-  if (typeof object === 'string')
+  if (typeof object === 'string') {
     return object ? object.match(/[^@]+/)[0] : '';
+  }
   return object;
 }

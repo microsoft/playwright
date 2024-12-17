@@ -20,11 +20,13 @@ export function findRepeatedSubsequences(s: string[]): { sequence: string[]; cou
   let i = 0;
 
   const arraysEqual = (a1: string[], a2: string[]) => {
-    if (a1.length !== a2.length)
+    if (a1.length !== a2.length) {
       return false;
+    }
     for (let j = 0; j < a1.length; j++) {
-      if (a1[j] !== a2[j])
+      if (a1[j] !== a2[j]) {
         return false;
+      }
     }
 
     return true;
@@ -44,8 +46,9 @@ export function findRepeatedSubsequences(s: string[]): { sequence: string[]; cou
       while (
         i + p * k <= n &&
         arraysEqual(s.slice(i + p * (k - 1), i + p * k), substr)
-      )
+      ) {
         k += 1;
+      }
 
       k -= 1; // Adjust k since it increments one extra time in the loop
 

@@ -35,13 +35,15 @@ it('should move with the arrow keys', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.type('textarea', 'Hello World!');
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello World!');
-  for (let i = 0; i < 'World!'.length; i++)
+  for (let i = 0; i < 'World!'.length; i++) {
     await page.keyboard.press('ArrowLeft');
+  }
   await page.keyboard.type('inserted ');
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello inserted World!');
   await page.keyboard.down('Shift');
-  for (let i = 0; i < 'inserted '.length; i++)
+  for (let i = 0; i < 'inserted '.length; i++) {
     await page.keyboard.press('ArrowLeft');
+  }
   await page.keyboard.up('Shift');
   await page.keyboard.press('Backspace');
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('Hello World!');
@@ -96,10 +98,11 @@ it('should report shiftKey', async ({ page, server, browserName, platform }) => 
     expect(await page.evaluate('getResult()')).toBe('Keydown: ' + modifierKey + ' ' + modifierKey + 'Left ' + codeForKey[modifierKey] + ' [' + modifierKey + ']');
     await keyboard.down('!');
     // Shift+! will generate a keypress
-    if (modifierKey === 'Shift')
+    if (modifierKey === 'Shift') {
       expect(await page.evaluate('getResult()')).toBe('Keydown: ! Digit1 49 [' + modifierKey + ']\nKeypress: ! Digit1 33 33 [' + modifierKey + ']');
-    else
+    } else {
       expect(await page.evaluate('getResult()')).toBe('Keydown: ! Digit1 49 [' + modifierKey + ']');
+    }
 
     await keyboard.up('!');
     expect(await page.evaluate('getResult()')).toBe('Keyup: ! Digit1 49 [' + modifierKey + ']');
@@ -159,10 +162,12 @@ it('should not type canceled events', async ({ page, server }) => {
     window.addEventListener('keydown', event => {
       event.stopPropagation();
       event.stopImmediatePropagation();
-      if (event.key === 'l')
+      if (event.key === 'l') {
         event.preventDefault();
-      if (event.key === 'o')
+      }
+      if (event.key === 'o') {
         event.preventDefault();
+      }
     }, false);
   });
   await page.keyboard.type('Hello World!');
@@ -341,8 +346,9 @@ it('should be able to prevent selectAll', async ({ page, server, isMac }) => {
   await textarea.type('some text');
   await page.$eval('textarea', textarea => {
     textarea.addEventListener('keydown', event => {
-      if (event.key === 'a' && (event.metaKey || event.ctrlKey))
+      if (event.key === 'a' && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
+      }
     }, false);
   });
   await page.keyboard.down('ControlOrMeta');

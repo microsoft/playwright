@@ -157,10 +157,11 @@ it('should upload large file', async ({ page, server, isAndroid, isWebView2, mod
   for (let i = 0; i < 50 * 1024; i++) {
     await new Promise<void>((fulfill, reject) => {
       stream.write(str, err => {
-        if (err)
+        if (err) {
           reject(err);
-        else
+        } else {
           fulfill();
+        }
       });
     });
   }
@@ -217,10 +218,11 @@ it('should upload multiple large files', async ({ page, server, isAndroid, isWeb
   for (let i = 0; i < 49 * 1024; i++) {
     await new Promise<void>((fulfill, reject) => {
       stream.write(str, err => {
-        if (err)
+        if (err) {
           reject(err);
-        else
+        } else {
           fulfill();
+        }
       });
     });
   }
@@ -255,10 +257,11 @@ it('should upload large file with relative path', async ({ page, server, isAndro
   for (let i = 0; i < 50 * 1024; i++) {
     await new Promise<void>((fulfill, reject) => {
       stream.write(str, err => {
-        if (err)
+        if (err) {
           reject(err);
-        else
+        } else {
           fulfill();
+        }
       });
     });
   }
@@ -775,6 +778,7 @@ it('should preserve lastModified timestamp', async ({ page, asset }) => {
   const expectedTimestamps = files.map(file => Math.round(fs.statSync(asset(file)).mtimeMs));
   // On Linux browser sometimes reduces the timestamp by 1ms: 1696272058110.0715  -> 1696272058109 or even
   // rounds it to seconds in WebKit: 1696272058110 -> 1696272058000.
-  for (let i = 0; i < timestamps.length; i++)
+  for (let i = 0; i < timestamps.length; i++) {
     expect(Math.abs(timestamps[i] - expectedTimestamps[i]), `expected: ${expectedTimestamps}; actual: ${timestamps}`).toBeLessThan(1000);
+  }
 });

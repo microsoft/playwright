@@ -53,8 +53,9 @@ export class Keyboard {
     const description = this._keyDescriptionForString(key);
     const autoRepeat = this._pressedKeys.has(description.code);
     this._pressedKeys.add(description.code);
-    if (kModifiers.includes(description.key as types.KeyboardModifier))
+    if (kModifiers.includes(description.key as types.KeyboardModifier)) {
       this._pressedModifiers.add(description.key as types.KeyboardModifier);
+    }
     const text = description.text;
     await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text);
   }
@@ -67,15 +68,17 @@ export class Keyboard {
     description = shift && description.shifted ? description.shifted : description;
 
     // if any modifiers besides shift are pressed, no text should be sent
-    if (this._pressedModifiers.size > 1 || (!this._pressedModifiers.has('Shift') && this._pressedModifiers.size === 1))
+    if (this._pressedModifiers.size > 1 || (!this._pressedModifiers.has('Shift') && this._pressedModifiers.size === 1)) {
       return { ...description, text: '' };
+    }
     return description;
   }
 
   async up(key: string) {
     const description = this._keyDescriptionForString(key);
-    if (kModifiers.includes(description.key as types.KeyboardModifier))
+    if (kModifiers.includes(description.key as types.KeyboardModifier)) {
       this._pressedModifiers.delete(description.key as types.KeyboardModifier);
+    }
     this._pressedKeys.delete(description.code);
     await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location);
   }
@@ -90,8 +93,9 @@ export class Keyboard {
       if (usKeyboardLayout.has(char)) {
         await this.press(char, { delay });
       } else {
-        if (delay)
+        if (delay) {
           await new Promise(f => setTimeout(f, delay));
+        }
         await this.insertText(char);
       }
     }
@@ -115,30 +119,35 @@ export class Keyboard {
 
     const tokens = split(key);
     key = tokens[tokens.length - 1];
-    for (let i = 0; i < tokens.length - 1; ++i)
+    for (let i = 0; i < tokens.length - 1; ++i) {
       await this.down(tokens[i]);
+    }
     await this.down(key);
-    if (options.delay)
+    if (options.delay) {
       await new Promise(f => setTimeout(f, options.delay));
+    }
     await this.up(key);
-    for (let i = tokens.length - 2; i >= 0; --i)
+    for (let i = tokens.length - 2; i >= 0; --i) {
       await this.up(tokens[i]);
+    }
   }
 
   async ensureModifiers(mm: types.SmartKeyboardModifier[]): Promise<types.KeyboardModifier[]> {
     const modifiers = mm.map(resolveSmartModifier);
     for (const modifier of modifiers) {
-      if (!kModifiers.includes(modifier))
+      if (!kModifiers.includes(modifier)) {
         throw new Error('Unknown modifier ' + modifier);
+      }
     }
     const restore: types.KeyboardModifier[] = Array.from(this._pressedModifiers);
     for (const key of kModifiers) {
       const needDown = modifiers.includes(key);
       const isDown = this._pressedModifiers.has(key);
-      if (needDown && !isDown)
+      if (needDown && !isDown) {
         await this.down(key);
-      else if (!needDown && isDown)
+      } else if (!needDown && isDown) {
         await this.up(key);
+      }
     }
     return restore;
   }
@@ -149,8 +158,9 @@ export class Keyboard {
 }
 
 export function resolveSmartModifierString(key: string): string {
-  if (key === 'ControlOrMeta')
+  if (key === 'ControlOrMeta') {
     return process.platform === 'darwin' ? 'Meta' : 'Control';
+  }
   return key;
 }
 
@@ -181,8 +191,9 @@ export class Mouse {
   }
 
   async move(x: number, y: number, options: { steps?: number, forClick?: boolean } = {}, metadata?: CallMetadata) {
-    if (metadata)
+    if (metadata) {
       metadata.point = { x, y };
+    }
     const { steps = 1 } = options;
     const fromX = this._x;
     const fromY = this._y;
@@ -196,8 +207,9 @@ export class Mouse {
   }
 
   async down(options: { button?: types.MouseButton, clickCount?: number } = {}, metadata?: CallMetadata) {
-    if (metadata)
+    if (metadata) {
       metadata.point = { x: this._x, y: this._y };
+    }
     const { button = 'left', clickCount = 1 } = options;
     this._lastButton = button;
     this._buttons.add(button);
@@ -205,8 +217,9 @@ export class Mouse {
   }
 
   async up(options: { button?: types.MouseButton, clickCount?: number } = {}, metadata?: CallMetadata) {
-    if (metadata)
+    if (metadata) {
       metadata.point = { x: this._x, y: this._y };
+    }
     const { button = 'left', clickCount = 1 } = options;
     this._lastButton = 'none';
     this._buttons.delete(button);
@@ -214,8 +227,9 @@ export class Mouse {
   }
 
   async click(x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number } = {}, metadata?: CallMetadata) {
-    if (metadata)
+    if (metadata) {
       metadata.point = { x, y };
+    }
     const { delay = null, clickCount = 1 } = options;
     if (delay) {
       this.move(x, y, { forClick: true });
@@ -223,8 +237,9 @@ export class Mouse {
         await this.down({ ...options, clickCount: cc });
         await new Promise(f => setTimeout(f, delay));
         await this.up({ ...options, clickCount: cc });
-        if (cc < clickCount)
+        if (cc < clickCount) {
           await new Promise(f => setTimeout(f, delay));
+        }
       }
     } else {
       const promises = [];
@@ -268,8 +283,9 @@ function buildLayoutClosure(layout: keyboardLayout.KeyboardLayout): Map<string, 
       text: definition.text || '',
       location: definition.location || 0,
     };
-    if (definition.key.length === 1)
+    if (definition.key.length === 1) {
       description.text = description.key;
+    }
 
     // Generate shifted definition.
     let shiftedDescription: KeyDescription | undefined;
@@ -278,8 +294,9 @@ function buildLayoutClosure(layout: keyboardLayout.KeyboardLayout): Map<string, 
       shiftedDescription = { ...description };
       shiftedDescription.key = definition.shiftKey;
       shiftedDescription.text = definition.shiftKey;
-      if (definition.shiftKeyCode)
+      if (definition.shiftKeyCode) {
         shiftedDescription.keyCode = definition.shiftKeyCode;
+      }
     }
 
     // Map from code: Digit3 -> { ... description, shifted }
@@ -287,21 +304,25 @@ function buildLayoutClosure(layout: keyboardLayout.KeyboardLayout): Map<string, 
 
     // Map from aliases: Shift -> non-shiftable definition
     if (aliases.has(code)) {
-      for (const alias of aliases.get(code)!)
+      for (const alias of aliases.get(code)!) {
         result.set(alias, description);
+      }
     }
 
     // Do not use numpad when converting keys to codes.
-    if (definition.location)
+    if (definition.location) {
       continue;
+    }
 
     // Map from key, no shifted
-    if (description.key.length === 1)
+    if (description.key.length === 1) {
       result.set(description.key, description);
+    }
 
     // Map from shiftKey, no shifted
-    if (shiftedDescription)
+    if (shiftedDescription) {
       result.set(shiftedDescription.key, { ...shiftedDescription, shifted: undefined });
+    }
   }
   return result;
 }
@@ -320,10 +341,12 @@ export class Touchscreen {
   }
 
   async tap(x: number, y: number, metadata?: CallMetadata) {
-    if (metadata)
+    if (metadata) {
       metadata.point = { x, y };
-    if (!this._page._browserContext._options.hasTouch)
+    }
+    if (!this._page._browserContext._options.hasTouch) {
       throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
+    }
     await this._raw.tap(x, y, this._page.keyboard._modifiers());
   }
 }

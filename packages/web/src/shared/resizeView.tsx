@@ -68,14 +68,16 @@ export const ResizeView: React.FC<{
       onPaneMouseMove={event => {
         if (!event.buttons) {
           setResizing(null);
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         } else if (resizing) {
           const delta = orientation === 'horizontal' ? event.clientX - resizing.clientX : event.clientY - resizing.clientY;
           const newOffset = resizing.offset + delta;
           const previous = resizing.index > 0 ? offsets[resizing.index - 1] : 0;
           const next = orientation === 'horizontal' ? measure.width : measure.height;
           const constrainedDelta = Math.min(Math.max(previous + minGap, newOffset), next - minGap) - offsets[resizing.index];
-          for (let i = resizing.index; i < offsets.length; ++i)
+          for (let i = resizing.index; i < offsets.length; ++i) {
             offsets[i] = offsets[i] + constrainedDelta;
+          }
           setOffsets([...offsets]);
         }
       }}

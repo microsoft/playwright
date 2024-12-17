@@ -93,13 +93,15 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
       const { id, result, error, method, params } = message;
       if (id) {
         const callback = this._callbacks.get(id);
-        if (!callback)
+        if (!callback) {
           return;
+        }
         this._callbacks.delete(id);
-        if (error)
+        if (error) {
           callback.reject(new Error(error));
-        else
+        } else {
           callback.resolve(result);
+        }
       } else {
         this._dispatchEvent(method, params);
       }
@@ -138,14 +140,15 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
   }
 
   private _dispatchEvent(method: string, params?: any) {
-    if (method === 'report')
+    if (method === 'report') {
       this._onReportEmitter.fire(params);
-    else if (method === 'stdio')
+    } else if (method === 'stdio') {
       this._onStdioEmitter.fire(params);
-    else if (method === 'testFilesChanged')
+    } else if (method === 'testFilesChanged') {
       this._onTestFilesChangedEmitter.fire(params);
-    else if (method === 'loadTraceRequested')
+    } else if (method === 'loadTraceRequested') {
       this._onLoadTraceRequestedEmitter.fire(params);
+    }
   }
 
   async initialize(params: Parameters<TestServerInterface['initialize']>[0]): ReturnType<TestServerInterface['initialize']> {

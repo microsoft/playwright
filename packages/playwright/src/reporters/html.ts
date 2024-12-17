@@ -94,8 +94,9 @@ class HtmlReporter implements ReporterV2 {
     for (const project of this.config.projects) {
       if (this._isSubdirectory(outputFolder, project.outputDir) || this._isSubdirectory(project.outputDir, outputFolder)) {
         const key = outputFolder + '|' + project.outputDir;
-        if (reportedWarnings.has(key))
+        if (reportedWarnings.has(key)) {
           continue;
+        }
         reportedWarnings.add(key);
         console.log(colors.red(`Configuration Error: HTML reporter output folder clashes with the tests output folder:`));
         console.log(`
@@ -137,8 +138,9 @@ class HtmlReporter implements ReporterV2 {
   }
 
   async onExit() {
-    if (process.env.CI || !this._buildResult)
+    if (process.env.CI || !this._buildResult) {
       return;
+    }
     const { ok, singleTestId } = this._buildResult;
     const shouldOpen = !this._options._isTestServer && (this._open === 'always' || (!ok && this._open === 'on-failure'));
     if (shouldOpen) {
@@ -166,8 +168,9 @@ function reportFolderFromEnv(): string | undefined {
 function getHtmlReportOptionProcessEnv(): HtmlReportOpenOption | undefined {
   // Note: PW_TEST_HTML_REPORT_OPEN is for backwards compatibility.
   const htmlOpenEnv = process.env.PLAYWRIGHT_HTML_OPEN || process.env.PW_TEST_HTML_REPORT_OPEN;
-  if (!htmlOpenEnv)
+  if (!htmlOpenEnv) {
     return undefined;
+  }
   if (!isHtmlReportOption(htmlOpenEnv)) {
     console.log(colors.red(`Configuration Error: HTML reporter Invalid value for PLAYWRIGHT_HTML_OPEN: ${htmlOpenEnv}. Valid values are: ${htmlReportOptions.join(', ')}`));
     return undefined;
@@ -193,8 +196,9 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
   let url = server.urlPrefix('human-readable');
   console.log('');
   console.log(colors.cyan(`  Serving HTML report at ${url}. Press Ctrl+C to quit.`));
-  if (testId)
+  if (testId) {
     url += `#?testId=${testId}`;
+  }
   url = url.replace('0.0.0.0', 'localhost');
   await open(url, { wait: true }).catch(() => {});
   await new Promise(() => {});
@@ -212,10 +216,12 @@ export function startHtmlReportServer(folder: string): HttpServer {
         return false;
       }
     }
-    if (relativePath.endsWith('/stall.js'))
+    if (relativePath.endsWith('/stall.js')) {
       return true;
-    if (relativePath === '/')
+    }
+    if (relativePath === '/') {
       relativePath = '/index.html';
+    }
     const absolutePath = path.join(folder, ...relativePath.split('/'));
     return server.serveFile(request, response, absolutePath);
   });
@@ -267,19 +273,24 @@ class HtmlBuilder {
     for (const [fileId, { testFile, testFileSummary }] of data) {
       const stats = testFileSummary.stats;
       for (const test of testFileSummary.tests) {
-        if (test.outcome === 'expected')
+        if (test.outcome === 'expected') {
           ++stats.expected;
-        if (test.outcome === 'skipped')
+        }
+        if (test.outcome === 'skipped') {
           ++stats.skipped;
-        if (test.outcome === 'unexpected')
+        }
+        if (test.outcome === 'unexpected') {
           ++stats.unexpected;
-        if (test.outcome === 'flaky')
+        }
+        if (test.outcome === 'flaky') {
           ++stats.flaky;
+        }
         ++stats.total;
       }
       stats.ok = stats.unexpected + stats.flaky === 0;
-      if (!stats.ok)
+      if (!stats.ok) {
         ok = false;
+      }
 
       const testCaseSummaryComparator = (t1: TestCaseSummary, t2: TestCaseSummary) => {
         const w1 = (t1.outcome === 'unexpected' ? 1000 : 0) +  (t1.outcome === 'flaky' ? 1 : 0);
@@ -345,13 +356,15 @@ class HtmlBuilder {
       const traceViewerAssetsTargetFolder = path.join(traceViewerTargetFolder, 'assets');
       fs.mkdirSync(traceViewerAssetsTargetFolder, { recursive: true });
       for (const file of fs.readdirSync(traceViewerFolder)) {
-        if (file.endsWith('.map') || file.includes('watch') || file.includes('assets'))
+        if (file.endsWith('.map') || file.includes('watch') || file.includes('assets')) {
           continue;
+        }
         await copyFileAndMakeWritable(path.join(traceViewerFolder, file), path.join(traceViewerTargetFolder, file));
       }
       for (const file of fs.readdirSync(path.join(traceViewerFolder, 'assets'))) {
-        if (file.endsWith('.map') || file.includes('xtermModule'))
+        if (file.endsWith('.map') || file.includes('xtermModule')) {
           continue;
+        }
         await copyFileAndMakeWritable(path.join(traceViewerFolder, 'assets', file), path.join(traceViewerAssetsTargetFolder, file));
       }
     }
@@ -381,10 +394,11 @@ class HtmlBuilder {
   private _processSuite(suite: Suite, projectName: string, path: string[], outTests: TestEntry[]) {
     const newPath = [...path, suite.title];
     suite.entries().forEach(e => {
-      if (e.type === 'test')
+      if (e.type === 'test') {
         outTests.push(this._createTestEntry(e, projectName, newPath));
-      else
+      } else {
         this._processSuite(e, projectName, newPath, outTests);
+      }
     });
   }
 
@@ -431,8 +445,9 @@ class HtmlBuilder {
   private _serializeAttachments(attachments: JsonAttachment[]) {
     let lastAttachment: TestAttachment | undefined;
     return attachments.map(a => {
-      if (a.name === 'trace')
+      if (a.name === 'trace') {
         this._hasTraces = true;
+      }
 
       if ((a.name === 'stdout' || a.name === 'stderr') && a.contentType === 'text/plain') {
         if (lastAttachment &&
@@ -526,14 +541,16 @@ class HtmlBuilder {
       error: step.error?.message,
       count
     };
-    if (step.location)
+    if (step.location) {
       this._stepsInFile.set(step.location.file, result);
+    }
     return result;
   }
 
   private _relativeLocation(location: Location | undefined): Location | undefined {
-    if (!location)
+    if (!location) {
       return undefined;
+    }
     const file = toPosixPath(path.relative(this._config.rootDir, location.file));
     return {
       file,
@@ -584,8 +601,9 @@ class Base64Encoder extends Transform {
   }
 
   override _flush(callback: TransformCallback): void {
-    if (this._remainder)
+    if (this._remainder) {
       this.push(Buffer.from(this._remainder.toString('base64')));
+    }
     callback();
   }
 }
@@ -624,8 +642,9 @@ function dedupeSteps(steps: TestStepPublic[]) {
     }
     lastResult = { step, count: 1, duration: step.duration };
     result.push(lastResult);
-    if (!canDedupe)
+    if (!canDedupe) {
       lastResult = undefined;
+    }
   }
   return result;
 }
@@ -644,8 +663,9 @@ function createSnippets(stepsInFile: MultiMap<string, TestStep>) {
     const lineWithArrow = highlightedLines[highlightedLines.length - 1];
     for (const step of stepsInFile.get(file)) {
       // Don't bother with snippets that have less than 3 lines.
-      if (step.location!.line < 2 || step.location!.line >= lines)
+      if (step.location!.line < 2 || step.location!.line >= lines) {
         continue;
+      }
       // Cut out snippet.
       const snippetLines = highlightedLines.slice(step.location!.line - 2, step.location!.line + 1);
       // Relocate arrow.

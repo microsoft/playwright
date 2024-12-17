@@ -52,8 +52,9 @@ export type AriaTemplateNode = AriaTemplateRoleNode | AriaTemplateTextNode;
 export function parseYamlTemplate(fragment: ParsedYaml): AriaTemplateNode {
   const result: AriaTemplateNode = { kind: 'role', role: 'fragment' };
   populateNode(result, fragment);
-  if (result.children && result.children.length === 1)
+  if (result.children && result.children.length === 1) {
     return result.children[0];
+  }
   return result;
 }
 
@@ -131,8 +132,9 @@ class KeyParser {
   }
 
   private _next() {
-    if (this._pos < this._length)
+    if (this._pos < this._length) {
       return this._input[this._pos++];
+    }
     return null;
   }
 
@@ -145,16 +147,19 @@ class KeyParser {
   }
 
   private _skipWhitespace() {
-    while (this._isWhitespace())
+    while (this._isWhitespace()) {
       this._pos++;
+    }
   }
 
   private _readIdentifier(type: 'role' | 'attribute'): string {
-    if (this._eof())
+    if (this._eof()) {
       this._throwError(`Unexpected end of input when expecting ${type}`);
+    }
     const start = this._pos;
-    while (!this._eof() && /[a-zA-Z]/.test(this._peek()))
+    while (!this._eof() && /[a-zA-Z]/.test(this._peek())) {
       this._pos++;
+    }
     return this._input.slice(start, this._pos);
   }
 
@@ -225,6 +230,7 @@ class KeyParser {
 
   private _readAttributes(result: AriaTemplateRoleNode) {
     let errorPos = this._pos;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (true) {
       this._skipWhitespace();
       if (this._peek() === '[') {
@@ -238,12 +244,14 @@ class KeyParser {
           this._next();
           this._skipWhitespace();
           errorPos = this._pos;
-          while (this._peek() !== ']' && !this._isWhitespace() && !this._eof())
+          while (this._peek() !== ']' && !this._isWhitespace() && !this._eof()) {
             flagValue += this._next();
+          }
         }
         this._skipWhitespace();
-        if (this._peek() !== ']')
+        if (this._peek() !== ']') {
           this._throwError('Expected ]');
+        }
 
         this._next(); // Consume ']'
         this._applyAttribute(result, flagName, flagValue || 'true', errorPos);
@@ -262,8 +270,9 @@ class KeyParser {
     const result: AriaTemplateRoleNode = { kind: 'role', role, name };
     this._readAttributes(result);
     this._skipWhitespace();
-    if (!this._eof())
+    if (!this._eof()) {
       this._throwError('Unexpected input');
+    }
     return result;
   }
 
@@ -302,8 +311,9 @@ class KeyParser {
   }
 
   private _assert(value: any, message: string, valuePos: number): asserts value {
-    if (!value)
+    if (!value) {
       this._throwError(message || 'Assertion error', valuePos);
+    }
   }
 }
 

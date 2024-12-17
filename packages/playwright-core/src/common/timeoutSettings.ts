@@ -46,44 +46,57 @@ export class TimeoutSettings {
   }
 
   navigationTimeout(options: { timeout?: number }): number {
-    if (typeof options.timeout === 'number')
+    if (typeof options.timeout === 'number') {
       return options.timeout;
-    if (this._defaultNavigationTimeout !== undefined)
+    }
+    if (this._defaultNavigationTimeout !== undefined) {
       return this._defaultNavigationTimeout;
-    if (debugMode())
+    }
+    if (debugMode()) {
       return 0;
-    if (this._defaultTimeout !== undefined)
+    }
+    if (this._defaultTimeout !== undefined) {
       return this._defaultTimeout;
-    if (this._parent)
+    }
+    if (this._parent) {
       return this._parent.navigationTimeout(options);
+    }
     return DEFAULT_TIMEOUT;
   }
 
   timeout(options: { timeout?: number }): number {
-    if (typeof options.timeout === 'number')
+    if (typeof options.timeout === 'number') {
       return options.timeout;
-    if (debugMode())
+    }
+    if (debugMode()) {
       return 0;
-    if (this._defaultTimeout !== undefined)
+    }
+    if (this._defaultTimeout !== undefined) {
       return this._defaultTimeout;
-    if (this._parent)
+    }
+    if (this._parent) {
       return this._parent.timeout(options);
+    }
     return DEFAULT_TIMEOUT;
   }
 
   static timeout(options: { timeout?: number }): number {
-    if (typeof options.timeout === 'number')
+    if (typeof options.timeout === 'number') {
       return options.timeout;
-    if (debugMode())
+    }
+    if (debugMode()) {
       return 0;
+    }
     return DEFAULT_TIMEOUT;
   }
 
   static launchTimeout(options: { timeout?: number }): number {
-    if (typeof options.timeout === 'number')
+    if (typeof options.timeout === 'number') {
       return options.timeout;
-    if (debugMode())
+    }
+    if (debugMode()) {
       return 0;
+    }
     return DEFAULT_LAUNCH_TIMEOUT;
   }
 }

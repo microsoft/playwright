@@ -43,16 +43,18 @@ export class PythonLanguageGenerator implements LanguageGenerator {
 
   generateAction(actionInContext: actions.ActionInContext): string {
     const action = actionInContext.action;
-    if (this._isPyTest && (action.name === 'openPage' || action.name === 'closePage'))
+    if (this._isPyTest && (action.name === 'openPage' || action.name === 'closePage')) {
       return '';
+    }
 
     const pageAlias = actionInContext.frame.pageAlias;
     const formatter = new PythonFormatter(4);
 
     if (action.name === 'openPage') {
       formatter.add(`${pageAlias} = ${this._awaitPrefix}context.new_page()`);
-      if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
+      if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/') {
         formatter.add(`${this._awaitPrefix}${pageAlias}.goto(${quote(action.url)})`);
+      }
       return formatter.format();
     }
 
@@ -60,8 +62,9 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     const subject = `${pageAlias}${locators.join('')}`;
     const signals = toSignalMap(action);
 
-    if (signals.dialog)
+    if (signals.dialog) {
       formatter.add(`  ${pageAlias}.once("dialog", lambda dialog: dialog.dismiss())`);
+    }
 
     let code = `${this._awaitPrefix}${this._generateActionCall(subject, actionInContext)}`;
 
@@ -93,8 +96,9 @@ export class PythonLanguageGenerator implements LanguageGenerator {
         return `${subject}.close()`;
       case 'click': {
         let method = 'click';
-        if (action.clickCount === 2)
+        if (action.clickCount === 2) {
           method = 'dblclick';
+        }
         const options = toClickOptionsForSourceCode(action);
         const optionsString = formatOptions(options, false);
         return `${subject}.${this._asLocator(action.selector)}.${method}(${optionsString})`;
@@ -151,8 +155,9 @@ from playwright.sync_api import Page, expect
 ${fixture}
 
 def test_example(page: Page) -> None {`);
-      if (options.contextOptions.recordHar)
+      if (options.contextOptions.recordHar) {
         formatter.add(`    page.route_from_har(${quote(options.contextOptions.recordHar.path)})`);
+      }
     } else if (this._isAsync) {
       formatter.add(`
 import asyncio
@@ -163,8 +168,9 @@ from playwright.async_api import Playwright, async_playwright, expect
 async def run(playwright: Playwright) -> None {
     browser = await playwright.${options.browserName}.launch(${formatOptions(options.launchOptions, false)})
     context = await browser.new_context(${formatContextOptions(options.contextOptions, options.deviceName)})`);
-      if (options.contextOptions.recordHar)
+      if (options.contextOptions.recordHar) {
         formatter.add(`    await page.route_from_har(${quote(options.contextOptions.recordHar.path)})`);
+      }
     } else {
       formatter.add(`
 import re
@@ -174,8 +180,9 @@ from playwright.sync_api import Playwright, sync_playwright, expect
 def run(playwright: Playwright) -> None {
     browser = playwright.${options.browserName}.launch(${formatOptions(options.launchOptions, false)})
     context = browser.new_context(${formatContextOptions(options.contextOptions, options.deviceName)})`);
-      if (options.contextOptions.recordHar)
+      if (options.contextOptions.recordHar) {
         formatter.add(`    context.route_from_har(${quote(options.contextOptions.recordHar.path)})`);
+      }
     }
     return formatter.format();
   }
@@ -212,28 +219,36 @@ with sync_playwright() as playwright:
 }
 
 function formatValue(value: any): string {
-  if (value === false)
+  if (value === false) {
     return 'False';
-  if (value === true)
+  }
+  if (value === true) {
     return 'True';
-  if (value === undefined)
+  }
+  if (value === undefined) {
     return 'None';
-  if (Array.isArray(value))
+  }
+  if (Array.isArray(value)) {
     return `[${value.map(formatValue).join(', ')}]`;
-  if (typeof value === 'string')
+  }
+  if (typeof value === 'string') {
     return quote(value);
-  if (typeof value === 'object')
+  }
+  if (typeof value === 'object') {
     return JSON.stringify(value);
+  }
   return String(value);
 }
 
 function formatOptions(value: any, hasArguments: boolean, asDict?: boolean): string {
   const keys = Object.keys(value).filter(key => value[key] !== undefined).sort();
-  if (!keys.length)
+  if (!keys.length) {
     return '';
+  }
   return (hasArguments ? ', ' : '') + keys.map(key => {
-    if (asDict)
+    if (asDict) {
       return `"${toSnakeCase(key)}": ${formatValue(value[key])}`;
+    }
     return `${toSnakeCase(key)}=${formatValue(value[key])}`;
   }).join(', ');
 }
@@ -242,8 +257,9 @@ function formatContextOptions(options: BrowserContextOptions, deviceName: string
   // recordHAR is replaced with routeFromHAR in the generated code.
   options = { ...options, recordHar: undefined };
   const device = deviceName && deviceDescriptors[deviceName];
-  if (!device)
+  if (!device) {
     return formatOptions(options, false, asDict);
+  }
   return `**playwright.devices[${quote(deviceName!)}]` + formatOptions(sanitizeDeviceOptions(device, options), true, asDict);
 }
 
@@ -273,8 +289,9 @@ class PythonFormatter {
     let spaces = '';
     const lines: string[] = [];
     this._lines.forEach((line: string) => {
-      if (line === '')
+      if (line === '') {
         return lines.push(line);
+      }
       if (line === '}') {
         spaces = spaces.substring(this._baseIndent.length);
         return;

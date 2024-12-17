@@ -102,8 +102,9 @@ it('should report requests and responses handled by service worker with routing'
   expect(await failedRequest.response()).toBe(null);
 
   const expectedUrls = [server.PREFIX + '/serviceworkers/fetchdummy/sw.html'];
-  if (browserName === 'webkit')
+  if (browserName === 'webkit') {
     expectedUrls.push(server.PREFIX + '/serviceworkers/fetchdummy/sw.js');
+  }
   expect(interceptedUrls).toEqual(expectedUrls);
 });
 
@@ -195,8 +196,9 @@ it('should fire requestfailed when intercepting race', async ({ page, server, br
       expect(alive.has(request)).toBe(true);
       alive.delete(request);
       failures.add(request);
-      if (++counter === 10)
+      if (++counter === 10) {
         resolve();
+      }
     });
   });
 
@@ -255,7 +257,9 @@ it('should finish 204 request', {
     page.waitForEvent('requestfailed', r => r.url().endsWith('/204')).then(() => 'requestfailed'),
     page.waitForEvent('requestfinished', r => r.url().endsWith('/204')).then(() => 'requestfinished'),
   ]);
-  page.evaluate(async url => { await fetch(url); }, server.PREFIX + '/204').catch(() => {});
+  page.evaluate(async url => {
+    await fetch(url);
+  }, server.PREFIX + '/204').catch(() => {});
   expect(await reqPromise).toBe('requestfinished');
 });
 

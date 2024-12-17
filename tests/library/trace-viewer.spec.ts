@@ -443,8 +443,9 @@ test('should capture iframe with sandbox attribute', async ({ page, server, runA
 
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
-    if (page.frames().length < 2)
+    if (page.frames().length < 2) {
       await page.waitForEvent('frameattached');
+    }
     await page.frames()[1].waitForSelector('button');
     // Force snapshot.
     await page.evaluate('2+2');
@@ -466,8 +467,9 @@ test('should capture data-url svg iframe', async ({ page, server, runAndTrace })
 
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
-    if (page.frames().length < 2)
+    if (page.frames().length < 2) {
       await page.waitForEvent('frameattached');
+    }
     await page.frames()[1].waitForSelector('svg');
     // Force snapshot.
     await page.evaluate('2+2');
@@ -1296,10 +1298,11 @@ test('should highlight locator in iframe while typing', async ({ page, runAndTra
   }];
 
   for (const locator of locators) {
-    if (platform === 'darwin')
+    if (platform === 'darwin') {
       await traceViewer.page.keyboard.press('Meta+a');
-    else
+    } else {
       await traceViewer.page.keyboard.press('Control+a');
+    }
     await traceViewer.page.keyboard.press('Backspace');
     await traceViewer.page.keyboard.type(locator.text);
     const elementBox = await locator.element.boundingBox();
@@ -1395,11 +1398,13 @@ test('should show similar actions from library-only trace', async ({ showTraceVi
 
 function parseMillis(s: string): number {
   const matchMs = s.match(/(\d+)ms/);
-  if (matchMs)
+  if (matchMs) {
     return +matchMs[1];
+  }
   const matchSeconds = s.match(/([\d.]+)s/);
-  if (!matchSeconds)
+  if (!matchSeconds) {
     throw new Error('Failed to parse to millis: ' + s);
+  }
   return (+matchSeconds[1]) * 1000;
 }
 

@@ -106,11 +106,15 @@ it('should work for multiple pages sharing same process', async ({ browser, serv
   await page.goto(server.EMPTY_PAGE);
   let [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(url => { window.open(url); }, server.EMPTY_PAGE),
+    page.evaluate(url => {
+      window.open(url);
+    }, server.EMPTY_PAGE),
   ]);
   [popup] = await Promise.all([
     popup.waitForEvent('popup'),
-    popup.evaluate(url => { window.open(url); }, server.EMPTY_PAGE),
+    popup.evaluate(url => {
+      window.open(url);
+    }, server.EMPTY_PAGE),
   ]);
   await context.close();
 });
@@ -119,8 +123,9 @@ it('should be isolated between contexts', async ({ browser, server }) => {
   const context1 = await browser.newContext({ locale: 'en-US' });
   const promises = [];
   // By default firefox limits number of child web processes to 8.
-  for (let i = 0; i < 8; i++)
+  for (let i = 0; i < 8; i++) {
     promises.push(context1.newPage());
+  }
   await Promise.all(promises);
 
   const context2 = await browser.newContext({ locale: 'ru-RU' });

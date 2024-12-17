@@ -70,22 +70,25 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   }
 
   async newBrowserCDPSession(): Promise<channels.BrowserNewBrowserCDPSessionResult> {
-    if (!this._object.options.isChromium)
+    if (!this._object.options.isChromium) {
       throw new Error(`CDP session is only available in Chromium`);
+    }
     const crBrowser = this._object as CRBrowser;
     return { session: new CDPSessionDispatcher(this, await crBrowser.newBrowserCDPSession()) };
   }
 
   async startTracing(params: channels.BrowserStartTracingParams): Promise<void> {
-    if (!this._object.options.isChromium)
+    if (!this._object.options.isChromium) {
       throw new Error(`Tracing is only available in Chromium`);
+    }
     const crBrowser = this._object as CRBrowser;
     await crBrowser.startTracing(params.page ? (params.page as PageDispatcher)._object : undefined, params);
   }
 
   async stopTracing(): Promise<channels.BrowserStopTracingResult> {
-    if (!this._object.options.isChromium)
+    if (!this._object.options.isChromium) {
       throw new Error(`Tracing is only available in Chromium`);
+    }
     const crBrowser = this._object as CRBrowser;
     return { artifact: ArtifactDispatcher.from(this, await crBrowser.stopTracing()) };
   }
@@ -105,8 +108,9 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
   }
 
   async newContext(params: channels.BrowserNewContextParams, metadata: CallMetadata): Promise<channels.BrowserNewContextResult> {
-    if (params.recordVideo)
+    if (params.recordVideo) {
       params.recordVideo.dir = this._object.options.artifactsDir;
+    }
     const context = await this._object.newContext(metadata, params);
     this._contexts.add(context);
     context.setSelectors(this.selectors);
@@ -135,22 +139,25 @@ export class ConnectedBrowserDispatcher extends Dispatcher<Browser, channels.Bro
   }
 
   async newBrowserCDPSession(): Promise<channels.BrowserNewBrowserCDPSessionResult> {
-    if (!this._object.options.isChromium)
+    if (!this._object.options.isChromium) {
       throw new Error(`CDP session is only available in Chromium`);
+    }
     const crBrowser = this._object as CRBrowser;
     return { session: new CDPSessionDispatcher(this as any as BrowserDispatcher, await crBrowser.newBrowserCDPSession()) };
   }
 
   async startTracing(params: channels.BrowserStartTracingParams): Promise<void> {
-    if (!this._object.options.isChromium)
+    if (!this._object.options.isChromium) {
       throw new Error(`Tracing is only available in Chromium`);
+    }
     const crBrowser = this._object as CRBrowser;
     await crBrowser.startTracing(params.page ? (params.page as PageDispatcher)._object : undefined, params);
   }
 
   async stopTracing(): Promise<channels.BrowserStopTracingResult> {
-    if (!this._object.options.isChromium)
+    if (!this._object.options.isChromium) {
       throw new Error(`Tracing is only available in Chromium`);
+    }
     const crBrowser = this._object as CRBrowser;
     return { artifact: ArtifactDispatcher.from(this, await crBrowser.stopTracing()) };
   }
@@ -164,12 +171,14 @@ async function newContextForReuse(browser: Browser, scope: BrowserDispatcher, pa
   const { context, needsReset } = await browser.newContextForReuse(params, metadata);
   if (needsReset) {
     const oldContextDispatcher = existingDispatcher<BrowserContextDispatcher>(context);
-    if (oldContextDispatcher)
+    if (oldContextDispatcher) {
       oldContextDispatcher._dispose();
+    }
     await context.resetForReuse(metadata, params);
   }
-  if (selectors)
+  if (selectors) {
     context.setSelectors(selectors);
+  }
   const contextDispatcher = new BrowserContextDispatcher(scope, context);
   return { context: contextDispatcher };
 }

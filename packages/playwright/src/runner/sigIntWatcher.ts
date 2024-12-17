@@ -49,8 +49,9 @@ class FixedNodeSIGINTHandler {
   private static _handlerInstalled = false;
 
   static _dispatch = () => {
-    if (this._ignoreNextSIGINTs)
+    if (this._ignoreNextSIGINTs) {
       return;
+    }
 
     this._ignoreNextSIGINTs = true;
     setTimeout(() => {
@@ -70,11 +71,13 @@ class FixedNodeSIGINTHandler {
       // We work around this by giving NPM 1000ms to send us duplicate signals.
       // The side effect is that slow shutdown or bug in our process will force
       // the user to hit Ctrl+C again after at least a second.
-      if (!this._handlers.length)
+      if (!this._handlers.length) {
         this._uninstall();
+      }
     }, 1000);
-    for (const handler of this._handlers)
+    for (const handler of this._handlers) {
       handler();
+    }
   };
 
   static _install() {
@@ -93,13 +96,15 @@ class FixedNodeSIGINTHandler {
 
   static on(handler: () => void) {
     this._handlers.push(handler);
-    if (this._handlers.length === 1)
+    if (this._handlers.length === 1) {
       this._install();
+    }
   }
 
   static off(handler: () => void) {
     this._handlers = this._handlers.filter(h => h !== handler);
-    if (!this._ignoreNextSIGINTs && !this._handlers.length)
+    if (!this._ignoreNextSIGINTs && !this._handlers.length) {
       this._uninstall();
+    }
   }
 }

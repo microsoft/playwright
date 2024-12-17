@@ -31,8 +31,9 @@ export function sanitizeDeviceOptions(device: any, options: BrowserContextOption
   // Filter out all the properties from the device descriptor.
   const cleanedOptions: Record<string, any> = {};
   for (const property in options) {
-    if (JSON.stringify(device[property]) !== JSON.stringify((options as any)[property]))
+    if (JSON.stringify(device[property]) !== JSON.stringify((options as any)[property])) {
       cleanedOptions[property] = (options as any)[property];
+    }
   }
   return cleanedOptions;
 }
@@ -42,12 +43,13 @@ export function toSignalMap(action: actions.Action) {
   let download: actions.DownloadSignal | undefined;
   let dialog: actions.DialogSignal | undefined;
   for (const signal of action.signals) {
-    if (signal.name === 'popup')
+    if (signal.name === 'popup') {
       popup = signal;
-    else if (signal.name === 'download')
+    } else if (signal.name === 'download') {
       download = signal;
-    else if (signal.name === 'dialog')
+    } else if (signal.name === 'dialog') {
       dialog = signal;
+    }
   }
   return {
     popup,
@@ -58,45 +60,59 @@ export function toSignalMap(action: actions.Action) {
 
 export function toKeyboardModifiers(modifiers: number): types.SmartKeyboardModifier[] {
   const result: types.SmartKeyboardModifier[] = [];
-  if (modifiers & 1)
+  if (modifiers & 1) {
     result.push('Alt');
-  if (modifiers & 2)
+  }
+  if (modifiers & 2) {
     result.push('ControlOrMeta');
-  if (modifiers & 4)
+  }
+  if (modifiers & 4) {
     result.push('ControlOrMeta');
-  if (modifiers & 8)
+  }
+  if (modifiers & 8) {
     result.push('Shift');
+  }
   return result;
 }
 
 export function fromKeyboardModifiers(modifiers?: types.SmartKeyboardModifier[]): number {
   let result = 0;
-  if (!modifiers)
+  if (!modifiers) {
     return result;
-  if (modifiers.includes('Alt'))
+  }
+  if (modifiers.includes('Alt')) {
     result |= 1;
-  if (modifiers.includes('Control'))
+  }
+  if (modifiers.includes('Control')) {
     result |= 2;
-  if (modifiers.includes('ControlOrMeta'))
+  }
+  if (modifiers.includes('ControlOrMeta')) {
     result |= 2;
-  if (modifiers.includes('Meta'))
+  }
+  if (modifiers.includes('Meta')) {
     result |= 4;
-  if (modifiers.includes('Shift'))
+  }
+  if (modifiers.includes('Shift')) {
     result |= 8;
+  }
   return result;
 }
 
 export function toClickOptionsForSourceCode(action: actions.ClickAction): types.MouseClickOptions {
   const modifiers = toKeyboardModifiers(action.modifiers);
   const options: types.MouseClickOptions = {};
-  if (action.button !== 'left')
+  if (action.button !== 'left') {
     options.button = action.button;
-  if (modifiers.length)
+  }
+  if (modifiers.length) {
     options.modifiers = modifiers;
+  }
   // Do not render clickCount === 2 for dblclick.
-  if (action.clickCount > 2)
+  if (action.clickCount > 2) {
     options.clickCount = action.clickCount;
-  if (action.position)
+  }
+  if (action.position) {
     options.position = action.position;
+  }
   return options;
 }

@@ -52,8 +52,9 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
       this._dispose();
     });
     this.addObjectListener(ElectronApplication.Events.Console, (message: ConsoleMessage) => {
-      if (!this._subscriptions.has('console'))
+      if (!this._subscriptions.has('console')) {
         return;
+      }
       this._dispatchEvent('console', {
         type: message.type(),
         text: message.text(),
@@ -80,10 +81,11 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
   }
 
   async updateSubscription(params: channels.ElectronApplicationUpdateSubscriptionParams): Promise<void> {
-    if (params.enabled)
+    if (params.enabled) {
       this._subscriptions.add(params.event);
-    else
+    } else {
       this._subscriptions.delete(params.event);
+    }
   }
 
   async close(): Promise<void> {

@@ -32,8 +32,9 @@ type Fixtures = {
 
 const test = baseTest.extend<Fixtures>({
   wsEndpoint: async ({ headless }, use) => {
-    if (headless)
+    if (headless) {
       process.env.PW_DEBUG_CONTROLLER_HEADLESS = '1';
+    }
     const server = new PlaywrightServer({ mode: 'extension', path: '/' + createGuid(), maxConnections: Number.MAX_VALUE, enableSocksProxy: false });
     const wsEndpoint = await server.listen();
     await use(wsEndpoint);
@@ -58,8 +59,9 @@ const test = baseTest.extend<Fixtures>({
       browsers.push(browser);
       return browser;
     });
-    for (const browser of browsers)
+    for (const browser of browsers) {
       await browser.close();
+    }
   },
   connectedBrowser: async ({ connectedBrowserFactory }, use) => {
     await use(await connectedBrowserFactory());

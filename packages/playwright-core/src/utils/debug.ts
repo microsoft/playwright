@@ -17,21 +17,25 @@
 import { getFromENV } from './env';
 
 export function assert(value: any, message?: string): asserts value {
-  if (!value)
+  if (!value) {
     throw new Error(message || 'Assertion error');
+  }
 }
 
 export function debugAssert(value: any, message?: string): asserts value {
-  if (isUnderTest() && !value)
+  if (isUnderTest() && !value) {
     throw new Error(message);
+  }
 }
 
 const debugEnv = getFromENV('PWDEBUG') || '';
 export function debugMode() {
-  if (debugEnv === 'console')
+  if (debugEnv === 'console') {
     return 'console';
-  if (debugEnv === '0' || debugEnv === 'false')
+  }
+  if (debugEnv === '0' || debugEnv === 'false') {
     return '';
+  }
   return debugEnv ? 'inspector' : '';
 }
 

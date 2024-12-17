@@ -54,8 +54,9 @@ export class BlobReporter extends TeleReporterEmitter {
   constructor(options: BlobReporterOptions) {
     super(message => this._messages.push(message));
     this._options = options;
-    if (this._options.fileName && !this._options.fileName.endsWith('.zip'))
+    if (this._options.fileName && !this._options.fileName.endsWith('.zip')) {
       throw new Error(`Blob report file name must end with .zip extension: ${this._options.fileName}`);
+    }
     this._salt = createGuid();
   }
 
@@ -93,8 +94,9 @@ export class BlobReporter extends TeleReporterEmitter {
     }).on('error', error => zipFinishPromise.reject(error));
 
     for (const { originalPath, zipEntryPath } of this._attachments) {
-      if (!fs.statSync(originalPath, { throwIfNoEntry: false })?.isFile())
+      if (!fs.statSync(originalPath, { throwIfNoEntry: false })?.isFile()) {
         continue;
+      }
       zipFile.addFile(originalPath, zipEntryPath);
     }
 
@@ -114,16 +116,18 @@ export class BlobReporter extends TeleReporterEmitter {
         outputDir: 'blob-report',
       }
     })!;
-    if (!process.env.PWTEST_BLOB_DO_NOT_REMOVE)
+    if (!process.env.PWTEST_BLOB_DO_NOT_REMOVE) {
       await removeFolders([outputDir!]);
+    }
     await fs.promises.mkdir(path.dirname(outputFile), { recursive: true });
     return outputFile;
   }
 
   private _defaultReportName(config: FullConfig) {
     let reportName = 'report';
-    if (this._options._commandHash)
+    if (this._options._commandHash) {
       reportName += '-' + sanitizeForFilePath(this._options._commandHash);
+    }
     if (config.shard) {
       const paddedNumber = `${config.shard.current}`.padStart(`${config.shard.total}`.length, '0');
       reportName = `${reportName}-${paddedNumber}`;
@@ -133,8 +137,9 @@ export class BlobReporter extends TeleReporterEmitter {
 
   override _serializeAttachments(attachments: TestResult['attachments']): JsonAttachment[] {
     return super._serializeAttachments(attachments).map(attachment => {
-      if (!attachment.path)
+      if (!attachment.path) {
         return attachment;
+      }
       // Add run guid to avoid clashes between shards.
       const sha1 = calculateSha1(attachment.path + this._salt);
       const extension = mime.getExtension(attachment.contentType) || 'dat';

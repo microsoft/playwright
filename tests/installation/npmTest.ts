@@ -32,15 +32,17 @@ const debug = debugLogger('itest');
 
 const expect = _expect.extend({
   toHaveLoggedSoftwareDownload(received: any, browsers: ('chromium' | 'chromium-headless-shell' | 'firefox' | 'webkit' | 'ffmpeg')[]) {
-    if (typeof received !== 'string')
+    if (typeof received !== 'string') {
       throw new Error(`Expected argument to be a string.`);
+    }
 
     const downloaded = new Set();
     let index = 0;
     while (true) {
       const match = received.substring(index).match(/(chromium|chromium headless shell|firefox|webkit|ffmpeg)[\s\d\.]+\(?playwright build v\d+\)? downloaded/im);
-      if (!match)
+      if (!match) {
         break;
+      }
       downloaded.add(match[1].replace(/\s/g, '-').toLowerCase());
       index += match.index + 1;
     }
@@ -147,16 +149,18 @@ export const test = _test
         await registry.shutdown();
       },
       installedSoftwareOnDisk: async ({ isolateBrowsers, _browsersPath }, use) => {
-        if (!isolateBrowsers)
+        if (!isolateBrowsers) {
           throw new Error(`Test that checks browser installation must set "isolateBrowsers" to true`);
+        }
         await use(async () => fs.promises.readdir(_browsersPath).catch(() => []).then(files => files.map(f => f.split('-')[0].replace(/_/g, '-')).filter(f => !f.startsWith('.'))));
       },
       exec: async ({ tmpWorkspace, _browsersPath, isolateBrowsers }, use, testInfo) => {
         await use(async (cmd: string, ...argsAndOrOptions: [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions]) => {
           let args: string[] = [];
           let options: ExecOptions = {};
-          if (typeof argsAndOrOptions[argsAndOrOptions.length - 1] === 'object')
+          if (typeof argsAndOrOptions[argsAndOrOptions.length - 1] === 'object') {
             options = argsAndOrOptions.pop() as ExecOptions;
+          }
 
           args = argsAndOrOptions as string[];
 
@@ -182,20 +186,24 @@ export const test = _test
           await testInfo.attach(command, { body: `COMMAND: ${fullCommand}\n\nEXIT CODE: ${result.code}\n\n====== STDOUT + STDERR ======\n\n${stdio}` });
 
           // This means something is really off with spawn
-          if (result.error)
+          if (result.error) {
             throw result.error;
+          }
 
           const error: string[] = [];
-          if (options.expectToExitWithError && result.code === 0)
+          if (options.expectToExitWithError && result.code === 0) {
             error.push(`Expected the command to exit with an error, but exited cleanly.`);
-          else if (!options.expectToExitWithError && result.code !== 0)
+          } else if (!options.expectToExitWithError && result.code !== 0) {
             error.push(`Expected the command to exit cleanly (0 status code), but exited with ${result.code}.`);
+          }
 
-          if (!error.length)
+          if (!error.length) {
             return stdio;
+          }
 
-          if (options.message)
+          if (options.message) {
             error.push(`Message: ${options.message}`);
+          }
           error.push(`Command: ${command}`);
           error.push(`EXIT CODE: ${result.code}`);
           error.push(`====== STDIO ======\n${stdio}`);
@@ -210,8 +218,9 @@ export const test = _test
     });
 
 function sanitizeEnvPath(value: string) {
-  if (process.platform === 'win32')
+  if (process.platform === 'win32') {
     return value.split(';').filter(path => !path.endsWith('node_modules\\.bin')).join(';');
+  }
   return value.split(':').filter(path => !path.endsWith('node_modules/.bin')).join(':');
 }
 

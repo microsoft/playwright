@@ -67,7 +67,9 @@ it.describe('snapshots', () => {
     const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     expect(distillSnapshot(snapshot1)).toBe('<STYLE>button { color: red; }</STYLE><BUTTON>Hello</BUTTON>');
 
-    await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
+    await page.evaluate(() => {
+      (document.styleSheets[0].cssRules[0] as any).style.color = 'blue';
+    });
     const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2');
     expect(distillSnapshot(snapshot2)).toBe('<STYLE>button { color: blue; }</STYLE><BUTTON>Hello</BUTTON>');
   });
@@ -81,11 +83,15 @@ it.describe('snapshots', () => {
     const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     expect(distillSnapshot(snapshot1)).toBe('<STYLE>@media  {\n  button { color: red; }\n}</STYLE><BUTTON>Hello</BUTTON>');
 
-    await page.evaluate(() => { window['rule'].cssRules[0].style.color = 'blue'; });
+    await page.evaluate(() => {
+      window['rule'].cssRules[0].style.color = 'blue';
+    });
     const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2');
     expect(distillSnapshot(snapshot2)).toBe('<STYLE>@media  {\n  button { color: blue; }\n}</STYLE><BUTTON>Hello</BUTTON>');
 
-    await page.evaluate(() => { window['rule'].insertRule('button { color: green; }', 1); });
+    await page.evaluate(() => {
+      window['rule'].insertRule('button { color: green; }', 1);
+    });
     const snapshot3 = await snapshotter.captureSnapshot(toImpl(page), 'call@3', 'snapshot@call@3');
     expect(distillSnapshot(snapshot3)).toBe('<STYLE>@media  {\n  button { color: blue; }\n  button { color: green; }\n}</STYLE><BUTTON>Hello</BUTTON>');
   });
@@ -140,7 +146,9 @@ it.describe('snapshots', () => {
     const snapshot1 = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
     expect(distillSnapshot(snapshot1)).toBe('<LINK rel=\"stylesheet\" href=\"style.css\"><BUTTON>Hello</BUTTON>');
 
-    await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
+    await page.evaluate(() => {
+      (document.styleSheets[0].cssRules[0] as any).style.color = 'blue';
+    });
     const snapshot2 = await snapshotter.captureSnapshot(toImpl(page), 'call@2', 'snapshot@call@2');
     const resource = snapshot2.resourceByUrl(`http://localhost:${server.PORT}/style.css`, 'GET');
     expect((await snapshotter.resourceContentForTest(resource.response.content._sha1)).toString()).toBe('button { color: blue; }');
@@ -164,8 +172,9 @@ it.describe('snapshots', () => {
     for (let counter = 0; ; ++counter) {
       const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@' + counter, 'snapshot@call@' + counter);
       const text = distillSnapshot(snapshot).replace(/frame@[^"]+["]/, '<id>"');
-      if (text === '<FRAMESET><FRAME __playwright_src__=\"/snapshot/<id>\"></FRAME></FRAMESET>')
+      if (text === '<FRAMESET><FRAME __playwright_src__=\"/snapshot/<id>\"></FRAME></FRAMESET>') {
         break;
+      }
       await page.waitForTimeout(250);
     }
   });
@@ -189,8 +198,9 @@ it.describe('snapshots', () => {
     for (let counter = 0; ; ++counter) {
       const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@' + counter, 'snapshot@call@' + counter);
       const text = distillSnapshot(snapshot).replace(/frame@[^"]+["]/, '<id>"');
-      if (text === '<IFRAME __playwright_src__=\"/snapshot/<id>\"></IFRAME>')
+      if (text === '<IFRAME __playwright_src__=\"/snapshot/<id>\"></IFRAME>') {
         break;
+      }
       await page.waitForTimeout(250);
     }
   });
@@ -209,8 +219,9 @@ it.describe('snapshots', () => {
     for (let counter = 0; ; ++counter) {
       const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@' + counter, 'snapshot@call@' + counter);
       const text = distillSnapshot(snapshot).replace(/frame@[^"]+["]/, '<id>"');
-      if (text === '<IFRAME __playwright_src__=\"/snapshot/<id>\"></IFRAME>')
+      if (text === '<IFRAME __playwright_src__=\"/snapshot/<id>\"></IFRAME>') {
         break;
+      }
       await page.waitForTimeout(250);
     }
   });
@@ -270,10 +281,12 @@ it.describe('snapshots', () => {
 
 function distillSnapshot(snapshot, options: { distillTarget: boolean, distillBoundingRect: boolean } = { distillTarget: true, distillBoundingRect: true }) {
   let { html } = snapshot.render();
-  if (options.distillTarget)
+  if (options.distillTarget) {
     html = html.replace(/\s__playwright_target__="[^"]+"/g, '');
-  if (options.distillBoundingRect)
+  }
+  if (options.distillBoundingRect) {
     html = html.replace(/\s__playwright_bounding_rect__="[^"]+"/g, '');
+  }
   return html
       .replace(/<style>\*,\*::before,\*::after { visibility: hidden }<\/style>/, '')
       .replace(/<script>[.\s\S]+<\/script>/, '')

@@ -32,17 +32,20 @@ export class AndroidServerLauncherImpl {
       omitDriverInstall: options.omitDriverInstall,
     });
 
-    if (devices.length === 0)
+    if (devices.length === 0) {
       throw new Error('No devices found');
+    }
 
     if (options.deviceSerialNumber) {
       devices = devices.filter(d => d.serial === options.deviceSerialNumber);
-      if (devices.length === 0)
+      if (devices.length === 0) {
         throw new Error(`No device with serial number '${options.deviceSerialNumber}' was found`);
+      }
     }
 
-    if (devices.length > 1)
+    if (devices.length > 1) {
       throw new Error(`More than one device found. Please specify deviceSerialNumber`);
+    }
 
     const device = devices[0];
 

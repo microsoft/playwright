@@ -34,8 +34,9 @@ it('should accept a string', async ({ page }) => {
 it('should work when resolved right before execution context disposal', async ({ page }) => {
   await page.addInitScript(() => window['__RELOADED'] = true);
   await page.waitForFunction(() => {
-    if (!window['__RELOADED'])
+    if (!window['__RELOADED']) {
       window.location.reload();
+    }
     return true;
   });
 });
@@ -81,15 +82,18 @@ it('should poll on raf', async ({ page }) => {
 });
 
 it('should fail with predicate throwing on first call', async ({ page }) => {
-  const error = await page.waitForFunction(() => { throw new Error('oh my'); }).catch(e => e);
+  const error = await page.waitForFunction(() => {
+    throw new Error('oh my');
+  }).catch(e => e);
   expect(error.message).toContain('oh my');
 });
 
 it('should fail with predicate throwing sometimes', async ({ page }) => {
   const error = await page.waitForFunction(() => {
     window['counter'] = (window['counter'] || 0) + 1;
-    if (window['counter'] === 3)
+    if (window['counter'] === 3) {
       throw new Error('Bad counter!');
+    }
     return window['counter'] === 5 ? 'result' : false;
   }).catch(e => e);
   expect(error.message).toContain('Bad counter!');
@@ -217,8 +221,9 @@ it('should not be called after finishing successfully', async ({ page, server })
 
   const messages = [];
   page.on('console', msg => {
-    if (msg.text().startsWith('waitForFunction'))
+    if (msg.text().startsWith('waitForFunction')) {
       messages.push(msg.text());
+    }
   });
 
   await page.waitForFunction(() => {
@@ -244,8 +249,9 @@ it('should not be called after finishing unsuccessfully', async ({ page, server 
 
   const messages = [];
   page.on('console', msg => {
-    if (msg.text().startsWith('waitForFunction'))
+    if (msg.text().startsWith('waitForFunction')) {
       messages.push(msg.text());
+    }
   });
 
   await page.waitForFunction(() => {

@@ -28,15 +28,17 @@ export class Selectors implements api.Selectors {
   async register(name: string, script: string | (() => SelectorEngine) | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
     const source = await evaluationScript(script, undefined, false);
     const params = { ...options, name, source };
-    for (const channel of this._channels)
+    for (const channel of this._channels) {
       await channel._channel.register(params);
+    }
     this._registrations.push(params);
   }
 
   setTestIdAttribute(attributeName: string) {
     setTestIdAttribute(attributeName);
-    for (const channel of this._channels)
+    for (const channel of this._channels) {
       channel._channel.setTestIdAttributeName({ testIdAttributeName: attributeName }).catch(() => {});
+    }
   }
 
   _addChannel(channel: SelectorsOwner) {

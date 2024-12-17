@@ -43,7 +43,9 @@ it('WebSocket should work @smoke', async ({ page, server }) => {
     let cb;
     const result = new Promise(f => cb = f);
     const ws = new WebSocket('ws://localhost:' + port + '/ws');
-    ws.addEventListener('message', data => { ws.close(); cb(data.data); });
+    ws.addEventListener('message', data => {
+      ws.close(); cb(data.data);
+    });
     ws.addEventListener('error', error => cb('Error'));
     return result;
   }, server.PORT);
@@ -155,10 +157,11 @@ it('should not crash on storage.getDirectory()', async ({ page, server, browserN
     return dir.name;
   }).catch(e => e);
   if (browserName === 'webkit') {
-    if (isMac)
+    if (isMac) {
       expect(error.message).toContain('UnknownError: The operation failed for an unknown transient reason');
-    else
+    } else {
       expect(error.message).toContain('TypeError: undefined is not an object');
+    }
   } else {
     expect(error).toBeFalsy();
   }

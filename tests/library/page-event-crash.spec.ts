@@ -20,12 +20,13 @@ import { contextTest as testBase, expect } from '../config/browserTest';
 const test = testBase.extend<{ crash: () => void }, { dummy: string }>({
   crash: async ({ page, toImpl, browserName }, run) => {
     await run(() => {
-      if (browserName === 'chromium')
+      if (browserName === 'chromium') {
         page.goto('chrome://crash').catch(e => {});
-      else if (browserName === 'webkit')
+      } else if (browserName === 'webkit') {
         toImpl(page)._delegate._session.send('Page.crash', {}).catch(e => {});
-      else if (browserName === 'firefox')
+      } else if (browserName === 'firefox') {
         toImpl(page)._delegate._session.send('Page.crash', {}).catch(e => {});
+      }
     });
   },
   // Force a separate worker to avoid messing up with other tests.
@@ -46,10 +47,11 @@ test('should throw on any action after page crashes', async ({ page, crash, brow
   const err = await page.evaluate(() => {}).then(() => null, e => e);
   expect(err).toBeTruthy();
   // In Firefox, crashed page is sometimes "closed".
-  if (browserName === 'firefox')
+  if (browserName === 'firefox') {
     expect(err.message.includes('Target page, context or browser has been closed') || err.message.includes('Target crashed'), err.message).toBe(true);
-  else
+  } else {
     expect(err.message).toContain('Target crashed');
+  }
 });
 
 test('should cancel waitForEvent when page crashes', async ({ page, crash }) => {

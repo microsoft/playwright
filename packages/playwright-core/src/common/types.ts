@@ -21,3 +21,9 @@ export type Quad = [ Point, Point, Point, Point ];
 export type TimeoutOptions = { timeout?: number };
 export type NameValue = { name: string, value: string };
 export type HeadersArray = NameValue[];
+
+export const assertUnreachable = (x: never): never => assertUnreachableWithError(x, new Error('Unreachable variant'));
+
+export const assertUnreachableWithError = (x: never, error: Error): never => {
+  throw error;
+};

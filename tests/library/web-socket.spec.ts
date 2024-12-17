@@ -25,7 +25,9 @@ it('should work @smoke', async ({ page, server }) => {
     let cb;
     const result = new Promise(f => cb = f);
     const ws = new WebSocket('ws://localhost:' + port + '/ws');
-    ws.addEventListener('message', data => { ws.close(); cb(data.data); });
+    ws.addEventListener('message', data => {
+      ws.close(); cb(data.data);
+    });
     return result;
   }, server.PORT);
   expect(value).toBe('incoming');
@@ -39,7 +41,9 @@ it('should emit close events', async ({ page, server }) => {
   page.on('websocket', ws => {
     log.push(`open<${ws.url()}>`);
     webSocket = ws;
-    ws.on('close', () => { log.push('close'); socketClosed(); });
+    ws.on('close', () => {
+      log.push('close'); socketClosed();
+    });
   });
   await page.evaluate(port => {
     const ws = new WebSocket('ws://localhost:' + port + '/ws');
@@ -61,12 +65,16 @@ it('should emit frame events', async ({ page, server }) => {
     log.push('open');
     ws.on('framesent', d => log.push('sent<' + d.payload + '>'));
     ws.on('framereceived', d => log.push('received<' + d.payload + '>'));
-    ws.on('close', () => { log.push('close'); socketClosed(); });
+    ws.on('close', () => {
+      log.push('close'); socketClosed();
+    });
   });
   await page.evaluate(port => {
     const ws = new WebSocket('ws://localhost:' + port + '/ws');
     ws.addEventListener('open', () => ws.send('outgoing'));
-    ws.addEventListener('message', () => { ws.close(); });
+    ws.addEventListener('message', () => {
+      ws.close();
+    });
     (window as any).ws = ws;
   }, server.PORT);
   await socketClosePromise;
@@ -85,7 +93,9 @@ it('should filter out the close events when the server closes with a message', a
     log.push('open');
     ws.on('framesent', d => log.push('sent<' + d.payload + '>'));
     ws.on('framereceived', d => log.push('received<' + d.payload + '>'));
-    ws.on('close', () => { log.push('close'); socketClosed(); });
+    ws.on('close', () => {
+      log.push('close'); socketClosed();
+    });
   });
   await page.evaluate(port => {
     const ws = new WebSocket('ws://localhost:' + port + '/ws');
@@ -124,8 +134,9 @@ it('should emit binary frame events', async ({ page, server }) => {
     const ws = new WebSocket('ws://localhost:' + port + '/ws');
     ws.addEventListener('open', () => {
       const binary = new Uint8Array(5);
-      for (let i = 0; i < 5; ++i)
+      for (let i = 0; i < 5; ++i) {
         binary[i] = i;
+      }
       ws.send('text');
       ws.send(binary);
       ws.close();
@@ -133,8 +144,9 @@ it('should emit binary frame events', async ({ page, server }) => {
   }, server.PORT);
   await donePromise;
   expect(sent[0]).toBe('text');
-  for (let i = 0; i < 5; ++i)
+  for (let i = 0; i < 5; ++i) {
     expect(sent[1][i]).toBe(i);
+  }
 });
 
 it('should emit error', async ({ page, server, browserName, channel }) => {
@@ -145,10 +157,11 @@ it('should emit error', async ({ page, server, browserName, channel }) => {
     new WebSocket('ws://localhost:' + port + '/bogus-ws');
   }, server.PORT);
   const message = await result;
-  if (browserName === 'firefox')
+  if (browserName === 'firefox') {
     expect(message).toBe('CLOSE_ABNORMAL');
-  else
+  } else {
     expect(message).toContain(channel?.includes('msedge') ? '' : ': 400');
+  }
 });
 
 it('should not have stray error events', async ({ page, server }) => {
@@ -215,8 +228,9 @@ it('should turn off when offline', async ({ page }) => {
   ]);
   const failurePromise = new Promise(x => socket.on('message', data => x(data)));
   const closePromise = wsHandle.evaluate(async ws => {
-    if (ws.readyState !== WebSocket.CLOSED)
+    if (ws.readyState !== WebSocket.CLOSED) {
       await new Promise(x => ws.onclose = x);
+    }
     return 'successfully closed';
   });
   const result = Promise.race([

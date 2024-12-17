@@ -25,8 +25,9 @@ async function checkSlowMo(toImpl: (api: any) => any, page: Page, task: () => Pr
   contextDebugger._slowMo = 100;
   const orig = contextDebugger._doSlowMo;
   contextDebugger._doSlowMo = async () => {
-    if (didSlowMo)
+    if (didSlowMo) {
       throw new Error('already did slowmo');
+    }
     await new Promise(x => setTimeout(x, 100));
     didSlowMo = true;
     return orig.call(contextDebugger);

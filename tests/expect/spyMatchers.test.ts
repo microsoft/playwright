@@ -696,8 +696,9 @@ for (const returned of ['toReturn', 'toHaveReturned']) {
 
     test('passes when at least one call does not throw', () => {
       const fn = mock.fn((causeError: boolean) => {
-        if (causeError)
+        if (causeError) {
           throw new Error('Error!');
+        }
 
 
         return 42;
@@ -887,8 +888,9 @@ for (const returnedTimes of ['toReturnTimes', 'toHaveReturnedTimes']) {
 
     test('calls that throw are not counted', () => {
       const fn = mock.fn((causeError: boolean) => {
-        if (causeError)
+        if (causeError) {
           throw new Error('Error!');
+        }
 
 
         return 42;
@@ -913,9 +915,9 @@ for (const returnedTimes of ['toReturnTimes', 'toHaveReturnedTimes']) {
 
     test('calls that throw undefined are not counted', () => {
       const fn = mock.fn((causeError: boolean) => {
-        if (causeError)
-
+        if (causeError) {
           throw undefined;
+        }
 
 
         return 42;
@@ -1029,10 +1031,11 @@ for (const returnedWith of [
       const fn = mock.fn();
       fn();
 
-      if (isToHaveNth(returnedWith))
+      if (isToHaveNth(returnedWith)) {
         expectUnderTest(fn)[returnedWith](1);
-      else
+      } else {
         expectUnderTest(fn)[returnedWith]();
+      }
 
     });
 

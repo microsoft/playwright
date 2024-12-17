@@ -24,7 +24,8 @@ export function parseAriaSnapshot(text: string): AriaTemplateNode {
 
 export function parseYamlForAriaSnapshot(text: string): ParsedYaml {
   const parsed = yaml.parse(text);
-  if (!Array.isArray(parsed))
+  if (!Array.isArray(parsed)) {
     throw new Error('Expected object key starting with "- ":\n\n' + text + '\n');
+  }
   return parsed;
 }

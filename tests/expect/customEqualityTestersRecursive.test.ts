@@ -43,12 +43,13 @@ const areAuthorsEqual = (a: unknown, b: unknown) => {
   const isAAuthor = a instanceof Author;
   const isBAuthor = b instanceof Author;
 
-  if (isAAuthor && isBAuthor)
+  if (isAAuthor && isBAuthor) {
     return a.name === b.name;
-  else if (isAAuthor !== isBAuthor)
+  } else if (isAAuthor !== isBAuthor) {
     return false;
-  else
+  } else {
     return undefined;
+  }
 
 };
 
@@ -72,8 +73,9 @@ const areBooksEqual = function(
 };
 
 function* toIterator<T>(array: Array<T>): Iterator<T> {
-  for (const obj of array)
+  for (const obj of array) {
     yield obj;
+  }
 
 }
 

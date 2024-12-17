@@ -25,16 +25,19 @@ test.slow();
 test('should close the browser when the node process closes', async ({ startRemoteServer, isWindows, server }) => {
   const remoteServer = await startRemoteServer('launchServer', { url: server.EMPTY_PAGE });
   try {
-    if (isWindows)
+    if (isWindows) {
       execSync(`taskkill /pid ${remoteServer.child().pid} /T /F`, { stdio: 'ignore' });
-    else
+    } else {
       process.kill(remoteServer.child().pid);
+    }
   } catch (error) {
     console.log(error);
-    if (error.stdout)
+    if (error.stdout) {
       console.log('--- stdout ---\n', error.stdout);
-    if (error.stderr)
+    }
+    if (error.stderr) {
       console.log('--- stderr ---\n', error.stderr);
+    }
     throw error;
   }
   // We might not get browser exitCode in time when killing the parent node process,

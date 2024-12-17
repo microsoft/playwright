@@ -22,11 +22,13 @@ function unshift(snapshot: string): string {
   const lines = snapshot.split('\n');
   let whitespacePrefixLength = 100;
   for (const line of lines) {
-    if (!line.trim())
+    if (!line.trim()) {
       continue;
+    }
     const match = line.match(/^(\s*)/);
-    if (match && match[1].length < whitespacePrefixLength)
+    if (match && match[1].length < whitespacePrefixLength) {
       whitespacePrefixLength = match[1].length;
+    }
   }
   return lines.filter(t => t.trim()).map(line => line.substring(whitespacePrefixLength)).join('\n');
 }

@@ -180,8 +180,9 @@ async function trackEvents(target: ElementHandle) {
       'mousedown', 'mouseenter', 'mouseleave', 'mousemove', 'mouseout', 'mouseover', 'mouseup', 'click',
       'pointercancel', 'pointerdown', 'pointerenter', 'pointerleave', 'pointermove', 'pointerout', 'pointerover', 'pointerup',
       'touchstart', 'touchend', 'touchmove', 'touchcancel',
-    ])
+    ]) {
       target.addEventListener(event, () => events.push(event), false);
+    }
     return events;
   });
   return eventsHandle;

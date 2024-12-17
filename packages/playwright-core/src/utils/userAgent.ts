@@ -22,8 +22,9 @@ import { wrapInASCIIBox } from './ascii';
 let cachedUserAgent: string | undefined;
 
 export function getUserAgent(): string {
-  if (cachedUserAgent)
+  if (cachedUserAgent) {
     return cachedUserAgent;
+  }
   try {
     cachedUserAgent = determineUserAgent();
   } catch (e) {
@@ -55,8 +56,9 @@ function determineUserAgent(): string {
     }
   }
   const additionalTokens = [];
-  if (process.env.CI)
+  if (process.env.CI) {
     additionalTokens.push('CI/1');
+  }
   const serializedTokens = additionalTokens.length ? ' ' + additionalTokens.join(' ') : '';
 
   const { embedderName, embedderVersion } = getEmbedderName();

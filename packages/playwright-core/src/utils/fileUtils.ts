@@ -36,8 +36,9 @@ export async function removeFolders(dirs: string[]): Promise<Error[]> {
 }
 
 export function canAccessFile(file: string) {
-  if (!file)
+  if (!file) {
     return false;
+  }
 
   try {
     fs.accessSync(file);
@@ -94,17 +95,20 @@ export class SerializedFS {
   }
 
   appendFile(file: string, text: string, flush?: boolean) {
-    if (!this._buffers.has(file))
+    if (!this._buffers.has(file)) {
       this._buffers.set(file, []);
+    }
     this._buffers.get(file)!.push(text);
-    if (flush)
+    if (flush) {
       this._flushFile(file);
+    }
   }
 
   private _flushFile(file: string) {
     const buffer = this._buffers.get(file);
-    if (buffer === undefined)
+    if (buffer === undefined) {
       return;
+    }
     const content = buffer.join('');
     this._buffers.delete(file);
     this._appendOperation({ op: 'appendFile', file, content });
@@ -117,15 +121,17 @@ export class SerializedFS {
   }
 
   async syncAndGetError() {
-    for (const file of this._buffers.keys())
+    for (const file of this._buffers.keys()) {
       this._flushFile(file);
+    }
     await this._operationsDone;
     return this._error;
   }
 
   zip(entries: NameValue[], zipFileName: string) {
-    for (const file of this._buffers.keys())
+    for (const file of this._buffers.keys()) {
       this._flushFile(file);
+    }
 
     // Chain the export operation against write operations,
     // so that files do not change during the export.
@@ -135,15 +141,16 @@ export class SerializedFS {
   // This method serializes all writes to the trace.
   private _appendOperation(op: SerializedFSOperation): void {
     const last = this._operations[this._operations.length - 1];
-    if (last?.op === 'appendFile' && op.op === 'appendFile' && last.file === op.file) {
+    if (last.op === 'appendFile' && op.op === 'appendFile' && last.file === op.file) {
       // Merge pending appendFile operations for performance.
       last.content += op.content;
       return;
     }
 
     this._operations.push(op);
-    if (this._operationsDone.isDone())
+    if (this._operationsDone.isDone()) {
       this._performOperations();
+    }
   }
 
   private async _performOperations() {
@@ -151,8 +158,9 @@ export class SerializedFS {
     while (this._operations.length) {
       const op = this._operations.shift()!;
       // Ignore all operations after the first error.
-      if (this._error)
+      if (this._error) {
         continue;
+      }
       try {
         await this._performOperation(op);
       } catch (e) {
@@ -172,10 +180,11 @@ export class SerializedFS {
         // Note: 'wx' flag only writes when the file does not exist.
         // See https://nodejs.org/api/fs.html#file-system-flags.
         // This way tracing never have to write the same resource twice.
-        if (op.skipIfExists)
+        if (op.skipIfExists) {
           await fs.promises.writeFile(op.file, op.content, { flag: 'wx' }).catch(() => {});
-        else
+        } else {
           await fs.promises.writeFile(op.file, op.content);
+        }
         return;
       }
       case 'copyFile': {
@@ -190,8 +199,9 @@ export class SerializedFS {
         const zipFile = new yazl.ZipFile();
         const result = new ManualPromise<void>();
         (zipFile as any as EventEmitter).on('error', error => result.reject(error));
-        for (const entry of op.entries)
+        for (const entry of op.entries) {
           zipFile.addFile(entry.value, entry.name);
+        }
         zipFile.end();
         zipFile.outputStream
             .pipe(fs.createWriteStream(op.zipFileName))

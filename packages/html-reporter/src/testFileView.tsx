@@ -74,8 +74,9 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
 function imageDiffBadge(test: TestCaseSummary): JSX.Element | undefined {
   for (const result of test.results) {
     for (const attachment of result.attachments) {
-      if (attachment.contentType.startsWith('image/') && !!attachment.name.match(/-(expected|actual|diff)/))
+      if (attachment.contentType.startsWith('image/') && !!attachment.name.match(/-(expected|actual|diff)/)) {
         return <Link href={testResultHref({ test, result, anchor: `attachment-${attachment.name}` })} title='View images' className='test-file-badge'>{image()}</Link>;
+      }
     }
   }
 }
@@ -85,9 +86,9 @@ function videoBadge(test: TestCaseSummary): JSX.Element | undefined {
   return resultWithVideo ? <Link href={testResultHref({ test, result: resultWithVideo, anchor: 'attachment-video' })}  title='View video' className='test-file-badge'>{video()}</Link> : undefined;
 }
 
-function traceBadge(test: TestCaseSummary): JSX.Element | undefined {
+function traceBadge(test: TestCaseSummary): JSX.Element {
   const firstTraces = test.results.map(result => result.attachments.filter(attachment => attachment.name === 'trace')).filter(traces => traces.length > 0)[0];
-  return firstTraces ? <Link href={generateTraceUrl(firstTraces)} title='View trace' className='test-file-badge'>{trace()}</Link> : undefined;
+  return <Link href={generateTraceUrl(firstTraces)} title='View trace' className='test-file-badge'>{trace()}</Link>;
 }
 
 const LabelsClickView: React.FC<React.PropsWithChildren<{

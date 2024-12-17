@@ -151,13 +151,17 @@ export function traceParamsForAction(actionInContext: recorderActions.ActionInCo
 
 export function toKeyboardModifiers(modifiers: number): types.SmartKeyboardModifier[] {
   const result: types.SmartKeyboardModifier[] = [];
-  if (modifiers & 1)
+  if (modifiers & 1) {
     result.push('Alt');
-  if (modifiers & 2)
+  }
+  if (modifiers & 2) {
     result.push('ControlOrMeta');
-  if (modifiers & 4)
+  }
+  if (modifiers & 4) {
     result.push('ControlOrMeta');
-  if (modifiers & 8)
+  }
+  if (modifiers & 8) {
     result.push('Shift');
+  }
   return result;
 }

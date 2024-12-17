@@ -72,16 +72,18 @@ class WebSocketTransport implements ConnectionTransport {
 
     this._ws.addEventListener('message', event => {
       try {
-        if (this.onmessage)
+        if (this.onmessage) {
           this.onmessage.call(null, JSON.parse(event.data.toString()));
+        }
       } catch (e) {
         this._ws.close();
       }
     });
 
     this._ws.addEventListener('close', event => {
-      if (this.onclose)
+      if (this.onclose) {
         this.onclose.call(null);
+      }
     });
     // Prevent Error: read ECONNRESET.
     this._ws.addEventListener('error', () => {});
@@ -124,8 +126,9 @@ export class Backend extends EventEmitter {
         return;
       }
       const pair = this._callbacks.get(message.id);
-      if (!pair)
+      if (!pair) {
         return;
+      }
       this._callbacks.delete(message.id);
       if (message.error) {
         const error = new Error(message.error.error?.message || message.error.value);
@@ -137,8 +140,9 @@ export class Backend extends EventEmitter {
     };
     this.channel = new Proxy(this, {
       get: (target, propKey) => {
-        if (['on', 'once'].includes(String(propKey)))
+        if (['on', 'once'].includes(String(propKey))) {
           return target[propKey].bind(target);
+        }
         return (...args: any) => this._send(String(propKey), ...args);
       }
     }) as any;

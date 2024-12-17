@@ -84,18 +84,23 @@ export function createInstrumentation(): Instrumentation {
   const listeners = new Map<InstrumentationListener, BrowserContext | APIRequestContext | null>();
   return new Proxy({}, {
     get: (obj: any, prop: string | symbol) => {
-      if (typeof prop !== 'string')
+      if (typeof prop !== 'string') {
         return obj[prop];
-      if (prop === 'addListener')
+      }
+      if (prop === 'addListener') {
         return (listener: InstrumentationListener, context: BrowserContext | APIRequestContext | null) => listeners.set(listener, context);
-      if (prop === 'removeListener')
+      }
+      if (prop === 'removeListener') {
         return (listener: InstrumentationListener) => listeners.delete(listener);
-      if (!prop.startsWith('on'))
+      }
+      if (!prop.startsWith('on')) {
         return obj[prop];
+      }
       return async (sdkObject: SdkObject, ...params: any[]) => {
         for (const [listener, context] of listeners) {
-          if (!context || sdkObject.attribution.context === context)
+          if (!context || sdkObject.attribution.context === context) {
             await (listener as any)[prop]?.(sdkObject, ...params);
+          }
         }
       };
     },

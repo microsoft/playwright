@@ -299,8 +299,9 @@ test('should report all pages in an existing browser', async ({ browserType }, t
     });
     const contexts = cdpBrowser.contexts();
     expect(contexts.length).toBe(1);
-    for (let i = 0; i < 3; i++)
+    for (let i = 0; i < 3; i++) {
       await contexts[0].newPage();
+    }
     await cdpBrowser.close();
 
     const cdpBrowser2 = await browserType.connectOverCDP({
@@ -340,8 +341,9 @@ test('should connect via https', async ({ browserType, httpsServer, mode }, test
     const cdpBrowser = await browserType.connectOverCDP(`https://localhost:${httpsServer.PORT}/`);
     const contexts = cdpBrowser.contexts();
     expect(contexts.length).toBe(1);
-    for (let i = 0; i < 3; i++)
+    for (let i = 0; i < 3; i++) {
       await contexts[0].newPage();
+    }
     await cdpBrowser.close();
   } finally {
     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = oldValue;
@@ -520,8 +522,9 @@ test('setInputFiles should preserve lastModified timestamp', async ({ browserTyp
     const expectedTimestamps = files.map(file => Math.round(fs.statSync(asset(file)).mtimeMs));
     // On Linux browser sometimes reduces the timestamp by 1ms: 1696272058110.0715  -> 1696272058109 or even
     // rounds it to seconds in WebKit: 1696272058110 -> 1696272058000.
-    for (let i = 0; i < timestamps.length; i++)
+    for (let i = 0; i < timestamps.length; i++) {
       expect(Math.abs(timestamps[i] - expectedTimestamps[i]), `expected: ${expectedTimestamps}; actual: ${timestamps}`).toBeLessThan(1000);
+    }
     await cdpBrowser.close();
   } finally {
     await browserServer.close();

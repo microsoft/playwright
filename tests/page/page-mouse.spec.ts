@@ -225,19 +225,22 @@ it('should set modifier keys on click', async ({ page, server, browserName, isMa
   await page.evaluate(() => document.querySelector('#button-3').addEventListener('mousedown', e => window['lastEvent'] = e, true));
   const modifiers = { 'Shift': 'shiftKey', 'Control': 'ctrlKey', 'Alt': 'altKey', 'Meta': 'metaKey' };
   // In Firefox, the Meta modifier only exists on Mac
-  if (browserName === 'firefox' && !isMac)
+  if (browserName === 'firefox' && !isMac) {
     delete modifiers['Meta'];
+  }
   for (const modifier in modifiers) {
     await page.keyboard.down(modifier);
     await page.click('#button-3');
-    if (!(await page.evaluate(mod => window['lastEvent'][mod], modifiers[modifier])))
+    if (!(await page.evaluate(mod => window['lastEvent'][mod], modifiers[modifier]))) {
       throw new Error(modifiers[modifier] + ' should be true');
+    }
     await page.keyboard.up(modifier);
   }
   await page.click('#button-3');
   for (const modifier in modifiers) {
-    if ((await page.evaluate(mod => window['lastEvent'][mod], modifiers[modifier])))
+    if ((await page.evaluate(mod => window['lastEvent'][mod], modifiers[modifier]))) {
       throw new Error(modifiers[modifier] + ' should be false');
+    }
   }
 });
 
@@ -245,8 +248,9 @@ it('should tween mouse movement', async ({ page, browserName, isAndroid }) => {
   it.skip(isAndroid, 'Bad rounding');
 
   // The test becomes flaky on WebKit without next line.
-  if (browserName === 'webkit')
+  if (browserName === 'webkit') {
     await page.evaluate(() => new Promise(requestAnimationFrame));
+  }
   await page.mouse.move(100, 100);
   await page.evaluate(() => {
     window['result'] = [];

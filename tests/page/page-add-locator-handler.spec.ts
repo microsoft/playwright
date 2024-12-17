@@ -64,8 +64,9 @@ test('should work with a custom check', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   await page.addLocatorHandler(page.locator('body'), async () => {
-    if (await page.getByText('This interstitial covers the button').isVisible())
+    if (await page.getByText('This interstitial covers the button').isVisible()) {
       await page.locator('#close').click();
+    }
   }, { noWaitAfter: true });
 
   for (const args of [
@@ -324,10 +325,11 @@ test('should work with noWaitAfter', async ({ page, server }) => {
   let called = 0;
   await page.addLocatorHandler(page.getByRole('button', { name: 'close' }), async button => {
     called++;
-    if (called === 1)
+    if (called === 1) {
       await button.click();
-    else
+    } else {
       await page.locator('#interstitial').waitFor({ state: 'hidden' });
+    }
   }, { noWaitAfter: true });
 
   await page.locator('#aside').hover();

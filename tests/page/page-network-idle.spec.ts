@@ -76,8 +76,9 @@ async function networkIdleTest(frame: Frame, server: TestServer, action: () => P
   const response = await actionPromise;
   clearTimeout(timer);
   expect(timerTriggered).toBe(true);
-  if (!isSetContent)
+  if (!isSetContent) {
     expect(response.ok()).toBe(true);
+  }
 }
 
 it('should wait for networkidle to succeed navigation', async ({ page, server }) => {

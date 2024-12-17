@@ -24,8 +24,9 @@ import { createFileMatcher } from '../util';
 
 export function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {
   for (const child of suite.suites) {
-    if (!suiteFilter(child))
+    if (!suiteFilter(child)) {
       filterSuite(child, suiteFilter, testFilter);
+    }
   }
   const filteredTests = suite.tests.filter(testFilter);
   const entries = new Set([...suite.suites, ...filteredTests]);
@@ -63,24 +64,29 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     let inheritedTimeout: number | undefined;
     test.annotations = [];
     for (let parentSuite: Suite | undefined = suite; parentSuite; parentSuite = parentSuite.parent) {
-      if (parentSuite._staticAnnotations.length)
+      if (parentSuite._staticAnnotations.length) {
         test.annotations = [...parentSuite._staticAnnotations, ...test.annotations];
-      if (inheritedRetries === undefined && parentSuite._retries !== undefined)
+      }
+      if (inheritedRetries === undefined && parentSuite._retries !== undefined) {
         inheritedRetries = parentSuite._retries;
-      if (inheritedTimeout === undefined && parentSuite._timeout !== undefined)
+      }
+      if (inheritedTimeout === undefined && parentSuite._timeout !== undefined) {
         inheritedTimeout = parentSuite._timeout;
+      }
     }
     test.retries = inheritedRetries ?? project.project.retries;
     test.timeout = inheritedTimeout ?? project.project.timeout;
     test.annotations.push(...test._staticAnnotations);
 
     // Skip annotations imply skipped expectedStatus.
-    if (test.annotations.some(a => a.type === 'skip' || a.type === 'fixme'))
+    if (test.annotations.some(a => a.type === 'skip' || a.type === 'fixme')) {
       test.expectedStatus = 'skipped';
+    }
 
     // We only compute / set digest in the runner.
-    if (test._poolDigest)
+    if (test._poolDigest) {
       test._workerHash = `${project.id}-${test._poolDigest}-0`;
+    }
   });
 
   return result;
@@ -96,15 +102,17 @@ export function applyRepeatEachIndex(project: FullProjectInternal, fileSuite: Su
       test.id = testId;
       test.repeatEachIndex = repeatEachIndex;
 
-      if (test._poolDigest)
+      if (test._poolDigest) {
         test._workerHash = `${project.id}-${test._poolDigest}-${repeatEachIndex}`;
+      }
     }
   });
 }
 
 export function filterOnly(suite: Suite) {
-  if (!suite._getOnlyItems().length)
+  if (!suite._getOnlyItems().length) {
     return;
+  }
   const suiteFilter = (suite: Suite) => suite._only;
   const testFilter = (test: TestCase) => test._only;
   return filterSuiteWithOnlySemantics(suite, suiteFilter, testFilter);
@@ -122,8 +130,9 @@ export function filterSuiteWithOnlySemantics(suite: Suite, suiteFilter: (suites:
 }
 
 export function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFileFilter[]) {
-  if (!focusedTestFileLines.length)
+  if (!focusedTestFileLines.length) {
     return;
+  }
   const matchers = focusedTestFileLines.map(createFileMatcherFromFilter);
   const testFileLineMatches = (testFileName: string, testLine: number, testColumn: number) => matchers.some(m => m(testFileName, testLine, testColumn));
   const suiteFilter = (suite: Suite) => !!suite.location && testFileLineMatches(suite.location.file, suite.location.line, suite.location.column);
@@ -132,8 +141,9 @@ export function filterByFocusedLine(suite: Suite, focusedTestFileLines: TestFile
 }
 
 export function filterByTestIds(suite: Suite, testIdMatcher: Matcher | undefined) {
-  if (!testIdMatcher)
+  if (!testIdMatcher) {
     return;
+  }
   filterTestsRemoveEmptySuites(suite, test => testIdMatcher(test.id));
 }
 

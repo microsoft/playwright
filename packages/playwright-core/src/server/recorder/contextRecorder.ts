@@ -94,8 +94,9 @@ export class ContextRecorder extends EventEmitter {
         };
         source.revealLine = text.split('\n').length - 1;
         this._recorderSources.push(source);
-        if (languageGenerator === this._orderedLanguages[0])
+        if (languageGenerator === this._orderedLanguages[0]) {
           this._throttledOutputFile?.setContent(source.text);
+        }
       }
       this.emit(ContextRecorder.Events.Change, {
         sources: this._recorderSources,
@@ -114,26 +115,29 @@ export class ContextRecorder extends EventEmitter {
   setOutput(codegenId: string, outputFile?: string) {
     const languages = languageSet();
     const primaryLanguage = [...languages].find(l => l.id === codegenId);
-    if (!primaryLanguage)
+    if (!primaryLanguage) {
       throw new Error(`\n===============================\nUnsupported language: '${codegenId}'\n===============================\n`);
+    }
     languages.delete(primaryLanguage);
     this._orderedLanguages = [primaryLanguage, ...languages];
     this._throttledOutputFile = outputFile ? new ThrottledFile(outputFile) : null;
-    this._collection?.restart();
+    this._collection.restart();
   }
 
   languageName(id?: string): Language {
     for (const lang of this._orderedLanguages) {
-      if (!id || lang.id === id)
+      if (!id || lang.id === id) {
         return lang.highlighter;
+      }
     }
     return 'javascript';
   }
 
   async install() {
     this._context.on(BrowserContext.Events.Page, (page: Page) => this._onPage(page));
-    for (const page of this._context.pages())
+    for (const page of this._context.pages()) {
       this._onPage(page);
+    }
     this._context.on(BrowserContext.Events.Dialog, (dialog: Dialog) => this._onDialog(dialog.page()));
 
     // Input actions that potentially lead to navigation are intercepted on the page and are
@@ -151,10 +155,11 @@ export class ContextRecorder extends EventEmitter {
   setEnabled(enabled: boolean) {
     this._collection.setEnabled(enabled);
     if (this._codegenMode === 'trace-events') {
-      if (enabled)
+      if (enabled) {
         this._context.tracing.startChunk({ name: 'trace', title: 'trace' }).catch(() => {});
-      else
+      } else {
         this._context.tracing.stopChunk({ mode: 'discard' }).catch(() => {});
+      }
     }
   }
 
@@ -177,8 +182,9 @@ export class ContextRecorder extends EventEmitter {
       this._pageAliases.delete(page);
     });
     frame.on(Frame.Events.InternalNavigation, event => {
-      if (event.isPublic)
+      if (event.isPublic) {
         this._onFrameNavigated(frame, page);
+      }
     });
     page.on(Page.Events.Download, () => this._onDownload(page));
     const suffix = this._pageAliases.size ? String(++this._lastPopupOrdinal) : '';
@@ -203,8 +209,9 @@ export class ContextRecorder extends EventEmitter {
   clearScript(): void {
     this._collection.restart();
     if (this._params.mode === 'recording') {
-      for (const page of this._context.pages())
+      for (const page of this._context.pages()) {
         this._onFrameNavigated(page.mainFrame(), page);
+      }
     }
   }
 
@@ -276,12 +283,14 @@ export class ContextRecorder extends EventEmitter {
 
 export async function generateFrameSelector(frame: Frame): Promise<string[]> {
   const selectorPromises: Promise<string>[] = [];
-  while (frame) {
-    const parent = frame.parentFrame();
-    if (!parent)
+  let currentFrame = frame as Frame | undefined;
+  while (currentFrame) {
+    const parent = currentFrame.parentFrame();
+    if (!parent) {
       break;
-    selectorPromises.push(generateFrameSelectorInParent(parent, frame));
-    frame = parent;
+    }
+    selectorPromises.push(generateFrameSelectorInParent(parent, currentFrame));
+    currentFrame = parent;
   }
   const result = await Promise.all(selectorPromises);
   return result.reverse();
@@ -291,8 +300,10 @@ async function generateFrameSelectorInParent(parent: Frame, frame: Frame): Promi
   const result = await raceAgainstDeadline(async () => {
     try {
       const frameElement = await frame.frameElement();
-      if (!frameElement || !parent)
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (!frameElement || !parent) {
         return;
+      }
       const utility = await parent._utilityContext();
       const injected = await utility.injectedScript();
       const selector = await injected.evaluate((injected, element) => {
@@ -302,10 +313,12 @@ async function generateFrameSelectorInParent(parent: Frame, frame: Frame): Promi
     } catch (e) {
     }
   }, monotonicTime() + 2000);
-  if (!result.timedOut && result.result)
+  if (!result.timedOut && result.result) {
     return result.result;
+  }
 
-  if (frame.name())
+  if (frame.name()) {
     return `iframe[name=${quoteCSSAttributeValue(frame.name())}]`;
+  }
   return `iframe[src=${quoteCSSAttributeValue(frame.url())}]`;
 }

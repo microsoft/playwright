@@ -112,8 +112,9 @@ export async function generateCurlCommand(resource: Entry): Promise<string> {
       let hexString = code.toString(16);
       // Zero pad to four digits to comply with ANSI-C Quoting:
       // http://www.gnu.org/software/bash/manual/html_node/ANSI_002dC-Quoting.html
-      while (hexString.length < 4)
+      while (hexString.length < 4) {
         hexString = '0' + hexString;
+      }
 
 
       return '\\u' + hexString;
@@ -150,16 +151,18 @@ export async function generateCurlCommand(resource: Entry): Promise<string> {
     inferredMethod = 'POST';
   }
 
-  if (resource.request.method !== inferredMethod)
+  if (resource.request.method !== inferredMethod) {
     command.push('-X ' + escapeString(resource.request.method));
+  }
 
 
   const requestHeaders = resource.request.headers;
   for (let i = 0; i < requestHeaders.length; i++) {
     const header = requestHeaders[i];
     const name = header.name.replace(/^:/, '');  // Translate SPDY v3 headers to HTTP headers.
-    if (ignoredHeaders.has(name.toLowerCase()))
+    if (ignoredHeaders.has(name.toLowerCase())) {
       continue;
+    }
 
     if (header.value.trim()) {
       command.push('-H ' + escapeString(name + ': ' + header.value));
@@ -222,16 +225,18 @@ export async function generateFetchCall(resource: Entry, style: FetchStyle = Fet
   const headerData: Headers = requestHeaders.reduce((result, header) => {
     const name = header.name;
 
-    if (!ignoredHeaders.has(name.toLowerCase()) && !name.includes(':'))
+    if (!ignoredHeaders.has(name.toLowerCase()) && !name.includes(':')) {
       result.append(name, header.value);
+    }
 
 
     return result;
   }, new Headers());
 
   const headers: HeadersInit = {};
-  for (const headerArray of headerData)
+  for (const headerArray of headerData) {
     headers[headerArray[0]] = headerArray[1];
+  }
 
 
   const credentials = resource.request.cookies.length ||
@@ -259,8 +264,9 @@ export async function generateFetchCall(resource: Entry, style: FetchStyle = Fet
     // According to https://www.npmjs.com/package/node-fetch#class-request the
     // following properties are not implemented in Node.js.
     delete fetchOptions.mode;
-    if (cookieHeader)
+    if (cookieHeader) {
       extraHeaders['cookie'] = cookieHeader.value;
+    }
 
     if (referrer) {
       delete fetchOptions.referrer;

@@ -124,10 +124,11 @@ it.describe('should proxy local network requests', () => {
           expect(await page.title()).toBe('Served by the proxy');
 
           await page.goto('http://1.non.existent.domain.for.the.test/foo.html').catch(() => {});
-          if (additionalBypass)
+          if (additionalBypass) {
             expect(proxyServer.requestUrls).not.toContain('http://1.non.existent.domain.for.the.test/foo.html');
-          else
+          } else {
             expect(proxyServer.requestUrls).toContain('http://1.non.existent.domain.for.the.test/foo.html');
+          }
 
           await context.close();
         });

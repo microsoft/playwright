@@ -49,21 +49,26 @@ export class Artifact extends SdkObject {
   }
 
   async localPathAfterFinished(): Promise<string> {
-    if (this._unaccessibleErrorMessage)
+    if (this._unaccessibleErrorMessage) {
       throw new Error(this._unaccessibleErrorMessage);
+    }
     await this._finishedPromise;
-    if (this._failureError)
+    if (this._failureError) {
       throw this._failureError;
+    }
     return this._localPath;
   }
 
   saveAs(saveCallback: SaveCallback) {
-    if (this._unaccessibleErrorMessage)
+    if (this._unaccessibleErrorMessage) {
       throw new Error(this._unaccessibleErrorMessage);
-    if (this._deleted)
+    }
+    if (this._deleted) {
       throw new Error(`File already deleted. Save before deleting.`);
-    if (this._failureError)
+    }
+    if (this._failureError) {
       throw this._failureError;
+    }
 
     if (this._finished) {
       saveCallback(this._localPath).catch(() => {});
@@ -73,8 +78,9 @@ export class Artifact extends SdkObject {
   }
 
   async failureError(): Promise<string | null> {
-    if (this._unaccessibleErrorMessage)
+    if (this._unaccessibleErrorMessage) {
       return this._unaccessibleErrorMessage;
+    }
     await this._finishedPromise;
     return this._failureError?.message || null;
   }
@@ -85,39 +91,47 @@ export class Artifact extends SdkObject {
   }
 
   async delete(): Promise<void> {
-    if (this._unaccessibleErrorMessage)
+    if (this._unaccessibleErrorMessage) {
       return;
+    }
     const fileName = await this.localPathAfterFinished();
-    if (this._deleted)
+    if (this._deleted) {
       return;
+    }
     this._deleted = true;
-    if (fileName)
+    if (fileName) {
       await fs.promises.unlink(fileName).catch(e => {});
+    }
   }
 
   async deleteOnContextClose(): Promise<void> {
     // Compared to "delete", this method does not wait for the artifact to finish.
     // We use it when closing the context to avoid stalling.
-    if (this._deleted)
+    if (this._deleted) {
       return;
+    }
     this._deleted = true;
-    if (!this._unaccessibleErrorMessage)
+    if (!this._unaccessibleErrorMessage) {
       await fs.promises.unlink(this._localPath).catch(e => {});
+    }
     await this.reportFinished(new TargetClosedError());
   }
 
   async reportFinished(error?: Error) {
-    if (this._finished)
+    if (this._finished) {
       return;
+    }
     this._finished = true;
     this._failureError = error;
 
     if (error) {
-      for (const callback of this._saveCallbacks)
+      for (const callback of this._saveCallbacks) {
         await callback('', error);
+      }
     } else {
-      for (const callback of this._saveCallbacks)
+      for (const callback of this._saveCallbacks) {
         await callback(this._localPath);
+      }
     }
     this._saveCallbacks = [];
 

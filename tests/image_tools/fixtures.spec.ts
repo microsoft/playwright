@@ -23,10 +23,11 @@ import path from 'path';
 function listFixtures(root: string, fixtures: Set<string> = new Set()) {
   for (const item of fs.readdirSync(root, { withFileTypes: true })) {
     const p = path.join(root, item.name);
-    if (item.isDirectory())
+    if (item.isDirectory()) {
       listFixtures(p, fixtures);
-    else if (item.isFile() && p.endsWith('-actual.png'))
+    } else if (item.isFile() && p.endsWith('-actual.png')) {
       fixtures.add(p.substring(0, p.length - '-actual.png'.length));
+    }
   }
   return fixtures;
 }
@@ -62,20 +63,23 @@ function declareFixtureTest(fixtureRoot: string, fixtureName: string, shouldMatc
       contentType: 'image/png',
     });
 
-    if (shouldMatch)
+    if (shouldMatch) {
       expect(diffCount).toBe(0);
-    else
+    } else {
       expect(diffCount).not.toBe(0);
+    }
   });
 }
 
 test.describe('basic fixtures', () => {
   test.describe.configure({ mode: 'parallel' });
 
-  for (const fixtureName of listFixtures(path.join(FIXTURES_DIR, 'should-match')))
+  for (const fixtureName of listFixtures(path.join(FIXTURES_DIR, 'should-match'))) {
     declareFixtureTest(FIXTURES_DIR, fixtureName, true /* shouldMatch */);
-  for (const fixtureName of listFixtures(path.join(FIXTURES_DIR, 'should-fail')))
+  }
+  for (const fixtureName of listFixtures(path.join(FIXTURES_DIR, 'should-fail'))) {
     declareFixtureTest(FIXTURES_DIR, fixtureName, false /* shouldMatch */);
+  }
 });
 
 const customImageToolsFixtures = process.env.IMAGE_TOOLS_FIXTURES;
@@ -83,9 +87,11 @@ if (customImageToolsFixtures) {
   test.describe('custom fixtures', () => {
     test.describe.configure({ mode: 'parallel' });
 
-    for (const fixtureName of listFixtures(path.join(customImageToolsFixtures, 'should-match')))
+    for (const fixtureName of listFixtures(path.join(customImageToolsFixtures, 'should-match'))) {
       declareFixtureTest(customImageToolsFixtures, fixtureName, true /* shouldMatch */);
-    for (const fixtureName of listFixtures(path.join(customImageToolsFixtures, 'should-fail')))
+    }
+    for (const fixtureName of listFixtures(path.join(customImageToolsFixtures, 'should-fail'))) {
       declareFixtureTest(customImageToolsFixtures, fixtureName, false /* shouldMatch */);
+    }
   });
 }

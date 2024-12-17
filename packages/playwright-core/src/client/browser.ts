@@ -65,8 +65,9 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     return await this._wrapApiCall(async () => {
       for (const context of this._contexts) {
         await this._browserType._willCloseContext(context);
-        for (const page of context.pages())
+        for (const page of context.pages()) {
           page._onClose();
+        }
         context._onClose();
       }
       return await this._innerNewContext(options, true);
@@ -138,14 +139,16 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   async close(options: { reason?: string } = {}): Promise<void> {
     this._closeReason = options.reason;
     try {
-      if (this._shouldCloseConnectionOnClose)
+      if (this._shouldCloseConnectionOnClose) {
         this._connection.close();
-      else
+      } else {
         await this._channel.close(options);
+      }
       await this._closedPromise;
     } catch (e) {
-      if (isTargetClosedError(e))
+      if (isTargetClosedError(e)) {
         return;
+      }
       throw e;
     }
   }

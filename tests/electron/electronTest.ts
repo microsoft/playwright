@@ -46,8 +46,9 @@ export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
       apps.push(app);
       return app;
     });
-    for (const app of apps)
+    for (const app of apps) {
       await app.close();
+    }
   },
 
   electronApp: async ({ launchElectronApp }, use) => {
@@ -75,8 +76,9 @@ export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
       windows.push(window);
       return window;
     });
-    for (const window of windows)
+    for (const window of windows) {
       await window.close();
+    }
   },
 
   page: async ({ newWindow }, run) => {

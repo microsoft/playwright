@@ -30,8 +30,9 @@ export class CRServiceWorker extends Worker {
     super(browserContext, url);
     this._session = session;
     this._browserContext = browserContext;
-    if (!!process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS)
+    if (!!process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS) {
       this._networkManager = new CRNetworkManager(null, this);
+    }
     session.once('Runtime.executionContextCreated', event => {
       this._createExecutionContext(new CRExecutionContext(session, event.context));
     });
@@ -59,26 +60,30 @@ export class CRServiceWorker extends Worker {
   }
 
   async updateOffline(): Promise<void> {
-    if (!this._isNetworkInspectionEnabled())
+    if (!this._isNetworkInspectionEnabled()) {
       return;
+    }
     await this._networkManager?.setOffline(!!this._browserContext._options.offline).catch(() => {});
   }
 
   async updateHttpCredentials(): Promise<void> {
-    if (!this._isNetworkInspectionEnabled())
+    if (!this._isNetworkInspectionEnabled()) {
       return;
+    }
     await this._networkManager?.authenticate(this._browserContext._options.httpCredentials || null).catch(() => {});
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
-    if (!this._isNetworkInspectionEnabled())
+    if (!this._isNetworkInspectionEnabled()) {
       return;
+    }
     await this._networkManager?.setExtraHTTPHeaders(this._browserContext._options.extraHTTPHeaders || []).catch(() => {});
   }
 
   async updateRequestInterception(): Promise<void> {
-    if (!this._isNetworkInspectionEnabled())
+    if (!this._isNetworkInspectionEnabled()) {
       return;
+    }
     await this._networkManager?.setRequestInterception(this.needsRequestInterception()).catch(() => {});
   }
 
@@ -102,8 +107,9 @@ export class CRServiceWorker extends Worker {
     this._browserContext.emit(BrowserContext.Events.Request, request);
     if (route) {
       const r = new network.Route(request, route);
-      if (this._browserContext._requestInterceptor?.(r, request))
+      if (this._browserContext._requestInterceptor?.(r, request)) {
         return;
+      }
       r.continue({ isFallback: true }).catch(() => {});
     }
   }

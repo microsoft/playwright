@@ -45,10 +45,11 @@ test('should throw upon second create new page', async function({ browser }) {
 
 test('version should work', async function({ browser, browserName }) {
   const version = browser.version();
-  if (browserName === 'chromium')
+  if (browserName === 'chromium') {
     expect(version.match(/^\d+\.\d+\.\d+\.\d+$/)).toBeTruthy();
-  else
+  } else {
     expect(version.match(/^\d+\.\d+/)).toBeTruthy();
+  }
 });
 
 test('should dispatch page.on(close) upon browser.close and reject evaluate', async ({ browserType }) => {

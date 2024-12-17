@@ -30,31 +30,36 @@ export class WritableStreamDispatcher extends Dispatcher<{ guid: string, streamO
   }
 
   async write(params: channels.WritableStreamWriteParams): Promise<channels.WritableStreamWriteResult> {
-    if (typeof this._object.streamOrDirectory === 'string')
+    if (typeof this._object.streamOrDirectory === 'string') {
       throw new Error('Cannot write to a directory');
+    }
     const stream = this._object.streamOrDirectory;
     await new Promise<void>((fulfill, reject) => {
       stream.write(params.binary, error => {
-        if (error)
+        if (error) {
           reject(error);
-        else
+        } else {
           fulfill();
+        }
       });
     });
   }
 
   async close() {
-    if (typeof this._object.streamOrDirectory === 'string')
+    if (typeof this._object.streamOrDirectory === 'string') {
       throw new Error('Cannot close a directory');
+    }
     const stream = this._object.streamOrDirectory;
     await new Promise<void>(fulfill => stream.end(fulfill));
-    if (this._lastModifiedMs)
+    if (this._lastModifiedMs) {
       await fs.promises.utimes(this.path(), new Date(this._lastModifiedMs), new Date(this._lastModifiedMs));
+    }
   }
 
   path(): string {
-    if (typeof this._object.streamOrDirectory === 'string')
+    if (typeof this._object.streamOrDirectory === 'string') {
       return this._object.streamOrDirectory;
+    }
     return this._object.streamOrDirectory.path as string;
   }
 }

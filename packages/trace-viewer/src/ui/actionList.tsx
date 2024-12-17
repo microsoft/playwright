@@ -120,12 +120,13 @@ export const renderAction = (
   const showAttachments = !!action.attachments?.length && !!revealAttachment;
 
   let time: string = '';
-  if (action.endTime)
+  if (action.endTime) {
     time = msToString(action.endTime - action.startTime);
-  else if (action.error)
+  } else if (action.error) {
     time = 'Timed out';
-  else if (!isLive)
+  } else if (!isLive) {
     time = '-';
+  }
   return <>
     <div className='action-title' title={action.apiName}>
       <span>{action.apiName}</span>

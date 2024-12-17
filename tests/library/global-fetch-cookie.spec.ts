@@ -37,10 +37,11 @@ type StorageStateType = PromiseArg<ReturnType<APIRequestContext['storageState']>
 it.skip(({ mode }) => mode !== 'default');
 
 const __testHookLookup = (hostname: string): LookupAddress[] => {
-  if (hostname === 'localhost' || hostname.endsWith('one.com') || hostname.endsWith('two.com'))
+  if (hostname === 'localhost' || hostname.endsWith('one.com') || hostname.endsWith('two.com')) {
     return [{ address: '127.0.0.1', family: 4 }];
-  else
+  } else {
     throw new Error(`Failed to resolve hostname: ${hostname}`);
+  }
 };
 
 it('should store cookie from Set-Cookie header', async ({ request, server }) => {

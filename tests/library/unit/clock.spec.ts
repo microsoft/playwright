@@ -21,8 +21,9 @@ import type { InstallConfig, ClockController, ClockMethods } from '../../../pack
 const createClock = (now?: number): ClockController & ClockMethods => {
   const { clock, api } = rawCreateClock(globalThis);
   clock.setSystemTime(now || 0);
-  for (const key of Object.keys(api))
+  for (const key of Object.keys(api)) {
     clock[key] = api[key];
+  }
   return clock as ClockController & ClockMethods;
 };
 
@@ -45,10 +46,12 @@ const it = test.extend<ClockFixtures>({
     let clockObject: ClockController & ClockMethods;
     const install = (now?: number) => {
       const { clock, api } = rawInstall(globalThis);
-      if (now)
+      if (now) {
         clock.setSystemTime(now);
-      for (const key of Object.keys(api))
+      }
+      for (const key of Object.keys(api)) {
         clock[key] = api[key];
+      }
       clockObject = clock as ClockController & ClockMethods;
       return clockObject;
     };
@@ -406,8 +409,9 @@ it.describe('runFor', () => {
     // eslint-disable-next-line prefer-const
     let id;
     const callback = createStub(() => {
-      if (callback.callCount === 3)
+      if (callback.callCount === 3) {
         clock.clearInterval(id);
+      }
     });
     id = clock.setInterval(callback, 10);
     await clock.runFor(100);
@@ -822,8 +826,9 @@ it.describe('setInterval', () => {
 
   it('does not schedule recurring timeout when cleared', async ({ clock }) => {
     const stub = createStub(() => {
-      if (stub.callCount === 3)
+      if (stub.callCount === 3) {
         clock.clearInterval(id);
+      }
     });
 
     const id = clock.setInterval(stub, 10);
@@ -1698,8 +1703,9 @@ const createStub = (body?: () => void): Stub => {
   const stub: Stub = function(...args: any[]) {
     stub.calls.push({ receiver: this, args, time: process.hrtime.bigint() });
     allFirstArgs.add(args[0]);
-    if (body)
+    if (body) {
       body();
+    }
   } as any;
 
   stub.calls = [];
@@ -1722,7 +1728,9 @@ const createStub = (body?: () => void): Stub => {
     expect(other.calls[0].time).toBeGreaterThan(stub.calls[0].time);
     return true;
   };
-  stub.throws = () => createStub(() => { throw new Error(''); });
+  stub.throws = () => createStub(() => {
+    throw new Error('');
+  });
   return stub;
 };
 

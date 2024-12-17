@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import type { FullResult, Suite } from '../../types/testReporter';
 import { filterProjects } from './projectUtils';
-import type { FullConfigInternal } from '../common/config';
+import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
 type LastRunInfo = {
@@ -33,14 +33,16 @@ export class LastRunReporter implements ReporterV2 {
 
   constructor(config: FullConfigInternal) {
     this._config = config;
-    const [project] = filterProjects(config.projects, config.cliProjectFilter);
-    if (project)
+    const project = filterProjects(config.projects, config.cliProjectFilter)[0] as FullProjectInternal | undefined;
+    if (project) {
       this._lastRunFile = path.join(project.project.outputDir, '.last-run.json');
+    }
   }
 
   async filterLastFailed() {
-    if (!this._lastRunFile)
+    if (!this._lastRunFile) {
       return;
+    }
     try {
       const lastRunInfo = JSON.parse(await fs.promises.readFile(this._lastRunFile, 'utf8')) as LastRunInfo;
       this._config.testIdMatcher = id => lastRunInfo.failedTests.includes(id);
@@ -61,8 +63,9 @@ export class LastRunReporter implements ReporterV2 {
   }
 
   async onEnd(result: FullResult) {
-    if (!this._lastRunFile || this._config.cliListOnly)
+    if (!this._lastRunFile || this._config.cliListOnly) {
       return;
+    }
     await fs.promises.mkdir(path.dirname(this._lastRunFile), { recursive: true });
     const failedTests = this._suite?.allTests().filter(t => !t.ok()).map(t => t.id);
     const lastRunReport = JSON.stringify({ status: result.status, failedTests }, undefined, 2);

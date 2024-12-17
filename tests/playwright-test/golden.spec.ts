@@ -1007,8 +1007,9 @@ test('should attach expected/actual/diff', async ({ runInlineTest }, testInfo) =
 
   const outputText = result.output;
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
-  for (const attachment of attachments)
+  for (const attachment of attachments) {
     attachment.path = attachment.path.replace(/\\/g, '/').replace(/.*test-results\//, '');
+  }
   expect(attachments).toEqual([
     {
       name: 'snapshot-expected.png',
@@ -1048,8 +1049,9 @@ test('should attach expected/actual/diff for different sizes', async ({ runInlin
   expect(outputText).toContain('Expected an image 2px by 2px, received 1px by 1px.');
   expect(outputText).toContain('4 pixels (ratio 1.00 of all image pixels) are different.');
   const attachments = outputText.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];
-  for (const attachment of attachments)
+  for (const attachment of attachments) {
     attachment.path = attachment.path.replace(testInfo.outputDir, '').substring(1).replace(/\\/g, '/');
+  }
   expect(attachments).toEqual([
     {
       name: 'snapshot-expected.png',

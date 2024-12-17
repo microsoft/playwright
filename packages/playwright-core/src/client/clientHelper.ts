@@ -22,8 +22,9 @@ import { isString } from '../utils';
 export function envObjectToArray(env: types.Env): { name: string, value: string }[] {
   const result: { name: string, value: string }[] = [];
   for (const name in env) {
-    if (!Object.is(env[name], undefined))
+    if (!Object.is(env[name], undefined)) {
       result.push({ name, value: String(env[name]) });
+    }
   }
   return result;
 }
@@ -34,16 +35,20 @@ export async function evaluationScript(fun: Function | string | { path?: string,
     const argString = Object.is(arg, undefined) ? 'undefined' : JSON.stringify(arg);
     return `(${source})(${argString})`;
   }
-  if (arg !== undefined)
+  if (arg !== undefined) {
     throw new Error('Cannot evaluate a string with arguments');
-  if (isString(fun))
+  }
+  if (isString(fun)) {
     return fun;
-  if (fun.content !== undefined)
+  }
+  if (fun.content !== undefined) {
     return fun.content;
+  }
   if (fun.path !== undefined) {
     let source = await fs.promises.readFile(fun.path, 'utf8');
-    if (addSourceUrl)
+    if (addSourceUrl) {
       source = addSourceUrlToScript(source, fun.path);
+    }
     return source;
   }
   throw new Error('Either path or content property must be present');

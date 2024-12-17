@@ -68,8 +68,9 @@ export function gracefullyProcessExitDoNotHang(code: number) {
 }
 
 function exitHandler() {
-  for (const kill of killSet)
+  for (const kill of killSet) {
     kill();
+  }
 }
 
 let sigintHandlerCalled = false;
@@ -91,8 +92,9 @@ function sigintHandler() {
 
     // Upon second Ctrl+C, immediately kill browsers and exit.
     // This prevents hanging in the case where closing the browser takes a lot of time or is buggy.
-    for (const kill of killSet)
+    for (const kill of killSet) {
       kill();
+    }
     exitWithCode130();
   } else {
     sigintHandlerCalled = true;
@@ -122,10 +124,12 @@ function addProcessHandlerIfNeeded(name: 'exit' | 'SIGINT' | 'SIGTERM' | 'SIGHUP
   }
 }
 function removeProcessHandlersIfNeeded() {
-  if (killSet.size)
+  if (killSet.size) {
     return;
-  for (const handler of installedHandlers)
+  }
+  for (const handler of installedHandlers) {
     process.off(handler, processHandlers[handler]);
+  }
   installedHandlers.clear();
 }
 
@@ -148,8 +152,9 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] starting temporary directories cleanup`);
     const errors = await removeFolders(options.tempDirectories);
     for (let i = 0; i < options.tempDirectories.length; ++i) {
-      if (errors[i])
+      if (errors[i]) {
         options.log(`[pid=${spawnedProcess.pid || 'N/A'}] exception while removing ${options.tempDirectories[i]}: ${errors[i]}`);
+      }
     }
     options.log(`[pid=${spawnedProcess.pid || 'N/A'}] finished temporary directories cleanup`);
   };
@@ -192,12 +197,15 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   });
 
   addProcessHandlerIfNeeded('exit');
-  if (options.handleSIGINT)
+  if (options.handleSIGINT) {
     addProcessHandlerIfNeeded('SIGINT');
-  if (options.handleSIGTERM)
+  }
+  if (options.handleSIGTERM) {
     addProcessHandlerIfNeeded('SIGTERM');
-  if (options.handleSIGHUP)
+  }
+  if (options.handleSIGHUP) {
     addProcessHandlerIfNeeded('SIGHUP');
+  }
   gracefullyCloseSet.add(gracefullyClose);
   killSet.add(killProcessAndCleanup);
 
@@ -233,10 +241,12 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
         if (process.platform === 'win32') {
           const taskkillProcess = childProcess.spawnSync(`taskkill /pid ${spawnedProcess.pid} /T /F`, { shell: true });
           const [stdout, stderr] = [taskkillProcess.stdout.toString(), taskkillProcess.stderr.toString()];
-          if (stdout)
+          if (stdout) {
             options.log(`[pid=${spawnedProcess.pid}] taskkill stdout: ${stdout}`);
-          if (stderr)
+          }
+          if (stderr) {
             options.log(`[pid=${spawnedProcess.pid}] taskkill stderr: ${stderr}`);
+          }
         } else {
           process.kill(-spawnedProcess.pid, 'SIGKILL');
         }
@@ -272,7 +282,8 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
 
 export function envArrayToObject(env: { name: string, value: string }[]): Env {
   const result: Env = {};
-  for (const { name, value } of env)
+  for (const { name, value } of env) {
     result[name] = value;
+  }
   return result;
 }

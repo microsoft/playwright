@@ -82,8 +82,9 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
         name: 'css-to-identity-obj-proxy',
         visitor: {
           ImportDeclaration(path: NodePath<ImportDeclaration>) {
-            if (path.node.source.value.match(/\.(css|less|scss)$/))
+            if (path.node.source.value.match(/\.(css|less|scss)$/)) {
               path.remove();
+            }
           }
         }
       })
@@ -119,8 +120,9 @@ function isTypeScript(filename: string) {
 }
 
 export function babelTransform(code: string, filename: string, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): BabelFileResult {
-  if (isTransforming)
+  if (isTransforming) {
     return {};
+  }
 
   // Prevent reentry while requiring plugins lazily.
   isTransforming = true;

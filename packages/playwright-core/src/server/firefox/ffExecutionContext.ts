@@ -63,8 +63,9 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
       executionContextId: this._executionContextId
     }).catch(rewriteError);
     checkException(payload.exceptionDetails);
-    if (returnByValue)
+    if (returnByValue) {
       return parseEvaluationResultValue(payload.result!.value);
+    }
     return utilityScript._context.createHandle(payload.result!);
   }
 
@@ -74,8 +75,9 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
       objectId,
     });
     const result = new Map();
-    for (const property of response.properties)
+    for (const property of response.properties) {
       result.set(property.name, context.createHandle(property.value));
+    }
     return result;
   }
 
@@ -92,21 +94,26 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
 }
 
 function checkException(exceptionDetails?: Protocol.Runtime.ExceptionDetails) {
-  if (!exceptionDetails)
+  if (!exceptionDetails) {
     return;
-  if (exceptionDetails.value)
+  }
+  if (exceptionDetails.value) {
     throw new js.JavaScriptErrorInEvaluate(JSON.stringify(exceptionDetails.value));
-  else
+  } else {
     throw new js.JavaScriptErrorInEvaluate(exceptionDetails.text + (exceptionDetails.stack ? '\n' + exceptionDetails.stack : ''));
+  }
 }
 
 function rewriteError(error: Error): (Protocol.Runtime.evaluateReturnValue | Protocol.Runtime.callFunctionReturnValue) {
-  if (error.message.includes('cyclic object value') || error.message.includes('Object is not serializable'))
+  if (error.message.includes('cyclic object value') || error.message.includes('Object is not serializable')) {
     return { result: { type: 'undefined', value: undefined } };
-  if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON'))
+  }
+  if (error instanceof TypeError && error.message.startsWith('Converting circular structure to JSON')) {
     rewriteErrorMessage(error, error.message + ' Are you passing a nested JSHandle?');
-  if (!js.isJavaScriptErrorInEvaluate(error) && !isSessionClosedError(error))
+  }
+  if (!js.isJavaScriptErrorInEvaluate(error) && !isSessionClosedError(error)) {
     throw new Error('Execution context was destroyed, most likely because of a navigation.');
+  }
   throw error;
 }
 
@@ -117,20 +124,28 @@ function potentiallyUnserializableValue(remoteObject: Protocol.Runtime.RemoteObj
 }
 
 function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefined {
-  if (object.type === 'undefined')
+  if (object.type === 'undefined') {
     return 'undefined';
-  if (object.unserializableValue)
+  }
+  if (object.unserializableValue) {
     return String(object.unserializableValue);
-  if (object.type === 'symbol')
+  }
+  if (object.type === 'symbol') {
     return 'Symbol()';
-  if (object.subtype === 'regexp')
+  }
+  if (object.subtype === 'regexp') {
     return 'RegExp';
-  if (object.subtype === 'weakmap')
+  }
+  if (object.subtype === 'weakmap') {
     return 'WeakMap';
-  if (object.subtype === 'weakset')
+  }
+  if (object.subtype === 'weakset') {
     return 'WeakSet';
-  if (object.subtype)
+  }
+  if (object.subtype) {
     return object.subtype[0].toUpperCase() + object.subtype.slice(1);
-  if ('value' in object)
+  }
+  if ('value' in object) {
     return String(object.value);
+  }
 }

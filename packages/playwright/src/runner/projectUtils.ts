@@ -30,8 +30,9 @@ function wildcardPatternToRegExp(pattern: string): RegExp {
 }
 
 export function filterProjects(projects: FullProjectInternal[], projectNames?: string[]): FullProjectInternal[] {
-  if (!projectNames)
+  if (!projectNames) {
     return [...projects];
+  }
 
   const projectNamesToFind = new Set<string>();
   const unmatchedProjectNames = new Map<string, string>();
@@ -54,8 +55,9 @@ export function filterProjects(projects: FullProjectInternal[], projectNames?: s
     }
     for (const regex of patterns) {
       regex.lastIndex = 0;
-      if (regex.test(lowerCaseName))
+      if (regex.test(lowerCaseName)) {
         return true;
+      }
     }
     return false;
   });
@@ -95,27 +97,33 @@ export function buildProjectsClosure(projects: FullProjectInternal[], hasTests?:
       throw error;
     }
 
-    if (depth === 0 && hasTests && !hasTests(project))
+    if (depth === 0 && hasTests && !hasTests(project)) {
       return;
+    }
 
-    if (result.get(project) !== 'dependency')
+    if (result.get(project) !== 'dependency') {
       result.set(project, depth ? 'dependency' : 'top-level');
+    }
 
-    for (const dep of project.deps)
+    for (const dep of project.deps) {
       visit(depth + 1, dep);
-    if (project.teardown)
+    }
+    if (project.teardown) {
       visit(depth + 1, project.teardown);
+    }
   };
-  for (const p of projects)
+  for (const p of projects) {
     visit(0, p);
+  }
   return result;
 }
 
 export function buildDependentProjects(forProjects: FullProjectInternal[], projects: FullProjectInternal[]): Set<FullProjectInternal> {
   const reverseDeps = new Map<FullProjectInternal, FullProjectInternal[]>(projects.map(p => ([p, []])));
   for (const project of projects) {
-    for (const dep of project.deps)
-      reverseDeps.get(dep)!.push(project);
+    for (const dep of project.deps) {
+reverseDeps.get(dep)!.push(project);
+    }
   }
   const result = new Set<FullProjectInternal>();
   const visit = (depth: number, project: FullProjectInternal) => {
@@ -125,13 +133,16 @@ export function buildDependentProjects(forProjects: FullProjectInternal[], proje
       throw error;
     }
     result.add(project);
-    for (const reverseDep of reverseDeps.get(project)!)
+    for (const reverseDep of reverseDeps.get(project)!) {
       visit(depth + 1, reverseDep);
-    if (project.teardown)
+    }
+    if (project.teardown) {
       visit(depth + 1, project.teardown);
+    }
   };
-  for (const forProject of forProjects)
+  for (const forProject of forProjects) {
     visit(0, forProject);
+  }
   return result;
 }
 
@@ -142,11 +153,13 @@ export async function collectFilesForProject(project: FullProjectInternal, fsCac
   const testMatch = createFileMatcher(project.project.testMatch);
   const testIgnore = createFileMatcher(project.project.testIgnore);
   const testFiles = allFiles.filter(file => {
-    if (!testFileExtension(file))
+    if (!testFileExtension(file)) {
       return false;
+    }
     const isTest = !testIgnore(file) && testMatch(file);
-    if (!isTest)
+    if (!isTest) {
       return false;
+    }
     return true;
   });
   return testFiles;
@@ -163,10 +176,12 @@ async function cachedCollectFiles(testDir: string, respectGitIgnore: boolean, fs
 }
 
 async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise<string[]> {
-  if (!fs.existsSync(testDir))
+  if (!fs.existsSync(testDir)) {
     return [];
-  if (!fs.statSync(testDir).isDirectory())
+  }
+  if (!fs.statSync(testDir).isDirectory()) {
     return [];
+  }
 
   type Rule = {
     dir: string;
@@ -179,8 +194,9 @@ async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise
     let status = parentStatus;
     for (const rule of rules) {
       const ruleIncludes = rule.negate;
-      if ((status === 'included') === ruleIncludes)
+      if ((status === 'included') === ruleIncludes) {
         continue;
+      }
       const relative = path.relative(rule.dir, entryPath);
       if (rule.match('/' + relative) || rule.match(relative)) {
         // Matches "/dir/file" or "dir/file"
@@ -208,12 +224,14 @@ async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise
         const content = await readFileAsync(path.join(dir, gitignore.name), 'utf8');
         const newRules: Rule[] = content.split(/\r?\n/).map(s => {
           s = s.trim();
-          if (!s)
+          if (!s) {
             return;
+          }
           // Use flipNegate, because we handle negation ourselves.
           const rule = new minimatch.Minimatch(s, { matchBase: true, dot: true, flipNegate: true }) as any;
-          if (rule.comment)
+          if (rule.comment) {
             return;
+          }
           rule.dir = dir;
           return rule;
         }).filter(rule => !!rule);
@@ -222,18 +240,22 @@ async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise
     }
 
     for (const entry of entries) {
-      if (entry.name === '.' || entry.name === '..')
+      if (entry.name === '.' || entry.name === '..') {
         continue;
-      if (entry.isFile() && entry.name === '.gitignore')
+      }
+      if (entry.isFile() && entry.name === '.gitignore') {
         continue;
-      if (entry.isDirectory() && entry.name === 'node_modules')
+      }
+      if (entry.isDirectory() && entry.name === 'node_modules') {
         continue;
+      }
       const entryPath = path.join(dir, entry.name);
       const entryStatus = checkIgnores(entryPath, rules, entry.isDirectory(), status);
-      if (entry.isDirectory() && entryStatus !== 'ignored')
+      if (entry.isDirectory() && entryStatus !== 'ignored') {
         await visit(entryPath, rules, entryStatus);
-      else if (entry.isFile() && entryStatus === 'included')
+      } else if (entry.isFile() && entryStatus === 'included') {
         files.push(entryPath);
+      }
     }
   };
   await visit(testDir, [], 'included');

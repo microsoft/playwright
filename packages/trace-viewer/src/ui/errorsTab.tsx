@@ -33,11 +33,13 @@ type ErrorsTabModel = {
 
 export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined): ErrorsTabModel {
   return React.useMemo(() => {
-    if (!model)
+    if (!model) {
       return { errors: new Map() };
+    }
     const errors = new Map<string, ErrorDescription>();
-    for (const error of model.errorDescriptors)
+    for (const error of model.errorDescriptors) {
       errors.set(error.message, error);
+    }
     return { errors };
   }, [model]);
 }
@@ -47,8 +49,9 @@ export const ErrorsTab: React.FunctionComponent<{
   sdkLanguage: Language,
   revealInSource: (error: ErrorDescription) => void,
 }> = ({ errorsModel, sdkLanguage, revealInSource }) => {
-  if (!errorsModel.errors.size)
+  if (!errorsModel.errors.size) {
     return <PlaceholderPanel text='No errors' />;
+  }
 
   return <div className='fill' style={{ overflow: 'auto' }}>
     {[...errorsModel.errors.entries()].map(([message, error]) => {

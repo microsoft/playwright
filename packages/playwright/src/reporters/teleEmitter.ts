@@ -50,8 +50,9 @@ export class TeleReporterEmitter implements ReporterV2 {
 
   onBegin(suite: reporterTypes.Suite) {
     const projects = suite.suites.map(projectSuite => this._serializeProject(projectSuite));
-    for (const project of projects)
+    for (const project of projects) {
       this._messageSink({ method: 'onProject', params: { project } });
+    }
     this._messageSink({ method: 'onBegin', params: undefined });
   }
 
@@ -121,8 +122,9 @@ export class TeleReporterEmitter implements ReporterV2 {
   }
 
   private _onStdIO(type: teleReceiver.JsonStdIOType, chunk: string | Buffer, test: void | reporterTypes.TestCase, result: void | reporterTypes.TestResult): void {
-    if (this._emitterOptions.omitOutput)
+    if (this._emitterOptions.omitOutput) {
       return;
+    }
     const isBase64 = typeof chunk !== 'string';
     const data = isBase64 ? chunk.toString('base64') : chunk;
     this._messageSink({
@@ -190,8 +192,9 @@ export class TeleReporterEmitter implements ReporterV2 {
       title: suite.title,
       location: this._relativeLocation(suite.location),
       entries: suite.entries().map(e => {
-        if (e.type === 'test')
+        if (e.type === 'test') {
           return this._serializeTest(e);
+        }
         return this._serializeSuite(e);
       })
     };
@@ -262,8 +265,9 @@ export class TeleReporterEmitter implements ReporterV2 {
   private _relativeLocation(location: reporterTypes.Location): reporterTypes.Location;
   private _relativeLocation(location?: reporterTypes.Location): reporterTypes.Location | undefined;
   private _relativeLocation(location: reporterTypes.Location | undefined): reporterTypes.Location | undefined {
-    if (!location)
+    if (!location) {
       return location;
+    }
     return {
       ...location,
       file: this._relativePath(location.file),
@@ -273,8 +277,9 @@ export class TeleReporterEmitter implements ReporterV2 {
   private _relativePath(absolutePath: string): string;
   private _relativePath(absolutePath?: string): string | undefined;
   private _relativePath(absolutePath?: string): string | undefined {
-    if (!absolutePath)
+    if (!absolutePath) {
       return absolutePath;
+    }
     return path.relative(this._rootDir, absolutePath);
   }
 }

@@ -5,7 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/* eslint-disable curly */
 
 export const getBidiKeyValue = (key: string) => {
   switch (key) {

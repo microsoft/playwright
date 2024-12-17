@@ -75,10 +75,11 @@ it('should have JSHandles for console logs', async function({ page, browserName 
   const logPromise = new Promise<ConsoleMessage>(x => page.on('console', x));
   await page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1,2,3,this)'], { type: 'application/javascript' }))));
   const log = await logPromise;
-  if (browserName !== 'firefox')
+  if (browserName !== 'firefox') {
     expect(log.text()).toBe('1 2 3 DedicatedWorkerGlobalScope');
-  else
+  } else {
     expect(log.text()).toBe('1 2 3 JSHandle@object');
+  }
   expect(log.args().length).toBe(4);
   expect(await (await log.args()[3].getProperty('origin')).jsonValue()).toBe('null');
 });

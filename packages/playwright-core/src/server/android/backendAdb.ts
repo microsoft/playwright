@@ -54,14 +54,16 @@ class AdbDevice implements DeviceBackend {
   }
 
   runCommand(command: string): Promise<Buffer> {
-    if (this._closed)
+    if (this._closed) {
       throw new Error('Device is closed');
+    }
     return runCommand(command, this.host, this.port, this.serial);
   }
 
   async open(command: string): Promise<SocketBackend> {
-    if (this._closed)
+    if (this._closed) {
       throw new Error('Device is closed');
+    }
     const result = await open(command, this.host, this.port, this.serial);
     result.becomeSocket();
     return result;
@@ -134,13 +136,15 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
         return;
       }
       this._buffer = Buffer.concat([this._buffer, data]);
-      if (this._notifyReader)
+      if (this._notifyReader) {
         this._notifyReader();
+      }
     });
     this._socket.on('close', () => {
       this._isClosed = true;
-      if (this._notifyReader)
+      if (this._notifyReader) {
         this._notifyReader();
+      }
       this.close();
       this.emit('close');
     });
@@ -154,8 +158,9 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
   }
 
   close() {
-    if (this._isClosed)
+    if (this._isClosed) {
       return;
+    }
     debug('pw:adb')('Close ' + this._command);
     this._socket.destroy();
   }
@@ -163,8 +168,9 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
   async read(length: number): Promise<Buffer> {
     await this._connectPromise;
     assert(!this._isSocket, 'Can not read by length in socket mode');
-    while (this._buffer.length < length)
+    while (this._buffer.length < length) {
       await new Promise<void>(f => this._notifyReader = f);
+    }
     const result = this._buffer.slice(0, length);
     this._buffer = this._buffer.slice(length);
     debug('pw:adb:recv')(result.toString().substring(0, 100) + '...');
@@ -172,8 +178,9 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
   }
 
   async readAll(): Promise<Buffer> {
-    while (!this._isClosed)
+    while (!this._isClosed) {
       await new Promise<void>(f => this._notifyReader = f);
+    }
     return this._buffer;
   }
 

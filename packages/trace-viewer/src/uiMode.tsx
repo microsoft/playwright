@@ -23,10 +23,13 @@ import { UIModeView } from './ui/uiModeView';
 (async () => {
   applyTheme();
   if (window.location.protocol !== 'file:') {
-    if (window.location.href.includes('isUnderTest=true'))
+    if (window.location.href.includes('isUnderTest=true')) {
       await new Promise(f => setTimeout(f, 1000));
-    if (!navigator.serviceWorker)
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!navigator.serviceWorker) {
       throw new Error(`Service workers are not supported.\nMake sure to serve the website (${window.location}) via HTTPS or localhost.`);
+    }
     navigator.serviceWorker.register('sw.bundle.js');
     if (!navigator.serviceWorker.controller) {
       await new Promise<void>(f => {
@@ -35,7 +38,9 @@ import { UIModeView } from './ui/uiModeView';
     }
 
     // Keep SW running.
-    setInterval(function() { fetch('ping'); }, 10000);
+    setInterval(function() {
+      fetch('ping');
+    }, 10000);
   }
 
   ReactDOM.createRoot(document.querySelector('#root')!).render(<UIModeView/>);

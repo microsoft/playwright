@@ -375,19 +375,21 @@ it('should support requestStorageAccess', async ({ page, server, channel, browse
       expect(serverRequest.headers.cookie).toBe('name=value');
     }
   } else {
-    if (isLinux && browserName === 'webkit')
+    if (isLinux && browserName === 'webkit') {
       expect(await frame.evaluate(() => document.hasStorageAccess())).toBeTruthy();
-    else
+    } else {
       expect(await frame.evaluate(() => document.hasStorageAccess())).toBeFalsy();
+    }
     {
       const [serverRequest] = await Promise.all([
         server.waitForRequest('/title.html'),
         frame.evaluate(() => fetch('/title.html'))
       ]);
-      if (isWindows && browserName === 'webkit')
+      if (isWindows && browserName === 'webkit') {
         expect(serverRequest.headers.cookie).toBe('name=value');
-      else
+      } else {
         expect(serverRequest.headers.cookie).toBeFalsy();
+      }
     }
     expect(await frame.evaluate(() => document.requestStorageAccess().then(() => true, e => false))).toBeTruthy();
     expect(await frame.evaluate(() => document.hasStorageAccess())).toBeTruthy();
@@ -396,10 +398,11 @@ it('should support requestStorageAccess', async ({ page, server, channel, browse
         server.waitForRequest('/title.html'),
         frame.evaluate(() => fetch('/title.html'))
       ]);
-      if (isLinux && browserName === 'webkit')
+      if (isLinux && browserName === 'webkit') {
         expect(serverRequest.headers.cookie).toBe(undefined);
-      else
+      } else {
         expect(serverRequest.headers.cookie).toBe('name=value');
+      }
     }
   }
 });

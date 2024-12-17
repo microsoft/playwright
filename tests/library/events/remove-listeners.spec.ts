@@ -99,8 +99,9 @@ test('Fourth test', () => {
   };
 
   ee.on('removeListener', common.mustCall((name, cb) => {
-    if (cb !== remove1)
+    if (cb !== remove1) {
       return;
+    }
     ee.removeListener('quux', remove2);
     ee.emit('quux');
   }, 2));

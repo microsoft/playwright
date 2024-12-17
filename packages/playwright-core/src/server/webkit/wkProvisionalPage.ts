@@ -47,8 +47,9 @@ export class WKProvisionalPage {
     const overrideFrameId = (handler: (p: any) => void) => {
       return (payload: any) => {
         // Pretend that the events happened in the same process.
-        if (payload.frameId)
+        if (payload.frameId) {
           payload.frameId = this._wkPage._page._frameManager.mainFrame()._id;
+        }
         handler(payload);
       };
     };

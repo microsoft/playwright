@@ -34,20 +34,26 @@ export const GlassPane: React.FC<{
 
     document.body.appendChild(glassPaneDiv);
 
-    if (onPaneMouseMove)
+    if (onPaneMouseMove) {
       glassPaneDiv.addEventListener('mousemove', onPaneMouseMove);
-    if (onPaneMouseUp)
+    }
+    if (onPaneMouseUp) {
       glassPaneDiv.addEventListener('mouseup', onPaneMouseUp);
-    if (onPaneDoubleClick)
+    }
+    if (onPaneDoubleClick) {
       document.body.addEventListener('dblclick', onPaneDoubleClick);
+    }
 
     return () => {
-      if (onPaneMouseMove)
+      if (onPaneMouseMove) {
         glassPaneDiv.removeEventListener('mousemove', onPaneMouseMove);
-      if (onPaneMouseUp)
+      }
+      if (onPaneMouseUp) {
         glassPaneDiv.removeEventListener('mouseup', onPaneMouseUp);
-      if (onPaneDoubleClick)
+      }
+      if (onPaneDoubleClick) {
         document.body.removeEventListener('dblclick', onPaneDoubleClick);
+      }
       document.body.removeChild(glassPaneDiv);
     };
   }, [cursor, onPaneMouseMove, onPaneMouseUp, onPaneDoubleClick]);

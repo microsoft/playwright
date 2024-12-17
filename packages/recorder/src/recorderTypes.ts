@@ -43,7 +43,8 @@ export type EventData = {
     | 'pause'
     | 'setMode'
     | 'highlightRequested'
-    | 'fileChanged';
+    | 'fileChanged'
+    | 'runTask';
   params: any;
 };
 

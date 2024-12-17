@@ -15,8 +15,10 @@ import type * as Bidi from './bidiProtocol';
  */
 export class BidiDeserializer {
   static deserialize(result: Bidi.Script.RemoteValue): any {
-    if (!result)
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!result) {
       return undefined;
+    }
 
     switch (result.type) {
       case 'array':

@@ -52,8 +52,9 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTest
   for (const [project, files] of allFilesForProject) {
     const matchedFiles = files.filter(file => {
       const hasMatchingSources = sourceMapSources(file, sourceMapCache).some(source => {
-        if (cliFileMatcher && !cliFileMatcher(source))
+        if (cliFileMatcher && !cliFileMatcher(source)) {
           return false;
+        }
         return true;
       });
       return hasMatchingSources;
@@ -80,8 +81,9 @@ export async function loadFileSuites(testRun: TestRun, mode: 'out-of-process' | 
   // Determine all files to load.
   const config = testRun.config;
   const allTestFiles = new Set<string>();
-  for (const files of testRun.projectFiles.values())
+  for (const files of testRun.projectFiles.values()) {
     files.forEach(file => allTestFiles.add(file));
+  }
 
   // Load test files.
   const fileSuiteByFile = new Map<string, Suite>();
@@ -145,12 +147,14 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   if (shouldFilterOnly) {
     // Create a fake root to execute the exclusive semantics across the projects.
     const filteredRoot = new Suite('', 'root');
-    for (const filteredProjectSuite of filteredProjectSuites.values())
+    for (const filteredProjectSuite of filteredProjectSuites.values()) {
       filteredRoot._addSuite(filteredProjectSuite);
+    }
     filterOnly(filteredRoot);
     for (const [project, filteredProjectSuite] of filteredProjectSuites) {
-      if (!filteredRoot.suites.includes(filteredProjectSuite))
+      if (!filteredRoot.suites.includes(filteredProjectSuite)) {
         filteredProjectSuites.delete(project);
+      }
     }
   }
 
@@ -186,8 +190,9 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     const testGroupsInThisShard = filterForShard(config.config.shard, testGroups);
     const testsInThisShard = new Set<TestCase>();
     for (const group of testGroupsInThisShard) {
-      for (const test of group.tests)
+      for (const test of group.tests) {
         testsInThisShard.add(test);
+      }
     }
 
     // Update project suites, removing empty ones.
@@ -202,8 +207,9 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
 
     // Clone file suites for dependency projects.
     for (const [project, level] of projectClosure.entries()) {
-      if (level === 'dependency')
+      if (level === 'dependency') {
         rootSuite._prependSuite(buildProjectSuite(project, projectSuites.get(project)!));
+      }
     }
   }
 
@@ -212,15 +218,17 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
 
 function createProjectSuite(project: FullProjectInternal, fileSuites: Suite[]): Suite {
   const projectSuite = new Suite(project.project.name, 'project');
-  for (const fileSuite of fileSuites)
+  for (const fileSuite of fileSuites) {
     projectSuite._addSuite(bindFileSuiteToProject(project, fileSuite));
+  }
 
   const grepMatcher = createTitleMatcher(project.project.grep);
   const grepInvertMatcher = project.project.grepInvert ? createTitleMatcher(project.project.grepInvert) : null;
   filterTestsRemoveEmptySuites(projectSuite, (test: TestCase) => {
     const grepTitle = test._grepTitle();
-    if (grepInvertMatcher?.(grepTitle))
+    if (grepInvertMatcher?.(grepTitle)) {
       return false;
+    }
     return grepMatcher(grepTitle);
   });
   return projectSuite;
@@ -228,19 +236,24 @@ function createProjectSuite(project: FullProjectInternal, fileSuites: Suite[]): 
 
 function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testIdMatcher?: Matcher, additionalFileMatcher?: Matcher }): Suite {
   // Fast path.
-  if (!options.cliFileFilters.length && !options.cliTitleMatcher && !options.testIdMatcher && !options.additionalFileMatcher)
+  if (!options.cliFileFilters.length && !options.cliTitleMatcher && !options.testIdMatcher && !options.additionalFileMatcher) {
     return projectSuite;
+  }
 
   const result = projectSuite._deepClone();
-  if (options.cliFileFilters.length)
+  if (options.cliFileFilters.length) {
     filterByFocusedLine(result, options.cliFileFilters);
-  if (options.testIdMatcher)
+  }
+  if (options.testIdMatcher) {
     filterByTestIds(result, options.testIdMatcher);
+  }
   filterTestsRemoveEmptySuites(result, (test: TestCase) => {
-    if (options.cliTitleMatcher && !options.cliTitleMatcher(test._grepTitle()))
+    if (options.cliTitleMatcher && !options.cliTitleMatcher(test._grepTitle())) {
       return false;
-    if (options.additionalFileMatcher && !options.additionalFileMatcher(test.location.file))
+    }
+    if (options.additionalFileMatcher && !options.additionalFileMatcher(test.location.file)) {
       return false;
+    }
     return true;
   });
   return result;
@@ -249,8 +262,9 @@ function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: Test
 function buildProjectSuite(project: FullProjectInternal, projectSuite: Suite): Suite {
   const result = new Suite(project.project.name, 'project');
   result._fullProject = project;
-  if (project.fullyParallel)
+  if (project.fullyParallel) {
     result._parallelMode = 'parallel';
+  }
 
   for (const fileSuite of projectSuite.suites) {
     // Fast path for the repeatEach = 0.
@@ -300,17 +314,20 @@ function createDuplicateTitlesErrors(config: FullConfigInternal, fileSuite: Suit
 }
 
 function buildItemLocation(rootDir: string, testOrSuite: Suite | TestCase) {
-  if (!testOrSuite.location)
+  if (!testOrSuite.location) {
     return '';
+  }
   return `${path.relative(rootDir, testOrSuite.location.file)}:${testOrSuite.location.line}`;
 }
 
 async function requireOrImportDefaultFunction(file: string, expectConstructor: boolean) {
   let func = await requireOrImport(file);
-  if (func && typeof func === 'object' && ('default' in func))
+  if (func && typeof func === 'object' && ('default' in func)) {
     func = func['default'];
-  if (typeof func !== 'function')
+  }
+  if (typeof func !== 'function') {
     throw errorWithFile(file, `file must export a single ${expectConstructor ? 'class' : 'function'}.`);
+  }
   return func;
 }
 
@@ -324,16 +341,19 @@ export function loadReporter(config: FullConfigInternal | null, file: string): P
 
 function sourceMapSources(file: string, cache: Map<string, string[]>): string[] {
   let sources = [file];
-  if (!file.endsWith('.js'))
+  if (!file.endsWith('.js')) {
     return sources;
-  if (cache.has(file))
+  }
+  if (cache.has(file)) {
     return cache.get(file)!;
+  }
 
   try {
     const sourceMap = sourceMapSupport.retrieveSourceMap(file);
     const sourceMapData: RawSourceMap | undefined = typeof sourceMap?.map === 'string' ? JSON.parse(sourceMap.map) : sourceMap?.map;
-    if (sourceMapData?.sources)
+    if (sourceMapData?.sources) {
       sources = sourceMapData.sources.map(source => path.resolve(path.dirname(file), source));
+    }
   } finally {
     cache.set(file, sources);
     return sources;

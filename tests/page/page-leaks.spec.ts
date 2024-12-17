@@ -21,21 +21,24 @@ function leakedJSHandles(): string {
   const map = new MultiMap();
   for (const [h, e] of (globalThis as any).leakedJSHandles) {
     const name = `[${h.worldNameForTest()}] ${h.preview()}`;
-    if (name === '[main] UtilityScript' || name === '[utility] UtilityScript' || name === '[electron] UtilityScript' || name === '[main] InjectedScript' || name === '[utility] InjectedScript' || name === '[electron] ElectronModule')
+    if (name === '[main] UtilityScript' || name === '[utility] UtilityScript' || name === '[electron] UtilityScript' || name === '[main] InjectedScript' || name === '[utility] InjectedScript' || name === '[electron] ElectronModule') {
       continue;
+    }
     map.set(e.stack, name);
   }
 
-  if (!map.size)
+  if (!map.size) {
     return '';
+  }
 
   const lines: string[] = [];
   lines.push('=============================');
   lines.push('Leaked JSHandles:');
   for (const key of map.keys()) {
     lines.push('=============================');
-    for (const value of map.get(key))
+    for (const value of map.get(key)) {
       lines.push(value);
+    }
     lines.push('in ' + key);
   }
   return lines.join('\n');
@@ -47,8 +50,9 @@ async function weakRefObjects(pageImpl: any, selector: string) {
     await context.evaluate(selector => {
       const elements = document.querySelectorAll(selector);
       globalThis.weakRefs = globalThis.weakRefs || [];
-      for (const element of elements)
+      for (const element of elements) {
         globalThis.weakRefs.push(new WeakRef(element));
+      }
     }, selector);
   }
 }

@@ -66,8 +66,9 @@ export class WorkerHost extends ProcessHost {
   }
 
   override async stop(didFail?: boolean) {
-    if (didFail)
+    if (didFail) {
       this._didFail = true;
+    }
     await super.stop();
   }
 

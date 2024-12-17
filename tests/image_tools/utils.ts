@@ -32,16 +32,18 @@ export function randomPNG(width, height, seed) {
   const png = new PNG({ width, height });
   for (let i = 0; i < height; ++i) {
     for (let j = 0; j < width; ++j) {
-      for (let k = 0; k < 4; ++k)
+      for (let k = 0; k < 4; ++k) {
         png.data[(i * width + j) * 4 + k] = (random() * 255) | 0;
+      }
     }
   }
   return png;
 }
 
 export function assertEqual(value1, value2) {
-  if (Math.abs(value1 - value2) >= 1e-3)
+  if (Math.abs(value1 - value2) >= 1e-3) {
     throw new Error(`ERROR: ${value1} is not equal to ${value2}`);
+  }
 }
 
 // NOTE: this is exact formula from SSIM.js and it DOES NOT include alpha.

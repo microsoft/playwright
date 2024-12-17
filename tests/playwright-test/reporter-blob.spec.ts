@@ -204,8 +204,9 @@ test('should merge into html with dependencies', async ({ runInlineTest, mergeRe
     `
   };
   const totalShards = 3;
-  for (let i = 0; i < totalShards; i++)
+  for (let i = 0; i < totalShards; i++) {
     await runInlineTest(files, { shard: `${i + 1}/${totalShards}` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  }
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual([expect.stringMatching(/report-.*.zip/), expect.stringMatching(/report-.*.zip/), expect.stringMatching(/report-.*.zip/)]);
@@ -468,8 +469,9 @@ test('merge into list report by default', async ({ runInlineTest, mergeReports }
   };
 
   const totalShards = 3;
-  for (let i = 0; i < totalShards; i++)
+  for (let i = 0; i < totalShards; i++) {
     await runInlineTest(files, { shard: `${i + 1}/${totalShards}` }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  }
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual(['report-1.zip', 'report-2.zip', 'report-3.zip']);
@@ -678,8 +680,9 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
   expect(exitCode).toBe(0);
 
   const htmlReportDir = test.info().outputPath('playwright-report');
-  for (const entry of await fs.promises.readdir(htmlReportDir))
+  for (const entry of await fs.promises.readdir(htmlReportDir)) {
     await fs.promises.cp(path.join(htmlReportDir, entry), path.join(reportDir, entry), { recursive: true });
+  }
 
   const oldServeFile = server.serveFile;
   server.serveFile = async (req, res) => {
@@ -1695,11 +1698,13 @@ function patchPathSeparators(json: any) {
   const to = (path.sep === '/') ? '\\' : '/';
 
   function patchPathSeparatorsRecursive(obj: any) {
-    if (typeof obj !== 'object')
+    if (typeof obj !== 'object') {
       return;
+    }
     for (const key in obj) {
-      if (/file|dir|path|^title$/i.test(key) && typeof obj[key] === 'string')
+      if (/file|dir|path|^title$/i.test(key) && typeof obj[key] === 'string') {
         obj[key] = obj[key].replace(from, to);
+      }
       patchPathSeparatorsRecursive(obj[key]);
     }
   }

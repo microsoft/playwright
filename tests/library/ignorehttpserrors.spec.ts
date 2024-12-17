@@ -70,7 +70,9 @@ it('should work with WebSocket', async ({ browser, httpsServer }) => {
     let cb;
     const result = new Promise(f => cb = f);
     const ws = new WebSocket(endpoint);
-    ws.addEventListener('message', data => { ws.close(); cb(data.data); });
+    ws.addEventListener('message', data => {
+      ws.close(); cb(data.data);
+    });
     ws.addEventListener('error', error => cb('Error'));
     return result;
   }, httpsServer.PREFIX.replace(/https/, 'wss') + '/ws');
@@ -85,7 +87,9 @@ it('should fail with WebSocket if not ignored', async ({ browser, httpsServer })
     let cb;
     const result = new Promise(f => cb = f);
     const ws = new WebSocket(endpoint);
-    ws.addEventListener('message', data => { ws.close(); cb(data.data); });
+    ws.addEventListener('message', data => {
+      ws.close(); cb(data.data);
+    });
     ws.addEventListener('error', error => cb('Error'));
     return result;
   }, httpsServer.PREFIX.replace(/https/, 'wss') + '/ws');

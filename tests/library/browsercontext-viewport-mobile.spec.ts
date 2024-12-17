@@ -181,10 +181,11 @@ it.describe('mobile viewport', () => {
     await page.goto(server.PREFIX + '/input/scrollable.html');
     await page.mouse.move(50, 60);
     const error = await page.mouse.wheel(0, 100).catch(e => e);
-    if (browserName === 'webkit')
+    if (browserName === 'webkit') {
       expect(error.message).toContain('Mouse wheel is not supported in mobile WebKit');
-    else
+    } else {
       await page.waitForFunction('window.scrollY === 100');
+    }
     await context.close();
   });
 

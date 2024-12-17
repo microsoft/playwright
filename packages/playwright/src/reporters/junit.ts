@@ -68,8 +68,9 @@ class JUnitReporter implements ReporterV2 {
   async onEnd(result: FullResult) {
     const children: XMLEntry[] = [];
     for (const projectSuite of this.suite.suites) {
-      for (const fileSuite of projectSuite.suites)
+      for (const fileSuite of projectSuite.suites) {
         children.push(await this._buildTestSuite(projectSuite.title, fileSuite));
+      }
     }
     const tokens: string[] = [];
 
@@ -108,12 +109,15 @@ class JUnitReporter implements ReporterV2 {
 
     for (const test of suite.allTests()){
       ++tests;
-      if (test.outcome() === 'skipped')
+      if (test.outcome() === 'skipped') {
         ++skipped;
-      if (!test.ok())
+      }
+      if (!test.ok()) {
         ++failures;
-      for (const result of test.results)
+      }
+      for (const result of test.results) {
         duration += result.duration;
+      }
       await this._addTestCase(suite.title, testCaseNamePrefix, test, children);
     }
 
@@ -167,14 +171,15 @@ class JUnitReporter implements ReporterV2 {
         name: 'property',
         attributes: {
           name: annotation.type,
-          value: (annotation?.description ? annotation.description : '')
+          value: (annotation.description ? annotation.description : '')
         }
       };
       properties.children?.push(property);
     }
 
-    if (properties.children?.length)
+    if (properties.children?.length) {
       entry.children.push(properties);
+    }
 
     if (test.outcome() === 'skipped') {
       entry.children.push({ name: 'skipped' });
@@ -198,13 +203,15 @@ class JUnitReporter implements ReporterV2 {
       systemOut.push(...result.stdout.map(item => item.toString()));
       systemErr.push(...result.stderr.map(item => item.toString()));
       for (const attachment of result.attachments) {
-        if (!attachment.path)
+        if (!attachment.path) {
           continue;
+        }
 
         let attachmentPath = path.relative(this.configDir, attachment.path);
         try {
-          if (this.resolvedOutputFile)
+          if (this.resolvedOutputFile) {
             attachmentPath = path.relative(path.dirname(this.resolvedOutputFile), attachment.path);
+          }
         } catch {
           systemOut.push(`\nWarning: Unable to make attachment path ${attachment.path} relative to report output file ${this.resolvedOutputFile}`);
         }
@@ -219,10 +226,12 @@ class JUnitReporter implements ReporterV2 {
     }
     // Note: it is important to only produce a single system-out/system-err entry
     // so that parsers in the wild understand it.
-    if (systemOut.length)
+    if (systemOut.length) {
       entry.children.push({ name: 'system-out', text: systemOut.join('') });
-    if (systemErr.length)
+    }
+    if (systemErr.length) {
       entry.children.push({ name: 'system-err', text: systemErr.join('') });
+    }
   }
 }
 
@@ -235,13 +244,16 @@ type XMLEntry = {
 
 function serializeXML(entry: XMLEntry, tokens: string[], stripANSIControlSequences: boolean) {
   const attrs: string[] = [];
-  for (const [name, value] of Object.entries(entry.attributes || {}))
+  for (const [name, value] of Object.entries(entry.attributes || {})) {
     attrs.push(`${name}="${escape(String(value), stripANSIControlSequences, false)}"`);
+  }
   tokens.push(`<${entry.name}${attrs.length ? ' ' : ''}${attrs.join(' ')}>`);
-  for (const child of entry.children || [])
+  for (const child of entry.children || []) {
     serializeXML(child, tokens, stripANSIControlSequences);
-  if (entry.text)
+  }
+  if (entry.text) {
     tokens.push(escape(entry.text, stripANSIControlSequences, true));
+  }
   tokens.push(`</${entry.name}>`);
 }
 
@@ -249,8 +261,9 @@ function serializeXML(entry: XMLEntry, tokens: string[], stripANSIControlSequenc
 const discouragedXMLCharacters = /[\u0000-\u0008\u000b-\u000c\u000e-\u001f\u007f-\u0084\u0086-\u009f]/g;
 
 function escape(text: string, stripANSIControlSequences: boolean, isCharacterData: boolean): string {
-  if (stripANSIControlSequences)
+  if (stripANSIControlSequences) {
     text = stripAnsiEscapes(text);
+  }
 
   if (isCharacterData) {
     text = '<![CDATA[' + text.replace(/]]>/g, ']]&gt;') + ']]>';

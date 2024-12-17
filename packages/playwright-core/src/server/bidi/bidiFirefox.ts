@@ -39,19 +39,23 @@ export class BidiFirefox extends BrowserType {
   }
 
   override doRewriteStartupLog(error: ProtocolError): ProtocolError {
-    if (!error.logs)
+    if (!error.logs) {
       return error;
+    }
     // https://github.com/microsoft/playwright/issues/6500
-    if (error.logs.includes(`as root in a regular user's session is not supported.`))
+    if (error.logs.includes(`as root in a regular user's session is not supported.`)) {
       error.logs = '\n' + wrapInASCIIBox(`Firefox is unable to launch if the $HOME folder isn't owned by the current user.\nWorkaround: Set the HOME=/root environment variable${process.env.GITHUB_ACTION ? ' in your GitHub Actions workflow file' : ''} when running Playwright.`, 1);
-    if (error.logs.includes('no DISPLAY environment variable specified'))
+    }
+    if (error.logs.includes('no DISPLAY environment variable specified')) {
       error.logs = '\n' + wrapInASCIIBox(kNoXServerRunningError, 1);
+    }
     return error;
   }
 
   override amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
-    if (!path.isAbsolute(os.homedir()))
+    if (!path.isAbsolute(os.homedir())) {
       throw new Error(`Cannot launch Firefox with relative home directory. Did you set ${os.platform() === 'win32' ? 'USERPROFILE' : 'HOME'} to a relative path?`);
+    }
 
     env = {
       ...env,
@@ -83,13 +87,15 @@ export class BidiFirefox extends BrowserType {
   override defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { args = [], headless } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
-    if (userDataDirArg)
+    if (userDataDirArg) {
       throw this._createUserDataDirArgMisuseError('--profile');
+    }
     const firefoxArguments = ['--remote-debugging-port=0'];
-    if (headless)
+    if (headless) {
       firefoxArguments.push('--headless');
-    else
+    } else {
       firefoxArguments.push('--foreground');
+    }
     firefoxArguments.push(`--profile`, userDataDir);
     firefoxArguments.push(...args);
     return firefoxArguments;
@@ -105,7 +111,8 @@ class FirefoxReadyState extends BrowserReadyState {
   override onBrowserOutput(message: string): void {
     // Bidi WebSocket in Firefox.
     const match = message.match(/WebDriver BiDi listening on (ws:\/\/.*)$/);
-    if (match)
+    if (match) {
       this._wsEndpoint.resolve(match[1] + '/session');
+    }
   }
 }

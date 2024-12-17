@@ -46,8 +46,9 @@ export const webView2Test = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
       }
     });
     await new Promise<void>(resolve => spawnedProcess.process.stdout.on('data', data => {
-      if (data.toString().includes('WebView2 initialized'))
+      if (data.toString().includes('WebView2 initialized')) {
         resolve();
+      }
     }));
     const browser = await playwright.chromium.connectOverCDP(`http://127.0.0.1:${cdpPort}`);
     await use(browser);

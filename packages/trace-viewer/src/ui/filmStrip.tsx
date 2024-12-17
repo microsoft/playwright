@@ -48,7 +48,7 @@ export const FilmStrip: React.FunctionComponent<{
     pageIndex = ((previewPoint.clientY - bounds.top + lanesRef.current.scrollTop) / rowHeight) | 0;
   }
 
-  const screencastFrames = model?.pages?.[pageIndex]?.screencastFrames;
+  const screencastFrames = model?.pages[pageIndex]?.screencastFrames;
   let previewImage = undefined;
   let previewSize = undefined;
   if (previewPoint !== undefined && screencastFrames && screencastFrames.length) {
@@ -58,6 +58,7 @@ export const FilmStrip: React.FunctionComponent<{
       width: Math.min(800, (window.innerWidth / 2) | 0),
       height: Math.min(800, (window.innerHeight / 2) | 0),
     };
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     previewSize = previewImage ? inscribe({ width: previewImage.width, height: previewImage.height }, fitInto) : undefined;
   }
 

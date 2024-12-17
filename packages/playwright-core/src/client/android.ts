@@ -58,8 +58,9 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
   }
 
   async launchServer(options: types.LaunchServerOptions = {}): Promise<api.BrowserServer> {
-    if (!this._serverLauncher)
+    if (!this._serverLauncher) {
       throw new Error('Launching server is not supported');
+    }
     return await this._serverLauncher.launchServer(options);
   }
 
@@ -78,7 +79,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
       let device: AndroidDevice;
       let closeError: string | undefined;
       const onPipeClosed = () => {
-        device?._didClose();
+        device._didClose();
         connection.close(closeError);
       };
       pipe.on('closed', onPipeClosed);
@@ -143,8 +144,9 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   private _onWebViewRemoved(socketName: string) {
     const view = this._webViews.get(socketName);
     this._webViews.delete(socketName);
-    if (view)
+    if (view) {
       view.emit(Events.AndroidWebView.Close);
+    }
   }
 
   setDefaultTimeout(timeout: number) {
@@ -166,15 +168,18 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
 
   async webView(selector: { pkg?: string; socketName?: string; }, options?: types.TimeoutOptions): Promise<AndroidWebView> {
     const predicate = (v: AndroidWebView) => {
-      if (selector.pkg)
+      if (selector.pkg) {
         return v.pkg() === selector.pkg;
-      if (selector.socketName)
+      }
+      if (selector.socketName) {
         return v._socketName() === selector.socketName;
+      }
       return false;
     };
     const webView = [...this._webViews.values()].find(predicate);
-    if (webView)
+    if (webView) {
       return webView;
+    }
     return await this.waitForEvent('webview', { ...options, predicate });
   }
 
@@ -229,8 +234,9 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
 
   async screenshot(options: { path?: string } = {}): Promise<Buffer> {
     const { binary } = await this._channel.screenshot();
-    if (options.path)
+    if (options.path) {
       await fs.promises.writeFile(options.path, binary);
+    }
     return binary;
   }
 
@@ -240,13 +246,15 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
 
   async close() {
     try {
-      if (this._shouldCloseConnectionOnClose)
+      if (this._shouldCloseConnectionOnClose) {
         this._connection.close();
-      else
+      } else {
         await this._channel.close();
+      }
     } catch (e) {
-      if (isTargetClosedError(e))
+      if (isTargetClosedError(e)) {
         return;
+      }
       throw e;
     }
   }
@@ -286,8 +294,9 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
       const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
       const waiter = Waiter.createForEvent(this, event);
       waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
-      if (event !== Events.AndroidDevice.Close)
+      if (event !== Events.AndroidDevice.Close) {
         waiter.rejectOnEvent(this, Events.AndroidDevice.Close, () => new TargetClosedError());
+      }
       const result = await waiter.waitForEvent(this, event, predicate as any);
       waiter.dispose();
       return result;
@@ -320,8 +329,9 @@ export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> i
 }
 
 async function loadFile(file: string | Buffer): Promise<Buffer> {
-  if (isString(file))
+  if (isString(file)) {
     return await fs.promises.readFile(file);
+  }
   return file;
 }
 
@@ -375,10 +385,12 @@ function toSelectorChannel(selector: api.AndroidSelector): channels.AndroidSelec
   } = selector;
 
   const toRegex = (value: RegExp | string | undefined): string | undefined => {
-    if (value === undefined)
+    if (value === undefined) {
       return undefined;
-    if (isRegExp(value))
+    }
+    if (isRegExp(value)) {
       return value.source;
+    }
     return '^' + value.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&').replace(/-/g, '\\x2d') + '$';
   };
 
@@ -427,8 +439,9 @@ export class AndroidWebView extends EventEmitter implements api.AndroidWebView {
   }
 
   async page(): Promise<Page> {
-    if (!this._pagePromise)
+    if (!this._pagePromise) {
       this._pagePromise = this._fetchPage();
+    }
     return await this._pagePromise;
   }
 

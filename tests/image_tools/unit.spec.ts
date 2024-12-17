@@ -89,8 +89,9 @@ function computeMean(c: ImageChannel, x1: number, y1: number, x2: number, y2: nu
   let result = 0;
   const N = (x2 - x1 + 1) * (y2 - y1 + 1);
   for (let y = y1; y <= y2; ++y) {
-    for (let x = x1; x <= x2; ++x)
+    for (let x = x1; x <= x2; ++x) {
       result += c.get(x, y);
+    }
   }
   return result / N;
 }
@@ -100,8 +101,9 @@ function computeVariance(c: ImageChannel, x1: number, y1: number, x2: number, y2
   const mean = computeMean(c, x1, y1, x2, y2);
   const N = (x2 - x1 + 1) * (y2 - y1 + 1);
   for (let y = y1; y <= y2; ++y) {
-    for (let x = x1; x <= x2; ++x)
+    for (let x = x1; x <= x2; ++x) {
       result += (c.get(x, y) - mean) ** 2;
+    }
   }
   return result / N;
 }
@@ -112,8 +114,9 @@ function computeCovariance(c1: ImageChannel, c2: ImageChannel, x1: number, y1: n
   const mean2 = computeMean(c2, x1, y1, x2, y2);
   let result = 0;
   for (let y = y1; y <= y2; ++y) {
-    for (let x = x1; x <= x2; ++x)
+    for (let x = x1; x <= x2; ++x) {
       result += (c1.get(x, y) - mean1) * (c2.get(x, y) - mean2);
+    }
   }
   return result / N;
 }

@@ -63,8 +63,9 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`)
 
     const messages: string[] = [];
     page.on('console', message => {
-      if (message.text().includes('click'))
+      if (message.text().includes('click')) {
         messages.push(message.text());
+      }
     });
     const [, sources] = await Promise.all([
       page.waitForEvent('console', msg => msg.type() !== 'error' && msg.text() === 'dblclick 2'),
@@ -491,8 +492,9 @@ await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
 
     const messages: any[] = [];
     page.on('console', message => {
-      if (message.type() !== 'error')
+      if (message.type() !== 'error') {
         messages.push(message);
+      }
     });
     const [, sources] = await Promise.all([
       recorder.waitForActionPerformed(),

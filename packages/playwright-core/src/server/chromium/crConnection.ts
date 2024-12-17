@@ -59,8 +59,9 @@ export class CRConnection extends EventEmitter {
   _rawSend(sessionId: string, method: string, params: any): number {
     const id = ++this._lastId;
     const message: ProtocolRequest = { id, method, params };
-    if (sessionId)
+    if (sessionId) {
       message.sessionId = sessionId;
+    }
     this._protocolLogger('send', message);
     this._transport.send(message);
     return id;
@@ -68,11 +69,13 @@ export class CRConnection extends EventEmitter {
 
   async _onMessage(message: ProtocolResponse) {
     this._protocolLogger('receive', message);
-    if (message.id === kBrowserCloseMessageId)
+    if (message.id === kBrowserCloseMessageId) {
       return;
+    }
     const session = this._sessions.get(message.sessionId || '');
-    if (session)
+    if (session) {
       session._onMessage(message);
+    }
   }
 
   _onClose(reason?: string) {
@@ -85,8 +88,9 @@ export class CRConnection extends EventEmitter {
   }
 
   close() {
-    if (!this._closed)
+    if (!this._closed) {
       this._transport.close();
+    }
   }
 
   async createBrowserSession(): Promise<CDPSession> {
@@ -140,8 +144,9 @@ export class CRSession extends EventEmitter {
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
-    if (this._crashed || this._closed || this._connection._closed || this._connection._browserDisconnectedLogs)
+    if (this._crashed || this._closed || this._connection._closed || this._connection._browserDisconnectedLogs) {
       throw new ProtocolError(this._crashed ? 'crashed' : 'closed', undefined, this._connection._browserDisconnectedLogs);
+    }
     const id = this._connection._rawSend(this._sessionId, method, params);
     return new Promise((resolve, reject) => {
       this._callbacks.set(id, { resolve, reject, error: new ProtocolError('error', method) });
@@ -165,20 +170,23 @@ export class CRSession extends EventEmitter {
     } else if (object.id && object.error?.code === -32001) {
       // Message to a closed session, just ignore it.
     } else {
-      assert(!object.id, object?.error?.message || undefined);
+      assert(!object.id, object.error?.message || undefined);
       Promise.resolve().then(() => {
-        if (this._eventListener)
+        if (this._eventListener) {
           this._eventListener(object.method!, object.params);
+        }
         this.emit(object.method!, object.params);
       });
     }
   }
 
   async detach() {
-    if (this._closed)
+    if (this._closed) {
       throw new Error(`Session already detached. Most likely the page has been closed.`);
-    if (!this._parentSession)
+    }
+    if (!this._parentSession) {
       throw new Error('Root session cannot be closed');
+    }
     // Ideally, detaching should resume any target, but there is a bug in the backend,
     // so we must Runtime.runIfWaitingForDebugger first.
     await this._sendMayFail('Runtime.runIfWaitingForDebugger');
@@ -214,8 +222,9 @@ export class CDPSession extends EventEmitter {
     this.guid = `cdp-session@${sessionId}`;
     this._session = parentSession.createChildSession(sessionId, (method, params) => this.emit(CDPSession.Events.Event, { method, params }));
     this._listeners = [eventsHelper.addEventListener(parentSession, 'Target.detachedFromTarget', (event: Protocol.Target.detachedFromTargetPayload) => {
-      if (event.sessionId === sessionId)
+      if (event.sessionId === sessionId) {
         this._onClose();
+      }
     })];
   }
 

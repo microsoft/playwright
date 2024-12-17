@@ -151,10 +151,11 @@ it('should support javascriptEnabled option', async ({ launchPersistent, browser
   await page.goto('data:text/html, <script>var something = "forbidden"</script>');
   let error = null;
   await page.evaluate('something').catch(e => error = e);
-  if (browserName === 'webkit')
+  if (browserName === 'webkit') {
     expect(error.message).toContain('Can\'t find variable: something');
-  else
+  } else {
     expect(error.message).toContain('something is not defined');
+  }
 });
 
 it('should support httpCredentials option', async ({ server, launchPersistent }) => {

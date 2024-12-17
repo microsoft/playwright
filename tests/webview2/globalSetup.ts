@@ -27,8 +27,9 @@ export default async () => {
     }
   });
   await new Promise<void>(resolve => spawnedProcess.stdout.on('data', (data: Buffer): void => {
-    if (data.toString().includes('WebView2 initialized'))
+    if (data.toString().includes('WebView2 initialized')) {
       resolve();
+    }
   }));
   const browser = await playwright.chromium.connectOverCDP(`http://127.0.0.1:${cdpPort}`);
   console.log(`Using version ${browser.version()} WebView2 runtime`);

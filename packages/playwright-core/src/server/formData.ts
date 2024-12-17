@@ -65,8 +65,9 @@ export class MultipartFormData {
 
   private _addBoundary(isLastBoundary?: boolean) {
     this._chunks.push(Buffer.from('--' + this._boundary));
-    if (isLastBoundary)
+    if (isLastBoundary) {
       this._chunks.push(Buffer.from('--'));
+    }
     this._chunks.push(Buffer.from('\r\n'));
   }
 }
@@ -85,7 +86,8 @@ const alphaNumericEncodingMap = [
 // See generateUniqueBoundaryString() in WebKit
 function generateUniqueBoundaryString(): string {
   const charCodes = [];
-  for (let i = 0; i < 16; i++)
+  for (let i = 0; i < 16; i++) {
     charCodes.push(alphaNumericEncodingMap[Math.floor(Math.random() * alphaNumericEncodingMap.length)]);
+  }
   return '----WebKitFormBoundary' + String.fromCharCode(...charCodes);
 }

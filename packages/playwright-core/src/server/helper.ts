@@ -26,8 +26,9 @@ const MAX_LOG_LENGTH = process.env.MAX_LOG_LENGTH ? +process.env.MAX_LOG_LENGTH 
 
 class Helper {
   static completeUserURL(urlString: string): string {
-    if (urlString.startsWith('localhost') || urlString.startsWith('127.0.0.1'))
+    if (urlString.startsWith('localhost') || urlString.startsWith('127.0.0.1')) {
       urlString = 'http://' + urlString;
+    }
     return urlString;
   }
 
@@ -48,8 +49,9 @@ class Helper {
     const heightString = features.find(f => f.startsWith('height='));
     const width = widthString ? parseInt(widthString.substring(6), 10) : NaN;
     const height = heightString ? parseInt(heightString.substring(7), 10) : NaN;
-    if (!Number.isNaN(width) && !Number.isNaN(height))
+    if (!Number.isNaN(width) && !Number.isNaN(height)) {
       return { width, height };
+    }
     return null;
   }
 
@@ -58,8 +60,9 @@ class Helper {
     const promise = new Promise((resolve, reject) => {
       listeners.push(eventsHelper.addEventListener(emitter, event, eventArg => {
         try {
-          if (predicate && !predicate(eventArg))
+          if (predicate && !predicate(eventArg)) {
             return;
+          }
           eventsHelper.removeEventListeners(listeners);
           resolve(eventArg);
         } catch (e) {
@@ -69,8 +72,9 @@ class Helper {
       }));
     });
     const dispose = () => eventsHelper.removeEventListeners(listeners);
-    if (progress)
+    if (progress) {
       progress.cleanupWhenAborted(dispose);
+    }
     return { promise, dispose };
   }
 
@@ -84,20 +88,23 @@ class Helper {
 
   static debugProtocolLogger(protocolLogger?: types.ProtocolLogger): types.ProtocolLogger {
     return (direction: 'send' | 'receive', message: object) => {
-      if (protocolLogger)
+      if (protocolLogger) {
         protocolLogger(direction, message);
+      }
       if (debugLogger.isEnabled('protocol')) {
         let text = JSON.stringify(message);
-        if (text.length > MAX_LOG_LENGTH)
+        if (text.length > MAX_LOG_LENGTH) {
           text = text.substring(0, MAX_LOG_LENGTH / 2) + ' <<<<<( LOG TRUNCATED )>>>>> ' + text.substring(text.length - MAX_LOG_LENGTH / 2);
+        }
         debugLogger.log('protocol', (direction === 'send' ? 'SEND ► ' : '◀ RECV ') + text);
       }
     };
   }
 
   static formatBrowserLogs(logs: string[], disconnectReason?: string) {
-    if (!disconnectReason && !logs.length)
+    if (!disconnectReason && !logs.length) {
       return '';
+    }
     return '\n' + (disconnectReason ? disconnectReason + '\n' : '') + logs.join('\n');
   }
 }

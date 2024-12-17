@@ -78,8 +78,9 @@ export class Clock {
   }
 
   private async _installIfNeeded() {
-    if (this._scriptInstalled)
+    if (this._scriptInstalled) {
       return;
+    }
     this._scriptInstalled = true;
     const script = `(() => {
       const module = {};
@@ -101,10 +102,12 @@ export class Clock {
  * to clock.tick()
  */
 function parseTicks(value: number | string): number {
-  if (typeof value === 'number')
+  if (typeof value === 'number') {
     return value;
-  if (!value)
+  }
+  if (!value) {
     return 0;
+  }
   const str = value;
 
   const strings = str.split(':');
@@ -121,8 +124,9 @@ function parseTicks(value: number | string): number {
 
   while (i--) {
     parsed = parseInt(strings[i], 10);
-    if (parsed >= 60)
+    if (parsed >= 60) {
       throw new Error(`Invalid time ${str}`);
+    }
     ms += parsed * Math.pow(60, l - i - 1);
   }
 
@@ -130,12 +134,15 @@ function parseTicks(value: number | string): number {
 }
 
 function parseTime(epoch: string | number | undefined): number {
-  if (!epoch)
+  if (!epoch) {
     return 0;
-  if (typeof epoch === 'number')
+  }
+  if (typeof epoch === 'number') {
     return epoch;
+  }
   const parsed = new Date(epoch);
-  if (!isFinite(parsed.getTime()))
+  if (!isFinite(parsed.getTime())) {
     throw new Error(`Invalid date: ${epoch}`);
+  }
   return parsed.getTime();
 }

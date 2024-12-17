@@ -59,35 +59,41 @@ export class FFNetworkManager {
   _onRequestWillBeSent(event: Protocol.Network.requestWillBeSentPayload) {
     const redirectedFrom = event.redirectedFrom ? (this._requests.get(event.redirectedFrom) || null) : null;
     const frame = redirectedFrom ? redirectedFrom.request.frame() : (event.frameId ? this._page._frameManager.frame(event.frameId) : null);
-    if (!frame)
+    if (!frame) {
       return;
-    if (redirectedFrom)
+    }
+    if (redirectedFrom) {
       this._requests.delete(redirectedFrom._id);
+    }
     const request = new InterceptableRequest(frame, redirectedFrom, event);
     let route;
-    if (event.isIntercepted)
+    if (event.isIntercepted) {
       route = new FFRouteImpl(this._session, request);
+    }
     this._requests.set(request._id, request);
     this._page._frameManager.requestStarted(request.request, route);
   }
 
   _onResponseReceived(event: Protocol.Network.responseReceivedPayload) {
     const request = this._requests.get(event.requestId);
-    if (!request)
+    if (!request) {
       return;
+    }
     const getResponseBody = async () => {
       const response = await this._session.send('Network.getResponseBody', {
         requestId: request._id
       });
-      if (response.evicted)
+      if (response.evicted) {
         throw new Error(`Response body for ${request.request.method()} ${request.request.url()} was evicted!`);
+      }
       return Buffer.from(response.base64body, 'base64');
     };
 
     const startTime = event.timing.startTime;
     function relativeToStart(time: number): number {
-      if (!time)
+      if (!time) {
         return -1;
+      }
       return (time - startTime) / 1000;
     }
     const timing = {
@@ -101,7 +107,7 @@ export class FFNetworkManager {
       responseStart: relativeToStart(event.timing.responseStart),
     };
     const response = new network.Response(request.request, event.status, event.statusText, parseMultivalueHeaders(event.headers), timing, getResponseBody, event.fromServiceWorker);
-    if (event?.remoteIPAddress && typeof event?.remotePort === 'number') {
+    if (event.remoteIPAddress && typeof event.remotePort === 'number') {
       response._serverAddrFinished({
         ipAddress: event.remoteIPAddress,
         port: event.remotePort,
@@ -110,11 +116,11 @@ export class FFNetworkManager {
       response._serverAddrFinished();
     }
     response._securityDetailsFinished({
-      protocol: event?.securityDetails?.protocol,
-      subjectName: event?.securityDetails?.subjectName,
-      issuer: event?.securityDetails?.issuer,
-      validFrom: event?.securityDetails?.validFrom,
-      validTo: event?.securityDetails?.validTo,
+      protocol: event.securityDetails?.protocol,
+      subjectName: event.securityDetails?.subjectName,
+      issuer: event.securityDetails?.issuer,
+      validFrom: event.securityDetails?.validFrom,
+      validTo: event.securityDetails?.validTo,
     });
     // "raw" headers are the same as "provisional" headers in Firefox.
     response.setRawResponseHeaders(null);
@@ -125,8 +131,9 @@ export class FFNetworkManager {
 
   _onRequestFinished(event: Protocol.Network.requestFinishedPayload) {
     const request = this._requests.get(event.requestId);
-    if (!request)
+    if (!request) {
       return;
+    }
     const response = request.request._existingResponse()!;
     response.setTransferSize(event.transferSize);
     response.setEncodedBodySize(event.encodedBodySize);
@@ -140,15 +147,17 @@ export class FFNetworkManager {
       this._requests.delete(request._id);
       response._requestFinished(responseEndTime);
     }
-    if (event.protocolVersion)
+    if (event.protocolVersion) {
       response._setHttpVersion(event.protocolVersion);
+    }
     this._page._frameManager.reportRequestFinished(request.request, response);
   }
 
   _onRequestFailed(event: Protocol.Network.requestFailedPayload) {
     const request = this._requests.get(event.requestId);
-    if (!request)
+    if (!request) {
       return;
+    }
     this._requests.delete(request._id);
     const response = request.request._existingResponse();
     if (response) {
@@ -198,11 +207,13 @@ class InterceptableRequest {
 
   constructor(frame: frames.Frame, redirectedFrom: InterceptableRequest | null, payload: Protocol.Network.requestWillBeSentPayload) {
     this._id = payload.requestId;
-    if (redirectedFrom)
+    if (redirectedFrom) {
       redirectedFrom._redirectedTo = this;
+    }
     let postDataBuffer = null;
-    if (payload.postData)
+    if (payload.postData) {
       postDataBuffer = Buffer.from(payload.postData, 'base64');
+    }
     this.request = new network.Request(frame._page._browserContext, frame, null, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
         payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, payload.headers);
     // "raw" headers are the same as "provisional" headers in Firefox.
@@ -211,8 +222,9 @@ class InterceptableRequest {
 
   _finalRequest(): InterceptableRequest {
     let request: InterceptableRequest = this;
-    while (request._redirectedTo)
+    while (request._redirectedTo) {
       request = request._redirectedTo;
+    }
     return request;
   }
 }
@@ -261,8 +273,9 @@ function parseMultivalueHeaders(headers: HeadersArray) {
   for (const header of headers) {
     const separator = header.name.toLowerCase() === 'set-cookie' ? '\n' : ',';
     const tokens = header.value.split(separator).map(s => s.trim());
-    for (const token of tokens)
+    for (const token of tokens) {
       result.push({ name: header.name, value: token });
+    }
   }
   return result;
 }

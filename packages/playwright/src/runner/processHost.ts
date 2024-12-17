@@ -73,8 +73,9 @@ export class ProcessHost extends EventEmitter {
     });
     this.process.on('error', e => {});  // do not yell at a send to dead process.
     this.process.on('message', (message: any) => {
-      if (debug.enabled('pw:test:protocol'))
+      if (debug.enabled('pw:test:protocol')) {
         debug('pw:test:protocol')('◀ RECV ' + JSON.stringify(message));
+      }
       if (message.method === '__env_produced__') {
         const producedEnv: EnvProducedPayload = message.params;
         this._producedEnv = Object.fromEntries(producedEnv.map(e => [e[0], e[1] ?? undefined]));
@@ -98,18 +99,21 @@ export class ProcessHost extends EventEmitter {
       }
     });
 
-    if (options.onStdOut)
+    if (options.onStdOut) {
       this.process.stdout?.on('data', options.onStdOut);
-    if (options.onStdErr)
+    }
+    if (options.onStdErr) {
       this.process.stderr?.on('data', options.onStdErr);
+    }
 
     const error = await new Promise<ProcessExitData | undefined>(resolve => {
       this.process!.once('exit', (code, signal) => resolve({ unexpectedly: true, code, signal }));
       this.once('ready', () => resolve(undefined));
     });
 
-    if (error)
+    if (error) {
       return error;
+    }
 
     const processParams: ProcessInitParams = {
       processName: this._processName
@@ -147,8 +151,9 @@ export class ProcessHost extends EventEmitter {
       this.send({ method: '__stop__' });
       this._didSendStop = true;
     }
-    if (!this._didExitAndRanOnExit)
+    if (!this._didExitAndRanOnExit) {
       await new Promise(f => this.once('exit', f));
+    }
   }
 
   didSendStop() {
@@ -160,8 +165,9 @@ export class ProcessHost extends EventEmitter {
   }
 
   private send(message: { method: string, params?: any }) {
-    if (debug.enabled('pw:test:protocol'))
+    if (debug.enabled('pw:test:protocol')) {
       debug('pw:test:protocol')('SEND ► ' + JSON.stringify(message));
+    }
     this.process?.send(message);
   }
 }

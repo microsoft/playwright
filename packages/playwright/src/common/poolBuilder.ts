@@ -43,10 +43,12 @@ export class PoolBuilder {
   buildPools(suite: Suite, testErrors?: TestError[]) {
     suite.forEachTest(test => {
       const pool = this._buildPoolForTest(test, testErrors);
-      if (this._type === 'loader')
+      if (this._type === 'loader') {
         test._poolDigest = pool.digest;
-      if (this._type === 'worker')
+      }
+      if (this._type === 'worker') {
         test._pool = pool;
+      }
     });
   }
 
@@ -54,17 +56,21 @@ export class PoolBuilder {
     let pool = this._buildTestTypePool(test._testType, testErrors);
 
     const parents: Suite[] = [];
-    for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent)
+    for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent) {
       parents.push(parent);
+    }
     parents.reverse();
 
     for (const parent of parents) {
-      if (parent._use.length)
+      if (parent._use.length) {
         pool = new FixturePool(parent._use, e => this._handleLoadError(e, testErrors), pool, parent._type === 'describe');
-      for (const hook of parent._hooks)
+      }
+      for (const hook of parent._hooks) {
         pool.validateFunction(hook.fn, hook.type + ' hook', hook.location);
-      for (const modifier of parent._modifiers)
+      }
+      for (const modifier of parent._modifiers) {
         pool.validateFunction(modifier.fn, modifier.type + ' modifier', modifier.location);
+      }
     }
 
     pool.validateFunction(test.fn, 'Test', test.location);
@@ -74,7 +80,7 @@ export class PoolBuilder {
   private _buildTestTypePool(testType: TestTypeImpl, testErrors?: TestError[]): FixturePool {
     if (!this._testTypePools.has(testType)) {
       const optionOverrides = {
-        overrides: this._project?.project?.use ?? {},
+        overrides: this._project?.project.use ?? {},
         location: { file: `project#${this._project?.id}`, line: 1, column: 1 }
       };
       const pool = new FixturePool(testType.fixtures, e => this._handleLoadError(e, testErrors), undefined, undefined, optionOverrides);
@@ -84,9 +90,10 @@ export class PoolBuilder {
   }
 
   private _handleLoadError(e: LoadError, testErrors?: TestError[]): void {
-    if (testErrors)
+    if (testErrors) {
       testErrors.push(e);
-    else
+    } else {
       throw new Error(`${formatLocation(e.location)}: ${e.message}`);
+    }
   }
 }

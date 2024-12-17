@@ -62,8 +62,9 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     await syncLocalStorageWithSettings(this._page, 'recorder');
 
     await this._page._setServerRequestInterceptor(route => {
-      if (!route.request().url().startsWith('https://playwright/'))
+      if (!route.request().url().startsWith('https://playwright/')) {
         return false;
+      }
 
       const uri = route.request().url().substring('https://playwright/'.length);
       const file = require.resolve('../../vite/recorder/' + uri);
@@ -93,8 +94,9 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
 
   static factory(context: BrowserContext): IRecorderAppFactory {
     return async recorder => {
-      if (process.env.PW_CODEGEN_NO_INSPECTOR)
+      if (process.env.PW_CODEGEN_NO_INSPECTOR) {
         return new EmptyRecorderApp();
+      }
       return await RecorderApp._open(recorder, context);
     };
   }
@@ -150,8 +152,9 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
 
     // Testing harness for runCLI mode.
     if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length) {
-      if ((process as any)._didSetSourcesForTest(sources[0].text))
+      if ((process as any)._didSetSourcesForTest(sources[0].text)) {
         this.close();
+      }
     }
   }
 
@@ -159,8 +162,9 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
   }
 
   async elementPicked(elementInfo: ElementInfo, userGesture?: boolean): Promise<void> {
-    if (userGesture)
+    if (userGesture) {
       this._page.bringToFront();
+    }
     await this._page.mainFrame().evaluateExpression(((param: { elementInfo: ElementInfo, userGesture?: boolean }) => {
       window.playwrightElementPicked(param.elementInfo, param.userGesture);
     }).toString(), { isFunction: true }, { elementInfo, userGesture }).catch(() => {});

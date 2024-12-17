@@ -264,8 +264,9 @@ it.describe('post data', () => {
     expect(serverRequest.method).toBe('POST');
     const buffer = await serverRequest.postBody;
     expect(buffer.length).toBe(arr.length);
-    for (let i = 0; i < arr.length; ++i)
+    for (let i = 0; i < arr.length; ++i) {
       expect(arr[i]).toBe(buffer[i]);
+    }
   });
 
   it('should use content-type from original request', async ({ page, server, browserName }) => {
@@ -329,10 +330,11 @@ it('should work with Cross-Origin-Opener-Policy', async ({ page, server, browser
   const response = await page.goto(server.EMPTY_PAGE);
   expect(intercepted).toEqual([server.EMPTY_PAGE]);
   // There should be only one request to the server.
-  if (browserName === 'webkit')
+  if (browserName === 'webkit') {
     expect(serverRequests).toEqual(['/empty.html', '/empty.html']);
-  else
+  } else {
     expect(serverRequests).toEqual(['/empty.html']);
+  }
   expect(serverHeaders['foo']).toBe('bar');
   expect(page.url()).toBe(server.EMPTY_PAGE);
   await response.finished();
@@ -659,10 +661,11 @@ it('propagate headers cross origin redirect after interception', {
   }, server.PREFIX + '/redirect');
   expect(text).toBe('done');
   const serverRequest = await serverRequestPromise;
-  if (browserName === 'webkit')
+  if (browserName === 'webkit') {
     expect.soft(serverRequest.headers['authorization']).toBeFalsy();
-  else
+  } else {
     expect.soft(serverRequest.headers['authorization']).toBe('credentials');
+  }
   expect.soft(serverRequest.headers['custom']).toBe('foo');
 });
 

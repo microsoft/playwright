@@ -21,8 +21,9 @@ import { PortTransport } from '../transform/portTransport';
 
 let loaderChannel: PortTransport | undefined;
 // Node.js < 20
-if ((globalThis as any).__esmLoaderPortPreV20)
+if ((globalThis as any).__esmLoaderPortPreV20) {
   loaderChannel = createPortTransport((globalThis as any).__esmLoaderPortPreV20);
+}
 
 // Node.js >= 20
 export let esmLoaderRegistered = false;
@@ -40,26 +41,30 @@ export function registerESMLoader() {
 
 function createPortTransport(port: MessagePort) {
   return new PortTransport(port, async (method, params) => {
-    if (method === 'pushToCompilationCache')
+    if (method === 'pushToCompilationCache') {
       addToCompilationCache(params.cache);
+    }
   });
 }
 
 export async function startCollectingFileDeps() {
-  if (!loaderChannel)
+  if (!loaderChannel) {
     return;
+  }
   await loaderChannel.send('startCollectingFileDeps', {});
 }
 
 export async function stopCollectingFileDeps(file: string) {
-  if (!loaderChannel)
+  if (!loaderChannel) {
     return;
+  }
   await loaderChannel.send('stopCollectingFileDeps', { file });
 }
 
 export async function incorporateCompilationCache() {
-  if (!loaderChannel)
+  if (!loaderChannel) {
     return;
+  }
   // This is needed to gather dependency information from the esm loader
   // that is populated from the resolve hook. We do not need to push
   // this information proactively during load, but gather it at the end.
@@ -68,15 +73,17 @@ export async function incorporateCompilationCache() {
 }
 
 export async function configureESMLoader() {
-  if (!loaderChannel)
+  if (!loaderChannel) {
     return;
+  }
   await loaderChannel.send('setSingleTSConfig', { tsconfig: singleTSConfig() });
   await loaderChannel.send('addToCompilationCache', { cache: serializeCompilationCache() });
 }
 
 export async function configureESMLoaderTransformConfig() {
-  if (!loaderChannel)
+  if (!loaderChannel) {
     return;
+  }
   await loaderChannel.send('setSingleTSConfig', { tsconfig: singleTSConfig() });
   await loaderChannel.send('setTransformConfig', { config: transformConfig() });
 }

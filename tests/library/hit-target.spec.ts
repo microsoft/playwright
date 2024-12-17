@@ -58,8 +58,9 @@ it('should block click when mousedown fails', async ({ page, server }) => {
 
     const allEvents = [];
     (window as any).allEvents = allEvents;
-    for (const name of ['mousemove', 'mousedown', 'mouseup', 'click', 'dblclick', 'auxclick', 'contextmenu', 'pointerdown', 'pointerup'])
+    for (const name of ['mousemove', 'mousedown', 'mouseup', 'click', 'dblclick', 'auxclick', 'contextmenu', 'pointerdown', 'pointerup']) {
       button.addEventListener(name, e => allEvents.push(e.type));
+    }
   });
 
   await page.click('button');
@@ -127,8 +128,9 @@ it('should not block programmatic events', async ({ page, server }) => {
     const allEvents = [];
     (window as any).allEvents = allEvents;
     button.addEventListener('click', e => {
-      if (!e.isTrusted)
+      if (!e.isTrusted) {
         allEvents.push(e.type);
+      }
     });
   });
 

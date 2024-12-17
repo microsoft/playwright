@@ -228,10 +228,11 @@ it('should have sane user agent', async ({ page, browserName, isElectron, isAndr
   // 5th part encodes real browser name and engine version.
   const [engine, browser] = part5.split(' ');
   expect(browser.startsWith('Safari/')).toBe(true);
-  if (browserName === 'chromium')
+  if (browserName === 'chromium') {
     expect(engine.includes('Chrome/')).toBe(true);
-  else
+  } else {
     expect(engine.startsWith('Version/')).toBe(true);
+  }
 });
 
 it('page.press should work', async ({ page, server }) => {
@@ -262,7 +263,8 @@ it('has navigator.webdriver set to true', async ({ page }) => {
 it('should iterate over page properties', async ({ page }) => {
   const props = [];
   for (const prop in page) {
-    if (page[prop] && typeof page[prop] === 'object')
+    if (page[prop] && typeof page[prop] === 'object') {
       props.push(page[prop][Symbol.iterator]);
+    }
   }
 });

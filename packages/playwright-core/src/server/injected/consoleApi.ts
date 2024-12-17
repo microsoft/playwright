@@ -29,14 +29,18 @@ class Locator {
   elements: Element[] | undefined;
 
   constructor(injectedScript: InjectedScript, selector: string, options?: { hasText?: string | RegExp, hasNotText?: string | RegExp, has?: Locator, hasNot?: Locator }) {
-    if (options?.hasText)
+    if (options?.hasText) {
       selector += ` >> internal:has-text=${escapeForTextSelector(options.hasText, false)}`;
-    if (options?.hasNotText)
+    }
+    if (options?.hasNotText) {
       selector += ` >> internal:has-not-text=${escapeForTextSelector(options.hasNotText, false)}`;
-    if (options?.has)
+    }
+    if (options?.has) {
       selector += ` >> internal:has=` + JSON.stringify(options.has[selectorSymbol]);
-    if (options?.hasNot)
+    }
+    if (options?.hasNot) {
       selector += ` >> internal:has-not=` + JSON.stringify(options.hasNot[selectorSymbol]);
+    }
     this[selectorSymbol] = selector;
     if (selector) {
       const parsed = injectedScript.parseSelector(selector);
@@ -77,8 +81,9 @@ class ConsoleAPI {
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
-    if (this._injectedScript.window.playwright)
+    if (this._injectedScript.window.playwright) {
       return;
+    }
     this._injectedScript.window.playwright = {
       $: (selector: string, strict?: boolean) => this._querySelector(selector, !!strict),
       $$: (selector: string) => this._querySelectorAll(selector),
@@ -102,34 +107,39 @@ class ConsoleAPI {
   }
 
   private _querySelector(selector: string, strict: boolean): (Element | undefined) {
-    if (typeof selector !== 'string')
+    if (typeof selector !== 'string') {
       throw new Error(`Usage: playwright.query('Playwright >> selector').`);
+    }
     const parsed = this._injectedScript.parseSelector(selector);
     return this._injectedScript.querySelector(parsed, this._injectedScript.document, strict);
   }
 
   private _querySelectorAll(selector: string): Element[] {
-    if (typeof selector !== 'string')
+    if (typeof selector !== 'string') {
       throw new Error(`Usage: playwright.$$('Playwright >> selector').`);
+    }
     const parsed = this._injectedScript.parseSelector(selector);
     return this._injectedScript.querySelectorAll(parsed, this._injectedScript.document);
   }
 
   private _inspect(selector: string) {
-    if (typeof selector !== 'string')
+    if (typeof selector !== 'string') {
       throw new Error(`Usage: playwright.inspect('Playwright >> selector').`);
+    }
     this._injectedScript.window.inspect(this._querySelector(selector, false));
   }
 
   private _selector(element: Element) {
-    if (!(element instanceof Element))
+    if (!(element instanceof Element)) {
       throw new Error(`Usage: playwright.selector(element).`);
+    }
     return this._injectedScript.generateSelectorSimple(element);
   }
 
   private _generateLocator(element: Element, language?: Language) {
-    if (!(element instanceof Element))
+    if (!(element instanceof Element)) {
       throw new Error(`Usage: playwright.locator(element).`);
+    }
     const selector = this._injectedScript.generateSelectorSimple(element);
     return asLocator(language || 'javascript', selector);
   }

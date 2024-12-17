@@ -84,8 +84,9 @@ it('should await resources to load', async ({ page, server }) => {
 });
 
 it('should work fast enough', async ({ page, server }) => {
-  for (let i = 0; i < 20; ++i)
+  for (let i = 0; i < 20; ++i) {
     await page.setContent('<div>yo</div>');
+  }
 });
 
 it('should work with tricky content', async ({ page, server }) => {
@@ -118,8 +119,9 @@ it('content() should throw nice error during navigation', async ({ page, server 
       promise,
     ]);
     const emptyOutput = '<html><head></head><body></body></html>';
-    if (contentOrError !== expectedOutput && contentOrError !== emptyOutput)
+    if (contentOrError !== expectedOutput && contentOrError !== emptyOutput) {
       expect(contentOrError?.message).toContain('Unable to retrieve content because the page is navigating and changing the content.');
+    }
   }
 });
 

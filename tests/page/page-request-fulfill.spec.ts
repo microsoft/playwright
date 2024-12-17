@@ -27,8 +27,9 @@ const it = base.extend<{
   rewriteAndroidLoopbackURL(url: string): string
       }>({
         rewriteAndroidLoopbackURL: ({ isAndroid }, use) => use(givenURL => {
-          if (!isAndroid)
+          if (!isAndroid) {
             return givenURL;
+          }
           const requestURL = new URL(givenURL);
           requestURL.hostname = 'localhost';
           return requestURL.toString();
@@ -155,7 +156,9 @@ it('should allow mocking svg with charset', async ({ page, server, browserName, 
     const img = document.createElement('img');
     img.src = PREFIX + '/does-not-exist.svg';
     document.body.appendChild(img);
-    return new Promise((f, r) => { img.onload = f; img.onerror = r; });
+    return new Promise((f, r) => {
+      img.onload = f; img.onerror = r;
+    });
   }, server.PREFIX);
   const img = await page.$('img');
   expect(await img.screenshot()).toMatchSnapshot('mock-svg.png');
@@ -370,8 +373,9 @@ it('should fulfill with har response', async ({ page, asset }) => {
   await page.route('**/*', async route => {
     const response = findResponse(har, route.request().url());
     const headers = {};
-    for (const { name, value } of response.headers)
+    for (const { name, value } of response.headers) {
       headers[name] = value;
+    }
     await route.fulfill({
       status: response.status,
       headers,

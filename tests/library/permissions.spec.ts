@@ -153,8 +153,9 @@ it('should support clipboard read', async ({ page, context, server, browserName,
 
   await page.goto(server.EMPTY_PAGE);
   // There is no 'clipboard-read' permission in WebKit Web API.
-  if (browserName !== 'webkit')
+  if (browserName !== 'webkit') {
     expect(await getPermission(page, 'clipboard-read')).toBe('prompt');
+  }
 
   if (isHeadlessShell) {
     // Chromium (but not headless-shell) shows a dialog and does not resolve the promise.
@@ -163,11 +164,13 @@ it('should support clipboard read', async ({ page, context, server, browserName,
   }
 
   await context.grantPermissions(['clipboard-read']);
-  if (browserName !== 'webkit')
+  if (browserName !== 'webkit') {
     expect(await getPermission(page, 'clipboard-read')).toBe('granted');
+  }
   // There is no 'clipboard-write' permission in WebKit Web API.
-  if (browserName === 'chromium')
+  if (browserName === 'chromium') {
     await context.grantPermissions(['clipboard-write']);
+  }
   await page.evaluate(() => navigator.clipboard.writeText('test content'));
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('test content');
 });

@@ -35,7 +35,8 @@ export class LocalUtils extends ChannelOwner<channels.LocalUtilsChannel> {
     super(parent, type, guid, initializer);
     this.markAsInternalType();
     this.devices = {};
-    for (const { name, descriptor } of initializer.deviceDescriptors)
+    for (const { name, descriptor } of initializer.deviceDescriptors) {
       this.devices[name] = descriptor;
+    }
   }
 }

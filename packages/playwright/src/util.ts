@@ -32,8 +32,9 @@ const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/packa
 export function filterStackTrace(e: Error): { message: string, stack: string, cause?: ReturnType<typeof filterStackTrace> } {
   const name = e.name ? e.name + ': ' : '';
   const cause = e.cause instanceof Error ? filterStackTrace(e.cause) : undefined;
-  if (process.env.PWDEBUGIMPL)
+  if (process.env.PWDEBUGIMPL) {
     return { message: name + e.message, stack: e.stack || '', cause };
+  }
 
   const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || []));
   return {
@@ -44,10 +45,12 @@ export function filterStackTrace(e: Error): { message: string, stack: string, ca
 }
 
 export function filterStackFile(file: string) {
-  if (!process.env.PWDEBUGIMPL && file.startsWith(PLAYWRIGHT_TEST_PATH))
+  if (!process.env.PWDEBUGIMPL && file.startsWith(PLAYWRIGHT_TEST_PATH)) {
     return false;
-  if (!process.env.PWDEBUGIMPL && file.startsWith(PLAYWRIGHT_CORE_PATH))
+  }
+  if (!process.env.PWDEBUGIMPL && file.startsWith(PLAYWRIGHT_CORE_PATH)) {
     return false;
+  }
   return true;
 }
 
@@ -55,18 +58,21 @@ export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
   const frames: StackFrame[] = [];
   for (const line of rawStack) {
     const frame = parseStackTraceLine(line);
-    if (!frame || !frame.file)
+    if (!frame || !frame.file) {
       continue;
-    if (!filterStackFile(frame.file))
+    }
+    if (!filterStackFile(frame.file)) {
       continue;
+    }
     frames.push(frame);
   }
   return frames;
 }
 
 export function serializeError(error: Error | any): TestInfoErrorImpl {
-  if (error instanceof Error)
+  if (error instanceof Error) {
     return filterStackTrace(error);
+  }
   return {
     value: util.inspect(error)
   };
@@ -104,17 +110,19 @@ export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[
     if (isRegExp(pattern)) {
       reList.push(pattern);
     } else {
-      if (!pattern.startsWith('**/'))
+      if (!pattern.startsWith('**/')) {
         filePatterns.push('**/' + pattern);
-      else
+      } else {
         filePatterns.push(pattern);
+      }
     }
   }
   return (filePath: string) => {
     for (const re of reList) {
       re.lastIndex = 0;
-      if (re.test(filePath))
+      if (re.test(filePath)) {
         return true;
+      }
     }
     // Windows might still receive unix style paths from Cygwin or Git Bash.
     // Check against the file url as well.
@@ -122,13 +130,15 @@ export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[
       const fileURL = url.pathToFileURL(filePath).href;
       for (const re of reList) {
         re.lastIndex = 0;
-        if (re.test(fileURL))
+        if (re.test(fileURL)) {
           return true;
+        }
       }
     }
     for (const pattern of filePatterns) {
-      if (minimatch(filePath, pattern, { nocase: true, dot: true }))
+      if (minimatch(filePath, pattern, { nocase: true, dot: true })) {
         return true;
+      }
     }
     return false;
   };
@@ -139,8 +149,9 @@ export function createTitleMatcher(patterns: RegExp | RegExp[]): Matcher {
   return (value: string) => {
     for (const re of reList) {
       re.lastIndex = 0;
-      if (re.test(value))
+      if (re.test(value)) {
         return true;
+      }
     }
     return false;
   };
@@ -150,8 +161,9 @@ export function mergeObjects<A extends object, B extends object, C extends objec
   const result = { ...a } as any;
   for (const x of [b, c].filter(Boolean)) {
     for (const [name, value] of Object.entries(x as any)) {
-      if (!Object.is(value, undefined))
+      if (!Object.is(value, undefined)) {
         result[name] = value;
+      }
     }
   }
   return result as any;
@@ -159,14 +171,16 @@ export function mergeObjects<A extends object, B extends object, C extends objec
 
 export function forceRegExp(pattern: string): RegExp {
   const match = pattern.match(/^\/(.*)\/([gi]*)$/);
-  if (match)
+  if (match) {
     return new RegExp(match[1], match[2]);
+  }
   return new RegExp(pattern, 'gi');
 }
 
 export function relativeFilePath(file: string): string {
-  if (!path.isAbsolute(file))
+  if (!path.isAbsolute(file)) {
     return file;
+  }
   return path.relative(process.cwd(), file);
 }
 
@@ -190,8 +204,9 @@ export function expectTypes(receiver: any, types: string[], matcherName: string)
 export const windowsFilesystemFriendlyLength = 60;
 
 export function trimLongString(s: string, length = 100) {
-  if (s.length <= length)
+  if (s.length <= length) {
     return s;
+  }
   const hash = calculateSha1(s);
   const middle = `-${hash.substring(0, 5)}-`;
   const start = Math.floor((length - middle.length) / 2);
@@ -216,8 +231,9 @@ export function sanitizeFilePathBeforeExtension(filePath: string): string {
  */
 export function getContainedPath(parentPath: string, subPath: string = ''): string | null {
   const resolvedPath = path.resolve(parentPath, subPath);
-  if (resolvedPath === parentPath || resolvedPath.startsWith(parentPath + path.sep))
+  if (resolvedPath === parentPath || resolvedPath.startsWith(parentPath + path.sep)) {
     return resolvedPath;
+  }
   return null;
 }
 
@@ -229,8 +245,9 @@ const folderToPackageJsonPath = new Map<string, string>();
 
 export function getPackageJsonPath(folderPath: string): string {
   const cached = folderToPackageJsonPath.get(folderPath);
-  if (cached !== undefined)
+  if (cached !== undefined) {
     return cached;
+  }
 
   const packageJsonPath = path.join(folderPath, 'package.json');
   if (fs.existsSync(packageJsonPath)) {
@@ -250,23 +267,27 @@ export function getPackageJsonPath(folderPath: string): string {
 }
 
 export function resolveReporterOutputPath(defaultValue: string, configDir: string, configValue: string | undefined) {
-  if (configValue)
+  if (configValue) {
     return path.resolve(configDir, configValue);
+  }
   let basePath = getPackageJsonPath(configDir);
   basePath = basePath ? path.dirname(basePath) : process.cwd();
   return path.resolve(basePath, defaultValue);
 }
 
 export async function normalizeAndSaveAttachment(outputPath: string, name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}): Promise<{ name: string; path?: string | undefined; body?: Buffer | undefined; contentType: string; }> {
-  if (options.path === undefined && options.body === undefined)
+  if (options.path === undefined && options.body === undefined) {
     return { name, contentType: 'text/plain' };
-  if ((options.path !== undefined ? 1 : 0) + (options.body !== undefined ? 1 : 0) !== 1)
+  }
+  if ((options.path !== undefined ? 1 : 0) + (options.body !== undefined ? 1 : 0) !== 1) {
     throw new Error(`Exactly one of "path" and "body" must be specified`);
+  }
   if (options.path !== undefined) {
     const hash = calculateSha1(options.path);
 
-    if (!isString(name))
+    if (!isString(name)) {
       throw new Error('"name" should be string.');
+    }
 
     const sanitizedNamePrefix = sanitizeForFilePath(name) + '-';
     const dest = path.join(outputPath, 'attachments', sanitizedNamePrefix + hash + path.extname(options.path));
@@ -281,18 +302,21 @@ export async function normalizeAndSaveAttachment(outputPath: string, name: strin
 }
 
 export function fileIsModule(file: string): boolean {
-  if (file.endsWith('.mjs') || file.endsWith('.mts'))
+  if (file.endsWith('.mjs') || file.endsWith('.mts')) {
     return true;
-  if (file.endsWith('.cjs') || file.endsWith('.cts'))
+  }
+  if (file.endsWith('.cjs') || file.endsWith('.cts')) {
     return false;
+  }
   const folder = path.dirname(file);
   return folderIsModule(folder);
 }
 
 function folderIsModule(folder: string): boolean {
   const packageJsonPath = getPackageJsonPath(folder);
-  if (!packageJsonPath)
+  if (!packageJsonPath) {
     return false;
+  }
   // Rely on `require` internal caching logic.
   return require(packageJsonPath).type === 'module';
 }
@@ -322,16 +346,19 @@ const kExtLookups = new Map([
   ['', ['.js', '.ts', '.jsx', '.tsx', '.cjs', '.mjs', '.cts', '.mts']],
 ]);
 function resolveImportSpecifierExtension(resolved: string): string | undefined {
-  if (fileExists(resolved))
+  if (fileExists(resolved)) {
     return resolved;
+  }
 
   for (const [ext, others] of kExtLookups) {
-    if (!resolved.endsWith(ext))
+    if (!resolved.endsWith(ext)) {
       continue;
+    }
     for (const other of others) {
       const modified = resolved.substring(0, resolved.length - ext.length) + other;
-      if (fileExists(modified))
+      if (fileExists(modified)) {
         return modified;
+      }
     }
     break;  // Do not try '' when a more specific extension like '.jsx' matched.
   }
@@ -348,8 +375,9 @@ function resolveImportSpecifierExtension(resolved: string): string | undefined {
 // https://nodejs.org/dist/latest-v20.x/docs/api/modules.html#folders-as-modules.
 export function resolveImportSpecifierAfterMapping(resolved: string, afterPathMapping: boolean): string | undefined {
   const resolvedFile = resolveImportSpecifierExtension(resolved);
-  if (resolvedFile)
+  if (resolvedFile) {
     return resolvedFile;
+  }
 
   if (dirExists(resolved)) {
     const packageJsonPath = path.join(resolved, 'package.json');
@@ -368,8 +396,9 @@ export function resolveImportSpecifierAfterMapping(resolved: string, afterPathMa
 
     // If we import a package, let Node.js figure out the correct import based on package.json.
     // This also covers the "main" field for "folder as module".
-    if (fileExists(packageJsonPath))
+    if (fileExists(packageJsonPath)) {
       return resolved;
+    }
 
     // Implement the "folder as module" Node.js behavior.
     // Note that we do not delegate to Node.js, because we support this for ESM as well,
@@ -389,8 +418,9 @@ function dirExists(resolved: string) {
 
 export async function removeDirAndLogToConsole(dir: string) {
   try {
-    if (!fs.existsSync(dir))
+    if (!fs.existsSync(dir)) {
       return;
+    }
     // eslint-disable-next-line no-console
     console.log(`Removing ${await fs.promises.realpath(dir)}`);
     await fs.promises.rm(dir, { recursive: true, force: true });

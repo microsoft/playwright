@@ -35,8 +35,9 @@ const kTCPConnectionAt = Symbol('kTCPConnectionAt');
 class HttpHappyEyeballsAgent extends http.Agent {
   createConnection(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket?: net.Socket) => void): net.Socket | undefined {
     // There is no ambiguity in case of IP address.
-    if (net.isIP(clientRequestArgsToHostName(options)))
+    if (net.isIP(clientRequestArgsToHostName(options))) {
       return net.createConnection(options as net.NetConnectOpts);
+    }
     createConnectionAsync(options, oncreate, /* useTLS */ false).catch(err => oncreate?.(err));
   }
 }
@@ -44,8 +45,9 @@ class HttpHappyEyeballsAgent extends http.Agent {
 class HttpsHappyEyeballsAgent extends https.Agent {
   createConnection(options: http.ClientRequestArgs, oncreate?: (err: Error | null, socket?: net.Socket) => void): net.Socket | undefined {
     // There is no ambiguity in case of IP address.
-    if (net.isIP(clientRequestArgsToHostName(options)))
+    if (net.isIP(clientRequestArgsToHostName(options))) {
       return tls.connect(options as tls.ConnectionOptions);
+    }
     createConnectionAsync(options, oncreate, /* useTLS */ true).catch(err => oncreate?.(err));
   }
 }
@@ -62,10 +64,12 @@ export async function createSocket(host: string, port: number): Promise<net.Sock
       socket.on('error', error => reject(error));
     } else {
       createConnectionAsync({ host, port }, (err, socket) => {
-        if (err)
+        if (err) {
           reject(err);
-        if (socket)
+        }
+        if (socket) {
           resolve(socket);
+        }
       }, /* useTLS */ false).catch(err => reject(err));
     }
   });
@@ -80,8 +84,9 @@ export async function createTLSSocket(options: tls.ConnectionOptions): Promise<t
       socket.on('error', error => reject(error));
     } else {
       createConnectionAsync(options, (err, socket) => {
-        if (err)
+        if (err) {
           reject(err);
+        }
         if (socket) {
           socket.on('secureConnect', () => resolve(socket));
           socket.on('error', error => reject(error));
@@ -116,12 +121,14 @@ export async function createConnectionAsync(
   let firstError;
   let errorCount = 0;
   const handleError = (socket: net.Socket, err: Error) => {
-    if (!sockets.delete(socket))
+    if (!sockets.delete(socket)) {
       return;
+    }
     ++errorCount;
     firstError ??= err;
-    if (errorCount === addresses.length)
+    if (errorCount === addresses.length) {
       oncreate?.(firstError);
+    }
   };
 
   const connected = new ManualPromise();
@@ -149,8 +156,9 @@ export async function createConnectionAsync(
       // TODO: Cache the result?
       // Close other outstanding sockets.
       sockets.delete(socket);
-      for (const s of sockets)
+      for (const s of sockets) {
         s.destroy();
+      }
       sockets.clear();
     });
     socket.on('timeout', () => {
@@ -164,8 +172,9 @@ export async function createConnectionAsync(
       connected,
       new Promise(f => setTimeout(f, connectionAttemptDelayMs))
     ]);
-    if (connected.isDone())
+    if (connected.isDone()) {
       break;
+    }
   }
 }
 
@@ -182,19 +191,23 @@ async function lookupAddresses(hostname: string): Promise<dns.LookupAddress[]> {
   const result = [];
   // Alternate ipv6 and ipv4 addresses.
   for (let i = 0; i < Math.max(firstFamily.length, secondFamily.length); i++) {
-    if (firstFamily[i])
+    if (firstFamily[i]) {
       result.push(firstFamily[i]);
-    if (secondFamily[i])
+    }
+    if (secondFamily[i]) {
       result.push(secondFamily[i]);
+    }
   }
   return result;
 }
 
 function clientRequestArgsToHostName(options: http.ClientRequestArgs): string {
-  if (options.hostname)
+  if (options.hostname) {
     return options.hostname;
-  if (options.host)
+  }
+  if (options.host) {
     return options.host;
+  }
   throw new Error('Either options.hostname or options.host must be provided');
 }
 
