@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { clsx } from '@web/uiUtils';
+import { clsx } from '../uiUtils';
 import './tabbedPane.css';
 import { Toolbar } from './toolbar';
 import * as React from 'react';

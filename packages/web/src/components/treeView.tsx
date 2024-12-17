@@ -15,7 +15,7 @@
 */
 
 import * as React from 'react';
-import { clsx, scrollIntoViewIfNeeded } from '@web/uiUtils';
+import { clsx, scrollIntoViewIfNeeded } from '../uiUtils';
 import './treeView.css';
 
 export type TreeItem = {
