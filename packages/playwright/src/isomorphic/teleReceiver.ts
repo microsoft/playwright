@@ -108,7 +108,7 @@ export type JsonTestStepEnd = {
   id: string;
   duration: number;
   error?: reporterTypes.TestError;
-  attachments: number[]; // index of JsonTestResultEnd.attachments
+  attachments?: number[]; // index of JsonTestResultEnd.attachments
 };
 
 export type JsonFullResult = {
@@ -267,7 +267,7 @@ export class TeleReporterReceiver {
     const step = result._stepMap.get(payload.id)!;
     step.duration = payload.duration;
     step.error = payload.error;
-    step._attachmentIndices = payload.attachments;
+    step._attachmentIndices = payload.attachments ?? [];
     this._reporter.onStepEnd?.(test, result, step);
   }
 
