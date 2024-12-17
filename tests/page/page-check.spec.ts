@@ -17,42 +17,16 @@
 
 import { test as it, expect } from './pageTest';
 
+it('should check the box @smoke', async ({ page }) => {
+  await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
+  await page.check('input');
+  expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
+});
+
 it('should not check the checked box', async ({ page }) => {
   await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
-  await it.step('outer step 1', async () => {
-    await it.step.fail('inner step 1.1', async () => {
-      throw new Error('inner step 1.1 failed');
-    });
-    await it.step.fixme('inner step 1.2', async () => {
-      console.log('inner step 1.2 skipped');
-    });
-  });
-  await it.step('outer step 2', async () => {
-    await it.step.fixme('inner step 2.1', async () => {
-      console.log('inner step 2.1 expected to fail');
-    });
-    await it.step('inner step 2.2', async () => {
-      expect(1).toBe(1);
-    });
-  });
-  await it.step.fail('outer step 3', async () => {
-    throw new Error('outer step 3 failed');
-  });
-});
-
-it.fail('exp falure', async ({ page }) => {
-  await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
-  expect(1).toBe(2);
-});
-
-it.skip('exp skipped', async ({ page }) => {
-  await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
-  expect(1).toBe(2);
-});
-
-it.fixme('exp fixme', async ({ page }) => {
-  await page.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
-  expect(1).toBe(2);
+  await page.check('input');
+  expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
 });
 
 it('should uncheck the box', async ({ page }) => {
