@@ -201,7 +201,8 @@ const kPresentationInheritanceParents: { [tagName: string]: string[] } = {
 };
 
 function getImplicitAriaRole(element: Element): AriaRole | null {
-  const implicitRole = kImplicitRoleByTagName[elementSafeTagName(element)](element) || '';
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const implicitRole = kImplicitRoleByTagName[elementSafeTagName(element)]?.(element) || '';
   if (!implicitRole) {
     return null;
   }
