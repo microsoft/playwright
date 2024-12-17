@@ -57,7 +57,6 @@ export class TestTypeImpl {
     test.slow = wrapFunctionWithLocation(this._modifier.bind(this, 'slow'));
     test.setTimeout = wrapFunctionWithLocation(this._setTimeout.bind(this));
     test.step = this._step.bind(this, 'pass');
-    test.step.skip = this._step.bind(this, 'skip');
     test.step.fail = this._step.bind(this, 'fail');
     test.step.fixme = this._step.bind(this, 'fixme');
     test.use = wrapFunctionWithLocation(this._use.bind(this));
@@ -260,11 +259,11 @@ export class TestTypeImpl {
     suite._use.push({ fixtures, location });
   }
 
-  async _step<T>(expectation: 'pass'|'fail'|'fixme'|'skip', title: string, body: () => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
+  async _step<T>(expectation: 'pass'|'fail'|'fixme', title: string, body: () => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
-    if (expectation === 'skip' || expectation === 'fixme')
+    if (expectation === 'fixme')
       return undefined as T;
     const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
     return await zones.run('stepZone', step, async () => {
