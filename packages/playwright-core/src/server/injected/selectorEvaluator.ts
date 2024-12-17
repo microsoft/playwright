@@ -20,7 +20,7 @@ import { isElementVisible, parentElementOrShadowHost } from './domUtils';
 import { type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { elementMatchesText, elementText, shouldSkipForTextMatching, type ElementText } from './selectorUtils';
 import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
-import { assertUnreachableWithError } from 'playwright-core/lib/common/types';
+import { assertUnreachableWithError } from '../../common/types';
 
 type QueryContext = {
   scope: Element | Document;

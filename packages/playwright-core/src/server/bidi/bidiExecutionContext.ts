@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { assertUnreachableWithError } from 'playwright-core/lib/common/types';
+import { assertUnreachableWithError } from '../../common/types';
 import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 import * as js from '../javascript';
 import type { BidiSession } from './bidiConnection';
