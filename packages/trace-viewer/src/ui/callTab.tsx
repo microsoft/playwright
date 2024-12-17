@@ -131,6 +131,7 @@ function parseSerializedValue(value: SerializedValue, handles: any[] | undefined
     if (value.v === '-Infinity') {
       return -Infinity;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (value.v === '-0') {
       return -0;
     }

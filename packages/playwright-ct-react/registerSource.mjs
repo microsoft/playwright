@@ -52,6 +52,7 @@ function __pwRender(value) {
       if (isJsxFragment(type)) {
         type = __pwReact.Fragment;
       }
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       const props = component.props ? __pwRender(component.props) : {};
       const key = component.key ? __pwRender(component.key) : undefined;
       const { children, ...propsWithoutChildren } = props;

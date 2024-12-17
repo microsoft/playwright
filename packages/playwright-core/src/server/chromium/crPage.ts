@@ -212,7 +212,7 @@ export class CRPage implements PageDelegate {
 
   private async _go(delta: number): Promise<boolean> {
     const history = await this._mainFrameSession._client.send('Page.getNavigationHistory');
-    const entry = history.entries[history.currentIndex + delta];
+    const entry = history.entries[history.currentIndex + delta] as Protocol.Page.NavigationEntry | undefined;
     if (!entry) {
       return false;
     }
@@ -639,6 +639,7 @@ class FrameSession {
     // In this case, we already have a new session for this frame, so events
     // in the old session should be ignored.
     const session = this._crPage._sessionForFrame(frame);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return session && session !== this && !session._swappedIn;
   }
 
@@ -1140,6 +1141,7 @@ class FrameSession {
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: handle._objectId
     });
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!nodeInfo || typeof nodeInfo.node.frameId !== 'string') {
       return null;
     }
@@ -1150,11 +1152,13 @@ class FrameSession {
     // document.documentElement has frameId of the owner frame.
     const documentElement = await handle.evaluateHandle(node => {
       const doc = node as Document;
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (doc.documentElement && doc.documentElement.ownerDocument === doc) {
         return doc.documentElement;
       }
       return node.ownerDocument ? node.ownerDocument.documentElement : null;
     });
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!documentElement) {
       return null;
     }
@@ -1164,6 +1168,7 @@ class FrameSession {
     const nodeInfo = await this._client.send('DOM.describeNode', {
       objectId: documentElement._objectId
     });
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const frameId = nodeInfo && typeof nodeInfo.node.frameId === 'string' ?
       nodeInfo.node.frameId : null;
     documentElement.dispose();

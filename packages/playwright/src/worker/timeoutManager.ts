@@ -99,6 +99,7 @@ export class TimeoutManager {
         running.timeoutPromise,
       ]);
     } finally {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (running.timer) {
         clearTimeout(running.timer);
       }

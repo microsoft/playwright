@@ -423,6 +423,7 @@ export class TestServerDispatcher implements TestServerInterface {
       // Preserve plugin instances between setup and build.
       if (!this._plugins) {
         webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         this._plugins = config.plugins || [];
       } else {
         config.plugins.splice(0, config.plugins.length, ...this._plugins);

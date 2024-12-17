@@ -106,7 +106,7 @@ export class TestTree {
 
       for (const test of parentSuite.tests) {
         const title = test.title;
-        let testCaseItem = parentGroup.children.find(t => t.kind !== 'group' && t.title === title) as TestCaseItem;
+        let testCaseItem = parentGroup.children.find(t => t.kind !== 'group' && t.title === title) as TestCaseItem | undefined;
         if (!testCaseItem) {
           testCaseItem = {
             kind: 'case',
@@ -135,9 +135,9 @@ export class TestTree {
           status = 'skipped';
         } else if (result.status === 'interrupted') {
           status = 'none';
-        } else if (result && test.outcome() !== 'expected') {
+        } else if (test.outcome() !== 'expected') {
           status = 'failed';
-        } else if (result && test.outcome() === 'expected') {
+        } else if (test.outcome() === 'expected') {
           status = 'passed';
         }
 

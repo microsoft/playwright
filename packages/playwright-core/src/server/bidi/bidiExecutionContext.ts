@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { assertUnreachableWithError } from 'playwright-core/lib/common/types';
 import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 import * as js from '../javascript';
 import type { BidiSession } from './bidiConnection';
@@ -51,13 +52,17 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       awaitPromise: true,
       userActivation: true,
     });
-    if (response.type === 'success') {
-      return BidiDeserializer.deserialize(response.result);
+    switch (response.type) {
+      case 'success': {
+        return BidiDeserializer.deserialize(response.result);
+      }
+      case 'exception': {
+        throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
+      }
+      default: {
+        return assertUnreachableWithError(response, new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response)));
+      }
     }
-    if (response.type === 'exception') {
-      throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
-    }
-    throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 
   async rawEvaluateHandle(expression: string): Promise<js.ObjectId> {
@@ -69,16 +74,20 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       awaitPromise: true,
       userActivation: true,
     });
-    if (response.type === 'success') {
-      if ('handle' in response.result) {
-        return response.result.handle!;
+    switch (response.type) {
+      case 'success': {
+        if ('handle' in response.result) {
+          return response.result.handle!;
+        }
+        throw new js.JavaScriptErrorInEvaluate('Cannot get handle: ' + JSON.stringify(response.result));
       }
-      throw new js.JavaScriptErrorInEvaluate('Cannot get handle: ' + JSON.stringify(response.result));
+      case 'exception': {
+        throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
+      }
+      default: {
+        return assertUnreachableWithError(response, new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response)));
+      }
     }
-    if (response.type === 'exception') {
-      throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
-    }
-    throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 
   async evaluateWithArguments(functionDeclaration: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
@@ -95,17 +104,21 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       awaitPromise: true,
       userActivation: true,
     });
-    if (response.type === 'exception') {
-      throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
-    }
-    if (response.type === 'success') {
-      if (returnByValue) {
-        return parseEvaluationResultValue(BidiDeserializer.deserialize(response.result));
+    switch (response.type) {
+      case 'success': {
+        if (returnByValue) {
+          return parseEvaluationResultValue(BidiDeserializer.deserialize(response.result));
+        }
+        const objectId = 'handle' in response.result ? response.result.handle : undefined ;
+        return utilityScript._context.createHandle({ objectId, ...response.result });
       }
-      const objectId = 'handle' in response.result ? response.result.handle : undefined ;
-      return utilityScript._context.createHandle({ objectId, ...response.result });
+      case 'exception': {
+        throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
+      }
+      default: {
+        return assertUnreachableWithError(response, new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response)));
+      }
     }
-    throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 
   async getProperties(context: js.ExecutionContext, objectId: js.ObjectId): Promise<Map<string, js.JSHandle>> {
@@ -134,13 +147,17 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       awaitPromise: true,
       userActivation: true,
     });
-    if (response.type === 'exception') {
-      throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
+    switch (response.type) {
+      case 'success': {
+        return response.result;
+      }
+      case 'exception': {
+        throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text + '\nFull val: ' + JSON.stringify(response.exceptionDetails));
+      }
+      default: {
+        return assertUnreachableWithError(response, new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response)));
+      }
     }
-    if (response.type === 'success') {
-      return response.result;
-    }
-    throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 }
 

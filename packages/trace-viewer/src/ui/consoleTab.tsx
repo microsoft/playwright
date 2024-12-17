@@ -202,6 +202,7 @@ function format(args: { preview: string, value: any }[]): JSX.Element[] {
     } else if (specifier === 'c') {
       tokens = [];
       const format = tail[argIndex++];
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       const styleObject = format ? parseCSSStyle(format.preview) : {};
       formatted.push(<span style={styleObject}>{tokens}</span>);
     }

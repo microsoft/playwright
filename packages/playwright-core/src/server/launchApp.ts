@@ -90,6 +90,7 @@ export async function syncLocalStorageWithSettings(page: Page, appName: string) 
   await page.addInitScript(
       `(${String((settings: any) => {
         // iframes w/ snapshots, etc.
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (location && location.protocol === 'data:') {
           return;
         }

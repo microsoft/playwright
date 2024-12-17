@@ -190,7 +190,7 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
       codemirror.scrollIntoView({ line: Math.max(0, revealLine - 1), ch: 0 }, 50);
     }
 
-    let changeListener: () => void | undefined;
+    let changeListener: (() => void | undefined) | undefined;
     if (onChange) {
       changeListener = () => onChange(codemirror.getValue());
       codemirror.on('change', changeListener);

@@ -42,6 +42,7 @@ const utils = Object.freeze({
 });
 
 function getPrototype(obj: object) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (Object.getPrototypeOf) {
     return Object.getPrototypeOf(obj);
   }

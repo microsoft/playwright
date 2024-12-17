@@ -188,6 +188,7 @@ export class Screenshotter {
 
   private async _fullPageSize(progress: Progress): Promise<types.Size> {
     const fullPageSize = await this._page.mainFrame().waitForFunctionValueInUtility(progress, () => {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (!document.body || !document.documentElement) {
         return null;
       }
@@ -297,6 +298,7 @@ export class Screenshotter {
       return cleanup;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     await Promise.all((options.mask || []).map(async ({ frame, selector }) => {
       const pair = await frame.selectors.resolveFrameForSelector(selector);
       if (pair) {
@@ -378,6 +380,7 @@ export function validateScreenshotOptions(options: ScreenshotOptions): 'png' | '
   // options.type takes precedence over inferring the type from options.path
   // because it may be a 0-length file with no extension created beforehand (i.e. as a temp file).
   if (options.type) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     assert(options.type === 'png' || options.type === 'jpeg', 'Unknown options.type value: ' + options.type);
     format = options.type;
   }

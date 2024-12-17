@@ -66,6 +66,7 @@ export class EventEmitter implements EventEmitterType {
     }
 
     const handler = events[type];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (handler === undefined) {
       return false;
     }
@@ -120,6 +121,7 @@ export class EventEmitter implements EventEmitterType {
     } else {
       // To avoid recursion in the case that type === "newListener"! Before
       // adding it to the listeners, first emit "newListener".
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (events.newListener !== undefined) {
         this.emit('newListener', type, unwrapListener(listener));
 
@@ -194,6 +196,7 @@ export class EventEmitter implements EventEmitterType {
     }
 
     const list = events[type];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (list === undefined) {
       return this;
     }
@@ -203,6 +206,7 @@ export class EventEmitter implements EventEmitterType {
         this._events = Object.create(null);
       } else {
         delete events[type];
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (events.removeListener) {
           this.emit('removeListener', type, (list as any).listener ?? listener);
         }
@@ -233,6 +237,7 @@ export class EventEmitter implements EventEmitterType {
         events[type] = list[0];
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (events.removeListener !== undefined) {
         this.emit('removeListener', type, originalListener || listener);
       }
@@ -280,10 +285,12 @@ export class EventEmitter implements EventEmitterType {
     }
 
     // not listening for removeListener, no need to emit
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!events.removeListener) {
       if (type === undefined) {
         this._events = Object.create(null);
         this._eventsCount = 0;
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       } else if (events[type] !== undefined) {
         if (--this._eventsCount === 0) {
           this._events = Object.create(null);
@@ -315,6 +322,7 @@ export class EventEmitter implements EventEmitterType {
 
     if (typeof listeners === 'function') {
       this.removeListener(type, listeners);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     } else if (listeners !== undefined) {
       // LIFO order
       for (let i = listeners.length - 1; i >= 0; i--) {
@@ -338,6 +346,7 @@ export class EventEmitter implements EventEmitterType {
       if (typeof listener === 'function') {
         return 1;
       }
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (listener !== undefined) {
         return listener.length;
       }
@@ -370,6 +379,7 @@ export class EventEmitter implements EventEmitterType {
     }
 
     const listener = events[type];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (listener === undefined) {
       return [];
     }
@@ -421,6 +431,6 @@ function unwrapListeners(arr: Listener[]): Listener[] {
   return arr.map(l => wrappedListener(l) ?? l);
 }
 
-function wrappedListener(l: Listener): Listener {
+function wrappedListener(l: Listener): Listener | undefined {
   return (l as any).listener;
 }

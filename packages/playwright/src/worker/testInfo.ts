@@ -228,6 +228,7 @@ export class TestInfoImpl implements TestInfo {
     } else if (type === 'skip' || type === 'fixme') {
       this.expectedStatus = 'skipped';
       throw new SkipError('Test is skipped: ' + (description || ''));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     } else if (type === 'fail') {
       if (this.expectedStatus !== 'skipped') {
         this.expectedStatus = 'failed';
@@ -330,6 +331,7 @@ export class TestInfoImpl implements TestInfo {
       location: data.location,
     };
     this._onStepBegin(payload);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.location ? [data.location] : []);
     return step;
   }

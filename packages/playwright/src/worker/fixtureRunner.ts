@@ -41,6 +41,7 @@ class Fixture {
     this.registration = registration;
     this.value = null;
     const shouldGenerateStep = !this.registration.box && !this.registration.option;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const isUserFixture = this.registration.location && filterStackFile(this.registration.location.file);
     const title = this.registration.customTitle || this.registration.name;
     const location = isUserFixture ? this.registration.location : undefined;

@@ -79,7 +79,7 @@ export class Chromium extends BrowserType {
 
     if (!headersMap) {
       headersMap = { 'User-Agent': getUserAgent() };
-    } else if (headersMap && !Object.keys(headersMap).some(key => key.toLowerCase() === 'user-agent')) {
+    } else if (!Object.keys(headersMap).some(key => key.toLowerCase() === 'user-agent')) {
       headersMap['User-Agent'] = getUserAgent();
     }
 

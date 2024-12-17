@@ -159,9 +159,9 @@ export class BidiBrowser extends Browser {
       }
       return;
     }
-    let context = this._contexts.get(event.userContext);
+    let context: BidiBrowserContext | undefined | null = this._contexts.get(event.userContext);
     if (!context) {
-      context = this._defaultContext as BidiBrowserContext;
+      context = this._defaultContext as BidiBrowserContext | null;
     }
     if (!context) {
       return;
@@ -240,6 +240,7 @@ export class BidiBrowserContext extends BrowserContext {
         httpOnly: c.httpOnly,
         secure: c.secure,
         expires: c.expiry ?? -1,
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         sameSite: c.sameSite ? fromBidiSameSite(c.sameSite) : 'None',
       };
       return copy;

@@ -40,6 +40,7 @@ type StdIOChunk = {
 
 export function wrapReporterAsV2(reporter: Reporter | ReporterV2): ReporterV2 {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if ('version' in reporter && reporter.version() === 'v2') {
       return reporter as ReporterV2;
     }

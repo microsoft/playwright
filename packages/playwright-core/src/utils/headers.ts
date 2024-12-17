@@ -23,7 +23,7 @@ export function headersObjectToArray(headers: HeadersObject, separator?: string,
   }
   const result: HeadersArray = [];
   for (const name in headers) {
-    const values = headers[name];
+    const values = headers[name] as string | undefined;
     if (values === undefined) {
       continue;
     }

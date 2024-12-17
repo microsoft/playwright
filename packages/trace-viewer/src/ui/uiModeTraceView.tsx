@@ -53,7 +53,7 @@ export const TraceView: React.FC<{
     }
 
     // Test finished.
-    const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
+    const attachment = result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
       loadSingleTraceFile(attachment.path).then(model => setModel({ model, isLive: false }));
       return;

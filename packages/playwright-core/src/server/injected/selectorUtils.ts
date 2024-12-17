@@ -55,6 +55,7 @@ export function matchesAttributePart(value: any, attr: AttributeSelectorPart) {
   if (attr.op === '|=') {
     return objValue === attrValue || objValue.startsWith(attrValue + '-');
   }
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (attr.op === '~=') {
     return objValue.split(' ').includes(attrValue);
   }
@@ -63,6 +64,7 @@ export function matchesAttributePart(value: any, attr: AttributeSelectorPart) {
 
 export function shouldSkipForTextMatching(element: Element | ShadowRoot) {
   const document = element.ownerDocument;
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   return element.nodeName === 'SCRIPT' || element.nodeName === 'NOSCRIPT' || element.nodeName === 'STYLE' || document.head && document.head.contains(element);
 }
 

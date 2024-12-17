@@ -31,6 +31,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
   }
 
   static fromNullable(parentScope: DispatcherScope, artifact: Artifact): ArtifactDispatcher | undefined {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!artifact) {
       return undefined;
     }

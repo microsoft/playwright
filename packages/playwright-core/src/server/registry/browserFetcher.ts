@@ -138,7 +138,7 @@ function getDownloadProgress(): OnProgressCallback {
 }
 
 function getAnimatedDownloadProgress(): OnProgressCallback {
-  let progressBar: ProgressBar;
+  let progressBar: ProgressBar | undefined;
   let lastDownloadedBytes = 0;
 
   return (downloadedBytes: number, totalBytes: number) => {

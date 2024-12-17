@@ -375,7 +375,7 @@ class JobDispatcher {
   }
 
   private _onAttach(params: AttachmentPayload) {
-    const data = this._dataByTestId.get(params.testId)!;
+    const data = this._dataByTestId.get(params.testId);
     if (!data) {
       // The test has finished, but attachments are still coming. Just ignore them.
       return;

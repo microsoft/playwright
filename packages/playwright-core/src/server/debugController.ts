@@ -240,9 +240,6 @@ export class DebugController extends SdkObject {
           await context.close({ reason: 'Browser collected' });
         }
       }
-      if (!browser.contexts()) {
-        await browser.close({ reason: 'Browser collected' });
-      }
     }
   }
 }

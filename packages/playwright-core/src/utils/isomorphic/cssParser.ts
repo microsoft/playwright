@@ -132,6 +132,7 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
 
   function consumeFunctionArguments(): CSSFunctionArgument[] {
     const result = [consumeArgument()];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (true) {
       skipWhitespace();
       if (!isComma()) {
@@ -163,6 +164,7 @@ export function parseCSS(selector: string, customNames: Set<string>): { selector
     } else {
       result.simples.push({ selector: consumeSimpleSelector(), combinator: '' });
     }
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (true) {
       skipWhitespace();
       if (isClauseCombinator()) {

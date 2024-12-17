@@ -128,12 +128,13 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
     }
     if (['email', 'tel', 'text', 'url', ''].includes(type)) {
       // https://html.spec.whatwg.org/multipage/input.html#concept-input-list
-      const list = getIdRefs(e, e.getAttribute('list'))[0];
+      const list = getIdRefs(e, e.getAttribute('list'))[0] as Element | undefined;
       return (list && elementSafeTagName(list) === 'DATALIST') ? 'combobox' : 'textbox';
     }
     if (type === 'hidden') {
       return null;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return inputTypeToRole[type] || 'textbox';
   },
   'INS': () => 'insertion',
@@ -206,10 +207,11 @@ function getImplicitAriaRole(element: Element): AriaRole | null {
   }
   // Inherit presentation role when required.
   // https://www.w3.org/TR/wai-aria-1.2/#conflict_resolution_presentation_none
-  let ancestor: Element | null = element;
+  let ancestor = element as Element | null;
   while (ancestor) {
     const parent = parentElementOrShadowHost(ancestor);
     const parents = kPresentationInheritanceParents[elementSafeTagName(ancestor)];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!parents || !parent || !parents.includes(elementSafeTagName(parent))) {
       break;
     }
@@ -233,7 +235,7 @@ const validRoles: AriaRole[] = ['alert', 'alertdialog', 'application', 'article'
 function getExplicitAriaRole(element: Element): AriaRole | null {
   // https://www.w3.org/TR/wai-aria-1.2/#document-handling_author-errors_roles
   const roles = (element.getAttribute('role') || '').split(' ').map(role => role.trim());
-  return roles.find(role => validRoles.includes(role as any)) as AriaRole || null;
+  return (roles.find(role => validRoles.includes(role as any)) as AriaRole | undefined) || null;
 }
 
 function hasPresentationConflictResolution(element: Element, role: string | null) {
@@ -661,6 +663,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     // https://w3c.github.io/html-aam/#button-element-accessible-name-computation
     if (!labelledBy && tagName === 'BUTTON') {
       options.visitedElements.add(element);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       const labels = (element as HTMLButtonElement).labels || [];
       if (labels.length) {
         return getAccessibleNameFromAssociatedLabels(labels, options);
@@ -671,6 +674,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
     // https://w3c.github.io/html-aam/#output-element-accessible-name-computation
     if (!labelledBy && tagName === 'OUTPUT') {
       options.visitedElements.add(element);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       const labels = (element as HTMLOutputElement).labels || [];
       if (labels.length) {
         return getAccessibleNameFromAssociatedLabels(labels, options);

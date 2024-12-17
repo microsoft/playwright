@@ -123,6 +123,7 @@ export class FFBrowser extends Browser {
 
   _onAttachedToTarget(payload: Protocol.Browser.attachedToTargetPayload) {
     const { targetId, browserContextId, openerId, type } = payload.targetInfo;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     assert(type === 'page');
     const context = browserContextId ? this._contexts.get(browserContextId)! : this._defaultContext as FFBrowserContext;
     assert(context, `Unknown context id:${browserContextId}, _defaultContext: ${this._defaultContext}`);

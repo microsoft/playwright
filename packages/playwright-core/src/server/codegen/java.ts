@@ -36,6 +36,7 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     if (mode === 'library') {
       this.name = 'Library';
       this.id = 'java';
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     } else if (mode === 'junit') {
       this.name = 'JUnit';
       this.id = 'java-junit';

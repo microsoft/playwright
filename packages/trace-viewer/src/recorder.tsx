@@ -24,6 +24,7 @@ import { RecorderView } from './ui/recorder/recorderView';
   applyTheme();
 
   if (window.location.protocol !== 'file:') {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!navigator.serviceWorker) {
       throw new Error(`Service workers are not supported.\nMake sure to serve the Recorder (${window.location}) via HTTPS or localhost.`);
     }

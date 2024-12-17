@@ -80,17 +80,15 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
     https.request(options, requestCallback) :
     http.request(options, requestCallback);
   request.on('error', onError);
-  if (timeout !== undefined) {
-    const rejectOnTimeout = () =>  {
-      onError(new Error(`Request to ${params.url} timed out after ${timeout}ms`));
-      request.abort();
-    };
-    if (timeout <= 0) {
-      rejectOnTimeout();
-      return;
-    }
-    request.setTimeout(timeout, rejectOnTimeout);
+  const rejectOnTimeout = () =>  {
+    onError(new Error(`Request to ${params.url} timed out after ${timeout}ms`));
+    request.abort();
+  };
+  if (timeout <= 0) {
+    rejectOnTimeout();
+    return;
   }
+  request.setTimeout(timeout, rejectOnTimeout);
   request.end(params.data);
 }
 

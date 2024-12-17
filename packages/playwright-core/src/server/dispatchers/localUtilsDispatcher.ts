@@ -357,6 +357,7 @@ class HarBackend {
   private async _harFindResponse(url: string, method: string, headers: HeadersArray, postData: Buffer | undefined): Promise<har.Entry | undefined> {
     const harLog = this._harFile.log;
     const visited = new Set<har.Entry>();
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (true) {
       const entries: har.Entry[] = [];
       for (const candidate of harLog.entries) {

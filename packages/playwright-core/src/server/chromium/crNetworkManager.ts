@@ -416,7 +416,7 @@ requestPausedSessionInfo!.session._sendMayFail('Fetch.continueRequest', { reques
       }
       return Buffer.concat(chunks);
     };
-    const timingPayload = responsePayload.timing!;
+    const timingPayload = responsePayload.timing;
     let timing: network.ResourceTiming;
     if (timingPayload && !this._responseExtraInfoTracker.servedFromCache(request._requestId)) {
       timing = {
@@ -828,7 +828,7 @@ class ResponseExtraInfoTracker {
   }
 
   private _patchHeaders(info: RequestInfo, index: number) {
-    const response = info.responses[index];
+    const response = info.responses[index] as network.Response | undefined;
     const requestExtraInfo = info.requestWillBeSentExtraInfo[index];
     if (response && requestExtraInfo) {
       response.request().setRawRequestHeaders(headersObjectToArray(requestExtraInfo.headers, '\n'));

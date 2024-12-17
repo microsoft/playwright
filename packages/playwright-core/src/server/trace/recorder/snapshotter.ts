@@ -113,7 +113,7 @@ export class Snapshotter {
 
     // In each frame, in a non-stalling manner, capture the snapshots.
     const snapshots = page.frames().map(async frame => {
-      const data = await frame.nonStallingRawEvaluateInExistingMainContext(expression).catch(e => debugLogger.log('error', e)) as SnapshotData;
+      const data = await frame.nonStallingRawEvaluateInExistingMainContext(expression).catch(e => debugLogger.log('error', e)) as SnapshotData | undefined;
       // Something went wrong -> bail out, our snapshots are best-efforty.
       if (!data || !this._started) {
         return;

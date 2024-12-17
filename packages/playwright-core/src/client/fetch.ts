@@ -206,6 +206,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
           throw new Error(`Unexpected 'data' type`);
         }
       } else if (options.form) {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (globalThis.FormData && options.form instanceof FormData) {
           formData = [];
           for (const [name, value] of options.form.entries()) {
@@ -219,6 +220,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
         }
       } else if (options.multipart) {
         multipartData = [];
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (globalThis.FormData && options.multipart instanceof FormData) {
           const form = options.multipart;
           for (const [name, value] of form.entries()) {

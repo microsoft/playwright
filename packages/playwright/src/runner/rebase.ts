@@ -20,7 +20,7 @@ import type { T } from '../transform/babelBundle';
 import { types, traverse, babelParse } from '../transform/babelBundle';
 import { MultiMap } from 'playwright-core/lib/utils';
 import { colors, diff } from 'playwright-core/lib/utilsBundle';
-import type { FullConfigInternal } from '../common/config';
+import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import { filterProjects } from './projectUtils';
 import type { InternalReporter } from '../reporters/internalReporter';
 const t: typeof T = types;
@@ -50,7 +50,7 @@ export async function applySuggestedRebaselines(config: FullConfigInternal, repo
   if (!suggestedRebaselines.size) {
     return;
   }
-  const [project] = filterProjects(config.projects, config.cliProjectFilter);
+  const project = filterProjects(config.projects, config.cliProjectFilter)[0] as FullProjectInternal | undefined;
   if (!project) {
     return;
   }
@@ -197,6 +197,7 @@ function applyPatchWithConflictMarkers(oldText: string, newText: string) {
     }
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (conflict) {
     result += '>>>>>>> SNAPSHOT\n';
   }

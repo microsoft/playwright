@@ -150,7 +150,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       let closeError: string | undefined;
       const onPipeClosed = (reason?: string) => {
         // Emulate all pages, contexts and the browser closing upon disconnect.
-        for (const context of browser.contexts() || []) {
+        for (const context of browser.contexts()) {
           for (const page of context.pages()) {
             page._onClose();
           }

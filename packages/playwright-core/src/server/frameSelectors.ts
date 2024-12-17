@@ -103,7 +103,7 @@ export class FrameSelectors {
     const targetContext = await resolved.frame._mainContext();
     const result: Promise<ElementHandle<Element>>[] = [];
     for (const property of properties.values()) {
-      const elementHandle = property.asElement() as ElementHandle<Element>;
+      const elementHandle = property.asElement() as ElementHandle<Element> | null;
       if (elementHandle) {
         result.push(adoptIfNeeded(elementHandle, targetContext));
       } else {

@@ -137,7 +137,7 @@ export class Connection extends EventEmitter {
     }
     const location = frames[0] ? { file: frames[0].file, line: frames[0].line, column: frames[0].column } : undefined;
     const metadata: channels.Metadata = { apiName, location, internal: !apiName, stepId };
-    if (this._tracingCount && frames && type !== 'LocalUtils') {
+    if (this._tracingCount && type !== 'LocalUtils') {
       this._localUtils?._channel.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
     }
     // We need to exit zones before calling into the server, otherwise
@@ -217,7 +217,7 @@ export class Connection extends EventEmitter {
 
   private _tChannelImplFromWire(names: '*' | string[], arg: any, path: string, context: ValidatorContext) {
     if (arg && typeof arg === 'object' && typeof arg.guid === 'string') {
-      const object = this._objects.get(arg.guid)!;
+      const object = this._objects.get(arg.guid);
       if (!object) {
         throw new Error(`Object with guid ${arg.guid} was not bound in the connection`);
       }

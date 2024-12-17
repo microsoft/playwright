@@ -337,7 +337,7 @@ export const rootTestType = new TestTypeImpl([]);
 export function mergeTests(...tests: TestType<any, any>[]) {
   let result = rootTestType;
   for (const t of tests) {
-    const testTypeImpl = (t as any)[testTypeSymbol] as TestTypeImpl;
+    const testTypeImpl = (t as any)[testTypeSymbol] as TestTypeImpl | undefined;
     if (!testTypeImpl) {
       throw new Error(`mergeTests() accepts "test" functions as parameters.\nDid you mean to call test.extend() with fixtures instead?`);
     }

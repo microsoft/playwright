@@ -107,6 +107,7 @@ export class FrameManager {
   }
 
   createDummyMainFrameIfNeeded() {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!this._mainFrame) {
       this.frameAttached(kDummyFrameId, null);
     }
@@ -143,6 +144,7 @@ export class FrameManager {
   frameAttached(frameId: string, parentFrameId: string | null | undefined): Frame {
     const parentFrame = parentFrameId ? this._frames.get(parentFrameId)! : null;
     if (!parentFrame) {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (this._mainFrame) {
         // Update frame id to retain frame identity on cross-process navigation.
         this._frames.delete(this._mainFrame._id);
@@ -880,7 +882,7 @@ export class Frame extends SdkObject {
           throw injected.createStacklessError('Element is not attached to the DOM');
         }
         const elements = injected.querySelectorAll(info.parsed, root || document);
-        const element: Element | undefined  = elements[0];
+        const element  = elements[0] as Element | undefined;
         const visible = element ? injected.utils.isElementVisible(element) : false;
         let log = '';
         if (elements.length > 1) {
@@ -970,6 +972,7 @@ export class Frame extends SdkObject {
         if (document.doctype) {
           retVal = new XMLSerializer().serializeToString(document.doctype);
         }
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (document.documentElement) {
           retVal += document.documentElement.outerHTML;
         }
@@ -1083,6 +1086,7 @@ export class Frame extends SdkObject {
       let error = null;
       script.onerror = e => error = e;
       document.head.appendChild(script);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (error) {
         throw error;
       }
@@ -1864,6 +1868,7 @@ export class Frame extends SdkObject {
       }
 
       // Clean Service Workers
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       const registrations = navigator.serviceWorker ? await navigator.serviceWorker.getRegistrations() : [];
       await Promise.all(registrations.map(async r => {
         // Heuristic for service workers that stalled during main script fetch or importScripts:
@@ -1879,6 +1884,7 @@ export class Frame extends SdkObject {
       }));
 
       // Clean IndexedDB
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       for (const db of await indexedDB.databases() || []) {
         // Do not wait for the callback - it is called on timer in Chromium (slow).
         if (db.name) {

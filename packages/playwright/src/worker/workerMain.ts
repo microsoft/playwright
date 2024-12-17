@@ -187,6 +187,7 @@ export class WorkerMain extends ProcessRunner {
   }
 
   private async _loadIfNeeded() {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (this._config) {
       return;
     }
@@ -215,6 +216,7 @@ export class WorkerMain extends ProcessRunner {
         const tests = suite.allTests();
         for (let i = 0; i < tests.length; i++) {
           // Do not run tests after full cleanup, because we are entirely done.
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           if (this._isStopped && this._didRunFullCleanup) {
             break;
           }
@@ -362,6 +364,7 @@ export class WorkerMain extends ProcessRunner {
         testFunctionParams = await this._fixtureRunner.resolveParametersForFunction(test.fn, testInfo, 'test', { type: 'test' });
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (testFunctionParams === null) {
         // Fixture setup failed or was skipped, we should not run the test now.
         return;

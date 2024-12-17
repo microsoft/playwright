@@ -363,6 +363,7 @@ class UniqueFileNameGenerator {
     const extension = path.extname(name);
     name = name.substring(0, name.length - extension.length);
     let index = 0;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (true) {
       const candidate = `${name}-${++index}${extension}`;
       if (!this._usedNames.has(candidate)) {
@@ -412,6 +413,7 @@ class IdsPatcher {
   }
 
   private _onProject(project: JsonProject) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     project.metadata ??= {};
     project.suites.forEach(suite => this._updateTestIds(suite));
   }

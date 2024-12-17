@@ -96,6 +96,7 @@ function loadAndValidateTsconfigsForFolder(folder: string): ParsedTsConfigData[]
   const foldersWithConfig: string[] = [];
   let currentFolder = path.resolve(folder);
   let result: ParsedTsConfigData[] | undefined;
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   while (true) {
     const cached = cachedTSConfigs.get(currentFolder);
     if (cached) {
@@ -299,6 +300,7 @@ function installTransformIfNeeded() {
 
   const originalResolveFilename = (Module as any)._resolveFilename;
   function resolveFilename(this: any, specifier: string, parent: Module, ...rest: any[]) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (parent) {
       const resolved = resolveHook(parent.filename, specifier);
       if (resolved !== undefined) {

@@ -45,6 +45,7 @@ export async function toMatchText(
 
   if (
     !(typeof expected === 'string') &&
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     !(expected && typeof expected.test === 'function')
   ) {
     // Same format as jest's matcherErrorMessage

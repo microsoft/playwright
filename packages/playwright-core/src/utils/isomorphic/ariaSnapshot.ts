@@ -230,6 +230,7 @@ class KeyParser {
 
   private _readAttributes(result: AriaTemplateRoleNode) {
     let errorPos = this._pos;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (true) {
       this._skipWhitespace();
       if (this._peek() === '[') {

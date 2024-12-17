@@ -133,6 +133,7 @@ export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLI
 }
 
 function validateConfig(file: string, config: Config) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (typeof config !== 'object' || !config) {
     throw errorWithFile(file, `Configuration file must export a single object`);
   }
@@ -239,7 +240,7 @@ function validateConfig(file: string, config: Config) {
   }
 
   if ('reportSlowTests' in config && config.reportSlowTests !== undefined && config.reportSlowTests !== null) {
-    if (!config.reportSlowTests || typeof config.reportSlowTests !== 'object') {
+    if (typeof config.reportSlowTests !== 'object') {
       throw errorWithFile(file, `config.reportSlowTests must be an object`);
     }
     if (!('max' in config.reportSlowTests) || typeof config.reportSlowTests.max !== 'number' || config.reportSlowTests.max < 0) {
@@ -251,7 +252,7 @@ function validateConfig(file: string, config: Config) {
   }
 
   if ('shard' in config && config.shard !== undefined && config.shard !== null) {
-    if (!config.shard || typeof config.shard !== 'object') {
+    if (typeof config.shard !== 'object') {
       throw errorWithFile(file, `config.shard must be an object`);
     }
     if (!('total' in config.shard) || typeof config.shard.total !== 'number' || config.shard.total < 1) {
@@ -278,6 +279,7 @@ function validateConfig(file: string, config: Config) {
 }
 
 function validateProject(file: string, project: Project, title: string) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (typeof project !== 'object' || !project) {
     throw errorWithFile(file, `${title} must be an object`);
   }
@@ -334,7 +336,7 @@ function validateProject(file: string, project: Project, title: string) {
   }
 
   if ('use' in project && project.use !== undefined) {
-    if (!project.use || typeof project.use !== 'object') {
+    if (typeof project.use !== 'object') {
       throw errorWithFile(file, `${title}.use must be an object`);
     }
   }

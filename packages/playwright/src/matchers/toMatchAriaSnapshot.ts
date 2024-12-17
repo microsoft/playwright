@@ -66,7 +66,7 @@ export async function toMatchAriaSnapshot(
     } else if (expectedParam.name) {
       expectedPath = testInfo.snapshotPath(sanitizeFilePathBeforeExtension(expectedParam.name));
     } else {
-      let snapshotNames = (testInfo as any)[snapshotNamesSymbol] as SnapshotNames;
+      let snapshotNames = (testInfo as any)[snapshotNamesSymbol] as SnapshotNames | undefined;
       if (!snapshotNames) {
         snapshotNames = { anonymousSnapshotIndex: 0 };
         (testInfo as any)[snapshotNamesSymbol] = snapshotNames;
@@ -107,6 +107,7 @@ export async function toMatchAriaSnapshot(
   const receivedText = typedReceived.raw;
   const message = () => {
     if (pass) {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (notFound) {
         return messagePrefix + `Expected: not ${this.utils.printExpected(expected)}\nReceived: ${receivedText}` + callLogText(log);
       }
@@ -114,6 +115,7 @@ export async function toMatchAriaSnapshot(
       return messagePrefix + `Expected: not ${this.utils.printExpected(expected)}\nReceived: ${printedReceived}` + callLogText(log);
     } else {
       const labelExpected = `Expected`;
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (notFound) {
         return messagePrefix + `${labelExpected}: ${this.utils.printExpected(expected)}\nReceived: ${receivedText}` + callLogText(log);
       }

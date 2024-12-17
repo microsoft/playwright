@@ -945,6 +945,7 @@ export class RawHeaders {
   static _fromHeadersObjectLossy(headers: Headers): RawHeaders {
     const headersArray: HeadersArray = Object.entries(headers).map(([name, value]) => ({
       name, value
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     })).filter(header => header.value !== undefined);
     return new RawHeaders(headersArray);
   }
@@ -958,7 +959,7 @@ export class RawHeaders {
 
   get(name: string): string | null {
     const values = this.getAll(name);
-    if (!values || !values.length) {
+    if (!values.length) {
       return null;
     }
     return values.join(name.toLowerCase() === 'set-cookie' ? '\n' : ', ');

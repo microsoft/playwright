@@ -77,6 +77,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       handleSIGINT: false,
       ...launchOptions,
     };
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (headless !== undefined) {
       options.headless = headless;
     }
@@ -179,6 +180,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     serviceWorkers,
   }, use) => {
     const options: BrowserContextOptions = {};
+    /* eslint-disable @typescript-eslint/no-unnecessary-condition */
     if (acceptDownloads !== undefined) {
       options.acceptDownloads = acceptDownloads;
     }
@@ -245,6 +247,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (serviceWorkers !== undefined) {
       options.serviceWorkers = serviceWorkers;
     }
+    /* eslint-enable @typescript-eslint/no-unnecessary-condition */
     await use({
       ...contextOptions,
       ...options,
@@ -454,7 +457,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     }
 
     // First time we are reusing the context, we should create the page.
-    let [page] = context.pages();
+    let page = context.pages()[0] as Page | undefined;
     if (!page) {
       page = await context.newPage();
     }

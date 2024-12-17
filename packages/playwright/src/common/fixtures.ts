@@ -213,6 +213,7 @@ export class FixturePool {
     }
 
     // If no errors found, iterate over boxed fixtures
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!hasDependencyErrors) {
       for (const name of names) {
         const registration = this._registrations.get(name)!;
@@ -260,6 +261,7 @@ export class FixturePool {
 const signatureSymbol = Symbol('signature');
 
 export function formatPotentiallyInternalLocation(location: Location): string {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const isUserFixture = location && filterStackFile(location.file);
   return isUserFixture ? formatLocation(location) : '<builtin>';
 }
@@ -317,6 +319,7 @@ function filterOutComments(s: string): string {
       if (s[i - 1] === '*' && s[i] === '/') {
         commentState = 'none';
       }
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     } else if (commentState === 'none') {
       if (s[i] === '/' && s[i + 1] === '/') {
         commentState = 'singleline';

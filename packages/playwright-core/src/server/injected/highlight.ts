@@ -92,6 +92,7 @@ export class Highlight {
 
   install() {
     // NOTE: document.documentElement can be null: https://github.com/microsoft/TypeScript/issues/50078
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (this._injectedScript.document.documentElement && !this._injectedScript.document.documentElement.contains(this._glassPaneElement)) {
       this._injectedScript.document.documentElement.appendChild(this._glassPaneElement);
     }

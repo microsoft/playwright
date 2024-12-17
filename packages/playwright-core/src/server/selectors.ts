@@ -91,6 +91,7 @@ export class Selectors {
     });
     return {
       parsed,
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       world: needsMainWorld ? 'main' as const : 'utility' as const,
       strict,
     };

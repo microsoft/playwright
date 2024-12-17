@@ -68,6 +68,7 @@ export const ResizeView: React.FC<{
       onPaneMouseMove={event => {
         if (!event.buttons) {
           setResizing(null);
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         } else if (resizing) {
           const delta = orientation === 'horizontal' ? event.clientX - resizing.clientX : event.clientY - resizing.clientY;
           const newOffset = resizing.offset + delta;

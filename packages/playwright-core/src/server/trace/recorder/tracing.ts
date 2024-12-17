@@ -405,9 +405,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const error = await this._fs.syncAndGetError();
 
     this._isStopping = false;
-    if (this._state) {
-      this._state.recording = false;
-    }
+    this._state.recording = false;
 
     // IMPORTANT: no awaits after this point, to make sure recording state is correct.
 

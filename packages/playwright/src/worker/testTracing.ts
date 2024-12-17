@@ -98,6 +98,7 @@ export class TestTracing {
     } else if (typeof value === 'string') {
       this._options = { ...defaultTraceOptions, mode: value === 'retry-with-trace' ? 'on-first-retry' : value as TraceMode };
     } else {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       const mode = value.mode || 'off';
       this._options = { ...defaultTraceOptions, ...value, mode: (mode as string) === 'retry-with-trace' ? 'on-first-retry' : mode };
     }
@@ -235,7 +236,7 @@ export class TestTracing {
 
   appendForError(error: TestInfoErrorImpl) {
     const rawStack = error.stack?.split('\n') || [];
-    const stack = rawStack ? filteredStackTrace(rawStack) : [];
+    const stack = filteredStackTrace(rawStack);
     this._appendTraceEvent({
       type: 'error',
       message: this._formatError(error),

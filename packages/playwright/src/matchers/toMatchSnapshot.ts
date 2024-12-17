@@ -198,6 +198,7 @@ class SnapshotHelper {
       message: () => message,
       log,
     };
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return Object.fromEntries(Object.entries(unfiltered).filter(([_, v]) => v !== undefined)) as ImageMatcherResult;
   }
 

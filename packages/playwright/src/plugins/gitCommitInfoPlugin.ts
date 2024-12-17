@@ -36,6 +36,7 @@ export const gitCommitInfo = (options?: GitCommitInfoPluginOptions): TestRunnerP
         info['revision.timestamp'] = timestamp.getTime();
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       config.metadata = config.metadata || {};
       Object.assign(config.metadata, info);
     },

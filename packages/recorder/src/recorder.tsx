@@ -164,7 +164,7 @@ export const Recorder: React.FC<RecorderProps> = ({
         window.dispatch({ event: 'setMode', params: { mode: mode === 'assertingSnapshot' ? 'recording' : 'assertingSnapshot' } });
       }}></ToolbarButton>
       <ToolbarSeparator />
-      <ToolbarButton icon='files' title='Copy' disabled={!source || !source.text} onClick={() => {
+      <ToolbarButton icon='files' title='Copy' disabled={!source.text} onClick={() => {
         copy(source.text);
       }}></ToolbarButton>
       <ToolbarButton icon='debug-continue' title='Resume (F8)' ariaLabel='Resume' disabled={!paused} onClick={() => {
@@ -182,7 +182,7 @@ export const Recorder: React.FC<RecorderProps> = ({
         setSelectedFileId(fileId);
         window.dispatch({ event: 'fileChanged', params: { file: fileId } });
       }} />
-      <ToolbarButton icon='clear-all' title='Clear' disabled={!source || !source.text} onClick={() => {
+      <ToolbarButton icon='clear-all' title='Clear' disabled={!source.text} onClick={() => {
         window.dispatch({ event: 'clear' });
       }}></ToolbarButton>
       <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>

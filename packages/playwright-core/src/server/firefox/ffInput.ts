@@ -38,16 +38,20 @@ function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
 }
 
 function toButtonNumber(button: types.MouseButton): number {
-  if (button === 'left') {
-    return 0;
+  switch (button) {
+    case 'left': {
+      return 0;
+    }
+    case 'middle': {
+      return 1;
+    }
+    case 'right': {
+      return 2;
+    }
+    default: {
+      return 0;
+    }
   }
-  if (button === 'middle') {
-    return 1;
-  }
-  if (button === 'right') {
-    return 2;
-  }
-  return 0;
 }
 
 function toButtonsMask(buttons: Set<types.MouseButton>): number {

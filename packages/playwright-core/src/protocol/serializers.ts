@@ -15,6 +15,7 @@
  */
 
 import type { SerializedValue } from '@protocol/channels';
+import { assertUnreachable } from '../common/types';
 
 export function parseSerializedValue(value: SerializedValue, handles: any[] | undefined): any {
   return innerParseSerializedValue(value, handles, new Map());
@@ -34,23 +35,28 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
     return value.b;
   }
   if (value.v !== undefined) {
-    if (value.v === 'undefined') {
-      return undefined;
-    }
-    if (value.v === 'null') {
-      return null;
-    }
-    if (value.v === 'NaN') {
-      return NaN;
-    }
-    if (value.v === 'Infinity') {
-      return Infinity;
-    }
-    if (value.v === '-Infinity') {
-      return -Infinity;
-    }
-    if (value.v === '-0') {
-      return -0;
+    switch (value.v) {
+      case 'undefined': {
+        return undefined;
+      }
+      case 'null': {
+        return null;
+      }
+      case 'NaN': {
+        return NaN;
+      }
+      case 'Infinity': {
+        return Infinity;
+      }
+      case '-Infinity': {
+        return -Infinity;
+      }
+      case '-0': {
+        return -0;
+      }
+      default: {
+        return assertUnreachable(value.v);
+      }
     }
   }
   if (value.d !== undefined) {

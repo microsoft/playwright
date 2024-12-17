@@ -28,6 +28,7 @@ import { DebugControllerDispatcher } from '../server/dispatchers/debugController
 import { startProfiling, stopProfiling } from '../utils';
 import { monotonicTime } from '../utils';
 import { debugLogger } from '../utils/debugLogger';
+import { assertUnreachableWithError } from '../common/types';
 
 export type ClientType = 'controller' | 'launch-browser' | 'reuse-browser' | 'pre-launched-browser-or-android';
 
@@ -108,16 +109,20 @@ export class PlaywrightConnection {
 
     this._root = new RootDispatcher(this._dispatcherConnection, async (scope, options) => {
       await startProfiling();
-      if (clientType === 'reuse-browser') {
-        return await this._initReuseBrowsersMode(scope);
+      switch (clientType) {
+        case 'reuse-browser': {
+          return await this._initReuseBrowsersMode(scope);
+        }
+        case 'pre-launched-browser-or-android': {
+          return this._preLaunched.browser ? await this._initPreLaunchedBrowserMode(scope) : await this._initPreLaunchedAndroidMode(scope);
+        }
+        case 'launch-browser': {
+          return await this._initLaunchBrowserMode(scope, options);
+        }
+        default: {
+          return assertUnreachableWithError(clientType, new Error('Unsupported client type: ' + clientType));
+        }
       }
-      if (clientType === 'pre-launched-browser-or-android') {
-        return this._preLaunched.browser ? await this._initPreLaunchedBrowserMode(scope) : await this._initPreLaunchedAndroidMode(scope);
-      }
-      if (clientType === 'launch-browser') {
-        return await this._initLaunchBrowserMode(scope, options);
-      }
-      throw new Error('Unsupported client type: ' + clientType);
     });
   }
 
@@ -232,9 +237,6 @@ export class PlaywrightConnection {
           } else {
             await context.stopPendingOperations('Connection closed');
           }
-        }
-        if (!browser.contexts()) {
-          await browser.close({ reason: 'Connection terminated' });
         }
       }
     });

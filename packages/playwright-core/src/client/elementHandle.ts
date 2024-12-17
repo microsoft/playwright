@@ -248,6 +248,7 @@ export function convertSelectOptionValues(values: string | api.ElementHandle | S
     return {};
   }
   for (let i = 0; i < values.length; i++) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     assert(values[i] !== null, `options[${i}]: expected object, got null`);
   }
   if (values[0] instanceof ElementHandle) {
@@ -262,6 +263,7 @@ export function convertSelectOptionValues(values: string | api.ElementHandle | S
 type SetInputFilesFiles = Pick<channels.ElementHandleSetInputFilesParams, 'payloads' | 'localPaths' | 'localDirectory' | 'streams' | 'directoryStream'>;
 
 function filePayloadExceedsSizeLimit(payloads: FilePayload[]) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   return payloads.reduce((size, item) => size + (item.buffer ? item.buffer.byteLength : 0), 0) >= fileUploadSizeLimit;
 }
 

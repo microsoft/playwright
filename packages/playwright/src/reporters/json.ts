@@ -157,6 +157,7 @@ class JSONReporter implements ReporterV2 {
       }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     for (const spec of from.specs || []) {
       const toSpec = to.specs.find(s => s.title === spec.title && s.file === toPosixPath(path.relative(this.config.rootDir, spec.file)) && s.line === spec.line && s.column === spec.column);
       if (toSpec) {

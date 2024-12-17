@@ -215,7 +215,7 @@ export abstract class BrowserContext extends SdkObject {
     await this._cancelAllRoutesInFlight();
 
     // Close extra pages early.
-    let page: Page | undefined = this.pages()[0];
+    let page = this.pages()[0] as Page | undefined;
     const [, ...otherPages] = this.pages();
     for (const p of otherPages) {
       await p.close(metadata);
@@ -391,7 +391,7 @@ export abstract class BrowserContext extends SdkObject {
       // Race against BrowserContext.close
       await Promise.race([waitForEvent.promise, this._closePromise]);
     }
-    const page = this.possiblyUninitializedPages()[0];
+    const page = this.possiblyUninitializedPages()[0] as Page | undefined;
     if (!page) {
       return;
     }
@@ -593,7 +593,7 @@ export abstract class BrowserContext extends SdkObject {
     if (!oldOrigins.size && !newOrigins.size) {
       return;
     }
-    let page = this.pages()[0];
+    let page = this.pages()[0] as Page | undefined;
 
     const internalMetadata = serverSideCallMetadata();
     page = page || await this.newPage({

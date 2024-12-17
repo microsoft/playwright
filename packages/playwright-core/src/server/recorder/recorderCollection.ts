@@ -91,7 +91,7 @@ export class RecorderCollection extends EventEmitter {
 
     if (signal.name === 'navigation' && frame._page.mainFrame() === frame) {
       const timestamp = monotonicTime();
-      const lastAction = this._actions[this._actions.length - 1];
+      const lastAction = this._actions[this._actions.length - 1] as actions.ActionInContext | undefined;
       const signalThreshold = isUnderTest() ? 500 : 5000;
 
       let generateGoto = false;

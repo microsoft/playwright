@@ -164,7 +164,7 @@ export class CRBrowser extends Browser {
     if (!context) {
       // TODO: auto attach only to pages from our contexts.
       // assert(this._defaultContext);
-      context = this._defaultContext as CRBrowserContext;
+      context = this._defaultContext as CRBrowserContext | null;
     }
 
     if (targetInfo.type === 'other' && targetInfo.url.startsWith('devtools://devtools') && this._devtools) {

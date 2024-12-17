@@ -193,7 +193,7 @@ function generateSelectorFor(injectedScript: InjectedScript, targetElement: Elem
       // This is best theoretically possible candidate from the current parent.
       // We use the fact that widening the scope to grand-parent makes any selector
       // even less likely to match.
-      let bestPossibleInParent: SelectorToken[] | null = candidates[0];
+      let bestPossibleInParent = candidates[0] as SelectorToken[] | null;
       if (!bestPossibleInParent) {
         return;
       }
@@ -442,7 +442,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, opt
       bestTokenForLevel = token;
     }
 
-    const parent = element.parentNode as (Element | ShadowRoot);
+    const parent = element.parentNode as (Element | ShadowRoot | null);
 
     // Combine class names until unique.
     const classes = [...element.classList];

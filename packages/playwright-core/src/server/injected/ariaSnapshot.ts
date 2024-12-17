@@ -202,6 +202,7 @@ function normalizeStringChildren(rootA11yNode: AriaNode) {
   const visit = (ariaNode: AriaNode) => {
     const normalizedChildren: (AriaNode | string)[] = [];
     const buffer: string[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     for (const child of ariaNode.children || []) {
       if (typeof child === 'string') {
         buffer.push(child);
@@ -296,6 +297,7 @@ function matchesNode(node: AriaNode | string, template: AriaTemplateNode, depth:
     if (!matchesName(node.name, template)) {
       return false;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!containsList(node.children || [], template.children || [], depth)) {
       return false;
     }
@@ -335,6 +337,7 @@ function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode, collectAll:
     if (typeof node === 'string') {
       return false;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     for (const child of node.children || []) {
       if (visit(child)) {
         return true;
@@ -414,6 +417,7 @@ export function renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'r
       }
     } else {
       lines.push(escapedKey + ':');
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       for (const child of ariaNode.children || []) {
         visit(child, ariaNode, indent + '  ');
       }
@@ -422,6 +426,7 @@ export function renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'r
 
   if (ariaNode.role === 'fragment') {
     // Render fragment.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     for (const child of ariaNode.children || []) {
       visit(child, ariaNode, '');
     }

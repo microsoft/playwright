@@ -23,6 +23,7 @@ export const XPathEngine: SelectorEngine = {
     }
     const result: Element[] = [];
     const document = root.ownerDocument || root;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!document) {
       return result;
     }

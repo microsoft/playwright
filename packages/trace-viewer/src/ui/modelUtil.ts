@@ -115,7 +115,7 @@ export class MultiTraceModel {
 
   private _errorDescriptorsFromActions(): ErrorDescription[] {
     const errors: ErrorDescription[] = [];
-    for (const action of this.actions || []) {
+    for (const action of this.actions) {
       if (!action.error?.message) {
         continue;
       }
@@ -130,7 +130,7 @@ export class MultiTraceModel {
 
   private _errorDescriptorsFromTestRunner(): ErrorDescription[] {
     const errors: ErrorDescription[] = [];
-    for (const error of this.errors || []) {
+    for (const error of this.errors) {
       if (!error.message) {
         continue;
       }
@@ -396,13 +396,14 @@ export function stats(action: ActionTraceEvent): { errors: number, warnings: num
 }
 
 export function eventsForAction(action: ActionTraceEvent): (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[] {
-  let result: (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[] = (action as any)[eventsSymbol];
+  let result = (action as any)[eventsSymbol] as Array<trace.EventTraceEvent | trace.ConsoleMessageTraceEvent> | undefined;
   if (result) {
     return result;
   }
 
   const nextAction = nextInContext(action);
   result = context(action).events.filter(event => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return event.time >= action.startTime && (!nextAction || event.time < nextAction.startTime);
   });
   (action as any)[eventsSymbol] = result;

@@ -216,6 +216,7 @@ function createRemoveOutputDirsTask(): Task<TestRun> {
       projects.forEach(p => outputDirs.add(p.project.outputDir));
 
       await Promise.all(Array.from(outputDirs).map(outputDir => removeFolders([outputDir]).then(async ([error]) => {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!error) {
           return;
         }

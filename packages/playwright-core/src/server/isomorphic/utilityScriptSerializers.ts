@@ -72,6 +72,7 @@ export function source() {
     if (Object.is(value, undefined)) {
       return undefined;
     }
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (typeof value === 'object' && value) {
       if ('ref' in value) {
         return refs.get(value.ref);
@@ -92,6 +93,7 @@ export function source() {
         if (value.v === '-Infinity') {
           return -Infinity;
         }
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (value.v === '-0') {
           return -0;
         }

@@ -322,7 +322,7 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
 
   // if the action has no beforeSnapshot, use the last available afterSnapshot.
   let beforeSnapshot: Snapshot | undefined = action.beforeSnapshot ? { action, snapshotName: action.beforeSnapshot } : undefined;
-  let a = action;
+  let a = action as ActionTraceEvent | undefined;
   while (!beforeSnapshot && a) {
     a = prevInList(a);
     beforeSnapshot = a.afterSnapshot ? { action: a, snapshotName: a.afterSnapshot } : undefined;

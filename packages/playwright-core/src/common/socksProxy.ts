@@ -200,7 +200,7 @@ class SocksConnection {
 
   private async _readBytes(length: number): Promise<Buffer> {
     this._fence = this._offset + length;
-    if (!this._buffer || this._buffer.length < this._fence) {
+    if (this._buffer.length < this._fence) {
       await new Promise<void>(f => this._fenceCallback = f);
     }
     this._offset += length;

@@ -328,6 +328,7 @@ export function parseAttributeSelector(selector: string, allowUnquotedStrings: b
     while (!EOL) {
       if (next() === '\\') {
         source += eat1();
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (EOL) {
           syntaxError('parsing regular expression');
         }

@@ -272,6 +272,7 @@ class BidiRouteImpl implements network.RouteDelegate {
   async continue(overrides: types.NormalizedContinueOverrides) {
     // Firefox does not update content-length header.
     let headers = overrides.headers || this._request.headers();
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (overrides.postData && headers) {
       headers = headers.map(header => {
         if (header.name.toLowerCase() === 'content-length') {
@@ -342,14 +343,17 @@ function toBidiHeaders(headers: types.HeadersArray): bidi.Network.Header[] {
 }
 
 export function bidiBytesValueToString(value: bidi.Network.BytesValue): string {
-  if (value.type === 'string') {
-    return value.value;
+  switch (value.type) {
+    case 'string': {
+      return value.value;
+    }
+    case 'base64': {
+      return Buffer.from(value.type, 'base64').toString('binary');
+    }
+    default: {
+      return 'unknown value type: ' + (value as any).type;
+    }
   }
-  if (value.type === 'base64') {
-    return Buffer.from(value.type, 'base64').toString('binary');
-  }
-  return 'unknown value type: ' + (value as any).type;
-
 }
 
 function toBidiSameSite(sameSite?: 'Strict' | 'Lax' | 'None'): bidi.Network.SameSite | undefined {

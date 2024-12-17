@@ -168,6 +168,7 @@ export const UIModeView: React.FC<{}> = ({
         throttleTimer = undefined;
         if (immediate) {
           setTestModel(teleSuiteUpdater.asModel());
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         } else if (!throttleTimer) {
           throttleTimer = setTimeout(() => {
             setTestModel(teleSuiteUpdater.asModel());
@@ -284,6 +285,7 @@ export const UIModeView: React.FC<{}> = ({
 
       // Clear test results.
       {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         for (const test of testModel.rootSuite.allTests() || []) {
           if (testIds.has(test.id)) {
             test.results = [];
@@ -312,6 +314,7 @@ export const UIModeView: React.FC<{}> = ({
         trace: 'on',
       });
       // Clear pending tests in case of interrupt.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       for (const test of testModel.rootSuite.allTests() || []) {
         if (test.results[0]?.duration === -1) {
           test.results = [];
@@ -525,6 +528,7 @@ export const UIModeView: React.FC<{}> = ({
           setFilterText={setFilterText}
           onRevealSource={onRevealSource}
         />
+        {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
         {showTestingOptions && <>
           <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setTestingOptionsVisible(!testingOptionsVisible)}>
             <span

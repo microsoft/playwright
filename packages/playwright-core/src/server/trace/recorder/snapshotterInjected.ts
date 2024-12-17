@@ -133,6 +133,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
           // New documentElement - let's check whether listeners are still here.
           seenEvent = false;
           window.dispatchEvent(new CustomEvent(customEventName));
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           if (!seenEvent) {
             // Listener did not fire. Reattach the listener and notify.
             window.addEventListener(customEventName, handleCustomEvent);
@@ -163,7 +164,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
     }
 
     private _interceptNativeMethod(obj: any, method: string, cb: (thisObj: any, result: any) => void) {
-      const native = obj[method] as Function;
+      const native = obj[method] as Function | undefined;
       if (!native) {
         return;
       }
@@ -175,7 +176,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
     }
 
     private _interceptNativeAsyncMethod(obj: any, method: string, cb: (thisObj: any, result: any) => void) {
-      const native = obj[method] as Function;
+      const native = obj[method] as Function | undefined;
       if (!native) {
         return;
       }
@@ -436,11 +437,9 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
 
         const visitChildStyleSheet = (child: CSSStyleSheet) => {
           const snapshot = visitStyleSheet(child);
-          if (snapshot) {
-            result.push(snapshot.n);
-            expectValue(child);
-            equals = equals && snapshot.equals;
-          }
+          result.push(snapshot.n);
+          expectValue(child);
+          equals = equals && snapshot.equals;
         };
 
         if (nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
@@ -482,6 +481,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
             expectValue(value);
             attrs[kBoundingRectAttribute] = value;
           }
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           if ((element as HTMLElement).popover && (element as HTMLElement).matches && (element as HTMLElement).matches(':popover-open')) {
             const value = 'true';
             expectValue(kPopoverOpenAttribute);
@@ -626,6 +626,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       };
 
       let html: NodeSnapshot;
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (document.documentElement) {
         const { n } = visitNode(document.documentElement)!;
         html = n;

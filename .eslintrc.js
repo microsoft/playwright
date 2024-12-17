@@ -14,6 +14,9 @@ module.exports = {
     settings: {
         react: { version: "18" }
     },
+    ignorePatterns: [
+        '/packages/playwright/bundles/expect/third_party/**/*'
+    ],
     overrides: [
         {
             files: ['./examples/**/*'],
@@ -34,7 +37,7 @@ module.exports = {
     rules: {
         "@typescript-eslint/no-unused-vars": [2, {args: "none"}],
         "@typescript-eslint/consistent-type-imports": [2, {disallowTypeAnnotations: false}],
-        // "@typescript-eslint/no-unnecessary-condition": [2],
+        "@typescript-eslint/no-unnecessary-condition": [2],
 
         /**
          * Enforced rules

@@ -323,6 +323,7 @@ const makeThrowingMatcher = (
 
           // Try to remove this function from the stack trace frame.
           // Guard for some environments (browsers) that do not support this feature.
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           if (Error.captureStackTrace) {
             Error.captureStackTrace(error, throwingMatcher);
           }
@@ -350,6 +351,7 @@ const makeThrowingMatcher = (
         !(error instanceof JestAssertionError) &&
         error.name !== 'PrettyFormatPluginError' &&
         // Guard for some environments (browsers) that do not support this feature.
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         Error.captureStackTrace
       ) {
         // Try to remove this and deeper functions from the stack trace frame.
@@ -373,6 +375,7 @@ const makeThrowingMatcher = (
 
       if (isPromise(potentialResult)) {
         const asyncError = new JestAssertionError();
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (Error.captureStackTrace) {
           Error.captureStackTrace(asyncError, throwingMatcher);
         }
@@ -432,6 +435,7 @@ const _validateResult = (result: any) => {
 
 function assertions(expected: number): void {
   const error = new Error();
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (Error.captureStackTrace) {
     Error.captureStackTrace(error, assertions);
   }
@@ -444,6 +448,7 @@ function assertions(expected: number): void {
 }
 function hasAssertions(...args: Array<unknown>): void {
   const error = new Error();
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (Error.captureStackTrace) {
     Error.captureStackTrace(error, hasAssertions);
   }

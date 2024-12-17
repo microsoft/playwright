@@ -164,7 +164,7 @@ export class WKBrowser extends Browser {
       context = this._contexts.get(event.browserContextId) || null;
     }
     if (!context) {
-      context = this._defaultContext as WKBrowserContext;
+      context = this._defaultContext as WKBrowserContext | null;
     }
     if (!context) {
       return;

@@ -51,9 +51,7 @@ export function toggleTheme() {
   const oldTheme = currentTheme();
   const newTheme = oldTheme === 'dark-mode' ? 'light-mode' : 'dark-mode';
 
-  if (oldTheme) {
-    document.body.classList.remove(oldTheme);
-  }
+  document.body.classList.remove(oldTheme);
   document.body.classList.add(newTheme);
   settings.setString('theme', newTheme);
   for (const listener of listeners) {

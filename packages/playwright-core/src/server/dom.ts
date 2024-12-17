@@ -183,6 +183,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async isIframeElement(): Promise<boolean | 'error:notconnected'> {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return this.evaluateInUtility(([injected, node]) => node && (node.nodeName === 'IFRAME' || node.nodeName === 'FRAME'), {});
   }
 
@@ -497,6 +498,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       }
       progress.throwIfAborted();  // Avoid action that has side-effects.
       let restoreModifiers: types.KeyboardModifier[] | undefined;
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (options && options.modifiers) {
         restoreModifiers = await this._page.keyboard.ensureModifiers(options.modifiers);
       }

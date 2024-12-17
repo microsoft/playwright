@@ -444,6 +444,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
   async waitForFunction<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options: WaitForFunctionOptions = {}): Promise<structs.SmartHandle<R>> {
     if (typeof options.polling === 'string') {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       assert(options.polling === 'raf', 'Unknown polling option: ' + options.polling);
     }
     const result = await this._channel.waitForFunction({

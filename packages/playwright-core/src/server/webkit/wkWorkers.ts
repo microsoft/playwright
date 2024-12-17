@@ -60,14 +60,14 @@ export class WKWorkers {
         });
       }),
       eventsHelper.addEventListener(session, 'Worker.dispatchMessageFromWorker', (event: Protocol.Worker.dispatchMessageFromWorkerPayload) => {
-        const workerSession = this._workerSessions.get(event.workerId)!;
+        const workerSession = this._workerSessions.get(event.workerId);
         if (!workerSession) {
           return;
         }
         workerSession.dispatchMessage(JSON.parse(event.message));
       }),
       eventsHelper.addEventListener(session, 'Worker.workerTerminated', (event: Protocol.Worker.workerTerminatedPayload) => {
-        const workerSession = this._workerSessions.get(event.workerId)!;
+        const workerSession = this._workerSessions.get(event.workerId);
         if (!workerSession) {
           return;
         }

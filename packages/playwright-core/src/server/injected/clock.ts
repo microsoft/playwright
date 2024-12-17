@@ -157,6 +157,7 @@ export class ClockController {
     }
 
     let firstException: Error | undefined;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (true) {
       const result = await this._callFirstTimer(to);
       if (!result.timerFound) {
@@ -428,6 +429,7 @@ export class ClockController {
         isPaused = false;
       } else if (type === 'setFixedTime') {
         this._innerSetFixedTime(asWallTime(param!));
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       } else if (type === 'setSystemTime') {
         this._innerSetTime(asWallTime(param!));
       }

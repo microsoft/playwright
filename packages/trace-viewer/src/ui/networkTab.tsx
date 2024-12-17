@@ -264,6 +264,7 @@ class ContextIdMap {
 
   private _apiRequestContextId(resource: Entry): string {
     const contextEntry = context(resource);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!contextEntry) {
       return '';
     }

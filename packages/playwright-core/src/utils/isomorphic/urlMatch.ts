@@ -30,13 +30,13 @@ export function globToRegex(glob: string): RegExp {
       continue;
     }
     if (c === '*') {
-      const beforeDeep = glob[i - 1];
+      const beforeDeep = glob[i - 1] as string | undefined;
       let starCount = 1;
       while (glob[i + 1] === '*') {
         starCount++;
         i++;
       }
-      const afterDeep = glob[i + 1];
+      const afterDeep = glob[i + 1] as string | undefined;
       const isDeep = starCount > 1 &&
           (beforeDeep === '/' || beforeDeep === undefined) &&
           (afterDeep === '/' || afterDeep === undefined);

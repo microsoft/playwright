@@ -37,6 +37,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     } else if (mode === 'mstest') {
       this.name = 'MSTest';
       this.id = 'csharp-mstest';
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     } else if (mode === 'nunit') {
       this.name = 'NUnit';
       this.id = 'csharp-nunit';

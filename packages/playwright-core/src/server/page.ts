@@ -494,6 +494,7 @@ export class Page extends SdkObject {
       return;
     }
     const mainFrame = this._frameManager.mainFrame();
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!mainFrame || !mainFrame.pendingDocument()) {
       return;
     }
@@ -619,11 +620,11 @@ export class Page extends SdkObject {
   async expectScreenshot(metadata: CallMetadata, options: ExpectScreenshotOptions = {}): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[] }> {
     const locator = options.locator;
     const rafrafScreenshot = locator ? async (progress: Progress, timeout: number) => {
-      return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options || {});
+      return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options);
     } : async (progress: Progress, timeout: number) => {
       await this.performActionPreChecks(progress);
       await this.mainFrame().rafrafTimeout(timeout);
-      return await this._screenshotter.screenshotPage(progress, options || {});
+      return await this._screenshotter.screenshotPage(progress, options);
     };
 
     const comparator = getComparator('image/png');
@@ -632,7 +633,7 @@ export class Page extends SdkObject {
       return { errorMessage: '"not" matcher requires expected result' };
     }
     try {
-      const format = validateScreenshotOptions(options || {});
+      const format = validateScreenshotOptions(options);
       if (format !== 'png') {
         throw new Error('Only PNG screenshots are supported');
       }
@@ -667,6 +668,7 @@ export class Page extends SdkObject {
         progress.log(`  generating new stable screenshot expectation`);
       }
       let isFirstIteration = true;
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       while (true) {
         progress.throwIfAborted();
         if (this.isClosed()) {

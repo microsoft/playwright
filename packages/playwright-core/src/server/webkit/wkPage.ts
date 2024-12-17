@@ -198,6 +198,7 @@ export class WKPage implements PageDelegate {
       promises.push(this.updateUserAgent());
     }
     const emulatedMedia = this._page.emulatedMedia();
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (emulatedMedia.media || emulatedMedia.colorScheme || emulatedMedia.reducedMotion || emulatedMedia.forcedColors) {
       promises.push(WKPage._setEmulateMedia(session, emulatedMedia.media, emulatedMedia.colorScheme, emulatedMedia.reducedMotion, emulatedMedia.forcedColors));
     }
@@ -274,6 +275,7 @@ export class WKPage implements PageDelegate {
     this._pageProxySession.dispose();
     eventsHelper.removeEventListeners(this._sessionListeners);
     eventsHelper.removeEventListeners(this._eventListeners);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (this._session) {
       this._session.dispose();
     }
@@ -1038,6 +1040,7 @@ export class WKPage implements PageDelegate {
       frameId: frame._id,
       executionContextId: ((context as any)[contextDelegateSymbol] as WKExecutionContext)._contextId
     });
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!result || result.object.subtype === 'null') {
       throw new Error('Frame has been detached.');
     }

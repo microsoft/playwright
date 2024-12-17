@@ -26,6 +26,7 @@ import { WorkbenchLoader } from './ui/workbenchLoader';
     if (window.location.href.includes('isUnderTest=true')) {
       await new Promise(f => setTimeout(f, 1000));
     }
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!navigator.serviceWorker) {
       throw new Error(`Service workers are not supported.\nMake sure to serve the Trace Viewer (${window.location}) via HTTPS or localhost.`);
     }

@@ -36,6 +36,7 @@ export async function pollAgainstDeadline<T>(callback: () => Promise<{ continueP
   const lastPollInterval = pollIntervals.pop() ?? 1000;
   let lastResult: T|undefined;
   const wrappedCallback = () => Promise.resolve().then(callback);
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   while (true) {
     const time = monotonicTime();
     if (deadline && time >= deadline) {

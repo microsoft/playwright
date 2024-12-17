@@ -21,6 +21,7 @@ export function bundle(): Plugin {
     name: 'playwright-bundle',
     transformIndexHtml: {
       handler(html, ctx) {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!ctx || !ctx.bundle) {
           return html;
         }

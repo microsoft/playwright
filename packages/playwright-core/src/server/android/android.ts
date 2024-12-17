@@ -334,7 +334,7 @@ export class AndroidDevice extends SdkObject {
     const artifactsDir = await fs.promises.mkdtemp(ARTIFACTS_FOLDER);
     const cleanupArtifactsDir = async () => {
       const errors = await removeFolders([artifactsDir]);
-      for (let i = 0; i < (errors || []).length; ++i) {
+      for (let i = 0; i < errors.length; ++i) {
         debug('pw:android')(`exception while removing ${artifactsDir}: ${errors[i]}`);
       }
     };
@@ -438,6 +438,7 @@ export class AndroidDevice extends SdkObject {
       }
 
       const pkg = await this._extractPkg(pid);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (this._isClosed) {
         return;
       }

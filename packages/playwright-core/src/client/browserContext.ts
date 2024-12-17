@@ -116,9 +116,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       const pageObject = Page.from(page);
       const parsedError = parseError(error);
       this.emit(Events.BrowserContext.WebError, new WebError(pageObject, parsedError));
-      if (pageObject) {
-        pageObject.emit(Events.Page.PageError, parsedError);
-      }
+      pageObject.emit(Events.Page.PageError, parsedError);
     });
     this._channel.on('dialog', ({ dialog }) => {
       const dialogObject = Dialog.from(dialog);

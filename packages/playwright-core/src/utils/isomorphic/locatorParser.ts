@@ -111,6 +111,7 @@ function shiftParams(template: string, sub: number) {
 function transform(template: string, params: TemplateParams, testIdAttributeName: string): string {
   // Recursively handle filter(has=, hasnot=, sethas(), sethasnot()).
   // TODO: handle and(locator), or(locator), locator(locator), locator(has=, hasnot=, sethas(), sethasnot()).
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   while (true) {
     const hasMatch = template.match(/filter\(,?(has=|hasnot=|sethas\(|sethasnot\()/);
     if (!hasMatch) {

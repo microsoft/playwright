@@ -317,6 +317,7 @@ export function tokenize(str1: string): CSSTokenInterface[] {
   const consumeComments = function() {
     while (next(1) === 0x2f && next(2) === 0x2a) {
       consume(2);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       while (true) {
         consume();
         if (code === 0x2a && next() === 0x2f) {

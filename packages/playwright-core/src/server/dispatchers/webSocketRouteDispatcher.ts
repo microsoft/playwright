@@ -154,6 +154,7 @@ export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, chann
 }
 
 function matchesPattern(dispatcher: PageDispatcher | BrowserContextDispatcher, baseURL: string | undefined, url: string) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   for (const pattern of dispatcher._webSocketInterceptionPatterns || []) {
     const urlMatch = pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags) : pattern.glob;
     if (urlMatches(baseURL, url, urlMatch)) {

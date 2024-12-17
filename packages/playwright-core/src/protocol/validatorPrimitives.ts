@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { assertUnreachableWithError } from '../common/types';
 import { isUnderTest } from '../utils';
 
 export class ValidationError extends Error {}
@@ -67,28 +68,32 @@ export const tString: Validator = (arg: any, path: string, context: ValidatorCon
   throw new ValidationError(`${path}: expected string, got ${typeof arg}`);
 };
 export const tBinary: Validator = (arg: any, path: string, context: ValidatorContext) => {
-  if (context.binary === 'fromBase64') {
-    if (arg instanceof String) {
-      return Buffer.from(arg.valueOf(), 'base64');
+  switch (context.binary) {
+    case 'fromBase64': {
+      if (arg instanceof String) {
+        return Buffer.from(arg.valueOf(), 'base64');
+      }
+      if (typeof arg === 'string') {
+        return Buffer.from(arg, 'base64');
+      }
+      throw new ValidationError(`${path}: expected base64-encoded buffer, got ${typeof arg}`);
     }
-    if (typeof arg === 'string') {
-      return Buffer.from(arg, 'base64');
+    case 'toBase64': {
+      if (!(arg instanceof Buffer)) {
+        throw new ValidationError(`${path}: expected Buffer, got ${typeof arg}`);
+      }
+      return (arg as Buffer).toString('base64');
     }
-    throw new ValidationError(`${path}: expected base64-encoded buffer, got ${typeof arg}`);
+    case 'buffer': {
+      if (!(arg instanceof Buffer)) {
+        throw new ValidationError(`${path}: expected Buffer, got ${typeof arg}`);
+      }
+      return arg;
+    }
+    default: {
+      return assertUnreachableWithError(context.binary, new ValidationError(`Unsupported binary behavior "${context.binary}"`));
+    }
   }
-  if (context.binary === 'toBase64') {
-    if (!(arg instanceof Buffer)) {
-      throw new ValidationError(`${path}: expected Buffer, got ${typeof arg}`);
-    }
-    return (arg as Buffer).toString('base64');
-  }
-  if (context.binary === 'buffer') {
-    if (!(arg instanceof Buffer)) {
-      throw new ValidationError(`${path}: expected Buffer, got ${typeof arg}`);
-    }
-    return arg;
-  }
-  throw new ValidationError(`Unsupported binary behavior "${context.binary}"`);
 };
 export const tUndefined: Validator = (arg: any, path: string, context: ValidatorContext) => {
   if (Object.is(arg, undefined)) {
@@ -156,6 +161,7 @@ export const tChannel = (names: '*' | string[]): Validator => {
 export const tType = (name: string): Validator => {
   return (arg: any, path: string, context: ValidatorContext) => {
     const v = scheme[name];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!v) {
       throw new ValidationError(path + ': unknown type "' + name + '"');
     }

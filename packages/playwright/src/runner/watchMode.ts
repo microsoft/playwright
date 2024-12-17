@@ -140,6 +140,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   let lastRun: { type: 'changed' | 'regular' | 'failed', failedTestIds?: string[], dirtyTestIds?: string[] } = { type: 'regular' };
   let result: FullResult['status'] = 'passed';
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   while (true) {
     if (bufferMode) {
       printBufferPrompt(dirtyTestFiles, teleSuiteUpdater.config!.rootDir);
@@ -244,9 +245,9 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
     if (command === 'repeat') {
       if (lastRun.type === 'regular') {
         await runTests(options, testServerConnection, { title: 're-running tests' });
-        continue;
       } else if (lastRun.type === 'changed') {
         await runTests(options, testServerConnection, { title: 're-running tests', testIds: lastRun.dirtyTestIds });
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       } else if (lastRun.type === 'failed') {
         await runTests({}, testServerConnection, { title: 're-running tests', testIds: lastRun.failedTestIds });
       }

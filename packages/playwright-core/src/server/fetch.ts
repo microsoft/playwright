@@ -566,6 +566,7 @@ export abstract class APIRequestContext extends SdkObject {
 
 
       progress.log(`→ ${options.method} ${url.toString()}`);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (options.headers) {
         for (const [name, value] of Object.entries(options.headers)) {
           progress.log(`  ${name}: ${value}`);

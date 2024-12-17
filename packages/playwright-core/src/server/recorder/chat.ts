@@ -105,6 +105,7 @@ function iterablePump(): ChunkIterator {
 
   const iterable = (async function* () {
     const reader = stream.getReader();
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (true) {
       const { done, value } = await reader.read();
       if (done) {

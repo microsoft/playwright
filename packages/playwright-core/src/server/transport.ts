@@ -118,6 +118,7 @@ export class WebSocketTransport implements ConnectionTransport {
 
     if (result.redirect) {
       // Strip authorization headers from the redirected request.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       const newHeaders = Object.fromEntries(Object.entries(headers || {}).filter(([name]) => {
         return !name.includes('access-key') && name.toLowerCase() !== 'authorization';
       }));

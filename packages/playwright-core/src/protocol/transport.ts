@@ -79,6 +79,7 @@ export class PipeTransport {
 
   _dispatch(buffer: Buffer) {
     this._data = Buffer.concat([this._data, buffer]);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     while (true) {
       if (!this._bytesLeft && this._data.length < 4) {
         // Need more data.

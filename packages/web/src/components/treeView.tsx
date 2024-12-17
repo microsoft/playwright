@@ -235,7 +235,7 @@ export function TreeItemHeader<T extends TreeItem>({
   isKeyboardNavigation,
   setIsKeyboardNavigation }: TreeItemHeaderProps<T>) {
   const groupId = React.useId();
-  const itemRef = React.useRef(null);
+  const itemRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (selectedItem === item && isKeyboardNavigation && itemRef.current) {

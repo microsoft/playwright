@@ -98,7 +98,7 @@ export function callMetadataForAction(pageAliases: Map<Page, string>, actionInCo
 export function collapseActions(actions: actions.ActionInContext[]): actions.ActionInContext[] {
   const result: actions.ActionInContext[] = [];
   for (const action of actions) {
-    const lastAction = result[result.length - 1];
+    const lastAction = result[result.length - 1] as actions.ActionInContext | undefined;
     const isSameAction = lastAction && lastAction.action.name === action.action.name && lastAction.frame.pageAlias === action.frame.pageAlias && lastAction.frame.framePath.join('|') === action.frame.framePath.join('|');
     const isSameSelector = lastAction && 'selector' in lastAction.action && 'selector' in action.action && action.action.selector === lastAction.action.selector;
     const shouldMerge = isSameAction && (action.action.name === 'navigate' || (action.action.name === 'fill' && isSameSelector));

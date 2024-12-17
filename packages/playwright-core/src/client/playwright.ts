@@ -51,7 +51,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
     this._bidiChromium._playwright = this;
     this._bidiFirefox = BrowserType.from(initializer.bidiFirefox);
     this._bidiFirefox._playwright = this;
-    this.devices = this._connection.localUtils().devices ?? {};
+    this.devices = this._connection.localUtils().devices;
     this.selectors = new Selectors();
     this.errors = { TimeoutError };
 

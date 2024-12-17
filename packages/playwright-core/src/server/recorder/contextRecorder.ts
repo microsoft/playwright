@@ -283,13 +283,14 @@ export class ContextRecorder extends EventEmitter {
 
 export async function generateFrameSelector(frame: Frame): Promise<string[]> {
   const selectorPromises: Promise<string>[] = [];
-  while (frame) {
-    const parent = frame.parentFrame();
+  let currentFrame = frame as Frame | undefined;
+  while (currentFrame) {
+    const parent = currentFrame.parentFrame();
     if (!parent) {
       break;
     }
-    selectorPromises.push(generateFrameSelectorInParent(parent, frame));
-    frame = parent;
+    selectorPromises.push(generateFrameSelectorInParent(parent, currentFrame));
+    currentFrame = parent;
   }
   const result = await Promise.all(selectorPromises);
   return result.reverse();
@@ -299,6 +300,7 @@ async function generateFrameSelectorInParent(parent: Frame, frame: Frame): Promi
   const result = await raceAgainstDeadline(async () => {
     try {
       const frameElement = await frame.frameElement();
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (!frameElement || !parent) {
         return;
       }

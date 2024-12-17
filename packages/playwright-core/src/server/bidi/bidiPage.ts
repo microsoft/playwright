@@ -189,7 +189,7 @@ export class BidiPage implements PageDelegate {
     if (url.startsWith('file:') || url.startsWith('data:') || url === 'about:blank') {
       // Navigation to file urls doesn't emit network events, so we fire 'commit' event right when navigation is started.
       // Doing it in domcontentload would be too late as we'd clear frame tree.
-      const frame = this._page._frameManager.frame(frameId)!;
+      const frame = this._page._frameManager.frame(frameId);
       if (frame) {
         this._page._frameManager.frameCommittedNewDocumentNavigation(frameId, params.url, '', params.navigation!, /* initial */ false);
       }
@@ -514,6 +514,7 @@ export class BidiPage implements PageDelegate {
         return 'error:notconnected';
       }
       const rects = node.getClientRects();
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (!rects) {
         return null;
       }

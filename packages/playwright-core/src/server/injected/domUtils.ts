@@ -43,6 +43,7 @@ export function parentElementOrShadowHost(element: Element): Element | undefined
   if (!element.parentNode) {
     return;
   }
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (element.parentNode.nodeType === 11 /* Node.DOCUMENT_FRAGMENT_NODE */ && (element.parentNode as ShadowRoot).host) {
     return (element.parentNode as ShadowRoot).host;
   }
@@ -80,6 +81,7 @@ export function closestCrossShadow(element: Element | undefined, css: string, sc
 }
 
 export function getElementComputedStyle(element: Element, pseudo?: string): CSSStyleDeclaration | undefined {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   return element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element, pseudo) : undefined;
 }
 
@@ -94,6 +96,7 @@ export function isElementStyleVisibilityVisible(element: Element, style?: CSSSty
   // All the browser implement it, but WebKit has a bug which prevents us from using it:
   // https://bugs.webkit.org/show_bug.cgi?id=264733
   // @ts-ignore
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (Element.prototype.checkVisibility && browserNameForWorkarounds !== 'webkit') {
     if (!element.checkVisibility()) {
       return false;

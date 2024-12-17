@@ -254,6 +254,7 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
     async transform(this: PluginContext, content, id) {
       const queryIndex = id.indexOf('?');
       const file = queryIndex !== -1 ? id.substring(0, queryIndex) : id;
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (!buildInfo.sources[file]) {
         try {
           const timestamp = (await fs.promises.stat(file)).mtimeMs;

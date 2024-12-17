@@ -45,6 +45,7 @@ export function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedB
   if (typeof actualBuffer === 'string') {
     return compareText(actualBuffer, expectedBuffer);
   }
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (!actualBuffer || !(actualBuffer instanceof Buffer)) {
     return { errorMessage: 'Actual result should be a Buffer or a string.' };
   }

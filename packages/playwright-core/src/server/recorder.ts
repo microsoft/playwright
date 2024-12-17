@@ -63,7 +63,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
   }
 
   static show(codegenMode: 'actions' | 'trace-events', context: BrowserContext, recorderAppFactory: IRecorderAppFactory, params: channels.BrowserContextEnableRecorderParams): Promise<Recorder> {
-    let recorderPromise = (context as any)[recorderSymbol] as Promise<Recorder>;
+    let recorderPromise = (context as any)[recorderSymbol] as Promise<Recorder> | undefined;
     if (!recorderPromise) {
       recorderPromise = Recorder._create(codegenMode, context, recorderAppFactory, params);
       (context as any)[recorderSymbol] = recorderPromise;
@@ -135,6 +135,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
         this._contextRecorder.clearScript();
         return;
       }
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (data.event === 'runTask') {
         this._contextRecorder.runTask(data.params.task);
         return;

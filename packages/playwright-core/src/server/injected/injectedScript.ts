@@ -271,11 +271,6 @@ export class InjectedScript {
       throw this.createStacklessError('Node is not queryable.');
     }
 
-    if (selector.capture !== undefined) {
-      // We should have handled the capture above.
-      throw this.createStacklessError('Internal error: there should not be a capture in the selector.');
-    }
-
     // Workaround so that ":scope" matches the ShadowRoot.
     // This is, unfortunately, because an ElementHandle can point to any Node (including ShadowRoot/Document/etc),
     // and not just to an Element, and we support various APIs on ElementHandle like "textContent()".
@@ -531,6 +526,7 @@ export class InjectedScript {
   }
 
   describeIFrameStyle(iframe: Element): 'error:notconnected' | 'transformed' | { left: number, top: number } {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!iframe.ownerDocument || !iframe.ownerDocument.defaultView) {
       return 'error:notconnected';
     }
@@ -687,6 +683,7 @@ export class InjectedScript {
       return !disabled && !readonly;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (state === 'checked' || state === 'unchecked') {
       const need = state === 'checked';
       const checked = getChecked(element, false);
@@ -718,6 +715,7 @@ export class InjectedScript {
         }
         let matches = true;
         if (optionToSelect.valueOrLabel !== undefined) {
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           matches = matches && (optionToSelect.valueOrLabel === option.value || optionToSelect.valueOrLabel === option.label);
         }
         if (optionToSelect.value !== undefined) {
@@ -835,6 +833,7 @@ export class InjectedScript {
     }
 
     const { activeElement, isFocused: wasFocused } = this._activelyFocused(node);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if ((node as HTMLElement).isContentEditable && !wasFocused && activeElement && (activeElement as HTMLElement | SVGElement).blur) {
       // Workaround the Firefox bug where focusing the element does not switch current
       // contenteditable to the new element. However, blurring the previous one helps.
@@ -899,7 +898,7 @@ export class InjectedScript {
 
     // Get all component roots leading to the target element.
     // Go from the bottom to the top to make it work with closed shadow roots.
-    let parentElement = targetElement;
+    let parentElement = targetElement as Element | undefined;
     while (parentElement) {
       const root = enclosingShadowRootOrDocument(parentElement);
       if (!root) {
@@ -1054,10 +1053,12 @@ export class InjectedScript {
       }
 
       // Determine the event point. Note that Firefox does not always have window.TouchEvent.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       const point = (!!this.window.TouchEvent && (event instanceof this.window.TouchEvent)) ? event.touches[0] : (event as MouseEvent | PointerEvent);
 
       // Check that we hit the right element at the first event, and assume all
       // subsequent events will be fine.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (result === undefined && point) {
         result = this.expectHitTarget({ x: point.clientX, y: point.clientY }, element);
       }
@@ -1265,6 +1266,8 @@ export class InjectedScript {
       // New documentElement - let's check whether listeners are still here.
       seenEvent = false;
       this.window.dispatchEvent(new CustomEvent(customEventName));
+      // TODO: Dead code?
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (seenEvent) {
         return;
       }

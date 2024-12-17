@@ -52,12 +52,12 @@ export const SplitView: React.FC<SplitViewProps> = ({
   let size: number;
   if (orientation === 'vertical') {
     size = vSize / window.devicePixelRatio;
-    if (measure && measure.height < size) {
+    if (measure.height < size) {
       size = measure.height - 10;
     }
   } else {
     size = hSize / window.devicePixelRatio;
-    if (measure && measure.width < size) {
+    if (measure.width < size) {
       size = measure.width - 10;
     }
   }

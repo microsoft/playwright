@@ -358,6 +358,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
 
       {
         const body = root.querySelector(`body[__playwright_custom_elements__]`);
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (body && window.customElements) {
           const customElements = (body.getAttribute('__playwright_custom_elements__') || '').split(',');
           for (const elementName of customElements) {
@@ -415,6 +416,7 @@ frameBoundingRectsInfo.frames.get(element)!.scrollLeft = element.scrollTop;
         const pointY = +search.get('pointY')!;
         const hasInputTarget = search.has('hasInputTarget');
         const hasTargetElements = targetElements.length > 0;
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         const roots = document.documentElement ? [document.documentElement] : [];
         for (const target of (hasTargetElements ? targetElements : roots)) {
           const pointElement = document.createElement('x-pw-pointer');

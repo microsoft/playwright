@@ -47,7 +47,7 @@ export const TestCaseView: React.FC<{
   }, [test]);
 
   const visibleAnnotations = React.useMemo(() => {
-    return test?.annotations?.filter(annotation => !annotation.type.startsWith('_')) || [];
+    return test?.annotations.filter(annotation => !annotation.type.startsWith('_')) || [];
   }, [test?.annotations]);
 
   return <div className='test-case-column vbox'>
@@ -58,10 +58,10 @@ export const TestCaseView: React.FC<{
       <div style={{ width: 10 }}></div>
       <div className={clsx(!next && 'hidden')}><Link href={testResultHref({ test: next }) + filterParam}>next »</Link></div>
     </div>}
-    {test && <div className='test-case-title'>{test?.title}</div>}
+    {test && <div className='test-case-title'>{test.title}</div>}
     {test && <div className='hbox'>
       <div className='test-case-location'>
-        <CopyToClipboardContainer value={`${test?.location.file}:${test?.location.line}`}>
+        <CopyToClipboardContainer value={`${test.location.file}:${test.location.line}`}>
           {test.location.file}:{test.location.line}
         </CopyToClipboardContainer>
       </div>
@@ -69,7 +69,7 @@ export const TestCaseView: React.FC<{
       <div className='test-case-duration'>{msToString(test.duration)}</div>
     </div>}
     {test && (!!test.projectName || labels) && <div className='test-case-project-labels-row'>
-      {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
+      {!!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
       {labels && <LabelsLinkView labels={labels} />}
     </div>}
     {!!visibleAnnotations.length && <AutoChip header='Annotations'>
@@ -80,7 +80,7 @@ export const TestCaseView: React.FC<{
         id: String(index),
         title: <div style={{ display: 'flex', alignItems: 'center' }}>{statusIcon(result.status)} {retryLabel(index)}</div>,
         render: () => <TestResultView test={test!} result={result} />
-      })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
+      }))} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />}
   </div>;
 };
 

@@ -20,6 +20,7 @@ import { isElementVisible, parentElementOrShadowHost } from './domUtils';
 import { type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { elementMatchesText, elementText, shouldSkipForTextMatching, type ElementText } from './selectorUtils';
 import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
+import { assertUnreachableWithError } from 'playwright-core/lib/common/types';
 
 type QueryContext = {
   scope: Element | Document;
@@ -280,66 +281,70 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     }
     return this._cached<boolean>(this._cacheMatchesParents, element, [complex, index, context.scope, context.pierceShadow, context.originalScope], () => {
       const { selector: simple, combinator } = complex.simples[index];
-      if (combinator === '>') {
-        const parent = parentElementOrShadowHostInContext(element, context);
-        if (!parent || !this._matchesSimple(parent, simple, context)) {
+      switch (combinator) {
+        case '>': {
+          const parent = parentElementOrShadowHostInContext(element, context);
+          if (!parent || !this._matchesSimple(parent, simple, context)) {
+            return false;
+          }
+          return this._matchesParents(parent, complex, index - 1, context);
+        }
+        case '+': {
+          const previousSibling = previousSiblingInContext(element, context);
+          if (!previousSibling || !this._matchesSimple(previousSibling, simple, context)) {
+            return false;
+          }
+          return this._matchesParents(previousSibling, complex, index - 1, context);
+        }
+        case '': {
+          let parent = parentElementOrShadowHostInContext(element, context);
+          while (parent) {
+            if (this._matchesSimple(parent, simple, context)) {
+              if (this._matchesParents(parent, complex, index - 1, context)) {
+                return true;
+              }
+              if (complex.simples[index - 1].combinator === '') {
+                break;
+              }
+            }
+            parent = parentElementOrShadowHostInContext(parent, context);
+          }
           return false;
         }
-        return this._matchesParents(parent, complex, index - 1, context);
-      }
-      if (combinator === '+') {
-        const previousSibling = previousSiblingInContext(element, context);
-        if (!previousSibling || !this._matchesSimple(previousSibling, simple, context)) {
+        case '~': {
+          let previousSibling = previousSiblingInContext(element, context);
+          while (previousSibling) {
+            if (this._matchesSimple(previousSibling, simple, context)) {
+              if (this._matchesParents(previousSibling, complex, index - 1, context)) {
+                return true;
+              }
+              if (complex.simples[index - 1].combinator === '~') {
+                break;
+              }
+            }
+            previousSibling = previousSiblingInContext(previousSibling, context);
+          }
           return false;
         }
-        return this._matchesParents(previousSibling, complex, index - 1, context);
-      }
-      if (combinator === '') {
-        let parent = parentElementOrShadowHostInContext(element, context);
-        while (parent) {
-          if (this._matchesSimple(parent, simple, context)) {
-            if (this._matchesParents(parent, complex, index - 1, context)) {
-              return true;
+        case '>=': {
+          let parent: Element | undefined = element;
+          while (parent) {
+            if (this._matchesSimple(parent, simple, context)) {
+              if (this._matchesParents(parent, complex, index - 1, context)) {
+                return true;
+              }
+              if (complex.simples[index - 1].combinator === '') {
+                break;
+              }
             }
-            if (complex.simples[index - 1].combinator === '') {
-              break;
-            }
+            parent = parentElementOrShadowHostInContext(parent, context);
           }
-          parent = parentElementOrShadowHostInContext(parent, context);
+          return false;
         }
-        return false;
-      }
-      if (combinator === '~') {
-        let previousSibling = previousSiblingInContext(element, context);
-        while (previousSibling) {
-          if (this._matchesSimple(previousSibling, simple, context)) {
-            if (this._matchesParents(previousSibling, complex, index - 1, context)) {
-              return true;
-            }
-            if (complex.simples[index - 1].combinator === '~') {
-              break;
-            }
-          }
-          previousSibling = previousSiblingInContext(previousSibling, context);
+        default: {
+          return assertUnreachableWithError(combinator, new Error(`Unsupported combinator "${combinator}"`));
         }
-        return false;
       }
-      if (combinator === '>=') {
-        let parent: Element | undefined = element;
-        while (parent) {
-          if (this._matchesSimple(parent, simple, context)) {
-            if (this._matchesParents(parent, complex, index - 1, context)) {
-              return true;
-            }
-            if (complex.simples[index - 1].combinator === '') {
-              break;
-            }
-          }
-          parent = parentElementOrShadowHostInContext(parent, context);
-        }
-        return false;
-      }
-      throw new Error(`Unsupported combinator "${combinator}"`);
     });
   }
 
@@ -461,6 +466,7 @@ const scopeEngine: SelectorEngine = {
     const actualScope = context.originalScope || context.scope;
     if (actualScope.nodeType === 9 /* Node.DOCUMENT_NODE */) {
       const root = (actualScope as Document).documentElement;
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       return root ? [root] : [];
     }
     if (actualScope.nodeType === 1 /* Node.ELEMENT_NODE */) {

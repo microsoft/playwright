@@ -494,6 +494,7 @@ export class TeleTestCase implements reporterTypes.TestCase {
   }
 
   titlePath(): string[] {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     const titlePath = this.parent ? this.parent.titlePath() : [];
     titlePath.push(this.title);
     return titlePath;

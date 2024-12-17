@@ -350,6 +350,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   async harExport(params: channels.BrowserContextHarExportParams): Promise<channels.BrowserContextHarExportResult> {
     const artifact = await this._context._harExport(params.harId);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!artifact) {
       throw new Error('No HAR artifact. Ensure record.harPath is set.');
     }

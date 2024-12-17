@@ -112,6 +112,7 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 
 window.playwrightUnmount = async rootElement => {
   const svelteComponent = /** @type {SvelteComponent} */ (rootElement[__pwSvelteComponentKey]);
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (!svelteComponent) {
     throw new Error('Component was not mounted');
   }
@@ -125,6 +126,7 @@ window.playwrightUpdate = async (rootElement, component) => {
   }
 
   const svelteComponent = /** @type {SvelteComponent} */ (rootElement[__pwSvelteComponentKey]);
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (!svelteComponent) {
     throw new Error('Component was not mounted');
   }

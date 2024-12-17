@@ -16,7 +16,7 @@
 
 import { escapeWithQuotes, normalizeEscapedRegexQuotes, toSnakeCase, toTitleCase } from './stringUtils';
 import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringifySelector } from './selectorParser';
-import type { ParsedSelector } from './selectorParser';
+import type { ParsedSelector, ParsedSelectorPart } from './selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
 export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'frame-locator' | 'and' | 'or' | 'chain';
@@ -177,7 +177,7 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
       continue;
     }
 
-    const nextPart = parts[index + 1];
+    const nextPart = parts[index + 1] as ParsedSelectorPart | undefined;
 
     const selectorPart = stringifySelector({ parts: [part] });
     const locatorPart = factory.generateLocator(base, 'default', selectorPart);
