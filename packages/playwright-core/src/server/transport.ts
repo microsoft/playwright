@@ -24,6 +24,7 @@ import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../utils/happy-
 import type { HeadersArray } from './types';
 
 export const perMessageDeflate = {
+  clientNoContextTakeover: true,
   zlibDeflateOptions: {
     level: 3,
   },

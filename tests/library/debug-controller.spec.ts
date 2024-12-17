@@ -84,9 +84,11 @@ test('should pick element', async ({ backend, connectedBrowser }) => {
 
   expect(events).toEqual([
     {
+      ariaSnapshot: '- button "Submit"',
       selector: 'internal:role=button[name=\"Submit\"i]',
       locator: 'getByRole(\'button\', { name: \'Submit\' })',
     }, {
+      ariaSnapshot: '- button "Submit"',
       selector: 'internal:role=button[name=\"Submit\"i]',
       locator: 'getByRole(\'button\', { name: \'Submit\' })',
     },
@@ -297,4 +299,10 @@ test('should highlight aria template', async ({ backend, connectedBrowser }, tes
   const box1 = roundBox(await button.boundingBox());
   const box2 = roundBox(await highlight.boundingBox());
   expect(box1).toEqual(box2);
+});
+
+test('should report error in aria template', async ({ backend }) => {
+  await backend.navigate({ url: `data:text/html,<button>Submit</button>` });
+  const error = await backend.highlight({ ariaTemplate: `- button "Submit` }).catch(e => e);
+  expect(error.message).toContain('Unterminated string:');
 });

@@ -34,7 +34,6 @@ import type { Protocol } from './protocol';
 import type { Progress } from '../progress';
 import { splitErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../utils/debugLogger';
-import { ManualPromise } from '../../utils/manualPromise';
 import { BrowserContext } from '../browserContext';
 import { TargetClosedError } from '../errors';
 
@@ -49,9 +48,7 @@ export class FFPage implements PageDelegate {
   readonly _page: Page;
   readonly _networkManager: FFNetworkManager;
   readonly _browserContext: FFBrowserContext;
-  private _pagePromise = new ManualPromise<Page | Error>();
-  _initializedPage: Page | null = null;
-  private _initializationFailed = false;
+  private _reportedAsNew = false;
   readonly _opener: FFPage | null;
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
@@ -102,40 +99,23 @@ export class FFPage implements PageDelegate {
       eventsHelper.addEventListener(this._session, 'Page.screencastFrame', this._onScreencastFrame.bind(this)),
 
     ];
-    this._session.once('Page.ready', async () => {
-      await this._page.initOpener(this._opener);
-      if (this._initializationFailed)
+    this._session.once('Page.ready', () => {
+      if (this._reportedAsNew)
         return;
-      // Note: it is important to call |reportAsNew| before resolving pageOrError promise,
-      // so that anyone who awaits pageOrError got a ready and reported page.
-      this._initializedPage = this._page;
-      this._page.reportAsNew();
-      this._pagePromise.resolve(this._page);
+      this._reportedAsNew = true;
+      this._page.reportAsNew(this._opener?._page);
     });
     // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
     // Therefore, we can end up with an initialized page without utility world, although very unlikely.
     this.addInitScript(new InitScript('', true), UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
   }
 
-  potentiallyUninitializedPage(): Page {
-    return this._page;
-  }
-
   async _markAsError(error: Error) {
-    // Same error may be report twice: channer disconnected and session.send fails.
-    if (this._initializationFailed)
+    // Same error may be reported twice: channel disconnected and session.send fails.
+    if (this._reportedAsNew)
       return;
-    this._initializationFailed = true;
-
-    if (!this._initializedPage) {
-      await this._page.initOpener(this._opener);
-      this._page.reportAsNew(error);
-      this._pagePromise.resolve(error);
-    }
-  }
-
-  async pageOrError(): Promise<Page | Error> {
-    return this._pagePromise;
+    this._reportedAsNew = true;
+    this._page.reportAsNew(this._opener?._page, error);
   }
 
   _onWebSocketCreated(event: Protocol.Page.webSocketCreatedPayload) {
@@ -268,7 +248,7 @@ export class FFPage implements PageDelegate {
   }
 
   async _onBindingCalled(event: Protocol.Page.bindingCalledPayload) {
-    const pageOrError = await this.pageOrError();
+    const pageOrError = await this._page.waitForInitializedOrError();
     if (!(pageOrError instanceof Error)) {
       const context = this._contextIdToContext.get(event.executionContextId);
       if (context)
@@ -333,7 +313,7 @@ export class FFPage implements PageDelegate {
   }
 
   _onVideoRecordingStarted(event: Protocol.Page.videoRecordingStartedPayload) {
-    this._browserContext._browser._videoStarted(this._browserContext, event.screencastId, event.file, this.pageOrError());
+    this._browserContext._browser._videoStarted(this._browserContext, event.screencastId, event.file, this._page.waitForInitializedOrError());
   }
 
   didClose() {

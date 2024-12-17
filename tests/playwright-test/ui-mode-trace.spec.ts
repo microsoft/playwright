@@ -339,3 +339,57 @@ test('should show request source context id', async ({ runUITest, server }) => {
   await expect(page.getByText('page#2')).toBeVisible();
   await expect(page.getByText('api#1')).toBeVisible();
 });
+
+test('should filter actions tab on double-click', async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.goto('${server.EMPTY_PAGE}');
+      });
+    `,
+  });
+
+  await page.getByText('pass').dblclick();
+
+  const actionsTree = page.getByTestId('actions-tree');
+  await expect(actionsTree.getByRole('treeitem')).toHaveText([
+    /Before Hooks/,
+    /page.goto/,
+    /After Hooks/,
+  ]);
+  await actionsTree.getByRole('treeitem', { name: 'page.goto' }).dblclick();
+  await expect(actionsTree.getByRole('treeitem')).toHaveText([
+    /page.goto/,
+  ]);
+});
+
+test('should show custom fixture titles in actions tree', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      
+      const test = base.extend({
+        fixture1: [async ({}, use) => {
+          await use();
+        }, { title: 'My Custom Fixture' }],
+        fixture2: async ({}, use) => {
+          await use();
+        },
+      });
+
+      test('fixture test', async ({ fixture1, fixture2 }) => {
+        // Empty test using both fixtures
+      });
+    `,
+  });
+
+  await page.getByText('fixture test').dblclick();
+  const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
+  await expect(listItem, 'action list').toHaveText([
+    /Before Hooks[\d.]+m?s/,
+    /My Custom Fixture[\d.]+m?s/,
+    /fixture2[\d.]+m?s/,
+    /After Hooks[\d.]+m?s/,
+  ]);
+});

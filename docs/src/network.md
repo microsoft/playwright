@@ -115,8 +115,7 @@ await page.GotoAsync("https://example.com");
 You can configure pages to load over the HTTP(S) proxy or SOCKSv5. Proxy can be either set globally
 for the entire browser, or for each browser context individually.
 
-You can optionally specify username and password for HTTP(S) proxy, you can also specify hosts to
-bypass proxy for.
+You can optionally specify username and password for HTTP(S) proxy, you can also specify hosts to bypass the [`option: Browser.newContext.proxy`] for.
 
 Here is an example of a global proxy:
 

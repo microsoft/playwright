@@ -183,6 +183,17 @@ it('should work across nodes', async ({ page }) => {
   expect(await page.$$eval(`text=/world/`, els => els.length)).toBe(1);
 });
 
+it('text-is() should ignore comments', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33976' }
+}, async ({ page }) => {
+  await page.setContent(`<div id=me>hel<!-- comment -->lo
+  <!-- comment -->
+  world</div>`);
+  expect(await page.$eval(`:text-is("hello world")`, e => e.id)).toBe('me');
+  expect(await page.locator('div', { hasText: 'hello world' }).getAttribute('id')).toBe('me');
+  expect(await page.getByText('hello world', { exact: true }).getAttribute('id')).toBe('me');
+});
+
 it('should work with text nodes in quoted mode', async ({ page }) => {
   await page.setContent(`<div id=target1>Hello<span id=target2>wo  rld  </span>  Hi again  </div>`);
   expect(await page.$eval(`text="Hello"`, e => e.id)).toBe('target1');

@@ -96,7 +96,7 @@ In case this browser is connected to, clears all created contexts belonging to t
 browser server.
 
 :::note
-This is similar to force quitting the browser. Therefore, you should call [`method: BrowserContext.close`] on any [BrowserContext]'s you explicitly created earlier with [`method: Browser.newContext`] **before** calling [`method: Browser.close`].
+This is similar to force-quitting the browser. To close pages gracefully and ensure you receive page close events, call [`method: BrowserContext.close`] on any [BrowserContext] instances you explicitly created earlier using [`method: Browser.newContext`] **before** calling [`method: Browser.close`].
 :::
 
 The [Browser] object itself is considered to be disposed and cannot be used anymore.

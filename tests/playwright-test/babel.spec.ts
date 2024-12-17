@@ -143,12 +143,13 @@ test('should not transform external', async ({ runInlineTest }) => {
       });
     `,
     'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
+      const { test, expect, Page } = require('@playwright/test');
+      let page: Page;
       test('succeeds', () => {});
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toMatch(/(Cannot use import statement outside a module|require\(\) of ES Module .* not supported.)/);
+  expect(result.output).toContain(`SyntaxError: Unexpected token ':'`);
 });
 
 for (const type of ['module', undefined]) {

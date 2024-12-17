@@ -66,7 +66,7 @@ class Fixture {
     }
 
     await testInfo._runAsStage({
-      title: `fixture: ${this.registration.name}`,
+      title: `fixture: ${this.registration.customTitle ?? this.registration.name}`,
       runnable: { ...runnable, fixture: this._setupDescription },
       stepInfo: this._stepInfo,
     }, async () => {
@@ -131,7 +131,7 @@ class Fixture {
       // time remaining in the time slot. This avoids cascading timeouts.
       if (!testInfo._timeoutManager.isTimeExhaustedFor(fixtureRunnable)) {
         await testInfo._runAsStage({
-          title: `fixture: ${this.registration.name}`,
+          title: `fixture: ${this.registration.customTitle ?? this.registration.name}`,
           runnable: fixtureRunnable,
           stepInfo: this._stepInfo,
         }, async () => {

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { test, expect } from './npmTest';
+import { chromium } from '@playwright/test';
 import path from 'path';
 
 test.use({ isolateBrowsers: true });
@@ -94,4 +95,47 @@ test('install playwright-chromium should work', async ({ exec, installedSoftware
   await exec('npm i playwright-chromium');
   await exec('npx playwright install chromium');
   await exec('node sanity.js playwright-chromium chromium');
+});
+
+test('should print error if recording video without ffmpeg', async ({ exec, writeFiles }) => {
+  await exec('npm i playwright');
+
+  await writeFiles({
+    'launch.js': `
+      const playwright = require('playwright');
+      (async () => {
+        const browser = await playwright.chromium.launch({ executablePath: ${JSON.stringify(chromium.executablePath())} });
+        try {
+          const context = await browser.newContext({ recordVideo: { dir: 'videos' } });
+          const page = await context.newPage();
+        } finally {
+          await browser.close();
+        }
+      })().catch(e => {
+        console.error(e);
+        process.exit(1);
+      });
+    `,
+    'launchPersistentContext.js': `
+      const playwright = require('playwright');
+      process.on('unhandledRejection', (e) => console.error('unhandledRejection', e));
+      (async () => {
+        const context = await playwright.chromium.launchPersistentContext('', { executablePath: ${JSON.stringify(chromium.executablePath())}, recordVideo: { dir: 'videos' } });
+      })().catch(e => {
+        console.error(e);
+        process.exit(1);
+      });
+    `,
+  });
+
+  await test.step('BrowserType.launch', async () => {
+    const result = await exec('node', 'launch.js', { expectToExitWithError: true });
+    expect(result).toContain(`browserContext.newPage: Executable doesn't exist at`);
+  });
+
+  await test.step('BrowserType.launchPersistentContext', async () => {
+    const result = await exec('node', 'launchPersistentContext.js', { expectToExitWithError: true });
+    expect(result).not.toContain('unhandledRejection');
+    expect(result).toContain(`browserType.launchPersistentContext: Executable doesn't exist at`);
+  });
 });

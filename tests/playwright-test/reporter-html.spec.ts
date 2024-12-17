@@ -847,7 +847,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         'a.test.js': `
           import { test, expect } from '@playwright/test';
           test('passing', async ({ page }, testInfo) => {
-            testInfo.attach('axe-report.html', {
+            await testInfo.attach('axe-report.html', {
               contentType: 'text/html',
               body: '<h1>Axe Report</h1>',
             });
@@ -914,6 +914,28 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         '84a516841ba77a5b4648de2cd0dfcb30ea46dbb4.png', // screenshot-that-already-has-an-extension-with-correct-contentType.png
         'e9d71f5ee7c92d6dc9e92ffdad17b8bd49418f98.ext-with-spaces', // example.ext with spaces
       ]));
+    });
+
+    test('should link from attach step to attachment view', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passing', async ({ page }, testInfo) => {
+            for (let i = 0; i < 100; i++)
+              await testInfo.attach('foo-1', { body: 'bar' });
+            await testInfo.attach('foo-2', { body: 'bar' });
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+
+      await showReport();
+      await page.getByRole('link', { name: 'passing' }).click();
+
+      const attachment = page.getByText('foo-2', { exact: true });
+      await expect(attachment).not.toBeInViewport();
+      await page.getByLabel('attach "foo-2"').getByTitle('link to attachment').click();
+      await expect(attachment).toBeInViewport();
     });
 
     test('should highlight textual diff', async ({ runInlineTest, showReport, page }) => {
@@ -1010,6 +1032,38 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.tree-item-title')).toContainText([
         /expect\.toBe.*10/,
         /expect\.toEqual.*20/,
+      ]);
+    });
+
+    test('show custom fixture titles', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.spec.js': `
+          import { test as base, expect } from '@playwright/test';
+          
+          const test = base.extend({
+            fixture1: [async ({}, use) => {
+              await use();
+            }, { title: 'custom fixture name' }],
+            fixture2: async ({}, use) => {
+              await use();
+            },
+          });
+
+          test('sample', ({ fixture1, fixture2 }) => {
+            // Empty test using both fixtures
+          });
+        `
+      }, { 'reporter': 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      await showReport();
+      await page.getByRole('link', { name: 'sample' }).click();
+      await page.getByText('Before Hooks').click();
+      await expect(page.getByText('fixture: custom fixture name')).toBeVisible();
+      await expect(page.locator('.tree-item-title')).toHaveText([
+        /Before Hooks/,
+        /fixture: custom fixture/,
+        /fixture: fixture2/,
+        /After Hooks/,
       ]);
     });
 
@@ -2561,6 +2615,24 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         - button "tests/a/test.spec.ts"
         - button "tests/b/test.spec.ts"
       `);
+    });
+
+    test('execSync doesnt produce a second stdout attachment', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33886' } }, async ({ runInlineTest, showReport, page }) => {
+      await runInlineTest({
+        'a.test.js': `
+          const { test, expect } = require('@playwright/test');
+          const { execSync } = require('node:child_process');
+          test('my test', async ({}) => {
+            console.log('foo');
+            execSync('echo bar', { stdio: 'inherit' });
+            console.log('baz');
+          });
+        `,
+      }, { reporter: 'dot,html' });
+
+      await showReport();
+      await page.getByText('my test').click();
+      await expect(page.locator('.tree-item', { hasText: 'stdout' })).toHaveCount(1);
     });
   });
 }

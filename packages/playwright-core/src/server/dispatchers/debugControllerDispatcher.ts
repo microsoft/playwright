@@ -32,8 +32,8 @@ export class DebugControllerDispatcher extends Dispatcher<DebugController, chann
       eventsHelper.addEventListener(this._object, DebugController.Events.StateChanged, params => {
         this._dispatchEvent('stateChanged', params);
       }),
-      eventsHelper.addEventListener(this._object, DebugController.Events.InspectRequested, ({ selector, locator }) => {
-        this._dispatchEvent('inspectRequested', { selector, locator });
+      eventsHelper.addEventListener(this._object, DebugController.Events.InspectRequested, ({ selector, locator, ariaSnapshot }) => {
+        this._dispatchEvent('inspectRequested', { selector, locator, ariaSnapshot });
       }),
       eventsHelper.addEventListener(this._object, DebugController.Events.SourceChanged, ({ text, header, footer, actions }) => {
         this._dispatchEvent('sourceChanged', ({ text, header, footer, actions }));
