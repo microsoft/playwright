@@ -482,7 +482,8 @@ export class InjectedScript {
       if (root.nodeType !== 1 /* Node.ELEMENT_NODE */) {
         return [];
       }
-      return isElementVisible(root as Element) === Boolean(body) ? [root as Element] : [];
+      const visible = body === 'true';
+      return isElementVisible(root as Element) === visible ? [root as Element] : [];
     };
     return { queryAll };
   }

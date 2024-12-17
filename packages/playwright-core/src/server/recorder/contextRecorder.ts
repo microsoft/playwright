@@ -311,7 +311,6 @@ async function generateFrameSelectorInParent(parent: Frame, frame: Frame): Promi
       }, frameElement);
       return selector;
     } catch (e) {
-      return e.toString();
     }
   }, monotonicTime() + 2000);
   if (!result.timedOut && result.result) {

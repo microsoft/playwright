@@ -9589,10 +9589,11 @@ export interface Browser {
    * In case this browser is connected to, clears all created contexts belonging to this browser and disconnects from
    * the browser server.
    *
-   * **NOTE** This is similar to force quitting the browser. Therefore, you should call
+   * **NOTE** This is similar to force-quitting the browser. To close pages gracefully and ensure you receive page close
+   * events, call
    * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) on
-   * any [BrowserContext](https://playwright.dev/docs/api/class-browsercontext)'s you explicitly created earlier with
-   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) **before**
+   * any [BrowserContext](https://playwright.dev/docs/api/class-browsercontext) instances you explicitly created earlier
+   * using [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) **before**
    * calling [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close).
    *
    * The [Browser](https://playwright.dev/docs/api/class-browser) object itself is considered to be disposed and cannot
