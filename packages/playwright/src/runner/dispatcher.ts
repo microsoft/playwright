@@ -320,6 +320,7 @@ class JobDispatcher {
       startTime: new Date(params.wallTime),
       duration: -1,
       steps: [],
+      attachments: [],
       location: params.location,
     };
     steps.set(params.stepId, step);
@@ -361,6 +362,8 @@ class JobDispatcher {
       body: params.body !== undefined ? Buffer.from(params.body, 'base64') : undefined
     };
     data.result.attachments.push(attachment);
+    if (params.stepId)
+      data.steps.get(params.stepId)!.attachments.push(attachment);
   }
 
   private _failTestWithErrors(test: TestCase, errors: TestError[]) {

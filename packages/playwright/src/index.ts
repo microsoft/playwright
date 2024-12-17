@@ -672,7 +672,12 @@ class ArtifactsRecorder {
   }
 
   private _attachScreenshot(screenshotPath: string) {
-    this._testInfo.attachments.push({ name: 'screenshot', path: screenshotPath, contentType: 'image/png' });
+    const step = this._testInfo._addStep({
+      title: `attach "screenshot"`,
+      category: 'attach',
+    });
+    step.attachments.push({ name: 'screenshot', path: screenshotPath, contentType: 'image/png' });
+    step.complete({});
   }
 
   private async _screenshotOnTestFailure() {

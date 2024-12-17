@@ -100,7 +100,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       params: {
         testId: test.id,
         resultId: (result as any)[this._idSymbol],
-        step: this._serializeStepEnd(step)
+        step: this._serializeStepEnd(step, result)
       }
     });
   }
@@ -251,11 +251,12 @@ export class TeleReporterEmitter implements ReporterV2 {
     };
   }
 
-  private _serializeStepEnd(step: reporterTypes.TestStep): teleReceiver.JsonTestStepEnd {
+  private _serializeStepEnd(step: reporterTypes.TestStep, result: reporterTypes.TestResult): teleReceiver.JsonTestStepEnd {
     return {
       id: (step as any)[this._idSymbol],
       duration: step.duration,
       error: step.error,
+      attachments: step.attachments.map(a => result.attachments.indexOf(a)),
     };
   }
 
