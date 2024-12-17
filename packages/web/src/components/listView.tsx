@@ -16,7 +16,7 @@
 
 import * as React from 'react';
 import './listView.css';
-import { clsx, scrollIntoViewIfNeeded } from '@web/uiUtils';
+import { clsx, scrollIntoViewIfNeeded } from '../uiUtils';
 
 export type ListViewProps<T> = {
   name: string,
