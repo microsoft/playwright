@@ -5714,9 +5714,6 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
     /**
    * Mark a test step as "fixme", with the intention to fix it. Playwright will not run the step.
    *
-   * To declare a "fixme" step:
-   * - `test.step.fixme(title, body)`
-   *
    * **Usage**
    *
    * You can declare a test step as failing, so that Playwright ensures it actually fails.
@@ -5736,13 +5733,13 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * @param body Step body.
    * @param options
    */
-  fixme(title: string, body: () => void | Promise<void>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<void>;
+  fixme(title: string, body: () => any | Promise<any>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<void>;
     /**
    * Marks a test step as "should fail". Playwright runs this test step and ensures that it actually fails. This is
    * useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
    *
-   * To declare a "failing" step:
-   * - `test.step.fail(title, body)`
+   * **NOTE** If the step exceeds the timeout, a [TimeoutError](https://playwright.dev/docs/api/class-timeouterror) is
+   * thrown. This indicates the step did not fail as expected.
    *
    * **Usage**
    *
@@ -5753,7 +5750,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    *
    * test('my test', async ({ page }) => {
    *   // ...
-   *   await test.step.fail('not yet ready', async () => {
+   *   await test.step.fail('currently failing', async () => {
    *     // ...
    *   });
    * });
@@ -5763,7 +5760,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * @param body Step body.
    * @param options
    */
-  fail(title: string, body: () => void | Promise<void>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<void>;
+  fail(title: string, body: () => any | Promise<any>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<void>;
   }
   /**
    * `expect` function can be used to create test assertions. Read more about [test assertions](https://playwright.dev/docs/test-assertions).

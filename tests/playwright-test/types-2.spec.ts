@@ -212,20 +212,16 @@ test('step.fail and step.fixme return void ', async ({ runTSC }) => {
       test('test step.fail', async ({ }) => {
         // @ts-expect-error
         const bad1: string = await test.step.fail('my step', () => { });
-        // @ts-expect-error
-        const bad2: void = await test.step.fail('my step', async () => {
-          return 10;
+        const good: void = await test.step.fail('my step', async () => {
+          return 2024;
         });
-        const good: void = await test.step.fail('my step', async () => { });
       });
       test('test step.fixme', async ({ }) => {
         // @ts-expect-error
         const bad1: string = await test.step.fixme('my step', () => { });
-        // @ts-expect-error
-        const bad2: void = await test.step.fixme('my step', async () => {
-          return 10;
+        const good: void = await test.step.fixme('my step', async () => {
+          return 2024;
         });
-        const good: void = await test.step.fixme('my step', async () => { });
       });
     `
   });

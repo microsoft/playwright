@@ -1779,8 +1779,9 @@ Maximum time in milliseconds for the step to finish. Defaults to `0` (no timeout
 
 Marks a test step as "should fail". Playwright runs this test step and ensures that it actually fails. This is useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
 
-To declare a "failing" step:
-* `test.step.fail(title, body)`
+:::note
+If the step exceeds the timeout, a [TimeoutError] is thrown. This indicates the step did not fail as expected.
+:::
 
 **Usage**
 
@@ -1791,7 +1792,7 @@ import { test, expect } from '@playwright/test';
 
 test('my test', async ({ page }) => {
   // ...
-  await test.step.fail('not yet ready', async () => {
+  await test.step.fail('currently failing', async () => {
     // ...
   });
 });
@@ -1832,9 +1833,6 @@ Maximum time in milliseconds for the step to finish. Defaults to `0` (no timeout
 - returns: <[void]>
 
 Mark a test step as "fixme", with the intention to fix it. Playwright will not run the step.
-
-To declare a "fixme" step:
-* `test.step.fixme(title, body)`
 
 **Usage**
 

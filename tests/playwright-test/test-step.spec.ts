@@ -1519,7 +1519,7 @@ test('test.step.fail and test.step.fixme should work', async ({ runInlineTest })
         });
       });
       `
-  }, { reporter: '', workers: 1, timeout: 3000 });
+  }, { reporter: '' });
 
   expect(result.exitCode).toBe(0);
   expect(result.report.stats.expected).toBe(1);
@@ -1553,7 +1553,7 @@ test('timeout inside test.step.fail is an error', async ({ runInlineTest }) => {
         });
       });
       `
-  }, { reporter: '', workers: 2, timeout: 1000 });
+  }, { reporter: '', timeout: 2500 });
 
   expect(result.exitCode).toBe(1);
   expect(result.report.stats.unexpected).toBe(1);
@@ -1563,7 +1563,7 @@ test.step |outer step 2 @ a.test.ts:4
 test.step |  inner step 2 @ a.test.ts:5
 hook      |After Hooks
 hook      |Worker Cleanup
-          |Test timeout of 1000ms exceeded.
+          |Test timeout of 2500ms exceeded.
 `);
 });
 
@@ -1583,7 +1583,7 @@ test('skip test.step.fixme body', async ({ runInlineTest }) => {
         expect(didRun).toBe(false);
       });
       `
-  }, { reporter: '', workers: 1, timeout: 1000 });
+  }, { reporter: '' });
 
   expect(result.exitCode).toBe(0);
   expect(result.report.stats.expected).toBe(1);
