@@ -21,7 +21,7 @@ import childProcess from 'child_process';
 import * as utils from '../../utils';
 import { spawnAsync } from '../../utils/spawnAsync';
 import { hostPlatform, isOfficiallySupportedPlatform } from '../../utils/hostPlatform';
-import { buildPlaywrightCLICommand } from '.';
+import { buildPlaywrightCLICommand, registry } from '.';
 import { deps } from './nativeDeps';
 import { getPlaywrightVersion } from '../../utils/userAgent';
 
@@ -122,12 +122,12 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
   });
 }
 
-export async function validateDependenciesWindows(windowsExeAndDllDirectories: string[]) {
+export async function validateDependenciesWindows(sdkLanguage: string, windowsExeAndDllDirectories: string[]) {
   const directoryPaths = windowsExeAndDllDirectories;
   const lddPaths: string[] = [];
   for (const directoryPath of directoryPaths)
     lddPaths.push(...(await executablesOrSharedLibraries(directoryPath)));
-  const allMissingDeps = await Promise.all(lddPaths.map(lddPath => missingFileDependenciesWindows(lddPath)));
+  const allMissingDeps = await Promise.all(lddPaths.map(lddPath => missingFileDependenciesWindows(sdkLanguage, lddPath)));
   const missingDeps: Set<string> = new Set();
   for (const deps of allMissingDeps) {
     for (const dep of deps)
@@ -302,8 +302,8 @@ async function executablesOrSharedLibraries(directoryPath: string): Promise<stri
   return executablersOrLibraries as string[];
 }
 
-async function missingFileDependenciesWindows(filePath: string): Promise<Array<string>> {
-  const executable = path.join(__dirname, '..', '..', '..', 'bin', 'PrintDeps.exe');
+async function missingFileDependenciesWindows(sdkLanguage: string, filePath: string): Promise<Array<string>> {
+  const executable = registry.findExecutable('winldd')!.executablePathOrDie(sdkLanguage);
   const dirname = path.dirname(filePath);
   const { stdout, code } = await spawnAsync(executable, [filePath], {
     cwd: dirname,
