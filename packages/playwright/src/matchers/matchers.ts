@@ -337,7 +337,7 @@ export function toHaveValue(
   options?: { timeout?: number },
 ) {
   return toMatchText.call(this, 'toHaveValue', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = serializeExpectedTextValues([expected]);
+    const expectedText = serializeExpectedTextValues([expected], { normalizeWhiteSpace: true });
     return await locator._expect('to.have.value', { expectedText, isNot, timeout });
   }, expected, options);
 }
