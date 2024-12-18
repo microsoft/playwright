@@ -15,7 +15,6 @@
     "yazl": "2.5.1"
   },
   "devDependencies": {
-    "@types/tar-fs": "^2.0.4",
     "@types/yauzl": "^2.10.0",
     "@types/yazl": "^2.4.2"
   }

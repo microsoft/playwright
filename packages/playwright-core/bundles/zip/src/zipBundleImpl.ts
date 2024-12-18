@@ -18,4 +18,5 @@ export * as yazl from 'yazl';
 export * as yauzl from 'yauzl';
 import extractZip from 'extract-zip';
 export const extract = extractZip;
+// @ts-expect-error @types/tar-fs is broken and we're fine without it
 export * as tarFs from 'tar-fs';
