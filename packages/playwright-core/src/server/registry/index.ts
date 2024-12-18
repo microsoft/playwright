@@ -762,7 +762,6 @@ export class Registry {
 
     const ffmpeg = descriptors.find(d => d.name === 'ffmpeg')!;
     const ffmpegExecutable = findExecutablePath(ffmpeg.dir, 'ffmpeg');
-    console.log(ffmpegExecutable)
     this._executables.push({
       type: 'tool',
       name: 'ffmpeg',
