@@ -25,6 +25,7 @@ import { zones } from '../utils/zones';
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';
+import { isOverriddenAPIError } from './errors';
 
 type Listener = (...args: any[]) => void;
 
@@ -203,15 +204,18 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       return result;
     } catch (e) {
       const innerError = ((process.env.PWDEBUGIMPL || isUnderTest()) && e.stack) ? '\n<inner error>\n' + e.stack : '';
-      if (apiName && !apiName.includes('<anonymous>'))
-        e.message = apiName + ': ' + e.message;
+
+      const computedAPIName = isOverriddenAPIError(e) ? e.apiNameOverride : apiName;
+
+      if (computedAPIName && !computedAPIName.includes('<anonymous>'))
+        e.message = computedAPIName + ': ' + e.message;
       const stackFrames = '\n' + stringifyStackFrames(stackTrace.frames).join('\n') + innerError;
       if (stackFrames.trim())
         e.stack = e.message + stackFrames;
       else
         e.stack = '';
       csi?.onApiCallEnd(callCookie, e);
-      logApiCall(logger, `<= ${apiName} failed`, isInternal);
+      logApiCall(logger, `<= ${computedAPIName} failed`, isInternal);
       throw e;
     }
   }

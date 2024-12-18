@@ -371,3 +371,19 @@ test('should removeLocatorHandler', async ({ page, server }) => {
   await expect(page.locator('#interstitial')).toBeVisible();
   expect(error.message).toContain('Timeout 3000ms exceeded');
 });
+
+test('should attribute errors to the locator handler', async ({ page }) => {
+  await page.setContent(`<html><body><script>setTimeout(() => {document.body.innerHTML = '<div><ul><li>Foo</li></ul><ul><li>Bar</li></ul></div>'}, 100)</script></body></html>`);
+
+  await page.addLocatorHandler(page.locator('ul'), async locator => Promise.resolve());
+
+  try {
+    // Perform an operation that will trigger the locator handler
+    await page.locator('ul > li').first().boundingBox();
+
+    // Unreachable
+    expect(false).toBeTruthy();
+  } catch (e) {
+    expect(e.message).toContain(`page.addLocatorHandler: Error: strict mode violation: locator('ul') resolved to 2 elements:`);
+  }
+});

@@ -151,6 +151,7 @@ scheme.SerializedError = tObject({
     message: tString,
     name: tString,
     stack: tOptional(tString),
+    apiNameOverride: tOptional(tString),
   })),
   value: tOptional(tType('SerializedValue')),
 });

@@ -35,6 +35,21 @@ export function isTargetClosedError(error: Error) {
   return error instanceof TargetClosedError;
 }
 
+export class OverriddenAPIError extends Error {
+  public apiNameOverride: string;
+
+  constructor(error: Exclude<SerializedError['error'], undefined>, apiNameOverride: string) {
+    super(error.message);
+    this.name = error.name;
+    this.stack = error.stack;
+    this.apiNameOverride = apiNameOverride;
+  }
+}
+
+export function isOverriddenAPIError(error: Error) {
+  return error instanceof OverriddenAPIError;
+}
+
 export function serializeError(e: any): SerializedError {
   if (isError(e))
     return { error: { message: e.message, stack: e.stack, name: e.name } };
@@ -46,6 +61,12 @@ export function parseError(error: SerializedError): Error {
     if (error.value === undefined)
       throw new Error('Serialized error must have either an error or a value');
     return parseSerializedValue(error.value, undefined);
+  }
+  if (error.error.apiNameOverride) {
+    const e = new OverriddenAPIError(error.error, error.error.apiNameOverride);
+    e.stack = error.error.stack;
+    e.name = error.error.name;
+    return e;
   }
   if (error.error.name === 'TimeoutError') {
     const e = new TimeoutError(error.error.message);
