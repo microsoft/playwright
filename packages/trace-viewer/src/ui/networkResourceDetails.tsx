@@ -99,12 +99,12 @@ const RequestTab: React.FunctionComponent<{
         {resource.request.queryString.map(param => `${param.name}: ${param.value}`).join('\n')}
       </div>
     </> : null}
+    <div className='network-request-details-header'>Request Headers</div>
+    <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
     <div className='network-request-details-header'>Time</div>
     <div className='network-request-details-general'>{`Wall Time: ${wallTimeString}`}</div>
     <div className='network-request-details-general'>{`Start: ${msToString(startTimeOffset)}`}</div>
     <div className='network-request-details-general'>{`Duration: ${msToString(resource.time)}`}</div>
-    <div className='network-request-details-header'>Request Headers</div>
-    <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
 
     <div className='network-request-details-copy'>
       <CopyToClipboardTextButton description='Copy as cURL' value={() => generateCurlCommand(resource)} />

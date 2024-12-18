@@ -52,9 +52,9 @@ export const CallTab: React.FunctionComponent<{
       {
         <>
           <div className='call-section'>Time</div>
-          {wallTime && <DateTimeCallLine name='wall time:' value={wallTime}/>}
-          <DateTimeCallLine name='start:' value={startTime}/>
-          <DateTimeCallLine name='duration:' value={duration}/>
+          <DateTimeCallLine name='wall time:' value={wallTime} />
+          <DateTimeCallLine name='start:' value={startTime} />
+          <DateTimeCallLine name='duration:' value={duration} />
         </>
       }
       {
