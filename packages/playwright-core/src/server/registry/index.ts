@@ -1094,9 +1094,12 @@ export class Registry {
 
   private _downloadURLs(descriptor: BrowsersJSONDescriptor): string[] {
     const paths = (DOWNLOAD_PATHS as any)[descriptor.name];
-    const downloadPathTemplate: string|undefined = paths[hostPlatform] || paths['<unknown>'];
+    let downloadPathTemplate: string|undefined = paths[hostPlatform] || paths['<unknown>'];
     if (!downloadPathTemplate)
       return [];
+    // old webkit versions don't have brotli
+    if (descriptor.hasRevisionOverride && descriptor.name === 'webkit' && Number(descriptor.revision) < 2114)
+      downloadPathTemplate = downloadPathTemplate.replace('.tar.br', '.zip');
     const downloadPath = util.format(downloadPathTemplate, descriptor.revision);
 
     let downloadURLs = PLAYWRIGHT_CDN_MIRRORS.map(mirror => `${mirror}/${downloadPath}`) ;
