@@ -568,23 +568,46 @@ test.describe('toHaveAccessibleErrorMessage should handle aria-invalid attribute
   });
 });
 
-test.describe('toHaveAccessibleErrorMessage should handle validity state', () => {
+test.describe('toHaveAccessibleErrorMessage should handle validity state with aria-invalid', () => {
   const errorMessageText = 'Error message';
-  test('should ignore aria-invalid="true" when HTMLElement.validity.valid is true', async ({ page }) => {
+
+  test('should show error message when validity is false and aria-invalid is true', async ({ page }) => {
     await page.setContent(`
-        <form>
-          <input id="node" role="textbox" type="number" min="1" max="100" aria-invalid="true" aria-errormessage="error-msg" />
-          <div id="error-msg">${errorMessageText}</div>
-        </form>
-      `);
+      <form>
+        <input id="node" role="textbox" type="number" min="1" max="100" aria-invalid="true" aria-errormessage="error-msg" />
+        <div id="error-msg">${errorMessageText}</div>
+      </form>
+    `);
     const locator = page.locator('#node');
-    await locator.fill('99');
-    await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
     await locator.fill('101');
     await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
   });
 
-  test('should ignore aria-invalid="false" when HTMLElement.validity.valid is false', async ({ page }) => {
+  test('should show error message when validity is true and aria-invalid is true', async ({ page }) => {
+    await page.setContent(`
+      <form>
+        <input id="node" role="textbox" type="number" min="1" max="100" aria-invalid="true" aria-errormessage="error-msg" />
+        <div id="error-msg">${errorMessageText}</div>
+      </form>
+    `);
+    const locator = page.locator('#node');
+    await locator.fill('99');
+    await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
+  });
+
+  test('should show error message when validity is false and aria-invalid is false', async ({ page }) => {
+    await page.setContent(`
+      <form>
+        <input id="node" role="textbox" type="number" min="1" max="100" aria-invalid="false" aria-errormessage="error-msg" />
+        <div id="error-msg">${errorMessageText}</div>
+      </form>
+    `);
+    const locator = page.locator('#node');
+    await locator.fill('101');
+    await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
+  });
+
+  test('should not show error message when validity is true and aria-invalid is false', async ({ page }) => {
     await page.setContent(`
       <form>
         <input id="node" role="textbox" type="number" min="1" max="100" aria-invalid="false" aria-errormessage="error-msg" />
@@ -594,10 +617,9 @@ test.describe('toHaveAccessibleErrorMessage should handle validity state', () =>
     const locator = page.locator('#node');
     await locator.fill('99');
     await expect(locator).not.toHaveAccessibleErrorMessage(errorMessageText);
-    await locator.fill('101');
-    await expect(locator).toHaveAccessibleErrorMessage(errorMessageText);
   });
 });
+
 
 test('toHaveRole', async ({ page }) => {
   await page.setContent(`<div role="button">Button!</div>`);
