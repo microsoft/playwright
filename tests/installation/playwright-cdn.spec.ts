@@ -26,7 +26,7 @@ const CDNS = [
   'https://playwright-verizon.azureedge.net',
 ];
 
-const DL_STAT_BLOCK = /^.*from url: (.*)$\n^.*to location: (.*)$\n^.*response status code: (.*)$\n^.*total bytes: (\d+)$\n^.*download complete, size: (\d+)$\n^.*SUCCESS downloading (\w+) .*$/gm;
+const DL_STAT_BLOCK = /^.*from url: (.*)$\n^.*to location: (.*)$\n^.*response status code: (.*)$\n^.*total bytes: (\d+)$\n^.*download complete, size: (\d+)$\n^.*SUCCESS downloading (?:and extracting )?(\w+) .*$/gm;
 
 const parsedDownloads = (rawLogs: string) => {
   const out: { url: string, status: number, name: string }[] = [];
