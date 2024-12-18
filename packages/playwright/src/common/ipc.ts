@@ -30,6 +30,7 @@ export type ConfigCLIOverrides = {
   outputDir?: string;
   preserveOutputDir?: boolean;
   quiet?: boolean;
+  failDependentTests?: boolean;
   repeatEach?: number;
   retries?: number;
   reporter?: ReporterDescription[];

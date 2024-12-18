@@ -894,3 +894,30 @@ test('page.pause() should disable test timeout', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
   expect(result.output).toContain('success!');
 });
+
+test('should automatically fail tests when their dependency tests fail', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        failDependentTests: true,
+        projects: [ { testMatch: /dependent\.test\.ts/, dependencies: ['a'] }, { name: 'a', testMatch: /setup\.test\.ts/ } ]
+      }
+    `,
+    'setup.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page }) => {
+        test.expect(1).toBeFalsy();
+      });
+    `,
+    'dependent.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        test.expect(0).toBeFalsy();
+      });
+    `
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(2);
+  expect(result.skipped).toBe(0);
+});

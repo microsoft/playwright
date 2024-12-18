@@ -354,6 +354,24 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     return result;
   }
 
+  _appendFailedTestResult(): reporterTypes.TestResult {
+    const result: reporterTypes.TestResult = {
+      retry: this.results.length,
+      parallelIndex: -1,
+      workerIndex: -1,
+      duration: 0,
+      startTime: new Date(),
+      stdout: [],
+      stderr: [],
+      attachments: [],
+      status: 'failed',
+      steps: [],
+      errors: [{ message: 'dependency test failed' }]
+    };
+    this.results.push(result);
+    return result;
+  }
+
   _grepTitle() {
     const path: string[] = [];
     this.parent._collectGrepTitlePath(path);

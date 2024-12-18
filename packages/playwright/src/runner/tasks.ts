@@ -355,7 +355,7 @@ function createRunTestsTask(): Task<TestRun> {
         // We don't want to run the test groups belonging to the projects
         // that depend on the projects that failed previously.
         const phaseTestGroups: TestGroup[] = [];
-        for (const { project, testGroups } of projects) {
+        for (const { project, testGroups, projectSuite } of projects) {
           // Inherit extra environment variables from dependencies.
           let extraEnv: Record<string, string | undefined> = {};
           for (const dep of project.deps)
@@ -367,8 +367,9 @@ function createRunTestsTask(): Task<TestRun> {
           const hasFailedDeps = project.deps.some(p => !successfulProjects.has(p));
           if (!hasFailedDeps)
             phaseTestGroups.push(...testGroups);
+          else if (project.fullConfig.config.failDependentTests)
+            projectSuite.allTests().forEach(test => test._appendFailedTestResult());
         }
-
         if (phaseTestGroups.length) {
           await dispatcher!.run(phaseTestGroups, extraEnvByProjectId);
           await dispatcher.stop();

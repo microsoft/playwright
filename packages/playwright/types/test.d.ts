@@ -1333,6 +1333,23 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   quiet?: boolean;
 
   /**
+   * Whether to automatically fail dependency tests after parent test fails
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   failDependentTests: true
+   * });
+   * ```
+   *
+   */
+  failDependentTests?: boolean;
+
+  /**
    * The number of times to repeat each test, useful for debugging flaky tests.
    *
    * **Usage**
@@ -1804,6 +1821,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * See [testConfig.quiet](https://playwright.dev/docs/api/class-testconfig#test-config-quiet).
    */
   quiet: boolean;
+
+  failDependentTests: boolean;
 
   /**
    * See [testConfig.reportSlowTests](https://playwright.dev/docs/api/class-testconfig#test-config-report-slow-tests).
