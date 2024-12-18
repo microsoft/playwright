@@ -19,8 +19,8 @@ import './xtermWrapper.css';
 import type { ITheme, Terminal } from 'xterm';
 import type { FitAddon } from 'xterm-addon-fit';
 import type { XtermModule } from './xtermModule';
-import { currentTheme, addThemeListener, removeThemeListener } from '@web/theme';
-import { useMeasure } from '@web/uiUtils';
+import { currentTheme, addThemeListener, removeThemeListener } from '../theme';
+import { useMeasure } from '../uiUtils';
 
 export type XtermDataSource = {
   pending: (string | Uint8Array)[];

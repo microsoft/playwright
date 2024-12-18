@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ansi2html } from '@web/ansi2html';
+import { ansi2html } from '../ansi2html';
 import * as React from 'react';
 import './errorMessage.css';
 

@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { clsx } from '@web/uiUtils';
+import { clsx } from '../uiUtils';
 import './toolbar.css';
 import * as React from 'react';
 

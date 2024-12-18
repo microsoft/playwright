@@ -32,6 +32,7 @@ export class TestProxy {
 
   connectHosts: string[] = [];
   requestUrls: string[] = [];
+  wsUrls: string[] = [];
 
   private readonly _server: ProxyServer;
   private readonly _sockets = new Set<net.Socket>();
@@ -58,11 +59,16 @@ export class TestProxy {
     await new Promise(x => this._server.close(x));
   }
 
-  forwardTo(port: number, options?: { allowConnectRequests: boolean }) {
+  forwardTo(port: number, options?: { allowConnectRequests?: boolean, prefix?: string, preserveHostname?: boolean }) {
     this._prependHandler('request', (req: IncomingMessage) => {
       this.requestUrls.push(req.url);
-      const url = new URL(req.url);
-      url.host = `127.0.0.1:${port}`;
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      if (options?.preserveHostname)
+        url.port = '' + port;
+      else
+        url.host = `127.0.0.1:${port}`;
+      if (options?.prefix)
+        url.pathname = url.pathname.replace(options.prefix, '');
       req.url = url.toString();
     });
     this._prependHandler('connect', (req: IncomingMessage) => {
@@ -72,6 +78,17 @@ export class TestProxy {
         return;
       this.connectHosts.push(req.url);
       req.url = `127.0.0.1:${port}`;
+    });
+    this._prependHandler('upgrade', (req: IncomingMessage) => {
+      this.wsUrls.push(req.url);
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      if (options?.preserveHostname)
+        url.port = '' + port;
+      else
+        url.host = `127.0.0.1:${port}`;
+      if (options?.prefix)
+        url.pathname = url.pathname.replace(options.prefix, '');
+      req.url = url.toString();
     });
   }
 
