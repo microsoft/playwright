@@ -1412,7 +1412,7 @@ This setting will change the default maximum time for all the methods accepting 
 * since: v1.8
 - `timeout` <[float]>
 
-Maximum time in milliseconds
+Maximum time in milliseconds. Pass `0` to disable timeout.
 
 ## async method: BrowserContext.setExtraHTTPHeaders
 * since: v1.8

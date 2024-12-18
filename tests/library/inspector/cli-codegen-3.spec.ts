@@ -472,7 +472,7 @@ await page.GetByTestId("testid").ClickAsync();`);
     await recorder.setContentAndWait(`<input placeholder="Country"></input>`);
 
     const locator = await recorder.hoverOverElement('input');
-    expect(locator).toBe(`getByPlaceholder('Country')`);
+    expect(locator).toBe(`getByRole('textbox', { name: 'Country' })`);
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
@@ -480,19 +480,19 @@ await page.GetByTestId("testid").ClickAsync();`);
     ]);
 
     expect.soft(sources.get('JavaScript')!.text).toContain(`
-  await page.getByPlaceholder('Country').click();`);
+  await page.getByRole('textbox', { name: 'Country' }).click();`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
-    page.get_by_placeholder("Country").click()`);
+    page.get_by_role("textbox", name="Country").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
-    await page.get_by_placeholder("Country").click()`);
+    await page.get_by_role("textbox", name="Country").click()`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
-      page.getByPlaceholder("Country").click()`);
+      page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Country")).click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-await page.GetByPlaceholder("Country").ClickAsync();`);
+await page.GetByRole(AriaRole.Textbox, new() { Name = "Country" }).ClickAsync();`);
   });
 
   test('should generate getByAltText', async ({ openRecorder }) => {
@@ -530,7 +530,7 @@ await page.GetByAltText("Country").ClickAsync();`);
     await recorder.setContentAndWait(`<label for=target>Country</label><input id=target>`);
 
     const locator = await recorder.hoverOverElement('input');
-    expect(locator).toBe(`getByLabel('Country')`);
+    expect(locator).toBe(`getByRole('textbox', { name: 'Country' })`);
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
@@ -538,19 +538,19 @@ await page.GetByAltText("Country").ClickAsync();`);
     ]);
 
     expect.soft(sources.get('JavaScript')!.text).toContain(`
-  await page.getByLabel('Country').click();`);
+  await page.getByRole('textbox', { name: 'Country' }).click();`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
-    page.get_by_label("Country").click()`);
+    page.get_by_role("textbox", name="Country").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
-    await page.get_by_label("Country").click()`);
+    await page.get_by_role("textbox", name="Country").click()`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
-      page.getByLabel("Country").click()`);
+      page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName("Country")).click()`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-await page.GetByLabel("Country").ClickAsync();`);
+await page.GetByRole(AriaRole.Textbox, new() { Name = "Country" }).ClickAsync();`);
   });
 
   test('should generate getByLabel without regex', async ({ openRecorder }) => {
@@ -559,7 +559,7 @@ await page.GetByLabel("Country").ClickAsync();`);
     await recorder.setContentAndWait(`<label for=target>Coun"try</label><input id=target>`);
 
     const locator = await recorder.hoverOverElement('input');
-    expect(locator).toBe(`getByLabel('Coun"try')`);
+    expect(locator).toBe(`getByRole('textbox', { name: 'Coun"try' })`);
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', 'click'),
@@ -567,19 +567,19 @@ await page.GetByLabel("Country").ClickAsync();`);
     ]);
 
     expect.soft(sources.get('JavaScript')!.text).toContain(`
-  await page.getByLabel('Coun\"try').click();`);
+  await page.getByRole('textbox', { name: 'Coun\"try' }).click();`);
 
     expect.soft(sources.get('Python')!.text).toContain(`
-    page.get_by_label("Coun\\"try").click()`);
+    page.get_by_role("textbox", name="Coun\\"try").click()`);
 
     expect.soft(sources.get('Python Async')!.text).toContain(`
-    await page.get_by_label("Coun\\"try").click()`);
+    await page.get_by_role("textbox", name="Coun\\"try").click()`);
 
     expect.soft(sources.get('Java')!.text).toContain(`
-      page.getByLabel("Coun\\"try").click()`);
+      page.getByRole(AriaRole.TEXTBOX, new Page.GetByRoleOptions().setName(\"Coun\\\"try\")).click();`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
-await page.GetByLabel("Coun\\"try").ClickAsync();`);
+await page.GetByRole(AriaRole.Textbox, new() { Name = \"Coun\\\"try\" }).ClickAsync();`);
   });
 
   test('should consume pointer events', async ({ openRecorder }) => {

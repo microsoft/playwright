@@ -309,7 +309,7 @@ class HtmlBuilder {
 
     let singleTestId: string | undefined;
     if (htmlReport.stats.total === 1) {
-      const testFile: TestFile  = data.values().next().value.testFile;
+      const testFile: TestFile  = data.values().next().value!.testFile;
       singleTestId = testFile.tests[0].testId;
     }
 
@@ -602,17 +602,10 @@ type JsonAttachment = {
 };
 
 function stdioAttachment(chunk: Buffer | string, type: 'stdout' | 'stderr'): JsonAttachment {
-  if (typeof chunk === 'string') {
-    return {
-      name: type,
-      contentType: 'text/plain',
-      body: chunk
-    };
-  }
   return {
     name: type,
-    contentType: 'application/octet-stream',
-    body: chunk
+    contentType: 'text/plain',
+    body: typeof chunk === 'string' ? chunk : chunk.toString('utf-8')
   };
 }
 

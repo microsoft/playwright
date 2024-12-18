@@ -342,7 +342,7 @@ Playwright ships a regular Chromium build for headed operations and a separate [
 
 #### Optimize download size on CI
 
-If you are only running tests in headless mode, for example on CI, you can avoid downloading a regular version of Chromium by passing `--only-shell` during installation.
+If you are only running tests in headless shell (i.e. the `channel` option is not specified), for example on CI, you can avoid downloading the full Chromium browser by passing `--only-shell` during installation.
 
 ```bash js
 # only running tests headlessly

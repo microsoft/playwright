@@ -311,6 +311,7 @@ export class TestServerDispatcher implements TestServerInterface {
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
       },
       ...(params.updateSnapshots ? { updateSnapshots: params.updateSnapshots } : {}),
+      ...(params.updateSourceMethod ? { updateSourceMethod: params.updateSourceMethod } : {}),
       ...(params.workers ? { workers: params.workers } : {}),
     };
     if (params.trace === 'on')
@@ -479,7 +480,7 @@ type StdioPayload = {
 };
 
 function chunkToPayload(type: 'stdout' | 'stderr', chunk: Buffer | string): StdioPayload {
-  if (chunk instanceof Buffer)
+  if (chunk instanceof Uint8Array)
     return { type, buffer: chunk.toString('base64') };
   return { type, text: chunk };
 }

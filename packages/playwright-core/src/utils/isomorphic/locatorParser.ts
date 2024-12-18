@@ -91,7 +91,8 @@ function parseLocator(locator: string, testIdAttributeName: string): { selector:
       .replace(/newregex\(([^)]+)\)/g, 'r$1')
       .replace(/string=/g, '=')
       .replace(/regex=/g, '=')
-      .replace(/,,/g, ',');
+      .replace(/,,/g, ',')
+      .replace(/,\)/g, ')');
 
   const preferredQuote = params.map(p => p.quote).filter(quote => '\'"`'.includes(quote))[0] as Quote | undefined;
   return { selector: transform(template, params, testIdAttributeName), preferredQuote };
@@ -174,6 +175,7 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
       .replace(/filter\(,?hasnot2=([^)]+)\)/g, 'internal:has-not=$1')
       .replace(/,exact=false/g, '')
       .replace(/,exact=true/g, 's')
+      .replace(/,includehidden=/g, ',include-hidden=')
       .replace(/\,/g, '][');
 
   const parts = template.split('.');
@@ -215,24 +217,29 @@ function transform(template: string, params: TemplateParams, testIdAttributeName
 
 export function locatorOrSelectorAsSelector(language: Language, locator: string, testIdAttributeName: string): string {
   try {
+    return unsafeLocatorOrSelectorAsSelector(language, locator, testIdAttributeName);
+  } catch (e) {
+    return '';
+  }
+}
+
+export function unsafeLocatorOrSelectorAsSelector(language: Language, locator: string, testIdAttributeName: string): string {
+  try {
     parseSelector(locator);
     return locator;
   } catch (e) {
   }
-  try {
-    const { selector, preferredQuote } = parseLocator(locator, testIdAttributeName);
-    const locators = asLocators(language, selector, undefined, undefined, preferredQuote);
-    const digest = digestForComparison(language, locator);
-    if (locators.some(candidate => digestForComparison(language, candidate) === digest))
-      return selector;
-  } catch (e) {
-  }
+  const { selector, preferredQuote } = parseLocator(locator, testIdAttributeName);
+  const locators = asLocators(language, selector, undefined, undefined, preferredQuote);
+  const digest = digestForComparison(language, locator);
+  if (locators.some(candidate => digestForComparison(language, candidate) === digest))
+    return selector;
   return '';
 }
 
 function digestForComparison(language: Language, locator: string) {
   locator = locator.replace(/\s/g, '');
   if (language === 'javascript')
-    locator = locator.replace(/\\?["`]/g, '\'');
+    locator = locator.replace(/\\?["`]/g, '\'').replace(/,{}/g, '');
   return locator;
 }

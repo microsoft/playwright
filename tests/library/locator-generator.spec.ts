@@ -196,6 +196,12 @@ it('reverse engineer getByRole', async ({ page }) => {
     java: `getByRole(AriaRole.BUTTON)`,
     csharp: `GetByRole(AriaRole.Button)`,
   });
+  expect.soft(generate(page.getByRole('heading', {}))).toEqual({
+    javascript: "getByRole('heading')",
+    python: 'get_by_role("heading")',
+    java: 'getByRole(AriaRole.HEADING)',
+    csharp: 'GetByRole(AriaRole.Heading)'
+  });
   expect.soft(generate(page.getByRole('button', { name: 'Hello' }))).toEqual({
     javascript: `getByRole('button', { name: 'Hello' })`,
     python: `get_by_role("button", name="Hello")`,
@@ -557,6 +563,12 @@ it('parseLocator css', async () => {
   expect.soft(parseLocator('java', `locator("css=.foo")`, '')).toBe(`css=.foo`);
   expect.soft(parseLocator('csharp', `Locator(".foo")`, '')).toBe(`.foo`);
   expect.soft(parseLocator('csharp', `Locator("css=.foo")`, '')).toBe(`css=.foo`);
+});
+
+
+it('parseLocator options', async () => {
+  expect.soft(parseLocator('javascript', `getByRole('heading', {})`, '')).toBe(`internal:role=heading`);
+  expect.soft(parseLocator('javascript', `getByRole('checkbox', { checked:false, includeHidden: true })`, '')).toBe(`internal:role=checkbox[checked=false][include-hidden=true]`);
 });
 
 it('parse locators strictly', () => {
