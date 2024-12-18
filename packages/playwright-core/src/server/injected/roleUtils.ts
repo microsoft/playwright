@@ -461,31 +461,27 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
   return accessibleDescription;
 }
 
-// https://html.spec.whatwg.org/multipage/input.html#the-input-element
-export const kInputValidityAttributes = ['required', 'pattern', 'min', 'max', 'minlength', 'maxlength', 'step', 'type', 'value'];
-
-export function hasValidationAttributes(element: Element): boolean {
-  if (!(element instanceof HTMLInputElement))
-    return false;
-
-  return kInputValidityAttributes.some(attr => element.hasAttribute(attr));
-}
-
 // https://www.w3.org/TR/wai-aria-1.2/#aria-invalid
-export const kAriaInvalidRoles = ['application', 'checkbox', 'combobox', 'gridcell', 'listbox', 'radiogroup', 'slider', 'spinbutton', 'textbox', 'tree', 'columnheader', 'rowheader', 'searchbox', 'switch', 'treegrid'];
+const kAriaInvalidRoles = ['application', 'checkbox', 'combobox', 'gridcell', 'listbox', 'radiogroup', 'slider', 'spinbutton', 'textbox', 'tree', 'columnheader', 'rowheader', 'searchbox', 'switch', 'treegrid'];
 
-export function getAriaInvalid(element: Element): 'false' | 'true' | 'grammar' | 'spelling' {
+function getAriaInvalid(element: Element): 'false' | 'true' | 'grammar' | 'spelling' {
   const role = getAriaRole(element) || '';
   if (!role || !kAriaInvalidRoles.includes(role))
     return 'false';
-  if (element instanceof HTMLInputElement && hasValidationAttributes(element) && element.validity)
-    return element.validity.valid ? 'false' : 'true';
   const ariaInvalid = element.getAttribute('aria-invalid');
   if (!ariaInvalid || ariaInvalid.trim() === '' || ariaInvalid.toLocaleLowerCase() === 'false')
     return 'false';
   if (ariaInvalid === 'true' || ariaInvalid === 'grammar' || ariaInvalid === 'spelling')
     return ariaInvalid;
   return 'true';
+}
+
+function getValidityInvalid(element: Element) {
+  if ('validity' in element){
+    const validity = element.validity as ValidityState | undefined;
+    return validity?.valid === false;
+  }
+  return false;
 }
 
 export function getElementAccessibleErrorMessage(element: Element): string {
@@ -499,9 +495,12 @@ export function getElementAccessibleErrorMessage(element: Element): string {
     accessibleErrorMessage = '';
 
     const isAriaInvalid = getAriaInvalid(element) !== 'false';
-    if (isAriaInvalid) {
+    const isValidityInvalid = getValidityInvalid(element);
+    if (isAriaInvalid || isValidityInvalid) {
       const errorMessageId = element.getAttribute('aria-errormessage');
       const errorMessages = getIdRefs(element, errorMessageId);
+      // Ideally, this should be a separate "embeddedInErrorMessage", but it would follow the exact same rules.
+      // Relevant vague spec: https://w3c.github.io/core-aam/#ariaErrorMessage.
       const parts = errorMessages.map(errorMessage => asFlatString(
           getTextAlternativeInternal(errorMessage, {
             visitedElements: new Set(),
