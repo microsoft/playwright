@@ -281,6 +281,7 @@ export type SerializedError = {
     message: string,
     name: string,
     stack?: string,
+    apiNameOverride?: string,
   },
   value?: SerializedValue,
 };

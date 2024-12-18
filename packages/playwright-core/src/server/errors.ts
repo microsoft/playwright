@@ -17,6 +17,7 @@
 import type { SerializedError } from '@protocol/channels';
 import { isError } from '../utils';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
+import { JavaScriptErrorInEvaluate } from './javascript';
 
 class CustomError extends Error {
   constructor(message: string) {
@@ -37,9 +38,43 @@ export function isTargetClosedError(error: Error) {
   return error instanceof TargetClosedError || error.name === 'TargetClosedError';
 }
 
+export class OverriddenAPIError extends JavaScriptErrorInEvaluate {
+  public apiNameOverride: string;
+
+  constructor(error: JavaScriptErrorInEvaluate, apiNameOverride: string) {
+    super(error.message);
+    this.name = error.name;
+    this.stack = error.stack;
+    this.apiNameOverride = apiNameOverride;
+  }
+}
+
+export function isOverriddenAPIError(error: Error) {
+  return error instanceof OverriddenAPIError;
+}
+
 export function serializeError(e: any): SerializedError {
-  if (isError(e))
-    return { error: { message: e.message, stack: e.stack, name: e.name } };
+  if (isError(e)) {
+    const serializedError: {
+      error: {
+        message: any,
+        stack: any,
+        name: string,
+        apiNameOverride?: string;
+      }
+    } = {
+      error: {
+        message: e.message,
+        stack: e.stack,
+        name: e.name
+      }
+    };
+
+    if (isOverriddenAPIError(e))
+      serializedError.error.apiNameOverride = e.apiNameOverride;
+
+    return serializedError;
+  }
   return { value: serializeValue(e, value => ({ fallThrough: value })) };
 }
 

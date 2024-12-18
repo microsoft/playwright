@@ -43,7 +43,7 @@ import type { TimeoutOptions } from '../common/types';
 import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSerializers';
 import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
-import { TargetClosedError, TimeoutError } from './errors';
+import { OverriddenAPIError, TargetClosedError, TimeoutError } from './errors';
 import { asLocator } from '../utils';
 import { helper } from './helper';
 
@@ -494,30 +494,36 @@ export class Page extends SdkObject {
     // Do not run locator handlers from inside locator handler callbacks to avoid deadlocks.
     if (this._locatorHandlerRunningCounter)
       return;
-    for (const [uid, handler] of this._locatorHandlers) {
-      if (!handler.resolved) {
-        if (await this.mainFrame().isVisibleInternal(handler.selector, { strict: true })) {
-          handler.resolved = new ManualPromise();
-          this.emit(Page.Events.LocatorHandlerTriggered, uid);
+    try {
+      for (const [uid, handler] of this._locatorHandlers) {
+        if (!handler.resolved) {
+          if (await this.mainFrame().isVisibleInternal(handler.selector, { strict: true })) {
+            handler.resolved = new ManualPromise();
+            this.emit(Page.Events.LocatorHandlerTriggered, uid);
+          }
+        }
+        if (handler.resolved) {
+          ++this._locatorHandlerRunningCounter;
+          progress.log(`  found ${asLocator(this.attribution.playwright.options.sdkLanguage, handler.selector)}, intercepting action to run the handler`);
+          const promise = handler.resolved.then(async () => {
+            progress.throwIfAborted();
+            if (!handler.noWaitAfter) {
+              progress.log(`  locator handler has finished, waiting for ${asLocator(this.attribution.playwright.options.sdkLanguage, handler.selector)} to be hidden`);
+              await this.mainFrame().waitForSelectorInternal(progress, handler.selector, false, { state: 'hidden' });
+            } else {
+              progress.log(`  locator handler has finished`);
+            }
+          });
+          await this.openScope.race(promise).finally(() => --this._locatorHandlerRunningCounter);
+          // Avoid side-effects after long-running operation.
+          progress.throwIfAborted();
+          progress.log(`  interception handler has finished, continuing`);
         }
       }
-      if (handler.resolved) {
-        ++this._locatorHandlerRunningCounter;
-        progress.log(`  found ${asLocator(this.attribution.playwright.options.sdkLanguage, handler.selector)}, intercepting action to run the handler`);
-        const promise = handler.resolved.then(async () => {
-          progress.throwIfAborted();
-          if (!handler.noWaitAfter) {
-            progress.log(`  locator handler has finished, waiting for ${asLocator(this.attribution.playwright.options.sdkLanguage, handler.selector)} to be hidden`);
-            await this.mainFrame().waitForSelectorInternal(progress, handler.selector, false, { state: 'hidden' });
-          } else {
-            progress.log(`  locator handler has finished`);
-          }
-        });
-        await this.openScope.race(promise).finally(() => --this._locatorHandlerRunningCounter);
-        // Avoid side-effects after long-running operation.
-        progress.throwIfAborted();
-        progress.log(`  interception handler has finished, continuing`);
-      }
+    } catch (e) {
+      // Since this checkpoint occurs during the evaluation of a different public API call, any errors are automatically attributed
+      // to that API call, rather than the locator handler. Mark the error from the locator handler
+      throw new OverriddenAPIError(e, 'page.addLocatorHandler');
     }
   }
 
