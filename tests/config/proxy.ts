@@ -59,11 +59,11 @@ export class TestProxy {
     await new Promise(x => this._server.close(x));
   }
 
-  forwardTo(port: number, options?: { allowConnectRequests?: boolean, prefix?: string, dontTouchHost?: boolean }) {
+  forwardTo(port: number, options?: { allowConnectRequests?: boolean, prefix?: string, preserveHostname?: boolean }) {
     this._prependHandler('request', (req: IncomingMessage) => {
       this.requestUrls.push(req.url);
       const url = new URL(req.url, `http://${req.headers.host}`);
-      if (options?.dontTouchHost)
+      if (options?.preserveHostname)
         url.port = '' + port;
       else
         url.host = `127.0.0.1:${port}`;
@@ -82,7 +82,7 @@ export class TestProxy {
     this._prependHandler('upgrade', (req: IncomingMessage) => {
       this.wsUrls.push(req.url);
       const url = new URL(req.url, `http://${req.headers.host}`);
-      if (options?.dontTouchHost)
+      if (options?.preserveHostname)
         url.port = '' + port;
       else
         url.host = `127.0.0.1:${port}`;
