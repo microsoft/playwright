@@ -280,7 +280,8 @@ const TraceView: React.FunctionComponent<{
     return snapshot.action || snapshot.after || snapshot.before;
   }, [action]);
   const snapshotUrls = React.useMemo(() => {
-    return snapshot ? extendSnapshot(snapshot) : undefined;
+    // TODO: Use actual setting. Requires settings UI to be wired up
+    return snapshot ? extendSnapshot(snapshot, false) : undefined;
   }, [snapshot]);
 
   return <SnapshotView

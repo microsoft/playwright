@@ -14,28 +14,8 @@
   limitations under the License.
 */
 
-.settings-view {
-  display: flex;
-  flex: none;
-  padding: 4px 0px;
-  row-gap: 8px;
-  user-select: none;
-}
+.settings-toolbar-dialog {
+  background-color: var(--vscode-sideBar-background);
 
-.settings-view .setting {
-  display: flex;
-  align-items: center;
-}
-
-.settings-view .setting label {
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-
-  cursor: pointer;
-}
-
-.settings-view .setting input {
-  margin-right: 5px;
-  flex-shrink: 0;
+  padding: 4px 8px;
 }

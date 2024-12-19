@@ -18,22 +18,32 @@ import * as React from 'react';
 import './settingsView.css';
 
 export type Setting<T> = {
-  value: T,
-  set: (value: T) => void,
-  title: string
+  value: T;
+  set: (value: T) => void;
+  name: string;
+  title?: string;
 };
 
 export const SettingsView: React.FunctionComponent<{
-  settings: Setting<boolean>[],
+  settings: Setting<boolean>[];
 }> = ({ settings }) => {
-  return <div className='vbox settings-view'>
-    {settings.map(({ value, set, title }) => {
-      return <div key={title} className='setting'>
-        <label>
-          <input type='checkbox' checked={value} onChange={() => set(!value)}/>
-          {title}
-        </label>
-      </div>;
-    })}
-  </div>;
+  return (
+    <div className='vbox settings-view'>
+      {settings.map(({ value, set, name, title }) => {
+        const labelId = `setting-${name}`;
+
+        return (
+          <div key={name} className='setting' title={title}>
+            <input
+              type='checkbox'
+              id={labelId}
+              checked={value}
+              onChange={() => set(!value)}
+            />
+            <label htmlFor={labelId}>{name}</label>
+          </div>
+        );
+      })}
+    </div>
+  );
 };
