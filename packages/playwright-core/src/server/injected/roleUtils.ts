@@ -461,6 +461,59 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
   return accessibleDescription;
 }
 
+// https://www.w3.org/TR/wai-aria-1.2/#aria-invalid
+const kAriaInvalidRoles = ['application', 'checkbox', 'combobox', 'gridcell', 'listbox', 'radiogroup', 'slider', 'spinbutton', 'textbox', 'tree', 'columnheader', 'rowheader', 'searchbox', 'switch', 'treegrid'];
+
+function getAriaInvalid(element: Element): 'false' | 'true' | 'grammar' | 'spelling' {
+  const role = getAriaRole(element) || '';
+  if (!role || !kAriaInvalidRoles.includes(role))
+    return 'false';
+  const ariaInvalid = element.getAttribute('aria-invalid');
+  if (!ariaInvalid || ariaInvalid.trim() === '' || ariaInvalid.toLocaleLowerCase() === 'false')
+    return 'false';
+  if (ariaInvalid === 'true' || ariaInvalid === 'grammar' || ariaInvalid === 'spelling')
+    return ariaInvalid;
+  return 'true';
+}
+
+function getValidityInvalid(element: Element) {
+  if ('validity' in element){
+    const validity = element.validity as ValidityState | undefined;
+    return validity?.valid === false;
+  }
+  return false;
+}
+
+export function getElementAccessibleErrorMessage(element: Element): string {
+  // SPEC: https://w3c.github.io/aria/#aria-errormessage
+  //
+  // TODO: support https://developer.mozilla.org/en-US/docs/Web/API/HTMLInputElement/validationMessage
+  const cache = cacheAccessibleErrorMessage;
+  let accessibleErrorMessage = cacheAccessibleErrorMessage?.get(element);
+
+  if (accessibleErrorMessage === undefined) {
+    accessibleErrorMessage = '';
+
+    const isAriaInvalid = getAriaInvalid(element) !== 'false';
+    const isValidityInvalid = getValidityInvalid(element);
+    if (isAriaInvalid || isValidityInvalid) {
+      const errorMessageId = element.getAttribute('aria-errormessage');
+      const errorMessages = getIdRefs(element, errorMessageId);
+      // Ideally, this should be a separate "embeddedInErrorMessage", but it would follow the exact same rules.
+      // Relevant vague spec: https://w3c.github.io/core-aam/#ariaErrorMessage.
+      const parts = errorMessages.map(errorMessage => asFlatString(
+          getTextAlternativeInternal(errorMessage, {
+            visitedElements: new Set(),
+            embeddedInDescribedBy: { element: errorMessage, hidden: isElementHiddenForAria(errorMessage) },
+          })
+      ));
+      accessibleErrorMessage = parts.join(' ').trim();
+    }
+    cache?.set(element, accessibleErrorMessage);
+  }
+  return accessibleErrorMessage;
+}
+
 type AccessibleNameOptions = {
   visitedElements: Set<Element>,
   includeHidden?: boolean,
@@ -972,6 +1025,7 @@ let cacheAccessibleName: Map<Element, string> | undefined;
 let cacheAccessibleNameHidden: Map<Element, string> | undefined;
 let cacheAccessibleDescription: Map<Element, string> | undefined;
 let cacheAccessibleDescriptionHidden: Map<Element, string> | undefined;
+let cacheAccessibleErrorMessage: Map<Element, string> | undefined;
 let cacheIsHidden: Map<Element, boolean> | undefined;
 let cachePseudoContentBefore: Map<Element, string> | undefined;
 let cachePseudoContentAfter: Map<Element, string> | undefined;
@@ -983,6 +1037,7 @@ export function beginAriaCaches() {
   cacheAccessibleNameHidden ??= new Map();
   cacheAccessibleDescription ??= new Map();
   cacheAccessibleDescriptionHidden ??= new Map();
+  cacheAccessibleErrorMessage ??= new Map();
   cacheIsHidden ??= new Map();
   cachePseudoContentBefore ??= new Map();
   cachePseudoContentAfter ??= new Map();
@@ -994,6 +1049,7 @@ export function endAriaCaches() {
     cacheAccessibleNameHidden = undefined;
     cacheAccessibleDescription = undefined;
     cacheAccessibleDescriptionHidden = undefined;
+    cacheAccessibleErrorMessage = undefined;
     cacheIsHidden = undefined;
     cachePseudoContentBefore = undefined;
     cachePseudoContentAfter = undefined;

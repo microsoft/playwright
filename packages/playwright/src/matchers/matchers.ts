@@ -205,6 +205,18 @@ export function toHaveAccessibleName(
   }
 }
 
+export function toHaveAccessibleErrorMessage(
+  this: ExpectMatcherState,
+  locator: LocatorEx,
+  expected: string | RegExp,
+  options?: { timeout?: number; ignoreCase?: boolean },
+) {
+  return toMatchText.call(this, 'toHaveAccessibleErrorMessage', locator, 'Locator', async (isNot, timeout) => {
+    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase, normalizeWhiteSpace: true });
+    return await locator._expect('to.have.accessible.error.message', { expectedText: expectedText, isNot, timeout });
+  }, expected, options);
+}
+
 export function toHaveAttribute(
   this: ExpectMatcherState,
   locator: LocatorEx,
