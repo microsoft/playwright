@@ -1333,7 +1333,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   quiet?: boolean;
 
   /**
-   * Whether to automatically fail dependency tests after parent test fails
+   * Whether to automatically fail all project tests if one of its dependencies fail
    *
    * **Usage**
    *

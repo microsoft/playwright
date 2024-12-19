@@ -376,7 +376,7 @@ const testOptions: [string, string][] = [
   ['--pass-with-no-tests', `Makes test run succeed even if no tests were found`],
   ['--project <project-name...>', `Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects)`],
   ['--quiet', `Suppress stdio`],
-  ['--failDependentTests', `fail all `],
+  ['--failDependentTests', `Automatically fail all project tests if project dependencies fail`],
   ['--repeat-each <N>', `Run each test N times (default: 1)`],
   ['--reporter <reporter>', `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")`],
   ['--retries <retries>', `Maximum retry count for flaky tests, zero for no retries (default: no retries)`],
