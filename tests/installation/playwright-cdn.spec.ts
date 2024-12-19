@@ -20,8 +20,6 @@ import type { AddressInfo } from 'net';
 
 const CDNS = [
   'https://playwright.azureedge.net',
-  'https://playwright-akamai.azureedge.net',
-  'https://playwright-verizon.azureedge.net',
 ];
 
 const DL_STAT_BLOCK = /^.*from url: (.*)$\n^.*to location: (.*)$\n^.*response status code: (.*)$\n^.*total bytes: (\d+)$\n^.*download complete, size: (\d+)$\n^.*SUCCESS downloading (\w+) .*$/gm;
