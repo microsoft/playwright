@@ -32,6 +32,7 @@ import { debugLogger } from '../utils/debugLogger';
 export type ClientType = 'controller' | 'launch-browser' | 'reuse-browser' | 'pre-launched-browser-or-android';
 
 type Options = {
+  allowFSPaths: boolean,
   socksProxyPattern: string | undefined,
   browserName: string | null,
   launchOptions: LaunchOptions,
@@ -60,7 +61,7 @@ export class PlaywrightConnection {
     this._ws = ws;
     this._preLaunched = preLaunched;
     this._options = options;
-    options.launchOptions = filterLaunchOptions(options.launchOptions);
+    options.launchOptions = filterLaunchOptions(options.launchOptions, options.allowFSPaths);
     if (clientType === 'reuse-browser' || clientType === 'pre-launched-browser-or-android')
       assert(preLaunched.playwright);
     if (clientType === 'pre-launched-browser-or-android')
@@ -284,7 +285,7 @@ function launchOptionsHash(options: LaunchOptions) {
   return JSON.stringify(copy);
 }
 
-function filterLaunchOptions(options: LaunchOptions): LaunchOptions {
+function filterLaunchOptions(options: LaunchOptions, allowFSPaths: boolean): LaunchOptions {
   return {
     channel: options.channel,
     args: options.args,
@@ -296,7 +297,8 @@ function filterLaunchOptions(options: LaunchOptions): LaunchOptions {
     chromiumSandbox: options.chromiumSandbox,
     firefoxUserPrefs: options.firefoxUserPrefs,
     slowMo: options.slowMo,
-    executablePath: isUnderTest() ? options.executablePath : undefined,
+    executablePath: (isUnderTest() || allowFSPaths) ? options.executablePath : undefined,
+    downloadsPath: allowFSPaths ? options.downloadsPath : undefined,
   };
 }
 
