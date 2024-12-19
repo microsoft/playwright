@@ -130,8 +130,7 @@ program
     .option('--force', 'force reinstall of stable browser channels')
     .option('--only-shell', 'only install headless shell when installing chromium')
     .option('--no-shell', 'do not install chromium headless shell')
-    .option('--quiet', 'do not print logs while installing')
-    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean, quiet?: boolean }) {
+    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
       // For '--no-shell' option, commander sets `shell: false` instead.
       if (options.shell === false)
         options.noShell = true;
@@ -175,8 +174,7 @@ program
           }
         } else {
           const forceReinstall = hasNoArguments ? false : !!options.force;
-          const suppressLogs = options.quiet;
-          await registry.install(executables, forceReinstall, suppressLogs);
+          await registry.install(executables, forceReinstall);
           await registry.validateHostRequirementsForExecutablesIfNeeded(executables, process.env.PW_LANG_NAME || 'javascript').catch((e: Error) => {
             e.name = 'Playwright Host validation warning';
             console.error(e);
