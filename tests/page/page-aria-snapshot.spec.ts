@@ -482,6 +482,7 @@ it('should escape yaml text in text nodes', async ({ page }) => {
       {<a href="#">four</a>}
       [<a href="#">five</a>]
     </ul>
+    <div>[Select all]</div>
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
@@ -504,6 +505,7 @@ it('should escape yaml text in text nodes', async ({ page }) => {
       - text: "} ["
       - link "five"
       - text: "]"
+    - text: "[Select all]"
   `);
 });
 
