@@ -18,7 +18,7 @@ import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import type { Electron } from '../electron/electron';
 import { ElectronApplication } from '../electron/electron';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
 import type { ConsoleMessage } from '../console';

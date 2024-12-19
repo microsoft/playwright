@@ -17,7 +17,7 @@
 import { colors } from 'playwright-core/lib/utilsBundle';
 import type { ExpectMatcherState } from '../../types/test';
 import type { Locator } from 'playwright-core';
-import type { StackFrame } from '@protocol/channels';
+import type { StackFrame } from '@playwright/protocol/src/channels';
 import { stringifyStackFrames } from 'playwright-core/lib/utils';
 
 export const kNoElementsFoundError = '<element(s) not found>';

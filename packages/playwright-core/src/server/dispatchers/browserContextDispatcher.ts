@@ -19,7 +19,7 @@ import { Dispatcher, existingDispatcher } from './dispatcher';
 import type { DispatcherScope } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import type { FrameDispatcher } from './frameDispatcher';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { RouteDispatcher, RequestDispatcher, ResponseDispatcher, APIRequestContextDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';

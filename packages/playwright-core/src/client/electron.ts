@@ -18,7 +18,7 @@ import type { BrowserWindow } from 'electron';
 import type * as childProcess from 'child_process';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';

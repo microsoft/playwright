@@ -16,7 +16,7 @@
  */
 
 import { assert } from '../utils';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { ChannelOwner } from './channelOwner';
 import { FrameLocator, Locator, testIdAttributeName } from './locator';
 import type { LocatorOptions } from './locator';

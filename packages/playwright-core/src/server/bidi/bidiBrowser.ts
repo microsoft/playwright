@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
 import type { BrowserOptions } from '../browser';

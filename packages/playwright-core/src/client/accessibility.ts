@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import type { ElementHandle } from './elementHandle';
 import type * as api from '../../types/types';
 

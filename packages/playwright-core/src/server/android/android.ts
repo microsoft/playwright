@@ -34,7 +34,7 @@ import { PipeTransport } from '../../protocol/transport';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { TimeoutSettings } from '../../common/timeoutSettings';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
 import { registry } from '../registry';

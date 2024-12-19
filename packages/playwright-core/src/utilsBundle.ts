@@ -39,7 +39,7 @@ export const wsReceiver = require('./utilsBundleImpl').wsReceiver;
 export const wsSender = require('./utilsBundleImpl').wsSender;
 export type { Command } from '../bundles/utils/node_modules/commander';
 export type { WebSocket, WebSocketServer, RawData as WebSocketRawData, EventEmitter as WebSocketEventEmitter } from '../bundles/utils/node_modules/@types/ws';
-import type { StackFrame } from '@protocol/channels';
+import type { StackFrame } from '@playwright/protocol/src/channels';
 
 const StackUtils: typeof import('../bundles/utils/node_modules/@types/stack-utils') = require('./utilsBundleImpl').StackUtils;
 const stackUtils = new StackUtils({ internals: StackUtils.nodeInternals() });

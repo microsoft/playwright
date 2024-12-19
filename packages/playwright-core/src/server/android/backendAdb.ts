@@ -15,7 +15,7 @@
  */
 
 import { debug } from '../../utilsBundle';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import * as net from 'net';
 import { EventEmitter } from 'events';
 import type { Backend, DeviceBackend, SocketBackend } from './android';

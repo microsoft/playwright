@@ -19,7 +19,7 @@ import { rewriteErrorMessage } from '../utils/stackTrace';
 import { TimeoutError } from './errors';
 import { createGuid, zones } from '../utils';
 import type { Zone } from '../utils';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import type { ChannelOwner } from './channelOwner';
 
 export class Waiter {

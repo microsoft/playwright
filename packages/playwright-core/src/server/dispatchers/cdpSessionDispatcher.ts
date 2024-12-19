@@ -15,7 +15,7 @@
  */
 
 import { CDPSession } from '../chromium/crConnection';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { Dispatcher } from './dispatcher';
 import type { BrowserDispatcher } from './browserDispatcher';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';

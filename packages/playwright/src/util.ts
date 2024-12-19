@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import type { StackFrame } from '@protocol/channels';
+import type { StackFrame } from '@playwright/protocol/src/channels';
 import util from 'util';
 import path from 'path';
 import url from 'url';

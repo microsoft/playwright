@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import type { CallLog, CallLogStatus, ElementInfo, EventData, Mode, OverlayState, Source, UIState } from '@recorder/recorderTypes';
 import * as fs from 'fs';
 import type { Point } from '../common/types';

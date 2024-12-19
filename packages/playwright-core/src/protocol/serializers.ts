@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { SerializedValue } from '@protocol/channels';
+import type { SerializedValue } from '@playwright/protocol/src/channels';
 
 export function parseSerializedValue(value: SerializedValue, handles: any[] | undefined): any {
   return innerParseSerializedValue(value, handles, new Map());

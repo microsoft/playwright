@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { TimeoutError } from './errors';
 import { Android } from './android';
 import { BrowserType } from './browserType';

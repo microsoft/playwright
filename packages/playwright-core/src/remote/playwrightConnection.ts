@@ -16,7 +16,7 @@
 
 import type { WebSocket } from '../utilsBundle';
 import type { DispatcherScope, Playwright } from '../server';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { createPlaywright, DispatcherConnection, RootDispatcher, PlaywrightDispatcher } from '../server';
 import { Browser } from '../server/browser';
 import { serverSideCallMetadata } from '../server/instrumentation';

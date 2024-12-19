@@ -20,7 +20,7 @@ import * as util from 'util';
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray, NameValue } from '../common/types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { assert, headersObjectToArray, isString } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import { ChannelOwner } from './channelOwner';

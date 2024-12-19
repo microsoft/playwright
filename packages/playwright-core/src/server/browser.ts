@@ -15,7 +15,7 @@
  */
 
 import type * as types from './types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { BrowserContext, validateBrowserContextOptions } from './browserContext';
 import { Page } from './page';
 import { Download } from './download';

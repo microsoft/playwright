@@ -16,7 +16,7 @@
 
 import * as socks from '../common/socksProxy';
 import EventEmitter from 'events';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import type { WebSocketTransport } from './transport';
 import { findValidator, ValidationError } from '../protocol/validator';
 import type { ValidatorContext } from '../protocol/validator';

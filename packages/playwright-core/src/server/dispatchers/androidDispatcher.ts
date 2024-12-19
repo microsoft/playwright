@@ -18,7 +18,7 @@ import type { RootDispatcher } from './dispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import type { Android, SocketBackend } from '../android/android';
 import { AndroidDevice } from '../android/android';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { CallMetadata } from '../instrumentation';
 

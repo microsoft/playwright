@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { Frame } from './frame';
 import type { Locator } from './locator';
 import { JSHandle, serializeArgument, parseResult } from './jsHandle';

@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { findValidator, ValidationError, createMetadataValidator, type ValidatorContext } from '../../protocol/validator';
 import { LongStandingScope, assert, compressCallLog, isUnderTest, monotonicTime, rewriteErrorMessage } from '../../utils';
 import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';

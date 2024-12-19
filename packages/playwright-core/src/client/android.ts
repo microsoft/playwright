@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 import { isString, isRegExp, monotonicTime } from '../utils';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { Events } from './events';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';

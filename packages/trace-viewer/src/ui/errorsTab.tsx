@@ -20,7 +20,7 @@ import type * as modelUtil from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { StackFrame } from '@protocol/channels';
+import type { StackFrame } from '@playwright/protocol/src/channels';
 
 export type ErrorDescription = {
   action?: modelUtil.ActionTraceEventInContext;

@@ -18,7 +18,7 @@
 import { Page, BindingCall } from './page';
 import { Frame } from './frame';
 import * as network from './network';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import fs from 'fs';
 import path from 'path';
 import { ChannelOwner } from './channelOwner';

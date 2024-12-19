@@ -18,7 +18,7 @@ import type * as contexts from './browserContext';
 import type * as pages from './page';
 import type * as frames from './frames';
 import type * as types from './types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { assert } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { SdkObject } from './instrumentation';

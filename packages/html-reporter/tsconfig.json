@@ -17,7 +17,6 @@
     "baseUrl": ".",
     "useUnknownInCatchVariables": false,
     "paths": {
-      "@protocol/*": ["../protocol/src/*"],
       "@web/*": ["../web/src/*"],
       "@playwright/*": ["../playwright/src/*"],
       "playwright-core/lib/*": ["../playwright-core/src/*"],

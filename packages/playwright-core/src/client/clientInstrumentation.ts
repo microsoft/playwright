@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { StackFrame } from '@protocol/channels';
+import type { StackFrame } from '@playwright/protocol/src/channels';
 import type { BrowserContext } from './browserContext';
 import type { APIRequestContext } from './fetch';
 

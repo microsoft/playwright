@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Point, SerializedError, StackFrame } from '@protocol/channels';
+import type { Point, SerializedError, StackFrame } from '@playwright/protocol/src/channels';
 import type { Language } from '../../playwright-core/src/utils/isomorphic/locatorGenerators';
 import type { FrameSnapshot, ResourceSnapshot } from './snapshot';
 

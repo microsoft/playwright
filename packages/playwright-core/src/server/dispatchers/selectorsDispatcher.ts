@@ -16,7 +16,7 @@
 
 import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import type { Selectors } from '../selectors';
 
 export class SelectorsDispatcher extends Dispatcher<Selectors, channels.SelectorsChannel, RootDispatcher> implements channels.SelectorsChannel {

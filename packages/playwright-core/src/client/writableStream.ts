@@ -15,7 +15,7 @@
  */
 
 import { Writable } from 'stream';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { ChannelOwner } from './channelOwner';
 
 export class WritableStream extends ChannelOwner<channels.WritableStreamChannel> {

@@ -17,7 +17,7 @@
 import type { BrowserContext } from '../browserContext';
 import type { Frame } from '../frames';
 import { Page } from '../page';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { Dispatcher } from './dispatcher';
 import { createGuid, urlMatches } from '../../utils';
 import { PageDispatcher } from './pageDispatcher';

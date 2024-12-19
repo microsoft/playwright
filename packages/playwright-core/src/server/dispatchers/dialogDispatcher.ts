@@ -15,7 +15,7 @@
  */
 
 import type { Dialog } from '../dialog';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { Dispatcher } from './dispatcher';
 import { PageDispatcher } from './pageDispatcher';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';

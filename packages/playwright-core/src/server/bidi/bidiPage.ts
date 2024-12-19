@@ -22,7 +22,7 @@ import * as dom from '../dom';
 import * as dialog from '../dialog';
 import type * as frames from '../frames';
 import { Page } from '../page';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';

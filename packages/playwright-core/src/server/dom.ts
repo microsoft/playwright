@@ -15,7 +15,7 @@
  */
 
 import fs from 'fs';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
 import { isSessionClosedError } from './protocolError';
 import type { ScreenshotOptions } from './screenshotter';

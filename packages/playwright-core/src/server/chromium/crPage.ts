@@ -30,7 +30,7 @@ import { type InitScript, PageBinding, type PageDelegate } from '../page';
 import { Page, Worker } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
-import type * as channels from '@protocol/channels';
+import type * as channels from '@playwright/protocol/src/channels';
 import { getAccessibilityTree } from './crAccessibility';
 import { CRBrowserContext } from './crBrowser';
 import type { CRSession } from './crConnection';

@@ -18,7 +18,6 @@
     "paths": {
       "@injected/*": ["../playwright-core/src/server/injected/*"],
       "@isomorphic/*": ["../playwright-core/src/utils/isomorphic/*"],
-      "@protocol/*": ["../protocol/src/*"],
       "@recorder/*": ["../recorder/src/*"],
       "@testIsomorphic/*": ["../playwright/src/isomorphic/*"],
       "@trace/*": ["../trace/src/*"],

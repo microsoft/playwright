@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { SerializedValue } from '@protocol/channels';
+import type { SerializedValue } from '@playwright/protocol/src/channels';
 import type { ActionTraceEvent } from '@trace/trace';
 import { clsx, msToString } from '@web/uiUtils';
 import * as React from 'react';
