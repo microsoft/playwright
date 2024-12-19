@@ -45,7 +45,7 @@
     },
     {
       "name": "ffmpeg",
-      "revision": "1010",
+      "revision": "1011",
       "installByDefault": true,
       "revisionOverrides": {
         "mac12": "1010",
