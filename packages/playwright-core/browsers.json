@@ -53,6 +53,11 @@
       }
     },
     {
+      "name": "winldd",
+      "revision": "1007",
+      "installByDefault": false
+    },
+    {
       "name": "android",
       "revision": "1001",
       "installByDefault": false

@@ -31,22 +31,22 @@ export const TMP_WORKSPACES = path.join(os.platform() === 'darwin' ? '/tmp' : os
 const debug = debugLogger('itest');
 
 const expect = _expect.extend({
-  toHaveLoggedSoftwareDownload(received: any, browsers: ('chromium' | 'chromium-headless-shell' | 'firefox' | 'webkit' | 'ffmpeg')[]) {
+  toHaveLoggedSoftwareDownload(received: string, browsers: ('chromium' | 'chromium-headless-shell' | 'firefox' | 'webkit' | 'winldd' |'ffmpeg')[]) {
     if (typeof received !== 'string')
       throw new Error(`Expected argument to be a string.`);
 
     const downloaded = new Set();
     let index = 0;
     while (true) {
-      const match = received.substring(index).match(/(chromium|chromium headless shell|firefox|webkit|ffmpeg)[\s\d\.]+\(?playwright build v\d+\)? downloaded/im);
+      const match = received.substring(index).match(/(chromium|chromium headless shell|firefox|webkit|winldd|ffmpeg)[\s\d\.]+\(?playwright build v\d+\)? downloaded/im);
       if (!match)
         break;
       downloaded.add(match[1].replace(/\s/g, '-').toLowerCase());
       index += match.index + 1;
     }
 
-    const expected = browsers;
-    if (expected.length === downloaded.size && expected.every(browser => downloaded.has(browser))) {
+    const expected = new Set(browsers);
+    if (expected.size === downloaded.size && [...expected].every(browser => downloaded.has(browser))) {
       return {
         pass: true,
         message: () => 'Expected not to download browsers, but did.'

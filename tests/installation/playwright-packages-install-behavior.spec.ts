@@ -18,12 +18,14 @@ import { test, expect } from './npmTest';
 
 test.use({ isolateBrowsers: true });
 
+const extraInstalledSoftware = process.platform === 'win32' ? ['winldd' as const] : [];
+
 for (const browser of ['chromium', 'firefox', 'webkit']) {
   test(`playwright-${browser} should work`, async ({ exec, checkInstalledSoftwareOnDisk }) => {
     const pkg = `playwright-${browser}`;
     const result = await exec('npm i --foreground-scripts', pkg);
     const browserName = pkg.split('-')[1];
-    const expectedSoftware = [browserName];
+    const expectedSoftware = [browserName, ...extraInstalledSoftware];
     if (browserName === 'chromium')
       expectedSoftware.push('chromium-headless-shell', 'ffmpeg');
     expect(result).toHaveLoggedSoftwareDownload(expectedSoftware as any);
@@ -37,7 +39,7 @@ for (const browser of ['chromium', 'firefox', 'webkit']) {
 for (const browser of ['chromium', 'firefox', 'webkit']) {
   test(`@playwright/browser-${browser} should work`, async ({ exec, checkInstalledSoftwareOnDisk }) => {
     const pkg = `@playwright/browser-${browser}`;
-    const expectedSoftware = [browser];
+    const expectedSoftware = [browser, ...extraInstalledSoftware];
     if (browser === 'chromium')
       expectedSoftware.push('chromium-headless-shell', 'ffmpeg');
 
@@ -69,8 +71,8 @@ test(`playwright should work`, async ({ exec, checkInstalledSoftwareOnDisk }) =>
   await checkInstalledSoftwareOnDisk([]);
 
   const result2 = await exec('npx playwright install');
-  expect(result2).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit']);
-  await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit']);
+  expect(result2).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit', ...extraInstalledSoftware]);
+  await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit', ...extraInstalledSoftware]);
 
   await exec('node sanity.js playwright chromium firefox webkit');
   await exec('node esm-playwright.mjs');
@@ -81,8 +83,8 @@ test(`playwright should work with chromium --no-shell`, async ({ exec, checkInst
   expect(result1).toHaveLoggedSoftwareDownload([]);
   await checkInstalledSoftwareOnDisk([]);
   const result2 = await exec('npx playwright install chromium --no-shell');
-  expect(result2).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg']);
-  await checkInstalledSoftwareOnDisk(['chromium', 'ffmpeg']);
+  expect(result2).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg', ...extraInstalledSoftware]);
+  await checkInstalledSoftwareOnDisk(['chromium', 'ffmpeg', ...extraInstalledSoftware]);
 });
 
 test(`playwright should work with chromium --only-shell`, async ({ exec, checkInstalledSoftwareOnDisk }) => {
@@ -90,8 +92,8 @@ test(`playwright should work with chromium --only-shell`, async ({ exec, checkIn
   expect(result1).toHaveLoggedSoftwareDownload([]);
   await checkInstalledSoftwareOnDisk([]);
   const result2 = await exec('npx playwright install --only-shell');
-  expect(result2).toHaveLoggedSoftwareDownload(['chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit']);
-  await checkInstalledSoftwareOnDisk(['chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit']);
+  expect(result2).toHaveLoggedSoftwareDownload(['chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit', ...extraInstalledSoftware]);
+  await checkInstalledSoftwareOnDisk(['chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit', ...extraInstalledSoftware]);
 });
 
 test('@playwright/test should work', async ({ exec, checkInstalledSoftwareOnDisk }) => {
@@ -102,8 +104,8 @@ test('@playwright/test should work', async ({ exec, checkInstalledSoftwareOnDisk
   await exec('npx playwright test -c . sample.spec.js', { expectToExitWithError: true, message: 'should not be able to run tests without installing browsers' });
 
   const result2 = await exec('npx playwright install');
-  expect(result2).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit']);
-  await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit']);
+  expect(result2).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit', ...extraInstalledSoftware]);
+  await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit', ...extraInstalledSoftware]);
 
   await exec('node sanity.js @playwright/test chromium firefox webkit');
   await exec('node', 'esm-playwright-test.mjs');
