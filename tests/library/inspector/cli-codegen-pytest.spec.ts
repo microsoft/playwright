@@ -69,3 +69,25 @@ def test_example(page: Page) -> None:
     page.goto("${emptyHTML}")
 `);
 });
+
+test('should work with --save-har', async ({ runCLI }, testInfo) => {
+  const harFileName = testInfo.outputPath('har.har');
+  const expectedResult = `page.route_from_har(${JSON.stringify(harFileName)})`;
+  const cli = runCLI(['--target=python-pytest', `--save-har=${harFileName}`], {
+    autoExitWhen: expectedResult,
+  });
+  await cli.waitForCleanExit();
+  const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
+  expect(json.log.creator.name).toBe('Playwright');
+});
+
+test('should work with --save-har and --save-har-glob', async ({ runCLI }, testInfo) => {
+  const harFileName = testInfo.outputPath('har.har');
+  const expectedResult = `page.route_from_har(${JSON.stringify(harFileName)}, url="**/*.js")`;
+  const cli = runCLI(['--target=python-pytest', `--save-har=${harFileName}`, '--save-har-glob=**/*.js'], {
+    autoExitWhen: expectedResult,
+  });
+  await cli.waitForCleanExit();
+  const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
+  expect(json.log.creator.name).toBe('Playwright');
+});

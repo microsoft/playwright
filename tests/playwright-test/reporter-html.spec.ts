@@ -936,6 +936,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(attachment).not.toBeInViewport();
       await page.getByLabel('attach "foo-2"').getByTitle('link to attachment').click();
       await expect(attachment).toBeInViewport();
+
+      await page.reload();
+      await expect(attachment).toBeInViewport();
     });
 
     test('should highlight textual diff', async ({ runInlineTest, showReport, page }) => {

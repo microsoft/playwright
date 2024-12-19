@@ -146,8 +146,19 @@ asyncio.run(main())
 
 test('should work with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
-  const expectedResult = `await page.route_from_har(${JSON.stringify(harFileName)})`;
+  const expectedResult = `await context.route_from_har(${JSON.stringify(harFileName)})`;
   const cli = runCLI(['--target=python-async', `--save-har=${harFileName}`], {
+    autoExitWhen: expectedResult,
+  });
+  await cli.waitForCleanExit();
+  const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
+  expect(json.log.creator.name).toBe('Playwright');
+});
+
+test('should work with --save-har and --save-har-glob', async ({ runCLI }, testInfo) => {
+  const harFileName = testInfo.outputPath('har.har');
+  const expectedResult = `await context.route_from_har(${JSON.stringify(harFileName)}, url="**/*.js")`;
+  const cli = runCLI(['--target=python-async', `--save-har=${harFileName}`, '--save-har-glob=**/*.js'], {
     autoExitWhen: expectedResult,
   });
   await cli.waitForCleanExit();

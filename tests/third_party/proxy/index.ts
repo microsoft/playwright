@@ -3,6 +3,7 @@ import * as net from 'net';
 import * as url from 'url';
 import * as http from 'http';
 import * as os from 'os';
+import { pipeline } from 'stream/promises';
 
 const pkg = { version: '1.0.0' }
 
@@ -33,6 +34,7 @@ export function createProxy(server?: http.Server): ProxyServer {
 	if (!server) server = http.createServer();
 	server.on('request', onrequest);
 	server.on('connect', onconnect);
+	server.on('upgrade', onupgrade);
 	return server;
 }
 
@@ -465,4 +467,29 @@ function requestAuthorization(
 	};
 	res.writeHead(407, headers);
 	res.end('Proxy authorization required');
+}
+
+function onupgrade(req: http.IncomingMessage, socket: net.Socket, head: Buffer) {
+	const proxyReq = http.request(req.url, {
+		method: req.method,
+		headers: req.headers,
+		localAddress: this.localAddress,
+	});
+
+	proxyReq.on('upgrade', async function (proxyRes, proxySocket, proxyHead) {
+		const header = ['HTTP/1.1 101 Switching Protocols'];
+		for (const [key, value] of Object.entries(proxyRes.headersDistinct))
+			header.push(`${key}: ${value}`);
+		socket.write(header.join('\r\n') + '\r\n\r\n');
+		if (proxyHead && proxyHead.length) proxySocket.unshift(proxyHead);
+
+		try {
+			await pipeline(proxySocket, socket, proxySocket);
+		} catch (error) {
+			if (error.code !== "ECONNRESET")
+				throw error;
+		}
+	});
+
+	proxyReq.end(head);
 }
