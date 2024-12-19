@@ -718,9 +718,9 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
     return content.toString('utf8');
   }
 
-  async json(): Promise<object> {
+  async json<T = object>(): Promise<T> {
     const content = await this.text();
-    return JSON.parse(content);
+    return JSON.parse(content) as T;
   }
 
   request(): Request {

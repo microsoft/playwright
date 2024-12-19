@@ -350,9 +350,9 @@ export class APIResponse implements api.APIResponse {
     return content.toString('utf8');
   }
 
-  async json(): Promise<object> {
+  async json<T = object>(): Promise<T> {
     const content = await this.text();
-    return JSON.parse(content);
+    return JSON.parse(content) as T;
   }
 
   async [Symbol.asyncDispose]() {
