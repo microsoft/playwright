@@ -56,7 +56,9 @@ export class TestTypeImpl {
     test.fail.only = wrapFunctionWithLocation(this._createTest.bind(this, 'fail.only'));
     test.slow = wrapFunctionWithLocation(this._modifier.bind(this, 'slow'));
     test.setTimeout = wrapFunctionWithLocation(this._setTimeout.bind(this));
-    test.step = this._step.bind(this);
+    test.step = this._step.bind(this, 'pass');
+    test.step.fail = this._step.bind(this, 'fail');
+    test.step.fixme = this._step.bind(this, 'fixme');
     test.use = wrapFunctionWithLocation(this._use.bind(this));
     test.extend = wrapFunctionWithLocation(this._extend.bind(this));
     test.info = () => {
@@ -257,22 +259,40 @@ export class TestTypeImpl {
     suite._use.push({ fixtures, location });
   }
 
-  async _step<T>(title: string, body: () => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
+  async _step<T>(expectation: 'pass'|'fail'|'fixme', title: string, body: () => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
+    if (expectation === 'fixme')
+      return undefined as T;
     const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
     return await zones.run('stepZone', step, async () => {
+      let result;
+      let error;
       try {
-        const result = await raceAgainstDeadline(async () => body(), options.timeout ? monotonicTime() + options.timeout : 0);
-        if (result.timedOut)
-          throw new errors.TimeoutError(`Step timeout ${options.timeout}ms exceeded.`);
-        step.complete({});
-        return result.result;
-      } catch (error) {
+        result = await raceAgainstDeadline(async () => body(), options.timeout ? monotonicTime() + options.timeout : 0);
+      } catch (e) {
+        error = e;
+      }
+      if (result?.timedOut) {
+        const error = new errors.TimeoutError(`Step timeout ${options.timeout}ms exceeded.`);
         step.complete({ error });
         throw error;
       }
+      const expectedToFail = expectation === 'fail';
+      if (error) {
+        step.complete({ error });
+        if (expectedToFail)
+          return undefined as T;
+        throw error;
+      }
+      if (expectedToFail) {
+        error = new Error(`Step is expected to fail, but passed`);
+        step.complete({ error });
+        throw error;
+      }
+      step.complete({});
+      return result!.result;
     });
   }
 

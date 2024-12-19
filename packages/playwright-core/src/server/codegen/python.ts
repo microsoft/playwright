@@ -137,6 +137,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
 
   generateHeader(options: LanguageGeneratorOptions): string {
     const formatter = new PythonFormatter();
+    const recordHar = options.contextOptions.recordHar;
     if (this._isPyTest) {
       const contextOptions = formatContextOptions(options.contextOptions, options.deviceName, true /* asDict */);
       const fixture = contextOptions ? `
@@ -146,13 +147,13 @@ def browser_context_args(browser_context_args, playwright) {
     return {${contextOptions}}
 }
 ` : '';
-      formatter.add(`${options.deviceName ? 'import pytest\n' : ''}import re
+      formatter.add(`${options.deviceName || contextOptions ? 'import pytest\n' : ''}import re
 from playwright.sync_api import Page, expect
 ${fixture}
 
 def test_example(page: Page) -> None {`);
-      if (options.contextOptions.recordHar)
-        formatter.add(`    page.route_from_har(${quote(options.contextOptions.recordHar.path)})`);
+      if (recordHar)
+        formatter.add(`    page.route_from_har(${quote(recordHar.path)}${typeof recordHar.urlFilter === 'string' ? `, url=${quote(recordHar.urlFilter)}` : ''})`);
     } else if (this._isAsync) {
       formatter.add(`
 import asyncio
@@ -163,8 +164,8 @@ from playwright.async_api import Playwright, async_playwright, expect
 async def run(playwright: Playwright) -> None {
     browser = await playwright.${options.browserName}.launch(${formatOptions(options.launchOptions, false)})
     context = await browser.new_context(${formatContextOptions(options.contextOptions, options.deviceName)})`);
-      if (options.contextOptions.recordHar)
-        formatter.add(`    await page.route_from_har(${quote(options.contextOptions.recordHar.path)})`);
+      if (recordHar)
+        formatter.add(`    await context.route_from_har(${quote(recordHar.path)}${typeof recordHar.urlFilter === 'string' ? `, url=${quote(recordHar.urlFilter)}` : ''})`);
     } else {
       formatter.add(`
 import re
@@ -174,8 +175,8 @@ from playwright.sync_api import Playwright, sync_playwright, expect
 def run(playwright: Playwright) -> None {
     browser = playwright.${options.browserName}.launch(${formatOptions(options.launchOptions, false)})
     context = browser.new_context(${formatContextOptions(options.contextOptions, options.deviceName)})`);
-      if (options.contextOptions.recordHar)
-        formatter.add(`    context.route_from_har(${quote(options.contextOptions.recordHar.path)})`);
+      if (recordHar)
+        formatter.add(`    context.route_from_har(${quote(recordHar.path)}${typeof recordHar.urlFilter === 'string' ? `, url=${quote(recordHar.urlFilter)}` : ''})`);
     }
     return formatter.format();
   }

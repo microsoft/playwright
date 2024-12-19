@@ -162,7 +162,11 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
   afterAll(inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   afterAll(title: string, inner: (args: TestArgs & WorkerArgs, testInfo: TestInfo) => Promise<any> | any): void;
   use(fixtures: Fixtures<{}, {}, TestArgs, WorkerArgs>): void;
-  step<T>(title: string, body: () => T | Promise<T>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<T>;
+  step: {
+    <T>(title: string, body: () => T | Promise<T>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<T>;
+    fixme(title: string, body: () => any | Promise<any>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<void>;
+    fail(title: string, body: () => any | Promise<any>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<void>;
+  }
   expect: Expect<{}>;
   extend<T extends {}, W extends {} = {}>(fixtures: Fixtures<T, W, TestArgs, WorkerArgs>): TestType<TestArgs & T, WorkerArgs & W>;
   info(): TestInfo;

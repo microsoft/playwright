@@ -143,7 +143,7 @@ export function useIsAnchored(id: AnchorID) {
 export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID }>) {
   const ref = React.useRef<HTMLDivElement>(null);
   const onAnchorReveal = React.useCallback(() => {
-    requestAnimationFrame(() => ref.current?.scrollIntoView({ block: 'start', inline: 'start' }));
+    ref.current?.scrollIntoView({ block: 'start', inline: 'start' });
   }, []);
   useAnchor(id, onAnchorReveal);
 
