@@ -399,7 +399,7 @@ export class BidiPage implements PageDelegate {
       context: this._session.sessionId,
       format: {
         type: `image/${format === 'png' ? 'png' : 'jpeg'}`,
-        quality: quality || 80,
+        quality: quality ? quality / 100 : 0.8,
       },
       origin: documentRect ? 'document' : 'viewport',
       clip: {
