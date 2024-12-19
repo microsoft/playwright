@@ -75,7 +75,7 @@ type NPMTestFixtures = {
   _auto: void;
   _browsersPath: string;
   tmpWorkspace: string;
-  installedSoftwareOnDisk: () => Promise<string[]>;
+  checkInstalledSoftwareOnDisk: (browsers: string[]) => Promise<void>;
   writeFiles: (nameToContents: Record<string, string>) => Promise<void>;
   exec: (cmd: string, ...argsAndOrOptions: ArgsOrOptions) => Promise<string>;
   tsc: (args: string) => Promise<string>;
@@ -146,10 +146,13 @@ export const test = _test
         await use(registry);
         await registry.shutdown();
       },
-      installedSoftwareOnDisk: async ({ isolateBrowsers, _browsersPath }, use) => {
-        if (!isolateBrowsers)
-          throw new Error(`Test that checks browser installation must set "isolateBrowsers" to true`);
-        await use(async () => fs.promises.readdir(_browsersPath).catch(() => []).then(files => files.map(f => f.split('-')[0].replace(/_/g, '-')).filter(f => !f.startsWith('.'))));
+      checkInstalledSoftwareOnDisk: async ({ isolateBrowsers, _browsersPath }, use) => {
+        await use(async expected => {
+          if (!isolateBrowsers)
+            throw new Error(`Test that checks browser installation must set "isolateBrowsers" to true`);
+          const actual = await fs.promises.readdir(_browsersPath).catch(() => []).then(files => files.map(f => f.split('-')[0].replace(/_/g, '-')).filter(f => !f.startsWith('.')));
+          expect(new Set(actual)).toEqual(new Set(expected));
+        });
       },
       exec: async ({ tmpWorkspace, _browsersPath, isolateBrowsers }, use, testInfo) => {
         await use(async (cmd: string, ...argsAndOrOptions: [] | [...string[]] | [...string[], ExecOptions] | [ExecOptions]) => {
