@@ -24,7 +24,7 @@ const CDNS = [
   'https://cdn.playwright.dev',
 ];
 
-const DL_STAT_BLOCK = /^.*from url: (.*)$\n^.*to location: (.*)$\n^.*response status code: (.*)$\n^.*total bytes: (\d+)$\n^.*download complete, size: (\d+)$\n^.*SUCCESS downloading (\w+) .*$/gm;
+const DL_STAT_BLOCK = /^.*from url: (.*)$\n^.*to location: (.*)$\n^.*response status code: (.*)$\n^.*total bytes: (\d+)$\n^.*download complete, size: (\d+)$\n^.*SUCCESS downloading (?:and extracting )?(\w+) .*$/gm;
 
 const parsedDownloads = (rawLogs: string) => {
   const out: { url: string, status: number, name: string }[] = [];
@@ -93,7 +93,7 @@ test(`npx playwright install should not hang when CDN closes the connection`, as
       expectToExitWithError: true
     });
     expect(retryCount).toBe(5);
-    expect([...result.matchAll(/Download failed: server closed connection/g)]).toHaveLength(5);
+    expect([...result.matchAll(/code: 'ECONNRESET'/g)]).toHaveLength(5);
   } finally {
     await new Promise(resolve => server.close(resolve));
   }
@@ -123,7 +123,7 @@ test(`npx playwright install should not hang when CDN TCP connection stalls`, as
       expectToExitWithError: true
     });
     expect(retryCount).toBe(5);
-    expect([...result.matchAll(/timed out after/g)]).toHaveLength(5);
+    expect([...result.matchAll(/code: 'ECONNRESET'/g)]).toHaveLength(5);
   } finally {
     for (const socket of socketsToDestroy)
       socket.destroy();
