@@ -150,13 +150,7 @@ async function downloadAndExtractBrotli(options: DownloadParams) {
   await pipeline(
       response,
       createBrotliDecompress(),
-      tarFs.extract(options.browserDirectory, {
-        map(header: { name: string }) {
-          // manually-created ffmpeg archive has files nested in subdirectory
-          if (header.name.startsWith('ffmpeg-'))
-            header.name = header.name.substring(header.name.indexOf('/'));
-        }
-      })
+      tarFs.extract(options.browserDirectory)
   );
 
   if (downloadedBytes !== totalBytes)
