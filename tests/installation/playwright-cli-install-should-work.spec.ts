@@ -19,19 +19,21 @@ import path from 'path';
 
 test.use({ isolateBrowsers: true });
 
+const extraInstalledSoftware = process.platform === 'win32' ? ['winldd' as const] : [];
+
 test('install command should work', async ({ exec, checkInstalledSoftwareOnDisk }) => {
   await exec('npm i playwright');
 
   await test.step('playwright install chromium', async () => {
     const result = await exec('npx playwright install chromium');
-    expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg']);
-    await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg']);
+    expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
+    await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
   });
 
   await test.step('playwright install', async () => {
     const result = await exec('npx playwright install');
     expect(result).toHaveLoggedSoftwareDownload(['firefox', 'webkit']);
-    await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit']);
+    await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit', ...extraInstalledSoftware]);
   });
 
   await exec('node sanity.js playwright', { env: { PLAYWRIGHT_BROWSERS_PATH: '0' } });
@@ -51,9 +53,9 @@ test('install command should work', async ({ exec, checkInstalledSoftwareOnDisk 
 test('should be able to remove browsers', async ({ exec, checkInstalledSoftwareOnDisk }) => {
   await exec('npm i playwright');
   await exec('npx playwright install chromium');
-  await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg']);
+  await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
   await exec('npx playwright uninstall');
-  await checkInstalledSoftwareOnDisk([]);
+  await checkInstalledSoftwareOnDisk([...extraInstalledSoftware]);
 });
 
 test('should print the right install command without browsers', async ({ exec }) => {

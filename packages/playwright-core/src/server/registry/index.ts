@@ -1315,6 +1315,8 @@ export async function installBrowsersForNpmInstall(browsers: string[]) {
     return false;
   }
   const executables: Executable[] = [];
+  if (process.platform === 'win32')
+    executables.push(registry.findExecutable('winldd')!);
   for (const browserName of browsers) {
     const executable = registry.findExecutable(browserName);
     if (!executable || executable.installType === 'none')

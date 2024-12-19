@@ -103,8 +103,6 @@ function checkBrowsersToInstall(args: string[], options: { noShell?: boolean, on
       executables.push(executable);
     if (executable?.browserName === 'chromium')
       executables.push(registry.findExecutable('ffmpeg')!);
-    if (process.platform === 'win32')
-      executables.push(registry.findExecutable('winldd')!);
   };
 
   for (const arg of args) {
@@ -117,6 +115,9 @@ function checkBrowsersToInstall(args: string[], options: { noShell?: boolean, on
       handleArgument(arg);
     }
   }
+
+  if (process.platform === 'win32')
+    executables.push(registry.findExecutable('winldd')!);
 
   if (faultyArguments.length)
     throw new Error(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${suggestedBrowsersToInstall()}`);
