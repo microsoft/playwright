@@ -508,9 +508,9 @@ export const UIModeView: React.FC<{}> = ({
             <div className='section-title'>Testing Options</div>
           </Toolbar>
           {testingOptionsVisible && <SettingsView settings={[
-            { value: singleWorker, set: setSingleWorker, title: 'Single worker' },
-            { value: showBrowser, set: setShowBrowser, title: 'Show browser' },
-            { value: updateSnapshots, set: setUpdateSnapshots, title: 'Update snapshots' },
+            { value: singleWorker, set: setSingleWorker, name: 'Single worker' },
+            { value: showBrowser, set: setShowBrowser, name: 'Show browser' },
+            { value: updateSnapshots, set: setUpdateSnapshots, name: 'Update snapshots' },
           ]} />}
         </>}
         <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setSettingsVisible(!settingsVisible)}>
@@ -522,7 +522,7 @@ export const UIModeView: React.FC<{}> = ({
           <div className='section-title'>Settings</div>
         </Toolbar>
         {settingsVisible && <SettingsView settings={[
-          { value: darkMode, set: setDarkMode, title: 'Dark mode' },
+          { value: darkMode, set: setDarkMode, name: 'Dark mode' },
         ]} />}
       </div>
       }
