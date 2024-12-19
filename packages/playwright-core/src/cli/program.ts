@@ -103,6 +103,8 @@ function checkBrowsersToInstall(args: string[], options: { noShell?: boolean, on
       executables.push(executable);
     if (executable?.browserName === 'chromium')
       executables.push(registry.findExecutable('ffmpeg')!);
+    if (process.platform === 'win32')
+      executables.push(registry.findExecutable('winldd')!);
   };
 
   for (const arg of args) {
