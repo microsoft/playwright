@@ -27,10 +27,9 @@ import type { ActionTraceEventInContext } from './modelUtil';
 
 export const CallTab: React.FunctionComponent<{
   action: ActionTraceEventInContext | undefined,
-  executionStartTime: number,
-  executionStartWallTime: number,
+  startTimeOffset: number,
   sdkLanguage: Language | undefined,
-}> = ({ action, executionStartTime, executionStartWallTime, sdkLanguage }) => {
+}> = ({ action, startTimeOffset, sdkLanguage }) => {
   // We never need the waitForEventInfo (`info`).
   const paramKeys = React.useMemo(() => Object.keys(action?.params ?? {}).filter(name => name !== 'info'), [action]);
 
@@ -38,11 +37,8 @@ export const CallTab: React.FunctionComponent<{
     return <PlaceholderPanel text='No action selected' />;
 
   // Calculate execution time relative to the test runner's start time
-  const startTimeMillis = action.startTime - executionStartTime;
+  const startTimeMillis = action.startTime - startTimeOffset;
   const startTime = msToString(startTimeMillis);
-
-  const wallTimeMillis = startTimeMillis + executionStartWallTime;
-  const wallTime = new Date(wallTimeMillis).toLocaleString(undefined, { timeZoneName: 'short' });
 
   const duration = action.endTime ? msToString(action.endTime - action.startTime) : 'Timed Out';
 
@@ -52,7 +48,6 @@ export const CallTab: React.FunctionComponent<{
       {
         <>
           <div className='call-section'>Time</div>
-          <DateTimeCallLine name='wall time:' value={wallTime} />
           <DateTimeCallLine name='start:' value={startTime} />
           <DateTimeCallLine name='duration:' value={duration} />
         </>

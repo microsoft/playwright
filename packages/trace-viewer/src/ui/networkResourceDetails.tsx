@@ -65,8 +65,6 @@ const RequestTab: React.FunctionComponent<{
 }> = ({ resource, sdkLanguage, startTimeOffset }) => {
   const [requestBody, setRequestBody] = React.useState<{ text: string, mimeType?: string } | null>(null);
 
-  const wallTimeString = React.useMemo(() => resource.startedDateTime.length > 0 ? new Date(resource.startedDateTime).toLocaleString(undefined, { timeZoneName: 'short' }) : '-', [resource.startedDateTime]);
-
   React.useEffect(() => {
     const readResources = async  () => {
       if (resource.request.postData) {
@@ -102,7 +100,6 @@ const RequestTab: React.FunctionComponent<{
     <div className='network-request-details-header'>Request Headers</div>
     <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
     <div className='network-request-details-header'>Time</div>
-    <div className='network-request-details-general'>{`Wall Time: ${wallTimeString}`}</div>
     <div className='network-request-details-general'>{`Start: ${msToString(startTimeOffset)}`}</div>
     <div className='network-request-details-general'>{`Duration: ${msToString(resource.time)}`}</div>
 
