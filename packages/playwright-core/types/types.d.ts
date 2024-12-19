@@ -18433,7 +18433,7 @@ export interface APIResponse {
    *
    * This method will throw if the response body is not parsable via `JSON.parse`.
    */
-  json(): Promise<Serializable>;
+  json<T = Serializable>(): Promise<T>;
 
   /**
    * Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
@@ -20571,7 +20571,7 @@ export interface Response {
    *
    * This method will throw if the response body is not parsable via `JSON.parse`.
    */
-  json(): Promise<Serializable>;
+  json<T = Serializable>(): Promise<T>;
 
   /**
    * Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
