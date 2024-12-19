@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 import type { Frame } from '../frames';
 import type { Page } from '../page';
 import type { Signal } from '../../../../recorder/src/actions';
-import type * as actions from '@recorder/actions';
+import type * as actions from '@playwright/recorder/src/actions';
 import { monotonicTime } from '../../utils/time';
 import { callMetadataForAction, collapseActions } from './recorderUtils';
 import { serializeError } from '../errors';

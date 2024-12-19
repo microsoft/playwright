@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import type * as actions from '@recorder/actions';
+import type * as actions from '@playwright/recorder/src/actions';
 import type { InjectedScript } from '../injectedScript';
 import type { Point } from '../../../common/types';
-import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
+import type { ElementInfo, Mode, OverlayState, UIState } from '@playwright/recorder/src/recorderTypes';
 import type { ElementText } from '../selectorUtils';
 import type { Highlight, HighlightOptions } from '../highlight';
 import clipPaths from './clipPaths';

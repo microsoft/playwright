@@ -20,14 +20,14 @@ import type { Page } from '../page';
 import { ProgressController } from '../progress';
 import { EventEmitter } from 'events';
 import { serverSideCallMetadata } from '../instrumentation';
-import type { CallLog, ElementInfo, Mode, Source } from '@recorder/recorderTypes';
+import type { CallLog, ElementInfo, Mode, Source } from '@playwright/recorder/src/recorderTypes';
 import { isUnderTest } from '../../utils';
 import { mime } from '../../utilsBundle';
 import { syncLocalStorageWithSettings } from '../launchApp';
 import type { BrowserContext } from '../browserContext';
 import { launchApp } from '../launchApp';
 import type { IRecorder, IRecorderApp, IRecorderAppFactory } from './recorderFrontend';
-import type * as actions from '@recorder/actions';
+import type * as actions from '@playwright/recorder/src/actions';
 
 export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   wsEndpointForTest: undefined;

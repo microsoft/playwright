@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type * as actionTypes from '@recorder/actions';
+import type * as actionTypes from '@playwright/recorder/src/actions';
 import { SourceChooser } from '@web/components/sourceChooser';
 import { SplitView } from '@web/components/splitView';
 import type { TabbedPaneTabModel } from '@web/components/tabbedPane';

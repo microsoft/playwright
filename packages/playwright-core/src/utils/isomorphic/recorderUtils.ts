@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type * as recorderActions from '@recorder/actions';
+import type * as recorderActions from '@playwright/recorder/src/actions';
 import type * as channels from '@protocol/channels';
 import type * as types from '../../server/types';
 

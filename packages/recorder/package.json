@@ -1,5 +1,5 @@
 {
-  "name": "recorder",
+  "name": "@playwright/recorder",
   "private": true,
   "version": "0.0.0",
   "type": "module",

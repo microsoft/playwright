@@ -15,10 +15,10 @@
  */
 
 import type { CallMetadata } from '../instrumentation';
-import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
+import type { CallLog, CallLogStatus } from '@playwright/recorder/src/recorderTypes';
 import type { Page } from '../page';
 import type { Frame } from '../frames';
-import type * as actions from '@recorder/actions';
+import type * as actions from '@playwright/recorder/src/actions';
 import { createGuid } from '../../utils';
 import { buildFullSelector, traceParamsForAction } from '../../utils/isomorphic/recorderUtils';
 

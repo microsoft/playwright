@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ElementInfo, Mode, Source } from '@recorder/recorderTypes';
+import type { ElementInfo, Mode, Source } from '@playwright/recorder/src/recorderTypes';
 import { gracefullyProcessExitDoNotHang } from '../utils/processLauncher';
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';

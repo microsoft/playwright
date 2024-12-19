@@ -16,7 +16,7 @@
 
 import type { BrowserContextOptions } from '../../../types/types';
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
-import type * as actions from '@recorder/actions';
+import type * as actions from '@playwright/recorder/src/actions';
 import { sanitizeDeviceOptions, toSignalMap, toKeyboardModifiers, toClickOptionsForSourceCode } from './language';
 import { deviceDescriptors } from '../deviceDescriptors';
 import { escapeWithQuotes, asLocator } from '../../utils';

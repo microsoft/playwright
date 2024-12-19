@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
-import type * as actions from '@recorder/actions';
+import type { ElementInfo, Mode, OverlayState, UIState } from '@playwright/recorder/src/recorderTypes';
+import type * as actions from '@playwright/recorder/src/actions';
 import type { InjectedScript } from '../injectedScript';
 import { Recorder } from './recorder';
 import type { RecorderDelegate } from './recorder';

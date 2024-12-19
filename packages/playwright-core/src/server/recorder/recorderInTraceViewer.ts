@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import type { CallLog, ElementInfo, Mode, Source } from '@recorder/recorderTypes';
+import type { CallLog, ElementInfo, Mode, Source } from '@playwright/recorder/src/recorderTypes';
 import { EventEmitter } from 'events';
 import type { IRecorder, IRecorderApp, IRecorderAppFactory } from './recorderFrontend';
 import { installRootRedirect, openTraceViewerApp, startTraceViewerServer } from '../trace/viewer/traceViewer';
@@ -24,7 +24,7 @@ import type { BrowserContext } from '../browserContext';
 import type { HttpServer, Transport } from '../../utils/httpServer';
 import type { Page } from '../page';
 import { ManualPromise } from '../../utils/manualPromise';
-import type * as actions from '@recorder/actions';
+import type * as actions from '@playwright/recorder/src/actions';
 
 export class RecorderInTraceViewer extends EventEmitter implements IRecorderApp {
   readonly wsEndpointForTest: string | undefined;

@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type * as actionTypes from '@recorder/actions';
+import type * as actionTypes from '@playwright/recorder/src/actions';
 import { ListView } from '@web/components/listView';
 import * as React from 'react';
 import '../actionList.css';
