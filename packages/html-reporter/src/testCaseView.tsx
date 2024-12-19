@@ -46,7 +46,7 @@ export const TestCaseView: React.FC<{
   }, [test]);
 
   const visibleAnnotations = React.useMemo(() => {
-    return test?.annotations?.filter(annotation => !annotation.type.startsWith('_')) || [];
+    return test?.annotations?.filter(annotation => !annotation?.type?.startsWith('_')) || [];
   }, [test?.annotations]);
 
   return <div className='test-case-column vbox'>
