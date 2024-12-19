@@ -15,7 +15,6 @@
 */
 
 .settings-view {
-  display: flex;
   flex: none;
   padding: 4px 0px;
   row-gap: 8px;
