@@ -18,7 +18,10 @@ import fs from 'fs';
 import path from 'path';
 import { httpRequest } from '../../utils/network';
 import { ManualPromise } from '../../utils/manualPromise';
-import { extract } from '../../zipBundle';
+import { extract, tarFs } from '../../zipBundle';
+import type http from 'http';
+import { pipeline } from 'stream/promises';
+import { createBrotliDecompress } from 'zlib';
 
 export type DownloadParams = {
   title: string;
@@ -104,11 +107,78 @@ function downloadFile(options: DownloadParams): Promise<void> {
   }
 }
 
+async function throwUnexpectedResponseError(response: http.IncomingMessage) {
+  let body = '';
+  try {
+    await new Promise<void>((resolve, reject) => {
+      response
+          .on('data', chunk => body += chunk)
+          .on('end', resolve)
+          .on('error', reject);
+    });
+  } catch (error) {
+    body += error;
+  }
+
+  response.resume(); // consume response data to free up memory
+
+  throw new Error(`server returned code ${response.statusCode} body '${body}'`);
+}
+
+async function downloadAndExtractBrotli(options: DownloadParams) {
+  const response = await new Promise<http.IncomingMessage>((resolve, reject) => httpRequest({
+    url: options.url,
+    headers: {
+      'User-Agent': options.userAgent,
+    },
+    timeout: options.connectionTimeout,
+  }, resolve, reject));
+
+  log(`-- response status code: ${response.statusCode}`);
+  if (response.statusCode !== 200)
+    await throwUnexpectedResponseError(response);
+
+  const totalBytes = parseInt(response.headers['content-length'] || '0', 10);
+  log(`-- total bytes: ${totalBytes}`);
+
+  let downloadedBytes = 0;
+  response.on('data', chunk => {
+    downloadedBytes += chunk.length;
+    progress(downloadedBytes, totalBytes);
+  });
+
+  await pipeline(
+      response,
+      createBrotliDecompress(),
+      tarFs.extract(options.browserDirectory, {
+        map(header: { name: string }) {
+          // manually-created ffmpeg archive has files nested in subdirectory
+          if (header.name.startsWith('ffmpeg-'))
+            header.name = header.name.substring(header.name.indexOf('/'));
+        }
+      })
+  );
+
+  if (downloadedBytes !== totalBytes)
+    throw new Error(`size mismatch, file size: ${downloadedBytes}, expected size: ${totalBytes}`);
+
+  log(`-- download complete, size: ${downloadedBytes}`);
+}
+
 async function main(options: DownloadParams) {
-  await downloadFile(options);
-  log(`SUCCESS downloading ${options.title}`);
-  log(`extracting archive`);
-  await extract(options.zipPath, { dir: options.browserDirectory });
+  if (options.url.endsWith('.tar.br')) {
+    try {
+      await downloadAndExtractBrotli(options);
+    } catch (error) {
+      throw new Error(`Download failed. URL: ${options.url}`, { cause: error });
+    }
+    log(`SUCCESS downloading and extracting ${options.title}`);
+  } else {
+    await downloadFile(options);
+    log(`SUCCESS downloading ${options.title}`);
+    log(`extracting archive`);
+    await extract(options.zipPath, { dir: options.browserDirectory });
+  }
   if (options.executablePath) {
     log(`fixing permissions at ${options.executablePath}`);
     await fs.promises.chmod(options.executablePath, 0o755);
