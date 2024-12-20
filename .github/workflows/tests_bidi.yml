@@ -48,6 +48,6 @@ jobs:
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v4
       with:
-        name: csv-report
+        name: csv-report-${{ matrix.channel }}
         path: test-results/report.csv
         retention-days: 7
