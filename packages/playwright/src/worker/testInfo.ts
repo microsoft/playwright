@@ -27,12 +27,12 @@ import type { Annotation, FullConfigInternal, FullProjectInternal } from '../com
 import type { FullConfig, Location } from '../../types/testReporter';
 import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
-import type { Attachment } from './testTracing';
 import type { StackFrame } from '@protocol/channels';
 import { testInfoError } from './util';
 
 export interface TestStepInternal {
-  complete(result: { error?: Error | unknown, attachments?: Attachment[], suggestedRebaseline?: string }): void;
+  complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
+  attachmentIndexes: number[];
   stepId: string;
   title: string;
   category: 'hook' | 'fixture' | 'test.step' | 'expect' | 'attach' | string;
@@ -70,6 +70,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _projectInternal: FullProjectInternal;
   readonly _configInternal: FullConfigInternal;
   private readonly _steps: TestStepInternal[] = [];
+  private readonly _stepMap = new Map<string, TestStepInternal>();
   _onDidFinishTestFunction: (() => Promise<void>) | undefined;
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
@@ -248,7 +249,7 @@ export class TestInfoImpl implements TestInfo {
     return zones.zoneData<ExpectZone>('expectZone')?.stepId;
   }
 
-  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps' | 'attachments'>, parentStep?: TestStepInternal): TestStepInternal {
+  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps' | 'attachmentIndexes'>, parentStep?: TestStepInternal): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
 
     if (data.isStage) {
@@ -267,10 +268,12 @@ export class TestInfoImpl implements TestInfo {
     }
     data.location = data.location || filteredStack[0];
 
+    const attachmentIndexes: number[] = [];
     const step: TestStepInternal = {
       stepId,
       ...data,
       steps: [],
+      attachmentIndexes,
       complete: result => {
         if (step.endWallTime)
           return;
@@ -307,11 +310,13 @@ export class TestInfoImpl implements TestInfo {
         };
         this._onStepEnd(payload);
         const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
-        this._tracing.appendAfterActionForStep(stepId, errorForTrace, result.attachments);
+        const attachments = attachmentIndexes.map(i => this.attachments[i]);
+        this._tracing.appendAfterActionForStep(stepId, errorForTrace, attachments);
       }
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
     parentStepList.push(step);
+    this._stepMap.set(stepId, step);
     const payload: StepBeginPayload = {
       testId: this.testId,
       stepId,
@@ -410,13 +415,14 @@ export class TestInfoImpl implements TestInfo {
       title: `attach "${name}"`,
       category: 'attach',
     });
-    const attachment = await normalizeAndSaveAttachment(this.outputPath(), name, options);
-    this._attach(attachment, step.stepId);
-    step.complete({ attachments: [attachment] });
+    this._attach(await normalizeAndSaveAttachment(this.outputPath(), name, options), step.stepId);
+    step.complete({});
   }
 
   private _attach(attachment: TestInfo['attachments'][0], stepId: string | undefined) {
-    this._attachmentsPush(attachment);
+    const index = this._attachmentsPush(attachment) - 1;
+    if (stepId)
+      this._stepMap.get(stepId)!.attachmentIndexes.push(index);
     this._onAttach({
       testId: this.testId,
       name: attachment.name,

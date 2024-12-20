@@ -392,7 +392,7 @@ test('should show custom fixture titles in actions tree', async ({ runUITest }) 
   ]);
 });
 
-test('all attachments are shown in attachments tab', async ({ runUITest }) => {
+test('attachments tab shows all but top-level .push attachments', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -429,11 +429,10 @@ test('all attachments are shown in attachments tab', async ({ runUITest }) => {
       - treeitem /attach \\"bar-attach\\"/
   `);
   await page.getByRole('tab', { name: 'Attachments' }).click();
-  await expect(page.getByRole('tabpanel', { name: 'Attachments' }), 'attachments tab shows all').toMatchAriaSnapshot(`
+  await expect(page.getByRole('tabpanel', { name: 'Attachments' })).toMatchAriaSnapshot(`
     - tabpanel:
       - button /foo-push/
       - button /foo-attach/
-      - button /bar-push/
       - button /bar-attach/
   `);
 });
