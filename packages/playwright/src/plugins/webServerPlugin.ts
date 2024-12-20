@@ -124,7 +124,10 @@ export class WebServerPlugin implements TestRunnerPlugin {
         if (!signal)
           throw new Error('skip graceful shutdown');
 
-        process.kill(-launchedProcess.pid!, signal);
+        // launchedProcess is a shell. not all shells forward signals to their child processes.
+        // we need to send the signal to the webserver inside the shell.
+        const webserverPid = launchedProcess.pid!; // TODO: get the actual pid of the webserver
+        process.kill(webserverPid, signal);
         return new Promise<void>((resolve, reject) => {
           const timer = timeout !== 0
             ? setTimeout(() => reject(new Error(`process didn't close gracefully within timeout, falling back to SIGKILL`)), timeout)
