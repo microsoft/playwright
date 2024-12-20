@@ -239,7 +239,7 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  _parentStep() {
+  private _parentStep() {
     return zones.zoneData<TestStepInternal>('stepZone')
       ?? this._findLastStageStep(this._steps); // If no parent step on stack, assume the current stage as parent.
   }

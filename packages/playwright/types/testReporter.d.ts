@@ -693,7 +693,7 @@ export interface TestStep {
 
   /**
    * The list of files or buffers attached in the step execution through
-   * [testInfo.attachments](https://playwright.dev/docs/api/class-testinfo#test-info-attachments).
+   * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach).
    */
   attachments: Array<{
     /**
