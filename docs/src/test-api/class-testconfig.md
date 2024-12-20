@@ -232,9 +232,17 @@ export default defineConfig({
 
 ## property: TestConfig.metadata
 * since: v1.10
-- type: ?<[Metadata]>
-
-Metadata that will be put directly to the test report serialized as JSON.
+- type: ?<[Object]>
+  - `revision.id` ?<[string]> The unique identifier (e.g., hash or GUID) for the revision or commit that triggered the test run.
+  - `revision.author` ?<[string]> The name of the person who authored the revision or commit.
+  - `revision.email` ?<[string]> The email address of the author of the revision or commit.
+  - `revision.subject` ?<[string]> The subject or short description of the revision or commit, often provided in the commit message.
+  - `revision.timestamp` ?<[int]> The UNIX timestamp representing when the revision or commit was created.
+  - `revision.link` ?<[string]> A URL link to view details about the revision or commit in the repository's source control system.
+  - `ci.link` ?<[string]> A URL link to view the details of the test run in the CI/CD system.
+  - `timestamp` ?<[int]> The UNIX timestamp representing when the test run was initiated.
+  
+Metadata that will be put directly to the test report. Only certain fields are allowed in the metadata.
 
 **Usage**
 
@@ -242,7 +250,16 @@ Metadata that will be put directly to the test report serialized as JSON.
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  metadata: 'acceptance tests',
+  metadata: {
+    'revision.id': 'adcb0c51debdbe96a6a836e2ead9d40a859f6438',
+    'revision.author': 'Your Name',
+    'revision.email': 'name@email.com',
+    'revision.subject': 'Acceptance tests',
+    'revision.timestamp': Date.now(),
+    'revision.link': 'https://github.com/microsoft/playwright',
+    'ci.link': 'https://github.com/microsoft/playwright/actions/workflows/tests_primary.yml',
+    'timestamp': Date.now(),
+  }
 });
 ```
 
