@@ -29,7 +29,7 @@ export async function createSkipTestPredicate(projectName: string): Promise<Shou
   return (info: TestInfo) => {
     const key = info.titlePath.join(' › ');
     const expectation = expectationsMap.get(key);
-    return expectation === 'fail' || expectation === 'timeout';
+    return expectation === 'timeout';
   };
 }
 

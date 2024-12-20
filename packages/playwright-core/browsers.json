@@ -9,9 +9,9 @@
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1286",
+      "revision": "1288",
       "installByDefault": false,
-      "browserVersion": "133.0.6891.0"
+      "browserVersion": "133.0.6905.0"
     },
     {
       "name": "firefox",
@@ -27,7 +27,7 @@
     },
     {
       "name": "webkit",
-      "revision": "2119",
+      "revision": "2120",
       "installByDefault": true,
       "revisionOverrides": {
         "debian11-x64": "2105",
@@ -45,12 +45,17 @@
     },
     {
       "name": "ffmpeg",
-      "revision": "1010",
+      "revision": "1011",
       "installByDefault": true,
       "revisionOverrides": {
         "mac12": "1010",
         "mac12-arm64": "1010"
       }
+    },
+    {
+      "name": "winldd",
+      "revision": "1007",
+      "installByDefault": false
     },
     {
       "name": "android",
