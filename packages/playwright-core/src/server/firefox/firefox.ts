@@ -101,4 +101,3 @@ class JugglerReadyState extends BrowserReadyState {
       this._wsEndpoint.resolve(undefined);
   }
 }
-

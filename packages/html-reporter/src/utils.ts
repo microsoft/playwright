@@ -47,4 +47,3 @@ export function hashStringToInt(str: string) {
     hash = str.charCodeAt(i) + ((hash << 8) - hash);
   return Math.abs(hash % 6);
 }
-
