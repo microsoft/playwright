@@ -32,8 +32,7 @@ import type { StackFrame } from '@protocol/channels';
 import { testInfoError } from './util';
 
 export interface TestStepInternal {
-  complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
-  attachments: Attachment[];
+  complete(result: { error?: Error | unknown, attachments?: Attachment[], suggestedRebaseline?: string }): void;
   stepId: string;
   title: string;
   category: 'hook' | 'fixture' | 'test.step' | 'expect' | 'attach' | string;
@@ -268,12 +267,10 @@ export class TestInfoImpl implements TestInfo {
     }
     data.location = data.location || filteredStack[0];
 
-    const attachments: Attachment[] = [];
     const step: TestStepInternal = {
       stepId,
       ...data,
       steps: [],
-      attachments,
       complete: result => {
         if (step.endWallTime)
           return;
@@ -301,9 +298,6 @@ export class TestInfoImpl implements TestInfo {
           }
         }
 
-        for (const attachment of attachments ?? [])
-          this._attach(attachment, stepId);
-
         const payload: StepEndPayload = {
           testId: this.testId,
           stepId,
@@ -313,7 +307,7 @@ export class TestInfoImpl implements TestInfo {
         };
         this._onStepEnd(payload);
         const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
-        this._tracing.appendAfterActionForStep(stepId, errorForTrace, attachments);
+        this._tracing.appendAfterActionForStep(stepId, errorForTrace, result.attachments);
       }
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
@@ -416,8 +410,9 @@ export class TestInfoImpl implements TestInfo {
       title: `attach "${name}"`,
       category: 'attach',
     });
-    step.attachments.push(await normalizeAndSaveAttachment(this.outputPath(), name, options));
-    step.complete({});
+    const attachment = await normalizeAndSaveAttachment(this.outputPath(), name, options);
+    this._attach(attachment, step.stepId);
+    step.complete({ attachments: [attachment] });
   }
 
   private _attach(attachment: TestInfo['attachments'][0], stepId: string | undefined) {
