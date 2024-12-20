@@ -391,3 +391,49 @@ test('should show custom fixture titles in actions tree', async ({ runUITest }) 
     /After Hooks[\d.]+m?s/,
   ]);
 });
+
+test('all attachments are shown in attachments tab', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('attachment test', async ({}) => {
+        await test.step('step', async () => {
+          test.info().attachments.push({
+            name: 'foo-push',
+            body: Buffer.from('foo-content'),
+            contentType: 'text/plain'
+          });
+
+          await test.info().attach('foo-attach', { body: 'foo-content' })
+        });
+
+        test.info().attachments.push({
+          name: 'bar-push',
+          body: Buffer.from('bar-content'),
+          contentType: 'text/plain'
+        });
+        await test.info().attach('bar-attach', { body: 'bar-content' })
+      });
+    `,
+  });
+
+  await page.getByRole('treeitem', { name: 'attachment test' }).dblclick();
+  const actionsTree = page.getByTestId('actions-tree');
+  await actionsTree.getByRole('treeitem', { name: 'step' }).click();
+  await page.keyboard.press('ArrowRight');
+  await expect(actionsTree, 'only attach() calls are shown as actions').toMatchAriaSnapshot(`
+    - tree:
+      - treeitem /step/:
+        - group:
+          - treeitem /attach \\"foo-attach\\"/ 
+      - treeitem /attach \\"bar-attach\\"/
+  `);
+  await page.getByRole('tab', { name: 'Attachments' }).click();
+  await expect(page.getByRole('tabpanel', { name: 'Attachments' }), 'attachments tab shows all').toMatchAriaSnapshot(`
+    - tabpanel:
+      - button /foo-push/
+      - button /foo-attach/
+      - button /bar-push/
+      - button /bar-attach/
+  `);
+});
