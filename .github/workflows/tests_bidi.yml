@@ -44,3 +44,10 @@ jobs:
       run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run biditest -- --project=${{ matrix.channel }}*
       env:
         PWTEST_USE_BIDI_EXPECTATIONS: '1'
+    - name: Upload csv report to GitHub
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: csv-report
+        path: test-results/report.csv
+        retention-days: 7

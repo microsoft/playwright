@@ -39,6 +39,7 @@ const reporters = () => {
     hasDebugOutput ? ['list'] : ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
     ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
+    ['./csvReporter', { outputFile: path.join(outputDir, 'report.csv') }],
   ] : [
     ['html', { open: 'on-failure' }],
     ['./expectationReporter', { rebase: false }],
