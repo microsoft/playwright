@@ -117,7 +117,7 @@ export const NetworkTab: React.FunctionComponent<{
         sidebarIsFirst={true}
         orientation='horizontal'
         settingName='networkResourceDetails'
-        main={<NetworkResourceDetails resource={selectedEntry.resource} onClose={() => setSelectedEntry(undefined)} sdkLanguage={sdkLanguage} />}
+        main={<NetworkResourceDetails resource={selectedEntry.resource} sdkLanguage={sdkLanguage} startTimeOffset={selectedEntry.start} onClose={() => setSelectedEntry(undefined)} />}
         sidebar={grid}
       />}
   </>;
