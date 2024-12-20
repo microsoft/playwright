@@ -638,7 +638,7 @@ class ArtifactsRecorder {
         try {
           const screenshotPath = this._createScreenshotAttachmentPath();
           await fs.promises.rename(file, screenshotPath);
-          this._attachScreenshot(screenshotPath);
+          await this._attachScreenshot(screenshotPath);
         } catch {
         }
       }
@@ -665,19 +665,14 @@ class ArtifactsRecorder {
       if (temporary)
         this._temporaryScreenshots.push(screenshotPath);
       else
-        this._attachScreenshot(screenshotPath);
+        await this._attachScreenshot(screenshotPath);
     } catch {
       // Screenshot may fail, just ignore.
     }
   }
 
-  private _attachScreenshot(screenshotPath: string) {
-    const step = this._testInfo._addStep({
-      title: `attach "screenshot"`,
-      category: 'attach',
-    });
-    step.attachments.push({ name: 'screenshot', path: screenshotPath, contentType: 'image/png' });
-    step.complete({});
+  private async _attachScreenshot(screenshotPath: string) {
+    await this._testInfo.attach('screenshot', { path: screenshotPath, contentType: 'image/png' });
   }
 
   private async _screenshotOnTestFailure() {
