@@ -309,4 +309,3 @@ it('should dispatch mouse move after context menu was opened', async ({ page, br
     }
   }
 });
-
