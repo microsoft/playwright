@@ -1,9 +1,0 @@
-{
-  "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["vite.config.*", "playwright.config.*"],
-  "compilerOptions": {
-    "composite": true,
-    "types": ["node"],
-    "ignoreDeprecations": "5.0"
-  }
-}

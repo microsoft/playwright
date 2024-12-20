@@ -258,7 +258,7 @@ export class BaseReporter implements ReporterV2 {
       console.log(colors.yellow('  Slow test file: ') + file + colors.yellow(` (${milliseconds(duration)})`));
     });
     if (slowTests.length)
-      console.log(colors.yellow('  Consider splitting slow test files to speed up parallel execution'));
+      console.log(colors.yellow('  Consider running tests from slow files in parallel, see https://playwright.dev/docs/test-parallel.'));
   }
 
   private _printSummary(summary: string) {
@@ -381,10 +381,11 @@ export function formatTestTitle(config: FullConfig, test: TestCase, step?: TestS
   if (omitLocation)
     location = `${relativeTestPath(config, test)}`;
   else
-    location = `${relativeTestPath(config, test)}:${step?.location?.line ?? test.location.line}:${step?.location?.column ?? test.location.column}`;
+    location = `${relativeTestPath(config, test)}:${test.location.line}:${test.location.column}`;
   const projectTitle = projectName ? `[${projectName}] › ` : '';
-  const tags = test.tags.length > 0 ? ` ${test.tags.join(' ')}` : '';
-  return `${projectTitle}${location} › ${titles.join(' › ')}${stepSuffix(step)}${tags}`;
+  const testTitle = `${projectTitle}${location} › ${titles.join(' › ')}`;
+  const extraTags = test.tags.filter(t => !testTitle.includes(t));
+  return `${testTitle}${stepSuffix(step)}${extraTags.length ? ' ' + extraTags.join(' ') : ''}`;
 }
 
 export function formatTestHeader(config: FullConfig, test: TestCase, options: { indent?: string, index?: number, mode?: 'default' | 'error' } = {}): string {

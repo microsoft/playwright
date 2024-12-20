@@ -108,7 +108,7 @@ test('globalTeardown runs after failures', async ({ runInlineTest }) => {
   expect(output).toContain('teardown=42');
 });
 
-test('globalTeardown does not run when globalSetup times out', async ({ runInlineTest }) => {
+test('globalTeardown still runs when globalSetup times out', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       import * as path from 'path';
@@ -135,7 +135,7 @@ test('globalTeardown does not run when globalSetup times out', async ({ runInlin
     `,
   });
   expect(result.output).toContain('Timed out waiting 1s for the global setup to run');
-  expect(result.output).not.toContain('teardown=');
+  expect(result.output).toContain('teardown=');
 });
 
 test('globalSetup should work with sync function', async ({ runInlineTest }) => {
@@ -395,9 +395,9 @@ test('globalSetup should support multiple', async ({ runInlineTest }) => {
         globalTeardown: ['./globalTeardown1.ts', './globalTeardown2.ts'],
       };
     `,
-    'globalSetup1.ts': `module.exports = () => { console.log('%%globalSetup1'); return () => { console.log('%%globalSetup1Function'); throw new Error('kaboom'); } };`,
+    'globalSetup1.ts': `module.exports = () => { console.log('%%globalSetup1'); return () => { console.log('%%callback1'); throw new Error('kaboom'); } };`,
     'globalSetup2.ts': `module.exports = () => console.log('%%globalSetup2');`,
-    'globalSetup3.ts': `module.exports = () => { console.log('%%globalSetup3'); return () => console.log('%%globalSetup3Function'); }`,
+    'globalSetup3.ts': `module.exports = () => { console.log('%%globalSetup3'); return () => console.log('%%callback3'); }`,
     'globalSetup4.ts': `module.exports = () => console.log('%%globalSetup4');`,
     'globalTeardown1.ts': `module.exports = () => console.log('%%globalTeardown1')`,
     'globalTeardown2.ts': `module.exports = () => { console.log('%%globalTeardown2'); throw new Error('kaboom'); }`,
@@ -410,8 +410,8 @@ test('globalSetup should support multiple', async ({ runInlineTest }) => {
   }, { reporter: 'line' });
   expect(result.passed).toBe(2);
 
-  // behaviour: setups in order, teardowns in reverse order.
-  // setup-returned functions inherit their position, and take precedence over `globalTeardown` scripts.
+  // first setups, then setup callbacks in reverse order.
+  // then teardowns in declared order.
   expect(result.outputLines).toEqual([
     'globalSetup1',
     'globalSetup2',
@@ -419,10 +419,38 @@ test('globalSetup should support multiple', async ({ runInlineTest }) => {
     'globalSetup4',
     'test a',
     'test b',
-    'globalSetup3Function',
+    'callback3',
+    'callback1',
+    'globalTeardown1',
     'globalTeardown2',
-    'globalSetup1Function',
-    // 'globalTeardown1' is missing, because globalSetup1Function errored out.
+  ]);
+  expect(result.output).toContain('Error: kaboom');
+});
+
+test('globalTeardown runs even if callback failed', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        globalSetup: './globalSetup.ts',
+        globalTeardown: './globalTeardown.ts',
+      };
+    `,
+    'globalSetup.ts': `module.exports = () => { console.log('%%globalSetup'); return () => { throw new Error('kaboom'); } };`,
+    'globalTeardown.ts': `module.exports = () => console.log('%%globalTeardown')`,
+
+    'a.test.js': `
+      import { test } from '@playwright/test';
+      test('a', () => console.log('%%test'));
+    `,
+  }, { reporter: 'line' });
+  expect(result.passed).toBe(1);
+
+  // first setups, then setup callbacks in reverse order.
+  // then teardowns in declared order.
+  expect(result.outputLines).toEqual([
+    'globalSetup',
+    'test',
+    'globalTeardown',
   ]);
   expect(result.output).toContain('Error: kaboom');
 });

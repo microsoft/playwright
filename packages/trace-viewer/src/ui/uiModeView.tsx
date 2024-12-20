@@ -47,9 +47,9 @@ const xtermDataSource: XtermDataSource = {
 };
 
 const searchParams = new URLSearchParams(window.location.search);
-const guid = searchParams.get('ws');
-const wsURL = new URL(`../${guid}`, window.location.toString());
-wsURL.protocol = (window.location.protocol === 'https:' ? 'wss:' : 'ws:');
+const testServerBaseUrl = new URL(searchParams.get('server') ?? '../', window.location.href);
+const wsURL = new URL(searchParams.get('ws')!, testServerBaseUrl);
+wsURL.protocol = (wsURL.protocol === 'https:' ? 'wss:' : 'ws:');
 const queryParams = {
   args: searchParams.getAll('arg'),
   grep: searchParams.get('grep') || undefined,
@@ -109,7 +109,10 @@ export const UIModeView: React.FC<{}> = ({
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const reloadTests = React.useCallback(() => {
-    setTestServerConnection(new TestServerConnection(new WebSocketTestServerTransport(wsURL)));
+    setTestServerConnection(prevConnection => {
+      prevConnection?.close();
+      return new TestServerConnection(new WebSocketTestServerTransport(wsURL));
+    });
   }, []);
 
   // Load tests on startup.
@@ -224,7 +227,7 @@ export const UIModeView: React.FC<{}> = ({
         newFilter.set(projectSuite.title, !!selectedProjects?.includes(projectSuite.title));
     }
     if (!selectedProjects && newFilter.size && ![...newFilter.values()].includes(true))
-      newFilter.set(newFilter.entries().next().value[0], true);
+      newFilter.set(newFilter.entries().next().value![0], true);
     if (projectFilters.size !== newFilter.size || [...projectFilters].some(([k, v]) => newFilter.get(k) !== v))
       setProjectFilters(newFilter);
   }, [projectFilters, testModel]);
@@ -505,9 +508,9 @@ export const UIModeView: React.FC<{}> = ({
             <div className='section-title'>Testing Options</div>
           </Toolbar>
           {testingOptionsVisible && <SettingsView settings={[
-            { value: singleWorker, set: setSingleWorker, title: 'Single worker' },
-            { value: showBrowser, set: setShowBrowser, title: 'Show browser' },
-            { value: updateSnapshots, set: setUpdateSnapshots, title: 'Update snapshots' },
+            { value: singleWorker, set: setSingleWorker, name: 'Single worker' },
+            { value: showBrowser, set: setShowBrowser, name: 'Show browser' },
+            { value: updateSnapshots, set: setUpdateSnapshots, name: 'Update snapshots' },
           ]} />}
         </>}
         <Toolbar noShadow={true} noMinHeight={true} className='settings-toolbar' onClick={() => setSettingsVisible(!settingsVisible)}>
@@ -519,7 +522,7 @@ export const UIModeView: React.FC<{}> = ({
           <div className='section-title'>Settings</div>
         </Toolbar>
         {settingsVisible && <SettingsView settings={[
-          { value: darkMode, set: setDarkMode, title: 'Dark mode' },
+          { value: darkMode, set: setDarkMode, name: 'Dark mode' },
         ]} />}
       </div>
       }

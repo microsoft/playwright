@@ -22,7 +22,7 @@ Playwright Trace Viewer is a GUI tool that lets you explore recorded Playwright 
 
 ## Recording a Trace
 
-By default the [playwright.config](./trace-viewer.md#recording-a-trace-on-ci) file will contain the configuration needed to create a `trace.zip` file for each test. Traces are setup to run `on-first-retry` meaning they will be run on the first retry of a failed test. Also `retries` are set to 2 when running on CI and 0 locally. This means the traces will be recorded on the first retry of a failed test but not on the first run and not on the second retry.
+By default the [playwright.config](./trace-viewer.md#tracing-on-ci) file will contain the configuration needed to create a `trace.zip` file for each test. Traces are setup to run `on-first-retry` meaning they will be run on the first retry of a failed test. Also `retries` are set to 2 when running on CI and 0 locally. This means the traces will be recorded on the first retry of a failed test but not on the first run and not on the second retry.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
@@ -45,7 +45,7 @@ npx playwright test --trace on
 
 ## Opening the HTML report
 
-The HTML report shows you a report of all your tests that have been ran and on which browsers as well as how long they took. Tests can be filtered by passed tests, failed, flakey or skipped tests. You can also search for a particular test. Clicking on a test will open the detailed view where you can see more information on your tests such as the errors, the test steps and the trace.
+The HTML report shows you a report of all your tests that have been run and on which browsers as well as how long they took. Tests can be filtered by passed tests, failed, flaky or skipped tests. You can also search for a particular test. Clicking on a test will open the detailed view where you can see more information on your tests such as the errors, the test steps and the trace.
 
 ```bash
 npx playwright show-report

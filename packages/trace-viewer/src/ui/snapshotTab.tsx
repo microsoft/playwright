@@ -40,8 +40,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
   setIsInspecting: (isInspecting: boolean) => void,
   highlightedLocator: string,
   setHighlightedLocator: (locator: string) => void,
-  openPage?: (url: string, target?: string) => Window | any,
-}> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator, openPage }) => {
+}> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator }) => {
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
   const snapshots = React.useMemo(() => {
@@ -66,9 +65,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
       })}
       <div style={{ flex: 'auto' }}></div>
       <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!snapshotUrls?.popoutUrl} onClick={() => {
-        if (!openPage)
-          openPage = window.open;
-        const win = openPage(snapshotUrls?.popoutUrl || '', '_blank');
+        const win = window.open(snapshotUrls?.popoutUrl || '', '_blank');
         win?.addEventListener('DOMContentLoaded', () => {
           const injectedScript = new InjectedScript(win as any, false, sdkLanguage, testIdAttributeName, 1, 'chromium', []);
           new ConsoleAPI(injectedScript);
@@ -328,6 +325,7 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
 }
 
 const isUnderTest = new URLSearchParams(window.location.search).has('isUnderTest');
+const serverParam = new URLSearchParams(window.location.search).get('server');
 
 export function extendSnapshot(snapshot: Snapshot): SnapshotUrls {
   const params = new URLSearchParams();
@@ -346,6 +344,8 @@ export function extendSnapshot(snapshot: Snapshot): SnapshotUrls {
 
   const popoutParams = new URLSearchParams();
   popoutParams.set('r', snapshotUrl);
+  if (serverParam)
+    popoutParams.set('server', serverParam);
   popoutParams.set('trace', context(snapshot.action).traceUrl);
   if (snapshot.point) {
     popoutParams.set('pointX', String(snapshot.point.x));

@@ -385,6 +385,7 @@ scheme.DebugControllerInitializer = tOptional(tObject({}));
 scheme.DebugControllerInspectRequestedEvent = tObject({
   selector: tString,
   locator: tString,
+  ariaSnapshot: tString,
 });
 scheme.DebugControllerSetModeRequestedEvent = tObject({
   mode: tString,
@@ -422,7 +423,8 @@ scheme.DebugControllerSetRecorderModeParams = tObject({
 });
 scheme.DebugControllerSetRecorderModeResult = tOptional(tObject({}));
 scheme.DebugControllerHighlightParams = tObject({
-  selector: tString,
+  selector: tOptional(tString),
+  ariaTemplate: tOptional(tString),
 });
 scheme.DebugControllerHighlightResult = tOptional(tObject({}));
 scheme.DebugControllerHideHighlightParams = tOptional(tObject({}));
@@ -2297,6 +2299,17 @@ scheme.TracingTracingStartChunkParams = tObject({
 scheme.TracingTracingStartChunkResult = tObject({
   traceName: tString,
 });
+scheme.TracingTracingGroupParams = tObject({
+  name: tString,
+  location: tOptional(tObject({
+    file: tString,
+    line: tOptional(tNumber),
+    column: tOptional(tNumber),
+  })),
+});
+scheme.TracingTracingGroupResult = tOptional(tObject({}));
+scheme.TracingTracingGroupEndParams = tOptional(tObject({}));
+scheme.TracingTracingGroupEndResult = tOptional(tObject({}));
 scheme.TracingTracingStopChunkParams = tObject({
   mode: tEnum(['archive', 'discard', 'entries']),
 });

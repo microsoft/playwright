@@ -3609,8 +3609,6 @@ export interface Page {
   /**
    * Returns the PDF buffer.
    *
-   * **NOTE** Generating a pdf is currently only supported in Chromium headless.
-   *
    * `page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call
    * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) before calling
    * `page.pdf()`:
@@ -4296,7 +4294,7 @@ export interface Page {
    * takes priority over
    * [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout).
    *
-   * @param timeout Maximum time in milliseconds
+   * @param timeout Maximum time in milliseconds. Pass `0` to disable timeout.
    */
   setDefaultTimeout(timeout: number): void;
 
@@ -8961,9 +8959,13 @@ export interface BrowserContext {
   /**
    * Grants specified permissions to the browser context. Only grants corresponding permissions to the given origin if
    * specified.
-   * @param permissions A permission or an array of permissions to grant. Permissions can be one of the following values:
+   * @param permissions A list of permissions to grant.
+   *
+   * **NOTE** Supported permissions differ between browsers, and even between different versions of the same browser.
+   * Any permission may stop working after an update.
+   *
+   * Here are some permissions that may be supported by some browsers:
    * - `'accelerometer'`
-   * - `'accessibility-events'`
    * - `'ambient-light-sensor'`
    * - `'background-sync'`
    * - `'camera'`
@@ -9191,7 +9193,7 @@ export interface BrowserContext {
    * take priority over
    * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout).
    *
-   * @param timeout Maximum time in milliseconds
+   * @param timeout Maximum time in milliseconds. Pass `0` to disable timeout.
    */
   setDefaultTimeout(timeout: number): void;
 
@@ -9587,10 +9589,11 @@ export interface Browser {
    * In case this browser is connected to, clears all created contexts belonging to this browser and disconnects from
    * the browser server.
    *
-   * **NOTE** This is similar to force quitting the browser. Therefore, you should call
+   * **NOTE** This is similar to force-quitting the browser. To close pages gracefully and ensure you receive page close
+   * events, call
    * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) on
-   * any [BrowserContext](https://playwright.dev/docs/api/class-browsercontext)'s you explicitly created earlier with
-   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) **before**
+   * any [BrowserContext](https://playwright.dev/docs/api/class-browsercontext) instances you explicitly created earlier
+   * using [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) **before**
    * calling [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close).
    *
    * The [Browser](https://playwright.dev/docs/api/class-browser) object itself is considered to be disposed and cannot
@@ -12425,8 +12428,8 @@ export interface Locator {
   and(locator: Locator): Locator;
 
   /**
-   * Captures the aria snapshot of the given element. See
-   * [expect(locator).toMatchAriaSnapshot(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-match-aria-snapshot)
+   * Captures the aria snapshot of the given element. Read more about [aria snapshots](https://playwright.dev/docs/aria-snapshots) and
+   * [expect(locator).toMatchAriaSnapshot(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-match-aria-snapshot-2)
    * for the corresponding assertion.
    *
    * **Usage**
@@ -13676,7 +13679,9 @@ export interface Locator {
   }): Promise<boolean>;
 
   /**
-   * Returns whether the element is [editable](https://playwright.dev/docs/actionability#editable).
+   * Returns whether the element is [editable](https://playwright.dev/docs/actionability#editable). If the target element is not an `<input>`,
+   * `<textarea>`, `<select>`, `[contenteditable]` and does not have a role allowing `[aria-readonly]`, this method
+   * throws an error.
    *
    * **NOTE** If you need to assert that an element is editable, prefer
    * [expect(locator).toBeEditable([options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-editable)
@@ -14709,9 +14714,12 @@ export interface BrowserType<Unused = {}> {
     bypassCSP?: boolean;
 
     /**
-     * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary",
-     * "msedge", "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
-     * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
+     * Browser distribution channel.
+     *
+     * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#opt-in-to-new-headless-mode).
+     *
+     * Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or
+     * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
      */
     channel?: string;
 
@@ -15205,9 +15213,12 @@ export interface BrowserType<Unused = {}> {
     args?: Array<string>;
 
     /**
-     * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary",
-     * "msedge", "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
-     * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
+     * Browser distribution channel.
+     *
+     * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#opt-in-to-new-headless-mode).
+     *
+     * Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or
+     * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
      */
     channel?: string;
 
@@ -18580,6 +18591,19 @@ export interface Clock {
    * await page.clock.pauseAt('2020-02-02');
    * ```
    *
+   * For best results, install the clock before navigating the page and set it to a time slightly before the intended
+   * test time. This ensures that all timers run normally during page loading, preventing the page from getting stuck.
+   * Once the page has fully loaded, you can safely use
+   * [clock.pauseAt(time)](https://playwright.dev/docs/api/class-clock#clock-pause-at) to pause the clock.
+   *
+   * ```js
+   * // Initialize clock with some time before the test time and let the page load
+   * // naturally. `Date.now` will progress as the timers fire.
+   * await page.clock.install({ time: new Date('2024-12-10T08:00:00') });
+   * await page.goto('http://localhost:3333');
+   * await page.clock.pauseAt(new Date('2024-12-10T10:00:00'));
+   * ```
+   *
    * @param time Time to pause at.
    */
   pauseAt(time: number|string|Date): Promise<void>;
@@ -21056,6 +21080,45 @@ export interface Touchscreen {
  */
 export interface Tracing {
   /**
+   * **NOTE** Use `test.step` instead when available.
+   *
+   * Creates a new group within the trace, assigning any subsequent API calls to this group, until
+   * [tracing.groupEnd()](https://playwright.dev/docs/api/class-tracing#tracing-group-end) is called. Groups can be
+   * nested and will be visible in the trace viewer.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // use test.step instead
+   * await test.step('Log in', async () => {
+   *   // ...
+   * });
+   * ```
+   *
+   * @param name Group name shown in the trace viewer.
+   * @param options
+   */
+  group(name: string, options?: {
+    /**
+     * Specifies a custom location for the group to be shown in the trace viewer. Defaults to the location of the
+     * [tracing.group(name[, options])](https://playwright.dev/docs/api/class-tracing#tracing-group) call.
+     */
+    location?: {
+      file: string;
+
+      line?: number;
+
+      column?: number;
+    };
+  }): Promise<void>;
+
+  /**
+   * Closes the last group created by
+   * [tracing.group(name[, options])](https://playwright.dev/docs/api/class-tracing#tracing-group).
+   */
+  groupEnd(): Promise<void>;
+
+  /**
    * Start tracing.
    *
    * **Usage**
@@ -21501,9 +21564,12 @@ export interface LaunchOptions {
   args?: Array<string>;
 
   /**
-   * Browser distribution channel.  Supported values are "chrome", "chrome-beta", "chrome-dev", "chrome-canary",
-   * "msedge", "msedge-beta", "msedge-dev", "msedge-canary". Read more about using
-   * [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
+   * Browser distribution channel.
+   *
+   * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#opt-in-to-new-headless-mode).
+   *
+   * Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or
+   * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
    */
   channel?: string;
 

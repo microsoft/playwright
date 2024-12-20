@@ -29,4 +29,5 @@ test('surrogate pairs', () => {
   expect(fitToWidth('🚄🚄', 2)).toBe('…');
   expect(fitToWidth('🚄🚄', 3)).toBe('…🚄');
   expect(fitToWidth('🚄🚄', 4)).toBe('🚄🚄');
+  expect(fitToWidth('🧑‍🧑‍🧒🧑‍🧑‍🧒🧑‍🧑‍🧒', 4)).toBe('…🧑‍🧑‍🧒');
 });

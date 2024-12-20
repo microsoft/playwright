@@ -29,12 +29,15 @@ import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector, type GenerateSelectorOptions } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription } from './roleUtils';
+import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription, getReadonly } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis } from '../../utils/isomorphic/stringUtils';
-import { matchesAriaTree, renderedAriaTree } from './ariaSnapshot';
+import { matchesAriaTree, getAllByAria, generateAriaTree, renderAriaTree } from './ariaSnapshot';
+import type { AriaNode, AriaSnapshot } from './ariaSnapshot';
+import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
+import { parseYamlTemplate } from '@isomorphic/ariaSnapshot';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
 
@@ -82,6 +85,7 @@ export class InjectedScript {
     isElementVisible,
     isInsideScope,
     normalizeWhiteSpace,
+    parseYamlTemplate,
   };
 
   // eslint-disable-next-line no-restricted-globals
@@ -212,10 +216,31 @@ export class InjectedScript {
     return new Set<Element>(result.map(r => r.element));
   }
 
-  ariaSnapshot(node: Node): string {
+  ariaSnapshot(node: Node, options?: { mode?: 'raw' | 'regex', id?: boolean }): string {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
-    return renderedAriaTree(node as Element);
+    const ariaSnapshot = generateAriaTree(node as Element);
+    return renderAriaTree(ariaSnapshot.root, options);
+  }
+
+  ariaSnapshotAsObject(node: Node): AriaSnapshot {
+    return generateAriaTree(node as Element);
+  }
+
+  ariaSnapshotElement(snapshot: AriaSnapshot, elementId: number): Element | null {
+    return snapshot.elements.get(elementId) || null;
+  }
+
+  renderAriaTree(ariaNode: AriaNode, options?: { mode?: 'raw' | 'regex', id?: boolean}): string {
+    return renderAriaTree(ariaNode, options);
+  }
+
+  renderAriaSnapshotWithIds(ariaSnapshot: AriaSnapshot): string {
+    return renderAriaTree(ariaSnapshot.root, { ids: ariaSnapshot.ids });
+  }
+
+  getAllByAria(document: Document, template: AriaTemplateNode): Element[] {
+    return getAllByAria(document.documentElement, template);
   }
 
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
@@ -432,7 +457,8 @@ export class InjectedScript {
     const queryAll = (root: SelectorRoot, body: string) => {
       if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
         return [];
-      return isElementVisible(root as Element) === Boolean(body) ? [root as Element] : [];
+      const visible = body === 'true';
+      return isElementVisible(root as Element) === visible ? [root as Element] : [];
     };
     return { queryAll };
   }
@@ -601,9 +627,12 @@ export class InjectedScript {
     if (state === 'enabled')
       return !disabled;
 
-    const editable = !(['INPUT', 'TEXTAREA', 'SELECT'].includes(element.nodeName) && element.hasAttribute('readonly'));
-    if (state === 'editable')
-      return !disabled && editable;
+    if (state === 'editable') {
+      const readonly = getReadonly(element);
+      if (readonly === 'error')
+        throw this.createStacklessError('Element is not an <input>, <textarea>, <select> or [contenteditable] and does not have a role allowing [aria-readonly]');
+      return !disabled && !readonly;
+    }
 
     if (state === 'checked' || state === 'unchecked') {
       const need = state === 'checked';
@@ -1263,8 +1292,13 @@ export class InjectedScript {
     }
 
     {
-      if (expression === 'to.match.aria')
-        return matchesAriaTree(element, options.expectedValue);
+      if (expression === 'to.match.aria') {
+        const result = matchesAriaTree(element, options.expectedValue);
+        return {
+          received: result.received,
+          matches: !!result.matches.length,
+        };
+      }
     }
 
     {
@@ -1324,6 +1358,8 @@ export class InjectedScript {
       received = elements.map(e => options.useInnerText ? (e as HTMLElement).innerText : elementText(new Map(), e).full);
     else if (expression === 'to.have.class.array')
       received = elements.map(e => e.classList.toString());
+    else if (expression === 'to.have.accessible.name.array')
+      received = elements.map(e => getElementAccessibleName(e, false));
 
     if (received && options.expectedText) {
       // "To match an array" is "to contain an array" + "equal length"

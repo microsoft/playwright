@@ -154,7 +154,8 @@ Additional locator to match.
 * since: v1.49
 - returns: <[string]>
 
-Captures the aria snapshot of the given element. See [`method: LocatorAssertions.toMatchAriaSnapshot`] for the corresponding assertion.
+Captures the aria snapshot of the given element.
+Read more about [aria snapshots](../aria-snapshots.md) and [`method: LocatorAssertions.toMatchAriaSnapshot#2`] for the corresponding assertion.
 
 **Usage**
 
@@ -204,6 +205,9 @@ Below is the HTML markup and the respective ARIA snapshot:
   - listitem:
     - link "About"
 ```
+
+### option: Locator.ariaSnapshot.timeout = %%-input-timeout-%%
+* since: v1.49
 
 ### option: Locator.ariaSnapshot.timeout = %%-input-timeout-js-%%
 * since: v1.49
@@ -1479,7 +1483,7 @@ Boolean disabled = await page.GetByRole(AriaRole.Button).IsDisabledAsync();
 * since: v1.14
 - returns: <[boolean]>
 
-Returns whether the element is [editable](../actionability.md#editable).
+Returns whether the element is [editable](../actionability.md#editable). If the target element is not an `<input>`, `<textarea>`, `<select>`, `[contenteditable]` and does not have a role allowing `[aria-readonly]`, this method throws an error.
 
 :::warning[Asserting editable state]
 If you need to assert that an element is editable, prefer [`method: LocatorAssertions.toBeEditable`] to avoid flakiness. See [assertions guide](../test-assertions.md) for more details.

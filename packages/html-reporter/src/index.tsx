@@ -15,7 +15,7 @@
  */
 
 import type { HTMLReport } from './types';
-import type zip from '@zip.js/zip.js';
+import type * as zip from '@zip.js/zip.js';
 // @ts-ignore
 import * as zipImport from '@zip.js/zip.js/lib/zip-no-worker-inflate.js';
 import * as React from 'react';
@@ -50,12 +50,33 @@ window.onload = () => {
   ReactDOM.createRoot(document.querySelector('#root')!).render(<ReportLoader />);
 };
 
+const kPlaywrightReportStorageForHMR = 'playwrightReportStorageForHMR';
+
 class ZipReport implements LoadedReport {
   private _entries = new Map<string, zip.Entry>();
   private _json!: HTMLReport;
 
   async load() {
-    const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(window.playwrightReportBase64!), { useWebWorkers: false });
+    const zipURI = await new Promise<string>(resolve => {
+      if (window.playwrightReportBase64)
+        return resolve(window.playwrightReportBase64);
+      if (window.opener) {
+        window.addEventListener('message', event => {
+          if (event.source === window.opener) {
+            localStorage.setItem(kPlaywrightReportStorageForHMR, event.data);
+            resolve(event.data);
+          }
+        }, { once: true });
+        window.opener.postMessage('ready', '*');
+      } else {
+        const oldReport = localStorage.getItem(kPlaywrightReportStorageForHMR);
+        if (oldReport)
+          return resolve(oldReport);
+        alert('couldnt find report, something with HMR is broken');
+      }
+    });
+
+    const zipReader = new zipjs.ZipReader(new zipjs.Data64URIReader(zipURI), { useWebWorkers: false });
     for (const entry of await zipReader.getEntries())
       this._entries.set(entry.filename, entry);
     this._json = await this.entry('report.json') as HTMLReport;

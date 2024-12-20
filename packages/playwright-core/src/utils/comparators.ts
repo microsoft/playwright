@@ -16,9 +16,10 @@
  */
 
 import { colors, jpegjs } from '../utilsBundle';
-const pixelmatch = require('../third_party/pixelmatch');
+// @ts-ignore
+import pixelmatch from '../third_party/pixelmatch';
 import { compare } from '../image_tools/compare';
-const { diffMatchPatch } = require('../utilsBundle');
+import { diff } from '../utilsBundle';
 import { PNG } from '../utilsBundle';
 
 export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, comparator?: string };
@@ -37,7 +38,7 @@ export function getComparator(mimeType: string): Comparator {
 
 const JPEG_JS_MAX_BUFFER_SIZE_IN_MB = 5 * 1024; // ~5 GB
 
-function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
+export function compareBuffersOrStrings(actualBuffer: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
   if (typeof actualBuffer === 'string')
     return compareText(actualBuffer, expectedBuffer);
   if (!actualBuffer || !(actualBuffer instanceof Buffer))
@@ -106,40 +107,29 @@ function validateBuffer(buffer: Buffer, mimeType: string): void {
 }
 
 function compareText(actual: Buffer | string, expectedBuffer: Buffer): ComparatorResult {
-  const { diff_match_patch } = diffMatchPatch;
   if (typeof actual !== 'string')
     return { errorMessage: 'Actual result should be a string' };
-  const expected = expectedBuffer.toString('utf-8');
+  let expected = expectedBuffer.toString('utf-8');
   if (expected === actual)
     return null;
-  const dmp = new diff_match_patch();
-  const d = dmp.diff_main(expected, actual);
-  dmp.diff_cleanupSemantic(d);
-  return {
-    errorMessage: diff_prettyTerminal(d)
-  };
-}
+  // Eliminate '\\ No newline at end of file'
+  if (!actual.endsWith('\n'))
+    actual += '\n';
+  if (!expected.endsWith('\n'))
+    expected += '\n';
 
-function diff_prettyTerminal(diffs: [number, string][]) {
-  const { DIFF_INSERT, DIFF_DELETE, DIFF_EQUAL } = diffMatchPatch;
-  const html = [];
-  for (let x = 0; x < diffs.length; x++) {
-    const op = diffs[x][0];    // Operation (insert, delete, equal)
-    const data = diffs[x][1];  // Text of change.
-    const text = data;
-    switch (op) {
-      case DIFF_INSERT:
-        html[x] = colors.green(text);
-        break;
-      case DIFF_DELETE:
-        html[x] = colors.reset(colors.strikethrough(colors.red(text)));
-        break;
-      case DIFF_EQUAL:
-        html[x] = text;
-        break;
-    }
-  }
-  return html.join('');
+  const lines = diff.createPatch('file', expected, actual, undefined, undefined, { context: 5 }).split('\n');
+  const coloredLines = lines.slice(4).map(line => {
+    if (line.startsWith('-'))
+      return colors.red(line);
+    if (line.startsWith('+'))
+      return colors.green(line);
+    if (line.startsWith('@@'))
+      return colors.dim(line);
+    return line;
+  });
+  const errorMessage = coloredLines.join('\n');
+  return { errorMessage  };
 }
 
 function resizeImage(image: ImageData, size: { width: number, height: number }): ImageData {

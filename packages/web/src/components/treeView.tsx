@@ -15,7 +15,7 @@
 */
 
 import * as React from 'react';
-import { clsx, scrollIntoViewIfNeeded } from '@web/uiUtils';
+import { clsx, scrollIntoViewIfNeeded } from '../uiUtils';
 import './treeView.css';
 
 export type TreeItem = {
@@ -180,7 +180,7 @@ export function TreeView<T extends TreeItem>({
         const itemData = treeItems.get(child as T);
         return itemData && <TreeItemHeader
           key={child.id}
-          item={child}
+          item={child as T}
           treeItems={treeItems}
           selectedItem={selectedItem}
           onSelected={onSelected}
@@ -231,6 +231,7 @@ export function TreeItemHeader<T extends TreeItem>({
   icon,
   isKeyboardNavigation,
   setIsKeyboardNavigation }: TreeItemHeaderProps<T>) {
+  const groupId = React.useId();
   const itemRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -251,7 +252,7 @@ export function TreeItemHeader<T extends TreeItem>({
   const titled = title?.(item);
   const iconed = icon?.(item) || 'codicon-blank';
 
-  return <div ref={itemRef} role='treeitem' aria-selected={item === selectedItem} aria-expanded={expanded} title={titled} className='vbox' style={{ flex: 'none' }}>
+  return <div ref={itemRef} role='treeitem' aria-selected={item === selectedItem} aria-expanded={expanded} aria-controls={groupId} title={titled} className='vbox' style={{ flex: 'none' }}>
     <div
       onDoubleClick={() => onAccepted?.(item)}
       className={clsx(
@@ -281,7 +282,7 @@ export function TreeItemHeader<T extends TreeItem>({
       {icon && <div className={'codicon ' + iconed} style={{ minWidth: 16, marginRight: 4 }} aria-label={'[' + iconed.replace('codicon', 'icon') + ']'}></div>}
       {typeof rendered === 'string' ? <div style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}>{rendered}</div> : rendered}
     </div>
-    {!!children.length && <div role='group'>
+    {!!children.length && <div id={groupId} role='group'>
       {children.map(child => {
         const itemData = treeItems.get(child);
         return itemData && <TreeItemHeader
@@ -318,7 +319,9 @@ function indexTree<T extends TreeItem>(
   selectedItem: T | undefined,
   expandedItems: Map<string, boolean | undefined>,
   autoExpandDepth: number,
-  isVisible?: (item: T) => boolean): Map<T, TreeItemData> {
+  isVisible: (item: T) => boolean = () => true): Map<T, TreeItemData> {
+  if (!isVisible(rootItem))
+    return new Map();
 
   const result = new Map<T, TreeItemData>();
   const temporaryExpanded = new Set<string>();
@@ -327,9 +330,9 @@ function indexTree<T extends TreeItem>(
   let lastItem: T | null = null;
 
   const appendChildren = (parent: T, depth: number) => {
-    if (isVisible && !isVisible(parent))
-      return;
     for (const item of parent.children as T[]) {
+      if (!isVisible(item))
+        continue;
       const expandState = temporaryExpanded.has(item.id) || expandedItems.get(item.id);
       const autoExpandMatches = autoExpandDepth > depth && result.size < 25 && expandState !== false;
       const expanded = item.children.length ? expandState ?? autoExpandMatches : undefined;

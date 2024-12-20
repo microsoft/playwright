@@ -238,15 +238,15 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>): TestStepInternal {
+  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>, parentStep?: TestStepInternal): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
 
-    let parentStep: TestStepInternal | undefined;
     if (data.isStage) {
       // Predefined stages form a fixed hierarchy - use the current one as parent.
       parentStep = this._findLastStageStep(this._steps);
     } else {
-      parentStep = zones.zoneData<TestStepInternal>('stepZone');
+      if (!parentStep)
+        parentStep = zones.zoneData<TestStepInternal>('stepZone');
       if (!parentStep) {
         // If no parent step on stack, assume the current stage as parent.
         parentStep = this._findLastStageStep(this._steps);

@@ -103,7 +103,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
 
   async firstWindow(options?: { timeout?: number }): Promise<Page> {
     if (this._windows.size)
-      return this._windows.values().next().value;
+      return this._windows.values().next().value!;
     return await this.waitForEvent('window', options);
   }
 

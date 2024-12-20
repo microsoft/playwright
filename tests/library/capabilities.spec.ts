@@ -19,8 +19,7 @@ import url from 'url';
 import { contextTest as it, expect } from '../config/browserTest';
 import { hostPlatform } from '../../packages/playwright-core/src/utils/hostPlatform';
 
-it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer, isMac, macVersion, browserName }) {
-  it.skip(browserName === 'webkit' && isMac && macVersion <= 12, 'WebKit on macOS 12 is frozen and does not support SharedArrayBuffer');
+it('SharedArrayBuffer should work @smoke', async function({ contextFactory, httpsServer }) {
   const context = await contextFactory({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
   httpsServer.setRoute('/sharedarraybuffer', (req, res) => {
@@ -234,9 +233,8 @@ it('make sure that XMLHttpRequest upload events are emitted correctly', async ({
   expect(events).toEqual(['loadstart', 'progress', 'load', 'loadend']);
 });
 
-it('loading in HTMLImageElement.prototype', async ({ page, server, browserName, isMac, macVersion }) => {
+it('loading in HTMLImageElement.prototype', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22738' });
-  it.skip(browserName === 'webkit' && isMac && macVersion < 12, 'macOS 11 is frozen');
   await page.goto(server.EMPTY_PAGE);
   const defined = await page.evaluate(() => 'loading' in HTMLImageElement.prototype);
   expect(defined).toBeTruthy();
@@ -251,7 +249,7 @@ it('window.GestureEvent in WebKit', async ({ page, server, browserName }) => {
   expect(type).toBe(browserName === 'webkit' ? 'function' : 'undefined');
 });
 
-it('requestFullscreen', async ({ page, server, browserName, headless, isLinux }) => {
+it('requestFullscreen', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22832' });
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {
@@ -268,7 +266,7 @@ it('requestFullscreen', async ({ page, server, browserName, headless, isLinux })
   expect(await page.evaluate(() => !!document.fullscreenElement)).toBeFalsy();
 });
 
-it('should send no Content-Length header for GET requests with a Content-Type', async ({ page, server, browserName }) => {
+it('should send no Content-Length header for GET requests with a Content-Type', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22569' });
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([
@@ -409,4 +407,60 @@ it('should be able to render avif images', {
     height: 128,
   }));
   expect(await page.evaluate(() => (window as any).error)).toBe(undefined);
+});
+
+it('should not crash when clicking a label with a <input type="file"/>', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/33257'
+  }
+}, async ({ page }) => {
+  await page.setContent(`
+    <form>
+      <label>
+        A second file
+        <input type="file" />
+      </label>
+    </form>
+  `);
+  const fileChooserPromise = page.waitForEvent('filechooser');
+  await page.getByText('A second file').click();
+  const fileChooser = await fileChooserPromise;
+  expect(fileChooser.page()).toBe(page);
+});
+
+it('should not auto play audio', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/33590'
+  }
+}, async ({ page, browserName, isWindows }) => {
+  it.fixme(browserName === 'webkit' && isWindows);
+  it.skip(process.env.PW_CLOCK === 'frozen', 'no way to inject real setTimeout');
+  await page.route('**/*', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: `
+      <script>
+        async function onLoad() {
+          const log = document.getElementById('log');
+          const audioContext = new AudioContext();
+          const gainNode = new GainNode(audioContext);
+          gainNode.connect(audioContext.destination);
+          gainNode.gain.value = 0.025;
+          const sineNode = new OscillatorNode(audioContext);
+          sineNode.connect(gainNode);
+          sineNode.start();
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          log.innerHTML = 'State: ' + audioContext.state;
+        }
+      </script>
+      <body onload="onLoad()">
+      <div id="log"></div>
+      </body>`,
+    });
+  });
+  await page.goto('http://127.0.0.1/audio.html');
+  await expect(page.locator('#log')).toHaveText('State: suspended');
 });

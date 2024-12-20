@@ -20,6 +20,7 @@ import './colors.css';
 import './common.css';
 import * as icons from './icons';
 import { clsx } from '@web/uiUtils';
+import { type AnchorID, useAnchor } from './links';
 
 export const Chip: React.FC<{
   header: JSX.Element | string,
@@ -28,10 +29,13 @@ export const Chip: React.FC<{
   setExpanded?: (expanded: boolean) => void,
   children?: any,
   dataTestId?: string,
-  targetRef?: React.RefObject<HTMLDivElement>,
-}> = ({ header, expanded, setExpanded, children, noInsets, dataTestId, targetRef }) => {
-  return <div className='chip' data-testid={dataTestId} ref={targetRef}>
+}> = ({ header, expanded, setExpanded, children, noInsets, dataTestId }) => {
+  const id = React.useId();
+  return <div className='chip' data-testid={dataTestId}>
     <div
+      role='button'
+      aria-expanded={!!expanded}
+      aria-controls={id}
       className={clsx('chip-header', setExpanded && ' expanded-' + expanded)}
       onClick={() => setExpanded?.(!expanded)}
       title={typeof header === 'string' ? header : undefined}>
@@ -39,7 +43,7 @@ export const Chip: React.FC<{
       {setExpanded && !expanded && icons.rightArrow()}
       {header}
     </div>
-    {(!setExpanded || expanded) && <div className={clsx('chip-body', noInsets && 'chip-body-no-insets')}>{children}</div>}
+    {(!setExpanded || expanded) && <div id={id} role='region' className={clsx('chip-body', noInsets && 'chip-body-no-insets')}>{children}</div>}
   </div>;
 };
 
@@ -49,16 +53,17 @@ export const AutoChip: React.FC<{
   noInsets?: boolean,
   children?: any,
   dataTestId?: string,
-  targetRef?: React.RefObject<HTMLDivElement>,
-}> = ({ header, initialExpanded, noInsets, children, dataTestId, targetRef }) => {
-  const [expanded, setExpanded] = React.useState(initialExpanded || initialExpanded === undefined);
+  revealOnAnchorId?: AnchorID,
+}> = ({ header, initialExpanded, noInsets, children, dataTestId, revealOnAnchorId }) => {
+  const [expanded, setExpanded] = React.useState(initialExpanded ?? true);
+  const onReveal = React.useCallback(() => setExpanded(true), []);
+  useAnchor(revealOnAnchorId, onReveal);
   return <Chip
     header={header}
     expanded={expanded}
     setExpanded={setExpanded}
     noInsets={noInsets}
     dataTestId={dataTestId}
-    targetRef={targetRef}
   >
     {children}
   </Chip>;

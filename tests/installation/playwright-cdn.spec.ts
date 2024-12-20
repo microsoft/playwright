@@ -19,9 +19,9 @@ import net from 'net';
 import type { AddressInfo } from 'net';
 
 const CDNS = [
-  'https://playwright.azureedge.net',
-  'https://playwright-akamai.azureedge.net',
-  'https://playwright-verizon.azureedge.net',
+  'https://cdn.playwright.dev/dbazure/download/playwright', // ESRP
+  'https://playwright.download.prss.microsoft.com/dbazure/download/playwright', // ESRP Fallback
+  'https://cdn.playwright.dev',
 ];
 
 const DL_STAT_BLOCK = /^.*from url: (.*)$\n^.*to location: (.*)$\n^.*response status code: (.*)$\n^.*total bytes: (\d+)$\n^.*download complete, size: (\d+)$\n^.*SUCCESS downloading (\w+) .*$/gm;
@@ -37,12 +37,14 @@ const parsedDownloads = (rawLogs: string) => {
 
 test.use({ isolateBrowsers: true });
 
+const extraInstalledSoftware = process.platform === 'win32' ? ['winldd' as const] : [];
+
 for (const cdn of CDNS) {
-  test(`playwright cdn failover should work (${cdn})`, async ({ exec, installedSoftwareOnDisk }) => {
+  test(`playwright cdn failover should work (${cdn})`, async ({ exec, checkInstalledSoftwareOnDisk }) => {
     await exec('npm i playwright');
     const result = await exec('npx playwright install', { env: { PW_TEST_CDN_THAT_SHOULD_WORK: cdn, DEBUG: 'pw:install' } });
-    expect(result).toHaveLoggedSoftwareDownload(['chromium', 'ffmpeg', 'firefox', 'webkit']);
-    expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'ffmpeg', 'firefox', 'webkit']);
+    expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit', ...extraInstalledSoftware]);
+    await checkInstalledSoftwareOnDisk((['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit', ...extraInstalledSoftware]));
     const dls = parsedDownloads(result);
     for (const software of ['chromium', 'ffmpeg', 'firefox', 'webkit'])
       expect(dls).toContainEqual({ status: 200, name: software, url: expect.stringContaining(cdn) });
@@ -90,8 +92,8 @@ test(`npx playwright install should not hang when CDN closes the connection`, as
       },
       expectToExitWithError: true
     });
-    expect(retryCount).toBe(3);
-    expect([...result.matchAll(/Download failed: server closed connection/g)]).toHaveLength(3);
+    expect(retryCount).toBe(5);
+    expect([...result.matchAll(/Download failed: server closed connection/g)]).toHaveLength(5);
   } finally {
     await new Promise(resolve => server.close(resolve));
   }
@@ -120,8 +122,8 @@ test(`npx playwright install should not hang when CDN TCP connection stalls`, as
       },
       expectToExitWithError: true
     });
-    expect(retryCount).toBe(3);
-    expect([...result.matchAll(/timed out after/g)]).toHaveLength(3);
+    expect(retryCount).toBe(5);
+    expect([...result.matchAll(/timed out after/g)]).toHaveLength(5);
   } finally {
     for (const socket of socketsToDestroy)
       socket.destroy();

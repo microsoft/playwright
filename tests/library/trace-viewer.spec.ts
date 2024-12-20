@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+// DO NOT TOUCH THIS LINE
+// It is used in the tracing.group test.
+
 import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
 import fs from 'fs';
@@ -101,6 +104,46 @@ test('should open trace viewer on specific host', async ({ showTraceViewer }, te
   const traceViewer = await showTraceViewer([testInfo.outputPath()], { host: '127.0.0.1' });
   await expect(traceViewer.page).toHaveTitle('Playwright Trace Viewer');
   await expect(traceViewer.page).toHaveURL(/127.0.0.1/);
+});
+
+test('should show tracing.group in the action list with location', async ({ runAndTrace, page, context }) => {
+  const traceViewer = await test.step('create trace with groups', async () => {
+    await page.context().tracing.group('ignored group');
+    return await runAndTrace(async () => {
+      await context.tracing.group('outer group');
+      await page.goto(`data:text/html,<!DOCTYPE html><body><div>Hello world</div></body>`);
+      await context.tracing.group('inner group 1', { location: { file: __filename, line: 17, column: 1 } });
+      await page.locator('body').click();
+      await context.tracing.groupEnd();
+      await context.tracing.group('inner group 2');
+      await expect(page.getByText('Hello')).toBeVisible();
+      await context.tracing.groupEnd();
+      await context.tracing.groupEnd();
+    });
+  });
+
+  await expect(traceViewer.actionTitles).toHaveText([
+    /outer group/,
+    /page.goto/,
+    /inner group 1/,
+    /inner group 2/,
+    /expect.toBeVisible/,
+  ]);
+
+  await traceViewer.selectAction('inner group 1');
+  await traceViewer.expandAction('inner group 1');
+  await expect(traceViewer.actionTitles).toHaveText([
+    /outer group/,
+    /page.goto/,
+    /inner group 1/,
+    /locator.click/,
+    /inner group 2/,
+  ]);
+  await traceViewer.showSourceTab();
+  await expect(traceViewer.sourceCodeTab.locator('.source-line-running')).toHaveText(/DO NOT TOUCH THIS LINE/);
+
+  await traceViewer.selectAction('inner group 2');
+  await expect(traceViewer.sourceCodeTab.locator('.source-line-running')).toContainText("await context.tracing.group('inner group 2');");
 });
 
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
@@ -197,7 +240,7 @@ test('should show params and return value', async ({ showTraceViewer }) => {
   await traceViewer.selectAction('page.evaluate');
   await expect(traceViewer.callLines).toHaveText([
     /page.evaluate/,
-    /wall time:[0-9/:,APM ]+/,
+    /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     /expression:"\({↵    a↵  }\) => {↵    console\.log\(\'Info\'\);↵    console\.warn\(\'Warning\'\);↵    console/,
     'isFunction:true',
@@ -208,7 +251,7 @@ test('should show params and return value', async ({ showTraceViewer }) => {
   await traceViewer.selectAction(`locator('button')`);
   await expect(traceViewer.callLines).toContainText([
     /expect.toHaveText/,
-    /wall time:[0-9/:,APM ]+/,
+    /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     /locator:locator\('button'\)/,
     /expression:"to.have.text"/,
@@ -223,7 +266,7 @@ test('should show null as a param', async ({ showTraceViewer, browserName }) => 
   await traceViewer.selectAction('page.evaluate', 1);
   await expect(traceViewer.callLines).toHaveText([
     /page.evaluate/,
-    /wall time:[0-9/:,APM ]+/,
+    /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     'expression:"() => 1 + 1"',
     'isFunction:true',
@@ -1401,6 +1444,24 @@ test('should not record route actions', {
   ]);
 });
 
+test('should not record network actions', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33558' },
+}, async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    page.on('request', async request => {
+      await request.allHeaders();
+    });
+    page.on('response', async response => {
+      await response.text();
+    });
+    await page.goto(server.EMPTY_PAGE);
+  });
+
+  await expect(traceViewer.actionTitles).toHaveText([
+    /page.goto.*empty.html/,
+  ]);
+});
+
 test('should show baseURL in metadata pane', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31847' },
 }, async ({ showTraceViewer }) => {
@@ -1467,7 +1528,7 @@ test('canvas clipping', async ({ runAndTrace, page, server }) => {
   });
 
   const msg = await traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') });
-  expect(msg.text()).toEqual('canvas drawn: [0,91,12,111]');
+  expect(msg.text()).toEqual('canvas drawn: [0,91,11,20]');
 
   const snapshot = await traceViewer.snapshotFrame('page.goto');
   await expect(snapshot.locator('canvas')).toHaveAttribute('title', `Playwright couldn't capture full canvas contents because it's located partially outside the viewport.`);
@@ -1478,12 +1539,16 @@ test('canvas clipping in iframe', async ({ runAndTrace, page, server }) => {
     await page.setContent(`
       <iframe src="${server.PREFIX}/screenshots/canvas.html#canvas-on-edge"></iframe>
     `);
+    await page.locator('iframe').contentFrame().locator('canvas').scrollIntoViewIfNeeded();
     await rafraf(page, 5);
   });
 
+  const msg = await traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') });
+  expect(msg.text()).toEqual('canvas drawn: [1,1,11,20]');
+
   const snapshot = await traceViewer.snapshotFrame('page.evaluate');
   const canvas = snapshot.locator('iframe').contentFrame().locator('canvas');
-  await expect(canvas).toHaveAttribute('title', `Playwright displays canvas contents on a best-effort basis. It doesn't support canvas elements inside an iframe yet. If this impacts your workflow, please open an issue so we can prioritize.`);
+  await expect(canvas).toHaveAttribute('title', 'Canvas contents are displayed on a best-effort basis based on viewport screenshots taken during test execution.');
 });
 
 test('should show only one pointer with multilevel iframes', async ({ page, runAndTrace, server, browserName }) => {
@@ -1510,4 +1575,21 @@ test('should show only one pointer with multilevel iframes', async ({ page, runA
   await expect.soft(snapshotFrame.locator('x-pw-pointer')).not.toBeAttached();
   await expect.soft(snapshotFrame.frameLocator('iframe').locator('x-pw-pointer')).not.toBeAttached();
   await expect.soft(snapshotFrame.frameLocator('iframe').frameLocator('iframe').locator('x-pw-pointer')).toBeVisible();
+});
+
+test('should show a popover', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent(`
+      <button popovertarget="pop">Click me</button>
+      <article id="pop" popover="auto">
+        <div>I'm a popover</div>
+      </article>
+    `);
+    await page.getByRole('button').click();
+    await expect(page.locator('div')).toBeVisible();
+  });
+
+  const snapshot = await traceViewer.snapshotFrame('expect.toBeVisible');
+  const popover = snapshot.locator('#pop');
+  await expect.poll(() => popover.evaluate(e => e.matches(':popover-open'))).toBe(true);
 });

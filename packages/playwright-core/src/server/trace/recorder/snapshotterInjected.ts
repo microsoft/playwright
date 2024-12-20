@@ -47,6 +47,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
   const kTargetAttribute = '__playwright_target__';
   const kCustomElementsAttribute = '__playwright_custom_elements__';
   const kCurrentSrcAttribute = '__playwright_current_src__';
+  const kBoundingRectAttribute = '__playwright_bounding_rect__';
+  const kPopoverOpenAttribute = '__playwright_popover_open_';
 
   // Symbols for our own info on Nodes/StyleSheets.
   const kSnapshotFrameId = Symbol('__playwright_snapshot_frameid_');
@@ -435,6 +437,24 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
             expectValue(kSelectedAttribute);
             expectValue(value);
             attrs[kSelectedAttribute] = value;
+          }
+          if (nodeName === 'CANVAS' || nodeName === 'IFRAME' || nodeName === 'FRAME') {
+            const boundingRect = (element as HTMLElement).getBoundingClientRect();
+            const value = JSON.stringify({
+              left: boundingRect.left,
+              top: boundingRect.top,
+              right: boundingRect.right,
+              bottom: boundingRect.bottom
+            });
+            expectValue(kBoundingRectAttribute);
+            expectValue(value);
+            attrs[kBoundingRectAttribute] = value;
+          }
+          if ((element as HTMLElement).popover && (element as HTMLElement).matches && (element as HTMLElement).matches(':popover-open')) {
+            const value = 'true';
+            expectValue(kPopoverOpenAttribute);
+            expectValue(value);
+            attrs[kPopoverOpenAttribute] = value;
           }
           if (element.scrollTop) {
             expectValue(kScrollTopAttribute);

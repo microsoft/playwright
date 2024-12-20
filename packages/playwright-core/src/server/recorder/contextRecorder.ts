@@ -208,6 +208,10 @@ export class ContextRecorder extends EventEmitter {
     }
   }
 
+  runTask(task: string): void {
+    // TODO: implement
+  }
+
   private _describeMainFrame(page: Page): actions.FrameDescription {
     return {
       pageAlias: this._pageAliases.get(page)!,
@@ -296,7 +300,6 @@ async function generateFrameSelectorInParent(parent: Frame, frame: Frame): Promi
       }, frameElement);
       return selector;
     } catch (e) {
-      return e.toString();
     }
   }, monotonicTime() + 2000);
   if (!result.timedOut && result.result)

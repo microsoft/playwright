@@ -24,6 +24,10 @@ import type { Playwright } from './playwright';
 import { Recorder } from './recorder';
 import { EmptyRecorderApp } from './recorder/recorderApp';
 import { asLocator, type Language } from '../utils';
+import { parseYamlForAriaSnapshot } from './ariaSnapshot';
+import type { ParsedYaml } from '../utils/isomorphic/ariaSnapshot';
+import { parseYamlTemplate } from '../utils/isomorphic/ariaSnapshot';
+import { unsafeLocatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
 
 const internalMetadata = serverSideCallMetadata();
 
@@ -142,9 +146,21 @@ export class DebugController extends SdkObject {
     this._autoCloseTimer = setTimeout(heartBeat, 30000);
   }
 
-  async highlight(selector: string) {
-    for (const recorder of await this._allRecorders())
-      recorder.setHighlightedSelector(this._sdkLanguage, selector);
+  async highlight(params: { selector?: string, ariaTemplate?: string }) {
+    // Assert parameters validity.
+    if (params.selector)
+      unsafeLocatorOrSelectorAsSelector(this._sdkLanguage, params.selector, 'data-testid');
+    let parsedYaml: ParsedYaml | undefined;
+    if (params.ariaTemplate) {
+      parsedYaml = parseYamlForAriaSnapshot(params.ariaTemplate);
+      parseYamlTemplate(parsedYaml);
+    }
+    for (const recorder of await this._allRecorders()) {
+      if (parsedYaml)
+        recorder.setHighlightedAriaTemplate(parsedYaml);
+      else if (params.selector)
+        recorder.setHighlightedSelector(this._sdkLanguage, params.selector);
+    }
   }
 
   async hideHighlight() {
@@ -223,7 +239,7 @@ class InspectingRecorderApp extends EmptyRecorderApp {
 
   override async elementPicked(elementInfo: ElementInfo): Promise<void> {
     const locator: string = asLocator(this._debugController._sdkLanguage, elementInfo.selector);
-    this._debugController.emit(DebugController.Events.InspectRequested, { selector: elementInfo.selector, locator });
+    this._debugController.emit(DebugController.Events.InspectRequested, { selector: elementInfo.selector, locator, ariaSnapshot: elementInfo.ariaSnapshot });
   }
 
   override async setSources(sources: Source[]): Promise<void> {

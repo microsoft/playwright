@@ -74,6 +74,18 @@ it('should work with >> visible=', async ({ page }) => {
   expect(await page.$eval('div >> visible=true', div => div.id)).toBe('target2');
 });
 
+it('should work with >> visible=false', async ({ page }) => {
+  await page.setContent(`
+    <section>
+      <div id=target1></div>
+      <div id=target2></div>
+    </section>
+  `);
+  await expect(page.locator('div >> visible=false')).toHaveCount(2);
+  await page.locator('#target2').evaluate(div => div.textContent = 'Now visible');
+  await expect(page.locator('div >> visible=false')).toHaveCount(1);
+});
+
 it('should work with :nth-match', async ({ page }) => {
   await page.setContent(`
     <section>

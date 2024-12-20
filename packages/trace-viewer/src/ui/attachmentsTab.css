@@ -40,6 +40,11 @@
   margin: 4px 8px;
 }
 
+.attachment-title-highlight {
+  text-decoration: underline var(--vscode-terminal-findMatchBackground);
+  text-decoration-thickness: 1.5px;
+}
+
 .attachment-item img {
   flex: none;
   min-width: 200px;

@@ -196,6 +196,12 @@ it('reverse engineer getByRole', async ({ page }) => {
     java: `getByRole(AriaRole.BUTTON)`,
     csharp: `GetByRole(AriaRole.Button)`,
   });
+  expect.soft(generate(page.getByRole('heading', {}))).toEqual({
+    javascript: "getByRole('heading')",
+    python: 'get_by_role("heading")',
+    java: 'getByRole(AriaRole.HEADING)',
+    csharp: 'GetByRole(AriaRole.Heading)'
+  });
   expect.soft(generate(page.getByRole('button', { name: 'Hello' }))).toEqual({
     javascript: `getByRole('button', { name: 'Hello' })`,
     python: `get_by_role("button", name="Hello")`,
@@ -559,6 +565,12 @@ it('parseLocator css', async () => {
   expect.soft(parseLocator('csharp', `Locator("css=.foo")`, '')).toBe(`css=.foo`);
 });
 
+
+it('parseLocator options', async () => {
+  expect.soft(parseLocator('javascript', `getByRole('heading', {})`, '')).toBe(`internal:role=heading`);
+  expect.soft(parseLocator('javascript', `getByRole('checkbox', { checked:false, includeHidden: true })`, '')).toBe(`internal:role=checkbox[checked=false][include-hidden=true]`);
+});
+
 it('parse locators strictly', () => {
   const selector = 'div >> internal:has-text=\"Goodbye world\"i >> span';
 
@@ -602,4 +614,28 @@ it('parseLocator frames', async () => {
 
   expect.soft(parseLocator('java', `locator("iframe").contentFrame().getByText("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
   expect.soft(parseLocator('java', `frameLocator("iframe").getByText("foo")`, '')).toBe(`iframe >> internal:control=enter-frame >> internal:text=\"foo\"i`);
+});
+
+it('should not oom in locator parser', async ({ page }) => {
+  const l = page.locator.bind(page);
+  const locator = page.locator('text=L1').or(l('text=L2').or(l('text=L3').or(l('text=L4')).or(l('#f0')
+      .contentFrame().locator('#f0_mid_0')
+      .contentFrame().locator('text=L5').or(l('text=L6'))).or(l('#f0')
+      .contentFrame().locator('#f0_mid_0')
+      .contentFrame().locator('text=L7')
+      .or(l('text=L8'))))).or(l('text=L9').or(l('text=L10').or(l('text=L11')).or(l('#f0')
+      .contentFrame().locator('#f0_mid_0')
+      .contentFrame().locator('text=L12').or(l('text=L13'))).or(l('#f0')
+      .contentFrame().locator('#f0_mid_0')
+      .contentFrame().locator('text=L14').or(l('text=L15'))))).or(l('text=L16').or(l('text=L17').or(l('text=L18')).or(l('#f0')
+      .contentFrame().locator('#f0_mid_0')
+      .contentFrame().locator('text=L19').or(l('text=L20'))).or(l('#f0')
+      .contentFrame().locator('#f0_mid_0')
+      .contentFrame().locator('text=L21').or(l('text=L22'))))).or(l('text=L23').or(l('text=L24').or(l('text=L25')).or(l('#f0')
+      .contentFrame().locator('#f0_mid_0')
+      .contentFrame().locator('text=L26').or(l('text=L27'))).or(l('#f0')
+      .contentFrame().locator('#f0_mid_0')
+      .contentFrame().locator('text=L28').or(l('text=L29')))));
+  const error = await locator.count().catch(e => e);
+  expect(error.message).toContain('Frame locators are not allowed inside composite locators');
 });

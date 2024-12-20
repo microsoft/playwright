@@ -22,11 +22,16 @@ import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { generateCurlCommand, generateFetchCall } from '../third_party/devtools';
 import { CopyToClipboardTextButton } from './copyToClipboard';
+import { getAPIRequestCodeGen } from './codegen';
+import type { Language } from '@isomorphic/locatorGenerators';
+import { msToString } from '@web/uiUtils';
 
 export const NetworkResourceDetails: React.FunctionComponent<{
   resource: ResourceSnapshot;
+  sdkLanguage: Language;
+  startTimeOffset: number;
   onClose: () => void;
-}> = ({ resource, onClose }) => {
+}> = ({ resource, sdkLanguage, startTimeOffset, onClose }) => {
   const [selectedTab, setSelectedTab] = React.useState('request');
 
   return <TabbedPane
@@ -36,7 +41,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
       {
         id: 'request',
         title: 'Request',
-        render: () => <RequestTab resource={resource}/>,
+        render: () => <RequestTab resource={resource} sdkLanguage={sdkLanguage} startTimeOffset={startTimeOffset} />,
       },
       {
         id: 'response',
@@ -55,7 +60,9 @@ export const NetworkResourceDetails: React.FunctionComponent<{
 
 const RequestTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
-}> = ({ resource }) => {
+  sdkLanguage: Language;
+  startTimeOffset: number;
+}> = ({ resource, sdkLanguage, startTimeOffset }) => {
   const [requestBody, setRequestBody] = React.useState<{ text: string, mimeType?: string } | null>(null);
 
   React.useEffect(() => {
@@ -92,10 +99,14 @@ const RequestTab: React.FunctionComponent<{
     </> : null}
     <div className='network-request-details-header'>Request Headers</div>
     <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
+    <div className='network-request-details-header'>Time</div>
+    <div className='network-request-details-general'>{`Start: ${msToString(startTimeOffset)}`}</div>
+    <div className='network-request-details-general'>{`Duration: ${msToString(resource.time)}`}</div>
 
     <div className='network-request-details-copy'>
       <CopyToClipboardTextButton description='Copy as cURL' value={() => generateCurlCommand(resource)} />
       <CopyToClipboardTextButton description='Copy as Fetch' value={() => generateFetchCall(resource)} />
+      <CopyToClipboardTextButton description='Copy as Playwright' value={async () => getAPIRequestCodeGen(sdkLanguage).generatePlaywrightRequestCall(resource.request, requestBody?.text)} />
     </div>
 
     {requestBody && <div className='network-request-details-header'>Request Body</div>}
@@ -115,7 +126,7 @@ const ResponseTab: React.FunctionComponent<{
 const BodyTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
-  const [responseBody, setResponseBody] = React.useState<{ dataUrl?: string, text?: string, mimeType?: string, font?: BinaryData } | null>(null);
+  const [responseBody, setResponseBody] = React.useState<{ dataUrl?: string, text?: string, mimeType?: string, font?: BufferSource } | null>(null);
 
   React.useEffect(() => {
     const readResources = async  () => {
@@ -153,7 +164,7 @@ const BodyTab: React.FunctionComponent<{
 };
 
 const FontPreview: React.FunctionComponent<{
-  font: BinaryData;
+  font: BufferSource;
 }> = ({ font }) => {
   const [isError, setIsError] = React.useState(false);
 

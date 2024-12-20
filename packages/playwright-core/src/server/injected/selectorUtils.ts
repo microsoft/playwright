@@ -73,6 +73,8 @@ export function elementText(cache: Map<Element | ShadowRoot, ElementText>, root:
           if (child.nodeType === Node.TEXT_NODE) {
             value.full += child.nodeValue || '';
             currentImmediate += child.nodeValue || '';
+          } else if (child.nodeType === Node.COMMENT_NODE) {
+            continue;
           } else {
             if (currentImmediate)
               value.immediate.push(currentImmediate);

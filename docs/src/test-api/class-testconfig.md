@@ -570,12 +570,13 @@ export default defineConfig({
 
 ## property: TestConfig.updateSnapshots
 * since: v1.10
-- type: ?<[UpdateSnapshots]<"all"|"none"|"missing">>
+- type: ?<[UpdateSnapshots]<"all"|"changed"|"missing"|"none">>
 
 Whether to update expected snapshots with the actual results produced by the test run. Defaults to `'missing'`.
-* `'all'` - All tests that are executed will update snapshots that did not match. Matching snapshots will not be updated.
-* `'none'` - No snapshots are updated.
+* `'all'` - All tests that are executed will update snapshots.
+* `'changed'` - All tests that are executed will update snapshots that did not match. Matching snapshots will not be updated.
 * `'missing'` - Missing snapshots are created, for example when authoring a new test and running it for the first time. This is the default.
+* `'none'` - No snapshots are updated.
 
 Learn more about [snapshots](../test-snapshots.md).
 
@@ -588,6 +589,15 @@ export default defineConfig({
   updateSnapshots: 'missing',
 });
 ```
+
+## property: TestConfig.updateSourceMethod
+* since: v1.50
+- type: ?<[UpdateSourceMethod]<"overwrite"|"3way"|"patch">>
+
+Defines how to update the source code snapshots.
+* `'overwrite'` - Overwrite the source code snapshot with the actual result.
+* `'3way'` - Use a three-way merge to update the source code snapshot.
+* `'patch'` - Use a patch to update the source code snapshot. This is the default.
 
 ## property: TestConfig.use
 * since: v1.10

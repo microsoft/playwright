@@ -19,6 +19,7 @@ import { matcherHint } from './matcherHint';
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherState } from '../../types/test';
 import type { Locator } from 'playwright-core';
+import { isRegExp } from 'playwright-core/lib/utils';
 
 // Omit colon and one or more spaces, so can call getLabelPrinter.
 const EXPECTED_LABEL = 'Expected';
@@ -59,6 +60,21 @@ export async function toEqual<T>(
   if (pass) {
     printedExpected = `Expected: not ${this.utils.printExpected(expected)}`;
     printedReceived = `Received: ${this.utils.printReceived(received)}`;
+  } else if (Array.isArray(expected) && Array.isArray(received)) {
+    const normalizedExpected = expected.map((exp, index) => {
+      const rec = received[index];
+      if (isRegExp(exp))
+        return exp.test(rec) ? rec : exp;
+
+      return exp;
+    });
+    printedDiff = this.utils.printDiffOrStringify(
+        normalizedExpected,
+        received,
+        EXPECTED_LABEL,
+        RECEIVED_LABEL,
+        false,
+    );
   } else {
     printedDiff = this.utils.printDiffOrStringify(
         expected,

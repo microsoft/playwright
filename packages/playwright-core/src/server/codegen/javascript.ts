@@ -117,8 +117,10 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
         const assertion = action.value ? `toHaveValue(${quote(action.value)})` : `toBeEmpty()`;
         return `${this._isTest ? '' : '// '}await expect(${subject}.${this._asLocator(action.selector)}).${assertion};`;
       }
-      case 'assertSnapshot':
-        return `${this._isTest ? '' : '// '}await expect(${subject}.${this._asLocator(action.selector)}).toMatchAriaSnapshot(${quoteMultiline(action.snapshot)});`;
+      case 'assertSnapshot': {
+        const commentIfNeeded = this._isTest ? '' : '// ';
+        return `${commentIfNeeded}await expect(${subject}.${this._asLocator(action.selector)}).toMatchAriaSnapshot(${quoteMultiline(action.snapshot, `${commentIfNeeded}  `)});`;
+      }
     }
   }
 
@@ -145,6 +147,10 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       import { test, expect${options.deviceName ? ', devices' : ''} } from '@playwright/test';
 ${useText ? '\ntest.use(' + useText + ');\n' : ''}
       test('test', async ({ page }) => {`);
+    if (options.contextOptions.recordHar) {
+      const url = options.contextOptions.recordHar.urlFilter;
+      formatter.add(`  await page.routeFromHAR(${quote(options.contextOptions.recordHar.path)}${url ? `, ${formatOptions({ url }, false)}` : ''});`);
+    }
     return formatter.format();
   }
 
@@ -160,6 +166,8 @@ ${useText ? '\ntest.use(' + useText + ');\n' : ''}
       (async () => {
         const browser = await ${options.browserName}.launch(${formatObjectOrVoid(options.launchOptions)});
         const context = await browser.newContext(${formatContextOptions(options.contextOptions, options.deviceName, false)});`);
+    if (options.contextOptions.recordHar)
+      formatter.add(`        await context.routeFromHAR(${quote(options.contextOptions.recordHar.path)});`);
     return formatter.format();
   }
 
@@ -203,10 +211,8 @@ function formatObjectOrVoid(value: any, indent = '  '): string {
 
 function formatContextOptions(options: BrowserContextOptions, deviceName: string | undefined, isTest: boolean): string {
   const device = deviceName && deviceDescriptors[deviceName];
-  if (isTest) {
-    // No recordHAR fixture in test.
-    options = { ...options, recordHar: undefined };
-  }
+  // recordHAR is replaced with routeFromHAR in the generated code.
+  options = { ...options, recordHar: undefined };
   if (!device)
     return formatObjectOrVoid(options);
   // Filter out all the properties from the device descriptor.
@@ -275,10 +281,13 @@ ${body}
 }
 
 export function quoteMultiline(text: string, indent = '  ') {
+  const escape = (text: string) => text.replace(/\\/g, '\\\\')
+      .replace(/`/g, '\\`')
+      .replace(/\$\{/g, '\\${');
   const lines = text.split('\n');
   if (lines.length === 1)
-    return '`' + text.replace(/`/g, '\\`').replace(/\${/g, '\\${') + '`';
-  return '`\n' + lines.map(line => indent + line.replace(/`/g, '\\`').replace(/\${/g, '\\${')).join('\n') + `\n${indent}\``;
+    return '`' + escape(text) + '`';
+  return '`\n' + lines.map(line => indent + escape(line).replace(/\${/g, '\\${')).join('\n') + `\n${indent}\``;
 }
 
 function isMultilineString(text: string) {

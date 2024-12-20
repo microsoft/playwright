@@ -74,7 +74,7 @@ export function rewriteCookies(cookies: channels.SetNetworkCookie[]): channels.S
   });
 }
 
-export function parsedURL(url: string): URL | null {
+export function parseURL(url: string): URL | null {
   try {
     return new URL(url);
   } catch (e) {

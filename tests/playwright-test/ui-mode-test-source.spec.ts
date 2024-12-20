@@ -122,7 +122,6 @@ test('should show top-level errors in file', async ({ runUITest }) => {
   await expect(
       page.locator('.CodeMirror-linewidget')
   ).toHaveText([
-    '            ',
     'TypeError: Assignment to constant variable.'
   ]);
 });
@@ -155,7 +154,6 @@ test('should show syntax errors in file', async ({ runUITest }) => {
   await expect(
       page.locator('.CodeMirror-linewidget')
   ).toHaveText([
-    '                                              ',
     /Missing semicolon./
   ]);
 });
@@ -183,7 +181,6 @@ test('should load error (dupe tests) indicator on sources', async ({ runUITest }
   await expect(
       page.locator('.CodeMirror-linewidget')
   ).toHaveText([
-    '                              ',
     /Error: duplicate test title "first", first declared in a.test.ts:3/
   ]);
 

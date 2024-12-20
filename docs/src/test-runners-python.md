@@ -111,15 +111,20 @@ def test_visit_admin_dashboard(page: Page):
 
 If you're using VSCode with Pylance, these types can be inferred by enabling the `python.testing.pytestEnabled` setting so you don't need the type annotation.
 
-### Configure slow mo
+### Using multiple contexts
 
-Run tests with slow mo with the `--slowmo` argument.
+In order to simulate multiple users, you can create multiple [`BrowserContext`](./browser-contexts) instances.
 
-```bash
-pytest --slowmo 100
+```py title="test_my_application.py"
+from playwright.sync_api import Page, BrowserContext
+from pytest_playwright.pytest_playwright import CreateContextCallback
+
+def test_foo(page: Page, new_context: CreateContextCallback) -> None:
+    page.goto("https://example.com")
+    context = new_context()
+    page2 = context.new_page()
+    # page and page2 are in different contexts
 ```
-
-Slows down Playwright operations by 100 milliseconds.
 
 ### Skip test by browser
 
@@ -198,7 +203,7 @@ def browser_context_args(browser_context_args):
     }
 ```
 
-### Device emulation
+### Device emulation / BrowserContext option overrides
 
 ```py title="conftest.py"
 import pytest
@@ -254,3 +259,18 @@ def test_bing_is_working(page):
 ## Deploy to CI
 
 See the [guides for CI providers](./ci.md) to deploy your tests to CI/CD.
+
+## Async Fixtures
+
+If you want to use async fixtures, you can use the [`pytest-playwright-asyncio`](https://pypi.org/project/pytest-playwright-asyncio/) plugin.
+Make sure to use `pytest-asyncio>=0.24.0` and make your tests use of [`loop_scope=sesion`](https://pytest-asyncio.readthedocs.io/en/latest/how-to-guides/run_session_tests_in_same_loop.html).
+
+```python
+import pytest
+from playwright.async_api import Page
+
+@pytest.mark.asyncio(loop_scope="session")
+async def test_foo(page: Page):
+    await page.goto("https://github.com")
+    # ...
+```

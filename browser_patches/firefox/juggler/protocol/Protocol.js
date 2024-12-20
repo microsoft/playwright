@@ -481,6 +481,17 @@ const Browser = {
   },
 };
 
+const Heap = {
+  targets: ['page'],
+  types: {},
+  events: {},
+  methods: {
+    'collectGarbage': {
+      params: {},
+    },
+  },
+};
+
 const Network = {
   targets: ['page'],
   types: networkTypes,
@@ -996,7 +1007,7 @@ const Accessibility = {
 }
 
 this.protocol = {
-  domains: {Browser, Page, Runtime, Network, Accessibility},
+  domains: {Browser, Heap, Page, Runtime, Network, Accessibility},
 };
 this.checkScheme = checkScheme;
 this.EXPORTED_SYMBOLS = ['protocol', 'checkScheme'];

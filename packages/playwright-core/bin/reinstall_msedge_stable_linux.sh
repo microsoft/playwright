@@ -8,15 +8,17 @@ if [[ $(arch) == "aarch64" ]]; then
   exit 1
 fi
 
-if [[ ! -f "/etc/os-release" ]]; then
-  echo "ERROR: cannot install on unknown linux distribution (/etc/os-release is missing)"
-  exit 1
-fi
+if [ -z "$PLAYWRIGHT_HOST_PLATFORM_OVERRIDE" ]; then
+  if [[ ! -f "/etc/os-release" ]]; then
+    echo "ERROR: cannot install on unknown linux distribution (/etc/os-release is missing)"
+    exit 1
+  fi
 
-ID=$(bash -c 'source /etc/os-release && echo $ID')
-if [[ "${ID}" != "ubuntu" && "${ID}" != "debian" ]]; then
-  echo "ERROR: cannot install on $ID distribution - only Ubuntu and Debian are supported"
-  exit 1
+  ID=$(bash -c 'source /etc/os-release && echo $ID')
+  if [[ "${ID}" != "ubuntu" && "${ID}" != "debian" ]]; then
+    echo "ERROR: cannot install on $ID distribution - only Ubuntu and Debian are supported"
+    exit 1
+  fi
 fi
 
 # 1. make sure to remove old stable if any.

@@ -27,7 +27,6 @@ function unshift(snapshot: string): string {
     const match = line.match(/^(\s*)/);
     if (match && match[1].length < whitespacePrefixLength)
       whitespacePrefixLength = match[1].length;
-    break;
   }
   return lines.filter(t => t.trim()).map(line => line.substring(whitespacePrefixLength)).join('\n');
 }
@@ -386,8 +385,7 @@ it('should include pseudo codepoints', async ({ page, server }) => {
   `);
 });
 
-it('check aria-hidden text', async ({ page, server }) => {
-  await page.goto(server.EMPTY_PAGE);
+it('check aria-hidden text', async ({ page }) => {
   await page.setContent(`
     <p>
       <span>hello</span>
@@ -400,8 +398,7 @@ it('check aria-hidden text', async ({ page, server }) => {
   `);
 });
 
-it('should ignore presentation and none roles', async ({ page, server }) => {
-  await page.goto(server.EMPTY_PAGE);
+it('should ignore presentation and none roles', async ({ page }) => {
   await page.setContent(`
     <ul>
       <li role='presentation'>hello</li>
@@ -411,5 +408,171 @@ it('should ignore presentation and none roles', async ({ page, server }) => {
 
   await checkAndMatchSnapshot(page.locator('body'), `
     - list: hello world
+  `);
+});
+
+it('should treat input value as text in templates', async ({ page }) => {
+  await page.setContent(`
+    <input value='hello world'>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - textbox: hello world
+  `);
+});
+
+it('should not use on as checkbox value', async ({ page }) => {
+  await page.setContent(`
+    <input type='checkbox'>
+    <input type='radio'>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - checkbox
+    - radio
+  `);
+});
+
+it('should respect aria-owns', async ({ page }) => {
+  await page.setContent(`
+    <a href='about:blank' aria-owns='input p'>
+      <div role='region'>Link 1</div>
+    </a>
+    <a href='about:blank' aria-owns='input p'>
+      <div role='region'>Link 2</div>
+    </a>
+    <input id='input' value='Value'>
+    <p id='p'>Paragraph</p>
+  `);
+
+  // - Different from Chrome DevTools which attributes ownership to the last element.
+  // - CDT also does not include non-owned children in accessible name.
+  // - Disregarding these as aria-owns can't suggest multiple parts by spec.
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - link "Link 1 Value Paragraph":
+      - region: Link 1
+      - textbox: Value
+      - paragraph: Paragraph
+    - link "Link 2 Value Paragraph":
+      - region: Link 2
+  `);
+});
+
+it('should be ok with circular ownership', async ({ page }) => {
+  await page.setContent(`
+    <a href='about:blank' id='parent'>
+      <div role='region' aria-owns='parent'>Hello</div>
+    </a>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - link "Hello":
+      - region: Hello
+  `);
+});
+
+it('should escape yaml text in text nodes', async ({ page }) => {
+  await page.setContent(`
+    <details>
+      <summary>one: <a href="#">link1</a> "two <a href="#">link2</a> 'three <a href="#">link3</a> \`four</summary>
+    </details>
+    <ul>
+      <a href="#">one</a>,<a href="#">two</a>
+      (<a href="#">three</a>)
+      {<a href="#">four</a>}
+      [<a href="#">five</a>]
+    </ul>
+    <div>[Select all]</div>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - group:
+      - text: "one:"
+      - link "link1"
+      - text: "\\\"two"
+      - link "link2"
+      - text: "'three"
+      - link "link3"
+      - text: "\`four"
+    - list:
+      - link "one"
+      - text: ","
+      - link "two"
+      - text: (
+      - link "three"
+      - text: ") {"
+      - link "four"
+      - text: "} ["
+      - link "five"
+      - text: "]"
+    - text: "[Select all]"
+  `);
+});
+
+it('should handle long strings', async ({ page }) => {
+  const s = 'a'.repeat(10000);
+  await page.setContent(`
+    <a href='about:blank'>
+      <div role='region'>${s}</div>
+    </a>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - link:
+      - region: ${s}
+  `);
+});
+
+it('should escape special yaml characters', async ({ page }) => {
+  await page.setContent(`
+    <a href="#">@hello</a>@hello
+    <a href="#">]hello</a>]hello
+    <a href="#">hello\n</a>
+    hello\n<a href="#">\n hello</a>\n hello
+    <a href="#">#hello</a>#hello
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - link "@hello"
+    - text: "@hello"
+    - link "]hello"
+    - text: "]hello"
+    - link "hello"
+    - text: hello
+    - link "hello"
+    - text: hello
+    - link "#hello"
+    - text: "#hello"
+  `);
+});
+
+it('should escape special yaml values', async ({ page }) => {
+  await page.setContent(`
+    <a href="#">true</a>False
+    <a href="#">NO</a>yes
+    <a href="#">y</a>N
+    <a href="#">on</a>Off
+    <a href="#">null</a>NULL
+    <a href="#">123</a>123
+    <a href="#">-1.2</a>-1.2
+    <input type=text value="555">
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - link "true"
+    - text: "False"
+    - link "NO"
+    - text: "yes"
+    - link "y"
+    - text: "N"
+    - link "on"
+    - text: "Off"
+    - link "null"
+    - text: "NULL"
+    - link "123"
+    - text: "123"
+    - link "-1.2"
+    - text: "-1.2"
+    - textbox: "555"
   `);
 });

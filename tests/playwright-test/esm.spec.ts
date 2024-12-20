@@ -45,9 +45,15 @@ test('should support import attributes', async ({ runInlineTest }) => {
     'package.json': JSON.stringify({ type: 'module', foo: 'bar' }),
     'a.test.ts': `
       import config from './package.json' with { type: 'json' };
+      import configFooFromUtils from './utils.js'
       console.log('imported value (test): ' + config.foo);
       import { test, expect } from '@playwright/test';
+      expect(configFooFromUtils.foo).toBe('bar');
       test('pass', async () => {});
+    `,
+    'utils.js': `
+      import config from './package.json' with { type: 'json' };
+      export default config;
     `
   });
   expect(result.exitCode).toBe(0);
@@ -676,9 +682,6 @@ test('should be able to use use execSync with a Node.js file inside a spec', asy
     'global-setup import level',
     'execSync: hello from hello.js',
     'spawnSync: hello from hello.js',
-    'global-teardown import level',
-    'execSync: hello from hello.js',
-    'spawnSync: hello from hello.js',
     'global-setup export level',
     'execSync: hello from hello.js',
     'spawnSync: hello from hello.js',
@@ -693,6 +696,9 @@ test('should be able to use use execSync with a Node.js file inside a spec', asy
     'execSync: hello from hello.js',
     'spawnSync: hello from hello.js',
     'fork: hello from hellofork.js',
+    'global-teardown import level',
+    'execSync: hello from hello.js',
+    'spawnSync: hello from hello.js',
     'global-teardown export level',
     'execSync: hello from hello.js',
     'spawnSync: hello from hello.js',

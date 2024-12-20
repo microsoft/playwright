@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-export function yamlEscapeStringIfNeeded(str: string, quote = '"'): string {
+export function yamlEscapeKeyIfNeeded(str: string): string {
   if (!yamlStringNeedsQuotes(str))
     return str;
-  return yamlEscapeString(str, quote);
+  return `'` + str.replace(/'/g, `''`) + `'`;
 }
 
-export function yamlEscapeString(str: string, quote = '"'): string {
-  return quote + str.replace(/[\\"\x00-\x1f\x7f-\x9f]/g, c => {
+export function yamlEscapeValueIfNeeded(str: string): string {
+  if (!yamlStringNeedsQuotes(str))
+    return str;
+  return '"' + str.replace(/[\\"\x00-\x1f\x7f-\x9f]/g, c => {
     switch (c) {
       case '\\':
         return '\\\\';
       case '"':
-        return quote === '"' ? '\\"' : '"';
-      case '\'':
-        return quote === '\''  ? '\\\'' : '\'';
+        return '\\"';
       case '\b':
         return '\\b';
       case '\f':
@@ -43,20 +43,7 @@ export function yamlEscapeString(str: string, quote = '"'): string {
         const code = c.charCodeAt(0);
         return '\\x' + code.toString(16).padStart(2, '0');
     }
-  }) + quote;
-}
-
-export function yamlQuoteFragment(str: string, quote = '"'): string {
-  return quote + str.replace(/['"]/g, c => {
-    switch (c) {
-      case '"':
-        return quote === '"' ? '\\"' : '"';
-      case '\'':
-        return quote === '\''  ? '\\\'' : '\'';
-      default:
-        return c;
-    }
-  }) + quote;
+  }) + '"';
 }
 
 function yamlStringNeedsQuotes(str: string): boolean {
@@ -75,12 +62,8 @@ function yamlStringNeedsQuotes(str: string): boolean {
   if (/^-\s/.test(str))
     return true;
 
-  // Strings that start with a special indicator character need quotes
-  if (/^[&*].*/.test(str))
-    return true;
-
-  // Strings containing ':' followed by a space or at the end need quotes
-  if (/:(\s|$)/.test(str))
+  // Strings containing ':' or '\n' followed by a space or at the end need quotes
+  if (/[\n:](\s|$)/.test(str))
     return true;
 
   // Strings containing '#' preceded by a space need quotes (comment indicator)
@@ -91,16 +74,20 @@ function yamlStringNeedsQuotes(str: string): boolean {
   if (/[\n\r]/.test(str))
     return true;
 
-  // Strings starting with '?' or '!' (directives) need quotes
-  if (/^[?!]/.test(str))
-    return true;
-
-  // Strings starting with '>' or '|' (block scalar indicators) need quotes
-  if (/^[>|]/.test(str))
+  // Strings starting with indicator characters or quotes need quotes
+  if (/^[&*\],?!>|@"'#%]/.test(str))
     return true;
 
   // Strings containing special characters that could cause ambiguity
   if (/[{}`]/.test(str))
+    return true;
+
+  // YAML array starts with [
+  if (/^\[/.test(str))
+    return true;
+
+  // Non-string types recognized by YAML
+  if (!isNaN(Number(str)) || ['y', 'n', 'yes', 'no', 'true', 'false', 'on', 'off', 'null'].includes(str.toLowerCase()))
     return true;
 
   return false;

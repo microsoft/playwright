@@ -2,13 +2,5 @@
   "name": "html-reporter",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build && tsc",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "ansi-to-html": "^0.7.2"
-  }
+  "type": "module"
 }

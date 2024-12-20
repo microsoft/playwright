@@ -34,6 +34,10 @@ The recommended approach is to use `setFixedTime` to set the time to a specific 
   - `Event.timeStamp`
 :::
 
+:::warning
+If you call `install` at any point in your test, the call _MUST_ occur before any other clock related calls (see note above for list). Calling these methods out of order will result in undefined behavior. For example, you cannot call `setInterval`, followed by `install`, then `clearInterval`, as `install` overrides the native definition of the clock functions.
+:::
+
 ## Test with predefined time
 
 Often you only need to fake `Date.now` while keeping the timers going.
@@ -164,11 +168,11 @@ await Page.GotoAsync("http://localhost:3333");
 await Page.Clock.PauseAtAsync(new DateTime(2024, 2, 2, 10, 0, 0));
 
 // Assert the page state.
-await Expect(Page.GetByTestId("current-time")).ToHaveText("2/2/2024, 10:00:00 AM");
+await Expect(Page.GetByTestId("current-time")).ToHaveTextAsync("2/2/2024, 10:00:00 AM");
 
 // Close the laptop lid again and open it at 10:30am.
 await Page.Clock.FastForwardAsync("30:00");
-await Expect(Page.GetByTestId("current-time")).ToHaveText("2/2/2024, 10:30:00 AM");
+await Expect(Page.GetByTestId("current-time")).ToHaveTextAsync("2/2/2024, 10:30:00 AM");
 ```
 
 ## Test inactivity monitoring

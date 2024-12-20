@@ -26,7 +26,6 @@ function patchPackageJsonForPreReleaseIfNeeded(tmpWorkspace: string) {
   // Workaround per https://stackoverflow.com/questions/71479750/npm-install-pre-release-versions-for-peer-dependency.
   const pkg = JSON.parse(fs.readFileSync(path.resolve(tmpWorkspace, 'package.json'), 'utf-8'));
   if (pkg.dependencies['@playwright/test'].match(/\d+\.\d+-\w+/)) {
-    console.log(`Setting overrides in package.json to make pre-release version of peer dependency work.`);
     pkg.overrides = { '@playwright/test': '$@playwright/test' };
     fs.writeFileSync(path.resolve(tmpWorkspace, 'package.json'), JSON.stringify(pkg, null, 2));
   }

@@ -3,33 +3,35 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1145",
+      "revision": "1152",
       "installByDefault": true,
-      "browserVersion": "131.0.6778.13"
+      "browserVersion": "132.0.6834.46"
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1271",
+      "revision": "1288",
       "installByDefault": false,
-      "browserVersion": "132.0.6791.0"
+      "browserVersion": "133.0.6905.0"
     },
     {
       "name": "firefox",
-      "revision": "1465",
+      "revision": "1466",
       "installByDefault": true,
-      "browserVersion": "131.0"
+      "browserVersion": "132.0"
     },
     {
       "name": "firefox-beta",
-      "revision": "1465",
+      "revision": "1466",
       "installByDefault": false,
-      "browserVersion": "132.0b8"
+      "browserVersion": "133.0b9"
     },
     {
       "name": "webkit",
-      "revision": "2098",
+      "revision": "2120",
       "installByDefault": true,
       "revisionOverrides": {
+        "debian11-x64": "2105",
+        "debian11-arm64": "2105",
         "mac10.14": "1446",
         "mac10.15": "1616",
         "mac11": "1816",
@@ -39,16 +41,21 @@
         "ubuntu20.04-x64": "2092",
         "ubuntu20.04-arm64": "2092"
       },
-      "browserVersion": "18.0"
+      "browserVersion": "18.2"
     },
     {
       "name": "ffmpeg",
-      "revision": "1010",
+      "revision": "1011",
       "installByDefault": true,
       "revisionOverrides": {
         "mac12": "1010",
         "mac12-arm64": "1010"
       }
+    },
+    {
+      "name": "winldd",
+      "revision": "1007",
+      "installByDefault": false
     },
     {
       "name": "android",

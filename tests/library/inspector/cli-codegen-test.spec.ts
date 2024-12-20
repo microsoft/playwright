@@ -87,10 +87,36 @@ test('test', async ({ page }) => {`;
 
 test('should not generate recordHAR with --save-har', async ({ runCLI }, testInfo) => {
   const harFileName = testInfo.outputPath('har.har');
-  const expectedResult = `test.use({
-  serviceWorkers: 'block'
+  const expectedResult = `  await page.routeFromHAR('${harFileName.replace(/\\/g, '\\\\')}');`;
+  const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`], {
+    autoExitWhen: expectedResult,
+  });
+  await cli.waitForCleanExit();
+  const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
+  expect(json.log.creator.name).toBe('Playwright');
+});
+
+test('should generate routeFromHAR with --save-har', async ({ runCLI }, testInfo) => {
+  const harFileName = testInfo.outputPath('har.har');
+  const expectedResult = `test('test', async ({ page }) => {
+  await page.routeFromHAR('${harFileName.replace(/\\/g, '\\\\')}');
 });`;
   const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`], {
+    autoExitWhen: expectedResult,
+  });
+  await cli.waitForCleanExit();
+  const json = JSON.parse(fs.readFileSync(harFileName, 'utf-8'));
+  expect(json.log.creator.name).toBe('Playwright');
+});
+
+test('should generate routeFromHAR with --save-har and --save-har-glob', async ({ runCLI }, testInfo) => {
+  const harFileName = testInfo.outputPath('har.har');
+  const expectedResult = `test('test', async ({ page }) => {
+  await page.routeFromHAR('${harFileName.replace(/\\/g, '\\\\')}', {
+    url: '**/*.js'
+  });
+});`;
+  const cli = runCLI(['--target=playwright-test', `--save-har=${harFileName}`, '--save-har-glob=**/*.js'], {
     autoExitWhen: expectedResult,
   });
   await cli.waitForCleanExit();

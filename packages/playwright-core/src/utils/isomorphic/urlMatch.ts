@@ -97,25 +97,25 @@ export function urlMatchesEqual(match1: URLMatch, match2: URLMatch) {
 export function urlMatches(baseURL: string | undefined, urlString: string, match: URLMatch | undefined): boolean {
   if (match === undefined || match === '')
     return true;
-  if (isString(match) && !match.startsWith('*'))
+  if (isString(match) && !match.startsWith('*')) {
+    // Allow http(s) baseURL to match ws(s) urls.
+    if (baseURL && /^https?:\/\//.test(baseURL) && /^wss?:\/\//.test(urlString))
+      baseURL = baseURL.replace(/^http/, 'ws');
     match = constructURLBasedOnBaseURL(baseURL, match);
+  }
   if (isString(match))
     match = globToRegex(match);
   if (isRegExp(match))
     return match.test(urlString);
-  if (typeof match === 'string' && match === urlString)
-    return true;
-  const url = parsedURL(urlString);
+  const url = parseURL(urlString);
   if (!url)
     return false;
-  if (typeof match === 'string')
-    return url.pathname === match;
   if (typeof match !== 'function')
     throw new Error('url parameter should be string, RegExp or function');
   return match(url);
 }
 
-function parsedURL(url: string): URL | null {
+function parseURL(url: string): URL | null {
   try {
     return new URL(url);
   } catch (e) {
