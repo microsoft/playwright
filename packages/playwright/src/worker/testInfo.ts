@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { captureRawStack, monotonicTime, zones, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
+import type { ExpectZone } from 'playwright-core/lib/utils';
 import type { TestInfo, TestStatus, FullProject } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
@@ -194,7 +195,7 @@ export class TestInfoImpl implements TestInfo {
     this._attachmentsPush = this.attachments.push.bind(this.attachments);
     this.attachments.push = (...attachments: TestInfo['attachments']) => {
       for (const a of attachments)
-        this._attach(a, this._parentStep()?.stepId);
+        this._attach(a, this._expectStepId() ?? this._parentStep()?.stepId);
       return this.attachments.length;
     };
 
@@ -242,6 +243,10 @@ export class TestInfoImpl implements TestInfo {
   private _parentStep() {
     return zones.zoneData<TestStepInternal>('stepZone')
       ?? this._findLastStageStep(this._steps); // If no parent step on stack, assume the current stage as parent.
+  }
+
+  private _expectStepId() {
+    return zones.zoneData<ExpectZone>('expectZone')?.stepId;
   }
 
   _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps' | 'attachments'>, parentStep?: TestStepInternal): TestStepInternal {

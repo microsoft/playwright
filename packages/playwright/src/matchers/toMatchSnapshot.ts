@@ -16,7 +16,7 @@
 
 import type { Locator, Page } from 'playwright-core';
 import type { ExpectScreenshotOptions, Page as PageEx } from 'playwright-core/lib/client/page';
-import { currentStep, currentTestInfo } from '../common/globals';
+import { currentTestInfo } from '../common/globals';
 import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils';
 import { compareBuffersOrStrings, getComparator, isString, sanitizeForFilePath } from 'playwright-core/lib/utils';
 import {
@@ -29,7 +29,7 @@ import { colors } from 'playwright-core/lib/utilsBundle';
 import fs from 'fs';
 import path from 'path';
 import { mime } from 'playwright-core/lib/utilsBundle';
-import type { TestInfoImpl, TestStepInternal } from '../worker/testInfo';
+import type { TestInfoImpl } from '../worker/testInfo';
 import type { ExpectMatcherState } from '../../types/test';
 import { matcherHint, type MatcherResult } from './matcherHint';
 import type { FullProjectInternal } from '../common/config';
@@ -75,7 +75,6 @@ const NonConfigProperties: (keyof ToHaveScreenshotOptions)[] = [
 
 class SnapshotHelper {
   readonly testInfo: TestInfoImpl;
-  readonly step: TestStepInternal;
   readonly attachmentBaseName: string;
   readonly legacyExpectedPath: string;
   readonly previousPath: string;
@@ -92,7 +91,6 @@ class SnapshotHelper {
 
   constructor(
     testInfo: TestInfoImpl,
-    step: TestStepInternal,
     matcherName: string,
     locator: Locator | undefined,
     anonymousSnapshotExtension: string,
@@ -184,7 +182,6 @@ class SnapshotHelper {
     this.comparator = getComparator(this.mimeType);
 
     this.testInfo = testInfo;
-    this.step = step;
     this.kind = this.mimeType.startsWith('image/') ? 'Screenshot' : 'Snapshot';
   }
 
@@ -227,9 +224,9 @@ class SnapshotHelper {
     const isWriteMissingMode = this.updateSnapshots !== 'none';
     if (isWriteMissingMode)
       writeFileSync(this.expectedPath, actual);
-    this.step.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
+    this.testInfo.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
     writeFileSync(this.actualPath, actual);
-    this.step.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
+    this.testInfo.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
     const message = `A snapshot doesn't exist at ${this.expectedPath}${isWriteMissingMode ? ', writing actual.' : '.'}`;
     if (this.updateSnapshots === 'all' || this.updateSnapshots === 'changed') {
       /* eslint-disable no-console */
@@ -257,22 +254,22 @@ class SnapshotHelper {
       // Copy the expectation inside the `test-results/` folder for backwards compatibility,
       // so that one can upload `test-results/` directory and have all the data inside.
       writeFileSync(this.legacyExpectedPath, expected);
-      this.step.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-expected'), contentType: this.mimeType, path: this.expectedPath });
       output.push(`\nExpected: ${colors.yellow(this.expectedPath)}`);
     }
     if (previous !== undefined) {
       writeFileSync(this.previousPath, previous);
-      this.step.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-previous'), contentType: this.mimeType, path: this.previousPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-previous'), contentType: this.mimeType, path: this.previousPath });
       output.push(`Previous: ${colors.yellow(this.previousPath)}`);
     }
     if (actual !== undefined) {
       writeFileSync(this.actualPath, actual);
-      this.step.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-actual'), contentType: this.mimeType, path: this.actualPath });
       output.push(`Received: ${colors.yellow(this.actualPath)}`);
     }
     if (diff !== undefined) {
       writeFileSync(this.diffPath, diff);
-      this.step.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-diff'), contentType: this.mimeType, path: this.diffPath });
+      this.testInfo.attachments.push({ name: addSuffixToFilePath(this.attachmentBaseName, '-diff'), contentType: this.mimeType, path: this.diffPath });
       output.push(`    Diff: ${colors.yellow(this.diffPath)}`);
     }
 
@@ -296,8 +293,7 @@ export function toMatchSnapshot(
   optOptions: ImageComparatorOptions = {}
 ): MatcherResult<NameOrSegments | { name?: NameOrSegments }, string> {
   const testInfo = currentTestInfo();
-  const step = currentStep();
-  if (!testInfo || !step)
+  if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
   if (received instanceof Promise)
     throw new Error('An unresolved Promise was passed to toMatchSnapshot(), make sure to resolve it by adding await to it.');
@@ -307,7 +303,7 @@ export function toMatchSnapshot(
 
   const configOptions = testInfo._projectInternal.expect?.toMatchSnapshot || {};
   const helper = new SnapshotHelper(
-      testInfo, step, 'toMatchSnapshot', undefined, determineFileExtension(received),
+      testInfo, 'toMatchSnapshot', undefined, determineFileExtension(received),
       configOptions, nameOrOptions, optOptions);
 
   if (this.isNot) {
@@ -369,8 +365,7 @@ export async function toHaveScreenshot(
   optOptions: ToHaveScreenshotOptions = {}
 ): Promise<MatcherResult<NameOrSegments | { name?: NameOrSegments }, string>> {
   const testInfo = currentTestInfo();
-  const step = currentStep();
-  if (!testInfo || !step)
+  if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
 
   if (testInfo._projectInternal.ignoreSnapshots)
@@ -379,7 +374,7 @@ export async function toHaveScreenshot(
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
   const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as Locator];
   const configOptions = testInfo._projectInternal.expect?.toHaveScreenshot || {};
-  const helper = new SnapshotHelper(testInfo, step, 'toHaveScreenshot', locator, 'png', configOptions, nameOrOptions, optOptions);
+  const helper = new SnapshotHelper(testInfo, 'toHaveScreenshot', locator, 'png', configOptions, nameOrOptions, optOptions);
   if (!helper.expectedPath.toLowerCase().endsWith('.png'))
     throw new Error(`Screenshot name "${path.basename(helper.expectedPath)}" must have '.png' extension`);
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');

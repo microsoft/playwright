@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestInfoImpl, TestStepInternal } from '../worker/testInfo';
+import type { TestInfoImpl } from '../worker/testInfo';
 import type { Suite } from './test';
 
 let currentTestInfoValue: TestInfoImpl | null = null;
@@ -41,14 +41,4 @@ export function setIsWorkerProcess() {
 
 export function isWorkerProcess() {
   return _isWorkerProcess;
-}
-
-let currentStepValue: TestStepInternal | undefined;
-
-export function setCurrentStep(step: TestStepInternal | undefined) {
-  currentStepValue = step;
-}
-
-export function currentStep(): TestStepInternal | undefined {
-  return currentStepValue;
 }

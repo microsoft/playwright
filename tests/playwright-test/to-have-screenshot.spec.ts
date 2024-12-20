@@ -677,6 +677,30 @@ test('should write missing expectations locally twice and attach them', async ({
   ]);
 });
 
+test('should attach missing expectations to right step', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      class Reporter {
+        onStepEnd(test, result, step) {
+          if (step.attachments.length > 0)
+            console.log(\`%%\${step.title}: \${step.attachments.map(a => a.name).join(", ")}\`);
+        }
+      }
+      module.exports = Reporter;
+    `,
+    ...playwrightConfig({ reporter: [['dot'], ['./reporter']] }),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png');
+      });
+    `,
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.outputLines).toEqual(['expect.toHaveScreenshot(snapshot.png): snapshot-expected.png, snapshot-actual.png']);
+});
+
 test('shouldn\'t write missing expectations locally for negated matcher', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...playwrightConfig({
