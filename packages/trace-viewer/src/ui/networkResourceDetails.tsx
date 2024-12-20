@@ -24,12 +24,14 @@ import { generateCurlCommand, generateFetchCall } from '../third_party/devtools'
 import { CopyToClipboardTextButton } from './copyToClipboard';
 import { getAPIRequestCodeGen } from './codegen';
 import type { Language } from '@isomorphic/locatorGenerators';
+import { msToString } from '@web/uiUtils';
 
 export const NetworkResourceDetails: React.FunctionComponent<{
   resource: ResourceSnapshot;
-  onClose: () => void;
   sdkLanguage: Language;
-}> = ({ resource, onClose, sdkLanguage }) => {
+  startTimeOffset: number;
+  onClose: () => void;
+}> = ({ resource, sdkLanguage, startTimeOffset, onClose }) => {
   const [selectedTab, setSelectedTab] = React.useState('request');
 
   return <TabbedPane
@@ -39,7 +41,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
       {
         id: 'request',
         title: 'Request',
-        render: () => <RequestTab resource={resource} sdkLanguage={sdkLanguage} />,
+        render: () => <RequestTab resource={resource} sdkLanguage={sdkLanguage} startTimeOffset={startTimeOffset} />,
       },
       {
         id: 'response',
@@ -59,7 +61,8 @@ export const NetworkResourceDetails: React.FunctionComponent<{
 const RequestTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
   sdkLanguage: Language;
-}> = ({ resource, sdkLanguage }) => {
+  startTimeOffset: number;
+}> = ({ resource, sdkLanguage, startTimeOffset }) => {
   const [requestBody, setRequestBody] = React.useState<{ text: string, mimeType?: string } | null>(null);
 
   React.useEffect(() => {
@@ -96,6 +99,9 @@ const RequestTab: React.FunctionComponent<{
     </> : null}
     <div className='network-request-details-header'>Request Headers</div>
     <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
+    <div className='network-request-details-header'>Time</div>
+    <div className='network-request-details-general'>{`Start: ${msToString(startTimeOffset)}`}</div>
+    <div className='network-request-details-general'>{`Duration: ${msToString(resource.time)}`}</div>
 
     <div className='network-request-details-copy'>
       <CopyToClipboardTextButton description='Copy as cURL' value={() => generateCurlCommand(resource)} />

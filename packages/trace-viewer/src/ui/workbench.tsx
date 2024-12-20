@@ -176,7 +176,7 @@ export const Workbench: React.FunctionComponent<{
   const callTab: TabbedPaneTabModel = {
     id: 'call',
     title: 'Call',
-    render: () => <CallTab action={activeAction} sdkLanguage={sdkLanguage} />
+    render: () => <CallTab action={activeAction} startTimeOffset={model?.startTime ?? 0} sdkLanguage={sdkLanguage} />
   };
   const logTab: TabbedPaneTabModel = {
     id: 'log',
