@@ -730,6 +730,8 @@ test('should not throw when attachment is missing', async ({ runInlineTest }, te
 
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+  const trace = await parseTrace(testInfo.outputPath('test-results', 'a-passes', 'trace.zip'));
+  expect(trace.actionTree).toContain('attach "screenshot"');
 });
 
 test('should not throw when screenshot on failure fails', async ({ runInlineTest, server }, testInfo) => {
