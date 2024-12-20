@@ -421,7 +421,7 @@ test('attachments tab shows all but top-level .push attachments', async ({ runUI
   const actionsTree = page.getByTestId('actions-tree');
   await actionsTree.getByRole('treeitem', { name: 'step' }).click();
   await page.keyboard.press('ArrowRight');
-  await expect(actionsTree, 'only attach() calls are shown as actions').toMatchAriaSnapshot(`
+  await expect(actionsTree, 'attach() and top-level attachments.push calls are shown as actions').toMatchAriaSnapshot(`
     - tree:
       - treeitem /step/:
         - group:
