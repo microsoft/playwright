@@ -61,7 +61,7 @@ jobs:
 
     - name: Upload report.csv to Azure
       run: |
-        REPORT_DIR='run-bidi-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}'
+        REPORT_DIR='bidi-reports'
         azcopy cp "./test-results/report.csv" "https://mspwblobreport.blob.core.windows.net/\$web/$REPORT_DIR/${{ matrix.channel }}.csv"
         echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/${{ matrix.channel }}.csv"
       env:
