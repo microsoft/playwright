@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import type { Reporter, TestCase, TestResult, TestStep } from '../../packages/playwright-test/reporter';
 import { test, expect } from './playwright-test-fixtures';
 
 const smallReporterJS = `
@@ -702,4 +703,34 @@ onTestEnd: [passed]  > a.spec.ts > test2; retry #1
 onEnd
 onExit
 `);
+});
+
+test('step attachments are referentially equal to result attachments', async ({ runInlineTest }) => {
+  class TestReporter implements Reporter {
+    onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+      console.log('%%%', JSON.stringify({
+        title: step.title,
+        attachments: step.attachments.map(a => result.attachments.indexOf(a)),
+      }));
+    }
+  }
+  const result = await runInlineTest({
+    'reporter.ts': `module.exports = ${TestReporter.toString()}`,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        await test.step('step', async () => {
+          testInfo.attachments.push({ name: 'attachment', body: Buffer.from('content') });
+        });
+      });
+    `,
+  }, { 'reporter': '', 'workers': 1 });
+
+  const steps = result.outputLines.map(line => JSON.parse(line));
+  expect(steps).toEqual([
+    { title: 'Before Hooks', attachments: [] },
+    { title: 'step', attachments: [0] },
+    { title: 'After Hooks', attachments: [] },
+  ]);
 });

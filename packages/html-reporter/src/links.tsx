@@ -68,11 +68,12 @@ export const ProjectLink: React.FunctionComponent<{
 
 export const AttachmentLink: React.FunctionComponent<{
   attachment: TestAttachment,
+  result: TestResult,
   href?: string,
   linkName?: string,
   openInNewTab?: boolean,
-}> = ({ attachment, href, linkName, openInNewTab }) => {
-  const isAnchored = useIsAnchored('attachment-' + attachment.name);
+}> = ({ attachment, result, href, linkName, openInNewTab }) => {
+  const isAnchored = useIsAnchored('attachment-' + result.attachments.indexOf(attachment));
   return <TreeItem title={<span>
     {attachment.contentType === kMissingContentType ? icons.warning() : icons.attachment()}
     {attachment.path && <a href={href || attachment.path} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>}

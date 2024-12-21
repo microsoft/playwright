@@ -263,11 +263,7 @@ test('should report toHaveScreenshot step with expectation name in title', async
     `end browserContext.newPage`,
     `end fixture: page`,
     `end Before Hooks`,
-    `end attach "foo-expected.png"`,
-    `end attach "foo-actual.png"`,
     `end expect.toHaveScreenshot(foo.png)`,
-    `end attach "is-a-test-1-expected.png"`,
-    `end attach "is-a-test-1-actual.png"`,
     `end expect.toHaveScreenshot(is-a-test-1.png)`,
     `end fixture: page`,
     `end fixture: context`,
@@ -679,6 +675,30 @@ test('should write missing expectations locally twice and attach them', async ({
       path: 'a-is-a-test/snapshot2-actual.png'
     },
   ]);
+});
+
+test('should attach missing expectations to right step', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      class Reporter {
+        onStepEnd(test, result, step) {
+          if (step.attachments.length > 0)
+            console.log(\`%%\${step.title}: \${step.attachments.map(a => a.name).join(", ")}\`);
+        }
+      }
+      module.exports = Reporter;
+    `,
+    ...playwrightConfig({ reporter: [['dot'], ['./reporter']] }),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await expect(page).toHaveScreenshot('snapshot.png');
+      });
+    `,
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.outputLines).toEqual(['expect.toHaveScreenshot(snapshot.png): snapshot-expected.png, snapshot-actual.png']);
 });
 
 test('shouldn\'t write missing expectations locally for negated matcher', async ({ runInlineTest }, testInfo) => {

@@ -692,6 +692,33 @@ export interface TestStep {
   titlePath(): Array<string>;
 
   /**
+   * The list of files or buffers attached in the step execution through
+   * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach).
+   */
+  attachments: Array<{
+    /**
+     * Attachment name.
+     */
+    name: string;
+
+    /**
+     * Content type of this attachment to properly present in the report, for example `'application/json'` or
+     * `'image/png'`.
+     */
+    contentType: string;
+
+    /**
+     * Optional path on the filesystem to the attached file.
+     */
+    path?: string;
+
+    /**
+     * Optional attachment body used instead of a file.
+     */
+    body?: Buffer;
+  }>;
+
+  /**
    * Step category to differentiate steps with different origin and verbosity. Built-in categories are:
    * - `hook` for fixtures and hooks initialization and teardown
    * - `expect` for expect calls
