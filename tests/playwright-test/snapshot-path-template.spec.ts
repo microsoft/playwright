@@ -18,8 +18,8 @@ import path from 'path';
 import fs from 'fs';
 import { test, expect } from './playwright-test-fixtures';
 
+const SEPARATOR = '==== 8< ---- ';
 async function getSnapshotPaths(runInlineTest, testInfo, playwrightConfig, pathArgs) {
-  const SEPARATOR = '==== 8< ---- ';
   const result = await runInlineTest({
     'playwright.config.js': `
       module.exports = ${JSON.stringify(playwrightConfig, null, 2)}
@@ -104,6 +104,53 @@ test('tokens should expand property', async ({ runInlineTest }, testInfo) => {
   expect.soft(snapshotPath['snapshotDir']).toBe('a-snapshot-dir.png');
   expect.soft(snapshotPath['snapshotSuffix']).toBe('-' + process.platform);
   expect.soft(snapshotPath['testName']).toBe('suite-test-should-work');
+});
+
+test('supports function arg', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `
+      module.exports = {
+        projects: [
+          {
+            name: 'proj',
+            snapshotPathTemplate: (args) => {
+              console.log(JSON.stringify(args));
+              return 'path/to/snapshot';
+            }
+          }
+        ]
+      }
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('is a test', async ({ }, testInfo) => {
+        console.log(${JSON.stringify(SEPARATOR)})
+        const snapshotPath = testInfo.snapshotPath('foo', 'bar.png');
+        console.log(${JSON.stringify(SEPARATOR)});
+        console.log(JSON.stringify({ snapshotPath }));
+        console.log(${JSON.stringify(SEPARATOR)});
+      });
+    `
+  });
+  const output = result.output.split(SEPARATOR).slice(1, -1).map(json => JSON.parse(json));
+  expect.soft(output).toEqual([
+    {
+      arg: 'foo/bar',
+      ext: '.png',
+      platform: process.platform,
+      projectName: 'proj',
+      snapshotDir: testInfo.outputPath(test.name),
+      snapshotSuffix: process.platform,
+      testDir: testInfo.outputDir,
+      testFileDir: '',
+      testFileName: 'a.spec.ts',
+      testFilePath: 'a.spec.ts',
+      testName: 'is-a-test',
+    },
+    {
+      snapshotPath: testInfo.outputPath('path/to/snapshot')
+    }
+  ]);
 });
 
 test('args array should work', async ({ runInlineTest }, testInfo) => {
