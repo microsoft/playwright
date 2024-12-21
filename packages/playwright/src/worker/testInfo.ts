@@ -53,6 +53,22 @@ export type TestStage = {
   step?: TestStepInternal;
 };
 
+export type SnapshotPathArgs = {
+  arg: string;
+  ext: string;
+  platform: NodeJS.Platform;
+  projectName?: string;
+  snapshotDir: string;
+  snapshotSuffix?: string;
+  testDir: string;
+  testFileDir: string;
+  testFileName: string;
+  testFilePath: string;
+  testName: string;
+};
+
+export type SnapshotPathResolver = (snapshotPathArgs: SnapshotPathArgs, testInfo: TestInfo) => string;
+
 export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
@@ -441,20 +457,35 @@ export class TestInfoImpl implements TestInfo {
     const parsedSubPath = path.parse(subPath);
     const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
-    const projectNamePathSegment = sanitizeForFilePath(this.project.name);
+    const options: SnapshotPathArgs = {
+      arg: path.join(parsedSubPath.dir, parsedSubPath.name),
+      ext: parsedSubPath.ext,
+      platform: process.platform,
+      projectName: sanitizeForFilePath(this.project.name),
+      snapshotDir: this.project.snapshotDir,
+      snapshotSuffix: this.snapshotSuffix,
+      testDir: this.project.testDir,
+      testFileDir: parsedRelativeTestFilePath.dir,
+      testFileName: parsedRelativeTestFilePath.base,
+      testFilePath: relativeTestFilePath,
+      testName: this._fsSanitizedTestName(),
+    };
 
-    const snapshotPath = (this._projectInternal.snapshotPathTemplate || '')
-        .replace(/\{(.)?testDir\}/g, '$1' + this.project.testDir)
-        .replace(/\{(.)?snapshotDir\}/g, '$1' + this.project.snapshotDir)
-        .replace(/\{(.)?snapshotSuffix\}/g, this.snapshotSuffix ? '$1' + this.snapshotSuffix : '')
-        .replace(/\{(.)?testFileDir\}/g, '$1' + parsedRelativeTestFilePath.dir)
-        .replace(/\{(.)?platform\}/g, '$1' + process.platform)
-        .replace(/\{(.)?projectName\}/g, projectNamePathSegment ? '$1' + projectNamePathSegment : '')
-        .replace(/\{(.)?testName\}/g, '$1' + this._fsSanitizedTestName())
-        .replace(/\{(.)?testFileName\}/g, '$1' + parsedRelativeTestFilePath.base)
-        .replace(/\{(.)?testFilePath\}/g, '$1' + relativeTestFilePath)
-        .replace(/\{(.)?arg\}/g, '$1' + path.join(parsedSubPath.dir, parsedSubPath.name))
-        .replace(/\{(.)?ext\}/g, parsedSubPath.ext ? '$1' + parsedSubPath.ext : '');
+    const snapshotPath: string =
+      typeof this._projectInternal.snapshotPathTemplate === 'function' ?
+        this._projectInternal.snapshotPathTemplate(options, this) :
+        (this._projectInternal.snapshotPathTemplate || '')
+            .replace(/\{(.)?testDir\}/g, '$1' + options.testDir)
+            .replace(/\{(.)?snapshotDir\}/g, '$1' + options.snapshotDir)
+            .replace(/\{(.)?snapshotSuffix\}/g, options.snapshotSuffix ? '$1' + options.snapshotSuffix : '')
+            .replace(/\{(.)?testFileDir\}/g, '$1' + options.testFileDir)
+            .replace(/\{(.)?platform\}/g, '$1' + options.platform)
+            .replace(/\{(.)?projectName\}/g, options.projectName ? '$1' + options.projectName : '')
+            .replace(/\{(.)?testName\}/g, '$1' + options.testName)
+            .replace(/\{(.)?testFileName\}/g, '$1' + options.testFileName)
+            .replace(/\{(.)?testFilePath\}/g, '$1' + options.testFilePath)
+            .replace(/\{(.)?arg\}/g, '$1' + options.arg)
+            .replace(/\{(.)?ext\}/g, options.ext ? '$1' + options.ext : '');
 
     return path.normalize(path.resolve(this._configInternal.configDir, snapshotPath));
   }

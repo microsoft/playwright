@@ -417,6 +417,12 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
    * export default defineConfig({
    *   testDir: './tests',
    *   snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
+   *   projects: [
+   *     {
+   *       // Using a function for runtime control
+   *       snapshotPathTemplate: ({ testDir, testFilePath, arg, ext }) => `${testDir}/__screenshots__/${testFilePath}/${arg}${ext}`
+   *     },
+   *   ],
    * });
    * ```
    *
@@ -498,7 +504,7 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
    * 1. Since `snapshotPathTemplate` resolves to relative path, it will be resolved relative to `configDir`.
    * 1. Forward slashes `"/"` can be used as path separators on any platform.
    */
-  snapshotPathTemplate?: string;
+  snapshotPathTemplate?: string|SnapshotPathResolver;
 
   /**
    * Name of a project that needs to run after this and all dependent projects have finished. Teardown is useful to
@@ -1479,6 +1485,12 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * export default defineConfig({
    *   testDir: './tests',
    *   snapshotPathTemplate: '{testDir}/__screenshots__/{testFilePath}/{arg}{ext}',
+   *   projects: [
+   *     {
+   *       // Using a function for runtime control
+   *       snapshotPathTemplate: ({ testDir, testFilePath, arg, ext }) => `${testDir}/__screenshots__/${testFilePath}/${arg}${ext}`
+   *     },
+   *   ],
    * });
    * ```
    *
@@ -1560,7 +1572,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * 1. Since `snapshotPathTemplate` resolves to relative path, it will be resolved relative to `configDir`.
    * 1. Forward slashes `"/"` can be used as path separators on any platform.
    */
-  snapshotPathTemplate?: string;
+  snapshotPathTemplate?: string|SnapshotPathResolver;
 
   /**
    * Directory that will be recursively scanned for test files. Defaults to the directory of the configuration file.

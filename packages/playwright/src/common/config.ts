@@ -24,6 +24,7 @@ import { getPackageJsonPath, mergeObjects } from '../util';
 import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
 import type { FullConfig, FullProject } from '../../types/testReporter';
+import type { SnapshotPathResolver } from '../worker/testInfo';
 
 export type ConfigLocation = {
   resolvedConfigFile?: string;
@@ -154,7 +155,7 @@ export class FullProjectInternal {
   readonly fullyParallel: boolean;
   readonly expect: Project['expect'];
   readonly respectGitIgnore: boolean;
-  readonly snapshotPathTemplate: string;
+  readonly snapshotPathTemplate: string | SnapshotPathResolver;
   readonly ignoreSnapshots: boolean;
   id = '';
   deps: FullProjectInternal[] = [];
