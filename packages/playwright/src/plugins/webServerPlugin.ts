@@ -15,6 +15,7 @@
  */
 import path from 'path';
 import net from 'net';
+import child_process from 'child_process'
 
 import { colors, debug } from 'playwright-core/lib/utilsBundle';
 import { raceAgainstDeadline, launchProcess, monotonicTime, isURLAvailable } from 'playwright-core/lib/utils';
@@ -124,10 +125,18 @@ export class WebServerPlugin implements TestRunnerPlugin {
         if (!signal)
           throw new Error('skip graceful shutdown');
 
-        // launchedProcess is a shell. not all shells forward signals to their child processes.
-        // we need to send the signal to the webserver inside the shell.
-        const webserverPid = launchedProcess.pid!; // TODO: get the actual pid of the webserver
-        process.kill(webserverPid, signal);
+        if (signal === "SIGINT") // proper usage of SIGINT is to send it to the entire process group, see https://www.cons.org/cracauer/sigint.html
+          process.kill(-launchedProcess.pid!, "SIGINT");
+        else { // SIGTERM is sent to the top process only, which then decides what to do
+          let pid = launchedProcess.pid!;
+          if (process.platform === "linux") {
+            for (const webServerPID of this._queryChildProcesses(launchedProcess.pid!))
+              process.kill(webServerPID, 'SIGTERM');
+          } else {
+            process.kill(-pid, "SIGTERM");
+          }
+        }
+          
         return new Promise<void>((resolve, reject) => {
           const timer = timeout !== 0
             ? setTimeout(() => reject(new Error(`process didn't close gracefully within timeout, falling back to SIGKILL`)), timeout)
@@ -154,6 +163,11 @@ export class WebServerPlugin implements TestRunnerPlugin {
       if (debugWebServer.enabled || this._options.stdout === 'pipe')
         this._reporter!.onStdOut?.(prefixOutputLines(data.toString()));
     });
+  }
+
+  private _queryChildProcesses(parentPID: number): number[] {
+    const output = child_process.execSync(`ps --ppid ${parentPID} -o pid`, { encoding: 'utf-8' });
+    return output.split("\n").map(l => parseInt(l.trim(), 10)).filter(l => !Number.isNaN(l))
   }
 
   private async _waitForProcess() {

@@ -752,10 +752,23 @@ test.describe('kill option', () => {
   const files = (additionalOptions = {}) => {
     const port = test.info().workerIndex * 2 + 10510;
     return {
+      'child.js': `
+        process.on('SIGINT', () => { console.log('%%childprocess received SIGINT'); setTimeout(() => process.exit(), 10) })
+        process.on('SIGTERM', () => { console.log('%%childprocess received SIGTERM'); setTimeout(() => process.exit(), 10) })
+        process.on('message', msg => console.log(msg))
+      `,
       'web-server.js': `
-        process.on('SIGINT', () => { console.log('%%webserver received SIGINT but stubbornly refuses to wind down') })
-        process.on('SIGTERM', () => { console.log('%%webserver received SIGTERM but stubbornly refuses to wind down') })
-        const server = require('http').createServer((req, res) => { res.end("ok"); })
+        const child = require("node:child_process").fork('./child.js', { silent: false })
+        
+        process.on('SIGINT', () => {
+          console.log('%%webserver received SIGINT but stubbornly refuses to wind down')
+        })
+        process.on('SIGTERM', () => {
+          console.log('%%webserver received SIGTERM but stubbornly refuses to wind down')
+          child.kill('SIGINT')
+        })
+
+        const server = require("node:http").createServer((req, res) => { res.end("ok"); })
         server.listen(process.argv[2]);
       `,
       'test.spec.ts': `
@@ -765,7 +778,7 @@ test.describe('kill option', () => {
       'playwright.config.ts': `
         module.exports = {
           webServer: {
-            command: 'node web-server.js ${port}',
+            command: 'echo some-precondition && node web-server.js ${port}',
             port: ${port},
             stdout: 'pipe',
             timeout: 3000,
@@ -788,12 +801,12 @@ test.describe('kill option', () => {
 
   test('can be configured to send SIGTERM', async ({ runInlineTest }) => {
     const result = await runInlineTest(files({ kill: { SIGTERM: 500 } }), { workers: 1 });
-    expect(parseOutputLines(result)).toEqual(['webserver received SIGTERM but stubbornly refuses to wind down']);
+    expect(parseOutputLines(result)).toEqual(['webserver received SIGTERM but stubbornly refuses to wind down', 'childprocess received SIGINT']);
   });
 
   test('can be configured to send SIGINT', async ({ runInlineTest }) => {
-    const result = await runInlineTest(files({ kill: { SIGINT: 500 } }), { workers: 1 });
-    expect(parseOutputLines(result)).toEqual(['webserver received SIGINT but stubbornly refuses to wind down']);
+    const result = await runInlineTest(files({ kill: { SIGINT: 5000 } }), { workers: 1 });
+    expect(parseOutputLines(result).sort()).toEqual(['childprocess received SIGINT', 'webserver received SIGINT but stubbornly refuses to wind down']);
   });
 
   test('throws when mixed', async ({ runInlineTest }) => {
