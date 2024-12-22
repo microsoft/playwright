@@ -125,7 +125,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
           throw new Error('skip graceful shutdown');
 
         // proper usage of SIGINT is to send it to the entire process group, see https://www.cons.org/cracauer/sigint.html
-        // there's no such convention for SIGTERM, but we follow GNU bash behaviour, which is also sending to the entire process group
+        // there's no such convention for SIGTERM, so we decide what we want. signaling the process group for consistency.
         process.kill(-launchedProcess.pid!, signal);
 
         return new Promise<void>((resolve, reject) => {
