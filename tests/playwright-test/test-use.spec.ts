@@ -186,4 +186,3 @@ test('test.use() should throw if called from beforeAll ', async ({ runInlineTest
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Playwright Test did not expect test.use() to be called here');
 });
-

@@ -319,4 +319,3 @@ function simpleAnsiRenderer(text, ttyWidth) {
 
   return screenLines.map(line => line.join('')).join('\n');
 }
-

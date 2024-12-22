@@ -6002,7 +6002,7 @@ export interface PlaywrightWorkerOptions {
   /**
    * Browser distribution channel.
    *
-   * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#opt-in-to-new-headless-mode).
+   * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#chromium-new-headless-mode).
    *
    * Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or
    * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).

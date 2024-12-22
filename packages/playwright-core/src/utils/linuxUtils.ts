@@ -77,4 +77,3 @@ function parseOSReleaseText(osReleaseText: string): Map<string, string> {
   }
   return fields;
 }
-
