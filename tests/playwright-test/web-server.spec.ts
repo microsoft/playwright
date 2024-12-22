@@ -755,17 +755,16 @@ test.describe('kill option', () => {
       'child.js': `
         process.on('SIGINT', () => { console.log('%%childprocess received SIGINT'); setTimeout(() => process.exit(), 10) })
         process.on('SIGTERM', () => { console.log('%%childprocess received SIGTERM'); setTimeout(() => process.exit(), 10) })
-        process.on('message', msg => console.log(msg))
+        process.on('message', () => {}) // somehow, this line is needed to receive signals in a forked child process
       `,
       'web-server.js': `
-        const child = require("node:child_process").fork('./child.js', { silent: false })
+        require("node:child_process").fork('./child.js', { silent: false })
         
         process.on('SIGINT', () => {
           console.log('%%webserver received SIGINT but stubbornly refuses to wind down')
         })
         process.on('SIGTERM', () => {
           console.log('%%webserver received SIGTERM but stubbornly refuses to wind down')
-          child.kill('SIGINT')
         })
 
         const server = require("node:http").createServer((req, res) => { res.end("ok"); })
@@ -801,7 +800,7 @@ test.describe('kill option', () => {
 
   test('can be configured to send SIGTERM', async ({ runInlineTest }) => {
     const result = await runInlineTest(files({ kill: { SIGTERM: 500 } }), { workers: 1 });
-    expect(parseOutputLines(result)).toEqual(['webserver received SIGTERM but stubbornly refuses to wind down', 'childprocess received SIGINT']);
+    expect(parseOutputLines(result).sort()).toEqual(['childprocess received SIGTERM', 'webserver received SIGTERM but stubbornly refuses to wind down']);
   });
 
   test('can be configured to send SIGINT', async ({ runInlineTest }) => {
