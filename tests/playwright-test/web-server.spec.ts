@@ -755,7 +755,7 @@ test.describe('kill option', () => {
       'child.js': `
         process.on('SIGINT', () => { console.log('%%childprocess received SIGINT'); setTimeout(() => process.exit(), 10) })
         process.on('SIGTERM', () => { console.log('%%childprocess received SIGTERM'); setTimeout(() => process.exit(), 10) })
-        process.on('message', () => {}) // somehow, this line is needed to receive signals in a forked child process
+        setTimeout(() => {}, 100000) // prevent child from exiting
       `,
       'web-server.js': `
         require("node:child_process").fork('./child.js', { silent: false })
