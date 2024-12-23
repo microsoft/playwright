@@ -24,6 +24,7 @@ import type { FullConfigInternal } from '../common/config';
 import { affectedTestFiles } from '../transform/compilationCache';
 import { InternalReporter } from '../reporters/internalReporter';
 import { LastRunReporter } from './lastRun';
+import { terminalScreen } from '../reporters/base';
 
 type ProjectConfigWithFiles = {
   name: string;
@@ -98,7 +99,7 @@ export class Runner {
   }
 
   async findRelatedTestFiles(files: string[]): Promise<FindRelatedTestFilesReport>  {
-    const errorReporter = createErrorCollectingReporter();
+    const errorReporter = createErrorCollectingReporter(terminalScreen);
     const reporter = new InternalReporter([errorReporter]);
     const status = await runTasks(new TestRun(this._config, reporter), [
       ...createPluginSetupTasks(this._config),
@@ -110,7 +111,7 @@ export class Runner {
   }
 
   async runDevServer() {
-    const reporter = new InternalReporter([createErrorCollectingReporter(true)]);
+    const reporter = new InternalReporter([createErrorCollectingReporter(terminalScreen, true)]);
     const status = await runTasks(new TestRun(this._config, reporter), [
       ...createPluginSetupTasks(this._config),
       createLoadTask('in-process', { failOnLoadErrors: true, filterOnly: false }),
@@ -121,7 +122,7 @@ export class Runner {
   }
 
   async clearCache() {
-    const reporter = new InternalReporter([createErrorCollectingReporter(true)]);
+    const reporter = new InternalReporter([createErrorCollectingReporter(terminalScreen, true)]);
     const status = await runTasks(new TestRun(this._config, reporter), [
       ...createPluginSetupTasks(this._config),
       createClearCacheTask(this._config),
