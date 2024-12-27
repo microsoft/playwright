@@ -95,6 +95,7 @@ const iconNames = [
     `// eslint-disable-next-line key-spacing, object-curly-spacing, comma-spacing, quotes`,
     `const svgJson: SvgJson = ${JSON.stringify(svgJson)};`,
     `export default svgJson;`,
+    '',
   ].join('\n');
   fs.writeFileSync(outFile, code, 'utf-8');
 })();
