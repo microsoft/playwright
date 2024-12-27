@@ -1217,6 +1217,56 @@ Expected accessible description.
 * since: v1.44
 
 
+## async method: LocatorAssertions.toHaveAccessibleErrorMessage
+* since: v1.50
+* langs:
+  - alias-java: hasAccessibleErrorMessage
+
+Ensures the [Locator] points to an element with a given [aria errormessage](https://w3c.github.io/aria/#aria-errormessage).
+
+**Usage**
+
+```js
+const locator = page.getByTestId('username-input');
+await expect(locator).toHaveAccessibleErrorMessage('Username is required.');
+```
+
+```java
+Locator locator = page.getByTestId("username-input");
+assertThat(locator).hasAccessibleErrorMessage("Username is required.");
+```
+
+```python async
+locator = page.get_by_test_id("username-input")
+await expect(locator).to_have_accessible_error_message("Username is required.")
+```
+
+```python sync
+locator = page.get_by_test_id("username-input")
+expect(locator).to_have_accessible_error_message("Username is required.")
+```
+
+```csharp
+var locator = Page.GetByTestId("username-input");
+await Expect(locator).ToHaveAccessibleErrorMessageAsync("Username is required.");
+```
+
+### param: LocatorAssertions.toHaveAccessibleErrorMessage.errorMessage
+* since: v1.50
+- `errorMessage` <[string]|[RegExp]>
+
+Expected accessible error message.
+
+### option: LocatorAssertions.toHaveAccessibleErrorMessage.timeout = %%-js-assertions-timeout-%%
+* since: v1.50
+
+### option: LocatorAssertions.toHaveAccessibleErrorMessage.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.50
+
+### option: LocatorAssertions.toHaveAccessibleErrorMessage.ignoreCase = %%-assertions-ignore-case-%%
+* since: v1.50
+
+
 ## async method: LocatorAssertions.toHaveAccessibleName
 * since: v1.44
 * langs:

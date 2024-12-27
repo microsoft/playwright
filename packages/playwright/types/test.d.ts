@@ -8114,6 +8114,34 @@ interface LocatorAssertions {
 
   /**
    * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with a given
+   * [aria errormessage](https://w3c.github.io/aria/#aria-errormessage).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = page.getByTestId('username-input');
+   * await expect(locator).toHaveAccessibleErrorMessage('Username is required.');
+   * ```
+   *
+   * @param errorMessage Expected accessible error message.
+   * @param options
+   */
+  toHaveAccessibleErrorMessage(errorMessage: string|RegExp, options?: {
+    /**
+     * Whether to perform case-insensitive match.
+     * [`ignoreCase`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-accessible-error-message-option-ignore-case)
+     * option takes precedence over the corresponding regular expression flag if specified.
+     */
+    ignoreCase?: boolean;
+
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with a given
    * [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
    *
    * **Usage**
