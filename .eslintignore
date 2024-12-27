@@ -3,9 +3,6 @@ test/assets/modernizr.js
 /packages/*/lib/
 *.js
 /packages/playwright-core/src/generated/*
-/packages/playwright-core/src/protocol/debug.ts
-/packages/playwright-core/src/protocol/validator.ts
-/packages/playwright-core/src/server/injected/recorder/clipPaths.ts
 /packages/playwright-core/src/third_party/
 /packages/playwright-core/types/*
 /packages/playwright-ct-core/src/generated/*
