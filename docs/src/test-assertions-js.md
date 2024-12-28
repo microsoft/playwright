@@ -308,6 +308,18 @@ test('amount', async () => {
 });
 ```
 
+Note that `expect.extend()` is mutable, so overriding base matchers may cause infinite loops, such as below.
+
+```js title="example.spec.ts"
+import { expect as baseExpect } from '@playwright/test';
+
+export const expect = baseExpect.extend({
+  toHaveURL: async (...args: any[]) => {
+    await expect.toHaveURL(...args);
+  },
+});
+```
+
 ### Compatibility with expect library
 
 :::note
