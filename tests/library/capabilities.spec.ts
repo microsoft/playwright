@@ -429,6 +429,20 @@ it('should not crash when clicking a label with a <input type="file"/>', {
   expect(fileChooser.page()).toBe(page);
 });
 
+it('should not crash when clicking a color input', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/33864'
+  }
+}, async ({ page }) => {
+  await page.setContent('<input type="color">');
+  const input = page.locator('input');
+
+  await expect(input).toBeVisible();
+  await input.click();
+  await expect(input).toBeVisible();
+});
+
 it('should not auto play audio', {
   annotation: {
     type: 'issue',
