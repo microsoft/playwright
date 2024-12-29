@@ -18,16 +18,13 @@ import type { BrowserContext } from '../browserContext';
 import type { Frame } from '../frames';
 import { Page } from '../page';
 import type * as channels from '@protocol/channels';
-import { Dispatcher } from './dispatcher';
+import { Dispatcher, existingDispatcher } from './dispatcher';
 import { createGuid, urlMatches } from '../../utils';
 import { PageDispatcher } from './pageDispatcher';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import * as webSocketMockSource from '../../generated/webSocketMockSource';
 import type * as ws from '../injected/webSocketMock';
 import { eventsHelper } from '../../utils/eventsHelper';
-
-const kBindingInstalledSymbol = Symbol('webSocketRouteBindingInstalled');
-const kInitScriptInstalledSymbol = Symbol('webSocketRouteInitScriptInstalled');
 
 export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, channels.WebSocketRouteChannel, PageDispatcher | BrowserContextDispatcher> implements channels.WebSocketRouteChannel {
   _type_WebSocketRoute = true;
@@ -57,18 +54,18 @@ export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, chann
     (scope as any)._dispatchEvent('webSocketRoute', { webSocketRoute: this });
   }
 
-  static async installIfNeeded(contextDispatcher: BrowserContextDispatcher, target: Page | BrowserContext) {
+  static async installIfNeeded(target: Page | BrowserContext) {
+    const kBindingName = '__pwWebSocketBinding';
     const context = target instanceof Page ? target.context() : target;
-    if (!(context as any)[kBindingInstalledSymbol]) {
-      (context as any)[kBindingInstalledSymbol] = true;
-
-      await context.exposeBinding('__pwWebSocketBinding', false, (source, payload: ws.BindingPayload) => {
+    if (!context.hasBinding(kBindingName)) {
+      await context.exposeBinding(kBindingName, false, (source, payload: ws.BindingPayload) => {
         if (payload.type === 'onCreate') {
-          const pageDispatcher = PageDispatcher.fromNullable(contextDispatcher, source.page);
+          const contextDispatcher = existingDispatcher<BrowserContextDispatcher>(context);
+          const pageDispatcher = contextDispatcher ? PageDispatcher.fromNullable(contextDispatcher, source.page) : undefined;
           let scope: PageDispatcher | BrowserContextDispatcher | undefined;
           if (pageDispatcher && matchesPattern(pageDispatcher, context._options.baseURL, payload.url))
             scope = pageDispatcher;
-          else if (matchesPattern(contextDispatcher, context._options.baseURL, payload.url))
+          else if (contextDispatcher && matchesPattern(contextDispatcher, context._options.baseURL, payload.url))
             scope = contextDispatcher;
           if (scope) {
             new WebSocketRouteDispatcher(scope, payload.id, payload.url, source.frame);
@@ -91,15 +88,15 @@ export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, chann
       });
     }
 
-    if (!(target as any)[kInitScriptInstalledSymbol]) {
-      (target as any)[kInitScriptInstalledSymbol] = true;
+    const kInitScriptName = 'webSocketMockSource';
+    if (!target.initScripts.find(s => s.name === kInitScriptName)) {
       await target.addInitScript(`
         (() => {
           const module = {};
           ${webSocketMockSource.source}
           (module.exports.inject())(globalThis);
         })();
-      `);
+      `, kInitScriptName);
     }
   }
 
