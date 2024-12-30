@@ -41,15 +41,14 @@ class CsvReporter implements Reporter {
   }
 
   onEnd(result: FullResult) {
-    const rows = [['File Name', 'Test Name', 'Expected Status', 'Status', 'Error Message']];
+    const rows = [['Test Name', 'Expected Status', 'Status', 'Error Message']];
     for (const project of this._suite.suites) {
       for (const file of project.suites) {
         for (const test of file.allTests()) {
           if (test.ok())
             continue;
           const row = [];
-          row.push(file.title);
-          row.push(csvEscape(test.title));
+          row.push(csvEscape(`${file.title} :: ${test.title}`));
           row.push(test.expectedStatus);
           row.push(test.outcome());
           const result = test.results.find(r => r.error);
