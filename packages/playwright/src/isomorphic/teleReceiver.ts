@@ -240,8 +240,6 @@ export class TeleReporterReceiver {
     result.error = result.errors?.[0];
     result.attachments = this._parseAttachments(payload.attachments);
     this._reporter.onTestEnd?.(test, result);
-    for (const step of result.steps)
-      step.attachments = step._attachmentIndices.map(index => result.attachments[index]);
     // Free up the memory as won't see these step ids.
     result._stepMap = new Map();
   }
@@ -252,7 +250,7 @@ export class TeleReporterReceiver {
     const parentStep = payload.parentStepId ? result._stepMap.get(payload.parentStepId) : undefined;
 
     const location = this._absoluteLocation(payload.location);
-    const step = new TeleTestStep(payload, parentStep, location);
+    const step = new TeleTestStep(payload, parentStep, location, result);
     if (parentStep)
       parentStep.steps.push(step);
     else
@@ -265,9 +263,9 @@ export class TeleReporterReceiver {
     const test = this._tests.get(testId)!;
     const result = test.results.find(r => r._id === resultId)!;
     const step = result._stepMap.get(payload.id)!;
+    step._endPayload = payload;
     step.duration = payload.duration;
     step.error = payload.error;
-    step._attachmentIndices = payload.attachments ?? [];
     this._reporter.onStepEnd?.(test, result, step);
   }
 
@@ -516,18 +514,20 @@ class TeleTestStep implements reporterTypes.TestStep {
   parent: reporterTypes.TestStep | undefined;
   duration: number = -1;
   steps: reporterTypes.TestStep[] = [];
-  attachments: reporterTypes.TestStep['attachments'] = [];
   error: reporterTypes.TestError | undefined;
 
-  private _startTime: number = 0;
-  _attachmentIndices: number[] = [];
+  private result: TeleTestResult;
+  _endPayload?: JsonTestStepEnd;
 
-  constructor(payload: JsonTestStepStart, parentStep: reporterTypes.TestStep | undefined, location: reporterTypes.Location | undefined) {
+  private _startTime: number = 0;
+
+  constructor(payload: JsonTestStepStart, parentStep: reporterTypes.TestStep | undefined, location: reporterTypes.Location | undefined, result: TeleTestResult) {
     this.title = payload.title;
     this.category = payload.category;
     this.location = location;
     this.parent = parentStep;
     this._startTime = payload.startTime;
+    this.result = result;
   }
 
   titlePath() {
@@ -541,6 +541,10 @@ class TeleTestStep implements reporterTypes.TestStep {
 
   set startTime(value: Date) {
     this._startTime = +value;
+  }
+
+  get attachments() {
+    return this._endPayload!.attachments?.map(index => this.result.attachments[index]) ?? [];
   }
 }
 
