@@ -362,8 +362,13 @@ class JobDispatcher {
       body: params.body !== undefined ? Buffer.from(params.body, 'base64') : undefined
     };
     data.result.attachments.push(attachment);
-    if (params.stepId)
-      data.steps.get(params.stepId)!.attachments.push(attachment);
+    if (params.stepId) {
+      const step = data.steps.get(params.stepId);
+      if (step)
+        step.attachments.push(attachment);
+      else
+        this._reporter.onStdErr?.('Internal error: step id not found: ' + params.stepId);
+    }
   }
 
   private _failTestWithErrors(test: TestCase, errors: TestError[]) {
