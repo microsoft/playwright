@@ -564,8 +564,8 @@ export class Page extends SdkObject {
     await this._delegate.bringToFront();
   }
 
-  async addInitScript(source: string) {
-    const initScript = new InitScript(source);
+  async addInitScript(source: string, name?: string) {
+    const initScript = new InitScript(source, false /* internal */, name);
     this.initScripts.push(initScript);
     await this._delegate.addInitScript(initScript);
   }
@@ -953,8 +953,9 @@ function addPageBinding(playwrightBinding: string, bindingName: string, needsHan
 export class InitScript {
   readonly source: string;
   readonly internal: boolean;
+  readonly name?: string;
 
-  constructor(source: string, internal?: boolean) {
+  constructor(source: string, internal?: boolean, name?: string) {
     const guid = createGuid();
     this.source = `(() => {
       globalThis.__pwInitScripts = globalThis.__pwInitScripts || {};
@@ -965,6 +966,7 @@ export class InitScript {
       ${source}
     })();`;
     this.internal = !!internal;
+    this.name = name;
   }
 }
 

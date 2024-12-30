@@ -314,6 +314,10 @@ export abstract class BrowserContext extends SdkObject {
     return this.doSetHTTPCredentials(httpCredentials);
   }
 
+  hasBinding(name: string) {
+    return this._pageBindings.has(name);
+  }
+
   async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<void> {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
@@ -414,8 +418,8 @@ export abstract class BrowserContext extends SdkObject {
       this._options.httpCredentials = { username, password: password || '' };
   }
 
-  async addInitScript(source: string) {
-    const initScript = new InitScript(source);
+  async addInitScript(source: string, name?: string) {
+    const initScript = new InitScript(source, false /* internal */, name);
     this.initScripts.push(initScript);
     await this.doAddInitScript(initScript);
   }

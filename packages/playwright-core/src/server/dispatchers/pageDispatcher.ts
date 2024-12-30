@@ -191,7 +191,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
     this._webSocketInterceptionPatterns = params.patterns;
     if (params.patterns.length)
-      await WebSocketRouteDispatcher.installIfNeeded(this.parentScope(), this._page);
+      await WebSocketRouteDispatcher.installIfNeeded(this._page);
   }
 
   async expectScreenshot(params: channels.PageExpectScreenshotParams, metadata: CallMetadata): Promise<channels.PageExpectScreenshotResult> {
