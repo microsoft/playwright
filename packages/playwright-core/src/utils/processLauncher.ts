@@ -226,7 +226,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     killSet.delete(killProcessAndCleanup);
     removeProcessHandlersIfNeeded();
     options.log(`[pid=${spawnedProcess.pid}] <kill>`);
-    if (spawnedProcess.pid && !processClosed) {
+    if (spawnedProcess.pid && !spawnedProcess.killed && !processClosed) {
       options.log(`[pid=${spawnedProcess.pid}] <will force kill>`);
       // Force kill the browser.
       try {
