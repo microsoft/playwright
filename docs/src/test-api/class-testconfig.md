@@ -248,7 +248,7 @@ export default defineConfig({
     'revision.email': 'alice@playwright.dev',
     'revision.subject': 'fix: improve accounts page accessibility',
     'revision.timestamp': 1735565401757, // also accepts Date object
-    'revision.link': 'https://github.com/microsoft/playwright/commit/9ba375c06344835d783fe60bf33f857f9bc208a4',
+    'revision.link': 'https://github.com/microsoft/playwright/commit/9ba375c',
     'ci.link': 'https://github.com/microsoft/playwright/actions/runs/12546864899',
     'timestamp': 1735565580248,
   },
