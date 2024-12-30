@@ -30,7 +30,7 @@ export type WebServerPluginOptions = {
   url?: string;
   ignoreHTTPSErrors?: boolean;
   timeout?: number;
-  kill?: { SIGINT?: number, SIGTERM?: number };
+  kill?: { signal: 'SIGINT' | 'SIGTERM', timeout?: number };
   reuseExistingServer?: boolean;
   cwd?: string;
   env?: { [key: string]: string; };
@@ -92,21 +92,6 @@ export class WebServerPlugin implements TestRunnerPlugin {
       throw new Error(`${this._options.url ?? `http://localhost${port ? ':' + port : ''}`} is already used, make sure that nothing is running on the port/url or set reuseExistingServer:true in config.webServer.`);
     }
 
-    let signal: 'SIGINT' | 'SIGTERM' | undefined = undefined;
-    let timeout = 0;
-    if (this._options.kill) {
-      if (typeof this._options.kill.SIGINT === 'number') {
-        signal = 'SIGINT';
-        timeout = this._options.kill.SIGINT;
-      }
-      if (typeof this._options.kill.SIGTERM === 'number') {
-        if (signal)
-          throw new Error('Only one of SIGINT or SIGTERM can be specified in config.webServer.kill');
-        signal = 'SIGTERM';
-        timeout = this._options.kill.SIGTERM;
-      }
-    }
-
     debugWebServer(`Starting WebServer process ${this._options.command}...`);
     const { launchedProcess, gracefullyClose } = await launchProcess({
       command: this._options.command,
@@ -121,8 +106,10 @@ export class WebServerPlugin implements TestRunnerPlugin {
       attemptToGracefullyClose: async () => {
         if (process.platform === 'win32')
           throw new Error('Graceful shutdown is not supported on Windows');
-        if (!signal)
+        if (!this._options.kill)
           throw new Error('skip graceful shutdown');
+
+        const { signal, timeout = 0 } = this._options.kill;
 
         // proper usage of SIGINT is to send it to the entire process group, see https://www.cons.org/cracauer/sigint.html
         // there's no such convention for SIGTERM, so we decide what we want. signaling the process group for consistency.

@@ -799,18 +799,12 @@ test.describe('kill option', () => {
   });
 
   test('can be configured to send SIGTERM', async ({ runInlineTest }) => {
-    const result = await runInlineTest(files({ kill: { SIGTERM: 500 } }), { workers: 1 });
+    const result = await runInlineTest(files({ kill: { signal: 'SIGTERM', timeout: 500 } }), { workers: 1 });
     expect(parseOutputLines(result).sort()).toEqual(['childprocess received SIGTERM', 'webserver received SIGTERM but stubbornly refuses to wind down']);
   });
 
   test('can be configured to send SIGINT', async ({ runInlineTest }) => {
-    const result = await runInlineTest(files({ kill: { SIGINT: 500 } }), { workers: 1 });
+    const result = await runInlineTest(files({ kill: { signal: 'SIGINT', timeout: 500 } }), { workers: 1 });
     expect(parseOutputLines(result).sort()).toEqual(['childprocess received SIGINT', 'webserver received SIGINT but stubbornly refuses to wind down']);
-  });
-
-  test('throws when mixed', async ({ runInlineTest }) => {
-    const result = await runInlineTest(files({ kill: { SIGINT: 500, SIGTERM: 500 } }), { workers: 1 });
-    expect(result.exitCode).toBe(1);
-    expect(result.output).toContain('Only one of SIGINT or SIGTERM can be specified in config.webServer.kill');
   });
 });

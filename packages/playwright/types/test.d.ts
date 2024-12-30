@@ -9631,14 +9631,14 @@ interface TestConfigWebServer {
 
   /**
    * How to shut down the process gracefully. If unspecified, the process group is forcefully `SIGKILL`ed. If set to `{
-   * SIGINT: 500 }`, the process group is sent a `SIGINT` signal, followed by `SIGKILL` if it doesn't exit within 500ms.
-   * You can also use `SIGTERM` instead. A `0` timeout means no `SIGKILL` will be sent. Windows doesn't support `SIGINT`
-   * and `SIGTERM` signals, so this option is ignored.
+   * signal: "SIGINT", timeout: 500 }`, the process group is sent a `SIGINT` signal, followed by `SIGKILL` if it doesn't
+   * exit within 500ms. You can also use `SIGTERM` instead. A `0` timeout means no `SIGKILL` will be sent. Windows
+   * doesn't support `SIGINT` and `SIGTERM` signals, so this option is ignored.
    */
   kill?: {
-    SIGINT?: number;
+    signal: "SIGINT"|"SIGTERM";
 
-    SIGTERM?: number;
+    timeout: number;
   };
 
   /**
