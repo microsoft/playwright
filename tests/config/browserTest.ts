@@ -188,8 +188,7 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   }, { scope: 'worker' }],
 
   autoSkipBidiTest: [async ({ bidiTestSkipPredicate }, run) => {
-    if (bidiTestSkipPredicate(test.info()))
-      test.skip(true);
+    test.fixme(bidiTestSkipPredicate(test.info()), 'marked as timeout in bidi expectations');
     await run();
   }, { auto: true, scope: 'test' }],
 });
