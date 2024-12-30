@@ -544,7 +544,7 @@ class TeleTestStep implements reporterTypes.TestStep {
   }
 
   get attachments() {
-    return this._endPayload!.attachments?.map(index => this.result.attachments[index]) ?? [];
+    return this._endPayload?.attachments?.map(index => this.result.attachments[index]) ?? [];
   }
 }
 
