@@ -42,6 +42,7 @@ const reporters = () => {
     ['./csvReporter', { outputFile: path.join(outputDir, 'report.csv') }],
   ] : [
     ['html', { open: 'on-failure' }],
+    ['./csvReporter', { outputFile: path.join(outputDir, 'report.csv') }],
     ['./expectationReporter', { rebase: false }],
   ];
   return result;
