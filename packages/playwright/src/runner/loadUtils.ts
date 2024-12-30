@@ -194,6 +194,10 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     filterTestsRemoveEmptySuites(rootSuite, test => testsInThisShard.has(test));
   }
 
+  // Explicitly apply --last-failed filter after sharding.
+  if (config.lastFailedTestIdMatcher)
+    filterByTestIds(rootSuite, config.lastFailedTestIdMatcher);
+
   // Now prepend dependency projects without filtration.
   {
     // Filtering 'only' and sharding might have reduced the number of top-level projects.
