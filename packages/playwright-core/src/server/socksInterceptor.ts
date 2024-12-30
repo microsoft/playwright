@@ -83,4 +83,3 @@ export class SocksInterceptor {
 function tChannelForSocks(names: '*' | string[], arg: any, path: string, context: ValidatorContext) {
   throw new ValidationError(`${path}: channels are not expected in SocksSupport`);
 }
-
