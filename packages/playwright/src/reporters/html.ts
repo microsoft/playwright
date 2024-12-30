@@ -515,7 +515,7 @@ class HtmlBuilder {
     };
   }
 
-  private _createTestStep(dedupedStep: DedupedStep, result: TestResultPublic): TestStep {
+  private _createTestStep(dedupedStep: DedupedStep, result: api.TestResult): TestStep {
     const { step, duration, count } = dedupedStep;
     const testStep: TestStep = {
       title: step.title,
