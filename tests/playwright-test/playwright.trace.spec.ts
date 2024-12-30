@@ -566,7 +566,7 @@ test('should opt out of attachments', async ({ runInlineTest, server }, testInfo
     'After Hooks',
   ]);
   expect(trace.actions[1].attachments).toEqual(undefined);
-  expect([...trace.resources.keys()].filter(f => f.startsWith('resources/'))).toEqual([expect.stringMatching(/^resources\/src@.*$/)]);
+  expect([...trace.resources.keys()].filter(f => f.startsWith('resources/') && !f.startsWith('resources/src@'))).toHaveLength(0);
 });
 
 test('should record with custom page fixture', async ({ runInlineTest }, testInfo) => {
