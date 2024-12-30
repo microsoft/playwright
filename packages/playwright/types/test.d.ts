@@ -1220,7 +1220,8 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   maxFailures?: number;
 
   /**
-   * Metadata that will be put directly to the test report serialized as JSON.
+   * Metadata that's made available to the test reporter. The example shows all field supported by Playwright built-in
+   * reporters. Custom reporters might support different fields.
    *
    * **Usage**
    *
@@ -1229,7 +1230,16 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
-   *   metadata: 'acceptance tests',
+   *   metadata: {
+   *     'revision.id': '9ba375c06344835d783fe60bf33f857f9bc208a4',
+   *     'revision.author': 'Alice Bobson',
+   *     'revision.email': 'alice@playwright.dev',
+   *     'revision.subject': 'fix: improve accounts page accessibility',
+   *     'revision.timestamp': 1735565401757, // also accepts Date object
+   *     'revision.link': 'https://github.com/microsoft/playwright/commit/9ba375c06344835d783fe60bf33f857f9bc208a4',
+   *     'ci.link': 'https://github.com/microsoft/playwright/actions/runs/12546864899',
+   *     'timestamp': 1735565580248,
+   *   },
    * });
    * ```
    *
