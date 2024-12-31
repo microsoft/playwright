@@ -32,6 +32,10 @@ const test = testBase.extend<{ crash: () => void }, { dummy: string }>({
   dummy: ['', { scope: 'worker' }],
 });
 
+test.beforeEach(({ platform, browserName }) => {
+  test.slow(platform === 'linux' && browserName === 'webkit', 'WebKit/Linux tests are consistently slower on some Linux environments. Most likely WebContent process is not getting terminated properly and is causing the slowdown.');
+});
+
 test('should emit crash event when page crashes', async ({ page, crash }) => {
   await page.setContent(`<div>This page should crash</div>`);
   crash();
