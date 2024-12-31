@@ -45,15 +45,21 @@ class CsvReporter implements Reporter {
     for (const project of this._suite.suites) {
       for (const file of project.suites) {
         for (const test of file.allTests()) {
-          if (test.ok())
+          // Report fixme tests as failing.
+          const fixme = test.annotations.find(a => a.type === 'fixme');
+          if (test.ok() && !fixme)
             continue;
           const row = [];
           row.push(csvEscape(`${file.title} :: ${test.title}`));
           row.push(test.expectedStatus);
           row.push(test.outcome());
-          const result = test.results.find(r => r.error);
-          const errorMessage = stripAnsi(result?.error?.message.replace(/\s+/g, ' ').trim().substring(0, 1024));
-          row.push(csvEscape(errorMessage ?? ''));
+          if (fixme) {
+            row.push('fixme' + (fixme.description ? `: ${fixme.description}` : ''));
+          } else {
+            const result = test.results.find(r => r.error);
+            const errorMessage = stripAnsi(result?.error?.message.replace(/\s+/g, ' ').trim().substring(0, 1024));
+            row.push(csvEscape(errorMessage ?? ''));
+          }
           rows.push(row);
         }
       }
