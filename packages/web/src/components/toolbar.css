@@ -64,7 +64,7 @@
 }
 
 .toolbar option {
-  background-color: var(--vscode-tab-activeBackground) !important;
+  background-color: var(--vscode-tab-activeBackground)
 }
 
 .toolbar input, .toolbar select {
