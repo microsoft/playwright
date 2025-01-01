@@ -69,6 +69,14 @@
   justify-content: center;
 }
 
+@media (prefers-color-scheme: dark) {
+  .dropdown-content,
+  select,
+  option {
+    background-color: var(--vscode-tab-activeBackground);
+  }
+}
+
 .tabbed-pane-tab-counter.error {
   background: var(--vscode-list-errorForeground);
   color: var(--vscode-button-foreground);
