@@ -79,8 +79,8 @@ export class RawMouseImpl implements input.RawMouse {
 
   async move(x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
     // Bidi throws when x/y are not integers.
-    x = Math.round(x);
-    y = Math.round(y);
+    x = Math.floor(x);
+    y = Math.floor(y);
     await this._performActions([{ type: 'pointerMove', x, y }]);
   }
 
