@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { captureRawStack, monotonicTime, zones, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
+import type { ExpectZone } from 'playwright-core/lib/utils';
 import type { TestInfo, TestStatus, FullProject } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
@@ -26,12 +27,12 @@ import type { Annotation, FullConfigInternal, FullProjectInternal } from '../com
 import type { FullConfig, Location } from '../../types/testReporter';
 import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
-import type { Attachment } from './testTracing';
 import type { StackFrame } from '@protocol/channels';
 import { testInfoError } from './util';
 
 export interface TestStepInternal {
-  complete(result: { error?: Error | unknown, attachments?: Attachment[], suggestedRebaseline?: string }): void;
+  complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
+  attachmentIndices: number[];
   stepId: string;
   title: string;
   category: 'hook' | 'fixture' | 'test.step' | 'expect' | 'attach' | string;
@@ -69,6 +70,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _projectInternal: FullProjectInternal;
   readonly _configInternal: FullConfigInternal;
   private readonly _steps: TestStepInternal[] = [];
+  private readonly _stepMap = new Map<string, TestStepInternal>();
   _onDidFinishTestFunction: (() => Promise<void>) | undefined;
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
@@ -193,7 +195,7 @@ export class TestInfoImpl implements TestInfo {
     this._attachmentsPush = this.attachments.push.bind(this.attachments);
     this.attachments.push = (...attachments: TestInfo['attachments']) => {
       for (const a of attachments)
-        this._attach(a.name, a);
+        this._attach(a, this._expectStepId() ?? this._parentStep()?.stepId);
       return this.attachments.length;
     };
 
@@ -238,7 +240,16 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps'>, parentStep?: TestStepInternal): TestStepInternal {
+  private _parentStep() {
+    return zones.zoneData<TestStepInternal>('stepZone')
+      ?? this._findLastStageStep(this._steps); // If no parent step on stack, assume the current stage as parent.
+  }
+
+  private _expectStepId() {
+    return zones.zoneData<ExpectZone>('expectZone')?.stepId;
+  }
+
+  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps' | 'attachmentIndices'>, parentStep?: TestStepInternal): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
 
     if (data.isStage) {
@@ -246,11 +257,7 @@ export class TestInfoImpl implements TestInfo {
       parentStep = this._findLastStageStep(this._steps);
     } else {
       if (!parentStep)
-        parentStep = zones.zoneData<TestStepInternal>('stepZone');
-      if (!parentStep) {
-        // If no parent step on stack, assume the current stage as parent.
-        parentStep = this._findLastStageStep(this._steps);
-      }
+        parentStep = this._parentStep();
     }
 
     const filteredStack = filteredStackTrace(captureRawStack());
@@ -261,10 +268,12 @@ export class TestInfoImpl implements TestInfo {
     }
     data.location = data.location || filteredStack[0];
 
+    const attachmentIndices: number[] = [];
     const step: TestStepInternal = {
       stepId,
       ...data,
       steps: [],
+      attachmentIndices,
       complete: result => {
         if (step.endWallTime)
           return;
@@ -301,11 +310,13 @@ export class TestInfoImpl implements TestInfo {
         };
         this._onStepEnd(payload);
         const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
-        this._tracing.appendAfterActionForStep(stepId, errorForTrace, result.attachments);
+        const attachments = attachmentIndices.map(i => this.attachments[i]);
+        this._tracing.appendAfterActionForStep(stepId, errorForTrace, attachments);
       }
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
     parentStepList.push(step);
+    this._stepMap.set(stepId, step);
     const payload: StepBeginPayload = {
       testId: this.testId,
       stepId,
@@ -400,23 +411,33 @@ export class TestInfoImpl implements TestInfo {
   // ------------ TestInfo methods ------------
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
-    this._attach(name, await normalizeAndSaveAttachment(this.outputPath(), name, options));
-  }
-
-  private _attach(name: string, attachment: TestInfo['attachments'][0]) {
     const step = this._addStep({
       title: `attach "${name}"`,
       category: 'attach',
     });
-    this._attachmentsPush(attachment);
+    this._attach(await normalizeAndSaveAttachment(this.outputPath(), name, options), step.stepId);
+    step.complete({});
+  }
+
+  private _attach(attachment: TestInfo['attachments'][0], stepId: string | undefined) {
+    const index = this._attachmentsPush(attachment) - 1;
+    if (stepId) {
+      this._stepMap.get(stepId)!.attachmentIndices.push(index);
+    } else {
+      // trace viewer has no means of representing attachments outside of a step, so we create an artificial action
+      const callId = `attach@${++this._lastStepId}`;
+      this._tracing.appendBeforeActionForStep(callId, this._findLastStageStep(this._steps)?.stepId, `attach "${attachment.name}"`, undefined, []);
+      this._tracing.appendAfterActionForStep(callId, undefined, [attachment]);
+    }
+
     this._onAttach({
       testId: this.testId,
       name: attachment.name,
       contentType: attachment.contentType,
       path: attachment.path,
-      body: attachment.body?.toString('base64')
+      body: attachment.body?.toString('base64'),
+      stepId,
     });
-    step.complete({ attachments: [attachment] });
   }
 
   outputPath(...pathSegments: string[]){

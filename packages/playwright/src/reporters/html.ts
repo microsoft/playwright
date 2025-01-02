@@ -505,7 +505,7 @@ class HtmlBuilder {
       duration: result.duration,
       startTime: result.startTime.toISOString(),
       retry: result.retry,
-      steps: dedupeSteps(result.steps).map(s => this._createTestStep(s)),
+      steps: dedupeSteps(result.steps).map(s => this._createTestStep(s, result)),
       errors: formatResultFailure(test, result, '', true).map(error => error.message),
       status: result.status,
       attachments: this._serializeAttachments([
@@ -515,20 +515,26 @@ class HtmlBuilder {
     };
   }
 
-  private _createTestStep(dedupedStep: DedupedStep): TestStep {
+  private _createTestStep(dedupedStep: DedupedStep, result: api.TestResult): TestStep {
     const { step, duration, count } = dedupedStep;
-    const result: TestStep = {
+    const testStep: TestStep = {
       title: step.title,
       startTime: step.startTime.toISOString(),
       duration,
-      steps: dedupeSteps(step.steps).map(s => this._createTestStep(s)),
+      steps: dedupeSteps(step.steps).map(s => this._createTestStep(s, result)),
+      attachments: step.attachments.map(s => {
+        const index = result.attachments.indexOf(s);
+        if (index === -1)
+          throw new Error('Unexpected, attachment not found');
+        return index;
+      }),
       location: this._relativeLocation(step.location),
       error: step.error?.message,
       count
     };
     if (step.location)
-      this._stepsInFile.set(step.location.file, result);
-    return result;
+      this._stepsInFile.set(step.location.file, testStep);
+    return testStep;
   }
 
   private _relativeLocation(location: api.Location | undefined): api.Location | undefined {

@@ -540,7 +540,7 @@ test('should include attachments by default', async ({ runInlineTest, server }, 
     contentType: 'text/plain',
     sha1: expect.any(String),
   }]);
-  expect([...trace.resources.keys()].filter(f => f.startsWith('resources/'))).toHaveLength(1);
+  expect([...trace.resources.keys()]).toContain(`resources/${trace.actions[1].attachments[0].sha1}`);
 });
 
 test('should opt out of attachments', async ({ runInlineTest, server }, testInfo) => {
@@ -566,7 +566,7 @@ test('should opt out of attachments', async ({ runInlineTest, server }, testInfo
     'After Hooks',
   ]);
   expect(trace.actions[1].attachments).toEqual(undefined);
-  expect([...trace.resources.keys()].filter(f => f.startsWith('resources/'))).toHaveLength(0);
+  expect([...trace.resources.keys()].filter(f => f.startsWith('resources/') && !f.startsWith('resources/src@'))).toHaveLength(0);
 });
 
 test('should record with custom page fixture', async ({ runInlineTest }, testInfo) => {
@@ -761,7 +761,7 @@ test('should not throw when screenshot on failure fails', async ({ runInlineTest
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   const trace = await parseTrace(testInfo.outputPath('test-results', 'a-has-download-page', 'trace.zip'));
-  const attachedScreenshots = trace.actionTree.filter(s => s.trim() === `attach "screenshot"`);
+  const attachedScreenshots = trace.actions.flatMap(a => a.attachments);
   // One screenshot for the page, no screenshot for the download page since it should have failed.
   expect(attachedScreenshots.length).toBe(1);
 });

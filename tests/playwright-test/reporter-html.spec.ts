@@ -941,6 +941,32 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(attachment).toBeInViewport();
     });
 
+    test('steps with internal attachments have links', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passing', async ({ page }, testInfo) => {
+            for (let i = 0; i < 100; i++)
+              await testInfo.attach('spacer', { body: 'content' });
+
+            await test.step('step', async () => {
+              testInfo.attachments.push({ name: 'attachment', body: 'content', contentType: 'text/plain' });
+            }) 
+            
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+
+      await showReport();
+      await page.getByRole('link', { name: 'passing' }).click();
+
+      const attachment = page.getByText('attachment', { exact: true });
+      await expect(attachment).not.toBeInViewport();
+      await page.getByLabel('step').getByTitle('link to attachment').click();
+      await expect(attachment).toBeInViewport();
+    });
+
     test('should highlight textual diff', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'helper.ts': `
