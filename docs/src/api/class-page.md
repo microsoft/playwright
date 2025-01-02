@@ -2762,10 +2762,6 @@ This method requires Playwright to be started in a headed mode, with a falsy [`o
 
 Returns the PDF buffer.
 
-:::note
-Generating a pdf is currently only supported in Chromium headless.
-:::
-
 `page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call
 [`method: Page.emulateMedia`] before calling `page.pdf()`:
 
@@ -3974,7 +3970,7 @@ This setting will change the default maximum time for all the methods accepting 
 * since: v1.8
 - `timeout` <[float]>
 
-Maximum time in milliseconds
+Maximum time in milliseconds. Pass `0` to disable timeout.
 
 ## async method: Page.setExtraHTTPHeaders
 * since: v1.8

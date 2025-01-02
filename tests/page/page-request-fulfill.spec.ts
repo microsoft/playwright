@@ -485,4 +485,3 @@ it('should not go to the network for fulfilled requests body', {
   expect(body).toBeTruthy();
   expect(serverHit).toBe(false);
 });
-

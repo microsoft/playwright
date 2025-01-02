@@ -29,7 +29,7 @@ import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector, type GenerateSelectorOptions } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription, getReadonly } from './roleUtils';
+import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription, getReadonly, getElementAccessibleErrorMessage } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
@@ -457,7 +457,8 @@ export class InjectedScript {
     const queryAll = (root: SelectorRoot, body: string) => {
       if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
         return [];
-      return isElementVisible(root as Element) === Boolean(body) ? [root as Element] : [];
+      const visible = body === 'true';
+      return isElementVisible(root as Element) === visible ? [root as Element] : [];
     };
     return { queryAll };
   }
@@ -1320,6 +1321,8 @@ export class InjectedScript {
         received = getElementAccessibleName(element, false /* includeHidden */);
       } else if (expression === 'to.have.accessible.description') {
         received = getElementAccessibleDescription(element, false /* includeHidden */);
+      } else if (expression === 'to.have.accessible.error.message') {
+        received = getElementAccessibleErrorMessage(element);
       } else if (expression === 'to.have.role') {
         received = getAriaRole(element) || '';
       } else if (expression === 'to.have.title') {

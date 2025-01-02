@@ -446,7 +446,7 @@ Expected options currently selected.
 * since: v1.49
 * langs: python
 
-The opposite of [`method: LocatorAssertions.toMatchAriaSnapshot`].
+The opposite of [`method: LocatorAssertions.toMatchAriaSnapshot#2`].
 
 ### param: LocatorAssertions.NotToMatchAriaSnapshot.expected
 * since: v1.49
@@ -1215,6 +1215,56 @@ Expected accessible description.
 
 ### option: LocatorAssertions.toHaveAccessibleDescription.ignoreCase = %%-assertions-ignore-case-%%
 * since: v1.44
+
+
+## async method: LocatorAssertions.toHaveAccessibleErrorMessage
+* since: v1.50
+* langs:
+  - alias-java: hasAccessibleErrorMessage
+
+Ensures the [Locator] points to an element with a given [aria errormessage](https://w3c.github.io/aria/#aria-errormessage).
+
+**Usage**
+
+```js
+const locator = page.getByTestId('username-input');
+await expect(locator).toHaveAccessibleErrorMessage('Username is required.');
+```
+
+```java
+Locator locator = page.getByTestId("username-input");
+assertThat(locator).hasAccessibleErrorMessage("Username is required.");
+```
+
+```python async
+locator = page.get_by_test_id("username-input")
+await expect(locator).to_have_accessible_error_message("Username is required.")
+```
+
+```python sync
+locator = page.get_by_test_id("username-input")
+expect(locator).to_have_accessible_error_message("Username is required.")
+```
+
+```csharp
+var locator = Page.GetByTestId("username-input");
+await Expect(locator).ToHaveAccessibleErrorMessageAsync("Username is required.");
+```
+
+### param: LocatorAssertions.toHaveAccessibleErrorMessage.errorMessage
+* since: v1.50
+- `errorMessage` <[string]|[RegExp]>
+
+Expected accessible error message.
+
+### option: LocatorAssertions.toHaveAccessibleErrorMessage.timeout = %%-js-assertions-timeout-%%
+* since: v1.50
+
+### option: LocatorAssertions.toHaveAccessibleErrorMessage.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.50
+
+### option: LocatorAssertions.toHaveAccessibleErrorMessage.ignoreCase = %%-assertions-ignore-case-%%
+* since: v1.50
 
 
 ## async method: LocatorAssertions.toHaveAccessibleName
@@ -2121,7 +2171,58 @@ Expected options currently selected.
 * since: v1.23
 
 
-## async method: LocatorAssertions.toMatchAriaSnapshot
+## async method: LocatorAssertions.toMatchAriaSnapshot#1
+* since: v1.50
+* langs:
+  - alias-java: matchesAriaSnapshot
+
+Asserts that the target element matches the given [accessibility snapshot](../aria-snapshots.md).
+
+**Usage**
+
+```js
+await expect(page.locator('body')).toMatchAriaSnapshot();
+await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'snapshot' });
+await expect(page.locator('body')).toMatchAriaSnapshot({ path: '/path/to/snapshot.yml' });
+```
+
+```python async
+await expect(page.locator('body')).to_match_aria_snapshot(path='/path/to/snapshot.yml')
+```
+
+```python sync
+expect(page.locator('body')).to_match_aria_snapshot(path='/path/to/snapshot.yml')
+```
+
+```csharp
+await Expect(page.Locator("body")).ToMatchAriaSnapshotAsync(new { Path = "/path/to/snapshot.yml" }); 
+```
+
+```java
+assertThat(page.locator("body")).matchesAriaSnapshot(new LocatorAssertions.MatchesAriaSnapshotOptions().setPath("/path/to/snapshot.yml"));
+```
+
+### option: LocatorAssertions.toMatchAriaSnapshot#1.name
+* since: v1.50
+* langs: js
+- `name` <[string]>
+
+Name of the snapshot to store in the snapshot folder corresponding to this test. Generates ordinal name if not specified.
+
+### option: LocatorAssertions.toMatchAriaSnapshot#1.path
+* since: v1.50
+- `path` <[string]>
+
+Path to the YAML snapshot file.
+
+### option: LocatorAssertions.toMatchAriaSnapshot#1.timeout = %%-js-assertions-timeout-%%
+* since: v1.50
+
+### option: LocatorAssertions.toMatchAriaSnapshot#1.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.50
+
+
+## async method: LocatorAssertions.toMatchAriaSnapshot#2
 * since: v1.49
 * langs:
   - alias-java: matchesAriaSnapshot
@@ -2170,12 +2271,12 @@ assertThat(page.locator("body")).matchesAriaSnapshot("""
 """);
 ```
 
-### param: LocatorAssertions.toMatchAriaSnapshot.expected
+### param: LocatorAssertions.toMatchAriaSnapshot#2.expected
 * since: v1.49
 - `expected` <string>
 
-### option: LocatorAssertions.toMatchAriaSnapshot.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toMatchAriaSnapshot#2.timeout = %%-js-assertions-timeout-%%
 * since: v1.49
 
-### option: LocatorAssertions.toMatchAriaSnapshot.timeout = %%-csharp-java-python-assertions-timeout-%%
+### option: LocatorAssertions.toMatchAriaSnapshot#2.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.49

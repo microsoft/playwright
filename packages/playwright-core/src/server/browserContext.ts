@@ -24,7 +24,6 @@ import type * as frames from './frames';
 import { helper } from './helper';
 import * as network from './network';
 import { InitScript } from './page';
-import type { PageDelegate } from './page';
 import { Page, PageBinding } from './page';
 import type { Progress, ProgressController } from './progress';
 import type { Selectors } from './selectors';
@@ -257,9 +256,13 @@ export abstract class BrowserContext extends SdkObject {
     this.emit(BrowserContext.Events.Close);
   }
 
+  pages(): Page[] {
+    return this.possiblyUninitializedPages().filter(page => page.initializedOrUndefined());
+  }
+
   // BrowserContext methods.
-  abstract pages(): Page[];
-  abstract newPageDelegate(): Promise<PageDelegate>;
+  abstract possiblyUninitializedPages(): Page[];
+  abstract doCreateNewPage(): Promise<Page>;
   abstract addCookies(cookies: channels.SetNetworkCookie[]): Promise<void>;
   abstract setGeolocation(geolocation?: types.Geolocation): Promise<void>;
   abstract setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void>;
@@ -311,6 +314,10 @@ export abstract class BrowserContext extends SdkObject {
     return this.doSetHTTPCredentials(httpCredentials);
   }
 
+  hasBinding(name: string) {
+    return this._pageBindings.has(name);
+  }
+
   async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<void> {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
@@ -358,31 +365,34 @@ export abstract class BrowserContext extends SdkObject {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async _loadDefaultContextAsIs(progress: Progress): Promise<Page[]> {
-    if (!this.pages().length) {
+  async _loadDefaultContextAsIs(progress: Progress): Promise<Page | undefined> {
+    if (!this.possiblyUninitializedPages().length) {
       const waitForEvent = helper.waitForEvent(progress, this, BrowserContext.Events.Page);
       progress.cleanupWhenAborted(() => waitForEvent.dispose);
-      const page = (await waitForEvent.promise) as Page;
-      if (page._pageIsError)
-        throw page._pageIsError;
+      // Race against BrowserContext.close
+      await Promise.race([waitForEvent.promise, this._closePromise]);
     }
-    const pages = this.pages();
-    if (pages[0]._pageIsError)
-      throw pages[0]._pageIsError;
-    await pages[0].mainFrame()._waitForLoadState(progress, 'load');
-    return pages;
+    const page = this.possiblyUninitializedPages()[0];
+    if (!page)
+      return;
+    const pageOrError = await page.waitForInitializedOrError();
+    if (pageOrError instanceof Error)
+      throw pageOrError;
+    await page.mainFrame()._waitForLoadState(progress, 'load');
+    return page;
   }
 
   async _loadDefaultContext(progress: Progress) {
-    const pages = await this._loadDefaultContextAsIs(progress);
+    const defaultPage = await this._loadDefaultContextAsIs(progress);
+    if (!defaultPage)
+      return;
     const browserName = this._browser.options.name;
     if ((this._options.isMobile && browserName === 'chromium') || (this._options.locale && browserName === 'webkit')) {
       // Workaround for:
       // - chromium fails to change isMobile for existing page;
       // - webkit fails to change locale for existing page.
-      const oldPage = pages[0];
       await this.newPage(progress.metadata);
-      await oldPage.close(progress.metadata);
+      await defaultPage.close(progress.metadata);
     }
   }
 
@@ -408,8 +418,8 @@ export abstract class BrowserContext extends SdkObject {
       this._options.httpCredentials = { username, password: password || '' };
   }
 
-  async addInitScript(source: string) {
-    const initScript = new InitScript(source);
+  async addInitScript(source: string, name?: string) {
+    const initScript = new InitScript(source, false /* internal */, name);
     this.initScripts.push(initScript);
     await this.doAddInitScript(initScript);
   }
@@ -480,10 +490,10 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   async newPage(metadata: CallMetadata): Promise<Page> {
-    const pageDelegate = await this.newPageDelegate();
+    const page = await this.doCreateNewPage();
     if (metadata.isServerSide)
-      pageDelegate.potentiallyUninitializedPage().markAsServerSideOnly();
-    const pageOrError = await pageDelegate.pageOrError();
+      page.markAsServerSideOnly();
+    const pageOrError = await page.waitForInitializedOrError();
     if (pageOrError instanceof Page) {
       if (pageOrError.isClosed())
         throw new Error('Page has been closed.');

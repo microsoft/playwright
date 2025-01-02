@@ -421,6 +421,18 @@ it('should treat input value as text in templates', async ({ page }) => {
   `);
 });
 
+it('should not use on as checkbox value', async ({ page }) => {
+  await page.setContent(`
+    <input type='checkbox'>
+    <input type='radio'>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - checkbox
+    - radio
+  `);
+});
+
 it('should respect aria-owns', async ({ page }) => {
   await page.setContent(`
     <a href='about:blank' aria-owns='input p'>
@@ -470,6 +482,7 @@ it('should escape yaml text in text nodes', async ({ page }) => {
       {<a href="#">four</a>}
       [<a href="#">five</a>]
     </ul>
+    <div>[Select all]</div>
   `);
 
   await checkAndMatchSnapshot(page.locator('body'), `
@@ -492,6 +505,7 @@ it('should escape yaml text in text nodes', async ({ page }) => {
       - text: "} ["
       - link "five"
       - text: "]"
+    - text: "[Select all]"
   `);
 });
 

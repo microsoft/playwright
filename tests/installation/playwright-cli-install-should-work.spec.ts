@@ -14,23 +14,26 @@
  * limitations under the License.
  */
 import { test, expect } from './npmTest';
+import { chromium } from '@playwright/test';
 import path from 'path';
 
 test.use({ isolateBrowsers: true });
 
-test('install command should work', async ({ exec, installedSoftwareOnDisk }) => {
+const extraInstalledSoftware = process.platform === 'win32' ? ['winldd' as const] : [];
+
+test('install command should work', async ({ exec, checkInstalledSoftwareOnDisk }) => {
   await exec('npm i playwright');
 
   await test.step('playwright install chromium', async () => {
     const result = await exec('npx playwright install chromium');
-    expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg']);
-    expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'chromium-headless-shell', 'ffmpeg']);
+    expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
+    await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
   });
 
   await test.step('playwright install', async () => {
     const result = await exec('npx playwright install');
     expect(result).toHaveLoggedSoftwareDownload(['firefox', 'webkit']);
-    expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit']);
+    await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit', ...extraInstalledSoftware]);
   });
 
   await exec('node sanity.js playwright', { env: { PLAYWRIGHT_BROWSERS_PATH: '0' } });
@@ -47,12 +50,12 @@ test('install command should work', async ({ exec, installedSoftwareOnDisk }) =>
   }
 });
 
-test('should be able to remove browsers', async ({ exec, installedSoftwareOnDisk }) => {
+test('should be able to remove browsers', async ({ exec, checkInstalledSoftwareOnDisk }) => {
   await exec('npm i playwright');
   await exec('npx playwright install chromium');
-  expect(await installedSoftwareOnDisk()).toEqual(['chromium', 'chromium-headless-shell', 'ffmpeg']);
+  await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
   await exec('npx playwright uninstall');
-  expect(await installedSoftwareOnDisk()).toEqual([]);
+  await checkInstalledSoftwareOnDisk([...extraInstalledSoftware]);
 });
 
 test('should print the right install command without browsers', async ({ exec }) => {
@@ -90,8 +93,51 @@ test('subsequent installs works', async ({ exec }) => {
   await exec('node --unhandled-rejections=strict', path.join('node_modules', '@playwright', 'browser-chromium', 'install.js'));
 });
 
-test('install playwright-chromium should work', async ({ exec, installedSoftwareOnDisk }) => {
+test('install playwright-chromium should work', async ({ exec }) => {
   await exec('npm i playwright-chromium');
   await exec('npx playwright install chromium');
   await exec('node sanity.js playwright-chromium chromium');
+});
+
+test('should print error if recording video without ffmpeg', async ({ exec, writeFiles }) => {
+  await exec('npm i playwright');
+
+  await writeFiles({
+    'launch.js': `
+      const playwright = require('playwright');
+      (async () => {
+        const browser = await playwright.chromium.launch({ executablePath: ${JSON.stringify(chromium.executablePath())} });
+        try {
+          const context = await browser.newContext({ recordVideo: { dir: 'videos' } });
+          const page = await context.newPage();
+        } finally {
+          await browser.close();
+        }
+      })().catch(e => {
+        console.error(e);
+        process.exit(1);
+      });
+    `,
+    'launchPersistentContext.js': `
+      const playwright = require('playwright');
+      process.on('unhandledRejection', (e) => console.error('unhandledRejection', e));
+      (async () => {
+        const context = await playwright.chromium.launchPersistentContext('', { executablePath: ${JSON.stringify(chromium.executablePath())}, recordVideo: { dir: 'videos' } });
+      })().catch(e => {
+        console.error(e);
+        process.exit(1);
+      });
+    `,
+  });
+
+  await test.step('BrowserType.launch', async () => {
+    const result = await exec('node', 'launch.js', { expectToExitWithError: true });
+    expect(result).toContain(`browserContext.newPage: Executable doesn't exist at`);
+  });
+
+  await test.step('BrowserType.launchPersistentContext', async () => {
+    const result = await exec('node', 'launchPersistentContext.js', { expectToExitWithError: true });
+    expect(result).not.toContain('unhandledRejection');
+    expect(result).toContain(`browserType.launchPersistentContext: Executable doesn't exist at`);
+  });
 });

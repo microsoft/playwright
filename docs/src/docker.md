@@ -103,6 +103,88 @@ Using `--ipc=host` is recommended when using Chrome ([Docker docs](https://docs.
 
 See our [Continuous Integration guides](./ci.md) for sample configs.
 
+### Remote Connection
+
+You can run Playwright Server in Docker while keeping your tests running on the host system or another machine. This is useful for running tests on unsupported Linux distributions or remote execution scenarios.
+
+#### Running the Playwright Server
+
+Start the Playwright Server in Docker:
+
+```bash
+docker run -p 3000:3000 --rm --init -it --workdir /home/pwuser --user pwuser mcr.microsoft.com/playwright:v%%VERSION%%-noble /bin/sh -c "npx -y playwright@%%VERSION%% run-server --port 3000 --host 0.0.0.0"
+```
+
+#### Connecting to the Server
+* langs: js
+
+There are two ways to connect to the remote Playwright server:
+
+1. Using environment variable with `@playwright/test`:
+
+```bash
+PW_TEST_CONNECT_WS_ENDPOINT=ws://127.0.0.1:3000/ npx playwright test
+```
+
+2. Using the [`method: BrowserType.connect`] API for other applications:
+
+```js
+const browser = await playwright['chromium'].connect('ws://127.0.0.1:3000/');
+```
+
+#### Connecting to the Server
+* langs: python, csharp, java
+
+```python sync
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as p:
+    browser = p.chromium.connect("ws://127.0.0.1:3000/")
+```
+
+```python async
+from playwright.async_api import async_playwright
+
+async with async_playwright() as p:
+    browser = await p.chromium.connect("ws://127.0.0.1:3000/")
+```
+
+```csharp
+using Microsoft.Playwright;
+
+using var playwright = await Playwright.CreateAsync();
+await using var browser = await playwright.Chromium.ConnectAsync("ws://127.0.0.1:3000/");
+```
+
+```java
+package org.example;
+
+import com.microsoft.playwright.*;
+import java.nio.file.Paths;
+
+public class App {
+  public static void main(String[] args) {
+    try (Playwright playwright = Playwright.create()) {
+      Browser browser = playwright.chromium().connect("ws://127.0.0.1:3000/");
+    }
+  }
+}
+```
+
+#### Network Configuration
+
+If you need to access local servers from within the Docker container:
+
+```bash
+docker run --add-host=hostmachine:host-gateway -p 3000:3000 --rm --init -it --workdir /home/pwuser --user pwuser mcr.microsoft.com/playwright:v%%VERSION%%-noble /bin/sh -c "npx -y playwright@%%VERSION%% run-server --port 3000 --host 0.0.0.0"
+```
+
+This makes `hostmachine` point to the host's localhost. Your tests should use `hostmachine` instead of `localhost` when accessing local servers.
+
+:::note
+When running tests remotely, ensure the Playwright version in your tests matches the version running in the Docker container.
+:::
+
 ## Image tags
 
 See [all available image tags].

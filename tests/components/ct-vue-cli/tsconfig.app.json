@@ -1,5 +1,5 @@
 {
-  "extends": "@vue/tsconfig/tsconfig.web.json",
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
   "include": ["src/**/*", "src/**/*.vue"],
   "exclude": ["src/**/*.spec.*/*"],
   "compilerOptions": {

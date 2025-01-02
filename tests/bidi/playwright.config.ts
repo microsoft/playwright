@@ -39,8 +39,10 @@ const reporters = () => {
     hasDebugOutput ? ['list'] : ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
     ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
+    ['./csvReporter', { outputFile: path.join(outputDir, 'report.csv') }],
   ] : [
     ['html', { open: 'on-failure' }],
+    ['./csvReporter', { outputFile: path.join(outputDir, 'report.csv') }],
     ['./expectationReporter', { rebase: false }],
   ];
   return result;
@@ -58,7 +60,7 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   workers: process.env.CI ? 2 : undefined,
   fullyParallel: !process.env.CI,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 3 : 0,
+  retries: 0, // No retries even on CI for now.
   reporter: reporters(),
   projects: [],
 };
@@ -66,7 +68,6 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
 const executablePath = process.env.BIDIPATH;
 if (executablePath && !process.env.TEST_WORKER_INDEX)
   console.error(`Using executable at ${executablePath}`);
-const testIgnore: RegExp[] = [];
 const browserToChannels = {
   '_bidiChromium': ['bidi-chromium', 'bidi-chrome-canary', 'bidi-chrome-stable'],
   '_bidiFirefox': ['bidi-firefox-nightly', 'bidi-firefox-beta', 'bidi-firefox-stable'],
@@ -74,6 +75,17 @@ const browserToChannels = {
 for (const [key, channels] of Object.entries(browserToChannels)) {
   const browserName: any = key;
   for (const channel of channels) {
+    const testIgnore: RegExp[] = [
+      /library\/debug-controller/,
+      /library\/inspector/,
+      /library\/trace-viewer.spec.ts/,
+      /library\/tracing.spec.ts/,
+      /page\/page-leaks.spec.ts/,
+    ];
+    if (browserName.toLowerCase().includes('firefox'))
+      testIgnore.push(/chromium/);
+    if (browserName.toLowerCase().includes('chromium'))
+      testIgnore.push(/firefox/);
     for (const folder of ['library', 'page']) {
       config.projects.push({
         name: `${channel}-${folder}`,

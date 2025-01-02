@@ -926,4 +926,34 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).ClickAsync();`)
     const predicate = (msg: ConsoleMessage) => msg.type() === 'error' && /Content[\- ]Security[\- ]Policy/i.test(msg.text());
     await expect(page.waitForEvent('console', { predicate, timeout: 1000 })).rejects.toThrow();
   });
+
+  test('should clear when recording is disabled', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33802' } }, async ({ openRecorder }) => {
+    const { recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <button id="foo" onclick="console.log('click')">Foo</button>
+      <button id="bar" onclick="console.log('click')">Bar</button>
+    `);
+
+    await recorder.hoverOverElement('#foo');
+    let [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'click'),
+      recorder.trustedClick(),
+    ]);
+
+    expect(sources.get('JavaScript').text).toContain(`getByRole('button', { name: 'Foo' }).click()`);
+
+    await recorder.recorderPage.getByRole('button', { name: 'Record' }).click();
+    await recorder.recorderPage.getByRole('button', { name: 'Clear' }).click();
+    await recorder.recorderPage.getByRole('button', { name: 'Record' }).click();
+
+    await recorder.hoverOverElement('#bar');
+    [sources] = await Promise.all([
+      recorder.waitForOutput('JavaScript', 'click'),
+      recorder.trustedClick(),
+    ]);
+
+    expect(sources.get('JavaScript').text).toContain(`getByRole('button', { name: 'Bar' }).click()`);
+    expect(sources.get('JavaScript').text).not.toContain(`getByRole('button', { name: 'Foo' })`);
+  });
 });

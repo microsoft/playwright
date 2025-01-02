@@ -115,6 +115,71 @@ test('should check types of fixtures', async ({ runTSC }) => {
           await use(x);
         },
       });
+
+      base.extend({
+        page: async ({ page }) => {
+          type IsPage = (typeof page) extends Page ? true : never;
+          const isPage: IsPage = true;
+        },
+      });
+
+      base.extend<{ myFixture: (arg: number) => void }>({
+        page: async ({ page }) => {
+          type IsPage = (typeof page) extends Page ? true : never;
+          const isPage: IsPage = true;
+        },
+      });
+
+      base.extend({
+        // @ts-expect-error
+        myFixture: async ({ page }) => {
+          type IsPage = (typeof page) extends Page ? true : never;
+          const isPage: IsPage = true;
+        }
+      });
+
+      base.extend<{ myFixture: (arg: number) => void }>({
+        myFixture: async ({ page }) => {
+          type IsPage = (typeof page) extends Page ? true : never;
+          const isPage: IsPage = true;
+        }
+      });
+
+      base.extend({
+        page: async ({ page }) => {
+          type IsPage = (typeof page) extends Page ? true : never;
+          const isPage: IsPage = true;
+        },
+        // @ts-expect-error
+        myFixture: async ({ page }) => {
+          type IsPage = (typeof page) extends Page ? true : never;
+          const isPage: IsPage = true;
+        }
+      });
+
+      base.extend<{ myFixture: (arg: number) => void }>({
+        page: async ({ page }) => {
+          type IsPage = (typeof page) extends Page ? true : never;
+          const isPage: IsPage = true;
+        },
+        myFixture: async ({ page }) => {
+          type IsPage = (typeof page) extends Page ? true : never;
+          const isPage: IsPage = true;
+        }
+      });
+
+      base.extend<{ myFixture: (arg: number) => void }>({
+        // @ts-expect-error
+        myFixture: (arg: number) => {},
+      });
+
+      base.extend<{ myFixture: (arg: number) => void }>({
+        myFixture: async (_, use) => {
+          use((arg: number) => {});
+          // @ts-expect-error
+          use((arg: string) => {});
+        }
+      });
     `,
     'playwright.config.ts': `
       import { MyOptions } from './helper';

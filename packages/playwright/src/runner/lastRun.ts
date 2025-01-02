@@ -43,7 +43,7 @@ export class LastRunReporter implements ReporterV2 {
       return;
     try {
       const lastRunInfo = JSON.parse(await fs.promises.readFile(this._lastRunFile, 'utf8')) as LastRunInfo;
-      this._config.testIdMatcher = id => lastRunInfo.failedTests.includes(id);
+      this._config.lastFailedTestIdMatcher = id => lastRunInfo.failedTests.includes(id);
     } catch {
     }
   }

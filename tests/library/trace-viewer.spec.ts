@@ -240,7 +240,7 @@ test('should show params and return value', async ({ showTraceViewer }) => {
   await traceViewer.selectAction('page.evaluate');
   await expect(traceViewer.callLines).toHaveText([
     /page.evaluate/,
-    /wall time:[0-9/:,APM ]+/,
+    /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     /expression:"\({↵    a↵  }\) => {↵    console\.log\(\'Info\'\);↵    console\.warn\(\'Warning\'\);↵    console/,
     'isFunction:true',
@@ -251,7 +251,7 @@ test('should show params and return value', async ({ showTraceViewer }) => {
   await traceViewer.selectAction(`locator('button')`);
   await expect(traceViewer.callLines).toContainText([
     /expect.toHaveText/,
-    /wall time:[0-9/:,APM ]+/,
+    /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     /locator:locator\('button'\)/,
     /expression:"to.have.text"/,
@@ -266,7 +266,7 @@ test('should show null as a param', async ({ showTraceViewer, browserName }) => 
   await traceViewer.selectAction('page.evaluate', 1);
   await expect(traceViewer.callLines).toHaveText([
     /page.evaluate/,
-    /wall time:[0-9/:,APM ]+/,
+    /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     'expression:"() => 1 + 1"',
     'isFunction:true',
@@ -1539,12 +1539,16 @@ test('canvas clipping in iframe', async ({ runAndTrace, page, server }) => {
     await page.setContent(`
       <iframe src="${server.PREFIX}/screenshots/canvas.html#canvas-on-edge"></iframe>
     `);
+    await page.locator('iframe').contentFrame().locator('canvas').scrollIntoViewIfNeeded();
     await rafraf(page, 5);
   });
 
+  const msg = await traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') });
+  expect(msg.text()).toEqual('canvas drawn: [1,1,11,20]');
+
   const snapshot = await traceViewer.snapshotFrame('page.evaluate');
   const canvas = snapshot.locator('iframe').contentFrame().locator('canvas');
-  await expect(canvas).toHaveAttribute('title', `Playwright displays canvas contents on a best-effort basis. It doesn't support canvas elements inside an iframe yet. If this impacts your workflow, please open an issue so we can prioritize.`);
+  await expect(canvas).toHaveAttribute('title', 'Canvas contents are displayed on a best-effort basis based on viewport screenshots taken during test execution.');
 });
 
 test('should show only one pointer with multilevel iframes', async ({ page, runAndTrace, server, browserName }) => {

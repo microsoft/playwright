@@ -268,10 +268,12 @@ it.describe('snapshots', () => {
   });
 });
 
-function distillSnapshot(snapshot, distillTarget = true) {
+function distillSnapshot(snapshot, options: { distillTarget: boolean, distillBoundingRect: boolean } = { distillTarget: true, distillBoundingRect: true }) {
   let { html } = snapshot.render();
-  if (distillTarget)
+  if (options.distillTarget)
     html = html.replace(/\s__playwright_target__="[^"]+"/g, '');
+  if (options.distillBoundingRect)
+    html = html.replace(/\s__playwright_bounding_rect__="[^"]+"/g, '');
   return html
       .replace(/<style>\*,\*::before,\*::after { visibility: hidden }<\/style>/, '')
       .replace(/<script>[.\s\S]+<\/script>/, '')

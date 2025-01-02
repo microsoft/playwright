@@ -129,7 +129,13 @@ You can use the `globalSetup` option in the [configuration file](./test-configur
 Similarly, use `globalTeardown` to run something once after all the tests. Alternatively, let `globalSetup` return a function that will be used as a global teardown. You can pass data such as port number, authentication tokens, etc. from your global setup to your tests using environment variables.
 
 :::note
-Using `globalSetup` and `globalTeardown` will not produce traces or artifacts, and options like `headless` or `testIdAttribute` specified in the config file are not applied. If you want to produce traces and artifacts and respect config options, use [project dependencies](#option-1-project-dependencies).
+Beware of `globalSetup` and `globalTeardown` caveats:
+
+- These methods will not produce traces or artifacts unless explictly enabled, as described in [Capturing trace of failures during global setup](#capturing-trace-of-failures-during-global-setup).
+- Options sush as `headless` or `testIdAttribute` specified in the config file are not applied,
+- An uncaught exception thrown in `globalSetup` will prevent Playwright from running tests, and no test results will appear in reporters.
+
+Consider using [project dependencies](#option-1-project-dependencies) to produce traces, artifacts, respect config options and get test results in reporters even in case of a setup failure.
 :::
 
 ```js title="playwright.config.ts"

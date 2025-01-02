@@ -3609,8 +3609,6 @@ export interface Page {
   /**
    * Returns the PDF buffer.
    *
-   * **NOTE** Generating a pdf is currently only supported in Chromium headless.
-   *
    * `page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call
    * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) before calling
    * `page.pdf()`:
@@ -4296,7 +4294,7 @@ export interface Page {
    * takes priority over
    * [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout).
    *
-   * @param timeout Maximum time in milliseconds
+   * @param timeout Maximum time in milliseconds. Pass `0` to disable timeout.
    */
   setDefaultTimeout(timeout: number): void;
 
@@ -9195,7 +9193,7 @@ export interface BrowserContext {
    * take priority over
    * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout).
    *
-   * @param timeout Maximum time in milliseconds
+   * @param timeout Maximum time in milliseconds. Pass `0` to disable timeout.
    */
   setDefaultTimeout(timeout: number): void;
 
@@ -9591,10 +9589,11 @@ export interface Browser {
    * In case this browser is connected to, clears all created contexts belonging to this browser and disconnects from
    * the browser server.
    *
-   * **NOTE** This is similar to force quitting the browser. Therefore, you should call
+   * **NOTE** This is similar to force-quitting the browser. To close pages gracefully and ensure you receive page close
+   * events, call
    * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) on
-   * any [BrowserContext](https://playwright.dev/docs/api/class-browsercontext)'s you explicitly created earlier with
-   * [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) **before**
+   * any [BrowserContext](https://playwright.dev/docs/api/class-browsercontext) instances you explicitly created earlier
+   * using [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context) **before**
    * calling [browser.close([options])](https://playwright.dev/docs/api/class-browser#browser-close).
    *
    * The [Browser](https://playwright.dev/docs/api/class-browser) object itself is considered to be disposed and cannot
@@ -12430,7 +12429,7 @@ export interface Locator {
 
   /**
    * Captures the aria snapshot of the given element. Read more about [aria snapshots](https://playwright.dev/docs/aria-snapshots) and
-   * [expect(locator).toMatchAriaSnapshot(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-match-aria-snapshot)
+   * [expect(locator).toMatchAriaSnapshot(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-match-aria-snapshot-2)
    * for the corresponding assertion.
    *
    * **Usage**
@@ -13854,18 +13853,22 @@ export interface Locator {
   /**
    * Creates a locator matching all elements that match one or both of the two locators.
    *
-   * Note that when both locators match something, the resulting locator will have multiple matches and violate
-   * [locator strictness](https://playwright.dev/docs/locators#strictness) guidelines.
+   * Note that when both locators match something, the resulting locator will have multiple matches, potentially causing
+   * a [locator strictness](https://playwright.dev/docs/locators#strictness) violation.
    *
    * **Usage**
    *
    * Consider a scenario where you'd like to click on a "New email" button, but sometimes a security settings dialog
    * shows up instead. In this case, you can wait for either a "New email" button, or a dialog and act accordingly.
    *
+   * **NOTE** If both "New email" button and security dialog appear on screen, the "or" locator will match both of them,
+   * possibly throwing the ["strict mode violation" error](https://playwright.dev/docs/locators#strictness). In this case, you can use
+   * [locator.first()](https://playwright.dev/docs/api/class-locator#locator-first) to only match one of them.
+   *
    * ```js
    * const newEmail = page.getByRole('button', { name: 'New' });
    * const dialog = page.getByText('Confirm security settings');
-   * await expect(newEmail.or(dialog)).toBeVisible();
+   * await expect(newEmail.or(dialog).first()).toBeVisible();
    * if (await dialog.isVisible())
    *   await page.getByRole('button', { name: 'Dismiss' }).click();
    * await newEmail.click();
@@ -14717,7 +14720,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * Browser distribution channel.
      *
-     * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#opt-in-to-new-headless-mode).
+     * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#chromium-new-headless-mode).
      *
      * Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or
      * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
@@ -15216,7 +15219,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * Browser distribution channel.
      *
-     * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#opt-in-to-new-headless-mode).
+     * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#chromium-new-headless-mode).
      *
      * Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or
      * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
@@ -18592,6 +18595,19 @@ export interface Clock {
    * await page.clock.pauseAt('2020-02-02');
    * ```
    *
+   * For best results, install the clock before navigating the page and set it to a time slightly before the intended
+   * test time. This ensures that all timers run normally during page loading, preventing the page from getting stuck.
+   * Once the page has fully loaded, you can safely use
+   * [clock.pauseAt(time)](https://playwright.dev/docs/api/class-clock#clock-pause-at) to pause the clock.
+   *
+   * ```js
+   * // Initialize clock with some time before the test time and let the page load
+   * // naturally. `Date.now` will progress as the timers fire.
+   * await page.clock.install({ time: new Date('2024-12-10T08:00:00') });
+   * await page.goto('http://localhost:3333');
+   * await page.clock.pauseAt(new Date('2024-12-10T10:00:00'));
+   * ```
+   *
    * @param time Time to pause at.
    */
   pauseAt(time: number|string|Date): Promise<void>;
@@ -21554,7 +21570,7 @@ export interface LaunchOptions {
   /**
    * Browser distribution channel.
    *
-   * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#opt-in-to-new-headless-mode).
+   * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#chromium-new-headless-mode).
    *
    * Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or
    * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).

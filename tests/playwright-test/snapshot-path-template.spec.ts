@@ -137,4 +137,3 @@ test('arg should receive default arg', async ({ runInlineTest }, testInfo) => {
   expect(result.output).toContain(`A snapshot doesn't exist at ${snapshotOutputPath}, writing actual`);
   expect(fs.existsSync(snapshotOutputPath)).toBe(true);
 });
-

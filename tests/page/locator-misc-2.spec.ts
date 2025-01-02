@@ -173,4 +173,3 @@ it('Locator.locator() and FrameLocator.locator() should accept locator', async (
   expect(await divLocator.locator('input').inputValue()).toBe('outer');
   expect(await page.frameLocator('iframe').locator(divLocator).locator('input').inputValue()).toBe('inner');
 });
-

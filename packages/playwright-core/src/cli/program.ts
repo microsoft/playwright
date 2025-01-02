@@ -31,7 +31,6 @@ import type { Browser } from '../client/browser';
 import type { Page } from '../client/page';
 import type { BrowserType } from '../client/browserType';
 import type { BrowserContextOptions, LaunchOptions } from '../client/types';
-import { spawn } from 'child_process';
 import { wrapInASCIIBox, isLikelyNpxGlobal, assert, gracefullyProcessExitDoNotHang, getPackageManagerExecCommand } from '../utils';
 import type { Executable } from '../server';
 import { registry, writeDockerVersion } from '../server';
@@ -77,21 +76,6 @@ Examples:
   $ codegen --target=python
   $ codegen -b webkit https://example.com`);
 
-program
-    .command('debug <app> [args...]', { hidden: true })
-    .description('run command in debug mode: disable timeout, open inspector')
-    .allowUnknownOption(true)
-    .action(function(app, options) {
-      spawn(app, options, {
-        env: { ...process.env, PWDEBUG: '1' },
-        stdio: 'inherit'
-      });
-    }).addHelpText('afterAll', `
-Examples:
-
-  $ debug node test.js
-  $ debug npm run test`);
-
 function suggestedBrowsersToInstall() {
   return registry.executables().filter(e => e.installType !== 'none' && e.type !== 'tool').map(e => e.name).join(', ');
 }
@@ -131,6 +115,9 @@ function checkBrowsersToInstall(args: string[], options: { noShell?: boolean, on
       handleArgument(arg);
     }
   }
+
+  if (process.platform === 'win32')
+    executables.push(registry.findExecutable('winldd')!);
 
   if (faultyArguments.length)
     throw new Error(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${suggestedBrowsersToInstall()}`);
@@ -291,7 +278,7 @@ program
     });
 
 program
-    .command('run-server', { hidden: true })
+    .command('run-server')
     .option('--port <port>', 'Server port')
     .option('--host <host>', 'Server host')
     .option('--path <path>', 'Endpoint Path', '/')

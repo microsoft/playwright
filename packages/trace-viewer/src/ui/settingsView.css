@@ -16,24 +16,25 @@
 
 .settings-view {
   flex: none;
-  margin-top: 4px;
+  padding: 4px 0px;
+  row-gap: 8px;
+  user-select: none;
+}
+
+.settings-view .setting {
+  display: flex;
+  align-items: center;
 }
 
 .settings-view .setting label {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  margin: 4px 2px;
-}
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 
-.settings-view .setting:first-of-type label {
-  margin-top: 2px;
-}
-
-.settings-view .setting:last-of-type label {
-  margin-bottom: 2px;
+  cursor: pointer;
 }
 
 .settings-view .setting input {
   margin-right: 5px;
+  flex-shrink: 0;
 }
