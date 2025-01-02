@@ -516,7 +516,7 @@ class TeleTestStep implements reporterTypes.TestStep {
   steps: reporterTypes.TestStep[] = [];
   error: reporterTypes.TestError | undefined;
 
-  private result: TeleTestResult;
+  private _result: TeleTestResult;
   _endPayload?: JsonTestStepEnd;
 
   private _startTime: number = 0;
@@ -527,7 +527,7 @@ class TeleTestStep implements reporterTypes.TestStep {
     this.location = location;
     this.parent = parentStep;
     this._startTime = payload.startTime;
-    this.result = result;
+    this._result = result;
   }
 
   titlePath() {
@@ -544,7 +544,7 @@ class TeleTestStep implements reporterTypes.TestStep {
   }
 
   get attachments() {
-    return this._endPayload?.attachments?.map(index => this.result.attachments[index]) ?? [];
+    return this._endPayload?.attachments?.map(index => this._result.attachments[index]) ?? [];
   }
 }
 
