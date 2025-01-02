@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
+import type { StackFrame } from '@protocol/channels';
+import type { SourceHighlight } from '@web/components/codeMirrorWrapper';
+import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import { SplitView } from '@web/components/splitView';
-import * as React from 'react';
+import { Toolbar } from '@web/components/toolbar';
+import { ToolbarButton } from '@web/components/toolbarButton';
 import { useAsyncMemo } from '@web/uiUtils';
+import * as React from 'react';
+import { CopyToClipboard } from './copyToClipboard';
+import type { SourceLocation, SourceModel } from './modelUtil';
 import './sourceTab.css';
 import { StackTraceView } from './stackTrace';
-import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
-import type { SourceHighlight } from '@web/components/codeMirrorWrapper';
-import type { SourceLocation, SourceModel } from './modelUtil';
-import type { StackFrame } from '@protocol/channels';
-import { CopyToClipboard } from './copyToClipboard';
-import { ToolbarButton } from '@web/components/toolbarButton';
-import { Toolbar } from '@web/components/toolbar';
 
 export const SourceTab: React.FunctionComponent<{
   stack?: StackFrame[],
@@ -98,7 +98,7 @@ export const SourceTab: React.FunctionComponent<{
 
   const showStackFrames = (stack?.length ?? 0) > 1;
   const shortFileName = getFileName(fileName);
-
+  return null;
   return <SplitView
     sidebarSize={200}
     orientation={stackFrameLocation === 'bottom' ? 'vertical' : 'horizontal'}

@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-import './snapshotTab.css';
-import * as React from 'react';
+import ConsoleAPI from '@injected/consoleApi';
+import { InjectedScript } from '@injected/injectedScript';
+import { Recorder } from '@injected/recorder/recorder';
+import type { Language } from '@isomorphic/locatorGenerators';
+import { asLocator } from '@isomorphic/locatorGenerators';
+import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
+import type { ElementInfo } from '@recorder/recorderTypes';
 import type { ActionTraceEvent } from '@trace/trace';
-import { context, type MultiTraceModel, prevInList } from './modelUtil';
+import { TabbedPaneTab } from '@web/components/tabbedPane';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { clsx, useMeasure } from '@web/uiUtils';
-import { InjectedScript } from '@injected/injectedScript';
-import { Recorder } from '@injected/recorder/recorder';
-import ConsoleAPI from '@injected/consoleApi';
-import { asLocator } from '@isomorphic/locatorGenerators';
-import type { Language } from '@isomorphic/locatorGenerators';
-import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
-import { TabbedPaneTab } from '@web/components/tabbedPane';
+import * as React from 'react';
 import { BrowserFrame } from './browserFrame';
-import type { ElementInfo } from '@recorder/recorderTypes';
+import { context, type MultiTraceModel, prevInList } from './modelUtil';
+import './snapshotTab.css';
 
 export const SnapshotTabsView: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
@@ -329,7 +329,7 @@ const serverParam = new URLSearchParams(window.location.search).get('server');
 
 export function extendSnapshot(snapshot: Snapshot): SnapshotUrls {
   const params = new URLSearchParams();
-  params.set('trace', context(snapshot.action).traceUrl);
+  params.set('trace', btoa(context(snapshot.action).traceUrl));
   params.set('name', snapshot.snapshotName);
   if (isUnderTest)
     params.set('isUnderTest', 'true');
@@ -360,6 +360,7 @@ export async function fetchSnapshotInfo(snapshotInfoUrl: string | undefined) {
   const result = { url: '', viewport: kDefaultViewport, timestamp: undefined, wallTime: undefined };
   if (snapshotInfoUrl) {
     const response = await fetch(snapshotInfoUrl);
+
     const info = await response.json();
     if (!info.error) {
       result.url = info.url;

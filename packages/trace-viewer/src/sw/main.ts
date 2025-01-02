@@ -18,7 +18,11 @@ import { splitProgress } from './progress';
 import { unwrapPopoutUrl } from './snapshotRenderer';
 import { SnapshotServer } from './snapshotServer';
 import { TraceModel } from './traceModel';
-import { FetchTraceModelBackend, TraceViewerServer, ZipTraceModelBackend } from './traceModelBackends';
+import {
+  FetchTraceModelBackend,
+  TraceViewerServer,
+  ZipTraceModelBackend,
+} from './traceModelBackends';
 import { TraceVersionError } from './traceModernizer';
 
 // @ts-ignore
@@ -34,20 +38,47 @@ self.addEventListener('activate', function(event: any) {
 
 const scopePath = new URL(self.registration.scope).pathname;
 
-const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: SnapshotServer }>();
+const loadedTraces = new Map<
+  string,
+  { traceModel: TraceModel; snapshotServer: SnapshotServer }
+>();
 
-const clientIdToTraceUrls = new Map<string, { limit: number | undefined, traceUrls: Set<string>, traceViewerServer: TraceViewerServer }>();
+const clientIdToTraceUrls = new Map<
+  string,
+  {
+    limit: number | undefined;
+    traceUrls: Set<string>;
+    traceViewerServer: TraceViewerServer;
+  }
+>();
 
-async function loadTrace(traceUrl: string, traceFileName: string | null, client: any | undefined, limit: number | undefined, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
+async function loadTrace(
+  traceUrl: string,
+  traceFileName: string | null,
+  client: any | undefined,
+  limit: number | undefined,
+  progress: (done: number, total: number) => undefined
+): Promise<TraceModel> {
   await gc();
   const clientId = client?.id ?? '';
   let data = clientIdToTraceUrls.get(clientId);
   if (!data) {
-    let traceViewerServerBaseUrl = new URL('../', client?.url ?? self.registration.scope);
-    if (traceViewerServerBaseUrl.searchParams.has('server'))
-      traceViewerServerBaseUrl = new URL(traceViewerServerBaseUrl.searchParams.get('server')!, traceViewerServerBaseUrl);
+    let traceViewerServerBaseUrl = new URL(
+        '../',
+        client?.url ?? self.registration.scope
+    );
+    if (traceViewerServerBaseUrl.searchParams.has('server')) {
+      traceViewerServerBaseUrl = new URL(
+        traceViewerServerBaseUrl.searchParams.get('server')!,
+        traceViewerServerBaseUrl
+      );
+    }
 
-    data = { limit, traceUrls: new Set(), traceViewerServer: new TraceViewerServer(traceViewerServerBaseUrl) };
+    data = {
+      limit,
+      traceUrls: new Set(),
+      traceViewerServer: new TraceViewerServer(traceViewerServerBaseUrl),
+    };
     clientIdToTraceUrls.set(clientId, data);
   }
   data.traceUrls.add(traceUrl);
@@ -55,21 +86,49 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, client:
   const traceModel = new TraceModel();
   try {
     // Allow 10% to hop from sw to page.
-    const [fetchProgress, unzipProgress] = splitProgress(progress, [0.5, 0.4, 0.1]);
-    const backend = traceUrl.endsWith('json') ? new FetchTraceModelBackend(traceUrl, data.traceViewerServer) : new ZipTraceModelBackend(traceUrl, data.traceViewerServer, fetchProgress);
+    const [fetchProgress, unzipProgress] = splitProgress(
+        progress,
+        [0.5, 0.4, 0.1]
+    );
+    const backend = traceUrl.endsWith('json')
+      ? new FetchTraceModelBackend(traceUrl, data.traceViewerServer)
+      : new ZipTraceModelBackend(
+          traceUrl,
+          data.traceViewerServer,
+          fetchProgress
+      );
     await traceModel.load(backend, unzipProgress);
   } catch (error: any) {
     // eslint-disable-next-line no-console
     console.error(error);
-    if (error?.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html'))
-      throw new Error('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');
-    if (error instanceof TraceVersionError)
-      throw new Error(`Could not load trace from ${traceFileName || traceUrl}. ${error.message}`);
-    if (traceFileName)
-      throw new Error(`Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.`);
-    throw new Error(`Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`);
+    if (
+      error?.message?.includes('Cannot find .trace file') &&
+      (await traceModel.hasEntry('index.html'))
+    ) {
+      throw new Error(
+          'Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.'
+      );
+    }
+    if (error instanceof TraceVersionError) {
+      throw new Error(
+          `Could not load trace from ${traceFileName || traceUrl}. ${
+            error.message
+          }`
+      );
+    }
+    if (traceFileName) {
+      throw new Error(
+          `Could not load trace from ${traceFileName}. Make sure to upload a valid Playwright trace.`
+      );
+    }
+    throw new Error(
+        `Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`
+    );
   }
-  const snapshotServer = new SnapshotServer(traceModel.storage(), sha1 => traceModel.resourceForSha1(sha1));
+  const snapshotServer = new SnapshotServer(traceModel.storage(), sha1 =>
+    traceModel.resourceForSha1(sha1)
+  );
+
   loadedTraces.set(traceUrl, { traceModel, snapshotServer });
   return traceModel;
 }
@@ -98,28 +157,43 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       return new Response(null, { status: 200 });
     }
 
-    const traceUrl = url.searchParams.get('trace');
+    let traceUrl = '';
+    try {
+      traceUrl = atob(url.searchParams.get('trace') ?? '');
+    } catch (error) {
+      traceUrl = url.searchParams.get('trace') ?? '';
+    }
+
 
     if (relativePath === '/contexts') {
       try {
-        const limit = url.searchParams.has('limit') ? +url.searchParams.get('limit')! : undefined;
-        const traceModel = await loadTrace(traceUrl!, url.searchParams.get('traceFileName'), client, limit, (done: number, total: number) => {
-          client.postMessage({ method: 'progress', params: { done, total } });
-        });
+        const limit = url.searchParams.has('limit')
+          ? +url.searchParams.get('limit')!
+          : undefined;
+        const traceModel = await loadTrace(
+          traceUrl!,
+          url.searchParams.get('traceFileName'),
+          client,
+          limit,
+          (done: number, total: number) => {
+            client.postMessage({ method: 'progress', params: { done, total } });
+          }
+        );
         return new Response(JSON.stringify(traceModel!.contextEntries), {
           status: 200,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         });
       } catch (error: any) {
         return new Response(JSON.stringify({ error: error?.message }), {
           status: 500,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         });
       }
     }
 
     if (relativePath.startsWith('/snapshotInfo/')) {
       const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
+
       if (!snapshotServer)
         return new Response(null, { status: 404 });
       return snapshotServer.serveSnapshotInfo(relativePath, url.searchParams);
@@ -129,9 +203,17 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
       if (!snapshotServer)
         return new Response(null, { status: 404 });
-      const response = snapshotServer.serveSnapshot(relativePath, url.searchParams, url.href);
-      if (isDeployedAsHttps)
-        response.headers.set('Content-Security-Policy', 'upgrade-insecure-requests');
+      const response = snapshotServer.serveSnapshot(
+          relativePath,
+          url.searchParams,
+          url.href
+      );
+      if (isDeployedAsHttps) {
+        response.headers.set(
+            'Content-Security-Policy',
+            'upgrade-insecure-requests'
+        );
+      }
       return response;
     }
 
@@ -139,7 +221,10 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       const { snapshotServer } = loadedTraces.get(traceUrl!) || {};
       if (!snapshotServer)
         return new Response(null, { status: 404 });
-      return snapshotServer.serveClosestScreenshot(relativePath, url.searchParams);
+      return snapshotServer.serveClosestScreenshot(
+          relativePath,
+          url.searchParams
+      );
     }
 
     if (relativePath.startsWith('/sha1/')) {
@@ -147,15 +232,21 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       const sha1 = relativePath.slice('/sha1/'.length);
       for (const trace of loadedTraces.values()) {
         const blob = await trace.traceModel.resourceForSha1(sha1);
-        if (blob)
-          return new Response(blob, { status: 200, headers: downloadHeaders(url.searchParams) });
+        if (blob) {
+          return new Response(blob, {
+            status: 200,
+            headers: downloadHeaders(url.searchParams),
+          });
+        }
       }
       return new Response(null, { status: 404 });
     }
 
     if (relativePath.startsWith('/file/')) {
       const path = url.searchParams.get('path')!;
-      const traceViewerServer = clientIdToTraceUrls.get(event.clientId ?? '')?.traceViewerServer;
+      const traceViewerServer = clientIdToTraceUrls.get(
+          event.clientId ?? ''
+      )?.traceViewerServer;
       if (!traceViewerServer)
         throw new Error('client is not initialized');
       const response = await traceViewerServer.readFile(path);
@@ -186,7 +277,12 @@ function downloadHeaders(searchParams: URLSearchParams): Headers | undefined {
   if (!name)
     return;
   const headers = new Headers();
-  headers.set('Content-Disposition', `attachment; filename="attachment"; filename*=UTF-8''${encodeURIComponent(name)}`);
+  headers.set(
+      'Content-Disposition',
+      `attachment; filename="attachment"; filename*=UTF-8''${encodeURIComponent(
+          name
+      )}`
+  );
   if (contentType)
     headers.set('Content-Type', contentType);
   return headers;
@@ -214,6 +310,7 @@ async function gc() {
     if (!usedTraces.has(traceUrl))
       loadedTraces.delete(traceUrl);
   }
+
 }
 
 // @ts-ignore

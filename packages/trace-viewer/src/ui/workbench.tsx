@@ -14,34 +14,33 @@
   limitations under the License.
 */
 
+import type { Entry } from '@trace/har';
+import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import { SplitView } from '@web/components/splitView';
+import type { TabbedPaneTabModel } from '@web/components/tabbedPane';
+import { TabbedPane } from '@web/components/tabbedPane';
+import { ToolbarButton } from '@web/components/toolbarButton';
+import { clsx, msToString, useSetting } from '@web/uiUtils';
 import * as React from 'react';
 import { ActionList } from './actionList';
+import { AnnotationsTab } from './annotationsTab';
+import { AttachmentsTab } from './attachmentsTab';
 import { CallTab } from './callTab';
-import { LogTab } from './logTab';
-import { ErrorsTab, useErrorsTabModel } from './errorsTab';
-import type { ErrorDescription } from './errorsTab';
 import type { ConsoleEntry } from './consoleTab';
 import { ConsoleTab, useConsoleTabModel } from './consoleTab';
+import type { ErrorDescription } from './errorsTab';
+import { ErrorsTab, useErrorsTabModel } from './errorsTab';
+import type { Boundaries } from './geometry';
+import { InspectorTab } from './inspectorTab';
+import { LogTab } from './logTab';
+import { MetadataView } from './metadataView';
 import type * as modelUtil from './modelUtil';
 import { NetworkTab, useNetworkTabModel } from './networkTab';
 import { SnapshotTabsView } from './snapshotTab';
-import { SourceTab } from './sourceTab';
-import { TabbedPane } from '@web/components/tabbedPane';
-import type { TabbedPaneTabModel } from '@web/components/tabbedPane';
-import { Timeline } from './timeline';
-import { MetadataView } from './metadataView';
-import { AttachmentsTab } from './attachmentsTab';
-import { AnnotationsTab } from './annotationsTab';
-import type { Boundaries } from './geometry';
-import { InspectorTab } from './inspectorTab';
-import { ToolbarButton } from '@web/components/toolbarButton';
-import { useSetting, msToString, clsx } from '@web/uiUtils';
-import type { Entry } from '@trace/har';
-import './workbench.css';
-import { testStatusIcon, testStatusText } from './testUtils';
 import type { UITestStatus } from './testUtils';
-import type { AfterActionTraceEventAttachment } from '@trace/trace';
+import { testStatusIcon, testStatusText } from './testUtils';
+import { Timeline } from './timeline';
+import './workbench.css';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -202,19 +201,19 @@ export const Workbench: React.FunctionComponent<{
   if (!selectedAction && fallbackLocation)
     fallbackSourceErrorCount = fallbackLocation.source?.errors.length;
 
-  const sourceTab: TabbedPaneTabModel = {
-    id: 'source',
-    title: 'Source',
-    errorCount: fallbackSourceErrorCount,
-    render: () => <SourceTab
-      stack={revealedStack}
-      sources={sources}
-      rootDir={rootDir}
-      stackFrameLocation={sidebarLocation === 'bottom' ? 'right' : 'bottom'}
-      fallbackLocation={fallbackLocation}
-      onOpenExternally={onOpenExternally}
-    />
-  };
+  // const sourceTab: TabbedPaneTabModel = {
+  //   id: 'source',
+  //   title: 'Source',
+  //   errorCount: fallbackSourceErrorCount,
+  //   render: () => <SourceTab
+  //     stack={revealedStack}
+  //     sources={sources}
+  //     rootDir={rootDir}
+  //     stackFrameLocation={sidebarLocation === 'bottom' ? 'right' : 'bottom'}
+  //     fallbackLocation={fallbackLocation}
+  //     onOpenExternally={onOpenExternally}
+  //   />
+  // };
   const consoleTab: TabbedPaneTabModel = {
     id: 'console',
     title: 'Console',
@@ -247,7 +246,6 @@ export const Workbench: React.FunctionComponent<{
     errorsTab,
     consoleTab,
     networkTab,
-    sourceTab,
     attachmentsTab,
   ];
 

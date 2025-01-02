@@ -14,6 +14,7 @@
   limitations under the License.
 */
 
+import type { Language } from '@isomorphic/locatorGenerators';
 import type * as actionTypes from '@recorder/actions';
 import { SourceChooser } from '@web/components/sourceChooser';
 import { SplitView } from '@web/components/splitView';
@@ -31,12 +32,10 @@ import type * as modelUtil from '../modelUtil';
 import type { SourceLocation } from '../modelUtil';
 import { NetworkTab, useNetworkTabModel } from '../networkTab';
 import { collectSnapshots, extendSnapshot, SnapshotView } from '../snapshotTab';
-import { SourceTab } from '../sourceTab';
-import { ModelContext, ModelProvider } from './modelContext';
-import './recorderView.css';
 import { ActionListView } from './actionListView';
 import { BackendContext, BackendProvider } from './backendContext';
-import type { Language } from '@isomorphic/locatorGenerators';
+import { ModelContext, ModelProvider } from './modelContext';
+import './recorderView.css';
 
 export const RecorderView: React.FunctionComponent = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -219,15 +218,15 @@ const PropertiesView: React.FunctionComponent<{
       setHighlightedLocator={setHighlightedLocator} />,
   };
 
-  const sourceTab: TabbedPaneTabModel = {
-    id: 'source',
-    title: 'Source',
-    render: () => <SourceTab
-      sources={sourceModel.current}
-      stackFrameLocation={'right'}
-      fallbackLocation={sourceLocation}
-    />
-  };
+  // const sourceTab: TabbedPaneTabModel = {
+  //   id: 'source',
+  //   title: 'Source',
+  //   render: () => <SourceTab
+  //     sources={sourceModel.current}
+  //     stackFrameLocation={'right'}
+  //     fallbackLocation={sourceLocation}
+  //   />
+  // };
   const consoleTab: TabbedPaneTabModel = {
     id: 'console',
     title: 'Console',
@@ -242,7 +241,6 @@ const PropertiesView: React.FunctionComponent<{
   };
 
   const tabs: TabbedPaneTabModel[] = [
-    sourceTab,
     inspectorTab,
     consoleTab,
     networkTab,
@@ -282,6 +280,7 @@ const TraceView: React.FunctionComponent<{
   const snapshotUrls = React.useMemo(() => {
     return snapshot ? extendSnapshot(snapshot) : undefined;
   }, [snapshot]);
+
 
   return <SnapshotView
     sdkLanguage={sdkLanguage}

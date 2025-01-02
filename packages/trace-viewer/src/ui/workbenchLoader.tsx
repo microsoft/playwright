@@ -14,14 +14,14 @@
   limitations under the License.
 */
 
+import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';
 import { ToolbarButton } from '@web/components/toolbarButton';
+import { toggleTheme } from '@web/theme';
 import * as React from 'react';
 import type { ContextEntry } from '../types/entries';
 import { MultiTraceModel } from './modelUtil';
-import './workbenchLoader.css';
-import { toggleTheme } from '@web/theme';
 import { Workbench } from './workbench';
-import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';
+import './workbenchLoader.css';
 
 export const WorkbenchLoader: React.FunctionComponent<{
 }> = () => {
@@ -166,6 +166,9 @@ export const WorkbenchLoader: React.FunctionComponent<{
     <div className='progress'>
       <div className='inner-progress' style={{ width: progress.total ? (100 * progress.done / progress.total) + '%' : 0 }}></div>
     </div>
+    {progress.done < progress.total && <div className='loading-inset'>
+      <div className='spinner'></div>
+    </div>}
     <Workbench model={model} inert={showFileUploadDropArea} />
     {fileForLocalModeError && <div className='drop-target'>
       <div>Trace Viewer uses Service Workers to show traces. To view trace:</div>
