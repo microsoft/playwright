@@ -313,3 +313,46 @@ it('headless and headful should use same default fonts', async ({ page, browserN
   }
   await headlessBrowser.close();
 });
+
+it('should have the same hyphen rendering on headless and headed', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/33590'
+  }
+}, async ({ browserType, page, headless, server }) => {
+  const content = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <style>
+        .hyphenated {
+          width: 100px;
+          hyphens: auto;
+          text-align: justify;
+          border: 1px solid black;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="hyphenated">
+        supercalifragilisticexpialidocious
+      </div>
+    </body>
+    </html>
+  `;
+  server.setRoute('/hyphenated.html', (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(content);
+  });
+  const oppositeBrowser = await browserType.launch({ headless: !headless });
+  const oppositePage = await oppositeBrowser.newPage();
+  await oppositePage.goto(server.PREFIX + '/hyphenated.html');
+  await page.goto(server.PREFIX + '/hyphenated.html');
+
+  const [divHeight1, divHeight2] = await Promise.all([
+    page.evaluate(() => document.querySelector('.hyphenated').getBoundingClientRect().height),
+    oppositePage.evaluate(() => document.querySelector('.hyphenated').getBoundingClientRect().height),
+  ]);
+  expect(divHeight1).toBe(divHeight2);
+  await oppositeBrowser.close();
+});
