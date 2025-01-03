@@ -63,6 +63,10 @@
   margin: 2px;
 }
 
+.toolbar option {
+  background-color: var(--vscode-tab-activeBackground)
+}
+
 .toolbar input, .toolbar select {
   border: none;
   color: var(--vscode-input-foreground);
