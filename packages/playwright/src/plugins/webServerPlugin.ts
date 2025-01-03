@@ -30,6 +30,7 @@ export type WebServerPluginOptions = {
   url?: string;
   ignoreHTTPSErrors?: boolean;
   timeout?: number;
+  gracefulShutdown?: { signal: 'SIGINT' | 'SIGTERM', timeout?: number };
   reuseExistingServer?: boolean;
   cwd?: string;
   env?: { [key: string]: string; };
@@ -92,7 +93,7 @@ export class WebServerPlugin implements TestRunnerPlugin {
     }
 
     debugWebServer(`Starting WebServer process ${this._options.command}...`);
-    const { launchedProcess, kill } = await launchProcess({
+    const { launchedProcess, gracefullyClose } = await launchProcess({
       command: this._options.command,
       env: {
         ...DEFAULT_ENVIRONMENT_VARIABLES,
@@ -102,14 +103,33 @@ export class WebServerPlugin implements TestRunnerPlugin {
       cwd: this._options.cwd,
       stdio: 'stdin',
       shell: true,
-      // Reject to indicate that we cannot close the web server gracefully
-      // and should fallback to non-graceful shutdown.
-      attemptToGracefullyClose: () => Promise.reject(),
+      attemptToGracefullyClose: async () => {
+        if (process.platform === 'win32')
+          throw new Error('Graceful shutdown is not supported on Windows');
+        if (!this._options.gracefulShutdown)
+          throw new Error('skip graceful shutdown');
+
+        const { signal, timeout = 0 } = this._options.gracefulShutdown;
+
+        // proper usage of SIGINT is to send it to the entire process group, see https://www.cons.org/cracauer/sigint.html
+        // there's no such convention for SIGTERM, so we decide what we want. signaling the process group for consistency.
+        process.kill(-launchedProcess.pid!, signal);
+
+        return new Promise<void>((resolve, reject) => {
+          const timer = timeout !== 0
+            ? setTimeout(() => reject(new Error(`process didn't close gracefully within timeout`)), timeout)
+            : undefined;
+          launchedProcess.once('close', (...args) => {
+            clearTimeout(timer);
+            resolve();
+          });
+        });
+      },
       log: () => {},
       onExit: code => processExitedReject(new Error(code ? `Process from config.webServer was not able to start. Exit code: ${code}` : 'Process from config.webServer exited early.')),
       tempDirectories: [],
     });
-    this._killProcess = kill;
+    this._killProcess = gracefullyClose;
 
     debugWebServer(`Process started`);
 

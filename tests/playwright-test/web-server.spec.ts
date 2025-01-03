@@ -17,6 +17,7 @@
 import type http from 'http';
 import path from 'path';
 import { test, expect, parseTestRunnerOutput } from './playwright-test-fixtures';
+import type { RunResult } from './playwright-test-fixtures';
 import { createHttpServer } from '../../packages/playwright-core/lib/utils/network';
 
 const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');
@@ -743,4 +744,67 @@ test('should forward stdout when set to "pipe" before server is ready', async ({
   expect(result.passed).toBe(0);
   expect(result.output).toContain('[WebServer] output from server');
   expect(result.output).not.toContain('Timed out waiting 3000ms');
+});
+
+test.describe('gracefulShutdown option', () => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+  const files = (additionalOptions = {}) => {
+    const port = test.info().workerIndex * 2 + 10510;
+    return {
+      'child.js': `
+        process.on('SIGINT', () => { console.log('%%childprocess received SIGINT'); setTimeout(() => process.exit(), 10) })
+        process.on('SIGTERM', () => { console.log('%%childprocess received SIGTERM'); setTimeout(() => process.exit(), 10) })
+        setTimeout(() => {}, 100000) // prevent child from exiting
+      `,
+      'web-server.js': `
+        require("node:child_process").fork('./child.js', { silent: false })
+        
+        process.on('SIGINT', () => {
+          console.log('%%webserver received SIGINT but stubbornly refuses to wind down')
+        })
+        process.on('SIGTERM', () => {
+          console.log('%%webserver received SIGTERM but stubbornly refuses to wind down')
+        })
+
+        const server = require("node:http").createServer((req, res) => { res.end("ok"); })
+        server.listen(process.argv[2]);
+      `,
+      'test.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('pass', async ({}) => {});
+      `,
+      'playwright.config.ts': `
+        module.exports = {
+          webServer: {
+            command: 'echo some-precondition && node web-server.js ${port}',
+            port: ${port},
+            stdout: 'pipe',
+            timeout: 3000,
+            ...${JSON.stringify(additionalOptions)}
+          },
+        };
+      `,
+    };
+  };
+
+  function parseOutputLines(result: RunResult): string[] {
+    const prefix = '[WebServer] %%';
+    return result.output.split('\n').filter(line => line.startsWith(prefix)).map(line => line.substring(prefix.length));
+  }
+
+  test('sends SIGKILL by default', async ({ runInlineTest }) => {
+    const result = await runInlineTest(files(), { workers: 1 });
+    expect(parseOutputLines(result)).toEqual([]);
+  });
+
+  test('can be configured to send SIGTERM', async ({ runInlineTest }) => {
+    const result = await runInlineTest(files({ gracefulShutdown: { signal: 'SIGTERM', timeout: 500 } }), { workers: 1 });
+    expect(parseOutputLines(result).sort()).toEqual(['childprocess received SIGTERM', 'webserver received SIGTERM but stubbornly refuses to wind down']);
+  });
+
+  test('can be configured to send SIGINT', async ({ runInlineTest }) => {
+    const result = await runInlineTest(files({ gracefulShutdown: { signal: 'SIGINT', timeout: 500 } }), { workers: 1 });
+    expect(parseOutputLines(result).sort()).toEqual(['childprocess received SIGINT', 'webserver received SIGINT but stubbornly refuses to wind down']);
+  });
 });
