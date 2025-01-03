@@ -996,13 +996,20 @@ export class InjectedScript {
     return { stop };
   }
 
-  dispatchEvent(node: Node, type: string, eventInit: Object) {
+  dispatchEvent(node: Node, type: string, eventInitObj: Object) {
     let event;
-    eventInit = { bubbles: true, cancelable: true, composed: true, ...eventInit };
+    const eventInit: any = { bubbles: true, cancelable: true, composed: true, ...eventInitObj };
     switch (eventType.get(type)) {
       case 'mouse': event = new MouseEvent(type, eventInit); break;
       case 'keyboard': event = new KeyboardEvent(type, eventInit); break;
-      case 'touch': event = new TouchEvent(type, eventInit); break;
+      case 'touch': {
+        eventInit.target ??= node;
+        eventInit.touches = eventInit.touches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
+        eventInit.targetTouches = eventInit.targetTouches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
+        eventInit.changedTouches = eventInit.changedTouches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
+        event = new TouchEvent(type, eventInit);
+        break;
+      }
       case 'pointer': event = new PointerEvent(type, eventInit); break;
       case 'focus': event = new FocusEvent(type, eventInit); break;
       case 'drag': event = new DragEvent(type, eventInit); break;
