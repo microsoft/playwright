@@ -5,7 +5,7 @@ title: "Emulating touch events"
 
 ## Introduction
 
-Mobile web sites may listen to [touch events](https://developer.mozilla.org/en-US/docs/Web/API/Touch_events) and react to user touch gestures such swipe, pinch, tap etc. To test such functionality you can manually generate [TouchEvent]s in the page context using [`method: Locator.evaluate`].
+Mobile web sites may listen to [touch events](https://developer.mozilla.org/en-US/docs/Web/API/Touch_events) and react to user touch gestures such as swipe, pinch, tap etc. To test this functionality you can manually generate [TouchEvent]s in the page context using [`method: Locator.evaluate`].
 
 If your web application relies on [pointer events](https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events) instead of touch events, you can use [`method: Locator.click`] and raw mouse events to simulate single touch point events, because pointer events are triggered for both mouse gestures and touch interactions.
 
