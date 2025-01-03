@@ -128,7 +128,8 @@ export class HttpServer {
       this._urlPrefixHumanReadable = address;
     } else {
       this._port = address.port;
-      const resolvedHost = address.family === 'IPv4' ? address.address : `[${address.address}]`;
+      const isIPV4 = address.family === 'IPv4' || (address.family as any) === 4; // Node 18.0.0 returns number, >18.4.0 returns string
+      const resolvedHost = isIPV4 ? address.address : `[${address.address}]`;
       this._urlPrefixPrecise = `http://${resolvedHost}:${address.port}`;
       this._urlPrefixHumanReadable = `http://${host}:${address.port}`;
     }
