@@ -1675,6 +1675,8 @@ Page:
         root: ElementHandle?
       returns:
         rootAXNode: AXNode?
+      flags:
+        snapshot: true
 
     pdf:
       parameters:
@@ -1885,6 +1887,8 @@ Frame:
         timeout: number?
       returns:
         snapshot: string
+      flags:
+        snapshot: true
 
     blur:
       parameters:
@@ -1943,6 +1947,8 @@ Frame:
     content:
       returns:
         value: string
+      flags:
+        snapshot: true
 
     dragAndDrop:
       parameters:
@@ -2202,6 +2208,8 @@ Frame:
         strict: boolean?
       returns:
         element: ElementHandle?
+      flags:
+        snapshot: true
 
     querySelectorAll:
       parameters:
@@ -2210,12 +2218,16 @@ Frame:
         elements:
           type: array
           items: ElementHandle
+      flags:
+        snapshot: true
 
     queryCount:
       parameters:
         selector: string
       returns:
         value: number
+      flags:
+        snapshot: true
 
     selectOption:
       parameters:
@@ -2540,6 +2552,8 @@ ElementHandle:
     boundingBox:
       returns:
         value: Rect?
+      flags:
+        snapshot: true
 
     check:
       parameters:
@@ -2585,6 +2599,8 @@ ElementHandle:
     contentFrame:
       returns:
         frame: Frame?
+      flags:
+        snapshot: true
 
     dblclick:
       parameters:
@@ -2739,6 +2755,8 @@ ElementHandle:
         strict: boolean?
       returns:
         element: ElementHandle?
+      flags:
+        snapshot: true
 
     querySelectorAll:
       parameters:
@@ -2747,6 +2765,8 @@ ElementHandle:
         elements:
           type: array
           items: ElementHandle
+      flags:
+        snapshot: true
 
     screenshot:
       parameters:
