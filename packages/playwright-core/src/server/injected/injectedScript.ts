@@ -1004,9 +1004,9 @@ export class InjectedScript {
       case 'keyboard': event = new KeyboardEvent(type, eventInit); break;
       case 'touch': {
         eventInit.target ??= node;
-        eventInit.touches = eventInit.touches?.map((t: any) => new Touch({ ...t, target: t.target ?? node }));
-        eventInit.targetTouches = eventInit.targetTouches?.map((t: any) => new Touch({ ...t, target: t.target ?? node }));
-        eventInit.changedTouches = eventInit.changedTouches?.map((t: any) => new Touch({ ...t, target: t.target ?? node }));
+        eventInit.touches = eventInit.touches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
+        eventInit.targetTouches = eventInit.targetTouches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
+        eventInit.changedTouches = eventInit.changedTouches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
         event = new TouchEvent(type, eventInit);
         break;
       }
