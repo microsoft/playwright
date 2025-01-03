@@ -68,7 +68,7 @@ test(`pan gesture to move the map`, async ({ page }) => {
 
 #### Emulating pinch gesture
 
-In the example below, we emulate pinch gesture, i.e. two touch points moving closer to each other. It is expected to zoom out the map. We only initialize `clientX/clientY` coordinates of the touch point as the we app reads only those, in a more complex scenario you may need to also set `pageX/pageY/screenX/screenY` if your app needs them.
+In the example below, we emulate pinch gesture, i.e. two touch points moving closer to each other. It is expected to zoom out the map. The app under test only uses `clientX/clientY` coordinates of touch points, so we initialize just that. In a more complex scenario you may need to also set `pageX/pageY/screenX/screenY`, if your app needs them.
 
 ```js
 import { test, expect, devices, Locator } from '@playwright/test';
