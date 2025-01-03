@@ -15,7 +15,7 @@ You can dispatch touch events to the page using [`method: Locator.dispatchEvent`
 
 #### Emulating pan gesture
 
-In the example below, we emulate pan gesture that is expected to move the map. We only initialize `clientX/clientY` coordinates of the touch point as the we app reads only those, in a more complex scenario you may need to also set `pageX/pageY/screenX/screenY` if your app needs them.
+In the example below, we emulate pan gesture that is expected to move the map. The app under test only uses `clientX/clientY` coordinates of the touch point, so we initialize just that. In a more complex scenario you may need to also set `pageX/pageY/screenX/screenY`, if your app needs them.
 
 ```js
 import { test, expect, devices, Locator } from '@playwright/test';
