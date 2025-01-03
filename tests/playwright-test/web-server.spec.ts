@@ -746,7 +746,7 @@ test('should forward stdout when set to "pipe" before server is ready', async ({
   expect(result.output).not.toContain('Timed out waiting 3000ms');
 });
 
-test.describe('kill option', () => {
+test.describe('gracefulShutdown option', () => {
   test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
 
   const files = (additionalOptions = {}) => {
@@ -799,12 +799,12 @@ test.describe('kill option', () => {
   });
 
   test('can be configured to send SIGTERM', async ({ runInlineTest }) => {
-    const result = await runInlineTest(files({ kill: { signal: 'SIGTERM', timeout: 500 } }), { workers: 1 });
+    const result = await runInlineTest(files({ gracefulShutdown: { signal: 'SIGTERM', timeout: 500 } }), { workers: 1 });
     expect(parseOutputLines(result).sort()).toEqual(['childprocess received SIGTERM', 'webserver received SIGTERM but stubbornly refuses to wind down']);
   });
 
   test('can be configured to send SIGINT', async ({ runInlineTest }) => {
-    const result = await runInlineTest(files({ kill: { signal: 'SIGINT', timeout: 500 } }), { workers: 1 });
+    const result = await runInlineTest(files({ gracefulShutdown: { signal: 'SIGINT', timeout: 500 } }), { workers: 1 });
     expect(parseOutputLines(result).sort()).toEqual(['childprocess received SIGINT', 'webserver received SIGINT but stubbornly refuses to wind down']);
   });
 });
