@@ -152,6 +152,9 @@ export class BidiBrowser extends Browser {
           continue;
         page._session.addFrameBrowsingContext(event.context);
         page._page._frameManager.frameAttached(event.context, parentFrameId);
+        const frame = page._page._frameManager.frame(event.context);
+        if (frame)
+          frame._url = event.url;
         return;
       }
       return;
@@ -164,6 +167,7 @@ export class BidiBrowser extends Browser {
     const session = this._connection.createMainFrameBrowsingContextSession(event.context);
     const opener = event.originalOpener && this._bidiPages.get(event.originalOpener);
     const page = new BidiPage(context, session, opener || null);
+    page._page.mainFrame()._url = event.url;
     this._bidiPages.set(event.context, page);
   }
 

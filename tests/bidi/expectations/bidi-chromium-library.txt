@@ -310,7 +310,7 @@ library/browsercontext-network-event.spec.ts › BrowserContext.Events.RequestFi
 library/browsercontext-network-event.spec.ts › BrowserContext.Events.Response [pass]
 library/browsercontext-network-event.spec.ts › should fire events in proper order [pass]
 library/browsercontext-network-event.spec.ts › should not fire events for favicon or favicon redirects [unknown]
-library/browsercontext-page-event.spec.ts › should fire page lifecycle events [fail]
+library/browsercontext-page-event.spec.ts › should fire page lifecycle events [pass]
 library/browsercontext-page-event.spec.ts › should have about:blank for empty url with domcontentloaded [fail]
 library/browsercontext-page-event.spec.ts › should have about:blank url with domcontentloaded [fail]
 library/browsercontext-page-event.spec.ts › should have an opener [pass]
