@@ -962,9 +962,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'passing' }).click();
 
-      const attachment = page.getByText('attachment', { exact: true });
+      const attachment = page.getByTestId('attachments').getByText('attachment', { exact: true });
       await expect(attachment).not.toBeInViewport();
-      await page.getByLabel('step').getByTitle('link to attachment').click();
+      await page.getByLabel('step').click();
+      await page.getByTitle('see "attachment"').click();
       await expect(attachment).toBeInViewport();
     });
 
