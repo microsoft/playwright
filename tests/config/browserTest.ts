@@ -137,14 +137,14 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await persistentContext.close();
   },
 
-  startRemoteServer: async ({ childProcess, browserType }, run) => {
+  startRemoteServer: async ({ childProcess, browserType, channel }, run) => {
     let server: PlaywrightServer | undefined;
     const fn = async (kind: 'launchServer' | 'run-server', options?: RemoteServerOptions) => {
       if (server)
         throw new Error('can only start one remote server');
       if (kind === 'launchServer') {
         const remoteServer = new RemoteServer();
-        await remoteServer._start(childProcess, browserType, options);
+        await remoteServer._start(childProcess, browserType, channel, options);
         server = remoteServer;
       } else {
         const runServer = new RunServer();

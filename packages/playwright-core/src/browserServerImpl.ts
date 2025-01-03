@@ -29,9 +29,9 @@ import { rewriteErrorMessage } from './utils/stackTrace';
 import { SocksProxy } from './common/socksProxy';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
-  private _browserName: 'chromium' | 'firefox' | 'webkit';
+  private _browserName: 'chromium' | 'firefox' | 'webkit' | 'bidiFirefox' | 'bidiChromium';
 
-  constructor(browserName: 'chromium' | 'firefox' | 'webkit') {
+  constructor(browserName: 'chromium' | 'firefox' | 'webkit' | 'bidiFirefox' | 'bidiChromium') {
     this._browserName = browserName;
   }
 
