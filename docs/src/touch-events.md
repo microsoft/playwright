@@ -18,7 +18,7 @@ You can dispatch touch events to the page using [`method: Locator.dispatchEvent`
 In the example below, we emulate pan gesture that is expected to move the map. The app under test only uses `clientX/clientY` coordinates of the touch point, so we initialize just that. In a more complex scenario you may need to also set `pageX/pageY/screenX/screenY`, if your app needs them.
 
 ```js
-import { test, expect, devices, Locator } from '@playwright/test';
+import { test, expect, devices, type Locator } from '@playwright/test';
 
 test.use({ ...devices['Pixel 7'] });
 
@@ -41,7 +41,7 @@ async function pan(locator: Locator, deltaX?: number, deltaY?: number, steps?: n
   steps = steps ?? 5;
   deltaX = deltaX ?? 0;
   deltaY = deltaY ?? 0;
-  for (let i = 0; i <= steps; i++) {
+  for (let i = 1; i <= steps; i++) {
     const touches = [{
       identifier: 0,
       clientX: centerX + deltaX * i / steps,
@@ -71,7 +71,7 @@ test(`pan gesture to move the map`, async ({ page }) => {
 In the example below, we emulate pinch gesture, i.e. two touch points moving closer to each other. It is expected to zoom out the map. The app under test only uses `clientX/clientY` coordinates of touch points, so we initialize just that. In a more complex scenario you may need to also set `pageX/pageY/screenX/screenY`, if your app needs them.
 
 ```js
-import { test, expect, devices, Locator } from '@playwright/test';
+import { test, expect, devices, type Locator } from '@playwright/test';
 
 test.use({ ...devices['Pixel 7'] });
 
@@ -83,37 +83,37 @@ async function pinch(locator: Locator, arg: { deltaX?: number, deltaY?: number, 
     return { centerX, centerY };
   });
 
-  const deltaX = arg.deltaX ?? 0;
-  const deltaY = arg.deltaY ?? 0;
+  const deltaX = arg.deltaX ?? 50;
+  const steps = arg.steps ?? 5;
+  const stepDeltaX = deltaX / (steps + 1);
 
   // Two touch points equally distant from the center of the element.
   const touches = [
     {
       identifier: 0,
-      clientX: centerX + (arg.direction === 'in' ? - deltaX : -10),
+      clientX: centerX - (arg.direction === 'in' ? deltaX : stepDeltaX),
       clientY: centerY,
     },
     {
       identifier: 1,
-      clientX: centerX + (arg.direction === 'in' ? deltaX : 10),
+      clientX: centerX + (arg.direction === 'in' ? deltaX : stepDeltaX),
       clientY: centerY,
     },
   ];
   await locator.dispatchEvent('touchstart', { touches, changedTouches: touches, targetTouches: touches });
 
   // Move the touch points towards or away from each other.
-  const steps = arg.steps ?? 5;
-  for (let i = 0; i < steps; i++) {
+  for (let i = 1; i <= steps; i++) {
     const touches = [
       {
         identifier: 0,
-        clientX: centerX + deltaX * i / steps + (arg.direction === 'in' ? - deltaX : 0),
-        clientY: centerY + deltaY * i / steps + (arg.direction === 'in' ? - deltaY : 0),
+        clientX: centerX - (arg.direction === 'in' ? (deltaX - i * stepDeltaX) : (stepDeltaX * (i + 1))),
+        clientY: centerY,
       },
       {
         identifier: 0,
-        clientX: centerX - deltaX * i / steps + (arg.direction === 'in' ? deltaX : 0),
-        clientY: centerY - deltaY * i / steps + (arg.direction === 'in' ? deltaY : 0),
+        clientX: centerX + (arg.direction === 'in' ? (deltaX - i * stepDeltaX) : (stepDeltaX * (i + 1))),
+        clientY: centerY,
       },
     ];
     await locator.dispatchEvent('touchmove', { touches, changedTouches: touches, targetTouches: touches });
