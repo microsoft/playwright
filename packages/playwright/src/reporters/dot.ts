@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { colors, BaseReporter, formatError } from './base';
+import { TerminalReporter } from './base';
 import type { FullResult, TestCase, TestResult, Suite, TestError } from '../../types/testReporter';
 
-class DotReporter extends BaseReporter {
+class DotReporter extends TerminalReporter {
   private _counter = 0;
 
   override onBegin(suite: Suite) {
@@ -45,23 +45,23 @@ class DotReporter extends BaseReporter {
     }
     ++this._counter;
     if (result.status === 'skipped') {
-      process.stdout.write(colors.yellow('°'));
+      process.stdout.write(this.screen.colors.yellow('°'));
       return;
     }
     if (this.willRetry(test)) {
-      process.stdout.write(colors.gray('×'));
+      process.stdout.write(this.screen.colors.gray('×'));
       return;
     }
     switch (test.outcome()) {
-      case 'expected': process.stdout.write(colors.green('·')); break;
-      case 'unexpected': process.stdout.write(colors.red(result.status === 'timedOut' ? 'T' : 'F')); break;
-      case 'flaky': process.stdout.write(colors.yellow('±')); break;
+      case 'expected': process.stdout.write(this.screen.colors.green('·')); break;
+      case 'unexpected': process.stdout.write(this.screen.colors.red(result.status === 'timedOut' ? 'T' : 'F')); break;
+      case 'flaky': process.stdout.write(this.screen.colors.yellow('±')); break;
     }
   }
 
   override onError(error: TestError): void {
     super.onError(error);
-    console.log('\n' + formatError(error, colors.enabled).message);
+    console.log('\n' + this.formatError(error).message);
     this._counter = 0;
   }
 

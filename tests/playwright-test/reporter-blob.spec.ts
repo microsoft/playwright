@@ -882,7 +882,10 @@ test('multiple output reports based on config', async ({ runInlineTest, mergeRep
   const reportFiles = await fs.promises.readdir(reportDir);
   reportFiles.sort();
   expect(reportFiles).toEqual(['report-1.zip', 'report-2.zip']);
-  const { exitCode, output } = await mergeReports(reportDir, undefined, { additionalArgs: ['--config', test.info().outputPath('merged/playwright.config.ts')] });
+  const { exitCode, output } = await mergeReports(reportDir, undefined, {
+    cwd: test.info().outputPath('merged'),
+    additionalArgs: ['--config', 'playwright.config.ts'],
+  });
   expect(exitCode).toBe(0);
 
   // Check that line reporter was called.

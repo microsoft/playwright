@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { open } from 'playwright-core/lib/utilsBundle';
+import { colors, open } from 'playwright-core/lib/utilsBundle';
 import { MultiMap, getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 import fs from 'fs';
 import path from 'path';
@@ -23,7 +23,7 @@ import { Transform } from 'stream';
 import { codeFrameColumns } from '../transform/babelBundle';
 import type * as api from '../../types/testReporter';
 import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath, toPosixPath } from 'playwright-core/lib/utils';
-import { colors, formatError, formatResultFailure, stripAnsiEscapes } from './base';
+import { formatError, formatResultFailure, internalScreen, stripAnsiEscapes } from './base';
 import { resolveReporterOutputPath } from '../util';
 import type { Metadata } from '../../types/test';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
@@ -297,7 +297,7 @@ class HtmlBuilder {
       files: [...data.values()].map(e => e.testFileSummary),
       projectNames: projectSuites.map(r => r.project()!.name),
       stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()) },
-      errors: topLevelErrors.map(error => formatError(error, true).message),
+      errors: topLevelErrors.map(error => formatError(internalScreen, error).message),
     };
     htmlReport.files.sort((f1, f2) => {
       const w1 = f1.stats.unexpected * 1000 + f1.stats.flaky;
@@ -506,7 +506,7 @@ class HtmlBuilder {
       startTime: result.startTime.toISOString(),
       retry: result.retry,
       steps: dedupeSteps(result.steps).map(s => this._createTestStep(s, result)),
-      errors: formatResultFailure(test, result, '', true).map(error => error.message),
+      errors: formatResultFailure(internalScreen, test, result, '').map(error => error.message),
       status: result.status,
       attachments: this._serializeAttachments([
         ...result.attachments,

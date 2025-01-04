@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
-import { formatFailure, resolveOutputFile, stripAnsiEscapes } from './base';
+import { formatFailure, nonTerminalScreen, resolveOutputFile, stripAnsiEscapes } from './base';
 import { getAsBooleanFromENV } from 'playwright-core/lib/utils';
 import type { ReporterV2 } from './reporterV2';
 
@@ -188,7 +188,7 @@ class JUnitReporter implements ReporterV2 {
           message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
           type: 'FAILURE',
         },
-        text: stripAnsiEscapes(formatFailure(this.config, test))
+        text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
       });
     }
 
