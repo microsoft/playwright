@@ -23,7 +23,7 @@ import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWor
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import { rootTestType } from './common/testType';
 import type { ContextReuseMode } from './common/config';
-import type { ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
+import type { ApiCallData, ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import { currentTestInfo } from './common/globals';
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -258,34 +258,33 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     const tracingGroupSteps: TestStepInternal[] = [];
     const csiListener: ClientInstrumentationListener = {
-      onApiCallBegin: (apiName: string, params: Record<string, any>, frames: StackFrame[], userData: any, out: { stepId?: string }) => {
-        userData.apiName = apiName;
+      onApiCallBegin: (data: ApiCallData) => {
         const testInfo = currentTestInfo();
-        if (!testInfo || apiName.includes('setTestIdAttribute') || apiName === 'tracing.groupEnd')
+        if (!testInfo || data.apiName.includes('setTestIdAttribute') || data.apiName === 'tracing.groupEnd')
           return;
         const step = testInfo._addStep({
-          location: frames[0] as any,
+          location: data.frames[0],
           category: 'pw:api',
-          title: renderApiCall(apiName, params),
-          apiName,
-          params,
+          title: renderApiCall(data.apiName, data.params),
+          apiName: data.apiName,
+          params: data.params,
         }, tracingGroupSteps[tracingGroupSteps.length - 1]);
-        userData.step = step;
-        out.stepId = step.stepId;
-        if (apiName === 'tracing.group')
+        data.userData = step;
+        data.stepId = step.stepId;
+        if (data.apiName === 'tracing.group')
           tracingGroupSteps.push(step);
       },
-      onApiCallEnd: (userData: any, error?: Error) => {
+      onApiCallEnd: (data: ApiCallData) => {
         // "tracing.group" step will end later, when "tracing.groupEnd" finishes.
-        if (userData.apiName === 'tracing.group')
+        if (data.apiName === 'tracing.group')
           return;
-        if (userData.apiName === 'tracing.groupEnd') {
+        if (data.apiName === 'tracing.groupEnd') {
           const step = tracingGroupSteps.pop();
-          step?.complete({ error });
+          step?.complete({ error: data.error });
           return;
         }
-        const step = userData.step;
-        step?.complete({ error });
+        const step = data.userData;
+        step?.complete({ error: data.error });
       },
       onWillPause: ({ keepTestTimeout }) => {
         if (!keepTestTimeout)
