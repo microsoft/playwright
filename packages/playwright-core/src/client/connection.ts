@@ -78,9 +78,9 @@ export class Connection extends EventEmitter {
 
   constructor(localUtils: LocalUtils | undefined, instrumentation: ClientInstrumentation | undefined) {
     super();
-    this._rootObject = new Root(this);
-    this._localUtils = localUtils;
     this._instrumentation = instrumentation || createInstrumentation();
+    this._localUtils = localUtils;
+    this._rootObject = new Root(this);
   }
 
   markAsRemote() {
