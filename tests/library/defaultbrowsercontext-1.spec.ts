@@ -19,7 +19,13 @@ import { playwrightTest as it, expect } from '../config/browserTest';
 import { verifyViewport } from '../config/utils';
 import fs from 'fs';
 
-it('context.cookies() should work @smoke', async ({ server, launchPersistent, defaultSameSiteCookieValue }) => {
+function maybeFilterCookies(channel: string | undefined, cookies: any[]) {
+  if (channel?.startsWith('msedge'))
+    return cookies.filter(c => !c.domain.endsWith('microsoft.com'));
+  return cookies;
+}
+
+it('context.cookies() should work @smoke', async ({ server, launchPersistent, defaultSameSiteCookieValue, channel }) => {
   const { page } = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   const documentCookie = await page.evaluate(() => {
@@ -27,7 +33,7 @@ it('context.cookies() should work @smoke', async ({ server, launchPersistent, de
     return document.cookie;
   });
   expect(documentCookie).toBe('username=John Doe');
-  expect(await page.context().cookies()).toEqual([{
+  expect(maybeFilterCookies(channel, await page.context().cookies())).toEqual([{
     name: 'username',
     value: 'John Doe',
     domain: 'localhost',
@@ -39,7 +45,7 @@ it('context.cookies() should work @smoke', async ({ server, launchPersistent, de
   }]);
 });
 
-it('context.addCookies() should work', async ({ server, launchPersistent, browserName, isWindows }) => {
+it('context.addCookies() should work', async ({ server, launchPersistent, browserName, isWindows, channel }) => {
   const { page } = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   await page.context().addCookies([{
@@ -49,7 +55,7 @@ it('context.addCookies() should work', async ({ server, launchPersistent, browse
     sameSite: 'Lax',
   }]);
   expect(await page.evaluate(() => document.cookie)).toBe('username=John Doe');
-  expect(await page.context().cookies()).toEqual([{
+  expect(maybeFilterCookies(channel, await page.context().cookies())).toEqual([{
     name: 'username',
     value: 'John Doe',
     domain: 'localhost',
@@ -61,7 +67,7 @@ it('context.addCookies() should work', async ({ server, launchPersistent, browse
   }]);
 });
 
-it('context.clearCookies() should work', async ({ server, launchPersistent }) => {
+it('context.clearCookies() should work', async ({ server, launchPersistent, channel }) => {
   const { page } = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   await page.context().addCookies([{
@@ -76,7 +82,7 @@ it('context.clearCookies() should work', async ({ server, launchPersistent }) =>
   expect(await page.evaluate('document.cookie')).toBe('cookie1=1; cookie2=2');
   await page.context().clearCookies();
   await page.reload();
-  expect(await page.context().cookies([])).toEqual([]);
+  expect(maybeFilterCookies(channel, await page.context().cookies([]))).toEqual([]);
   expect(await page.evaluate('document.cookie')).toBe('');
 });
 
