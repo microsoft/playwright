@@ -217,7 +217,7 @@ await page.getByText('Item').click({ button: 'right' });
 // Shift + click
 await page.getByText('Item').click({ modifiers: ['Shift'] });
 
-// Ctrl + click or Windows and Linux
+// Ctrl + click on Windows and Linux
 // Meta + click on macOS
 await page.getByText('Item').click({ modifiers: ['ControlOrMeta'] });
 
