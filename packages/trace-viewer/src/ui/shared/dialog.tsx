@@ -47,6 +47,7 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
     const bounds = anchor.current.getBoundingClientRect();
 
     style = {
+      position: 'fixed',
       margin: 0,
       top: bounds.bottom + (verticalOffset ?? 0),
       left: buildTopLeftCoord(bounds, width),
