@@ -124,4 +124,3 @@ export class FastStats implements Stats {
     return (this._sum(this._partialSumMult, x1, y1, x2, y2) - this._sum(this._partialSumC1, x1, y1, x2, y2) * this._sum(this._partialSumC2, x1, y1, x2, y2) / N) / N;
   }
 }
-

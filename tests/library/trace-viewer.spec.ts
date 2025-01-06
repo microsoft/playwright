@@ -240,7 +240,7 @@ test('should show params and return value', async ({ showTraceViewer }) => {
   await traceViewer.selectAction('page.evaluate');
   await expect(traceViewer.callLines).toHaveText([
     /page.evaluate/,
-    /wall time:[0-9/:,APM ]+/,
+    /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     /expression:"\({↵    a↵  }\) => {↵    console\.log\(\'Info\'\);↵    console\.warn\(\'Warning\'\);↵    console/,
     'isFunction:true',
@@ -251,7 +251,7 @@ test('should show params and return value', async ({ showTraceViewer }) => {
   await traceViewer.selectAction(`locator('button')`);
   await expect(traceViewer.callLines).toContainText([
     /expect.toHaveText/,
-    /wall time:[0-9/:,APM ]+/,
+    /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     /locator:locator\('button'\)/,
     /expression:"to.have.text"/,
@@ -266,7 +266,7 @@ test('should show null as a param', async ({ showTraceViewer, browserName }) => 
   await traceViewer.selectAction('page.evaluate', 1);
   await expect(traceViewer.callLines).toHaveText([
     /page.evaluate/,
-    /wall time:[0-9/:,APM ]+/,
+    /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     'expression:"() => 1 + 1"',
     'isFunction:true',

@@ -18,15 +18,11 @@ import * as React from 'react';
 
 export interface DialogProps {
   className?: string;
-
   open: boolean;
   width: number;
-
   verticalOffset?: number;
-
   requestClose?: () => void;
-
-  hostingElement?: React.RefObject<HTMLElement>;
+  anchor?: React.RefObject<HTMLElement>;
 }
 
 export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
@@ -35,28 +31,24 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
   width,
   verticalOffset,
   requestClose,
-  hostingElement,
+  anchor,
   children,
 }) => {
   const dialogRef = React.useRef<HTMLDialogElement>(null);
 
-  // Allow window dimension changes to force a rerender
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, setRecalculateDimensionsCount] = React.useState(0);
 
   let style: React.CSSProperties | undefined = undefined;
 
-  if (hostingElement?.current) {
-    // For now, always place dialog below hosting element
-    const bounds = hostingElement.current.getBoundingClientRect();
+  if (anchor?.current) {
+    const bounds = anchor.current.getBoundingClientRect();
 
     style = {
-      // Override default `<dialog>` positioning
       margin: 0,
       top: bounds.bottom + (verticalOffset ?? 0),
       left: buildTopLeftCoord(bounds, width),
       width,
-      // For some reason the dialog is placed behind the timeline, but there's a stacking context that allows the dialog to be placed above
       zIndex: 1,
     };
   }
@@ -66,10 +58,8 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
       if (!dialogRef.current || !(event.target instanceof Node))
         return;
 
-      if (!dialogRef.current.contains(event.target)) {
-        // Click outside of dialog bounds
+      if (!dialogRef.current.contains(event.target))
         requestClose?.();
-      }
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -110,7 +100,6 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
 };
 
 const buildTopLeftCoord = (bounds: DOMRect, width: number): number => {
-  // Default to left aligned
   const leftAlignCoord = buildTopLeftCoordWithAlignment(bounds, width, 'left');
 
   if (leftAlignCoord.inBounds)
@@ -125,7 +114,6 @@ const buildTopLeftCoord = (bounds: DOMRect, width: number): number => {
   if (rightAlignCoord.inBounds)
     return rightAlignCoord.value;
 
-  // Fallback to left align, even if it will go off screen
   return leftAlignCoord.value;
 };
 
@@ -144,7 +132,6 @@ const buildTopLeftCoordWithAlignment = (
 
     return {
       value,
-      // Would extend off of right side of screen
       inBounds: value + width <= maxLeft,
     };
   } else {
@@ -152,7 +139,6 @@ const buildTopLeftCoordWithAlignment = (
 
     return {
       value,
-      // Would extend off of left side of screen
       inBounds: bounds.right - width >= 0,
     };
   }

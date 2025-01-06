@@ -56,6 +56,7 @@ export class FullConfigInternal {
   cliFailOnFlakyTests?: boolean;
   cliLastFailed?: boolean;
   testIdMatcher?: Matcher;
+  lastFailedTestIdMatcher?: Matcher;
   defineConfigWasUsed = false;
 
   globalSetups: string[] = [];

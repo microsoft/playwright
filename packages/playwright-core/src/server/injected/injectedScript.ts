@@ -29,7 +29,7 @@ import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector, type GenerateSelectorOptions } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription, getReadonly } from './roleUtils';
+import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription, getReadonly, getElementAccessibleErrorMessage } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
@@ -457,7 +457,8 @@ export class InjectedScript {
     const queryAll = (root: SelectorRoot, body: string) => {
       if (root.nodeType !== 1 /* Node.ELEMENT_NODE */)
         return [];
-      return isElementVisible(root as Element) === Boolean(body) ? [root as Element] : [];
+      const visible = body === 'true';
+      return isElementVisible(root as Element) === visible ? [root as Element] : [];
     };
     return { queryAll };
   }
@@ -995,13 +996,20 @@ export class InjectedScript {
     return { stop };
   }
 
-  dispatchEvent(node: Node, type: string, eventInit: Object) {
+  dispatchEvent(node: Node, type: string, eventInitObj: Object) {
     let event;
-    eventInit = { bubbles: true, cancelable: true, composed: true, ...eventInit };
+    const eventInit: any = { bubbles: true, cancelable: true, composed: true, ...eventInitObj };
     switch (eventType.get(type)) {
       case 'mouse': event = new MouseEvent(type, eventInit); break;
       case 'keyboard': event = new KeyboardEvent(type, eventInit); break;
-      case 'touch': event = new TouchEvent(type, eventInit); break;
+      case 'touch': {
+        eventInit.target ??= node;
+        eventInit.touches = eventInit.touches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
+        eventInit.targetTouches = eventInit.targetTouches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
+        eventInit.changedTouches = eventInit.changedTouches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
+        event = new TouchEvent(type, eventInit);
+        break;
+      }
       case 'pointer': event = new PointerEvent(type, eventInit); break;
       case 'focus': event = new FocusEvent(type, eventInit); break;
       case 'drag': event = new DragEvent(type, eventInit); break;
@@ -1320,6 +1328,8 @@ export class InjectedScript {
         received = getElementAccessibleName(element, false /* includeHidden */);
       } else if (expression === 'to.have.accessible.description') {
         received = getElementAccessibleDescription(element, false /* includeHidden */);
+      } else if (expression === 'to.have.accessible.error.message') {
+        received = getElementAccessibleErrorMessage(element);
       } else if (expression === 'to.have.role') {
         received = getAriaRole(element) || '';
       } else if (expression === 'to.have.title') {

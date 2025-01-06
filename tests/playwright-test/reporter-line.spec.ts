@@ -127,7 +127,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         `,
       }, { reporter: 'line' });
       const text = result.output;
-      expect(text).toContain('[1/1] a.test.ts:6:26 › passes › outer › inner');
+      expect(text).toContain('[1/1] a.test.ts:3:15 › passes › outer › inner');
       expect(result.exitCode).toBe(0);
     });
 

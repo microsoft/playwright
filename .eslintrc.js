@@ -115,7 +115,7 @@ module.exports = {
         "@typescript-eslint/type-annotation-spacing": 2,
 
         // file whitespace
-        "no-multiple-empty-lines": [2, {"max": 2}],
+        "no-multiple-empty-lines": [2, {"max": 2, "maxEOF": 0}],
         "no-mixed-spaces-and-tabs": 2,
         "no-trailing-spaces": 2,
         "linebreak-style": [ process.platform === "win32" ? 0 : 2, "unix" ],
@@ -123,6 +123,7 @@ module.exports = {
         "key-spacing": [2, {
             "beforeColon": false
         }],
+        "eol-last": 2,
 
         // copyright
         "notice/notice": [2, {

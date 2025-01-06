@@ -300,3 +300,9 @@ test('should highlight aria template', async ({ backend, connectedBrowser }, tes
   const box2 = roundBox(await highlight.boundingBox());
   expect(box1).toEqual(box2);
 });
+
+test('should report error in aria template', async ({ backend }) => {
+  await backend.navigate({ url: `data:text/html,<button>Submit</button>` });
+  const error = await backend.highlight({ ariaTemplate: `- button "Submit` }).catch(e => e);
+  expect(error.message).toContain('Unterminated string:');
+});

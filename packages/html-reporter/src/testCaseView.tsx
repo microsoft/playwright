@@ -19,7 +19,7 @@ import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
 import './common.css';
-import { Link, ProjectLink, SearchParamsContext } from './links';
+import { Link, ProjectLink, SearchParamsContext, testResultHref } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
@@ -53,9 +53,9 @@ export const TestCaseView: React.FC<{
     {test && <div className='hbox'>
       <div className='test-case-path'>{test.path.join(' › ')}</div>
       <div style={{ flex: 'auto' }}></div>
-      <div className={clsx(!prev && 'hidden')}><Link href={`#?testId=${prev?.testId}${filterParam}`}>« previous</Link></div>
+      <div className={clsx(!prev && 'hidden')}><Link href={testResultHref({ test: prev }) + filterParam}>« previous</Link></div>
       <div style={{ width: 10 }}></div>
-      <div className={clsx(!next && 'hidden')}><Link href={`#?testId=${next?.testId}${filterParam}`}>next »</Link></div>
+      <div className={clsx(!next && 'hidden')}><Link href={testResultHref({ test: next }) + filterParam}>next »</Link></div>
     </div>}
     {test && <div className='test-case-title'>{test?.title}</div>}
     {test && <div className='hbox'>

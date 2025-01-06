@@ -116,6 +116,9 @@ function checkBrowsersToInstall(args: string[], options: { noShell?: boolean, on
     }
   }
 
+  if (process.platform === 'win32')
+    executables.push(registry.findExecutable('winldd')!);
+
   if (faultyArguments.length)
     throw new Error(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${suggestedBrowsersToInstall()}`);
   return executables;

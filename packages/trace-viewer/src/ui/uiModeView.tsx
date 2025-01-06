@@ -28,6 +28,7 @@ import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
 import type { XtermDataSource } from '@web/components/xtermWrapper';
 import { XtermWrapper } from '@web/components/xtermWrapper';
+import { useDarkModeSetting } from '@web/theme';
 import { clsx, settings, useSetting } from '@web/uiUtils';
 import { statusEx, TestTree } from '@testIsomorphic/testTree';
 import type { TreeItem  } from '@testIsomorphic/testTree';
@@ -104,6 +105,7 @@ export const UIModeView: React.FC<{}> = ({
   const [singleWorker, setSingleWorker] = React.useState(false);
   const [showBrowser, setShowBrowser] = React.useState(false);
   const [updateSnapshots, setUpdateSnapshots] = React.useState(false);
+  const [darkMode, setDarkMode] = useDarkModeSetting();
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 

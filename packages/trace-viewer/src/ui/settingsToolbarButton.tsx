@@ -40,7 +40,7 @@ export const SettingsToolbarButton: React.FC<{}> = () => {
         // TODO: Temporary spacing until design of toolbar buttons is revisited
         verticalOffset={8}
         requestClose={() => setOpen(false)}
-        hostingElement={hostingRef}
+        anchor={hostingRef}
       >
         <DefaultSettingsView />
       </Dialog>

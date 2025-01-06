@@ -427,4 +427,3 @@ test('exits successfully if there are no changes', async ({ runInlineTest, git, 
 
   expect(result.exitCode).toBe(0);
 });
-

@@ -82,6 +82,10 @@ function yamlStringNeedsQuotes(str: string): boolean {
   if (/[{}`]/.test(str))
     return true;
 
+  // YAML array starts with [
+  if (/^\[/.test(str))
+    return true;
+
   // Non-string types recognized by YAML
   if (!isNaN(Number(str)) || ['y', 'n', 'yes', 'no', 'true', 'false', 'on', 'off', 'null'].includes(str.toLowerCase()))
     return true;

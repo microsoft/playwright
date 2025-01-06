@@ -150,28 +150,38 @@ export class JavaLanguageGenerator implements LanguageGenerator {
       import com.microsoft.playwright.Page;
       import com.microsoft.playwright.options.*;
 
-      import org.junit.jupiter.api.*;
+      ${options.contextOptions.recordHar ? `import java.nio.file.Paths;\n` : ''}import org.junit.jupiter.api.*;
       import static com.microsoft.playwright.assertions.PlaywrightAssertions.*;
 
       @UsePlaywright
       public class TestExample {
         @Test
         void test(Page page) {`);
+      if (options.contextOptions.recordHar) {
+        const url = options.contextOptions.recordHar.urlFilter;
+        const recordHarOptions = typeof url === 'string' ? `, new Page.RouteFromHAROptions()
+            .setUrl(${quote(url)})` : '';
+        formatter.add(`          page.routeFromHAR(Paths.get(${quote(options.contextOptions.recordHar.path)})${recordHarOptions});`);
+      }
       return formatter.format();
     }
     formatter.add(`
     import com.microsoft.playwright.*;
     import com.microsoft.playwright.options.*;
     import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
-    import java.util.*;
+    ${options.contextOptions.recordHar ? `import java.nio.file.Paths;\n` : ''}import java.util.*;
 
     public class Example {
       public static void main(String[] args) {
         try (Playwright playwright = Playwright.create()) {
           Browser browser = playwright.${options.browserName}().launch(${formatLaunchOptions(options.launchOptions)});
           BrowserContext context = browser.newContext(${formatContextOptions(options.contextOptions, options.deviceName)});`);
-    if (options.contextOptions.recordHar)
-      formatter.add(`          context.routeFromHAR(${quote(options.contextOptions.recordHar.path)});`);
+    if (options.contextOptions.recordHar) {
+      const url = options.contextOptions.recordHar.urlFilter;
+      const recordHarOptions = typeof url === 'string' ? `, new BrowserContext.RouteFromHAROptions()
+          .setUrl(${quote(url)})` : '';
+      formatter.add(`          context.routeFromHAR(Paths.get(${quote(options.contextOptions.recordHar.path)})${recordHarOptions});`);
+    }
     return formatter.format();
   }
 

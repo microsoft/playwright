@@ -1003,7 +1003,7 @@ Additional arguments to pass to the browser instance. The list of Chromium flags
 
 Browser distribution channel.
 
-Use "chromium" to [opt in to new headless mode](../browsers.md#opt-in-to-new-headless-mode).
+Use "chromium" to [opt in to new headless mode](../browsers.md#chromium-new-headless-mode).
 
 Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or "msedge-canary" to use branded [Google Chrome and Microsoft Edge](../browsers.md#google-chrome--microsoft-edge).
 

@@ -25,6 +25,11 @@
   cursor: pointer;
 }
 
+.tree-item-title.selected {
+  text-decoration: underline var(--color-underlinenav-icon);
+  text-decoration-thickness: 1.5px;
+}
+
 .tree-item-body {
   min-height: 18px;
 }

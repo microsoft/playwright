@@ -17,7 +17,7 @@
 import './toolbarButton.css';
 import '../third_party/vscode/codicon.css';
 import * as React from 'react';
-import { clsx } from '@web/uiUtils';
+import { clsx } from '../uiUtils';
 
 export interface ToolbarButtonProps {
   title: string,

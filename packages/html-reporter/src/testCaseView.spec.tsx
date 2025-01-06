@@ -37,8 +37,10 @@ const result: TestResult = {
       duration: 10,
       location: { file: 'test.spec.ts', line: 82, column: 0 },
       steps: [],
+      attachments: [],
       count: 1,
     }],
+    attachments: [],
   }],
   attachments: [],
   status: 'passed',
@@ -139,6 +141,7 @@ const resultWithAttachment: TestResult = {
     location: { file: 'test.spec.ts', line: 62, column: 0 },
     count: 1,
     steps: [],
+    attachments: [1],
   }],
   attachments: [{
     name: 'first attachment',
