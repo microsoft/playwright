@@ -18,7 +18,6 @@ import * as React from 'react';
 import { Dialog } from './shared/dialog';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { DefaultSettingsView } from './defaultSettingsView';
-import './settingsToolbar.css';
 
 export const SettingsToolbarButton: React.FC<{}> = () => {
   const hostingRef = React.useRef<HTMLButtonElement>(null);
@@ -34,7 +33,10 @@ export const SettingsToolbarButton: React.FC<{}> = () => {
         onClick={() => setOpen(current => !current)}
       />
       <Dialog
-        className='settings-toolbar-dialog'
+        style={{
+          backgroundColor: 'var(--vscode-sideBar-background)',
+          padding: '4px 8px'
+        }}
         open={open}
         width={200}
         // TODO: Temporary spacing until design of toolbar buttons is revisited

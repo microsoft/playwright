@@ -20,7 +20,7 @@ import type { ActionTraceEvent } from '@trace/trace';
 import { context, type MultiTraceModel, prevInList } from './modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { clsx, useMeasure } from '@web/uiUtils';
+import { clsx, useMeasure, useSetting } from '@web/uiUtils';
 import { InjectedScript } from '@injected/injectedScript';
 import { Recorder } from '@injected/recorder/recorder';
 import ConsoleAPI from '@injected/consoleApi';
@@ -30,7 +30,6 @@ import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { TabbedPaneTab } from '@web/components/tabbedPane';
 import { BrowserFrame } from './browserFrame';
 import type { ElementInfo } from '@recorder/recorderTypes';
-import { useShouldPopulateCanvasFromScreenshot } from './settings/useShouldPopulateCanvasFromScreenshot';
 
 export const SnapshotTabsView: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
@@ -45,7 +44,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [shouldPopulateCanvasFromScreenshot, _] = useShouldPopulateCanvasFromScreenshot();
+  const [shouldPopulateCanvasFromScreenshot, _] = useSetting('shouldPopulateCanvasFromScreenshot', false);
 
   const snapshots = React.useMemo(() => {
     return collectSnapshots(action);

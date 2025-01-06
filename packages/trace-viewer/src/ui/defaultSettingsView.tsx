@@ -17,13 +17,16 @@
 import * as React from 'react';
 import { SettingsView } from './settingsView';
 import { useDarkModeSetting } from '@web/theme';
-import { useShouldPopulateCanvasFromScreenshot } from './settings/useShouldPopulateCanvasFromScreenshot';
+import { useSetting } from '@web/uiUtils';
 
+/**
+ * A view of the collection of standard settings used between various applications
+ */
 export const DefaultSettingsView: React.FC<{}> = () => {
   const [
     shouldPopulateCanvasFromScreenshot,
     setShouldPopulateCanvasFromScreenshot,
-  ] = useShouldPopulateCanvasFromScreenshot();
+  ] = useSetting('shouldPopulateCanvasFromScreenshot', false);
   const [darkMode, setDarkMode] = useDarkModeSetting();
 
   return (
