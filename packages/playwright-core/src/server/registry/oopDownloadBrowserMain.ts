@@ -18,7 +18,8 @@ import fs from 'fs';
 import path from 'path';
 import { httpRequest } from '../../utils/network';
 import { ManualPromise } from '../../utils/manualPromise';
-import { extract, tarFs } from '../../zipBundle';
+import { extract } from '../../zipBundle';
+import tar from '../../utils/tar';
 import type http from 'http';
 import { pipeline } from 'stream/promises';
 import { createBrotliDecompress } from 'zlib';
@@ -150,7 +151,7 @@ async function downloadAndExtractBrotli(options: DownloadParams) {
   await pipeline(
       response,
       createBrotliDecompress(),
-      tarFs.extract(options.browserDirectory)
+      tar.extract(options.browserDirectory)
   );
 
   if (downloadedBytes !== totalBytes)

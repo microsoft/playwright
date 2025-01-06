@@ -40,5 +40,11 @@
   "bin": {
     "playwright-core": "cli.js"
   },
-  "types": "types/types.d.ts"
+  "types": "types/types.d.ts",
+  "dependencies": {
+    "b4a": "^1.6.7",
+    "fast-fifo": "^1.3.2",
+    "pump": "^3.0.2",
+    "streamx": "^2.21.1"
+  }
 }

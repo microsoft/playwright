@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "extract-zip": "2.0.1",
-    "tar-fs": "^3.0.6",
     "yauzl": "2.10.0",
     "yazl": "2.5.1"
   },
