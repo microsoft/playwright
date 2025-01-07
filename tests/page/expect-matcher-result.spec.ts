@@ -73,7 +73,7 @@ test('toBeTruthy-based assertions should have matcher result', async ({ page }) 
     const e = await expect(page.locator('#node2')).toBeVisible({ timeout: 1 }).catch(e => e);
     e.matcherResult.message = stripAnsi(e.matcherResult.message);
     expect.soft(e.matcherResult).toEqual({
-      actual: 'hidden',
+      actual: '<element(s) not found>',
       expected: 'visible',
       message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).toBeVisible()`),
       name: 'toBeVisible',
