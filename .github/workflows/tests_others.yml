@@ -16,7 +16,6 @@ on:
 
 env:
   FORCE_COLOR: 1
-  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
 jobs:
   test_stress:
@@ -26,6 +25,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: 1
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -84,6 +85,8 @@ jobs:
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
+      env:
+        ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
   test_clock_frozen_time_linux:
     name: time library - ${{ matrix.clock }}
@@ -109,6 +112,7 @@ jobs:
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PW_CLOCK: ${{ matrix.clock }}
+        ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
   test_clock_frozen_time_test_runner:
     name: time test runner - ${{ matrix.clock }}
@@ -133,6 +137,7 @@ jobs:
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PW_CLOCK: ${{ matrix.clock }}
+        ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
   test_electron:
     name: Electron - ${{ matrix.os }}
@@ -155,5 +160,3 @@ jobs:
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
-      env:
-        ELECTRON_SKIP_BINARY_DOWNLOAD:
