@@ -52,19 +52,17 @@ it('should open devtools when "devtools: true" option is given', async ({ browse
   await browser.close();
 });
 
-it('should return background pages', async ({ browserType, createUserDataDir, asset, isHeadlessShell }) => {
+it('should return background pages', async ({ browserType, asset, isHeadlessShell }) => {
   it.skip(isHeadlessShell, 'Headless Shell has no support for extensions');
 
-  const userDataDir = await createUserDataDir();
   const extensionPath = asset('simple-extension');
   const extensionOptions = {
-    headless: false,
     args: [
       `--disable-extensions-except=${extensionPath}`,
       `--load-extension=${extensionPath}`,
     ],
   };
-  const context = await browserType.launchPersistentContext(userDataDir, extensionOptions);
+  const context = await browserType.launchPersistentContext('', extensionOptions);
   const backgroundPages = context.backgroundPages();
   const backgroundPage = backgroundPages.length
     ? backgroundPages[0]
@@ -77,13 +75,11 @@ it('should return background pages', async ({ browserType, createUserDataDir, as
   expect(context.backgroundPages().length).toBe(0);
 });
 
-it('should return background pages when recording video', async ({ browserType, createUserDataDir, asset, isHeadlessShell }, testInfo) => {
+it('should return background pages when recording video', async ({ browserType, asset, isHeadlessShell }, testInfo) => {
   it.skip(isHeadlessShell, 'Headless Shell has no support for extensions');
 
-  const userDataDir = await createUserDataDir();
   const extensionPath = asset('simple-extension');
   const extensionOptions = {
-    headless: false,
     args: [
       `--disable-extensions-except=${extensionPath}`,
       `--load-extension=${extensionPath}`,
@@ -92,7 +88,7 @@ it('should return background pages when recording video', async ({ browserType, 
       dir: testInfo.outputPath(''),
     },
   };
-  const context = await browserType.launchPersistentContext(userDataDir, extensionOptions);
+  const context = await browserType.launchPersistentContext('', extensionOptions);
   const backgroundPages = context.backgroundPages();
   const backgroundPage = backgroundPages.length
     ? backgroundPages[0]
@@ -103,23 +99,21 @@ it('should return background pages when recording video', async ({ browserType, 
   await context.close();
 });
 
-it('should support request/response events when using backgroundPage()', async ({ browserType, createUserDataDir, asset, server, isHeadlessShell }) => {
+it('should support request/response events when using backgroundPage()', async ({ browserType, asset, server, isHeadlessShell }) => {
   it.skip(isHeadlessShell, 'Headless Shell has no support for extensions');
 
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html', 'x-response-foobar': 'BarFoo' });
     res.end(`<span>hello world!</span>`);
   });
-  const userDataDir = await createUserDataDir();
   const extensionPath = asset('simple-extension');
   const extensionOptions = {
-    headless: false,
     args: [
       `--disable-extensions-except=${extensionPath}`,
       `--load-extension=${extensionPath}`,
     ],
   };
-  const context = await browserType.launchPersistentContext(userDataDir, extensionOptions);
+  const context = await browserType.launchPersistentContext('', extensionOptions);
   const backgroundPages = context.backgroundPages();
   const backgroundPage = backgroundPages.length
     ? backgroundPages[0]
@@ -154,19 +148,17 @@ it('should support request/response events when using backgroundPage()', async (
 
 it('should report console messages from content script', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/32762' }
-}, async ({ browserType, createUserDataDir, asset, server, isHeadlessShell }) => {
+}, async ({ browserType, asset, server, isHeadlessShell }) => {
   it.skip(isHeadlessShell, 'Headless Shell has no support for extensions');
 
-  const userDataDir = await createUserDataDir();
   const extensionPath = asset('extension-with-logging');
   const extensionOptions = {
-    headless: false,
     args: [
       `--disable-extensions-except=${extensionPath}`,
       `--load-extension=${extensionPath}`,
     ],
   };
-  const context = await browserType.launchPersistentContext(userDataDir, extensionOptions);
+  const context = await browserType.launchPersistentContext('', extensionOptions);
   const page = await context.newPage();
   const consolePromise = page.waitForEvent('console', e => e.text().includes('Test console log from a third-party execution context'));
   await page.goto(server.EMPTY_PAGE);
