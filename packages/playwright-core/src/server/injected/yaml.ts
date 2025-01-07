@@ -59,7 +59,7 @@ function yamlStringNeedsQuotes(str: string): boolean {
     return true;
 
   // Strings starting with '-' followed by a space need quotes
-  if (/^-\s/.test(str))
+  if (/^-/.test(str))
     return true;
 
   // Strings containing ':' or '\n' followed by a space or at the end need quotes
