@@ -218,6 +218,8 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libgbm-dev
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - run: npm install -g yarn@1
     - run: npm install -g pnpm@8
     - uses: ./.github/actions/run-test
