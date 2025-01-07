@@ -217,7 +217,7 @@ jobs:
       if: ${{ runner.os == 'Linux' }}
       run: |
         sudo apt-get update
-        npx playwright install-deps chromium
+        sudo apt-get install -y libgbm-dev
     - run: npm install -g yarn@1
     - run: npm install -g pnpm@8
     - uses: ./.github/actions/run-test

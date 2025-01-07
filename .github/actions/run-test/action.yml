@@ -65,6 +65,7 @@ runs:
       shell: bash
       env:
         PWTEST_BOT_NAME: ${{ inputs.bot-name }}
+        DEBUG: pw:browser
     - name: Run tests
       if: inputs.shell != 'bash'
       run: ${{ inputs.command }}
