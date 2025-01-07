@@ -213,6 +213,12 @@ jobs:
       contents: read    # This is required for actions/checkout to succeed
     steps:
     - uses: actions/checkout@v4
+    - name: Setup Ubuntu
+      if: ${{ runner.os == 'Linux' }}
+      # Install dependencies necessary for running Electron on newer Ubuntu images
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libatk1.0-0 libatk-bridge2.0-0 libcups2 libgtk-3-0 libgbm-dev libasound2t64
     - run: npm install -g yarn@1
     - run: npm install -g pnpm@8
     - uses: ./.github/actions/run-test
