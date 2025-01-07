@@ -58,7 +58,7 @@ function yamlStringNeedsQuotes(str: string): boolean {
   if (/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]/.test(str))
     return true;
 
-  // Strings starting with '-' followed by a space need quotes
+  // Strings starting with '-' need quotes
   if (/^-/.test(str))
     return true;
 
