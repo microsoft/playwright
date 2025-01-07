@@ -49,7 +49,7 @@ async function pan(locator: Locator, deltaX?: number, deltaY?: number, steps?: n
       clientY: centerY + deltaY * i / steps,
     }];
     await locator.dispatchEvent('touchmove',
-      { touches, changedTouches: touches, targetTouches: touches });
+        { touches, changedTouches: touches, targetTouches: touches });
   }
 
   await locator.dispatchEvent('touchend');
@@ -57,7 +57,7 @@ async function pan(locator: Locator, deltaX?: number, deltaY?: number, steps?: n
 
 test(`pan gesture to move the map`, async ({ page }) => {
   await page.goto('https://www.google.com/maps/place/@37.4117722,-122.0713234,15z',
-    { waitUntil: 'commit' });
+      { waitUntil: 'commit' });
   await page.getByRole('button', { name: 'Keep using web' }).click();
   await expect(page.getByRole('button', { name: 'Keep using web' })).not.toBeVisible();
   // Get the map element.
@@ -105,7 +105,7 @@ async function pinch(locator: Locator,
     },
   ];
   await locator.dispatchEvent('touchstart',
-    { touches, changedTouches: touches, targetTouches: touches });
+      { touches, changedTouches: touches, targetTouches: touches });
 
   // Move the touch points towards or away from each other.
   for (let i = 1; i <= steps; i++) {
@@ -113,7 +113,7 @@ async function pinch(locator: Locator,
     const touches = [
       {
         identifier: 0,
-        clientX:centerX - offset,
+        clientX: centerX - offset,
         clientY: centerY,
       },
       {
@@ -123,14 +123,15 @@ async function pinch(locator: Locator,
       },
     ];
     await locator.dispatchEvent('touchmove',
-      { touches, changedTouches: touches, targetTouches: touches });
+        { touches, changedTouches: touches, targetTouches: touches });
   }
 
   await locator.dispatchEvent('touchend', { touches: [], changedTouches: [], targetTouches: [] });
 }
 
 test(`pinch in gesture to zoom out the map`, async ({ page }) => {
-  await page.goto('https://www.google.com/maps/place/@37.4117722,-122.0713234,15z', { waitUntil: 'commit' });
+  await page.goto('https://www.google.com/maps/place/@37.4117722,-122.0713234,15z',
+      { waitUntil: 'commit' });
   await page.getByRole('button', { name: 'Keep using web' }).click();
   await expect(page.getByRole('button', { name: 'Keep using web' })).not.toBeVisible();
   // Get the map element.
