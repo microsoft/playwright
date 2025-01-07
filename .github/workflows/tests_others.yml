@@ -9,7 +9,6 @@ on:
     paths-ignore:
       - 'browser_patches/**'
       - 'docs/**'
-    types: [ labeled ]
     branches:
       - main
       - release-*
@@ -147,6 +146,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: chromium
