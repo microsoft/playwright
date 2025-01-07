@@ -778,7 +778,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async _setChecked(progress: Progress, state: boolean, options: { position?: types.Point } & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     const isChecked = async () => {
       const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'checked'), {});
-      return throwRetargetableDOMError(result);
+      if (result === 'error:notconnected' || result.received === 'error:notconnected')
+        throwElementIsNotAttached();
+      return result.matches;
     };
     await this._markAsTargetElement(progress.metadata);
     if (await isChecked() === state)
@@ -913,8 +915,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
 export function throwRetargetableDOMError<T>(result: T | 'error:notconnected'): T {
   if (result === 'error:notconnected')
-    throw new Error('Element is not attached to the DOM');
+    throwElementIsNotAttached();
   return result;
+}
+
+export function throwElementIsNotAttached(): never {
+  throw new Error('Element is not attached to the DOM');
 }
 
 export function assertDone(result: 'done'): void {

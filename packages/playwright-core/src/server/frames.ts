@@ -1301,7 +1301,9 @@ export class Frame extends SdkObject {
     const result = await this._callOnElementOnceMatches(metadata, selector, (injected, element, data) => {
       return injected.elementState(element, data.state);
     }, { state }, options, scope);
-    return dom.throwRetargetableDOMError(result);
+    if (result.received === 'error:notconnected')
+      dom.throwElementIsNotAttached();
+    return result.matches;
   }
 
   async isVisible(metadata: CallMetadata, selector: string, options: types.StrictOptions = {}, scope?: dom.ElementHandle): Promise<boolean> {
@@ -1319,8 +1321,8 @@ export class Frame extends SdkObject {
         return false;
       return await resolved.injected.evaluate((injected, { info, root }) => {
         const element = injected.querySelector(info.parsed, root || document, info.strict);
-        const state = element ? injected.elementState(element, 'visible') : false;
-        return state === 'error:notconnected' ? false : state;
+        const state = element ? injected.elementState(element, 'visible') : { matches: false, received: 'error:notconnected' };
+        return state.matches;
       }, { info: resolved.info, root: resolved.frame === this ? scope : undefined });
     } catch (e) {
       if (js.isJavaScriptErrorInEvaluate(e) || isInvalidSelectorError(e) || isSessionClosedError(e))
@@ -1809,26 +1811,6 @@ function verifyLifecycle(name: string, waitUntil: types.LifecycleEvent): types.L
 }
 
 function renderUnexpectedValue(expression: string, received: any): string {
-  if (expression === 'to.be.checked')
-    return received ? 'checked' : 'unchecked';
-  if (expression === 'to.be.unchecked')
-    return received ? 'unchecked' : 'checked';
-  if (expression === 'to.be.visible')
-    return received ? 'visible' : 'hidden';
-  if (expression === 'to.be.hidden')
-    return received ? 'hidden' : 'visible';
-  if (expression === 'to.be.enabled')
-    return received ? 'enabled' : 'disabled';
-  if (expression === 'to.be.disabled')
-    return received ? 'disabled' : 'enabled';
-  if (expression === 'to.be.editable')
-    return received ? 'editable' : 'readonly';
-  if (expression === 'to.be.readonly')
-    return received ? 'readonly' : 'editable';
-  if (expression === 'to.be.empty')
-    return received ? 'empty' : 'not empty';
-  if (expression === 'to.be.focused')
-    return received ? 'focused' : 'not focused';
   if (expression === 'to.match.aria')
     return received ? received.raw : received;
   return received;

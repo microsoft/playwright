@@ -41,8 +41,9 @@ import { parseYamlTemplate } from '@isomorphic/ariaSnapshot';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
 
-export type ElementStateWithoutStable = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked';
-export type ElementState = ElementStateWithoutStable | 'stable';
+export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'mixed' | 'stable';
+export type ElementStateWithoutStable = Exclude<ElementState, 'stable'>;
+export type ElementStateQueryResult = { matches: boolean, received?: string | 'error:notconnected' };
 
 export type HitTargetInterceptionResult = {
   stop: () => 'done' | { hitTargetDescription: string };
@@ -545,15 +546,15 @@ export class InjectedScript {
       if (stableResult === false)
         return { missingState: 'stable' };
       if (stableResult === 'error:notconnected')
-        return stableResult;
+        return 'error:notconnected';
     }
     for (const state of states) {
       if (state !== 'stable') {
         const result = this.elementState(node, state);
-        if (result === false)
+        if (result.received === 'error:notconnected')
+          return 'error:notconnected';
+        if (!result.matches)
           return { missingState: state };
-        if (result === 'error:notconnected')
-          return result;
       }
     }
   }
@@ -608,38 +609,50 @@ export class InjectedScript {
     return result;
   }
 
-  elementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' {
-    const element = this.retarget(node, ['stable', 'visible', 'hidden'].includes(state) ? 'none' : 'follow-label');
+  elementState(node: Node, state: ElementStateWithoutStable): ElementStateQueryResult {
+    const element = this.retarget(node, ['visible', 'hidden'].includes(state) ? 'none' : 'follow-label');
     if (!element || !element.isConnected) {
       if (state === 'hidden')
-        return true;
-      return 'error:notconnected';
+        return { matches: true, received: 'hidden' };
+      return { matches: false, received: 'error:notconnected' };
     }
 
-    if (state === 'visible')
-      return isElementVisible(element);
-    if (state === 'hidden')
-      return !isElementVisible(element);
+    if (state === 'visible' || state === 'hidden') {
+      const visible = isElementVisible(element);
+      return {
+        matches: state === 'visible' ? visible : !visible,
+        received: visible ? 'visible' : 'hidden'
+      };
+    }
 
-    const disabled = getAriaDisabled(element);
-    if (state === 'disabled')
-      return disabled;
-    if (state === 'enabled')
-      return !disabled;
+    if (state === 'disabled' || state === 'enabled') {
+      const disabled = getAriaDisabled(element);
+      return {
+        matches: state === 'disabled' ? disabled : !disabled,
+        received: disabled ? 'disabled' : 'enabled'
+      };
+    }
 
     if (state === 'editable') {
+      const disabled = getAriaDisabled(element);
       const readonly = getReadonly(element);
       if (readonly === 'error')
         throw this.createStacklessError('Element is not an <input>, <textarea>, <select> or [contenteditable] and does not have a role allowing [aria-readonly]');
-      return !disabled && !readonly;
+      return {
+        matches: !disabled && !readonly,
+        received: disabled ? 'disabled' : readonly ? 'readOnly' : 'editable'
+      };
     }
 
-    if (state === 'checked' || state === 'unchecked') {
-      const need = state === 'checked';
+    if (state === 'checked' || state === 'unchecked' || state === 'mixed') {
+      const need = state === 'checked' ? true : state === 'unchecked' ? false : 'mixed';
       const checked = getChecked(element, false);
       if (checked === 'error')
         throw this.createStacklessError('Not a checkbox or radio button');
-      return need === checked;
+      return {
+        matches: need === checked,
+        received: checked === true ? 'checked' : checked === false ? 'unchecked' : 'mixed',
+      };
     }
     throw this.createStacklessError(`Unexpected element state "${state}"`);
   }
@@ -1220,44 +1233,60 @@ export class InjectedScript {
 
     {
       // Element state / boolean values.
-      let elementState: boolean | 'error:notconnected' | 'error:notcheckbox' | undefined;
+      let result: ElementStateQueryResult | undefined;
       if (expression === 'to.have.attribute') {
-        elementState = element.hasAttribute(options.expressionArg);
+        const hasAttribute = element.hasAttribute(options.expressionArg);
+        result = {
+          matches: hasAttribute,
+          received: hasAttribute ? 'attribute present' : 'attribute not present',
+        };
       } else if (expression === 'to.be.checked') {
-        elementState = this.elementState(element, 'checked');
+        result = this.elementState(element, 'checked');
       } else if (expression === 'to.be.unchecked') {
-        elementState = this.elementState(element, 'unchecked');
+        result = this.elementState(element, 'unchecked');
       } else if (expression === 'to.be.disabled') {
-        elementState = this.elementState(element, 'disabled');
+        result = this.elementState(element, 'disabled');
       } else if (expression === 'to.be.editable') {
-        elementState = this.elementState(element, 'editable');
+        result = this.elementState(element, 'editable');
       } else if (expression === 'to.be.readonly') {
-        elementState = !this.elementState(element, 'editable');
+        result = this.elementState(element, 'editable');
+        result.matches = !result.matches;
       } else if (expression === 'to.be.empty') {
-        if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA')
-          elementState = !(element as HTMLInputElement).value;
-        else
-          elementState = !element.textContent?.trim();
+        if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA') {
+          const value = (element as HTMLInputElement).value;
+          result = { matches: !value, received: value ? 'notEmpty' : 'empty' };
+        } else {
+          const text = element.textContent?.trim();
+          result = { matches: !text, received: text ? 'notEmpty' : 'empty' };
+        }
       } else if (expression === 'to.be.enabled') {
-        elementState = this.elementState(element, 'enabled');
+        result = this.elementState(element, 'enabled');
       } else if (expression === 'to.be.focused') {
-        elementState = this._activelyFocused(element).isFocused;
+        const focused = this._activelyFocused(element).isFocused;
+        result = {
+          matches: focused,
+          received: focused ? 'focused' : 'inactive',
+        };
       } else if (expression === 'to.be.hidden') {
-        elementState = this.elementState(element, 'hidden');
+        result = this.elementState(element, 'hidden');
       } else if (expression === 'to.be.visible') {
-        elementState = this.elementState(element, 'visible');
+        result = this.elementState(element, 'visible');
       } else if (expression === 'to.be.attached') {
-        elementState = true;
+        result = {
+          matches: true,
+          received: 'attached',
+        };
       } else if (expression === 'to.be.detached') {
-        elementState = false;
+        result = {
+          matches: false,
+          received: 'attached',
+        };
       }
 
-      if (elementState !== undefined) {
-        if (elementState === 'error:notcheckbox')
-          throw this.createStacklessError('Element is not a checkbox');
-        if (elementState === 'error:notconnected')
+      if (result) {
+        if (result.received === 'error:notconnected')
           throw this.createStacklessError('Element is not connected');
-        return { received: elementState, matches: elementState };
+        return result;
       }
     }
 
