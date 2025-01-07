@@ -531,10 +531,10 @@ export class InjectedScript {
       if (!element.matches('a, input, textarea, button, select, [role=link], [role=button], [role=checkbox], [role=radio]') &&
         !(element as any).isContentEditable) {
         // Go up to the label that might be connected to the input/textarea.
-        element = element.closest('label') || element;
+        const enclosingLabel: HTMLLabelElement | null = element.closest('label');
+        if (enclosingLabel && enclosingLabel.control)
+          element = enclosingLabel.control;
       }
-      if (element.nodeName === 'LABEL')
-        element = (element as HTMLLabelElement).control || element;
     }
     return element;
   }
