@@ -24,6 +24,7 @@ export interface DialogProps {
   verticalOffset?: number;
   requestClose?: () => void;
   anchor?: React.RefObject<HTMLElement>;
+  dataTestId?: string;
 }
 
 export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
@@ -34,6 +35,7 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
   verticalOffset,
   requestClose,
   anchor,
+  dataTestId,
   children,
 }) => {
   const dialogRef = React.useRef<HTMLDialogElement>(null);
@@ -96,7 +98,7 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
 
   return (
     open && (
-      <dialog ref={dialogRef} style={style} className={className} open>
+      <dialog ref={dialogRef} style={style} className={className} data-testid={dataTestId} open>
         {children}
       </dialog>
     )

@@ -33,7 +33,6 @@ export const SettingsToolbarButton: React.FC<{}> = () => {
         onClick={() => setOpen(current => !current)}
       />
       <Dialog
-        className='settings-toolbar-dialog'
         style={{
           backgroundColor: 'var(--vscode-sideBar-background)',
           padding: '4px 8px'
@@ -44,6 +43,7 @@ export const SettingsToolbarButton: React.FC<{}> = () => {
         verticalOffset={8}
         requestClose={() => setOpen(false)}
         anchor={hostingRef}
+        dataTestId='settings-toolbar-dialog'
       >
         <DefaultSettingsView />
       </Dialog>

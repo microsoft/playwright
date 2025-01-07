@@ -68,7 +68,7 @@ class TraceViewerPage {
     this.metadataTab = page.getByTestId('metadata-view');
     this.sourceCodeTab = page.getByTestId('source-code');
 
-    this.settingsDialog = page.locator('.settings-toolbar-dialog');
+    this.settingsDialog = page.getByTestId('settings-toolbar-dialog');
     this.darkModeSetting = page.locator('.setting').getByText('Dark mode');
     this.displayCanvasContentSetting = page.locator('.setting').getByText('Display canvas content');
   }

@@ -1641,7 +1641,7 @@ test('should toggle canvas rendering', async ({ runAndTrace, page }) => {
     await page.goto(`data:text/html,<!DOCTYPE html><body><div>Hello world</div></body>`);
   });
 
-  let snapshotRequestPromise = traceViewer.page.waitForRequest(request => request.url().includes('/snapshot/'), { timeout: 2000 });
+  let snapshotRequestPromise = traceViewer.page.waitForRequest(request => request.url().includes('/snapshot/'));
 
   // Click on the action with a canvas snapshot
   await traceViewer.selectAction('goto', 0);
@@ -1659,7 +1659,7 @@ test('should toggle canvas rendering', async ({ runAndTrace, page }) => {
   // Deselect canvas
   await traceViewer.selectAction('goto', 1);
 
-  snapshotRequestPromise = traceViewer.page.waitForRequest(request => request.url().includes('/snapshot/'), { timeout: 2000 });
+  snapshotRequestPromise = traceViewer.page.waitForRequest(request => request.url().includes('/snapshot/'));
 
   // Select canvas again
   await traceViewer.selectAction('goto', 0);
