@@ -555,6 +555,7 @@ it('should escape special yaml values', async ({ page }) => {
     <a href="#">null</a>NULL
     <a href="#">123</a>123
     <a href="#">-1.2</a>-1.2
+    <a href="#">-</a>-
     <input type=text value="555">
   `);
 
@@ -573,6 +574,8 @@ it('should escape special yaml values', async ({ page }) => {
     - text: "123"
     - link "-1.2"
     - text: "-1.2"
+    - link "-"
+    - text: "-"
     - textbox: "555"
   `);
 });
