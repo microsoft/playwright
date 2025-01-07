@@ -12915,7 +12915,6 @@ export interface Locator {
    * live objects to be passed into the event:
    *
    * ```js
-   * // Note you can only create DataTransfer in Chromium and Firefox
    * const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
    * await locator.dispatchEvent('dragstart', { dataTransfer });
    * ```
