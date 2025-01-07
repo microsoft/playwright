@@ -51,13 +51,13 @@ export function toBeAttached(
 export function toBeChecked(
   this: ExpectMatcherState,
   locator: LocatorEx,
-  options?: { checked?: boolean, timeout?: number },
+  options?: { checked?: boolean | 'mixed', timeout?: number },
 ) {
-  const checked = !options || options.checked === undefined || options.checked;
-  const expected = checked ? 'checked' : 'unchecked';
-  const arg = checked ? '' : '{ checked: false }';
+  const expected = options?.checked === true ? 'checked' : options?.checked === false ? 'unchecked' : options?.checked === 'mixed' ? 'mixed' : 'checked';
+  const expectedValue = options?.checked === true ? 'checked' : options?.checked === false ? 'unchecked' : options?.checked === 'mixed' ? 'mixed' : 'lax-checked';
+  const arg = options?.checked === undefined ? '' : `{ checked: ${JSON.stringify(options.checked)} }`;
   return toBeTruthy.call(this, 'toBeChecked', locator, 'Locator', expected, arg, async (isNot, timeout) => {
-    return await locator._expect(checked ? 'to.be.checked' : 'to.be.unchecked', { isNot, timeout });
+    return await locator._expect('to.be.checked', { isNot, timeout, expectedValue });
   }, options);
 }
 

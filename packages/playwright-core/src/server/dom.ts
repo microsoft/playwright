@@ -777,7 +777,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _setChecked(progress: Progress, state: boolean, options: { position?: types.Point } & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     const isChecked = async () => {
-      const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'checked'), {});
+      const result = await this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'lax-checked'), {});
       if (result === 'error:notconnected' || result.received === 'error:notconnected')
         throwElementIsNotAttached();
       return result.matches;

@@ -29,7 +29,7 @@ import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector, type GenerateSelectorOptions } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription, getReadonly, getElementAccessibleErrorMessage } from './roleUtils';
+import { getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription, getReadonly, getElementAccessibleErrorMessage, getCheckedAllowMixed, getCheckedWithoutMixed } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
@@ -41,7 +41,7 @@ import { parseYamlTemplate } from '@isomorphic/ariaSnapshot';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
 
-export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'mixed' | 'stable';
+export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'mixed' | 'lax-checked' | 'stable';
 export type ElementStateWithoutStable = Exclude<ElementState, 'stable'>;
 export type ElementStateQueryResult = { matches: boolean, received?: string | 'error:notconnected' };
 
@@ -646,7 +646,7 @@ export class InjectedScript {
 
     if (state === 'checked' || state === 'unchecked' || state === 'mixed') {
       const need = state === 'checked' ? true : state === 'unchecked' ? false : 'mixed';
-      const checked = getChecked(element, false);
+      const checked = getCheckedAllowMixed(element);
       if (checked === 'error')
         throw this.createStacklessError('Not a checkbox or radio button');
       return {
@@ -654,6 +654,17 @@ export class InjectedScript {
         received: checked === true ? 'checked' : checked === false ? 'unchecked' : 'mixed',
       };
     }
+
+    if (state === 'lax-checked') {
+      const checked = getCheckedWithoutMixed(element);
+      if (checked === 'error')
+        throw this.createStacklessError('Not a checkbox or radio button');
+      return {
+        matches: checked,
+        received: checked ? 'checked' : 'unchecked',
+      };
+    }
+
     throw this.createStacklessError(`Unexpected element state "${state}"`);
   }
 
@@ -1241,9 +1252,7 @@ export class InjectedScript {
           received: hasAttribute ? 'attribute present' : 'attribute not present',
         };
       } else if (expression === 'to.be.checked') {
-        result = this.elementState(element, 'checked');
-      } else if (expression === 'to.be.unchecked') {
-        result = this.elementState(element, 'unchecked');
+        result = this.elementState(element, options.expectedValue);
       } else if (expression === 'to.be.disabled') {
         result = this.elementState(element, 'disabled');
       } else if (expression === 'to.be.editable') {

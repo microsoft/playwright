@@ -1591,6 +1591,7 @@ scheme.FrameInputValueResult = tObject({
 });
 scheme.FrameIsCheckedParams = tObject({
   selector: tString,
+  checked: tOptional(tEnum(['checked', 'unchecked', 'mixed'])),
   strict: tOptional(tBoolean),
   timeout: tOptional(tNumber),
 });

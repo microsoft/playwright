@@ -2128,6 +2128,12 @@ Frame:
     isChecked:
       parameters:
         selector: string
+        checked:
+          type: enum?
+          literals:
+          - checked
+          - unchecked
+          - mixed
         strict: boolean?
         timeout: number?
       returns:

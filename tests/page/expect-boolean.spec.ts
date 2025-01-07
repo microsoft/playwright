@@ -35,6 +35,13 @@ test.describe('toBeChecked', () => {
     await expect(locator).not.toBeChecked({ checked: false });
   });
 
+  test('with checked:mixed', async ({ page }) => {
+    await page.setContent('<input type=checkbox aria-checked=mixed></input>');
+    await page.locator('input').evaluate((e: HTMLInputElement) => e.indeterminate = true);
+    const locator = page.locator('input');
+    await expect(locator).toBeChecked({ checked: 'mixed' });
+  });
+
   test('fail', async ({ page }) => {
     await page.setContent('<input type=checkbox></input>');
     const locator = page.locator('input');
@@ -66,6 +73,13 @@ test.describe('toBeChecked', () => {
     await page.setContent('<input type=checkbox checked></input>');
     const locator = page.locator('input');
     const error = await expect(locator).toBeChecked({ checked: false, timeout: 1000 }).catch(e => e);
+    expect(error.message).toContain(`expect.toBeChecked with timeout 1000ms`);
+  });
+
+  test('fail with checked:mixed', async ({ page }) => {
+    await page.setContent('<input type=checkbox></input>');
+    const locator = page.locator('input');
+    const error = await expect(locator).toBeChecked({ checked: 'mixed', timeout: 1000 }).catch(e => e);
     expect(error.message).toContain(`expect.toBeChecked with timeout 1000ms`);
   });
 

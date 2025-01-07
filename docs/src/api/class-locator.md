@@ -1431,6 +1431,16 @@ checked = page.get_by_role("checkbox").is_checked()
 var isChecked = await page.GetByRole(AriaRole.Checkbox).IsCheckedAsync();
 ```
 
+### option: Locator.isChecked.checked
+* since: v1.50
+* langs: js, python
+- `checked` <[boolean]|"mixed">
+
+### option: Locator.isChecked.checked
+* since: v1.50
+* langs: java, csharp
+- `checked` <[boolean]>
+
 ### option: Locator.isChecked.timeout = %%-input-timeout-%%
 * since: v1.14
 

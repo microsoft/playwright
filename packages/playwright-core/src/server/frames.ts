@@ -1336,19 +1336,19 @@ export class Frame extends SdkObject {
   }
 
   async isDisabled(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}, scope?: dom.ElementHandle): Promise<boolean> {
-    return this._elementState(metadata, selector, 'disabled', options, scope);
+    return await this._elementState(metadata, selector, 'disabled', options, scope);
   }
 
   async isEnabled(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}, scope?: dom.ElementHandle): Promise<boolean> {
-    return this._elementState(metadata, selector, 'enabled', options, scope);
+    return await this._elementState(metadata, selector, 'enabled', options, scope);
   }
 
   async isEditable(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}, scope?: dom.ElementHandle): Promise<boolean> {
-    return this._elementState(metadata, selector, 'editable', options, scope);
+    return await this._elementState(metadata, selector, 'editable', options, scope);
   }
 
-  async isChecked(metadata: CallMetadata, selector: string, options: types.QueryOnSelectorOptions = {}, scope?: dom.ElementHandle): Promise<boolean> {
-    return this._elementState(metadata, selector, 'checked', options, scope);
+  async isChecked(metadata: CallMetadata, selector: string, options: { checked?: 'checked' | 'unchecked' | 'mixed' } & types.QueryOnSelectorOptions = {}, scope?: dom.ElementHandle): Promise<boolean> {
+    return await this._elementState(metadata, selector, options?.checked || 'lax-checked', options, scope);
   }
 
   async hover(metadata: CallMetadata, selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {

@@ -13643,6 +13643,8 @@ export interface Locator {
    * @param options
    */
   isChecked(options?: {
+    checked?: boolean|"mixed";
+
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the

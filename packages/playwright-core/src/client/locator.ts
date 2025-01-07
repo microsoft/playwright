@@ -256,8 +256,9 @@ export class Locator implements api.Locator {
     return await this._frame.inputValue(this._selector, { strict: true, ...options });
   }
 
-  async isChecked(options?: TimeoutOptions): Promise<boolean> {
-    return await this._frame.isChecked(this._selector, { strict: true, ...options });
+  async isChecked(options?: { checked?: boolean | 'mixed' } & TimeoutOptions): Promise<boolean> {
+    const checked = options?.checked === true ? 'checked' : options?.checked === false ? 'unchecked' : options?.checked === 'mixed' ? 'mixed' : undefined;
+    return await this._frame.isChecked(this._selector, { strict: true, ...options, checked });
   }
 
   async isDisabled(options?: TimeoutOptions): Promise<boolean> {

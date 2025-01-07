@@ -539,6 +539,12 @@ await Expect(locator).ToBeCheckedAsync();
 
 ### option: LocatorAssertions.toBeChecked.checked
 * since: v1.18
+* langs: js, python
+- `checked` <[boolean]|"mixed">
+
+### option: LocatorAssertions.toBeChecked.checked
+* since: v1.18
+* langs: java, csharp
 - `checked` <[boolean]>
 
 ### option: LocatorAssertions.toBeChecked.timeout = %%-js-assertions-timeout-%%

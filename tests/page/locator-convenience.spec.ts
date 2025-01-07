@@ -172,6 +172,32 @@ it('isChecked should work for indeterminate input', async ({ page }) => {
   await expect(page.locator('input')).not.toBeChecked();
 });
 
+it('isChecked with explicit checked should work for indeterminate input', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20190' });
+
+  await page.setContent(`<input type="checkbox" checked>`);
+  await page.locator('input').evaluate((e: HTMLInputElement) => e.indeterminate = true);
+
+  expect(await page.locator('input').isChecked({ checked: true })).toBe(false);
+  expect(await page.locator('input').isChecked({ checked: false })).toBe(false);
+  expect(await page.locator('input').isChecked({ checked: 'mixed' })).toBe(true);
+  await expect(page.locator('input')).toBeChecked({ checked: 'mixed' });
+
+  await page.locator('input').uncheck();
+
+  expect(await page.locator('input').isChecked({ checked: true })).toBe(false);
+  expect(await page.locator('input').isChecked({ checked: false })).toBe(true);
+  expect(await page.locator('input').isChecked({ checked: 'mixed' })).toBe(false);
+  await expect(page.locator('input')).toBeChecked({ checked: false });
+
+  await page.locator('input').check();
+
+  expect(await page.locator('input').isChecked({ checked: true })).toBe(true);
+  expect(await page.locator('input').isChecked({ checked: false })).toBe(false);
+  expect(await page.locator('input').isChecked({ checked: 'mixed' })).toBe(false);
+  await expect(page.locator('input')).toBeChecked({ checked: true });
+});
+
 it('allTextContents should work', async ({ page }) => {
   await page.setContent(`<div>A</div><div>B</div><div>C</div>`);
   expect(await page.locator('div').allTextContents()).toEqual(['A', 'B', 'C']);

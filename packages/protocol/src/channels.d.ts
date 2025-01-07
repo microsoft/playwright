@@ -2879,10 +2879,12 @@ export type FrameInputValueResult = {
 };
 export type FrameIsCheckedParams = {
   selector: string,
+  checked?: 'checked' | 'unchecked' | 'mixed',
   strict?: boolean,
   timeout?: number,
 };
 export type FrameIsCheckedOptions = {
+  checked?: 'checked' | 'unchecked' | 'mixed',
   strict?: boolean,
   timeout?: number,
 };

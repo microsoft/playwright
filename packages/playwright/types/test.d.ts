@@ -7813,7 +7813,7 @@ interface LocatorAssertions {
    * @param options
    */
   toBeChecked(options?: {
-    checked?: boolean;
+    checked?: boolean|"mixed";
 
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
