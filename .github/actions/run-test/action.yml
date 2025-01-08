@@ -58,6 +58,7 @@ runs:
       if: ${{ runner.os == 'Linux' }}
       run: |
         sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      shell: bash
     - name: Run tests
       if: inputs.shell == 'bash'
       run: |
