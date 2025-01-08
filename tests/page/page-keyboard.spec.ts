@@ -256,16 +256,24 @@ it('should specify location', async ({ page, server }) => {
   const textarea = await page.$('textarea');
 
   await textarea.press('Digit5');
-  expect(await lastEvent.evaluate(e => e.location)).toBe(0);
+  expect.soft(await lastEvent.evaluate(e => e.location)).toBe(0);
+  expect.soft(await lastEvent.evaluate(e => e.key)).toBe('5');
+  expect.soft(await lastEvent.evaluate(e => e.code)).toBe('Digit5');
 
   await textarea.press('ControlLeft');
-  expect(await lastEvent.evaluate(e => e.location)).toBe(1);
+  expect.soft(await lastEvent.evaluate(e => e.location)).toBe(1);
+  expect.soft(await lastEvent.evaluate(e => e.key)).toBe('Control');
+  expect.soft(await lastEvent.evaluate(e => e.code)).toBe('ControlLeft');
 
   await textarea.press('ControlRight');
-  expect(await lastEvent.evaluate(e => e.location)).toBe(2);
+  expect.soft(await lastEvent.evaluate(e => e.location)).toBe(2);
+  expect.soft(await lastEvent.evaluate(e => e.key)).toBe('Control');
+  expect.soft(await lastEvent.evaluate(e => e.code)).toBe('ControlRight');
 
   await textarea.press('NumpadSubtract');
-  expect(await lastEvent.evaluate(e => e.location)).toBe(3);
+  expect.soft(await lastEvent.evaluate(e => e.location)).toBe(3);
+  expect.soft(await lastEvent.evaluate(e => e.key)).toBe('-');
+  expect.soft(await lastEvent.evaluate(e => e.code)).toBe('NumpadSubtract');
 });
 
 it('should press Enter', async ({ page, server }) => {
