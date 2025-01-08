@@ -9,7 +9,9 @@ title: "Chrome extensions"
 Extensions only work in Chrome / Chromium launched with a persistent context. Use custom browser args at your own risk, as some of them may break Playwright functionality.
 :::
 
-The following is code for getting a handle to the [background page](https://developer.chrome.com/extensions/background_pages) of a [Manifest v2](https://developer.chrome.com/docs/extensions/mv2/) extension whose source is located in `./my-extension`:
+The snippet below retrieves the [background page](https://developer.chrome.com/extensions/background_pages) of a [Manifest v2](https://developer.chrome.com/docs/extensions/mv2/) extension whose source is located in `./my-extension`.
+
+Note the use of the `chromium` channel that allows to run extensions in headless mode. Alternatively, you can launch the browser in headed mode.
 
 ```js
 const { chromium } = require('playwright');
@@ -18,7 +20,7 @@ const { chromium } = require('playwright');
   const pathToExtension = require('path').join(__dirname, 'my-extension');
   const userDataDir = '/tmp/test-user-data-dir';
   const browserContext = await chromium.launchPersistentContext(userDataDir, {
-    headless: false,
+    channel: 'chromium',
     args: [
       `--disable-extensions-except=${pathToExtension}`,
       `--load-extension=${pathToExtension}`
@@ -44,7 +46,7 @@ user_data_dir = "/tmp/test-user-data-dir"
 async def run(playwright: Playwright):
     context = await playwright.chromium.launch_persistent_context(
         user_data_dir,
-        headless=False,
+        channel="chromium",
         args=[
             f"--disable-extensions-except={path_to_extension}",
             f"--load-extension={path_to_extension}",
@@ -78,7 +80,7 @@ user_data_dir = "/tmp/test-user-data-dir"
 def run(playwright: Playwright):
     context = playwright.chromium.launch_persistent_context(
         user_data_dir,
-        headless=False,
+        channel="chromium",
         args=[
             f"--disable-extensions-except={path_to_extension}",
             f"--load-extension={path_to_extension}",
@@ -101,6 +103,8 @@ with sync_playwright() as playwright:
 
 To have the extension loaded when running tests you can use a test fixture to set the context. You can also dynamically retrieve the extension id and use it to load and test the popup page for example.
 
+Note the use of the `chromium` channel that allows to run extensions in headless mode. Alternatively, you can launch the browser in headed mode.
+
 First, add fixtures that will load the extension:
 
 ```js title="fixtures.ts"
@@ -114,7 +118,7 @@ export const test = base.extend<{
   context: async ({ }, use) => {
     const pathToExtension = path.join(__dirname, 'my-extension');
     const context = await chromium.launchPersistentContext('', {
-      headless: false,
+      channel: 'chromium',
       args: [
         `--disable-extensions-except=${pathToExtension}`,
         `--load-extension=${pathToExtension}`,
@@ -155,7 +159,7 @@ def context(playwright: Playwright) -> Generator[BrowserContext, None, None]:
     path_to_extension = Path(__file__).parent.joinpath("my-extension")
     context = playwright.chromium.launch_persistent_context(
         "",
-        headless=False,
+        channel="chromium",
         args=[
             f"--disable-extensions-except={path_to_extension}",
             f"--load-extension={path_to_extension}",
@@ -210,34 +214,4 @@ def test_example_test(page: Page) -> None:
 def test_popup_page(page: Page, extension_id: str) -> None:
     page.goto(f"chrome-extension://{extension_id}/popup.html")
     expect(page.locator("body")).to_have_text("my-extension popup")
-```
-
-## Headless mode
-
-By default, Chrome's headless mode in Playwright does not support Chrome extensions. To overcome this limitation, you can run Chrome's persistent context with a new headless mode by using [channel `chromium`](./browsers.md#chromium-new-headless-mode):
-
-```js title="fixtures.ts"
-// ...
-
-const pathToExtension = path.join(__dirname, 'my-extension');
-const context = await chromium.launchPersistentContext('', {
-  channel: 'chromium',
-  args: [
-    `--disable-extensions-except=${pathToExtension}`,
-    `--load-extension=${pathToExtension}`,
-  ],
-});
-// ...
-```
-
-```python title="conftest.py"
-path_to_extension = Path(__file__).parent.joinpath("my-extension")
-context = playwright.chromium.launch_persistent_context(
-    "",
-    channel="chromium",
-    args=[
-        f"--disable-extensions-except={path_to_extension}",
-        f"--load-extension={path_to_extension}",
-    ],
-)
 ```
