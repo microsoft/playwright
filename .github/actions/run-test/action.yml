@@ -36,6 +36,11 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
     - uses: ./.github/actions/enable-microphone-access
+    - name: Setup Ubuntu Electron
+      if: ${{ runner.os == 'Linux' }}
+      run: |
+        sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      shell: bash
     - run: |
         echo "::group::npm ci"
         npm ci
@@ -53,11 +58,6 @@ runs:
         echo "::group::npx playwright install --with-deps"
         npx playwright install --with-deps ${{ inputs.browsers-to-install }}
         echo "::endgroup::"
-      shell: bash
-    - name: Setup Ubuntu Electron
-      if: ${{ runner.os == 'Linux' }}
-      run: |
-        sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       shell: bash
     - name: Run tests
       if: inputs.shell == 'bash'
