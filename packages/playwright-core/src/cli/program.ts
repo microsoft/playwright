@@ -35,6 +35,7 @@ import { wrapInASCIIBox, isLikelyNpxGlobal, assert, gracefullyProcessExitDoNotHa
 import type { Executable } from '../server';
 import { registry, writeDockerVersion } from '../server';
 import { isTargetClosedError } from '../client/errors';
+import { listInstalledBrowsers } from './commands/ls';
 
 const packageJSON = require('../../package.json');
 
@@ -133,7 +134,8 @@ program
     .option('--force', 'force reinstall of stable browser channels')
     .option('--only-shell', 'only install headless shell when installing chromium')
     .option('--no-shell', 'do not install chromium headless shell')
-    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
+    .option('--list', 'list installed browsers')
+    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean, list?: boolean }) {
       // For '--no-shell' option, commander sets `shell: false` instead.
       if (options.shell === false)
         options.noShell = true;
@@ -182,6 +184,9 @@ program
             e.name = 'Playwright Host validation warning';
             console.error(e);
           });
+        }
+        if (options.list) {
+          await listInstalledBrowsers();
         }
       } catch (e) {
         console.log(`Failed to install browsers\n${e}`);
@@ -337,6 +342,13 @@ program
 Examples:
 
   $ show-trace https://example.com/trace.zip`);
+
+program
+    .command('ls')
+    .description('list installed browsers')
+    .action(async function() {
+      await listInstalledBrowsers();
+    });
 
 type Options = {
   browser: string;

@@ -50,8 +50,8 @@ runs:
         echo "::endgroup::"
       shell: bash
     - run: |
-        echo "::group::npx playwright install --with-deps"
-        npx playwright install --with-deps ${{ inputs.browsers-to-install }}
+        echo "::group::npx playwright install --with-deps --list"
+        npx playwright install --with-deps --list ${{ inputs.browsers-to-install }}
         echo "::endgroup::"
       shell: bash
     - name: Run tests
