@@ -188,12 +188,20 @@ it.describe('pause', () => {
 
     const iframe = page.frames()[1];
     const button = await iframe.waitForSelector('button');
-    const box1 = await button.boundingBox();
+    const box1Promise = button.boundingBox();
+
     const actionPoint = await page.waitForSelector('x-pw-action-point');
-    const box2 = await actionPoint.boundingBox();
+    const box2Promise = actionPoint.boundingBox();
+    await recorderPage.click('[title="Step over (F10)"]');
+
+    const box1 = await box1Promise;
+    const box2 = await box2Promise;
 
     const iframeActionPoint = await iframe.$('x-pw-action-point');
-    expect(await iframeActionPoint?.boundingBox()).toBeFalsy();
+    const iframeActionPointPromise = iframeActionPoint?.boundingBox();
+    await recorderPage.click('[title="Resume (F8)"]');
+
+    expect(await iframeActionPointPromise).toBeFalsy();
 
     const x1 = box1!.x + box1!.width / 2;
     const y1 = box1!.y + box1!.height / 2;
@@ -203,7 +211,6 @@ it.describe('pause', () => {
     expect(Math.abs(x1 - x2) < 2).toBeTruthy();
     expect(Math.abs(y1 - y2) < 2).toBeTruthy();
 
-    await recorderPage.click('[title="Resume (F8)"]');
     await scriptPromise;
   });
 
