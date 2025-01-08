@@ -147,10 +147,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-    - name: Setup Ubuntu
-      if: ${{ runner.os == 'Linux' }}
-      run: |
-        sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: chromium

@@ -213,10 +213,6 @@ jobs:
       contents: read    # This is required for actions/checkout to succeed
     steps:
     - uses: actions/checkout@v4
-    - name: Setup Ubuntu
-      if: ${{ runner.os == 'Linux' }}
-      run: |
-        sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
     - run: npm install -g yarn@1
     - run: npm install -g pnpm@8
     - uses: ./.github/actions/run-test

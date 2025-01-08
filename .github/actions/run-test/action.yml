@@ -54,6 +54,10 @@ runs:
         npx playwright install --with-deps ${{ inputs.browsers-to-install }}
         echo "::endgroup::"
       shell: bash
+    - name: Setup Ubuntu Electron
+      if: ${{ runner.os == 'Linux' }}
+      run: |
+        sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
     - name: Run tests
       if: inputs.shell == 'bash'
       run: |
