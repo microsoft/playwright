@@ -18,20 +18,24 @@ import * as React from 'react';
 
 export interface DialogProps {
   className?: string;
+  style?: React.CSSProperties;
   open: boolean;
   width: number;
   verticalOffset?: number;
   requestClose?: () => void;
   anchor?: React.RefObject<HTMLElement>;
+  dataTestId?: string;
 }
 
 export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
   className,
+  style: externalStyle,
   open,
   width,
   verticalOffset,
   requestClose,
   anchor,
+  dataTestId,
   children,
 }) => {
   const dialogRef = React.useRef<HTMLDialogElement>(null);
@@ -39,17 +43,19 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, setRecalculateDimensionsCount] = React.useState(0);
 
-  let style: React.CSSProperties | undefined = undefined;
+  let style: React.CSSProperties | undefined = externalStyle;
 
   if (anchor?.current) {
     const bounds = anchor.current.getBoundingClientRect();
 
     style = {
+      position: 'fixed',
       margin: 0,
       top: bounds.bottom + (verticalOffset ?? 0),
       left: buildTopLeftCoord(bounds, width),
       width,
       zIndex: 1,
+      ...externalStyle
     };
   }
 
@@ -92,7 +98,7 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
 
   return (
     open && (
-      <dialog ref={dialogRef} style={style} className={className} open>
+      <dialog ref={dialogRef} style={style} className={className} data-testid={dataTestId} open>
         {children}
       </dialog>
     )

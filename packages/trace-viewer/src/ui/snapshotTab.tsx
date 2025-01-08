@@ -20,7 +20,7 @@ import type { ActionTraceEvent } from '@trace/trace';
 import { context, type MultiTraceModel, prevInList } from './modelUtil';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { clsx, useMeasure } from '@web/uiUtils';
+import { clsx, useMeasure, useSetting } from '@web/uiUtils';
 import { InjectedScript } from '@injected/injectedScript';
 import { Recorder } from '@injected/recorder/recorder';
 import ConsoleAPI from '@injected/consoleApi';
@@ -43,13 +43,16 @@ export const SnapshotTabsView: React.FunctionComponent<{
 }> = ({ action, sdkLanguage, testIdAttributeName, isInspecting, setIsInspecting, highlightedLocator, setHighlightedLocator }) => {
   const [snapshotTab, setSnapshotTab] = React.useState<'action'|'before'|'after'>('action');
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [shouldPopulateCanvasFromScreenshot, _] = useSetting('shouldPopulateCanvasFromScreenshot', false);
+
   const snapshots = React.useMemo(() => {
     return collectSnapshots(action);
   }, [action]);
   const snapshotUrls = React.useMemo(() => {
     const snapshot = snapshots[snapshotTab];
-    return snapshot ? extendSnapshot(snapshot) : undefined;
-  }, [snapshots, snapshotTab]);
+    return snapshot ? extendSnapshot(snapshot, shouldPopulateCanvasFromScreenshot) : undefined;
+  }, [snapshots, snapshotTab, shouldPopulateCanvasFromScreenshot]);
 
   return <div className='snapshot-tab vbox'>
     <Toolbar>
@@ -327,7 +330,7 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
 const isUnderTest = new URLSearchParams(window.location.search).has('isUnderTest');
 const serverParam = new URLSearchParams(window.location.search).get('server');
 
-export function extendSnapshot(snapshot: Snapshot): SnapshotUrls {
+export function extendSnapshot(snapshot: Snapshot, shouldPopulateCanvasFromScreenshot: boolean): SnapshotUrls {
   const params = new URLSearchParams();
   params.set('trace', context(snapshot.action).traceUrl);
   params.set('name', snapshot.snapshotName);
@@ -339,6 +342,9 @@ export function extendSnapshot(snapshot: Snapshot): SnapshotUrls {
     if (snapshot.hasInputTarget)
       params.set('hasInputTarget', '1');
   }
+  if (shouldPopulateCanvasFromScreenshot)
+    params.set('shouldPopulateCanvasFromScreenshot', '1');
+
   const snapshotUrl = new URL(`snapshot/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
   const snapshotInfoUrl = new URL(`snapshotInfo/${snapshot.action.pageId}?${params.toString()}`, window.location.href).toString();
 

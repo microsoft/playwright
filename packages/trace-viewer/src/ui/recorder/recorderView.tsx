@@ -21,7 +21,6 @@ import type { TabbedPaneTabModel } from '@web/components/tabbedPane';
 import { TabbedPane } from '@web/components/tabbedPane';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton, ToolbarSeparator } from '@web/components/toolbarButton';
-import { toggleTheme } from '@web/theme';
 import { copy, useSetting } from '@web/uiUtils';
 import * as React from 'react';
 import { ConsoleTab, useConsoleTabModel } from '../consoleTab';
@@ -37,6 +36,7 @@ import './recorderView.css';
 import { ActionListView } from './actionListView';
 import { BackendContext, BackendProvider } from './backendContext';
 import type { Language } from '@isomorphic/locatorGenerators';
+import { SettingsToolbarButton } from '../settingsToolbarButton';
 
 export const RecorderView: React.FunctionComponent = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -148,7 +148,7 @@ export const Workbench: React.FunctionComponent = () => {
     <SourceChooser fileId={fileId} sources={backend?.sources || []} setFileId={fileId => {
       setFileId(fileId);
     }} />
-    <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
+    <SettingsToolbarButton />
   </Toolbar>;
 
   const sidebarTabbedPane = <TabbedPane tabs={[actionsTab]} />;
@@ -271,6 +271,10 @@ const TraceView: React.FunctionComponent<{
   setHighlightedLocator,
 }) => {
   const model = React.useContext(ModelContext);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [shouldPopulateCanvasFromScreenshot, _] = useSetting('shouldPopulateCanvasFromScreenshot', false);
+
   const action = React.useMemo(() => {
     return model?.actions.find(a => a.callId === callId);
   }, [model, callId]);
@@ -280,8 +284,8 @@ const TraceView: React.FunctionComponent<{
     return snapshot.action || snapshot.after || snapshot.before;
   }, [action]);
   const snapshotUrls = React.useMemo(() => {
-    return snapshot ? extendSnapshot(snapshot) : undefined;
-  }, [snapshot]);
+    return snapshot ? extendSnapshot(snapshot, shouldPopulateCanvasFromScreenshot) : undefined;
+  }, [snapshot, shouldPopulateCanvasFromScreenshot]);
 
   return <SnapshotView
     sdkLanguage={sdkLanguage}
