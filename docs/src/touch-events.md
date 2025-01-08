@@ -13,10 +13,6 @@ If your web application relies on [pointer events](https://developer.mozilla.org
 
 You can dispatch touch events to the page using [`method: Locator.dispatchEvent`]. [Touch](https://developer.mozilla.org/en-US/docs/Web/API/Touch) points can be passed as arguments, see examples below.
 
-:::note
-The examples work only in Chromium and Firefox, as the [`Touch()`](https://developer.mozilla.org/en-US/docs/Web/API/Touch/Touch) constructor is not supported in WebKit.
-:::
-
 #### Emulating pan gesture
 
 In the example below, we emulate pan gesture that is expected to move the map. The app under test only uses `clientX/clientY` coordinates of the touch point, so we initialize just that. In a more complex scenario you may need to also set `pageX/pageY/screenX/screenY`, if your app needs them.
