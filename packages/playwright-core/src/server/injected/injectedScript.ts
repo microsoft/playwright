@@ -1024,10 +1024,10 @@ export class InjectedScript {
             // createTouch does not accept clientX/clientY, so we have to use pageX/pageY.
             let pageX = t.pageX;
             if (pageX === undefined && t.clientX !== undefined)
-              pageX = t.clientX + this.window.scrollX;
+              pageX = t.clientX + (this.document.scrollingElement?.scrollLeft || 0);
             let pageY = t.pageY;
             if (pageY === undefined && t.clientY !== undefined)
-              pageY = t.clientY + this.window.scrollY;
+              pageY = t.clientY + (this.document.scrollingElement?.scrollTop || 0);
             return (this.document as any).createTouch(this.window, t.target ?? node, t.identifier, pageX, pageY, t.screenX, t.screenY, t.radiusX, t.radiusY, t.rotationAngle, t.force);
           };
           const createTouchList = (touches: any) => {
