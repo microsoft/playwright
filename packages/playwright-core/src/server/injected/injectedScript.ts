@@ -1016,11 +1016,37 @@ export class InjectedScript {
       case 'mouse': event = new MouseEvent(type, eventInit); break;
       case 'keyboard': event = new KeyboardEvent(type, eventInit); break;
       case 'touch': {
-        eventInit.target ??= node;
-        eventInit.touches = eventInit.touches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
-        eventInit.targetTouches = eventInit.targetTouches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
-        eventInit.changedTouches = eventInit.changedTouches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
-        event = new TouchEvent(type, eventInit);
+        // WebKit does not support Touch constructor, but has deprecated createTouch and createTouchList methods.
+        if (this._browserName === 'webkit') {
+          const createTouch = (t: any) => {
+            if (t instanceof Touch)
+              return t;
+            // createTouch does not accept clientX/clientY, so we have to use pageX/pageY.
+            let pageX = t.pageX;
+            if (pageX === undefined && t.clientX !== undefined)
+              pageX = t.clientX + (this.document.scrollingElement?.scrollLeft || 0);
+            let pageY = t.pageY;
+            if (pageY === undefined && t.clientY !== undefined)
+              pageY = t.clientY + (this.document.scrollingElement?.scrollTop || 0);
+            return (this.document as any).createTouch(this.window, t.target ?? node, t.identifier, pageX, pageY, t.screenX, t.screenY, t.radiusX, t.radiusY, t.rotationAngle, t.force);
+          };
+          const createTouchList = (touches: any) => {
+            if (touches instanceof TouchList || !touches)
+              return touches;
+            return (this.document as any).createTouchList(...touches.map(createTouch));
+          };
+          eventInit.target ??= node;
+          eventInit.touches = createTouchList(eventInit.touches);
+          eventInit.targetTouches = createTouchList(eventInit.targetTouches);
+          eventInit.changedTouches = createTouchList(eventInit.changedTouches);
+          event = new TouchEvent(type, eventInit);
+        } else {
+          eventInit.target ??= node;
+          eventInit.touches = eventInit.touches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
+          eventInit.targetTouches = eventInit.targetTouches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
+          eventInit.changedTouches = eventInit.changedTouches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
+          event = new TouchEvent(type, eventInit);
+        }
         break;
       }
       case 'pointer': event = new PointerEvent(type, eventInit); break;
