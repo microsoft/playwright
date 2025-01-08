@@ -170,13 +170,6 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: 18
-    - name: Setup Ubuntu Binary Installation
-      if: ${{ runner.os == 'Linux' }}
-      run: |
-        if grep -q "Ubuntu 24" /etc/os-release; then
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-        fi
-      shell: bash
     - run: npm ci
       env:
         DEBUG: pw:install
