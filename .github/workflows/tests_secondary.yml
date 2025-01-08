@@ -98,9 +98,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - os: ubuntu-latest
+        - os: ubuntu-22.04
           node_version: 20
-        - os: ubuntu-latest
+        - os: ubuntu-22.04
           node_version: 22
     timeout-minutes: 30
     steps:
@@ -295,7 +295,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest, windows-latest, macos-latest]
+        runs-on: [ubuntu-22.04, windows-latest, macos-latest]
     runs-on: ${{ matrix.runs-on }}
     steps:
     - uses: actions/checkout@v4

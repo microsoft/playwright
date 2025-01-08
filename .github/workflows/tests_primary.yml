@@ -87,24 +87,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-22.04, windows-latest, macos-latest]
         node-version: [18]
         shardIndex: [1, 2]
         shardTotal: [2]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             node-version: 20
             shardIndex: 1
             shardTotal: 2
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             node-version: 20
             shardIndex: 2
             shardTotal: 2
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             node-version: 22
             shardIndex: 1
             shardTotal: 2
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             node-version: 22
             shardIndex: 2
             shardTotal: 2
@@ -127,7 +127,7 @@ jobs:
 
   test_web_components:
     name: Web Components
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -162,7 +162,7 @@ jobs:
 
   test_vscode_extension:
     name: VSCode Extension
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
       PWTEST_BOT_NAME: "vscode-extension"
     steps:
@@ -203,7 +203,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - ubuntu-latest
+        - ubuntu-22.04
         - macos-latest
         - windows-latest
     runs-on: ${{ matrix.os  }}
