@@ -39,7 +39,9 @@ runs:
     - name: Setup Ubuntu Electron
       if: ${{ runner.os == 'Linux' }}
       run: |
-        sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        if grep -q "Ubuntu 24" /etc/os-release; then
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        fi
       shell: bash
     - run: |
         echo "::group::npm ci"
