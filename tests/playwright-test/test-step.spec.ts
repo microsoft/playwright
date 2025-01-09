@@ -1376,8 +1376,9 @@ test('calls from waitForEvent callback should be under its parent step', {
         await page.setContent('<div onclick="fetch(\\'/simple.json\\').then(r => r.text());">Go!</div>');
         const responseJson = await test.step('custom step', async () => {
           const responsePromise = page.waitForResponse(async response => {
-            const text = await response.text();
-            expect(text).toBeTruthy();
+            await page.content();
+            await page.content();  // second time a charm!
+            await expect(page.locator('div')).toContainText('Go');
             return true;
           });
 
@@ -1405,9 +1406,11 @@ pw:api    |page.goto(${server.EMPTY_PAGE}) @ a.test.ts:4
 pw:api    |page.setContent @ a.test.ts:5
 test.step |custom step @ a.test.ts:6
 pw:api    |  page.waitForResponse @ a.test.ts:7
-pw:api    |  page.click(div) @ a.test.ts:13
-expect    |  expect.toBeTruthy @ a.test.ts:9
-expect    |expect.toBe @ a.test.ts:17
+pw:api    |  page.click(div) @ a.test.ts:14
+pw:api    |  page.content @ a.test.ts:8
+pw:api    |  page.content @ a.test.ts:9
+expect    |  expect.toContainText @ a.test.ts:10
+expect    |expect.toBe @ a.test.ts:18
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
@@ -1464,7 +1467,8 @@ test('calls from page.route callback should be under its parent step', {
             const response = await route.fetch();
             const text = await response.text();
             expect(text).toBe('');
-            await route.fulfill({ response })
+            await response.text();  // second time a charm!
+            await route.fulfill({ response });
           });
           await page.goto('${server.EMPTY_PAGE}');
         });
@@ -1485,9 +1489,10 @@ fixture   |  fixture: page
 pw:api    |    browserContext.newPage
 test.step |custom step @ a.test.ts:4
 pw:api    |  page.route @ a.test.ts:5
-pw:api    |  page.goto(${server.EMPTY_PAGE}) @ a.test.ts:11
+pw:api    |  page.goto(${server.EMPTY_PAGE}) @ a.test.ts:12
 pw:api    |  apiResponse.text @ a.test.ts:7
 expect    |  expect.toBe @ a.test.ts:8
+pw:api    |  apiResponse.text @ a.test.ts:9
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context

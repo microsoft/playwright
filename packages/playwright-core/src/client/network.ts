@@ -820,7 +820,7 @@ export class RouteHandler {
     this._times = times;
     this.url = url;
     this.handler = handler;
-    this._svedZone = zones.currentZone();
+    this._svedZone = zones.current().without('apiZone');
   }
 
   static prepareInterceptionPatterns(handlers: RouteHandler[]) {

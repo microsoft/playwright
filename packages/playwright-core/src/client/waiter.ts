@@ -35,7 +35,7 @@ export class Waiter {
   constructor(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
     this._waitId = createGuid();
     this._channelOwner = channelOwner;
-    this._savedZone = zones.currentZone();
+    this._savedZone = zones.current().without('apiZone');
 
     this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'before', event } }).catch(() => {});
     this._dispose = [
