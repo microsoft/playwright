@@ -16608,11 +16608,6 @@ export interface AndroidDevice {
     colorScheme?: null|"light"|"dark"|"no-preference";
 
     /**
-     * Optional package name to launch instead of default Chrome for Android.
-     */
-    command?: string;
-
-    /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
      * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
      */
@@ -16719,6 +16714,11 @@ export interface AndroidDevice {
      * for more details. Defaults to none.
      */
     permissions?: Array<string>;
+
+    /**
+     * Optional package name to launch instead of default Chrome for Android.
+     */
+    pkg?: string;
 
     /**
      * Network proxy settings.
