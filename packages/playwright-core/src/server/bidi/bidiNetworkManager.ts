@@ -302,11 +302,9 @@ function fromBidiHeaders(bidiHeaders: bidi.Network.Header[]): types.HeadersArray
   return result;
 }
 
-function toBidiRequestHeaders(allHeaders: types.HeadersArray): { cookies: bidi.Network.CookieHeader[], headers: bidi.Network.Header[] } {
+function toBidiRequestHeaders(allHeaders: types.HeadersArray): { headers: bidi.Network.Header[] } {
   const bidiHeaders = toBidiHeaders(allHeaders);
-  const cookies = bidiHeaders.filter(h => h.name.toLowerCase() === 'cookie');
-  const headers = bidiHeaders.filter(h => h.name.toLowerCase() !== 'cookie');
-  return { cookies, headers };
+  return { headers: bidiHeaders };
 }
 
 function toBidiResponseHeaders(headers: types.HeadersArray): { cookies: bidi.Network.SetCookieHeader[], headers: bidi.Network.Header[] } {
