@@ -40,9 +40,6 @@ export class DebugController extends SdkObject {
     SetModeRequested: 'setModeRequested',
   };
 
-  private _autoCloseTimer: NodeJS.Timeout | undefined;
-  // TODO: remove in 1.27
-  private _autoCloseAllowed = false;
   private _trackHierarchyListener: InstrumentationListener | undefined;
   private _playwright: Playwright;
   _sdkLanguage: Language = 'javascript';
@@ -58,13 +55,8 @@ export class DebugController extends SdkObject {
     this._sdkLanguage = sdkLanguage;
   }
 
-  setAutoCloseAllowed(allowed: boolean) {
-    this._autoCloseAllowed = allowed;
-  }
-
   dispose() {
     this.setReportStateChanged(false);
-    this.setAutoCloseAllowed(false);
   }
 
   setReportStateChanged(enabled: boolean) {
@@ -102,7 +94,6 @@ export class DebugController extends SdkObject {
         recorder.hideHighlightedSelector();
         recorder.setMode('none');
       }
-      this.setAutoCloseEnabled(true);
       return;
     }
 
@@ -127,23 +118,6 @@ export class DebugController extends SdkObject {
         recorder.setOutput(this._codegenId, params.file);
       recorder.setMode(params.mode);
     }
-    this.setAutoCloseEnabled(true);
-  }
-
-  async setAutoCloseEnabled(enabled: boolean) {
-    if (!this._autoCloseAllowed)
-      return;
-    if (this._autoCloseTimer)
-      clearTimeout(this._autoCloseTimer);
-    if (!enabled)
-      return;
-    const heartBeat = () => {
-      if (!this._playwright.allPages().length)
-        gracefullyProcessExitDoNotHang(0);
-      else
-        this._autoCloseTimer = setTimeout(heartBeat, 5000);
-    };
-    this._autoCloseTimer = setTimeout(heartBeat, 30000);
   }
 
   async highlight(params: { selector?: string, ariaTemplate?: string }) {
