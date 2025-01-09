@@ -7813,7 +7813,20 @@ interface LocatorAssertions {
    * @param options
    */
   toBeChecked(options?: {
+    /**
+     * Provides state to assert for. Asserts for input to be checked by default. This option can't be used when
+     * [`indeterminate`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-checked-option-indeterminate)
+     * is set to true.
+     */
     checked?: boolean;
+
+    /**
+     * Asserts that the element is in the indeterminate (mixed) state. Only supported for checkboxes and radio buttons.
+     * This option can't be true when
+     * [`checked`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-checked-option-checked)
+     * is provided.
+     */
+    indeterminate?: boolean;
 
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.

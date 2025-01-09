@@ -51,13 +51,25 @@ export function toBeAttached(
 export function toBeChecked(
   this: ExpectMatcherState,
   locator: LocatorEx,
-  options?: { checked?: boolean, timeout?: number },
+  options?: { checked?: boolean, indeterminate?: boolean, timeout?: number },
 ) {
-  const checked = !options || options.checked === undefined || options.checked;
-  const expected = checked ? 'checked' : 'unchecked';
-  const arg = checked ? '' : '{ checked: false }';
+  const checked = options?.checked;
+  const indeterminate = options?.indeterminate;
+  const expectedValue = {
+    checked,
+    indeterminate,
+  };
+  let expected: string;
+  let arg: string;
+  if (options?.indeterminate) {
+    expected = 'indeterminate';
+    arg = `{ indeterminate: true }`;
+  } else {
+    expected = options?.checked === false ? 'unchecked' : 'checked';
+    arg = options?.checked === false ? `{ checked: false }` : '';
+  }
   return toBeTruthy.call(this, 'toBeChecked', locator, 'Locator', expected, arg, async (isNot, timeout) => {
-    return await locator._expect(checked ? 'to.be.checked' : 'to.be.unchecked', { isNot, timeout });
+    return await locator._expect('to.be.checked', { isNot, timeout, expectedValue });
   }, options);
 }
 

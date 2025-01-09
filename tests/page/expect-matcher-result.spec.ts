@@ -161,7 +161,7 @@ Call log`);
   }
 });
 
-test('toBeChecked({ checked: false }) should have expected: false', async ({ page }) => {
+test('toBeChecked({ checked }) should have expected', async ({ page }) => {
   await page.setContent(`
     <input id=checked type=checkbox checked></input>
     <input id=unchecked type=checkbox></input>
@@ -250,6 +250,28 @@ Call log`);
 
 Locator: locator('#unchecked')
 Expected: not unchecked
+Received: unchecked
+Call log`);
+
+  }
+
+  {
+    const e = await expect(page.locator('#unchecked')).toBeChecked({ indeterminate: true, timeout: 1 }).catch(e => e);
+    e.matcherResult.message = stripAnsi(e.matcherResult.message);
+    expect.soft(e.matcherResult).toEqual({
+      actual: 'unchecked',
+      expected: 'indeterminate',
+      message: expect.stringContaining(`Timed out 1ms waiting for expect(locator).toBeChecked({ indeterminate: true })`),
+      name: 'toBeChecked',
+      pass: false,
+      log: expect.any(Array),
+      timeout: 1,
+    });
+
+    expect.soft(stripAnsi(e.toString())).toContain(`Error: Timed out 1ms waiting for expect(locator).toBeChecked({ indeterminate: true })
+
+Locator: locator('#unchecked')
+Expected: indeterminate
 Received: unchecked
 Call log`);
 

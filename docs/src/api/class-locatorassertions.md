@@ -541,6 +541,16 @@ await Expect(locator).ToBeCheckedAsync();
 * since: v1.18
 - `checked` <[boolean]>
 
+Provides state to assert for. Asserts for input to be checked by default.
+This option can't be used when [`option: LocatorAssertions.toBeChecked.indeterminate`] is set to true.
+
+### option: LocatorAssertions.toBeChecked.indeterminate
+* since: v1.50
+- `indeterminate` <[boolean]>
+
+Asserts that the element is in the indeterminate (mixed) state. Only supported for checkboxes and radio buttons.
+This option can't be true when [`option: LocatorAssertions.toBeChecked.checked`] is provided.
+
 ### option: LocatorAssertions.toBeChecked.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 

@@ -35,6 +35,21 @@ test.describe('toBeChecked', () => {
     await expect(locator).not.toBeChecked({ checked: false });
   });
 
+  test('with indeterminate:true', async ({ page }) => {
+    await page.setContent('<input type=checkbox></input>');
+    await page.locator('input').evaluate((e: HTMLInputElement) => e.indeterminate = true);
+    const locator = page.locator('input');
+    await expect(locator).toBeChecked({ indeterminate: true });
+  });
+
+  test('with indeterminate:true and checked', async ({ page }) => {
+    await page.setContent('<input type=checkbox></input>');
+    await page.locator('input').evaluate((e: HTMLInputElement) => e.indeterminate = true);
+    const locator = page.locator('input');
+    const error = await expect(locator).toBeChecked({ indeterminate: true, checked: false }).catch(e => e);
+    expect(error.message).toContain(`Can\'t assert indeterminate and checked at the same time`);
+  });
+
   test('fail', async ({ page }) => {
     await page.setContent('<input type=checkbox></input>');
     const locator = page.locator('input');
@@ -66,6 +81,13 @@ test.describe('toBeChecked', () => {
     await page.setContent('<input type=checkbox checked></input>');
     const locator = page.locator('input');
     const error = await expect(locator).toBeChecked({ checked: false, timeout: 1000 }).catch(e => e);
+    expect(error.message).toContain(`expect.toBeChecked with timeout 1000ms`);
+  });
+
+  test('fail with indeterminate: true', async ({ page }) => {
+    await page.setContent('<input type=checkbox></input>');
+    const locator = page.locator('input');
+    const error = await expect(locator).toBeChecked({ indeterminate: true, timeout: 1000 }).catch(e => e);
     expect(error.message).toContain(`expect.toBeChecked with timeout 1000ms`);
   });
 
