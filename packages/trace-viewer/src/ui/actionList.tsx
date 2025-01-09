@@ -26,6 +26,7 @@ import { TreeView } from '@web/components/treeView';
 import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
 import type { Boundaries } from './geometry';
 import { ToolbarButton } from '@web/components/toolbarButton';
+import { commandContextString } from './string';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
@@ -116,7 +117,7 @@ export const renderAction = (
   }) => {
   const { sdkLanguage, revealConsole, revealAttachment, isLive, showDuration, showBadges } = options;
   const { errors, warnings } = modelUtil.stats(action);
-  const locator = action.params.selector ? asLocator(sdkLanguage || 'javascript', action.params.selector) : undefined;
+  const locator = commandContextString(action, sdkLanguage || 'javascript');
   const showAttachments = !!action.attachments?.length && !!revealAttachment;
 
   let time: string = '';
