@@ -70,10 +70,11 @@ export class DebugController extends SdkObject {
   setReportStateChanged(enabled: boolean) {
     if (enabled && !this._trackHierarchyListener) {
       this._trackHierarchyListener = {
-        onPageOpen: () => this._emitSnapshot(),
-        onPageClose: () => this._emitSnapshot(),
+        onPageOpen: () => this._emitSnapshot(false),
+        onPageClose: () => this._emitSnapshot(false),
       };
       this._playwright.instrumentation.addListener(this._trackHierarchyListener, null);
+      this._emitSnapshot(true);
     } else if (!enabled && this._trackHierarchyListener) {
       this._playwright.instrumentation.removeListener(this._trackHierarchyListener);
       this._trackHierarchyListener = undefined;
@@ -188,24 +189,10 @@ export class DebugController extends SdkObject {
     await Promise.all(this.allBrowsers().map(browser => browser.close({ reason: 'Close all browsers requested' })));
   }
 
-  private _emitSnapshot() {
-    const browsers = [];
-    let pageCount = 0;
-    for (const browser of this._playwright.allBrowsers()) {
-      const b = {
-        contexts: [] as any[]
-      };
-      browsers.push(b);
-      for (const context of browser.contexts()) {
-        const c = {
-          pages: [] as any[]
-        };
-        b.contexts.push(c);
-        for (const page of context.pages())
-          c.pages.push(page.mainFrame().url());
-        pageCount += context.pages().length;
-      }
-    }
+  private _emitSnapshot(initial: boolean) {
+    const pageCount = this._playwright.allPages().length;
+    if (initial && !pageCount)
+      return;
     this.emit(DebugController.Events.StateChanged, { pageCount });
   }
 
