@@ -390,10 +390,17 @@ export class BidiPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    await this._session.send('browsingContext.close', {
+    const onClose = this._session.send('browsingContext.close', {
       context: this._session.sessionId,
       promptUnload: runBeforeUnload,
     });
+
+    // Only wait for the browsingContext to close if runBeforeUnload is false.
+    // Otherwise a before unload prompt might be displayed and should be handled
+    // by the caller.
+    // See NOTE on https://playwright.dev/docs/api/class-page#page-close
+    if (!runBeforeUnload)
+      await onClose;
   }
 
   async setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void> {
