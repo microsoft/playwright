@@ -138,7 +138,7 @@ export class Connection extends EventEmitter {
       this._localUtils?._channel.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
     // We need to exit zones before calling into the server, otherwise
     // when we receive events from the server, we would be in an API zone.
-    zones.exitZones(() => this.onmessage({ ...message, metadata }));
+    zones.empty().run(() => this.onmessage({ ...message, metadata }));
     return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, apiName, type, method }));
   }
 
