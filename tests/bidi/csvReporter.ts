@@ -66,7 +66,10 @@ class CsvReporter implements Reporter {
     }
     const csv = rows.map(r => r.join(',')).join('\n');
     const reportFile = path.resolve(this._options.configDir, this._options.outputFile || 'test-results.csv');
-    this._pendingWrite = fs.promises.writeFile(reportFile, csv);
+    this._pendingWrite = (async () => {
+      await fs.mkdirSync(path.dirname(reportFile), { recursive: true });
+      await fs.promises.writeFile(reportFile, csv);
+    })();
   }
 
   async onExit() {
