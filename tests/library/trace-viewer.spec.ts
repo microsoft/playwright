@@ -188,10 +188,10 @@ test('should show action context on locators and other common actions', async ({
     await page.mouse.up();
     await page.clock.fastForward(1000);
     await page.clock.fastForward('30:00');
-    await page.clock.pauseAt(new Date('2020-02-02'));
+    await page.clock.pauseAt(new Date('2020-02-02T00:00:00Z'));
     await page.clock.runFor(10);
-    await page.clock.setFixedTime(new Date('2020-02-02'));
-    await page.clock.setSystemTime(new Date('2020-02-02'));
+    await page.clock.setFixedTime(new Date('2020-02-02T00:00:00Z'));
+    await page.clock.setSystemTime(new Date('2020-02-02T00:00:00Z'));
   });
 
   await expect(traceViewer.actionTitles).toHaveText([
@@ -210,10 +210,10 @@ test('should show action context on locators and other common actions', async ({
     /mouse.up/,
     /clock.fastForward1000ms/,
     /clock.fastForward30:00/,
-    /clock.pauseAt2\/1\/2020, 4:00:00 PM/,
+    /clock.pauseAt2\/2\/2020, 12:00:00 AM/,
     /clock.runFor10ms/,
-    /clock.setFixedTime2\/1\/2020, 4:00:00 PM/,
-    /clock.setSystemTime2\/1\/2020, 4:00:00 PM/
+    /clock.setFixedTime2\/2\/2020, 12:00:00 AM/,
+    /clock.setSystemTime2\/2\/2020, 12:00:00 AM/,
   ]);
 });
 

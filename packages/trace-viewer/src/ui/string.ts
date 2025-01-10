@@ -31,7 +31,9 @@ const formatClockParams = (params: {
   } else if (params.timeNumber !== undefined) {
     // clock.pauseAt/setFixedTime/setSystemTime
     try {
-      return new Date(params.timeNumber).toLocaleString();
+      return new Date(params.timeNumber).toLocaleString(undefined, {
+        timeZone: 'UTC',
+      });
     } catch (e) {
       return undefined;
     }
