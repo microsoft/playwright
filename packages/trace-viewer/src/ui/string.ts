@@ -105,6 +105,7 @@ export const actionContextString = (
     case apiName.startsWith('keyboard'):
       return formatKeyboardParams(params);
     case apiName.startsWith('locator'):
+    case apiName.startsWith('expect'):
       return formatLocatorParams(sdkLanguage, params);
     case apiName.startsWith('mouse'):
       return formatMouseParams(params);
