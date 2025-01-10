@@ -40,7 +40,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
 
   async keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
     const actions: bidi.Input.KeySourceAction[] = [];
-    actions.push({ type: 'keyUp', value: getBidiKeyValue(key) });
+    actions.push({ type: 'keyUp', value: getBidiKeyValue(code) });
     await this._performActions(actions);
   }
 
