@@ -92,7 +92,7 @@ const formatTouchscreenParams = (params: {
   return undefined;
 };
 
-export const commandContextString = (
+export const actionContextString = (
   action: ActionTraceEvent,
   sdkLanguage: Language,
 ): string | undefined => {
