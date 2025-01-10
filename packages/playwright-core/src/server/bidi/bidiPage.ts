@@ -180,6 +180,12 @@ export class BidiPage implements PageDelegate {
     const frameId = params.context;
     this._page._frameManager.frameRequestedNavigation(frameId, params.navigation!);
 
+    // url is missing from navigationStarted events on Firefox when the
+    // navigation is interrupted by a beforeunload prompt.
+    // See https://bugzilla.mozilla.org/show_bug.cgi?id=1908952
+    if (!params.url)
+      return;
+
     const url = params.url.toLowerCase();
     if (url.startsWith('file:') || url.startsWith('data:') || url === 'about:blank') {
       // Navigation to file urls doesn't emit network events, so we fire 'commit' event right when navigation is started.
