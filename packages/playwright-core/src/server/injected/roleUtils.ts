@@ -894,7 +894,17 @@ export function getAriaChecked(element: Element): boolean | 'mixed' {
   const result = getChecked(element, true);
   return result === 'error' ? false : result;
 }
-export function getChecked(element: Element, allowMixed: boolean): boolean | 'mixed' | 'error' {
+
+export function getCheckedAllowMixed(element: Element): boolean | 'mixed' | 'error' {
+  return getChecked(element, true);
+}
+
+export function getCheckedWithoutMixed(element: Element): boolean | 'error' {
+  const result = getChecked(element, false);
+  return result as boolean | 'error';
+}
+
+function getChecked(element: Element, allowMixed: boolean): boolean | 'mixed' | 'error' {
   const tagName = elementSafeTagName(element);
   // https://www.w3.org/TR/wai-aria-1.2/#aria-checked
   // https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings

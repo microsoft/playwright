@@ -29,7 +29,7 @@ import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector, type GenerateSelectorOptions } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription, getReadonly, getElementAccessibleErrorMessage } from './roleUtils';
+import { getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription, getReadonly, getElementAccessibleErrorMessage, getCheckedAllowMixed, getCheckedWithoutMixed } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
@@ -41,7 +41,7 @@ import { parseYamlTemplate } from '@isomorphic/ariaSnapshot';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
 
-export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'mixed' | 'stable';
+export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'indeterminate' | 'stable';
 export type ElementStateWithoutStable = Exclude<ElementState, 'stable'>;
 export type ElementStateQueryResult = { matches: boolean, received?: string | 'error:notconnected' };
 
@@ -644,13 +644,23 @@ export class InjectedScript {
       };
     }
 
-    if (state === 'checked' || state === 'unchecked' || state === 'mixed') {
-      const need = state === 'checked' ? true : state === 'unchecked' ? false : 'mixed';
-      const checked = getChecked(element, false);
+    if (state === 'checked' || state === 'unchecked') {
+      const need = state === 'checked';
+      const checked = getCheckedWithoutMixed(element);
       if (checked === 'error')
         throw this.createStacklessError('Not a checkbox or radio button');
       return {
         matches: need === checked,
+        received: checked ? 'checked' : 'unchecked',
+      };
+    }
+
+    if (state === 'indeterminate') {
+      const checked = getCheckedAllowMixed(element);
+      if (checked === 'error')
+        throw this.createStacklessError('Not a checkbox or radio button');
+      return {
+        matches: checked === 'mixed',
         received: checked === true ? 'checked' : checked === false ? 'unchecked' : 'mixed',
       };
     }
@@ -1267,9 +1277,14 @@ export class InjectedScript {
           received: hasAttribute ? 'attribute present' : 'attribute not present',
         };
       } else if (expression === 'to.be.checked') {
-        result = this.elementState(element, 'checked');
-      } else if (expression === 'to.be.unchecked') {
-        result = this.elementState(element, 'unchecked');
+        const { checked, indeterminate } = options.expectedValue;
+        if (indeterminate) {
+          if (checked !== undefined)
+            throw this.createStacklessError('Can\'t assert indeterminate and checked at the same time');
+          result = this.elementState(element, 'indeterminate');
+        } else {
+          result = this.elementState(element, checked === false ? 'unchecked' : 'checked');
+        }
       } else if (expression === 'to.be.disabled') {
         result = this.elementState(element, 'disabled');
       } else if (expression === 'to.be.editable') {
