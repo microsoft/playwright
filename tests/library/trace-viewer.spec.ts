@@ -166,6 +166,57 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
   ]);
 });
 
+test('should show action context on locators and other common actions', async ({
+  runAndTrace,
+  page,
+}) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent('<input type="text" />');
+    await page.locator('input').click({ button: 'right' });
+    await page.getByRole('textbox').click();
+    await page.keyboard.type(
+        'Hello world this is a very long string what happens when it overflows?',
+    );
+    await page.keyboard.press('Control+c');
+    await page.keyboard.down('Shift');
+    await page.keyboard.insertText('Hello world');
+    await page.keyboard.up('Shift');
+    await page.mouse.move(0, 0);
+    await page.mouse.down();
+    await page.mouse.move(100, 200);
+    await page.mouse.wheel(5, 7);
+    await page.mouse.up();
+    await page.clock.fastForward(1000);
+    await page.clock.fastForward('30:00');
+    await page.clock.pauseAt(new Date('2020-02-02'));
+    await page.clock.runFor(10);
+    await page.clock.setFixedTime(new Date('2020-02-02'));
+    await page.clock.setSystemTime(new Date('2020-02-02'));
+  });
+
+  await expect(traceViewer.actionTitles).toHaveText([
+    /page.setContent/,
+    /locator.clicklocator\('input'\)/,
+    /locator.clickgetByRole\('textbox'\)/,
+    /keyboard.type\"Hello world this is a very long string what happens when it overflows\?\"/,
+    /keyboard.pressControl\+c/,
+    /keyboard.downShift/,
+    /keyboard.insertText\"Hello world\"/,
+    /keyboard.upShift/,
+    /mouse.move\(0, 0\)/,
+    /mouse.down/,
+    /mouse.move\(100, 200\)/,
+    /mouse.wheel\(5, 7\)/,
+    /mouse.up/,
+    /clock.fastForward1000ms/,
+    /clock.fastForward30:00/,
+    /clock.pauseAt2\/1\/2020, 4:00:00 PM/,
+    /clock.runFor10ms/,
+    /clock.setFixedTime2\/1\/2020, 4:00:00 PM/,
+    /clock.setSystemTime2\/1\/2020, 4:00:00 PM/
+  ]);
+});
+
 test('should complain about newer version of trace in old viewer', async ({ showTraceViewer, asset }, testInfo) => {
   const traceViewer = await showTraceViewer([asset('trace-from-the-future.zip')]);
   await expect(traceViewer.page.getByText('The trace was created by a newer version of Playwright and is not supported by this version of the viewer.')).toBeVisible();
