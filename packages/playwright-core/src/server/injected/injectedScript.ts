@@ -37,7 +37,7 @@ import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis
 import { matchesAriaTree, getAllByAria, generateAriaTree, renderAriaTree } from './ariaSnapshot';
 import type { AriaNode, AriaSnapshot } from './ariaSnapshot';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
-import { parseYamlTemplate } from '@isomorphic/ariaSnapshot';
+import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
 
@@ -86,7 +86,7 @@ export class InjectedScript {
     isElementVisible,
     isInsideScope,
     normalizeWhiteSpace,
-    parseYamlTemplate,
+    parseAriaSnapshot,
   };
 
   // eslint-disable-next-line no-restricted-globals

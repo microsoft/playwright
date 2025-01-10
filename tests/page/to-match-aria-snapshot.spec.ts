@@ -521,10 +521,7 @@ test('should report error in YAML', async ({ page }) => {
     const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
       heading "title"
     `).catch(e => e);
-    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Expected object key starting with "- ":
-
-heading "title"
-`);
+    expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Aria snapshot must be a YAML sequence, elements starting with " -"`);
   }
 
   {

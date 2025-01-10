@@ -18,7 +18,7 @@ import * as roleUtils from './roleUtils';
 import { getElementComputedStyle } from './domUtils';
 import { escapeRegExp, longestCommonSubstring, normalizeWhiteSpace } from '@isomorphic/stringUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
-import type { AriaProps, AriaRole, AriaTemplateNode, AriaTemplateRoleNode, AriaTemplateTextNode } from '@isomorphic/ariaSnapshot';
+import type { AriaProps, AriaRegex, AriaRole, AriaTemplateNode, AriaTemplateRoleNode, AriaTemplateTextNode } from '@isomorphic/ariaSnapshot';
 
 export type AriaNode = AriaProps & {
   role: AriaRole | 'fragment';
@@ -196,14 +196,14 @@ function normalizeStringChildren(rootA11yNode: AriaNode) {
   visit(rootA11yNode);
 }
 
-function matchesText(text: string, template: RegExp | string | undefined): boolean {
+function matchesText(text: string, template: AriaRegex | string | undefined): boolean {
   if (!template)
     return true;
   if (!text)
     return false;
   if (typeof template === 'string')
     return text === template;
-  return !!text.match(template);
+  return !!text.match(new RegExp(template.pattern));
 }
 
 function matchesTextNode(text: string, template: AriaTemplateTextNode) {

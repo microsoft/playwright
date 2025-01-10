@@ -29,8 +29,7 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import { toggleTheme } from '@web/theme';
 import { copy, useSetting } from '@web/uiUtils';
 import yaml from 'yaml';
-import { parseAriaKey } from '@isomorphic/ariaSnapshot';
-import type { AriaKeyError, ParsedYaml } from '@isomorphic/ariaSnapshot';
+import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
 
 export interface RecorderProps {
   sources: Source[],
@@ -117,8 +116,17 @@ export const Recorder: React.FC<RecorderProps> = ({
   const onAriaEditorChange = React.useCallback((ariaSnapshot: string) => {
     if (mode === 'none' || mode === 'inspecting')
       window.dispatch({ event: 'setMode', params: { mode: 'standby' } });
-    const { fragment, errors } = parseAriaSnapshot(ariaSnapshot);
-    setAriaSnapshotErrors(errors);
+    const { fragment, errors } = parseAriaSnapshot(yaml, ariaSnapshot, { prettyErrors: false });
+    const highlights = errors.map(error => {
+      const highlight: SourceHighlight = {
+        message: error.message,
+        line: error.range[1].line,
+        column: error.range[1].col,
+        type: 'subtle-error',
+      };
+      return highlight;
+    });
+    setAriaSnapshotErrors(highlights);
     setAriaSnapshot(ariaSnapshot);
     if (!errors.length)
       window.dispatch({ event: 'highlightRequested', params: { ariaTemplate: fragment } });
@@ -208,57 +216,3 @@ export const Recorder: React.FC<RecorderProps> = ({
     />
   </div>;
 };
-
-function parseAriaSnapshot(ariaSnapshot: string): { fragment?: ParsedYaml, errors: SourceHighlight[] } {
-  const lineCounter = new yaml.LineCounter();
-  const yamlDoc = yaml.parseDocument(ariaSnapshot, {
-    keepSourceTokens: true,
-    lineCounter,
-    prettyErrors: false,
-  });
-
-  const errors: SourceHighlight[] = [];
-  for (const error of yamlDoc.errors) {
-    errors.push({
-      line: lineCounter.linePos(error.pos[0]).line,
-      type: 'subtle-error',
-      message: error.message,
-    });
-  }
-
-  if (yamlDoc.errors.length)
-    return { errors };
-
-  const handleKey = (key: yaml.Scalar<string>) => {
-    try {
-      parseAriaKey(key.value);
-    } catch (e) {
-      const keyError = e as AriaKeyError;
-      const linePos = lineCounter.linePos(key.srcToken!.offset + keyError.pos);
-      errors.push({
-        message: keyError.shortMessage,
-        line: linePos.line,
-        column: linePos.col,
-        type: 'subtle-error',
-      });
-    }
-  };
-  const visitSeq = (seq: yaml.YAMLSeq) => {
-    for (const item of seq.items) {
-      if (item instanceof yaml.YAMLMap) {
-        const map = item as yaml.YAMLMap;
-        for (const entry of map.items) {
-          if (entry.key instanceof yaml.Scalar)
-            handleKey(entry.key);
-          if (entry.value instanceof yaml.YAMLSeq)
-            visitSeq(entry.value);
-        }
-        continue;
-      }
-      if (item instanceof yaml.Scalar)
-        handleKey(item);
-    }
-  };
-  visitSeq(yamlDoc.contents as yaml.YAMLSeq);
-  return errors.length ? { errors } : { fragment: yamlDoc.toJSON(), errors };
-}
