@@ -131,6 +131,8 @@ export const getBidiKeyValue = (code: string) => {
       return '\uE052';
     case 'MetaRight':
       return '\uE053';
+    case 'Space':
+      return ' ';
     case 'Digit0':
       return '0';
     case 'Digit1':
