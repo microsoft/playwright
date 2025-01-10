@@ -509,6 +509,32 @@ it('should escape yaml text in text nodes', async ({ page }) => {
   `);
 });
 
+it('should normalize whitespace', async ({ page }) => {
+  await page.setContent(`
+    <details>
+      <summary> one  \n two <a href="#"> link &nbsp;\n  1 </a> </summary>
+    </details>
+    <input value='  hello   &nbsp; world '>
+  `);
+
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - group:
+      - text: one two
+      - link "link 1"
+    - textbox: hello world
+  `);
+
+  // Weird whitespace in the template should be normalized.
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - group:
+      - text: |
+          one
+          two
+      - link "  link     1 "
+    - textbox:        hello  world
+  `);
+});
+
 it('should handle long strings', async ({ page }) => {
   const s = 'a'.repeat(10000);
   await page.setContent(`
