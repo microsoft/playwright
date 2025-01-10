@@ -212,7 +212,7 @@ class KeyParser {
     const ch = this._peek();
     if (ch === '"') {
       this._next();
-      return this._readString();
+      return normalizeWhitespace(this._readString());
     }
 
     if (ch === '/') {

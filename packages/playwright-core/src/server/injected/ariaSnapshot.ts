@@ -16,7 +16,7 @@
 
 import * as roleUtils from './roleUtils';
 import { getElementComputedStyle } from './domUtils';
-import { escapeRegExp, longestCommonSubstring } from '@isomorphic/stringUtils';
+import { escapeRegExp, longestCommonSubstring, normalizeWhiteSpace } from '@isomorphic/stringUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 import type { AriaProps, AriaRole, AriaTemplateNode, AriaTemplateRoleNode, AriaTemplateTextNode } from '@isomorphic/ariaSnapshot';
 
@@ -137,7 +137,7 @@ function toAriaNode(element: Element): AriaNode | null {
   if (!role || role === 'presentation' || role === 'none')
     return null;
 
-  const name = roleUtils.getElementAccessibleName(element, false) || '';
+  const name = normalizeWhiteSpace(roleUtils.getElementAccessibleName(element, false) || '');
   const result: AriaNode = { role, name, children: [], element };
 
   if (roleUtils.kAriaCheckedRoles.includes(role))
@@ -170,7 +170,7 @@ function normalizeStringChildren(rootA11yNode: AriaNode) {
   const flushChildren = (buffer: string[], normalizedChildren: (AriaNode | string)[]) => {
     if (!buffer.length)
       return;
-    const text = normalizeWhitespaceWithin(buffer.join('')).trim();
+    const text = normalizeWhiteSpace(buffer.join(''));
     if (text)
       normalizedChildren.push(text);
     buffer.length = 0;
@@ -195,8 +195,6 @@ function normalizeStringChildren(rootA11yNode: AriaNode) {
   };
   visit(rootA11yNode);
 }
-
-const normalizeWhitespaceWithin = (text: string) => text.replace(/[\u200b\s\t\r\n]+/g, ' ');
 
 function matchesText(text: string, template: RegExp | string | undefined): boolean {
   if (!template)
