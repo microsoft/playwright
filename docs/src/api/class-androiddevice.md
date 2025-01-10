@@ -136,7 +136,7 @@ Launches Chrome browser on the device, and returns its persistent context.
 
 ### option: AndroidDevice.launchBrowser.pkg
 * since: v1.9
-- `command` <[string]>
+- `pkg` <[string]>
 
 Optional package name to launch instead of default Chrome for Android.
 
