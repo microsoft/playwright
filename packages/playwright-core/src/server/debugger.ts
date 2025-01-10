@@ -134,7 +134,7 @@ function shouldPauseBeforeStep(metadata: CallMetadata): boolean {
   // Always stop on 'close'
   if (metadata.method === 'close')
     return true;
-  if (metadata.method === 'waitForSelector' || metadata.method === 'waitForEventInfo')
+  if (metadata.method === 'waitForSelector' || metadata.method === 'waitForEventInfo' || metadata.method === 'querySelector' || metadata.method === 'querySelectorAll')
     return false;  // Never stop on those, primarily for the test harness.
   const step = metadata.type + '.' + metadata.method;
   // Stop before everything that generates snapshot. But don't stop before those marked as pausesBeforeInputActions
