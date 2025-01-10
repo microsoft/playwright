@@ -32,7 +32,7 @@ import type * as actions from '@recorder/actions';
 import { buildFullSelector } from '../utils/isomorphic/recorderUtils';
 import { stringifySelector } from '../utils/isomorphic/selectorParser';
 import type { Frame } from './frames';
-import type { ParsedYaml } from '@isomorphic/ariaSnapshot';
+import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 
 const recorderSymbol = Symbol('recorderSymbol');
 
@@ -40,7 +40,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
   readonly handleSIGINT: boolean | undefined;
   private _context: BrowserContext;
   private _mode: Mode;
-  private _highlightedElement: { selector?: string, ariaTemplate?: ParsedYaml } = {};
+  private _highlightedElement: { selector?: string, ariaTemplate?: AriaTemplateNode } = {};
   private _overlayState: OverlayState = { offsetX: 0 };
   private _recorderApp: IRecorderApp | null = null;
   private _currentCallsMetadata = new Map<CallMetadata, SdkObject>();
@@ -249,7 +249,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
     this._refreshOverlay();
   }
 
-  setHighlightedAriaTemplate(ariaTemplate: ParsedYaml) {
+  setHighlightedAriaTemplate(ariaTemplate: AriaTemplateNode) {
     this._highlightedElement = { ariaTemplate };
     this._refreshOverlay();
   }
