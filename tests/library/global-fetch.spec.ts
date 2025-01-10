@@ -536,3 +536,21 @@ it('should retry ECONNRESET', {
   expect(requestCount).toBe(4);
   await request.dispose();
 });
+
+it('should retry ETIMEDOUT', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34207' }
+}, async ({ playwright, server }) => {
+  const request = await playwright.request.newContext();
+  let requestCount = 0;
+  server.setRoute('/test', (req, res) => {
+    if (requestCount++ < 3)
+      return;
+    res.writeHead(200, { 'content-type': 'text/plain' });
+    res.end('Hello!');
+  });
+  const response = await request.fetch(server.PREFIX + '/test', { maxRetries: 3, timeout: 100 });
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toBe('Hello!');
+  expect(requestCount).toBe(4);
+  await request.dispose();
+});
