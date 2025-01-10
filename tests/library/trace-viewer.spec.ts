@@ -1539,9 +1539,11 @@ test('canvas clipping', async ({ runAndTrace, page, server }) => {
 
   // Enable canvas display
   await traceViewer.showSettings();
-  await traceViewer.displayCanvasContentSetting.click();
 
-  const msg = await traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') });
+  const [msg] = await Promise.all([
+    traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') }),
+    traceViewer.displayCanvasContentSetting.click(),
+  ]);
   expect(msg.text()).toEqual('canvas drawn: [0,91,11,20]');
 
   const snapshot = await traceViewer.snapshotFrame('page.goto');
@@ -1559,9 +1561,11 @@ test('canvas clipping in iframe', async ({ runAndTrace, page, server }) => {
 
   // Enable canvas display
   await traceViewer.showSettings();
-  await traceViewer.displayCanvasContentSetting.click();
 
-  const msg = await traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') });
+  const [msg] = await Promise.all([
+    traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') }),
+    traceViewer.displayCanvasContentSetting.click(),
+  ]);
   expect(msg.text()).toEqual('canvas drawn: [1,1,11,20]');
 
   const snapshot = await traceViewer.snapshotFrame('page.evaluate');
