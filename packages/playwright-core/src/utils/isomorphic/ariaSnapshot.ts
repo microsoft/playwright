@@ -159,6 +159,15 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
       // - role "name": "text"
       const valueIsScalar = value instanceof yaml.Scalar;
       if (valueIsScalar) {
+        const type = typeof value.value;
+        if (type !== 'string' && type !== 'number' && type !== 'boolean') {
+          errors.push({
+            message: 'Node value should be a string or a sequence',
+            range: convertRange(((entry.value as any).range || map.range)),
+          });
+          continue;
+        }
+
         container.children.push({
           ...childNode,
           children: [{
@@ -193,7 +202,7 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
   if (!(yamlDoc.contents instanceof yaml.YAMLSeq)) {
     errors.push({
       message: 'Aria snapshot must be a YAML sequence, elements starting with " -"',
-      range: convertRange(yamlDoc.contents!.range),
+      range: yamlDoc.contents ? convertRange(yamlDoc.contents!.range) : [{ line: 0, col: 0 }, { line: 0, col: 0 }],
     });
   }
   if (errors.length)
@@ -214,7 +223,7 @@ function normalizeWhitespace(text: string) {
 }
 
 export function valueOrRegex(value: string): string | AriaRegex {
-  return value.startsWith('/') && value.endsWith('/') ? { pattern: value.slice(1, -1) } : normalizeWhitespace(value);
+  return value.startsWith('/') && value.endsWith('/') && value.length > 1 ? { pattern: value.slice(1, -1) } : normalizeWhitespace(value);
 }
 
 export class KeyParser {

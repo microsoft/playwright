@@ -24,7 +24,7 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 import { expect, playwrightTest } from '../config/browserTest';
 import type { FrameLocator } from '@playwright/test';
-import { rafraf } from 'tests/page/pageTest';
+import { rafraf, roundBox } from 'tests/page/pageTest';
 
 const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
@@ -1096,19 +1096,41 @@ test('should pick locator', async ({ page, runAndTrace, server }) => {
   const snapshot = await traceViewer.snapshotFrame('page.setContent');
   await traceViewer.page.getByTitle('Pick locator').click();
   await snapshot.locator('button').click();
-  await expect(traceViewer.page.locator('.cm-wrapper')).toContainText(`getByRole('button', { name: 'Submit' })`);
+  await expect(traceViewer.page.locator('.cm-wrapper').first()).toContainText(`getByRole('button', { name: 'Submit' })`);
+  await expect(traceViewer.page.locator('.cm-wrapper').last()).toContainText(`- button "Submit"`);
 });
 
-test('should update highlight when typing', async ({ page, runAndTrace, server }) => {
+test('should update highlight when typing locator', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<button>Submit</button>');
   });
   const snapshot = await traceViewer.snapshotFrame('page.setContent');
   await traceViewer.page.getByText('Locator').click();
-  await traceViewer.page.locator('.CodeMirror').click();
+  await traceViewer.page.locator('.CodeMirror').first().click();
   await traceViewer.page.keyboard.type('button');
-  await expect(snapshot.locator('x-pw-glass')).toBeVisible();
+
+  const buttonBox = roundBox(await snapshot.locator('button').boundingBox());
+  await expect(snapshot.locator('x-pw-highlight')).toBeVisible();
+  await expect.poll(async () => {
+    return roundBox(await snapshot.locator('x-pw-highlight').boundingBox());
+  }).toEqual(buttonBox);
+});
+
+test('should update highlight when typing snapshot', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<button>Submit</button>');
+  });
+  const snapshot = await traceViewer.snapshotFrame('page.setContent');
+  await traceViewer.page.getByText('Locator').click();
+  await traceViewer.page.locator('.CodeMirror').last().click();
+  await traceViewer.page.keyboard.type('- button');
+  const buttonBox = roundBox(await snapshot.locator('button').boundingBox());
+  await expect(snapshot.locator('x-pw-highlight')).toBeVisible();
+  await expect.poll(async () => {
+    return roundBox(await snapshot.locator('x-pw-highlight').boundingBox());
+  }).toEqual(buttonBox);
 });
 
 test('should open trace-1.31', async ({ showTraceViewer }) => {
@@ -1239,7 +1261,7 @@ test('should pick locator in iframe', async ({ page, runAndTrace, server }) => {
     await page.evaluate('2+2');
   });
   await traceViewer.page.getByTitle('Pick locator').click();
-  const cmWrapper = traceViewer.page.locator('.cm-wrapper');
+  const cmWrapper = traceViewer.page.locator('.cm-wrapper').first();
 
   const snapshot = await traceViewer.snapshotFrame('page.evaluate');
 
@@ -1279,7 +1301,7 @@ test('should highlight locator in iframe while typing', async ({ page, runAndTra
 
   const snapshot = await traceViewer.snapshotFrame('page.evaluate');
   await traceViewer.page.getByText('Locator').click();
-  await traceViewer.page.locator('.CodeMirror').click();
+  await traceViewer.page.locator('.CodeMirror').first().click();
 
   const locators = [{
     text: `locator('#frame1').contentFrame().getByText('Hello1')`,
