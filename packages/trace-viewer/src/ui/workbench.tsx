@@ -42,6 +42,7 @@ import './workbench.css';
 import { testStatusIcon, testStatusText } from './testUtils';
 import type { UITestStatus } from './testUtils';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
+import type { HighlightedElement } from './snapshotTab';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -65,7 +66,7 @@ export const Workbench: React.FunctionComponent<{
   const [selectedNavigatorTab, setSelectedNavigatorTab] = React.useState<string>('actions');
   const [selectedPropertiesTab, setSelectedPropertiesTab] = useSetting<string>('propertiesTab', showSourcesFirst ? 'source' : 'call');
   const [isInspecting, setIsInspectingState] = React.useState(false);
-  const [highlightedLocator, setHighlightedLocator] = React.useState<string>('');
+  const [highlightedElement, setHighlightedElement] = React.useState<HighlightedElement>({ lastEdited: 'none' });
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
 
@@ -140,8 +141,8 @@ export const Workbench: React.FunctionComponent<{
     setIsInspectingState(value);
   }, [setIsInspectingState, selectPropertiesTab, isInspecting]);
 
-  const locatorPicked = React.useCallback((locator: string) => {
-    setHighlightedLocator(locator);
+  const elementPicked = React.useCallback((element: HighlightedElement) => {
+    setHighlightedElement(element);
     selectPropertiesTab('inspector');
   }, [selectPropertiesTab]);
 
@@ -170,8 +171,8 @@ export const Workbench: React.FunctionComponent<{
     render: () => <InspectorTab
       sdkLanguage={sdkLanguage}
       setIsInspecting={setIsInspecting}
-      highlightedLocator={highlightedLocator}
-      setHighlightedLocator={setHighlightedLocator} />,
+      highlightedElement={highlightedElement}
+      setHighlightedElement={setHighlightedElement} />,
   };
   const callTab: TabbedPaneTabModel = {
     id: 'call',
@@ -342,8 +343,8 @@ export const Workbench: React.FunctionComponent<{
           testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
           isInspecting={isInspecting}
           setIsInspecting={setIsInspecting}
-          highlightedLocator={highlightedLocator}
-          setHighlightedLocator={locatorPicked} />}
+          highlightedElement={highlightedElement}
+          setHighlightedElement={elementPicked} />}
         sidebar={
           <TabbedPane
             tabs={[actionsTab, metadataTab]}

@@ -241,7 +241,7 @@ function matchesNode(node: AriaNode | string, template: AriaTemplateNode, depth:
   if (typeof node === 'string' && template.kind === 'text')
     return matchesTextNode(node, template);
 
-  if (typeof node === 'object' && template.kind === 'role') {
+  if (node !== null && typeof node === 'object' && template.kind === 'role') {
     if (template.role !== 'fragment' && template.role !== node.role)
       return false;
     if (template.checked !== undefined && template.checked !== node.checked)
@@ -285,20 +285,22 @@ function containsList(children: (AriaNode | string)[], template: AriaTemplateNod
 
 function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode, collectAll: boolean): AriaNode[] {
   const results: AriaNode[] = [];
-  const visit = (node: AriaNode | string): boolean => {
+  const visit = (node: AriaNode | string, parent: AriaNode | null): boolean => {
     if (matchesNode(node, template, 0)) {
-      results.push(node as AriaNode);
+      const result = typeof node === 'string' ? parent : node;
+      if (result)
+        results.push(result);
       return !collectAll;
     }
     if (typeof node === 'string')
       return false;
     for (const child of node.children || []) {
-      if (visit(child))
+      if (visit(child, node))
         return true;
     }
     return false;
   };
-  visit(root);
+  visit(root, null);
   return results;
 }
 
