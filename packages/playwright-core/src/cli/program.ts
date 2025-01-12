@@ -39,37 +39,37 @@ import { isTargetClosedError } from '../client/errors';
 const packageJSON = require('../../package.json');
 
 program
-    .version('Version ' + (process.env.PW_CLI_DISPLAY_VERSION || packageJSON.version))
-    .name(buildBasePlaywrightCLICommand(process.env.PW_LANG_NAME));
+  .version('Version ' + (process.env.PW_CLI_DISPLAY_VERSION || packageJSON.version))
+  .name(buildBasePlaywrightCLICommand(process.env.PW_LANG_NAME));
 
 program
-    .command('mark-docker-image [dockerImageNameTemplate]', { hidden: true })
-    .description('mark docker image')
-    .allowUnknownOption(true)
-    .action(function(dockerImageNameTemplate) {
-      assert(dockerImageNameTemplate, 'dockerImageNameTemplate is required');
-      writeDockerVersion(dockerImageNameTemplate).catch(logErrorAndExit);
-    });
+  .command('mark-docker-image [dockerImageNameTemplate]', { hidden: true })
+  .description('mark docker image')
+  .allowUnknownOption(true)
+  .action(function (dockerImageNameTemplate) {
+    assert(dockerImageNameTemplate, 'dockerImageNameTemplate is required');
+    writeDockerVersion(dockerImageNameTemplate).catch(logErrorAndExit);
+  });
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
-    .action(function(url, options) {
-      open(options, url, codegenId()).catch(logErrorAndExit);
-    })
-    .addHelpText('afterAll', `
+  .action(function (url, options) {
+    open(options, url, codegenId()).catch(logErrorAndExit);
+  })
+  .addHelpText('afterAll', `
 Examples:
 
   $ open
   $ open -b webkit https://example.com`);
 
 commandWithOpenOptions('codegen [url]', 'open page and generate code for user actions',
-    [
-      ['-o, --output <file name>', 'saves the generated script to a file'],
-      ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
-      ['--save-trace <filename>', 'record a trace for the session and save it to a file'],
-      ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
-    ]).action(function(url, options) {
-  codegen(options, url).catch(logErrorAndExit);
-}).addHelpText('afterAll', `
+  [
+    ['-o, --output <file name>', 'saves the generated script to a file'],
+    ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
+    ['--save-trace <filename>', 'record a trace for the session and save it to a file'],
+    ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
+  ]).action(function (url, options) {
+    codegen(options, url).catch(logErrorAndExit);
+  }).addHelpText('afterAll', `
 Examples:
 
   $ codegen
@@ -126,68 +126,68 @@ function checkBrowsersToInstall(args: string[], options: { noShell?: boolean, on
 
 
 program
-    .command('install [browser...]')
-    .description('ensure browsers necessary for this version of Playwright are installed')
-    .option('--with-deps', 'install system dependencies for browsers')
-    .option('--dry-run', 'do not execute installation, only print information')
-    .option('--force', 'force reinstall of stable browser channels')
-    .option('--only-shell', 'only install headless shell when installing chromium')
-    .option('--no-shell', 'do not install chromium headless shell')
-    .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
-      // For '--no-shell' option, commander sets `shell: false` instead.
-      if (options.shell === false)
-        options.noShell = true;
-      if (isLikelyNpxGlobal()) {
-        console.error(wrapInASCIIBox([
-          `WARNING: It looks like you are running 'npx playwright install' without first`,
-          `installing your project's dependencies.`,
-          ``,
-          `To avoid unexpected behavior, please install your dependencies first, and`,
-          `then run Playwright's install command:`,
-          ``,
-          `    npm install`,
-          `    npx playwright install`,
-          ``,
-          `If your project does not yet depend on Playwright, first install the`,
-          `applicable npm package (most commonly @playwright/test), and`,
-          `then run Playwright's install command to download the browsers:`,
-          ``,
-          `    npm install @playwright/test`,
-          `    npx playwright install`,
-          ``,
-        ].join('\n'), 1));
-      }
-      try {
-        const hasNoArguments = !args.length;
-        const executables = hasNoArguments ? defaultBrowsersToInstall(options) : checkBrowsersToInstall(args, options);
-        if (options.withDeps)
-          await registry.installDeps(executables, !!options.dryRun);
-        if (options.dryRun) {
-          for (const executable of executables) {
-            const version = executable.browserVersion ? `version ` + executable.browserVersion : '';
-            console.log(`browser: ${executable.name}${version ? ' ' + version : ''}`);
-            console.log(`  Install location:    ${executable.directory ?? '<system>'}`);
-            if (executable.downloadURLs?.length) {
-              const [url, ...fallbacks] = executable.downloadURLs;
-              console.log(`  Download url:        ${url}`);
-              for (let i = 0; i < fallbacks.length; ++i)
-                console.log(`  Download fallback ${i + 1}: ${fallbacks[i]}`);
-            }
-            console.log(``);
+  .command('install [browser...]')
+  .description('ensure browsers necessary for this version of Playwright are installed')
+  .option('--with-deps', 'install system dependencies for browsers')
+  .option('--dry-run', 'do not execute installation, only print information')
+  .option('--force', 'force reinstall of stable browser channels')
+  .option('--only-shell', 'only install headless shell when installing chromium')
+  .option('--no-shell', 'do not install chromium headless shell')
+  .action(async function (args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
+    // For '--no-shell' option, commander sets `shell: false` instead.
+    if (options.shell === false)
+      options.noShell = true;
+    if (isLikelyNpxGlobal()) {
+      console.error(wrapInASCIIBox([
+        `WARNING: It looks like you are running 'npx playwright install' without first`,
+        `installing your project's dependencies.`,
+        ``,
+        `To avoid unexpected behavior, please install your dependencies first, and`,
+        `then run Playwright's install command:`,
+        ``,
+        `    npm install`,
+        `    npx playwright install`,
+        ``,
+        `If your project does not yet depend on Playwright, first install the`,
+        `applicable npm package (most commonly @playwright/test), and`,
+        `then run Playwright's install command to download the browsers:`,
+        ``,
+        `    npm install @playwright/test`,
+        `    npx playwright install`,
+        ``,
+      ].join('\n'), 1));
+    }
+    try {
+      const hasNoArguments = !args.length;
+      const executables = hasNoArguments ? defaultBrowsersToInstall(options) : checkBrowsersToInstall(args, options);
+      if (options.withDeps)
+        await registry.installDeps(executables, !!options.dryRun);
+      if (options.dryRun) {
+        for (const executable of executables) {
+          const version = executable.browserVersion ? `version ` + executable.browserVersion : '';
+          console.log(`browser: ${executable.name}${version ? ' ' + version : ''}`);
+          console.log(`  Install location:    ${executable.directory ?? '<system>'}`);
+          if (executable.downloadURLs?.length) {
+            const [url, ...fallbacks] = executable.downloadURLs;
+            console.log(`  Download url:        ${url}`);
+            for (let i = 0; i < fallbacks.length; ++i)
+              console.log(`  Download fallback ${i + 1}: ${fallbacks[i]}`);
           }
-        } else {
-          const forceReinstall = hasNoArguments ? false : !!options.force;
-          await registry.install(executables, forceReinstall);
-          await registry.validateHostRequirementsForExecutablesIfNeeded(executables, process.env.PW_LANG_NAME || 'javascript').catch((e: Error) => {
-            e.name = 'Playwright Host validation warning';
-            console.error(e);
-          });
+          console.log(``);
         }
-      } catch (e) {
-        console.log(`Failed to install browsers\n${e}`);
-        gracefullyProcessExitDoNotHang(1);
+      } else {
+        const forceReinstall = hasNoArguments ? false : !!options.force;
+        await registry.install(executables, forceReinstall);
+        await registry.validateHostRequirementsForExecutablesIfNeeded(executables, process.env.PW_LANG_NAME || 'javascript').catch((e: Error) => {
+          e.name = 'Playwright Host validation warning';
+          console.error(e);
+        });
       }
-    }).addHelpText('afterAll', `
+    } catch (e) {
+      console.log(`Failed to install browsers\n${e}`);
+      gracefullyProcessExitDoNotHang(1);
+    }
+  }).addHelpText('afterAll', `
 
 Examples:
   - $ install
@@ -197,40 +197,73 @@ Examples:
     Install custom browsers, supports ${suggestedBrowsersToInstall()}.`);
 
 program
-    .command('uninstall')
-    .description('Removes browsers used by this installation of Playwright from the system (chromium, firefox, webkit, ffmpeg). This does not include branded channels.')
-    .option('--all', 'Removes all browsers used by any Playwright installation from the system.')
-    .action(async (options: { all?: boolean }) => {
-      delete process.env.PLAYWRIGHT_SKIP_BROWSER_GC;
-      await registry.uninstall(!!options.all).then(({ numberOfBrowsersLeft }) => {
-        if (!options.all && numberOfBrowsersLeft > 0) {
-          console.log('Successfully uninstalled Playwright browsers for the current Playwright installation.');
-          console.log(`There are still ${numberOfBrowsersLeft} browsers left, used by other Playwright installations.\nTo uninstall Playwright browsers for all installations, re-run with --all flag.`);
-        }
-      }).catch(logErrorAndExit);
-    });
+  .command('uninstall')
+  .description('Removes browsers used by this installation of Playwright from the system (chromium, firefox, webkit, ffmpeg). This does not include branded channels.')
+  .option('--all', 'Removes all browsers used by any Playwright installation from the system.')
+  .action(async (options: { all?: boolean }) => {
+    delete process.env.PLAYWRIGHT_SKIP_BROWSER_GC;
+    await registry.uninstall(!!options.all).then(({ numberOfBrowsersLeft }) => {
+      if (!options.all && numberOfBrowsersLeft > 0) {
+        console.log('Successfully uninstalled Playwright browsers for the current Playwright installation.');
+        console.log(`There are still ${numberOfBrowsersLeft} browsers left, used by other Playwright installations.\nTo uninstall Playwright browsers for all installations, re-run with --all flag.`);
+      }
+    }).catch(logErrorAndExit);
+  });
 
 program
-    .command('install-deps [browser...]')
-    .description('install dependencies necessary to run browsers (will ask for sudo permissions)')
-    .option('--dry-run', 'Do not execute installation commands, only print them')
-    .action(async function(args: string[], options: { dryRun?: boolean }) {
-      try {
-        if (!args.length)
-          await registry.installDeps(defaultBrowsersToInstall({}), !!options.dryRun);
-        else
-          await registry.installDeps(checkBrowsersToInstall(args, {}), !!options.dryRun);
-      } catch (e) {
-        console.log(`Failed to install browser dependencies\n${e}`);
-        gracefullyProcessExitDoNotHang(1);
-      }
-    }).addHelpText('afterAll', `
+  .command('install-deps [browser...]')
+  .description('install dependencies necessary to run browsers (will ask for sudo permissions)')
+  .option('--dry-run', 'Do not execute installation commands, only print them')
+  .action(async function (args: string[], options: { dryRun?: boolean }) {
+    try {
+      if (!args.length)
+        await registry.installDeps(defaultBrowsersToInstall({}), !!options.dryRun);
+      else
+        await registry.installDeps(checkBrowsersToInstall(args, {}), !!options.dryRun);
+    } catch (e) {
+      console.log(`Failed to install browser dependencies\n${e}`);
+      gracefullyProcessExitDoNotHang(1);
+    }
+  }).addHelpText('afterAll', `
 Examples:
   - $ install-deps
     Install dependencies for default browsers.
 
   - $ install-deps chrome firefox
     Install dependencies for specific browsers, supports ${suggestedBrowsersToInstall()}.`);
+
+program
+  .command('show-browsers')  // Changed from 'install --list' to avoid conflicts
+  .alias('list-browsers')    // Added alias for convenience
+  .description('lists installed browsers and their paths')
+  .action(async function () {
+    try {
+      const browsers = new Set();
+      // Filter once instead of twice
+      const installableBrowsers = registry.executables().filter(e =>
+        e.installType !== 'none' &&
+        e.type !== 'tool'
+      );
+
+      if (installableBrowsers.length === 0) {
+        console.log('No browsers installed. To install them use: npx playwright install');
+        return;
+      }
+
+      for (const executable of installableBrowsers) {
+        try {
+          const version = executable.browserVersion ? `v${executable.browserVersion}` : '';
+          const location = executable.directory || '<system>';
+          console.log(`${executable.name} ${version ? version + ' ' : ''}${location ? `(${location})` : ''}`);
+          browsers.add(executable.name);
+        } catch (e) {
+          console.error(`Failed to get info for browser ${executable.name}:`, e);
+        }
+      }
+    } catch (e) {
+      logErrorAndExit(e);
+    }
+  });
 
 const browsers = [
   { alias: 'cr', name: 'Chromium', type: 'chromium' },
@@ -240,100 +273,100 @@ const browsers = [
 
 for (const { alias, name, type } of browsers) {
   commandWithOpenOptions(`${alias} [url]`, `open page in ${name}`, [])
-      .action(function(url, options) {
-        open({ ...options, browser: type }, url, options.target).catch(logErrorAndExit);
-      }).addHelpText('afterAll', `
+    .action(function (url, options) {
+      open({ ...options, browser: type }, url, options.target).catch(logErrorAndExit);
+    }).addHelpText('afterAll', `
 Examples:
 
   $ ${alias} https://example.com`);
 }
 
 commandWithOpenOptions('screenshot <url> <filename>', 'capture a page screenshot',
-    [
-      ['--wait-for-selector <selector>', 'wait for selector before taking a screenshot'],
-      ['--wait-for-timeout <timeout>', 'wait for timeout in milliseconds before taking a screenshot'],
-      ['--full-page', 'whether to take a full page screenshot (entire scrollable area)'],
-    ]).action(function(url, filename, command) {
-  screenshot(command, command, url, filename).catch(logErrorAndExit);
-}).addHelpText('afterAll', `
+  [
+    ['--wait-for-selector <selector>', 'wait for selector before taking a screenshot'],
+    ['--wait-for-timeout <timeout>', 'wait for timeout in milliseconds before taking a screenshot'],
+    ['--full-page', 'whether to take a full page screenshot (entire scrollable area)'],
+  ]).action(function (url, filename, command) {
+    screenshot(command, command, url, filename).catch(logErrorAndExit);
+  }).addHelpText('afterAll', `
 Examples:
 
   $ screenshot -b webkit https://example.com example.png`);
 
 commandWithOpenOptions('pdf <url> <filename>', 'save page as pdf',
-    [
-      ['--wait-for-selector <selector>', 'wait for given selector before saving as pdf'],
-      ['--wait-for-timeout <timeout>', 'wait for given timeout in milliseconds before saving as pdf'],
-    ]).action(function(url, filename, options) {
-  pdf(options, options, url, filename).catch(logErrorAndExit);
-}).addHelpText('afterAll', `
+  [
+    ['--wait-for-selector <selector>', 'wait for given selector before saving as pdf'],
+    ['--wait-for-timeout <timeout>', 'wait for given timeout in milliseconds before saving as pdf'],
+  ]).action(function (url, filename, options) {
+    pdf(options, options, url, filename).catch(logErrorAndExit);
+  }).addHelpText('afterAll', `
 Examples:
 
   $ pdf https://example.com example.pdf`);
 
 program
-    .command('run-driver', { hidden: true })
-    .action(function(options) {
-      runDriver();
-    });
+  .command('run-driver', { hidden: true })
+  .action(function (options) {
+    runDriver();
+  });
 
 program
-    .command('run-server')
-    .option('--port <port>', 'Server port')
-    .option('--host <host>', 'Server host')
-    .option('--path <path>', 'Endpoint Path', '/')
-    .option('--max-clients <maxClients>', 'Maximum clients')
-    .option('--mode <mode>', 'Server mode, either "default" or "extension"')
-    .action(function(options) {
-      runServer({
-        port: options.port ? +options.port : undefined,
-        host: options.host,
-        path: options.path,
-        maxConnections: options.maxClients ? +options.maxClients : Infinity,
-        extension: options.mode === 'extension' || !!process.env.PW_EXTENSION_MODE,
-      }).catch(logErrorAndExit);
-    });
+  .command('run-server')
+  .option('--port <port>', 'Server port')
+  .option('--host <host>', 'Server host')
+  .option('--path <path>', 'Endpoint Path', '/')
+  .option('--max-clients <maxClients>', 'Maximum clients')
+  .option('--mode <mode>', 'Server mode, either "default" or "extension"')
+  .action(function (options) {
+    runServer({
+      port: options.port ? +options.port : undefined,
+      host: options.host,
+      path: options.path,
+      maxConnections: options.maxClients ? +options.maxClients : Infinity,
+      extension: options.mode === 'extension' || !!process.env.PW_EXTENSION_MODE,
+    }).catch(logErrorAndExit);
+  });
 
 program
-    .command('print-api-json', { hidden: true })
-    .action(function(options) {
-      printApiJson();
-    });
+  .command('print-api-json', { hidden: true })
+  .action(function (options) {
+    printApiJson();
+  });
 
 program
-    .command('launch-server', { hidden: true })
-    .requiredOption('--browser <browserName>', 'Browser name, one of "chromium", "firefox" or "webkit"')
-    .option('--config <path-to-config-file>', 'JSON file with launchServer options')
-    .action(function(options) {
-      launchBrowserServer(options.browser, options.config);
-    });
+  .command('launch-server', { hidden: true })
+  .requiredOption('--browser <browserName>', 'Browser name, one of "chromium", "firefox" or "webkit"')
+  .option('--config <path-to-config-file>', 'JSON file with launchServer options')
+  .action(function (options) {
+    launchBrowserServer(options.browser, options.config);
+  });
 
 program
-    .command('show-trace [trace...]')
-    .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
-    .option('-h, --host <host>', 'Host to serve trace on; specifying this option opens trace in a browser tab')
-    .option('-p, --port <port>', 'Port to serve trace on, 0 for any free port; specifying this option opens trace in a browser tab')
-    .option('--stdin', 'Accept trace URLs over stdin to update the viewer')
-    .description('show trace viewer')
-    .action(function(traces, options) {
-      if (options.browser === 'cr')
-        options.browser = 'chromium';
-      if (options.browser === 'ff')
-        options.browser = 'firefox';
-      if (options.browser === 'wk')
-        options.browser = 'webkit';
+  .command('show-trace [trace...]')
+  .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
+  .option('-h, --host <host>', 'Host to serve trace on; specifying this option opens trace in a browser tab')
+  .option('-p, --port <port>', 'Port to serve trace on, 0 for any free port; specifying this option opens trace in a browser tab')
+  .option('--stdin', 'Accept trace URLs over stdin to update the viewer')
+  .description('show trace viewer')
+  .action(function (traces, options) {
+    if (options.browser === 'cr')
+      options.browser = 'chromium';
+    if (options.browser === 'ff')
+      options.browser = 'firefox';
+    if (options.browser === 'wk')
+      options.browser = 'webkit';
 
-      const openOptions: TraceViewerServerOptions = {
-        host: options.host,
-        port: +options.port,
-        isServer: !!options.stdin,
-      };
+    const openOptions: TraceViewerServerOptions = {
+      host: options.host,
+      port: +options.port,
+      isServer: !!options.stdin,
+    };
 
-      if (options.port !== undefined || options.host !== undefined)
-        runTraceInBrowser(traces, openOptions).catch(logErrorAndExit);
-      else
-        runTraceViewerApp(traces, options.browser, openOptions, true).catch(logErrorAndExit);
-    }).addHelpText('afterAll', `
+    if (options.port !== undefined || options.host !== undefined)
+      runTraceInBrowser(traces, openOptions).catch(logErrorAndExit);
+    else
+      runTraceViewerApp(traces, options.browser, openOptions, true).catch(logErrorAndExit);
+  }).addHelpText('afterAll', `
 Examples:
 
   $ show-trace https://example.com/trace.zip`);
@@ -518,13 +551,13 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   }
 
   context.on('page', page => {
-    page.on('dialog', () => {});  // Prevent dialogs from being automatically dismissed.
+    page.on('dialog', () => { });  // Prevent dialogs from being automatically dismissed.
     page.on('close', () => {
       const hasPage = browser.contexts().some(context => context.pages().length > 0);
       if (hasPage)
         return;
       // Avoid the error when the last page is closed because the browser has been closed.
-      closeBrowser().catch(() => {});
+      closeBrowser().catch(() => { });
     });
   });
   process.on('SIGINT', async () => {
@@ -686,24 +719,24 @@ function commandWithOpenOptions(command: string, description: string, options: a
   for (const option of options)
     result = result.option(option[0], ...option.slice(1));
   return result
-      .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
-      .option('--block-service-workers', 'block service workers')
-      .option('--channel <channel>', 'Chromium distribution channel, "chrome", "chrome-beta", "msedge-dev", etc')
-      .option('--color-scheme <scheme>', 'emulate preferred color scheme, "light" or "dark"')
-      .option('--device <deviceName>', 'emulate device, for example  "iPhone 11"')
-      .option('--geolocation <coordinates>', 'specify geolocation coordinates, for example "37.819722,-122.478611"')
-      .option('--ignore-https-errors', 'ignore https errors')
-      .option('--load-storage <filename>', 'load context storage state from the file, previously saved with --save-storage')
-      .option('--lang <language>', 'specify language / locale, for example "en-GB"')
-      .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
-      .option('--proxy-bypass <bypass>', 'comma-separated domains to bypass proxy, for example ".com,chromium.org,.domain.com"')
-      .option('--save-har <filename>', 'save HAR file with all network activity at the end')
-      .option('--save-har-glob <glob pattern>', 'filter entries in the HAR by matching url against this glob pattern')
-      .option('--save-storage <filename>', 'save context storage state at the end, for later use with --load-storage')
-      .option('--timezone <time zone>', 'time zone to emulate, for example "Europe/Rome"')
-      .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds, no timeout by default')
-      .option('--user-agent <ua string>', 'specify user agent string')
-      .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
+    .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
+    .option('--block-service-workers', 'block service workers')
+    .option('--channel <channel>', 'Chromium distribution channel, "chrome", "chrome-beta", "msedge-dev", etc')
+    .option('--color-scheme <scheme>', 'emulate preferred color scheme, "light" or "dark"')
+    .option('--device <deviceName>', 'emulate device, for example  "iPhone 11"')
+    .option('--geolocation <coordinates>', 'specify geolocation coordinates, for example "37.819722,-122.478611"')
+    .option('--ignore-https-errors', 'ignore https errors')
+    .option('--load-storage <filename>', 'load context storage state from the file, previously saved with --save-storage')
+    .option('--lang <language>', 'specify language / locale, for example "en-GB"')
+    .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
+    .option('--proxy-bypass <bypass>', 'comma-separated domains to bypass proxy, for example ".com,chromium.org,.domain.com"')
+    .option('--save-har <filename>', 'save HAR file with all network activity at the end')
+    .option('--save-har-glob <glob pattern>', 'filter entries in the HAR by matching url against this glob pattern')
+    .option('--save-storage <filename>', 'save context storage state at the end, for later use with --load-storage')
+    .option('--timezone <time zone>', 'time zone to emulate, for example "Europe/Rome"')
+    .option('--timeout <timeout>', 'timeout for Playwright actions in milliseconds, no timeout by default')
+    .option('--user-agent <ua string>', 'specify user agent string')
+    .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
 }
 
 function buildBasePlaywrightCLICommand(cliTargetLang: string | undefined): string {
