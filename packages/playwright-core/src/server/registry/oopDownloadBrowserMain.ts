@@ -20,9 +20,9 @@ import { httpRequest } from '../../utils/network';
 import { ManualPromise } from '../../utils/manualPromise';
 import { extract } from '../../zipBundle';
 import tar from '../../utils/tar';
-import type http from 'http';
 import { pipeline } from 'stream/promises';
 import { createBrotliDecompress } from 'zlib';
+import type { Writable } from 'stream';
 
 export type DownloadParams = {
   title: string;
@@ -46,7 +46,7 @@ function browserDirectoryToMarkerFilePath(browserDirectory: string): string {
   return path.join(browserDirectory, 'INSTALLATION_COMPLETE');
 }
 
-function downloadFile(options: DownloadParams): Promise<void> {
+function downloadFile(options: DownloadParams, file: Writable): Promise<void> {
   let downloadedBytes = 0;
   let totalBytes = 0;
 
@@ -76,7 +76,6 @@ function downloadFile(options: DownloadParams): Promise<void> {
     }
     totalBytes = parseInt(response.headers['content-length'] || '0', 10);
     log(`-- total bytes: ${totalBytes}`);
-    const file = fs.createWriteStream(options.zipPath);
     file.on('finish', () => {
       if (downloadedBytes !== totalBytes) {
         log(`-- download failed, size mismatch: ${downloadedBytes} != ${totalBytes}`);
@@ -90,7 +89,7 @@ function downloadFile(options: DownloadParams): Promise<void> {
     response.pipe(file);
     response.on('data', onData);
     response.on('error', (error: any) => {
-      file.close();
+      file.destroy();
       if (error?.code === 'ECONNRESET') {
         log(`-- download failed, server closed connection`);
         promise.reject(new Error(`Download failed: server closed connection. URL: ${options.url}`));
@@ -108,68 +107,21 @@ function downloadFile(options: DownloadParams): Promise<void> {
   }
 }
 
-async function throwUnexpectedResponseError(response: http.IncomingMessage) {
-  let body = '';
-  try {
-    await new Promise<void>((resolve, reject) => {
-      response
-          .on('data', chunk => body += chunk)
-          .on('end', resolve)
-          .on('error', reject);
-    });
-  } catch (error) {
-    body += error;
-  }
-
-  response.resume(); // consume response data to free up memory
-
-  throw new Error(`server returned code ${response.statusCode} body '${body}'`);
-}
-
-async function downloadAndExtractBrotli(options: DownloadParams) {
-  const response = await new Promise<http.IncomingMessage>((resolve, reject) => httpRequest({
-    url: options.url,
-    headers: {
-      'User-Agent': options.userAgent,
-    },
-    timeout: options.connectionTimeout,
-  }, resolve, reject));
-
-  log(`-- response status code: ${response.statusCode}`);
-  if (response.statusCode !== 200)
-    await throwUnexpectedResponseError(response);
-
-  const totalBytes = parseInt(response.headers['content-length'] || '0', 10);
-  log(`-- total bytes: ${totalBytes}`);
-
-  let downloadedBytes = 0;
-  response.on('data', chunk => {
-    downloadedBytes += chunk.length;
-    progress(downloadedBytes, totalBytes);
-  });
-
-  await pipeline(
-      response,
-      createBrotliDecompress(),
-      tar.extract(options.browserDirectory)
-  );
-
-  if (downloadedBytes !== totalBytes)
-    throw new Error(`size mismatch, file size: ${downloadedBytes}, expected size: ${totalBytes}`);
-
-  log(`-- download complete, size: ${downloadedBytes}`);
-}
-
 async function main(options: DownloadParams) {
   if (options.url.endsWith('.tar.br')) {
-    try {
-      await downloadAndExtractBrotli(options);
-    } catch (error) {
-      throw new Error(`Download failed. URL: ${options.url}`, { cause: error });
-    }
+    const decompress = createBrotliDecompress();
+    const extraction = pipeline(
+        decompress,
+        tar.extract(options.browserDirectory),
+    );
+    await Promise.all([
+      extraction,
+      downloadFile(options, decompress)
+    ]);
     log(`SUCCESS downloading and extracting ${options.title}`);
   } else {
-    await downloadFile(options);
+    const file = fs.createWriteStream(options.zipPath);
+    await downloadFile(options, file);
     log(`SUCCESS downloading ${options.title}`);
     log(`extracting archive`);
     await extract(options.zipPath, { dir: options.browserDirectory });
