@@ -20,7 +20,7 @@ import path from 'path';
 import { httpRequest } from '../../utils/network';
 import { ManualPromise } from '../../utils/manualPromise';
 import { extract } from '../../zipBundle';
-import tar from '../../utils/tar';
+import tar from '../../utils/third_party/tar';
 import { pipeline } from 'stream/promises';
 import { createBrotliDecompress } from 'zlib';
 import type { Writable } from 'stream';
