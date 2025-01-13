@@ -6002,7 +6002,7 @@ export interface PlaywrightWorkerOptions {
   /**
    * Browser distribution channel.
    *
-   * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#opt-in-to-new-headless-mode).
+   * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#chromium-new-headless-mode).
    *
    * Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or
    * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
@@ -7813,7 +7813,20 @@ interface LocatorAssertions {
    * @param options
    */
   toBeChecked(options?: {
+    /**
+     * Provides state to assert for. Asserts for input to be checked by default. This option can't be used when
+     * [`indeterminate`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-checked-option-indeterminate)
+     * is set to true.
+     */
     checked?: boolean;
+
+    /**
+     * Asserts that the element is in the indeterminate (mixed) state. Only supported for checkboxes and radio buttons.
+     * This option can't be true when
+     * [`checked`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-be-checked-option-checked)
+     * is provided.
+     */
+    indeterminate?: boolean;
 
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
@@ -8102,6 +8115,34 @@ interface LocatorAssertions {
     /**
      * Whether to perform case-insensitive match.
      * [`ignoreCase`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-accessible-description-option-ignore-case)
+     * option takes precedence over the corresponding regular expression flag if specified.
+     */
+    ignoreCase?: boolean;
+
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with a given
+   * [aria errormessage](https://w3c.github.io/aria/#aria-errormessage).
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = page.getByTestId('username-input');
+   * await expect(locator).toHaveAccessibleErrorMessage('Username is required.');
+   * ```
+   *
+   * @param errorMessage Expected accessible error message.
+   * @param options
+   */
+  toHaveAccessibleErrorMessage(errorMessage: string|RegExp, options?: {
+    /**
+     * Whether to perform case-insensitive match.
+     * [`ignoreCase`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-accessible-error-message-option-ignore-case)
      * option takes precedence over the corresponding regular expression flag if specified.
      */
     ignoreCase?: boolean;
@@ -9628,6 +9669,18 @@ interface TestConfigWebServer {
    * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
    */
   timeout?: number;
+
+  /**
+   * How to shut down the process. If unspecified, the process group is forcefully `SIGKILL`ed. If set to `{ signal:
+   * 'SIGINT', timeout: 500 }`, the process group is sent a `SIGINT` signal, followed by `SIGKILL` if it doesn't exit
+   * within 500ms. You can also use `SIGTERM` instead. A `0` timeout means no `SIGKILL` will be sent. Windows doesn't
+   * support `SIGINT` and `SIGTERM` signals, so this option is ignored.
+   */
+  gracefulShutdown?: {
+    signal: "SIGINT"|"SIGTERM";
+
+    timeout: number;
+  };
 
   /**
    * The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the

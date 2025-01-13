@@ -3,21 +3,21 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1152",
+      "revision": "1153",
       "installByDefault": true,
-      "browserVersion": "132.0.6834.46"
+      "browserVersion": "132.0.6834.57"
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1287",
+      "revision": "1293",
       "installByDefault": false,
-      "browserVersion": "133.0.6901.0"
+      "browserVersion": "133.0.6943.0"
     },
     {
       "name": "firefox",
-      "revision": "1466",
+      "revision": "1470",
       "installByDefault": true,
-      "browserVersion": "132.0"
+      "browserVersion": "133.0.3"
     },
     {
       "name": "firefox-beta",
@@ -27,7 +27,7 @@
     },
     {
       "name": "webkit",
-      "revision": "2120",
+      "revision": "2122",
       "installByDefault": true,
       "revisionOverrides": {
         "debian11-x64": "2105",
@@ -51,6 +51,11 @@
         "mac12": "1011",
         "mac12-arm64": "1011"
       }
+    },
+    {
+      "name": "winldd",
+      "revision": "1007",
+      "installByDefault": false
     },
     {
       "name": "android",

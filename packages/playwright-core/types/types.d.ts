@@ -12915,7 +12915,6 @@ export interface Locator {
    * live objects to be passed into the event:
    *
    * ```js
-   * // Note you can only create DataTransfer in Chromium and Firefox
    * const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
    * await locator.dispatchEvent('dragstart', { dataTransfer });
    * ```
@@ -13853,18 +13852,22 @@ export interface Locator {
   /**
    * Creates a locator matching all elements that match one or both of the two locators.
    *
-   * Note that when both locators match something, the resulting locator will have multiple matches and violate
-   * [locator strictness](https://playwright.dev/docs/locators#strictness) guidelines.
+   * Note that when both locators match something, the resulting locator will have multiple matches, potentially causing
+   * a [locator strictness](https://playwright.dev/docs/locators#strictness) violation.
    *
    * **Usage**
    *
    * Consider a scenario where you'd like to click on a "New email" button, but sometimes a security settings dialog
    * shows up instead. In this case, you can wait for either a "New email" button, or a dialog and act accordingly.
    *
+   * **NOTE** If both "New email" button and security dialog appear on screen, the "or" locator will match both of them,
+   * possibly throwing the ["strict mode violation" error](https://playwright.dev/docs/locators#strictness). In this case, you can use
+   * [locator.first()](https://playwright.dev/docs/api/class-locator#locator-first) to only match one of them.
+   *
    * ```js
    * const newEmail = page.getByRole('button', { name: 'New' });
    * const dialog = page.getByText('Confirm security settings');
-   * await expect(newEmail.or(dialog)).toBeVisible();
+   * await expect(newEmail.or(dialog).first()).toBeVisible();
    * if (await dialog.isVisible())
    *   await page.getByRole('button', { name: 'Dismiss' }).click();
    * await newEmail.click();
@@ -14716,7 +14719,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * Browser distribution channel.
      *
-     * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#opt-in-to-new-headless-mode).
+     * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#chromium-new-headless-mode).
      *
      * Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or
      * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
@@ -15215,7 +15218,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * Browser distribution channel.
      *
-     * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#opt-in-to-new-headless-mode).
+     * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#chromium-new-headless-mode).
      *
      * Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or
      * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).
@@ -16605,11 +16608,6 @@ export interface AndroidDevice {
     colorScheme?: null|"light"|"dark"|"no-preference";
 
     /**
-     * Optional package name to launch instead of default Chrome for Android.
-     */
-    command?: string;
-
-    /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
      * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
      */
@@ -16716,6 +16714,11 @@ export interface AndroidDevice {
      * for more details. Defaults to none.
      */
     permissions?: Array<string>;
+
+    /**
+     * Optional package name to launch instead of default Chrome for Android.
+     */
+    pkg?: string;
 
     /**
      * Network proxy settings.
@@ -21566,7 +21569,7 @@ export interface LaunchOptions {
   /**
    * Browser distribution channel.
    *
-   * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#opt-in-to-new-headless-mode).
+   * Use "chromium" to [opt in to new headless mode](https://playwright.dev/docs/browsers#chromium-new-headless-mode).
    *
    * Use "chrome", "chrome-beta", "chrome-dev", "chrome-canary", "msedge", "msedge-beta", "msedge-dev", or
    * "msedge-canary" to use branded [Google Chrome and Microsoft Edge](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge).

@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep, JSONReportError } from '../../types/testReporter';
-import { formatError, prepareErrorStack, resolveOutputFile } from './base';
+import { formatError, nonTerminalScreen, prepareErrorStack, resolveOutputFile } from './base';
 import { MultiMap, toPosixPath } from 'playwright-core/lib/utils';
 import { getProjectId } from '../common/config';
 import type { ReporterV2 } from './reporterV2';
@@ -222,7 +222,7 @@ class JSONReporter implements ReporterV2 {
   }
 
   private _serializeError(error: TestError): JSONReportError {
-    return formatError(error, true);
+    return formatError(nonTerminalScreen, error);
   }
 
   private _serializeTestStep(step: TestStep): JSONReportTestStep {

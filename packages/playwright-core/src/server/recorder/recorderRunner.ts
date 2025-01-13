@@ -87,6 +87,7 @@ export async function performAction(callMetadata: CallMetadata, pageAliases: Map
     await mainFrame.expect(callMetadata, selector, {
       selector,
       expression: 'to.be.checked',
+      expectedValue: { checked: action.checked },
       isNot: !action.checked,
       timeout: kActionTimeout,
     });

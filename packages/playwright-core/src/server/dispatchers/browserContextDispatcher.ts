@@ -288,7 +288,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   async setWebSocketInterceptionPatterns(params: channels.PageSetWebSocketInterceptionPatternsParams, metadata: CallMetadata): Promise<void> {
     this._webSocketInterceptionPatterns = params.patterns;
     if (params.patterns.length)
-      await WebSocketRouteDispatcher.installIfNeeded(this, this._context);
+      await WebSocketRouteDispatcher.installIfNeeded(this._context);
   }
 
   async storageState(params: channels.BrowserContextStorageStateParams, metadata: CallMetadata): Promise<channels.BrowserContextStorageStateResult> {

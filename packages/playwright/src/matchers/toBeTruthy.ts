@@ -26,7 +26,6 @@ export async function toBeTruthy(
   receiver: Locator,
   receiverType: string,
   expected: string,
-  unexpected: string,
   arg: string,
   query: (isNot: boolean, timeout: number) => Promise<{ matches: boolean, log?: string[], received?: any, timedOut?: boolean }>,
   options: { timeout?: number } = {},
@@ -50,7 +49,6 @@ export async function toBeTruthy(
   }
 
   const notFound = received === kNoElementsFoundError ? received : undefined;
-  const actual = pass ? expected : unexpected;
   let printedReceived: string | undefined;
   let printedExpected: string | undefined;
   if (pass) {
@@ -58,7 +56,7 @@ export async function toBeTruthy(
     printedReceived = `Received: ${notFound ? kNoElementsFoundError : expected}`;
   } else {
     printedExpected = `Expected: ${expected}`;
-    printedReceived = `Received: ${notFound ? kNoElementsFoundError : unexpected}`;
+    printedReceived = `Received: ${notFound ? kNoElementsFoundError : received}`;
   }
   const message = () => {
     const header = matcherHint(this, receiver, matcherName, 'locator', arg, matcherOptions, timedOut ? timeout : undefined);
@@ -68,7 +66,7 @@ export async function toBeTruthy(
   return {
     message,
     pass,
-    actual,
+    actual: received,
     name: matcherName,
     expected,
     log,

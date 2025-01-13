@@ -29,7 +29,7 @@ import type { CSSComplexSelectorList } from '../../utils/isomorphic/cssParser';
 import { generateSelector, type GenerateSelectorOptions } from './selectorGenerator';
 import type * as channels from '@protocol/channels';
 import { Highlight } from './highlight';
-import { getChecked, getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription, getReadonly } from './roleUtils';
+import { getAriaDisabled, getAriaRole, getElementAccessibleName, getElementAccessibleDescription, getReadonly, getElementAccessibleErrorMessage, getCheckedAllowMixed, getCheckedWithoutMixed } from './roleUtils';
 import { kLayoutSelectorNames, type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
@@ -37,12 +37,13 @@ import { cacheNormalizedWhitespaces, normalizeWhiteSpace, trimStringWithEllipsis
 import { matchesAriaTree, getAllByAria, generateAriaTree, renderAriaTree } from './ariaSnapshot';
 import type { AriaNode, AriaSnapshot } from './ariaSnapshot';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
-import { parseYamlTemplate } from '@isomorphic/ariaSnapshot';
+import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
 
 export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue'> & { expectedValue?: any };
 
-export type ElementStateWithoutStable = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked';
-export type ElementState = ElementStateWithoutStable | 'stable';
+export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'indeterminate' | 'stable';
+export type ElementStateWithoutStable = Exclude<ElementState, 'stable'>;
+export type ElementStateQueryResult = { matches: boolean, received?: string | 'error:notconnected' };
 
 export type HitTargetInterceptionResult = {
   stop: () => 'done' | { hitTargetDescription: string };
@@ -85,7 +86,7 @@ export class InjectedScript {
     isElementVisible,
     isInsideScope,
     normalizeWhiteSpace,
-    parseYamlTemplate,
+    parseAriaSnapshot,
   };
 
   // eslint-disable-next-line no-restricted-globals
@@ -531,10 +532,10 @@ export class InjectedScript {
       if (!element.matches('a, input, textarea, button, select, [role=link], [role=button], [role=checkbox], [role=radio]') &&
         !(element as any).isContentEditable) {
         // Go up to the label that might be connected to the input/textarea.
-        element = element.closest('label') || element;
+        const enclosingLabel: HTMLLabelElement | null = element.closest('label');
+        if (enclosingLabel && enclosingLabel.control)
+          element = enclosingLabel.control;
       }
-      if (element.nodeName === 'LABEL')
-        element = (element as HTMLLabelElement).control || element;
     }
     return element;
   }
@@ -545,15 +546,15 @@ export class InjectedScript {
       if (stableResult === false)
         return { missingState: 'stable' };
       if (stableResult === 'error:notconnected')
-        return stableResult;
+        return 'error:notconnected';
     }
     for (const state of states) {
       if (state !== 'stable') {
         const result = this.elementState(node, state);
-        if (result === false)
+        if (result.received === 'error:notconnected')
+          return 'error:notconnected';
+        if (!result.matches)
           return { missingState: state };
-        if (result === 'error:notconnected')
-          return result;
       }
     }
   }
@@ -608,38 +609,60 @@ export class InjectedScript {
     return result;
   }
 
-  elementState(node: Node, state: ElementStateWithoutStable): boolean | 'error:notconnected' {
-    const element = this.retarget(node, ['stable', 'visible', 'hidden'].includes(state) ? 'none' : 'follow-label');
+  elementState(node: Node, state: ElementStateWithoutStable): ElementStateQueryResult {
+    const element = this.retarget(node, ['visible', 'hidden'].includes(state) ? 'none' : 'follow-label');
     if (!element || !element.isConnected) {
       if (state === 'hidden')
-        return true;
-      return 'error:notconnected';
+        return { matches: true, received: 'hidden' };
+      return { matches: false, received: 'error:notconnected' };
     }
 
-    if (state === 'visible')
-      return isElementVisible(element);
-    if (state === 'hidden')
-      return !isElementVisible(element);
+    if (state === 'visible' || state === 'hidden') {
+      const visible = isElementVisible(element);
+      return {
+        matches: state === 'visible' ? visible : !visible,
+        received: visible ? 'visible' : 'hidden'
+      };
+    }
 
-    const disabled = getAriaDisabled(element);
-    if (state === 'disabled')
-      return disabled;
-    if (state === 'enabled')
-      return !disabled;
+    if (state === 'disabled' || state === 'enabled') {
+      const disabled = getAriaDisabled(element);
+      return {
+        matches: state === 'disabled' ? disabled : !disabled,
+        received: disabled ? 'disabled' : 'enabled'
+      };
+    }
 
     if (state === 'editable') {
+      const disabled = getAriaDisabled(element);
       const readonly = getReadonly(element);
       if (readonly === 'error')
         throw this.createStacklessError('Element is not an <input>, <textarea>, <select> or [contenteditable] and does not have a role allowing [aria-readonly]');
-      return !disabled && !readonly;
+      return {
+        matches: !disabled && !readonly,
+        received: disabled ? 'disabled' : readonly ? 'readOnly' : 'editable'
+      };
     }
 
     if (state === 'checked' || state === 'unchecked') {
       const need = state === 'checked';
-      const checked = getChecked(element, false);
+      const checked = getCheckedWithoutMixed(element);
       if (checked === 'error')
         throw this.createStacklessError('Not a checkbox or radio button');
-      return need === checked;
+      return {
+        matches: need === checked,
+        received: checked ? 'checked' : 'unchecked',
+      };
+    }
+
+    if (state === 'indeterminate') {
+      const checked = getCheckedAllowMixed(element);
+      if (checked === 'error')
+        throw this.createStacklessError('Not a checkbox or radio button');
+      return {
+        matches: checked === 'mixed',
+        received: checked === true ? 'checked' : checked === false ? 'unchecked' : 'mixed',
+      };
     }
     throw this.createStacklessError(`Unexpected element state "${state}"`);
   }
@@ -996,13 +1019,46 @@ export class InjectedScript {
     return { stop };
   }
 
-  dispatchEvent(node: Node, type: string, eventInit: Object) {
+  dispatchEvent(node: Node, type: string, eventInitObj: Object) {
     let event;
-    eventInit = { bubbles: true, cancelable: true, composed: true, ...eventInit };
+    const eventInit: any = { bubbles: true, cancelable: true, composed: true, ...eventInitObj };
     switch (eventType.get(type)) {
       case 'mouse': event = new MouseEvent(type, eventInit); break;
       case 'keyboard': event = new KeyboardEvent(type, eventInit); break;
-      case 'touch': event = new TouchEvent(type, eventInit); break;
+      case 'touch': {
+        // WebKit does not support Touch constructor, but has deprecated createTouch and createTouchList methods.
+        if (this._browserName === 'webkit') {
+          const createTouch = (t: any) => {
+            if (t instanceof Touch)
+              return t;
+            // createTouch does not accept clientX/clientY, so we have to use pageX/pageY.
+            let pageX = t.pageX;
+            if (pageX === undefined && t.clientX !== undefined)
+              pageX = t.clientX + (this.document.scrollingElement?.scrollLeft || 0);
+            let pageY = t.pageY;
+            if (pageY === undefined && t.clientY !== undefined)
+              pageY = t.clientY + (this.document.scrollingElement?.scrollTop || 0);
+            return (this.document as any).createTouch(this.window, t.target ?? node, t.identifier, pageX, pageY, t.screenX, t.screenY, t.radiusX, t.radiusY, t.rotationAngle, t.force);
+          };
+          const createTouchList = (touches: any) => {
+            if (touches instanceof TouchList || !touches)
+              return touches;
+            return (this.document as any).createTouchList(...touches.map(createTouch));
+          };
+          eventInit.target ??= node;
+          eventInit.touches = createTouchList(eventInit.touches);
+          eventInit.targetTouches = createTouchList(eventInit.targetTouches);
+          eventInit.changedTouches = createTouchList(eventInit.changedTouches);
+          event = new TouchEvent(type, eventInit);
+        } else {
+          eventInit.target ??= node;
+          eventInit.touches = eventInit.touches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
+          eventInit.targetTouches = eventInit.targetTouches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
+          eventInit.changedTouches = eventInit.changedTouches?.map((t: any) => t instanceof Touch ? t : new Touch({ ...t, target: t.target ?? node }));
+          event = new TouchEvent(type, eventInit);
+        }
+        break;
+      }
       case 'pointer': event = new PointerEvent(type, eventInit); break;
       case 'focus': event = new FocusEvent(type, eventInit); break;
       case 'drag': event = new DragEvent(type, eventInit); break;
@@ -1213,44 +1269,65 @@ export class InjectedScript {
 
     {
       // Element state / boolean values.
-      let elementState: boolean | 'error:notconnected' | 'error:notcheckbox' | undefined;
+      let result: ElementStateQueryResult | undefined;
       if (expression === 'to.have.attribute') {
-        elementState = element.hasAttribute(options.expressionArg);
+        const hasAttribute = element.hasAttribute(options.expressionArg);
+        result = {
+          matches: hasAttribute,
+          received: hasAttribute ? 'attribute present' : 'attribute not present',
+        };
       } else if (expression === 'to.be.checked') {
-        elementState = this.elementState(element, 'checked');
-      } else if (expression === 'to.be.unchecked') {
-        elementState = this.elementState(element, 'unchecked');
+        const { checked, indeterminate } = options.expectedValue;
+        if (indeterminate) {
+          if (checked !== undefined)
+            throw this.createStacklessError('Can\'t assert indeterminate and checked at the same time');
+          result = this.elementState(element, 'indeterminate');
+        } else {
+          result = this.elementState(element, checked === false ? 'unchecked' : 'checked');
+        }
       } else if (expression === 'to.be.disabled') {
-        elementState = this.elementState(element, 'disabled');
+        result = this.elementState(element, 'disabled');
       } else if (expression === 'to.be.editable') {
-        elementState = this.elementState(element, 'editable');
+        result = this.elementState(element, 'editable');
       } else if (expression === 'to.be.readonly') {
-        elementState = !this.elementState(element, 'editable');
+        result = this.elementState(element, 'editable');
+        result.matches = !result.matches;
       } else if (expression === 'to.be.empty') {
-        if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA')
-          elementState = !(element as HTMLInputElement).value;
-        else
-          elementState = !element.textContent?.trim();
+        if (element.nodeName === 'INPUT' || element.nodeName === 'TEXTAREA') {
+          const value = (element as HTMLInputElement).value;
+          result = { matches: !value, received: value ? 'notEmpty' : 'empty' };
+        } else {
+          const text = element.textContent?.trim();
+          result = { matches: !text, received: text ? 'notEmpty' : 'empty' };
+        }
       } else if (expression === 'to.be.enabled') {
-        elementState = this.elementState(element, 'enabled');
+        result = this.elementState(element, 'enabled');
       } else if (expression === 'to.be.focused') {
-        elementState = this._activelyFocused(element).isFocused;
+        const focused = this._activelyFocused(element).isFocused;
+        result = {
+          matches: focused,
+          received: focused ? 'focused' : 'inactive',
+        };
       } else if (expression === 'to.be.hidden') {
-        elementState = this.elementState(element, 'hidden');
+        result = this.elementState(element, 'hidden');
       } else if (expression === 'to.be.visible') {
-        elementState = this.elementState(element, 'visible');
+        result = this.elementState(element, 'visible');
       } else if (expression === 'to.be.attached') {
-        elementState = true;
+        result = {
+          matches: true,
+          received: 'attached',
+        };
       } else if (expression === 'to.be.detached') {
-        elementState = false;
+        result = {
+          matches: false,
+          received: 'attached',
+        };
       }
 
-      if (elementState !== undefined) {
-        if (elementState === 'error:notcheckbox')
-          throw this.createStacklessError('Element is not a checkbox');
-        if (elementState === 'error:notconnected')
+      if (result) {
+        if (result.received === 'error:notconnected')
           throw this.createStacklessError('Element is not connected');
-        return { received: elementState, matches: elementState };
+        return result;
       }
     }
 
@@ -1321,6 +1398,8 @@ export class InjectedScript {
         received = getElementAccessibleName(element, false /* includeHidden */);
       } else if (expression === 'to.have.accessible.description') {
         received = getElementAccessibleDescription(element, false /* includeHidden */);
+      } else if (expression === 'to.have.accessible.error.message') {
+        received = getElementAccessibleErrorMessage(element);
       } else if (expression === 'to.have.role') {
         received = getAriaRole(element) || '';
       } else if (expression === 'to.have.title') {

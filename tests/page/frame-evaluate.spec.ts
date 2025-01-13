@@ -180,4 +180,3 @@ it('evaluateHandle should work', async ({ page, server }) => {
   const windowHandle = await mainFrame.evaluateHandle(() => window);
   expect(windowHandle).toBeTruthy();
 });
-

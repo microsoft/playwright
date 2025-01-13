@@ -338,11 +338,11 @@ dotnet test --settings:webkit.runsettings
 
 For Google Chrome, Microsoft Edge and other Chromium-based browsers, by default, Playwright uses open source Chromium builds. Since the Chromium project is ahead of the branded browsers, when the world is on Google Chrome N, Playwright already supports Chromium N+1 that will be released in Google Chrome and Microsoft Edge a few weeks later.
 
-Playwright ships a regular Chromium build for headed operations and a separate [chromium headless shell](https://developer.chrome.com/blog/chrome-headless-shell) for headless mode. See [issue #33566](https://github.com/microsoft/playwright/issues/33566) for details.
+### Chromium: headless shell
 
-#### Optimize download size on CI
+Playwright ships a regular Chromium build for headed operations and a separate [chromium headless shell](https://developer.chrome.com/blog/chrome-headless-shell) for headless mode.
 
-If you are only running tests in headless shell (i.e. the `channel` option is not specified), for example on CI, you can avoid downloading the full Chromium browser by passing `--only-shell` during installation.
+If you are only running tests in headless shell (i.e. the `channel` option is **not** specified), for example on CI, you can avoid downloading the full Chromium browser by passing `--only-shell` during installation.
 
 ```bash js
 # only running tests headlessly
@@ -364,7 +364,7 @@ playwright install --with-deps --only-shell
 pwsh bin/Debug/netX/playwright.ps1 install --with-deps --only-shell
 ```
 
-#### Opt-in to new headless mode
+### Chromium: new headless mode
 
 You can opt into the new headless mode by using `'chromium'` channel. As [official Chrome documentation puts it](https://developer.chrome.com/blog/chrome-headless-shell):
 
@@ -417,6 +417,28 @@ pytest test_login.py --browser-channel chromium
 
 ```bash csharp
 dotnet test -- Playwright.BrowserName=chromium Playwright.LaunchOptions.Channel=chromium
+```
+
+With the new headless mode, you can skip downloading the headless shell during browser installation by using the `--no-shell` option:
+
+```bash js
+# only running tests headlessly
+npx playwright install --with-deps --no-shell
+```
+
+```bash java
+# only running tests headlessly
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install --with-deps --no-shell"
+```
+
+```bash python
+# only running tests headlessly
+playwright install --with-deps --no-shell
+```
+
+```bash csharp
+# only running tests headlessly
+pwsh bin/Debug/netX/playwright.ps1 install --with-deps --no-shell
 ```
 
 ### Google Chrome & Microsoft Edge

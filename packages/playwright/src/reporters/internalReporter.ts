@@ -18,7 +18,7 @@ import fs from 'fs';
 import { codeFrameColumns } from '../transform/babelBundle';
 import type { FullConfig, TestCase, TestError, TestResult, FullResult, TestStep } from '../../types/testReporter';
 import { Suite } from '../common/test';
-import { colors, prepareErrorStack, relativeFilePath } from './base';
+import { internalScreen, prepareErrorStack, relativeFilePath } from './base';
 import type { ReporterV2 } from './reporterV2';
 import { monotonicTime } from 'playwright-core/lib/utils';
 import { Multiplexer } from './multiplexer';
@@ -125,7 +125,7 @@ function addLocationAndSnippetToError(config: FullConfig, error: TestError, file
     const codeFrame = codeFrameColumns(source, { start: location }, { highlightCode: true });
     // Convert /var/folders to /private/var/folders on Mac.
     if (!file || fs.realpathSync(file) !== location.file) {
-      tokens.push(colors.gray(`   at `) + `${relativeFilePath(config, location.file)}:${location.line}`);
+      tokens.push(internalScreen.colors.gray(`   at `) + `${relativeFilePath(internalScreen, config, location.file)}:${location.line}`);
       tokens.push('');
     }
     tokens.push(codeFrame);

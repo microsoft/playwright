@@ -16,7 +16,7 @@
 
 import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import path from 'path';
-import { BaseReporter, colors, formatError, formatResultFailure, formatRetry, formatTestHeader, formatTestTitle, stripAnsiEscapes } from './base';
+import { TerminalReporter, formatResultFailure, formatRetry, noColors, stripAnsiEscapes } from './base';
 import type { TestCase, FullResult, TestError } from '../../types/testReporter';
 
 type GitHubLogType = 'debug' | 'notice' | 'warning' | 'error';
@@ -56,8 +56,13 @@ class GitHubLogger {
   }
 }
 
-export class GitHubReporter extends BaseReporter {
+export class GitHubReporter extends TerminalReporter {
   githubLogger = new GitHubLogger();
+
+  constructor(options: { omitFailures?: boolean } = {}) {
+    super(options);
+    this.screen = { ...this.screen, colors: noColors };
+  }
 
   printsToStdio() {
     return false;
@@ -69,7 +74,7 @@ export class GitHubReporter extends BaseReporter {
   }
 
   override onError(error: TestError) {
-    const errorMessage = formatError(error, false).message;
+    const errorMessage = this.formatError(error).message;
     this.githubLogger.error(errorMessage);
   }
 
@@ -100,10 +105,10 @@ export class GitHubReporter extends BaseReporter {
 
   private _printFailureAnnotations(failures: TestCase[]) {
     failures.forEach((test, index) => {
-      const title = formatTestTitle(this.config, test);
-      const header = formatTestHeader(this.config, test, { indent: '  ', index: index + 1, mode: 'error' });
+      const title = this.formatTestTitle(test);
+      const header = this.formatTestHeader(test, { indent: '  ', index: index + 1, mode: 'error' });
       for (const result of test.results) {
-        const errors = formatResultFailure(test, result, '    ', colors.enabled);
+        const errors = formatResultFailure(this.screen, test, result, '    ');
         for (const error of errors) {
           const options: GitHubLogOptions = {
             file: workspaceRelativePath(error.location?.file || test.location.file),
@@ -113,7 +118,7 @@ export class GitHubReporter extends BaseReporter {
             options.line = error.location.line;
             options.col = error.location.column;
           }
-          const message = [header, ...formatRetry(result), error.message].join('\n');
+          const message = [header, ...formatRetry(this.screen, result), error.message].join('\n');
           this.githubLogger.error(message, options);
         }
       }

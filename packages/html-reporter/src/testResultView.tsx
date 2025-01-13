@@ -32,7 +32,7 @@ interface ImageDiffWithAnchors extends ImageDiff {
   anchors: string[];
 }
 
-function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiffWithAnchors[] {
+function groupImageDiffs(screenshots: Set<TestAttachment>, result: TestResult): ImageDiffWithAnchors[] {
   const snapshotNameToImageDiff = new Map<string, ImageDiffWithAnchors>();
   for (const attachment of screenshots) {
     const match = attachment.name.match(/^(.*)-(expected|actual|diff|previous)(\.[^.]+)?$/);
@@ -45,7 +45,7 @@ function groupImageDiffs(screenshots: Set<TestAttachment>): ImageDiffWithAnchors
       imageDiff = { name: snapshotName, anchors: [`attachment-${name}`] };
       snapshotNameToImageDiff.set(snapshotName, imageDiff);
     }
-    imageDiff.anchors.push(`attachment-${attachment.name}`);
+    imageDiff.anchors.push(`attachment-${result.attachments.indexOf(attachment)}`);
     if (category === 'actual')
       imageDiff.actual = { attachment };
     if (category === 'expected')
@@ -72,15 +72,15 @@ export const TestResultView: React.FC<{
   result: TestResult,
 }> = ({ test, result }) => {
   const { screenshots, videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors } = React.useMemo(() => {
-    const attachments = result?.attachments || [];
+    const attachments = result.attachments;
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
-    const screenshotAnchors = [...screenshots].map(a => `attachment-${a.name}`);
+    const screenshotAnchors = [...screenshots].map(a => `attachment-${attachments.indexOf(a)}`);
     const videos = attachments.filter(a => a.contentType.startsWith('video/'));
     const traces = attachments.filter(a => a.name === 'trace');
     const otherAttachments = new Set<TestAttachment>(attachments);
     [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
-    const otherAttachmentAnchors = [...otherAttachments].map(a => `attachment-${a.name}`);
-    const diffs = groupImageDiffs(screenshots);
+    const otherAttachmentAnchors = [...otherAttachments].map(a => `attachment-${attachments.indexOf(a)}`);
+    const diffs = groupImageDiffs(screenshots, result);
     const errors = classifyErrors(result.errors, diffs);
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors };
   }, [result]);
@@ -107,11 +107,11 @@ export const TestResultView: React.FC<{
 
     {!!screenshots.length && <AutoChip header='Screenshots' revealOnAnchorId={screenshotAnchors}>
       {screenshots.map((a, i) => {
-        return <Anchor key={`screenshot-${i}`} id={`attachment-${a.name}`}>
+        return <Anchor key={`screenshot-${i}`} id={`attachment-${result.attachments.indexOf(a)}`}>
           <a href={a.path}>
             <img className='screenshot' src={a.path} />
           </a>
-          <AttachmentLink attachment={a}></AttachmentLink>
+          <AttachmentLink attachment={a} result={result}></AttachmentLink>
         </Anchor>;
       })}
     </AutoChip>}
@@ -121,7 +121,7 @@ export const TestResultView: React.FC<{
         <a href={generateTraceUrl(traces)}>
           <img className='screenshot' src={traceImage} style={{ width: 192, height: 117, marginLeft: 20 }} />
         </a>
-        {traces.map((a, i) => <AttachmentLink key={`trace-${i}`} attachment={a} linkName={traces.length === 1 ? 'trace' : `trace-${i + 1}`}></AttachmentLink>)}
+        {traces.map((a, i) => <AttachmentLink key={`trace-${i}`} attachment={a} result={result} linkName={traces.length === 1 ? 'trace' : `trace-${i + 1}`}></AttachmentLink>)}
       </div>}
     </AutoChip></Anchor>}
 
@@ -130,14 +130,14 @@ export const TestResultView: React.FC<{
         <video controls>
           <source src={a.path} type={a.contentType}/>
         </video>
-        <AttachmentLink attachment={a}></AttachmentLink>
+        <AttachmentLink attachment={a} result={result}></AttachmentLink>
       </div>)}
     </AutoChip></Anchor>}
 
-    {!!otherAttachments.size && <AutoChip header='Attachments' revealOnAnchorId={otherAttachmentAnchors}>
+    {!!otherAttachments.size && <AutoChip header='Attachments' revealOnAnchorId={otherAttachmentAnchors} dataTestId='attachments'>
       {[...otherAttachments].map((a, i) =>
-        <Anchor key={`attachment-link-${i}`} id={`attachment-${a.name}`}>
-          <AttachmentLink attachment={a} openInNewTab={a.contentType.startsWith('text/html')} />
+        <Anchor key={`attachment-link-${i}`} id={`attachment-${result.attachments.indexOf(a)}`}>
+          <AttachmentLink attachment={a} result={result} openInNewTab={a.contentType.startsWith('text/html')} />
         </Anchor>
       )}
     </AutoChip>}
@@ -174,18 +174,29 @@ const StepTreeItem: React.FC<{
   step: TestStep;
   depth: number,
 }> = ({ test, step, result, depth }) => {
-  const attachmentName = step.title.match(/^attach "(.*)"$/)?.[1];
   return <TreeItem title={<span aria-label={step.title}>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
-    {attachmentName && <a style={{ float: 'right' }} title='link to attachment' href={testResultHref({ test, result, anchor: `attachment-${attachmentName}` })} onClick={evt => { evt.stopPropagation(); }}>{icons.attachment()}</a>}
     {statusIcon(step.error || step.duration === -1 ? 'failed' : 'passed')}
     <span>{step.title}</span>
     {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
     {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
   </span>} loadChildren={step.steps.length + (step.snippet ? 1 : 0) ? () => {
-    const children = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} result={result} test={test} />);
-    if (step.snippet)
-      children.unshift(<TestErrorView testId='test-snippet' key='line' error={step.snippet}/>);
-    return children;
+    const snippet = step.snippet ? [<TestErrorView testId='test-snippet' key='line' error={step.snippet}/>] : [];
+    const steps = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} result={result} test={test} />);
+    const attachments = step.attachments.map(attachmentIndex => (
+      <a key={'' + attachmentIndex}
+        href={testResultHref({ test, result, anchor: `attachment-${attachmentIndex}` })}
+        style={{ paddingLeft: depth * 22 + 4, textDecoration: 'none' }}
+      >
+        <span
+          style={{ margin: '8px 0 0 8px', padding: '2px 10px', cursor: 'pointer' }}
+          className='label label-color-gray'
+          title={`see "${result.attachments[attachmentIndex].name}"`}
+        >
+          {icons.attachment()}{result.attachments[attachmentIndex].name}
+        </span>
+      </a>
+    ));
+    return snippet.concat(steps, attachments);
   } : undefined} depth={depth}/>;
 };

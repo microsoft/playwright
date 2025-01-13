@@ -932,12 +932,40 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'passing' }).click();
 
-      const attachment = page.getByText('foo-2', { exact: true });
+      const attachment = page.getByTestId('attachments').getByText('foo-2', { exact: true });
       await expect(attachment).not.toBeInViewport();
-      await page.getByLabel('attach "foo-2"').getByTitle('link to attachment').click();
+      await page.getByLabel('attach "foo-2"').click();
+      await page.getByTitle('see "foo-2"').click();
       await expect(attachment).toBeInViewport();
 
       await page.reload();
+      await expect(attachment).toBeInViewport();
+    });
+
+    test('steps with internal attachments have links', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passing', async ({ page }, testInfo) => {
+            for (let i = 0; i < 100; i++)
+              await testInfo.attach('spacer', { body: 'content' });
+
+            await test.step('step', async () => {
+              testInfo.attachments.push({ name: 'attachment', body: 'content', contentType: 'text/plain' });
+            }) 
+            
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+
+      await showReport();
+      await page.getByRole('link', { name: 'passing' }).click();
+
+      const attachment = page.getByTestId('attachments').getByText('attachment', { exact: true });
+      await expect(attachment).not.toBeInViewport();
+      await page.getByLabel('step').click();
+      await page.getByTitle('see "attachment"').click();
       await expect(attachment).toBeInViewport();
     });
 

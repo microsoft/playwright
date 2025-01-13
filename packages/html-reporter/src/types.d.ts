@@ -108,5 +108,6 @@ export type TestStep = {
   snippet?: string;
   error?: string;
   steps: TestStep[];
+  attachments: number[];
   count: number;
 };

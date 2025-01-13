@@ -524,5 +524,3 @@ class ClankBrowserProcess implements BrowserProcess {
     await this._browser.close();
   }
 }
-
-

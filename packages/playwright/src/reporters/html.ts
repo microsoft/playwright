@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import { open } from 'playwright-core/lib/utilsBundle';
+import { colors, open } from 'playwright-core/lib/utilsBundle';
 import { MultiMap, getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 import fs from 'fs';
 import path from 'path';
 import type { TransformCallback } from 'stream';
 import { Transform } from 'stream';
 import { codeFrameColumns } from '../transform/babelBundle';
-import type { FullResult, FullConfig, Location, Suite, TestCase as TestCasePublic, TestResult as TestResultPublic, TestStep as TestStepPublic, TestError } from '../../types/testReporter';
+import type * as api from '../../types/testReporter';
 import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath, toPosixPath } from 'playwright-core/lib/utils';
-import { colors, formatError, formatResultFailure, stripAnsiEscapes } from './base';
+import { formatError, formatResultFailure, internalScreen, stripAnsiEscapes } from './base';
 import { resolveReporterOutputPath } from '../util';
 import type { Metadata } from '../../types/test';
 import type { ZipFile } from 'playwright-core/lib/zipBundle';
@@ -56,8 +56,8 @@ type HtmlReporterOptions = {
 };
 
 class HtmlReporter implements ReporterV2 {
-  private config!: FullConfig;
-  private suite!: Suite;
+  private config!: api.FullConfig;
+  private suite!: api.Suite;
   private _options: HtmlReporterOptions;
   private _outputFolder!: string;
   private _attachmentsBaseURL!: string;
@@ -65,7 +65,7 @@ class HtmlReporter implements ReporterV2 {
   private _port: number | undefined;
   private _host: string | undefined;
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
-  private _topLevelErrors: TestError[] = [];
+  private _topLevelErrors: api.TestError[] = [];
 
   constructor(options: HtmlReporterOptions) {
     this._options = options;
@@ -79,11 +79,11 @@ class HtmlReporter implements ReporterV2 {
     return false;
   }
 
-  onConfigure(config: FullConfig) {
+  onConfigure(config: api.FullConfig) {
     this.config = config;
   }
 
-  onBegin(suite: Suite) {
+  onBegin(suite: api.Suite) {
     const { outputFolder, open, attachmentsBaseURL, host, port } = this._resolveOptions();
     this._outputFolder = outputFolder;
     this._open = open;
@@ -125,11 +125,11 @@ class HtmlReporter implements ReporterV2 {
     return !!relativePath && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
   }
 
-  onError(error: TestError): void {
+  onError(error: api.TestError): void {
     this._topLevelErrors.push(error);
   }
 
-  async onEnd(result: FullResult) {
+  async onEnd(result: api.FullResult) {
     const projectSuites = this.suite.suites;
     await removeFolders([this._outputFolder]);
     const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL);
@@ -223,14 +223,14 @@ export function startHtmlReportServer(folder: string): HttpServer {
 }
 
 class HtmlBuilder {
-  private _config: FullConfig;
+  private _config: api.FullConfig;
   private _reportFolder: string;
   private _stepsInFile = new MultiMap<string, TestStep>();
   private _dataZipFile: ZipFile;
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
 
-  constructor(config: FullConfig, outputDir: string, attachmentsBaseURL: string) {
+  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string) {
     this._config = config;
     this._reportFolder = outputDir;
     fs.mkdirSync(this._reportFolder, { recursive: true });
@@ -238,7 +238,7 @@ class HtmlBuilder {
     this._attachmentsBaseURL = attachmentsBaseURL;
   }
 
-  async build(metadata: Metadata, projectSuites: Suite[], result: FullResult, topLevelErrors: TestError[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
+  async build(metadata: Metadata, projectSuites: api.Suite[], result: api.FullResult, topLevelErrors: api.TestError[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
     const data = new Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>();
     for (const projectSuite of projectSuites) {
       for (const fileSuite of projectSuite.suites) {
@@ -297,7 +297,7 @@ class HtmlBuilder {
       files: [...data.values()].map(e => e.testFileSummary),
       projectNames: projectSuites.map(r => r.project()!.name),
       stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()) },
-      errors: topLevelErrors.map(error => formatError(error, true).message),
+      errors: topLevelErrors.map(error => formatError(internalScreen, error).message),
     };
     htmlReport.files.sort((f1, f2) => {
       const w1 = f1.stats.unexpected * 1000 + f1.stats.flaky;
@@ -378,7 +378,7 @@ class HtmlBuilder {
     this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
   }
 
-  private _processSuite(suite: Suite, projectName: string, path: string[], outTests: TestEntry[]) {
+  private _processSuite(suite: api.Suite, projectName: string, path: string[], outTests: TestEntry[]) {
     const newPath = [...path, suite.title];
     suite.entries().forEach(e => {
       if (e.type === 'test')
@@ -388,7 +388,7 @@ class HtmlBuilder {
     });
   }
 
-  private _createTestEntry(test: TestCasePublic, projectName: string, path: string[]): TestEntry {
+  private _createTestEntry(test: api.TestCase, projectName: string, path: string[]): TestEntry {
     const duration = test.results.reduce((a, r) => a + r.duration, 0);
     const location = this._relativeLocation(test.location)!;
     path = path.slice(1).filter(path => path.length > 0);
@@ -500,13 +500,13 @@ class HtmlBuilder {
     }).filter(Boolean) as TestAttachment[];
   }
 
-  private _createTestResult(test: TestCasePublic, result: TestResultPublic): TestResult {
+  private _createTestResult(test: api.TestCase, result: api.TestResult): TestResult {
     return {
       duration: result.duration,
       startTime: result.startTime.toISOString(),
       retry: result.retry,
-      steps: dedupeSteps(result.steps).map(s => this._createTestStep(s)),
-      errors: formatResultFailure(test, result, '', true).map(error => error.message),
+      steps: dedupeSteps(result.steps).map(s => this._createTestStep(s, result)),
+      errors: formatResultFailure(internalScreen, test, result, '').map(error => error.message),
       status: result.status,
       attachments: this._serializeAttachments([
         ...result.attachments,
@@ -515,23 +515,29 @@ class HtmlBuilder {
     };
   }
 
-  private _createTestStep(dedupedStep: DedupedStep): TestStep {
+  private _createTestStep(dedupedStep: DedupedStep, result: api.TestResult): TestStep {
     const { step, duration, count } = dedupedStep;
-    const result: TestStep = {
+    const testStep: TestStep = {
       title: step.title,
       startTime: step.startTime.toISOString(),
       duration,
-      steps: dedupeSteps(step.steps).map(s => this._createTestStep(s)),
+      steps: dedupeSteps(step.steps).map(s => this._createTestStep(s, result)),
+      attachments: step.attachments.map(s => {
+        const index = result.attachments.indexOf(s);
+        if (index === -1)
+          throw new Error('Unexpected, attachment not found');
+        return index;
+      }),
       location: this._relativeLocation(step.location),
       error: step.error?.message,
       count
     };
     if (step.location)
-      this._stepsInFile.set(step.location.file, result);
-    return result;
+      this._stepsInFile.set(step.location.file, testStep);
+    return testStep;
   }
 
-  private _relativeLocation(location: Location | undefined): Location | undefined {
+  private _relativeLocation(location: api.Location | undefined): api.Location | undefined {
     if (!location)
       return undefined;
     const file = toPosixPath(path.relative(this._config.rootDir, location.file));
@@ -609,9 +615,9 @@ function stdioAttachment(chunk: Buffer | string, type: 'stdout' | 'stderr'): Jso
   };
 }
 
-type DedupedStep = { step: TestStepPublic, count: number, duration: number };
+type DedupedStep = { step: api.TestStep, count: number, duration: number };
 
-function dedupeSteps(steps: TestStepPublic[]) {
+function dedupeSteps(steps: api.TestStep[]) {
   const result: DedupedStep[] = [];
   let lastResult = undefined;
   for (const step of steps) {

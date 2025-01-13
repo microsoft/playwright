@@ -46,4 +46,3 @@ test('should display annotations', async ({ runUITest }) => {
   await expect(annotations.locator('.annotation-item').filter({ hasText: 'test repo' }).locator('a'))
       .toHaveAttribute('href', 'https://github.com/microsoft/playwright');
 });
-

@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - .github/workflows/tests_bidi.yml
+      - packages/playwright-core/src/server/bidi/*
   schedule:
     # Run every day at midnight
     - cron: '0 0 * * *'
@@ -43,3 +44,27 @@ jobs:
       run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run biditest -- --project=${{ matrix.channel }}*
       env:
         PWTEST_USE_BIDI_EXPECTATIONS: '1'
+    - name: Upload csv report to GitHub
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: csv-report-${{ matrix.channel }}
+        path: test-results/report.csv
+        retention-days: 7
+
+    - name: Azure Login
+      if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_BLOB_REPORTS_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_BLOB_REPORTS_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_BLOB_REPORTS_SUBSCRIPTION_ID }}
+
+    - name: Upload report.csv to Azure
+      if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+      run: |
+        REPORT_DIR='bidi-reports'
+        azcopy cp "./test-results/report.csv" "https://mspwblobreport.blob.core.windows.net/\$web/$REPORT_DIR/${{ matrix.channel }}.csv"
+        echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/${{ matrix.channel }}.csv"
+      env:
+        AZCOPY_AUTO_LOGIN_TYPE: AZCLI

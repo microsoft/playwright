@@ -24,7 +24,7 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 import { expect, playwrightTest } from '../config/browserTest';
 import type { FrameLocator } from '@playwright/test';
-import { rafraf } from 'tests/page/pageTest';
+import { rafraf, roundBox } from 'tests/page/pageTest';
 
 const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
@@ -240,7 +240,7 @@ test('should show params and return value', async ({ showTraceViewer }) => {
   await traceViewer.selectAction('page.evaluate');
   await expect(traceViewer.callLines).toHaveText([
     /page.evaluate/,
-    /wall time:[0-9/:,APM ]+/,
+    /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     /expression:"\({↵    a↵  }\) => {↵    console\.log\(\'Info\'\);↵    console\.warn\(\'Warning\'\);↵    console/,
     'isFunction:true',
@@ -251,7 +251,7 @@ test('should show params and return value', async ({ showTraceViewer }) => {
   await traceViewer.selectAction(`locator('button')`);
   await expect(traceViewer.callLines).toContainText([
     /expect.toHaveText/,
-    /wall time:[0-9/:,APM ]+/,
+    /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     /locator:locator\('button'\)/,
     /expression:"to.have.text"/,
@@ -266,7 +266,7 @@ test('should show null as a param', async ({ showTraceViewer, browserName }) => 
   await traceViewer.selectAction('page.evaluate', 1);
   await expect(traceViewer.callLines).toHaveText([
     /page.evaluate/,
-    /wall time:[0-9/:,APM ]+/,
+    /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     'expression:"() => 1 + 1"',
     'isFunction:true',
@@ -1096,19 +1096,41 @@ test('should pick locator', async ({ page, runAndTrace, server }) => {
   const snapshot = await traceViewer.snapshotFrame('page.setContent');
   await traceViewer.page.getByTitle('Pick locator').click();
   await snapshot.locator('button').click();
-  await expect(traceViewer.page.locator('.cm-wrapper')).toContainText(`getByRole('button', { name: 'Submit' })`);
+  await expect(traceViewer.page.locator('.cm-wrapper').first()).toContainText(`getByRole('button', { name: 'Submit' })`);
+  await expect(traceViewer.page.locator('.cm-wrapper').last()).toContainText(`- button "Submit"`);
 });
 
-test('should update highlight when typing', async ({ page, runAndTrace, server }) => {
+test('should update highlight when typing locator', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<button>Submit</button>');
   });
   const snapshot = await traceViewer.snapshotFrame('page.setContent');
   await traceViewer.page.getByText('Locator').click();
-  await traceViewer.page.locator('.CodeMirror').click();
+  await traceViewer.page.locator('.CodeMirror').first().click();
   await traceViewer.page.keyboard.type('button');
-  await expect(snapshot.locator('x-pw-glass')).toBeVisible();
+
+  const buttonBox = roundBox(await snapshot.locator('button').boundingBox());
+  await expect(snapshot.locator('x-pw-highlight')).toBeVisible();
+  await expect.poll(async () => {
+    return roundBox(await snapshot.locator('x-pw-highlight').boundingBox());
+  }).toEqual(buttonBox);
+});
+
+test('should update highlight when typing snapshot', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<button>Submit</button>');
+  });
+  const snapshot = await traceViewer.snapshotFrame('page.setContent');
+  await traceViewer.page.getByText('Locator').click();
+  await traceViewer.page.locator('.CodeMirror').last().click();
+  await traceViewer.page.keyboard.type('- button');
+  const buttonBox = roundBox(await snapshot.locator('button').boundingBox());
+  await expect(snapshot.locator('x-pw-highlight')).toBeVisible();
+  await expect.poll(async () => {
+    return roundBox(await snapshot.locator('x-pw-highlight').boundingBox());
+  }).toEqual(buttonBox);
 });
 
 test('should open trace-1.31', async ({ showTraceViewer }) => {
@@ -1239,7 +1261,7 @@ test('should pick locator in iframe', async ({ page, runAndTrace, server }) => {
     await page.evaluate('2+2');
   });
   await traceViewer.page.getByTitle('Pick locator').click();
-  const cmWrapper = traceViewer.page.locator('.cm-wrapper');
+  const cmWrapper = traceViewer.page.locator('.cm-wrapper').first();
 
   const snapshot = await traceViewer.snapshotFrame('page.evaluate');
 
@@ -1279,7 +1301,7 @@ test('should highlight locator in iframe while typing', async ({ page, runAndTra
 
   const snapshot = await traceViewer.snapshotFrame('page.evaluate');
   await traceViewer.page.getByText('Locator').click();
-  await traceViewer.page.locator('.CodeMirror').click();
+  await traceViewer.page.locator('.CodeMirror').first().click();
 
   const locators = [{
     text: `locator('#frame1').contentFrame().getByText('Hello1')`,
@@ -1521,13 +1543,29 @@ test('should serve css without content-type', async ({ page, runAndTrace, server
   await expect(snapshotFrame.locator('body')).toHaveCSS('background-color', 'rgb(255, 0, 0)', { timeout: 0 });
 });
 
+test('canvas disabled title', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/screenshots/canvas.html#canvas-on-edge');
+    await rafraf(page, 5);
+  });
+
+  const snapshot = await traceViewer.snapshotFrame('page.goto');
+  await expect(snapshot.locator('canvas')).toHaveAttribute('title', `Canvas content display is disabled.`);
+});
+
 test('canvas clipping', async ({ runAndTrace, page, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.PREFIX + '/screenshots/canvas.html#canvas-on-edge');
     await rafraf(page, 5);
   });
 
-  const msg = await traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') });
+  // Enable canvas display
+  await traceViewer.showSettings();
+
+  const [msg] = await Promise.all([
+    traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') }),
+    traceViewer.displayCanvasContentSetting.click(),
+  ]);
   expect(msg.text()).toEqual('canvas drawn: [0,91,11,20]');
 
   const snapshot = await traceViewer.snapshotFrame('page.goto');
@@ -1543,7 +1581,13 @@ test('canvas clipping in iframe', async ({ runAndTrace, page, server }) => {
     await rafraf(page, 5);
   });
 
-  const msg = await traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') });
+  // Enable canvas display
+  await traceViewer.showSettings();
+
+  const [msg] = await Promise.all([
+    traceViewer.page.waitForEvent('console', { predicate: msg => msg.text().startsWith('canvas drawn:') }),
+    traceViewer.displayCanvasContentSetting.click(),
+  ]);
   expect(msg.text()).toEqual('canvas drawn: [1,1,11,20]');
 
   const snapshot = await traceViewer.snapshotFrame('page.evaluate');
@@ -1592,4 +1636,61 @@ test('should show a popover', async ({ runAndTrace, page, server }) => {
   const snapshot = await traceViewer.snapshotFrame('expect.toBeVisible');
   const popover = snapshot.locator('#pop');
   await expect.poll(() => popover.evaluate(e => e.matches(':popover-open'))).toBe(true);
+});
+
+test('should open settings dialog', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer([traceFile]);
+  await traceViewer.selectAction('http://localhost');
+  await traceViewer.showSettings();
+  await expect(traceViewer.settingsDialog).toBeVisible();
+});
+
+test('should toggle theme color', async ({ showTraceViewer, page }) => {
+  const traceViewer = await showTraceViewer([traceFile]);
+  await traceViewer.selectAction('http://localhost');
+  await traceViewer.showSettings();
+
+  await expect(traceViewer.darkModeSetting).toBeChecked({ checked: false });
+
+  await traceViewer.darkModeSetting.click();
+  await expect(traceViewer.darkModeSetting).toBeChecked({ checked: true });
+  await expect(traceViewer.page.locator('.dark-mode')).toBeVisible();
+
+  await traceViewer.darkModeSetting.click();
+  await expect(traceViewer.darkModeSetting).toBeChecked({ checked: false });
+  await expect(traceViewer.page.locator('.light-mode')).toBeVisible();
+});
+
+test('should toggle canvas rendering', async ({ runAndTrace, page }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(`data:text/html,<!DOCTYPE html><body><div>Hello world</div><canvas /></body>`);
+    await page.goto(`data:text/html,<!DOCTYPE html><body><div>Hello world</div></body>`);
+  });
+
+  let snapshotRequestPromise = traceViewer.page.waitForRequest(request => request.url().includes('/snapshot/'));
+
+  // Click on the action with a canvas snapshot
+  await traceViewer.selectAction('goto', 0);
+
+  let snapshotRequest = await snapshotRequestPromise;
+
+  expect(snapshotRequest.url()).not.toContain('shouldPopulateCanvasFromScreenshot');
+
+  await traceViewer.showSettings();
+
+  await expect(traceViewer.displayCanvasContentSetting).toBeChecked({ checked: false });
+  await traceViewer.displayCanvasContentSetting.click();
+  await expect(traceViewer.displayCanvasContentSetting).toBeChecked({ checked: true });
+
+  // Deselect canvas
+  await traceViewer.selectAction('goto', 1);
+
+  snapshotRequestPromise = traceViewer.page.waitForRequest(request => request.url().includes('/snapshot/'));
+
+  // Select canvas again
+  await traceViewer.selectAction('goto', 0);
+
+  snapshotRequest = await snapshotRequestPromise;
+
+  expect(snapshotRequest.url()).toContain('shouldPopulateCanvasFromScreenshot');
 });

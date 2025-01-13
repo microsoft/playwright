@@ -15,7 +15,7 @@
  */
 
 import { browserTest, expect } from '../config/browserTest';
-import type { BrowserContext } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 
 const test = browserTest.extend<{ reusedContext: () => Promise<BrowserContext> }>({
   reusedContext: async ({ browserType, browser }, use) => {
@@ -286,4 +286,43 @@ test('should continue issuing events after closing the reused page', async ({ re
       page.goto(server.PREFIX + '/one-style.html'),
     ]);
   }
+});
+
+test('should work with routeWebSocket', async ({ reusedContext, server, browser }, testInfo) => {
+  async function setup(page: Page, suffix: string) {
+    await page.routeWebSocket(/ws1/, ws => {
+      ws.onMessage(message => {
+        ws.send('page-mock-' + suffix);
+      });
+    });
+    await page.context().routeWebSocket(/.*/, ws => {
+      ws.onMessage(message => {
+        ws.send('context-mock-' + suffix);
+      });
+    });
+    await page.goto('about:blank');
+    await page.evaluate(({ port }) => {
+      window.log = [];
+      (window as any).ws1 = new WebSocket('ws://localhost:' + port + '/ws1');
+      (window as any).ws1.addEventListener('message', event => window.log.push(`ws1:${event.data}`));
+      (window as any).ws2 = new WebSocket('ws://localhost:' + port + '/ws2');
+      (window as any).ws2.addEventListener('message', event => window.log.push(`ws2:${event.data}`));
+    }, { port: server.PORT });
+  }
+
+  let context = await reusedContext();
+  let page = await context.newPage();
+  await setup(page, 'before');
+  await page.evaluate(() => (window as any).ws1.send('request'));
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual([`ws1:page-mock-before`]);
+  await page.evaluate(() => (window as any).ws2.send('request'));
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual([`ws1:page-mock-before`, `ws2:context-mock-before`]);
+
+  context = await reusedContext();
+  page = context.pages()[0];
+  await setup(page, 'after');
+  await page.evaluate(() => (window as any).ws1.send('request'));
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual([`ws1:page-mock-after`]);
+  await page.evaluate(() => (window as any).ws2.send('request'));
+  await expect.poll(() => page.evaluate(() => window.log)).toEqual([`ws1:page-mock-after`, `ws2:context-mock-after`]);
 });

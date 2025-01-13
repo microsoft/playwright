@@ -24,10 +24,9 @@ import type { Playwright } from './playwright';
 import { Recorder } from './recorder';
 import { EmptyRecorderApp } from './recorder/recorderApp';
 import { asLocator, type Language } from '../utils';
-import { parseYamlForAriaSnapshot } from './ariaSnapshot';
-import type { ParsedYaml } from '../utils/isomorphic/ariaSnapshot';
-import { parseYamlTemplate } from '../utils/isomorphic/ariaSnapshot';
+import { yaml } from '../utilsBundle';
 import { unsafeLocatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
+import { parseAriaSnapshotUnsafe } from '../utils/isomorphic/ariaSnapshot';
 
 const internalMetadata = serverSideCallMetadata();
 
@@ -40,9 +39,6 @@ export class DebugController extends SdkObject {
     SetModeRequested: 'setModeRequested',
   };
 
-  private _autoCloseTimer: NodeJS.Timeout | undefined;
-  // TODO: remove in 1.27
-  private _autoCloseAllowed = false;
   private _trackHierarchyListener: InstrumentationListener | undefined;
   private _playwright: Playwright;
   _sdkLanguage: Language = 'javascript';
@@ -58,22 +54,18 @@ export class DebugController extends SdkObject {
     this._sdkLanguage = sdkLanguage;
   }
 
-  setAutoCloseAllowed(allowed: boolean) {
-    this._autoCloseAllowed = allowed;
-  }
-
   dispose() {
     this.setReportStateChanged(false);
-    this.setAutoCloseAllowed(false);
   }
 
   setReportStateChanged(enabled: boolean) {
     if (enabled && !this._trackHierarchyListener) {
       this._trackHierarchyListener = {
-        onPageOpen: () => this._emitSnapshot(),
-        onPageClose: () => this._emitSnapshot(),
+        onPageOpen: () => this._emitSnapshot(false),
+        onPageClose: () => this._emitSnapshot(false),
       };
       this._playwright.instrumentation.addListener(this._trackHierarchyListener, null);
+      this._emitSnapshot(true);
     } else if (!enabled && this._trackHierarchyListener) {
       this._playwright.instrumentation.removeListener(this._trackHierarchyListener);
       this._trackHierarchyListener = undefined;
@@ -102,7 +94,6 @@ export class DebugController extends SdkObject {
         recorder.hideHighlightedSelector();
         recorder.setMode('none');
       }
-      this.setAutoCloseEnabled(true);
       return;
     }
 
@@ -127,37 +118,16 @@ export class DebugController extends SdkObject {
         recorder.setOutput(this._codegenId, params.file);
       recorder.setMode(params.mode);
     }
-    this.setAutoCloseEnabled(true);
-  }
-
-  async setAutoCloseEnabled(enabled: boolean) {
-    if (!this._autoCloseAllowed)
-      return;
-    if (this._autoCloseTimer)
-      clearTimeout(this._autoCloseTimer);
-    if (!enabled)
-      return;
-    const heartBeat = () => {
-      if (!this._playwright.allPages().length)
-        gracefullyProcessExitDoNotHang(0);
-      else
-        this._autoCloseTimer = setTimeout(heartBeat, 5000);
-    };
-    this._autoCloseTimer = setTimeout(heartBeat, 30000);
   }
 
   async highlight(params: { selector?: string, ariaTemplate?: string }) {
     // Assert parameters validity.
     if (params.selector)
       unsafeLocatorOrSelectorAsSelector(this._sdkLanguage, params.selector, 'data-testid');
-    let parsedYaml: ParsedYaml | undefined;
-    if (params.ariaTemplate) {
-      parsedYaml = parseYamlForAriaSnapshot(params.ariaTemplate);
-      parseYamlTemplate(parsedYaml);
-    }
+    const ariaTemplate = params.ariaTemplate ? parseAriaSnapshotUnsafe(yaml, params.ariaTemplate) : undefined;
     for (const recorder of await this._allRecorders()) {
-      if (parsedYaml)
-        recorder.setHighlightedAriaTemplate(parsedYaml);
+      if (ariaTemplate)
+        recorder.setHighlightedAriaTemplate(ariaTemplate);
       else if (params.selector)
         recorder.setHighlightedSelector(this._sdkLanguage, params.selector);
     }
@@ -188,24 +158,10 @@ export class DebugController extends SdkObject {
     await Promise.all(this.allBrowsers().map(browser => browser.close({ reason: 'Close all browsers requested' })));
   }
 
-  private _emitSnapshot() {
-    const browsers = [];
-    let pageCount = 0;
-    for (const browser of this._playwright.allBrowsers()) {
-      const b = {
-        contexts: [] as any[]
-      };
-      browsers.push(b);
-      for (const context of browser.contexts()) {
-        const c = {
-          pages: [] as any[]
-        };
-        b.contexts.push(c);
-        for (const page of context.pages())
-          c.pages.push(page.mainFrame().url());
-        pageCount += context.pages().length;
-      }
-    }
+  private _emitSnapshot(initial: boolean) {
+    const pageCount = this._playwright.allPages().length;
+    if (initial && !pageCount)
+      return;
     this.emit(DebugController.Events.StateChanged, { pageCount });
   }
 

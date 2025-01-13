@@ -36,7 +36,7 @@ export interface LocatorFactory {
 }
 
 export function asLocator(lang: Language, selector: string, isFrameLocator: boolean = false): string {
-  return asLocators(lang, selector, isFrameLocator)[0];
+  return asLocators(lang, selector, isFrameLocator, 1)[0];
 }
 
 export function asLocators(lang: Language, selector: string, isFrameLocator: boolean = false, maxOutputSize = 20, preferredQuote?: Quote): string[] {
@@ -220,7 +220,7 @@ function combineTokens(factory: LocatorFactory, tokens: string[][], maxOutputSiz
   const visit = (index: number) => {
     if (index === tokens.length) {
       result.push(factory.chainLocators(currentTokens));
-      return currentTokens.length < maxOutputSize;
+      return result.length < maxOutputSize;
     }
     for (const taken of tokens[index]) {
       currentTokens[index] = taken;

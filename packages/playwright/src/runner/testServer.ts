@@ -38,6 +38,7 @@ import { serializeError } from '../util';
 import { baseFullConfig } from '../isomorphic/teleReceiver';
 import { InternalReporter } from '../reporters/internalReporter';
 import type { ReporterV2 } from '../reporters/reporterV2';
+import { internalScreen } from '../reporters/base';
 
 const originalStdoutWrite = process.stdout.write;
 const originalStderrWrite = process.stderr.write;
@@ -359,7 +360,7 @@ export class TestServerDispatcher implements TestServerInterface {
   }
 
   async findRelatedTestFiles(params: Parameters<TestServerInterface['findRelatedTestFiles']>[0]): ReturnType<TestServerInterface['findRelatedTestFiles']> {
-    const errorReporter = createErrorCollectingReporter();
+    const errorReporter = createErrorCollectingReporter(internalScreen);
     const reporter = new InternalReporter([errorReporter]);
     const config = await this._loadConfigOrReportError(reporter);
     if (!config)

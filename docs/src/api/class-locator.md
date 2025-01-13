@@ -633,13 +633,11 @@ properties:
 You can also specify [JSHandle] as the property value if you want live objects to be passed into the event:
 
 ```js
-// Note you can only create DataTransfer in Chromium and Firefox
 const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
 await locator.dispatchEvent('dragstart', { dataTransfer });
 ```
 
 ```java
-// Note you can only create DataTransfer in Chromium and Firefox
 JSHandle dataTransfer = page.evaluateHandle("() => new DataTransfer()");
 Map<String, Object> arg = new HashMap<>();
 arg.put("dataTransfer", dataTransfer);
@@ -647,13 +645,11 @@ locator.dispatchEvent("dragstart", arg);
 ```
 
 ```python async
-# note you can only create data_transfer in chromium and firefox
 data_transfer = await page.evaluate_handle("new DataTransfer()")
 await locator.dispatch_event("#source", "dragstart", {"dataTransfer": data_transfer})
 ```
 
 ```python sync
-# note you can only create data_transfer in chromium and firefox
 data_transfer = page.evaluate_handle("new DataTransfer()")
 locator.dispatch_event("#source", "dragstart", {"dataTransfer": data_transfer})
 ```
@@ -1717,16 +1713,21 @@ var banana = await page.GetByRole(AriaRole.Listitem).Nth(2);
 
 Creates a locator matching all elements that match one or both of the two locators.
 
-Note that when both locators match something, the resulting locator will have multiple matches and violate [locator strictness](../locators.md#strictness) guidelines.
+Note that when both locators match something, the resulting locator will have multiple matches, potentially causing a [locator strictness](../locators.md#strictness) violation.
 
 **Usage**
 
 Consider a scenario where you'd like to click on a "New email" button, but sometimes a security settings dialog shows up instead. In this case, you can wait for either a "New email" button, or a dialog and act accordingly.
 
+:::note
+If both "New email" button and security dialog appear on screen, the "or" locator will match both of them,
+possibly throwing the ["strict mode violation" error](../locators.md#strictness). In this case, you can use [`method: Locator.first`] to only match one of them.
+:::
+
 ```js
 const newEmail = page.getByRole('button', { name: 'New' });
 const dialog = page.getByText('Confirm security settings');
-await expect(newEmail.or(dialog)).toBeVisible();
+await expect(newEmail.or(dialog).first()).toBeVisible();
 if (await dialog.isVisible())
   await page.getByRole('button', { name: 'Dismiss' }).click();
 await newEmail.click();
@@ -1735,7 +1736,7 @@ await newEmail.click();
 ```java
 Locator newEmail = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("New"));
 Locator dialog = page.getByText("Confirm security settings");
-assertThat(newEmail.or(dialog)).isVisible();
+assertThat(newEmail.or(dialog).first()).isVisible();
 if (dialog.isVisible())
   page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Dismiss")).click();
 newEmail.click();
@@ -1744,7 +1745,7 @@ newEmail.click();
 ```python async
 new_email = page.get_by_role("button", name="New")
 dialog = page.get_by_text("Confirm security settings")
-await expect(new_email.or_(dialog)).to_be_visible()
+await expect(new_email.or_(dialog).first).to_be_visible()
 if (await dialog.is_visible()):
   await page.get_by_role("button", name="Dismiss").click()
 await new_email.click()
@@ -1753,7 +1754,7 @@ await new_email.click()
 ```python sync
 new_email = page.get_by_role("button", name="New")
 dialog = page.get_by_text("Confirm security settings")
-expect(new_email.or_(dialog)).to_be_visible()
+expect(new_email.or_(dialog).first).to_be_visible()
 if (dialog.is_visible()):
   page.get_by_role("button", name="Dismiss").click()
 new_email.click()
@@ -1762,7 +1763,7 @@ new_email.click()
 ```csharp
 var newEmail = page.GetByRole(AriaRole.Button, new() { Name = "New" });
 var dialog = page.GetByText("Confirm security settings");
-await Expect(newEmail.Or(dialog)).ToBeVisibleAsync();
+await Expect(newEmail.Or(dialog).First).ToBeVisibleAsync();
 if (await dialog.IsVisibleAsync())
   await page.GetByRole(AriaRole.Button, new() { Name = "Dismiss" }).ClickAsync();
 await newEmail.ClickAsync();

@@ -1146,8 +1146,7 @@ export class Recorder {
     const ariaTemplateJSON = JSON.stringify(state.ariaTemplate);
     if (this._lastHighlightedAriaTemplateJSON !== ariaTemplateJSON) {
       this._lastHighlightedAriaTemplateJSON = ariaTemplateJSON;
-      const template = state.ariaTemplate ? this.injectedScript.utils.parseYamlTemplate(state.ariaTemplate) : undefined;
-      const elements = template ? this.injectedScript.getAllByAria(this.document, template) : [];
+      const elements = state.ariaTemplate ? this.injectedScript.getAllByAria(this.document, state.ariaTemplate) : [];
       if (elements.length)
         highlight = { elements };
       else

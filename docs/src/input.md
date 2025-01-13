@@ -217,7 +217,7 @@ await page.getByText('Item').click({ button: 'right' });
 // Shift + click
 await page.getByText('Item').click({ modifiers: ['Shift'] });
 
-// Ctrl + click or Windows and Linux
+// Ctrl + click on Windows and Linux
 // Meta + click on macOS
 await page.getByText('Item').click({ modifiers: ['ControlOrMeta'] });
 
@@ -241,7 +241,7 @@ page.getByText("Item").click(new Locator.ClickOptions().setButton(MouseButton.RI
 // Shift + click
 page.getByText("Item").click(new Locator.ClickOptions().setModifiers(Arrays.asList(KeyboardModifier.SHIFT)));
 
-// Ctrl + click or Windows and Linux
+// Ctrl + click on Windows and Linux
 // Meta + click on macOS
 page.getByText("Item").click(new Locator.ClickOptions().setModifiers(Arrays.asList(KeyboardModifier.CONTROL_OR_META)));
 
@@ -265,7 +265,7 @@ await page.get_by_text("Item").click(button="right")
 # Shift + click
 await page.get_by_text("Item").click(modifiers=["Shift"])
 
-# Ctrl + click or Windows and Linux
+# Ctrl + click on Windows and Linux
 # Meta + click on macOS
 await page.get_by_text("Item").click(modifiers=["ControlOrMeta"])
 
@@ -309,7 +309,7 @@ await page.GetByText("Item").ClickAsync(new() { Button = MouseButton.Right });
 // Shift + click
 await page.GetByText("Item").ClickAsync(new() { Modifiers = new[] { KeyboardModifier.Shift } });
 
-// Ctrl + click or Windows and Linux
+// Ctrl + click on Windows and Linux
 // Meta + click on macOS
 await page.GetByText("Item").ClickAsync(new() { Modifiers = new[] { KeyboardModifier.ControlOrMeta } });
 

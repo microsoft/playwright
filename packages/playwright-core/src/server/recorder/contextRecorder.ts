@@ -108,7 +108,7 @@ export class ContextRecorder extends EventEmitter {
     this._listeners.push(eventsHelper.addEventListener(process, 'exit', () => {
       this._throttledOutputFile?.flush();
     }));
-    this.setEnabled(true);
+    this.setEnabled(params.mode === 'recording');
   }
 
   setOutput(codegenId: string, outputFile?: string) {

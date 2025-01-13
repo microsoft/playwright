@@ -49,6 +49,10 @@ class TraceViewerPage {
   snapshotContainer: Locator;
   sourceCodeTab: Locator;
 
+  settingsDialog: Locator;
+  darkModeSetting: Locator;
+  displayCanvasContentSetting: Locator;
+
   constructor(public page: Page) {
     this.actionTitles = page.locator('.action-title');
     this.actionsTree = page.getByTestId('actions-tree');
@@ -63,6 +67,10 @@ class TraceViewerPage {
     this.snapshotContainer = page.locator('.snapshot-container iframe.snapshot-visible[name=snapshot]');
     this.metadataTab = page.getByTestId('metadata-view');
     this.sourceCodeTab = page.getByTestId('source-code');
+
+    this.settingsDialog = page.getByTestId('settings-toolbar-dialog');
+    this.darkModeSetting = page.locator('.setting').getByText('Dark mode');
+    this.displayCanvasContentSetting = page.locator('.setting').getByText('Display canvas content');
   }
 
   async actionIconsText(action: string) {
@@ -113,6 +121,10 @@ class TraceViewerPage {
 
   async showMetadataTab() {
     await this.page.click('text="Metadata"');
+  }
+
+  async showSettings() {
+    await this.page.locator('.settings-gear').click();
   }
 
   @step

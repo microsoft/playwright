@@ -42,9 +42,8 @@ export function toBeAttached(
 ) {
   const attached = !options || options.attached === undefined || options.attached;
   const expected = attached ? 'attached' : 'detached';
-  const unexpected = attached ? 'detached' : 'attached';
   const arg = attached ? '' : '{ attached: false }';
-  return toBeTruthy.call(this, 'toBeAttached', locator, 'Locator', expected, unexpected, arg, async (isNot, timeout) => {
+  return toBeTruthy.call(this, 'toBeAttached', locator, 'Locator', expected, arg, async (isNot, timeout) => {
     return await locator._expect(attached ? 'to.be.attached' : 'to.be.detached', { isNot, timeout });
   }, options);
 }
@@ -52,14 +51,25 @@ export function toBeAttached(
 export function toBeChecked(
   this: ExpectMatcherState,
   locator: LocatorEx,
-  options?: { checked?: boolean, timeout?: number },
+  options?: { checked?: boolean, indeterminate?: boolean, timeout?: number },
 ) {
-  const checked = !options || options.checked === undefined || options.checked;
-  const expected = checked ? 'checked' : 'unchecked';
-  const unexpected = checked ? 'unchecked' : 'checked';
-  const arg = checked ? '' : '{ checked: false }';
-  return toBeTruthy.call(this, 'toBeChecked', locator, 'Locator', expected, unexpected, arg, async (isNot, timeout) => {
-    return await locator._expect(checked ? 'to.be.checked' : 'to.be.unchecked', { isNot, timeout });
+  const checked = options?.checked;
+  const indeterminate = options?.indeterminate;
+  const expectedValue = {
+    checked,
+    indeterminate,
+  };
+  let expected: string;
+  let arg: string;
+  if (options?.indeterminate) {
+    expected = 'indeterminate';
+    arg = `{ indeterminate: true }`;
+  } else {
+    expected = options?.checked === false ? 'unchecked' : 'checked';
+    arg = options?.checked === false ? `{ checked: false }` : '';
+  }
+  return toBeTruthy.call(this, 'toBeChecked', locator, 'Locator', expected, arg, async (isNot, timeout) => {
+    return await locator._expect('to.be.checked', { isNot, timeout, expectedValue });
   }, options);
 }
 
@@ -68,7 +78,7 @@ export function toBeDisabled(
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeDisabled', locator, 'Locator', 'disabled', 'enabled', '', async (isNot, timeout) => {
+  return toBeTruthy.call(this, 'toBeDisabled', locator, 'Locator', 'disabled', '', async (isNot, timeout) => {
     return await locator._expect('to.be.disabled', { isNot, timeout });
   }, options);
 }
@@ -80,9 +90,8 @@ export function toBeEditable(
 ) {
   const editable = !options || options.editable === undefined || options.editable;
   const expected = editable ? 'editable' : 'readOnly';
-  const unexpected = editable ? 'readOnly' : 'editable';
   const arg = editable ? '' : '{ editable: false }';
-  return toBeTruthy.call(this, 'toBeEditable', locator, 'Locator', expected, unexpected, arg, async (isNot, timeout) => {
+  return toBeTruthy.call(this, 'toBeEditable', locator, 'Locator', expected, arg, async (isNot, timeout) => {
     return await locator._expect(editable ? 'to.be.editable' : 'to.be.readonly', { isNot, timeout });
   }, options);
 }
@@ -92,7 +101,7 @@ export function toBeEmpty(
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeEmpty', locator, 'Locator', 'empty', 'notEmpty', '', async (isNot, timeout) => {
+  return toBeTruthy.call(this, 'toBeEmpty', locator, 'Locator', 'empty', '', async (isNot, timeout) => {
     return await locator._expect('to.be.empty', { isNot, timeout });
   }, options);
 }
@@ -104,9 +113,8 @@ export function toBeEnabled(
 ) {
   const enabled = !options || options.enabled === undefined || options.enabled;
   const expected = enabled ? 'enabled' : 'disabled';
-  const unexpected = enabled ? 'disabled' : 'enabled';
   const arg = enabled ? '' : '{ enabled: false }';
-  return toBeTruthy.call(this, 'toBeEnabled', locator, 'Locator', expected, unexpected, arg, async (isNot, timeout) => {
+  return toBeTruthy.call(this, 'toBeEnabled', locator, 'Locator', expected, arg, async (isNot, timeout) => {
     return await locator._expect(enabled ? 'to.be.enabled' : 'to.be.disabled', { isNot, timeout });
   }, options);
 }
@@ -116,7 +124,7 @@ export function toBeFocused(
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeFocused', locator, 'Locator', 'focused', 'inactive', '', async (isNot, timeout) => {
+  return toBeTruthy.call(this, 'toBeFocused', locator, 'Locator', 'focused', '', async (isNot, timeout) => {
     return await locator._expect('to.be.focused', { isNot, timeout });
   }, options);
 }
@@ -126,7 +134,7 @@ export function toBeHidden(
   locator: LocatorEx,
   options?: { timeout?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeHidden', locator, 'Locator', 'hidden', 'visible', '', async (isNot, timeout) => {
+  return toBeTruthy.call(this, 'toBeHidden', locator, 'Locator', 'hidden', '', async (isNot, timeout) => {
     return await locator._expect('to.be.hidden', { isNot, timeout });
   }, options);
 }
@@ -138,9 +146,8 @@ export function toBeVisible(
 ) {
   const visible = !options || options.visible === undefined || options.visible;
   const expected = visible ? 'visible' : 'hidden';
-  const unexpected = visible ? 'hidden' : 'visible';
   const arg = visible ? '' : '{ visible: false }';
-  return toBeTruthy.call(this, 'toBeVisible', locator, 'Locator', expected, unexpected, arg, async (isNot, timeout) => {
+  return toBeTruthy.call(this, 'toBeVisible', locator, 'Locator', expected, arg, async (isNot, timeout) => {
     return await locator._expect(visible ? 'to.be.visible' : 'to.be.hidden', { isNot, timeout });
   }, options);
 }
@@ -150,7 +157,7 @@ export function toBeInViewport(
   locator: LocatorEx,
   options?: { timeout?: number, ratio?: number },
 ) {
-  return toBeTruthy.call(this, 'toBeInViewport', locator, 'Locator', 'in viewport', 'outside viewport', '', async (isNot, timeout) => {
+  return toBeTruthy.call(this, 'toBeInViewport', locator, 'Locator', 'in viewport', '', async (isNot, timeout) => {
     return await locator._expect('to.be.in.viewport', { isNot, expectedNumber: options?.ratio, timeout });
   }, options);
 }
@@ -205,6 +212,18 @@ export function toHaveAccessibleName(
   }
 }
 
+export function toHaveAccessibleErrorMessage(
+  this: ExpectMatcherState,
+  locator: LocatorEx,
+  expected: string | RegExp,
+  options?: { timeout?: number; ignoreCase?: boolean },
+) {
+  return toMatchText.call(this, 'toHaveAccessibleErrorMessage', locator, 'Locator', async (isNot, timeout) => {
+    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase, normalizeWhiteSpace: true });
+    return await locator._expect('to.have.accessible.error.message', { expectedText: expectedText, isNot, timeout });
+  }, expected, options);
+}
+
 export function toHaveAttribute(
   this: ExpectMatcherState,
   locator: LocatorEx,
@@ -220,7 +239,7 @@ export function toHaveAttribute(
     }
   }
   if (expected === undefined) {
-    return toBeTruthy.call(this, 'toHaveAttribute', locator, 'Locator', 'have attribute', 'not have attribute', '', async (isNot, timeout) => {
+    return toBeTruthy.call(this, 'toHaveAttribute', locator, 'Locator', 'have attribute', '', async (isNot, timeout) => {
       return await locator._expect('to.have.attribute', { expressionArg: name, isNot, timeout });
     }, options);
   }

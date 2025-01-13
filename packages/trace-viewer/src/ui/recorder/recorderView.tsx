@@ -21,7 +21,6 @@ import type { TabbedPaneTabModel } from '@web/components/tabbedPane';
 import { TabbedPane } from '@web/components/tabbedPane';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton, ToolbarSeparator } from '@web/components/toolbarButton';
-import { toggleTheme } from '@web/theme';
 import { copy, useSetting } from '@web/uiUtils';
 import * as React from 'react';
 import { ConsoleTab, useConsoleTabModel } from '../consoleTab';
@@ -37,6 +36,8 @@ import './recorderView.css';
 import { ActionListView } from './actionListView';
 import { BackendContext, BackendProvider } from './backendContext';
 import type { Language } from '@isomorphic/locatorGenerators';
+import { SettingsToolbarButton } from '../settingsToolbarButton';
+import type { HighlightedElement } from '../snapshotTab';
 
 export const RecorderView: React.FunctionComponent = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -56,8 +57,8 @@ export const Workbench: React.FunctionComponent = () => {
   const [fileId, setFileId] = React.useState<string | undefined>();
   const [selectedStartTime, setSelectedStartTime] = React.useState<number | undefined>(undefined);
   const [isInspecting, setIsInspecting] = React.useState(false);
-  const [highlightedLocatorInProperties, setHighlightedLocatorInProperties] = React.useState<string>('');
-  const [highlightedLocatorInTrace, setHighlightedLocatorInTrace] = React.useState<string>('');
+  const [highlightedElementInProperties, setHighlightedElementInProperties] = React.useState<HighlightedElement>({ lastEdited: 'none' });
+  const [highlightedElementInTrace, setHighlightedElementInTrace] = React.useState<HighlightedElement>({ lastEdited: 'none' });
   const [traceCallId, setTraceCallId] = React.useState<string | undefined>();
 
   const setSelectedAction = React.useCallback((action: actionTypes.ActionInContext | undefined) => {
@@ -103,15 +104,15 @@ export const Workbench: React.FunctionComponent = () => {
     return { boundaries };
   }, [model]);
 
-  const locatorPickedInTrace = React.useCallback((locator: string) => {
-    setHighlightedLocatorInProperties(locator);
-    setHighlightedLocatorInTrace('');
+  const elementPickedInTrace = React.useCallback((element: HighlightedElement) => {
+    setHighlightedElementInProperties(element);
+    setHighlightedElementInTrace({ lastEdited: 'none' });
     setIsInspecting(false);
   }, []);
 
-  const locatorTypedInProperties = React.useCallback((locator: string) => {
-    setHighlightedLocatorInTrace(locator);
-    setHighlightedLocatorInProperties(locator);
+  const elementTypedInProperties = React.useCallback((element: HighlightedElement) => {
+    setHighlightedElementInTrace(element);
+    setHighlightedElementInProperties(element);
   }, []);
 
   const actionList = <ActionListView
@@ -148,7 +149,7 @@ export const Workbench: React.FunctionComponent = () => {
     <SourceChooser fileId={fileId} sources={backend?.sources || []} setFileId={fileId => {
       setFileId(fileId);
     }} />
-    <ToolbarButton icon='color-mode' title='Toggle color mode' toggled={false} onClick={() => toggleTheme()}></ToolbarButton>
+    <SettingsToolbarButton />
   </Toolbar>;
 
   const sidebarTabbedPane = <TabbedPane tabs={[actionsTab]} />;
@@ -157,14 +158,14 @@ export const Workbench: React.FunctionComponent = () => {
     callId={traceCallId}
     isInspecting={isInspecting}
     setIsInspecting={setIsInspecting}
-    highlightedLocator={highlightedLocatorInTrace}
-    setHighlightedLocator={locatorPickedInTrace} />;
+    highlightedElement={highlightedElementInTrace}
+    setHighlightedElement={elementPickedInTrace} />;
   const propertiesView = <PropertiesView
     sdkLanguage={sdkLanguage}
     boundaries={boundaries}
     setIsInspecting={setIsInspecting}
-    highlightedLocator={highlightedLocatorInProperties}
-    setHighlightedLocator={locatorTypedInProperties}
+    highlightedElement={highlightedElementInProperties}
+    setHighlightedElement={elementTypedInProperties}
     sourceLocation={sourceLocation} />;
 
   return <div className='vbox workbench'>
@@ -192,15 +193,15 @@ const PropertiesView: React.FunctionComponent<{
   sdkLanguage: Language,
   boundaries: Boundaries,
   setIsInspecting: (value: boolean) => void,
-  highlightedLocator: string,
-  setHighlightedLocator: (locator: string) => void,
+  highlightedElement: HighlightedElement,
+  setHighlightedElement: (element: HighlightedElement) => void,
   sourceLocation: modelUtil.SourceLocation | undefined,
 }> = ({
   sdkLanguage,
   boundaries,
   setIsInspecting,
-  highlightedLocator,
-  setHighlightedLocator,
+  highlightedElement,
+  setHighlightedElement,
   sourceLocation,
 }) => {
   const model = React.useContext(ModelContext);
@@ -215,8 +216,8 @@ const PropertiesView: React.FunctionComponent<{
     render: () => <InspectorTab
       sdkLanguage={sdkLanguage}
       setIsInspecting={setIsInspecting}
-      highlightedLocator={highlightedLocator}
-      setHighlightedLocator={setHighlightedLocator} />,
+      highlightedElement={highlightedElement}
+      setHighlightedElement={setHighlightedElement} />,
   };
 
   const sourceTab: TabbedPaneTabModel = {
@@ -260,17 +261,21 @@ const TraceView: React.FunctionComponent<{
   callId: string | undefined,
   isInspecting: boolean;
   setIsInspecting: (value: boolean) => void;
-  highlightedLocator: string;
-  setHighlightedLocator: (locator: string) => void;
+  highlightedElement: HighlightedElement;
+  setHighlightedElement: (element: HighlightedElement) => void;
 }> = ({
   sdkLanguage,
   callId,
   isInspecting,
   setIsInspecting,
-  highlightedLocator,
-  setHighlightedLocator,
+  highlightedElement,
+  setHighlightedElement,
 }) => {
   const model = React.useContext(ModelContext);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [shouldPopulateCanvasFromScreenshot, _] = useSetting('shouldPopulateCanvasFromScreenshot', false);
+
   const action = React.useMemo(() => {
     return model?.actions.find(a => a.callId === callId);
   }, [model, callId]);
@@ -280,15 +285,15 @@ const TraceView: React.FunctionComponent<{
     return snapshot.action || snapshot.after || snapshot.before;
   }, [action]);
   const snapshotUrls = React.useMemo(() => {
-    return snapshot ? extendSnapshot(snapshot) : undefined;
-  }, [snapshot]);
+    return snapshot ? extendSnapshot(snapshot, shouldPopulateCanvasFromScreenshot) : undefined;
+  }, [snapshot, shouldPopulateCanvasFromScreenshot]);
 
   return <SnapshotView
     sdkLanguage={sdkLanguage}
     testIdAttributeName='data-testid'
     isInspecting={isInspecting}
     setIsInspecting={setIsInspecting}
-    highlightedLocator={highlightedLocator}
-    setHighlightedLocator={setHighlightedLocator}
+    highlightedElement={highlightedElement}
+    setHighlightedElement={setHighlightedElement}
     snapshotUrls={snapshotUrls} />;
 };
