@@ -60,7 +60,10 @@ it('should have browser', async ({ browserName, browser, contextFactory, server 
   const { page, getLog } = await pageWithHar(contextFactory, testInfo);
   await page.goto(server.EMPTY_PAGE);
   const log = await getLog();
-  expect(log.browser!.name.toLowerCase()).toBe(browserName);
+
+  // _bidiFirefox and _bidiChromium are initialized with 'bidi' as browser name.
+  const harBrowserName = browserName.startsWith('_bidi') ? 'bidi' : browserName;
+  expect(log.browser!.name.toLowerCase()).toBe(harBrowserName);
   expect(log.browser!.version).toBe(browser.version());
 });
 
@@ -957,6 +960,9 @@ it('should not hang on slow chunked response', async ({ browserName, browser, co
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => (window as any).receivedFirstData);
   const log = await getLog();
-  expect(log.browser!.name.toLowerCase()).toBe(browserName);
+
+  // _bidiFirefox and _bidiChromium are initialized with 'bidi' as browser name.
+  const harBrowserName = browserName.startsWith('_bidi') ? 'bidi' : browserName;
+  expect(log.browser!.name.toLowerCase()).toBe(harBrowserName);
   expect(log.browser!.version).toBe(browser.version());
 });
