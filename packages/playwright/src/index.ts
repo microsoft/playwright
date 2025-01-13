@@ -19,7 +19,6 @@ import * as path from 'path';
 import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
 import { createGuid, debugMode, addInternalStackPrefix, isString, asLocator, jsonStringifyForceASCII, zones } from 'playwright-core/lib/utils';
-import type { ExpectZone } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import { rootTestType } from './common/testType';
@@ -264,12 +263,12 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         // Some special calls do not get into steps.
         if (!testInfo || data.apiName.includes('setTestIdAttribute') || data.apiName === 'tracing.groupEnd')
           return;
-        const expectZone = zones.zoneData<ExpectZone>('expectZone');
-        if (expectZone) {
+        const zone = zones.zoneData<TestStepInternal>('stepZone');
+        if (zone && zone.category === 'expect') {
           // Display the internal locator._expect call under the name of the enclosing expect call,
           // and connect it to the existing expect step.
-          data.apiName = expectZone.title;
-          data.stepId = expectZone.stepId;
+          data.apiName = zone.title;
+          data.stepId = zone.stepId;
           return;
         }
         // In the general case, create a step for each api call and connect them through the stepId.
