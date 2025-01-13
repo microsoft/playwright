@@ -60,6 +60,11 @@
     color: var(--color-scale-orange-6);
     border: 1px solid var(--color-scale-orange-4);
   }
+  .label-color-gray {
+    background-color: var(--color-scale-gray-0);
+    color: var(--color-scale-gray-6);
+    border: 1px solid var(--color-scale-gray-4);
+  }
 }
 
 @media(prefers-color-scheme: dark) {
@@ -92,6 +97,11 @@
     background-color: var(--color-scale-orange-9);
     color: var(--color-scale-orange-2);
     border: 1px solid var(--color-scale-orange-4);
+  }
+  .label-color-gray {
+    background-color: var(--color-scale-gray-9);
+    color: var(--color-scale-gray-2);
+    border: 1px solid var(--color-scale-gray-4);
   }
 }
 
