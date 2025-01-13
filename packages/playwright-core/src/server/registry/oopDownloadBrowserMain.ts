@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import type { WriteStream } from 'fs';
 import fs from 'fs';
 import path from 'path';
 import { httpRequest } from '../../utils/network';
@@ -46,7 +47,7 @@ function browserDirectoryToMarkerFilePath(browserDirectory: string): string {
   return path.join(browserDirectory, 'INSTALLATION_COMPLETE');
 }
 
-function downloadFile(options: DownloadParams, file: Writable): Promise<void> {
+function downloadFile(options: DownloadParams, file: WriteStream | Writable): Promise<void> {
   let downloadedBytes = 0;
   let totalBytes = 0;
 
@@ -89,7 +90,10 @@ function downloadFile(options: DownloadParams, file: Writable): Promise<void> {
     response.pipe(file);
     response.on('data', onData);
     response.on('error', (error: any) => {
-      file.destroy();
+      if ('close' in file)
+        file.close();
+      else
+        file.destroy(error);
       if (error?.code === 'ECONNRESET') {
         log(`-- download failed, server closed connection`);
         promise.reject(new Error(`Download failed: server closed connection. URL: ${options.url}`));
