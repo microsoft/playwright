@@ -1,1 +1,1 @@
-This directory contains a modified copy of the `tar-stream` library that's used exclusively to extract TAR files.
+This folder contains the `index.js` file from the [tar-fs](https://github.com/mafintosh/tar-fs/commit/7ce355d649e47d0c79ec092bb926d325884916b0) and `extract.js` and `headers.js` files from [tar-stream](https://github.com/mafintosh/tar-stream/commit/126968fd3c4a39eba5f8318c255e04cedbbad176) with the modifications seen in `diff.patch`.
