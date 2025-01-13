@@ -1,4 +1,4 @@
-const { Writable, Readable, getStreamError } = require('stream')
+const { Writable, Readable } = require('stream')
 const headers = require('./headers')
 
 const EMPTY = Buffer.alloc(0)
@@ -78,10 +78,6 @@ class Source extends Readable {
     }
   }
 
-  _predestroy () {
-    this._parent.destroy(getStreamError(this))
-  }
-
   _detach () {
     if (this._parent._stream === this) {
       this._parent._stream = null
@@ -91,6 +87,7 @@ class Source extends Readable {
   }
 
   _destroy (err, cb) {
+    this._parent.destroy(err)
     this._detach()
     cb(null)
   }
