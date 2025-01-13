@@ -61,6 +61,14 @@ This project incorporates components from the projects listed below. The origina
       }
     }
 
+    if (project === "playwright-core") {
+      const tar = path.join(projectDir, 'src', 'utils', 'third_party', 'tar');
+      const license = path.join(tar, 'LICENSE');
+      const licenseText = fs.readFileSync(license, 'utf8');
+      allPackages['tar-fs'] = { licenseText, repository: 'https://github.com/mafintosh/tar-fs' };
+      allPackages['tar-stream'] = { licenseText, repository: 'https://github.com/mafintosh/tar-stream' };
+    }
+
     const packages = await checkDir('node_modules/codemirror');
     for (const [key, value] of Object.entries(packages)) {
       if (value.licenseText)

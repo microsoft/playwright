@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
+import type { WriteStream } from 'fs';
 import fs from 'fs';
 import path from 'path';
 import { httpRequest } from '../../utils/network';
 import { ManualPromise } from '../../utils/manualPromise';
 import { extract } from '../../zipBundle';
+import tar from '../../utils/third_party/tar';
+import { pipeline } from 'stream/promises';
+import { createBrotliDecompress } from 'zlib';
+import type { Writable } from 'stream';
 
 export type DownloadParams = {
   title: string;
@@ -42,7 +47,7 @@ function browserDirectoryToMarkerFilePath(browserDirectory: string): string {
   return path.join(browserDirectory, 'INSTALLATION_COMPLETE');
 }
 
-function downloadFile(options: DownloadParams): Promise<void> {
+function downloadFile(options: DownloadParams, file: WriteStream | Writable): Promise<void> {
   let downloadedBytes = 0;
   let totalBytes = 0;
 
@@ -72,7 +77,6 @@ function downloadFile(options: DownloadParams): Promise<void> {
     }
     totalBytes = parseInt(response.headers['content-length'] || '0', 10);
     log(`-- total bytes: ${totalBytes}`);
-    const file = fs.createWriteStream(options.zipPath);
     file.on('finish', () => {
       if (downloadedBytes !== totalBytes) {
         log(`-- download failed, size mismatch: ${downloadedBytes} != ${totalBytes}`);
@@ -86,7 +90,10 @@ function downloadFile(options: DownloadParams): Promise<void> {
     response.pipe(file);
     response.on('data', onData);
     response.on('error', (error: any) => {
-      file.close();
+      if ('close' in file)
+        file.close();
+      else
+        file.destroy(error);
       if (error?.code === 'ECONNRESET') {
         log(`-- download failed, server closed connection`);
         promise.reject(new Error(`Download failed: server closed connection. URL: ${options.url}`));
@@ -105,10 +112,24 @@ function downloadFile(options: DownloadParams): Promise<void> {
 }
 
 async function main(options: DownloadParams) {
-  await downloadFile(options);
-  log(`SUCCESS downloading ${options.title}`);
-  log(`extracting archive`);
-  await extract(options.zipPath, { dir: options.browserDirectory });
+  if (options.url.endsWith('.tar.br')) {
+    const decompress = createBrotliDecompress();
+    const extraction = pipeline(
+        decompress,
+        tar.extract(options.browserDirectory),
+    );
+    await Promise.all([
+      extraction,
+      downloadFile(options, decompress)
+    ]);
+    log(`SUCCESS downloading and extracting ${options.title}`);
+  } else {
+    const file = fs.createWriteStream(options.zipPath);
+    await downloadFile(options, file);
+    log(`SUCCESS downloading ${options.title}`);
+    log(`extracting archive`);
+    await extract(options.zipPath, { dir: options.browserDirectory });
+  }
   if (options.executablePath) {
     log(`fixing permissions at ${options.executablePath}`);
     await fs.promises.chmod(options.executablePath, 0o755);
