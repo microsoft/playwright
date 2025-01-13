@@ -117,12 +117,12 @@ const ActionParameterContext: React.FC<{
     <div
       className={clsx(
           'action-parameter',
-          action.apiName.startsWith('locator')
+          parameterString.type === 'locator'
             ? 'action-locator-parameter'
             : 'action-generic-parameter',
       )}
     >
-      {parameterString}
+      {parameterString.value}
     </div>
   );
 };

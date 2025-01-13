@@ -17,21 +17,28 @@
 import type { ActionTraceEvent } from '@trace/trace';
 import { asLocator, type Language } from '@isomorphic/locatorGenerators';
 
+export interface ActionParameterDisplayString {
+  type: 'generic' | 'locator';
+  value: string;
+}
+
 const formatClockParams = (params: {
   ticksNumber?: number;
   ticksString?: string;
   timeNumber?: number;
-}): string | undefined => {
+}): ActionParameterDisplayString | undefined => {
+  let value: string | undefined = undefined;
+
   if (params.ticksNumber !== undefined) {
     // clock.fastForward/runFor
-    return `${params.ticksNumber}ms`;
+    value = `${params.ticksNumber}ms`;
   } else if (params.ticksString !== undefined) {
     // clock.fastForward/runFor
-    return params.ticksString;
+    value = params.ticksString;
   } else if (params.timeNumber !== undefined) {
     // clock.pauseAt/setFixedTime/setSystemTime
     try {
-      return new Date(params.timeNumber).toLocaleString(undefined, {
+      value = new Date(params.timeNumber).toLocaleString(undefined, {
         timeZone: 'UTC',
       });
     } catch (e) {
@@ -39,30 +46,44 @@ const formatClockParams = (params: {
     }
   }
 
-  return undefined;
+  if (value === undefined)
+    return undefined;
+
+  return {
+    type: 'generic',
+    value,
+  };
 };
 
 const formatLocatorParams = (
   sdkLanguage: Language,
   params: { selector?: string },
-): string | undefined =>
+): ActionParameterDisplayString | undefined =>
   params.selector !== undefined
-    ? asLocator(sdkLanguage, params.selector)
+    ? { type: 'locator', value: asLocator(sdkLanguage, params.selector) }
     : undefined;
 
 const formatKeyboardParams = (params: {
   key?: string;
   text?: string;
-}): string | undefined => {
+}): ActionParameterDisplayString | undefined => {
+  let value: string | undefined = undefined;
+
   if (params.key !== undefined) {
     // keyboard.press/down/up
-    return params.key;
+    value = params.key;
   } else if (params.text !== undefined) {
     // keyboard.type/insertText
-    return `"${params.text}"`;
+    value = `"${params.text}"`;
   }
 
-  return undefined;
+  if (value === undefined)
+    return undefined;
+
+  return {
+    type: 'generic',
+    value,
+  };
 };
 
 const formatMouseParams = (params: {
@@ -70,36 +91,52 @@ const formatMouseParams = (params: {
   y?: number;
   deltaX?: number;
   deltaY?: number;
-}): string | undefined => {
+}): ActionParameterDisplayString | undefined => {
+  let value: string | undefined = undefined;
+
   if (params.x !== undefined && params.y !== undefined) {
     // mouse.click/dblclick/move
-    return `(${params.x}, ${params.y})`;
+    value = `(${params.x}, ${params.y})`;
   } else if (params.deltaX !== undefined && params.deltaY !== undefined) {
     // mouse.wheel
-    return `(${params.deltaX}, ${params.deltaY})`;
+    value = `(${params.deltaX}, ${params.deltaY})`;
   }
 
-  return undefined;
+  if (value === undefined)
+    return undefined;
+
+  return {
+    type: 'generic',
+    value,
+  };
 };
 
 const formatTouchscreenParams = (params: {
   x?: number;
   y?: number;
-}): string | undefined => {
+}): ActionParameterDisplayString | undefined => {
+  let value: string | undefined = undefined;
+
   if (params.x && params.y) {
     // touchscreen.tap
-    return `(${params.x}, ${params.y})`;
+    value = `(${params.x}, ${params.y})`;
   }
 
-  return undefined;
+  if (value === undefined)
+    return undefined;
+
+  return {
+    type: 'generic',
+    value,
+  };
 };
 
 export const actionParameterDisplayString = (
   action: ActionTraceEvent,
   sdkLanguage: Language,
-): string | undefined => {
+): ActionParameterDisplayString | undefined => {
   const params = action.params;
-  const apiName = action.apiName;
+  const apiName = action.apiName.toLowerCase();
 
   switch (true) {
     case apiName.startsWith('clock'):
@@ -108,6 +145,7 @@ export const actionParameterDisplayString = (
       return formatKeyboardParams(params);
     case apiName.startsWith('locator'):
     case apiName.startsWith('expect'):
+    case apiName.startsWith('frame'):
       return formatLocatorParams(sdkLanguage, params);
     case apiName.startsWith('mouse'):
       return formatMouseParams(params);
