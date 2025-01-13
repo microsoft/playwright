@@ -1,0 +1,356 @@
+diff --git a/extract.js b/extract.js
+index 739ebc9..438c9f0 100644
+--- a/extract.js
++++ b/extract.js
+@@ -1,15 +1,13 @@
+-const { Writable, Readable, getStreamError } = require('streamx')
+-const FIFO = require('fast-fifo')
+-const b4a = require('b4a')
++const { Writable, Readable } = require('stream')
+ const headers = require('./headers')
+ 
+-const EMPTY = b4a.alloc(0)
++const EMPTY = Buffer.alloc(0)
+ 
+ class BufferList {
+   constructor () {
+     this.buffered = 0
+     this.shifted = 0
+-    this.queue = new FIFO()
++    this.queue = []
+ 
+     this._offset = 0
+   }
+@@ -38,11 +36,11 @@ class BufferList {
+       chunks.push(chunk)
+     }
+ 
+-    return b4a.concat(chunks)
++    return Buffer.concat(chunks)
+   }
+ 
+   _next (size) {
+-    const buf = this.queue.peek()
++    const buf = this.queue[0]
+     const rem = buf.byteLength - this._offset
+ 
+     if (size >= rem) {
+@@ -71,18 +69,13 @@ class Source extends Readable {
+     this._parent = self
+   }
+ 
+-  _read (cb) {
++  _read () {
+     if (this.header.size === 0) {
+       this.push(null)
+     }
+     if (this._parent._stream === this) {
+       this._parent._update()
+     }
+-    cb(null)
+-  }
+-
+-  _predestroy () {
+-    this._parent.destroy(getStreamError(this))
+   }
+ 
+   _detach () {
+@@ -93,7 +86,8 @@ class Source extends Readable {
+     }
+   }
+ 
+-  _destroy (cb) {
++  _destroy (err, cb) {
++    this._parent.destroy(err)
+     this._detach()
+     cb(null)
+   }
+@@ -281,7 +275,7 @@ class Extract extends Writable {
+     cb(err)
+   }
+ 
+-  _write (data, cb) {
++  _write (data, encoding, cb) {
+     this._callback = cb
+     this._buffer.push(data)
+     this._update()
+@@ -296,102 +290,10 @@ class Extract extends Writable {
+     this._continueWrite(null)
+   }
+ 
+-  _destroy (cb) {
+-    if (this._stream) this._stream.destroy(getStreamError(this))
++  _destroy (err, cb) {
++    if (this._stream) this._stream.destroy(err)
+     cb(null)
+   }
+-
+-  [Symbol.asyncIterator] () {
+-    let error = null
+-
+-    let promiseResolve = null
+-    let promiseReject = null
+-
+-    let entryStream = null
+-    let entryCallback = null
+-
+-    const extract = this
+-
+-    this.on('entry', onentry)
+-    this.on('error', (err) => { error = err })
+-    this.on('close', onclose)
+-
+-    return {
+-      [Symbol.asyncIterator] () {
+-        return this
+-      },
+-      next () {
+-        return new Promise(onnext)
+-      },
+-      return () {
+-        return destroy(null)
+-      },
+-      throw (err) {
+-        return destroy(err)
+-      }
+-    }
+-
+-    function consumeCallback (err) {
+-      if (!entryCallback) return
+-      const cb = entryCallback
+-      entryCallback = null
+-      cb(err)
+-    }
+-
+-    function onnext (resolve, reject) {
+-      if (error) {
+-        return reject(error)
+-      }
+-
+-      if (entryStream) {
+-        resolve({ value: entryStream, done: false })
+-        entryStream = null
+-        return
+-      }
+-
+-      promiseResolve = resolve
+-      promiseReject = reject
+-
+-      consumeCallback(null)
+-
+-      if (extract._finished && promiseResolve) {
+-        promiseResolve({ value: undefined, done: true })
+-        promiseResolve = promiseReject = null
+-      }
+-    }
+-
+-    function onentry (header, stream, callback) {
+-      entryCallback = callback
+-      stream.on('error', noop) // no way around this due to tick sillyness
+-
+-      if (promiseResolve) {
+-        promiseResolve({ value: stream, done: false })
+-        promiseResolve = promiseReject = null
+-      } else {
+-        entryStream = stream
+-      }
+-    }
+-
+-    function onclose () {
+-      consumeCallback(error)
+-      if (!promiseResolve) return
+-      if (error) promiseReject(error)
+-      else promiseResolve({ value: undefined, done: true })
+-      promiseResolve = promiseReject = null
+-    }
+-
+-    function destroy (err) {
+-      extract.destroy(err)
+-      consumeCallback(err)
+-      return new Promise((resolve, reject) => {
+-        if (extract.destroyed) return resolve({ value: undefined, done: true })
+-        extract.once('close', function () {
+-          if (err) reject(err)
+-          else resolve({ value: undefined, done: true })
+-        })
+-      })
+-    }
+-  }
+ }
+ 
+ module.exports = function extract (opts) {
+diff --git a/index.js b/index.js
+index 4bed332..71152ca 100644
+--- a/index.js
++++ b/index.js
+@@ -1,108 +1,10 @@
+-const tar = require('tar-stream')
+-const pump = require('pump')
++const tarExtract = require('./extract')
+ const fs = require('fs')
+ const path = require('path')
++const { pipeline } = require('stream/promises')
+ 
+-const win32 = (global.Bare?.platform || process.platform) === 'win32'
++const win32 = process.platform === 'win32'
+ 
+-exports.pack = function pack (cwd, opts) {
+-  if (!cwd) cwd = '.'
+-  if (!opts) opts = {}
+-
+-  const xfs = opts.fs || fs
+-  const ignore = opts.ignore || opts.filter || noop
+-  const mapStream = opts.mapStream || echo
+-  const statNext = statAll(xfs, opts.dereference ? xfs.stat : xfs.lstat, cwd, ignore, opts.entries, opts.sort)
+-  const strict = opts.strict !== false
+-  const umask = typeof opts.umask === 'number' ? ~opts.umask : ~processUmask()
+-  const pack = opts.pack || tar.pack()
+-  const finish = opts.finish || noop
+-
+-  let map = opts.map || noop
+-  let dmode = typeof opts.dmode === 'number' ? opts.dmode : 0
+-  let fmode = typeof opts.fmode === 'number' ? opts.fmode : 0
+-
+-  if (opts.strip) map = strip(map, opts.strip)
+-
+-  if (opts.readable) {
+-    dmode |= parseInt(555, 8)
+-    fmode |= parseInt(444, 8)
+-  }
+-  if (opts.writable) {
+-    dmode |= parseInt(333, 8)
+-    fmode |= parseInt(222, 8)
+-  }
+-
+-  onnextentry()
+-
+-  function onsymlink (filename, header) {
+-    xfs.readlink(path.join(cwd, filename), function (err, linkname) {
+-      if (err) return pack.destroy(err)
+-      header.linkname = normalize(linkname)
+-      pack.entry(header, onnextentry)
+-    })
+-  }
+-
+-  function onstat (err, filename, stat) {
+-    if (pack.destroyed) return
+-    if (err) return pack.destroy(err)
+-    if (!filename) {
+-      if (opts.finalize !== false) pack.finalize()
+-      return finish(pack)
+-    }
+-
+-    if (stat.isSocket()) return onnextentry() // tar does not support sockets...
+-
+-    let header = {
+-      name: normalize(filename),
+-      mode: (stat.mode | (stat.isDirectory() ? dmode : fmode)) & umask,
+-      mtime: stat.mtime,
+-      size: stat.size,
+-      type: 'file',
+-      uid: stat.uid,
+-      gid: stat.gid
+-    }
+-
+-    if (stat.isDirectory()) {
+-      header.size = 0
+-      header.type = 'directory'
+-      header = map(header) || header
+-      return pack.entry(header, onnextentry)
+-    }
+-
+-    if (stat.isSymbolicLink()) {
+-      header.size = 0
+-      header.type = 'symlink'
+-      header = map(header) || header
+-      return onsymlink(filename, header)
+-    }
+-
+-    // TODO: add fifo etc...
+-
+-    header = map(header) || header
+-
+-    if (!stat.isFile()) {
+-      if (strict) return pack.destroy(new Error('unsupported type for ' + filename))
+-      return onnextentry()
+-    }
+-
+-    const entry = pack.entry(header, onnextentry)
+-    const rs = mapStream(xfs.createReadStream(path.join(cwd, filename), { start: 0, end: header.size > 0 ? header.size - 1 : header.size }), header)
+-
+-    rs.on('error', function (err) { // always forward errors on destroy
+-      entry.destroy(err)
+-    })
+-
+-    pump(rs, entry)
+-  }
+-
+-  function onnextentry (err) {
+-    if (err) return pack.destroy(err)
+-    statNext(onstat)
+-  }
+-
+-  return pack
+-}
+ 
+ function head (list) {
+   return list.length ? list[list.length - 1] : null
+@@ -124,7 +26,7 @@ exports.extract = function extract (cwd, opts) {
+   const ignore = opts.ignore || opts.filter || noop
+   const mapStream = opts.mapStream || echo
+   const own = opts.chown !== false && !win32 && processGetuid() === 0
+-  const extract = opts.extract || tar.extract()
++  const extract = opts.extract || tarExtract()
+   const stack = []
+   const now = new Date()
+   const umask = typeof opts.umask === 'number' ? ~opts.umask : ~processUmask()
+@@ -244,10 +146,7 @@ exports.extract = function extract (cwd, opts) {
+         rs.destroy(err)
+       })
+ 
+-      pump(rs, ws, function (err) {
+-        if (err) return next(err)
+-        ws.on('close', stat)
+-      })
++      pipeline(rs, ws).then(stat).catch(next);
+     }
+   }
+ 
+@@ -325,37 +224,6 @@ function normalize (name) {
+   return win32 ? name.replace(/\\/g, '/').replace(/[:?<>|]/g, '_') : name
+ }
+ 
+-function statAll (fs, stat, cwd, ignore, entries, sort) {
+-  if (!entries) entries = ['.']
+-  const queue = entries.slice(0)
+-
+-  return function loop (callback) {
+-    if (!queue.length) return callback(null)
+-
+-    const next = queue.shift()
+-    const nextAbs = path.join(cwd, next)
+-
+-    stat.call(fs, nextAbs, function (err, stat) {
+-      // ignore errors if the files were deleted while buffering
+-      if (err) return callback(entries.indexOf(next) === -1 && err.code === 'ENOENT' ? null : err)
+-
+-      if (!stat.isDirectory()) return callback(null, next, stat)
+-
+-      fs.readdir(nextAbs, function (err, files) {
+-        if (err) return callback(err)
+-
+-        if (sort) files.sort()
+-
+-        for (let i = 0; i < files.length; i++) {
+-          if (!ignore(path.join(cwd, next, files[i]))) queue.push(path.join(next, files[i]))
+-        }
+-
+-        callback(null, next, stat)
+-      })
+-    })
+-  }
+-}
+-
+ function strip (map, level) {
+   return function (header) {
+     header.name = header.name.split('/').slice(level).join('/')
