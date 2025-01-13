@@ -78,6 +78,10 @@ class Source extends Readable {
     }
   }
 
+  _predestroy(err) {
+    this._parent.destroy(err)
+  }
+
   _detach () {
     if (this._parent._stream === this) {
       this._parent._stream = null
@@ -87,7 +91,6 @@ class Source extends Readable {
   }
 
   _destroy (err, cb) {
-    this._parent.destroy(err)
     this._detach()
     cb(null)
   }
@@ -291,7 +294,10 @@ class Extract extends Writable {
   }
 
   _destroy (err, cb) {
-    if (this._stream) this._stream.destroy(err)
+    if (this._stream) {
+      this._stream._predestroy(err)
+      this._stream.destroy(err)
+    }
     cb(null)
   }
 }

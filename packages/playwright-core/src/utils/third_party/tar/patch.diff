@@ -1,5 +1,5 @@
 diff --git a/extract.js b/extract.js
-index 739ebc9..438c9f0 100644
+index 739ebc9..4375232 100644
 --- a/extract.js
 +++ b/extract.js
 @@ -1,15 +1,13 @@
@@ -35,7 +35,7 @@ index 739ebc9..438c9f0 100644
      const rem = buf.byteLength - this._offset
  
      if (size >= rem) {
-@@ -71,18 +69,13 @@ class Source extends Readable {
+@@ -71,18 +69,17 @@ class Source extends Readable {
      this._parent = self
    }
  
@@ -48,24 +48,25 @@ index 739ebc9..438c9f0 100644
        this._parent._update()
      }
 -    cb(null)
--  }
--
+   }
+ 
 -  _predestroy () {
 -    this._parent.destroy(getStreamError(this))
++  _predestroy(err) {
++    this._parent.destroy(err)
    }
  
    _detach () {
-@@ -93,7 +86,8 @@ class Source extends Readable {
+@@ -93,7 +90,7 @@ class Source extends Readable {
      }
    }
  
 -  _destroy (cb) {
 +  _destroy (err, cb) {
-+    this._parent.destroy(err)
      this._detach()
      cb(null)
    }
-@@ -281,7 +275,7 @@ class Extract extends Writable {
+@@ -281,7 +278,7 @@ class Extract extends Writable {
      cb(err)
    }
  
@@ -74,16 +75,14 @@ index 739ebc9..438c9f0 100644
      this._callback = cb
      this._buffer.push(data)
      this._update()
-@@ -296,102 +290,10 @@ class Extract extends Writable {
+@@ -296,101 +293,12 @@ class Extract extends Writable {
      this._continueWrite(null)
    }
  
 -  _destroy (cb) {
 -    if (this._stream) this._stream.destroy(getStreamError(this))
-+  _destroy (err, cb) {
-+    if (this._stream) this._stream.destroy(err)
-     cb(null)
-   }
+-    cb(null)
+-  }
 -
 -  [Symbol.asyncIterator] () {
 -    let error = null
@@ -174,11 +173,15 @@ index 739ebc9..438c9f0 100644
 -          else resolve({ value: undefined, done: true })
 -        })
 -      })
--    }
--  }
++  _destroy (err, cb) {
++    if (this._stream) {
++      this._stream._predestroy(err)
++      this._stream.destroy(err)
+     }
++    cb(null)
+   }
  }
  
- module.exports = function extract (opts) {
 diff --git a/index.js b/index.js
 index 4bed332..71152ca 100644
 --- a/index.js
