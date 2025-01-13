@@ -1,5 +1,3 @@
-library/beforeunload.spec.ts › should access page after beforeunload [timeout]
-library/beforeunload.spec.ts › should run beforeunload if asked for @smoke [timeout]
 library/browsercontext-events.spec.ts › console event should work in immediately closed popup [timeout]
 library/browsercontext-events.spec.ts › console event should work in popup 2 [timeout]
 library/browsercontext-events.spec.ts › dialog event should work in immediately closed popup [timeout]
