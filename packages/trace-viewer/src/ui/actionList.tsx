@@ -25,7 +25,7 @@ import { TreeView } from '@web/components/treeView';
 import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
 import type { Boundaries } from './geometry';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { actionContextString } from './string';
+import { actionParameterDisplayString } from './string';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
@@ -104,25 +104,25 @@ export const ActionList: React.FC<ActionListProps> = ({
   </div>;
 };
 
-const ActionContext: React.FC<{
+const ActionParameterContext: React.FC<{
   action: ActionTraceEvent;
   sdkLanguage: Language;
 }> = ({ action, sdkLanguage }) => {
-  const contextString = actionContextString(action, sdkLanguage);
+  const parameterString = actionParameterDisplayString(action, sdkLanguage);
 
-  if (contextString === undefined)
+  if (parameterString === undefined)
     return null;
 
   return (
     <div
       className={clsx(
-          'action-context',
+          'action-parameter',
           action.apiName.startsWith('locator')
-            ? 'action-locator-context'
-            : 'action-generic-context',
+            ? 'action-locator-parameter'
+            : 'action-generic-parameter',
       )}
     >
-      {contextString}
+      {parameterString}
     </div>
   );
 };
@@ -151,7 +151,7 @@ export const renderAction = (
   return <>
     <div className='action-title' title={action.apiName}>
       <span>{action.apiName}</span>
-      <ActionContext action={action} sdkLanguage={sdkLanguage || 'javascript'} />
+      <ActionParameterContext action={action} sdkLanguage={sdkLanguage || 'javascript'} />
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
       {action.class === 'APIRequestContext' && action.params.url && <div className='action-url' title={action.params.url}>{excludeOrigin(action.params.url)}</div>}
     </div>
