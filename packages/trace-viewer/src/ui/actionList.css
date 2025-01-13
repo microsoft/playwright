@@ -70,11 +70,18 @@
   flex: none;
 }
 
-.action-selector {
+.action-parameter {
   display: inline;
   flex: none;
   padding-left: 5px;
+}
+
+.action-locator-parameter {
   color: var(--vscode-charts-orange);
+}
+
+.action-generic-parameter {
+  color: var(--vscode-charts-purple);
 }
 
 .action-url {

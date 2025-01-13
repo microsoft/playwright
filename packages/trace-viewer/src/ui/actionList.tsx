@@ -15,17 +15,17 @@
 */
 
 import type { ActionTraceEvent, AfterActionTraceEventAttachment } from '@trace/trace';
-import { msToString } from '@web/uiUtils';
+import { clsx, msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './actionList.css';
 import * as modelUtil from './modelUtil';
-import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
 import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
 import type { Boundaries } from './geometry';
 import { ToolbarButton } from '@web/components/toolbarButton';
+import { actionParameterDisplayString } from './string';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
@@ -104,6 +104,29 @@ export const ActionList: React.FC<ActionListProps> = ({
   </div>;
 };
 
+const ActionParameterContext: React.FC<{
+  action: ActionTraceEvent;
+  sdkLanguage: Language;
+}> = ({ action, sdkLanguage }) => {
+  const parameterString = actionParameterDisplayString(action, sdkLanguage);
+
+  if (parameterString === undefined)
+    return null;
+
+  return (
+    <div
+      className={clsx(
+          'action-parameter',
+          parameterString.type === 'locator'
+            ? 'action-locator-parameter'
+            : 'action-generic-parameter',
+      )}
+    >
+      {parameterString.value}
+    </div>
+  );
+};
+
 export const renderAction = (
   action: ActionTraceEvent,
   options: {
@@ -116,7 +139,6 @@ export const renderAction = (
   }) => {
   const { sdkLanguage, revealConsole, revealAttachment, isLive, showDuration, showBadges } = options;
   const { errors, warnings } = modelUtil.stats(action);
-  const locator = action.params.selector ? asLocator(sdkLanguage || 'javascript', action.params.selector) : undefined;
   const showAttachments = !!action.attachments?.length && !!revealAttachment;
 
   let time: string = '';
@@ -129,7 +151,7 @@ export const renderAction = (
   return <>
     <div className='action-title' title={action.apiName}>
       <span>{action.apiName}</span>
-      {locator && <div className='action-selector' title={locator}>{locator}</div>}
+      <ActionParameterContext action={action} sdkLanguage={sdkLanguage || 'javascript'} />
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
       {action.class === 'APIRequestContext' && action.params.url && <div className='action-url' title={action.params.url}>{excludeOrigin(action.params.url)}</div>}
     </div>
