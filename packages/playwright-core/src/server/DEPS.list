@@ -4,6 +4,7 @@
 ../protocol/
 ../utils/
 ../utils/isomorphic/
+../utils/third_party/tar/
 ../utilsBundle.ts
 ../zipBundle.ts
 ./
