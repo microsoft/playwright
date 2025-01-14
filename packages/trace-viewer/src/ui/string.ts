@@ -22,18 +22,21 @@ export interface ActionParameterDisplayString {
   value: string;
 }
 
-const formatClockParams = (params: {
-  ticksNumber?: number;
-  ticksString?: string;
-  timeNumber?: number;
-}): ActionParameterDisplayString | undefined => {
+export const actionParameterDisplayString = (
+  action: ActionTraceEvent,
+  sdkLanguage: Language,
+): ActionParameterDisplayString | undefined => {
+  const params = action.params;
+
   let value: string | undefined = undefined;
 
-  if (params.ticksNumber !== undefined) {
-    // clock.fastForward/runFor
+  if (params.selector !== undefined) {
+    return { type: 'locator', value: asLocator(sdkLanguage, params.selector) };
+  } else if (params.ticksNumber !== undefined) {
+    // clock.fastForward/runFor number
     value = `${params.ticksNumber}ms`;
   } else if (params.ticksString !== undefined) {
-    // clock.fastForward/runFor
+    // clock.fastForward/runFor string
     value = params.ticksString;
   } else if (params.timeNumber !== undefined) {
     // clock.pauseAt/setFixedTime/setSystemTime
@@ -44,80 +47,19 @@ const formatClockParams = (params: {
     } catch (e) {
       return undefined;
     }
-  }
-
-  if (value === undefined)
-    return undefined;
-
-  return {
-    type: 'generic',
-    value,
-  };
-};
-
-const formatLocatorParams = (
-  sdkLanguage: Language,
-  params: { selector?: string },
-): ActionParameterDisplayString | undefined =>
-  params.selector !== undefined
-    ? { type: 'locator', value: asLocator(sdkLanguage, params.selector) }
-    : undefined;
-
-const formatKeyboardParams = (params: {
-  key?: string;
-  text?: string;
-}): ActionParameterDisplayString | undefined => {
-  let value: string | undefined = undefined;
-
-  if (params.key !== undefined) {
+  } else if (params.key !== undefined) {
     // keyboard.press/down/up
     value = params.key;
   } else if (params.text !== undefined) {
     // keyboard.type/insertText
     value = `"${params.text}"`;
-  }
-
-  if (value === undefined)
-    return undefined;
-
-  return {
-    type: 'generic',
-    value,
-  };
-};
-
-const formatMouseParams = (params: {
-  x?: number;
-  y?: number;
-  deltaX?: number;
-  deltaY?: number;
-}): ActionParameterDisplayString | undefined => {
-  let value: string | undefined = undefined;
-
-  if (params.x !== undefined && params.y !== undefined) {
+  } else if (params.x !== undefined && params.y !== undefined) {
     // mouse.click/dblclick/move
     value = `(${params.x}, ${params.y})`;
   } else if (params.deltaX !== undefined && params.deltaY !== undefined) {
     // mouse.wheel
     value = `(${params.deltaX}, ${params.deltaY})`;
-  }
-
-  if (value === undefined)
-    return undefined;
-
-  return {
-    type: 'generic',
-    value,
-  };
-};
-
-const formatTouchscreenParams = (params: {
-  x?: number;
-  y?: number;
-}): ActionParameterDisplayString | undefined => {
-  let value: string | undefined = undefined;
-
-  if (params.x && params.y) {
+  } else if (params.x && params.y) {
     // touchscreen.tap
     value = `(${params.x}, ${params.y})`;
   }
@@ -129,29 +71,4 @@ const formatTouchscreenParams = (params: {
     type: 'generic',
     value,
   };
-};
-
-export const actionParameterDisplayString = (
-  action: ActionTraceEvent,
-  sdkLanguage: Language,
-): ActionParameterDisplayString | undefined => {
-  const params = action.params;
-  const apiName = action.apiName.toLowerCase();
-
-  switch (true) {
-    case apiName.startsWith('clock'):
-      return formatClockParams(params);
-    case apiName.startsWith('keyboard'):
-      return formatKeyboardParams(params);
-    case apiName.startsWith('locator'):
-    case apiName.startsWith('expect'):
-    case apiName.startsWith('frame'):
-      return formatLocatorParams(sdkLanguage, params);
-    case apiName.startsWith('mouse'):
-      return formatMouseParams(params);
-    case apiName.startsWith('touchscreen'):
-      return formatTouchscreenParams(params);
-    default:
-      return undefined;
-  }
 };
