@@ -670,3 +670,15 @@ test('should not unshift actual template text', async ({ page }) => {
     - heading "title" [level=1]
 - heading "title 2" [level=1]`);
 });
+
+test('should not match what is not matched', async ({ page }) => {
+  await page.setContent(`<p>Text</p>`);
+  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - paragraph:
+      - button "bogus"
+  `).catch(e => e);
+  expect(stripAnsi(error.message)).toContain(`
+- - paragraph:
+-   - button "bogus"
++ - paragraph: Text`);
+});

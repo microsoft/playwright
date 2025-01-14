@@ -180,8 +180,9 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
 
       // - role "name":
       //   - child
-      const valueIsSequence = value instanceof yaml.YAMLSeq ;
+      const valueIsSequence = value instanceof yaml.YAMLSeq;
       if (valueIsSequence) {
+        container.children.push(childNode);
         convertSeq(childNode, value as yamlTypes.YAMLSeq);
         continue;
       }
