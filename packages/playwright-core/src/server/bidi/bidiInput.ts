@@ -31,16 +31,15 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     this._session = session;
   }
 
-  async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
+  async keydown(modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription, autoRepeat: boolean): Promise<void> {
     const actions: bidi.Input.KeySourceAction[] = [];
-    actions.push({ type: 'keyDown', value: getBidiKeyValue(code) });
-    // TODO: add modifiers?
+    actions.push({ type: 'keyDown', value: getBidiKeyValue(keyName) });
     await this._performActions(actions);
   }
 
-  async keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
+  async keyup(modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription): Promise<void> {
     const actions: bidi.Input.KeySourceAction[] = [];
-    actions.push({ type: 'keyUp', value: getBidiKeyValue(code) });
+    actions.push({ type: 'keyUp', value: getBidiKeyValue(keyName) });
     await this._performActions(actions);
   }
 

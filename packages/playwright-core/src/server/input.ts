@@ -22,7 +22,7 @@ import type { CallMetadata } from './instrumentation';
 
 export const keypadLocation = keyboardLayout.keypadLocation;
 
-type KeyDescription = {
+export type KeyDescription = {
   keyCode: number,
   keyCodeWithoutLocation: number,
   key: string,
@@ -35,8 +35,8 @@ type KeyDescription = {
 const kModifiers: types.KeyboardModifier[] = ['Alt', 'Control', 'Meta', 'Shift'];
 
 export interface RawKeyboard {
-  keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void>;
-  keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void>;
+  keydown(modifiers: Set<types.KeyboardModifier>, keyName: string, description: KeyDescription, autoRepeat: boolean): Promise<void>;
+  keyup(modifiers: Set<types.KeyboardModifier>, keyName: string, description: KeyDescription): Promise<void>;
   sendText(text: string): Promise<void>;
 }
 
@@ -55,8 +55,7 @@ export class Keyboard {
     this._pressedKeys.add(description.code);
     if (kModifiers.includes(description.key as types.KeyboardModifier))
       this._pressedModifiers.add(description.key as types.KeyboardModifier);
-    const text = description.text;
-    await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text);
+    await this._raw.keydown(this._pressedModifiers, key, description, autoRepeat);
   }
 
   private _keyDescriptionForString(str: string): KeyDescription {
@@ -77,7 +76,7 @@ export class Keyboard {
     if (kModifiers.includes(description.key as types.KeyboardModifier))
       this._pressedModifiers.delete(description.key as types.KeyboardModifier);
     this._pressedKeys.delete(description.code);
-    await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location);
+    await this._raw.keyup(this._pressedModifiers, key, description);
   }
 
   async insertText(text: string) {

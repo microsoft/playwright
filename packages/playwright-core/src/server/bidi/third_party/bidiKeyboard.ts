@@ -7,18 +7,18 @@
 
 /* eslint-disable curly */
 
-export const getBidiKeyValue = (code: string) => {
-  switch (code) {
+export const getBidiKeyValue = (keyName: string) => {
+  switch (keyName) {
     case '\r':
     case '\n':
-      code = 'Enter';
+      keyName = 'Enter';
       break;
   }
   // Measures the number of code points rather than UTF-16 code units.
-  if ([...code].length === 1) {
-    return code;
+  if ([...keyName].length === 1) {
+    return keyName;
   }
-  switch (code) {
+  switch (keyName) {
     case 'Cancel':
       return '\uE001';
     case 'Help':
@@ -228,6 +228,6 @@ export const getBidiKeyValue = (code: string) => {
     case 'Quote':
       return '"';
     default:
-      throw new Error(`Unknown key: "${code}"`);
+      throw new Error(`Unknown key: "${keyName}"`);
   }
 };
