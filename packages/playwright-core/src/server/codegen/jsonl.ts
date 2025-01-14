@@ -28,7 +28,7 @@ export class JsonlLanguageGenerator implements LanguageGenerator {
     const locator = (actionInContext.action as any).selector ? JSON.parse(asLocator('jsonl', (actionInContext.action as any).selector)) : undefined;
     const entry = {
       ...actionInContext.action,
-      pageAlias: actionInContext.frame.pageAlias,
+      ...actionInContext.frame,
       locator,
     };
     return JSON.stringify(entry);
