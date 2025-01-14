@@ -60,6 +60,7 @@ export const InspectorTab: React.FunctionComponent<{
     <div style={{ margin: '0 10px 10px', flex: 'auto' }}>
       <CodeMirrorWrapper
         text={highlightedElement.ariaSnapshot || ''}
+        language='yaml'
         wrapLines={false}
         highlight={ariaSnapshotErrors}
         onChange={onAriaEditorChange} />
