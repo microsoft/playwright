@@ -8687,6 +8687,29 @@ interface LocatorAssertions {
    * **Usage**
    *
    * ```js
+   * await page.goto('https://demo.playwright.dev/todomvc/');
+   * await expect(page.locator('body')).toMatchAriaSnapshot(`
+   *   - heading "todos"
+   *   - textbox "What needs to be done?"
+   * `);
+   * ```
+   *
+   * @param expected
+   * @param options
+   */
+  toMatchAriaSnapshot(expected: string, options?: {
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Asserts that the target element matches the given [accessibility snapshot](https://playwright.dev/docs/aria-snapshots).
+   *
+   * **Usage**
+   *
+   * ```js
    * await expect(page.locator('body')).toMatchAriaSnapshot();
    * await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'snapshot' });
    * await expect(page.locator('body')).toMatchAriaSnapshot({ path: '/path/to/snapshot.yml' });
@@ -8706,29 +8729,6 @@ interface LocatorAssertions {
      */
     path?: string;
 
-    /**
-     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
-   * Asserts that the target element matches the given [accessibility snapshot](https://playwright.dev/docs/aria-snapshots).
-   *
-   * **Usage**
-   *
-   * ```js
-   * await page.goto('https://demo.playwright.dev/todomvc/');
-   * await expect(page.locator('body')).toMatchAriaSnapshot(`
-   *   - heading "todos"
-   *   - textbox "What needs to be done?"
-   * `);
-   * ```
-   *
-   * @param expected
-   * @param options
-   */
-  toMatchAriaSnapshot(expected: string, options?: {
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */

@@ -9,7 +9,7 @@ toc_max_heading_level: 2
 
 ### Aria snapshots
 
-New assertion [`method: LocatorAssertions.toMatchAriaSnapshot#2`] verifies page structure by comparing to an expected accessibility tree, represented as YAML.
+New assertion [`method: LocatorAssertions.toMatchAriaSnapshot#1`] verifies page structure by comparing to an expected accessibility tree, represented as YAML.
 
 ```csharp
 await page.GotoAsync("https://playwright.dev");
