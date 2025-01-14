@@ -80,10 +80,16 @@ export type APIRequestFinishedEvent = {
 
 type SendRequestOptions = https.RequestOptions & {
   maxRedirects: number,
-  deadline: number,
+  deadline?: number, // applies to the whole retry sequence.
   headers: HeadersObject,
   __testHookLookup?: (hostname: string) => LookupAddress[]
 };
+
+class RequestTimedOutError extends Error {
+  constructor(timeout: number) {
+    super(`Request timed out after ${timeout}ms`);
+  }
+}
 
 export abstract class APIRequestContext extends SdkObject {
   static Events = {
@@ -180,7 +186,6 @@ export abstract class APIRequestContext extends SdkObject {
 
 
     const timeout = defaults.timeoutSettings.timeout(params);
-    const deadline = timeout && (monotonicTime() + timeout);
 
     const options: SendRequestOptions = {
       method,
@@ -188,7 +193,6 @@ export abstract class APIRequestContext extends SdkObject {
       agent,
       maxRedirects: params.maxRedirects === 0 ? -1 : params.maxRedirects === undefined ? 20 : params.maxRedirects,
       timeout,
-      deadline,
       ...getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, requestUrl.origin),
       __testHookLookup: (params as any).__testHookLookup,
     };
@@ -255,24 +259,33 @@ export abstract class APIRequestContext extends SdkObject {
     }
   }
 
-  private async _sendRequestWithRetries(progress: Progress, url: URL, options: SendRequestOptions, postData?: Buffer, maxRetries?: number): Promise<Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer }>{
-    maxRetries ??= 0;
+  private async _sendRequestWithRetries(progress: Progress, url: URL, options: SendRequestOptions, postData?: Buffer, maxRetries = 0): Promise<Omit<channels.APIResponse, 'fetchUid'> & { body: Buffer }>{
     let backoff = 250;
     for (let i = 0; i <= maxRetries; i++) {
       try {
-        return await this._sendRequest(progress, url, options, postData);
+        const requestOptions = { ...options };
+        if (options.timeout)
+          requestOptions.deadline ??= monotonicTime() + options.timeout;
+        return await this._sendRequest(progress, url, requestOptions, postData);
       } catch (e) {
         e = rewriteOpenSSLErrorIfNeeded(e);
         if (maxRetries === 0)
           throw e;
         if (i === maxRetries || (options.deadline && monotonicTime() + backoff > options.deadline))
           throw new Error(`Failed after ${i + 1} attempt(s): ${e}`);
-        // Retry on connection reset only.
-        if (e.code !== 'ECONNRESET')
+
+        async function retry(reason: string) {
+          progress.log(`  ${reason}, will retry after ${backoff}ms.`);
+          await new Promise(f => setTimeout(f, backoff));
+          backoff *= 2;
+        }
+
+        if (e instanceof RequestTimedOutError)
+          await retry('Request timed out');
+        else if (e.code === 'ECONNRESET')
+          await retry('Received ECONNRESET');
+        else
           throw e;
-        progress.log(`  Received ECONNRESET, will retry after ${backoff}ms.`);
-        await new Promise(f => setTimeout(f, backoff));
-        backoff *= 2;
       }
     }
     throw new Error('Unreachable');
@@ -544,7 +557,7 @@ export abstract class APIRequestContext extends SdkObject {
 
       if (options.deadline) {
         const rejectOnTimeout = () =>  {
-          reject(new Error(`Request timed out after ${options.timeout}ms`));
+          reject(new RequestTimedOutError(options.timeout!));
           request.destroy();
         };
         const remaining = options.deadline - monotonicTime();

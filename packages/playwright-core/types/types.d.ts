@@ -17670,8 +17670,9 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
-     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
-     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     * Maximum number of times network errors should be retried. Only `ECONNRESET` and timeout errors are retried. Does
+     * not retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no
+     * retries.
      */
     maxRetries?: number;
 
@@ -17801,8 +17802,9 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
-     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
-     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     * Maximum number of times network errors should be retried. Only `ECONNRESET` and timeout errors are retried. Does
+     * not retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no
+     * retries.
      */
     maxRetries?: number;
 
@@ -17919,8 +17921,9 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
-     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
-     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     * Maximum number of times network errors should be retried. Only `ECONNRESET` and timeout errors are retried. Does
+     * not retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no
+     * retries.
      */
     maxRetries?: number;
 
@@ -18005,8 +18008,9 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
-     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
-     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     * Maximum number of times network errors should be retried. Only `ECONNRESET` and timeout errors are retried. Does
+     * not retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no
+     * retries.
      */
     maxRetries?: number;
 
@@ -18091,8 +18095,9 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
-     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
-     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     * Maximum number of times network errors should be retried. Only `ECONNRESET` and timeout errors are retried. Does
+     * not retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no
+     * retries.
      */
     maxRetries?: number;
 
@@ -18219,8 +18224,9 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
-     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
-     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     * Maximum number of times network errors should be retried. Only `ECONNRESET` and timeout errors are retried. Does
+     * not retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no
+     * retries.
      */
     maxRetries?: number;
 
@@ -18305,8 +18311,9 @@ export interface APIRequestContext {
     maxRedirects?: number;
 
     /**
-     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
-     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     * Maximum number of times network errors should be retried. Only `ECONNRESET` and timeout errors are retried. Does
+     * not retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no
+     * retries.
      */
     maxRetries?: number;
 
@@ -20867,8 +20874,9 @@ export interface Route {
     maxRedirects?: number;
 
     /**
-     * Maximum number of times network errors should be retried. Currently only `ECONNRESET` error is retried. Does not
-     * retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no retries.
+     * Maximum number of times network errors should be retried. Only `ECONNRESET` and timeout errors are retried. Does
+     * not retry based on HTTP response codes. An error will be thrown if the limit is exceeded. Defaults to `0` - no
+     * retries.
      */
     maxRetries?: number;
 
