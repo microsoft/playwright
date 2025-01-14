@@ -174,6 +174,7 @@ test('should show action context on locators and other common actions', async ({
     await page.setContent('<input type="text" />');
     await page.locator('input').click({ button: 'right' });
     await page.getByRole('textbox').click();
+    await expect(page.locator('input')).toHaveText('');
     await page.keyboard.type(
         'Hello world this is a very long string what happens when it overflows?',
     );
@@ -198,6 +199,7 @@ test('should show action context on locators and other common actions', async ({
     /page.setContent/,
     /locator.clicklocator\('input'\)/,
     /locator.clickgetByRole\('textbox'\)/,
+    /expect.toHaveTextlocator\('input'\)/,
     /keyboard.type\"Hello world this is a very long string what happens when it overflows\?\"/,
     /keyboard.pressControl\+c/,
     /keyboard.downShift/,
