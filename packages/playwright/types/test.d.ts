@@ -1689,10 +1689,11 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   updateSnapshots?: "all"|"changed"|"missing"|"none";
 
   /**
-   * Defines how to update the source code snapshots.
-   * - `'overwrite'` - Overwrite the source code snapshot with the actual result.
-   * - `'3way'` - Use a three-way merge to update the source code snapshot.
-   * - `'patch'` - Use a patch to update the source code snapshot. This is the default.
+   * Defines how to update snapshots in the source code.
+   * - `'patch'` - Create a unified diff file that can be used to update the source code later. This is the default.
+   * - `'3way'` - Generate merge conflict markers in source code. This allows user to manually pick relevant changes,
+   *   as if they are resolving a merge conflict in the IDE.
+   * - `'overwrite'` - Overwrite the source code with the new snapshot values.
    */
   updateSourceMethod?: "overwrite"|"3way"|"patch";
 
