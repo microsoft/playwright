@@ -28,7 +28,11 @@ async function generateMultiple(pageOrFrame: Page | Frame, target: string): Prom
 it.describe('selector generator', () => {
   it.skip(({ mode }) => mode !== 'default');
 
-  it.beforeEach(async ({ context }) => {
+  it.beforeEach(async ({ context, page }) => {
+    // Make sure `page`(fixture) is created before enabling recorder, so that
+    // we properly wait for `extendInjectedScript` call to finish. Otherwise
+    // if the page is created later, there is a race between ConsoleAPI
+    // initialization and playwright.selector(e) call in `generate()` function above.
     await (context as any)._enableRecorder({ language: 'javascript' });
   });
 
