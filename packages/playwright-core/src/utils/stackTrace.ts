@@ -156,8 +156,3 @@ export function compressCallLog(log: string[]): string[] {
   }
   return lines;
 }
-
-export type ExpectZone = {
-  title: string;
-  stepId: string;
-};
