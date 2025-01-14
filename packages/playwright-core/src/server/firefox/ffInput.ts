@@ -61,13 +61,15 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     this._client = client;
   }
 
-  async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
+  async keydown(modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription, autoRepeat: boolean): Promise<void> {
+    let text = description.text;
     // Firefox will figure out Enter by itself
     if (text === '\r')
       text = '';
+    const { code, key, location } = description;
     await this._client.send('Page.dispatchKeyEvent', {
       type: 'keydown',
-      keyCode: keyCodeWithoutLocation,
+      keyCode: description.keyCodeWithoutLocation,
       code,
       key,
       repeat: autoRepeat,
@@ -76,11 +78,12 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     });
   }
 
-  async keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
+  async keyup(modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription): Promise<void> {
+    const { code, key, location } = description;
     await this._client.send('Page.dispatchKeyEvent', {
       type: 'keyup',
       key,
-      keyCode: keyCodeWithoutLocation,
+      keyCode: description.keyCodeWithoutLocation,
       code,
       location,
       repeat: false
