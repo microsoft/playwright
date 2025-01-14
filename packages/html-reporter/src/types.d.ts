@@ -110,4 +110,5 @@ export type TestStep = {
   steps: TestStep[];
   attachments: number[];
   count: number;
+  skipped?: boolean;
 };
