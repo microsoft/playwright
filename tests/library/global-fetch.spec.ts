@@ -545,7 +545,7 @@ it('should throw when failOnStatusCode is set to true', async ({ playwright, ser
     res.end('Not found.');
   });
   const error = await request.fetch(server.EMPTY_PAGE).catch(e => e);
-  expect(error.message).toContain('404 Not Found')
+  expect(error.message).toContain('404 Not Found');
 });
 
 it('should throw when failOnStatusCode is set to true inside the fetch API call', async ({ playwright, server }) => {
@@ -555,8 +555,8 @@ it('should throw when failOnStatusCode is set to true inside the fetch API call'
     res.writeHead(404, { 'Content-Length': 10, 'Content-Type': 'text/plain' });
     res.end('Not found.');
   });
-  const error = await request.fetch(server.EMPTY_PAGE, {failOnStatusCode: true}).catch(e => e);
-  expect(error.message).toContain('404 Not Found')
+  const error = await request.fetch(server.EMPTY_PAGE, { failOnStatusCode: true }).catch(e => e);
+  expect(error.message).toContain('404 Not Found');
 });
 
 it('should not throw when failOnStatusCode is set to false', async ({ playwright, server }) => {
@@ -567,7 +567,7 @@ it('should not throw when failOnStatusCode is set to false', async ({ playwright
     res.end('Not found.');
   });
   const error = await request.fetch(server.EMPTY_PAGE).catch(e => e);
-  expect(error.message).toBeUndefined()
+  expect(error.message).toBeUndefined();
 });
 
 it('should not throw when failOnStatusCode is set to false inside the fetch API call', async ({ playwright, server }) => {
@@ -577,6 +577,6 @@ it('should not throw when failOnStatusCode is set to false inside the fetch API 
     res.writeHead(404, { 'Content-Length': 10, 'Content-Type': 'text/plain' });
     res.end('Not found.');
   });
-  const error = await request.fetch(server.EMPTY_PAGE, {failOnStatusCode: false}).catch(e => e);
-  expect(error.message).toBeUndefined()
+  const error = await request.fetch(server.EMPTY_PAGE, { failOnStatusCode: false }).catch(e => e);
+  expect(error.message).toBeUndefined();
 });
