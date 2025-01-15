@@ -620,6 +620,12 @@ A list of permissions to grant to all pages in this context. See
 
 An object containing additional HTTP headers to be sent with every request. Defaults to none.
 
+## context-option-apirequest
+- `apiRequest` <[Object]>
+  - `failOnStatusCode` <[boolean]> 
+
+An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By default, response object is returned for all status codes.
+
 ## context-option-offline
 - `offline` <[boolean]>
 

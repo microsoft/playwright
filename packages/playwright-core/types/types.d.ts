@@ -17482,6 +17482,11 @@ export interface APIRequest {
      */
     extraHTTPHeaders?: { [key: string]: string; };
 
+    /** 
+     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx.
+     */
+    apiRequest?: {failOnStatusCode?: boolean;}
+
     /**
      * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
      * origin is specified, the username and password are sent to any servers upon unauthorized responses.

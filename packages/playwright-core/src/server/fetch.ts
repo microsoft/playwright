@@ -45,6 +45,9 @@ import { TLSSocket } from 'tls';
 type FetchRequestOptions = {
   userAgent: string;
   extraHTTPHeaders?: HeadersArray;
+  apiRequest?: {
+    failOnStatusCode: boolean;
+  }
   httpCredentials?: HTTPCredentials;
   proxy?: ProxySettings;
   timeoutSettings: TimeoutSettings;
@@ -205,7 +208,8 @@ export abstract class APIRequestContext extends SdkObject {
     });
     const fetchUid = this._storeResponseBody(fetchResponse.body);
     this.fetchLog.set(fetchUid, controller.metadata.log);
-    if (params.failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400)) {
+    let failOnStatusCode = params.failOnStatusCode !== undefined ? params.failOnStatusCode : !!defaults.apiRequest?.failOnStatusCode;
+    if (failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400)) {
       let responseText = '';
       if (fetchResponse.body.byteLength) {
         let text = fetchResponse.body.toString('utf8');
@@ -661,6 +665,7 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       baseURL: options.baseURL,
       userAgent: options.userAgent || getUserAgent(),
       extraHTTPHeaders: options.extraHTTPHeaders,
+      apiRequest: {failOnStatusCode: !!options.apiRequest?.failOnStatusCode},
       ignoreHTTPSErrors: !!options.ignoreHTTPSErrors,
       httpCredentials: options.httpCredentials,
       clientCertificates: options.clientCertificates,
