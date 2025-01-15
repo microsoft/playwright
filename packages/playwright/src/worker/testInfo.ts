@@ -35,7 +35,7 @@ export interface TestStepInternal {
   attachmentIndices: number[];
   stepId: string;
   title: string;
-  category: 'hook' | 'fixture' | 'test.step' | 'expect' | 'attach' | string;
+  category: 'hook' | 'fixture' | 'test.step' | 'test.step.skip' | 'expect' | 'attach' | string;
   location?: Location;
   boxedStack?: StackFrame[];
   steps: TestStepInternal[];

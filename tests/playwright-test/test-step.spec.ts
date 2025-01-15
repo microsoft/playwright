@@ -1499,28 +1499,25 @@ fixture   |  fixture: context
 `);
 });
 
-test('test.step.fail and test.step.fixme should work', async ({ runInlineTest }) => {
+test('test.step.skip should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('test', async ({ }) => {
-        await test.step('outer step 1', async () => {
-          await test.step.fail('inner step 1.1', async () => {
+        await test.step.skip('outer step 1', async () => {
+          await test.step('inner step 1.1', async () => {
             throw new Error('inner step 1.1 failed');
           });
-          await test.step.fixme('inner step 1.2', async () => {});
+          await test.step.skip('inner step 1.2', async () => {});
           await test.step('inner step 1.3', async () => {});
         });
         await test.step('outer step 2', async () => {
-          await test.step.fixme('inner step 2.1', async () => {});
+          await test.step.skip('inner step 2.1', async () => {});
           await test.step('inner step 2.2', async () => {
             expect(1).toBe(1);
           });
-        });
-        await test.step.fail('outer step 3', async () => {
-          throw new Error('outer step 3 failed');
         });
       });
       `
@@ -1531,48 +1528,16 @@ test('test.step.fail and test.step.fixme should work', async ({ runInlineTest })
   expect(result.report.stats.unexpected).toBe(0);
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
-test.step |outer step 1 @ a.test.ts:4
-test.step |  inner step 1.1 @ a.test.ts:5
-test.step |  ↪ error: Error: inner step 1.1 failed
-test.step |  inner step 1.3 @ a.test.ts:9
+test.step.skip|outer step 1 @ a.test.ts:4
 test.step |outer step 2 @ a.test.ts:11
+test.step.skip|  inner step 2.1 @ a.test.ts:12
 test.step |  inner step 2.2 @ a.test.ts:13
 expect    |    expect.toBe @ a.test.ts:14
-test.step |outer step 3 @ a.test.ts:17
-test.step |↪ error: Error: outer step 3 failed
 hook      |After Hooks
 `);
 });
 
-test('timeout inside test.step.fail is an error', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'reporter.ts': stepIndentReporter,
-    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('test 2', async ({ }) => {
-        await test.step('outer step 2', async () => {
-          await test.step.fail('inner step 2', async () => {
-            await new Promise(() => {});
-          });
-        });
-      });
-      `
-  }, { reporter: '', timeout: 2500 });
-
-  expect(result.exitCode).toBe(1);
-  expect(result.report.stats.unexpected).toBe(1);
-  expect(stripAnsi(result.output)).toBe(`
-hook      |Before Hooks
-test.step |outer step 2 @ a.test.ts:4
-test.step |  inner step 2 @ a.test.ts:5
-hook      |After Hooks
-hook      |Worker Cleanup
-          |Test timeout of 2500ms exceeded.
-`);
-});
-
-test('skip test.step.fixme body', async ({ runInlineTest }) => {
+test('skip test.step.skip body', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
     'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
@@ -1581,7 +1546,7 @@ test('skip test.step.fixme body', async ({ runInlineTest }) => {
       test('test', async ({ }) => {
         let didRun = false;
         await test.step('outer step 2', async () => {
-          await test.step.fixme('inner step 2', async () => {
+          await test.step.skip('inner step 2', async () => {
             didRun = true;
           });
         });
@@ -1595,6 +1560,7 @@ test('skip test.step.fixme body', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 test.step |outer step 2 @ a.test.ts:5
+test.step.skip|  inner step 2 @ a.test.ts:6
 expect    |expect.toBe @ a.test.ts:10
 hook      |After Hooks
 `);
