@@ -22,6 +22,7 @@ export type ByRoleOptions = {
   exact?: boolean;
   expanded?: boolean;
   includeHidden?: boolean;
+  ariaChildren?: boolean;
   level?: number;
   name?: string | RegExp;
   pressed?: boolean;
@@ -68,6 +69,8 @@ export function getByRoleSelector(role: string, options: ByRoleOptions = {}): st
     props.push(['expanded', String(options.expanded)]);
   if (options.includeHidden !== undefined)
     props.push(['include-hidden', String(options.includeHidden)]);
+  if (options.ariaChildren !== undefined)
+    props.push(['aria-children', String(options.ariaChildren)]);
   if (options.level !== undefined)
     props.push(['level', String(options.level)]);
   if (options.name !== undefined)
