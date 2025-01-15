@@ -38,12 +38,18 @@ export const actionParameterDisplayString = (
   } else if (params.ticksString !== undefined) {
     // clock.fastForward/runFor string
     value = params.ticksString;
-  } else if (params.timeNumber !== undefined) {
+  } else if (
+    params.timeString !== undefined ||
+    params.timeNumber !== undefined
+  ) {
     // clock.pauseAt/setFixedTime/setSystemTime
     try {
-      value = new Date(params.timeNumber).toLocaleString(undefined, {
-        timeZone: 'UTC',
-      });
+      value = new Date(params.timeString ?? params.timeNumber).toLocaleString(
+          undefined,
+          {
+            timeZone: 'UTC',
+          },
+      );
     } catch (e) {
       return undefined;
     }
