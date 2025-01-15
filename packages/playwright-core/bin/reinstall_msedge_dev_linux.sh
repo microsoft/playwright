@@ -32,6 +32,12 @@ if ! command -v curl >/dev/null; then
   apt-get install -y curl
 fi
 
+# GnuPG is not preinstalled in slim images
+if ! command -v gpg >/dev/null; then
+  apt-get update
+  apt-get install -y gpg
+fi
+
 # 3. Add the GPG key, the apt repo, update the apt cache, and install the package
 curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft.gpg
 install -o root -g root -m 644 /tmp/microsoft.gpg /etc/apt/trusted.gpg.d/
