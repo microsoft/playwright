@@ -479,7 +479,7 @@ test('should print unknown engine error', async ({ page }) => {
 
 test('should print selector syntax error', async ({ page }) => {
   const error = await expect(page.locator('row]')).toBeVisible().catch(e => e);
-  expect(error.message).toContain(`Unexpected token "]" while parsing selector "row]"`);
+  expect(error.message).toContain(`Unexpected token "]" while parsing css selector "row]"`);
 });
 
 test.describe(() => {
