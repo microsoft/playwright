@@ -8207,21 +8207,24 @@ interface LocatorAssertions {
 
   /**
    * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with given CSS classes.
-   * This needs to be a full match or using a relaxed regular expression.
+   * When a string is provided, it must fully match the element's `class` attribute. To match individual classes or
+   * perform partial matches, use a regular expression:
    *
    * **Usage**
    *
    * ```html
-   * <div class='selected row' id='component'></div>
+   * <div class='middle selected row' id='component'></div>
    * ```
    *
    * ```js
    * const locator = page.locator('#component');
-   * await expect(locator).toHaveClass(/selected/);
-   * await expect(locator).toHaveClass('selected row');
+   * await expect(locator).toHaveClass('middle selected row');
+   * await expect(locator).toHaveClass(/(^|\s)selected(\s|$)/);
    * ```
    *
-   * Note that if array is passed as an expected value, entire lists of elements can be asserted:
+   * When an array is passed, the method asserts that the list of elements located matches the corresponding list of
+   * expected class values. Each element's class attribute is matched against the corresponding string or regular
+   * expression in the array:
    *
    * ```js
    * const locator = page.locator('list > .component');
