@@ -15,7 +15,7 @@
  */
 import { test as it, expect } from './pageTest';
 
-it('should handle aria-owns with elements outside the parent tree', async ({ page }) => {
+it('should work with aria-owns with elements outside the parent tree', async ({ page }) => {
   await page.setContent(`
     <div role="navigation" aria-owns="menu1 menu2">
       <div id="menu1" role="menu">
@@ -33,7 +33,7 @@ it('should handle aria-owns with elements outside the parent tree', async ({ pag
   await expect.soft(menuItem).toHaveText(`Services`);
 });
 
-it('should handle aria-controls with elements outside the parent tree', async ({ page }) => {
+it('should work with aria-controls with elements outside the parent tree', async ({ page }) => {
   await page.setContent(`
     <form role="form" aria-controls="input1 input2">
       <label for="input1">First Name</label>
@@ -46,7 +46,7 @@ it('should handle aria-controls with elements outside the parent tree', async ({
   await page.getByRole('form').getByRole('textbox', { name: 'Last Name', ariaChildren: true }).fill('John');
 });
 
-it('should handle aria-owns and aria-controls with elements outside the parent tree', async ({ page }) => {
+it('should work with aria-owns and aria-controls with elements outside the parent tree', async ({ page }) => {
   await page.setContent(`
     <div role="main" aria-owns="section1 section2" aria-controls="footer">
       <section id="section1" role="region">
@@ -69,7 +69,7 @@ it('should handle aria-owns and aria-controls with elements outside the parent t
   await page.getByRole('main').getByRole('region', { ariaChildren: true }).getByRole('heading', { name: 'Features' }).click();
 });
 
-it('should handle nested roles with aria-owns', async ({ page }) => {
+it('should work with nested roles with aria-owns', async ({ page }) => {
   await page.setContent(`
     <div role="tree" aria-owns="node1 node2">
       <div id="node1" role="treeitem">Node 1</div>
@@ -81,7 +81,7 @@ it('should handle nested roles with aria-owns', async ({ page }) => {
   await expect(treeItem).toHaveText('Node 1');
 });
 
-it('should handle aria-controls with nested elements', async ({ page }) => {
+it('should work with aria-controls with nested elements', async ({ page }) => {
   await page.setContent(`
     <div role="tablist" aria-controls="panel1 panel2">
       <div role="tab" id="tab1">Tab 1</div>
@@ -95,7 +95,7 @@ it('should handle aria-controls with nested elements', async ({ page }) => {
   await expect(tabPanel).toHaveText('Panel 1 Content');
 });
 
-it('should handle accordion with aria-controls', async ({ page }) => {
+it('should work with aria-controls', async ({ page }) => {
   await page.setContent(`
     <div role="region">
       <button aria-controls="section1">Section 1</button>
@@ -109,7 +109,7 @@ it('should handle accordion with aria-controls', async ({ page }) => {
   await expect(section).toHaveText('Section 1 Content');
 });
 
-it('should handle aria-owns with mixed roles', async ({ page }) => {
+it('should work with aria-owns with mixed roles', async ({ page }) => {
   await page.setContent(`
     <div role="grid" aria-owns="row1 row2">
       <div id="row1" role="row">
@@ -126,7 +126,7 @@ it('should handle aria-owns with mixed roles', async ({ page }) => {
 });
 
 
-it('should handle aria-owns with role changes', async ({ page }) => {
+it('should work with aria-owns with role changes', async ({ page }) => {
   await page.setContent(`
     <div role="tablist" aria-owns="tab1 tab2">
       <div id="tab1" role="tab">Tab 1</div>
