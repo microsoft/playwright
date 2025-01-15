@@ -67,7 +67,7 @@ export const test = contextTest.extend<CLITestArgs>({
     });
   },
 
-  runCLI: async ({ childProcess, browserName, channel, headless, mode, launchOptions, codegenMode }, run, testInfo) => {
+  runCLI: async ({ childProcess, browserName, channel, headless, mode, launchOptions }, run, testInfo) => {
     testInfo.skip(mode.startsWith('service'));
 
     await run((cliArgs, { autoExitWhen } = {}) => {
@@ -78,17 +78,15 @@ export const test = contextTest.extend<CLITestArgs>({
         args: cliArgs,
         executablePath: launchOptions.executablePath,
         autoExitWhen,
-        codegenMode
       });
     });
   },
 
-  openRecorder: async ({ context, recorderPageGetter, codegenMode }, run) => {
+  openRecorder: async ({ context, recorderPageGetter }, run) => {
     await run(async (options?: { testIdAttributeName?: string }) => {
       await (context as any)._enableRecorder({
         language: 'javascript',
         mode: 'recording',
-        codegenMode,
         ...options
       });
       const page = await context.newPage();
@@ -235,7 +233,7 @@ export class Recorder {
 class CLIMock {
   process: TestChildProcess;
 
-  constructor(childProcess: CommonFixtures['childProcess'], options: { browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined, autoExitWhen: string | undefined, codegenMode?: 'trace-events' | 'actions'}) {
+  constructor(childProcess: CommonFixtures['childProcess'], options: { browserName: string, channel: string | undefined, headless: boolean | undefined, args: string[], executablePath: string | undefined, autoExitWhen: string | undefined}) {
     const nodeArgs = [
       'node',
       path.join(__dirname, '..', '..', '..', 'packages', 'playwright-core', 'cli.js'),
@@ -248,7 +246,6 @@ class CLIMock {
     this.process = childProcess({
       command: nodeArgs,
       env: {
-        PW_RECORDER_IS_TRACE_VIEWER: options.codegenMode === 'trace-events' ? '1' : undefined,
         PWTEST_CLI_AUTO_EXIT_WHEN: options.autoExitWhen,
         PWTEST_CLI_IS_UNDER_TEST: '1',
         PWTEST_CLI_HEADLESS: options.headless ? '1' : undefined,
