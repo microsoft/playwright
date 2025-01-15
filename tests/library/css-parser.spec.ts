@@ -77,7 +77,8 @@ it('should throw on malformed css', async () => {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toContain(`while parsing selector "${selector}"`);
+    expect(error.message).toContain(`while parsing css selector "${selector}"`);
+    expect(error.message).toContain(`Did you mean to CSS.escape it?`);
   }
 
   expectError('');

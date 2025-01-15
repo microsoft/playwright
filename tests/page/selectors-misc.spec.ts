@@ -415,7 +415,7 @@ it('should work with internal:has=', async ({ page, server }) => {
   const error3 = await page.$(`div >> internal:has=33`).catch(e => e);
   expect(error3.message).toContain('Malformed selector: internal:has=33');
   const error4 = await page.$(`div >> internal:has="span!"`).catch(e => e);
-  expect(error4.message).toContain('Unexpected token "!" while parsing selector "span!"');
+  expect(error4.message).toContain('Unexpected token "!" while parsing css selector "span!"');
 });
 
 it('should work with internal:has-not=', async ({ page }) => {
