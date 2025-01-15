@@ -1294,6 +1294,23 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   outputDir?: string;
 
   /**
+   * Whether to populate [metadata](https://playwright.dev/docs/api/class-testconfig#test-config-output-metadata) with Git info.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   populateGitInfo: !!process.env.CI,
+   * });
+   * ```
+   *
+   */
+  populateGitInfo?: boolean;
+
+  /**
    * Whether to preserve test output in the
    * [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir). Defaults to
    * `'always'`.
@@ -1795,6 +1812,11 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * See [testConfig.metadata](https://playwright.dev/docs/api/class-testconfig#test-config-metadata).
    */
   metadata: Metadata;
+
+  /**
+   * See [testConfig.populateGitInfo](https://playwright.dev/docs/api/class-testconfig#test-config-populategitinfo).
+   */
+  populateGitInfo: boolean;
 
   /**
    * See [testConfig.preserveOutput](https://playwright.dev/docs/api/class-testconfig#test-config-preserve-output).

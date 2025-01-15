@@ -20,6 +20,7 @@ import os from 'os';
 import type { Config, Fixtures, Project, ReporterDescription } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import type { TestRunnerPluginRegistration } from '../plugins';
+import { gitCommitInfo } from '../plugins/gitCommitInfoPlugin';
 import { getPackageJsonPath, mergeObjects } from '../util';
 import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
@@ -91,6 +92,7 @@ export class FullConfigInternal {
       grepInvert: takeFirst(userConfig.grepInvert, null),
       maxFailures: takeFirst(configCLIOverrides.debug ? 1 : undefined, configCLIOverrides.maxFailures, userConfig.maxFailures, 0),
       metadata: takeFirst(userConfig.metadata, {}),
+      populateGitInfo: takeFirst(userConfig.populateGitInfo, false),
       preserveOutput: takeFirst(userConfig.preserveOutput, 'always'),
       reporter: takeFirst(configCLIOverrides.reporter, resolveReporters(userConfig.reporter, configDir), [[defaultReporter]]),
       reportSlowTests: takeFirst(userConfig.reportSlowTests, { max: 5, threshold: 15000 }),
@@ -133,6 +135,9 @@ export class FullConfigInternal {
     } else {
       this.webServers = [];
     }
+
+    if (this.config.populateGitInfo)
+      this.plugins.push({ factory: gitCommitInfo });
 
     const projectConfigs = configCLIOverrides.projects || userConfig.projects || [userConfig];
     this.projects = projectConfigs.map(p => new FullProjectInternal(configDir, userConfig, this, p, this.configCLIOverrides, packageJsonDir));
