@@ -1311,6 +1311,13 @@ Option that controls whether hidden elements are matched. By default, only non-h
 
 Learn more about [`aria-hidden`](https://www.w3.org/TR/wai-aria-1.2/#aria-hidden).
 
+## locator-get-by-role-option-ariaChildren
+- `ariaChildren` <[boolean]>
+
+Option that controls whether elements referenced by `aria-owns` and `aria-controls` are included in the search. By default, elements referenced by `aria-owns` and `aria-controls` are not included.
+
+Learn more about [`aria-owns`](https://www.w3.org/TR/wai-aria-1.2/#aria-owns) and [`aria-controls`](https://www.w3.org/TR/wai-aria-1.2/#aria-controls).
+
 ## locator-get-by-role-option-level
 * since: v1.27
 - `level` <[int]>
@@ -1354,6 +1361,7 @@ Learn more about [`aria-selected`](https://www.w3.org/TR/wai-aria-1.2/#aria-sele
 - %%-locator-get-by-role-option-disabled-%%
 - %%-locator-get-by-role-option-expanded-%%
 - %%-locator-get-by-role-option-includeHidden-%%
+- %%-locator-get-by-role-option-ariaChildren-%%
 - %%-locator-get-by-role-option-level-%%
 - %%-locator-get-by-role-option-name-%%
 - %%-locator-get-by-role-option-pressed-%%

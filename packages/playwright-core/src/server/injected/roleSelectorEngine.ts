@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import type { SelectorEngine, SelectorRoot } from './selectorEngine';
-import { matchesAttributePart } from './selectorUtils';
-import { beginAriaCaches, endAriaCaches, getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
-import { parseAttributeSelector, type AttributeSelectorPart, type AttributeSelectorOperator } from '../../utils/isomorphic/selectorParser';
-import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
+import type { SelectorEngine, SelectorRoot } from '../../../../../../playwright/packages/playwright-core/src/server/injected/selectorEngine';
+import { matchesAttributePart } from '../../../../../../playwright/packages/playwright-core/src/server/injected/selectorUtils';
+import { beginAriaCaches, endAriaCaches, getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from '../../../../../../playwright/packages/playwright-core/src/server/injected/roleUtils';
+import { parseAttributeSelector, type AttributeSelectorPart, type AttributeSelectorOperator } from '../../../../../../playwright/packages/playwright-core/src/utils/isomorphic/selectorParser';
+import { normalizeWhiteSpace } from '../../../../../../playwright/packages/playwright-core/src/utils/isomorphic/stringUtils';
 
 type RoleEngineOptions = {
   role: string;
@@ -32,9 +32,10 @@ type RoleEngineOptions = {
   level?: number;
   disabled?: boolean;
   includeHidden?: boolean;
+  ariaChildren?: boolean;
 };
 
-const kSupportedAttributes = ['selected', 'checked', 'pressed', 'expanded', 'level', 'disabled', 'name', 'include-hidden'];
+const kSupportedAttributes = ['selected', 'checked', 'pressed', 'expanded', 'level', 'disabled', 'name', 'include-hidden', 'aria-children'];
 kSupportedAttributes.sort();
 
 function validateSupportedRole(attr: string, roles: string[], role: string) {
@@ -116,6 +117,11 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string): RoleE
         options.includeHidden = attr.op === '<truthy>' ? true : attr.value;
         break;
       }
+      case 'aria-children': {
+        validateSupportedValues(attr, [true, false]);
+        options.ariaChildren = attr.value;
+        break;
+      }
       default: {
         throw new Error(`Unknown attribute "${attr.name}", must be one of ${kSupportedAttributes.map(a => `"${a}"`).join(', ')}.`);
       }
@@ -124,9 +130,31 @@ function validateAttributes(attrs: AttributeSelectorPart[], role: string): RoleE
   return options;
 }
 
+function getAriaChildren(element: Element, scope: SelectorRoot): Element[] {
+  const documentRoot = scope.ownerDocument || scope;
+  const ariaElements: Element[] = [];
+  const ariaAttributes = ['aria-owns', 'aria-controls'];
+
+  ariaAttributes.forEach(attr => {
+    const ariaValue = element.getAttribute(attr);
+    if (!ariaValue)
+      return;
+
+    const ids = ariaValue.split(/\s+/);
+    for (const id of ids) {
+      const ownedElement = documentRoot.getElementById(id);
+      if (ownedElement)
+        ariaElements.push(ownedElement);
+    }
+  });
+
+  return ariaElements;
+}
+
 function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: boolean): Element[] {
   const result: Element[] = [];
   const match = (element: Element) => {
+
     if (getAriaRole(element) !== options.role)
       return;
     if (options.selected !== undefined && getAriaSelected(element) !== options.selected)
@@ -147,11 +175,9 @@ function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: bo
         return;
     }
     if (options.name !== undefined) {
-      // Always normalize whitespace in the accessible name.
       const accessibleName = normalizeWhiteSpace(getElementAccessibleName(element, !!options.includeHidden));
       if (typeof options.name === 'string')
         options.name = normalizeWhiteSpace(options.name);
-      // internal:role assumes that [name="foo"i] also means substring.
       if (internal && !options.exact && options.nameOp === '=')
         options.nameOp = '*=';
       if (!matchesAttributePart(accessibleName, { name: '', jsonPath: [], op: options.nameOp || '=', value: options.name, caseSensitive: !!options.exact }))
@@ -170,8 +196,11 @@ function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: bo
         shadows.push(element.shadowRoot);
     }
     shadows.forEach(query);
+    if (options.ariaChildren && root instanceof Element) {
+      const ariaChildren = getAriaChildren(root, scope);
+      ariaChildren.forEach(match);
+    }
   };
-
   query(scope);
   return result;
 }
