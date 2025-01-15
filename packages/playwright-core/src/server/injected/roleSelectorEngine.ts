@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import type { SelectorEngine, SelectorRoot } from '../../../../../../playwright/packages/playwright-core/src/server/injected/selectorEngine';
-import { matchesAttributePart } from '../../../../../../playwright/packages/playwright-core/src/server/injected/selectorUtils';
-import { beginAriaCaches, endAriaCaches, getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from '../../../../../../playwright/packages/playwright-core/src/server/injected/roleUtils';
-import { parseAttributeSelector, type AttributeSelectorPart, type AttributeSelectorOperator } from '../../../../../../playwright/packages/playwright-core/src/utils/isomorphic/selectorParser';
-import { normalizeWhiteSpace } from '../../../../../../playwright/packages/playwright-core/src/utils/isomorphic/stringUtils';
+import type { SelectorEngine, SelectorRoot } from './selectorEngine';
+import { matchesAttributePart } from './selectorUtils';
+import { beginAriaCaches, endAriaCaches, getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
+import { parseAttributeSelector, type AttributeSelectorPart, type AttributeSelectorOperator } from '../../utils/isomorphic/selectorParser';
+import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 
 type RoleEngineOptions = {
   role: string;

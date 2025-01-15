@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { escapeForAttributeSelector, escapeForTextSelector } from '../../../../../../playwright/packages/playwright-core/src/utils/isomorphic/stringUtils';
+import { escapeForAttributeSelector, escapeForTextSelector } from './stringUtils';
 
 export type ByRoleOptions = {
   checked?: boolean;
