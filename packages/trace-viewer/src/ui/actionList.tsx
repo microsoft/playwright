@@ -309,17 +309,11 @@ const actionParameterDisplayString = (
     case 'page':
     case 'frame':
     case 'elementhandle':
-      let string = keyboardDisplayString(action);
-
-      if (string !== undefined)
-        return string;
-
-      string = mouseDisplayString(action);
-
-      if (string !== undefined)
-        return string;
-
-      return touchscreenDisplayString(action);
+      return (
+        keyboardDisplayString(action) ??
+        mouseDisplayString(action) ??
+        touchscreenDisplayString(action)
+      );
   }
 
   return undefined;
