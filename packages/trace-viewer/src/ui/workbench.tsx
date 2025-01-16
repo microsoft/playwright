@@ -148,7 +148,7 @@ export const Workbench: React.FunctionComponent<{
 
   const revealAttachment = React.useCallback((attachment: AfterActionTraceEventAttachment) => {
     selectPropertiesTab('attachments');
-    setRevealedAttachment(attachment);
+    setRevealedAttachment({ ...attachment }); // copy to force re-render
   }, [selectPropertiesTab]);
 
   React.useEffect(() => {
@@ -238,7 +238,7 @@ export const Workbench: React.FunctionComponent<{
     id: 'attachments',
     title: 'Attachments',
     count: attachments.length,
-    render: () => <AttachmentsTab model={model} selectedAction={selectedAction} revealedAttachment={revealedAttachment} />
+    render: () => <AttachmentsTab model={model} revealedAttachment={revealedAttachment} />
   };
 
   const tabs: TabbedPaneTabModel[] = [

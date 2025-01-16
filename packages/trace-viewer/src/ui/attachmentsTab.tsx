@@ -17,7 +17,7 @@
 import * as React from 'react';
 import './attachmentsTab.css';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
+import type { MultiTraceModel } from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import { CodeMirrorWrapper, lineHeight } from '@web/components/codeMirrorWrapper';
@@ -26,15 +26,27 @@ import { Expandable } from '@web/components/expandable';
 import { linkifyText } from '@web/renderUtils';
 import { clsx } from '@web/uiUtils';
 
+// flash is retriggered whenever the value changes
+function useFlash(flash: any | undefined) {
+  const [flashState, setFlashState] = React.useState(false);
+  React.useEffect(() => {
+    if (flash) {
+      setFlashState(true);
+      const timeout = setTimeout(() => setFlashState(false), 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [flash]);
+  return flashState;
+}
+
 type Attachment = AfterActionTraceEventAttachment & { traceUrl: string };
 
 type ExpandableAttachmentProps = {
   attachment: Attachment;
-  reveal: boolean;
-  highlight: boolean;
+  reveal?: any;
 };
 
-const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> = ({ attachment, reveal, highlight }) => {
+const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> = ({ attachment, reveal }) => {
   const [expanded, setExpanded] = React.useState(false);
   const [attachmentText, setAttachmentText] = React.useState<string | null>(null);
   const [placeholder, setPlaceholder] = React.useState<string | null>(null);
@@ -47,6 +59,7 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
     if (reveal)
       ref.current?.scrollIntoView({ behavior: 'smooth' });
   }, [reveal]);
+  const flash = useFlash(reveal);
 
   React.useEffect(() => {
     if (expanded && attachmentText === null && placeholder === null) {
@@ -66,14 +79,14 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
   }, [attachmentText]);
 
   const title = <span style={{ marginLeft: 5 }} ref={ref} aria-label={attachment.name}>
-    <span className={clsx(highlight && 'attachment-title-highlight')}>{linkifyText(attachment.name)}</span>
+    <span>{linkifyText(attachment.name)}</span>
     {hasContent && <a style={{ marginLeft: 5 }} href={downloadURL(attachment)}>download</a>}
   </span>;
 
   if (!isTextAttachment || !hasContent)
     return <div style={{ marginLeft: 20 }}>{title}</div>;
 
-  return <>
+  return <div className={clsx(flash && 'yellow-flash')}>
     <Expandable title={title} expanded={expanded} setExpanded={setExpanded} expandOnTitleClick={true}>
       {placeholder && <i>{placeholder}</i>}
     </Expandable>
@@ -87,14 +100,13 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
         wrapLines={false}>
       </CodeMirrorWrapper>
     </div>}
-  </>;
+  </div>;
 };
 
 export const AttachmentsTab: React.FunctionComponent<{
   model: MultiTraceModel | undefined,
-  selectedAction: ActionTraceEventInContext | undefined,
   revealedAttachment?: AfterActionTraceEventAttachment,
-}> = ({ model, selectedAction, revealedAttachment }) => {
+}> = ({ model, revealedAttachment }) => {
   const { diffMap, screenshots, attachments } = React.useMemo(() => {
     const attachments = new Set<Attachment>();
     const screenshots = new Set<Attachment>();
@@ -153,8 +165,7 @@ export const AttachmentsTab: React.FunctionComponent<{
       return <div className='attachment-item' key={attachmentKey(a, i)}>
         <ExpandableAttachment
           attachment={a}
-          highlight={selectedAction?.attachments?.some(selected => isEqualAttachment(a, selected)) ?? false}
-          reveal={!!revealedAttachment && isEqualAttachment(a, revealedAttachment)}
+          reveal={(!!revealedAttachment && isEqualAttachment(a, revealedAttachment)) ? revealedAttachment : undefined}
         />
       </div>;
     })}
