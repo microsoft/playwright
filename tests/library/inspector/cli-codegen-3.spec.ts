@@ -21,7 +21,6 @@ import type { Page } from '@playwright/test';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
-  test.skip(({ trace, codegenMode }) => trace === 'on' && codegenMode === 'trace-events');
 
   test('should click locator.first', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
