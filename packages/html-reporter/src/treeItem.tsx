@@ -17,20 +17,7 @@
 import * as React from 'react';
 import './treeItem.css';
 import * as icons from './icons';
-import { clsx } from '@web/uiUtils';
-
-// flash is retriggered whenever the value changes
-function useFlash(flash: any | undefined) {
-  const [flashState, setFlashState] = React.useState(false);
-  React.useEffect(() => {
-    if (flash) {
-      setFlashState(true);
-      const timeout = setTimeout(() => setFlashState(false), 1000);
-      return () => clearTimeout(timeout);
-    }
-  }, [flash]);
-  return flashState;
-}
+import { clsx, useFlash } from '@web/uiUtils';
 
 export const TreeItem: React.FunctionComponent<{
   title: JSX.Element,

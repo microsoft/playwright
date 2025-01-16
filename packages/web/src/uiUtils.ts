@@ -224,3 +224,16 @@ export function scrollIntoViewIfNeeded(element: Element | undefined) {
 
 const kControlCodesRe = '\\u0000-\\u0020\\u007f-\\u009f';
 export const kWebLinkRe = new RegExp('(?:[a-zA-Z][a-zA-Z0-9+.-]{2,}:\\/\\/|www\\.)[^\\s' + kControlCodesRe + '"]{2,}[^\\s' + kControlCodesRe + '"\')}\\],:;.!?]', 'ug');
+
+// flash is retriggered whenever the value changes
+export function useFlash(flash: any | undefined) {
+  const [flashState, setFlashState] = React.useState(false);
+  React.useEffect(() => {
+    if (flash) {
+      setFlashState(true);
+      const timeout = setTimeout(() => setFlashState(false), 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [flash]);
+  return flashState;
+}
