@@ -451,27 +451,16 @@ await page1.GotoAsync("about:blank?foo");`);
     await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/page2.html');`);
   });
 
-  test('should --save-trace', async ({ runCLI }, testInfo) => {
-    const traceFileName = testInfo.outputPath('trace.zip');
-    const cli = runCLI([`--save-trace=${traceFileName}`], {
-      autoExitWhen: ' ',
-    });
-    await cli.waitForCleanExit();
-    expect(fs.existsSync(traceFileName)).toBeTruthy();
-  });
-
   test('should save assets via SIGINT', async ({ runCLI, platform }, testInfo) => {
     test.skip(platform === 'win32', 'SIGINT not supported on Windows');
 
-    const traceFileName = testInfo.outputPath('trace.zip');
     const storageFileName = testInfo.outputPath('auth.json');
     const harFileName = testInfo.outputPath('har.har');
-    const cli = runCLI([`--save-trace=${traceFileName}`, `--save-storage=${storageFileName}`, `--save-har=${harFileName}`]);
+    const cli = runCLI([`--save-storage=${storageFileName}`, `--save-har=${harFileName}`]);
     await cli.waitFor(`import { test, expect } from '@playwright/test'`);
     await cli.process.kill('SIGINT');
     const { exitCode } = await cli.process.exited;
     expect(exitCode).toBe(130);
-    expect(fs.existsSync(traceFileName)).toBeTruthy();
     expect(fs.existsSync(storageFileName)).toBeTruthy();
     expect(fs.existsSync(harFileName)).toBeTruthy();
   });

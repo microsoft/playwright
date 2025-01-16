@@ -19,8 +19,10 @@ import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
 import type { Page } from '../page';
 import type { Frame } from '../frames';
 import type * as actions from '@recorder/actions';
-import { createGuid } from '../../utils';
-import { buildFullSelector, traceParamsForAction } from '../../utils/isomorphic/recorderUtils';
+
+export function buildFullSelector(framePath: string[], selector: string) {
+  return [...framePath, selector].join(' >> internal:control=enter-frame >> ');
+}
 
 export function metadataToCallLog(metadata: CallMetadata, status: CallLogStatus): CallLog {
   let title = metadata.apiName || metadata.method;
@@ -68,26 +70,6 @@ export async function frameForAction(pageAliases: Map<Page, string>, actionInCon
   if (!result)
     throw new Error('Internal error: frame not found');
   return result.frame;
-}
-
-export function callMetadataForAction(pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext): { callMetadata: CallMetadata, mainFrame: Frame } {
-  const mainFrame = mainFrameForAction(pageAliases, actionInContext);
-  const { method, apiName, params } = traceParamsForAction(actionInContext);
-
-  const callMetadata: CallMetadata = {
-    id: `call@${createGuid()}`,
-    apiName,
-    objectId: mainFrame.guid,
-    pageId: mainFrame._page.guid,
-    frameId: mainFrame.guid,
-    startTime: actionInContext.startTime,
-    endTime: 0,
-    type: 'Frame',
-    method,
-    params,
-    log: [],
-  };
-  return { callMetadata, mainFrame };
 }
 
 export function collapseActions(actions: actions.ActionInContext[]): actions.ActionInContext[] {
