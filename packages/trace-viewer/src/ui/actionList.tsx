@@ -166,59 +166,137 @@ interface ActionParameterDisplayString {
   value: string;
 }
 
+const clockDisplayString = (
+  action: ActionTraceEvent,
+): ActionParameterDisplayString | undefined => {
+  switch (action.method) {
+    case 'clockPauseAt':
+    case 'clockSetFixedTime':
+    case 'clockSetSystemTime': {
+      if (
+        action.params.timeString === undefined &&
+        action.params.timeNumber === undefined
+      )
+        return undefined;
+      return {
+        type: 'generic',
+        value: new Date(
+            action.params.timeString ?? action.params.timeNumber,
+        ).toLocaleString(undefined, { timeZone: 'UTC' }),
+      };
+    }
+    case 'clockFastForward':
+    case 'clockRunFor': {
+      if (
+        action.params.ticksNumber === undefined &&
+        action.params.ticksString === undefined
+      )
+        return undefined;
+      return {
+        type: 'generic',
+        value: action.params.ticksString ?? `${action.params.ticksNumber}ms`,
+      };
+    }
+  }
+
+  return undefined;
+};
+
+const keyboardDisplayString = (
+  action: ActionTraceEvent,
+): ActionParameterDisplayString | undefined => {
+  switch (action.method) {
+    case 'press':
+    case 'keyboardPress':
+    case 'keyboardDown':
+    case 'keyboardUp': {
+      if (action.params.key === undefined)
+        return undefined;
+      return { type: 'generic', value: action.params.key };
+    }
+    case 'type':
+    case 'fill':
+    case 'keyboardType':
+    case 'keyboardInsertText': {
+      if (action.params.text === undefined)
+        return undefined;
+      return { type: 'generic', value: `"${action.params.text}"` };
+    }
+  }
+};
+
+const mouseDisplayString = (
+  action: ActionTraceEvent,
+): ActionParameterDisplayString | undefined => {
+  switch (action.method) {
+    case 'click':
+    case 'dblclick':
+    case 'mouseClick':
+    case 'mouseMove': {
+      if (action.params.x === undefined || action.params.y === undefined)
+        return undefined;
+      return {
+        type: 'generic',
+        value: `(${action.params.x}, ${action.params.y})`,
+      };
+    }
+    case 'mouseWheel': {
+      if (
+        action.params.deltaX === undefined ||
+        action.params.deltaY === undefined
+      )
+        return undefined;
+      return {
+        type: 'generic',
+        value: `(${action.params.deltaX}, ${action.params.deltaY})`,
+      };
+    }
+  }
+};
+
+const touchscreenDisplayString = (
+  action: ActionTraceEvent,
+): ActionParameterDisplayString | undefined => {
+  switch (action.method) {
+    case 'tap': {
+      if (action.params.x === undefined || action.params.y === undefined)
+        return undefined;
+      return {
+        type: 'generic',
+        value: `(${action.params.x}, ${action.params.y})`,
+      };
+    }
+  }
+};
+
 const actionParameterDisplayString = (
   action: ActionTraceEvent,
   sdkLanguage: Language,
 ): ActionParameterDisplayString | undefined => {
   const params = action.params;
 
-  let value: string | undefined = undefined;
-
-  if (params.selector !== undefined) {
+  // Locators have many possible classes, so follow existing logic and use `selector` presence
+  if (params.selector !== undefined)
     return { type: 'locator', value: asLocator(sdkLanguage, params.selector) };
-  } else if (params.ticksNumber !== undefined) {
-    // clock.fastForward/runFor number
-    value = `${params.ticksNumber}ms`;
-  } else if (params.ticksString !== undefined) {
-    // clock.fastForward/runFor string
-    value = params.ticksString;
-  } else if (
-    params.timeString !== undefined ||
-    params.timeNumber !== undefined
-  ) {
-    // clock.pauseAt/setFixedTime/setSystemTime
-    try {
-      value = new Date(params.timeString ?? params.timeNumber).toLocaleString(
-          undefined,
-          {
-            timeZone: 'UTC',
-          },
-      );
-    } catch (e) {
-      return undefined;
-    }
-  } else if (params.key !== undefined) {
-    // keyboard.press/down/up
-    value = params.key;
-  } else if (params.text !== undefined) {
-    // keyboard.type/insertText
-    value = `"${params.text}"`;
-  } else if (params.x !== undefined && params.y !== undefined) {
-    // mouse.click/dblclick/move
-    value = `(${params.x}, ${params.y})`;
-  } else if (params.deltaX !== undefined && params.deltaY !== undefined) {
-    // mouse.wheel
-    value = `(${params.deltaX}, ${params.deltaY})`;
-  } else if (params.x && params.y) {
-    // touchscreen.tap
-    value = `(${params.x}, ${params.y})`;
+
+  switch (action.class.toLowerCase()) {
+    case 'browsercontext':
+      return clockDisplayString(action);
+    case 'page':
+    case 'frame':
+    case 'elementhandle':
+      let string = keyboardDisplayString(action);
+
+      if (string !== undefined)
+        return string;
+
+      string = mouseDisplayString(action);
+
+      if (string !== undefined)
+        return string;
+
+      return touchscreenDisplayString(action);
   }
 
-  if (value === undefined)
-    return undefined;
-
-  return {
-    type: 'generic',
-    value,
-  };
+  return undefined;
 };
