@@ -990,7 +990,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       const attachment = page.getByText('attachment', { exact: true });
       await expect(attachment).not.toBeInViewport();
-      await page.getByLabel('step').getByTitle('link to attachment').click();
+      await page.getByLabel('step').getByTitle('reveal attachment').click();
       await expect(attachment).toBeInViewport();
     });
 
