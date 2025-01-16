@@ -74,6 +74,7 @@ export const AttachmentLink: React.FunctionComponent<{
   openInNewTab?: boolean,
 }> = ({ attachment, result, href, linkName, openInNewTab }) => {
   const isAnchored = useIsAnchored('attachment-' + result.attachments.indexOf(attachment));
+  const searchParams = React.useContext(SearchParamsContext);
   return <TreeItem title={<span>
     {attachment.contentType === kMissingContentType ? icons.warning() : icons.attachment()}
     {attachment.path && <a href={href || attachment.path} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>}
@@ -84,7 +85,7 @@ export const AttachmentLink: React.FunctionComponent<{
     )}
   </span>} loadChildren={attachment.body ? () => {
     return [<div key={1} className='attachment-body'><CopyToClipboard value={attachment.body!}/>{linkifyText(attachment.body!)}</div>];
-  } : undefined} depth={0} style={{ lineHeight: '32px' }} selected={isAnchored}></TreeItem>;
+  } : undefined} depth={0} style={{ lineHeight: '32px' }} selected={isAnchored} flash={isAnchored ? searchParams : undefined}></TreeItem>;
 };
 
 export const SearchParamsContext = React.createContext<URLSearchParams>(new URLSearchParams(window.location.hash.slice(1)));

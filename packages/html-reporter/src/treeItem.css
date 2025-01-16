@@ -33,3 +33,11 @@
 .tree-item-body {
   min-height: 18px;
 }
+
+.yellow-flash {
+  animation: yellowflash-bg 2s;
+}
+@keyframes yellowflash-bg {
+  from { background: var(--color-attention-subtle); }
+  to   { background: transparent; }
+}

@@ -19,6 +19,19 @@ import './treeItem.css';
 import * as icons from './icons';
 import { clsx } from '@web/uiUtils';
 
+// flash is retriggered whenever the value changes
+function useFlash(flash: any | undefined) {
+  const [flashState, setFlashState] = React.useState(false);
+  React.useEffect(() => {
+    if (flash) {
+      setFlashState(true);
+      const timeout = setTimeout(() => setFlashState(false), 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [flash]);
+  return flashState;
+}
+
 export const TreeItem: React.FunctionComponent<{
   title: JSX.Element,
   loadChildren?: () => JSX.Element[],
@@ -27,9 +40,11 @@ export const TreeItem: React.FunctionComponent<{
   depth: number,
   selected?: boolean,
   style?:  React.CSSProperties,
-}> = ({ title, loadChildren, onClick, expandByDefault, depth, selected, style }) => {
+  flash?: any
+}> = ({ title, loadChildren, onClick, expandByDefault, depth, selected, style, flash }) => {
+  const addFlashClass = useFlash(flash);
   const [expanded, setExpanded] = React.useState(expandByDefault || false);
-  return <div className={'tree-item'} style={style}>
+  return <div className={clsx('tree-item', addFlashClass && 'yellow-flash')} style={style}>
     <span className={clsx('tree-item-title', selected && 'selected')} style={{ whiteSpace: 'nowrap', paddingLeft: depth * 22 + 4 }} onClick={() => { onClick?.(); setExpanded(!expanded); }} >
       {loadChildren && !!expanded && icons.downArrow()}
       {loadChildren && !expanded && icons.rightArrow()}
