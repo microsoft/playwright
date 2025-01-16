@@ -129,16 +129,23 @@ export const renderAction = (
   return <>
     <div className='action-title' title={action.apiName}>
       <span>{action.apiName}</span>
-      {parameterString && <div
-        className={clsx(
-            'action-parameter',
-            parameterString.type === 'locator'
-              ? 'action-locator-parameter'
-              : 'action-generic-parameter',
-        )}
-      >
-        {parameterString.value}
-      </div>}
+      {parameterString &&
+          (parameterString.type === 'locator' ? (
+            <>
+              <span className='action-parameter action-locator-parameter'>
+                {parameterString.value}
+              </span>
+              {parameterString.childDisplayString && (
+                <span className='action-parameter action-generic-parameter'>
+                  {parameterString.childDisplayString.value}
+                </span>
+              )}
+            </>
+          ) : (
+            <span className='action-parameter action-generic-parameter'>
+              {parameterString.value}
+            </span>
+          ))}
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
       {action.class === 'APIRequestContext' && action.params.url && <div className='action-url' title={action.params.url}>{excludeOrigin(action.params.url)}</div>}
     </div>
@@ -161,10 +168,16 @@ function excludeOrigin(url: string): string {
   }
 }
 
-interface ActionParameterDisplayString {
-  type: 'generic' | 'locator';
-  value: string;
-}
+type ActionParameterDisplayString =
+  | {
+      type: 'generic';
+      value: string;
+    }
+  | {
+      type: 'locator';
+      value: string;
+      childDisplayString?: ActionParameterDisplayString;
+    };
 
 const clockDisplayString = (
   action: ActionTraceEvent,
@@ -218,9 +231,10 @@ const keyboardDisplayString = (
     case 'fill':
     case 'keyboardType':
     case 'keyboardInsertText': {
-      if (action.params.text === undefined)
+      const string = action.params.text ?? action.params.value;
+      if (string === undefined)
         return undefined;
-      return { type: 'generic', value: `"${action.params.text}"` };
+      return { type: 'generic', value: `"${string}"` };
     }
   }
 };
@@ -272,12 +286,22 @@ const touchscreenDisplayString = (
 const actionParameterDisplayString = (
   action: ActionTraceEvent,
   sdkLanguage: Language,
+  ignoreLocator: boolean = false,
 ): ActionParameterDisplayString | undefined => {
   const params = action.params;
 
   // Locators have many possible classes, so follow existing logic and use `selector` presence
-  if (params.selector !== undefined)
-    return { type: 'locator', value: asLocator(sdkLanguage, params.selector) };
+  if (!ignoreLocator && params.selector !== undefined) {
+    return {
+      type: 'locator',
+      value: asLocator(sdkLanguage, params.selector),
+      childDisplayString: actionParameterDisplayString(
+          action,
+          sdkLanguage,
+          true,
+      ),
+    };
+  }
 
   switch (action.class.toLowerCase()) {
     case 'browsercontext':
