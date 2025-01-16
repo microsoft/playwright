@@ -85,7 +85,7 @@ export const AttachmentLink: React.FunctionComponent<{
     )}
   </span>} loadChildren={attachment.body ? () => {
     return [<div key={1} className='attachment-body'><CopyToClipboard value={attachment.body!}/>{linkifyText(attachment.body!)}</div>];
-  } : undefined} depth={0} style={{ lineHeight: '32px' }} selected={isAnchored} flash={isAnchored ? searchParams : undefined}></TreeItem>;
+  } : undefined} depth={0} style={{ lineHeight: '32px' }} flash={isAnchored ? searchParams : undefined}></TreeItem>;
 };
 
 export const SearchParamsContext = React.createContext<URLSearchParams>(new URLSearchParams(window.location.hash.slice(1)));
