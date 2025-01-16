@@ -19,13 +19,12 @@ import { clsx, msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './actionList.css';
 import * as modelUtil from './modelUtil';
-import type { Language } from '@isomorphic/locatorGenerators';
+import { asLocator, type Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
 import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
 import type { Boundaries } from './geometry';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { actionParameterDisplayString } from './string';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
@@ -104,29 +103,6 @@ export const ActionList: React.FC<ActionListProps> = ({
   </div>;
 };
 
-const ActionParameterContext: React.FC<{
-  action: ActionTraceEvent;
-  sdkLanguage: Language;
-}> = ({ action, sdkLanguage }) => {
-  const parameterString = actionParameterDisplayString(action, sdkLanguage);
-
-  if (parameterString === undefined)
-    return null;
-
-  return (
-    <div
-      className={clsx(
-          'action-parameter',
-          parameterString.type === 'locator'
-            ? 'action-locator-parameter'
-            : 'action-generic-parameter',
-      )}
-    >
-      {parameterString.value}
-    </div>
-  );
-};
-
 export const renderAction = (
   action: ActionTraceEvent,
   options: {
@@ -141,6 +117,8 @@ export const renderAction = (
   const { errors, warnings } = modelUtil.stats(action);
   const showAttachments = !!action.attachments?.length && !!revealAttachment;
 
+  const parameterString = actionParameterDisplayString(action, sdkLanguage || 'javascript');
+
   let time: string = '';
   if (action.endTime)
     time = msToString(action.endTime - action.startTime);
@@ -151,7 +129,16 @@ export const renderAction = (
   return <>
     <div className='action-title' title={action.apiName}>
       <span>{action.apiName}</span>
-      <ActionParameterContext action={action} sdkLanguage={sdkLanguage || 'javascript'} />
+      {parameterString && <div
+        className={clsx(
+            'action-parameter',
+            parameterString.type === 'locator'
+              ? 'action-locator-parameter'
+              : 'action-generic-parameter',
+        )}
+      >
+        {parameterString.value}
+      </div>}
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
       {action.class === 'APIRequestContext' && action.params.url && <div className='action-url' title={action.params.url}>{excludeOrigin(action.params.url)}</div>}
     </div>
@@ -173,3 +160,65 @@ function excludeOrigin(url: string): string {
     return url;
   }
 }
+
+interface ActionParameterDisplayString {
+  type: 'generic' | 'locator';
+  value: string;
+}
+
+const actionParameterDisplayString = (
+  action: ActionTraceEvent,
+  sdkLanguage: Language,
+): ActionParameterDisplayString | undefined => {
+  const params = action.params;
+
+  let value: string | undefined = undefined;
+
+  if (params.selector !== undefined) {
+    return { type: 'locator', value: asLocator(sdkLanguage, params.selector) };
+  } else if (params.ticksNumber !== undefined) {
+    // clock.fastForward/runFor number
+    value = `${params.ticksNumber}ms`;
+  } else if (params.ticksString !== undefined) {
+    // clock.fastForward/runFor string
+    value = params.ticksString;
+  } else if (
+    params.timeString !== undefined ||
+    params.timeNumber !== undefined
+  ) {
+    // clock.pauseAt/setFixedTime/setSystemTime
+    try {
+      value = new Date(params.timeString ?? params.timeNumber).toLocaleString(
+          undefined,
+          {
+            timeZone: 'UTC',
+          },
+      );
+    } catch (e) {
+      return undefined;
+    }
+  } else if (params.key !== undefined) {
+    // keyboard.press/down/up
+    value = params.key;
+  } else if (params.text !== undefined) {
+    // keyboard.type/insertText
+    value = `"${params.text}"`;
+  } else if (params.x !== undefined && params.y !== undefined) {
+    // mouse.click/dblclick/move
+    value = `(${params.x}, ${params.y})`;
+  } else if (params.deltaX !== undefined && params.deltaY !== undefined) {
+    // mouse.wheel
+    value = `(${params.deltaX}, ${params.deltaY})`;
+  } else if (params.x && params.y) {
+    // touchscreen.tap
+    value = `(${params.x}, ${params.y})`;
+  }
+
+  if (value === undefined)
+    return undefined;
+
+  return {
+    type: 'generic',
+    value,
+  };
+};
