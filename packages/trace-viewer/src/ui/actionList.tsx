@@ -15,7 +15,7 @@
 */
 
 import type { ActionTraceEvent, AfterActionTraceEventAttachment } from '@trace/trace';
-import { clsx, msToString } from '@web/uiUtils';
+import { msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './actionList.css';
 import * as modelUtil from './modelUtil';
