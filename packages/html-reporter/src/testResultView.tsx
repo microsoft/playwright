@@ -176,7 +176,7 @@ const StepTreeItem: React.FC<{
 }> = ({ test, step, result, depth }) => {
   return <TreeItem title={<span aria-label={step.title}>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
-    {step.attachments.length > 0 && <a style={{ float: 'right' }} title='link to attachment' href={testResultHref({ test, result, anchor: `attachment-${step.attachments[0]}` })} onClick={evt => { evt.stopPropagation(); }}>{icons.attachment()}</a>}
+    {step.attachments.length > 0 && <a style={{ float: 'right' }} title={`link to "${result.attachments[step.attachments[0]].name}" attachment`} href={testResultHref({ test, result, anchor: `attachment-${step.attachments[0]}` })} onClick={evt => { evt.stopPropagation(); }}>{icons.attachment()}</a>}
     {statusIcon(step.error || step.duration === -1 ? 'failed' : (step.skipped ? 'skipped' : 'passed'))}
     <span>{step.title}</span>
     {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
