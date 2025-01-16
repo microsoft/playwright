@@ -961,7 +961,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       const attachment = page.getByText('foo-2', { exact: true });
       await expect(attachment).not.toBeInViewport();
-      await page.getByTitle('link to "foo-2" attachment').click();
+      await page.getByLabel(`attach "foo-2"`).getByTitle('reveal attachment').click();
       await expect(attachment).toBeInViewport();
 
       await page.reload();
