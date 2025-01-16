@@ -47,7 +47,8 @@ import {
   toHaveURL,
   toHaveValue,
   toHaveValues,
-  toPass
+  toPass,
+  toHaveURL2
 } from './matchers';
 import { toMatchSnapshot, toHaveScreenshot, toHaveScreenshotStepTitle } from './toMatchSnapshot';
 import type { Expect, ExpectMatcherState } from '../../types/test';
@@ -235,6 +236,7 @@ const customAsyncMatchers = {
   toHaveText,
   toHaveTitle,
   toHaveURL,
+  toHaveURL2,
   toHaveValue,
   toHaveValues,
   toHaveScreenshot,

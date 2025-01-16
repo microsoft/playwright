@@ -26,6 +26,8 @@ import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl } from '../worker/testInfo';
 import type { ExpectMatcherState } from '../../types/test';
 import { takeFirst } from '../common/config';
+import { matcherHint } from './matcherHint';
+import { toMatchExpectedVerification } from './error';
 
 export interface LocatorEx extends Locator {
   _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
@@ -384,6 +386,54 @@ export function toHaveTitle(
     const expectedText = serializeExpectedTextValues([expected], { normalizeWhiteSpace: true });
     return await locator._expect('to.have.title', { expectedText, isNot, timeout });
   }, expected, options);
+}
+
+export async function toHaveURL2(
+  this: ExpectMatcherState,
+  page: Page,
+  expected: string | RegExp | ((url: URL) => boolean),
+  options?: { ignoreCase?: boolean; timeout?: number },
+) {
+  const matcherName = 'toHaveURL';
+  const expression = 'page';
+  toMatchExpectedVerification(
+      this,
+      matcherName,
+      undefined,
+      expression,
+      expected,
+      true,
+  );
+
+  const timeout = options?.timeout ?? this.timeout;
+  let urlMatched = false;
+  try {
+    await page.mainFrame().waitForURL(expected, { timeout });
+    urlMatched = true;
+  } catch (e) {
+    urlMatched = false;
+  }
+
+  if (urlMatched !== this.isNot)
+    return { pass: urlMatched, message: () => '' };
+
+  const matcherOptions = {
+    isNot: this.isNot,
+    promise: this.promise,
+  };
+  return {
+    pass: urlMatched,
+    message: () =>
+      matcherHint(
+          this,
+          undefined,
+          matcherName,
+          expression,
+          typeof expected === 'function' ? 'predicate' : expected,
+          matcherOptions,
+          timeout,
+      ),
+  };
 }
 
 export function toHaveURL(

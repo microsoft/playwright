@@ -20,12 +20,11 @@ import {
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring
 } from './expect';
-import { EXPECTED_COLOR } from '../common/expectBundle';
 import type { ExpectMatcherState } from '../../types/test';
 import { kNoElementsFoundError, matcherHint } from './matcherHint';
 import type { MatcherResult } from './matcherHint';
 import type { Locator } from 'playwright-core';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { toMatchExpectedVerification } from './error';
 
 export async function toMatchText(
   this: ExpectMatcherState,
@@ -37,23 +36,7 @@ export async function toMatchText(
   options: { timeout?: number, matchSubstring?: boolean } = {},
 ): Promise<MatcherResult<string | RegExp, string>> {
   expectTypes(receiver, [receiverType], matcherName);
-
-  const matcherOptions = {
-    isNot: this.isNot,
-    promise: this.promise,
-  };
-
-  if (
-    !(typeof expected === 'string') &&
-    !(expected && typeof expected.test === 'function')
-  ) {
-    // Same format as jest's matcherErrorMessage
-    throw new Error([
-      matcherHint(this, receiver, matcherName, receiver, expected, matcherOptions),
-      `${colors.bold('Matcher error')}: ${EXPECTED_COLOR('expected',)} value must be a string or regular expression`,
-      this.utils.printWithType('Expected', expected, this.utils.printExpected)
-    ].join('\n\n'));
-  }
+  toMatchExpectedVerification(this, matcherName, receiver, receiver, expected);
 
   const timeout = options.timeout ?? this.timeout;
 
@@ -67,6 +50,10 @@ export async function toMatchText(
     };
   }
 
+  const matcherOptions = {
+    isNot: this.isNot,
+    promise: this.promise,
+  };
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
   const receivedString = received || '';
   const messagePrefix = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
