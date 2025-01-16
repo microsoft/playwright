@@ -95,7 +95,7 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
   for (const target of targets) {
     const info = deps[platform];
     if (!info) {
-      console.warn(`Cannot install dependencies for ${platform}!`);  // eslint-disable-line no-console
+      console.warn(`Cannot install dependencies for ${platform} with Playwright ${getPlaywrightVersion()}!`);  // eslint-disable-line no-console
       return;
     }
     libraries.push(...info[target]);
