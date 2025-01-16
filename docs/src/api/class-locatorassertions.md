@@ -1313,7 +1313,7 @@ await Expect(locator).ToHaveAccessibleNameAsync("Save to disk");
 
 ### param: LocatorAssertions.toHaveAccessibleName.name
 * since: v1.44
-- `name` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
+- `name` <[string]|[RegExp]>
 
 Expected accessible name.
 
