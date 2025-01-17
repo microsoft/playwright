@@ -133,6 +133,12 @@ function defaultProfilePreferences(
     'dom.max_chrome_script_run_time': 0,
     'dom.max_script_run_time': 0,
 
+    // Disable background timer throttling to allow tests to run in parallel
+    // without a decrease in performance.
+    'dom.min_background_timeout_value': 0,
+    'dom.min_background_timeout_value_without_budget_throttling': 0,
+    'dom.timeout.enable_budget_timer_throttling': false,
+
     // Only load extensions from the application and user profile
     // AddonManager.SCOPE_PROFILE + AddonManager.SCOPE_APPLICATION
     'extensions.autoDisableScopes': 0,
@@ -174,6 +180,9 @@ function defaultProfilePreferences(
 
     // Show chrome errors and warnings in the error console
     'javascript.options.showInConsole': true,
+
+    // Do not throttle rendering (requestAnimationFrame) in background tabs
+    'layout.testing.top-level-always-active': true,
 
     // Disable download and usage of OpenH264: and Widevine plugins
     'media.gmp-manager.updateEnabled': false,
