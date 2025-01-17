@@ -101,7 +101,6 @@ library/inspector/cli-codegen-3.spec.ts › cli codegen › should generate fram
 library/page-clock.spec.ts › popup › should run time before popup [timeout]
 library/page-clock.spec.ts › popup › should tick after popup [timeout]
 library/page-clock.spec.ts › popup › should tick before popup [timeout]
-library/popup.spec.ts › should not throttle rAF in the opener page [timeout]
 library/popup.spec.ts › should not throw when click closes popup [timeout]
 library/popup.spec.ts › should use viewport size from window features [timeout]
 library/trace-viewer.spec.ts › should serve css without content-type [timeout]
