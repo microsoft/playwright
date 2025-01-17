@@ -65,7 +65,6 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
     [
       ['-o, --output <file name>', 'saves the generated script to a file'],
       ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
-      ['--save-trace <filename>', 'record a trace for the session and save it to a file'],
       ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
     ]).action(function(url, options) {
   codegen(options, url).catch(logErrorAndExit);
@@ -353,7 +352,6 @@ type Options = {
   saveHar?: string;
   saveHarGlob?: string;
   saveStorage?: string;
-  saveTrace?: string;
   timeout: string;
   timezone?: string;
   viewportSize?: string;
@@ -508,8 +506,6 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     if (closingBrowser)
       return;
     closingBrowser = true;
-    if (options.saveTrace)
-      await context.tracing.stop({ path: options.saveTrace });
     if (options.saveStorage)
       await context.storageState({ path: options.saveStorage }).catch(e => null);
     if (options.saveHar)
@@ -535,9 +531,6 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
   const timeout = options.timeout ? parseInt(options.timeout, 10) : 0;
   context.setDefaultTimeout(timeout);
   context.setDefaultNavigationTimeout(timeout);
-
-  if (options.saveTrace)
-    await context.tracing.start({ screenshots: true, snapshots: true });
 
   // Omit options that we add automatically for presentation purpose.
   delete launchOptions.headless;
