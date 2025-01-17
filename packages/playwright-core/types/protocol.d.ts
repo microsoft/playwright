@@ -685,8 +685,8 @@ percentage [0 - 100] for scroll driven animations
       /**
        * The unique request id.
        */
-      requestId: Network.RequestId;
-      url?: string;
+      requestId?: Network.RequestId;
+      url: string;
     }
     /**
      * Information about the frame affected by an inspector issue.
@@ -697,6 +697,20 @@ percentage [0 - 100] for scroll driven animations
     export type CookieExclusionReason = "ExcludeSameSiteUnspecifiedTreatedAsLax"|"ExcludeSameSiteNoneInsecure"|"ExcludeSameSiteLax"|"ExcludeSameSiteStrict"|"ExcludeInvalidSameParty"|"ExcludeSamePartyCrossPartyContext"|"ExcludeDomainNonASCII"|"ExcludeThirdPartyCookieBlockedInFirstPartySet"|"ExcludeThirdPartyPhaseout"|"ExcludePortMismatch"|"ExcludeSchemeMismatch";
     export type CookieWarningReason = "WarnSameSiteUnspecifiedCrossSiteContext"|"WarnSameSiteNoneInsecure"|"WarnSameSiteUnspecifiedLaxAllowUnsafe"|"WarnSameSiteStrictLaxDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeStrict"|"WarnSameSiteStrictCrossDowngradeLax"|"WarnSameSiteLaxCrossDowngradeStrict"|"WarnSameSiteLaxCrossDowngradeLax"|"WarnAttributeValueExceedsMaxSize"|"WarnDomainNonASCII"|"WarnThirdPartyPhaseout"|"WarnCrossSiteRedirectDowngradeChangesInclusion"|"WarnDeprecationTrialMetadata"|"WarnThirdPartyCookieHeuristic";
     export type CookieOperation = "SetCookie"|"ReadCookie";
+    /**
+     * Represents the category of insight that a cookie issue falls under.
+     */
+    export type InsightType = "GitHubResource"|"GracePeriod"|"Heuristics";
+    /**
+     * Information about the suggested solution to a cookie issue.
+     */
+    export interface CookieIssueInsight {
+      type: InsightType;
+      /**
+       * Link to table entry in third-party cookie migration readiness list.
+       */
+      tableEntryUrl?: string;
+    }
     /**
      * This information is currently necessary, as the front-end has a difficult
 time finding a specific cookie. With this, we can convey specific error
@@ -721,6 +735,10 @@ may be used by the front-end as additional context.
       siteForCookies?: string;
       cookieUrl?: string;
       request?: AffectedRequest;
+      /**
+       * The recommended solution to the issue.
+       */
+      insight?: CookieIssueInsight;
     }
     export type MixedContentResolutionStatus = "MixedContentBlocked"|"MixedContentAutomaticallyUpgraded"|"MixedContentWarning";
     export type MixedContentResourceType = "AttributionSrc"|"Audio"|"Beacon"|"CSPReport"|"Download"|"EventSource"|"Favicon"|"Font"|"Form"|"Frame"|"Image"|"Import"|"JSON"|"Manifest"|"Ping"|"PluginData"|"PluginResource"|"Prefetch"|"Resource"|"Script"|"ServiceWorker"|"SharedWorker"|"SpeculationRules"|"Stylesheet"|"Track"|"Video"|"Worker"|"XMLHttpRequest"|"XSLT";
@@ -758,7 +776,7 @@ Does not always exist (e.g. for unsafe form submission urls).
      * Enum indicating the reason a response has been blocked. These reasons are
 refinements of the net error BLOCKED_BY_RESPONSE.
      */
-    export type BlockedByResponseReason = "CoepFrameResourceNeedsCoepHeader"|"CoopSandboxedIFrameCannotNavigateToCoopPage"|"CorpNotSameOrigin"|"CorpNotSameOriginAfterDefaultedToSameOriginByCoep"|"CorpNotSameOriginAfterDefaultedToSameOriginByDip"|"CorpNotSameOriginAfterDefaultedToSameOriginByCoepAndDip"|"CorpNotSameSite";
+    export type BlockedByResponseReason = "CoepFrameResourceNeedsCoepHeader"|"CoopSandboxedIFrameCannotNavigateToCoopPage"|"CorpNotSameOrigin"|"CorpNotSameOriginAfterDefaultedToSameOriginByCoep"|"CorpNotSameOriginAfterDefaultedToSameOriginByDip"|"CorpNotSameOriginAfterDefaultedToSameOriginByCoepAndDip"|"CorpNotSameSite"|"SRIMessageSignatureMismatch";
     /**
      * Details for a request that has been blocked with the BLOCKED_BY_RESPONSE
 code. Currently only used for COEP/COOP, but may be extended to include
@@ -963,6 +981,15 @@ features, encourage the use of new ones, and provide general guidance.
       failureMessage: string;
       requestId?: Network.RequestId;
     }
+    export type SelectElementAccessibilityIssueReason = "DisallowedSelectChild"|"DisallowedOptGroupChild"|"NonPhrasingContentOptionChild"|"InteractiveContentOptionChild"|"InteractiveContentLegendChild";
+    /**
+     * This isue warns about errors in the select element content model.
+     */
+    export interface SelectElementAccessibilityIssueDetails {
+      nodeId: DOM.BackendNodeId;
+      selectElementAccessibilityIssueReason: SelectElementAccessibilityIssueReason;
+      hasDisallowedAttributes: boolean;
+    }
     export type StyleSheetLoadingIssueReason = "LateImportRule"|"RequestFailed";
     /**
      * This issue warns when a referenced stylesheet couldn't be loaded.
@@ -1005,7 +1032,7 @@ registrations being ignored.
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "CookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"NavigatorUserAgentIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue"|"FederatedAuthRequestIssue"|"BounceTrackingIssue"|"CookieDeprecationMetadataIssue"|"StylesheetLoadingIssue"|"FederatedAuthUserInfoRequestIssue"|"PropertyRuleIssue"|"SharedDictionaryIssue";
+    export type InspectorIssueCode = "CookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"NavigatorUserAgentIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue"|"FederatedAuthRequestIssue"|"BounceTrackingIssue"|"CookieDeprecationMetadataIssue"|"StylesheetLoadingIssue"|"FederatedAuthUserInfoRequestIssue"|"PropertyRuleIssue"|"SharedDictionaryIssue"|"SelectElementAccessibilityIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -1033,6 +1060,7 @@ add a new optional field to this type.
       propertyRuleIssueDetails?: PropertyRuleIssueDetails;
       federatedAuthUserInfoRequestIssueDetails?: FederatedAuthUserInfoRequestIssueDetails;
       sharedDictionaryIssueDetails?: SharedDictionaryIssueDetails;
+      selectElementAccessibilityIssueDetails?: SelectElementAccessibilityIssueDetails;
     }
     /**
      * A unique id for a DevTools inspector issue. Allows other entities (e.g.
@@ -1534,7 +1562,7 @@ events afterwards if enabled and recording.
        */
       windowState?: WindowState;
     }
-    export type PermissionType = "accessibilityEvents"|"audioCapture"|"backgroundSync"|"backgroundFetch"|"capturedSurfaceControl"|"clipboardReadWrite"|"clipboardSanitizedWrite"|"displayCapture"|"durableStorage"|"flash"|"geolocation"|"idleDetection"|"localFonts"|"midi"|"midiSysex"|"nfc"|"notifications"|"paymentHandler"|"periodicBackgroundSync"|"protectedMediaIdentifier"|"sensors"|"storageAccess"|"speakerSelection"|"topLevelStorageAccess"|"videoCapture"|"videoCapturePanTiltZoom"|"wakeLockScreen"|"wakeLockSystem"|"webAppInstallation"|"windowManagement";
+    export type PermissionType = "ar"|"audioCapture"|"automaticFullscreen"|"backgroundFetch"|"backgroundSync"|"cameraPanTiltZoom"|"capturedSurfaceControl"|"clipboardReadWrite"|"clipboardSanitizedWrite"|"displayCapture"|"durableStorage"|"geolocation"|"handTracking"|"idleDetection"|"keyboardLock"|"localFonts"|"midi"|"midiSysex"|"nfc"|"notifications"|"paymentHandler"|"periodicBackgroundSync"|"pointerLock"|"protectedMediaIdentifier"|"sensors"|"smartCard"|"speakerSelection"|"storageAccess"|"topLevelStorageAccess"|"videoCapture"|"vr"|"wakeLockScreen"|"wakeLockSystem"|"webAppInstallation"|"webPrinting"|"windowManagement";
     export type PermissionSetting = "granted"|"denied"|"prompt";
     /**
      * Definition of PermissionDescriptor defined in the Permissions API:
@@ -1962,6 +1990,19 @@ inspector" rules), "regular" for regular stylesheets.
       matches: RuleMatch[];
     }
     /**
+     * CSS style coming from animations with the name of the animation.
+     */
+    export interface CSSAnimationStyle {
+      /**
+       * The name of the animation.
+       */
+      name?: string;
+      /**
+       * The style coming from the animation.
+       */
+      style: CSSStyle;
+    }
+    /**
      * Inherited CSS rule collection from ancestor node.
      */
     export interface InheritedStyleEntry {
@@ -1973,6 +2014,19 @@ inspector" rules), "regular" for regular stylesheets.
        * Matches of CSS rules matching the ancestor node in the style inheritance chain.
        */
       matchedCSSRules: RuleMatch[];
+    }
+    /**
+     * Inherited CSS style collection for animated styles from ancestor node.
+     */
+    export interface InheritedAnimatedStyleEntry {
+      /**
+       * Styles coming from the animations of the ancestor, if any, in the style inheritance chain.
+       */
+      animationStyles?: CSSAnimationStyle[];
+      /**
+       * The style coming from the transitions of the ancestor, if any, in the style inheritance chain.
+       */
+      transitionsStyle?: CSSStyle;
     }
     /**
      * Inherited pseudo element matches from pseudos of an ancestor node.
@@ -2897,6 +2951,21 @@ the browser.
     }
     export type forcePseudoStateReturnValue = {
     }
+    /**
+     * Ensures that the given node is in its starting-style state.
+     */
+    export type forceStartingStyleParameters = {
+      /**
+       * The element id for which to force the starting-style state.
+       */
+      nodeId: DOM.NodeId;
+      /**
+       * Boolean indicating if this is on or off.
+       */
+      forced: boolean;
+    }
+    export type forceStartingStyleReturnValue = {
+    }
     export type getBackgroundColorsParameters = {
       /**
        * Id of the node to get background colors for.
@@ -2935,6 +3004,46 @@ be ignored (as if the image had failed to load).
       computedStyle: CSSComputedStyleProperty[];
     }
     /**
+     * Resolve the specified values in the context of the provided element.
+For example, a value of '1em' is evaluated according to the computed
+'font-size' of the element and a value 'calc(1px + 2px)' will be
+resolved to '3px'.
+     */
+    export type resolveValuesParameters = {
+      /**
+       * Substitution functions (var()/env()/attr()) and cascade-dependent
+keywords (revert/revert-layer) do not work.
+       */
+      values: string[];
+      /**
+       * Id of the node in whose context the expression is evaluated
+       */
+      nodeId: DOM.NodeId;
+      /**
+       * Only longhands and custom property names are accepted.
+       */
+      propertyName?: string;
+      /**
+       * Pseudo element type, only works for pseudo elements that generate
+elements in the tree, such as ::before and ::after.
+       */
+      pseudoType?: DOM.PseudoType;
+      /**
+       * Pseudo element custom ident.
+       */
+      pseudoIdentifier?: string;
+    }
+    export type resolveValuesReturnValue = {
+      results: string[];
+    }
+    export type getLonghandPropertiesParameters = {
+      shorthandName: string;
+      value: string;
+    }
+    export type getLonghandPropertiesReturnValue = {
+      longhandProperties: CSSProperty[];
+    }
+    /**
      * Returns the styles defined inline (explicitly in the "style" attribute and implicitly, using DOM
 attributes) for a DOM node identified by `nodeId`.
      */
@@ -2950,6 +3059,28 @@ attributes) for a DOM node identified by `nodeId`.
        * Attribute-defined element style (e.g. resulting from "width=20 height=100%").
        */
       attributesStyle?: CSSStyle;
+    }
+    /**
+     * Returns the styles coming from animations & transitions
+including the animation & transition styles coming from inheritance chain.
+     */
+    export type getAnimatedStylesForNodeParameters = {
+      nodeId: DOM.NodeId;
+    }
+    export type getAnimatedStylesForNodeReturnValue = {
+      /**
+       * Styles coming from animations.
+       */
+      animationStyles?: CSSAnimationStyle[];
+      /**
+       * Style coming from transitions.
+       */
+      transitionsStyle?: CSSStyle;
+      /**
+       * Inherited style entries for animationsStyle and transitionsStyle from
+the inheritance chain of the element.
+       */
+      inherited?: InheritedAnimatedStyleEntry[];
     }
     /**
      * Returns requested styles for a DOM node identified by `nodeId`.
@@ -3603,7 +3734,7 @@ front-end.
     /**
      * Pseudo element type.
      */
-    export type PseudoType = "first-line"|"first-letter"|"check"|"before"|"after"|"select-arrow"|"marker"|"backdrop"|"column"|"selection"|"search-text"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scroll-marker"|"scroll-marker-group"|"scroll-next-button"|"scroll-prev-button"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-old"|"view-transition-new"|"placeholder"|"file-selector-button"|"details-content"|"picker";
+    export type PseudoType = "first-line"|"first-letter"|"checkmark"|"before"|"after"|"picker-icon"|"marker"|"backdrop"|"column"|"selection"|"search-text"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scroll-marker"|"scroll-marker-group"|"scroll-button"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-old"|"view-transition-new"|"placeholder"|"file-selector-button"|"details-content"|"picker";
     /**
      * Shadow root type.
      */
@@ -8616,7 +8747,7 @@ applicable or not known.
     /**
      * The reason why request was blocked.
      */
-    export type BlockedReason = "other"|"csp"|"mixed-content"|"origin"|"inspector"|"subresource-filter"|"content-type"|"coep-frame-resource-needs-coep-header"|"coop-sandboxed-iframe-cannot-navigate-to-coop-page"|"corp-not-same-origin"|"corp-not-same-origin-after-defaulted-to-same-origin-by-coep"|"corp-not-same-origin-after-defaulted-to-same-origin-by-dip"|"corp-not-same-origin-after-defaulted-to-same-origin-by-coep-and-dip"|"corp-not-same-site";
+    export type BlockedReason = "other"|"csp"|"mixed-content"|"origin"|"inspector"|"subresource-filter"|"content-type"|"coep-frame-resource-needs-coep-header"|"coop-sandboxed-iframe-cannot-navigate-to-coop-page"|"corp-not-same-origin"|"corp-not-same-origin-after-defaulted-to-same-origin-by-coep"|"corp-not-same-origin-after-defaulted-to-same-origin-by-dip"|"corp-not-same-origin-after-defaulted-to-same-origin-by-coep-and-dip"|"corp-not-same-site"|"sri-message-signature-mismatch";
     /**
      * The reason why request was blocked.
      */
@@ -9917,6 +10048,9 @@ are represented by the invalid cookie line string instead of a proper cookie.
       blockedCookies: BlockedSetCookieWithReason[];
       /**
        * Raw response headers as they were received over the wire.
+Duplicate headers in the response are represented as a single key with their values
+concatentated using `\n` as the separator.
+See also `headersText` that contains verbatim text for HTTP/1.*.
        */
       headers: Headers;
       /**
@@ -9962,6 +10096,9 @@ Only one responseReceivedEarlyHints may be fired for eached responseReceived eve
       requestId: RequestId;
       /**
        * Raw response headers as they were received over the wire.
+Duplicate headers in the response are represented as a single key with their values
+concatentated using `\n` as the separator.
+See also `headersText` that contains verbatim text for HTTP/1.*.
        */
       headers: Headers;
     }
@@ -9978,7 +10115,7 @@ or after the response was received.
 of the operation already exists und thus, the operation was abort
 preemptively (e.g. a cache hit).
        */
-      status: "Ok"|"InvalidArgument"|"MissingIssuerKeys"|"FailedPrecondition"|"ResourceExhausted"|"AlreadyExists"|"ResourceLimited"|"Unauthorized"|"BadResponse"|"InternalError"|"UnknownError"|"FulfilledLocally";
+      status: "Ok"|"InvalidArgument"|"MissingIssuerKeys"|"FailedPrecondition"|"ResourceExhausted"|"AlreadyExists"|"ResourceLimited"|"Unauthorized"|"BadResponse"|"InternalError"|"UnknownError"|"FulfilledLocally"|"SiteIssuerLimit";
       type: TrustTokenOperationType;
       requestId: RequestId;
       /**
@@ -10671,6 +10808,26 @@ should be omitted for worker targets.
     }
     export type loadNetworkResourceReturnValue = {
       resource: LoadNetworkResourcePageResult;
+    }
+    /**
+     * Sets Controls for third-party cookie access
+Page reload is required before the new cookie bahavior will be observed
+     */
+    export type setCookieControlsParameters = {
+      /**
+       * Whether 3pc restriction is enabled.
+       */
+      enableThirdPartyCookieRestriction: boolean;
+      /**
+       * Whether 3pc grace period exception should be enabled; false by default.
+       */
+      disableThirdPartyCookieMetadata: boolean;
+      /**
+       * Whether 3pc heuristics exceptions should be enabled; false by default.
+       */
+      disableThirdPartyCookieHeuristics: boolean;
+    }
+    export type setCookieControlsReturnValue = {
     }
   }
   
@@ -11545,7 +11702,7 @@ as an ad.
      * All Permissions Policy features. This enum should match the one defined
 in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-private"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"fenced-unpartitioned-storage-read"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"local-fonts"|"magnetometer"|"media-playback-while-not-visible"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"popins"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-autofill"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"sync-xhr"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"web-printing"|"web-share"|"window-management"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-private"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"fenced-unpartitioned-storage-read"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"local-fonts"|"magnetometer"|"media-playback-while-not-visible"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"popins"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-autofill"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"sync-xhr"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"web-printing"|"web-share"|"window-management"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -15520,6 +15677,14 @@ Parts of the URL other than those constituting origin are ignored.
        */
       url: string;
       /**
+       * Frame left origin in DIP (headless chrome only).
+       */
+      left?: number;
+      /**
+       * Frame top origin in DIP (headless chrome only).
+       */
+      top?: number;
+      /**
        * Frame width in DIP (headless chrome only).
        */
       width?: number;
@@ -17152,6 +17317,16 @@ possible for multiple rule sets and links to trigger a single attempt.
       nodeIds: DOM.BackendNodeId[];
     }
     /**
+     * Chrome manages different types of preloads together using a
+concept of preloading pipeline. For example, if a site uses a
+SpeculationRules for prerender, Chrome first starts a prefetch and
+then upgrades it to prerender.
+
+CDP events for them are emitted separately but they share
+`PreloadPipelineId`.
+     */
+    export type PreloadPipelineId = string;
+    /**
      * List of FinalStatus reasons for Prerender2.
      */
     export type PrerenderFinalStatus = "Activated"|"Destroyed"|"LowEndDevice"|"InvalidSchemeRedirect"|"InvalidSchemeNavigation"|"NavigationRequestBlockedByCsp"|"MainFrameNavigation"|"MojoBinderPolicy"|"RendererProcessCrashed"|"RendererProcessKilled"|"Download"|"TriggerDestroyed"|"NavigationNotCommitted"|"NavigationBadHttpStatus"|"ClientCertRequested"|"NavigationRequestNetworkError"|"CancelAllHostsForTesting"|"DidFailLoad"|"Stop"|"SslCertificateError"|"LoginAuthRequested"|"UaChangeRequiresReload"|"BlockedByClient"|"AudioOutputDeviceRequested"|"MixedContent"|"TriggerBackgrounded"|"MemoryLimitExceeded"|"DataSaverEnabled"|"TriggerUrlHasEffectiveUrl"|"ActivatedBeforeStarted"|"InactivePageRestriction"|"StartFailed"|"TimeoutBackgrounded"|"CrossSiteRedirectInInitialNavigation"|"CrossSiteNavigationInInitialNavigation"|"SameSiteCrossOriginRedirectNotOptInInInitialNavigation"|"SameSiteCrossOriginNavigationNotOptInInInitialNavigation"|"ActivationNavigationParameterMismatch"|"ActivatedInBackground"|"EmbedderHostDisallowed"|"ActivationNavigationDestroyedBeforeSuccess"|"TabClosedByUserGesture"|"TabClosedWithoutUserGesture"|"PrimaryMainFrameRendererProcessCrashed"|"PrimaryMainFrameRendererProcessKilled"|"ActivationFramePolicyNotCompatible"|"PreloadingDisabled"|"BatterySaverEnabled"|"ActivatedDuringMainFrameNavigation"|"PreloadingUnsupportedByWebContents"|"CrossSiteRedirectInMainFrameNavigation"|"CrossSiteNavigationInMainFrameNavigation"|"SameSiteCrossOriginRedirectNotOptInInMainFrameNavigation"|"SameSiteCrossOriginNavigationNotOptInInMainFrameNavigation"|"MemoryPressureOnTrigger"|"MemoryPressureAfterTriggered"|"PrerenderingDisabledByDevTools"|"SpeculationRuleRemoved"|"ActivatedWithAuxiliaryBrowsingContexts"|"MaxNumOfRunningEagerPrerendersExceeded"|"MaxNumOfRunningNonEagerPrerendersExceeded"|"MaxNumOfRunningEmbedderPrerendersExceeded"|"PrerenderingUrlHasEffectiveUrl"|"RedirectedPrerenderingUrlHasEffectiveUrl"|"ActivationUrlHasEffectiveUrl"|"JavaScriptInterfaceAdded"|"JavaScriptInterfaceRemoved"|"AllPrerenderingCanceled"|"WindowClosed"|"SlowNetwork"|"OtherPrerenderedPageActivated"|"V8OptimizerDisabled"|"PrerenderFailedDuringPrefetch";
@@ -17198,6 +17373,7 @@ filter out the ones that aren't necessary to the developers.
      */
     export type prefetchStatusUpdatedPayload = {
       key: PreloadingAttemptKey;
+      pipelineId: PreloadPipelineId;
       /**
        * The frame id of the frame initiating prefetch.
        */
@@ -17212,6 +17388,7 @@ filter out the ones that aren't necessary to the developers.
      */
     export type prerenderStatusUpdatedPayload = {
       key: PreloadingAttemptKey;
+      pipelineId: PreloadPipelineId;
       status: PreloadingStatus;
       prerenderStatus?: PrerenderFinalStatus;
       /**
@@ -17923,6 +18100,10 @@ variables as its properties.
        */
       hash: string;
       /**
+       * For Wasm modules, the content of the `build_id` custom section.
+       */
+      buildId: string;
+      /**
        * Embedder-specific auxiliary data likely matching {isDefault: boolean, type: 'default'|'isolated'|'worker', frameId: string}
        */
       executionContextAuxData?: { [key: string]: string };
@@ -17996,6 +18177,10 @@ scripts upon enabling debugger.
        * Content hash of the script, SHA-256.
        */
       hash: string;
+      /**
+       * For Wasm modules, the content of the `build_id` custom section.
+       */
+      buildId: string;
       /**
        * Embedder-specific auxiliary data likely matching {isDefault: boolean, type: 'default'|'isolated'|'worker', frameId: string}
        */
@@ -20507,9 +20692,13 @@ Error was thrown.
     "CSS.disable": CSS.disableParameters;
     "CSS.enable": CSS.enableParameters;
     "CSS.forcePseudoState": CSS.forcePseudoStateParameters;
+    "CSS.forceStartingStyle": CSS.forceStartingStyleParameters;
     "CSS.getBackgroundColors": CSS.getBackgroundColorsParameters;
     "CSS.getComputedStyleForNode": CSS.getComputedStyleForNodeParameters;
+    "CSS.resolveValues": CSS.resolveValuesParameters;
+    "CSS.getLonghandProperties": CSS.getLonghandPropertiesParameters;
     "CSS.getInlineStylesForNode": CSS.getInlineStylesForNodeParameters;
+    "CSS.getAnimatedStylesForNode": CSS.getAnimatedStylesForNodeParameters;
     "CSS.getMatchedStylesForNode": CSS.getMatchedStylesForNodeParameters;
     "CSS.getMediaQueries": CSS.getMediaQueriesParameters;
     "CSS.getPlatformFontsForNode": CSS.getPlatformFontsForNodeParameters;
@@ -20751,6 +20940,7 @@ Error was thrown.
     "Network.getSecurityIsolationStatus": Network.getSecurityIsolationStatusParameters;
     "Network.enableReportingApi": Network.enableReportingApiParameters;
     "Network.loadNetworkResource": Network.loadNetworkResourceParameters;
+    "Network.setCookieControls": Network.setCookieControlsParameters;
     "Overlay.disable": Overlay.disableParameters;
     "Overlay.enable": Overlay.enableParameters;
     "Overlay.getHighlightObjectForTest": Overlay.getHighlightObjectForTestParameters;
@@ -21119,9 +21309,13 @@ Error was thrown.
     "CSS.disable": CSS.disableReturnValue;
     "CSS.enable": CSS.enableReturnValue;
     "CSS.forcePseudoState": CSS.forcePseudoStateReturnValue;
+    "CSS.forceStartingStyle": CSS.forceStartingStyleReturnValue;
     "CSS.getBackgroundColors": CSS.getBackgroundColorsReturnValue;
     "CSS.getComputedStyleForNode": CSS.getComputedStyleForNodeReturnValue;
+    "CSS.resolveValues": CSS.resolveValuesReturnValue;
+    "CSS.getLonghandProperties": CSS.getLonghandPropertiesReturnValue;
     "CSS.getInlineStylesForNode": CSS.getInlineStylesForNodeReturnValue;
+    "CSS.getAnimatedStylesForNode": CSS.getAnimatedStylesForNodeReturnValue;
     "CSS.getMatchedStylesForNode": CSS.getMatchedStylesForNodeReturnValue;
     "CSS.getMediaQueries": CSS.getMediaQueriesReturnValue;
     "CSS.getPlatformFontsForNode": CSS.getPlatformFontsForNodeReturnValue;
@@ -21363,6 +21557,7 @@ Error was thrown.
     "Network.getSecurityIsolationStatus": Network.getSecurityIsolationStatusReturnValue;
     "Network.enableReportingApi": Network.enableReportingApiReturnValue;
     "Network.loadNetworkResource": Network.loadNetworkResourceReturnValue;
+    "Network.setCookieControls": Network.setCookieControlsReturnValue;
     "Overlay.disable": Overlay.disableReturnValue;
     "Overlay.enable": Overlay.enableReturnValue;
     "Overlay.getHighlightObjectForTest": Overlay.getHighlightObjectForTestReturnValue;
