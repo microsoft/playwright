@@ -235,18 +235,16 @@ export const kWebLinkRe = new RegExp('(?:[a-zA-Z][a-zA-Z0-9+.-]{2,}:\\/\\/|www\\
 export function useFlash(): [boolean, EffectCallback] {
   const [flash, setFlash] = React.useState(false);
   const trigger = React.useCallback<React.EffectCallback>(() => {
-    let timeout: number | undefined;
+    const timeouts: any[] = [];
     setFlash(currentlyFlashing => {
-      if (!currentlyFlashing) {
-        timeout = setTimeout(() => setFlash(false), 1000) as any;
+      timeouts.push(setTimeout(() => setFlash(false), 1000));
+      if (!currentlyFlashing)
         return true;
-      }
 
-      // It's already flashing, so we remove the class and re-add it after 50ms to trigger the animation again.
-      timeout = setTimeout(() => setFlash(true), 50) as any;
+      timeouts.push(setTimeout(() => setFlash(true), 50));
       return false;
     });
-    return () => clearTimeout(timeout);
+    return () => timeouts.forEach(clearTimeout);
   }, [setFlash]);
   return [flash, trigger];
 }
