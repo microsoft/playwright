@@ -42,24 +42,6 @@ test('should match snapshot with name', async ({ runInlineTest }, testInfo) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should match snapshot with path', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    'test.yml': `
-      - heading "hello world"
-    `,
-    'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      import path from 'path';
-      test('test', async ({ page }) => {
-        await page.setContent(\`<h1>hello world</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ path: path.resolve(__dirname, 'test.yml') });
-      });
-    `
-  });
-
-  expect(result.exitCode).toBe(0);
-});
-
 test('should generate multiple missing', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

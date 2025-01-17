@@ -8697,15 +8697,10 @@ interface LocatorAssertions {
    */
   toMatchAriaSnapshot(options?: {
     /**
-     * Name of the snapshot to store in the snapshot folder corresponding to this test. Generates ordinal name if not
-     * specified.
+     * Name of the snapshot to store in the snapshot (screenshot) folder corresponding to this test. Generates sequential
+     * names if not specified.
      */
     name?: string;
-
-    /**
-     * Path to the YAML snapshot file.
-     */
-    path?: string;
 
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
