@@ -1,0 +1,13 @@
+- tree:
+  - treeitem "[icon-circle-outline] a.test.ts" [expanded]:
+    - group:
+      - treeitem "[icon-circle-outline] passes" [selected]:
+        - button "Run"
+        - button "Show source"
+        - button "Watch"
+      - treeitem "[icon-circle-outline] fails"
+      - treeitem "[icon-circle-outline] suite"
+  - treeitem "[icon-circle-outline] b.test.ts" [expanded]:
+    - group:
+      - treeitem "[icon-circle-outline] passes"
+      - treeitem "[icon-circle-outline] fails"
