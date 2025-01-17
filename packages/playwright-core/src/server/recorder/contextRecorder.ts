@@ -54,11 +54,9 @@ export class ContextRecorder extends EventEmitter {
   private _throttledOutputFile: ThrottledFile | null = null;
   private _orderedLanguages: LanguageGenerator[] = [];
   private _listeners: RegisteredListener[] = [];
-  private _codegenMode: 'actions' | 'trace-events';
 
-  constructor(codegenMode: 'actions' | 'trace-events', context: BrowserContext, params: channels.BrowserContextEnableRecorderParams, delegate: ContextRecorderDelegate) {
+  constructor(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams, delegate: ContextRecorderDelegate) {
     super();
-    this._codegenMode = codegenMode;
     this._context = context;
     this._params = params;
     this._delegate = delegate;
@@ -150,12 +148,6 @@ export class ContextRecorder extends EventEmitter {
 
   setEnabled(enabled: boolean) {
     this._collection.setEnabled(enabled);
-    if (this._codegenMode === 'trace-events') {
-      if (enabled)
-        this._context.tracing.startChunk({ name: 'trace', title: 'trace' }).catch(() => {});
-      else
-        this._context.tracing.stopChunk({ mode: 'discard' }).catch(() => {});
-    }
   }
 
   dispose() {

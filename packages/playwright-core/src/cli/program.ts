@@ -595,7 +595,6 @@ async function codegen(options: Options & { target: string, output?: string, tes
     device: options.device,
     saveStorage: options.saveStorage,
     mode: 'recording',
-    codegenMode: process.env.PW_RECORDER_IS_TRACE_VIEWER ? 'trace-events' : 'actions',
     testIdAttributeName,
     outputFile: outputFile ? path.resolve(outputFile) : undefined,
     handleSIGINT: false,

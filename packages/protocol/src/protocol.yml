@@ -1198,11 +1198,6 @@ BrowserContext:
           literals:
           - inspecting
           - recording
-        codegenMode:
-          type: enum?
-          literals:
-          - actions
-          - trace-events
         pauseOnNextStatement: boolean?
         testIdAttributeName: string?
         launchOptions: json?

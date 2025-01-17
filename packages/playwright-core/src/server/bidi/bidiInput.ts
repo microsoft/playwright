@@ -19,6 +19,7 @@ import type * as types from '../types';
 import type { BidiSession } from './bidiConnection';
 import * as bidi from './third_party/bidiProtocol';
 import { getBidiKeyValue } from './third_party/bidiKeyboard';
+import { resolveSmartModifierString } from '../input';
 
 export class RawKeyboardImpl implements input.RawKeyboard {
   private _session: BidiSession;
@@ -32,12 +33,14 @@ export class RawKeyboardImpl implements input.RawKeyboard {
   }
 
   async keydown(modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription, autoRepeat: boolean): Promise<void> {
+    keyName = resolveSmartModifierString(keyName);
     const actions: bidi.Input.KeySourceAction[] = [];
     actions.push({ type: 'keyDown', value: getBidiKeyValue(keyName) });
     await this._performActions(actions);
   }
 
   async keyup(modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription): Promise<void> {
+    keyName = resolveSmartModifierString(keyName);
     const actions: bidi.Input.KeySourceAction[] = [];
     actions.push({ type: 'keyUp', value: getBidiKeyValue(keyName) });
     await this._performActions(actions);

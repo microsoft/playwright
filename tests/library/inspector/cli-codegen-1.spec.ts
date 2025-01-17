@@ -19,7 +19,6 @@ import type { ConsoleMessage } from 'playwright';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
-  test.skip(({ trace, codegenMode }) => trace === 'on' && codegenMode === 'trace-events');
 
   test('should click', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
@@ -413,7 +412,7 @@ await page.GetByRole(AriaRole.Textbox).PressAsync("Shift+Enter");`);
     expect(messages[0].text()).toBe('press');
   });
 
-  test('should update selected element after pressing Tab', async ({ openRecorder, browserName, codegenMode }) => {
+  test('should update selected element after pressing Tab', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`
