@@ -2274,13 +2274,8 @@ assertThat(page.locator("body")).matchesAriaSnapshot(new LocatorAssertions.Match
 * langs: js
 - `name` <[string]>
 
-Name of the snapshot to store in the snapshot folder corresponding to this test. Generates ordinal name if not specified.
-
-### option: LocatorAssertions.toMatchAriaSnapshot#2.path
-* since: v1.50
-- `path` <[string]>
-
-Path to the YAML snapshot file.
+Name of the snapshot to store in the snapshot (screenshot) folder corresponding to this test.
+Generates sequential names if not specified.
 
 ### option: LocatorAssertions.toMatchAriaSnapshot#2.timeout = %%-js-assertions-timeout-%%
 * since: v1.50
