@@ -24,7 +24,7 @@ import type { ExpectMatcherState } from '../../types/test';
 import { kNoElementsFoundError, matcherHint } from './matcherHint';
 import type { MatcherResult } from './matcherHint';
 import type { Locator } from 'playwright-core';
-import { toMatchExpectedVerification } from './error';
+import { toMatchExpectedStringOrPredicateVerification } from './error';
 
 export async function toMatchText(
   this: ExpectMatcherState,
@@ -36,7 +36,7 @@ export async function toMatchText(
   options: { timeout?: number, matchSubstring?: boolean } = {},
 ): Promise<MatcherResult<string | RegExp, string>> {
   expectTypes(receiver, [receiverType], matcherName);
-  toMatchExpectedVerification(this, matcherName, receiver, receiver, expected);
+  toMatchExpectedStringOrPredicateVerification(this, matcherName, receiver, receiver, expected);
 
   const timeout = options.timeout ?? this.timeout;
 

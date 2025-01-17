@@ -27,7 +27,7 @@ import { TestInfoImpl } from '../worker/testInfo';
 import type { ExpectMatcherState } from '../../types/test';
 import { takeFirst } from '../common/config';
 import { matcherHint } from './matcherHint';
-import { toMatchExpectedVerification } from './error';
+import { toMatchExpectedStringOrPredicateVerification } from './error';
 
 export interface LocatorEx extends Locator {
   _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
@@ -396,7 +396,7 @@ export async function toHaveURL2(
 ) {
   const matcherName = 'toHaveURL';
   const expression = 'page';
-  toMatchExpectedVerification(
+  toMatchExpectedStringOrPredicateVerification(
       this,
       matcherName,
       undefined,
@@ -429,7 +429,7 @@ export async function toHaveURL2(
           undefined,
           matcherName,
           expression,
-          typeof expected === 'function' ? 'predicate' : expected,
+          undefined,
           matcherOptions,
           timeout,
       ),

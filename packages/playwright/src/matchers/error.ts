@@ -20,7 +20,7 @@ import { colors } from 'playwright-core/lib/utilsBundle';
 import type { Locator } from 'playwright-core';
 import { EXPECTED_COLOR } from '../common/expectBundle';
 
-export function toMatchExpectedVerification(
+export function toMatchExpectedStringOrPredicateVerification(
   state: ExpectMatcherState,
   matcherName: string,
   receiver: Locator | undefined,
@@ -42,7 +42,8 @@ export function toMatchExpectedVerification(
     const message = supportsPredicate ? 'string, regular expression, or predicate' : 'string or regular expression';
 
     throw new Error([
-      matcherHint(state, receiver, matcherName, expression, expected, matcherOptions),
+      // Always display `expected` in expectation place
+      matcherHint(state, receiver, matcherName, expression, undefined, matcherOptions),
       `${colors.bold('Matcher error')}: ${EXPECTED_COLOR('expected',)} value must be a ${message}`,
       state.utils.printWithType('Expected', expected, state.utils.printExpected)
     ].join('\n\n'));
