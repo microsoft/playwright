@@ -37,16 +37,18 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
   const [expanded, setExpanded] = React.useState(false);
   const [attachmentText, setAttachmentText] = React.useState<string | null>(null);
   const [placeholder, setPlaceholder] = React.useState<string | null>(null);
+  const [flash, triggerFlash] = useFlash();
   const ref = React.useRef<HTMLSpanElement>(null);
 
   const isTextAttachment = isTextualMimeType(attachment.contentType);
   const hasContent = !!attachment.sha1 || !!attachment.path;
 
   React.useEffect(() => {
-    if (reveal)
+    if (reveal) {
       ref.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [reveal]);
-  const flash = useFlash(reveal);
+      return triggerFlash();
+    }
+  }, [reveal, triggerFlash]);
 
   React.useEffect(() => {
     if (expanded && attachmentText === null && placeholder === null) {

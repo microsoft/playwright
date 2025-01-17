@@ -14,6 +14,7 @@
   limitations under the License.
 */
 
+import type { EffectCallback } from 'react';
 import React from 'react';
 
 // Recalculates the value when dependencies change.
@@ -225,15 +226,21 @@ export function scrollIntoViewIfNeeded(element: Element | undefined) {
 const kControlCodesRe = '\\u0000-\\u0020\\u007f-\\u009f';
 export const kWebLinkRe = new RegExp('(?:[a-zA-Z][a-zA-Z0-9+.-]{2,}:\\/\\/|www\\.)[^\\s' + kControlCodesRe + '"]{2,}[^\\s' + kControlCodesRe + '"\')}\\],:;.!?]', 'ug');
 
-// flash is retriggered whenever the value changes
-export function useFlash(flash: any | undefined) {
-  const [flashState, setFlashState] = React.useState(false);
-  React.useEffect(() => {
-    if (flash) {
-      setFlashState(true);
-      const timeout = setTimeout(() => setFlashState(false), 1000);
-      return () => clearTimeout(timeout);
-    }
-  }, [flash]);
-  return flashState;
+export function useFlash(): [boolean, EffectCallback] {
+  const [flash, setFlash] = React.useState(false);
+  const trigger = React.useCallback<React.EffectCallback>(() => {
+    let timeout: number | undefined;
+    setFlash(currentlyFlashing => {
+      if (!currentlyFlashing) {
+        timeout = setTimeout(() => setFlash(false), 1000) as any;
+        return true;
+      }
+
+      // It's already flashing, so we remove the class and re-add it after 50ms to trigger the animation again.
+      timeout = setTimeout(() => setFlash(true), 50) as any;
+      return false;
+    });
+    return () => clearTimeout(timeout);
+  }, [setFlash]);
+  return [flash, trigger];
 }

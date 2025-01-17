@@ -17,7 +17,7 @@
 import * as React from 'react';
 import './treeItem.css';
 import * as icons from './icons';
-import { clsx, useFlash } from '@web/uiUtils';
+import { clsx } from '@web/uiUtils';
 
 export const TreeItem: React.FunctionComponent<{
   title: JSX.Element,
@@ -26,11 +26,10 @@ export const TreeItem: React.FunctionComponent<{
   expandByDefault?: boolean,
   depth: number,
   style?:  React.CSSProperties,
-  flash?: any
+  flash?: boolean
 }> = ({ title, loadChildren, onClick, expandByDefault, depth, style, flash }) => {
-  const addFlashClass = useFlash(flash);
   const [expanded, setExpanded] = React.useState(expandByDefault || false);
-  return <div className={clsx('tree-item', addFlashClass && 'yellow-flash')} style={style}>
+  return <div className={clsx('tree-item', flash && 'yellow-flash')} style={style}>
     <span className='tree-item-title' style={{ whiteSpace: 'nowrap', paddingLeft: depth * 22 + 4 }} onClick={() => { onClick?.(); setExpanded(!expanded); }} >
       {loadChildren && !!expanded && icons.downArrow()}
       {loadChildren && !expanded && icons.rightArrow()}
