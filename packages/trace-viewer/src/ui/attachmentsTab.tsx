@@ -94,7 +94,7 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
 
 export const AttachmentsTab: React.FunctionComponent<{
   model: MultiTraceModel | undefined,
-  revealedAttachment?: AfterActionTraceEventAttachment,
+  revealedAttachment?: [AfterActionTraceEventAttachment, number],
 }> = ({ model, revealedAttachment }) => {
   const { diffMap, screenshots, attachments } = React.useMemo(() => {
     const attachments = new Set<Attachment>();
@@ -154,7 +154,7 @@ export const AttachmentsTab: React.FunctionComponent<{
       return <div className='attachment-item' key={attachmentKey(a, i)}>
         <ExpandableAttachment
           attachment={a}
-          reveal={(!!revealedAttachment && isEqualAttachment(a, revealedAttachment)) ? revealedAttachment : undefined}
+          reveal={(!!revealedAttachment && isEqualAttachment(a, revealedAttachment[0])) ? revealedAttachment : undefined}
         />
       </div>;
     })}
