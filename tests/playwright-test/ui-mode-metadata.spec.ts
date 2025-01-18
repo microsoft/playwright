@@ -30,6 +30,6 @@ test.only('should display git info metadata', async ({ runUITest }) => {
     `
   });
   await page.getByTitle('Run all').click();
-  
+
   // todo: what to check?
 });
