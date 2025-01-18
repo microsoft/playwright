@@ -16,7 +16,7 @@
 
 import { test } from './ui-mode-fixtures';
 
-test.only('should display git info metadata', async ({ runUITest }) => {
+test('should display git info metadata', async ({ runUITest }) => {
   const { page } = await runUITest({
     'playwright.config.ts': `
       import { defineConfig } from '@playwright/test';
