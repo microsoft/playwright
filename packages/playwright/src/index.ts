@@ -369,7 +369,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     });
 
     let counter = 0;
-    const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
+    let closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
+    if (testInfo.status === 'failed' && testInfo.error?.message?.startsWith('TimeoutError: Step timeout of '))
+      closeReason = testInfo.error.message.substring('TimeoutError: '.length);
     await Promise.all([...contexts.keys()].map(async context => {
       await (context as any)._wrapApiCall(async () => {
         await context.close({ reason: closeReason });
