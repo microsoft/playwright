@@ -1295,7 +1295,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
 
   /**
    * Whether to populate [testConfig.metadata](https://playwright.dev/docs/api/class-testconfig#test-config-metadata)
-   * with Git info.
+   * with Git info. The metadata will automatically appear in the HTML report and is available in Reporter API.
    *
    * **Usage**
    *
@@ -1813,11 +1813,6 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * See [testConfig.metadata](https://playwright.dev/docs/api/class-testconfig#test-config-metadata).
    */
   metadata: Metadata;
-
-  /**
-   * See [testConfig.populateGitInfo](https://playwright.dev/docs/api/class-testconfig#test-config-populate-git-info).
-   */
-  populateGitInfo: boolean;
 
   /**
    * See [testConfig.preserveOutput](https://playwright.dev/docs/api/class-testconfig#test-config-preserve-output).

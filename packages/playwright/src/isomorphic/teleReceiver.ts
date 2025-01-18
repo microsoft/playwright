@@ -596,7 +596,6 @@ export const baseFullConfig: reporterTypes.FullConfig = {
   grepInvert: null,
   maxFailures: 0,
   metadata: {},
-  populateGitInfo: false,
   preserveOutput: 'always',
   projects: [],
   reporter: [[process.env.CI ? 'dot' : 'list']],

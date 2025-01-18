@@ -64,12 +64,6 @@ See [`property: TestConfig.maxFailures`].
 
 See [`property: TestConfig.metadata`].
 
-## property: FullConfig.populateGitInfo
-* since: v1.50
-- type: <[boolean]>
-
-See [`property: TestConfig.populateGitInfo`].
-
 ## property: FullConfig.preserveOutput
 * since: v1.10
 - type: <[PreserveOutput]<"always"|"never"|"failures-only">>

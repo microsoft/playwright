@@ -322,10 +322,10 @@ This path will serve as the base directory for each test file snapshot directory
 * since: v1.28
 
 ## property: TestConfig.populateGitInfo
-* since: v1.50
+* since: v1.51
 - type: ?<[boolean]>
 
-Whether to populate [`property: TestConfig.metadata`] with Git info.
+Whether to populate [`property: TestConfig.metadata`] with Git info. The metadata will automatically appear in the HTML report and is available in Reporter API.
 
 **Usage**
 

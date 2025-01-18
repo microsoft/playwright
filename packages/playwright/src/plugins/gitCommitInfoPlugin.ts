@@ -22,7 +22,7 @@ import type { FullConfigInternal } from '../common/config';
 const GIT_OPERATIONS_TIMEOUT_MS = 1500;
 
 export const addGitCommitInfoPlugin = (fullConfig: FullConfigInternal) => {
-  if (fullConfig.config.populateGitInfo)
+  if (fullConfig.populateGitInfo)
     fullConfig.plugins.push({ factory: gitCommitInfo });
 };
 
