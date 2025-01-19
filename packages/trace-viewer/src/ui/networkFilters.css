@@ -26,6 +26,10 @@
   padding: 0 5px;
 }
 
+.network-filters input[type="search"][placeholder] {
+  text-overflow: ellipsis;
+}
+
 .network-filters-resource-types {
   display: flex;
   gap: 8px;
