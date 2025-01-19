@@ -30,15 +30,18 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  overflow: auto;
+  width: 100%;
 }
 
 .network-filters-resource-type {
   cursor: pointer;
   border-radius: 2px;
-  padding: 3px 8px;
+  padding: 3px 5px;
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 50px;
 }
 
 .network-filters-resource-type.selected {
