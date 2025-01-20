@@ -959,10 +959,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'passing' }).click();
 
-      const attachment = page.getByTestId('attachments').getByText('foo-2', { exact: true });
+      const attachment = page.getByText('foo-2', { exact: true });
       await expect(attachment).not.toBeInViewport();
-      await page.getByLabel('attach "foo-2"').click();
-      await page.getByTitle('see "foo-2"').click();
+      await page.getByLabel(`attach "foo-2"`).getByTitle('reveal attachment').click();
       await expect(attachment).toBeInViewport();
 
       await page.reload();
@@ -989,10 +988,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'passing' }).click();
 
-      const attachment = page.getByTestId('attachments').getByText('attachment', { exact: true });
+      const attachment = page.getByText('attachment', { exact: true });
       await expect(attachment).not.toBeInViewport();
-      await page.getByLabel('step').click();
-      await page.getByTitle('see "attachment"').click();
+      await page.getByLabel('step').getByTitle('reveal attachment').click();
       await expect(attachment).toBeInViewport();
     });
 

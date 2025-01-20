@@ -21,7 +21,7 @@ import { TreeItem } from './treeItem';
 import { CopyToClipboard } from './copyToClipboard';
 import './links.css';
 import { linkifyText } from '@web/renderUtils';
-import { clsx } from '@web/uiUtils';
+import { clsx, useFlash } from '@web/uiUtils';
 
 export function navigate(href: string | URL) {
   window.history.pushState({}, '', href);
@@ -73,7 +73,8 @@ export const AttachmentLink: React.FunctionComponent<{
   linkName?: string,
   openInNewTab?: boolean,
 }> = ({ attachment, result, href, linkName, openInNewTab }) => {
-  const isAnchored = useIsAnchored('attachment-' + result.attachments.indexOf(attachment));
+  const [flash, triggerFlash] = useFlash();
+  useAnchor('attachment-' + result.attachments.indexOf(attachment), triggerFlash);
   return <TreeItem title={<span>
     {attachment.contentType === kMissingContentType ? icons.warning() : icons.attachment()}
     {attachment.path && <a href={href || attachment.path} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>}
@@ -84,7 +85,7 @@ export const AttachmentLink: React.FunctionComponent<{
     )}
   </span>} loadChildren={attachment.body ? () => {
     return [<div key={1} className='attachment-body'><CopyToClipboard value={attachment.body!}/>{linkifyText(attachment.body!)}</div>];
-  } : undefined} depth={0} style={{ lineHeight: '32px' }} selected={isAnchored}></TreeItem>;
+  } : undefined} depth={0} style={{ lineHeight: '32px' }} flash={flash}></TreeItem>;
 };
 
 export const SearchParamsContext = React.createContext<URLSearchParams>(new URLSearchParams(window.location.hash.slice(1)));
@@ -118,12 +119,12 @@ const kMissingContentType = 'x-playwright/missing';
 
 export type AnchorID = string | string[] | ((id: string) => boolean) | undefined;
 
-export function useAnchor(id: AnchorID, onReveal: () => void) {
+export function useAnchor(id: AnchorID, onReveal: React.EffectCallback) {
   const searchParams = React.useContext(SearchParamsContext);
   const isAnchored = useIsAnchored(id);
   React.useEffect(() => {
     if (isAnchored)
-      onReveal();
+      return onReveal();
   }, [isAnchored, onReveal, searchParams]);
 }
 
