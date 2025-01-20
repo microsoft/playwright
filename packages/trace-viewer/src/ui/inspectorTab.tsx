@@ -47,28 +47,34 @@ export const InspectorTab: React.FunctionComponent<{
     setIsInspecting(false);
   }, [highlightedElement, setHighlightedElement, setIsInspecting]);
 
-  return <div className='vbox' style={{ backgroundColor: 'var(--vscode-sideBar-background)' }}>
-    <div style={{ margin: '10px 0px 10px 10px', color: 'var(--vscode-editorCodeLens-foreground)', flex: 'none' }}>Locator</div>
-    <div style={{ margin: '0 10px 10px', flex: 'auto' }}>
+  return <div style={{ flex: 'auto', backgroundColor: 'var(--vscode-sideBar-background)', padding: '0 10px 10px 10px', overflow: 'auto' }}>
+    <div className='hbox' style={{ lineHeight: '28px', color: 'var(--vscode-editorCodeLens-foreground)' }}>
+      <div style={{ flex: 'auto'  }}>Locator</div>
+      <ToolbarButton icon='files' title='Copy locator' onClick={() => {
+        copy(highlightedElement.locator || '');
+      }}></ToolbarButton>
+    </div>
+    <div style={{ height: 50 }}>
       <CodeMirrorWrapper text={highlightedElement.locator || ''} language={sdkLanguage} isFocused={true} wrapLines={true} onChange={text => {
         // Updating text needs to go first - react can squeeze a render between the state updates.
         setHighlightedElement({ ...highlightedElement, locator: text, lastEdited: 'locator' });
         setIsInspecting(false);
       }} />
     </div>
-    <div style={{ margin: '10px 0px 10px 10px', color: 'var(--vscode-editorCodeLens-foreground)', flex: 'none' }}>Aria</div>
-    <div style={{ margin: '0 10px 10px', flex: 'auto' }}>
+
+    <div className='hbox' style={{ lineHeight: '28px', color: 'var(--vscode-editorCodeLens-foreground)' }}>
+      <div style={{ flex: 'auto'  }}>Aria snapshot</div>
+      <ToolbarButton icon='files' title='Copy snapshot' onClick={() => {
+        copy(highlightedElement.ariaSnapshot || '');
+      }}></ToolbarButton>
+    </div>
+    <div style={{ height: 150 }}>
       <CodeMirrorWrapper
         text={highlightedElement.ariaSnapshot || ''}
         language='yaml'
         wrapLines={false}
         highlight={ariaSnapshotErrors}
         onChange={onAriaEditorChange} />
-    </div>
-    <div style={{ position: 'absolute', right: 5, top: 5 }}>
-      <ToolbarButton icon='files' title='Copy locator' onClick={() => {
-        copy(highlightedElement.locator || '');
-      }}></ToolbarButton>
     </div>
   </div>;
 };

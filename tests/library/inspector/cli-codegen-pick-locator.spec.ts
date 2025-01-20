@@ -19,7 +19,6 @@ import { roundBox } from '../../page/pageTest';
 
 test.describe(() => {
   test.skip(({ mode }) => mode !== 'default');
-  test.skip(({ trace, codegenMode }) => trace === 'on' && codegenMode === 'trace-events');
 
   test('should inspect locator', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();

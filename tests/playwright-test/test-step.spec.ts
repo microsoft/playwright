@@ -399,7 +399,7 @@ test('step timeout option', async ({ runInlineTest }) => {
   }, { reporter: '', workers: 1 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('Error: Step timeout 100ms exceeded.');
+  expect(result.output).toContain('Error: Step timeout of 100ms exceeded.');
 });
 
 test('step timeout longer than test timeout', async ({ runInlineTest }) => {
@@ -420,6 +420,27 @@ test('step timeout longer than test timeout', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Test timeout of 900ms exceeded.');
+});
+
+test('step timeout includes interrupted action errors', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('step with timeout', async ({ page }) => {
+        await test.step('my step', async () => {
+          await page.waitForTimeout(100_000);
+        }, { timeout: 1000 });
+      });
+    `
+  }, { reporter: '', workers: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+  // Should include 2 errors, one for the step timeout and one for the aborted action.
+  expect.soft(result.output).toContain('TimeoutError: Step timeout of 1000ms exceeded.');
+  expect.soft(result.output).toContain(`> 4 |         await test.step('my step', async () => {`);
+  expect.soft(result.output).toContain('Error: page.waitForTimeout: Test ended.');
+  expect.soft(result.output.split('Error: page.waitForTimeout: Test ended.').length).toBe(2);
+  expect.soft(result.output).toContain('> 5 |           await page.waitForTimeout(100_000);');
 });
 
 test('step timeout is errors.TimeoutError', async ({ runInlineTest }) => {
@@ -616,7 +637,7 @@ test('should not propagate errors from within toPass', async ({ runInlineTest })
   expect(result.exitCode).toBe(0);
   expect(result.output).toBe(`
 hook      |Before Hooks
-expect    |expect.toPass @ a.test.ts:7
+step      |expect.toPass @ a.test.ts:7
 expect    |  expect.toBe @ a.test.ts:6
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 expect    |  expect.toBe @ a.test.ts:6
@@ -643,8 +664,8 @@ test('should show final toPass error', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
-expect    |expect.toPass @ a.test.ts:6
-expect    |↪ error: Error: expect(received).toBe(expected) // Object.is equality
+step      |expect.toPass @ a.test.ts:6
+step      |↪ error: Error: expect(received).toBe(expected) // Object.is equality
 expect    |  expect.toBe @ a.test.ts:5
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 hook      |After Hooks
@@ -909,7 +930,7 @@ test('step inside expect.toPass', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 test.step |step 1 @ a.test.ts:4
-expect    |  expect.toPass @ a.test.ts:11
+step      |  expect.toPass @ a.test.ts:11
 test.step |    step 2, attempt: 0 @ a.test.ts:7
 test.step |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 expect    |      expect.toBe @ a.test.ts:9
@@ -956,7 +977,7 @@ fixture   |  fixture: context
 pw:api    |    browser.newContext
 fixture   |  fixture: page
 pw:api    |    browserContext.newPage
-expect    |expect.toPass @ a.test.ts:11
+step      |expect.toPass @ a.test.ts:11
 pw:api    |  page.goto(about:blank) @ a.test.ts:6
 test.step |  inner step attempt: 0 @ a.test.ts:7
 test.step |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
@@ -1007,7 +1028,7 @@ fixture   |  fixture: context
 pw:api    |    browser.newContext
 fixture   |  fixture: page
 pw:api    |    browserContext.newPage
-expect    |expect.poll.toHaveLength @ a.test.ts:14
+step      |expect.poll.toHaveLength @ a.test.ts:14
 pw:api    |  page.goto(about:blank) @ a.test.ts:7
 test.step |  inner step attempt: 0 @ a.test.ts:8
 expect    |    expect.toBe @ a.test.ts:10
@@ -1059,7 +1080,7 @@ pw:api    |    browser.newContext
 fixture   |  fixture: page
 pw:api    |    browserContext.newPage
 pw:api    |page.setContent @ a.test.ts:4
-expect    |expect.poll.toBe @ a.test.ts:13
+step      |expect.poll.toBe @ a.test.ts:13
 expect    |  expect.toHaveText @ a.test.ts:7
 test.step |  iteration 1 @ a.test.ts:9
 expect    |    expect.toBeVisible @ a.test.ts:10
@@ -1563,5 +1584,68 @@ test.step |outer step 2 @ a.test.ts:5
 test.step.skip|  inner step 2 @ a.test.ts:6
 expect    |expect.toBe @ a.test.ts:10
 hook      |After Hooks
+`);
+});
+
+test('show api calls inside expects', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'a.test.ts': `
+      import { test, expect as baseExpect } from '@playwright/test';
+
+      const expect = baseExpect.extend({
+        async toBeInvisible(locator: Locator) {
+          try {
+            await expect.poll(() => locator.isVisible()).toBe(false);
+            return { name: 'toBeInvisible', pass: true, message: '' };
+          } catch (e) {
+            return { name: 'toBeInvisible', pass: false, message: () => 'Expected to be invisible, got visible!' };
+          }
+        },
+      });
+
+      test('test', async ({ page }) => {
+        await page.setContent('<div>hello</div>');
+        const promise = expect(page.locator('div')).toBeInvisible();
+        await page.waitForTimeout(1100);
+        await page.setContent('<div style="display:none">hello</div>');
+        await promise;
+      });
+      `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.report.stats.expected).toBe(1);
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+fixture   |  fixture: browser
+pw:api    |    browserType.launch
+fixture   |  fixture: context
+pw:api    |    browser.newContext
+fixture   |  fixture: page
+pw:api    |    browserContext.newPage
+pw:api    |page.setContent @ a.test.ts:16
+expect    |expect.toBeInvisible @ a.test.ts:17
+step      |  expect.poll.toBe @ a.test.ts:7
+pw:api    |    locator.isVisible(div) @ a.test.ts:7
+expect    |    expect.toBe @ a.test.ts:7
+expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
+pw:api    |    locator.isVisible(div) @ a.test.ts:7
+expect    |    expect.toBe @ a.test.ts:7
+expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
+pw:api    |    locator.isVisible(div) @ a.test.ts:7
+expect    |    expect.toBe @ a.test.ts:7
+expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
+pw:api    |    locator.isVisible(div) @ a.test.ts:7
+expect    |    expect.toBe @ a.test.ts:7
+expect    |    ↪ error: Error: expect(received).toBe(expected) // Object.is equality
+pw:api    |    locator.isVisible(div) @ a.test.ts:7
+expect    |    expect.toBe @ a.test.ts:7
+pw:api    |page.waitForTimeout @ a.test.ts:18
+pw:api    |page.setContent @ a.test.ts:19
+hook      |After Hooks
+fixture   |  fixture: page
+fixture   |  fixture: context
 `);
 });

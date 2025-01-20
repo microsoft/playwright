@@ -20,7 +20,6 @@ import fs from 'fs';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
-  test.skip(({ trace, codegenMode }) => trace === 'on' && codegenMode === 'trace-events');
 
   test('should contain open page', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
@@ -310,8 +309,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "click me" }).ClickAsync();
     }
   });
 
-  test('should record open in a new tab with url', async ({ openRecorder, browserName, codegenMode }) => {
-    test.skip(codegenMode === 'trace-events');
+  test('should record open in a new tab with url', async ({ openRecorder, browserName }) => {
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`<a href="about:blank?foo">link</a>`);
 
@@ -453,29 +451,16 @@ await page1.GotoAsync("about:blank?foo");`);
     await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/page2.html');`);
   });
 
-  test('should --save-trace', async ({ runCLI, codegenMode }, testInfo) => {
-    test.skip(codegenMode === 'trace-events');
-    const traceFileName = testInfo.outputPath('trace.zip');
-    const cli = runCLI([`--save-trace=${traceFileName}`], {
-      autoExitWhen: ' ',
-    });
-    await cli.waitForCleanExit();
-    expect(fs.existsSync(traceFileName)).toBeTruthy();
-  });
-
-  test('should save assets via SIGINT', async ({ runCLI, platform, codegenMode }, testInfo) => {
-    test.skip(codegenMode === 'trace-events');
+  test('should save assets via SIGINT', async ({ runCLI, platform }, testInfo) => {
     test.skip(platform === 'win32', 'SIGINT not supported on Windows');
 
-    const traceFileName = testInfo.outputPath('trace.zip');
     const storageFileName = testInfo.outputPath('auth.json');
     const harFileName = testInfo.outputPath('har.har');
-    const cli = runCLI([`--save-trace=${traceFileName}`, `--save-storage=${storageFileName}`, `--save-har=${harFileName}`]);
+    const cli = runCLI([`--save-storage=${storageFileName}`, `--save-har=${harFileName}`]);
     await cli.waitFor(`import { test, expect } from '@playwright/test'`);
     await cli.process.kill('SIGINT');
     const { exitCode } = await cli.process.exited;
     expect(exitCode).toBe(130);
-    expect(fs.existsSync(traceFileName)).toBeTruthy();
     expect(fs.existsSync(storageFileName)).toBeTruthy();
     expect(fs.existsSync(harFileName)).toBeTruthy();
   });

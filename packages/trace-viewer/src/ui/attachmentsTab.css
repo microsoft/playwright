@@ -55,3 +55,11 @@
 a.codicon-cloud-download:hover{
   background-color: var(--vscode-list-inactiveSelectionBackground)
 }
+
+.yellow-flash {
+  animation: yellowflash-bg 2s;
+}
+@keyframes yellowflash-bg {
+  from { background: var(--vscode-peekViewEditor-matchHighlightBackground); }
+  to   { background: transparent; }
+}

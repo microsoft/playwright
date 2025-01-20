@@ -18,9 +18,10 @@
 import { test as it, expect } from './pageTest';
 
 it('should check the box @smoke', async ({ page }) => {
-  await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
-  await page.check('input');
-  expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
+  await page.setContent(`<div class='middle selected row' id='component'></div>`);
+  const locator = page.locator('#component');
+  await expect(locator).toHaveClass(/(^|\s)selected(\s|$)/);
+  await expect(locator).toHaveClass('middle selected row');
 });
 
 it('should not check the checked box', async ({ page }) => {

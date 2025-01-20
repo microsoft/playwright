@@ -39,7 +39,6 @@ import type { Dialog } from '../dialog';
 import type { ConsoleMessage } from '../console';
 import { serializeError } from '../errors';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
-import { RecorderInTraceViewer } from '../recorder/recorderInTraceViewer';
 import { RecorderApp } from '../recorder/recorderApp';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 
@@ -301,17 +300,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async enableRecorder(params: channels.BrowserContextEnableRecorderParams): Promise<void> {
-    if (params.codegenMode === 'trace-events') {
-      await this._context.tracing.start({
-        name: 'trace',
-        snapshots: true,
-        screenshots: true,
-        live: true,
-      });
-      await Recorder.show('trace-events', this._context, RecorderInTraceViewer.factory(this._context), params);
-    } else {
-      await Recorder.show('actions', this._context, RecorderApp.factory(this._context), params);
-    }
+    await Recorder.show(this._context, RecorderApp.factory(this._context), params);
   }
 
   async pause(params: channels.BrowserContextPauseParams, metadata: CallMetadata) {
