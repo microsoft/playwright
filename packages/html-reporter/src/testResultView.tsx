@@ -176,6 +176,7 @@ const StepTreeItem: React.FC<{
 }> = ({ test, step, result, depth }) => {
   return <TreeItem title={<span aria-label={step.title}>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
+    {step.attachments.length > 0 && <a style={{ float: 'right' }} title={`reveal attachment`} href={testResultHref({ test, result, anchor: `attachment-${step.attachments[0]}` })} onClick={evt => { evt.stopPropagation(); }}>{icons.attachment()}</a>}
     {statusIcon(step.error || step.duration === -1 ? 'failed' : (step.skipped ? 'skipped' : 'passed'))}
     <span>{step.title}</span>
     {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
@@ -183,20 +184,6 @@ const StepTreeItem: React.FC<{
   </span>} loadChildren={step.steps.length || step.snippet ? () => {
     const snippet = step.snippet ? [<TestErrorView testId='test-snippet' key='line' error={step.snippet}/>] : [];
     const steps = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} result={result} test={test} />);
-    const attachments = step.attachments.map(attachmentIndex => (
-      <a key={'' + attachmentIndex}
-        href={testResultHref({ test, result, anchor: `attachment-${attachmentIndex}` })}
-        style={{ paddingLeft: depth * 22 + 4, textDecoration: 'none' }}
-      >
-        <span
-          style={{ margin: '8px 0 0 8px', padding: '2px 10px', cursor: 'pointer' }}
-          className='label label-color-gray'
-          title={`see "${result.attachments[attachmentIndex].name}"`}
-        >
-          {icons.attachment()}{result.attachments[attachmentIndex].name}
-        </span>
-      </a>
-    ));
-    return snippet.concat(steps, attachments);
+    return snippet.concat(steps);
   } : undefined} depth={depth}/>;
 };
