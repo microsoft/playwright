@@ -30,9 +30,9 @@ import { pipeline } from 'stream/promises';
 import { Transform } from 'stream';
 
 type InterceptorResult =
-| { result: 'continue', guid: string, overrides?: NormalizedContinueOverrides }
-| { result: 'abort', guid: string, errorCode: string }
-| { result: 'fulfill', guid: string, response: NormalizedFulfillResponse };
+| { result: 'continue', request: Request, overrides?: NormalizedContinueOverrides }
+| { result: 'abort', request: Request, errorCode: string }
+| { result: 'fulfill', request: Request, response: NormalizedFulfillResponse };
 
 interface EventDelegate {
   onRequest(request: Request): void;
@@ -44,7 +44,6 @@ interface EventDelegate {
 
 export class ServerInterceptionRegistry extends SdkObject implements RequestContext {
   private _eventDelegate: EventDelegate;
-  private readonly _requests = new Map<string, Request>(); // TODO: dont memory leak requests
   fetchRequest: APIRequestContext;
   private _matches?: (url: string) => boolean;
 
@@ -63,22 +62,19 @@ export class ServerInterceptionRegistry extends SdkObject implements RequestCont
     request.setRawRequestHeaders(headers);
     this._eventDelegate.onRequest(request);
 
-    const guid = request.guid;
-    this._requests.set(guid, request);
-
     if (!this._matches?.(url))
-      return Promise.resolve({ result: 'continue', guid });
+      return Promise.resolve({ result: 'continue', request });
 
     return new Promise(resolve => {
       const route = new Route(request, {
         async abort(errorCode) {
-          resolve({ result: 'abort', guid, errorCode });
+          resolve({ result: 'abort', request, errorCode });
         },
         async continue(overrides) {
-          resolve({ result: 'continue', guid, overrides });
+          resolve({ result: 'continue', request, overrides });
         },
         async fulfill(response) {
-          resolve({ result: 'fulfill', guid, response });
+          resolve({ result: 'fulfill', request, response });
         },
       });
 
@@ -86,18 +82,12 @@ export class ServerInterceptionRegistry extends SdkObject implements RequestCont
     });
   }
 
-  failed(guid: string, error: string) {
-    const request = this._requests.get(guid);
-    if (!request)
-      throw new Error('Internal error: missing request for response');
+  failed(request: Request, error: string) {
     request._setFailureText(error);
     this._eventDelegate.onRequestFailed(request);
   }
 
-  response(guid: string, status: number, statusText: string, headers: HeadersArray, body: () => Promise<Buffer>, httpVersion: string, timing: ResourceTiming, securityDetails: SecurityDetails | undefined, serverAddr: RemoteAddr | undefined) {
-    const request = this._requests.get(guid);
-    if (!request)
-      throw new Error('Internal error: missing request for response');
+  response(request: Request, status: number, statusText: string, headers: HeadersArray, body: () => Promise<Buffer>, httpVersion: string, timing: ResourceTiming, securityDetails: SecurityDetails | undefined, serverAddr: RemoteAddr | undefined) {
     const response = new Response(request, status, statusText, headers, timing, body, false, httpVersion);
     response.setRawResponseHeaders(headers);
     response._securityDetailsFinished(securityDetails);
@@ -236,7 +226,7 @@ export class MockingProxy {
             const address = socket.address() as AddressInfo;
             const responseBodyPromise = new ManualPromise<Buffer>();
             const response = this._registry.response(
-                result.guid,
+                result.request,
                 proxyRes.statusCode!,
                 proxyRes.statusMessage!, headersArray(proxyRes),
                 () => responseBodyPromise,
@@ -270,13 +260,13 @@ export class MockingProxy {
               );
               resolve();
             } catch (error) {
-              this._registry.failed(result.guid, error.toString());
+              this._registry.failed(result.request, error.toString());
               resolve();
             }
           });
 
           proxyReq.on('error', error => {
-            this._registry.failed(result.guid, error.toString());
+            this._registry.failed(result.request, error.toString());
             res.statusCode = 502;
             res.end(resolve);
           });
