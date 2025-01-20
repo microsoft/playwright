@@ -49,7 +49,6 @@ export type InitializerTraits<T> =
     T extends FrameChannel ? FrameInitializer :
     T extends PageChannel ? PageInitializer :
     T extends BrowserContextChannel ? BrowserContextInitializer :
-    T extends EventTargetChannel ? EventTargetInitializer :
     T extends BrowserChannel ? BrowserInitializer :
     T extends BrowserTypeChannel ? BrowserTypeInitializer :
     T extends SelectorsChannel ? SelectorsInitializer :
@@ -58,6 +57,7 @@ export type InitializerTraits<T> =
     T extends PlaywrightChannel ? PlaywrightInitializer :
     T extends RootChannel ? RootInitializer :
     T extends LocalUtilsChannel ? LocalUtilsInitializer :
+    T extends EventTargetChannel ? EventTargetInitializer :
     T extends APIRequestContextChannel ? APIRequestContextInitializer :
     object;
 
@@ -87,7 +87,6 @@ export type EventsTraits<T> =
     T extends FrameChannel ? FrameEvents :
     T extends PageChannel ? PageEvents :
     T extends BrowserContextChannel ? BrowserContextEvents :
-    T extends EventTargetChannel ? EventTargetEvents :
     T extends BrowserChannel ? BrowserEvents :
     T extends BrowserTypeChannel ? BrowserTypeEvents :
     T extends SelectorsChannel ? SelectorsEvents :
@@ -96,6 +95,7 @@ export type EventsTraits<T> =
     T extends PlaywrightChannel ? PlaywrightEvents :
     T extends RootChannel ? RootEvents :
     T extends LocalUtilsChannel ? LocalUtilsEvents :
+    T extends EventTargetChannel ? EventTargetEvents :
     T extends APIRequestContextChannel ? APIRequestContextEvents :
     undefined;
 
@@ -125,7 +125,6 @@ export type EventTargetTraits<T> =
     T extends FrameChannel ? FrameEventTarget :
     T extends PageChannel ? PageEventTarget :
     T extends BrowserContextChannel ? BrowserContextEventTarget :
-    T extends EventTargetChannel ? EventTargetEventTarget :
     T extends BrowserChannel ? BrowserEventTarget :
     T extends BrowserTypeChannel ? BrowserTypeEventTarget :
     T extends SelectorsChannel ? SelectorsEventTarget :
@@ -134,6 +133,7 @@ export type EventTargetTraits<T> =
     T extends PlaywrightChannel ? PlaywrightEventTarget :
     T extends RootChannel ? RootEventTarget :
     T extends LocalUtilsChannel ? LocalUtilsEventTarget :
+    T extends EventTargetChannel ? EventTargetEventTarget :
     T extends APIRequestContextChannel ? APIRequestContextEventTarget :
     undefined;
 
@@ -404,6 +404,31 @@ export type APIResponse = {
 };
 
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
+// ----------- EventTarget -----------
+export type EventTargetInitializer = {};
+export interface EventTargetEventTarget {
+}
+export interface EventTargetChannel extends EventTargetEventTarget, Channel {
+  _type_EventTarget: boolean;
+  waitForEventInfo(params: EventTargetWaitForEventInfoParams, metadata?: CallMetadata): Promise<EventTargetWaitForEventInfoResult>;
+}
+export type EventTargetWaitForEventInfoParams = {
+  info: {
+    waitId: string,
+    phase: 'before' | 'after' | 'log',
+    event?: string,
+    message?: string,
+    error?: string,
+  },
+};
+export type EventTargetWaitForEventInfoOptions = {
+
+};
+export type EventTargetWaitForEventInfoResult = void;
+
+export interface EventTargetEvents {
+}
+
 // ----------- LocalUtils -----------
 export type LocalUtilsInitializer = {
   deviceDescriptors: {
@@ -424,10 +449,16 @@ export type LocalUtilsInitializer = {
       defaultBrowserType: 'chromium' | 'firefox' | 'webkit',
     },
   }[],
+  requestContext: APIRequestContextChannel,
 };
 export interface LocalUtilsEventTarget {
+  on(event: 'route', callback: (params: LocalUtilsRouteEvent) => void): this;
+  on(event: 'request', callback: (params: LocalUtilsRequestEvent) => void): this;
+  on(event: 'response', callback: (params: LocalUtilsResponseEvent) => void): this;
+  on(event: 'requestFailed', callback: (params: LocalUtilsRequestFailedEvent) => void): this;
+  on(event: 'requestFinished', callback: (params: LocalUtilsRequestFinishedEvent) => void): this;
 }
-export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
+export interface LocalUtilsChannel extends LocalUtilsEventTarget, EventTargetChannel {
   _type_LocalUtils: boolean;
   zip(params: LocalUtilsZipParams, metadata?: CallMetadata): Promise<LocalUtilsZipResult>;
   harOpen(params: LocalUtilsHarOpenParams, metadata?: CallMetadata): Promise<LocalUtilsHarOpenResult>;
@@ -438,7 +469,28 @@ export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   tracingStarted(params: LocalUtilsTracingStartedParams, metadata?: CallMetadata): Promise<LocalUtilsTracingStartedResult>;
   addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams, metadata?: CallMetadata): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
   traceDiscarded(params: LocalUtilsTraceDiscardedParams, metadata?: CallMetadata): Promise<LocalUtilsTraceDiscardedResult>;
+  setServerNetworkInterceptionPatterns(params: LocalUtilsSetServerNetworkInterceptionPatternsParams, metadata?: CallMetadata): Promise<LocalUtilsSetServerNetworkInterceptionPatternsResult>;
 }
+export type LocalUtilsRouteEvent = {
+  route: RouteChannel,
+};
+export type LocalUtilsRequestEvent = {
+  request: RequestChannel,
+};
+export type LocalUtilsResponseEvent = {
+  request: RequestChannel,
+  response: ResponseChannel,
+};
+export type LocalUtilsRequestFailedEvent = {
+  request: RequestChannel,
+  failureText?: string,
+  responseEndTiming: number,
+};
+export type LocalUtilsRequestFinishedEvent = {
+  request: RequestChannel,
+  response?: ResponseChannel,
+  responseEndTiming: number,
+};
 export type LocalUtilsZipParams = {
   zipFile: string,
   entries: NameValue[],
@@ -537,8 +589,25 @@ export type LocalUtilsTraceDiscardedOptions = {
 
 };
 export type LocalUtilsTraceDiscardedResult = void;
+export type LocalUtilsSetServerNetworkInterceptionPatternsParams = {
+  port: number,
+  patterns: {
+    glob?: string,
+    regexSource?: string,
+    regexFlags?: string,
+  }[],
+};
+export type LocalUtilsSetServerNetworkInterceptionPatternsOptions = {
+
+};
+export type LocalUtilsSetServerNetworkInterceptionPatternsResult = void;
 
 export interface LocalUtilsEvents {
+  'route': LocalUtilsRouteEvent;
+  'request': LocalUtilsRequestEvent;
+  'response': LocalUtilsResponseEvent;
+  'requestFailed': LocalUtilsRequestFailedEvent;
+  'requestFinished': LocalUtilsRequestFinishedEvent;
 }
 
 // ----------- Root -----------
@@ -1458,31 +1527,6 @@ export type BrowserStopTracingResult = {
 
 export interface BrowserEvents {
   'close': BrowserCloseEvent;
-}
-
-// ----------- EventTarget -----------
-export type EventTargetInitializer = {};
-export interface EventTargetEventTarget {
-}
-export interface EventTargetChannel extends EventTargetEventTarget, Channel {
-  _type_EventTarget: boolean;
-  waitForEventInfo(params: EventTargetWaitForEventInfoParams, metadata?: CallMetadata): Promise<EventTargetWaitForEventInfoResult>;
-}
-export type EventTargetWaitForEventInfoParams = {
-  info: {
-    waitId: string,
-    phase: 'before' | 'after' | 'log',
-    event?: string,
-    message?: string,
-    error?: string,
-  },
-};
-export type EventTargetWaitForEventInfoOptions = {
-
-};
-export type EventTargetWaitForEventInfoResult = void;
-
-export interface EventTargetEvents {
 }
 
 // ----------- BrowserContext -----------

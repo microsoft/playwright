@@ -22,6 +22,7 @@ import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
 import { APIRequest } from './fetch';
 import { Selectors, SelectorsOwner } from './selectors';
+import { MockingProxyFactory } from './mockingProxy';
 
 export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly _android: Android;
@@ -34,11 +35,13 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly devices: any;
   selectors: Selectors;
   readonly request: APIRequest;
+  readonly mockingProxy: MockingProxyFactory;
   readonly errors: { TimeoutError: typeof TimeoutError };
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
     super(parent, type, guid, initializer);
     this.request = new APIRequest(this);
+    this.mockingProxy = new MockingProxyFactory(this._connection.localUtils());
     this.chromium = BrowserType.from(initializer.chromium);
     this.chromium._playwright = this;
     this.firefox = BrowserType.from(initializer.firefox);

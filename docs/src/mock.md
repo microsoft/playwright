@@ -554,3 +554,169 @@ await page.RouteWebSocketAsync("wss://example.com/ws", ws => {
 ```
 
 For more details, see [WebSocketRoute].
+
+## Mock Application Server
+
+If you want to intercept network traffic originating from the server, you can use [MockingProxy] to intercept and mock network traffic going through a proxy server.
+
+```js
+test('calls the cms to fetch frontpage posts', async ({ page, server }) => {
+  await server.route("https://headless-cms.example.com/frontpage", (route, request) => {
+    await route.fulfill({
+      json: [
+        { id: 1, title: 'Hello, World!' },
+        { id: 2, title: 'Second post' },
+        { id: 2, title: 'Third post' }
+      ]
+    });
+  })
+
+  await page.goto('http://localhost:3000/');
+
+  await expect(page.getByRole('list')).toMatchAriaSnapshot(`
+    - list:
+      - listitem: Hello, World!
+      - listitem: Second post
+      - listitem: Third post
+  `);
+});
+```
+
+You can configure the port of the proxy server in the `playwright.config.ts` file.
+
+```ts
+# playwright.config.ts
+export default defineConfig({
+  workers: 1, // disable parallelism because we can't share the proxy server across multiple workers
+  ...
+  use: {
+    ...
+    mockingProxy: {
+      port: 8123 // example port
+    }
+  },
+});
+```
+
+We need to disable parallelism because we can't share the proxy server across multiple workers.
+
+Now, configure your application server to route HTTP traffic through `http://localhost:8123/`.
+
+#### `.env` file
+
+If you're using a `.env` file to configure API endpoints, prepend the proxy server URL:
+
+```env
+# .env.test
+CMS_BASE_URL=http://localhost:8123/https://headless-cms.example.com
+STOREFRONT_BASE_URL=http://localhost:8123/https://api.myexample.com
+```
+
+#### `HTTP_PROXY` environment variable
+
+If all your requests are going to localhost, you can use the `HTTP_PROXY` environment variable to route all requests through the proxy server.
+
+```bash
+HTTP_PROXY=http://localhost:8888
+```
+
+This environment variable is interpreted by many HTTP clients, including Node.js `axios` and Python `requests`. 
+
+Pay attention though: it's important that you use `HTTP_PROXY` and not `HTTPS_PROXY` because the latter will use [`CONNECT`-style proxying](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT) where the proxy cannot intercept the traffic.
+
+#### Manual
+
+In your server code, prepend the proxy server URL to all outgoing requests:
+
+```js
+let proxyURL = isUnderTest ? 'http://localhost:8123/' : '';
+await axios.get(proxyURL + 'https://headless-cms.example.com/items');
+// or
+await fetch(proxyURL + 'https://headless-cms.example.com/frontpage');
+```
+
+```python
+proxy_url = "http://localhost:8123/" if is_under_test else ""
+requests.get(proxy_url + "https://headless-cms.example.com/frontpage")
+```
+
+```csharp
+var proxyURL = isUnderTest ? "http://localhost:8123/" : "";
+await client.GetAsync(proxyURL + "https://headless-cms.example.com/frontpage");
+```
+
+#### Injecting the proxy port
+
+The previous examples all use a single proxy server with a hard-coded port. This has the downside that you can't run tests in parallel.
+If your application allows accessing current request headers conveniently, you can use `inject` mode to dynamically create one proxy server per worker, and inject the port into the request headers.
+
+To do this, set `mockingProxy.port` to `'inject'` in your `playwright.config.ts`:
+
+```ts
+# playwright.config.ts
+export default defineConfig({
+  use: {
+    ...
+    mockingProxy: {
+      port: 'inject'
+    }
+  },
+});
+```
+
+Now, you can access the proxy port from the request headers:
+
+```js
+let proxyPort = await headers().get("x-playwright-proxy-port");
+let proxyURL = proxyPort ? `http://localhost:${proxyPort}/` : '';
+await axios.get(proxyURL + 'https://headless-cms.example.com/items');
+// or
+await fetch(proxyURL + 'https://headless-cms.example.com/frontpage');
+```
+
+```python
+proxy_port = request.headers.get("x-playwright-proxy-port")
+proxy_url = f"http://localhost:{proxy_port}/" if proxy_port else ""
+requests.get(proxy_url + "https://headless-cms.example.com/frontpage")
+```
+
+```csharp
+var proxyPort = httpContextAccessor.HttpContext?.Request.Headers["x-playwright-proxy-port"];
+var proxyURL = proxyPort.HasValue ? $"http://localhost:{proxyPort}/" : "";
+await client.GetAsync(proxyURL + "https://headless-cms.example.com/frontpage");
+```
+
+#### Interceptors
+
+If your HTTP client or runtime supports HTTP interceptors, you can use them to prepend the proxy URL to all outgoing requests
+with minimal changes to your existing code:
+
+##### Node.js Axios
+
+```js
+const api = axios.create({
+  baseURL: "https://jsonplaceholder.typicode.com",
+});
+
+if (isUnderTest) {
+  api.interceptors.request.use(async config => {
+    config.proxy = { protocol: "http", host: "localhost", port: 8123 };
+    return config;
+  });
+}
+```
+
+##### Node.js fetch / undici
+
+```js
+import { setGlobalDispatcher, getGlobalDispatcher } from "undici";
+
+if (isUnderTest) {
+  const proxyingDispatcher = getGlobalDispatcher().compose(dispatch => (opts, handler) => {
+    opts.path = opts.origin + opts.path;
+    opts.origin = `http://localhost:8123`;
+    return dispatch(opts, handler);
+  })
+  setGlobalDispatcher(proxyingDispatcher);
+}
+```

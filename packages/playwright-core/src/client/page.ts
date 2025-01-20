@@ -180,7 +180,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   private async _onRoute(route: Route) {
-    route._context = this.context();
+    route._request = this.context().request;
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
       // If the page was closed we stall all requests right away.
@@ -850,7 +850,7 @@ export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
   }
 }
 
-function trimUrl(param: any): string | undefined {
+export function trimUrl(param: any): string | undefined {
   if (isRegExp(param))
     return `/${trimStringWithEllipsis(param.source, 50)}/${param.flags}`;
   if (isString(param))

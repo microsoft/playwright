@@ -112,3 +112,9 @@ test('basic test', async ({ request }) => {
   // ...
 });
 ```
+
+## property: Fixtures.server
+* since: v1.51
+- type: <[MockingProxy]>
+
+Instance of [MockingProxy] that can be used to intercept network requests from your application server.

@@ -44,7 +44,7 @@ import { Clock } from './clock';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { RecorderApp } from './recorder/recorderApp';
 
-export abstract class BrowserContext extends SdkObject {
+export abstract class BrowserContext extends SdkObject implements network.RequestContext {
   static Events = {
     Console: 'console',
     Close: 'close',

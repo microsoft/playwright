@@ -19,8 +19,9 @@ import type { StackFrame } from '@protocol/channels';
 import util from 'util';
 import path from 'path';
 import url from 'url';
+import net, { AddressInfo } from 'net';
 import { debug, mime, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
-import { formatCallLog } from 'playwright-core/lib/utils';
+import { formatCallLog, ManualPromise } from 'playwright-core/lib/utils';
 import type { Location } from './../types/testReporter';
 import { calculateSha1, isRegExp, isString, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
 import type { RawStack } from 'playwright-core/lib/utils';
@@ -396,4 +397,16 @@ export async function removeDirAndLogToConsole(dir: string) {
     await fs.promises.rm(dir, { recursive: true, force: true });
   } catch {
   }
+}
+
+export async function getFreePort() {
+  const promise = new ManualPromise<number>();
+  const server = net.createServer();
+  server.unref();
+  server.on('error', promise.reject);
+  server.listen(0, () => {
+    const { port } = server.address() as AddressInfo;
+    server.close(() => promise.resolve(port));
+  });
+  return promise;
 }

@@ -20037,6 +20037,352 @@ export interface Logger {
 }
 
 /**
+ * `MockingProxy` allows you to intercept network traffic from your application server.
+ *
+ * ```js
+ * const { webkit, mockingProxy } = require('playwright');  // Or 'chromium' or 'firefox'.
+ *
+ * (async () => {
+ *   const browser = await webkit.launch();
+ *   const context = await browser.newContext();
+ *   const server = await mockingProxy.newProxy(8888); // point your application server to MockingProxy all requests through this port
+ *
+ *   await server.route("https://headless-cms.example.com/posts", (route, request) => {
+ *     await route.fulfill({
+ *       json: [
+ *         { id: 1, title: 'Hello, World!' },
+ *         { id: 2, title: 'Second post' },
+ *         { id: 2, title: 'Third post' }
+ *       ]
+ *     });
+ *   })
+ *
+ *   const page = await context.newPage();
+ *   await page.goto('https://localhost:3000/posts');
+ *
+ *   console.log(await page.getByRole('list').ariaSnapshot())
+ *   // - list:
+ *   //    - listitem: Hello, World!
+ *   //    - listitem: Second post
+ *   //    - listitem: Third post
+ * })();
+ * ```
+ *
+ */
+export interface MockingProxy {
+  /**
+   * Emitted when a request passes through the MockingProxy. The [request] object is read-only. In order to intercept
+   * and mutate requests, see
+   * [mockingProxy.route(url, handler[, options])](https://playwright.dev/docs/api/class-mockingproxy#mocking-proxy-route).
+   */
+  on(event: 'request', listener: (request: Request) => any): this;
+
+  /**
+   * Emitted when a request fails, for example by timing out.
+   */
+  on(event: 'requestfailed', listener: (request: Request) => any): this;
+
+  /**
+   * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+   * sequence of events is `request`, `response` and `requestfinished`.
+   */
+  on(event: 'requestfinished', listener: (request: Request) => any): this;
+
+  /**
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of
+   * events is `request`, `response` and `requestfinished`.
+   */
+  on(event: 'response', listener: (response: Response) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'request', listener: (request: Request) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'requestfailed', listener: (request: Request) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'requestfinished', listener: (request: Request) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'response', listener: (response: Response) => any): this;
+
+  /**
+   * Emitted when a request passes through the MockingProxy. The [request] object is read-only. In order to intercept
+   * and mutate requests, see
+   * [mockingProxy.route(url, handler[, options])](https://playwright.dev/docs/api/class-mockingproxy#mocking-proxy-route).
+   */
+  addListener(event: 'request', listener: (request: Request) => any): this;
+
+  /**
+   * Emitted when a request fails, for example by timing out.
+   */
+  addListener(event: 'requestfailed', listener: (request: Request) => any): this;
+
+  /**
+   * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+   * sequence of events is `request`, `response` and `requestfinished`.
+   */
+  addListener(event: 'requestfinished', listener: (request: Request) => any): this;
+
+  /**
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of
+   * events is `request`, `response` and `requestfinished`.
+   */
+  addListener(event: 'response', listener: (response: Response) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'request', listener: (request: Request) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'requestfailed', listener: (request: Request) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'requestfinished', listener: (request: Request) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'response', listener: (response: Response) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'request', listener: (request: Request) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'requestfailed', listener: (request: Request) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'requestfinished', listener: (request: Request) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'response', listener: (response: Response) => any): this;
+
+  /**
+   * Emitted when a request passes through the MockingProxy. The [request] object is read-only. In order to intercept
+   * and mutate requests, see
+   * [mockingProxy.route(url, handler[, options])](https://playwright.dev/docs/api/class-mockingproxy#mocking-proxy-route).
+   */
+  prependListener(event: 'request', listener: (request: Request) => any): this;
+
+  /**
+   * Emitted when a request fails, for example by timing out.
+   */
+  prependListener(event: 'requestfailed', listener: (request: Request) => any): this;
+
+  /**
+   * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+   * sequence of events is `request`, `response` and `requestfinished`.
+   */
+  prependListener(event: 'requestfinished', listener: (request: Request) => any): this;
+
+  /**
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of
+   * events is `request`, `response` and `requestfinished`.
+   */
+  prependListener(event: 'response', listener: (response: Response) => any): this;
+
+  port(): number;
+
+  /**
+   * Routing provides the capability to modify network requests that are made through the MockingProxy.
+   *
+   * Once routing is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or
+   * aborted.
+   *
+   * **Usage**
+   *
+   * An example of a naive handler that aborts all requests to a specific domain:
+   *
+   * ```js
+   * const page = await browser.newPage();
+   * const server = await page.context().newMockingProxy(8888)
+   * await server.route('https://api.example.com', route => route.abort()); // simulates this API being unreachable
+   * await page.goto('http://localhost:3000');
+   * ```
+   *
+   * It is possible to examine the request to decide the route action. For example, mocking all requests that contain
+   * some post data, and leaving all other requests as is:
+   *
+   * ```js
+   * await serer.route('https://api.example.com/*', async route => {
+   *   if (route.request().postData().includes('my-string'))
+   *     await route.fulfill({ body: 'mocked-data' });
+   *   else
+   *     await route.continue();
+   * })
+   * ```
+   *
+   * To remove a route with its handler you can use
+   * [mockingProxy.unroute(url[, handler])](https://playwright.dev/docs/api/class-mockingproxy#mocking-proxy-unroute).
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing. When a
+   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
+   * options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+   * @param handler handler function to route the request.
+   * @param options
+   */
+  route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => Promise<any>|any), options?: {
+    /**
+     * How often a route should be used. By default it will be used every time.
+     */
+    times?: number;
+  }): Promise<void>;
+
+  /**
+   * Removes a route created with
+   * [mockingProxy.route(url, handler[, options])](https://playwright.dev/docs/api/class-mockingproxy#mocking-proxy-route).
+   * When [`handler`](https://playwright.dev/docs/api/class-mockingproxy#mocking-proxy-unroute-option-handler) is not
+   * specified, removes all routes for the
+   * [`url`](https://playwright.dev/docs/api/class-mockingproxy#mocking-proxy-unroute-option-url).
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with
+   * [mockingProxy.route(url, handler[, options])](https://playwright.dev/docs/api/class-mockingproxy#mocking-proxy-route).
+   * @param handler Optional handler function used to register a routing with
+   * [mockingProxy.route(url, handler[, options])](https://playwright.dev/docs/api/class-mockingproxy#mocking-proxy-route).
+   */
+  unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => Promise<any>|any)): Promise<void>;
+
+  /**
+   * Removes all routes created with
+   * [mockingProxy.route(url, handler[, options])](https://playwright.dev/docs/api/class-mockingproxy#mocking-proxy-route).
+   * @param options
+   */
+  unrouteAll(options?: {
+    /**
+     * Specifies whether to wait for already running handlers and what to do if they throw errors:
+     * - `'default'` - do not wait for current handler calls (if any) to finish, if unrouted handler throws, it may
+     *   result in unhandled error
+     * - `'wait'` - wait for current handler calls (if any) to finish
+     * - `'ignoreErrors'` - do not wait for current handler calls (if any) to finish, all errors thrown by the handlers
+     *   after unrouting are silently caught
+     */
+    behavior?: "wait"|"ignoreErrors"|"default";
+  }): Promise<void>;
+
+  /**
+   * Emitted when a request passes through the MockingProxy. The [request] object is read-only. In order to intercept
+   * and mutate requests, see
+   * [mockingProxy.route(url, handler[, options])](https://playwright.dev/docs/api/class-mockingproxy#mocking-proxy-route).
+   */
+  waitForEvent(event: 'request', optionsOrPredicate?: { predicate?: (request: Request) => boolean | Promise<boolean>, timeout?: number } | ((request: Request) => boolean | Promise<boolean>)): Promise<Request>;
+
+  /**
+   * Emitted when a request fails, for example by timing out.
+   */
+  waitForEvent(event: 'requestfailed', optionsOrPredicate?: { predicate?: (request: Request) => boolean | Promise<boolean>, timeout?: number } | ((request: Request) => boolean | Promise<boolean>)): Promise<Request>;
+
+  /**
+   * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+   * sequence of events is `request`, `response` and `requestfinished`.
+   */
+  waitForEvent(event: 'requestfinished', optionsOrPredicate?: { predicate?: (request: Request) => boolean | Promise<boolean>, timeout?: number } | ((request: Request) => boolean | Promise<boolean>)): Promise<Request>;
+
+  /**
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of
+   * events is `request`, `response` and `requestfinished`.
+   */
+  waitForEvent(event: 'response', optionsOrPredicate?: { predicate?: (response: Response) => boolean | Promise<boolean>, timeout?: number } | ((response: Response) => boolean | Promise<boolean>)): Promise<Response>;
+
+
+  /**
+   * Waits for the matching request and returns it. See [waiting for event](https://playwright.dev/docs/events#waiting-for-event) for more
+   * details about events.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // Start waiting for request before clicking. Note no await.
+   * const requestPromise = MockingProxy.waitForRequest('https://example.com/resource');
+   * await page.getByText('trigger request').click();
+   * const request = await requestPromise;
+   *
+   * // Alternative way with a predicate. Note no await.
+   * const requestPromise = MockingProxy.waitForRequest(request =>
+   *   request.url() === 'https://example.com' && request.method() === 'GET',
+   * );
+   * await page.getByText('trigger request').click();
+   * const request = await requestPromise;
+   * ```
+   *
+   * @param urlOrPredicate Request URL string, regex or predicate receiving [Request](https://playwright.dev/docs/api/class-request) object.
+   * @param options
+   */
+  waitForRequest(urlOrPredicate: string|RegExp|((request: Request) => boolean|Promise<boolean>), options?: {
+    /**
+     * Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can
+     * be changed by using the
+     * [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) method.
+     */
+    timeout?: number;
+  }): Promise<Request>;
+
+  /**
+   * Returns the matched response. See [waiting for event](https://playwright.dev/docs/events#waiting-for-event) for more details about
+   * events.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // Start waiting for response before clicking. Note no await.
+   * const responsePromise = MockingProxy.waitForResponse('https://example.com/resource');
+   * await page.getByText('trigger response').click();
+   * const response = await responsePromise;
+   *
+   * // Alternative way with a predicate. Note no await.
+   * const responsePromise = MockingProxy.waitForResponse(response =>
+   *   response.url() === 'https://example.com' && response.status() === 200
+   *       && response.request().method() === 'GET'
+   * );
+   * await page.getByText('trigger response').click();
+   * const response = await responsePromise;
+   * ```
+   *
+   * @param urlOrPredicate Request URL string, regex or predicate receiving [Response](https://playwright.dev/docs/api/class-response) object.
+   * @param options
+   */
+  waitForResponse(urlOrPredicate: string|RegExp|((response: Response) => boolean|Promise<boolean>), options?: {
+    /**
+     * Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout.
+     */
+    timeout?: number;
+  }): Promise<Response>;
+}
+
+/**
+ * This class is used for creating [MockingProxy](https://playwright.dev/docs/api/class-mockingproxy) instances which
+ * in turn can be used to intercept network traffic from your application server. An instance of this class can be
+ * obtained via [playwright.mockingProxy](https://playwright.dev/docs/api/class-playwright#playwright-mocking-proxy).
+ * For more information see [MockingProxy](https://playwright.dev/docs/api/class-mockingproxy).
+ */
+export interface MockingProxyFactory {
+  /**
+   * Creates a new instance of [MockingProxy](https://playwright.dev/docs/api/class-mockingproxy).
+   * @param port Port to listen on.
+   */
+  newProxy(port: number): Promise<MockingProxy>;
+}
+
+/**
  * The Mouse class operates in main-frame CSS pixels relative to the top-left corner of the viewport.
  *
  * Every `page` object has its own Mouse, accessible with
@@ -20171,6 +20517,8 @@ export const chromium: BrowserType;
  * [Browser](https://playwright.dev/docs/api/class-browser).
  */
 export const firefox: BrowserType;
+
+export const mockingProxy: MockingProxyFactory;
 
 /**
  * Exposes API that can be used for the Web API testing.

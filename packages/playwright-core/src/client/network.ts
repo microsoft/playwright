@@ -30,9 +30,9 @@ import type { Page } from './page';
 import { Waiter } from './waiter';
 import type * as api from '../../types/types';
 import type { HeadersArray } from '../common/types';
+import type { APIRequestContext } from './fetch';
 import { APIResponse } from './fetch';
 import type { Serializable } from '../../types/structs';
-import type { BrowserContext } from './browserContext';
 import { isTargetClosedError } from './errors';
 
 export type NetworkCookie = {
@@ -291,7 +291,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
 export class Route extends ChannelOwner<channels.RouteChannel> implements api.Route {
   private _handlingPromise: ManualPromise<boolean> | null = null;
-  _context!: BrowserContext;
+  _request!: APIRequestContext;
   _didThrow: boolean = false;
 
   static from(route: channels.RouteChannel): Route {
@@ -339,7 +339,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async fetch(options: FallbackOverrides & { maxRedirects?: number, maxRetries?: number, timeout?: number } = {}): Promise<APIResponse> {
     return await this._wrapApiCall(async () => {
-      return await this._context.request._innerFetch({ request: this.request(), data: options.postData, ...options });
+      return await this._request._innerFetch({ request: this.request(), data: options.postData, ...options });
     });
   }
 

@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
+import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video, MockingProxy } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
 import { createGuid, debugMode, addInternalStackPrefix, isString, asLocator, jsonStringifyForceASCII, zones } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
@@ -25,6 +25,7 @@ import { rootTestType } from './common/testType';
 import type { ContextReuseMode } from './common/config';
 import type { ApiCallData, ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import { currentTestInfo } from './common/globals';
+import { getFreePort } from './util';
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -54,6 +55,7 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _optionContextReuseMode: ContextReuseMode,
   _optionConnectOptions: PlaywrightWorkerOptions['connectOptions'],
   _reuseContext: boolean,
+  _mockingProxy?: MockingProxy,
 };
 
 const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
@@ -71,6 +73,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   screenshot: ['off', { scope: 'worker', option: true }],
   video: ['off', { scope: 'worker', option: true }],
   trace: ['off', { scope: 'worker', option: true }],
+  mockingProxy: [undefined, { scope: 'worker', option: true }],
 
   _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
     const options: LaunchOptions = {
@@ -118,6 +121,19 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       await browser.close({ reason: 'Test ended.' });
     }, true);
   }, { scope: 'worker', timeout: 0 }],
+
+  _mockingProxy: [async ({ mockingProxy: mockingProxyOption, playwright }, use) => {
+    if (!mockingProxyOption)
+      return await use(undefined);
+
+    const testInfoImpl = test.info() as TestInfoImpl;
+    if (typeof mockingProxyOption.port === 'number' && testInfoImpl.config.workers > 1)
+      throw new Error(`Cannot share mocking proxy between multiple workers. Either disable parallel mode or set mockingProxy.port to 'inject'`);
+
+    const port = typeof mockingProxyOption.port === 'number' ? mockingProxyOption.port : await getFreePort();
+    const mockingProxy = await playwright.mockingProxy.newProxy(port);
+    await use(mockingProxy);
+  }, { scope: 'worker' }],
 
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true }],
   bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP ?? false), { option: true }],
@@ -172,6 +188,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     baseURL,
     contextOptions,
     serviceWorkers,
+    _mockingProxy,
   }, use) => {
     const options: BrowserContextOptions = {};
     if (acceptDownloads !== undefined)
@@ -218,6 +235,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.baseURL = baseURL;
     if (serviceWorkers !== undefined)
       options.serviceWorkers = serviceWorkers;
+    if (_mockingProxy)
+      options.extraHTTPHeaders = { ...options.extraHTTPHeaders, 'x-pw-proxy-port': String(_mockingProxy.port()) };
     await use({
       ...contextOptions,
       ...options,
@@ -448,6 +467,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       await request.dispose();
     }
   },
+
+  server: async ({ _mockingProxy }, use) => {
+    if (!_mockingProxy)
+      throw new Error(`The 'server' fixture is only available when 'mockingProxy' is enabled.`);
+    await use(_mockingProxy);
+    await _mockingProxy.unrouteAll();
+  }
 });
 
 type ScreenshotOption = PlaywrightWorkerOptions['screenshot'] | undefined;

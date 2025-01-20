@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
+import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions, MockingProxy } from 'playwright-core';
 export * from 'playwright-core';
 
 export type ReporterDescription = Readonly<
@@ -5892,6 +5892,12 @@ type ConnectOptions = {
    */
   timeout?: number;
 };
+type MockingProxyOptions = {
+  /**
+   * What port to start the mocking proxy on. If set to `"inject"`, Playwright will use a free port and inject it into all outgoing requests under the `x-playwright-proxy-port` parameter.
+   */
+  port: number | "inject";
+}
 
 /**
  * Playwright Test provides many options to configure test environment,
@@ -6139,6 +6145,24 @@ export interface PlaywrightWorkerOptions {
    * Learn more about [recording video](https://playwright.dev/docs/test-use-options#recording-options).
    */
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
+  /**
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     mockingProxy: {
+   *       port: 9956,
+   *     },
+   *   },
+   * });
+   * ```
+   *
+   */
+  mockingProxy: MockingProxyOptions | undefined;
 }
 
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';
@@ -6889,6 +6913,11 @@ export interface PlaywrightTestArgs {
    *
    */
   request: APIRequestContext;
+  /**
+   * Instance of [MockingProxy](https://playwright.dev/docs/api/class-mockingproxy) that can be used to intercept
+   * network requests from your application server.
+   */
+  server: MockingProxy;
 }
 
 type ExcludeProps<A, B> = {
