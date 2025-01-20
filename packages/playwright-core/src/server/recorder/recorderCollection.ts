@@ -20,10 +20,8 @@ import type { Page } from '../page';
 import type { Signal } from '../../../../recorder/src/actions';
 import type * as actions from '@recorder/actions';
 import { monotonicTime } from '../../utils/time';
-import { callMetadataForAction, collapseActions } from './recorderUtils';
-import { serializeError } from '../errors';
+import { collapseActions } from './recorderUtils';
 import { performAction } from './recorderRunner';
-import type { CallMetadata } from '@protocol/callMetadata';
 import { isUnderTest } from '../../utils/debug';
 
 export class RecorderCollection extends EventEmitter {
@@ -46,8 +44,8 @@ export class RecorderCollection extends EventEmitter {
   }
 
   async performAction(actionInContext: actions.ActionInContext) {
-    await this._addAction(actionInContext, async callMetadata => {
-      await performAction(callMetadata, this._pageAliases, actionInContext);
+    await this._addAction(actionInContext, async () => {
+      await performAction(this._pageAliases, actionInContext);
     });
   }
 
@@ -60,7 +58,7 @@ export class RecorderCollection extends EventEmitter {
     this._addAction(actionInContext).catch(() => {});
   }
 
-  private async _addAction(actionInContext: actions.ActionInContext, callback?: (callMetadata: CallMetadata) => Promise<void>) {
+  private async _addAction(actionInContext: actions.ActionInContext, callback?: () => Promise<void>) {
     if (!this._enabled)
       return;
     if (actionInContext.action.name === 'openPage' || actionInContext.action.name === 'closePage') {
@@ -69,18 +67,10 @@ export class RecorderCollection extends EventEmitter {
       return;
     }
 
-    const { callMetadata, mainFrame } = callMetadataForAction(this._pageAliases, actionInContext);
-    await mainFrame.instrumentation.onBeforeCall(mainFrame, callMetadata);
     this._actions.push(actionInContext);
     this._fireChange();
-    const error = await callback?.(callMetadata).catch((e: Error) => e);
-    callMetadata.endTime = monotonicTime();
-    actionInContext.endTime = callMetadata.endTime;
-    callMetadata.error = error ? serializeError(error) : undefined;
-    // Do not wait for onAfterCall so that performAction returned immediately after the action.
-    mainFrame.instrumentation.onAfterCall(mainFrame, callMetadata).then(() => {
-      this._fireChange();
-    }).catch(() => {});
+    await callback?.().catch();
+    actionInContext.endTime = monotonicTime();
   }
 
   signal(pageAlias: string, frame: Frame, signal: Signal) {

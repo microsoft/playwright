@@ -16,7 +16,7 @@
 
 import { AsyncLocalStorage } from 'async_hooks';
 
-export type ZoneType = 'apiZone' | 'expectZone' | 'stepZone';
+export type ZoneType = 'apiZone' | 'stepZone';
 
 class ZoneManager {
   private readonly _asyncLocalStorage = new AsyncLocalStorage<Zone | undefined>();

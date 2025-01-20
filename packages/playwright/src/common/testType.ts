@@ -270,9 +270,20 @@ export class TestTypeImpl {
     const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
     return await zones.run('stepZone', step, async () => {
       try {
-        const result = await raceAgainstDeadline(async () => body(), options.timeout ? monotonicTime() + options.timeout : 0);
+        let result: Awaited<ReturnType<typeof raceAgainstDeadline<T>>> | undefined = undefined;
+        result = await raceAgainstDeadline(async () => {
+          try {
+            return await body();
+          } catch (e) {
+            // If the step timed out, the test fixtures will tear down, which in turn
+            // will abort unfinished actions in the step body. Record such errors here.
+            if (result?.timedOut)
+              testInfo._failWithError(e);
+            throw e;
+          }
+        }, options.timeout ? monotonicTime() + options.timeout : 0);
         if (result.timedOut)
-          throw new errors.TimeoutError(`Step timeout ${options.timeout}ms exceeded.`);
+          throw new errors.TimeoutError(`Step timeout of ${options.timeout}ms exceeded.`);
         step.complete({});
         return result.result;
       } catch (error) {

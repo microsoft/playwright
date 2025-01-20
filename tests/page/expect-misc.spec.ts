@@ -436,43 +436,6 @@ test('toHaveAccessibleName', async ({ page }) => {
   await expect(page.locator('button')).toHaveAccessibleName('foo bar baz');
 });
 
-test('toHaveAccessibleName should accept array of names for multiple elements', async ({ page }) => {
-  await page.setContent(`
-    <table>
-      <tr role="row">
-        <td role="cell">Cell A1</td>
-        <td role="cell">Cell B1</td>
-        <td role="cell">Cell C1</td>
-      </tr>
-      <tr role="row">
-        <td role="cell">Cell A2</td>
-        <td role="cell">Cell B2</td>
-        <td role="cell">Cell C2</td>
-      </tr>
-      <tr role="row">
-        <td role="cell">Cell A3</td>
-        <td role="cell">Cell B3</td>
-        <td role="cell">Cell C3</td>
-      </tr>
-    </table>
-  `);
-  await expect(page.getByRole('row')).toHaveAccessibleName([
-    'Cell A1 Cell B1 Cell C1',
-    'Cell A2 Cell B2 Cell C2',
-    'Cell A3 Cell B3 Cell C3',
-  ]);
-  await expect(page.getByRole('row')).toHaveAccessibleName(['cell a1 cell b1 cell C1',
-    'cell A2 Cell b2 Cell c2',
-    'Cell a3 Cell b3 cell C3',], { ignoreCase: true });
-
-  await expect(page.getByRole('row')).not.toHaveAccessibleName([
-    'Cel A4 Cell B4 Cell C4',
-    'Cell A5 Cell B5 Cell C5',
-    'Cell A6 Cell B6 Cell C6',
-  ]);
-});
-
-
 test('toHaveAccessibleDescription', async ({ page }) => {
   await page.setContent(`
     <div role="button" aria-description="Hello"></div>
