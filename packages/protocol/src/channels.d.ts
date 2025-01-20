@@ -619,9 +619,6 @@ export type PlaywrightNewRequestOptions = {
   userAgent?: string,
   ignoreHTTPSErrors?: boolean,
   extraHTTPHeaders?: NameValue[],
-  apiRequest?: {
-    failOnStatusCode: boolean
-  },
   clientCertificates?: {
     origin: string,
     cert?: Binary,

@@ -339,9 +339,6 @@ scheme.PlaywrightNewRequestParams = tObject({
   userAgent: tOptional(tString),
   ignoreHTTPSErrors: tOptional(tBoolean),
   extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
-  apiRequest: tOptional(tObject({
-    failOnStatusCode: tBoolean
-  })),
   clientCertificates: tOptional(tArray(tObject({
     origin: tString,
     cert: tOptional(tBinary),
