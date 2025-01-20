@@ -165,7 +165,7 @@ test.describe('transparent', () => {
     expect(await response.text()).toBe('hello');
     expect(await responseEvent.body()).toEqual(Buffer.from('hello'));
     expect(requestEvent.postData()).toBe('hello');
-    expect(await requestEvent.sizes()).toEqual({ // TODO: fixme
+    expect(await requestEvent.sizes()).toEqual({
       requestBodySize: 5,
       requestHeadersSize: 218,
       responseBodySize: 5,
