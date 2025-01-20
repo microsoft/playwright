@@ -6,7 +6,7 @@ of this class can be obtained via [`property: Playwright.mockingProxy`]. For mor
 see [MockingProxy].
 
 ## async method: MockingProxyFactory.newProxy
-* since: v1.16
+* since: v1.51
 - returns: <[MockingProxy]>
 
 Creates a new instance of [MockingProxy].
