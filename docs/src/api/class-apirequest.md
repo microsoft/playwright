@@ -22,6 +22,7 @@ Creates new instances of [APIRequestContext].
 * since: v1.16
 
 ### option: APIRequest.newContext.fetchFailOnStatusCode = %%-context-option-fetchFailOnStatusCode-%%
+* since: v1.51
 
 ### option: APIRequest.newContext.httpCredentials = %%-context-option-httpcredentials-%%
 * since: v1.16
