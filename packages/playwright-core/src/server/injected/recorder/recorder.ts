@@ -1138,25 +1138,28 @@ export class Recorder {
 
     let highlight: HighlightModel | 'clear' | 'noop' = 'noop';
     if (state.actionSelector !== this._lastHighlightedSelector) {
-      this._lastHighlightedSelector = state.actionSelector;
       const model = state.actionSelector ? querySelector(this.injectedScript, state.actionSelector, this.document) : null;
       highlight = model?.elements.length ? model : 'clear';
+      this._lastHighlightedSelector = model?.elements.length ? state.actionSelector : undefined;
     }
 
     const ariaTemplateJSON = JSON.stringify(state.ariaTemplate);
     if (this._lastHighlightedAriaTemplateJSON !== ariaTemplateJSON) {
-      this._lastHighlightedAriaTemplateJSON = ariaTemplateJSON;
       const elements = state.ariaTemplate ? this.injectedScript.getAllByAria(this.document, state.ariaTemplate) : [];
-      if (elements.length)
+      if (elements.length) {
         highlight = { elements };
-      else
-        highlight = 'clear';
+        this._lastHighlightedAriaTemplateJSON = ariaTemplateJSON;
+      } else {
+        if (!this._lastHighlightedSelector)
+          highlight = 'clear';
+        this._lastHighlightedAriaTemplateJSON = 'undefined';
+      }
     }
 
     if (highlight === 'clear')
       this.clearHighlight();
     else if (highlight !== 'noop')
-      this.updateHighlight(highlight, false);
+      this._updateHighlight(highlight, false);
   }
 
   clearHighlight() {
@@ -1299,6 +1302,12 @@ export class Recorder {
   }
 
   updateHighlight(model: HighlightModel | null, userGesture: boolean) {
+    this._lastHighlightedSelector = undefined;
+    this._lastHighlightedAriaTemplateJSON = 'undefined';
+    this._updateHighlight(model, userGesture);
+  }
+
+  private _updateHighlight(model: HighlightModel | null, userGesture: boolean) {
     let tooltipText = model?.tooltipText;
     if (tooltipText === undefined && !model?.tooltipList && model?.selector)
       tooltipText = this.injectedScript.utils.asLocator(this.state.language, model.selector);

@@ -19,7 +19,6 @@ import {
   createGuid,
   isString,
   pollAgainstDeadline } from 'playwright-core/lib/utils';
-import type { ExpectZone } from 'playwright-core/lib/utils';
 import {
   toBeAttached,
   toBeChecked,
@@ -315,9 +314,10 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       // out all the frames that belong to the test runner from caught runtime errors.
       const stackFrames = filteredStackTrace(captureRawStack());
 
-      // Enclose toPass in a step to maintain async stacks, toPass matcher is always async.
+      // toPass and poll matchers can contain other steps, expects and API calls,
+      // so they behave like a retriable step.
       const stepInfo = {
-        category: 'expect',
+        category: (matcherName === 'toPass' || this._info.poll) ? 'step' : 'expect',
         title: trimLongString(title, 1024),
         params: args[0] ? { expected: args[0] } : undefined,
         infectParentStepsWithError: this._info.isSoft,
@@ -345,11 +345,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 
       try {
         const callback = () => matcher.call(target, ...args);
-        // toPass and poll matchers can contain other steps, expects and API calls,
-        // so they behave like a retriable step.
-        const result = (matcherName === 'toPass' || this._info.poll) ?
-          zones.run('stepZone', step, callback) :
-          zones.run<ExpectZone, any>('expectZone', { title, stepId: step.stepId }, callback);
+        const result = zones.run('stepZone', step, callback);
         if (result instanceof Promise)
           return result.then(finalizer).catch(reportStepError);
         finalizer();

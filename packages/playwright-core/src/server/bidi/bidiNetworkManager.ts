@@ -96,10 +96,10 @@ export class BidiNetworkManager {
     function relativeToStart(time: number): number {
       if (!time)
         return -1;
-      return (time - startTime) / 1000;
+      return (time - startTime);
     }
     const timing: network.ResourceTiming = {
-      startTime: startTime / 1000,
+      startTime: startTime,
       requestStart: relativeToStart(timings.requestStart),
       responseStart: relativeToStart(timings.responseStart),
       domainLookupStart: relativeToStart(timings.dnsStart),
@@ -130,7 +130,7 @@ export class BidiNetworkManager {
 
     // Keep redirected requests in the map for future reference as redirectedFrom.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
-    const responseEndTime = params.request.timings.responseEnd / 1000 - response.timing().startTime;
+    const responseEndTime = params.request.timings.responseEnd - response.timing().startTime;
     if (isRedirected) {
       response._requestFinished(responseEndTime);
     } else {

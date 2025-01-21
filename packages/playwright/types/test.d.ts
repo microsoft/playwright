@@ -1689,10 +1689,11 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   updateSnapshots?: "all"|"changed"|"missing"|"none";
 
   /**
-   * Defines how to update the source code snapshots.
-   * - `'overwrite'` - Overwrite the source code snapshot with the actual result.
-   * - `'3way'` - Use a three-way merge to update the source code snapshot.
-   * - `'patch'` - Use a patch to update the source code snapshot. This is the default.
+   * Defines how to update snapshots in the source code.
+   * - `'patch'` - Create a unified diff file that can be used to update the source code later. This is the default.
+   * - `'3way'` - Generate merge conflict markers in source code. This allows user to manually pick relevant changes,
+   *   as if they are resolving a merge conflict in the IDE.
+   * - `'overwrite'` - Overwrite the source code with the new snapshot values.
    */
   updateSourceMethod?: "overwrite"|"3way"|"patch";
 
@@ -5712,18 +5713,19 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    */
   <T>(title: string, body: () => T | Promise<T>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<T>;
     /**
-   * Mark a test step as "fixme", with the intention to fix it. Playwright will not run the step.
+   * Mark a test step as "skip" to temporarily disable its execution, useful for steps that are currently failing and
+   * planned for a near-term fix. Playwright will not run the step.
    *
    * **Usage**
    *
-   * You can declare a test step as failing, so that Playwright ensures it actually fails.
+   * You can declare a skipped step, and Playwright will not run it.
    *
    * ```js
    * import { test, expect } from '@playwright/test';
    *
    * test('my test', async ({ page }) => {
    *   // ...
-   *   await test.step.fixme('not yet ready', async () => {
+   *   await test.step.skip('not yet ready', async () => {
    *     // ...
    *   });
    * });
@@ -5733,34 +5735,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * @param body Step body.
    * @param options
    */
-  fixme(title: string, body: () => any | Promise<any>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<void>;
-    /**
-   * Marks a test step as "should fail". Playwright runs this test step and ensures that it actually fails. This is
-   * useful for documentation purposes to acknowledge that some functionality is broken until it is fixed.
-   *
-   * **NOTE** If the step exceeds the timeout, a [TimeoutError](https://playwright.dev/docs/api/class-timeouterror) is
-   * thrown. This indicates the step did not fail as expected.
-   *
-   * **Usage**
-   *
-   * You can declare a test step as failing, so that Playwright ensures it actually fails.
-   *
-   * ```js
-   * import { test, expect } from '@playwright/test';
-   *
-   * test('my test', async ({ page }) => {
-   *   // ...
-   *   await test.step.fail('currently failing', async () => {
-   *     // ...
-   *   });
-   * });
-   * ```
-   *
-   * @param title Step name.
-   * @param body Step body.
-   * @param options
-   */
-  fail(title: string, body: () => any | Promise<any>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<void>;
+  skip(title: string, body: () => any | Promise<any>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<void>;
   }
   /**
    * `expect` function can be used to create test assertions. Read more about [test assertions](https://playwright.dev/docs/test-assertions).
@@ -8167,7 +8142,7 @@ interface LocatorAssertions {
    * @param name Expected accessible name.
    * @param options
    */
-  toHaveAccessibleName(name: string|RegExp|ReadonlyArray<string|RegExp>, options?: {
+  toHaveAccessibleName(name: string|RegExp, options?: {
     /**
      * Whether to perform case-insensitive match.
      * [`ignoreCase`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-accessible-name-option-ignore-case)
@@ -8232,21 +8207,24 @@ interface LocatorAssertions {
 
   /**
    * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with given CSS classes.
-   * This needs to be a full match or using a relaxed regular expression.
+   * When a string is provided, it must fully match the element's `class` attribute. To match individual classes or
+   * perform partial matches, use a regular expression:
    *
    * **Usage**
    *
    * ```html
-   * <div class='selected row' id='component'></div>
+   * <div class='middle selected row' id='component'></div>
    * ```
    *
    * ```js
    * const locator = page.locator('#component');
-   * await expect(locator).toHaveClass(/selected/);
-   * await expect(locator).toHaveClass('selected row');
+   * await expect(locator).toHaveClass('middle selected row');
+   * await expect(locator).toHaveClass(/(^|\s)selected(\s|$)/);
    * ```
    *
-   * Note that if array is passed as an expected value, entire lists of elements can be asserted:
+   * When an array is passed, the method asserts that the list of elements located matches the corresponding list of
+   * expected class values. Each element's class attribute is matched against the corresponding string or regular
+   * expression in the array:
    *
    * ```js
    * const locator = page.locator('list > .component');
@@ -8687,25 +8665,17 @@ interface LocatorAssertions {
    * **Usage**
    *
    * ```js
-   * await expect(page.locator('body')).toMatchAriaSnapshot();
-   * await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'snapshot' });
-   * await expect(page.locator('body')).toMatchAriaSnapshot({ path: '/path/to/snapshot.yml' });
+   * await page.goto('https://demo.playwright.dev/todomvc/');
+   * await expect(page.locator('body')).toMatchAriaSnapshot(`
+   *   - heading "todos"
+   *   - textbox "What needs to be done?"
+   * `);
    * ```
    *
+   * @param expected
    * @param options
    */
-  toMatchAriaSnapshot(options?: {
-    /**
-     * Name of the snapshot to store in the snapshot folder corresponding to this test. Generates ordinal name if not
-     * specified.
-     */
-    name?: string;
-
-    /**
-     * Path to the YAML snapshot file.
-     */
-    path?: string;
-
+  toMatchAriaSnapshot(expected: string, options?: {
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
@@ -8718,17 +8688,20 @@ interface LocatorAssertions {
    * **Usage**
    *
    * ```js
-   * await page.goto('https://demo.playwright.dev/todomvc/');
-   * await expect(page.locator('body')).toMatchAriaSnapshot(`
-   *   - heading "todos"
-   *   - textbox "What needs to be done?"
-   * `);
+   * await expect(page.locator('body')).toMatchAriaSnapshot();
+   * await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'snapshot' });
+   * await expect(page.locator('body')).toMatchAriaSnapshot({ path: '/path/to/snapshot.yml' });
    * ```
    *
-   * @param expected
    * @param options
    */
-  toMatchAriaSnapshot(expected: string, options?: {
+  toMatchAriaSnapshot(options?: {
+    /**
+     * Name of the snapshot to store in the snapshot (screenshot) folder corresponding to this test. Generates sequential
+     * names if not specified.
+     */
+    name?: string;
+
     /**
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */

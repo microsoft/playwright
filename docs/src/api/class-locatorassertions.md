@@ -446,7 +446,7 @@ Expected options currently selected.
 * since: v1.49
 * langs: python
 
-The opposite of [`method: LocatorAssertions.toMatchAriaSnapshot#2`].
+The opposite of [`method: LocatorAssertions.toMatchAriaSnapshot#1`].
 
 ### param: LocatorAssertions.NotToMatchAriaSnapshot.expected
 * since: v1.49
@@ -1313,7 +1313,7 @@ await Expect(locator).ToHaveAccessibleNameAsync("Save to disk");
 
 ### param: LocatorAssertions.toHaveAccessibleName.name
 * since: v1.44
-- `name` <[string]|[RegExp]|[Array]<[string]|[RegExp]>>
+- `name` <[string]|[RegExp]>
 
 Expected accessible name.
 
@@ -1413,49 +1413,48 @@ Attribute name.
 * langs:
   - alias-java: hasClass
 
-Ensures the [Locator] points to an element with given CSS classes. This needs to be a full match
-or using a relaxed regular expression.
+Ensures the [Locator] points to an element with given CSS classes. When a string is provided, it must fully match the element's `class` attribute. To match individual classes or perform partial matches, use a regular expression:
 
 **Usage**
 
 ```html
-<div class='selected row' id='component'></div>
+<div class='middle selected row' id='component'></div>
 ```
 
 ```js
 const locator = page.locator('#component');
-await expect(locator).toHaveClass(/selected/);
-await expect(locator).toHaveClass('selected row');
+await expect(locator).toHaveClass('middle selected row');
+await expect(locator).toHaveClass(/(^|\s)selected(\s|$)/);
 ```
 
 ```java
-assertThat(page.locator("#component")).hasClass(Pattern.compile("selected"));
-assertThat(page.locator("#component")).hasClass("selected row");
+assertThat(page.locator("#component")).hasClass(Pattern.compile("(^|\\s)selected(\\s|$)"));
+assertThat(page.locator("#component")).hasClass("middle selected row");
 ```
 
 ```python async
 from playwright.async_api import expect
 
 locator = page.locator("#component")
-await expect(locator).to_have_class(re.compile(r"selected"))
-await expect(locator).to_have_class("selected row")
+await expect(locator).to_have_class(re.compile(r"(^|\\s)selected(\\s|$)"))
+await expect(locator).to_have_class("middle selected row")
 ```
 
 ```python sync
 from playwright.sync_api import expect
 
 locator = page.locator("#component")
-expect(locator).to_have_class(re.compile(r"selected"))
-expect(locator).to_have_class("selected row")
+expect(locator).to_have_class(re.compile(r"(^|\\s)selected(\\s|$)"))
+expect(locator).to_have_class("middle selected row")
 ```
 
 ```csharp
 var locator = Page.Locator("#component");
-await Expect(locator).ToHaveClassAsync(new Regex("selected"));
-await Expect(locator).ToHaveClassAsync("selected row");
+await Expect(locator).ToHaveClassAsync(new Regex("(^|\\s)selected(\\s|$)"));
+await Expect(locator).ToHaveClassAsync("middle selected row");
 ```
 
-Note that if array is passed as an expected value, entire lists of elements can be asserted:
+When an array is passed, the method asserts that the list of elements located matches the corresponding list of expected class values. Each element's class attribute is matched against the corresponding string or regular expression in the array:
 
 ```js
 const locator = page.locator('list > .component');
@@ -2182,57 +2181,6 @@ Expected options currently selected.
 
 
 ## async method: LocatorAssertions.toMatchAriaSnapshot#1
-* since: v1.50
-* langs:
-  - alias-java: matchesAriaSnapshot
-
-Asserts that the target element matches the given [accessibility snapshot](../aria-snapshots.md).
-
-**Usage**
-
-```js
-await expect(page.locator('body')).toMatchAriaSnapshot();
-await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'snapshot' });
-await expect(page.locator('body')).toMatchAriaSnapshot({ path: '/path/to/snapshot.yml' });
-```
-
-```python async
-await expect(page.locator('body')).to_match_aria_snapshot(path='/path/to/snapshot.yml')
-```
-
-```python sync
-expect(page.locator('body')).to_match_aria_snapshot(path='/path/to/snapshot.yml')
-```
-
-```csharp
-await Expect(page.Locator("body")).ToMatchAriaSnapshotAsync(new { Path = "/path/to/snapshot.yml" }); 
-```
-
-```java
-assertThat(page.locator("body")).matchesAriaSnapshot(new LocatorAssertions.MatchesAriaSnapshotOptions().setPath("/path/to/snapshot.yml"));
-```
-
-### option: LocatorAssertions.toMatchAriaSnapshot#1.name
-* since: v1.50
-* langs: js
-- `name` <[string]>
-
-Name of the snapshot to store in the snapshot folder corresponding to this test. Generates ordinal name if not specified.
-
-### option: LocatorAssertions.toMatchAriaSnapshot#1.path
-* since: v1.50
-- `path` <[string]>
-
-Path to the YAML snapshot file.
-
-### option: LocatorAssertions.toMatchAriaSnapshot#1.timeout = %%-js-assertions-timeout-%%
-* since: v1.50
-
-### option: LocatorAssertions.toMatchAriaSnapshot#1.timeout = %%-csharp-java-python-assertions-timeout-%%
-* since: v1.50
-
-
-## async method: LocatorAssertions.toMatchAriaSnapshot#2
 * since: v1.49
 * langs:
   - alias-java: matchesAriaSnapshot
@@ -2281,12 +2229,56 @@ assertThat(page.locator("body")).matchesAriaSnapshot("""
 """);
 ```
 
-### param: LocatorAssertions.toMatchAriaSnapshot#2.expected
+### param: LocatorAssertions.toMatchAriaSnapshot#1.expected
 * since: v1.49
 - `expected` <string>
 
-### option: LocatorAssertions.toMatchAriaSnapshot#2.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toMatchAriaSnapshot#1.timeout = %%-js-assertions-timeout-%%
 * since: v1.49
 
-### option: LocatorAssertions.toMatchAriaSnapshot#2.timeout = %%-csharp-java-python-assertions-timeout-%%
+### option: LocatorAssertions.toMatchAriaSnapshot#1.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.49
+
+## async method: LocatorAssertions.toMatchAriaSnapshot#2
+* since: v1.50
+* langs: js
+
+Asserts that the target element matches the given [accessibility snapshot](../aria-snapshots.md).
+
+**Usage**
+
+```js
+await expect(page.locator('body')).toMatchAriaSnapshot();
+await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'snapshot' });
+await expect(page.locator('body')).toMatchAriaSnapshot({ path: '/path/to/snapshot.yml' });
+```
+
+```python async
+await expect(page.locator('body')).to_match_aria_snapshot(path='/path/to/snapshot.yml')
+```
+
+```python sync
+expect(page.locator('body')).to_match_aria_snapshot(path='/path/to/snapshot.yml')
+```
+
+```csharp
+await Expect(page.Locator("body")).ToMatchAriaSnapshotAsync(new { Path = "/path/to/snapshot.yml" });
+```
+
+```java
+assertThat(page.locator("body")).matchesAriaSnapshot(new LocatorAssertions.MatchesAriaSnapshotOptions().setPath("/path/to/snapshot.yml"));
+```
+
+### option: LocatorAssertions.toMatchAriaSnapshot#2.name
+* since: v1.50
+* langs: js
+- `name` <[string]>
+
+Name of the snapshot to store in the snapshot (screenshot) folder corresponding to this test.
+Generates sequential names if not specified.
+
+### option: LocatorAssertions.toMatchAriaSnapshot#2.timeout = %%-js-assertions-timeout-%%
+* since: v1.50
+
+### option: LocatorAssertions.toMatchAriaSnapshot#2.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.50

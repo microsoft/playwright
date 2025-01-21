@@ -154,7 +154,7 @@ structure of a page, use the [Chrome DevTools Accessibility Pane](https://develo
 
 ## Snapshot matching
 
-The [`method: LocatorAssertions.toMatchAriaSnapshot#2`] assertion method in Playwright compares the accessible
+The [`method: LocatorAssertions.toMatchAriaSnapshot#1`] assertion method in Playwright compares the accessible
 structure of the locator scope with a predefined aria snapshot template, helping validate the page's state against
 testing requirements.
 

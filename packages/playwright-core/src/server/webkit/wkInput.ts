@@ -59,12 +59,13 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     this._session = session;
   }
 
-  async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
+  async keydown(modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription, autoRepeat: boolean): Promise<void> {
     const parts = [];
     for (const modifier of (['Shift', 'Control', 'Alt', 'Meta']) as types.KeyboardModifier[]) {
       if (modifiers.has(modifier))
         parts.push(modifier);
     }
+    const { code, keyCode, key, text } = description;
     parts.push(code);
     const shortcut = parts.join('+');
     let commands = macEditingCommands[shortcut];
@@ -80,18 +81,19 @@ export class RawKeyboardImpl implements input.RawKeyboard {
       unmodifiedText: text,
       autoRepeat,
       macCommands: commands,
-      isKeypad: location === input.keypadLocation
+      isKeypad: description.location === input.keypadLocation
     });
   }
 
-  async keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
+  async keyup(modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription): Promise<void> {
+    const { code, key } = description;
     await this._pageProxySession.send('Input.dispatchKeyEvent', {
       type: 'keyUp',
       modifiers: toModifiersMask(modifiers),
       key,
-      windowsVirtualKeyCode: keyCode,
+      windowsVirtualKeyCode: description.keyCode,
       code,
-      isKeypad: location === input.keypadLocation
+      isKeypad: description.location === input.keypadLocation
     });
   }
 

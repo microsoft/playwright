@@ -50,14 +50,15 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     return commands.map(c => c.substring(0, c.length - 1));
   }
 
-  async keydown(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number, autoRepeat: boolean, text: string | undefined): Promise<void> {
+  async keydown(modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription, autoRepeat: boolean): Promise<void> {
+    const { code, key, location, text } = description;
     if (code === 'Escape' && await this._dragManger.cancelDrag())
       return;
     const commands = this._commandsForCode(code, modifiers);
     await this._client.send('Input.dispatchKeyEvent', {
       type: text ? 'keyDown' : 'rawKeyDown',
       modifiers: toModifiersMask(modifiers),
-      windowsVirtualKeyCode: keyCodeWithoutLocation,
+      windowsVirtualKeyCode: description.keyCodeWithoutLocation,
       code,
       commands,
       key,
@@ -69,12 +70,13 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     });
   }
 
-  async keyup(modifiers: Set<types.KeyboardModifier>, code: string, keyCode: number, keyCodeWithoutLocation: number, key: string, location: number): Promise<void> {
+  async keyup(modifiers: Set<types.KeyboardModifier>, keyName: string, description: input.KeyDescription): Promise<void> {
+    const { code, key, location } = description;
     await this._client.send('Input.dispatchKeyEvent', {
       type: 'keyUp',
       modifiers: toModifiersMask(modifiers),
       key,
-      windowsVirtualKeyCode: keyCodeWithoutLocation,
+      windowsVirtualKeyCode: description.keyCodeWithoutLocation,
       code,
       location
     });

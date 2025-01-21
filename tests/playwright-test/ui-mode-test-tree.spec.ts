@@ -164,6 +164,7 @@ test('should traverse up/down', async ({ runUITest }) => {
           - treeitem "[icon-circle-outline] fails"
           - treeitem "[icon-circle-outline] suite" [expanded=false]
   `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot();
 
   await page.keyboard.press('ArrowDown');
   await expect.poll(dumpTestTree(page)).toContain(`
@@ -180,6 +181,7 @@ test('should traverse up/down', async ({ runUITest }) => {
           - treeitem "[icon-circle-outline] fails" [selected]
           - treeitem "[icon-circle-outline] suite" [expanded=false]
   `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot();
 
   await page.keyboard.press('ArrowUp');
   await expect.poll(dumpTestTree(page)).toContain(`
@@ -196,6 +198,7 @@ test('should traverse up/down', async ({ runUITest }) => {
           - treeitem "[icon-circle-outline] fails"
           - treeitem "[icon-circle-outline] suite" [expanded=false]
   `);
+  await expect(page.getByTestId('test-tree')).toMatchAriaSnapshot();
 });
 
 test('should expand / collapse groups', async ({ runUITest }) => {

@@ -21,7 +21,6 @@ import type { Page } from '@playwright/test';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
-  test.skip(({ trace, codegenMode }) => trace === 'on' && codegenMode === 'trace-events');
 
   test('should click locator.first', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
@@ -54,6 +53,19 @@ test.describe('cli codegen', () => {
 
     expect.soft(sources.get('C#')!.text).toContain(`
 await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).First.ClickAsync();`);
+
+    const clickAction = sources.get('JSON')!.actions.map(l => JSON.parse(l)).find(a => a.name === 'click');
+    expect.soft(clickAction).toEqual({
+      name: 'click',
+      selector: 'internal:role=button[name="Submit"i] >> nth=0',
+      button: 'left',
+      clickCount: 1,
+      locator: { body: 'button', kind: 'role', options: { exact: false, attrs: [], name: 'Submit' }, next: { body: '', kind: 'first', options: {} } },
+      modifiers: 0,
+      signals: [],
+      framePath: [],
+      pageAlias: 'page',
+    });
 
     expect(message.text()).toBe('click1');
   });
@@ -116,6 +128,19 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).Nth(1).ClickAsy
 
     expect.soft(sources.get('C#')!.text).toContain(`
 await page.Locator("#frame1").ContentFrame.GetByText("Hello1").ClickAsync();`);
+
+    const clickAction = sources.get('JSON')!.actions.map(l => JSON.parse(l)).find(a => a.name === 'click');
+    expect.soft(clickAction).toEqual({
+      name: 'click',
+      selector: 'internal:text="Hello1"i',
+      button: 'left',
+      clickCount: 1,
+      locator: { body: 'Hello1', kind: 'text', options: { exact: false } },
+      modifiers: 0,
+      signals: [],
+      framePath: ['#frame1'],
+      pageAlias: 'page',
+    });
   });
 
   test('should generate frame locators (2)', async ({ openRecorder, server }) => {
@@ -141,6 +166,19 @@ await page.Locator("#frame1").ContentFrame.GetByText("Hello1").ClickAsync();`);
 
     expect.soft(sources.get('C#')!.text).toContain(`
 await page.Locator("#frame1").ContentFrame.Locator("iframe").ContentFrame.GetByText("Hello2").ClickAsync();`);
+
+    const clickAction = sources.get('JSON')!.actions.map(l => JSON.parse(l)).find(a => a.name === 'click');
+    expect.soft(clickAction).toEqual({
+      name: 'click',
+      selector: 'internal:text="Hello2"i',
+      button: 'left',
+      clickCount: 1,
+      locator: { body: 'Hello2', kind: 'text', options: { exact: false } },
+      modifiers: 0,
+      signals: [],
+      framePath: ['#frame1', 'iframe'],
+      pageAlias: 'page',
+    });
   });
 
   test('should generate frame locators (3)', async ({ openRecorder, server }) => {
@@ -166,6 +204,19 @@ await page.Locator("#frame1").ContentFrame.Locator("iframe").ContentFrame.GetByT
 
     expect.soft(sources.get('C#')!.text).toContain(`
 await page.Locator("#frame1").ContentFrame.Locator("iframe").ContentFrame.Locator("iframe").Nth(2).ContentFrame.GetByText("HelloNameAnonymous").ClickAsync();`);
+
+    const clickAction = sources.get('JSON')!.actions.map(l => JSON.parse(l)).find(a => a.name === 'click');
+    expect.soft(clickAction).toEqual({
+      name: 'click',
+      selector: 'internal:text="HelloNameAnonymous"i',
+      button: 'left',
+      clickCount: 1,
+      locator: { body: 'HelloNameAnonymous', kind: 'text', options: { exact: false } },
+      modifiers: 0,
+      signals: [],
+      framePath: ['#frame1', 'iframe', 'iframe >> nth=2'],
+      pageAlias: 'page',
+    });
   });
 
   test('should generate frame locators (4)', async ({ openRecorder, server }) => {
