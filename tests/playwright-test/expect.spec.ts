@@ -556,6 +556,24 @@ test('should respect expect.timeout', async ({ runInlineTest }) => {
   expect(result.passed).toBe(1);
 });
 
+test('should support toHaveURL predicate', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.js': `module.exports = { expect: { timeout: 1000 } }`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('predicate', async ({ page }) => {
+        await page.goto('data:text/html,<div>A</div>');
+        const error = await expect(page).toHaveURL('data:text/html,<div>B</div>').catch(e => e);
+        expect(error.message).toContain('expect.toHaveURL with timeout 1000ms');
+        expect(error.message).toContain('data:text/html,<div>');
+      });
+      `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should log scale the time', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `

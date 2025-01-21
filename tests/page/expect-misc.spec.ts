@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { stripVTControlCharacters } from 'node:util';
 import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
@@ -243,7 +244,15 @@ test.describe('toHaveURL', () => {
   test('fail', async ({ page }) => {
     await page.goto('data:text/html,<div>B</div>');
     const error = await expect(page).toHaveURL('wrong', { timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain('expect.toHaveURL with timeout 1000ms');
+    expect(stripVTControlCharacters(error.message)).toContain('Timed out 1000ms waiting for expect(page).toHaveURL(expected)');
+  });
+
+  test('fail with invalid argument', async ({ page }) => {
+    await page.goto('data:text/html,<div>B</div>');
+    // @ts-expect-error
+    const error = await expect(page).toHaveURL({}).catch(e => e);
+    expect(stripVTControlCharacters(error.message)).toContain('expect(page).toHaveURL(expected)\n\n\nMatcher error: expected value should be a string, regular expression, or predicate');
+    expect(stripVTControlCharacters(error.message)).toContain('Expected has type:  object\nExpected has value: {}');
   });
 
   test('support ignoreCase', async ({ page }) => {
