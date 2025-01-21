@@ -11,20 +11,40 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 ### Test runner
 
 * New option [`option: Test.step.timeout`] allows specifying a maximum run time for an individual test step. A timed-out step will fail the execution of the test.
+
+  ```ts
+    test('some test', async ({ page }) => {
+      await test.step('a step', async () => {...}, { timeout: 1000 });
+    });
+  ```
+
 * New method [`method: Test.step.skip`] to disable execution of a test step.
+  
+  ```ts
+    test('some test', async ({ page }) => {
+      await test.step('before running step', async () => {...});
+
+      await test.step.skip('not yet ready', async () => {...});
+
+      await test.step('after running step', async () => {...});
+    });
+  ```
+
 * Expanded [`method: LocatorAssertions.toMatchAriaSnapshot#2`] to allow storing of aria snapshots in separate YAML files.
 * Added method [`method: LocatorAssertions.toHaveAccessibleErrorMessage`] to assert the Locator points to an element with a given [aria errormessage](https://w3c.github.io/aria/#aria-errormessage).
 * Option [`property: TestConfig.updateSnapshots`] added the configuration enum `changed`. `changed` updates only the snapshots that have changed, whereas `all` now updates all snapshots, regardless of whether there are any differences.
-* New option [`property: TestConfig.updateSourceMethod`] defines the way source code is updated when [`property: TestConfig.updateSnapshots`] is configured.
+* New option [`property: TestConfig.updateSourceMethod`] defines the way source code is updated when [`property: TestConfig.updateSnapshots`] is configured. Added `overwrite` and `3-way` modes that write the changes into source code, on top of existing `patch` mode that creates a patch file.
+
+  ```bash
+  npx playwright test --update-snapshots=changed --update-source-method=3way
+  ```
+
 * Option [`property: TestConfig.webServer`] added a `gracefulShutdown` field for specifying a process kill signal other than the default `SIGKILL`.
-
-### Reporter
-
 * Exposed [`property: TestStep.attachments`] from the reporter API to allow retrieval of all attachments created by that step.
-* Updated default HTML reporter to improve display of attachments.
 
 ### UI updates
 
+* Updated default HTML reporter to improve display of attachments.
 * New button for picking elements to produce aria snapshots.
 * Additional details (such as keys pressed) are now displayed alongside action API calls in traces.
 * Display of `canvas` content in traces is error-prone. Display is now disabled by default, and can be enabled via the `Display canvas content` UI setting.
@@ -43,8 +63,8 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 This version was also tested against the following stable channels:
 
-* Google Chrome 131
-* Microsoft Edge 131
+* Google Chrome 132
+* Microsoft Edge 132
 
 ## Version 1.49
 
