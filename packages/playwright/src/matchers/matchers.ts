@@ -21,7 +21,7 @@ import { expectTypes, callLogText } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toMatchText } from './toMatchText';
-import { constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues, urlMatches } from 'playwright-core/lib/utils';
+import { isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues, urlMatches } from 'playwright-core/lib/utils';
 import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl } from '../worker/testInfo';
 import type { ExpectMatcherState } from '../../types/test';
@@ -388,7 +388,7 @@ export function toHaveTitle(
   }, expected, options);
 }
 
-export async function toHaveURL2(
+export async function toHaveURL(
   this: ExpectMatcherState,
   page: Page,
   expected: string | RegExp | ((url: URL) => boolean),
@@ -408,10 +408,34 @@ export async function toHaveURL2(
   const timeout = options?.timeout ?? this.timeout;
   let conditionSucceeded = false;
   try {
-    await page.mainFrame().waitForURL(url => {
-      const baseURL = (page.context() as any)._options.baseURL;
-      return !this.isNot === urlMatches(baseURL, url.toString(), expected);
-    }, { timeout });
+    await page.mainFrame().waitForURL(
+        url => {
+          const baseURL: string | undefined = (page.context() as any)._options
+              .baseURL;
+          if (options?.ignoreCase) {
+            return (
+              !this.isNot ===
+              urlMatches(
+                  baseURL?.toLocaleLowerCase(),
+                  url.toString().toLocaleLowerCase(),
+                  typeof expected === 'string'
+                    ? expected.toLocaleLowerCase()
+                    : expected,
+              )
+            );
+          }
+
+          return (
+            !this.isNot ===
+            urlMatches(
+                baseURL,
+                url.toString(),
+                expected,
+            )
+          );
+        },
+        { timeout },
+    );
 
     conditionSucceeded = true;
   } catch (e) {
@@ -438,21 +462,6 @@ export async function toHaveURL2(
           timeout,
       ),
   };
-}
-
-export function toHaveURL(
-  this: ExpectMatcherState,
-  page: Page,
-  expected: string | RegExp,
-  options?: { ignoreCase?: boolean, timeout?: number },
-) {
-  const baseURL = (page.context() as any)._options.baseURL;
-  expected = typeof expected === 'string' ? constructURLBasedOnBaseURL(baseURL, expected) : expected;
-  const locator = page.locator(':root') as LocatorEx;
-  return toMatchText.call(this, 'toHaveURL', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
-    return await locator._expect('to.have.url', { expectedText, isNot, timeout });
-  }, expected, options);
 }
 
 export async function toBeOK(
