@@ -9,6 +9,7 @@ on:
 jobs:
   trigger:
     name: "trigger"
+    if: github.repository == 'microsoft/playwright'
     runs-on: ubuntu-24.04
     steps:
     - run: |
