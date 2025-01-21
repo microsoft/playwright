@@ -21,7 +21,7 @@ import { expectTypes, callLogText } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toMatchText } from './toMatchText';
-import { constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues } from 'playwright-core/lib/utils';
+import { constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues, urlMatches } from 'playwright-core/lib/utils';
 import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl } from '../worker/testInfo';
 import type { ExpectMatcherState } from '../../types/test';
@@ -406,23 +406,27 @@ export async function toHaveURL2(
   );
 
   const timeout = options?.timeout ?? this.timeout;
-  let urlMatched = false;
+  let conditionSucceeded = false;
   try {
-    await page.mainFrame().waitForURL(expected, { timeout });
-    urlMatched = true;
+    await page.mainFrame().waitForURL(url => {
+      const baseURL = (page.context() as any)._options.baseURL;
+      return !this.isNot === urlMatches(baseURL, url.toString(), expected);
+    }, { timeout });
+
+    conditionSucceeded = true;
   } catch (e) {
-    urlMatched = false;
+    conditionSucceeded = false;
   }
 
-  if (urlMatched !== this.isNot)
-    return { pass: urlMatched, message: () => '' };
+  if (conditionSucceeded)
+    return { pass: !this.isNot, message: () => '' };
 
   const matcherOptions = {
     isNot: this.isNot,
     promise: this.promise,
   };
   return {
-    pass: urlMatched,
+    pass: this.isNot,
     message: () =>
       matcherHint(
           this,
