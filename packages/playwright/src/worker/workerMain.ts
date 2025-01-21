@@ -75,16 +75,20 @@ export class WorkerMain extends ProcessRunner {
 
     process.on('unhandledRejection', reason => this.unhandledError(reason));
     process.on('uncaughtException', error => this.unhandledError(error));
-    process.stdout.write = (chunk: string | Buffer) => {
+    process.stdout.write = (chunk: string | Buffer, cb?: any) => {
       this.dispatchEvent('stdOut', stdioChunkToParams(chunk));
       this._currentTest?._tracing.appendStdioToTrace('stdout', chunk);
+      if (typeof cb === 'function')
+        process.nextTick(cb);
       return true;
     };
 
     if (!process.env.PW_RUNNER_DEBUG) {
-      process.stderr.write = (chunk: string | Buffer) => {
+      process.stderr.write = (chunk: string | Buffer, cb?: any) => {
         this.dispatchEvent('stdErr', stdioChunkToParams(chunk));
         this._currentTest?._tracing.appendStdioToTrace('stderr', chunk);
+        if (typeof cb === 'function')
+          process.nextTick(cb);
         return true;
       };
     }
