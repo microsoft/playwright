@@ -41,6 +41,10 @@
   color: var(--vscode-editorCodeLens-foreground);
 }
 
+.action-skipped {
+  margin-right: 4px;
+}
+
 .action-icon {
   flex: none;
   display: flex;
