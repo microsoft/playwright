@@ -15,10 +15,12 @@
  */
 
 import type { ExpectMatcherState } from '../../types/test';
-import { matcherHint } from './matcherHint';
+import { kNoElementsFoundError, matcherHint } from './matcherHint';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import type { Locator } from 'playwright-core';
-import { EXPECTED_COLOR } from '../common/expectBundle';
+import { EXPECTED_COLOR, printReceived } from '../common/expectBundle';
+import { printReceivedStringContainExpectedResult, printReceivedStringContainExpectedSubstring } from './expect';
+import { callLogText } from '../util';
 
 export function toMatchExpectedStringOrPredicateVerification(
   state: ExpectMatcherState,
@@ -48,4 +50,55 @@ export function toMatchExpectedStringOrPredicateVerification(
       state.utils.printWithType('Expected', expected, state.utils.printExpected)
     ].join('\n\n'));
   }
+}
+
+export function textMatcherMessage(state: ExpectMatcherState, matcherName: string, receiver: Locator | undefined, expression: string, expected: string | RegExp | Function, received: string | undefined, callLog: string[] | undefined, stringName: string, pass: boolean, didTimeout: boolean, timeout: number): string {
+  const matcherOptions = {
+    isNot: state.isNot,
+    promise: state.promise,
+  };
+  const receivedString = received || '';
+  const messagePrefix = matcherHint(state, receiver, matcherName, expression, undefined, matcherOptions, didTimeout ? timeout : undefined);
+  const notFound = received === kNoElementsFoundError;
+
+  let printedReceived: string | undefined;
+  let printedExpected: string | undefined;
+  let printedDiff: string | undefined;
+  if (typeof expected === 'function') {
+    printedExpected = `Expected predicate to ${!state.isNot ? 'succeed' : 'fail'}`;
+    printedReceived = `Received string: ${printReceived(receivedString)}`;
+  } else {
+    if (pass) {
+      if (typeof expected === 'string') {
+        if (notFound) {
+          printedExpected = `Expected ${stringName}: not ${state.utils.printExpected(expected)}`;
+          printedReceived = `Received: ${received}`;
+        } else {
+          printedExpected = `Expected ${stringName}: not ${state.utils.printExpected(expected)}`;
+          const formattedReceived = printReceivedStringContainExpectedSubstring(receivedString, receivedString.indexOf(expected), expected.length);
+          printedReceived = `Received string: ${formattedReceived}`;
+        }
+      } else {
+        if (notFound) {
+          printedExpected = `Expected pattern: not ${state.utils.printExpected(expected)}`;
+          printedReceived = `Received: ${received}`;
+        } else {
+          printedExpected = `Expected pattern: not ${state.utils.printExpected(expected)}`;
+          const formattedReceived = printReceivedStringContainExpectedResult(receivedString, typeof expected.exec === 'function' ? expected.exec(receivedString) : null);
+          printedReceived = `Received string: ${formattedReceived}`;
+        }
+      }
+    } else {
+      const labelExpected = `Expected ${typeof expected === 'string' ? stringName : 'pattern'}`;
+      if (notFound) {
+        printedExpected = `${labelExpected}: ${state.utils.printExpected(expected)}`;
+        printedReceived = `Received: ${received}`;
+      } else {
+        printedDiff = state.utils.printDiffOrStringify(expected, receivedString, labelExpected, 'Received string', false);
+      }
+    }
+  }
+
+  const resultDetails = printedDiff ? printedDiff : printedExpected + '\n' + printedReceived;
+  return messagePrefix + resultDetails + callLogText(callLog);
 }

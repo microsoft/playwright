@@ -15,16 +15,11 @@
  */
 
 
-import { expectTypes, callLogText } from '../util';
-import {
-  printReceivedStringContainExpectedResult,
-  printReceivedStringContainExpectedSubstring
-} from './expect';
+import { expectTypes } from '../util';
 import type { ExpectMatcherState } from '../../types/test';
-import { kNoElementsFoundError, matcherHint } from './matcherHint';
 import type { MatcherResult } from './matcherHint';
 import type { Locator } from 'playwright-core';
-import { toMatchExpectedStringOrPredicateVerification } from './error';
+import { textMatcherMessage, toMatchExpectedStringOrPredicateVerification } from './error';
 
 export async function toMatchText(
   this: ExpectMatcherState,
@@ -50,57 +45,25 @@ export async function toMatchText(
     };
   }
 
-  const matcherOptions = {
-    isNot: this.isNot,
-    promise: this.promise,
-  };
   const stringSubstring = options.matchSubstring ? 'substring' : 'string';
-  const receivedString = received || '';
-  const messagePrefix = matcherHint(this, receiver, matcherName, 'locator', undefined, matcherOptions, timedOut ? timeout : undefined);
-  const notFound = received === kNoElementsFoundError;
-
-  let printedReceived: string | undefined;
-  let printedExpected: string | undefined;
-  let printedDiff: string | undefined;
-  if (pass) {
-    if (typeof expected === 'string') {
-      if (notFound) {
-        printedExpected = `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}`;
-        printedReceived = `Received: ${received}`;
-      } else {
-        printedExpected = `Expected ${stringSubstring}: not ${this.utils.printExpected(expected)}`;
-        const formattedReceived = printReceivedStringContainExpectedSubstring(receivedString, receivedString.indexOf(expected), expected.length);
-        printedReceived = `Received string: ${formattedReceived}`;
-      }
-    } else {
-      if (notFound) {
-        printedExpected = `Expected pattern: not ${this.utils.printExpected(expected)}`;
-        printedReceived = `Received: ${received}`;
-      } else {
-        printedExpected = `Expected pattern: not ${this.utils.printExpected(expected)}`;
-        const formattedReceived = printReceivedStringContainExpectedResult(receivedString, typeof expected.exec === 'function' ? expected.exec(receivedString) : null);
-        printedReceived = `Received string: ${formattedReceived}`;
-      }
-    }
-  } else {
-    const labelExpected = `Expected ${typeof expected === 'string' ? stringSubstring : 'pattern'}`;
-    if (notFound) {
-      printedExpected = `${labelExpected}: ${this.utils.printExpected(expected)}`;
-      printedReceived = `Received: ${received}`;
-    } else {
-      printedDiff = this.utils.printDiffOrStringify(expected, receivedString, labelExpected, 'Received string', false);
-    }
-  }
-
-  const message = () => {
-    const resultDetails = printedDiff ? printedDiff : printedExpected + '\n' + printedReceived;
-    return messagePrefix + resultDetails + callLogText(log);
-  };
 
   return {
     name: matcherName,
     expected,
-    message,
+    message: () =>
+      textMatcherMessage(
+          this,
+          matcherName,
+          receiver,
+          'locator',
+          expected,
+          received,
+          log,
+          stringSubstring,
+          pass,
+          !!timedOut,
+          timeout,
+      ),
     pass,
     actual: received,
     log,

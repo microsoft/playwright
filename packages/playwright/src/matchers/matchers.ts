@@ -26,8 +26,7 @@ import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl } from '../worker/testInfo';
 import type { ExpectMatcherState } from '../../types/test';
 import { takeFirst } from '../common/config';
-import { matcherHint } from './matcherHint';
-import { toMatchExpectedStringOrPredicateVerification } from './error';
+import { textMatcherMessage, toMatchExpectedStringOrPredicateVerification } from './error';
 
 export interface LocatorEx extends Locator {
   _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
@@ -407,17 +406,20 @@ export async function toHaveURL(
 
   const timeout = options?.timeout ?? this.timeout;
   let conditionSucceeded = false;
+  let lastCheckedURLString: string | undefined = undefined;
   try {
     await page.mainFrame().waitForURL(
         url => {
           const baseURL: string | undefined = (page.context() as any)._options
               .baseURL;
+          lastCheckedURLString = url.toString();
+
           if (options?.ignoreCase) {
             return (
               !this.isNot ===
               urlMatches(
                   baseURL?.toLocaleLowerCase(),
-                  url.toString().toLocaleLowerCase(),
+                  lastCheckedURLString.toLocaleLowerCase(),
                   typeof expected === 'string'
                     ? expected.toLocaleLowerCase()
                     : expected,
@@ -429,7 +431,7 @@ export async function toHaveURL(
             !this.isNot ===
             urlMatches(
                 baseURL,
-                url.toString(),
+                lastCheckedURLString,
                 expected,
             )
           );
@@ -445,22 +447,24 @@ export async function toHaveURL(
   if (conditionSucceeded)
     return { pass: !this.isNot, message: () => '' };
 
-  const matcherOptions = {
-    isNot: this.isNot,
-    promise: this.promise,
-  };
   return {
     pass: this.isNot,
     message: () =>
-      matcherHint(
+      textMatcherMessage(
           this,
-          undefined,
           matcherName,
-          expression,
           undefined,
-          matcherOptions,
+          expression,
+          expected,
+          lastCheckedURLString,
+          undefined,
+          'string',
+          this.isNot,
+          true,
           timeout,
       ),
+    actual: lastCheckedURLString,
+    timeout,
   };
 }
 
