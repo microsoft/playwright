@@ -8,11 +8,6 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.50
 
-### Breaking
-
-* [`method: LocatorAssertions.toBeEditable`] and [`method: Locator.isEditable`] now throw if the target element is not `<input>`, `<select>`, or a number of other editable elements.
-* Option [`property: TestConfig.updateSnapshots`] now updates all snapshots when set to `all`, rather than only the failed/changed snapshots. Use the new enum `changed` to keep the old functionality of only updating the changed snapshots.
-
 ### Test runner
 
 * New option [`option: Test.step.timeout`] allows specifying a maximum run time for an individual test step. A timed-out step will fail the execution of the test.
@@ -35,16 +30,21 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 * Display of `canvas` content in traces is error-prone. Display is now disabled by default, and can be enabled via the `Display canvas content` UI setting.
 * `Call` and `Network` panels now display additional time information.
 
+### Breaking
+
+* [`method: LocatorAssertions.toBeEditable`] and [`method: Locator.isEditable`] now throw if the target element is not `<input>`, `<select>`, or a number of other editable elements.
+* Option [`property: TestConfig.updateSnapshots`] now updates all snapshots when set to `all`, rather than only the failed/changed snapshots. Use the new enum `changed` to keep the old functionality of only updating the changed snapshots.
+
 ### Browser Versions
 
-- Chromium 133.0.6943.16
-- Mozilla Firefox 134.0
-- WebKit 18.2
+* Chromium 133.0.6943.16
+* Mozilla Firefox 134.0
+* WebKit 18.2
 
 This version was also tested against the following stable channels:
 
-- Google Chrome 131
-- Microsoft Edge 131
+* Google Chrome 131
+* Microsoft Edge 131
 
 ## Version 1.49
 
