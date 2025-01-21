@@ -117,7 +117,12 @@ async function main(options: DownloadParams) {
     const extraction = pipeline(
         decompress,
         tar.extract(options.browserDirectory),
-    );
+    ).catch(e => {
+      if (e.code === 'ERR_STREAM_PREMATURE_CLOSE') // caused by an upstream error in `downloadFile()`, let's no throw twice
+        return;
+
+      throw e;
+    });
     await Promise.all([
       extraction,
       downloadFile(options, decompress)
