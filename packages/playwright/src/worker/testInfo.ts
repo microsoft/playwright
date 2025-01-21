@@ -322,7 +322,7 @@ export class TestInfoImpl implements TestInfo {
       location: data.location,
     };
     this._onStepBegin(payload);
-    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, data.apiName || data.title, data.params, data.location ? [data.location] : []);
+    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, data.category, data.apiName || data.title, data.params, data.location ? [data.location] : []);
     return step;
   }
 
@@ -421,7 +421,7 @@ export class TestInfoImpl implements TestInfo {
     } else {
       // trace viewer has no means of representing attachments outside of a step, so we create an artificial action
       const callId = `attach@${++this._lastStepId}`;
-      this._tracing.appendBeforeActionForStep(callId, this._findLastStageStep(this._steps)?.stepId, `attach "${attachment.name}"`, undefined, []);
+      this._tracing.appendBeforeActionForStep(callId, this._findLastStageStep(this._steps)?.stepId, 'attach', `attach "${attachment.name}"`, undefined, []);
       this._tracing.appendAfterActionForStep(callId, undefined, [attachment]);
     }
 
