@@ -323,17 +323,18 @@ expect(page).to_have_url(re.compile(".*checkout"))
 await Expect(Page).ToHaveURLAsync(new Regex(".*checkout"));
 ```
 
-### param: PageAssertions.toHaveURL.urlOrRegExp
+### param: PageAssertions.toHaveURL.urlRegExOrPredicate
 * since: v1.18
-- `urlOrRegExp` <[string]|[RegExp]>
+- `urlRegExOrPredicate` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
-Expected URL string or RegExp.
+Expected URL string, RegExp, or predicate receiving [URL] to match.
+When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path, it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### option: PageAssertions.toHaveURL.ignoreCase
 * since: v1.44
 - `ignoreCase` <[boolean]>
 
-Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression flag if specified.
+Whether to perform case-insensitive match. [`option: ignoreCase`] option takes precedence over the corresponding regular expression parameter if specified. The predicate parameter ignores this flag.
 
 ### option: PageAssertions.toHaveURL.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
