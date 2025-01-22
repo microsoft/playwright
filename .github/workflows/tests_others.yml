@@ -21,6 +21,7 @@ env:
 jobs:
   test_stress:
     name: Stress - ${{ matrix.os }}
+    if: github.repository == 'microsoft/playwright'
     strategy:
       fail-fast: false
       matrix:
@@ -57,6 +58,7 @@ jobs:
 
   test_webview2:
     name: WebView2
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: windows-2022
     permissions:
@@ -87,6 +89,7 @@ jobs:
 
   test_clock_frozen_time_linux:
     name: time library - ${{ matrix.clock }}
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
@@ -112,6 +115,7 @@ jobs:
 
   test_clock_frozen_time_test_runner:
     name: time test runner - ${{ matrix.clock }}
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-22.04
     permissions:
@@ -136,6 +140,7 @@ jobs:
 
   test_electron:
     name: Electron - ${{ matrix.os }}
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
