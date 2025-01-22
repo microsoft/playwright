@@ -25,11 +25,14 @@
   cursor: pointer;
 }
 
-.tree-item-title.selected {
-  text-decoration: underline var(--color-underlinenav-icon);
-  text-decoration-thickness: 1.5px;
-}
-
 .tree-item-body {
   min-height: 18px;
+}
+
+.yellow-flash {
+  animation: yellowflash-bg 2s;
+}
+@keyframes yellowflash-bg {
+  from { background: var(--color-attention-subtle); }
+  to   { background: transparent; }
 }

@@ -59,7 +59,7 @@ export const Workbench: React.FunctionComponent<{
 }> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource }) => {
   const [selectedCallId, setSelectedCallId] = React.useState<string | undefined>(undefined);
   const [revealedError, setRevealedError] = React.useState<ErrorDescription | undefined>(undefined);
-  const [revealedAttachment, setRevealedAttachment] = React.useState<AfterActionTraceEventAttachment | undefined>(undefined);
+  const [revealedAttachment, setRevealedAttachment] = React.useState<[attachment: AfterActionTraceEventAttachment, renderCounter: number] | undefined>(undefined);
   const [highlightedCallId, setHighlightedCallId] = React.useState<string | undefined>();
   const [highlightedEntry, setHighlightedEntry] = React.useState<Entry | undefined>();
   const [highlightedConsoleMessage, setHighlightedConsoleMessage] = React.useState<ConsoleEntry | undefined>();
@@ -148,7 +148,12 @@ export const Workbench: React.FunctionComponent<{
 
   const revealAttachment = React.useCallback((attachment: AfterActionTraceEventAttachment) => {
     selectPropertiesTab('attachments');
-    setRevealedAttachment(attachment);
+    setRevealedAttachment(currentValue => {
+      if (!currentValue)
+        return [attachment, 0];
+      const revealCounter = currentValue[1];
+      return [attachment, revealCounter + 1];
+    });
   }, [selectPropertiesTab]);
 
   React.useEffect(() => {
@@ -238,7 +243,7 @@ export const Workbench: React.FunctionComponent<{
     id: 'attachments',
     title: 'Attachments',
     count: attachments.length,
-    render: () => <AttachmentsTab model={model} selectedAction={selectedAction} revealedAttachment={revealedAttachment} />
+    render: () => <AttachmentsTab model={model} revealedAttachment={revealedAttachment} />
   };
 
   const tabs: TabbedPaneTabModel[] = [
