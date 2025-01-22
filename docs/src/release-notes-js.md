@@ -13,29 +13,29 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 * New option [`option: Test.step.timeout`] allows specifying a maximum run time for an individual test step. A timed-out step will fail the execution of the test.
 
   ```js
-    test('some test', async ({ page }) => {
-      await test.step('a step', async () => {
-        // This step can time out separately from the test
-      }, { timeout: 1000 });
-    });
+  test('some test', async ({ page }) => {
+    await test.step('a step', async () => {
+      // This step can time out separately from the test
+    }, { timeout: 1000 });
+  });
   ```
 
 * New method [`method: Test.step.skip`] to disable execution of a test step.
   
   ```js
-    test('some test', async ({ page }) => {
-      await test.step('before running step', async () => {
-        // Normal step
-      });
-
-      await test.step.skip('not yet ready', async () => {
-        // This step is skipped
-      });
-
-      await test.step('after running step', async () => {
-        // This step still runs even though the previous one was skipped
-      });
+  test('some test', async ({ page }) => {
+    await test.step('before running step', async () => {
+      // Normal step
     });
+
+    await test.step.skip('not yet ready', async () => {
+      // This step is skipped
+    });
+
+    await test.step('after running step', async () => {
+      // This step still runs even though the previous one was skipped
+    });
+  });
   ```
 
 * Expanded [`method: LocatorAssertions.toMatchAriaSnapshot#2`] to allow storing of aria snapshots in separate YAML files.
