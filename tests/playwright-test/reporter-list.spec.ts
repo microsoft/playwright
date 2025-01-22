@@ -258,6 +258,51 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(text).toContain('1) a.test.ts:3:15 › passes › outer 1.0 › inner 1.1 ──');
       expect(result.exitCode).toBe(1);
     });
+
+    test('print stdio', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.ts': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {
+            await new Promise(resolve => process.stdout.write('line1', () => resolve()));
+            await new Promise(resolve => process.stdout.write('line2\\n', () => resolve()));
+            await new Promise(resolve => process.stderr.write(Buffer.from(''), () => resolve()));
+          });
+
+          test('passes 2', async ({}) => {
+            await new Promise(resolve => process.stdout.write('partial', () => resolve()));
+          });
+
+          test('passes 3', async ({}) => {
+            await new Promise(resolve => process.stdout.write('full\\n', () => resolve()));
+          });
+
+          test('passes 4', async ({}) => {
+          });
+        `,
+      }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PLAYWRIGHT_FORCE_TTY: '80' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(4);
+      const expected = [
+        '#0 :      1 a.test.ts:3:15 › passes',
+        'line1line2',
+        `#0 :   ${POSITIVE_STATUS_MARK} 1 a.test.ts:3:15 › passes`,
+        '',
+        '#3 :      2 a.test.ts:9:15 › passes 2',
+        `partial#3 :   ${POSITIVE_STATUS_MARK} 2 a.test.ts:9:15 › passes 2`,
+        '',
+        '#5 :      3 a.test.ts:13:15 › passes 3',
+        'full',
+        `#5 :   ${POSITIVE_STATUS_MARK} 3 a.test.ts:13:15 › passes 3`,
+        '#7 :      4 a.test.ts:17:15 › passes 4',
+        `#7 :   ${POSITIVE_STATUS_MARK} 4 a.test.ts:17:15 › passes 4`,
+      ];
+      const lines = result.output.split('\n');
+      const firstIndex = lines.indexOf(expected[0]);
+      expect(firstIndex, 'first line should be there').not.toBe(-1);
+      for (let i = 0; i < expected.length; ++i)
+        expect(lines[firstIndex + i]).toContain(expected[i]);
+    });
   });
 }
 

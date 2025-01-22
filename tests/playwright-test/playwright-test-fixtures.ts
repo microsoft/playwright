@@ -229,6 +229,7 @@ export function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
     // END: Reserved CI
     PW_TEST_HTML_REPORT_OPEN: undefined,
     PLAYWRIGHT_HTML_OPEN: undefined,
+    PW_TEST_DEBUG_REPORTERS: undefined,
     PW_TEST_REPORTER: undefined,
     PW_TEST_REPORTER_WS_ENDPOINT: undefined,
     PW_TEST_SOURCE_TRANSFORM: undefined,
