@@ -398,7 +398,7 @@ test('should show custom fixture titles in actions tree', async ({ runUITest }) 
   const { page } = await runUITest({
     'a.test.ts': `
       import { test as base, expect } from '@playwright/test';
-      
+
       const test = base.extend({
         fixture1: [async ({}, use) => {
           await use();
@@ -457,7 +457,7 @@ test('attachments tab shows all but top-level .push attachments', async ({ runUI
     - tree:
       - treeitem /step/:
         - group:
-          - treeitem /attach \\"foo-attach\\"/ 
+          - treeitem /attach \\"foo-attach\\"/
       - treeitem /attach \\"bar-push\\"/
       - treeitem /attach \\"bar-attach\\"/
   `);
@@ -469,4 +469,33 @@ test('attachments tab shows all but top-level .push attachments', async ({ runUI
       - button /bar-push/
       - button /bar-attach/
   `);
+});
+
+test('skipped steps should have an indicator', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test with steps', async ({}) => {
+        await test.step('outer', async () => {
+          await test.step.skip('skipped1', () => {});
+        });
+        await test.step.skip('skipped2', () => {});
+      });
+    `,
+  });
+
+  await page.getByRole('treeitem', { name: 'test with steps' }).dblclick();
+  const actionsTree = page.getByTestId('actions-tree');
+  await actionsTree.getByRole('treeitem', { name: 'outer' }).click();
+  await page.keyboard.press('ArrowRight');
+  await expect(actionsTree).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem /outer/ [expanded]:
+        - group:
+          - treeitem /skipped1/
+      - treeitem /skipped2/
+  `);
+  const skippedMarker = actionsTree.getByRole('treeitem', { name: 'skipped1' }).locator('.action-skipped');
+  await expect(skippedMarker).toBeVisible();
+  await expect(skippedMarker).toHaveAccessibleName('skipped');
 });
