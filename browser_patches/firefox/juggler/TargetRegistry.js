@@ -393,7 +393,7 @@ class PageTarget {
     this._videoRecordingInfo = undefined;
     this._screencastRecordingInfo = undefined;
     this._dialogs = new Map();
-    this.forcedColors = 'no-override';
+    this.forcedColors = 'none';
     this.disableCache = false;
     this.mediumOverride = '';
     this.crossProcessCookie = {
@@ -635,7 +635,8 @@ class PageTarget {
   }
 
   updateForcedColorsOverride(browsingContext = undefined) {
-    (browsingContext || this._linkedBrowser.browsingContext).forcedColorsOverride = (this.forcedColors !== 'no-override' ? this.forcedColors : this._browserContext.forcedColors) || 'no-override';
+    const isActive = this.forcedColors === 'active' || this._browserContext.forcedColors === 'active';
+    (browsingContext || this._linkedBrowser.browsingContext).forcedColorsOverride = isActive ? 'active' : 'none';
   }
 
   async setInterceptFileChooserDialog(enabled) {
@@ -858,8 +859,8 @@ function fromProtocolReducedMotion(reducedMotion) {
 function fromProtocolForcedColors(forcedColors) {
   if (forcedColors === 'active' || forcedColors === 'none')
     return forcedColors;
-  if (forcedColors === null)
-    return undefined;
+  if (!forcedColors)
+    return 'none';
   throw new Error('Unknown forced colors: ' + forcedColors);
 }
 
@@ -893,7 +894,7 @@ class BrowserContext {
     this.forceOffline = false;
     this.disableCache = false;
     this.colorScheme = 'none';
-    this.forcedColors = 'no-override';
+    this.forcedColors = 'none';
     this.reducedMotion = 'none';
     this.videoRecordingOptions = undefined;
     this.crossProcessCookie = {
