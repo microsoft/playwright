@@ -134,7 +134,7 @@ export async function toMatchAriaSnapshot(
         }
         return { pass: true, message: () => '', name: 'toMatchAriaSnapshot' };
       } else {
-        const suggestedRebaseline = `toMatchAriaSnapshot(\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\`)`;
+        const suggestedRebaseline = `\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\``;
         return { pass: false, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline };
       }
     }
