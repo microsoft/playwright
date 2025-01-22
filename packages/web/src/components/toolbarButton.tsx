@@ -29,6 +29,7 @@ export interface ToolbarButtonProps {
   testId?: string,
   className?: string,
   ariaLabel?: string,
+  noChildMargin?: boolean,
 }
 
 export const ToolbarButton = React.forwardRef<HTMLButtonElement, React.PropsWithChildren<ToolbarButtonProps>>(function ToolbarButton({
@@ -42,6 +43,7 @@ export const ToolbarButton = React.forwardRef<HTMLButtonElement, React.PropsWith
   testId,
   className,
   ariaLabel,
+  noChildMargin,
 }, ref) {
   return <button
     ref={ref}
@@ -55,7 +57,7 @@ export const ToolbarButton = React.forwardRef<HTMLButtonElement, React.PropsWith
     data-testid={testId}
     aria-label={ariaLabel || title}
   >
-    {icon && <span className={`codicon codicon-${icon}`} style={children ? { marginRight: 5 } : {}}></span>}
+    {icon && <span className={`codicon codicon-${icon}`} style={children && !noChildMargin ? { marginRight: 5 } : {}}></span>}
     {children}
   </button>;
 });

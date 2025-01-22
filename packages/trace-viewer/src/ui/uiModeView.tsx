@@ -354,6 +354,18 @@ export const UIModeView: React.FC<{}> = ({
     return () => disposable.dispose();
   }, [runTests, testServerConnection, watchAll, watchedTreeIds, teleSuiteUpdater, projectFilters]);
 
+  const hideOutput = React.useCallback(() => setIsShowingOutput(false), [setIsShowingOutput]);
+  const showOutput = React.useCallback(() => {
+    setIsShowingOutput(true);
+    setOutputContainsError(false);
+  }, [setIsShowingOutput, setOutputContainsError]);
+  const toggleOutput = React.useCallback(() => {
+    if (isShowingOutput)
+      hideOutput();
+    else
+      showOutput();
+  }, [isShowingOutput, showOutput, hideOutput]);
+
   // Shortcuts.
   React.useEffect(() => {
     if (!testServerConnection)
@@ -361,7 +373,7 @@ export const UIModeView: React.FC<{}> = ({
     const onShortcutEvent = (e: KeyboardEvent) => {
       if (e.code === 'Backquote' && e.ctrlKey) {
         e.preventDefault();
-        setIsShowingOutput(!isShowingOutput);
+        toggleOutput();
       } else if (e.code === 'F5' && e.shiftKey) {
         e.preventDefault();
         testServerConnection?.stopTestsNoReply({});
@@ -374,7 +386,7 @@ export const UIModeView: React.FC<{}> = ({
     return () => {
       removeEventListener('keydown', onShortcutEvent);
     };
-  }, [runTests, reloadTests, testServerConnection, visibleTestIds, isShowingOutput]);
+  }, [runTests, reloadTests, testServerConnection, visibleTestIds, toggleOutput]);
 
   const dialogRef = React.useRef<HTMLDialogElement>(null);
   const openInstallDialog = React.useCallback((e: React.MouseEvent) => {
@@ -389,13 +401,13 @@ export const UIModeView: React.FC<{}> = ({
   }, []);
   const installBrowsers = React.useCallback((e: React.MouseEvent) => {
     closeInstallDialog(e);
-    setIsShowingOutput(true);
+    showOutput();
     testServerConnection?.installBrowsers({}).then(async () => {
-      setIsShowingOutput(false);
+      hideOutput();
       const { hasBrowsers } = await testServerConnection?.checkBrowsers({});
       setHasBrowsers(hasBrowsers);
     });
-  }, [closeInstallDialog, testServerConnection]);
+  }, [closeInstallDialog, testServerConnection, showOutput, hideOutput]);
 
   return <div className='vbox ui-mode'>
     {!hasBrowsers && <dialog ref={dialogRef}>
@@ -425,7 +437,7 @@ export const UIModeView: React.FC<{}> = ({
             <div className='section-title' style={{ flex: 'none' }}>Output</div>
             <ToolbarButton icon='circle-slash' title='Clear output' onClick={() => { xtermDataSource.clear(); setOutputContainsError(false); }}></ToolbarButton>
             <div className='spacer'></div>
-            <ToolbarButton icon='close' title='Close' onClick={() => setIsShowingOutput(false)}></ToolbarButton>
+            <ToolbarButton icon='close' title='Close' onClick={hideOutput}></ToolbarButton>
           </Toolbar>
           <XtermWrapper source={xtermDataSource}></XtermWrapper>
         </div>
@@ -445,8 +457,9 @@ export const UIModeView: React.FC<{}> = ({
           <div className='section-title'>Playwright</div>
           <ToolbarButton icon='refresh' title='Reload' onClick={() => reloadTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
           <div style={{ position: 'relative' }}>
-            <ToolbarButton icon={'terminal'} title={'Toggle output — ' + (isMac ? '⌃`' : 'Ctrl + `')} toggled={isShowingOutput} onClick={() => { setIsShowingOutput(!isShowingOutput); }} />
-            {outputContainsError && <div title='Output contains error' style={{ position: 'absolute', top: 2, right: 2, width: 7, height: 7, borderRadius: '50%', backgroundColor: 'var(--vscode-notificationsErrorIcon-foreground)' }} />}
+            <ToolbarButton icon={'terminal'} title={'Toggle output — ' + (isMac ? '⌃`' : 'Ctrl + `')} toggled={isShowingOutput} onClick={toggleOutput} noChildMargin={true}>
+              {outputContainsError && <div title='Output contains error' style={{ position: 'absolute', top: 2, right: 2, width: 7, height: 7, borderRadius: '50%', backgroundColor: 'var(--vscode-notificationsErrorIcon-foreground)' }} />}
+            </ToolbarButton>
           </div>
           {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-list-warningForeground)' }} title='Playwright browsers are missing' onClick={openInstallDialog} />}
         </Toolbar>
