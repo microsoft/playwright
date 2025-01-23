@@ -18,13 +18,13 @@ import { playwrightTest as baseTest, expect } from '../config/browserTest';
 import { pipeline } from 'stream/promises';
 import { suppressCertificateWarning } from 'tests/config/utils';
 
-const test = baseTest.extend<{ proxiedRequest: APIRequestContext }, { mockingProxy: MockingProxy }>({
-  mockingProxy: [async ({ playwright }, use, testInfo) => {
+const test = baseTest.extend<{ proxiedRequest: APIRequestContext }, { mockproxy: MockingProxy }>({
+  mockproxy: [async ({ playwright }, use, testInfo) => {
     const port = 32181 + testInfo.parallelIndex;
     const proxy = await playwright.mockingProxy.newProxy(port);
     await use(proxy);
   }, { scope: 'worker' }],
-  proxiedRequest: async ({ request, mockingProxy: mockproxy }, use) => {
+  proxiedRequest: async ({ request, mockproxy }, use) => {
     const originalFetch = request.fetch;
     request.fetch = function(urlOrRequest, options) {
       if (typeof urlOrRequest !== 'string')
@@ -36,12 +36,12 @@ const test = baseTest.extend<{ proxiedRequest: APIRequestContext }, { mockingPro
   },
 });
 
-test.beforeEach(async ({ mockingProxy: mockproxy }) => {
+test.beforeEach(async ({ mockproxy }) => {
   await mockproxy.unrouteAll();
 });
 
 test.describe('transparent', () => {
-  test('generates events', async ({ server, proxiedRequest, mockingProxy: mockproxy }) => {
+  test('generates events', async ({ server, proxiedRequest, mockproxy }) => {
     const events: string[] = [];
     mockproxy.on('request', () => {
       events.push('request');
@@ -58,7 +58,7 @@ test.describe('transparent', () => {
     expect(events).toEqual(['request', 'response', 'requestfinished']);
   });
 
-  test('event properties', async ({ server, proxiedRequest, mockingProxy: mockproxy }) => {
+  test('event properties', async ({ server, proxiedRequest, mockproxy }) => {
     const [
       requestFinished,
       request,
@@ -122,7 +122,7 @@ test.describe('transparent', () => {
     });
   });
 
-  test('securityDetails', async ({ httpsServer, proxiedRequest, mockingProxy: mockproxy }) => {
+  test('securityDetails', async ({ httpsServer, proxiedRequest, mockproxy }) => {
     const oldValue = process.env['NODE_TLS_REJECT_UNAUTHORIZED'];
     // https://stackoverflow.com/a/21961005/552185
     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
@@ -149,7 +149,7 @@ test.describe('transparent', () => {
     }
   });
 
-  test('request with body', async ({ server, proxiedRequest, mockingProxy: mockproxy }) => {
+  test('request with body', async ({ server, proxiedRequest, mockproxy }) => {
     server.setRoute('/echo', (req, res) => pipeline(req, res));
     const [
       requestEvent,
@@ -173,7 +173,7 @@ test.describe('transparent', () => {
     });
   });
 
-  test('request failed', async ({ server, proxiedRequest, mockingProxy: mockproxy }) => {
+  test('request failed', async ({ server, proxiedRequest, mockproxy }) => {
     server.setRoute('/failure', (req, res) => {
       res.socket.destroy();
     });
@@ -196,14 +196,14 @@ test.describe('transparent', () => {
   });
 });
 
-test('stalling', async ({ server, proxiedRequest, mockingProxy: mockproxy }) => {
+test('stalling', async ({ server, proxiedRequest, mockproxy }) => {
   const routes: Route[] = [];
   await mockproxy.route('**/abort', route => routes.push(route));
   await expect(() => proxiedRequest.get(server.PREFIX + '/abort', { timeout: 100 })).rejects.toThrowError('Request timed out after 100ms');
   expect(routes.length).toBe(1);
 });
 
-test('route properties', async ({ server, proxiedRequest, mockingProxy: mockproxy }) => {
+test('route properties', async ({ server, proxiedRequest, mockproxy }) => {
   const routes: Route[] = [];
   await mockproxy.route('**/*', (route, request) => {
     expect(route.request()).toBe(request);
@@ -214,12 +214,12 @@ test('route properties', async ({ server, proxiedRequest, mockingProxy: mockprox
   expect(routes.length).toBe(1);
 });
 
-test('aborting', async ({ server, proxiedRequest, mockingProxy: mockproxy }) => {
+test('aborting', async ({ server, proxiedRequest, mockproxy }) => {
   await mockproxy.route('**/abort', route => route.abort());
   await expect(() => proxiedRequest.get(server.PREFIX + '/abort', { timeout: 100 })).rejects.toThrowError('Request timed out after 100ms');
 });
 
-test('fulfill', async ({ server, proxiedRequest, mockingProxy: mockproxy }) => {
+test('fulfill', async ({ server, proxiedRequest, mockproxy }) => {
   let apiCalls = 0;
   server.setRoute('/endpoint', (req, res) => {
     apiCalls++;
@@ -233,7 +233,7 @@ test('fulfill', async ({ server, proxiedRequest, mockingProxy: mockproxy }) => {
   expect(apiCalls).toBe(0);
 });
 
-test('continue', async ({ server, proxiedRequest, mockingProxy: mockproxy }) => {
+test('continue', async ({ server, proxiedRequest, mockproxy }) => {
   server.setRoute('/echo', (req, res) => {
     res.setHeader('request-method', req.method);
     res.writeHead(200, req.headers);
@@ -255,7 +255,7 @@ test('continue', async ({ server, proxiedRequest, mockingProxy: mockproxy }) => 
   expect(response.headers()['x-add']).toBe('baz');
 });
 
-test('fallback', async ({ server, proxiedRequest, mockingProxy: mockproxy }) => {
+test('fallback', async ({ server, proxiedRequest, mockproxy }) => {
   server.setRoute('/foo', (req, res) => {
     res.end('ok');
   });
@@ -266,7 +266,7 @@ test('fallback', async ({ server, proxiedRequest, mockingProxy: mockproxy }) => 
   expect(await response.text()).toBe('ok');
 });
 
-test('fetch', async ({ server, proxiedRequest, mockingProxy: mockproxy }) => {
+test('fetch', async ({ server, proxiedRequest, mockproxy }) => {
   server.setRoute('/foo', (req, res) => {
     res.end('ok');
   });
