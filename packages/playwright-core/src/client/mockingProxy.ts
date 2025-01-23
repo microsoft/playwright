@@ -80,14 +80,6 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> imp
     this._channel.on('response', this.responseListener);
   }
 
-  dispose() {
-    this._channel.off('route', this.routeListener);
-    this._channel.off('request', this.requestListener);
-    this._channel.off('requestFailed', this.failedListener);
-    this._channel.off('requestFinished', this.finishedListener);
-    this._channel.off('response', this.responseListener);
-  }
-
   async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
     this._routes.unshift(new network.RouteHandler(undefined, url, handler, options.times));
     await this._updateInterceptionPatterns();
