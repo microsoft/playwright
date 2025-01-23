@@ -20,7 +20,7 @@ import path from 'path';
 import os from 'os';
 import type * as channels from '@protocol/channels';
 import { ManualPromise } from '../../utils/manualPromise';
-import { assert, calculateSha1, createGuid, HttpServer, removeFolders, urlMatches } from '../../utils';
+import { assert, calculateSha1, createGuid, removeFolders } from '../../utils';
 import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { yazl, yauzl } from '../../zipBundle';
@@ -41,14 +41,13 @@ import type { Playwright } from '../playwright';
 import { SdkObject } from '../../server/instrumentation';
 import { serializeClientSideCallMetadata } from '../../utils';
 import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
-import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
 import type { APIRequestContext } from '../fetch';
 import { GlobalAPIRequestContext } from '../fetch';
-import { MockingProxy, ServerInterceptionRegistry } from '../mockingProxy';
+import { MockingProxy } from '../mockingProxy';
+import { MockingProxyDispatcher } from './mockingProxyDispatcher';
 
 export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
-  _type_EventTarget: boolean;
   private _harBackends = new Map<string, HarBackend>();
   private _stackSessions = new Map<string, {
     file: string,
@@ -56,9 +55,7 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
     tmpDir: string | undefined,
     callStacks: channels.ClientSideCallMetadata[]
   }>();
-  _requestContext: APIRequestContext;
-  private _interceptionRegistry;
-  private _server?: WorkerHttpServer;
+  private _requestContext: APIRequestContext;
 
   constructor(scope: RootDispatcher, playwright: Playwright) {
     const localUtils = new SdkObject(playwright, 'localUtils', 'localUtils');
@@ -68,40 +65,9 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
     const requestContext = new GlobalAPIRequestContext(playwright, {});
     super(scope, localUtils, 'LocalUtils', {
       deviceDescriptors,
-      requestContext: APIRequestContextDispatcher.from(scope, requestContext),
     });
     this._requestContext = requestContext;
     this._type_LocalUtils = true;
-    this._type_EventTarget = true;
-
-    this._interceptionRegistry = new ServerInterceptionRegistry(this._object, this._requestContext, {
-      onRequest: request => {
-        this._dispatchEvent('request', { request: RequestDispatcher.from(this.parentScope() as any, request) });
-      },
-      onRequestFinished: (request, response) => {
-        this._dispatchEvent('requestFinished', {
-          request: RequestDispatcher.from(this.parentScope() as any, request),
-          response: ResponseDispatcher.fromNullable(this.parentScope() as any, response ?? null),
-          responseEndTiming: request._responseEndTiming,
-        });
-      },
-      onRequestFailed: request => {
-        this._dispatchEvent('requestFailed', {
-          request: RequestDispatcher.from(this.parentScope() as any, request),
-          responseEndTiming: request._responseEndTiming,
-          failureText: request._failureText ?? undefined
-        });
-      },
-      onResponse: (request, response) => {
-        this._dispatchEvent('response', {
-          request: RequestDispatcher.from(this.parentScope() as any, request),
-          response: ResponseDispatcher.from(this.parentScope() as any, response),
-        });
-      },
-      onRoute: (route, request) => {
-        this._dispatchEvent('route', { route: RouteDispatcher.from(RequestDispatcher.from(this.parentScope() as any, request), route) });
-      },
-    });
   }
 
   async zip(params: channels.LocalUtilsZipParams): Promise<void> {
@@ -316,24 +282,10 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
     this._stackSessions.delete(stacksId!);
   }
 
-  async setServerNetworkInterceptionPatterns(params: channels.LocalUtilsSetServerNetworkInterceptionPatternsParams, metadata?: CallMetadata): Promise<channels.LocalUtilsSetServerNetworkInterceptionPatternsResult> {
-    if (!this._server) {
-      this._server = new WorkerHttpServer();
-      new MockingProxy(this._interceptionRegistry).install(this._server);
-      await this._server.start({ port: params.port });
-    }
-
-    if (params.patterns.length === 0)
-      return this._interceptionRegistry.setRequestInterceptor(undefined);
-
-    const urlMatchers = params.patterns.map(pattern => pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags!) : pattern.glob!);
-    this._interceptionRegistry.setRequestInterceptor(url => urlMatchers.some(urlMatch => urlMatches(undefined, url, urlMatch)));
-  }
-}
-
-export class WorkerHttpServer extends HttpServer {
-  override _handleCORS(request: http.IncomingMessage, response: http.ServerResponse): boolean {
-    return false;
+  async newMockingProxy(params: channels.LocalUtilsNewMockingProxyParams, metadata?: CallMetadata): Promise<channels.LocalUtilsNewMockingProxyResult> {
+    const mockingProxy = new MockingProxy(this._object, this._requestContext);
+    await mockingProxy.start(params.port);
+    return { mockingProxy: MockingProxyDispatcher.from(this.parentScope(), mockingProxy) };
   }
 }
 

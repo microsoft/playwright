@@ -455,7 +455,7 @@ export type LocalUtilsInitializer = {
 };
 export interface LocalUtilsEventTarget {
 }
-export interface LocalUtilsChannel extends LocalUtilsEventTarget, EventTargetChannel {
+export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   _type_LocalUtils: boolean;
   zip(params: LocalUtilsZipParams, metadata?: CallMetadata): Promise<LocalUtilsZipResult>;
   harOpen(params: LocalUtilsHarOpenParams, metadata?: CallMetadata): Promise<LocalUtilsHarOpenResult>;

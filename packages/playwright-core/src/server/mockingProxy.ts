@@ -19,142 +19,43 @@ import https from 'https';
 import url from 'url';
 import type { APIRequestContext } from './fetch';
 import { SdkObject } from './instrumentation';
-import type { RemoteAddr, RequestContext, ResourceTiming, SecurityDetails } from './network';
+import type { RequestContext, ResourceTiming, SecurityDetails } from './network';
 import { Request, Response, Route } from './network';
-import type { HeadersArray, NormalizedContinueOverrides, NormalizedFulfillResponse } from './types';
-import { ManualPromise, monotonicTime } from 'playwright-core/lib/utils';
-import type { WorkerHttpServer } from './dispatchers/localUtilsDispatcher';
+import type { HeadersArray, } from './types';
+import { HttpServer, ManualPromise, monotonicTime } from '../utils';
 import { TLSSocket } from 'tls';
 import type { AddressInfo } from 'net';
 import { pipeline } from 'stream/promises';
 import { Transform } from 'stream';
 
-type InterceptorResult =
-| { result: 'continue', request: Request, overrides?: NormalizedContinueOverrides }
-| { result: 'abort', request: Request, errorCode: string }
-| { result: 'fulfill', request: Request, response: NormalizedFulfillResponse };
-
-interface EventDelegate {
-  onRequest(request: Request): void;
-  onRequestFinished(request: Request, response: Response): void;
-  onRequestFailed(request: Request): void;
-  onResponse(request: Request, response: Response): void;
-  onRoute(route: Route, request: Request): void;
-}
-
-export class ServerInterceptionRegistry extends SdkObject implements RequestContext {
-  private _eventDelegate: EventDelegate;
+export class MockingProxy extends SdkObject implements RequestContext {
   fetchRequest: APIRequestContext;
   private _matches?: (url: string) => boolean;
+  private _httpServer = new WorkerHttpServer();
 
-  constructor(parent: SdkObject, requestContext: APIRequestContext, eventDelegate: EventDelegate) {
-    super(parent, 'serverInterceptionRegistry');
-    this._eventDelegate = eventDelegate;
+  constructor(parent: SdkObject, requestContext: APIRequestContext) {
+    super(parent, 'MockingProxy');
     this.fetchRequest = requestContext;
-  }
 
-  setRequestInterceptor(matches?: (url: string) => boolean) {
-    this._matches = matches;
-  }
-
-  handle(url: string, method: string, body: Buffer | null, headers: HeadersArray): Promise<InterceptorResult> {
-    const request = new Request(this, null, null, null, undefined, url, '', method, body, headers);
-    request.setRawRequestHeaders(headers);
-    this._eventDelegate.onRequest(request);
-
-    if (!this._matches?.(url))
-      return Promise.resolve({ result: 'continue', request });
-
-    return new Promise(resolve => {
-      const route = new Route(request, {
-        async abort(errorCode) {
-          resolve({ result: 'abort', request, errorCode });
-        },
-        async continue(overrides) {
-          resolve({ result: 'continue', request, overrides });
-        },
-        async fulfill(response) {
-          resolve({ result: 'fulfill', request, response });
-        },
-      });
-
-      this._eventDelegate.onRoute(route, request);
-    });
-  }
-
-  failed(request: Request, error: string) {
-    request._setFailureText(error);
-    this._eventDelegate.onRequestFailed(request);
-  }
-
-  response(request: Request, status: number, statusText: string, headers: HeadersArray, body: () => Promise<Buffer>, httpVersion: string, timing: ResourceTiming, securityDetails: SecurityDetails | undefined, serverAddr: RemoteAddr | undefined) {
-    const response = new Response(request, status, statusText, headers, timing, body, false, httpVersion);
-    response.setRawResponseHeaders(headers);
-    response._securityDetailsFinished(securityDetails);
-    response._serverAddrFinished(serverAddr);
-    this._eventDelegate.onResponse(request, response);
-
-    return {
-      finished: async (responseEndTiming: number, transferSize: number, encodedBodySize: number) => {
-        response._requestFinished(responseEndTiming);
-        response.setTransferSize(transferSize);
-        response.setEncodedBodySize(encodedBodySize);
-        response.setResponseHeadersSize(transferSize - encodedBodySize);
-        this._eventDelegate.onRequestFinished(request, response);
-      }
-    };
-  }
-
-  addRouteInFlight(route: Route): void {
-
-  }
-
-  removeRouteInFlight(route: Route): void {
-
-  }
-}
-
-function headersArray(req: Pick<http.IncomingMessage, 'headersDistinct'>): HeadersArray {
-  return Object.entries(req.headersDistinct).flatMap(([name, values = []]) => values.map(value => ({ name, value })));
-}
-
-function headersArrayToOutgoingHeaders(headers: HeadersArray) {
-  const result: http.OutgoingHttpHeaders = {};
-  for (const { name, value } of headers) {
-    if (result[name] === undefined)
-      result[name] = value;
-    else if (Array.isArray(result[name]))
-      result[name].push(value);
-    else
-      result[name] = [result[name] as string, value];
-  }
-  return result;
-}
-
-async function collectBody(req: http.IncomingMessage) {
-  return await new Promise<Buffer>((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    req.on('data', chunk => chunks.push(chunk));
-    req.on('end', () => resolve(Buffer.concat(chunks)));
-    req.on('error', reject);
-  });
-}
-
-export class MockingProxy {
-  private readonly _registry: ServerInterceptionRegistry;
-
-  constructor(registry: ServerInterceptionRegistry) {
-    this._registry = registry;
-  }
-
-  install(server: WorkerHttpServer) {
-    server.routePrefix('/', (req, res) => {
+    this._httpServer.routePrefix('/', (req, res) => {
       this._proxy(req, res);
       return true;
     });
-    server.server().on('connect', (req, socket, head) => {
+    this._httpServer.server().on('connect', (req, socket, head) => {
       socket.end('HTTP/1.1 405 Method Not Allowed\r\n\r\n');
     });
+  }
+
+  async start(port?: number): Promise<void> {
+    await this._httpServer.start({ port });
+  }
+
+  get port() {
+    return this._httpServer.port();
+  }
+
+  setInterceptionPatterns(matches?: (url: string) => boolean) {
+    this._matches = matches;
   }
 
   private async _proxy(req: http.IncomingMessage, res: http.ServerResponse) {
@@ -170,14 +71,14 @@ export class MockingProxy {
     delete req.headersDistinct.host;
     const headers = headersArray(req);
     const body = await collectBody(req);
-    const result = await this._registry.handle(req.url!, req.method!, body, headers);
-    switch (result.result) {
-      case 'abort': {
-        req.destroy(result.errorCode ? new Error(result.errorCode) : undefined);
-        return;
-      }
-      case 'continue': {
-        const { overrides } = result;
+    const request = new Request(this, null, null, null, undefined, req.url!, '', req.method!, body, headers);
+    request.setRawRequestHeaders(headers);
+
+    const route = new Route(request, {
+      abort: async errorCode => {
+        req.destroy(errorCode ? new Error(errorCode) : undefined);
+      },
+      continue: async overrides => {
         const proxyUrl = url.parse(overrides?.url ?? req.url!);
         const httpLib = proxyUrl.protocol === 'https:' ? https : http;
         const proxyHeaders = overrides?.headers ?? headers;
@@ -225,16 +126,11 @@ export class MockingProxy {
 
             const address = socket.address() as AddressInfo;
             const responseBodyPromise = new ManualPromise<Buffer>();
-            const response = this._registry.response(
-                result.request,
-                proxyRes.statusCode!,
-                proxyRes.statusMessage!, headersArray(proxyRes),
-                () => responseBodyPromise,
-                proxyRes.httpVersion,
-                timings,
-                securityDetails,
-                { ipAddress: address.family === 'IPv6' ? `[${address.address}]` : address.address, port: address.port },
-            );
+            const response = new Response(request, proxyRes.statusCode!, proxyRes.statusMessage!, headersArray(proxyRes), timings, () => responseBodyPromise, false, proxyRes.httpVersion);
+            response.setRawResponseHeaders(headers);
+            response._securityDetailsFinished(securityDetails);
+            response._serverAddrFinished({ ipAddress: address.family === 'IPv6' ? `[${address.address}]` : address.address, port: address.port });
+            this.emit('response', response);
 
             try {
               res.writeHead(proxyRes.statusCode!, proxyRes.headers);
@@ -253,20 +149,24 @@ export class MockingProxy {
               const body = Buffer.concat(chunks);
               responseBodyPromise.resolve(body);
 
-              response.finished(
-                  monotonicTime() - startAt,
-                  socket.bytesRead - socketBytesReadStart,
-                  body.byteLength
-              );
+              const transferSize = socket.bytesRead - socketBytesReadStart;
+              const encodedBodySize = body.byteLength;
+              response._requestFinished(monotonicTime() - startAt);
+              response.setTransferSize(transferSize);
+              response.setEncodedBodySize(encodedBodySize);
+              response.setResponseHeadersSize(transferSize - encodedBodySize);
+              this.emit('requestFinished', response);
               resolve();
             } catch (error) {
-              this._registry.failed(result.request, error.toString());
+              request._setFailureText('' + error);
+              this.emit('failed', request);
               resolve();
             }
           });
 
           proxyReq.on('error', error => {
-            this._registry.failed(result.request, error.toString());
+            request._setFailureText('' + error);
+            this.emit('failed', request);
             res.statusCode = 502;
             res.end(resolve);
           });
@@ -283,19 +183,51 @@ export class MockingProxy {
           });
           proxyReq.end(proxyBody);
         });
-      }
-      case 'fulfill': {
-        const { response: { status, headers, body, isBase64 } } = result;
+      },
+      fulfill: async ({ status, headers, body, isBase64 }) => {
         res.statusCode = status;
         for (const { name, value } of headers)
           res.appendHeader(name, value);
         res.sendDate = false;
         res.end(Buffer.from(body, isBase64 ? 'base64' : 'utf-8'));
-        return;
-      }
-      default: {
-        throw new Error('Unexpected result');
-      }
-    }
+      },
+    });
+
+    if (this._matches?.(req.url!))
+      this.emit('route', { route, request });
+    else
+      await route.continue({ isFallback: false });
+  }
+}
+
+function headersArray(req: Pick<http.IncomingMessage, 'headersDistinct'>): HeadersArray {
+  return Object.entries(req.headersDistinct).flatMap(([name, values = []]) => values.map(value => ({ name, value })));
+}
+
+function headersArrayToOutgoingHeaders(headers: HeadersArray) {
+  const result: http.OutgoingHttpHeaders = {};
+  for (const { name, value } of headers) {
+    if (result[name] === undefined)
+      result[name] = value;
+    else if (Array.isArray(result[name]))
+      result[name].push(value);
+    else
+      result[name] = [result[name] as string, value];
+  }
+  return result;
+}
+
+async function collectBody(req: http.IncomingMessage) {
+  return await new Promise<Buffer>((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on('data', chunk => chunks.push(chunk));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
+
+export class WorkerHttpServer extends HttpServer {
+  override _handleCORS(request: http.IncomingMessage, response: http.ServerResponse): boolean {
+    return false;
   }
 }

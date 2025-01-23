@@ -89,10 +89,10 @@ export function stripFragmentFromUrl(url: string): string {
 }
 
 export interface RequestContext extends SdkObject {
-  addRouteInFlight(route: Route): void;
-  removeRouteInFlight(route: Route): void;
-
   fetchRequest: APIRequestContext;
+
+  addRouteInFlight?(route: Route): void;
+  removeRouteInFlight?(route: Route): void;
 }
 
 export class Request extends SdkObject {
@@ -261,7 +261,7 @@ export class Route extends SdkObject {
     super(request._frame || request._context, 'route');
     this._request = request;
     this._delegate = delegate;
-    this._request._context.addRouteInFlight(this);
+    this._request._context.addRouteInFlight?.(this);
   }
 
   request(): Request {
@@ -347,7 +347,7 @@ export class Route extends SdkObject {
   }
 
   private _endHandling() {
-    this._request._context.removeRouteInFlight(this);
+    this._request._context.removeRouteInFlight?.(this);
   }
 }
 
