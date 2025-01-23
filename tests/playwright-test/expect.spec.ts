@@ -561,11 +561,12 @@ test('should support toHaveURL predicate', async ({ runInlineTest }) => {
     'playwright.config.js': `module.exports = { expect: { timeout: 1000 } }`,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
+      import { stripVTControlCharacters } from 'node:util';
 
       test('predicate', async ({ page }) => {
         await page.goto('data:text/html,<div>A</div>');
         const error = await expect(page).toHaveURL('data:text/html,<div>B</div>').catch(e => e);
-        expect(error.message).toContain('expect.toHaveURL with timeout 1000ms');
+        expect(stripVTControlCharacters(error.message)).toContain('Timed out 1000ms waiting for expect(page).toHaveURL(expected)');
         expect(error.message).toContain('data:text/html,<div>');
       });
       `,

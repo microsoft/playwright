@@ -18,7 +18,7 @@ import type { Page } from 'playwright-core';
 import type { ExpectMatcherState } from '../../types/test';
 import { EXPECTED_COLOR, printReceived } from '../common/expectBundle';
 import { matcherHint, type MatcherResult } from './matcherHint';
-import { urlMatches } from 'playwright-core/lib/utils';
+import { constructURLBasedOnBaseURL, urlMatches } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { printReceivedStringContainExpectedResult, printReceivedStringContainExpectedSubstring } from './expect';
 
@@ -51,13 +51,12 @@ export async function toHaveURL(
   }
 
   const timeout = options?.timeout ?? this.timeout;
+  const baseURL: string | undefined = (page.context() as any)._options.baseURL;
   let conditionSucceeded = false;
   let lastCheckedURLString: string | undefined = undefined;
   try {
     await page.mainFrame().waitForURL(
         url => {
-          const baseURL: string | undefined = (page.context() as any)._options
-              .baseURL;
           lastCheckedURLString = url.toString();
 
           if (options?.ignoreCase) {
@@ -96,7 +95,9 @@ export async function toHaveURL(
           this,
           matcherName,
           expression,
-          expected,
+          typeof expected === 'string'
+            ? constructURLBasedOnBaseURL(baseURL, expected)
+            : expected,
           lastCheckedURLString,
           this.isNot,
           true,
