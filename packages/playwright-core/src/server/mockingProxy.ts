@@ -198,6 +198,14 @@ export class MockingProxy extends SdkObject implements RequestContext {
     else
       await route.continue({ isFallback: false });
   }
+
+  addRouteInFlight(route: Route): void {
+    // no-op, might be useful for warnings
+  }
+
+  removeRouteInFlight(route: Route): void {
+    // no-op, might be useful for warnings
+  }
 }
 
 function headersArray(req: Pick<http.IncomingMessage, 'headersDistinct'>): HeadersArray {

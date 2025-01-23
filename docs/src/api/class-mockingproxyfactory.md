@@ -13,6 +13,6 @@ Creates a new instance of [MockingProxy].
 
 ### param: MockingProxyFactory.newProxy.port
 * since: v1.51
-- `port` <[int]>
+- `port` ?<[int]>
 
 Port to listen on.
