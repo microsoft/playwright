@@ -42,42 +42,38 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> imp
   private _timeoutSettings = new TimeoutSettings();
   private _requestContext: APIRequestContext;
 
-  private routeListener = ({ route }: channels.MockingProxyRouteEvent) => {
-    this._onRoute(network.Route.from(route));
-  };
-  private failedListener = (params: channels.MockingProxyRequestFailedEvent) => {
-    const request = network.Request.from(params.request);
-    if (params.failureText)
-      request._failureText = params.failureText;
-    request._setResponseEndTiming(params.responseEndTiming);
-    this.emit('requestfailed', request);
-  };
-  private finishedListener = (params: channels.MockingProxyRequestFinishedEvent) => {
-    const { responseEndTiming } = params;
-    const request = network.Request.from(params.request);
-    const response = network.Response.fromNullable(params.response);
-    request._setResponseEndTiming(responseEndTiming);
-    this.emit('requestfinished', request);
-    response?._finishedPromise.resolve(null);
-  };
-  private responseListener = ({ response }: channels.MockingProxyResponseEvent) => {
-    this.emit('response', network.Response.from(response));
-  };
-  private requestListener = ({ request }: channels.MockingProxyRequestEvent) => {
-    this.emit('request', network.Request.from(request));
-  };
-
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.MockingProxyInitializer) {
     super(parent, type, guid, initializer);
 
     this._port = initializer.port;
     this._requestContext = APIRequestContext.from(initializer.requestContext);
 
-    this._channel.on('route', this.routeListener);
-    this._channel.on('request', this.requestListener);
-    this._channel.on('requestFailed', this.failedListener);
-    this._channel.on('requestFinished', this.finishedListener);
-    this._channel.on('response', this.responseListener);
+    this._channel.on('route', ({ route }: channels.MockingProxyRouteEvent) => {
+      this._onRoute(network.Route.from(route));
+    });
+    this._channel.on('request', ({ request }: channels.MockingProxyRequestEvent) => {
+      this.emit(Events.MockingProxy.Request, network.Request.from(request));
+    });
+    this._channel.on('requestFailed', (params: channels.MockingProxyRequestFailedEvent) => {
+      const request = network.Request.from(params.request);
+      if (params.failureText)
+        request._failureText = params.failureText;
+      request._setResponseEndTiming(params.responseEndTiming);
+      this.emit(Events.MockingProxy.RequestFailed, request);
+    });
+    this._channel.on('requestFinished', (params: channels.MockingProxyRequestFinishedEvent) => {
+      const { responseEndTiming } = params;
+      const request = network.Request.from(params.request);
+      request._setResponseEndTiming(responseEndTiming);
+
+      const response = network.Response.fromNullable(params.response);
+      response?._finishedPromise.resolve(null);
+
+      this.emit(Events.MockingProxy.RequestFinished, request);
+    });
+    this._channel.on('response', ({ response }: channels.MockingProxyResponseEvent) => {
+      this.emit(Events.MockingProxy.Response, network.Response.from(response));
+    });
   }
 
   async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
