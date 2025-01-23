@@ -81,6 +81,7 @@ export class MockingProxy extends SdkObject implements RequestContext {
     const body = await collectBody(req);
     const request = new Request(this, null, null, null, undefined, req.url!, '', req.method!, body, headers);
     request.setRawRequestHeaders(headers);
+    this.emit(MockingProxy.Events.Request, request);
 
     const route = new Route(request, {
       abort: async errorCode => {
@@ -135,7 +136,7 @@ export class MockingProxy extends SdkObject implements RequestContext {
             const address = socket.address() as AddressInfo;
             const responseBodyPromise = new ManualPromise<Buffer>();
             const response = new Response(request, proxyRes.statusCode!, proxyRes.statusMessage!, headersArray(proxyRes), timings, () => responseBodyPromise, false, proxyRes.httpVersion);
-            response.setRawResponseHeaders(headers);
+            response.setRawResponseHeaders(headersArray(proxyRes));
             response._securityDetailsFinished(securityDetails);
             response._serverAddrFinished({ ipAddress: address.family === 'IPv6' ? `[${address.address}]` : address.address, port: address.port });
             this.emit(MockingProxy.Events.Response, response);
@@ -163,7 +164,7 @@ export class MockingProxy extends SdkObject implements RequestContext {
               response.setTransferSize(transferSize);
               response.setEncodedBodySize(encodedBodySize);
               response.setResponseHeadersSize(transferSize - encodedBodySize);
-              this.emit(MockingProxy.Events.RequestFinished, response);
+              this.emit(MockingProxy.Events.RequestFinished, request);
               resolve();
             } catch (error) {
               request._setFailureText('' + error);

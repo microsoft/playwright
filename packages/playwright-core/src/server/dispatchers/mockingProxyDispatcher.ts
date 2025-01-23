@@ -19,8 +19,8 @@ import type { RootDispatcher } from './dispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import type * as channels from '@protocol/channels';
 import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
-import { urlMatches } from '@isomorphic/urlMatch';
 import type { Request, Response, Route } from '../network';
+import { urlMatches } from '../../utils/isomorphic/urlMatch';
 
 export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.MockingProxyChannel, RootDispatcher> implements channels.MockingProxyChannel {
   _type_MockingProxy = true;
