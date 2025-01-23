@@ -387,7 +387,7 @@ export function toHaveTitle(
   }, expected, options);
 }
 
-export async function toHaveURL(
+export function toHaveURL(
   this: ExpectMatcherState,
   page: Page,
   expected: string | RegExp | ((url: URL) => boolean),
