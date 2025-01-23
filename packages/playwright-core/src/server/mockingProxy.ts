@@ -164,7 +164,7 @@ export class MockingProxy extends SdkObject implements RequestContext {
               response.setTransferSize(transferSize);
               response.setEncodedBodySize(encodedBodySize);
               response.setResponseHeadersSize(transferSize - encodedBodySize);
-              this.emit(MockingProxy.Events.RequestFinished, request);
+              this.emit(MockingProxy.Events.RequestFinished, { request, response });
               resolve();
             } catch (error) {
               request._setFailureText('' + error);

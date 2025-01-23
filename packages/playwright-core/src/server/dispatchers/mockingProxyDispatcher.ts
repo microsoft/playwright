@@ -56,9 +56,10 @@ export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.Mo
         response: ResponseDispatcher.from(this as any, response),
       });
     });
-    this.addObjectListener(MockingProxy.Events.RequestFinished, (request: Request) => {
+    this.addObjectListener(MockingProxy.Events.RequestFinished, ({ request, response }: { request: Request, response: Response | null }) => {
       this._dispatchEvent('requestFinished', {
         request: RequestDispatcher.from(this as any, request),
+        response: ResponseDispatcher.fromNullable(this as any, response),
         responseEndTiming: request._responseEndTiming,
       });
     });
