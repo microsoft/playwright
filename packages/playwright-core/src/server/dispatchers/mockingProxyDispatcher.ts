@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 import type { CallMetadata } from '@protocol/callMetadata';
-import type { MockingProxy } from '../mockingProxy';
+import { MockingProxy } from '../mockingProxy';
 import type { RootDispatcher } from './dispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import type * as channels from '@protocol/channels';
-import { APIRequestContextDispatcher } from './networkDispatchers';
+import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
 import { urlMatches } from '@isomorphic/urlMatch';
+import type { Request, Response, Route } from '../network';
 
 export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.MockingProxyChannel, RootDispatcher> implements channels.MockingProxyChannel {
   _type_MockingProxy = true;
@@ -33,6 +34,33 @@ export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.Mo
     super(scope, mockingProxy, 'MockingProxy', {
       port: mockingProxy.port,
       requestContext: APIRequestContextDispatcher.from(scope, mockingProxy.fetchRequest),
+    });
+
+    this.addObjectListener(MockingProxy.Events.Route, (route: Route) => {
+      const requestDispatcher = RequestDispatcher.from(this as any, route.request());
+      this._dispatchEvent('route', { route: RouteDispatcher.from(requestDispatcher, route) });
+    });
+    this.addObjectListener(MockingProxy.Events.Request, (request: Request) => {
+      this._dispatchEvent('request', { request: RequestDispatcher.from(this as any, request) });
+    });
+    this.addObjectListener(MockingProxy.Events.RequestFailed, (request: Request) => {
+      this._dispatchEvent('requestFailed', {
+        request: RequestDispatcher.from(this as any, request),
+        responseEndTiming: request._responseEndTiming,
+        failureText: request._failureText ?? undefined
+      });
+    });
+    this.addObjectListener(MockingProxy.Events.Response, (response: Response) => {
+      this._dispatchEvent('response', {
+        request: RequestDispatcher.from(this as any, response.request()),
+        response: ResponseDispatcher.from(this as any, response),
+      });
+    });
+    this.addObjectListener(MockingProxy.Events.RequestFinished, (request: Request) => {
+      this._dispatchEvent('requestFinished', {
+        request: RequestDispatcher.from(this as any, request),
+        responseEndTiming: request._responseEndTiming,
+      });
     });
   }
 

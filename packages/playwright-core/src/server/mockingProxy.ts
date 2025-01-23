@@ -29,6 +29,14 @@ import { pipeline } from 'stream/promises';
 import { Transform } from 'stream';
 
 export class MockingProxy extends SdkObject implements RequestContext {
+  static Events = {
+    Request: 'request',
+    Response: 'response',
+    Route: 'route',
+    RequestFailed: 'requestfailed',
+    RequestFinished: 'requestfinished',
+  };
+
   fetchRequest: APIRequestContext;
   private _matches?: (url: string) => boolean;
   private _httpServer = new WorkerHttpServer();
@@ -130,7 +138,7 @@ export class MockingProxy extends SdkObject implements RequestContext {
             response.setRawResponseHeaders(headers);
             response._securityDetailsFinished(securityDetails);
             response._serverAddrFinished({ ipAddress: address.family === 'IPv6' ? `[${address.address}]` : address.address, port: address.port });
-            this.emit('response', response);
+            this.emit(MockingProxy.Events.Response, response);
 
             try {
               res.writeHead(proxyRes.statusCode!, proxyRes.headers);
@@ -155,18 +163,18 @@ export class MockingProxy extends SdkObject implements RequestContext {
               response.setTransferSize(transferSize);
               response.setEncodedBodySize(encodedBodySize);
               response.setResponseHeadersSize(transferSize - encodedBodySize);
-              this.emit('requestFinished', response);
+              this.emit(MockingProxy.Events.RequestFinished, response);
               resolve();
             } catch (error) {
               request._setFailureText('' + error);
-              this.emit('failed', request);
+              this.emit(MockingProxy.Events.RequestFailed, request);
               resolve();
             }
           });
 
           proxyReq.on('error', error => {
             request._setFailureText('' + error);
-            this.emit('failed', request);
+            this.emit(MockingProxy.Events.RequestFailed, request);
             res.statusCode = 502;
             res.end(resolve);
           });
@@ -194,7 +202,7 @@ export class MockingProxy extends SdkObject implements RequestContext {
     });
 
     if (this._matches?.(req.url!))
-      this.emit('route', { route, request });
+      this.emit(MockingProxy.Events.Route, route);
     else
       await route.continue({ isFallback: false });
   }
