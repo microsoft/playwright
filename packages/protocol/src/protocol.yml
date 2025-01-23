@@ -583,7 +583,6 @@ LocalUtils:
                 - chromium
                 - firefox
                 - webkit
-    requestContext: APIRequestContext
 
   commands:
 
@@ -671,10 +670,25 @@ LocalUtils:
     traceDiscarded:
       parameters:
         stacksId: string
-        
-    setServerNetworkInterceptionPatterns:
+
+    newMockingProxy:
       parameters:
-        port: number
+        port: number?
+      returns:
+        mockingProxy: MockingProxy
+
+MockingProxy:
+  type: interface
+
+  extends: EventTarget
+
+  initializer:
+    port: number
+    requestContext: APIRequestContext
+
+  commands:
+    setInterceptionPatterns:
+      parameters:
         patterns:
           type: array
           items:
@@ -683,7 +697,7 @@ LocalUtils:
               glob: string?
               regexSource: string?
               regexFlags: string?
-  
+
   events:
     route:
       parameters:

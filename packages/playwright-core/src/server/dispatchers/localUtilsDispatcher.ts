@@ -44,7 +44,7 @@ import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
 import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
 import type { APIRequestContext } from '../fetch';
 import { GlobalAPIRequestContext } from '../fetch';
-import { MockingProxy, ServerInterceptionRegistry } from './mockingProxy';
+import { MockingProxy, ServerInterceptionRegistry } from '../mockingProxy';
 
 export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;

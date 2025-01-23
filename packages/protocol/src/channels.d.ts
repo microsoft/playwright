@@ -56,6 +56,7 @@ export type InitializerTraits<T> =
     T extends DebugControllerChannel ? DebugControllerInitializer :
     T extends PlaywrightChannel ? PlaywrightInitializer :
     T extends RootChannel ? RootInitializer :
+    T extends MockingProxyChannel ? MockingProxyInitializer :
     T extends LocalUtilsChannel ? LocalUtilsInitializer :
     T extends EventTargetChannel ? EventTargetInitializer :
     T extends APIRequestContextChannel ? APIRequestContextInitializer :
@@ -94,6 +95,7 @@ export type EventsTraits<T> =
     T extends DebugControllerChannel ? DebugControllerEvents :
     T extends PlaywrightChannel ? PlaywrightEvents :
     T extends RootChannel ? RootEvents :
+    T extends MockingProxyChannel ? MockingProxyEvents :
     T extends LocalUtilsChannel ? LocalUtilsEvents :
     T extends EventTargetChannel ? EventTargetEvents :
     T extends APIRequestContextChannel ? APIRequestContextEvents :
@@ -132,6 +134,7 @@ export type EventTargetTraits<T> =
     T extends DebugControllerChannel ? DebugControllerEventTarget :
     T extends PlaywrightChannel ? PlaywrightEventTarget :
     T extends RootChannel ? RootEventTarget :
+    T extends MockingProxyChannel ? MockingProxyEventTarget :
     T extends LocalUtilsChannel ? LocalUtilsEventTarget :
     T extends EventTargetChannel ? EventTargetEventTarget :
     T extends APIRequestContextChannel ? APIRequestContextEventTarget :
@@ -449,14 +452,8 @@ export type LocalUtilsInitializer = {
       defaultBrowserType: 'chromium' | 'firefox' | 'webkit',
     },
   }[],
-  requestContext: APIRequestContextChannel,
 };
 export interface LocalUtilsEventTarget {
-  on(event: 'route', callback: (params: LocalUtilsRouteEvent) => void): this;
-  on(event: 'request', callback: (params: LocalUtilsRequestEvent) => void): this;
-  on(event: 'response', callback: (params: LocalUtilsResponseEvent) => void): this;
-  on(event: 'requestFailed', callback: (params: LocalUtilsRequestFailedEvent) => void): this;
-  on(event: 'requestFinished', callback: (params: LocalUtilsRequestFinishedEvent) => void): this;
 }
 export interface LocalUtilsChannel extends LocalUtilsEventTarget, EventTargetChannel {
   _type_LocalUtils: boolean;
@@ -469,28 +466,8 @@ export interface LocalUtilsChannel extends LocalUtilsEventTarget, EventTargetCha
   tracingStarted(params: LocalUtilsTracingStartedParams, metadata?: CallMetadata): Promise<LocalUtilsTracingStartedResult>;
   addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams, metadata?: CallMetadata): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
   traceDiscarded(params: LocalUtilsTraceDiscardedParams, metadata?: CallMetadata): Promise<LocalUtilsTraceDiscardedResult>;
-  setServerNetworkInterceptionPatterns(params: LocalUtilsSetServerNetworkInterceptionPatternsParams, metadata?: CallMetadata): Promise<LocalUtilsSetServerNetworkInterceptionPatternsResult>;
+  newMockingProxy(params: LocalUtilsNewMockingProxyParams, metadata?: CallMetadata): Promise<LocalUtilsNewMockingProxyResult>;
 }
-export type LocalUtilsRouteEvent = {
-  route: RouteChannel,
-};
-export type LocalUtilsRequestEvent = {
-  request: RequestChannel,
-};
-export type LocalUtilsResponseEvent = {
-  request: RequestChannel,
-  response: ResponseChannel,
-};
-export type LocalUtilsRequestFailedEvent = {
-  request: RequestChannel,
-  failureText?: string,
-  responseEndTiming: number,
-};
-export type LocalUtilsRequestFinishedEvent = {
-  request: RequestChannel,
-  response?: ResponseChannel,
-  responseEndTiming: number,
-};
 export type LocalUtilsZipParams = {
   zipFile: string,
   entries: NameValue[],
@@ -589,25 +566,73 @@ export type LocalUtilsTraceDiscardedOptions = {
 
 };
 export type LocalUtilsTraceDiscardedResult = void;
-export type LocalUtilsSetServerNetworkInterceptionPatternsParams = {
+export type LocalUtilsNewMockingProxyParams = {
+  port?: number,
+};
+export type LocalUtilsNewMockingProxyOptions = {
+  port?: number,
+};
+export type LocalUtilsNewMockingProxyResult = {
+  mockingProxy: MockingProxyChannel,
+};
+
+export interface LocalUtilsEvents {
+}
+
+// ----------- MockingProxy -----------
+export type MockingProxyInitializer = {
   port: number,
+  requestContext: APIRequestContextChannel,
+};
+export interface MockingProxyEventTarget {
+  on(event: 'route', callback: (params: MockingProxyRouteEvent) => void): this;
+  on(event: 'request', callback: (params: MockingProxyRequestEvent) => void): this;
+  on(event: 'response', callback: (params: MockingProxyResponseEvent) => void): this;
+  on(event: 'requestFailed', callback: (params: MockingProxyRequestFailedEvent) => void): this;
+  on(event: 'requestFinished', callback: (params: MockingProxyRequestFinishedEvent) => void): this;
+}
+export interface MockingProxyChannel extends MockingProxyEventTarget, EventTargetChannel {
+  _type_MockingProxy: boolean;
+  setInterceptionPatterns(params: MockingProxySetInterceptionPatternsParams, metadata?: CallMetadata): Promise<MockingProxySetInterceptionPatternsResult>;
+}
+export type MockingProxyRouteEvent = {
+  route: RouteChannel,
+};
+export type MockingProxyRequestEvent = {
+  request: RequestChannel,
+};
+export type MockingProxyResponseEvent = {
+  request: RequestChannel,
+  response: ResponseChannel,
+};
+export type MockingProxyRequestFailedEvent = {
+  request: RequestChannel,
+  failureText?: string,
+  responseEndTiming: number,
+};
+export type MockingProxyRequestFinishedEvent = {
+  request: RequestChannel,
+  response?: ResponseChannel,
+  responseEndTiming: number,
+};
+export type MockingProxySetInterceptionPatternsParams = {
   patterns: {
     glob?: string,
     regexSource?: string,
     regexFlags?: string,
   }[],
 };
-export type LocalUtilsSetServerNetworkInterceptionPatternsOptions = {
+export type MockingProxySetInterceptionPatternsOptions = {
 
 };
-export type LocalUtilsSetServerNetworkInterceptionPatternsResult = void;
+export type MockingProxySetInterceptionPatternsResult = void;
 
-export interface LocalUtilsEvents {
-  'route': LocalUtilsRouteEvent;
-  'request': LocalUtilsRequestEvent;
-  'response': LocalUtilsResponseEvent;
-  'requestFailed': LocalUtilsRequestFailedEvent;
-  'requestFinished': LocalUtilsRequestFinishedEvent;
+export interface MockingProxyEvents {
+  'route': MockingProxyRouteEvent;
+  'request': MockingProxyRequestEvent;
+  'response': MockingProxyResponseEvent;
+  'requestFailed': MockingProxyRequestFailedEvent;
+  'requestFinished': MockingProxyRequestFinishedEvent;
 }
 
 // ----------- Root -----------

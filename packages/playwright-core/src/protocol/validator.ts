@@ -237,6 +237,7 @@ scheme.EventTargetWaitForEventInfoParams = tObject({
   }),
 });
 scheme.LocalUtilsWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+scheme.MockingProxyWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.BrowserContextWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.PageWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.WebSocketWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
@@ -244,6 +245,7 @@ scheme.ElectronApplicationWaitForEventInfoParams = tType('EventTargetWaitForEven
 scheme.AndroidDeviceWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.EventTargetWaitForEventInfoResult = tOptional(tObject({}));
 scheme.LocalUtilsWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
+scheme.MockingProxyWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.BrowserContextWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.PageWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.WebSocketWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
@@ -268,27 +270,6 @@ scheme.LocalUtilsInitializer = tObject({
       defaultBrowserType: tEnum(['chromium', 'firefox', 'webkit']),
     }),
   })),
-  requestContext: tChannel(['APIRequestContext']),
-});
-scheme.LocalUtilsRouteEvent = tObject({
-  route: tChannel(['Route']),
-});
-scheme.LocalUtilsRequestEvent = tObject({
-  request: tChannel(['Request']),
-});
-scheme.LocalUtilsResponseEvent = tObject({
-  request: tChannel(['Request']),
-  response: tChannel(['Response']),
-});
-scheme.LocalUtilsRequestFailedEvent = tObject({
-  request: tChannel(['Request']),
-  failureText: tOptional(tString),
-  responseEndTiming: tNumber,
-});
-scheme.LocalUtilsRequestFinishedEvent = tObject({
-  request: tChannel(['Request']),
-  response: tOptional(tChannel(['Response'])),
-  responseEndTiming: tNumber,
 });
 scheme.LocalUtilsZipParams = tObject({
   zipFile: tString,
@@ -357,15 +338,44 @@ scheme.LocalUtilsTraceDiscardedParams = tObject({
   stacksId: tString,
 });
 scheme.LocalUtilsTraceDiscardedResult = tOptional(tObject({}));
-scheme.LocalUtilsSetServerNetworkInterceptionPatternsParams = tObject({
+scheme.LocalUtilsNewMockingProxyParams = tObject({
+  port: tOptional(tNumber),
+});
+scheme.LocalUtilsNewMockingProxyResult = tObject({
+  mockingProxy: tChannel(['MockingProxy']),
+});
+scheme.MockingProxyInitializer = tObject({
   port: tNumber,
+  requestContext: tChannel(['APIRequestContext']),
+});
+scheme.MockingProxyRouteEvent = tObject({
+  route: tChannel(['Route']),
+});
+scheme.MockingProxyRequestEvent = tObject({
+  request: tChannel(['Request']),
+});
+scheme.MockingProxyResponseEvent = tObject({
+  request: tChannel(['Request']),
+  response: tChannel(['Response']),
+});
+scheme.MockingProxyRequestFailedEvent = tObject({
+  request: tChannel(['Request']),
+  failureText: tOptional(tString),
+  responseEndTiming: tNumber,
+});
+scheme.MockingProxyRequestFinishedEvent = tObject({
+  request: tChannel(['Request']),
+  response: tOptional(tChannel(['Response'])),
+  responseEndTiming: tNumber,
+});
+scheme.MockingProxySetInterceptionPatternsParams = tObject({
   patterns: tArray(tObject({
     glob: tOptional(tString),
     regexSource: tOptional(tString),
     regexFlags: tOptional(tString),
   })),
 });
-scheme.LocalUtilsSetServerNetworkInterceptionPatternsResult = tOptional(tObject({}));
+scheme.MockingProxySetInterceptionPatternsResult = tOptional(tObject({}));
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tEnum(['javascript', 'python', 'java', 'csharp']),

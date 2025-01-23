@@ -67,6 +67,7 @@ export const slowMoActions = new Set([
 export const commandsWithTracingSnapshots = new Set([
   'EventTarget.waitForEventInfo',
   'LocalUtils.waitForEventInfo',
+  'MockingProxy.waitForEventInfo',
   'BrowserContext.waitForEventInfo',
   'Page.waitForEventInfo',
   'WebSocket.waitForEventInfo',
