@@ -661,4 +661,45 @@ test.describe('update-source-method', () => {
   a.spec.ts
 `);
   });
+
+  test('should overwrite source when specified in the config', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      '.git/marker': '',
+      'playwright.config.ts': `
+        export default { updateSourceMethod: 'overwrite' };
+      `,
+      'a.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('test', async ({ page }) => {
+          await page.setContent(\`<h1>hello</h1>\`);
+          await expect(page.locator('body')).toMatchAriaSnapshot(\`
+            - heading "world"
+          \`);
+        });
+      `
+    }, { 'update-snapshots': 'all' });
+
+    expect(result.exitCode).toBe(0);
+    const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
+    expect(fs.existsSync(patchPath)).toBeFalsy();
+
+    const data = fs.readFileSync(testInfo.outputPath('a.spec.ts'), 'utf-8');
+    expect(data).toBe(`
+        import { test, expect } from '@playwright/test';
+        test('test', async ({ page }) => {
+          await page.setContent(\`<h1>hello</h1>\`);
+          await expect(page.locator('body')).toMatchAriaSnapshot(\`
+            - heading "hello" [level=1]
+          \`);
+        });
+      `);
+
+    expect(stripAnsi(result.output).replace(/\\/g, '/')).toContain(`New baselines created for:
+
+  a.spec.ts
+`);
+
+    const result2 = await runInlineTest({});
+    expect(result2.exitCode).toBe(0);
+  });
 });
