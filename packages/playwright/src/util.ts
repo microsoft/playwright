@@ -398,15 +398,3 @@ export async function removeDirAndLogToConsole(dir: string) {
   } catch {
   }
 }
-
-export async function getFreePort() {
-  const promise = new ManualPromise<number>();
-  const server = net.createServer();
-  server.unref();
-  server.on('error', promise.reject);
-  server.listen(0, () => {
-    const { port } = server.address() as AddressInfo;
-    server.close(() => promise.resolve(port));
-  });
-  return promise;
-}

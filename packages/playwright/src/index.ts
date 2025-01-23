@@ -130,8 +130,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (typeof mockingProxyOption.port === 'number' && testInfoImpl.config.workers > 1)
       throw new Error(`Cannot share mocking proxy between multiple workers. Either disable parallel mode or set mockingProxy.port to 'inject'`);
 
-    const port = typeof mockingProxyOption.port === 'number' ? mockingProxyOption.port : await getFreePort();
-    const mockingProxy = await playwright.mockingProxy.newProxy(port);
+    const mockingProxy = await playwright.mockingProxy.newProxy(
+        mockingProxyOption.port === 'inject' ? undefined : mockingProxyOption.port
+    );
     await use(mockingProxy);
   }, { scope: 'worker' }],
 
