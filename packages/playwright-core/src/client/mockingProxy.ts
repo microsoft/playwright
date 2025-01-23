@@ -107,7 +107,7 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> imp
   }
 
   async _onRoute(route: network.Route) {
-    route._request = this._requestContext;
+    route._context = this._requestContext;
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
       if (!routeHandler.matches(route.request().url()))

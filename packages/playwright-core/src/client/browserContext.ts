@@ -198,7 +198,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async _onRoute(route: network.Route) {
-    route._request = this.request;
+    route._context = this.request;
     const page = route.request()._safePage();
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {

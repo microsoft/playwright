@@ -291,7 +291,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
 export class Route extends ChannelOwner<channels.RouteChannel> implements api.Route {
   private _handlingPromise: ManualPromise<boolean> | null = null;
-  _request!: APIRequestContext;
+  _context!: APIRequestContext;
   _didThrow: boolean = false;
 
   static from(route: channels.RouteChannel): Route {
@@ -339,7 +339,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async fetch(options: FallbackOverrides & { maxRedirects?: number, maxRetries?: number, timeout?: number } = {}): Promise<APIResponse> {
     return await this._wrapApiCall(async () => {
-      return await this._request._innerFetch({ request: this.request(), data: options.postData, ...options });
+      return await this._context._innerFetch({ request: this.request(), data: options.postData, ...options });
     });
   }
 
