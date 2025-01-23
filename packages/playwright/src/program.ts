@@ -282,7 +282,7 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
   const shardPair = options.shard ? options.shard.split('/').map((t: string) => parseInt(t, 10)) : undefined;
 
-  let updateSnapshots: 'all' | 'changed' | 'missing' | 'none';
+  let updateSnapshots: 'all' | 'changed' | 'missing' | 'none' | undefined;
   if (['all', 'changed', 'missing', 'none'].includes(options.updateSnapshots))
     updateSnapshots = options.updateSnapshots;
   else
@@ -303,7 +303,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     tsconfig: options.tsconfig ? path.resolve(process.cwd(), options.tsconfig) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
     updateSnapshots,
-    updateSourceMethod: options.updateSourceMethod || 'patch',
+    updateSourceMethod: options.updateSourceMethod,
     workers: options.workers,
   };
 
