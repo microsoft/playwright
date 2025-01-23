@@ -21,12 +21,12 @@ import { expectTypes, callLogText } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toMatchText } from './toMatchText';
-import { isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues, urlMatches } from 'playwright-core/lib/utils';
+import { isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues } from 'playwright-core/lib/utils';
 import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl } from '../worker/testInfo';
 import type { ExpectMatcherState } from '../../types/test';
 import { takeFirst } from '../common/config';
-import { textMatcherMessage, toMatchExpectedStringOrPredicateVerification } from './error';
+import { toHaveURL as toHaveURLExternal } from './toHaveURL';
 
 export interface LocatorEx extends Locator {
   _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
@@ -393,79 +393,7 @@ export async function toHaveURL(
   expected: string | RegExp | ((url: URL) => boolean),
   options?: { ignoreCase?: boolean; timeout?: number },
 ) {
-  const matcherName = 'toHaveURL';
-  const expression = 'page';
-  toMatchExpectedStringOrPredicateVerification(
-      this,
-      matcherName,
-      undefined,
-      expression,
-      expected,
-      true,
-  );
-
-  const timeout = options?.timeout ?? this.timeout;
-  let conditionSucceeded = false;
-  let lastCheckedURLString: string | undefined = undefined;
-  try {
-    await page.mainFrame().waitForURL(
-        url => {
-          const baseURL: string | undefined = (page.context() as any)._options
-              .baseURL;
-          lastCheckedURLString = url.toString();
-
-          if (options?.ignoreCase) {
-            return (
-              !this.isNot ===
-              urlMatches(
-                  baseURL?.toLocaleLowerCase(),
-                  lastCheckedURLString.toLocaleLowerCase(),
-                  typeof expected === 'string'
-                    ? expected.toLocaleLowerCase()
-                    : expected,
-              )
-            );
-          }
-
-          return (
-            !this.isNot ===
-            urlMatches(
-                baseURL,
-                lastCheckedURLString,
-                expected,
-            )
-          );
-        },
-        { timeout },
-    );
-
-    conditionSucceeded = true;
-  } catch (e) {
-    conditionSucceeded = false;
-  }
-
-  if (conditionSucceeded)
-    return { pass: !this.isNot, message: () => '' };
-
-  return {
-    pass: this.isNot,
-    message: () =>
-      textMatcherMessage(
-          this,
-          matcherName,
-          undefined,
-          expression,
-          expected,
-          lastCheckedURLString,
-          undefined,
-          'string',
-          this.isNot,
-          true,
-          timeout,
-      ),
-    actual: lastCheckedURLString,
-    timeout,
-  };
+  return toHaveURLExternal.call(this, page, expected, options);
 }
 
 export async function toBeOK(
