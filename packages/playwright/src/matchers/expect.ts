@@ -47,7 +47,7 @@ import {
   toHaveURL,
   toHaveValue,
   toHaveValues,
-  toPass,
+  toPass
 } from './matchers';
 import { toMatchSnapshot, toHaveScreenshot, toHaveScreenshotStepTitle } from './toMatchSnapshot';
 import type { Expect, ExpectMatcherState } from '../../types/test';
