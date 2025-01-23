@@ -12176,12 +12176,6 @@ export interface Locator {
    * rejects, this method throws.
    *
    * **Usage**
-   *
-   * ```js
-   * const tweets = page.locator('.tweet .retweets');
-   * expect(await tweets.evaluate(node => node.innerText)).toBe('10 retweets');
-   * ```
-   *
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression).
@@ -12207,12 +12201,6 @@ export interface Locator {
    * rejects, this method throws.
    *
    * **Usage**
-   *
-   * ```js
-   * const tweets = page.locator('.tweet .retweets');
-   * expect(await tweets.evaluate(node => node.innerText)).toBe('10 retweets');
-   * ```
-   *
    * @param pageFunction Function to be evaluated in the page context.
    * @param arg Optional argument to pass to
    * [`pageFunction`](https://playwright.dev/docs/api/class-locator#locator-evaluate-option-expression).
