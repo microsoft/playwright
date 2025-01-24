@@ -12,6 +12,7 @@ on:
     branches:
       - main
       - release-*
+  workflow_dispatch:
 
 env:
   FORCE_COLOR: 1
@@ -20,7 +21,7 @@ env:
 jobs:
   test_components:
     name: ${{ matrix.os }} - Node.js ${{ matrix.node-version }}
-    if: github.repository == 'microsoft/playwright'
+    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:

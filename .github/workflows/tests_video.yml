@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - release-*
+  workflow_dispatch:
 
 env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
@@ -14,7 +15,7 @@ env:
 jobs:
   video_linux:
     name: "Video Linux"
-    if: github.repository == 'microsoft/playwright'
+    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
     environment: allow-uploading-flakiness-results
     strategy:
       fail-fast: false

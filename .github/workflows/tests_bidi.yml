@@ -18,7 +18,7 @@ env:
 jobs:
   test_bidi:
     name: BiDi
-    if: github.repository == 'microsoft/playwright'
+    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-24.04
     permissions:
