@@ -139,6 +139,9 @@ function defaultProfilePreferences(
     'dom.min_background_timeout_value_without_budget_throttling': 0,
     'dom.timeout.enable_budget_timer_throttling': false,
 
+    // Disable HTTPS-First upgrades
+    'dom.security.https_first': false,
+
     // Only load extensions from the application and user profile
     // AddonManager.SCOPE_PROFILE + AddonManager.SCOPE_APPLICATION
     'extensions.autoDisableScopes': 0,
