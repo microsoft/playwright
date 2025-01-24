@@ -59,9 +59,7 @@ export async function toMatchAriaSnapshot(
   if (isString(expectedParam)) {
     expected = expectedParam;
   } else {
-    if (expectedParam?.path) {
-      expectedPath = expectedParam.path;
-    } else if (expectedParam?.name) {
+    if (expectedParam?.name) {
       expectedPath = testInfo.snapshotPath(sanitizeFilePathBeforeExtension(expectedParam.name));
     } else {
       let snapshotNames = (testInfo as any)[snapshotNamesSymbol] as SnapshotNames;
@@ -136,7 +134,7 @@ export async function toMatchAriaSnapshot(
         }
         return { pass: true, message: () => '', name: 'toMatchAriaSnapshot' };
       } else {
-        const suggestedRebaseline = `toMatchAriaSnapshot(\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\`)`;
+        const suggestedRebaseline = `\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\``;
         return { pass: false, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline };
       }
     }

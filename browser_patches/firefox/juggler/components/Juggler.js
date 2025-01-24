@@ -105,7 +105,10 @@ class Juggler {
         };
 
         // Force create hidden window here, otherwise its creation later closes the web socket!
-        Services.appShell.hiddenDOMWindow;
+        // Since https://phabricator.services.mozilla.com/D219834, hiddenDOMWindow is only available on MacOS.
+        if (Services.appShell.hasHiddenWindow) {
+          Services.appShell.hiddenDOMWindow;
+        }
 
         let pipeStopped = false;
         let browserHandler;

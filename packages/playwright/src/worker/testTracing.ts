@@ -245,14 +245,14 @@ export class TestTracing {
     });
   }
 
-  appendBeforeActionForStep(callId: string, parentId: string | undefined, apiName: string, params: Record<string, any> | undefined, stack: StackFrame[]) {
+  appendBeforeActionForStep(callId: string, parentId: string | undefined, category: string, apiName: string, params: Record<string, any> | undefined, stack: StackFrame[]) {
     this._appendTraceEvent({
       type: 'before',
       callId,
       parentId,
       startTime: monotonicTime(),
       class: 'Test',
-      method: 'step',
+      method: category,
       apiName,
       params: Object.fromEntries(Object.entries(params || {}).map(([name, value]) => [name, generatePreview(value)])),
       stack,

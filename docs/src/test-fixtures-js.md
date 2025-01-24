@@ -407,7 +407,7 @@ Automatic fixtures are set up for each test/worker, even when the test does not 
 Here is an example fixture that automatically attaches debug logs when the test fails, so we can later review the logs in the reporter. Note how it uses [TestInfo] object that is available in each test/fixture to retrieve metadata about the test being run.
 
 ```js title="my-test.ts"
-import * as debug from 'debug';
+import debug from 'debug';
 import * as fs from 'fs';
 import { test as base } from '@playwright/test';
 

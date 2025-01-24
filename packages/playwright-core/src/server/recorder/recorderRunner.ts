@@ -16,14 +16,14 @@
 
 import { serializeExpectedTextValues } from '../../utils';
 import { toKeyboardModifiers } from '../codegen/language';
-import type { CallMetadata } from '../instrumentation';
+import { serverSideCallMetadata } from '../instrumentation';
 import type { Page } from '../page';
 import type * as actions from '@recorder/actions';
 import type * as types from '../types';
-import { mainFrameForAction } from './recorderUtils';
-import { buildFullSelector } from '../../utils/isomorphic/recorderUtils';
+import { buildFullSelector, mainFrameForAction } from './recorderUtils';
 
-export async function performAction(callMetadata: CallMetadata, pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext) {
+export async function performAction(pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext) {
+  const callMetadata = serverSideCallMetadata();
   const mainFrame = mainFrameForAction(pageAliases, actionInContext);
   const { action } = actionInContext;
 

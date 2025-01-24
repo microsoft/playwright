@@ -9,9 +9,9 @@
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1293",
+      "revision": "1297",
       "installByDefault": false,
-      "browserVersion": "133.0.6943.0"
+      "browserVersion": "134.0.6974.0"
     },
     {
       "name": "firefox",
@@ -27,7 +27,7 @@
     },
     {
       "name": "webkit",
-      "revision": "2123",
+      "revision": "2125",
       "installByDefault": true,
       "revisionOverrides": {
         "debian11-x64": "2105",
