@@ -94,11 +94,4 @@ export const Events = {
     Console: 'console',
     Window: 'window',
   },
-
-  MockingProxy: {
-    Request: 'request',
-    RequestFailed: 'requestfailed',
-    Response: 'response',
-    RequestFinished: 'requestfinished',
-  }
 };

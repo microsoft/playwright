@@ -855,7 +855,7 @@ export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {
   }
 }
 
-export function trimUrl(param: any): string | undefined {
+function trimUrl(param: any): string | undefined {
   if (isRegExp(param))
     return `/${trimStringWithEllipsis(param.source, 50)}/${param.flags}`;
   if (isString(param))

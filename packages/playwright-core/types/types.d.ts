@@ -20172,8 +20172,6 @@ export const chromium: BrowserType;
  */
 export const firefox: BrowserType;
 
-export const mockingProxy: MockingProxyFactory;
-
 /**
  * Exposes API that can be used for the Web API testing.
  */
