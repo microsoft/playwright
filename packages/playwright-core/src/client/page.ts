@@ -138,7 +138,11 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._channel.on('frameAttached', ({ frame }) => this._onFrameAttached(Frame.from(frame)));
     this._channel.on('frameDetached', ({ frame }) => this._onFrameDetached(Frame.from(frame)));
     this._channel.on('locatorHandlerTriggered', ({ uid }) => this._onLocatorHandlerTriggered(uid));
-    this._channel.on('route', ({ route }) => this._onRoute(Route.from(route)));
+    this._channel.on('route', params => {
+      const route = Route.from(params.route);
+      route._context = this.context().request;
+      this._onRoute(route);
+    });
     this._channel.on('webSocketRoute', ({ webSocketRoute }) => this._onWebSocketRoute(WebSocketRoute.from(webSocketRoute)));
     this._channel.on('video', ({ artifact }) => {
       const artifactObject = Artifact.from(artifact);
@@ -180,7 +184,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async _onRoute(route: Route) {
-    route._context = this.context().request;
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
       // If the page was closed we stall all requests right away.

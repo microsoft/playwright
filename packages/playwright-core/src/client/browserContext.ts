@@ -93,7 +93,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
     this._channel.on('page', ({ page }) => this._onPage(Page.from(page)));
-    this._channel.on('route', ({ route }) => this._onRoute(network.Route.from(route)));
+    this._channel.on('route', params => {
+      const route = network.Route.from(params.route);
+      route._context = this.request;
+      this._onRoute(route);
+    });
     this._channel.on('webSocketRoute', ({ webSocketRoute }) => this._onWebSocketRoute(network.WebSocketRoute.from(webSocketRoute)));
     this._channel.on('backgroundPage', ({ page }) => {
       const backgroundPage = Page.from(page);
@@ -201,7 +205,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async _onRoute(route: network.Route) {
-    route._context = this.request;
     const page = route.request()._safePage();
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
