@@ -555,168 +555,225 @@ await page.RouteWebSocketAsync("wss://example.com/ws", ws => {
 
 For more details, see [WebSocketRoute].
 
-## Mock Application Server
+## Mock Server
+* langs: js
 
-If you want to intercept network traffic originating from the server, you can use [MockingProxy] to intercept and mock network traffic going through a proxy server.
+By default, Playwright only has access to the network traffic made by the browser.
+To mock and intercept traffic made by the application server, use Playwright's mocking proxy.
+How to do this differs for each application. This section explains the moving parts that you can use to embed it in any application. Skip forward to find recipes for Next.js, Remix and Angular.
+
+Playwright's mocking proxy is an HTTP proxy server that's connected to the currently running test. If you send it a request, it will apply the network routes configured via `page.route` and `context.route`, allowing you to reuse your existing browser routes.
+
+For browser network mocking, Playwright always knows what browser context and page a request is coming from. But because there's only a single application server shared by multiple concurrent test runs, it cannot know this for server requests! To resolve this, pick one of these two strategies:
+
+1. [Disable parallelism](./test-parallel-js.md#disable-parallelism), so that there's only a single test at a time.
+2. On the server, read the `x-playwright-proxy-port` header of incoming requests. When the mocking proxy is configured, Playwright adds this header to all browser requests.
+
+The second strategy can be hard to integrate for some applications, because it requires access to the current request from where you're making your API requests.
+If this is possible in your application, this is the recommended approach.
+If it isn't, then go with disabling parallelism. It will slow down your test execution, but will make the proxy configuration easier because there will be only a single proxy running, on a port that is hardcoded.
+
+Putting this together, figuring out what proxy to funnel a request should look something like this in your application:
 
 ```js
-test('calls the cms to fetch frontpage posts', async ({ page, server }) => {
-  await server.route("https://headless-cms.example.com/frontpage", (route, request) => {
-    await route.fulfill({
-      json: [
-        { id: 1, title: 'Hello, World!' },
-        { id: 2, title: 'Second post' },
-        { id: 2, title: 'Third post' }
-      ]
-    });
+const proxyUrl = `http://localhost:8123/`; // 1: Disable Parallelism + hardcode port OR
+const proxyUrl = `http://localhost:${$currentHeaders.get('x-playwright-proxy-port')}/`; // 2: Inject proxy port
+```
+
+And this is the Playwright config to go with it:
+
+```ts
+// playwright.config.ts
+// 1: Disable Parallelism + hardcode port
+export default defineConfig({
+  workers: 1,
+  use: { mockingProxy: { port: 8123 } }
+});
+
+// 2: Inject proxy port
+export default defineConfig({
+  use: { mockingProxy: { port: 'inject' } }
+});
+```
+
+After figuring out what proxy to send traffic to, you need to direct traffic through it. To do so, prepend the proxy URL to all outgoing HTTP requests:
+
+```js
+await fetch(proxyUrl + 'https://api.example.com/users');
+```
+
+That's it! Your `context.route` and `page.route` methods can now intercept network traffic from your server:
+
+```ts
+// shopping-cart.spec.ts
+import { test, expect } from "@playwright/test"
+
+test('checkout applies customer loyalty bonus points', async ({ page }) => {
+  await page.route("https://users.internal.example.com/loyalty/balance*", (route, request) => {
+    await route.fulfill({ json: { userId: 'jane@doe.com', balance: 100 } });
   })
 
-  await page.goto('http://localhost:3000/');
+  await page.goto('http://localhost:3000/checkout');
 
   await expect(page.getByRole('list')).toMatchAriaSnapshot(`
-    - list:
-      - listitem: Hello, World!
-      - listitem: Second post
-      - listitem: Third post
+    - list "Cart":
+      - listitem: Super Duper Hammer
+      - listitem: Nails
+      - listitem: 16mm Birch Plywood
+    - text: "Price after applying 10$ loyalty discount: 79.99$"
+    - button "Buy now"
   `);
 });
 ```
 
-You can configure the port of the proxy server in the `playwright.config.ts` file.
+Prepending the proxy URL manually to all outgoing requests can be cumbersome. If your HTTP client supports it, consider updating your client baseURL ...
 
-```ts
-# playwright.config.ts
-export default defineConfig({
-  workers: 1, // disable parallelism because we can't share the proxy server across multiple workers
-  ...
-  use: {
-    ...
-    mockingProxy: {
-      port: 8123 // example port
-    }
-  },
+```js
+import { axios } from "axios"; 
+
+const api = axios.create({
+  baseURL: proxyUrl + "https://jsonplaceholder.typicode.com",
 });
 ```
 
-We need to disable parallelism because we can't share the proxy server across multiple workers.
+... or setting up a global interceptor:
 
-Now, configure your application server to route HTTP traffic through `http://localhost:8123/`.
+```js
+import { axios } from "axios";
+
+axios.interceptors.request.use(async config => {
+  config.proxy = { protocol: "http", host: "localhost", port: 8123 };
+  return config;
+});
+```
+
+```js
+import { setGlobalDispatcher, getGlobalDispatcher } from "undici"; 
+
+const proxyingDispatcher = getGlobalDispatcher().compose(dispatch => (opts, handler) => {
+  opts.path = opts.origin + opts.path;
+  opts.origin = `http://localhost:8123`;
+  return dispatch(opts, handler);
+})
+setGlobalDispatcher(proxyingDispatcher); // this will also apply to global fetch
+```
+
+:::note
+Note that this style of proxying, where the proxy URL is prended to the request URL, does *not* use [`CONNECT`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT), which is the common way of establishing a proxy connection.
+This is because for HTTPS requests, a `CONNECT` proxy does not have access to the proxied traffic. That's great behaviour for a production proxy, but counteracts network interception!
+:::
+
+
+### Recipes
+* langs: js
+
+#### Next.js
+* langs: js
+
+Monkey-patch `globalThis.fetch` in your `instrumentation.ts` file:
+
+```ts
+// instrumentation.ts
+
+import { headers } from "next/headers"
+ 
+export function register() {
+  if (process.env.NODE_ENV === 'test') {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (input, init) => {
+      const proxyPort = (await headers()).get('x-playwright-proxy-port');
+      if (!proxyPort)
+        return originalFetch(input, init);
+      const request = new Request(input, init);
+      return originalFetch(`http://localhost:${proxyPort}/${request.url}`, request);
+    };
+  }
+}
+```
+
+#### Remix
+* langs: js
+
+
+Monkey-patch `globalThis.fetch` in your `entry.server.ts` file, and use `AsyncLocalStorage` to make current request headers available:
+
+```ts
+import { setGlobalDispatcher, getGlobalDispatcher } from "undici";
+import { AsyncLocalStorage } from "node:async_hooks";
+
+const headersStore = new AsyncLocalStorage<Headers>();
+if (process.env.NODE_ENV === "test") {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    const proxyPort = headersStore.getStore()?.get('x-playwright-proxy-port');
+    if (!proxyPort)
+      return originalFetch(input, init);
+    const request = new Request(input, init);
+    return originalFetch(`http://localhost:${proxyPort}/${request.url}`, request);
+  };
+}
+
+export default function handleRequest(request: Request, ...) {
+  return headersStore.run(request.headers, () => {
+    // ...
+    return handleBrowserRequest(request, ...);
+  })
+}
+```
+
+#### Angular
+* langs: js
+
+Configure your `HttpClient` with an [interceptor](https://angular.dev/guide/http/setup#withinterceptors):
+
+```ts
+// app.config.server.ts
+
+import { inject, REQUEST } from '@angular/core';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+
+const serverConfig = {
+  providers: [
+    ...
+    provideHttpClient(
+      ...,
+      withInterceptors([
+        (req, next) => {
+          const proxyPort = inject(REQUEST)?.headers.get('x-playwright-proxy-port');
+          if (proxyPort)
+            req = req.clone({ url: `http://localhost:${proxyPort}/${req.url}` })
+          return next(req);
+        },
+      ])
+    )
+  ]
+};
+
+...
+```
+
+```ts
+// playwright.config.ts
+export default defineConfig({
+  use: { mockingProxy: { port: 'inject' } }
+});
+```
 
 #### `.env` file
+* langs: js
 
-If you're using a `.env` file to configure API endpoints, prepend the proxy server URL:
-
-```env
-# .env.test
-CMS_BASE_URL=http://localhost:8123/https://headless-cms.example.com
-STOREFRONT_BASE_URL=http://localhost:8123/https://api.myexample.com
-```
-
-#### `HTTP_PROXY` environment variable
-
-If all your requests are going to localhost, you can use the `HTTP_PROXY` environment variable to route all requests through the proxy server.
+If your application uses `.env` files to configure API endpoints, you can configure the proxy by prepending them with the proxy URL:
 
 ```bash
-HTTP_PROXY=http://localhost:8888
+# .env.test
+CMS_BASE_URL=http://localhost:8123/https://cms.example.com/api/
+USERS_SERVICE_BASE_URL=http://localhost:8123/https://users.internal.api.example.com/
 ```
-
-This environment variable is interpreted by many HTTP clients, including Node.js `axios` and Python `requests`. 
-
-Pay attention though: it's important that you use `HTTP_PROXY` and not `HTTPS_PROXY` because the latter will use [`CONNECT`-style proxying](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT) where the proxy cannot intercept the traffic.
-
-#### Manual
-
-In your server code, prepend the proxy server URL to all outgoing requests:
-
-```js
-let proxyURL = isUnderTest ? 'http://localhost:8123/' : '';
-await axios.get(proxyURL + 'https://headless-cms.example.com/items');
-// or
-await fetch(proxyURL + 'https://headless-cms.example.com/frontpage');
-```
-
-```python
-proxy_url = "http://localhost:8123/" if is_under_test else ""
-requests.get(proxy_url + "https://headless-cms.example.com/frontpage")
-```
-
-```csharp
-var proxyURL = isUnderTest ? "http://localhost:8123/" : "";
-await client.GetAsync(proxyURL + "https://headless-cms.example.com/frontpage");
-```
-
-#### Injecting the proxy port
-
-The previous examples all use a single proxy server with a hard-coded port. This has the downside that you can't run tests in parallel.
-If your application allows accessing current request headers conveniently, you can use `inject` mode to dynamically create one proxy server per worker, and inject the port into the request headers.
-
-To do this, set `mockingProxy.port` to `'inject'` in your `playwright.config.ts`:
 
 ```ts
-# playwright.config.ts
+// playwright.config.ts
 export default defineConfig({
-  use: {
-    ...
-    mockingProxy: {
-      port: 'inject'
-    }
-  },
+  workers: 1,
+  use: { mockingProxy: { port: 8123 } }
 });
-```
-
-Now, you can access the proxy port from the request headers:
-
-```js
-let proxyPort = await headers().get("x-playwright-proxy-port");
-let proxyURL = proxyPort ? `http://localhost:${proxyPort}/` : '';
-await axios.get(proxyURL + 'https://headless-cms.example.com/items');
-// or
-await fetch(proxyURL + 'https://headless-cms.example.com/frontpage');
-```
-
-```python
-proxy_port = request.headers.get("x-playwright-proxy-port")
-proxy_url = f"http://localhost:{proxy_port}/" if proxy_port else ""
-requests.get(proxy_url + "https://headless-cms.example.com/frontpage")
-```
-
-```csharp
-var proxyPort = httpContextAccessor.HttpContext?.Request.Headers["x-playwright-proxy-port"];
-var proxyURL = proxyPort.HasValue ? $"http://localhost:{proxyPort}/" : "";
-await client.GetAsync(proxyURL + "https://headless-cms.example.com/frontpage");
-```
-
-#### Interceptors
-
-If your HTTP client or runtime supports HTTP interceptors, you can use them to prepend the proxy URL to all outgoing requests
-with minimal changes to your existing code:
-
-##### Node.js Axios
-
-```js
-const api = axios.create({
-  baseURL: "https://jsonplaceholder.typicode.com",
-});
-
-if (isUnderTest) {
-  api.interceptors.request.use(async config => {
-    config.proxy = { protocol: "http", host: "localhost", port: 8123 };
-    return config;
-  });
-}
-```
-
-##### Node.js fetch / undici
-
-```js
-import { setGlobalDispatcher, getGlobalDispatcher } from "undici";
-
-if (isUnderTest) {
-  const proxyingDispatcher = getGlobalDispatcher().compose(dispatch => (opts, handler) => {
-    opts.path = opts.origin + opts.path;
-    opts.origin = `http://localhost:8123`;
-    return dispatch(opts, handler);
-  })
-  setGlobalDispatcher(proxyingDispatcher);
-}
 ```
