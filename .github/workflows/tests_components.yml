@@ -21,7 +21,7 @@ env:
 jobs:
   test_components:
     name: ${{ matrix.os }} - Node.js ${{ matrix.node-version }}
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     strategy:
       fail-fast: false
       matrix:

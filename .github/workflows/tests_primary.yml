@@ -28,7 +28,7 @@ env:
 jobs:
   test_linux:
     name: ${{ matrix.os }} (${{ matrix.browser }} - Node.js ${{ matrix.node-version }})
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
@@ -61,7 +61,7 @@ jobs:
 
   test_linux_chromium_tot:
     name: ${{ matrix.os }} (chromium tip-of-tree)
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
@@ -86,7 +86,7 @@ jobs:
 
   test_test_runner:
     name: Test Runner
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
@@ -131,7 +131,7 @@ jobs:
 
   test_web_components:
     name: Web Components
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -167,7 +167,7 @@ jobs:
 
   test_vscode_extension:
     name: VSCode Extension
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     runs-on: ubuntu-latest
     env:
       PWTEST_BOT_NAME: "vscode-extension"
@@ -204,7 +204,7 @@ jobs:
 
   test_package_installations:
     name: "Installation Test ${{ matrix.os }}"
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false

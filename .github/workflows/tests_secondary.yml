@@ -27,7 +27,7 @@ permissions:
 jobs:
   test_linux:
     name: ${{ matrix.os }} (${{ matrix.browser }})
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
@@ -48,7 +48,7 @@ jobs:
 
   test_mac:
     name: ${{ matrix.os }} (${{ matrix.browser }})
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
@@ -76,7 +76,7 @@ jobs:
 
   test_win:
     name: "Windows"
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
@@ -96,7 +96,7 @@ jobs:
 
   test-package-installations-other-node-versions:
     name: "Installation Test ${{ matrix.os }} (${{ matrix.node_version }})"
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     strategy:
@@ -130,7 +130,7 @@ jobs:
 
   headed_tests:
     name: "headed ${{ matrix.browser }} (${{ matrix.os }})"
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
@@ -157,7 +157,7 @@ jobs:
 
   transport_linux:
     name: "Transport"
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
@@ -179,7 +179,7 @@ jobs:
 
   tracing_linux:
     name: Tracing ${{ matrix.browser }} ${{ matrix.channel }}
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false
@@ -207,7 +207,7 @@ jobs:
 
   test_chromium_channels:
     name: Test ${{ matrix.channel }} on ${{ matrix.runs-on }}
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.runs-on }}
     strategy:
@@ -230,7 +230,7 @@ jobs:
 
   chromium_tot:
     name: Chromium tip-of-tree ${{ matrix.os }}${{ matrix.headed }}
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     strategy:
@@ -253,7 +253,7 @@ jobs:
 
   chromium_tot_headless_shell:
     name: Chromium tip-of-tree headless-shell-${{ matrix.os }}
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     strategy:
@@ -275,7 +275,7 @@ jobs:
 
   firefox_beta:
     name: Firefox Beta ${{ matrix.os }}
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ${{ matrix.os  }}
     strategy:
@@ -297,7 +297,7 @@ jobs:
 
   build-playwright-driver:
     name: "build-playwright-driver"
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
@@ -311,7 +311,7 @@ jobs:
 
   test_channel_chromium:
     name: Test channel=chromium
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:
       fail-fast: false

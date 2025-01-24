@@ -15,7 +15,7 @@ env:
 jobs:
   video_linux:
     name: "Video Linux"
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     environment: allow-uploading-flakiness-results
     strategy:
       fail-fast: false

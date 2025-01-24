@@ -10,7 +10,7 @@ env:
 jobs:
   test:
     name: "Service"
-    if: github.repository == 'microsoft/playwright' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'microsoft/playwright'
     strategy:
       fail-fast: false
       matrix:
