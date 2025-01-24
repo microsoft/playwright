@@ -30,12 +30,13 @@ import path from 'path';
 type ToMatchAriaSnapshotExpected = {
   name?: string;
   path?: string;
+  timeout?: number;
 } | string;
 
 export async function toMatchAriaSnapshot(
   this: ExpectMatcherState,
   receiver: LocatorEx,
-  expectedParam: ToMatchAriaSnapshotExpected,
+  expectedParam?: ToMatchAriaSnapshotExpected,
   options: { timeout?: number } = {},
 ): Promise<MatcherResult<string | RegExp, string>> {
   const matcherName = 'toMatchAriaSnapshot';
@@ -55,9 +56,11 @@ export async function toMatchAriaSnapshot(
   };
 
   let expected: string;
+  let timeout: number;
   let expectedPath: string | undefined;
   if (isString(expectedParam)) {
     expected = expectedParam;
+    timeout = options.timeout ?? this.timeout;
   } else {
     if (expectedParam?.name) {
       expectedPath = testInfo.snapshotPath(sanitizeFilePathBeforeExtension(expectedParam.name));
@@ -71,6 +74,7 @@ export async function toMatchAriaSnapshot(
       expectedPath = testInfo.snapshotPath(sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.yml');
     }
     expected = await fs.promises.readFile(expectedPath, 'utf8').catch(() => '');
+    timeout = expectedParam?.timeout ?? this.timeout;
   }
 
   const generateMissingBaseline = updateSnapshots === 'missing' && !expected;
@@ -84,7 +88,6 @@ export async function toMatchAriaSnapshot(
     }
   }
 
-  const timeout = options.timeout ?? this.timeout;
   expected = unshift(expected);
   const { matches: pass, received, log, timedOut } = await receiver._expect('to.match.aria', { expectedValue: expected, isNot: this.isNot, timeout });
   const typedReceived = received as MatcherReceived | typeof kNoElementsFoundError;

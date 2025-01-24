@@ -152,3 +152,60 @@ test('should generate snapshot name', async ({ runInlineTest }, testInfo) => {
   const snapshot2 = await fs.promises.readFile(testInfo.outputPath('__snapshots__/a.spec.ts/test-name-2.yml'), 'utf8');
   expect(snapshot2).toBe('- heading "hello world 2" [level=1]');
 });
+
+for (const updateSnapshots of ['all', 'changed', 'missing', 'none']) {
+  test(`should update snapshot with the update-snapshots=${updateSnapshots} (config)`, async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'playwright.config.ts': `
+        export default {
+          snapshotPathTemplate: '__snapshots__/{testFilePath}/{arg}{ext}',
+          updateSnapshots: '${updateSnapshots}',
+        };
+      `,
+      'a.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('test', async ({ page }) => {
+          await page.setContent(\`<h1>New content</h1>\`);
+          await expect(page.locator('body')).toMatchAriaSnapshot({ timeout: 1 });
+        });
+      `,
+      '__snapshots__/a.spec.ts/test-1.yml': '- heading "Old content" [level=1]',
+    });
+
+    const rebase = updateSnapshots === 'all' || updateSnapshots === 'changed';
+    expect(result.exitCode).toBe(rebase ? 0 : 1);
+    if (rebase) {
+      const snapshotOutputPath = testInfo.outputPath('__snapshots__/a.spec.ts/test-1.yml');
+      expect(result.output).toContain(`A snapshot is generated at`);
+      const data = fs.readFileSync(snapshotOutputPath);
+      expect(data.toString()).toBe('- heading "New content" [level=1]');
+    } else {
+      expect(result.output).toContain(`expect.toMatchAriaSnapshot`);
+    }
+  });
+}
+
+test('should respect timeout', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        snapshotPathTemplate: '__snapshots__/{testFilePath}/{arg}{ext}',
+      };
+    `,
+    'test.yml': `
+      - heading "hello world"
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import path from 'path';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<h1>hello world</h1>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot({ timeout: 1 });
+      });
+    `,
+    '__snapshots__/a.spec.ts/test-1.yml': '- heading "new world" [level=1]',
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`Timed out 1ms waiting for`);
+});
