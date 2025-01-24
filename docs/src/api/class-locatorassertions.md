@@ -2250,7 +2250,6 @@ Asserts that the target element matches the given [accessibility snapshot](../ar
 ```js
 await expect(page.locator('body')).toMatchAriaSnapshot();
 await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'snapshot' });
-await expect(page.locator('body')).toMatchAriaSnapshot({ path: '/path/to/snapshot.yml' });
 ```
 
 ```python async
