@@ -18,8 +18,8 @@ import { MockingProxy } from '../mockingProxy';
 import type { RootDispatcher } from './dispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import type * as channels from '@protocol/channels';
-import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
-import type { Request, Response, Route } from '../network';
+import { APIRequestContextDispatcher, RequestDispatcher, RouteDispatcher } from './networkDispatchers';
+import type { Route } from '../network';
 import { urlMatches } from '../../utils/isomorphic/urlMatch';
 
 export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.MockingProxyChannel, RootDispatcher> implements channels.MockingProxyChannel {
@@ -39,29 +39,6 @@ export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.Mo
     this.addObjectListener(MockingProxy.Events.Route, (route: Route) => {
       const requestDispatcher = RequestDispatcher.from(this as any, route.request());
       this._dispatchEvent('route', { route: RouteDispatcher.from(requestDispatcher, route) });
-    });
-    this.addObjectListener(MockingProxy.Events.Request, (request: Request) => {
-      this._dispatchEvent('request', { request: RequestDispatcher.from(this as any, request) });
-    });
-    this.addObjectListener(MockingProxy.Events.RequestFailed, (request: Request) => {
-      this._dispatchEvent('requestFailed', {
-        request: RequestDispatcher.from(this as any, request),
-        responseEndTiming: request._responseEndTiming,
-        failureText: request._failureText ?? undefined
-      });
-    });
-    this.addObjectListener(MockingProxy.Events.Response, (response: Response) => {
-      this._dispatchEvent('response', {
-        request: RequestDispatcher.from(this as any, response.request()),
-        response: ResponseDispatcher.from(this as any, response),
-      });
-    });
-    this.addObjectListener(MockingProxy.Events.RequestFinished, ({ request, response }: { request: Request, response: Response | null }) => {
-      this._dispatchEvent('requestFinished', {
-        request: RequestDispatcher.from(this as any, request),
-        response: ResponseDispatcher.fromNullable(this as any, response),
-        responseEndTiming: request._responseEndTiming,
-      });
     });
   }
 
