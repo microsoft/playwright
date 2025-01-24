@@ -179,7 +179,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this.emit(Events.Page.FrameDetached, frame);
   }
 
-  private async _onRoute(route: Route) {
+  async _onRoute(route: Route) {
     route._context = this.context().request;
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
@@ -565,6 +565,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   private async _updateInterceptionPatterns() {
     const patterns = RouteHandler.prepareInterceptionPatterns(this._routes);
     await this._channel.setNetworkInterceptionPatterns({ patterns });
+    for (const proxy of this._browserContext._mockingProxies)
+      await proxy.setInterceptionPatterns({ patterns });
   }
 
   private async _updateWebSocketInterceptionPatterns() {

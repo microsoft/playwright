@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video, MockingProxy } from 'playwright-core';
+import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
 import { createGuid, debugMode, addInternalStackPrefix, isString, asLocator, jsonStringifyForceASCII, zones } from 'playwright-core/lib/utils';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
@@ -24,8 +24,9 @@ import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import { rootTestType } from './common/testType';
 import type { ContextReuseMode } from './common/config';
 import type { ApiCallData, ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
+import type { MockingProxy } from '../../playwright-core/src/client/mockingProxy';
 import { currentTestInfo } from './common/globals';
-import { getFreePort } from './util';
+import type { LocalUtils } from 'playwright-core/lib/client/localUtils';
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -130,10 +131,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (typeof mockingProxyOption.port === 'number' && testInfoImpl.config.workers > 1)
       throw new Error(`Cannot share mocking proxy between multiple workers. Either disable parallel mode or set mockingProxy.port to 'inject'`);
 
-    const mockingProxy = await playwright.mockingProxy.newProxy(
-        mockingProxyOption.port === 'inject' ? undefined : mockingProxyOption.port
-    );
-    await use(mockingProxy);
+    const port = mockingProxyOption.port === 'inject' ? undefined : mockingProxyOption.port;
+    const localUtils: LocalUtils = (playwright as any)._connection.localUtils();
+    const { mockingProxy } = await localUtils._channel.newMockingProxy({ port });
+    await use((mockingProxy as any)._object);
   }, { scope: 'worker' }],
 
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true }],
@@ -347,7 +348,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   }, { auto: 'all-hooks-included',  title: 'trace recording', box: true, timeout: 0 } as any],
 
-  _contextFactory: [async ({ browser, video, _reuseContext, _combinedContextOptions /** mitigate dep-via-auto lack of traceability */ }, use, testInfo) => {
+  _contextFactory: [async ({ browser, video, _reuseContext, _mockingProxy, _combinedContextOptions /** mitigate dep-via-auto lack of traceability */ }, use, testInfo) => {
     const testInfoImpl = testInfo as TestInfoImpl;
     const videoMode = normalizeVideoMode(video);
     const captureVideo = shouldCaptureVideo(videoMode, testInfo) && !_reuseContext;
@@ -369,6 +370,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         }
       } : {};
       const context = await browser.newContext({ ...videoOptions, ...options });
+      _mockingProxy?.installOn(context as any);
       const contextData: { pagesWithVideo: Page[] } = { pagesWithVideo: [] };
       contexts.set(context, contextData);
       if (captureVideo)
@@ -468,13 +470,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       await request.dispose();
     }
   },
-
-  server: async ({ _mockingProxy }, use) => {
-    if (!_mockingProxy)
-      throw new Error(`The 'server' fixture is only available when 'mockingProxy' is enabled.`);
-    await use(_mockingProxy);
-    await _mockingProxy.unrouteAll();
-  }
 });
 
 type ScreenshotOption = PlaywrightWorkerOptions['screenshot'] | undefined;
