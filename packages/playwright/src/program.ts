@@ -282,11 +282,11 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
   const shardPair = options.shard ? options.shard.split('/').map((t: string) => parseInt(t, 10)) : undefined;
 
-  let updateSnapshots: 'all' | 'changed' | 'missing' | 'none';
+  let updateSnapshots: 'all' | 'changed' | 'missing' | 'none' | undefined;
   if (['all', 'changed', 'missing', 'none'].includes(options.updateSnapshots))
     updateSnapshots = options.updateSnapshots;
   else
-    updateSnapshots = 'updateSnapshots' in options ? 'changed' : 'missing';
+    updateSnapshots = 'updateSnapshots' in options ? 'changed' : undefined;
 
   const overrides: ConfigCLIOverrides = {
     forbidOnly: options.forbidOnly ? true : undefined,
