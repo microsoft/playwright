@@ -10,13 +10,13 @@
       let textarea = document.querySelector('textarea');
       textarea.focus();
       textarea.addEventListener('keydown', event => {
-        log('Keydown:', event.key, event.code, event.which, modifiers(event));
+        log('Keydown:', event.key, event.code, event.location, modifiers(event));
       });
       textarea.addEventListener('keypress', event => {
-        log('Keypress:', event.key, event.code, event.which, event.charCode, modifiers(event));
+        log('Keypress:', event.key, event.code, event.location, event.charCode, modifiers(event));
       });
       textarea.addEventListener('keyup', event => {
-        log('Keyup:', event.key, event.code, event.which, modifiers(event));
+        log('Keyup:', event.key, event.code, event.location, modifiers(event));
       });
       function modifiers(event) {
         let m = [];
