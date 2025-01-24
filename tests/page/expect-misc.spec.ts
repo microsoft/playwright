@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { stripVTControlCharacters } from 'node:util';
 import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
@@ -240,10 +241,45 @@ test.describe('toHaveURL', () => {
     await expect(page).toHaveURL('data:text/html,<div>A</div>');
   });
 
-  test('fail', async ({ page }) => {
-    await page.goto('data:text/html,<div>B</div>');
+  test('fail string', async ({ page }) => {
+    await page.goto('data:text/html,<div>A</div>');
     const error = await expect(page).toHaveURL('wrong', { timeout: 1000 }).catch(e => e);
-    expect(error.message).toContain('expect.toHaveURL with timeout 1000ms');
+    expect(stripVTControlCharacters(error.message)).toContain('Timed out 1000ms waiting for expect(page).toHaveURL(expected)');
+    expect(stripVTControlCharacters(error.message)).toContain('Expected string: "wrong"\nReceived string: "data:text/html,<div>A</div>"');
+  });
+
+  test('fail with invalid argument', async ({ page }) => {
+    await page.goto('data:text/html,<div>A</div>');
+    // @ts-expect-error
+    const error = await expect(page).toHaveURL({}).catch(e => e);
+    expect(stripVTControlCharacters(error.message)).toContain('expect(page).toHaveURL(expected)\n\n\n\nMatcher error: expected value must be a string, regular expression, or predicate');
+    expect(stripVTControlCharacters(error.message)).toContain('Expected has type:  object\nExpected has value: {}');
+  });
+
+  test('fail with positive predicate', async ({ page }) => {
+    await page.goto('data:text/html,<div>A</div>');
+    const error = await expect(page).toHaveURL(_url => false).catch(e => e);
+    expect(stripVTControlCharacters(error.message)).toContain('expect(page).toHaveURL(expected)');
+    expect(stripVTControlCharacters(error.message)).toContain('Expected predicate to succeed\nReceived string: "data:text/html,<div>A</div>"');
+  });
+
+  test('fail with negative predicate', async ({ page }) => {
+    await page.goto('data:text/html,<div>A</div>');
+    const error = await expect(page).not.toHaveURL(_url => true).catch(e => e);
+    expect(stripVTControlCharacters(error.message)).toContain('expect(page).not.toHaveURL(expected)');
+    expect(stripVTControlCharacters(error.message)).toContain('Expected predicate to fail\nReceived string: "data:text/html,<div>A</div>"');
+  });
+
+  test('resolve predicate on initial call', async ({ page }) => {
+    await page.goto('data:text/html,<div>A</div>');
+    await expect(page).toHaveURL(url => url.href === 'data:text/html,<div>A</div>', { timeout: 1000 });
+  });
+
+  test('resolve predicate after retries', async ({ page }) => {
+    await page.goto('data:text/html,<div>A</div>');
+    const expectPromise = expect(page).toHaveURL(url => url.href === 'data:text/html,<div>B</div>', { timeout: 1000 });
+    setTimeout(() => page.goto('data:text/html,<div>B</div>'), 500);
+    await expectPromise;
   });
 
   test('support ignoreCase', async ({ page }) => {

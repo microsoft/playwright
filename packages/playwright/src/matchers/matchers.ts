@@ -21,11 +21,12 @@ import { expectTypes, callLogText } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toMatchText } from './toMatchText';
-import { constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues } from 'playwright-core/lib/utils';
+import { isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues } from 'playwright-core/lib/utils';
 import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl } from '../worker/testInfo';
 import type { ExpectMatcherState } from '../../types/test';
 import { takeFirst } from '../common/config';
+import { toHaveURL as toHaveURLExternal } from './toHaveURL';
 
 export interface LocatorEx extends Locator {
   _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean }>;
@@ -382,16 +383,10 @@ export function toHaveTitle(
 export function toHaveURL(
   this: ExpectMatcherState,
   page: Page,
-  expected: string | RegExp,
-  options?: { ignoreCase?: boolean, timeout?: number },
+  expected: string | RegExp | ((url: URL) => boolean),
+  options?: { ignoreCase?: boolean; timeout?: number },
 ) {
-  const baseURL = (page.context() as any)._options.baseURL;
-  expected = typeof expected === 'string' ? constructURLBasedOnBaseURL(baseURL, expected) : expected;
-  const locator = page.locator(':root') as LocatorEx;
-  return toMatchText.call(this, 'toHaveURL', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = serializeExpectedTextValues([expected], { ignoreCase: options?.ignoreCase });
-    return await locator._expect('to.have.url', { expectedText, isNot, timeout });
-  }, expected, options);
+  return toHaveURLExternal.call(this, page, expected, options);
 }
 
 export async function toBeOK(

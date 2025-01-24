@@ -8795,14 +8795,18 @@ interface PageAssertions {
    * await expect(page).toHaveURL(/.*checkout/);
    * ```
    *
-   * @param urlOrRegExp Expected URL string or RegExp.
+   * @param url Expected URL string, RegExp, or predicate receiving [URL] to match. When a
+   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
+   * options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param options
    */
-  toHaveURL(urlOrRegExp: string|RegExp, options?: {
+  toHaveURL(url: string|RegExp|((url: URL) => boolean), options?: {
     /**
      * Whether to perform case-insensitive match.
      * [`ignoreCase`](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-url-option-ignore-case)
-     * option takes precedence over the corresponding regular expression flag if specified.
+     * option takes precedence over the corresponding regular expression parameter if specified. A provided predicate
+     * ignores this flag.
      */
     ignoreCase?: boolean;
 
