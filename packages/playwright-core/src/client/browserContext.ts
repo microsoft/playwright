@@ -462,6 +462,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._disposeHarRouters();
     this.tracing._resetStackCounter();
     this.emit(Events.BrowserContext.Close, this);
+    this._mockingProxies.forEach(p => p.uninstall(this));
   }
 
   async [Symbol.asyncDispose]() {

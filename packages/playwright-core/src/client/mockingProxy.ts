@@ -41,9 +41,14 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
     });
   }
 
-  installOn(context: BrowserContext): void {
+  install(context: BrowserContext): void {
     context._mockingProxies.add(this);
     this._contexts.add(context);
+  }
+
+  uninstall(context: BrowserContext): void {
+    context._mockingProxies.delete(this);
+    this._contexts.delete(context);
   }
 
   async setInterceptionPatterns(params: channels.MockingProxySetInterceptionPatternsParams) {
