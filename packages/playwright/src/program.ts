@@ -286,7 +286,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
   if (['all', 'changed', 'missing', 'none'].includes(options.updateSnapshots))
     updateSnapshots = options.updateSnapshots;
   else
-    updateSnapshots = 'updateSnapshots' in options ? 'changed' : 'missing';
+    updateSnapshots = 'updateSnapshots' in options ? 'changed' : undefined;
 
   const overrides: ConfigCLIOverrides = {
     forbidOnly: options.forbidOnly ? true : undefined,

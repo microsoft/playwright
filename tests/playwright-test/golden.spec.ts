@@ -341,6 +341,36 @@ test('should update snapshot with the update-snapshots flag', async ({ runInline
   expect(data.toString()).toBe(ACTUAL_SNAPSHOT);
 });
 
+for (const updateSnapshots of ['all', 'changed', 'missing', 'none']) {
+  test(`should update snapshot with the update-snapshots=${updateSnapshots} (config)`, async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      'playwright.config.ts': `export default { updateSnapshots: '${updateSnapshots}' };`,
+      ...files,
+      'a.spec.js-snapshots/snapshot.txt': 'Hello world',
+      'a.spec.js': `
+        const { test, expect } = require('./helper');
+        test('is a test', ({}) => {
+          expect('Hello world updated').toMatchSnapshot('snapshot.txt');
+        });
+      `
+    });
+
+    const rebase = updateSnapshots === 'all' || updateSnapshots === 'changed';
+    expect(result.exitCode).toBe(rebase ? 0 : 1);
+    if (rebase) {
+      const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot.txt');
+      if (updateSnapshots === 'all')
+        expect(result.output).toContain(`${snapshotOutputPath} is not the same, writing actual.`);
+      if (updateSnapshots === 'changed')
+        expect(result.output).toContain(`${snapshotOutputPath} does not match, writing actual.`);
+      const data = fs.readFileSync(snapshotOutputPath);
+      expect(data.toString()).toBe('Hello world updated');
+    } else {
+      expect(result.output).toContain(`toMatchSnapshot`);
+    }
+  });
+}
+
 test('should ignore text snapshot with the ignore-snapshots flag', async ({ runInlineTest }, testInfo) => {
   const EXPECTED_SNAPSHOT = 'Hello world';
   const ACTUAL_SNAPSHOT = 'Hello world updated';
@@ -1139,4 +1169,26 @@ test('should throw if a Promise was passed to toMatchSnapshot', async ({ runInli
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+});
+
+
+test('should respect update snapshot option from config', async ({ runInlineTest }, testInfo) => {
+  const EXPECTED_SNAPSHOT = 'Hello world';
+  const ACTUAL_SNAPSHOT = 'Hello world updated';
+  const result = await runInlineTest({
+    ...files,
+    'a.spec.js-snapshots/snapshot.txt': EXPECTED_SNAPSHOT,
+    'a.spec.js': `
+      const { test, expect } = require('./helper');
+      test('is a test', ({}) => {
+        expect('${ACTUAL_SNAPSHOT}').toMatchSnapshot('snapshot.txt');
+      });
+    `
+  }, { 'update-snapshots': true });
+
+  expect(result.exitCode).toBe(0);
+  const snapshotOutputPath = testInfo.outputPath('a.spec.js-snapshots/snapshot.txt');
+  expect(result.output).toContain(`${snapshotOutputPath} does not match, writing actual.`);
+  const data = fs.readFileSync(snapshotOutputPath);
+  expect(data.toString()).toBe(ACTUAL_SNAPSHOT);
 });
