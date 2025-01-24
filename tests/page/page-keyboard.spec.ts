@@ -93,18 +93,18 @@ it('should report shiftKey', async ({ page, server, browserName, platform }) => 
   const codeForKey = { 'Shift': 16, 'Alt': 18, 'Control': 17 };
   for (const modifierKey in codeForKey) {
     await keyboard.down(modifierKey);
-    expect(await page.evaluate('getResult()')).toBe('Keydown: ' + modifierKey + ' ' + modifierKey + 'Left 1 [' + modifierKey + ']');
+    expect(await page.evaluate('getResult()')).toBe('Keydown: ' + modifierKey + ' ' + modifierKey + 'Left LEFT [' + modifierKey + ']');
     await keyboard.down('!');
     // Shift+! will generate a keypress
     if (modifierKey === 'Shift')
-      expect(await page.evaluate('getResult()')).toBe('Keydown: ! Digit1 0 [' + modifierKey + ']\nKeypress: ! Digit1 0 33 [' + modifierKey + ']');
+      expect(await page.evaluate('getResult()')).toBe('Keydown: ! Digit1 STANDARD [' + modifierKey + ']\nKeypress: ! Digit1 STANDARD 33 [' + modifierKey + ']');
     else
-      expect(await page.evaluate('getResult()')).toBe('Keydown: ! Digit1 0 [' + modifierKey + ']');
+      expect(await page.evaluate('getResult()')).toBe('Keydown: ! Digit1 STANDARD [' + modifierKey + ']');
 
     await keyboard.up('!');
-    expect(await page.evaluate('getResult()')).toBe('Keyup: ! Digit1 0 [' + modifierKey + ']');
+    expect(await page.evaluate('getResult()')).toBe('Keyup: ! Digit1 STANDARD [' + modifierKey + ']');
     await keyboard.up(modifierKey);
-    expect(await page.evaluate('getResult()')).toBe('Keyup: ' + modifierKey + ' ' + modifierKey + 'Left 1 []');
+    expect(await page.evaluate('getResult()')).toBe('Keyup: ' + modifierKey + ' ' + modifierKey + 'Left LEFT []');
   }
 });
 
@@ -112,31 +112,31 @@ it('should report multiple modifiers', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   const keyboard = page.keyboard;
   await keyboard.down('Control');
-  expect(await page.evaluate('getResult()')).toBe('Keydown: Control ControlLeft 1 [Control]');
+  expect(await page.evaluate('getResult()')).toBe('Keydown: Control ControlLeft LEFT [Control]');
   await keyboard.down('Alt');
-  expect(await page.evaluate('getResult()')).toBe('Keydown: Alt AltLeft 1 [Alt Control]');
+  expect(await page.evaluate('getResult()')).toBe('Keydown: Alt AltLeft LEFT [Alt Control]');
   await keyboard.down(';');
-  expect(await page.evaluate('getResult()')).toBe('Keydown: ; Semicolon 0 [Alt Control]');
+  expect(await page.evaluate('getResult()')).toBe('Keydown: ; Semicolon STANDARD [Alt Control]');
   await keyboard.up(';');
-  expect(await page.evaluate('getResult()')).toBe('Keyup: ; Semicolon 0 [Alt Control]');
+  expect(await page.evaluate('getResult()')).toBe('Keyup: ; Semicolon STANDARD [Alt Control]');
   await keyboard.up('Control');
-  expect(await page.evaluate('getResult()')).toBe('Keyup: Control ControlLeft 1 [Alt]');
+  expect(await page.evaluate('getResult()')).toBe('Keyup: Control ControlLeft LEFT [Alt]');
   await keyboard.up('Alt');
-  expect(await page.evaluate('getResult()')).toBe('Keyup: Alt AltLeft 1 []');
+  expect(await page.evaluate('getResult()')).toBe('Keyup: Alt AltLeft LEFT []');
 });
 
 it('should send proper codes while typing', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.type('!');
   expect(await page.evaluate('getResult()')).toBe(
-      ['Keydown: ! Digit1 0 []',
-        'Keypress: ! Digit1 0 33 []',
-        'Keyup: ! Digit1 0 []'].join('\n'));
+      ['Keydown: ! Digit1 STANDARD []',
+        'Keypress: ! Digit1 STANDARD 33 []',
+        'Keyup: ! Digit1 STANDARD []'].join('\n'));
   await page.keyboard.type('^');
   expect(await page.evaluate('getResult()')).toBe(
-      ['Keydown: ^ Digit6 0 []',
-        'Keypress: ^ Digit6 0 94 []',
-        'Keyup: ^ Digit6 0 []'].join('\n'));
+      ['Keydown: ^ Digit6 STANDARD []',
+        'Keypress: ^ Digit6 STANDARD 94 []',
+        'Keyup: ^ Digit6 STANDARD []'].join('\n'));
 });
 
 it('should send proper codes while typing with shift', async ({ page, server }) => {
@@ -145,10 +145,10 @@ it('should send proper codes while typing with shift', async ({ page, server }) 
   await keyboard.down('Shift');
   await page.keyboard.type('~');
   expect(await page.evaluate('getResult()')).toBe(
-      ['Keydown: Shift ShiftLeft 1 [Shift]',
-        'Keydown: ~ Backquote 0 [Shift]',
-        'Keypress: ~ Backquote 0 126 [Shift]',
-        'Keyup: ~ Backquote 0 [Shift]'].join('\n'));
+      ['Keydown: Shift ShiftLeft LEFT [Shift]',
+        'Keydown: ~ Backquote STANDARD [Shift]',
+        'Keypress: ~ Backquote STANDARD 126 [Shift]',
+        'Keyup: ~ Backquote STANDARD [Shift]'].join('\n'));
   await keyboard.up('Shift');
 });
 
@@ -173,54 +173,54 @@ it('should press plus', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('+');
   expect(await page.evaluate('getResult()')).toBe(
-      ['Keydown: + Equal 0 []',
-        'Keypress: + Equal 0 43 []',
-        'Keyup: + Equal 0 []'].join('\n'));
+      ['Keydown: + Equal STANDARD []',
+        'Keypress: + Equal STANDARD 43 []',
+        'Keyup: + Equal STANDARD []'].join('\n'));
 });
 
 it('should press shift plus', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Shift++');
   expect(await page.evaluate('getResult()')).toBe(
-      ['Keydown: Shift ShiftLeft 1 [Shift]',
-        'Keydown: + Equal 0 [Shift]',
-        'Keypress: + Equal 0 43 [Shift]',
-        'Keyup: + Equal 0 [Shift]',
-        'Keyup: Shift ShiftLeft 1 []'].join('\n'));
+      ['Keydown: Shift ShiftLeft LEFT [Shift]',
+        'Keydown: + Equal STANDARD [Shift]',
+        'Keypress: + Equal STANDARD 43 [Shift]',
+        'Keyup: + Equal STANDARD [Shift]',
+        'Keyup: Shift ShiftLeft LEFT []'].join('\n'));
 });
 
 it('should support plus-separated modifiers', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Shift+~');
   expect(await page.evaluate('getResult()')).toBe(
-      ['Keydown: Shift ShiftLeft 1 [Shift]',
-        'Keydown: ~ Backquote 0 [Shift]',
-        'Keypress: ~ Backquote 0 126 [Shift]',
-        'Keyup: ~ Backquote 0 [Shift]',
-        'Keyup: Shift ShiftLeft 1 []'].join('\n'));
+      ['Keydown: Shift ShiftLeft LEFT [Shift]',
+        'Keydown: ~ Backquote STANDARD [Shift]',
+        'Keypress: ~ Backquote STANDARD 126 [Shift]',
+        'Keyup: ~ Backquote STANDARD [Shift]',
+        'Keyup: Shift ShiftLeft LEFT []'].join('\n'));
 });
 
 it('should support multiple plus-separated modifiers', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Control+Shift+~');
   expect(await page.evaluate('getResult()')).toBe(
-      ['Keydown: Control ControlLeft 1 [Control]',
-        'Keydown: Shift ShiftLeft 1 [Control Shift]',
-        'Keydown: ~ Backquote 0 [Control Shift]',
-        'Keyup: ~ Backquote 0 [Control Shift]',
-        'Keyup: Shift ShiftLeft 1 [Control]',
-        'Keyup: Control ControlLeft 1 []'].join('\n'));
+      ['Keydown: Control ControlLeft LEFT [Control]',
+        'Keydown: Shift ShiftLeft LEFT [Control Shift]',
+        'Keydown: ~ Backquote STANDARD [Control Shift]',
+        'Keyup: ~ Backquote STANDARD [Control Shift]',
+        'Keyup: Shift ShiftLeft LEFT [Control]',
+        'Keyup: Control ControlLeft LEFT []'].join('\n'));
 });
 
 it('should shift raw codes', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Shift+Digit3');
   expect(await page.evaluate('getResult()')).toBe(
-      ['Keydown: Shift ShiftLeft 1 [Shift]',
-        'Keydown: # Digit3 0 [Shift]',
-        'Keypress: # Digit3 0 35 [Shift]',
-        'Keyup: # Digit3 0 [Shift]',
-        'Keyup: Shift ShiftLeft 1 []'].join('\n'));
+      ['Keydown: Shift ShiftLeft LEFT [Shift]',
+        'Keydown: # Digit3 STANDARD [Shift]',
+        'Keypress: # Digit3 STANDARD 35 [Shift]',
+        'Keyup: # Digit3 STANDARD [Shift]',
+        'Keyup: Shift ShiftLeft LEFT []'].join('\n'));
 });
 
 it('should specify repeat property', async ({ page, server }) => {
@@ -710,7 +710,7 @@ it('should have correct Keydown/Keyup order when pressing Escape key', async ({ 
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Escape');
   expect(await page.evaluate('getResult()')).toBe(`
-Keydown: Escape Escape 0 []
-Keyup: Escape Escape 0 []
+Keydown: Escape Escape STANDARD []
+Keyup: Escape Escape STANDARD []
 `.trim());
 });
