@@ -16,22 +16,15 @@
 
 import { test, expect } from './ui-mode-fixtures';
 
-const reporter = `
-  class Reporter {
-    onBegin(config, suite) {
-      console.log(JSON.stringify(config.metadata, null, 2));
-    }
-     
-    printsToStdio() {
-      return true;
-    } 
-  }
-  module.exports = Reporter;
-`;
-
 test('should render html report git info metadata', async ({ runUITest }) => {
-  const { page, testProcess } = await runUITest({
-    'reporter.ts': reporter,
+  const { page } = await runUITest({
+    'reporter.ts': `
+      module.exports = class Reporter {
+        onBegin(config, suite) {
+          console.log('ci.link:', config.metadata['ci.link']);
+        }
+      }
+    `,
     'playwright.config.ts': `
       import { defineConfig } from '@playwright/test';
       export default defineConfig({
@@ -50,7 +43,7 @@ test('should render html report git info metadata', async ({ runUITest }) => {
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
 
-  // 1. testProcess.output is not populated with console.log from reporter
-  // 2. even with PWTEST_DEBUG=1 output contains unpopulated metadata: { actualWorkers: 1 }
-  expect(testProcess.output).toContain(`"ci.link": "https://playwright.dev"`);
+  await page.getByTitle('Toggle output').click();
+  // does not pass, actual output: ci.link: undefined
+  await expect(page.getByTestId('output')).toContainText('ci.link: https://playwright.dev');
 });
