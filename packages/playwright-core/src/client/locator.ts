@@ -236,6 +236,10 @@ export class Locator implements api.Locator {
     return await this._frame._queryCount(this._selector);
   }
 
+  async _generateLocatorString(): Promise<string | null> {
+    return await this._withElement(h => h._generateLocatorString());
+  }
+
   async getAttribute(name: string, options?: TimeoutOptions): Promise<string | null> {
     return await this._frame.getAttribute(this._selector, name, { strict: true, ...options });
   }
@@ -288,8 +292,8 @@ export class Locator implements api.Locator {
     return await this._withElement((h, timeout) => h.screenshot({ ...options, timeout }), options.timeout);
   }
 
-  async ariaSnapshot(options?: TimeoutOptions): Promise<string> {
-    const result = await this._frame._channel.ariaSnapshot({ ...options, selector: this._selector });
+  async ariaSnapshot(options?: { _id?: boolean, _mode?: 'raw' | 'regex' } & TimeoutOptions): Promise<string> {
+    const result = await this._frame._channel.ariaSnapshot({ ...options, id: options?._id, mode: options?._mode, selector: this._selector });
     return result.snapshot;
   }
 

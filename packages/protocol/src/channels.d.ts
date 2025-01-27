@@ -2619,9 +2619,13 @@ export type FrameAddStyleTagResult = {
 };
 export type FrameAriaSnapshotParams = {
   selector: string,
+  id?: boolean,
+  mode?: 'raw' | 'regex',
   timeout?: number,
 };
 export type FrameAriaSnapshotOptions = {
+  id?: boolean,
+  mode?: 'raw' | 'regex',
   timeout?: number,
 };
 export type FrameAriaSnapshotResult = {
@@ -3311,6 +3315,7 @@ export interface ElementHandleChannel extends ElementHandleEventTarget, JSHandle
   dispatchEvent(params: ElementHandleDispatchEventParams, metadata?: CallMetadata): Promise<ElementHandleDispatchEventResult>;
   fill(params: ElementHandleFillParams, metadata?: CallMetadata): Promise<ElementHandleFillResult>;
   focus(params?: ElementHandleFocusParams, metadata?: CallMetadata): Promise<ElementHandleFocusResult>;
+  generateLocatorString(params?: ElementHandleGenerateLocatorStringParams, metadata?: CallMetadata): Promise<ElementHandleGenerateLocatorStringResult>;
   getAttribute(params: ElementHandleGetAttributeParams, metadata?: CallMetadata): Promise<ElementHandleGetAttributeResult>;
   hover(params: ElementHandleHoverParams, metadata?: CallMetadata): Promise<ElementHandleHoverResult>;
   innerHTML(params?: ElementHandleInnerHTMLParams, metadata?: CallMetadata): Promise<ElementHandleInnerHTMLResult>;
@@ -3450,6 +3455,11 @@ export type ElementHandleFillResult = void;
 export type ElementHandleFocusParams = {};
 export type ElementHandleFocusOptions = {};
 export type ElementHandleFocusResult = void;
+export type ElementHandleGenerateLocatorStringParams = {};
+export type ElementHandleGenerateLocatorStringOptions = {};
+export type ElementHandleGenerateLocatorStringResult = {
+  value?: string,
+};
 export type ElementHandleGetAttributeParams = {
   name: string,
 };

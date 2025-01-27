@@ -1879,6 +1879,12 @@ Frame:
     ariaSnapshot:
       parameters:
         selector: string
+        id: boolean?
+        mode:
+          type: enum?
+          literals:
+          - raw
+          - regex
         timeout: number?
       returns:
         snapshot: string
@@ -2647,6 +2653,10 @@ ElementHandle:
       flags:
         slowMo: true
         snapshot: true
+
+    generateLocatorString:
+      returns:
+        value: string?
 
     getAttribute:
       parameters:

@@ -72,6 +72,7 @@ export class InjectedScript {
   // eslint-disable-next-line no-restricted-globals
   readonly window: Window & typeof globalThis;
   readonly document: Document;
+  private _ariaElementById: Map<number, Element> | undefined;
 
   // Recorder must use any external dependencies through InjectedScript.
   // Otherwise it will end up with a copy of all modules it uses, and any
@@ -130,6 +131,7 @@ export class InjectedScript {
     this._engines.set('internal:attr', this._createNamedAttributeEngine());
     this._engines.set('internal:testid', this._createNamedAttributeEngine());
     this._engines.set('internal:role', createRoleEngine(true));
+    this._engines.set('internal:aria-id', this._createAriaIdEngine());
 
     for (const { name, engine } of customEngines)
       this._engines.set(name, engine);
@@ -221,7 +223,8 @@ export class InjectedScript {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
     const ariaSnapshot = generateAriaTree(node as Element);
-    return renderAriaTree(ariaSnapshot.root, options);
+    this._ariaElementById = ariaSnapshot.elements;
+    return renderAriaTree(ariaSnapshot.root, { ...options, ids: options?.id ? ariaSnapshot.ids : undefined });
   }
 
   ariaSnapshotAsObject(node: Node): AriaSnapshot {
@@ -607,6 +610,15 @@ export class InjectedScript {
     this.builtinRequestAnimationFrame(raf);
 
     return result;
+  }
+
+  _createAriaIdEngine() {
+    const queryAll = (root: SelectorRoot, selector: string): Element[] => {
+      const ariaId = parseInt(selector, 10);
+      const result = this._ariaElementById?.get(ariaId);
+      return result && result.isConnected ? [result] : [];
+    };
+    return { queryAll };
   }
 
   elementState(node: Node, state: ElementStateWithoutStable): ElementStateQueryResult {
