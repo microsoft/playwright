@@ -317,3 +317,39 @@ test('inject mode knows originating page', async ({ runInlineTest, server, reque
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('failure', async ({ runInlineTest, server, request }) => {
+  server.setRoute('/fallback', async (req, res) => {
+    res.socket.destroy();
+  });
+  server.setRoute('/page', async (req, res) => {
+    const proxyURL = decodeURIComponent((req.headers['x-playwright-proxy'] as string) ?? '');
+    const response = await request.get(proxyURL + server.PREFIX + '/fallback');
+    res.end(await response.body());
+  });
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+          mockingProxy: { port: 'inject' }
+        }
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('first', async ({ page, context }) => {
+        let request;
+        await page.route('${server.PREFIX}/fallback', route => {
+          request = route.request();
+          route.continue();
+        });
+        await page.goto('${server.PREFIX}/page');
+
+        expect(request.failure()).toEqual({ errorText: expect.any(String) });
+      });
+    `
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
