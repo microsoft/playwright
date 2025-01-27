@@ -2249,23 +2249,6 @@ Asserts that the target element matches the given [accessibility snapshot](../ar
 
 ```js
 await expect(page.locator('body')).toMatchAriaSnapshot();
-await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'snapshot' });
-```
-
-```python async
-await expect(page.locator('body')).to_match_aria_snapshot(path='/path/to/snapshot.yml')
-```
-
-```python sync
-expect(page.locator('body')).to_match_aria_snapshot(path='/path/to/snapshot.yml')
-```
-
-```csharp
-await Expect(page.Locator("body")).ToMatchAriaSnapshotAsync(new { Path = "/path/to/snapshot.yml" });
-```
-
-```java
-assertThat(page.locator("body")).matchesAriaSnapshot(new LocatorAssertions.MatchesAriaSnapshotOptions().setPath("/path/to/snapshot.yml"));
 ```
 
 ### option: LocatorAssertions.toMatchAriaSnapshot#2.name
@@ -2275,6 +2258,12 @@ assertThat(page.locator("body")).matchesAriaSnapshot(new LocatorAssertions.Match
 
 Name of the snapshot to store in the snapshot (screenshot) folder corresponding to this test.
 Generates sequential names if not specified.
+
+**Usage**
+
+```js
+await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'snapshot.yml' });
+```
 
 ### option: LocatorAssertions.toMatchAriaSnapshot#2.timeout = %%-js-assertions-timeout-%%
 * since: v1.50
