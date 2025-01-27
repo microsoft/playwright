@@ -566,7 +566,7 @@ Playwright's mocking proxy is an HTTP proxy server that's connected to the curre
 
 For browser network mocking, Playwright always knows what browser context and page a request is coming from. But because there's only a single application server shared by multiple concurrent test runs, it cannot know this for server requests! To resolve this, pick one of these two strategies:
 
-1. [Disable parallelism](./test-parallel-js.md#disable-parallelism), so that there's only a single test at a time.
+1. [Disable parallelism](./test-parallel.md#disable-parallelism), so that there's only a single test at a time.
 2. On the server, read the `x-playwright-proxy-port` header of incoming requests. When the mocking proxy is configured, Playwright adds this header to all browser requests.
 
 The second strategy can be hard to integrate for some applications, because it requires access to the current request from where you're making your API requests.
