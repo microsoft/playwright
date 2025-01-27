@@ -26,7 +26,7 @@ test('should close the browser when the node process closes', async ({ startRemo
   const remoteServer = await startRemoteServer('launchServer', { url: server.EMPTY_PAGE });
   try {
     if (isWindows)
-      execSync(`taskkill /pid ${remoteServer.child().pid} /T /F`, { stdio: 'inherit' });
+      console.log(execSync(`taskkill /pid ${remoteServer.child().pid} /T /F`, { stdio: 'inherit' }));
     else
       process.kill(remoteServer.child().pid);
   } catch (error) {
