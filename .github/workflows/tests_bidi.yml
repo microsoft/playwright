@@ -8,6 +8,7 @@ on:
     paths:
       - .github/workflows/tests_bidi.yml
       - packages/playwright-core/src/server/bidi/**
+      - tests/bidi/**
   schedule:
     # Run every day at midnight
     - cron: '0 0 * * *'
