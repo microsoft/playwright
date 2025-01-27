@@ -606,10 +606,10 @@ That's it! Your `context.route` and `page.route` methods can now intercept netwo
 
 ```ts
 // shopping-cart.spec.ts
-import { test, expect } from "@playwright/test"
+import { test, expect } from '@playwright/test'
 
 test('checkout applies customer loyalty bonus points', async ({ page }) => {
-  await page.route("https://users.internal.example.com/loyalty/balance*", (route, request) => {
+  await page.route('https://users.internal.example.com/loyalty/balance*', (route, request) => {
     await route.fulfill({ json: { userId: 'jane@doe.com', balance: 100 } });
   })
 
@@ -629,26 +629,26 @@ test('checkout applies customer loyalty bonus points', async ({ page }) => {
 Prepending the proxy URL manually to all outgoing requests can be cumbersome. If your HTTP client supports it, consider updating your client baseURL ...
 
 ```js
-import { axios } from "axios"; 
+import { axios } from 'axios'; 
 
 const api = axios.create({
-  baseURL: proxyUrl + "https://jsonplaceholder.typicode.com",
+  baseURL: proxyUrl + 'https://jsonplaceholder.typicode.com',
 });
 ```
 
 ... or setting up a global interceptor:
 
 ```js
-import { axios } from "axios";
+import { axios } from 'axios';
 
 axios.interceptors.request.use(async config => {
-  config.proxy = { protocol: "http", host: "localhost", port: 8123 };
+  config.proxy = { protocol: 'http', host: 'localhost', port: 8123 };
   return config;
 });
 ```
 
 ```js
-import { setGlobalDispatcher, getGlobalDispatcher } from "undici"; 
+import { setGlobalDispatcher, getGlobalDispatcher } from 'undici'; 
 
 const proxyingDispatcher = getGlobalDispatcher().compose(dispatch => (opts, handler) => {
   opts.path = opts.origin + opts.path;
@@ -675,7 +675,7 @@ Monkey-patch `globalThis.fetch` in your `instrumentation.ts` file:
 ```ts
 // instrumentation.ts
 
-import { headers } from "next/headers"
+import { headers } from 'next/headers'
  
 export function register() {
   if (process.env.NODE_ENV === 'test') {
@@ -698,11 +698,11 @@ export function register() {
 Monkey-patch `globalThis.fetch` in your `entry.server.ts` file, and use `AsyncLocalStorage` to make current request headers available:
 
 ```ts
-import { setGlobalDispatcher, getGlobalDispatcher } from "undici";
-import { AsyncLocalStorage } from "node:async_hooks";
+import { setGlobalDispatcher, getGlobalDispatcher } from 'undici';
+import { AsyncLocalStorage } from 'node:async_hooks';
 
 const headersStore = new AsyncLocalStorage<Headers>();
-if (process.env.NODE_ENV === "test") {
+if (process.env.NODE_ENV === 'test') {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (input, init) => {
     const proxy = headersStore.getStore()?.get('x-playwright-proxy');
@@ -713,10 +713,10 @@ if (process.env.NODE_ENV === "test") {
   };
 }
 
-export default function handleRequest(request: Request, ...) {
+export default function handleRequest(request: Request, /* ... */) {
   return headersStore.run(request.headers, () => {
     // ...
-    return handleBrowserRequest(request, ...);
+    return handleBrowserRequest(request, /* ... */);
   })
 }
 ```
@@ -734,9 +734,9 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 const serverConfig = {
   providers: [
-    ...
+    /* ... */
     provideHttpClient(
-      ...,
+      /* ... */,
       withInterceptors([
         (req, next) => {
           const proxy = inject(REQUEST)?.headers.get('x-playwright-proxy');
@@ -749,7 +749,7 @@ const serverConfig = {
   ]
 };
 
-...
+/* ... */
 ```
 
 ```ts
