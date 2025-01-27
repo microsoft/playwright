@@ -46,7 +46,7 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
   async instrumentBrowserRequest(route: network.Route) {
     const isSimpleCORS = false; // TODO: implement simple CORS
     if (isSimpleCORS)
-      return await route.continue();
+      return await route.fallback();
 
     const request = route.request();
     const correlation = request._guid.split('@')[1];
