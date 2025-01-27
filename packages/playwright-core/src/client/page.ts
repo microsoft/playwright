@@ -483,12 +483,13 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.requestGC();
   }
 
-  async emulateMedia(options: { media?: 'screen' | 'print' | null, colorScheme?: 'dark' | 'light' | 'no-preference' | null, reducedMotion?: 'reduce' | 'no-preference' | null, forcedColors?: 'active' | 'none' | null } = {}) {
+  async emulateMedia(options: { media?: 'screen' | 'print' | null, colorScheme?: 'dark' | 'light' | 'no-preference' | null, reducedMotion?: 'reduce' | 'no-preference' | null, forcedColors?: 'active' | 'none' | null, contrast?: 'no-preference' | 'more' | null } = {}) {
     await this._channel.emulateMedia({
       media: options.media === null ? 'no-override' : options.media,
       colorScheme: options.colorScheme === null ? 'no-override' : options.colorScheme,
       reducedMotion: options.reducedMotion === null ? 'no-override' : options.reducedMotion,
       forcedColors: options.forcedColors === null ? 'no-override' : options.forcedColors,
+      contrast: options.contrast === null ? 'no-override' : options.contrast,
     });
   }
 

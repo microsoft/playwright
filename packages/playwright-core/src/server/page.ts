@@ -107,6 +107,7 @@ type EmulatedMedia = {
   colorScheme: types.ColorScheme;
   reducedMotion: types.ReducedMotion;
   forcedColors: types.ForcedColors;
+  contrast: types.Contrast;
 };
 
 type ExpectScreenshotOptions = ImageComparatorOptions & ScreenshotOptions & {
@@ -530,6 +531,8 @@ export class Page extends SdkObject {
       this._emulatedMedia.reducedMotion = options.reducedMotion;
     if (options.forcedColors !== undefined)
       this._emulatedMedia.forcedColors = options.forcedColors;
+    if (options.contrast !== undefined)
+      this._emulatedMedia.contrast = options.contrast;
 
     await this._delegate.updateEmulateMedia();
   }
@@ -541,6 +544,7 @@ export class Page extends SdkObject {
       colorScheme: this._emulatedMedia.colorScheme !== undefined ? this._emulatedMedia.colorScheme : contextOptions.colorScheme ?? 'light',
       reducedMotion: this._emulatedMedia.reducedMotion !== undefined ? this._emulatedMedia.reducedMotion : contextOptions.reducedMotion ?? 'no-preference',
       forcedColors: this._emulatedMedia.forcedColors !== undefined ? this._emulatedMedia.forcedColors : contextOptions.forcedColors ?? 'none',
+      contrast: this._emulatedMedia.contrast !== undefined ? this._emulatedMedia.contrast : contextOptions.contrast ?? 'no-preference',
     };
   }
 

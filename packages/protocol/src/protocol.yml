@@ -508,6 +508,12 @@ ContextOptions:
       - accept
       - deny
       - internal-browser-default
+    contrast:
+      type: enum?
+      literals:
+      - no-preference
+      - more
+      - no-override
     baseURL: string?
     recordVideo:
       type: object?
@@ -1419,6 +1425,12 @@ Page:
           literals:
           - active
           - none
+          - no-override
+        contrast:
+          type: enum?
+          literals:
+          - no-preference
+          - more
           - no-override
       flags:
         snapshot: true

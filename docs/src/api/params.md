@@ -673,6 +673,18 @@ Emulates `'forced-colors'` media feature, supported values are `'active'`, `'non
 
 Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See [`method: Page.emulateMedia`] for more details. Passing `'null'` resets emulation to system defaults. Defaults to `'none'`.
 
+## context-option-contrast
+* langs: js, java
+- `contrast` <null|[ForcedColors]<"no-preference"|"more">>
+
+Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See [`method: Page.emulateMedia`] for more details. Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+
+## context-option-contrast-csharp-python
+* langs: csharp, python
+- `contrast` <[ForcedColors]<"no-preference"|"more"|"null">>
+
+Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See [`method: Page.emulateMedia`] for more details. Passing `'null'` resets emulation to system defaults. Defaults to `'no-preference'`.
+
 ## context-option-logger
 * langs: js
 - `logger` <[Logger]>
@@ -973,6 +985,8 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 - %%-context-option-reducedMotion-csharp-python-%%
 - %%-context-option-forcedColors-%%
 - %%-context-option-forcedColors-csharp-python-%%
+- %%-context-option-contrast-%%
+- %%-context-option-contrast-csharp-python-%%
 - %%-context-option-logger-%%
 - %%-context-option-videospath-%%
 - %%-context-option-videosize-%%
