@@ -20,15 +20,12 @@ import { APIRequestContext } from './fetch';
 import { Events } from './events';
 
 export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
-  private _port: number;
   private _browserRequests = new Map<string, network.Request>();
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.MockingProxyInitializer) {
     super(parent, type, guid, initializer);
 
-    this._port = initializer.port;
     const requestContext = APIRequestContext.from(initializer.requestContext);
-
     this._channel.on('route', async (params: channels.MockingProxyRouteEvent) => {
       const route = network.Route.from(params.route);
       route._context = requestContext;
@@ -61,7 +58,7 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
   }
 
   port(): number {
-    return this._port;
+    return this._initializer.port;
   }
 
 }
