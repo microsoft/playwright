@@ -593,7 +593,7 @@ export interface MockingProxyChannel extends MockingProxyEventTarget, EventTarge
 }
 export type MockingProxyRouteEvent = {
   route: RouteChannel,
-  browserRequestRoute?: string,
+  browserRequest?: string,
 };
 export type MockingProxySetInterceptionPatternsParams = {
   patterns: {
