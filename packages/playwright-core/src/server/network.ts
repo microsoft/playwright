@@ -22,7 +22,6 @@ import { assert } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 import { SdkObject } from './instrumentation';
 import type { HeadersArray, NameValue } from '../common/types';
-import type { BrowserContextAPIRequestContext } from './fetch';
 import { APIRequestContext } from './fetch';
 import type { NormalizedContinueOverrides } from './types';
 import { BrowserContext } from './browserContext';
