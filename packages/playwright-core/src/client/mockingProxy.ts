@@ -30,13 +30,15 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
     const requestContext = APIRequestContext.from(initializer.requestContext);
 
     this._channel.on('route', async (params: channels.MockingProxyRouteEvent) => {
+      const route = network.Route.from(params.route);
+      route._context = requestContext;
+
       let browserRequest: network.Request | undefined;
       if (params.correlation) {
         browserRequest = this._browserRequests.get(params.correlation);
         this._browserRequests.delete(params.correlation);
       }
-      const route = network.Route.from(params.route);
-      route._context = requestContext;
+
       this.emit(Events.MockingProxy.Route, { route, browserRequest });
     });
   }
