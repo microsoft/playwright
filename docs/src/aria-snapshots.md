@@ -6,7 +6,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Overview
 
-With the Playwright Snapshot testing you can assert the accessibility tree of a page against a predefined snapshot template.
+With Playwright's Snapshot testing you can assert the accessibility tree of a page against a predefined snapshot template.
 
 ```js
 await page.goto('https://playwright.dev/');
@@ -79,12 +79,12 @@ confirms that an input field has the expected value.
 Assertion tests are specific and generally check the current state of an element or property
 against an expected, predefined state.
 They work well for predictable, single-value checks but are limited in scope when testing the
-broader  structure or variations.
+broader structure or variations.
 
 **Advantages**
 - **Clarity**: The intent of the test is explicit and easy to understand.
 - **Specificity**: Tests focus on particular aspects of functionality, making them more robust
-  against  unrelated changes.
+  against unrelated changes.
 - **Debugging**: Failures provide targeted feedback, pointing directly to the problematic aspect.
 
 **Disadvantages**
@@ -222,7 +222,7 @@ attributes.
 ```
 
 In this example, the button role is matched, but the accessible name ("Submit") is not specified, allowing the test to
-pass regardless of the button’s label.
+pass regardless of the button's label.
 
 <hr/>
 
@@ -280,12 +280,12 @@ support regex patterns.
 
 ## Generating snapshots
 
-Creating aria snapshots in Playwright helps ensure and maintain your application’s structure.
+Creating aria snapshots in Playwright helps ensure and maintain your application's structure.
 You can generate snapshots in various ways depending on your testing setup and workflow.
 
 ### 1. Generating snapshots with the Playwright code generator
 
-If you’re using Playwright’s [Code Generator](./codegen.md), generating aria snapshots is streamlined with its
+If you're using Playwright's [Code Generator](./codegen.md), generating aria snapshots is streamlined with its
 interactive interface:
 
 - **"Assert snapshot" Action**: In the code generator, you can use the "Assert snapshot" action to automatically create
@@ -298,18 +298,15 @@ accessible names to aid snapshot creation and review.
 
 ### 2. Updating snapshots with `@playwright/test` and the `--update-snapshots` flag
 
-When using the Playwright test runner (`@playwright/test`), you can automatically update snapshots by running tests with
-the `--update-snapshots` flag:
+When using the Playwright test runner (`@playwright/test`), you can automatically update snapshots with the `--update-snapshots` flag, `-u` for short.
+
+Running tests with the `--update-snapshots` flag will update snapshots that did not match. Matching snapshots will not be updated. Possible values are "all", "changed", "missing" and "none".
 
 ```bash
 npx playwright test --update-snapshots
 ```
 
-This command regenerates snapshots for assertions, including aria snapshots, replacing outdated ones. It’s
-useful when application structure changes require new snapshots as a baseline. Note that Playwright will wait for the
-maximum expect timeout specified in the test runner configuration to ensure the
-page is settled before taking the snapshot. It might be necessary to adjust the `--timeout` if the test hits the timeout
-while generating snapshots.
+Updating snapshots is useful when application structure changes require new snapshots as a baseline. Note that Playwright will wait for the maximum expect timeout specified in the test runner configuration to ensure the page is settled before taking the snapshot. It might be necessary to adjust the `--timeout` if the test hits the timeout while generating snapshots.
 
 #### Empty template for snapshot generation
 
@@ -329,10 +326,34 @@ When updating snapshots, Playwright creates patch files that capture differences
 applied, and committed to source control, allowing teams to track structural changes over time and ensure updates are
 consistent with application requirements.
 
+The source method for updating snapshots can be changed using the `--update-source-method` flag. There are several options available:
+
+- **"patch"** (default): Generates a unified diff file that can be applied to the source code using `git apply`.
+- **"3way"**: Generates merge conflict markers in your source code, allowing you to choose whether to accept changes.
+- **"overwrite"**: Overwrites the source code with the new snapshot values.
+
+```bash
+npx playwright test --update-snapshots --update-source-mode=3way
+```
+
+#### Snapshot as separate files
+
+To store your snapshots in a separate file, use the `toMatchAriaSnapshot` method with the `name` option, specifying a `.yml` file extension.
+
+```js
+await expect(page.getByRole('main')).toMatchAriaSnapshot({ name: 'main-snapshot.yml' });
+```
+
+By default, snapshots are saved in a directory next to your test file and a `.yml` file is created for each project specified in your Playwright configuration file. You can customize the snapshot path template using the `snapshotPathTemplate` option in the test runner configuration:
+
+```js
+snapshotPathTemplate: '__snapshots__/{testFilePath}/{arg}{ext}',
+```
+
 ### 3. Using the `Locator.ariaSnapshot` method
 
 The [`method: Locator.ariaSnapshot`] method allows you to programmatically create a YAML representation of accessible
-elements within a locator’s scope, especially helpful for generating snapshots dynamically during test execution.
+elements within a locator's scope, especially helpful for generating snapshots dynamically during test execution.
 
 **Example**:
 
@@ -361,7 +382,7 @@ var snapshot = await page.Locator("body").AriaSnapshotAsync();
 Console.WriteLine(snapshot);
 ```
 
-This command outputs the aria snapshot within the specified locator’s scope in YAML format, which you can validate
+This command outputs the aria snapshot within the specified locator's scope in YAML format, which you can validate
 or store as needed.
 
 ## Accessibility tree examples
