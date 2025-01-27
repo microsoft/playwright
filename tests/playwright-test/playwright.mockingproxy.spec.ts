@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { suppressCertificateWarning } from '../config/utils';
 import { test, expect } from './playwright-test-fixtures';
+import http from 'http';
 
 test('inject mode', async ({ runInlineTest, server }) => {
   server.setRoute('/page', (req, res) => {
@@ -222,6 +222,35 @@ test('securityDetails', async ({ httpsServer, request, runInlineTest }) => {
         });
       `
   }, { workers: 1 }, { NODE_TLS_REJECT_UNAUTHORIZED: '0' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('aborting', async ({ runInlineTest, server }) => {
+  server.setRoute('/page', async (req, res) => {
+    const proxyURL = decodeURIComponent((req.headers['x-playwright-proxy'] as string) ?? '');
+    const request = http.get(proxyURL + server.PREFIX + '/fallback');
+    request.on('error', () => res.end('aborted'));
+    request.pipe(res);
+  });
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+          mockingProxy: { port: 'inject' }
+        }
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page, context, request }) => {
+        await context.route('${server.PREFIX}/fallback', route => route.abort());
+        const response = await request.get('${server.PREFIX}/page')
+        expect(await response.text()).toEqual('aborted');
+      });
+    `
+  }, { workers: 1 });
+
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
