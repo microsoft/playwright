@@ -136,7 +136,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const localUtils: LocalUtils = (playwright as any)._connection.localUtils();
     const { mockingProxy } = await localUtils._channel.newMockingProxy({ port });
     await use((mockingProxy as any)._object);
-  }, { scope: 'worker' }],
+  }, { scope: 'worker', box: true }],
 
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true }],
   bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP ?? false), { option: true }],
