@@ -87,7 +87,6 @@
     "electron": "^30.1.2",
     "esbuild": "^0.18.11",
     "eslint": "^8.55.0",
-    "eslint-plugin-internal-playwright": "file:utils/eslint-plugin-internal-playwright",
     "eslint-plugin-notice": "^0.9.10",
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^4.6.2",

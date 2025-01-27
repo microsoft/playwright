@@ -243,7 +243,6 @@ export class EventEmitter implements EventEmitterType {
     if (options.behavior === 'wait') {
       const errors: Error[] = [];
       this._rejectionHandler = error => errors.push(error);
-      // eslint-disable-next-line internal-playwright/await-promise-in-class-returns
       return this._waitFor(type).then(() => {
         if (errors.length)
           throw errors[0];
@@ -253,7 +252,6 @@ export class EventEmitter implements EventEmitterType {
     if (options.behavior === 'ignoreErrors')
       this._rejectionHandler = () => {};
 
-    // eslint-disable-next-line internal-playwright/await-promise-in-class-returns
     return Promise.resolve();
   }
 
