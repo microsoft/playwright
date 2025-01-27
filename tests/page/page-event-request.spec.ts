@@ -41,6 +41,20 @@ it('should fire for fetches', async ({ page, server }) => {
   expect(requests.length).toBe(2);
 });
 
+it('should fire for fetches with keepalive: true', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/34497'
+  }
+}, async ({ page, server, browserName }) => {
+  it.fixme(browserName === 'firefox');
+  const requests = [];
+  page.on('request', request => requests.push(request));
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => fetch('/empty.html', { keepalive: true }));
+  expect(requests.length).toBe(2);
+});
+
 it('should report requests and responses handled by service worker', async ({ page, server, isAndroid, isElectron }) => {
   it.fixme(isAndroid);
   it.fixme(isElectron);
