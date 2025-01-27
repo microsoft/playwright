@@ -1220,7 +1220,12 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   maxFailures?: number;
 
   /**
-   * Metadata that will be put directly to the test report serialized as JSON.
+   * Metadata contains key-value pairs to be included in the report. For example, HTML report will display it as
+   * key-value pairs, and JSON report will include metadata serialized as json.
+   *
+   * See also
+   * [testConfig.populateGitInfo](https://playwright.dev/docs/api/class-testconfig#test-config-populate-git-info) that
+   * populates metadata.
    *
    * **Usage**
    *
@@ -1229,7 +1234,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
-   *   metadata: 'acceptance tests',
+   *   metadata: { title: 'acceptance tests' },
    * });
    * ```
    *
@@ -1294,8 +1299,11 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   outputDir?: string;
 
   /**
-   * Whether to populate [testConfig.metadata](https://playwright.dev/docs/api/class-testconfig#test-config-metadata)
-   * with Git info. The metadata will automatically appear in the HTML report and is available in Reporter API.
+   * Whether to populate `'git.commit.info'` field of the
+   * [testConfig.metadata](https://playwright.dev/docs/api/class-testconfig#test-config-metadata) with Git commit info
+   * and CI/CD information.
+   *
+   * This information will appear in the HTML and JSON reports and is available in the Reporter API.
    *
    * **Usage**
    *

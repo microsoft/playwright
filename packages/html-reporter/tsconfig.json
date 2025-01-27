@@ -20,6 +20,7 @@
       "@protocol/*": ["../protocol/src/*"],
       "@web/*": ["../web/src/*"],
       "@playwright/*": ["../playwright/src/*"],
+      "@testIsomorphic/*": ["../playwright/src/isomorphic/*"],
       "playwright-core/lib/*": ["../playwright-core/src/*"],
       "playwright/lib/*": ["../playwright/src/*"],
     }
