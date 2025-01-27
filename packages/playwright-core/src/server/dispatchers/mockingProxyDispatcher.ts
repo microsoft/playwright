@@ -18,7 +18,7 @@ import { MockingProxy } from '../mockingProxy';
 import type { RootDispatcher } from './dispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import type * as channels from '@protocol/channels';
-import { APIRequestContextDispatcher, RequestDispatcher, RouteDispatcher } from './networkDispatchers';
+import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
 import type { Request, Route } from '../network';
 import { urlMatches } from '../../utils/isomorphic/urlMatch';
 
@@ -42,6 +42,20 @@ export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.Mo
     });
     this.addObjectListener(MockingProxy.Events.Request, ({ request, correlation }: { request: Request, correlation?: string }) => {
       this._dispatchEvent('request', { request: RequestDispatcher.from(this as any, request), correlation });
+    });
+    this.addObjectListener(MockingProxy.Events.RequestFailed, (request: Request) => {
+      this._dispatchEvent('requestFailed', {
+        request: RequestDispatcher.from(this as any, request),
+        failureText: request._failureText ?? undefined,
+        responseEndTiming: request._responseEndTiming,
+      });
+    });
+    this.addObjectListener(MockingProxy.Events.RequestFinished, (request: Request) => {
+      this._dispatchEvent('requestFinished', {
+        request: RequestDispatcher.from(this as any, request),
+        response: ResponseDispatcher.fromNullable(this as any, request._existingResponse()),
+        responseEndTiming: request._responseEndTiming,
+      });
     });
   }
 
