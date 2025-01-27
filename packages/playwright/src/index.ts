@@ -25,6 +25,7 @@ import { rootTestType } from './common/testType';
 import type { ContextReuseMode } from './common/config';
 import type { ApiCallData, ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import type { MockingProxy } from '../../playwright-core/src/client/mockingProxy';
+import type { BrowserContext as BrowserContextImpl } from '../../playwright-core/src/client/browserContext';
 import { currentTestInfo } from './common/globals';
 import type { LocalUtils } from 'playwright-core/lib/client/localUtils';
 export { expect } from './matchers/expect';
@@ -369,8 +370,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           size: typeof video === 'string' ? undefined : video.size,
         }
       } : {};
-      const context = await browser.newContext({ ...videoOptions, ...options });
-      _mockingProxy?.install(context as any);
+      const context = await browser.newContext({ ...videoOptions, ...options }) as BrowserContextImpl;
+      if (_mockingProxy)
+        context._subscribeToMockingProxy(_mockingProxy);
       const contextData: { pagesWithVideo: Page[] } = { pagesWithVideo: [] };
       contexts.set(context, contextData);
       if (captureVideo)

@@ -69,8 +69,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _closeWasCalled = false;
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
-
-  _mockingProxies = new Set<MockingProxy>();
+  private _mockingProxies = new Set<MockingProxy>();
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -229,6 +228,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await route._innerContinue(true /* isFallback */).catch(() => {});
   }
 
+  private _onRouteListener = (route: network.Route) => this._onRoute(route);
+
   async _onWebSocketRoute(webSocketRoute: network.WebSocketRoute) {
     const routeHandler = this._webSocketRoutes.find(route => route.matches(webSocketRoute.url()));
     if (routeHandler)
@@ -242,6 +243,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (!func)
       return;
     await bindingCall.call(func);
+  }
+
+  _subscribeToMockingProxy(mockingProxy: MockingProxy) {
+    this._mockingProxies.add(mockingProxy);
+    mockingProxy.on(Events.MockingProxy.Route, this._onRouteListener);
   }
 
   setDefaultNavigationTimeout(timeout: number | undefined) {
@@ -465,7 +471,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._disposeHarRouters();
     this.tracing._resetStackCounter();
     this.emit(Events.BrowserContext.Close, this);
-    this._mockingProxies.forEach(p => p.uninstall(this));
+    this._mockingProxies.forEach(p => {
+      p.off(Events.MockingProxy.Route, this._onRouteListener);
+    });
   }
 
   async [Symbol.asyncDispose]() {
