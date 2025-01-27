@@ -239,7 +239,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (serviceWorkers !== undefined)
       options.serviceWorkers = serviceWorkers;
     if (_mockingProxy)
-      options.extraHTTPHeaders = { ...options.extraHTTPHeaders, 'x-playwright-proxy-port': String(_mockingProxy.port()) };
+      options.extraHTTPHeaders = { ...options.extraHTTPHeaders, 'x-playwright-proxy': encodeURIComponent(`http://localhost:${_mockingProxy.port()}/`) };
     await use({
       ...contextOptions,
       ...options,

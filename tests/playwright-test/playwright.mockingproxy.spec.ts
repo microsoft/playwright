@@ -18,7 +18,7 @@ import { test, expect } from './playwright-test-fixtures';
 
 test('inject mode', async ({ runInlineTest, server }) => {
   server.setRoute('/page', (req, res) => {
-    res.end(req.headers['x-pw-proxy-port'] ?? 'no port given');
+    res.end(req.headers['x-playwright-proxy'] ? 'proxy url injected' : 'proxy url missing');
   });
   const result = await runInlineTest({
     'playwright.config.ts': `
@@ -30,12 +30,11 @@ test('inject mode', async ({ runInlineTest, server }) => {
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
-      test('foo', async ({ server, page, request }) => {
+      test('foo', async ({ page, request }) => {
         await page.goto('${server.PREFIX}/page');
-        expect(await page.textContent('body')).toEqual('' + server.port());
-
+        expect(await page.textContent('body')).toEqual('proxy url injected');
         const response = await request.get('${server.PREFIX}/page');
-        expect(await response.text()).toEqual('' + server.port());
+        expect(await response.text()).toEqual('proxy url injected');
       });
     `
   }, { workers: 1 });
@@ -55,8 +54,7 @@ test('throws on fixed mocking proxy port and parallel workers', async ({ runInli
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
-      test('foo', async ({ server }) => {
-      });
+      test('foo', async ({}) => {});
     `
   }, { workers: 2 });
 
@@ -64,26 +62,12 @@ test('throws on fixed mocking proxy port and parallel workers', async ({ runInli
   expect(result.output).toContain('Cannot share mocking proxy between multiple workers.');
 });
 
-test('throws on missing config', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('foo', async ({ server }) => {
-      });
-    `
-  }, { workers: 2 });
-
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`The 'server' fixture is only available when 'mockingProxy' is enabled.`);
-});
-
 test('routes are reset between tests', async ({ runInlineTest, server, request }) => {
   server.setRoute('/fallback', async (req, res) => {
     res.end('fallback');
   });
   server.setRoute('/page', async (req, res) => {
-    const port = req.headers['x-pw-proxy-port'];
-    const proxyURL = `http://localhost:${port}/`;
+    const proxyURL = decodeURIComponent((req.headers['x-playwright-proxy'] as string) ?? '');
     const response = await request.get(proxyURL + server.PREFIX + '/fallback');
     res.end(await response.body());
   });
@@ -97,13 +81,13 @@ test('routes are reset between tests', async ({ runInlineTest, server, request }
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
-      test('first', async ({ server, page, request }) => {
-        await server.route('${server.PREFIX}/fallback', route => route.fulfill({ body: 'first' }));
+      test('first', async ({ page, request, context }) => {
+        await context.route('${server.PREFIX}/fallback', route => route.fulfill({ body: 'first' }));
         await page.goto('${server.PREFIX}/page');
         expect(await page.textContent('body')).toEqual('first');
       });
-      test('second', async ({ server, page, request }) => {
-        await server.route('${server.PREFIX}/fallback', route => route.fallback());
+      test('second', async ({ page, request, context }) => {
+        await context.route('${server.PREFIX}/fallback', route => route.fallback());
         await page.goto('${server.PREFIX}/page');
         expect(await page.textContent('body')).toEqual('fallback');
       });

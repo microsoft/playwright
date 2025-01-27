@@ -17,6 +17,7 @@ import * as network from './network';
 import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { APIRequestContext } from './fetch';
+import { Events } from './events';
 
 export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
   private _port: number;
@@ -30,7 +31,7 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
     this._channel.on('route', (params: channels.MockingProxyRouteEvent) => {
       const route = network.Route.from(params.route);
       route._context = requestContext;
-      this.emit('route', route);
+      this.emit(Events.MockingProxy.Route, route);
     });
   }
 
