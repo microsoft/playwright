@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { suppressCertificateWarning } from '../config/utils';
 import { test, expect } from './playwright-test-fixtures';
 
 test('inject mode', async ({ runInlineTest, server }) => {
@@ -176,6 +177,51 @@ test('all properties are populated', async ({ runInlineTest, server, request }) 
     `
   }, { workers: 1 });
 
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('securityDetails', async ({ httpsServer, request, runInlineTest }) => {
+  httpsServer.setRoute('/fallback', async (req, res) => {
+    res.statusCode = 201;
+    res.setHeader('foo', 'bar');
+    res.end('fallback');
+  });
+  httpsServer.setRoute('/page', async (req, res) => {
+    const proxyURL = decodeURIComponent((req.headers['x-playwright-proxy'] as string) ?? '');
+    const response = await request.get(proxyURL + httpsServer.PREFIX + '/fallback', { ignoreHTTPSErrors: true });
+    res.end(await response.body());
+  });
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+        module.exports = {
+          use: {
+            mockingProxy: { port: 'inject' },
+            ignoreHTTPSErrors: true,
+          }
+        };
+      `,
+    'a.test.js': `
+        import { test, expect } from '@playwright/test';
+        test('test', async ({ page, context }) => {
+          let request;
+          await context.route('${httpsServer.PREFIX}/fallback', route => {
+            request = route.request();
+            route.continue();
+          });
+          await page.goto('${httpsServer.PREFIX}/page');
+          expect(await page.textContent('body')).toEqual('fallback');
+          const response = await request.response();
+          expect(await response.securityDetails()).toEqual({
+            "issuer": "playwright-test",
+            "protocol": expect.any(String),
+            "subjectName": "playwright-test",
+            "validFrom": expect.any(Number),
+            "validTo": expect.any(Number)
+          });
+        });
+      `
+  }, { workers: 1 }, { NODE_TLS_REJECT_UNAUTHORIZED: '0' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
