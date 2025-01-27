@@ -228,8 +228,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await route._innerContinue(true /* isFallback */).catch(() => {});
   }
 
-  private _onRouteListener = ({ route, browserRequest }: { route: network.Route, browserRequest: network.Route }) => {
-    const page = browserRequest.request()._safePage();
+  private _onRouteListener = ({ route, browserRequest }: { route: network.Route, browserRequest?: network.Request }) => {
+    const page = browserRequest?._safePage();
     if (page)
       page._onRoute(route);
     else

@@ -48,8 +48,9 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
     if (isSimpleCORS)
       return await route.continue();
 
-    this._browserRequests.set(route._guid, route.request());
-    const proxyUrl = `http://localhost:${this.port()}/pw_meta:${route.request()._guid}/`;
+    const request = route.request();
+    this._browserRequests.set(request._guid, request);
+    const proxyUrl = `http://localhost:${this.port()}/pw_meta:${request._guid}/`;
 
     await route.continue({ headers: { 'x-playwright-proxy': encodeURIComponent(proxyUrl) } });
   }
