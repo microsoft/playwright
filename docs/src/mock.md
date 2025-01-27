@@ -567,7 +567,7 @@ Playwright's mocking proxy is an HTTP proxy server that's connected to the curre
 For browser network mocking, Playwright always knows what browser context and page a request is coming from. But because there's only a single application server shared by multiple concurrent test runs, it cannot know this for server requests! To resolve this, pick one of these two strategies:
 
 1. [Disable parallelism](./test-parallel.md#disable-parallelism), so that there's only a single test at a time.
-2. On the server, read the `x-playwright-proxy-port` header of incoming requests. When the mocking proxy is configured, Playwright adds this header to all browser requests.
+2. On the server, read the `x-playwright-proxy` header of incoming requests. When the mocking proxy is configured, Playwright adds this header to all browser requests.
 
 The second strategy can be hard to integrate for some applications, because it requires access to the current request from where you're making your API requests.
 If this is possible in your application, this is the recommended approach.
@@ -577,7 +577,7 @@ Putting this together, figuring out what proxy to funnel a request should look s
 
 ```js
 const proxyUrl = `http://localhost:8123/`; // 1: Disable Parallelism + hardcode port OR
-const proxyUrl = `http://localhost:${$currentHeaders.get('x-playwright-proxy-port')}/`; // 2: Inject proxy port
+const proxyUrl = decodeURIComponent(currentHeaders.get('x-playwright-proxy') ?? ''); // 2: Inject proxy port
 ```
 
 And this is the Playwright config to go with it:
@@ -681,11 +681,11 @@ export function register() {
   if (process.env.NODE_ENV === 'test') {
     const originalFetch = globalThis.fetch;
     globalThis.fetch = async (input, init) => {
-      const proxyPort = (await headers()).get('x-playwright-proxy-port');
-      if (!proxyPort)
+      const proxy = (await headers()).get('x-playwright-proxy');
+      if (!proxy)
         return originalFetch(input, init);
       const request = new Request(input, init);
-      return originalFetch(`http://localhost:${proxyPort}/${request.url}`, request);
+      return originalFetch(decodeURIComponent(proxy) + request.url, request);
     };
   }
 }
@@ -705,11 +705,11 @@ const headersStore = new AsyncLocalStorage<Headers>();
 if (process.env.NODE_ENV === "test") {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (input, init) => {
-    const proxyPort = headersStore.getStore()?.get('x-playwright-proxy-port');
-    if (!proxyPort)
+    const proxy = headersStore.getStore()?.get('x-playwright-proxy');
+    if (!proxy)
       return originalFetch(input, init);
     const request = new Request(input, init);
-    return originalFetch(`http://localhost:${proxyPort}/${request.url}`, request);
+    return originalFetch(decodeURIComponent(proxy) + request.url, request);
   };
 }
 
@@ -739,9 +739,9 @@ const serverConfig = {
       ...,
       withInterceptors([
         (req, next) => {
-          const proxyPort = inject(REQUEST)?.headers.get('x-playwright-proxy-port');
-          if (proxyPort)
-            req = req.clone({ url: `http://localhost:${proxyPort}/${req.url}` })
+          const proxy = inject(REQUEST)?.headers.get('x-playwright-proxy');
+          if (proxy)
+            req = req.clone({ url: decodeURIComponent(proxy) + req.url })
           return next(req);
         },
       ])

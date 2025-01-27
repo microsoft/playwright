@@ -227,7 +227,7 @@ type ConnectOptions = {
 };
 type MockingProxyOptions = {
   /**
-   * What port to start the mocking proxy on. If set to `"inject"`, Playwright will use a free port and inject it into all outgoing requests under the `x-playwright-proxy-port` parameter.
+   * What port to start the mocking proxy on. If set to `"inject"`, Playwright will use a free port and inject the proxy URL it into all outgoing requests under the `x-playwright-proxy` header.
    */
   port: number | "inject";
 }

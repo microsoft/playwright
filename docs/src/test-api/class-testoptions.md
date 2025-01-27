@@ -680,7 +680,7 @@ export default defineConfig({
 ## property: TestOptions.mockingProxy
 * since: v1.51
 - type: <[Object]>
-  - `port` <[int]|"inject"> What port to start the mocking proxy on. If set to `"inject"`, Playwright will use a free port and inject it into all outgoing requests under the `x-playwright-proxy-port` parameter.
+  - `port` <[int]|"inject"> What port to start the mocking proxy on. If set to `"inject"`, Playwright will use a free port and inject the proxy URL into all outgoing requests under the `x-playwright-proxy` header.
 
 **Usage**
 
