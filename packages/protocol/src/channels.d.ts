@@ -586,6 +586,10 @@ export type MockingProxyInitializer = {
 };
 export interface MockingProxyEventTarget {
   on(event: 'route', callback: (params: MockingProxyRouteEvent) => void): this;
+  on(event: 'request', callback: (params: MockingProxyRequestEvent) => void): this;
+  on(event: 'requestFailed', callback: (params: MockingProxyRequestFailedEvent) => void): this;
+  on(event: 'requestFinished', callback: (params: MockingProxyRequestFinishedEvent) => void): this;
+  on(event: 'response', callback: (params: MockingProxyResponseEvent) => void): this;
 }
 export interface MockingProxyChannel extends MockingProxyEventTarget, EventTargetChannel {
   _type_MockingProxy: boolean;
@@ -593,7 +597,24 @@ export interface MockingProxyChannel extends MockingProxyEventTarget, EventTarge
 }
 export type MockingProxyRouteEvent = {
   route: RouteChannel,
+};
+export type MockingProxyRequestEvent = {
+  request: RequestChannel,
   correlation?: string,
+};
+export type MockingProxyRequestFailedEvent = {
+  request: RequestChannel,
+  failureText?: string,
+  responseEndTiming: number,
+};
+export type MockingProxyRequestFinishedEvent = {
+  request: RequestChannel,
+  response?: ResponseChannel,
+  responseEndTiming: number,
+};
+export type MockingProxyResponseEvent = {
+  response: ResponseChannel,
+  page?: PageChannel,
 };
 export type MockingProxySetInterceptionPatternsParams = {
   patterns: {
@@ -609,6 +630,10 @@ export type MockingProxySetInterceptionPatternsResult = void;
 
 export interface MockingProxyEvents {
   'route': MockingProxyRouteEvent;
+  'request': MockingProxyRequestEvent;
+  'requestFailed': MockingProxyRequestFailedEvent;
+  'requestFinished': MockingProxyRequestFinishedEvent;
+  'response': MockingProxyResponseEvent;
 }
 
 // ----------- Root -----------

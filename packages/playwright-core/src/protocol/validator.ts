@@ -348,7 +348,24 @@ scheme.MockingProxyInitializer = tObject({
 });
 scheme.MockingProxyRouteEvent = tObject({
   route: tChannel(['Route']),
+});
+scheme.MockingProxyRequestEvent = tObject({
+  request: tChannel(['Request']),
   correlation: tOptional(tString),
+});
+scheme.MockingProxyRequestFailedEvent = tObject({
+  request: tChannel(['Request']),
+  failureText: tOptional(tString),
+  responseEndTiming: tNumber,
+});
+scheme.MockingProxyRequestFinishedEvent = tObject({
+  request: tChannel(['Request']),
+  response: tOptional(tChannel(['Response'])),
+  responseEndTiming: tNumber,
+});
+scheme.MockingProxyResponseEvent = tObject({
+  response: tChannel(['Response']),
+  page: tOptional(tChannel(['Page'])),
 });
 scheme.MockingProxySetInterceptionPatternsParams = tObject({
   patterns: tArray(tObject({

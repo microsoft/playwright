@@ -30,15 +30,35 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
     this._channel.on('route', async (params: channels.MockingProxyRouteEvent) => {
       const route = network.Route.from(params.route);
       route._context = requestContext;
+      this.emit(Events.MockingProxy.Route, route);
+    });
 
+    this._channel.on('request', async (params: channels.MockingProxyRequestEvent) => {
+      const request = network.Request.from(params.request);
       if (params.correlation) {
         const browserRequest = this._browserRequests.get(params.correlation);
         this._browserRequests.delete(params.correlation);
         assert(browserRequest);
-        route.request()._frame = browserRequest._frame;
+        request._frame = browserRequest._frame;
       }
+    });
 
-      this.emit(Events.MockingProxy.Route, route);
+    this._channel.on('requestFailed', async (params: channels.MockingProxyRequestFailedEvent) => {
+      const request = network.Request.from(params.request);
+      request._failureText = params.failureText ?? null;
+      request._setResponseEndTiming(params.responseEndTiming);
+    });
+
+    this._channel.on('requestFinished', async (params: channels.MockingProxyRequestFinishedEvent) => {
+      const { responseEndTiming } = params;
+      const request = network.Request.from(params.request);
+      const response = network.Response.fromNullable(params.response);
+      request._setResponseEndTiming(responseEndTiming);
+      response?._finishedPromise.resolve(null);
+    });
+
+    this._channel.on('response', async (params: channels.MockingProxyResponseEvent) => {
+      // no-op
     });
   }
 

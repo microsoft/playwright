@@ -19,7 +19,7 @@ import type { RootDispatcher } from './dispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import type * as channels from '@protocol/channels';
 import { APIRequestContextDispatcher, RequestDispatcher, RouteDispatcher } from './networkDispatchers';
-import type { Route } from '../network';
+import type { Request, Route } from '../network';
 import { urlMatches } from '../../utils/isomorphic/urlMatch';
 
 export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.MockingProxyChannel, RootDispatcher> implements channels.MockingProxyChannel {
@@ -36,9 +36,12 @@ export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.Mo
       requestContext: APIRequestContextDispatcher.from(scope, mockingProxy.fetchRequest),
     });
 
-    this.addObjectListener(MockingProxy.Events.Route, ({ route, correlation }: {route: Route, correlation?: string }) => {
+    this.addObjectListener(MockingProxy.Events.Route, (route: Route) => {
       const requestDispatcher = RequestDispatcher.from(this as any, route.request());
-      this._dispatchEvent('route', { route: RouteDispatcher.from(requestDispatcher, route), correlation });
+      this._dispatchEvent('route', { route: RouteDispatcher.from(requestDispatcher, route) });
+    });
+    this.addObjectListener(MockingProxy.Events.Request, ({ request, correlation }: { request: Request, correlation?: string }) => {
+      this._dispatchEvent('request', { request: RequestDispatcher.from(this as any, request), correlation });
     });
   }
 

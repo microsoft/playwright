@@ -700,7 +700,28 @@ MockingProxy:
     route:
       parameters:
         route: Route
+
+    request:
+      parameters:
+        request: Request
         correlation: string?
+
+    requestFailed:
+      parameters:
+        request: Request
+        failureText: string?
+        responseEndTiming: number
+
+    requestFinished:
+      parameters:
+        request: Request
+        response: Response?
+        responseEndTiming: number
+    
+    response:
+      parameters:
+        response: Response
+        page: Page?
 
 Root:
   type: interface

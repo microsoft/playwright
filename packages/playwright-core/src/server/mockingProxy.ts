@@ -87,7 +87,7 @@ export class MockingProxy extends SdkObject implements RequestContext {
     const body = await collectBody(req);
     const request = new Request(this, null, null, null, undefined, req.url!, '', req.method!, body, headers);
     request.setRawRequestHeaders(headers);
-    this.emit(MockingProxy.Events.Request, request);
+    this.emit(MockingProxy.Events.Request, { request, correlation });
 
     const route = new Route(request, {
       abort: async errorCode => {
@@ -209,7 +209,7 @@ export class MockingProxy extends SdkObject implements RequestContext {
     });
 
     if (this._matches?.(req.url!))
-      this.emit(MockingProxy.Events.Route, { route, correlation });
+      this.emit(MockingProxy.Events.Route, route);
     else
       await route.continue({ isFallback: false });
   }
