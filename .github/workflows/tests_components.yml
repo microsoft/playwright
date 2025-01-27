@@ -20,7 +20,6 @@ env:
 jobs:
   test_components:
     name: ${{ matrix.os }} - Node.js ${{ matrix.node-version }}
-    if: github.repository == 'microsoft/playwright'
     strategy:
       fail-fast: false
       matrix:

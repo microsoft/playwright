@@ -7,7 +7,8 @@ on:
       - main
     paths:
       - .github/workflows/tests_bidi.yml
-      - packages/playwright-core/src/server/bidi/*
+      - packages/playwright-core/src/server/bidi/**
+      - tests/bidi/**
   schedule:
     # Run every day at midnight
     - cron: '0 0 * * *'
@@ -18,7 +19,6 @@ env:
 jobs:
   test_bidi:
     name: BiDi
-    if: github.repository == 'microsoft/playwright'
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     runs-on: ubuntu-24.04
     permissions:

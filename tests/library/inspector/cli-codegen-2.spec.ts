@@ -459,8 +459,13 @@ await page1.GotoAsync("about:blank?foo");`);
     const cli = runCLI([`--save-storage=${storageFileName}`, `--save-har=${harFileName}`]);
     await cli.waitFor(`import { test, expect } from '@playwright/test'`);
     await cli.process.kill('SIGINT');
-    const { exitCode } = await cli.process.exited;
-    expect(exitCode).toBe(130);
+    const { exitCode, signal } = await cli.process.exited;
+    if (exitCode !== null) {
+      expect(exitCode).toBe(130);
+    } else {
+      // If the runner is slow enough, the process will be forcibly terminated by the signal
+      expect(signal).toBe('SIGINT');
+    }
     expect(fs.existsSync(storageFileName)).toBeTruthy();
     expect(fs.existsSync(harFileName)).toBeTruthy();
   });

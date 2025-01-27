@@ -10,13 +10,13 @@
       let textarea = document.querySelector('textarea');
       textarea.focus();
       textarea.addEventListener('keydown', event => {
-        log('Keydown:', event.key, event.code, event.which, modifiers(event));
+        log('Keydown:', event.key, event.code, getLocation(event), modifiers(event));
       });
       textarea.addEventListener('keypress', event => {
-        log('Keypress:', event.key, event.code, event.which, event.charCode, modifiers(event));
+        log('Keypress:', event.key, event.code, getLocation(event), event.charCode, modifiers(event));
       });
       textarea.addEventListener('keyup', event => {
-        log('Keyup:', event.key, event.code, event.which, modifiers(event));
+        log('Keyup:', event.key, event.code, getLocation(event), modifiers(event));
       });
       function modifiers(event) {
         let m = [];
@@ -27,6 +27,15 @@
         if (event.shiftKey)
           m.push('Shift')
         return '[' + m.join(' ') + ']';
+      }
+      function getLocation(event) {
+        switch (event.location) {
+          case KeyboardEvent.DOM_KEY_LOCATION_STANDARD: return 'STANDARD';
+          case KeyboardEvent.DOM_KEY_LOCATION_LEFT: return 'LEFT';
+          case KeyboardEvent.DOM_KEY_LOCATION_RIGHT: return 'RIGHT';
+          case KeyboardEvent.DOM_KEY_LOCATION_NUMPAD: return 'NUMPAD';
+          default: return 'Unknown: ' + event.location;
+        };
       }
       function log(...args) {
         console.log.apply(console, args);
