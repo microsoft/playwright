@@ -10,7 +10,6 @@ env:
 jobs:
   test:
     name: "Service"
-    if: github.repository == 'microsoft/playwright'
     strategy:
       fail-fast: false
       matrix:
