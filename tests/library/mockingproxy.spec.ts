@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { APIRequestContext, MockingProxy, Route } from 'packages/playwright-test';
+import type { APIRequestContext, Route } from 'packages/playwright-test';
 import { playwrightTest as baseTest, expect } from '../config/browserTest';
 import { pipeline } from 'stream/promises';
 import { suppressCertificateWarning } from 'tests/config/utils';

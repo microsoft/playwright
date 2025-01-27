@@ -46,7 +46,7 @@ import { GlobalAPIRequestContext } from '../fetch';
 import { MockingProxy } from '../mockingProxy';
 import { MockingProxyDispatcher } from './mockingProxyDispatcher';
 
-export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
+export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
   private _harBackends = new Map<string, HarBackend>();
   private _stackSessions = new Map<string, {

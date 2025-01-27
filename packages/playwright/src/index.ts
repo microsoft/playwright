@@ -370,7 +370,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         }
       } : {};
       const context = await browser.newContext({ ...videoOptions, ...options });
-      _mockingProxy?.installOn(context as any);
+      _mockingProxy?.install(context as any);
       const contextData: { pagesWithVideo: Page[] } = { pagesWithVideo: [] };
       contexts.set(context, contextData);
       if (captureVideo)
