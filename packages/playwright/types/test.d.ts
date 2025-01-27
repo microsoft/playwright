@@ -8714,7 +8714,6 @@ interface LocatorAssertions {
    * ```js
    * await expect(page.locator('body')).toMatchAriaSnapshot();
    * await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'snapshot' });
-   * await expect(page.locator('body')).toMatchAriaSnapshot({ path: '/path/to/snapshot.yml' });
    * ```
    *
    * @param options
@@ -8819,14 +8818,18 @@ interface PageAssertions {
    * await expect(page).toHaveURL(/.*checkout/);
    * ```
    *
-   * @param urlOrRegExp Expected URL string or RegExp.
+   * @param url Expected URL string, RegExp, or predicate receiving [URL] to match. When a
+   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
+   * options was provided and the passed URL is a path, it gets merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param options
    */
-  toHaveURL(urlOrRegExp: string|RegExp, options?: {
+  toHaveURL(url: string|RegExp|((url: URL) => boolean), options?: {
     /**
      * Whether to perform case-insensitive match.
      * [`ignoreCase`](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-url-option-ignore-case)
-     * option takes precedence over the corresponding regular expression flag if specified.
+     * option takes precedence over the corresponding regular expression parameter if specified. A provided predicate
+     * ignores this flag.
      */
     ignoreCase?: boolean;
 
@@ -9669,9 +9672,10 @@ interface TestConfigWebServer {
 
   /**
    * How to shut down the process. If unspecified, the process group is forcefully `SIGKILL`ed. If set to `{ signal:
-   * 'SIGINT', timeout: 500 }`, the process group is sent a `SIGINT` signal, followed by `SIGKILL` if it doesn't exit
-   * within 500ms. You can also use `SIGTERM` instead. A `0` timeout means no `SIGKILL` will be sent. Windows doesn't
-   * support `SIGINT` and `SIGTERM` signals, so this option is ignored.
+   * 'SIGTERM', timeout: 500 }`, the process group is sent a `SIGTERM` signal, followed by `SIGKILL` if it doesn't exit
+   * within 500ms. You can also use `SIGINT` as the signal instead. A `0` timeout means no `SIGKILL` will be sent.
+   * Windows doesn't support `SIGTERM` and `SIGINT` signals, so this option is ignored on Windows. Note that shutting
+   * down a Docker container requires `SIGTERM`.
    */
   gracefulShutdown?: {
     signal: "SIGINT"|"SIGTERM";

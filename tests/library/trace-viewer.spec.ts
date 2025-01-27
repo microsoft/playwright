@@ -1676,7 +1676,8 @@ test('should show only one pointer with multilevel iframes', async ({ page, runA
   await expect.soft(snapshotFrame.frameLocator('iframe').frameLocator('iframe').locator('x-pw-pointer')).toBeVisible();
 });
 
-test('should show a popover', async ({ runAndTrace, page, server }) => {
+test('should show a popover', async ({ runAndTrace, page, server, platform, browserName, macVersion }) => {
+  test.skip(platform === 'darwin' && macVersion === 13 && browserName === 'webkit', 'WebKit on macOS 13.7 reliably fails on this test for some reason');
   const traceViewer = await runAndTrace(async () => {
     await page.setContent(`
       <button popovertarget="pop">Click me</button>

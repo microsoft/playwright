@@ -118,7 +118,14 @@ export class PlaywrightConnection {
     const playwright = createPlaywright({ sdkLanguage: options.sdkLanguage, isServer: true });
 
     const ownedSocksProxy = await this._createOwnedSocksProxy(playwright);
-    const browser = await playwright[this._options.browserName as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
+    let browserName = this._options.browserName;
+    if ('bidi' === browserName) {
+      if (this._options.launchOptions?.channel?.toLocaleLowerCase().includes('firefox'))
+        browserName = 'bidiFirefox';
+      else
+        browserName = 'bidiChromium';
+    }
+    const browser = await playwright[browserName as 'chromium'].launch(serverSideCallMetadata(), this._options.launchOptions);
 
     this._cleanups.push(async () => {
       for (const browser of playwright.allBrowsers())

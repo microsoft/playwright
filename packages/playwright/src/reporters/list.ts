@@ -129,6 +129,8 @@ class ListReporter extends TerminalReporter {
     if (this._needNewLine) {
       this._needNewLine = false;
       process.stdout.write('\n');
+      ++this._lastRow;
+      this._lastColumn = 0;
     }
   }
 
@@ -210,6 +212,7 @@ class ListReporter extends TerminalReporter {
       process.stdout.write('\n');
     }
     ++this._lastRow;
+    this._lastColumn = 0;
   }
 
   private _updateLine(row: number, text: string, prefix: string) {

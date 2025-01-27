@@ -301,6 +301,11 @@ export module Protocol {
       forcedColors: ("active"|"none")|null;
     };
     export type setForcedColorsReturnValue = void;
+    export type setContrastParameters = {
+      browserContextId?: string;
+      contrast: ("less"|"more"|"custom"|"no-preference")|null;
+    };
+    export type setContrastReturnValue = void;
     export type setVideoRecordingOptionsParameters = {
       browserContextId?: string;
       options?: {
@@ -530,6 +535,7 @@ export module Protocol {
       colorScheme?: ("dark"|"light"|"no-preference");
       reducedMotion?: ("reduce"|"no-preference");
       forcedColors?: ("active"|"none");
+      contrast?: ("less"|"more"|"custom"|"no-preference");
     };
     export type setEmulatedMediaReturnValue = void;
     export type setCacheDisabledParameters = {
@@ -1131,6 +1137,7 @@ export module Protocol {
     "Browser.setColorScheme": Browser.setColorSchemeParameters;
     "Browser.setReducedMotion": Browser.setReducedMotionParameters;
     "Browser.setForcedColors": Browser.setForcedColorsParameters;
+    "Browser.setContrast": Browser.setContrastParameters;
     "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsParameters;
     "Browser.cancelDownload": Browser.cancelDownloadParameters;
     "Heap.collectGarbage": Heap.collectGarbageParameters;
@@ -1213,6 +1220,7 @@ export module Protocol {
     "Browser.setColorScheme": Browser.setColorSchemeReturnValue;
     "Browser.setReducedMotion": Browser.setReducedMotionReturnValue;
     "Browser.setForcedColors": Browser.setForcedColorsReturnValue;
+    "Browser.setContrast": Browser.setContrastReturnValue;
     "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsReturnValue;
     "Browser.cancelDownload": Browser.cancelDownloadReturnValue;
     "Heap.collectGarbage": Heap.collectGarbageReturnValue;

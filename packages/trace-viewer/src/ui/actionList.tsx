@@ -15,7 +15,7 @@
 */
 
 import type { ActionTraceEvent, AfterActionTraceEventAttachment } from '@trace/trace';
-import { msToString } from '@web/uiUtils';
+import { clsx, msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './actionList.css';
 import * as modelUtil from './modelUtil';
@@ -25,6 +25,7 @@ import { TreeView } from '@web/components/treeView';
 import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
 import type { Boundaries } from './geometry';
 import { ToolbarButton } from '@web/components/toolbarButton';
+import { testStatusIcon } from './testUtils';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
@@ -119,6 +120,7 @@ export const renderAction = (
 
   const parameterString = actionParameterDisplayString(action, sdkLanguage || 'javascript');
 
+  const isSkipped = action.class === 'Test' && action.method === 'test.step.skip';
   let time: string = '';
   if (action.endTime)
     time = msToString(action.endTime - action.startTime);
@@ -149,9 +151,10 @@ export const renderAction = (
       {action.method === 'goto' && action.params.url && <div className='action-url' title={action.params.url}>{action.params.url}</div>}
       {action.class === 'APIRequestContext' && action.params.url && <div className='action-url' title={action.params.url}>{excludeOrigin(action.params.url)}</div>}
     </div>
-    {(showDuration || showBadges || showAttachments) && <div className='spacer'></div>}
+    {(showDuration || showBadges || showAttachments || isSkipped) && <div className='spacer'></div>}
     {showAttachments && <ToolbarButton icon='attach' title='Open Attachment' onClick={() => revealAttachment(action.attachments![0])} />}
-    {showDuration && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
+    {showDuration && !isSkipped && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
+    {isSkipped && <span className={clsx('action-skipped', 'codicon', testStatusIcon('skipped'))} title='skipped'></span>}
     {showBadges && <div className='action-icons' onClick={() => revealConsole?.()}>
       {!!errors && <div className='action-icon'><span className='codicon codicon-error'></span><span className='action-icon-value'>{errors}</span></div>}
       {!!warnings && <div className='action-icon'><span className='codicon codicon-warning'></span><span className='action-icon-value'>{warnings}</span></div>}

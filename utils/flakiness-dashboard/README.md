@@ -5,24 +5,20 @@ The data is consumed by https://devops.playwright.dev/flakiness.html
 
 ## Publish
 
-Azure Functions Core Tools is not available on macOS M1 yet, so we use GitHub Codespaces to publish the function.
-
-### Via GitHub Codespaces:
-
-- Install [Azure Functions Core Tools version 4](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=linux%2Cisolated-process%2Cnode-v4%2Cpython-v2%2Chttp-trigger%2Ccontainer-apps&pivots=programming-language-javascript):
+- Install [Azure Functions Core Tools version 4](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=macos%2Cisolated-process%2Cnode-v4%2Cpython-v2%2Chttp-trigger%2Ccontainer-apps&pivots=programming-language-javascript):
   ```
-  curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
-  mv microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
-  sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main" > /etc/apt/sources.list.d/dotnetdev.list'
-  apt-get update && apt-get install azure-functions-core-tools-4 sudo
+  brew tap azure/functions
+  brew install azure-functions-core-tools@4
+  # if upgrading on a machine that has 2.x or 3.x installed:
+  brew link --overwrite azure-functions-core-tools@4
   ```
 - Install Azure CLI:
   ```bash
-  curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+  brew update && brew install azure-cli
   ```
-- Login to Azure:
+- Login to Azure CLI and select the subscription (popup will open):
   ```bash
-  az login --use-device-code
+  az login
   ```
 - Install NPM Deps (`node_modules/` folder will be published as-is):
   ```

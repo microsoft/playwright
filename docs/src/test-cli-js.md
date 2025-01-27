@@ -111,5 +111,6 @@ Complete set of Playwright Test options is available in the [configuration file]
 | `--ui-host <host>` | Host to serve UI on; specifying this option opens UI in a browser tab. |
 | `--ui-port <port>` | Port to serve UI on, 0 for any free port; specifying this option opens UI in a browser tab. |
 | `-u` or `--update-snapshots [mode]` | Update snapshots with actual results. Possible values are "all", "changed", "missing", and "none". Not passing defaults to "missing"; passing without a value defaults to "changed". |
+| `--update-source-method [mode]` | Update snapshots with actual results. Possible values are "patch" (default), "3way" and "overwrite". "Patch" creates a unified diff file that can be used to update the source code later. "3way" generates merge conflict markers in source code. "Overwrite" overwrites the source code with the new snapshot values.|
 | `-j <workers>` or `--workers <workers>` | Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%). |
 | `-x` | Stop after the first failure. |
