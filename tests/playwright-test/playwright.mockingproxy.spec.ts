@@ -254,3 +254,39 @@ test('aborting', async ({ runInlineTest, server }) => {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('fetch', async ({ runInlineTest, server, request }) => {
+  server.setRoute('/fallback', async (req, res) => {
+    res.statusCode = 201;
+    res.setHeader('foo', 'bar');
+    res.end('fallback');
+  });
+  server.setRoute('/page', async (req, res) => {
+    const proxyURL = decodeURIComponent((req.headers['x-playwright-proxy'] as string) ?? '');
+    const response = await request.get(proxyURL + server.PREFIX + '/fallback');
+    res.end(await response.body());
+  });
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+          mockingProxy: { port: 'inject' }
+        }
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page, context }) => {
+        let request;
+        await context.route('${server.PREFIX}/fallback', async route => {
+          route.fulfill({ response: await route.fetch() });
+        });
+        await page.goto('${server.PREFIX}/page');
+        expect(await page.textContent('body')).toEqual('fallback');
+      });
+    `
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
