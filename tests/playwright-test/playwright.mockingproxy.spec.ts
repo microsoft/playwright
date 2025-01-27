@@ -97,3 +97,85 @@ test('routes are reset between tests', async ({ runInlineTest, server, request }
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(2);
 });
+
+test('all properties are populated', async ({ runInlineTest, server, request }) => {
+  server.setRoute('/fallback', async (req, res) => {
+    res.statusCode = 201;
+    res.setHeader('foo', 'bar');
+    res.end('fallback');
+  });
+  server.setRoute('/page', async (req, res) => {
+    const proxyURL = decodeURIComponent((req.headers['x-playwright-proxy'] as string) ?? '');
+    const response = await request.get(proxyURL + server.PREFIX + '/fallback');
+    res.end(await response.body());
+  });
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        use: {
+          mockingProxy: { port: 'inject' }
+        }
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page, context }) => {
+        let request;
+        await context.route('${server.PREFIX}/fallback', route => {
+          request = route.request();
+          route.continue();
+        });
+        await page.goto('${server.PREFIX}/page');
+        expect(await page.textContent('body')).toEqual('fallback');
+
+        const response = await request.response();
+        expect(request.url()).toBe('${server.PREFIX}/fallback');
+        expect(response.url()).toBe('${server.PREFIX}/fallback');
+        expect(response.status()).toBe(201);
+        expect(await response.headersArray()).toContainEqual({ name: 'foo', value: 'bar' });
+        expect(await response.body()).toEqual(Buffer.from('fallback'));
+    
+        // TODO: implement, this currently blocks because requestFinished isn't emitted
+        // expect(await response.finished()).toBe(null);
+        expect(request.serviceWorker()).toBe(null);
+        expect(() => request.frame()).toThrowError('Assertion error'); // TODO: improve error message
+        expect(() => response.frame()).toThrowError('Assertion error');
+    
+        expect(request.failure()).toBe(null);
+        expect(request.isNavigationRequest()).toBe(false);
+        expect(request.redirectedFrom()).toBe(null);
+        expect(request.redirectedTo()).toBe(null);
+        expect(request.resourceType()).toBe(''); // TODO: should this be different?
+        expect(request.method()).toBe('GET');
+    
+        expect(await request.sizes()).toEqual({
+          requestBodySize: 0,
+          requestHeadersSize: 176,
+          responseBodySize: 8,
+          responseHeadersSize: 137,
+        });
+    
+        expect(request.timing()).toEqual({
+          'connectEnd': expect.any(Number),
+          'connectStart': expect.any(Number),
+          'domainLookupEnd': expect.any(Number),
+          'domainLookupStart': -1,
+          'requestStart': expect.any(Number),
+          'responseEnd': expect.any(Number),
+          'responseStart': expect.any(Number),
+          'secureConnectionStart': -1,
+          'startTime': expect.any(Number),
+        });
+    
+        expect(await response.securityDetails()).toBe(null);
+        expect(await response.serverAddr()).toEqual({
+          ipAddress: expect.any(String),
+          port: expect.any(Number),
+        });
+      });
+    `
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
