@@ -53,7 +53,7 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
     this._browserRequests.set(correlation, request);
     const proxyUrl = `http://localhost:${this.port()}/pw_meta:${correlation}/`;
 
-    await route.continue({ headers: { 'x-playwright-proxy': encodeURIComponent(proxyUrl) } });
+    await route.fallback({ headers: { 'x-playwright-proxy': encodeURIComponent(proxyUrl) } });
   }
 
   port(): number {
