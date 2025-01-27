@@ -96,6 +96,6 @@ export const Events = {
   },
 
   MockingProxy: {
-    Route: 'rooute',
+    Route: 'route',
   },
 };

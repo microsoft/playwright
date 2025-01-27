@@ -228,9 +228,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await route._innerContinue(true /* isFallback */).catch(() => {});
   }
 
-  private _onRouteListener = ({ route, browserRequest }: { route: network.Route, browserRequest?: network.Request }) => {
+  private _onRouteListener = (route: network.Route) => {
     const subject =
-      browserRequest?._safePage()
+      route.request()._safePage()
       ?? this.pages()[0] // Fallback to the first page if no page is associated with the request. This should be the `page` fixture.
       ?? this;
     subject._onRoute(route);

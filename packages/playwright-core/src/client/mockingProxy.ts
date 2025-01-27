@@ -18,6 +18,7 @@ import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { APIRequestContext } from './fetch';
 import { Events } from './events';
+import { assert } from '../utils';
 
 export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
   private _browserRequests = new Map<string, network.Request>();
@@ -30,13 +31,14 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
       const route = network.Route.from(params.route);
       route._context = requestContext;
 
-      let browserRequest: network.Request | undefined;
       if (params.correlation) {
-        browserRequest = this._browserRequests.get(params.correlation);
+        const browserRequest = this._browserRequests.get(params.correlation);
         this._browserRequests.delete(params.correlation);
+        assert(browserRequest);
+        route.request()._frame = browserRequest._frame;
       }
 
-      this.emit(Events.MockingProxy.Route, { route, browserRequest });
+      this.emit(Events.MockingProxy.Route, route);
     });
   }
 
@@ -52,6 +54,12 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
     const request = route.request();
     const correlation = request._guid.split('@')[1];
     this._browserRequests.set(correlation, request);
+
+    void request.response()
+        .then(response => response?.finished())
+        .catch(() => {})
+        .finally(() => this._browserRequests.delete(correlation));
+
     const proxyUrl = `http://localhost:${this.port()}/pw_meta:${correlation}/`;
 
     await route.fallback({ headers: { 'x-playwright-proxy': encodeURIComponent(proxyUrl) } });

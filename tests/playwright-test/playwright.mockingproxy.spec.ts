@@ -137,8 +137,8 @@ test('all properties are populated', async ({ runInlineTest, server, request }) 
         // TODO: implement, this currently blocks because requestFinished isn't emitted
         // expect(await response.finished()).toBe(null);
         expect(request.serviceWorker()).toBe(null);
-        expect(() => request.frame()).toThrowError('Assertion error'); // TODO: improve error message
-        expect(() => response.frame()).toThrowError('Assertion error');
+        expect(request.frame()).not.toBe(null);
+        expect(response.frame()).not.toBe(null);
     
         expect(request.failure()).toBe(null);
         expect(request.isNavigationRequest()).toBe(false);
