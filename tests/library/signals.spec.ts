@@ -26,7 +26,7 @@ test('should close the browser when the node process closes', async ({ startRemo
   const remoteServer = await startRemoteServer('launchServer', { url: server.EMPTY_PAGE });
   try {
     if (isWindows)
-      execSync(`taskkill /pid ${remoteServer.child().pid} /T /F`);
+      execSync(`taskkill /pid ${remoteServer.child().pid} /T /F`, { stdio: 'inherit' });
     else
       process.kill(remoteServer.child().pid);
   } catch (error) {
@@ -40,6 +40,7 @@ test('should close the browser when the node process closes', async ({ startRemo
   // We might not get browser exitCode in time when killing the parent node process,
   // so we don't check it here.
   expect(await remoteServer.childExitCode()).toBe(isWindows ? 1 : 0);
+  expect(false).toBe(true);
 });
 
 test('should remove temp dir on process.exit', async ({ startRemoteServer, server, platform }, testInfo) => {
