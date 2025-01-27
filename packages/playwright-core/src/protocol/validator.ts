@@ -348,7 +348,7 @@ scheme.MockingProxyInitializer = tObject({
 });
 scheme.MockingProxyRouteEvent = tObject({
   route: tChannel(['Route']),
-  browserRequest: tOptional(tString),
+  correlation: tOptional(tString),
 });
 scheme.MockingProxySetInterceptionPatternsParams = tObject({
   patterns: tArray(tObject({

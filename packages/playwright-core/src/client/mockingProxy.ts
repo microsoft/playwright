@@ -30,9 +30,9 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
     const requestContext = APIRequestContext.from(initializer.requestContext);
 
     this._channel.on('route', async (params: channels.MockingProxyRouteEvent) => {
-      const browserRequest = params.browserRequest ? this._browserRequests.get(params.browserRequest) : undefined;
-      if (params.browserRequest)
-        this._browserRequests.delete(params.browserRequest);
+      const browserRequest = params.correlation ? this._browserRequests.get(params.correlation) : undefined;
+      if (params.correlation)
+        this._browserRequests.delete(params.correlation);
       const route = network.Route.from(params.route);
       route._context = requestContext;
       this.emit(Events.MockingProxy.Route, { route, browserRequest });
@@ -49,8 +49,9 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
       return await route.continue();
 
     const request = route.request();
-    this._browserRequests.set(request._guid, request);
-    const proxyUrl = `http://localhost:${this.port()}/pw_meta:${request._guid}/`;
+    const correlation = request._guid.split('@')[1];
+    this._browserRequests.set(correlation, request);
+    const proxyUrl = `http://localhost:${this.port()}/pw_meta:${correlation}/`;
 
     await route.continue({ headers: { 'x-playwright-proxy': encodeURIComponent(proxyUrl) } });
   }

@@ -36,9 +36,9 @@ export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.Mo
       requestContext: APIRequestContextDispatcher.from(scope, mockingProxy.fetchRequest),
     });
 
-    this.addObjectListener(MockingProxy.Events.Route, ({ route, browserRequest }: {route: Route, browserRequest?: string }) => {
+    this.addObjectListener(MockingProxy.Events.Route, ({ route, correlation }: {route: Route, correlation?: string }) => {
       const requestDispatcher = RequestDispatcher.from(this as any, route.request());
-      this._dispatchEvent('route', { route: RouteDispatcher.from(requestDispatcher, route), browserRequest });
+      this._dispatchEvent('route', { route: RouteDispatcher.from(requestDispatcher, route), correlation });
     });
   }
 

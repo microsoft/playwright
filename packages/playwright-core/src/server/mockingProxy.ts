@@ -70,9 +70,9 @@ export class MockingProxy extends SdkObject implements RequestContext {
     if (req.url?.startsWith('/'))
       req.url = req.url.substring(1);
 
-    let browserRequest: string | undefined;
+    let correlation: string | undefined;
     if (req.url?.startsWith('pw_meta:')) {
-      browserRequest = req.url.substring('pw_meta:'.length, req.url.indexOf('/'));
+      correlation = req.url.substring('pw_meta:'.length, req.url.indexOf('/'));
       req.url = req.url.substring(req.url.indexOf('/') + 1);
     }
 
@@ -209,7 +209,7 @@ export class MockingProxy extends SdkObject implements RequestContext {
     });
 
     if (this._matches?.(req.url!))
-      this.emit(MockingProxy.Events.Route, { route, browserRequest });
+      this.emit(MockingProxy.Events.Route, { route, correlation });
     else
       await route.continue({ isFallback: false });
   }
