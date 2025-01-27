@@ -1,6 +1,7 @@
 {
   "name": "@playwright/experimental-tools",
-  "version": "1.51.0-next",
+  "private": true,
+  "version": "0.0.0",
   "description": "Playwright Tools for AI",
   "repository": {
     "type": "git",
