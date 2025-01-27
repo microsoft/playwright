@@ -228,7 +228,13 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await route._innerContinue(true /* isFallback */).catch(() => {});
   }
 
-  private _onRouteListener = (route: network.Route) => this._onRoute(route);
+  private _onRouteListener = ({ route, browserRequest }: { route: network.Route, browserRequest: network.Route }) => {
+    const page = browserRequest.request()._safePage();
+    if (page)
+      page._onRoute(route);
+    else
+      this._onRoute(route);
+  };
 
   async _onWebSocketRoute(webSocketRoute: network.WebSocketRoute) {
     const routeHandler = this._webSocketRoutes.find(route => route.matches(webSocketRoute.url()));
@@ -245,11 +251,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await bindingCall.call(func);
   }
 
-  _subscribeToMockingProxy(mockingProxy: MockingProxy) {
+  async _subscribeToMockingProxy(mockingProxy: MockingProxy) {
     if (this._mockingProxy)
       throw new Error('Multiple mocking proxies are not supported');
     this._mockingProxy = mockingProxy;
     this._mockingProxy.on(Events.MockingProxy.Route, this._onRouteListener);
+    await this.route('**', (route: network.Route) => this._mockingProxy!.instrumentBrowserRequest(route));
   }
 
   setDefaultNavigationTimeout(timeout: number | undefined) {

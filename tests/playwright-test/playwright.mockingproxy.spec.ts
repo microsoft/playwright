@@ -31,11 +31,9 @@ test('inject mode', async ({ runInlineTest, server }) => {
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
-      test('foo', async ({ page, request }) => {
+      test('foo', async ({ page }) => {
         await page.goto('${server.PREFIX}/page');
         expect(await page.textContent('body')).toEqual('proxy url injected');
-        const response = await request.get('${server.PREFIX}/page');
-        expect(await response.text()).toEqual('proxy url injected');
       });
     `
   }, { workers: 1 });

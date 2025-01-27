@@ -700,6 +700,7 @@ MockingProxy:
     route:
       parameters:
         route: Route
+        browserRequestRoute: string?
 
 Root:
   type: interface

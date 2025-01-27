@@ -238,8 +238,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.baseURL = baseURL;
     if (serviceWorkers !== undefined)
       options.serviceWorkers = serviceWorkers;
-    if (_mockingProxy)
-      options.extraHTTPHeaders = { ...options.extraHTTPHeaders, 'x-playwright-proxy': encodeURIComponent(`http://localhost:${_mockingProxy.port()}/`) };
     await use({
       ...contextOptions,
       ...options,
@@ -372,7 +370,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       } : {};
       const context = await browser.newContext({ ...videoOptions, ...options }) as BrowserContextImpl;
       if (_mockingProxy)
-        context._subscribeToMockingProxy(_mockingProxy);
+        await context._subscribeToMockingProxy(_mockingProxy);
       const contextData: { pagesWithVideo: Page[] } = { pagesWithVideo: [] };
       contexts.set(context, contextData);
       if (captureVideo)

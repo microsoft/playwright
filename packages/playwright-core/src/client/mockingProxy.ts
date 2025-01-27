@@ -21,6 +21,7 @@ import { Events } from './events';
 
 export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
   private _port: number;
+  private _browserRequests = new Map<string, network.Route>();
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.MockingProxyInitializer) {
     super(parent, type, guid, initializer);
@@ -28,15 +29,29 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
     this._port = initializer.port;
     const requestContext = APIRequestContext.from(initializer.requestContext);
 
-    this._channel.on('route', (params: channels.MockingProxyRouteEvent) => {
+    this._channel.on('route', async (params: channels.MockingProxyRouteEvent) => {
+      const browserRequest = params.browserRequestRoute ? this._browserRequests.get(params.browserRequestRoute) : undefined;
+      if (params.browserRequestRoute)
+        this._browserRequests.delete(params.browserRequestRoute);
       const route = network.Route.from(params.route);
       route._context = requestContext;
-      this.emit(Events.MockingProxy.Route, route);
+      this.emit(Events.MockingProxy.Route, { route, browserRequest });
     });
   }
 
   async setInterceptionPatterns(params: channels.MockingProxySetInterceptionPatternsParams) {
     await this._channel.setInterceptionPatterns(params);
+  }
+
+  async instrumentBrowserRequest(route: network.Route) {
+    const isSimpleCORS = false; // TODO: implement simple CORS
+    if (isSimpleCORS)
+      return await route.continue();
+
+    this._browserRequests.set(route._guid, route);
+    const proxyUrl = `http://localhost:${this.port()}/pw_meta:${route._guid}/`;
+
+    await route.continue({ headers: { 'x-playwright-proxy': encodeURIComponent(proxyUrl) } });
   }
 
   port(): number {
