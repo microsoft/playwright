@@ -62,6 +62,11 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     return Frame.fromNullable((await this._elementChannel.contentFrame()).frame);
   }
 
+  async _generateLocatorString(): Promise<string | null> {
+    const value = (await this._elementChannel.generateLocatorString()).value;
+    return value === undefined ? null : value;
+  }
+
   async getAttribute(name: string): Promise<string | null> {
     const value = (await this._elementChannel.getAttribute({ name })).value;
     return value === undefined ? null : value;

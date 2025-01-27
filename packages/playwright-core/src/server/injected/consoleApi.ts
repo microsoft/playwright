@@ -85,10 +85,8 @@ class ConsoleAPI {
       inspect: (selector: string) => this._inspect(selector),
       selector: (element: Element) => this._selector(element),
       generateLocator: (element: Element, language?: Language) => this._generateLocator(element, language),
-      ariaSnapshot: (element?: Element) => {
-        const snapshot = this._injectedScript.ariaSnapshot(element || this._injectedScript.document.body);
-        // eslint-disable-next-line no-console
-        console.log(snapshot);
+      ariaSnapshot: (element?: Element, options?: { id?: boolean }) => {
+        return this._injectedScript.ariaSnapshot(element || this._injectedScript.document.body, options);
       },
       resume: () => this._resume(),
       ...new Locator(injectedScript, ''),

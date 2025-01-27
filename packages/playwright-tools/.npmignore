@@ -1,0 +1,8 @@
+**/*
+README.md
+LICENSE
+!lib/*
+!browser.js
+!browser.d.ts
+!computer-20241022.js
+!computer-20241022.d.ts

@@ -1408,10 +1408,10 @@ export class Frame extends SdkObject {
     });
   }
 
-  async ariaSnapshot(metadata: CallMetadata, selector: string, options: types.TimeoutOptions = {}): Promise<string> {
+  async ariaSnapshot(metadata: CallMetadata, selector: string, options: { id?: boolean, mode?: 'raw' | 'regex' } & types.TimeoutOptions = {}): Promise<string> {
     const controller = new ProgressController(metadata, this);
     return controller.run(async progress => {
-      return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, handle => handle.ariaSnapshot());
+      return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, handle => handle.ariaSnapshot(options));
     }, this._page._timeoutSettings.timeout(options));
   }
 

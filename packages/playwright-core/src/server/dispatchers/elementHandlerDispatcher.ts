@@ -63,6 +63,10 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
     return { frame: frame ? FrameDispatcher.from(this._browserContextDispatcher(), frame) : undefined };
   }
 
+  async generateLocatorString(params: channels.ElementHandleGenerateLocatorStringParams, metadata: CallMetadata): Promise<channels.ElementHandleGenerateLocatorStringResult> {
+    return { value: await this._elementHandle.generateLocatorString() };
+  }
+
   async getAttribute(params: channels.ElementHandleGetAttributeParams, metadata: CallMetadata): Promise<channels.ElementHandleGetAttributeResult> {
     const value = await this._elementHandle.getAttribute(metadata, params.name);
     return { value: value === null ? undefined : value };
