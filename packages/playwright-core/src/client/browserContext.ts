@@ -69,7 +69,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _closeWasCalled = false;
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
-  private _mockingProxies = new Set<MockingProxy>();
+  private _mockingProxy?: MockingProxy;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -246,8 +246,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   _subscribeToMockingProxy(mockingProxy: MockingProxy) {
-    this._mockingProxies.add(mockingProxy);
-    mockingProxy.on(Events.MockingProxy.Route, this._onRouteListener);
+    if (this._mockingProxy)
+      throw new Error('Multiple mocking proxies are not supported');
+    this._mockingProxy = mockingProxy;
+    this._mockingProxy.on(Events.MockingProxy.Route, this._onRouteListener);
   }
 
   setDefaultNavigationTimeout(timeout: number | undefined) {
@@ -412,8 +414,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   private async _updateInterceptionPatterns() {
     const patterns = network.RouteHandler.prepareInterceptionPatterns(this._routes);
     await this._channel.setNetworkInterceptionPatterns({ patterns });
-    for (const proxy of this._mockingProxies)
-      await proxy.setInterceptionPatterns({ patterns });
+    await this._mockingProxy?.setInterceptionPatterns({ patterns });
   }
 
   private async _updateWebSocketInterceptionPatterns() {
@@ -471,9 +472,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._disposeHarRouters();
     this.tracing._resetStackCounter();
     this.emit(Events.BrowserContext.Close, this);
-    this._mockingProxies.forEach(p => {
-      p.off(Events.MockingProxy.Route, this._onRouteListener);
-    });
+    this._mockingProxy?.off(Events.MockingProxy.Route, this._onRouteListener);
   }
 
   async [Symbol.asyncDispose]() {
