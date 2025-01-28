@@ -29,7 +29,8 @@ import { Events } from './events';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
 import type { Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
-import { type URLMatch, headersObjectToArray, isRegExp, isString, urlMatchesEqual, mkdirIfNeeded } from '../utils';
+import type { RegisteredListener } from '../utils';
+import { type URLMatch, headersObjectToArray, isRegExp, isString, urlMatchesEqual, mkdirIfNeeded, eventsHelper } from '../utils';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
 import { CDPSession } from './cdpSession';
@@ -44,6 +45,7 @@ import { Dialog } from './dialog';
 import { WebError } from './webError';
 import { TargetClosedError, parseError } from './errors';
 import { Clock } from './clock';
+import type { MockingProxy } from './mockingProxy';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -68,6 +70,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _closeWasCalled = false;
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
+  private _registeredListeners: RegisteredListener[] = [];
+  _mockingProxy?: MockingProxy;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -90,7 +94,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
     this._channel.on('page', ({ page }) => this._onPage(Page.from(page)));
-    this._channel.on('route', ({ route }) => this._onRoute(network.Route.from(route)));
+    this._channel.on('route', params => {
+      const route = network.Route.from(params.route);
+      route._context = this.request;
+      this._onRoute(route);
+    });
     this._channel.on('webSocketRoute', ({ webSocketRoute }) => this._onWebSocketRoute(network.WebSocketRoute.from(webSocketRoute)));
     this._channel.on('backgroundPage', ({ page }) => {
       const backgroundPage = Page.from(page);
@@ -157,9 +165,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this.tracing._tracesDir = browserOptions.tracesDir;
   }
 
-  private _onPage(page: Page): void {
+  private async _onPage(page: Page): Promise<void>{
     this._pages.add(page);
     this.emit(Events.BrowserContext.Page, page);
+    await this._mockingProxy?.instrumentPage(page);
     if (page._opener && !page._opener.isClosed())
       page._opener.emit(Events.Page.Popup, page);
   }
@@ -198,7 +207,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async _onRoute(route: network.Route) {
-    route._context = this;
     const page = route.request()._safePage();
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
@@ -236,6 +244,19 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (!func)
       return;
     await bindingCall.call(func);
+  }
+
+  async _subscribeToMockingProxy(mockingProxy: MockingProxy) {
+    if (this._mockingProxy)
+      throw new Error('Multiple mocking proxies are not supported');
+    this._mockingProxy = mockingProxy;
+    this._registeredListeners.push(
+        eventsHelper.addEventListener(this._mockingProxy, Events.MockingProxy.Route, (route: network.Route) => {
+          const page = route.request()._safePage()!;
+          page._onRoute(route);
+        }),
+        // TODO: should we also emit `request`, `response`, `requestFinished`, `requestFailed` events?
+    );
   }
 
   setDefaultNavigationTimeout(timeout: number | undefined) {
@@ -400,6 +421,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   private async _updateInterceptionPatterns() {
     const patterns = network.RouteHandler.prepareInterceptionPatterns(this._routes);
     await this._channel.setNetworkInterceptionPatterns({ patterns });
+    await this._mockingProxy?.setInterceptionPatterns({ patterns });
   }
 
   private async _updateWebSocketInterceptionPatterns() {
@@ -457,6 +479,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._disposeHarRouters();
     this.tracing._resetStackCounter();
     this.emit(Events.BrowserContext.Close, this);
+    eventsHelper.removeEventListeners(this._registeredListeners);
   }
 
   async [Symbol.asyncDispose]() {

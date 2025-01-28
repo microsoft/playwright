@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type * as contexts from './browserContext';
 import type * as pages from './page';
 import type * as frames from './frames';
 import type * as types from './types';
@@ -88,6 +87,13 @@ export function stripFragmentFromUrl(url: string): string {
   return url.substring(0, url.indexOf('#'));
 }
 
+export interface RequestContext extends SdkObject {
+  fetchRequest: APIRequestContext;
+
+  addRouteInFlight(route: Route): void;
+  removeRouteInFlight(route: Route): void;
+}
+
 export class Request extends SdkObject {
   private _response: Response | null = null;
   private _redirectedFrom: Request | null;
@@ -103,14 +109,14 @@ export class Request extends SdkObject {
   private _headersMap = new Map<string, string>();
   readonly _frame: frames.Frame | null = null;
   readonly _serviceWorker: pages.Worker | null = null;
-  readonly _context: contexts.BrowserContext;
+  readonly _context: RequestContext;
   private _rawRequestHeadersPromise = new ManualPromise<HeadersArray>();
   private _waitForResponsePromise = new ManualPromise<Response | null>();
   _responseEndTiming = -1;
   private _overrides: NormalizedContinueOverrides | undefined;
   private _bodySize: number | undefined;
 
-  constructor(context: contexts.BrowserContext, frame: frames.Frame | null, serviceWorker: pages.Worker | null, redirectedFrom: Request | null, documentId: string | undefined,
+  constructor(context: RequestContext, frame: frames.Frame | null, serviceWorker: pages.Worker | null, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: HeadersArray) {
     super(frame || context, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
@@ -346,7 +352,7 @@ export class Route extends SdkObject {
 
 export type RouteHandler = (route: Route, request: Request) => boolean;
 
-type GetResponseBodyCallback = () => Promise<Buffer>;
+export type GetResponseBodyCallback = () => Promise<Buffer>;
 
 export type ResourceTiming = {
   startTime: number;

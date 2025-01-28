@@ -94,4 +94,8 @@ export const Events = {
     Console: 'console',
     Window: 'window',
   },
+
+  MockingProxy: {
+    Route: 'route',
+  },
 };

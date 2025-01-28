@@ -226,6 +226,29 @@ scheme.APIResponse = tObject({
   headers: tArray(tType('NameValue')),
 });
 scheme.LifecycleEvent = tEnum(['load', 'domcontentloaded', 'networkidle', 'commit']);
+scheme.EventTargetInitializer = tOptional(tObject({}));
+scheme.EventTargetWaitForEventInfoParams = tObject({
+  info: tObject({
+    waitId: tString,
+    phase: tEnum(['before', 'after', 'log']),
+    event: tOptional(tString),
+    message: tOptional(tString),
+    error: tOptional(tString),
+  }),
+});
+scheme.MockingProxyWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+scheme.BrowserContextWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+scheme.PageWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+scheme.WebSocketWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+scheme.ElectronApplicationWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+scheme.AndroidDeviceWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+scheme.EventTargetWaitForEventInfoResult = tOptional(tObject({}));
+scheme.MockingProxyWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
+scheme.BrowserContextWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
+scheme.PageWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
+scheme.WebSocketWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
+scheme.ElectronApplicationWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
+scheme.AndroidDeviceWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.LocalUtilsInitializer = tObject({
   deviceDescriptors: tArray(tObject({
     name: tString,
@@ -313,6 +336,43 @@ scheme.LocalUtilsTraceDiscardedParams = tObject({
   stacksId: tString,
 });
 scheme.LocalUtilsTraceDiscardedResult = tOptional(tObject({}));
+scheme.LocalUtilsNewMockingProxyParams = tOptional(tObject({}));
+scheme.LocalUtilsNewMockingProxyResult = tObject({
+  mockingProxy: tChannel(['MockingProxy']),
+});
+scheme.MockingProxyInitializer = tObject({
+  port: tNumber,
+  requestContext: tChannel(['APIRequestContext']),
+});
+scheme.MockingProxyRouteEvent = tObject({
+  route: tChannel(['Route']),
+});
+scheme.MockingProxyRequestEvent = tObject({
+  request: tChannel(['Request']),
+  correlation: tString,
+});
+scheme.MockingProxyRequestFailedEvent = tObject({
+  request: tChannel(['Request']),
+  failureText: tOptional(tString),
+  responseEndTiming: tNumber,
+});
+scheme.MockingProxyRequestFinishedEvent = tObject({
+  request: tChannel(['Request']),
+  response: tOptional(tChannel(['Response'])),
+  responseEndTiming: tNumber,
+});
+scheme.MockingProxyResponseEvent = tObject({
+  response: tChannel(['Response']),
+  page: tOptional(tChannel(['Page'])),
+});
+scheme.MockingProxySetInterceptionPatternsParams = tObject({
+  patterns: tArray(tObject({
+    glob: tOptional(tString),
+    regexSource: tOptional(tString),
+    regexFlags: tOptional(tString),
+  })),
+});
+scheme.MockingProxySetInterceptionPatternsResult = tOptional(tObject({}));
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tEnum(['javascript', 'python', 'java', 'csharp']),
@@ -780,27 +840,6 @@ scheme.BrowserStopTracingParams = tOptional(tObject({}));
 scheme.BrowserStopTracingResult = tObject({
   artifact: tChannel(['Artifact']),
 });
-scheme.EventTargetInitializer = tOptional(tObject({}));
-scheme.EventTargetWaitForEventInfoParams = tObject({
-  info: tObject({
-    waitId: tString,
-    phase: tEnum(['before', 'after', 'log']),
-    event: tOptional(tString),
-    message: tOptional(tString),
-    error: tOptional(tString),
-  }),
-});
-scheme.BrowserContextWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.PageWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.WebSocketWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.ElectronApplicationWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.AndroidDeviceWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
-scheme.EventTargetWaitForEventInfoResult = tOptional(tObject({}));
-scheme.BrowserContextWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
-scheme.PageWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
-scheme.WebSocketWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
-scheme.ElectronApplicationWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
-scheme.AndroidDeviceWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.BrowserContextInitializer = tObject({
   isChromium: tBoolean,
   requestContext: tChannel(['APIRequestContext']),

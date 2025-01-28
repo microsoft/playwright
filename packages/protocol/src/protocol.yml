@@ -526,6 +526,28 @@ ContextOptions:
       - allow
       - block
 
+EventTarget:
+  type: interface
+
+  commands:
+    waitForEventInfo:
+      parameters:
+        info:
+          type: object
+          properties:
+            waitId: string
+            phase:
+              type: enum
+              literals:
+              - before
+              - after
+              - log
+            event: string?
+            message: string?
+            error: string?
+      flags:
+        snapshot: true
+
 LocalUtils:
   type: interface
 
@@ -646,6 +668,58 @@ LocalUtils:
     traceDiscarded:
       parameters:
         stacksId: string
+
+    newMockingProxy:
+      returns:
+        mockingProxy: MockingProxy
+
+MockingProxy:
+  type: interface
+
+  extends: EventTarget
+
+  initializer:
+    port: number
+    requestContext: APIRequestContext
+
+  commands:
+    setInterceptionPatterns:
+      parameters:
+        patterns:
+          type: array
+          items:
+            type: object
+            properties:
+              glob: string?
+              regexSource: string?
+              regexFlags: string?
+
+  events:
+    route:
+      parameters:
+        route: Route
+
+    request:
+      parameters:
+        request: Request
+        correlation: string
+
+    requestFailed:
+      parameters:
+        request: Request
+        failureText: string?
+        responseEndTiming: number
+
+    requestFinished:
+      parameters:
+        request: Request
+        response: Response?
+        responseEndTiming: number
+    
+    response:
+      parameters:
+        response: Response
+        page: Page?
 
 Root:
   type: interface
@@ -1029,29 +1103,6 @@ ConsoleMessage:
         url: string
         lineNumber: number
         columnNumber: number
-
-
-EventTarget:
-  type: interface
-
-  commands:
-    waitForEventInfo:
-      parameters:
-        info:
-          type: object
-          properties:
-            waitId: string
-            phase:
-              type: enum
-              literals:
-              - before
-              - after
-              - log
-            event: string?
-            message: string?
-            error: string?
-      flags:
-        snapshot: true
 
 BrowserContext:
   type: interface

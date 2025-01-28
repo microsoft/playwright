@@ -554,3 +554,179 @@ await page.RouteWebSocketAsync("wss://example.com/ws", ws => {
 ```
 
 For more details, see [WebSocketRoute].
+
+## Mock Server
+* langs: js
+
+By default, Playwright only has access to the network traffic made by the browser.
+To mock and intercept traffic made by the application server, use Playwright's **experimental** mocking proxy. Note this feature is **experimental** and subject to change.
+
+The mocking proxy is a HTTP proxy server that's connected to the currently running test.
+If you send it a request, it will apply the network routes configured via `page.route` and `context.route`, reusing your existing browser routes.
+
+To get started, enable the `mockingProxy` option in your Playwright config:
+
+```ts
+export default defineConfig({
+  use: { mockingProxy: true }
+});
+```
+
+Playwright will now inject the proxy URL into all browser requests under the `x-playwright-proxy` header.
+On your server, read the URL in this header and prepend it to all outgoing traffic you want to intercept:
+
+```js
+const headers = getCurrentRequestHeaders(); // this looks different for each application
+const proxyURL = decodeURIComponent(headers.get('x-playwright-proxy') ?? '');
+await fetch(proxyURL + 'https://api.example.com/users');
+```
+
+Prepending the URL will direct the request through the proxy. You can now intercept it with `context.route` and `page.route`, just like browser requests:
+
+```ts
+// shopping-cart.spec.ts
+import { test, expect } from '@playwright/test';
+
+test('checkout applies customer loyalty bonus points', async ({ page }) => {
+  await page.route('https://users.internal.example.com/loyalty/balance*', (route, request) => {
+    await route.fulfill({ json: { userId: 'jane@doe.com', balance: 100 } });
+  });
+
+  await page.goto('http://localhost:3000/checkout');
+
+  await expect(page.getByRole('list')).toMatchAriaSnapshot(`
+    - list "Cart":
+      - listitem: Super Duper Hammer
+      - listitem: Nails
+      - listitem: 16mm Birch Plywood
+    - text: "Price after applying 10$ loyalty discount: 79.99$"
+    - button "Buy now"
+  `);
+});
+```
+
+Now, prepending the proxy URL manually can be cumbersome. If your HTTP client supports it, consider updating your client baseURL ...
+
+```js
+import { axios } from 'axios';
+
+const api = axios.create({
+  baseURL: proxyURL + 'https://jsonplaceholder.typicode.com',
+});
+```
+
+... or setting up a global interceptor:
+
+```js
+import { axios } from 'axios';
+
+axios.interceptors.request.use(async config => {
+  config.baseURL = proxyURL + (config.baseURL ?? '/');
+  return config;
+});
+```
+
+```js
+import { setGlobalDispatcher, getGlobalDispatcher } from 'undici';
+
+const proxyingDispatcher = getGlobalDispatcher().compose(dispatch => (opts, handler) => {
+  opts.path = opts.origin + opts.path;
+  opts.origin = proxyURL;
+  return dispatch(opts, handler);
+});
+setGlobalDispatcher(proxyingDispatcher); // this will also apply to global fetch
+```
+
+:::note
+Note that this style of proxying, where the proxy URL is prended to the request URL, does *not* use [`CONNECT`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT), which is the common way of establishing a proxy connection.
+This is because for HTTPS requests, a `CONNECT` proxy does not have access to the proxied traffic. That's great behaviour for a production proxy, but counteracts network interception!
+:::
+
+
+### Recipes
+* langs: js
+
+#### Next.js
+* langs: js
+
+Monkey-patch `globalThis.fetch` in your `instrumentation.ts` file:
+
+```ts
+// instrumentation.ts
+
+import { headers } from 'next/headers';
+
+export function register() {
+  if (process.env.NODE_ENV === 'test') {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async (input, init) => {
+      const proxy = (await headers()).get('x-playwright-proxy');
+      if (!proxy)
+        return originalFetch(input, init);
+      const request = new Request(input, init);
+      return originalFetch(decodeURIComponent(proxy) + request.url, request);
+    };
+  }
+}
+```
+
+#### Remix
+* langs: js
+
+
+Monkey-patch `globalThis.fetch` in your `entry.server.ts` file, and use `AsyncLocalStorage` to make current request headers available:
+
+```ts
+import { setGlobalDispatcher, getGlobalDispatcher } from 'undici';
+import { AsyncLocalStorage } from 'node:async_hooks';
+
+const headersStore = new AsyncLocalStorage<Headers>();
+if (process.env.NODE_ENV === 'test') {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    const proxy = headersStore.getStore()?.get('x-playwright-proxy');
+    if (!proxy)
+      return originalFetch(input, init);
+    const request = new Request(input, init);
+    return originalFetch(decodeURIComponent(proxy) + request.url, request);
+  };
+}
+
+export default function handleRequest(request: Request, /* ... */) {
+  return headersStore.run(request.headers, () => {
+    // ...
+    return handleBrowserRequest(request, /* ... */);
+  });
+}
+```
+
+#### Angular
+* langs: js
+
+Configure your `HttpClient` with an [interceptor](https://angular.dev/guide/http/setup#withinterceptors):
+
+```ts
+// app.config.server.ts
+
+import { inject, REQUEST } from '@angular/core';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+
+const serverConfig = {
+  providers: [
+    /* ... */
+    provideHttpClient(
+        /* ... */
+        withInterceptors([
+          (req, next) => {
+            const proxy = inject(REQUEST)?.headers.get('x-playwright-proxy');
+            if (proxy)
+              req = req.clone({ url: decodeURIComponent(proxy) + req.url })
+            return next(req);
+          },
+        ]),
+    )
+  ]
+};
+
+/* ... */
+```

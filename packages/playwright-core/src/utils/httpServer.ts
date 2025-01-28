@@ -213,12 +213,19 @@ export class HttpServer {
     readable.pipe(response);
   }
 
-  private _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
+  _handleCORS(request: http.IncomingMessage, response: http.ServerResponse): boolean {
     if (request.method === 'OPTIONS') {
       response.writeHead(200);
       response.end();
-      return;
+      return true;
     }
+
+    return false;
+  }
+
+  private _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
+    if (this._handleCORS(request, response))
+      return;
 
     request.on('error', () => response.end());
     try {

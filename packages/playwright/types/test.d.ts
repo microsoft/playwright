@@ -6157,6 +6157,22 @@ export interface PlaywrightWorkerOptions {
    * Learn more about [recording video](https://playwright.dev/docs/test-use-options#recording-options).
    */
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
+  /**
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     mockingProxy: true
+   *   },
+   * });
+   * ```
+   *
+   */
+  mockingProxy: boolean | undefined;
 }
 
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';

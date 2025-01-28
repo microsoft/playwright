@@ -41,8 +41,12 @@ import type { Playwright } from '../playwright';
 import { SdkObject } from '../../server/instrumentation';
 import { serializeClientSideCallMetadata } from '../../utils';
 import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
+import type { APIRequestContext } from '../fetch';
+import { GlobalAPIRequestContext } from '../fetch';
+import { MockingProxy } from '../mockingProxy';
+import { MockingProxyDispatcher } from './mockingProxyDispatcher';
 
-export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
+export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
   private _harBackends = new Map<string, HarBackend>();
   private _stackSessions = new Map<string, {
@@ -51,14 +55,21 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
     tmpDir: string | undefined,
     callStacks: channels.ClientSideCallMetadata[]
   }>();
+  private _requestContext: APIRequestContext;
 
   constructor(scope: RootDispatcher, playwright: Playwright) {
     const localUtils = new SdkObject(playwright, 'localUtils', 'localUtils');
     const deviceDescriptors = Object.entries(descriptors)
         .map(([name, descriptor]) => ({ name, descriptor }));
+
+    const requestContext = new GlobalAPIRequestContext(
+        playwright,
+        {} // TODO: this should probably respect _combinedContextOptions from test runner
+    );
     super(scope, localUtils, 'LocalUtils', {
       deviceDescriptors,
     });
+    this._requestContext = requestContext;
     this._type_LocalUtils = true;
   }
 
@@ -273,6 +284,12 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
       await removeFolders([session.tmpDir]);
     this._stackSessions.delete(stacksId!);
   }
+
+  async newMockingProxy(params: channels.LocalUtilsNewMockingProxyParams, metadata?: CallMetadata): Promise<channels.LocalUtilsNewMockingProxyResult> {
+    const mockingProxy = new MockingProxy(this._object, this._requestContext);
+    await mockingProxy.start();
+    return { mockingProxy: MockingProxyDispatcher.from(this.parentScope(), mockingProxy) };
+  }
 }
 
 const redirectStatus = [301, 302, 303, 307, 308];
@@ -295,7 +312,8 @@ class HarBackend {
       redirectURL?: string,
       status?: number,
       headers?: HeadersArray,
-      body?: Buffer }> {
+    body?: Buffer
+  }> {
     let entry;
     try {
       entry = await this._harFindResponse(url, method, headers, postData);
