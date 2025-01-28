@@ -326,7 +326,7 @@ When updating snapshots, Playwright creates patch files that capture differences
 applied, and committed to source control, allowing teams to track structural changes over time and ensure updates are
 consistent with application requirements.
 
-The source method for updating snapshots can be changed using the `--update-source-method` flag. There are several options available:
+The way source code is updated can be changed using the `--update-source-method` flag. There are several options available:
 
 - **"patch"** (default): Generates a unified diff file that can be applied to the source code using `git apply`.
 - **"3way"**: Generates merge conflict markers in your source code, allowing you to choose whether to accept changes.
@@ -347,7 +347,9 @@ await expect(page.getByRole('main')).toMatchAriaSnapshot({ name: 'main-snapshot.
 By default, snapshots are saved in a directory next to your test file and a `.yml` file is created for each project specified in your Playwright configuration file. You can customize the snapshot path template using the `snapshotPathTemplate` option in the test runner configuration:
 
 ```js
-snapshotPathTemplate: '__snapshots__/{testFilePath}/{arg}{ext}',
+export default defineConfig({
+  snapshotPathTemplate: '__snapshots__/{testFilePath}/{arg}{ext}',
+});
 ```
 
 ### 3. Using the `Locator.ariaSnapshot` method
