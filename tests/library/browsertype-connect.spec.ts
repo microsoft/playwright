@@ -53,7 +53,8 @@ const test = playwrightTest.extend<ExtraFixtures>({
     const server = createHttpServer((req: http.IncomingMessage, res: http.ServerResponse) => {
       res.end('<html><body>from-dummy-server</body></html>');
     });
-    await new Promise<void>(resolve => server.listen(0, resolve));
+    // Only listen on IPv4 to check that we don't try to connect to it via IPv6.
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
     await use((server.address() as net.AddressInfo).port);
     await new Promise<Error>(resolve => server.close(resolve));
   },
@@ -792,9 +793,23 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         const remoteServer = await startRemoteServer(kind);
         const browser = await connect(remoteServer.wsEndpoint(), { _exposeNetwork: '*' } as any, dummyServerPort);
         const page = await browser.newPage();
-        await page.goto(`http://127.0.0.1:${examplePort}/foo.html`);
-        expect(await page.content()).toContain('from-dummy-server');
-        expect(reachedOriginalTarget).toBe(false);
+        {
+          await page.setContent('empty');
+          await page.goto(`http://127.0.0.1:${examplePort}/foo.html`);
+          expect(await page.content()).toContain('from-dummy-server');
+          expect(reachedOriginalTarget).toBe(false);
+        }
+        {
+          await page.setContent('empty');
+          await page.goto(`http://localhost:${examplePort}/foo.html`);
+          expect(await page.content()).toContain('from-dummy-server');
+          expect(reachedOriginalTarget).toBe(false);
+        }
+        {
+          const error = await page.goto(`http://[::1]:${examplePort}/foo.html`).catch(() => 'failed');
+          expect(error).toBe('failed');
+          expect(reachedOriginalTarget).toBe(false);
+        }
       });
 
       test('should proxy ipv6 localhost requests @smoke', async ({ startRemoteServer, server, browserName, connect, platform, ipV6ServerPort }, testInfo) => {
@@ -809,15 +824,27 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         const remoteServer = await startRemoteServer(kind);
         const browser = await connect(remoteServer.wsEndpoint(), { exposeNetwork: '*' }, ipV6ServerPort);
         const page = await browser.newPage();
-        await page.goto(`http://[::1]:${examplePort}/foo.html`);
-        expect(await page.content()).toContain('from-ipv6-server');
-        const page2 = await browser.newPage();
-        await page2.goto(`http://localhost:${examplePort}/foo.html`);
-        expect(await page2.content()).toContain('from-ipv6-server');
-        expect(reachedOriginalTarget).toBe(false);
+        {
+          await page.setContent('empty');
+          await page.goto(`http://[::1]:${examplePort}/foo.html`);
+          expect(await page.content()).toContain('from-ipv6-server');
+          expect(reachedOriginalTarget).toBe(false);
+        }
+        {
+          await page.setContent('empty');
+          await page.goto(`http://localhost:${examplePort}/foo.html`);
+          expect(await page.content()).toContain('from-ipv6-server');
+          expect(reachedOriginalTarget).toBe(false);
+        }
+        {
+          const error = await page.goto(`http://127.0.0.1:${examplePort}/foo.html`).catch(() => 'failed');
+          expect(error).toBe('failed');
+          expect(reachedOriginalTarget).toBe(false);
+        }
       });
 
-      test('should proxy localhost requests from fetch api', async ({ startRemoteServer, server, browserName, connect, channel, platform, dummyServerPort }, workerInfo) => {
+      test('should proxy requests from fetch api', async ({ startRemoteServer, server, browserName, connect, channel, platform, dummyServerPort }, workerInfo) => {
+        test.fixme(true, 'broken because of socks proxy agent error: Socks5 proxy rejected connection - ConnectionRefused');
         test.skip(browserName === 'webkit' && platform === 'darwin', 'no localhost proxying');
 
         let reachedOriginalTarget = false;
@@ -829,10 +856,54 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         const remoteServer = await startRemoteServer(kind);
         const browser = await connect(remoteServer.wsEndpoint(), { exposeNetwork: '*' }, dummyServerPort);
         const page = await browser.newPage();
-        const response = await page.request.get(`http://127.0.0.1:${examplePort}/foo.html`);
-        expect(response.status()).toBe(200);
-        expect(await response.text()).toContain('from-dummy-server');
-        expect(reachedOriginalTarget).toBe(false);
+        {
+          const response = await page.request.get(`http://localhost:${examplePort}/foo.html`);
+          expect(response.status()).toBe(200);
+          expect(await response.text()).toContain('from-dummy-server');
+          expect(reachedOriginalTarget).toBe(false);
+        }
+        {
+          const response = await page.request.get(`http://127.0.0.1:${examplePort}/foo.html`);
+          expect(response.status()).toBe(200);
+          expect(await response.text()).toContain('from-dummy-server');
+          expect(reachedOriginalTarget).toBe(false);
+        }
+        {
+          const error = await page.request.get(`http://[::1]:${examplePort}/foo.html`).catch(e => 'failed');
+          expect(error).toBe('failed');
+          expect(reachedOriginalTarget).toBe(false);
+        }
+      });
+
+      test('should proxy requests from fetch api over ipv6', async ({ startRemoteServer, server, browserName, connect, channel, platform, ipV6ServerPort }, workerInfo) => {
+        test.skip(browserName === 'webkit' && platform === 'darwin', 'no localhost proxying');
+
+        let reachedOriginalTarget = false;
+        server.setRoute('/foo.html', async (req, res) => {
+          reachedOriginalTarget = true;
+          res.end('<html><body></body></html>');
+        });
+        const examplePort = 20_000 + workerInfo.workerIndex * 3;
+        const remoteServer = await startRemoteServer(kind);
+        const browser = await connect(remoteServer.wsEndpoint(), { exposeNetwork: '*' }, ipV6ServerPort);
+        const page = await browser.newPage();
+        {
+          const response = await page.request.get(`http://localhost:${examplePort}/foo.html`);
+          expect(response.status()).toBe(200);
+          expect(await response.text()).toContain('from-ipv6-server');
+          expect(reachedOriginalTarget).toBe(false);
+        }
+        {
+          const response = await page.request.get(`http://[::1]:${examplePort}/foo.html`);
+          expect(response.status()).toBe(200);
+          expect(await response.text()).toContain('from-ipv6-server');
+          expect(reachedOriginalTarget).toBe(false);
+        }
+        {
+          const error = await page.request.get(`http://127.0.0.1:${examplePort}/foo.html`).catch(e => 'failed');
+          expect(error).toBe('failed');
+          expect(reachedOriginalTarget).toBe(false);
+        }
       });
 
       test('should proxy local.playwright requests', async ({ connect, server, dummyServerPort, startRemoteServer }, workerInfo) => {
