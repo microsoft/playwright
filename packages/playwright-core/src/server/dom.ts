@@ -28,7 +28,7 @@ import type { Progress } from './progress';
 import { ProgressController } from './progress';
 import type * as types from './types';
 import type { TimeoutOptions } from '../common/types';
-import { isUnderTest } from '../utils';
+import { asLocator, isUnderTest } from '../utils';
 import { prepareFilesForUpload } from './fileUploadUtils';
 
 export type InputFilesItems = {
@@ -183,6 +183,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (!isFrameElement)
       return null;
     return this._page._delegate.getContentFrame(this);
+  }
+
+  async generateLocatorString(): Promise<string | undefined> {
+    const selector = await this.evaluateInUtility(async ([injected, node]) => {
+      return injected.generateSelectorSimple(node as unknown as Element);
+    }, {});
+    if (selector === 'error:notconnected')
+      return;
+    return asLocator('javascript', selector);
   }
 
   async getAttribute(metadata: CallMetadata, name: string): Promise<string | null> {
@@ -799,8 +808,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._delegate.getBoundingBox(this);
   }
 
-  async ariaSnapshot(): Promise<string> {
-    return await this.evaluateInUtility(([injected, element]) => injected.ariaSnapshot(element), {});
+  async ariaSnapshot(options: { id?: boolean, mode?: 'raw' | 'regex' }): Promise<string> {
+    return await this.evaluateInUtility(([injected, element, options]) => injected.ariaSnapshot(element, options), options);
   }
 
   async screenshot(metadata: CallMetadata, options: ScreenshotOptions & TimeoutOptions = {}): Promise<Buffer> {

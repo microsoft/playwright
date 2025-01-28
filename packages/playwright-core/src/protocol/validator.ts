@@ -1429,6 +1429,8 @@ scheme.FrameAddStyleTagResult = tObject({
 });
 scheme.FrameAriaSnapshotParams = tObject({
   selector: tString,
+  id: tOptional(tBoolean),
+  mode: tOptional(tEnum(['raw', 'regex'])),
   timeout: tOptional(tNumber),
 });
 scheme.FrameAriaSnapshotResult = tObject({
@@ -1925,6 +1927,10 @@ scheme.ElementHandleFillParams = tObject({
 scheme.ElementHandleFillResult = tOptional(tObject({}));
 scheme.ElementHandleFocusParams = tOptional(tObject({}));
 scheme.ElementHandleFocusResult = tOptional(tObject({}));
+scheme.ElementHandleGenerateLocatorStringParams = tOptional(tObject({}));
+scheme.ElementHandleGenerateLocatorStringResult = tObject({
+  value: tOptional(tString),
+});
 scheme.ElementHandleGetAttributeParams = tObject({
   name: tString,
 });

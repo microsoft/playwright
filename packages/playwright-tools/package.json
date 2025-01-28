@@ -1,0 +1,36 @@
+{
+  "name": "@playwright/experimental-tools",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Playwright Tools for AI",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoft/playwright.git"
+  },
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=18"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
+  "exports": {
+    "./browser": {
+      "types": "./browser.d.ts",
+      "default": "./browser.js"
+    },
+    "./computer-20241022": {
+      "types": "./computer-20241022.d.ts",
+      "default": "./computer-20241022.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "playwright": "1.51.0-next"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.33.1",
+    "openai": "^4.79.1"
+  }
+}

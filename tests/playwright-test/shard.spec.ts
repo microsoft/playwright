@@ -139,6 +139,12 @@ test('should respect shard=3/4', async ({ runInlineTest }) => {
   ]);
 });
 
+test('should exit with shard=/3', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34463' });
+  const result = await runInlineTest(tests, { shard: '/3' });
+  expect(result.exitCode).toBe(1);
+});
+
 test('should not produce skipped tests for zero-sized shards', async ({ runInlineTest }) => {
   const result = await runInlineTest(tests, { shard: '10/10', workers: 1 });
   expect(result.exitCode).toBe(0);

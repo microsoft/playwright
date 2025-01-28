@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module.exports = {
-  rules: {
-    'await-promise-in-class-returns': require('./rules/await-promise-in-class-returns'),
-  }
-};
+
+const { call } = require('./lib/tools/computer-20241022');
+
+module.exports = { call };

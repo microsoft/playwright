@@ -280,8 +280,6 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
-  const shardPair = options.shard ? options.shard.split('/').map((t: string) => parseInt(t, 10)) : undefined;
-
   let updateSnapshots: 'all' | 'changed' | 'missing' | 'none' | undefined;
   if (['all', 'changed', 'missing', 'none'].includes(options.updateSnapshots))
     updateSnapshots = options.updateSnapshots;
@@ -298,7 +296,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     repeatEach: options.repeatEach ? parseInt(options.repeatEach, 10) : undefined,
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
     reporter: resolveReporterOption(options.reporter),
-    shard: shardPair ? { current: shardPair[0], total: shardPair[1] } : undefined,
+    shard: resolveShardOption(options.shard),
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     tsconfig: options.tsconfig ? path.resolve(process.cwd(), options.tsconfig) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
@@ -339,6 +337,34 @@ function resolveReporterOption(reporter?: string): ReporterDescription[] | undef
   if (!reporter || !reporter.length)
     return undefined;
   return reporter.split(',').map((r: string) => [resolveReporter(r)]);
+}
+
+function resolveShardOption(shard?: string): ConfigCLIOverrides['shard'] {
+  if (!shard)
+    return undefined;
+
+  const shardPair = shard.split('/');
+
+  if (shardPair.length !== 2) {
+    throw new Error(
+        `--shard "${shard}", expected format is "current/all", 1-based, for example "3/5".`,
+    );
+  }
+
+  const current = parseInt(shardPair[0], 10);
+  const total = parseInt(shardPair[1], 10);
+
+  if (isNaN(total) || total < 1)
+    throw new Error(`--shard "${shard}" total must be a positive number`);
+
+
+  if (isNaN(current) || current < 1 || current > total) {
+    throw new Error(
+        `--shard "${shard}" current must be a positive number, not greater than shard total`,
+    );
+  }
+
+  return { current, total };
 }
 
 function resolveReporter(id: string) {
