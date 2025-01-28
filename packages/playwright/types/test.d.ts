@@ -8689,7 +8689,8 @@ interface LocatorAssertions {
    *
    * ```js
    * await expect(page.locator('body')).toMatchAriaSnapshot();
-   * await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'snapshot' });
+   * await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'snapshot.yml' });
+   *
    * ```
    *
    * @param options
