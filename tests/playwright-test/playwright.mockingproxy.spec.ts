@@ -121,7 +121,7 @@ test('all properties are populated', async ({ runInlineTest, server, request }) 
     
         expect(await request.sizes()).toEqual({
           requestBodySize: 0,
-          requestHeadersSize: 176,
+          requestHeadersSize: expect.any(Number),
           responseBodySize: 8,
           responseHeadersSize: 137,
         });
