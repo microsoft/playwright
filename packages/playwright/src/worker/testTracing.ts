@@ -318,6 +318,7 @@ async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) 
   const mergePromise = new ManualPromise();
   const zipFile = new yazl.ZipFile();
   const entryNames = new Set<string>();
+  const networkTraceEntries = new Map<string, string>();
   (zipFile as any as EventEmitter).on('error', error => mergePromise.reject(error));
 
   for (let i = temporaryTraceFiles.length - 1; i >= 0; --i) {
@@ -335,6 +336,15 @@ async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) 
           // Keep the name for test traces so that the last test trace
           // that contains most of the information is kept in the trace.
           // Note the reverse order of the iteration (from new traces to old).
+        } else if (entry.fileName.endsWith('.trace.network')) {
+          // Network trace file name format is <context guid>.trace.network
+          // Use only latest trace for each context if there are multiple traces,
+          // it will contain all previous events.
+          entryName = networkTraceEntries.get(entry.fileName);
+          if (!entryName) {
+            entryName = i + '-trace.network';
+            networkTraceEntries.set(entry.fileName, entryName);
+          }
         } else if (entry.fileName.match(/[\d-]*trace\./)) {
           entryName = i + '-' + entry.fileName;
         }

@@ -160,3 +160,39 @@ test('should display list of query parameters (only if present)', async ({ runUI
 
   await expect(page.getByText('Query String Parameters')).not.toBeVisible();
 });
+
+test('should not duplicate network entries from beforeAll', {
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34404' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33106' },
+  ]
+}, async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'on' } };
+    `,
+    'a.spec.ts': `
+      import { test as base, expect, request, type APIRequestContext } from '@playwright/test';
+
+      const test = base.extend<{}, { apiRequest: APIRequestContext }>({
+        apiRequest: [async ({ }, use) => {
+          const apiContext = await request.newContext();
+          await use(apiContext);
+          await apiContext.dispose();
+        }, { scope: 'worker' }]
+      });
+
+      test.beforeAll(async ({ apiRequest }) => {
+        await apiRequest.get("${server.EMPTY_PAGE}");
+      });
+
+      test('first test', async ({ }) => { });
+
+      test.afterAll(async ({ apiRequest }) => { });
+    `,
+  });
+
+  await page.getByText('first test').dblclick();
+  await page.getByText('Network', { exact: true }).click();
+  await expect(page.getByTestId('network-list').getByText('empty.html')).toHaveCount(1);
+});
