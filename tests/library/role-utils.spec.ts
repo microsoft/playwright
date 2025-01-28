@@ -495,6 +495,21 @@ test('should not include hidden pseudo into accessible name', async ({ page }) =
   expect.soft(await getNameAndRole(page, 'a')).toEqual({ role: 'link', name: 'hello hello' });
 });
 
+test('should resolve pseudo content from attr', async ({ page }) => {
+  await page.setContent(`
+    <style>
+    .stars:before {
+      display: block;
+      content: attr(data-hello);
+    }
+    </style>
+    <a href="http://example.com">
+      <div class="stars" data-hello="hello">world</div>
+    </a>
+  `);
+  expect(await getNameAndRole(page, 'a')).toEqual({ role: 'link', name: 'hello world' });
+});
+
 test('should ignore invalid aria-labelledby', async ({ page }) => {
   await page.setContent(`
     <label>
