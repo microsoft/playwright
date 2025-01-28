@@ -268,6 +268,8 @@ const renderEntry = (resource: Entry, boundaries: Boundaries, contextIdGenerator
     resourceName = url.pathname.substring(url.pathname.lastIndexOf('/') + 1);
     if (!resourceName)
       resourceName = url.host;
+    if (url.search)
+      resourceName += url.search;
   } catch {
     resourceName = resource.request.url;
   }
