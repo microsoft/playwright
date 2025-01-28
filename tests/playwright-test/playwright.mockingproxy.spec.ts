@@ -110,7 +110,7 @@ test('all properties are populated', async ({ runInlineTest, server, request }) 
     
         expect(await response.finished()).toBe(null);
         expect(request.serviceWorker()).toBe(null);
-        expect(request.frame()).not.toBe(null);
+        expect(request.frame()).toBe(null); // we know the page, but not the frame
     
         expect(request.failure()).toBe(null);
         expect(request.isNavigationRequest()).toBe(false);
