@@ -39,6 +39,7 @@ import { baseFullConfig } from '../isomorphic/teleReceiver';
 import { InternalReporter } from '../reporters/internalReporter';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import { internalScreen } from '../reporters/base';
+import { addGitCommitInfoPlugin } from '../plugins/gitCommitInfoPlugin';
 
 const originalStdoutWrite = process.stdout.write;
 const originalStderrWrite = process.stderr.write;
@@ -406,6 +407,7 @@ export class TestServerDispatcher implements TestServerInterface {
       // Preserve plugin instances between setup and build.
       if (!this._plugins) {
         webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
+        addGitCommitInfoPlugin(config);
         this._plugins = config.plugins || [];
       } else {
         config.plugins.splice(0, config.plugins.length, ...this._plugins);

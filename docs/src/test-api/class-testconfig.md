@@ -321,6 +321,22 @@ This path will serve as the base directory for each test file snapshot directory
 ## property: TestConfig.snapshotPathTemplate = %%-test-config-snapshot-path-template-%%
 * since: v1.28
 
+## property: TestConfig.populateGitInfo
+* since: v1.51
+- type: ?<[boolean]>
+
+Whether to populate [`property: TestConfig.metadata`] with Git info. The metadata will automatically appear in the HTML report and is available in Reporter API.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  populateGitInfo: !!process.env.CI,
+});
+```
+
 ## property: TestConfig.preserveOutput
 * since: v1.10
 - type: ?<[PreserveOutput]<"always"|"never"|"failures-only">>

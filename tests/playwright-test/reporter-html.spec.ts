@@ -1142,14 +1142,12 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     });
 
     test.describe('gitCommitInfo plugin', () => {
-      test('should include metadata', async ({ runInlineTest, writeFiles, showReport, page }) => {
+      test('should include metadata with populateGitInfo = true', async ({ runInlineTest, writeFiles, showReport, page }) => {
         const files = {
           'uncommitted.txt': `uncommitted file`,
           'playwright.config.ts': `
-            import { gitCommitInfo } from 'playwright/lib/plugins';
             import { test, expect } from '@playwright/test';
-            const plugins = [gitCommitInfo()];
-            export default { '@playwright/test': { plugins } };
+            export default { populateGitInfo: true };
           `,
           'example.spec.ts': `
             import { test, expect } from '@playwright/test';
@@ -1195,6 +1193,25 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect.soft(page.getByTestId('metadata-error')).not.toBeVisible();
       });
 
+      test('should not include metadata with populateGitInfo = false', async ({ runInlineTest, showReport, page }) => {
+        const result = await runInlineTest({
+          'uncommitted.txt': `uncommitted file`,
+          'playwright.config.ts': `
+            export default { populateGitInfo: false };
+          `,
+          'example.spec.ts': `
+            import { test, expect } from '@playwright/test';
+            test('my sample test', async ({}) => { expect(2).toBe(2); });
+          `,
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' }, undefined);
+
+        await showReport();
+
+        expect(result.exitCode).toBe(0);
+        await expect.soft(page.locator('text="my sample test"')).toBeVisible();
+        await expect.soft(page.getByTestId('metadata-error')).not.toBeVisible();
+        await expect.soft(page.getByTestId('metadata-chip')).not.toBeVisible();
+      });
 
       test('should use explicitly supplied metadata', async ({ runInlineTest, showReport, page }) => {
         const result = await runInlineTest({

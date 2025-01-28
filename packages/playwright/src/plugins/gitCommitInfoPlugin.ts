@@ -17,8 +17,14 @@
 import { createGuid, spawnAsync } from 'playwright-core/lib/utils';
 import type { TestRunnerPlugin } from './';
 import type { FullConfig } from '../../types/testReporter';
+import type { FullConfigInternal } from '../common/config';
 
 const GIT_OPERATIONS_TIMEOUT_MS = 1500;
+
+export const addGitCommitInfoPlugin = (fullConfig: FullConfigInternal) => {
+  if (fullConfig.populateGitInfo)
+    fullConfig.plugins.push({ factory: gitCommitInfo });
+};
 
 export const gitCommitInfo = (options?: GitCommitInfoPluginOptions): TestRunnerPlugin => {
   return {

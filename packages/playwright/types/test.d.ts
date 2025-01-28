@@ -1294,6 +1294,24 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   outputDir?: string;
 
   /**
+   * Whether to populate [testConfig.metadata](https://playwright.dev/docs/api/class-testconfig#test-config-metadata)
+   * with Git info. The metadata will automatically appear in the HTML report and is available in Reporter API.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   populateGitInfo: !!process.env.CI,
+   * });
+   * ```
+   *
+   */
+  populateGitInfo?: boolean;
+
+  /**
    * Whether to preserve test output in the
    * [testConfig.outputDir](https://playwright.dev/docs/api/class-testconfig#test-config-output-dir). Defaults to
    * `'always'`.
