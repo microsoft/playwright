@@ -91,10 +91,9 @@ async function openAIAgentLoop(page: playwright.Page, task: string) {
       model: 'gpt-4o',
       messages: toOpenAIMessages(history),
       tools,
+      tool_choice: 'required',
       store: true,
     });
-
-    console.log(JSON.stringify(completion, null, 2));
 
     const toolCalls = completion.choices[0]?.message?.tool_calls;
     if (!toolCalls || toolCalls.length !== 1 || toolCalls[0].type !== 'function') {
@@ -113,7 +112,6 @@ async function openAIAgentLoop(page: playwright.Page, task: string) {
     // Run the Playwright tool.
     const params = JSON.parse(toolCall.function.arguments);
     const { error, snapshot, code } = await browser.call(page, toolCall.function.name, params);
-    console.log({ error, code, snapshot });
     if (code.length)
       console.log(code.join('\n'));
 
@@ -149,9 +147,6 @@ async function main() {
     - Go to http://github.com/microsoft
     - Search for "playwright" repository
     - Navigate to it
-    - Capture snapshot for toolbar with Code, Issues, etc.
-    - Capture snapshot for branch selector
-    - Assert that number of Issues is present
     - Switch into the Issues tab
     - Report 3 first issues
   `);

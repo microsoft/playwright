@@ -126,6 +126,8 @@ async function performAction(page: playwright.Page, toolName: string, params: Re
   if (toolName === 'navigate') {
     code.push(`await page.goto(${JSON.stringify(params.url)})`);
     await page.goto(params.url as string);
+  } else if (toolName === 'wait') {
+    await page.waitForTimeout(Math.min(10000, params.time as number * 1000));
   } else if (toolName === 'click') {
     code.push(`await page.${await locator._generateLocatorString()}.click()`);
     await locator.click();
