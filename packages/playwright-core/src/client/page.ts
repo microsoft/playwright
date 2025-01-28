@@ -568,6 +568,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   private async _updateInterceptionPatterns() {
     const patterns = RouteHandler.prepareInterceptionPatterns(this._routes);
     await this._channel.setNetworkInterceptionPatterns({ patterns });
+    // TODO: merge this with browserContext patterns
+    await this._browserContext._mockingProxy?.setInterceptionPatterns({ patterns });
   }
 
   private async _updateWebSocketInterceptionPatterns() {
