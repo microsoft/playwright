@@ -75,18 +75,27 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
       }
     };
 
-    for (const entry of params.entries)
-      addFile(entry.value, entry.name);
+    for (const entry of params.entries) {
+      let name = entry.name;
+      // Prefix network trace with the tracing(context) guid, it can be used later to deduplicate
+      // network traces from the same context saved for beforeAll/test/afterAll hooks. Trace
+      // viewer relies on .trace.trace, .trace.network and .trace.stacks files to have the same
+      // prefix, so we keep them consistent.
+      if (name === 'trace.network' || name === 'trace.trace')
+        name = params.tracingId + '.' + name;
+      addFile(entry.value, name);
+    }
 
     // Add stacks and the sources.
     const stackSession = params.stacksId ? this._stackSessions.get(params.stacksId) : undefined;
     if (stackSession?.callStacks.length) {
       await stackSession.writer;
+      const stacksFileName = params.tracingId + '.trace.stacks';
       if (process.env.PW_LIVE_TRACE_STACKS) {
-        zipFile.addFile(stackSession.file, 'trace.stacks');
+        zipFile.addFile(stackSession.file, stacksFileName);
       } else {
         const buffer = Buffer.from(JSON.stringify(serializeClientSideCallMetadata(stackSession.callStacks)));
-        zipFile.addBuffer(buffer, 'trace.stacks');
+        zipFile.addBuffer(buffer, stacksFileName);
       }
     }
 

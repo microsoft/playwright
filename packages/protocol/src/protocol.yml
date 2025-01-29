@@ -569,6 +569,7 @@ LocalUtils:
           type: array
           items: NameValue
         stacksId: string?
+        tracingId: string
         mode:
           type: enum
           literals:

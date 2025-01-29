@@ -240,9 +240,9 @@ test('should respect tracesDir and name', async ({ browserType, server, mode }, 
     expect(resourceNames(resources)).toEqual([
       'resources/XXX.css',
       'resources/XXX.html',
-      'trace.network',
-      'trace.stacks',
-      'trace.trace',
+      expect.stringMatching(/trace.network$/),
+      expect.stringMatching(/trace.stacks$/),
+      expect.stringMatching(/trace.trace$/),
     ]);
   }
 
@@ -253,9 +253,9 @@ test('should respect tracesDir and name', async ({ browserType, server, mode }, 
       'resources/XXX.css',
       'resources/XXX.html',
       'resources/XXX.html',
-      'trace.network',
-      'trace.stacks',
-      'trace.trace',
+      expect.stringMatching(/trace.network$/),
+      expect.stringMatching(/trace.stacks$/),
+      expect.stringMatching(/trace.trace$/),
     ]);
   }
 });

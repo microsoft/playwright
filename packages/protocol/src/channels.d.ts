@@ -443,6 +443,7 @@ export type LocalUtilsZipParams = {
   zipFile: string,
   entries: NameValue[],
   stacksId?: string,
+  tracingId: string,
   mode: 'write' | 'append',
   includeSources: boolean,
 };

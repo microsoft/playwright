@@ -352,10 +352,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const newNetworkFile = path.join(this._state.tracesDir, this._state.traceName + `-pwnetcopy-${this._state.chunkOrdinal}.network`);
 
     const entries: NameValue[] = [];
-    entries.push({ name: 'trace.trace', value: this._state.traceFile });
-    // Prefix network trace with the context guid, it can be used later to deduplicate
-    // network traces from the same context saved for beforeAll/test/afterAll hooks.
-    entries.push({ name: `${this._context.guid}.trace.network`, value: newNetworkFile });
+    entries.push({ name: `trace.trace`, value: this._state.traceFile });
+    entries.push({ name: `trace.network`, value: newNetworkFile });
     for (const sha1 of new Set([...this._state.traceSha1s, ...this._state.networkSha1s]))
       entries.push({ name: path.join('resources', sha1), value: path.join(this._state.resourcesDir, sha1) });
 

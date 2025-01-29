@@ -250,6 +250,7 @@ scheme.LocalUtilsZipParams = tObject({
   zipFile: tString,
   entries: tArray(tType('NameValue')),
   stacksId: tOptional(tString),
+  tracingId: tString,
   mode: tEnum(['write', 'append']),
   includeSources: tBoolean,
 });

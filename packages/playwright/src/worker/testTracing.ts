@@ -342,7 +342,7 @@ async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) 
           // it will contain all previous events.
           entryName = networkTraceEntries.get(entry.fileName);
           if (!entryName) {
-            entryName = i + '-trace.network';
+            entryName = i + '-' + entry.fileName;
             networkTraceEntries.set(entry.fileName, entryName);
           }
         } else if (entry.fileName.match(/[\d-]*trace\./)) {

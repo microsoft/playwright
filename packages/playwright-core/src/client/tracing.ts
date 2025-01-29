@@ -96,7 +96,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
     if (isLocal) {
       const result = await this._channel.tracingStopChunk({ mode: 'entries' });
-      await this._connection.localUtils()._channel.zip({ zipFile: filePath, entries: result.entries!, mode: 'write', stacksId: this._stacksId, includeSources: this._includeSources });
+      await this._connection.localUtils()._channel.zip({ zipFile: filePath, entries: result.entries!, mode: 'write', stacksId: this._stacksId, tracingId: this._guid, includeSources: this._includeSources });
       return;
     }
 
@@ -114,7 +114,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     await artifact.saveAs(filePath);
     await artifact.delete();
 
-    await this._connection.localUtils()._channel.zip({ zipFile: filePath, entries: [], mode: 'append', stacksId: this._stacksId, includeSources: this._includeSources });
+    await this._connection.localUtils()._channel.zip({ zipFile: filePath, entries: [], mode: 'append', stacksId: this._stacksId, tracingId: this._guid, includeSources: this._includeSources });
   }
 
   _resetStackCounter() {
