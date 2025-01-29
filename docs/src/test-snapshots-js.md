@@ -48,7 +48,7 @@ The snapshot name `example-test-1-chromium-darwin.png` consists of a few parts:
 
 - `chromium-darwin` - the browser name and the platform. Screenshots differ between browsers and platforms due to different rendering, fonts and more, so you will need different snapshots for them. If you use multiple projects in your [configuration file](./test-configuration.md), project name will be used instead of `chromium`.
 
-The snapshot name and path can be configured with [`snapshotPathTemplate`](./api/class-testproject#test-project-snapshot-path-template) in the playwright config.
+The snapshot name and path can be configured with [`property: TestConfig.snapshotPathTemplate`] in the playwright config.
 
 ## Updating screenshots
 
