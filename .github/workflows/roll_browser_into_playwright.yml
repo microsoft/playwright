@@ -48,7 +48,7 @@ jobs:
         git checkout -b "$BRANCH_NAME"
         git add .
         git commit -m "feat(${BROWSER}): roll to r${REVISION}"
-        git push origin $BRANCH_NAME
+        git push origin $BRANCH_NAME --force
     - name: Create Pull Request
       uses: actions/github-script@v7
       with:
