@@ -344,7 +344,7 @@ To store your snapshots in a separate file, use the `toMatchAriaSnapshot` method
 await expect(page.getByRole('main')).toMatchAriaSnapshot({ name: 'main-snapshot.yml' });
 ```
 
-By default, snapshots are saved with the following pattern `{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{ext}`. As snapshots should be the same across browsers, only one snapshot is saved even if testing with multiple browsers. Should you wish, you can customize the snapshot path template using the following configuration:
+By default, snapshots from a test file `example.spec.ts` are placed in the `example.spec.ts-snapshots` directory. As snapshots should be the same across browsers, only one snapshot is saved even if testing with multiple browsers. Should you wish, you can customize the snapshot path template using the following configuration:
 
 ```js
 export default {
