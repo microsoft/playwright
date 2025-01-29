@@ -21,7 +21,7 @@ test('should render html report git info metadata', async ({ runUITest }) => {
     'reporter.ts': `
       module.exports = class Reporter {
         onBegin(config, suite) {
-          console.log('ci.link:', config.metadata['ci.link']);
+          console.log('ci.link:', config.metadata['git.commit.info']['ci.link']);
         }
       }
     `,
