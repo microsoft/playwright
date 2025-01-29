@@ -1122,8 +1122,8 @@
   "Microsoft Lumia 550": {
     "userAgent": "Mozilla/5.0 (Windows Phone 10.0; Android 4.2.1; Microsoft; Lumia 550) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.27 Mobile Safari/537.36 Edge/14.14263",
     "viewport": {
-      "width": 640,
-      "height": 360
+      "width": 360,
+      "height": 640
     },
     "deviceScaleFactor": 2,
     "isMobile": true,
@@ -1133,8 +1133,8 @@
   "Microsoft Lumia 550 landscape": {
     "userAgent": "Mozilla/5.0 (Windows Phone 10.0; Android 4.2.1; Microsoft; Lumia 550) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.27 Mobile Safari/537.36 Edge/14.14263",
     "viewport": {
-      "width": 360,
-      "height": 640
+      "width": 640,
+      "height": 360
     },
     "deviceScaleFactor": 2,
     "isMobile": true,
