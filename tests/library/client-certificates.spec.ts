@@ -390,7 +390,7 @@ test.describe('browser', () => {
     });
     expect(connectHosts).toEqual([]);
     await page.goto(serverURL);
-    const host = browserName === 'webkit' && isMac ? '0:0:0:0:0:0:0:1' : '127.0.0.1';
+    const host = browserName === 'webkit' && isMac ? 'localhost' : '127.0.0.1';
     expect(connectHosts).toEqual([`${host}:${serverPort}`]);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
     await page.close();
