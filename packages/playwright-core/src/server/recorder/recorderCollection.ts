@@ -85,7 +85,7 @@ export class RecorderCollection extends EventEmitter {
       let generateGoto = false;
       if (!lastAction)
         generateGoto = true;
-      else if (lastAction.action.name !== 'click' && lastAction.action.name !== 'press')
+      else if (lastAction.action.name !== 'click' && lastAction.action.name !== 'press' && lastAction.action.name !== 'fill')
         generateGoto = true;
       else if (timestamp - lastAction.startTime > signalThreshold)
         generateGoto = true;

@@ -778,6 +778,70 @@ await page.GetByText("link").ClickAsync();`);
     expect(page.url()).toContain('about:blank#foo');
   });
 
+  test('should attribute navigation to press/fill', async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`<input /><script>document.querySelector('input').addEventListener('input', () => window.location.href = 'about:blank#foo');</script>`);
+
+    const locator = await recorder.hoverOverElement('input');
+    expect(locator).toBe(`getByRole('textbox')`);
+    await recorder.trustedClick();
+    await expect.poll(() => page.locator('input').evaluate(e => e === document.activeElement)).toBeTruthy();
+    const [, sources] = await Promise.all([
+      page.waitForNavigation(),
+      recorder.waitForOutput('JavaScript', '.fill'),
+      recorder.trustedPress('h'),
+    ]);
+
+    expect.soft(sources.get('JavaScript')!.text).toContain(`
+  await page.goto('about:blank');
+  await page.getByRole('textbox').click();
+  await page.getByRole('textbox').fill('h');
+
+  // ---------------------
+  await context.close();`);
+
+    expect.soft(sources.get('Playwright Test')!.text).toContain(`
+  await page.goto('about:blank');
+  await page.getByRole('textbox').click();
+  await page.getByRole('textbox').fill('h');
+});`);
+
+    expect.soft(sources.get('Java')!.text).toContain(`
+      page.navigate(\"about:blank\");
+      page.getByRole(AriaRole.TEXTBOX).click();
+      page.getByRole(AriaRole.TEXTBOX).fill(\"h\");
+    }`);
+
+    expect.soft(sources.get('Python')!.text).toContain(`
+    page.goto("about:blank")
+    page.get_by_role("textbox").click()
+    page.get_by_role("textbox").fill("h")
+
+    # ---------------------
+    context.close()`);
+
+    expect.soft(sources.get('Python Async')!.text).toContain(`
+    await page.goto("about:blank")
+    await page.get_by_role("textbox").click()
+    await page.get_by_role("textbox").fill("h")
+
+    # ---------------------
+    await context.close()`);
+
+    expect.soft(sources.get('Pytest')!.text).toContain(`
+    page.goto("about:blank")
+    page.get_by_role("textbox").click()
+    page.get_by_role("textbox").fill("h")`);
+
+    expect.soft(sources.get('C#')!.text).toContain(`
+await page.GotoAsync("about:blank");
+await page.GetByRole(AriaRole.Textbox).ClickAsync();
+await page.GetByRole(AriaRole.Textbox).FillAsync("h");`);
+
+    expect(page.url()).toContain('about:blank#foo');
+  });
+
   test('should ignore AltGraph', async ({ openRecorder, browserName }) => {
     test.skip(browserName === 'firefox', 'The TextInputProcessor in Firefox does not work with AltGraph.');
     const { recorder } = await openRecorder();
