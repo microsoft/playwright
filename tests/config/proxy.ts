@@ -138,7 +138,7 @@ export async function setupSocksForwardingServer({
   const socksProxy = new SocksProxy();
   socksProxy.setPattern('*');
   socksProxy.addListener(SocksProxy.Events.SocksRequested, async (payload: SocksSocketRequestedPayload) => {
-    if (!['127.0.0.1', '0:0:0:0:0:0:0:1', 'fake-localhost-127-0-0-1.nip.io', 'localhost'].includes(payload.host) || payload.port !== allowedTargetPort) {
+    if (!['127.0.0.1', 'fake-localhost-127-0-0-1.nip.io', 'localhost'].includes(payload.host) || payload.port !== allowedTargetPort) {
       socksProxy.sendSocketError({ uid: payload.uid, error: 'ECONNREFUSED' });
       return;
     }
