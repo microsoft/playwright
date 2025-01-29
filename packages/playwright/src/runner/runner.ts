@@ -17,6 +17,7 @@
 
 import type { FullResult, TestError } from '../../types/testReporter';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
+import { addGitCommitInfoPlugin } from '../plugins/gitCommitInfoPlugin';
 import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createErrorCollectingReporter, createReporters } from './reporters';
 import { TestRun, createApplyRebaselinesTask, createClearCacheTask, createGlobalSetupTasks, createLoadTask, createPluginSetupTasks, createReportBeginTask, createRunTestsTasks, createStartDevServerTask, runTasks } from './tasks';
@@ -69,6 +70,8 @@ export class Runner {
   async runAllTests(): Promise<FullResult['status']> {
     const config = this._config;
     const listOnly = config.cliListOnly;
+
+    addGitCommitInfoPlugin(config);
 
     // Legacy webServer support.
     webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));

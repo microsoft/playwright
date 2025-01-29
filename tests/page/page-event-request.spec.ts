@@ -47,7 +47,6 @@ it('should fire for fetches with keepalive: true', {
     description: 'https://github.com/microsoft/playwright/issues/34497'
   }
 }, async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'firefox');
   const requests = [];
   page.on('request', request => requests.push(request));
   await page.goto(server.EMPTY_PAGE);

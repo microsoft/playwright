@@ -43,6 +43,10 @@ export function addSuggestedRebaseline(location: Location, suggestedRebaseline: 
   suggestedRebaselines.set(location.file, { location, code: suggestedRebaseline });
 }
 
+export function clearSuggestedRebaselines() {
+  suggestedRebaselines.clear();
+}
+
 export async function applySuggestedRebaselines(config: FullConfigInternal, reporter: InternalReporter) {
   if (config.config.updateSnapshots === 'none')
     return;

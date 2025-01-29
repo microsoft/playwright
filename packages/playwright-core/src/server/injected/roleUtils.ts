@@ -354,27 +354,34 @@ export function getPseudoContent(element: Element, pseudo: '::before' | '::after
   if (cache?.has(element))
     return cache?.get(element) || '';
   const pseudoStyle = getElementComputedStyle(element, pseudo);
-  const content = getPseudoContentImpl(pseudoStyle);
+  const content = getPseudoContentImpl(element, pseudoStyle);
   if (cache)
     cache.set(element, content);
   return content;
 }
 
-function getPseudoContentImpl(pseudoStyle: CSSStyleDeclaration | undefined) {
+function getPseudoContentImpl(element: Element, pseudoStyle: CSSStyleDeclaration | undefined) {
   // Note: all browsers ignore display:none and visibility:hidden pseudos.
   if (!pseudoStyle || pseudoStyle.display === 'none' || pseudoStyle.visibility === 'hidden')
     return '';
   const content = pseudoStyle.content;
+  let resolvedContent: string | undefined;
   if ((content[0] === '\'' && content[content.length - 1] === '\'') ||
     (content[0] === '"' && content[content.length - 1] === '"')) {
-    const unquoted = content.substring(1, content.length - 1);
+    resolvedContent = content.substring(1, content.length - 1);
+  } else if (content.startsWith('attr(') && content.endsWith(')')) {
+    // Firefox does not resolve attribute accessors in content.
+    const attrName = content.substring('attr('.length, content.length - 1).trim();
+    resolvedContent = element.getAttribute(attrName) || '';
+  }
+  if (resolvedContent !== undefined) {
     // SPEC DIFFERENCE.
     // Spec says "CSS textual content, without a space", but we account for display
     // to pass "name_file-label-inline-block-styles-manual.html"
     const display = pseudoStyle.display || 'inline';
     if (display !== 'inline')
-      return ' ' + unquoted + ' ';
-    return unquoted;
+      return ' ' + resolvedContent + ' ';
+    return resolvedContent;
   }
   return '';
 }
