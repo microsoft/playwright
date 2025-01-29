@@ -454,14 +454,15 @@ export class TestInfoImpl implements TestInfo {
     return sanitizeForFilePath(trimLongString(fullTitleWithoutSpec));
   }
 
-  snapshotPath(...pathSegments: string[]) {
+  _resolveSnapshotPath(template: string | undefined, defaultTemplate: string, pathSegments: string[]) {
     const subPath = path.join(...pathSegments);
     const parsedSubPath = path.parse(subPath);
     const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
 
-    const snapshotPath = (this._projectInternal.snapshotPathTemplate || '')
+    const actualTemplate = (template || this._projectInternal.snapshotPathTemplate || defaultTemplate);
+    const snapshotPath = actualTemplate
         .replace(/\{(.)?testDir\}/g, '$1' + this.project.testDir)
         .replace(/\{(.)?snapshotDir\}/g, '$1' + this.project.snapshotDir)
         .replace(/\{(.)?snapshotSuffix\}/g, this.snapshotSuffix ? '$1' + this.snapshotSuffix : '')
@@ -475,6 +476,11 @@ export class TestInfoImpl implements TestInfo {
         .replace(/\{(.)?ext\}/g, parsedSubPath.ext ? '$1' + parsedSubPath.ext : '');
 
     return path.normalize(path.resolve(this._configInternal.configDir, snapshotPath));
+  }
+
+  snapshotPath(...pathSegments: string[]) {
+    const legacyTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
+    return this._resolveSnapshotPath(undefined, legacyTemplate, pathSegments);
   }
 
   skip(...args: [arg?: any, description?: string]) {
