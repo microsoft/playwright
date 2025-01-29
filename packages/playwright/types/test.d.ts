@@ -8792,7 +8792,6 @@ interface LocatorAssertions {
    *
    * ```js
    * await expect(page.locator('body')).toMatchAriaSnapshot();
-   *
    * await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'body.yml' });
    * ```
    *

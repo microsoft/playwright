@@ -300,7 +300,7 @@ accessible names to aid snapshot creation and review.
 
 When using the Playwright test runner (`@playwright/test`), you can automatically update snapshots with the `--update-snapshots` flag, `-u` for short.
 
-Running tests with the `--update-snapshots` flag will update snapshots that did not match. Matching snapshots will not be updated. Possible values are "all", "changed", "missing" and "none".
+Running tests with the `--update-snapshots` flag will update snapshots that did not match. Matching snapshots will not be updated.
 
 ```bash
 npx playwright test --update-snapshots
@@ -344,7 +344,7 @@ To store your snapshots in a separate file, use the `toMatchAriaSnapshot` method
 await expect(page.getByRole('main')).toMatchAriaSnapshot({ name: 'main-snapshot.yml' });
 ```
 
-By default, snapshots from a test file `example.spec.ts` are placed in the `example.spec.ts-snapshots` directory. As snapshots should be the same across browsers, only one snapshot is saved even if testing with multiple browsers. Should you wish, you can customize the snapshot path template using the following configuration:
+By default, snapshots from a test file `example.spec.ts` are placed in the `example.spec.ts-snapshots` directory. As snapshots should be the same across browsers, only one snapshot is saved even if testing with multiple browsers. Should you wish, you can customize the [snapshot path template](./api/class-testconfig#test-config-snapshot-path-template) using the following configuration:
 
 ```js
 export default {
