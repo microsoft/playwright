@@ -3,9 +3,21 @@ name: Roll Browser into Playwright
 on:
   repository_dispatch:
     types: [roll_into_pw]
+  workflow_dispatch:
+    inputs:
+      browser:
+        description: 'Browser name, e.g. chromium'
+        required: true
+        type: string
+      revision:
+        description: 'Browser revision without v prefix, e.g. 1234'
+        required: true
+        type: string
 
 env:
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+  BROWSER: ${{ github.event.client_payload.browser || github.event.inputs.browser }}
+  REVISION: ${{ github.event.client_payload.revision || github.event.inputs.revision }}
 
 permissions:
   contents: write
@@ -24,19 +36,19 @@ jobs:
       run: npx playwright install-deps
     - name: Roll to new revision
       run: |
-        ./utils/roll_browser.js ${{ github.event.client_payload.browser }} ${{ github.event.client_payload.revision }}
+        ./utils/roll_browser.js $BROWSER $REVISION
         npm run build
     - name: Prepare branch
       id: prepare-branch
       run: |
-        BRANCH_NAME="roll-into-pw-${{ github.event.client_payload.browser }}/${{ github.event.client_payload.revision }}"
+        BRANCH_NAME="roll-into-pw-${BROWSER}/${REVISION}"
         echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_OUTPUT
         git config --global user.name github-actions
         git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
         git checkout -b "$BRANCH_NAME"
         git add .
-        git commit -m "feat(${{ github.event.client_payload.browser }}): roll to r${{ github.event.client_payload.revision }}"
-        git push origin $BRANCH_NAME
+        git commit -m "feat(${BROWSER}): roll to r${REVISION}"
+        git push origin $BRANCH_NAME --force
     - name: Create Pull Request
       uses: actions/github-script@v7
       with:
@@ -47,7 +59,7 @@ jobs:
             repo: 'playwright',
             head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
             base: 'main',
-            title: 'feat(${{ github.event.client_payload.browser }}): roll to r${{ github.event.client_payload.revision }}',
+            title: 'feat(${{ env.BROWSER }}): roll to r${{ env.REVISION }}',
           });
           await github.rest.issues.addLabels({
             owner: 'microsoft',
