@@ -844,7 +844,6 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       });
 
       test('should proxy requests from fetch api', async ({ startRemoteServer, server, browserName, connect, channel, platform, dummyServerPort }, workerInfo) => {
-        test.fixme(true, 'broken because of socks proxy agent error: Socks5 proxy rejected connection - ConnectionRefused');
         test.skip(browserName === 'webkit' && platform === 'darwin', 'no localhost proxying');
 
         let reachedOriginalTarget = false;
