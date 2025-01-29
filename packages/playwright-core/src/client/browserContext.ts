@@ -421,7 +421,15 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   private async _updateInterceptionPatterns() {
     const patterns = network.RouteHandler.prepareInterceptionPatterns(this._routes);
     await this._channel.setNetworkInterceptionPatterns({ patterns });
-    await this._mockingProxy?.setInterceptionPatterns({ patterns });
+    await this._updateMockingProxyInterceptionPatterns();
+  }
+
+  async _updateMockingProxyInterceptionPatterns() {
+    if (!this._mockingProxy)
+      return;
+    const pageRoutes = this.pages().flatMap(page => page._routes);
+    const patterns = network.RouteHandler.prepareInterceptionPatterns(this._routes.concat(pageRoutes));
+    await this._mockingProxy.setInterceptionPatterns({ patterns });
   }
 
   private async _updateWebSocketInterceptionPatterns() {
