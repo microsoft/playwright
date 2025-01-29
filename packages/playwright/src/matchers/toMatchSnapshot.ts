@@ -148,7 +148,8 @@ class SnapshotHelper {
       outputBasePath = testInfo._getOutputPath(sanitizedName);
       this.attachmentBaseName = sanitizedName;
     }
-    this.expectedPath = testInfo.snapshotPath(...expectedPathSegments);
+    const defaultTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
+    this.expectedPath = testInfo._resolveSnapshotPath(configOptions.pathTemplate, defaultTemplate, expectedPathSegments);
     this.legacyExpectedPath = addSuffixToFilePath(outputBasePath, '-expected');
     this.previousPath = addSuffixToFilePath(outputBasePath, '-previous');
     this.actualPath = addSuffixToFilePath(outputBasePath, '-actual');
