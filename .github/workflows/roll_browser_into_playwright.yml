@@ -10,7 +10,7 @@ on:
         required: true
         type: string
       revision:
-        description: 'Browser revision'
+        description: 'Browser revision without v prefix, e.g. 1234'
         required: true
         type: string
 
