@@ -344,12 +344,16 @@ To store your snapshots in a separate file, use the `toMatchAriaSnapshot` method
 await expect(page.getByRole('main')).toMatchAriaSnapshot({ name: 'main-snapshot.yml' });
 ```
 
-By default, snapshots are saved in a directory next to your test file and a `.yml` file is created for each project specified in your Playwright configuration file. You can customize the snapshot path template using the `snapshotPathTemplate` option in the test runner configuration:
+By default, snapshots are saved with the following pattern `{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{ext}`. As snapshots should be the same across browsers, only one snapshot is saved even if testing with multiple browsers. Should you wish, you can customize the snapshot path template using the following configuration:
 
 ```js
-export default defineConfig({
-  snapshotPathTemplate: '__snapshots__/{testFilePath}/{arg}{ext}',
-});
+export default {
+  expect: {
+    toMatchAriaSnapshot: {
+      pathTemplate: '__snapshots__/{testFilePath}/{arg}{ext}',
+    },
+  },
+};
 ```
 
 ### 3. Using the `Locator.ariaSnapshot` method
