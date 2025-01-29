@@ -34,6 +34,7 @@ export class PollingRecorder implements RecorderDelegate {
   private _recorder: Recorder;
   private _embedder: Embedder;
   private _pollRecorderModeTimer: number | undefined;
+  private _lastStateJSON: string | undefined;
 
   constructor(injectedScript: InjectedScript) {
     this._recorder = new Recorder(injectedScript);
@@ -42,6 +43,7 @@ export class PollingRecorder implements RecorderDelegate {
     injectedScript.onGlobalListenersRemoved.add(() => this._recorder.installListeners());
 
     const refreshOverlay = () => {
+      this._lastStateJSON = undefined;
       this._pollRecorderMode().catch(e => console.log(e)); // eslint-disable-line no-console
     };
     this._embedder.__pw_refreshOverlay = refreshOverlay;
@@ -57,13 +59,19 @@ export class PollingRecorder implements RecorderDelegate {
       this._pollRecorderModeTimer = this._recorder.injectedScript.builtinSetTimeout(() => this._pollRecorderMode(), pollPeriod);
       return;
     }
-    const win = this._recorder.document.defaultView!;
-    if (win.top !== win) {
-      // Only show action point in the main frame, since it is relative to the page's viewport.
-      // Otherwise we'll see multiple action points at different locations.
-      state.actionPoint = undefined;
+
+    const stringifiedState = JSON.stringify(state);
+    if (this._lastStateJSON !== stringifiedState) {
+      this._lastStateJSON = stringifiedState;
+      const win = this._recorder.document.defaultView!;
+      if (win.top !== win) {
+        // Only show action point in the main frame, since it is relative to the page's viewport.
+        // Otherwise we'll see multiple action points at different locations.
+        state.actionPoint = undefined;
+      }
+      this._recorder.setUIState(state, this);
     }
-    this._recorder.setUIState(state, this);
+
     this._pollRecorderModeTimer = this._recorder.injectedScript.builtinSetTimeout(() => this._pollRecorderMode(), pollPeriod);
   }
 
