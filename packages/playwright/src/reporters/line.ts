@@ -68,12 +68,12 @@ class LineReporter extends TerminalReporter {
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
-    if (step.category === 'test.step')
+    if (this.screen.isTTY && step.category === 'test.step')
       this._updateLine(test, result, step);
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-    if (step.category === 'test.step')
+    if (this.screen.isTTY && step.category === 'test.step')
       this._updateLine(test, result, step.parent);
   }
 
