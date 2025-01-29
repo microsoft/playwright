@@ -435,4 +435,6 @@ function toJugglerProxyOptions(proxy: types.ProxySettings) {
 
 // Prefs for quick fixes that didn't make it to the build.
 // Should all be moved to `playwright.cfg`.
-const kBandaidFirefoxUserPrefs = {};
+const kBandaidFirefoxUserPrefs = {
+  'dom.fetchKeepalive.enabled': false,
+};
