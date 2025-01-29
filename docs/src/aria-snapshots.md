@@ -336,7 +336,7 @@ The way source code is updated can be changed using the `--update-source-method`
 npx playwright test --update-snapshots --update-source-mode=3way
 ```
 
-#### Snapshot as separate files
+#### Snapshots as separate files
 
 To store your snapshots in a separate file, use the `toMatchAriaSnapshot` method with the `name` option, specifying a `.yml` file extension.
 
