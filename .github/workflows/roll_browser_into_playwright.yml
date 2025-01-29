@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       browser:
-        description: 'Browser name'
+        description: 'Browser name, e.g. chromium'
         required: true
         type: string
       revision:
