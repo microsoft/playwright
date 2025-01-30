@@ -329,6 +329,8 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         const jestError = isJestError(e) ? e : null;
         const error = jestError ? new ExpectError(jestError, customMessage, stackFrames) : e;
         if (jestError?.matcherResult.suggestedRebaseline) {
+          // NOTE: this is a workaround for the fact that we can't pass the suggested rebaseline
+          // for passing matchers. See toMatchAriaSnapshot for a counterpart.
           step.complete({ suggestedRebaseline: jestError?.matcherResult.suggestedRebaseline });
           return;
         }

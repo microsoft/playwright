@@ -140,6 +140,14 @@ export async function toMatchAriaSnapshot(
         return { pass: true, message: () => '', name: 'toMatchAriaSnapshot' };
       } else {
         const suggestedRebaseline = `\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\``;
+        if (updateSnapshots === 'missing') {
+          const message = 'A snapshot is not provided, generating new baseline.';
+          testInfo._hasNonRetriableError = true;
+          testInfo._failWithError(new Error(message));
+        }
+        // TODO: ideally, we should return "pass: true" here because this matcher passes
+        // when regenerating baselines. However, we can only access suggestedRebaseline in case
+        // of an error, so we fail here and workaround it in the expect implementation.
         return { pass: false, message: () => '', name: 'toMatchAriaSnapshot', suggestedRebaseline };
       }
     }
