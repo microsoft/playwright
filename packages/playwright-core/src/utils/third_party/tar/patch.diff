@@ -1,7 +1,7 @@
-diff --git a/extract.js b/extract.js
-index 739ebc9..4375232 100644
---- a/extract.js
-+++ b/extract.js
+diff --git a/original/extract.js b/patched/extract.js
+index 739ebc9a9..b00f5d913 100644
+--- a/original/extract.js
++++ b/patched/extract.js
 @@ -1,15 +1,13 @@
 -const { Writable, Readable, getStreamError } = require('streamx')
 -const FIFO = require('fast-fifo')
@@ -182,10 +182,219 @@ index 739ebc9..4375232 100644
    }
  }
  
-diff --git a/index.js b/index.js
-index 4bed332..71152ca 100644
---- a/index.js
-+++ b/index.js
+@@ -403,4 +311,4 @@ function noop () {}
+ function overflow (size) {
+   size &= 511
+   return size && 512 - size
+-}
+\ No newline at end of file
++}
+diff --git a/original/headers.js b/patched/headers.js
+index 9161a7e86..b748e22b3 100644
+--- a/original/headers.js
++++ b/patched/headers.js
+@@ -1,13 +1,7 @@
+-const b4a = require('b4a')
+-
+-const ZEROS = '0000000000000000000'
+-const SEVENS = '7777777777777777777'
+ const ZERO_OFFSET = '0'.charCodeAt(0)
+-const USTAR_MAGIC = b4a.from([0x75, 0x73, 0x74, 0x61, 0x72, 0x00]) // ustar\x00
+-const USTAR_VER = b4a.from([ZERO_OFFSET, ZERO_OFFSET])
+-const GNU_MAGIC = b4a.from([0x75, 0x73, 0x74, 0x61, 0x72, 0x20]) // ustar\x20
+-const GNU_VER = b4a.from([0x20, 0x00])
+-const MASK = 0o7777
++const USTAR_MAGIC = Buffer.from([0x75, 0x73, 0x74, 0x61, 0x72, 0x00]) // ustar\x00
++const GNU_MAGIC = Buffer.from([0x75, 0x73, 0x74, 0x61, 0x72, 0x20]) // ustar\x20
++const GNU_VER = Buffer.from([0x20, 0x00])
+ const MAGIC_OFFSET = 257
+ const VERSION_OFFSET = 263
+ 
+@@ -15,29 +9,16 @@ exports.decodeLongPath = function decodeLongPath (buf, encoding) {
+   return decodeStr(buf, 0, buf.length, encoding)
+ }
+ 
+-exports.encodePax = function encodePax (opts) { // TODO: encode more stuff in pax
+-  let result = ''
+-  if (opts.name) result += addLength(' path=' + opts.name + '\n')
+-  if (opts.linkname) result += addLength(' linkpath=' + opts.linkname + '\n')
+-  const pax = opts.pax
+-  if (pax) {
+-    for (const key in pax) {
+-      result += addLength(' ' + key + '=' + pax[key] + '\n')
+-    }
+-  }
+-  return b4a.from(result)
+-}
+-
+ exports.decodePax = function decodePax (buf) {
+   const result = {}
+ 
+   while (buf.length) {
+     let i = 0
+     while (i < buf.length && buf[i] !== 32) i++
+-    const len = parseInt(b4a.toString(buf.subarray(0, i)), 10)
++    const len = parseInt(buf.toString('ascii', 0, i), 10)
+     if (!len) return result
+ 
+-    const b = b4a.toString(buf.subarray(i + 1, len - 1))
++    const b = buf.subarray('ascii', i + 1, len - 1)
+     const keyIndex = b.indexOf('=')
+     if (keyIndex === -1) return result
+     result[b.slice(0, keyIndex)] = b.slice(keyIndex + 1)
+@@ -48,49 +29,6 @@ exports.decodePax = function decodePax (buf) {
+   return result
+ }
+ 
+-exports.encode = function encode (opts) {
+-  const buf = b4a.alloc(512)
+-  let name = opts.name
+-  let prefix = ''
+-
+-  if (opts.typeflag === 5 && name[name.length - 1] !== '/') name += '/'
+-  if (b4a.byteLength(name) !== name.length) return null // utf-8
+-
+-  while (b4a.byteLength(name) > 100) {
+-    const i = name.indexOf('/')
+-    if (i === -1) return null
+-    prefix += prefix ? '/' + name.slice(0, i) : name.slice(0, i)
+-    name = name.slice(i + 1)
+-  }
+-
+-  if (b4a.byteLength(name) > 100 || b4a.byteLength(prefix) > 155) return null
+-  if (opts.linkname && b4a.byteLength(opts.linkname) > 100) return null
+-
+-  b4a.write(buf, name)
+-  b4a.write(buf, encodeOct(opts.mode & MASK, 6), 100)
+-  b4a.write(buf, encodeOct(opts.uid, 6), 108)
+-  b4a.write(buf, encodeOct(opts.gid, 6), 116)
+-  encodeSize(opts.size, buf, 124)
+-  b4a.write(buf, encodeOct((opts.mtime.getTime() / 1000) | 0, 11), 136)
+-
+-  buf[156] = ZERO_OFFSET + toTypeflag(opts.type)
+-
+-  if (opts.linkname) b4a.write(buf, opts.linkname, 157)
+-
+-  b4a.copy(USTAR_MAGIC, buf, MAGIC_OFFSET)
+-  b4a.copy(USTAR_VER, buf, VERSION_OFFSET)
+-  if (opts.uname) b4a.write(buf, opts.uname, 265)
+-  if (opts.gname) b4a.write(buf, opts.gname, 297)
+-  b4a.write(buf, encodeOct(opts.devmajor || 0, 6), 329)
+-  b4a.write(buf, encodeOct(opts.devminor || 0, 6), 337)
+-
+-  if (prefix) b4a.write(buf, prefix, 345)
+-
+-  b4a.write(buf, encodeOct(cksum(buf), 6), 148)
+-
+-  return buf
+-}
+-
+ exports.decode = function decode (buf, filenameEncoding, allowUnknownFormat) {
+   let typeflag = buf[156] === 0 ? 0 : buf[156] - ZERO_OFFSET
+ 
+@@ -149,12 +87,12 @@ exports.decode = function decode (buf, filenameEncoding, allowUnknownFormat) {
+ }
+ 
+ function isUSTAR (buf) {
+-  return b4a.equals(USTAR_MAGIC, buf.subarray(MAGIC_OFFSET, MAGIC_OFFSET + 6))
++  return USTAR_MAGIC.equals(buf.subarray(MAGIC_OFFSET, MAGIC_OFFSET + 6))
+ }
+ 
+ function isGNU (buf) {
+-  return b4a.equals(GNU_MAGIC, buf.subarray(MAGIC_OFFSET, MAGIC_OFFSET + 6)) &&
+-    b4a.equals(GNU_VER, buf.subarray(VERSION_OFFSET, VERSION_OFFSET + 2))
++  return GNU_MAGIC.equals(buf.subarray(MAGIC_OFFSET, MAGIC_OFFSET + 6)) &&
++    GNU_VER.equals(buf.subarray(VERSION_OFFSET, VERSION_OFFSET + 2))
+ }
+ 
+ function clamp (index, len, defaultValue) {
+@@ -199,31 +137,6 @@ function toType (flag) {
+   return null
+ }
+ 
+-function toTypeflag (flag) {
+-  switch (flag) {
+-    case 'file':
+-      return 0
+-    case 'link':
+-      return 1
+-    case 'symlink':
+-      return 2
+-    case 'character-device':
+-      return 3
+-    case 'block-device':
+-      return 4
+-    case 'directory':
+-      return 5
+-    case 'fifo':
+-      return 6
+-    case 'contiguous-file':
+-      return 7
+-    case 'pax-header':
+-      return 72
+-  }
+-
+-  return 0
+-}
+-
+ function indexOf (block, num, offset, end) {
+   for (; offset < end; offset++) {
+     if (block[offset] === num) return offset
+@@ -238,28 +151,6 @@ function cksum (block) {
+   return sum
+ }
+ 
+-function encodeOct (val, n) {
+-  val = val.toString(8)
+-  if (val.length > n) return SEVENS.slice(0, n) + ' '
+-  return ZEROS.slice(0, n - val.length) + val + ' '
+-}
+-
+-function encodeSizeBin (num, buf, off) {
+-  buf[off] = 0x80
+-  for (let i = 11; i > 0; i--) {
+-    buf[off + i] = num & 0xff
+-    num = Math.floor(num / 0x100)
+-  }
+-}
+-
+-function encodeSize (num, buf, off) {
+-  if (num.toString(8).length > 11) {
+-    encodeSizeBin(num, buf, off)
+-  } else {
+-    b4a.write(buf, encodeOct(num, 11), off)
+-  }
+-}
+-
+ /* Copied from the node-tar repo and modified to meet
+  * tar-stream coding standard.
+  *
+@@ -304,18 +195,10 @@ function decodeOct (val, offset, length) {
+     const end = clamp(indexOf(val, 32, offset, val.length), val.length, val.length)
+     while (offset < end && val[offset] === 0) offset++
+     if (end === offset) return 0
+-    return parseInt(b4a.toString(val.subarray(offset, end)), 8)
++    return parseInt(val.toString('ascii', offset, end), 8)
+   }
+ }
+ 
+ function decodeStr (val, offset, length, encoding) {
+-  return b4a.toString(val.subarray(offset, indexOf(val, 0, offset, offset + length)), encoding)
++  return val.toString(encoding, offset, indexOf(val, 0, offset, offset + length))
+ }
+-
+-function addLength (str) {
+-  const len = b4a.byteLength(str)
+-  let digits = Math.floor(Math.log(len) / Math.log(10)) + 1
+-  if (len + digits >= Math.pow(10, digits)) digits++
+-
+-  return (len + digits) + str
+-}
+\ No newline at end of file
+diff --git a/original/index.js b/patched/index.js
+index 4bed3324b..812a9ed0f 100644
+--- a/original/index.js
++++ b/patched/index.js
 @@ -1,108 +1,10 @@
 -const tar = require('tar-stream')
 -const pump = require('pump')
@@ -357,3 +566,10 @@ index 4bed332..71152ca 100644
  function strip (map, level) {
    return function (header) {
      header.name = header.name.split('/').slice(level).join('/')
+@@ -367,4 +235,4 @@ function strip (map, level) {
+ 
+     return map(header)
+   }
+-}
+\ No newline at end of file
++}
