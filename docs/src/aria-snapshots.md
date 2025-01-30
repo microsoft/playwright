@@ -283,7 +283,7 @@ support regex patterns.
 Creating aria snapshots in Playwright helps ensure and maintain your application's structure.
 You can generate snapshots in various ways depending on your testing setup and workflow.
 
-### 1. Generating snapshots with the Playwright code generator
+### Generating snapshots with the Playwright code generator
 
 If you're using Playwright's [Code Generator](./codegen.md), generating aria snapshots is streamlined with its
 interactive interface:
@@ -296,7 +296,8 @@ recorded test flow.
 aria snapshot for a selected locator, letting you explore, inspect, and verify element roles, attributes, and
 accessible names to aid snapshot creation and review.
 
-### 2. Updating snapshots with `@playwright/test` and the `--update-snapshots` flag
+### Updating snapshots with `@playwright/test` and the `--update-snapshots` flag
+* langs: js
 
 When using the Playwright test runner (`@playwright/test`), you can automatically update snapshots with the `--update-snapshots` flag, `-u` for short.
 
@@ -345,18 +346,18 @@ await expect(page.getByRole('main')).toMatchAriaSnapshot({ name: 'main-snapshot.
 ```
 
 By default, snapshots from a test file `example.spec.ts` are placed in the `example.spec.ts-snapshots` directory. As snapshots should be the same across browsers, only one snapshot is saved even if testing with multiple browsers. Should you wish, you can customize the [snapshot path template](./api/class-testconfig#test-config-snapshot-path-template) using the following configuration:
-
+ll
 ```js
-export default {
+export default defineConfig({
   expect: {
     toMatchAriaSnapshot: {
       pathTemplate: '__snapshots__/{testFilePath}/{arg}{ext}',
     },
   },
-};
+});
 ```
 
-### 3. Using the `Locator.ariaSnapshot` method
+### Using the `Locator.ariaSnapshot` method
 
 The [`method: Locator.ariaSnapshot`] method allows you to programmatically create a YAML representation of accessible
 elements within a locator's scope, especially helpful for generating snapshots dynamically during test execution.
