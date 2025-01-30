@@ -240,6 +240,24 @@ Expected accessible description.
 ### option: LocatorAssertions.NotToHaveAccessibleDescription.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.44
 
+## async method: LocatorAssertions.NotToHaveAccessibleErrorMessage
+* since: v1.50
+* langs: python
+
+The opposite of [`method: LocatorAssertions.toHaveAccessibleErrorMessage`].
+
+### param: LocatorAssertions.NotToHaveAccessibleErrorMessage.errorMessage
+* since: v1.50
+- `errorMessage` <[string]|[RegExp]>
+
+Expected accessible error message.
+
+### option: LocatorAssertions.NotToHaveAccessibleErrorMessage.ignoreCase = %%-assertions-ignore-case-%%
+* since: v1.50
+
+### option: LocatorAssertions.NotToHaveAccessibleErrorMessage.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.50
+
 
 ## async method: LocatorAssertions.NotToHaveAccessibleName
 * since: v1.44
@@ -446,7 +464,7 @@ Expected options currently selected.
 * since: v1.49
 * langs: python
 
-The opposite of [`method: LocatorAssertions.toMatchAriaSnapshot#1`].
+The opposite of [`method: LocatorAssertions.toMatchAriaSnapshot`].
 
 ### param: LocatorAssertions.NotToMatchAriaSnapshot.expected
 * since: v1.49
@@ -2180,7 +2198,7 @@ Expected options currently selected.
 * since: v1.23
 
 
-## async method: LocatorAssertions.toMatchAriaSnapshot#1
+## async method: LocatorAssertions.toMatchAriaSnapshot
 * since: v1.49
 * langs:
   - alias-java: matchesAriaSnapshot
@@ -2229,14 +2247,14 @@ assertThat(page.locator("body")).matchesAriaSnapshot("""
 """);
 ```
 
-### param: LocatorAssertions.toMatchAriaSnapshot#1.expected
+### param: LocatorAssertions.toMatchAriaSnapshot.expected
 * since: v1.49
 - `expected` <string>
 
-### option: LocatorAssertions.toMatchAriaSnapshot#1.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toMatchAriaSnapshot.timeout = %%-js-assertions-timeout-%%
 * since: v1.49
 
-### option: LocatorAssertions.toMatchAriaSnapshot#1.timeout = %%-csharp-java-python-assertions-timeout-%%
+### option: LocatorAssertions.toMatchAriaSnapshot.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.49
 
 ## async method: LocatorAssertions.toMatchAriaSnapshot#2
