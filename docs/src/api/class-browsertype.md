@@ -87,15 +87,31 @@ class BrowserTypeExamples
 
 ## async method: BrowserType.connect
 * since: v1.8
+* langs: js
 - returns: <[Browser]>
 
-This method attaches Playwright to an existing browser instance. When connecting to another browser launched via `BrowserType.launchServer` in Node.js, the major and minor version needs to match the client version (1.2.3 → is compatible with 1.2.x).
+This method attaches Playwright to an existing browser instance created via [`method: BrowserType.launchServer`].
+
+:::note
+The major and minor version of the Playwright instance that connects needs to match the version of Playwright that launches the browser (1.2.3 → is compatible with 1.2.x).
+:::
+
+## async method: BrowserType.connect
+* since: v1.8
+* langs: python, csharp, java
+- returns: <[Browser]>
+
+This method attaches Playwright to an existing browser instance created via `BrowserType.launchServer` in Node.js.
+
+:::note
+The major and minor version of the Playwright instance that connects needs to match the version of Playwright that launches the browser (1.2.3 → is compatible with 1.2.x).
+:::
 
 ### param: BrowserType.connect.wsEndpoint
 * since: v1.10
 - `wsEndpoint` <[string]>
 
-A browser websocket endpoint to connect to.
+A Playwright browser websocket endpoint to connect to. You obtain this endpoint via [`method: BrowserServer.wsEndpoint`].
 
 ### option: BrowserType.connect.headers
 * since: v1.11
@@ -150,6 +166,10 @@ The default browser context is accessible via [`method: Browser.contexts`].
 
 :::note
 Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
+:::
+
+:::note
+This connection is significantly lower fidelity than the Playwright protocol connection via [`method: BrowserType.connect`]. If you are experiencing issues or attempting to use advanced functionality, you probably want to use [`method: BrowserType.connect`].
 :::
 
 **Usage**
