@@ -346,7 +346,7 @@ await expect(page.getByRole('main')).toMatchAriaSnapshot({ name: 'main-snapshot.
 ```
 
 By default, snapshots from a test file `example.spec.ts` are placed in the `example.spec.ts-snapshots` directory. As snapshots should be the same across browsers, only one snapshot is saved even if testing with multiple browsers. Should you wish, you can customize the [snapshot path template](./api/class-testconfig#test-config-snapshot-path-template) using the following configuration:
-ll
+
 ```js
 export default defineConfig({
   expect: {
