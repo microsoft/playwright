@@ -170,7 +170,7 @@ export class FullProjectInternal {
   readonly fullyParallel: boolean;
   readonly expect: Project['expect'];
   readonly respectGitIgnore: boolean;
-  readonly snapshotPathTemplate: string;
+  readonly snapshotPathTemplate: string | undefined;
   readonly ignoreSnapshots: boolean;
   id = '';
   deps: FullProjectInternal[] = [];
@@ -179,8 +179,7 @@ export class FullProjectInternal {
   constructor(configDir: string, config: Config, fullConfig: FullConfigInternal, projectConfig: Project, configCLIOverrides: ConfigCLIOverrides, packageJsonDir: string) {
     this.fullConfig = fullConfig;
     const testDir = takeFirst(pathResolve(configDir, projectConfig.testDir), pathResolve(configDir, config.testDir), fullConfig.configDir);
-    const defaultSnapshotPathTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
-    this.snapshotPathTemplate = takeFirst(projectConfig.snapshotPathTemplate, config.snapshotPathTemplate, defaultSnapshotPathTemplate);
+    this.snapshotPathTemplate = takeFirst(projectConfig.snapshotPathTemplate, config.snapshotPathTemplate);
 
     this.project = {
       grep: takeFirst(projectConfig.grep, config.grep, defaultGrep),

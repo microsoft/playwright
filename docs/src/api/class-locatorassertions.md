@@ -2245,27 +2245,13 @@ assertThat(page.locator("body")).matchesAriaSnapshot("""
 
 Asserts that the target element matches the given [accessibility snapshot](../aria-snapshots.md).
 
+Snapshot is stored in a separate `.yml` file in a location configured by `expect.toMatchAriaSnapshot.pathTemplate` and/or `snapshotPathTemplate` properties in the configuration file.
+
 **Usage**
 
 ```js
 await expect(page.locator('body')).toMatchAriaSnapshot();
-await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'snapshot' });
-```
-
-```python async
-await expect(page.locator('body')).to_match_aria_snapshot(path='/path/to/snapshot.yml')
-```
-
-```python sync
-expect(page.locator('body')).to_match_aria_snapshot(path='/path/to/snapshot.yml')
-```
-
-```csharp
-await Expect(page.Locator("body")).ToMatchAriaSnapshotAsync(new { Path = "/path/to/snapshot.yml" });
-```
-
-```java
-assertThat(page.locator("body")).matchesAriaSnapshot(new LocatorAssertions.MatchesAriaSnapshotOptions().setPath("/path/to/snapshot.yml"));
+await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'body.yml' });
 ```
 
 ### option: LocatorAssertions.toMatchAriaSnapshot#2.name
@@ -2273,7 +2259,7 @@ assertThat(page.locator("body")).matchesAriaSnapshot(new LocatorAssertions.Match
 * langs: js
 - `name` <[string]>
 
-Name of the snapshot to store in the snapshot (screenshot) folder corresponding to this test.
+Name of the snapshot to store in the snapshot folder corresponding to this test.
 Generates sequential names if not specified.
 
 ### option: LocatorAssertions.toMatchAriaSnapshot#2.timeout = %%-js-assertions-timeout-%%
