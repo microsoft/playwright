@@ -8,7 +8,7 @@ toc_max_heading_level: 2
 
 ### Aria snapshots
 
-New assertion [`method: LocatorAssertions.toMatchAriaSnapshot#1`] verifies page structure by comparing to an expected accessibility tree, represented as YAML.
+New assertion [`method: LocatorAssertions.toMatchAriaSnapshot`] verifies page structure by comparing to an expected accessibility tree, represented as YAML.
 
 ```python
 page.goto("https://playwright.dev")
