@@ -9,19 +9,6 @@ exports.decodeLongPath = function decodeLongPath (buf, encoding) {
   return decodeStr(buf, 0, buf.length, encoding)
 }
 
-exports.encodePax = function encodePax (opts) { // TODO: encode more stuff in pax
-  let result = ''
-  if (opts.name) result += addLength(' path=' + opts.name + '\n')
-  if (opts.linkname) result += addLength(' linkpath=' + opts.linkname + '\n')
-  const pax = opts.pax
-  if (pax) {
-    for (const key in pax) {
-      result += addLength(' ' + key + '=' + pax[key] + '\n')
-    }
-  }
-  return Buffer.from(result)
-}
-
 exports.decodePax = function decodePax (buf) {
   const result = {}
 
@@ -214,12 +201,4 @@ function decodeOct (val, offset, length) {
 
 function decodeStr (val, offset, length, encoding) {
   return val.toString(encoding, offset, indexOf(val, 0, offset, offset + length))
-}
-
-function addLength (str) {
-  const len = Buffer.byteLength(str)
-  let digits = Math.floor(Math.log(len) / Math.log(10)) + 1
-  if (len + digits >= Math.pow(10, digits)) digits++
-
-  return (len + digits) + str
 }
