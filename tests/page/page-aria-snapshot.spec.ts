@@ -605,3 +605,16 @@ it('should escape special yaml values', async ({ page }) => {
     - textbox: "555"
   `);
 });
+
+it('should not report textarea textContent', async ({ page }) => {
+  await page.setContent(`<textarea>Before</textarea>`);
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - textbox: Before
+  `);
+  await page.evaluate(() => {
+    document.querySelector('textarea').value = 'After';
+  });
+  await checkAndMatchSnapshot(page.locator('body'), `
+    - textbox: After
+  `);
+});
