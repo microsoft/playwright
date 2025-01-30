@@ -84,7 +84,8 @@ test('should update missing snapshots', async ({ runInlineTest }, testInfo) => {
     `
   });
 
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Error: A snapshot is not provided, generating new baseline.');
 
   expect(stripAnsi(result.output).replace(/\\/g, '/')).toContain(`New baselines created for:
 
@@ -129,7 +130,7 @@ test('should update multiple missing snapshots', async ({ runInlineTest }, testI
     `
   });
 
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
 
   expect(stripAnsi(result.output).replace(/\\/g, '/')).toContain(`New baselines created for:
 
@@ -188,7 +189,7 @@ test('should generate baseline with regex', async ({ runInlineTest }, testInfo) 
     `
   });
 
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
   const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
   const data = fs.readFileSync(patchPath, 'utf-8');
   expect(trimPatch(data)).toBe(`diff --git a/a.spec.ts b/a.spec.ts
@@ -249,7 +250,7 @@ test('should generate baseline with special characters', async ({ runInlineTest 
     `
   });
 
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
   const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
   const data = fs.readFileSync(patchPath, 'utf-8');
   expect(trimPatch(data)).toBe(`diff --git a/a.spec.ts b/a.spec.ts
@@ -314,7 +315,7 @@ test('should update missing snapshots in tsx', async ({ runInlineTest }, testInf
     `,
   });
 
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
   const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
   const data = fs.readFileSync(patchPath, 'utf-8');
   expect(trimPatch(data)).toBe(`diff --git a/src/button.test.tsx b/src/button.test.tsx
@@ -370,7 +371,7 @@ test('should update multiple files', async ({ runInlineTest }, testInfo) => {
     `,
   });
 
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
 
   expect(stripAnsi(result.output).replace(/\\/g, '/')).toContain(`New baselines created for:
 
@@ -430,7 +431,7 @@ test('should generate baseline for input values', async ({ runInlineTest }, test
     `
   });
 
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
   const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
   const data = fs.readFileSync(patchPath, 'utf-8');
   expect(trimPatch(data)).toBe(`diff --git a/a.spec.ts b/a.spec.ts
@@ -470,7 +471,7 @@ test('should update when options are specified', async ({ runInlineTest }, testI
     `
   });
 
-  expect(result.exitCode).toBe(0);
+  expect(result.exitCode).toBe(1);
   const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
   const data = fs.readFileSync(patchPath, 'utf-8');
   expect(trimPatch(data)).toBe(`diff --git a/a.spec.ts b/a.spec.ts
