@@ -47,7 +47,7 @@ it('should return correct outerWidth and outerHeight', async ({ page }) => {
   expect(size.outerHeight >= size.innerHeight).toBeTruthy();
 });
 
-it.only('landscape viewport should have width larger than height', async () => {
+it('landscape viewport should have width larger than height', async () => {
   for (const device in deviceDescriptors) {
     const configuration = deviceDescriptors[device];
     if (device.includes('landscape') || device.includes('Landscape'))
