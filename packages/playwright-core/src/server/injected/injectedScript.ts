@@ -1291,7 +1291,7 @@ export class InjectedScript {
       } else if (expression === 'to.be.checked') {
         const { checked, indeterminate } = options.expectedValue;
         if (indeterminate) {
-          if (checked !== undefined)
+          if (typeof checked === 'boolean')
             throw this.createStacklessError('Can\'t assert indeterminate and checked at the same time');
           result = this.elementState(element, 'indeterminate');
         } else {
