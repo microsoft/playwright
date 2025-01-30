@@ -21,7 +21,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
   ```
 
 * New method [`method: Test.step.skip`] to disable execution of a test step.
-  
+
   ```js
   test('some test', async ({ page }) => {
     await test.step('before running step', async () => {
@@ -49,6 +49,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 * Option [`property: TestConfig.webServer`] added a `gracefulShutdown` field for specifying a process kill signal other than the default `SIGKILL`.
 * Exposed [`property: TestStep.attachments`] from the reporter API to allow retrieval of all attachments created by that step.
+* New option `pathTemplate` for `toHaveScreenshot` and `toMatchAriaSnapshot` assertions in the [`property: TestConfig.expect`] configuration.
 
 ### UI updates
 
