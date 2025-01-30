@@ -75,7 +75,8 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   await dispatchEvents(eventData.prologue);
   for (const { reportFile, eventPatchers, metadata } of eventData.reports) {
     const reportJsonl = await fs.promises.readFile(reportFile);
-    const events = parseTestEvents(reportJsonl);
+    let events = parseTestEvents(reportJsonl);
+    events = modernizer.modernize(metadata.version, events);
     new JsonStringInternalizer(stringPool).traverse(events);
     eventPatchers.patchers.push(new AttachmentPathPatcher(dir));
     if (metadata.name)
@@ -480,7 +481,8 @@ class PathSeparatorPatcher {
     }
     if (jsonEvent.method === 'onStepBegin') {
       const step = jsonEvent.params.step as JsonTestStepStart;
-      this._updateLocation(step.location);
+      for (const stackFrame of Array.isArray(step.stack) ? step.stack : [step.stack])
+        this._updateLocation(stackFrame);
       return;
     }
     if (jsonEvent.method === 'onStepEnd') {
@@ -586,6 +588,14 @@ class BlobModernizer {
         const project = event.params.project;
         project.suites = project.suites.map(modernizeSuite);
       }
+      return event;
+    });
+  }
+
+  _modernize_2_to_3(events: JsonEvent[]): JsonEvent[] {
+    return events.map(event => {
+      if (event.method === 'onStepBegin')
+        (event.params.step as JsonTestStepStart).stack = event.params.step.location;
       return event;
     });
   }

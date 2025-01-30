@@ -101,7 +101,8 @@ export type JsonTestStepStart = {
   title: string;
   category: string,
   startTime: number;
-  location?: reporterTypes.Location;
+  // Best effort to keep step struct small.
+  stack?: reporterTypes.Location | reporterTypes.Location[];
 };
 
 export type JsonTestStepEnd = {
@@ -249,8 +250,8 @@ export class TeleReporterReceiver {
     const result = test.results.find(r => r._id === resultId)!;
     const parentStep = payload.parentStepId ? result._stepMap.get(payload.parentStepId) : undefined;
 
-    const location = this._absoluteLocation(payload.location);
-    const step = new TeleTestStep(payload, parentStep, location, result);
+    const stack = Array.isArray(payload.stack) ? payload.stack.map(l => this._absoluteLocation(l)) : this._absoluteLocation(payload.stack);
+    const step = new TeleTestStep(payload, parentStep, stack, result);
     if (parentStep)
       parentStep.steps.push(step);
     else
@@ -426,8 +427,8 @@ export class TeleSuite implements reporterTypes.Suite {
   }
 
   allTests(): reporterTypes.TestCase[] {
-    const result: reporterTypes.TestCase[] = [];
-    const visit = (suite: reporterTypes.Suite) => {
+    const result: TeleTestCase[] = [];
+    const visit = (suite: TeleSuite) => {
       for (const entry of suite.entries()) {
         if (entry.type === 'test')
           result.push(entry);
@@ -511,6 +512,7 @@ class TeleTestStep implements reporterTypes.TestStep {
   title: string;
   category: string;
   location: reporterTypes.Location | undefined;
+  stack: reporterTypes.Location[];
   parent: reporterTypes.TestStep | undefined;
   duration: number = -1;
   steps: reporterTypes.TestStep[] = [];
@@ -521,10 +523,11 @@ class TeleTestStep implements reporterTypes.TestStep {
 
   private _startTime: number = 0;
 
-  constructor(payload: JsonTestStepStart, parentStep: reporterTypes.TestStep | undefined, location: reporterTypes.Location | undefined, result: TeleTestResult) {
+  constructor(payload: JsonTestStepStart, parentStep: reporterTypes.TestStep | undefined, stackOrLocation: reporterTypes.Location | reporterTypes.Location[] | undefined, result: TeleTestResult) {
     this.title = payload.title;
     this.category = payload.category;
-    this.location = location;
+    this.stack = Array.isArray(stackOrLocation) ? stackOrLocation : (stackOrLocation ? [stackOrLocation] : []);
+    this.location = this.stack[0];
     this.parent = parentStep;
     this._startTime = payload.startTime;
     this._result = result;

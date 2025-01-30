@@ -555,7 +555,7 @@ export class WorkerMain extends ProcessRunner {
     let firstError: Error | undefined;
     const hooks = suites.map(suite => this._collectHooksAndModifiers(suite, type, testInfo)).flat();
     for (const hook of hooks) {
-      const runnable = { type: hook.type, location: hook.location, slot };
+      const runnable = { type: hook.type, stack: [hook.location], slot };
       if (testInfo._timeoutManager.isTimeExhaustedFor(runnable)) {
         // Do not run hooks that will timeout right away.
         continue;

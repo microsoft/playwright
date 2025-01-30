@@ -748,6 +748,11 @@ export interface TestStep {
   parent?: TestStep;
 
   /**
+   * Call stack for this step.
+   */
+  stack: Array<Location>;
+
+  /**
    * Start time of this particular test step.
    */
   startTime: Date;

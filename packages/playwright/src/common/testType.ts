@@ -69,7 +69,7 @@ export class TestTypeImpl {
     this.test = test;
   }
 
-  private _currentSuite(location: Location, title: string): Suite | undefined {
+  private _currentSuite(title: string): Suite | undefined {
     const suite = currentlyLoadingFileSuite();
     if (!suite) {
       throw new Error([
@@ -86,7 +86,7 @@ export class TestTypeImpl {
 
   private _createTest(type: 'default' | 'only' | 'skip' | 'fixme' | 'fail' | 'fail.only', location: Location, title: string, fnOrDetails: Function | TestDetails, fn?: Function) {
     throwIfRunningInsideJest();
-    const suite = this._currentSuite(location, 'test()');
+    const suite = this._currentSuite('test()');
     if (!suite)
       return;
 
@@ -117,7 +117,7 @@ export class TestTypeImpl {
 
   private _describe(type: 'default' | 'only' | 'serial' | 'serial.only' | 'parallel' | 'parallel.only' | 'skip' | 'fixme', location: Location, titleOrFn: string | Function, fnOrDetails?: TestDetails | Function, fn?: Function) {
     throwIfRunningInsideJest();
-    const suite = this._currentSuite(location, 'test.describe()');
+    const suite = this._currentSuite('test.describe()');
     if (!suite)
       return;
 
@@ -169,7 +169,7 @@ export class TestTypeImpl {
   }
 
   private _hook(name: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', location: Location, title: string | Function, fn?: Function) {
-    const suite = this._currentSuite(location, `test.${name}()`);
+    const suite = this._currentSuite(`test.${name}()`);
     if (!suite)
       return;
     if (typeof title === 'function') {
@@ -182,7 +182,7 @@ export class TestTypeImpl {
 
   private _configure(location: Location, options: { mode?: 'default' | 'parallel' | 'serial', retries?: number, timeout?: number }) {
     throwIfRunningInsideJest();
-    const suite = this._currentSuite(location, `test.describe.configure()`);
+    const suite = this._currentSuite(`test.describe.configure()`);
     if (!suite)
       return;
 
@@ -252,7 +252,7 @@ export class TestTypeImpl {
   }
 
   private _use(location: Location, fixtures: Fixtures) {
-    const suite = this._currentSuite(location, `test.use()`);
+    const suite = this._currentSuite(`test.use()`);
     if (!suite)
       return;
     suite._use.push({ fixtures, location });
@@ -263,11 +263,11 @@ export class TestTypeImpl {
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
     if (expectation === 'skip') {
-      const step = testInfo._addStep({ category: 'test.step.skip', title, location: options.location, box: options.box });
+      const step = testInfo._addStep({ category: 'test.step.skip', title, box: options.box }, undefined, options.location ? [options.location] : undefined);
       step.complete({});
       return undefined as T;
     }
-    const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
+    const step = testInfo._addStep({ category: 'test.step', title, box: options.box }, undefined, options.location ? [options.location] : undefined);
     return await zones.run('stepZone', step, async () => {
       try {
         let result: Awaited<ReturnType<typeof raceAgainstDeadline<T>>> | undefined = undefined;

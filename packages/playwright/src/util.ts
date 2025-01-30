@@ -51,7 +51,7 @@ export function filterStackFile(file: string) {
   return true;
 }
 
-export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
+export function filteredStackTrace(rawStack: RawStack): Location[] {
   const frames: StackFrame[] = [];
   for (const line of rawStack) {
     const frame = parseStackTraceLine(line);
@@ -59,7 +59,7 @@ export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
       continue;
     if (!filterStackFile(frame.file))
       continue;
-    frames.push(frame);
+    frames.push({ file: frame.file, line: frame.line, column: frame.column });
   }
   return frames;
 }

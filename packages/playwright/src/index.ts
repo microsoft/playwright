@@ -273,12 +273,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         }
         // In the general case, create a step for each api call and connect them through the stepId.
         const step = testInfo._addStep({
-          location: data.frames[0],
           category: 'pw:api',
           title: renderApiCall(data.apiName, data.params),
           apiName: data.apiName,
           params: data.params,
-        }, tracingGroupSteps[tracingGroupSteps.length - 1]);
+        }, tracingGroupSteps[tracingGroupSteps.length - 1], data.frames);
         data.userData = step;
         data.stepId = step.stepId;
         if (data.apiName === 'tracing.group')

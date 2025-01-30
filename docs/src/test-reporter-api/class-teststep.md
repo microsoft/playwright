@@ -38,6 +38,12 @@ Error thrown during the step execution, if any.
 
 Parent step, if any.
 
+## property: TestStep.stack
+* since: v1.51
+- type: <[Array]<[Location]>>
+
+Call stack for this step.
+
 ## property: TestStep.startTime
 * since: v1.10
 - type: <[Date]>

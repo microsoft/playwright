@@ -247,7 +247,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       title: step.title,
       category: step.category,
       startTime: +step.startTime,
-      location: this._relativeLocation(step.location),
+      stack: this._relativeStack(step.stack),
     };
   }
 
@@ -258,6 +258,14 @@ export class TeleReporterEmitter implements ReporterV2 {
       error: step.error,
       attachments: step.attachments.map(a => result.attachments.indexOf(a)),
     };
+  }
+
+  private _relativeStack(stack: reporterTypes.Location[]): undefined | reporterTypes.Location | reporterTypes.Location[] {
+    if (!stack.length)
+      return undefined;
+    if (stack.length === 1)
+      return this._relativeLocation(stack[0]);
+    return stack.map(frame => this._relativeLocation(frame));
   }
 
   private _relativeLocation(location: reporterTypes.Location): reporterTypes.Location;

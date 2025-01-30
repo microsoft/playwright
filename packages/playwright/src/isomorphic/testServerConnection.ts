@@ -37,7 +37,7 @@ export class WebSocketTestServerTransport implements TestServerTransport {
   }
 
   onmessage(listener: (message: string) => void) {
-    this._ws.addEventListener('message', event => listener(event.data));
+    this._ws.addEventListener('message', event => listener(String(event.data)));
   }
 
   onopen(listener: () => void) {

@@ -17,14 +17,19 @@
 import { monotonicTime } from './';
 
 export async function raceAgainstDeadline<T>(cb: () => Promise<T>, deadline: number): Promise<{ result: T, timedOut: false } | { timedOut: true }> {
+  // Avoid indirections to preserve better stacks.
+  if (deadline === 0) {
+    const result = await cb();
+    return { result, timedOut: false };
+  }
+
   let timer: NodeJS.Timeout | undefined;
   return Promise.race([
     cb().then(result => {
       return { result, timedOut: false };
     }),
     new Promise<{ timedOut: true }>(resolve => {
-      const kMaxDeadline = 2147483647; // 2^31-1
-      const timeout = (deadline || kMaxDeadline) - monotonicTime();
+      const timeout = deadline - monotonicTime();
       timer = setTimeout(() => resolve({ timedOut: true }), timeout);
     }),
   ]).finally(() => {

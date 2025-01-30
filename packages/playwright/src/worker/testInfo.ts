@@ -26,7 +26,6 @@ import type { Annotation, FullConfigInternal, FullProjectInternal } from '../com
 import type { FullConfig, Location } from '../../types/testReporter';
 import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
-import type { StackFrame } from '@protocol/channels';
 import { testInfoError } from './util';
 
 export interface TestStepInternal {
@@ -35,8 +34,8 @@ export interface TestStepInternal {
   stepId: string;
   title: string;
   category: string;
-  location?: Location;
-  boxedStack?: StackFrame[];
+  stack: Location[];
+  boxedStack?: Location[];
   steps: TestStepInternal[];
   endWallTime?: number;
   apiName?: string;
@@ -244,7 +243,7 @@ export class TestInfoImpl implements TestInfo {
       ?? this._findLastStageStep(this._steps); // If no parent step on stack, assume the current stage as parent.
   }
 
-  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps' | 'attachmentIndices'>, parentStep?: TestStepInternal): TestStepInternal {
+  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps' | 'attachmentIndices' | 'stack'>, parentStep?: TestStepInternal, stackOverride?: Location[]): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
 
     if (data.isStage) {
@@ -255,18 +254,20 @@ export class TestInfoImpl implements TestInfo {
         parentStep = this._parentStep();
     }
 
-    const filteredStack = filteredStackTrace(captureRawStack());
+    const filteredStack = stackOverride ? stackOverride : filteredStackTrace(captureRawStack());
     data.boxedStack = parentStep?.boxedStack;
+    let stack = filteredStack;
     if (!data.boxedStack && data.box) {
       data.boxedStack = filteredStack.slice(1);
-      data.location = data.location || data.boxedStack[0];
+      // Only steps with box: true get boxed stack. Inner steps have original stack for better traceability.
+      stack = data.boxedStack;
     }
-    data.location = data.location || filteredStack[0];
 
     const attachmentIndices: number[] = [];
     const step: TestStepInternal = {
       stepId,
       ...data,
+      stack,
       steps: [],
       attachmentIndices,
       complete: result => {
@@ -319,10 +320,10 @@ export class TestInfoImpl implements TestInfo {
       title: data.title,
       category: data.category,
       wallTime: Date.now(),
-      location: data.location,
+      stack,
     };
     this._onStepBegin(payload);
-    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, data.category, data.apiName || data.title, data.params, data.location ? [data.location] : []);
+    this._tracing.appendBeforeActionForStep(stepId, parentStep?.stepId, data.category, data.apiName || data.title, data.params, stack);
     return step;
   }
 
@@ -351,7 +352,7 @@ export class TestInfoImpl implements TestInfo {
       const location = stage.runnable?.location ? ` at "${formatLocation(stage.runnable.location)}"` : ``;
       debugTest(`started stage "${stage.title}"${location}`);
     }
-    stage.step = stage.stepInfo ? this._addStep({ ...stage.stepInfo, title: stage.title, isStage: true }) : undefined;
+    stage.step = stage.stepInfo ? this._addStep({ category: stage.stepInfo.category, title: stage.title, isStage: true }, undefined, stage.stepInfo.location ? [stage.stepInfo.location] : undefined) : undefined;
 
     try {
       await this._timeoutManager.withRunnable(stage.runnable, async () => {

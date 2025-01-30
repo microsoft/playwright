@@ -34,7 +34,7 @@ type BlobReporterOptions = {
   _commandHash: string;
 };
 
-export const currentBlobReportVersion = 2;
+export const currentBlobReportVersion = 3;
 
 export type BlobReportMetadata = {
   version: number;

@@ -321,7 +321,8 @@ class JobDispatcher {
       duration: -1,
       steps: [],
       attachments: [],
-      location: params.location,
+      location: params.stack[0],
+      stack: params.stack,
     };
     steps.set(params.stepId, step);
     (parentStep || result).steps.push(step);
