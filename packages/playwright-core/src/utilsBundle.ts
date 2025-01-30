@@ -34,7 +34,7 @@ export const progress: typeof import('../bundles/utils/node_modules/@types/progr
 export const SocksProxyAgent: typeof import('../bundles/utils/node_modules/socks-proxy-agent').SocksProxyAgent = require('./utilsBundleImpl').SocksProxyAgent;
 export const yaml: typeof import('../bundles/utils/node_modules/yaml') = require('./utilsBundleImpl').yaml;
 export type { Scalar as YAMLScalar, YAMLSeq, YAMLMap, YAMLError, Range as YAMLRange } from '../bundles/utils/node_modules/yaml';
-export const ws: typeof import('../bundles/utils/node_modules/@types/ws') = typeof globalThis.Bun !== 'undefined' ? require('ws') : require('./utilsBundleImpl').ws;
+export const ws: typeof import('../bundles/utils/node_modules/@types/ws') = 'Bun' in globalThis ? require('ws') : require('./utilsBundleImpl').ws;
 export const wsServer: typeof import('../bundles/utils/node_modules/@types/ws').WebSocketServer = require('./utilsBundleImpl').wsServer;
 export const wsReceiver = require('./utilsBundleImpl').wsReceiver;
 export const wsSender = require('./utilsBundleImpl').wsSender;
