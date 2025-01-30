@@ -19,6 +19,7 @@ import { devices } from '@playwright/test';
 import { contextTest as it, expect } from '../config/browserTest';
 import { browserTest } from '../config/browserTest';
 import { verifyViewport } from '../config/utils';
+import { deviceDescriptors } from 'packages/playwright-core/lib/server/deviceDescriptors';
 
 it('should get the proper default viewport size', async ({ page, server }) => {
   await verifyViewport(page, 1280, 720);
@@ -44,6 +45,14 @@ it('should return correct outerWidth and outerHeight', async ({ page }) => {
   expect(size.innerHeight).toBe(420);
   expect(size.outerWidth >= size.innerWidth).toBeTruthy();
   expect(size.outerHeight >= size.innerHeight).toBeTruthy();
+});
+
+it('landscape viewport should have width larger than height', async () => {
+  for (const device in deviceDescriptors) {
+    const configuration = deviceDescriptors[device];
+    if (device.includes('landscape') || device.includes('Landscape'))
+      expect(configuration.viewport.width).toBeGreaterThan(configuration.viewport.height);
+  }
 });
 
 it('should emulate device width', async ({ page, server }) => {
