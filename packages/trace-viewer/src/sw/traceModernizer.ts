@@ -126,6 +126,7 @@ export class TraceModernizer {
         existing!.result = event.result;
         existing!.error = event.error;
         existing!.attachments = event.attachments;
+        existing!.annotations = event.annotations;
         if (event.point)
           existing!.point = event.point;
         break;

@@ -692,6 +692,21 @@ export interface TestStep {
   titlePath(): Array<string>;
 
   /**
+   * The list of annotations applicable to the current test step.
+   */
+  annotations: Array<{
+    /**
+     * Annotation type, for example `'skip'`.
+     */
+    type: string;
+
+    /**
+     * Optional description.
+     */
+    description?: string;
+  }>;
+
+  /**
    * The list of files or buffers attached in the step execution through
    * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach).
    */

@@ -321,6 +321,7 @@ class JobDispatcher {
       duration: -1,
       steps: [],
       attachments: [],
+      annotations: [],
       location: params.location,
     };
     steps.set(params.stepId, step);
@@ -345,6 +346,7 @@ class JobDispatcher {
       step.error = params.error;
     if (params.suggestedRebaseline)
       addSuggestedRebaseline(step.location!, params.suggestedRebaseline);
+    step.annotations = params.annotations;
     steps.delete(params.stepId);
     this._reporter.onStepEnd?.(test, result, step);
   }

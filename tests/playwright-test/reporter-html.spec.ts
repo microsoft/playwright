@@ -780,8 +780,33 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
       await page.click('text=example');
-      await page.click('text=skipped step title');
+      await page.click('text=skipped step title (skipped)');
       await expect(page.getByTestId('test-snippet')).toContainText(`await test.step.skip('skipped step title', async () => {`);
+    });
+
+    test('step title should inlclude skipped step description', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'playwright.config.js': `
+          export default { testDir: './tests' };
+        `,
+        'tests/a.test.ts': `
+          import { test, expect } from '@playwright/test';
+
+          test('example', async ({}) => {
+            await test.step('step title', async (step) => {
+              expect(1).toBe(1);
+              step.skip(true, 'conditional step.skip');
+            });
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.click('text=example');
+      await page.click('text=step title (skipped: conditional step.skip)');
+      await expect(page.getByTestId('test-snippet')).toContainText(`await test.step('step title', async (step) => {`);
     });
 
     test('should render annotations', async ({ runInlineTest, page, showReport }) => {

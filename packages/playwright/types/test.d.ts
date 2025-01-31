@@ -5811,7 +5811,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * @param body Step body.
    * @param options
    */
-  <T>(title: string, body: () => T | Promise<T>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<T>;
+  <T>(title: string, body: (step: TestStepInfo) => T | Promise<T>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<T>;
     /**
    * Mark a test step as "skip" to temporarily disable its execution, useful for steps that are currently failing and
    * planned for a near-term fix. Playwright will not run the step.
@@ -5835,7 +5835,7 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * @param body Step body.
    * @param options
    */
-  skip(title: string, body: () => any | Promise<any>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<void>;
+  skip(title: string, body: (step: TestStepInfo) => any | Promise<any>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<void>;
   }
   /**
    * `expect` function can be used to create test assertions. Read more about [test assertions](https://playwright.dev/docs/test-assertions).
@@ -9551,6 +9551,39 @@ export interface TestInfoError {
    * The value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.
    */
   value?: string;
+}
+
+/**
+ * `TestStepInfo` contains information about currently running test step. It is passed as an argument to the step
+ * function. `TestStepInfo` provides utilities to control test step execution.
+ *
+ * ```js
+ * import { test, expect } from '@playwright/test';
+ *
+ * test('basic test', async ({ page, browserName }, TestStepInfo) => {
+ *   await test.step('check some behavior', async step => {
+ *     await step.skip(browserName === 'webkit', 'The feature is not available in WebKit');
+ *     // ... rest of the step code
+ *     await page.check('input');
+ *   });
+ * });
+ * ```
+ *
+ */
+export interface TestStepInfo {
+  /**
+   * Unconditionally skip the currently running step. Test step is immediately aborted. This is similar to
+   * [test.step.skip(title, body[, options])](https://playwright.dev/docs/api/class-test#test-step-skip).
+   */
+  skip(): void;
+
+  /**
+   * Conditionally skips the currently running step with an optional description. This is similar to
+   * [test.step.skip(title, body[, options])](https://playwright.dev/docs/api/class-test#test-step-skip).
+   * @param condition A skip condition. Test step is skipped when the condition is `true`.
+   * @param description Optional description that will be reflected in a test report.
+   */
+  skip(condition: boolean, description?: string): void;
 }
 
 /**

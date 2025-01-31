@@ -258,6 +258,8 @@ function mergeActionsAndUpdateTimingSameTrace(contexts: ContextEntry[]): ActionT
           existing.error = action.error;
         if (action.attachments)
           existing.attachments = action.attachments;
+        if (action.annotations)
+          existing.annotations = action.annotations;
         if (action.parentId)
           existing.parentId = nonPrimaryIdToPrimaryId.get(action.parentId) ?? action.parentId;
         // For the events that are present in the test runner context, always take
