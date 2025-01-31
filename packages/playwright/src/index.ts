@@ -527,27 +527,17 @@ function connectOptionsFromEnv() {
 }
 
 class SnapshotRecorder {
-  private _artifactsRecorder: ArtifactsRecorder;
   private _ordinal = 0;
   private _temporary: string[] = [];
   private _snapshottedSymbol = Symbol('snapshotted');
-  private _mode: ScreenshotMode;
-  private _name: string;
-  private _contentType: string;
-  private _extension: string;
-  private _doSnapshot: (page: Page, path: string) => Promise<void>;
 
-  constructor(artifactsRecorder: ArtifactsRecorder, mode: ScreenshotMode, name: string, contentType: string, extension: string, doSnapshot: (page: Page, path: string) => Promise<void>) {
-    this._artifactsRecorder = artifactsRecorder;
-    this._mode = mode;
-    this._name = name;
-    this._contentType = contentType;
-    this._extension = extension;
-    this._doSnapshot = doSnapshot;
-  }
-
-  private get testInfo(): TestInfoImpl {
-    return this._artifactsRecorder._testInfo;
+  constructor(
+    private _artifactsRecorder: ArtifactsRecorder,
+    private _mode: ScreenshotMode,
+    private _name: string,
+    private _contentType: string,
+    private _extension: string,
+    private _doSnapshot: (page: Page, path: string) => Promise<void>) {
   }
 
   fixOrdinal() {
@@ -556,28 +546,22 @@ class SnapshotRecorder {
     this._ordinal = this.testInfo.attachments.filter(a => a.name === this._name).length;
   }
 
-  async captureTemporary(context: BrowserContext) {
-    if (this._mode === 'on' || this._mode === 'only-on-failure' || (this._mode === 'on-first-failure' && this.testInfo.retry === 0))
-      await Promise.all(context.pages().map(page => this._snapshotPage(page, true)));
-  }
-
   private shouldCaptureUponFinish() {
     return this._mode === 'on' ||
         (this._mode === 'only-on-failure' && this.testInfo._isFailure()) ||
         (this._mode === 'on-first-failure' && this.testInfo._isFailure() && this.testInfo.retry === 0);
   }
 
-  private _allContexts() {
+  async maybeCapture() {
+    if (!this.shouldCaptureUponFinish())
+      return;
+
     const contexts: BrowserContext[] = [];
     const playwright = this._artifactsRecorder._playwright;
     for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
       contexts.push(...(browserType as any)._contexts);
-    return contexts;
-  }
 
-  async maybeCapture() {
-    if (this.shouldCaptureUponFinish())
-      await Promise.all(this._allContexts().flatMap(context => context.pages().map(page => this._snapshotPage(page, false))));
+    await Promise.all(contexts.flatMap(context => context.pages().map(page => this._snapshotPage(page, false))));
   }
 
   async persistTemporary() {
@@ -591,6 +575,11 @@ class SnapshotRecorder {
         }
       }));
     }
+  }
+
+  async captureTemporary(context: BrowserContext) {
+    if (this._mode === 'on' || this._mode === 'only-on-failure' || (this._mode === 'on-first-failure' && this.testInfo.retry === 0))
+      await Promise.all(context.pages().map(page => this._snapshotPage(page, true)));
   }
 
   private _attach(screenshotPath: string) {
@@ -624,6 +613,10 @@ class SnapshotRecorder {
     } catch {
       // snapshot may fail, just ignore.
     }
+  }
+
+  private get testInfo(): TestInfoImpl {
+    return this._artifactsRecorder._testInfo;
   }
 }
 
