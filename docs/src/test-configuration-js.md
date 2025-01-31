@@ -68,10 +68,6 @@ export default defineConfig({
 | [`property: TestConfig.webServer`] | To launch a server during the tests, use the `webServer` option |
 | [`property: TestConfig.workers`] | The maximum number of concurrent worker processes to use for parallelizing tests. Can also be set as percentage of logical CPU cores, e.g. `'50%'.`. See [Parallelism](./test-parallel) and [Sharding](./test-sharding) for more details. |
 
-:::warning
-Playwright executes the configuration file multiple times. Do not dynamically produce non-stable values in your configuration (for example, using the current datetime in [`property: TestProject.name`]).
-:::
-
 ## Filtering Tests
 
 Filter tests by glob patterns or regular expressions.
