@@ -730,3 +730,47 @@ const serverConfig = {
 
 /* ... */
 ```
+
+#### Astro
+* langs: js
+
+Set up a server-side fetch override in an Astro integration:
+
+```ts
+// astro.config.mjs
+import { defineConfig } from 'astro/config';
+import type { AstroIntegration } from "astro"
+import { AsyncLocalStorage } from "async_hooks";
+
+const playwrightMockingProxy: AstroIntegration = {
+  name: 'playwrightMockingProxy',
+  hooks: {
+    'astro:server:setup': async astro => {
+      if (process.env.NODE_ENV !== 'test')
+        return;
+
+      const proxyStorage = new AsyncLocalStorage<string>();
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = async (input, init) => {
+        const proxy = proxyStorage.getStore();
+        if (!proxy)
+          return originalFetch(input, init);
+        const request = new Request(input, init);
+        return originalFetch(proxy + request.url, request);
+      };
+      astro.server.middlewares.use((req, res, next) => {
+        const header = req.headers['x-playwright-proxy'] as string;
+        if (typeof header !== 'string')
+          return next();
+        proxyStorage.run(decodeURIComponent(header), next);
+      });
+    },
+  }
+};
+
+export default defineConfig({
+  integrations: [
+    playwrightMockingProxy
+  ]
+});
+```
