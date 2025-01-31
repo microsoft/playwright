@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { captureRawStack, monotonicTime, zones, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
-import type { TestInfo, TestStatus, FullProject } from '../../types/test';
+import type { TestInfo, TestStatus, FullProject, TestStepInfo } from '../../types/test';
 import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
@@ -28,9 +28,11 @@ import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normal
 import { TestTracing } from './testTracing';
 import type { StackFrame } from '@protocol/channels';
 import { testInfoError } from './util';
+import { wrapFunctionWithLocation } from '../transform/transform';
 
 export interface TestStepInternal {
   complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
+  annotations?: Annotation[];
   attachmentIndices: number[];
   stepId: string;
   title: string;
@@ -302,11 +304,12 @@ export class TestInfoImpl implements TestInfo {
           wallTime: step.endWallTime,
           error: step.error,
           suggestedRebaseline: result.suggestedRebaseline,
+          annotations: step.annotations,
         };
         this._onStepEnd(payload);
         const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
         const attachments = attachmentIndices.map(i => this.attachments[i]);
-        this._tracing.appendAfterActionForStep(stepId, errorForTrace, attachments);
+        this._tracing.appendAfterActionForStep(stepId, errorForTrace, attachments, step.annotations);
       }
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
@@ -501,6 +504,25 @@ export class TestInfoImpl implements TestInfo {
 
   setTimeout(timeout: number) {
     this._timeoutManager.setTimeout(timeout);
+  }
+}
+
+export class TestStepInfoImpl implements TestStepInfo {
+  skip;
+
+  constructor(private _step: TestStepInternal, private _testInfo: TestInfoImpl) {
+    this.skip = wrapFunctionWithLocation(this._skip.bind(this));
+  }
+
+  private _skip(location: Location, ...args: unknown[]) {
+    // skip();
+    // skip(condition: boolean, description: string);
+    if (args.length > 0 && !args[0])
+      return;
+    const description = args[1] as (string|undefined);
+    this._step.annotations ??= [];
+    this._step.annotations.push({ type: 'skip', description });
+    throw new SkipError(description);
   }
 }
 

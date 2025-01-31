@@ -19,10 +19,11 @@ import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuit
 import { TestCase, Suite } from './test';
 import { wrapFunctionWithLocation } from '../transform/transform';
 import type { FixturesWithLocation } from './config';
-import type { Fixtures, TestType, TestDetails } from '../../types/test';
+import type { Fixtures, TestType, TestDetails, TestStepInfo } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import { getPackageManagerExecCommand, monotonicTime, raceAgainstDeadline, zones } from 'playwright-core/lib/utils';
 import { errors } from 'playwright-core';
+import { SkipError, TestStepInfoImpl } from '../worker/testInfo';
 
 const testTypeSymbol = Symbol('testType');
 
@@ -258,27 +259,31 @@ export class TestTypeImpl {
     suite._use.push({ fixtures, location });
   }
 
-  async _step<T>(expectation: 'pass'|'skip', title: string, body: () => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
+  async _step<T>(expectation: 'pass'|'skip', title: string, body: (step: TestStepInfo) => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
     if (expectation === 'skip') {
-      const step = testInfo._addStep({ category: 'test.step.skip', title, location: options.location, box: options.box });
+      const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
+      step.annotations = [{ type: 'skip' }];
       step.complete({});
       return undefined as T;
     }
     const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
+    const stepInfo = new TestStepInfoImpl(step, testInfo);
     return await zones.run('stepZone', step, async () => {
       try {
         let result: Awaited<ReturnType<typeof raceAgainstDeadline<T>>> | undefined = undefined;
         result = await raceAgainstDeadline(async () => {
           try {
-            return await body();
+            return await body(stepInfo);
           } catch (e) {
             // If the step timed out, the test fixtures will tear down, which in turn
             // will abort unfinished actions in the step body. Record such errors here.
             if (result?.timedOut)
               testInfo._failWithError(e);
+            if (e instanceof SkipError)
+              return undefined as T;
             throw e;
           }
         }, options.timeout ? monotonicTime() + options.timeout : 0);

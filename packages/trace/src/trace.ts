@@ -86,6 +86,11 @@ export type AfterActionTraceEventAttachment = {
   base64?: string;
 };
 
+export type AfterActionTraceEventAnnotation = {
+  type: string,
+  description?: string
+};
+
 export type AfterActionTraceEvent = {
   type: 'after',
   callId: string;
@@ -93,6 +98,7 @@ export type AfterActionTraceEvent = {
   afterSnapshot?: string;
   error?: SerializedError['error'];
   attachments?: AfterActionTraceEventAttachment[];
+  annotations?: AfterActionTraceEventAnnotation[];
   result?: any;
   point?: Point;
 };

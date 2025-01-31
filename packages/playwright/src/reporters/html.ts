@@ -517,9 +517,12 @@ class HtmlBuilder {
 
   private _createTestStep(dedupedStep: DedupedStep, result: api.TestResult): TestStep {
     const { step, duration, count } = dedupedStep;
-    const skipped = dedupedStep.step.category === 'test.step.skip';
+    const skipped = dedupedStep.step.annotations?.find(a => a.type === 'skip');
+    let title = step.title;
+    if (skipped)
+      title = `${title} (skipped${skipped.description ? ': ' + skipped.description : ''})`;
     const testStep: TestStep = {
-      title: step.title,
+      title,
       startTime: step.startTime.toISOString(),
       duration,
       steps: dedupeSteps(step.steps).map(s => this._createTestStep(s, result)),
@@ -532,7 +535,7 @@ class HtmlBuilder {
       location: this._relativeLocation(step.location),
       error: step.error?.message,
       count,
-      skipped
+      skipped: !!skipped,
     };
     if (step.location)
       this._stepsInFile.set(step.location.file, testStep);

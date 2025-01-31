@@ -252,19 +252,20 @@ export class TestTracing {
       parentId,
       startTime: monotonicTime(),
       class: 'Test',
-      method: category,
+      method: 'step',
       apiName,
       params: Object.fromEntries(Object.entries(params || {}).map(([name, value]) => [name, generatePreview(value)])),
       stack,
     });
   }
 
-  appendAfterActionForStep(callId: string, error?: SerializedError['error'], attachments: Attachment[] = []) {
+  appendAfterActionForStep(callId: string, error?: SerializedError['error'], attachments: Attachment[] = [], annotations?: trace.AfterActionTraceEventAnnotation[]) {
     this._appendTraceEvent({
       type: 'after',
       callId,
       endTime: monotonicTime(),
       attachments: serializeAttachments(attachments),
+      annotations,
       error,
     });
   }

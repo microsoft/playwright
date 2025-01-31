@@ -120,7 +120,7 @@ export const renderAction = (
 
   const parameterString = actionParameterDisplayString(action, sdkLanguage || 'javascript');
 
-  const isSkipped = action.class === 'Test' && action.method === 'test.step.skip';
+  const isSkipped = action.class === 'Test' && action.method === 'step' && action.annotations?.some(a => a.type === 'skip');
   let time: string = '';
   if (action.endTime)
     time = msToString(action.endTime - action.startTime);
