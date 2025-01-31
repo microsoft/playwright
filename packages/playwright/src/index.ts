@@ -526,48 +526,139 @@ function connectOptionsFromEnv() {
   };
 }
 
+class SnapshotRecorder {
+  private _artifactsRecorder: ArtifactsRecorder;
+  private _ordinal = 0;
+  private _temporary: string[] = [];
+  private _snapshottedSymbol = Symbol('snapshotted');
+  private _mode: ScreenshotMode;
+  private _name: string;
+  private _contentType: string;
+  private _extension: string;
+  private _doSnapshot: (page: Page, path: string) => Promise<void>;
+
+  constructor(artifactsRecorder: ArtifactsRecorder, mode: ScreenshotMode, name: string, contentType: string, extension: string, doSnapshot: (page: Page, path: string) => Promise<void>) {
+    this._artifactsRecorder = artifactsRecorder;
+    this._mode = mode;
+    this._name = name;
+    this._contentType = contentType;
+    this._extension = extension;
+    this._doSnapshot = doSnapshot;
+  }
+
+  private get testInfo(): TestInfoImpl {
+    return this._artifactsRecorder._testInfo;
+  }
+
+  fixOrdinal() {
+    // Since beforeAll(s), test and afterAll(s) reuse the same TestInfo, make sure we do not
+    // overwrite previous screenshots.
+    this._ordinal = this.testInfo.attachments.filter(a => a.name === this._name).length;
+  }
+
+  async captureTemporary(context: BrowserContext) {
+    if (this._mode === 'on' || this._mode === 'only-on-failure' || (this._mode === 'on-first-failure' && this.testInfo.retry === 0))
+      await Promise.all(context.pages().map(page => this._snapshotPage(page, true)));
+  }
+
+  private shouldCaptureUponFinish() {
+    return this._mode === 'on' ||
+        (this._mode === 'only-on-failure' && this.testInfo._isFailure()) ||
+        (this._mode === 'on-first-failure' && this.testInfo._isFailure() && this.testInfo.retry === 0);
+  }
+
+  private _allContexts() {
+    const contexts: BrowserContext[] = [];
+    const playwright = this._artifactsRecorder._playwright;
+    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit])
+      contexts.push(...(browserType as any)._contexts);
+    return contexts;
+  }
+
+  async maybeCapture() {
+    if (this.shouldCaptureUponFinish())
+      await Promise.all(this._allContexts().flatMap(context => context.pages().map(page => this._snapshotPage(page, false))));
+  }
+
+  async persistTemporary() {
+    if (this.shouldCaptureUponFinish()) {
+      await Promise.all(this._temporary.map(async file => {
+        try {
+          const path = this._createAttachmentPath();
+          await fs.promises.rename(file, path);
+          this._attach(path);
+        } catch {
+        }
+      }));
+    }
+  }
+
+  private _attach(screenshotPath: string) {
+    this.testInfo.attachments.push({ name: this._name, path: screenshotPath, contentType: this._contentType });
+  }
+
+  private _createAttachmentPath() {
+    const testFailed = this.testInfo._isFailure();
+    const index = this._ordinal + 1;
+    ++this._ordinal;
+    const path = this.testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${index}${this._extension}`);
+    return path;
+  }
+
+  private _createTemporaryArtifact(...name: string[]) {
+    const file = path.join(this._artifactsRecorder._artifactsDir, ...name);
+    return file;
+  }
+
+  private async _snapshotPage(page: Page, temporary: boolean) {
+    if ((page as any)[this._snapshottedSymbol])
+      return;
+    (page as any)[this._snapshottedSymbol] = true;
+    try {
+      const path = temporary ? this._createTemporaryArtifact(createGuid() + this._extension) : this._createAttachmentPath();
+      await this._doSnapshot(page, path);
+      if (temporary)
+        this._temporary.push(path);
+      else
+        this._attach(path);
+    } catch {
+      // snapshot may fail, just ignore.
+    }
+  }
+}
+
 class ArtifactsRecorder {
-  private _testInfo!: TestInfoImpl;
-  private _playwright: Playwright;
-  private _artifactsDir: string;
-  private _screenshotMode: ScreenshotMode;
-  private _screenshotOptions: { mode: ScreenshotMode } & Pick<playwrightLibrary.PageScreenshotOptions, 'fullPage' | 'omitBackground'> | undefined;
-  private _temporaryScreenshots: string[] = [];
-  private _temporaryPageSnapshots: string[] = [];
-  private _temporaryArtifacts: string[] = [];
+  _testInfo!: TestInfoImpl;
+  _playwright: Playwright;
+  _artifactsDir: string;
   private _reusedContexts = new Set<BrowserContext>();
-  private _screenshotOrdinal = 0;
-  private _pageSnapshotOrdinal = 0;
-  private _screenshottedSymbol: symbol;
-  private _snapshottedSymbol: symbol;
   private _startedCollectingArtifacts: symbol;
-  private _pageSnapshotMode: PageSnapshotOption;
+
+  private _pageSnapshotRecorder: SnapshotRecorder;
+  private _screenshotRecorder: SnapshotRecorder;
 
   constructor(playwright: Playwright, artifactsDir: string, screenshot: ScreenshotOption, pageSnapshot: PageSnapshotOption) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
-    this._pageSnapshotMode = pageSnapshot;
-    this._screenshotMode = normalizeScreenshotMode(screenshot);
-    this._screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
-    this._screenshottedSymbol = Symbol('screenshotted');
-    this._snapshottedSymbol = Symbol('snapshotted');
+    const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
     this._startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
-  }
 
-  private _createTemporaryArtifact(...name: string[]) {
-    const file = path.join(this._artifactsDir, ...name);
-    this._temporaryArtifacts.push(file);
-    return file;
+    this._screenshotRecorder = new SnapshotRecorder(this, normalizeScreenshotMode(screenshot), 'screenshot', 'image/png', '.png', async (page, path) => {
+      await page.screenshot({ ...screenshotOptions, timeout: 5000, path, caret: 'initial' });
+    });
+
+    this._pageSnapshotRecorder = new SnapshotRecorder(this, pageSnapshot, 'pageSnapshot', 'text/plain', '.ariasnapshot', async (page, path) => {
+      const ariaSnapshot = await page.locator('body').ariaSnapshot();
+      await fs.promises.writeFile(path, ariaSnapshot);
+    });
   }
 
   async willStartTest(testInfo: TestInfoImpl) {
     this._testInfo = testInfo;
     testInfo._onDidFinishTestFunction = () => this.didFinishTestFunction();
 
-    // Since beforeAll(s), test and afterAll(s) reuse the same TestInfo, make sure we do not
-    // overwrite previous screenshots.
-    this._screenshotOrdinal = testInfo.attachments.filter(a => a.name === 'screenshot').length;
-    this._pageSnapshotOrdinal = testInfo.attachments.filter(a => a.name === 'pageSnapshot').length;
+    this._screenshotRecorder.fixOrdinal();
+    this._pageSnapshotRecorder.fixOrdinal();
 
     // Process existing contexts.
     for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit]) {
@@ -597,11 +688,9 @@ class ArtifactsRecorder {
     if (this._reusedContexts.has(context))
       return;
     await this._stopTracing(context.tracing);
-    // Capture for now. We'll know whether we have to preserve them after the test finishes.
-    if (this._screenshotMode === 'on' || this._screenshotMode === 'only-on-failure' || (this._screenshotMode === 'on-first-failure' && this._testInfo.retry === 0))
-      await Promise.all(context.pages().map(page => this._screenshotPage(page, true)));
-    if (this._pageSnapshotMode === 'on' || this._pageSnapshotMode === 'only-on-failure')
-      await Promise.all(context.pages().map(page => this._snapshotPage(page, true)));
+
+    await this._screenshotRecorder.captureTemporary(context);
+    await this._pageSnapshotRecorder.captureTemporary(context);
   }
 
   async didCreateRequestContext(context: APIRequestContext) {
@@ -614,31 +703,13 @@ class ArtifactsRecorder {
     await this._stopTracing(tracing);
   }
 
-  private _shouldCaptureScreenshotUponFinish() {
-    return this._screenshotMode === 'on' ||
-        (this._screenshotMode === 'only-on-failure' && this._testInfo._isFailure()) ||
-        (this._screenshotMode === 'on-first-failure' && this._testInfo._isFailure() && this._testInfo.retry === 0);
-  }
-
-  private _shouldCapturePageSnapshotUponFinish() {
-    return this._pageSnapshotMode === 'on' ||
-        (this._pageSnapshotMode === 'only-on-failure' && this._testInfo._isFailure());
-  }
-
   async didFinishTestFunction() {
-    if (this._shouldCaptureScreenshotUponFinish())
-      await this._screenshotOnTestFailure();
-    if (this._shouldCapturePageSnapshotUponFinish())
-      await this._pageSnapshotOnTestFailure();
+    await this._screenshotRecorder.maybeCapture();
+    await this._pageSnapshotRecorder.maybeCapture();
   }
 
   async didFinishTest() {
-    const captureScreenshots = this._shouldCaptureScreenshotUponFinish();
-    if (captureScreenshots)
-      await this._screenshotOnTestFailure();
-    const capturePageSnapshots = this._shouldCapturePageSnapshotUponFinish();
-    if (capturePageSnapshots)
-      await this._pageSnapshotOnTestFailure();
+    await this.didFinishTestFunction();
 
     let leftoverContexts: BrowserContext[] = [];
     for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit])
@@ -654,103 +725,8 @@ class ArtifactsRecorder {
       await this._stopTracing(tracing);
     })));
 
-    // Attach temporary screenshots for contexts closed before collecting the test trace.
-    if (captureScreenshots) {
-      for (const file of this._temporaryScreenshots) {
-        try {
-          const screenshotPath = this._createScreenshotAttachmentPath();
-          await fs.promises.rename(file, screenshotPath);
-          this._attachScreenshot(screenshotPath);
-        } catch {
-        }
-      }
-    }
-    if (this._shouldCapturePageSnapshotUponFinish()) {
-      for (const file of this._temporaryPageSnapshots) {
-        try {
-          const path = this._createPageSnapshotAttachmentPath();
-          await fs.promises.rename(file, path);
-          this._attachPageSnapshot(path);
-        } catch {
-        }
-      }
-    }
-  }
-
-  private _createScreenshotAttachmentPath() {
-    const testFailed = this._testInfo._isFailure();
-    const index = this._screenshotOrdinal + 1;
-    ++this._screenshotOrdinal;
-    const screenshotPath = this._testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${index}.png`);
-    return screenshotPath;
-  }
-
-  private _createPageSnapshotAttachmentPath() {
-    const testFailed = this._testInfo._isFailure();
-    const index = this._pageSnapshotOrdinal + 1;
-    ++this._pageSnapshotOrdinal;
-    const path = this._testInfo.outputPath(`test-${testFailed ? 'failed' : 'finished'}-${index}.ariasnapshot`);
-    return path;
-  }
-
-  private async _screenshotPage(page: Page, temporary: boolean) {
-    if ((page as any)[this._screenshottedSymbol])
-      return;
-    (page as any)[this._screenshottedSymbol] = true;
-    try {
-      const screenshotPath = temporary ? this._createTemporaryArtifact(createGuid() + '.png') : this._createScreenshotAttachmentPath();
-      // Pass caret=initial to avoid any evaluations that might slow down the screenshot
-      // and let the page modify itself from the problematic state it had at the moment of failure.
-      await page.screenshot({ ...this._screenshotOptions, timeout: 5000, path: screenshotPath, caret: 'initial' });
-      if (temporary)
-        this._temporaryScreenshots.push(screenshotPath);
-      else
-        this._attachScreenshot(screenshotPath);
-    } catch {
-      // Screenshot may fail, just ignore.
-    }
-  }
-
-  private _attachScreenshot(screenshotPath: string) {
-    this._testInfo.attachments.push({ name: 'screenshot', path: screenshotPath, contentType: 'image/png' });
-  }
-
-  private _allPages() {
-    const contexts: BrowserContext[] = [];
-    for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit])
-      contexts.push(...(browserType as any)._contexts);
-    return contexts.flatMap(ctx => ctx.pages());
-  }
-
-  private async _screenshotOnTestFailure() {
-    await Promise.all(this._allPages().map(page => this._screenshotPage(page, false)));
-  }
-
-  private async _snapshotPage(page: Page, temporary: boolean) {
-    if ((page as any)[this._snapshottedSymbol])
-      return;
-    (page as any)[this._snapshottedSymbol] = true;
-    try {
-      const ariaSnapshot = await page.locator('body').ariaSnapshot();
-      const path = temporary ? this._createTemporaryArtifact(createGuid() + '.ariasnapshot') : this._createPageSnapshotAttachmentPath();
-      await fs.promises.writeFile(path, ariaSnapshot);
-
-      if (temporary)
-        this._temporaryPageSnapshots.push(path);
-      else
-        this._attachPageSnapshot(path);
-    } catch (error) {
-      // snapshot may fail, just ignore.
-    }
-  }
-
-  private _attachPageSnapshot(path: string) {
-    this._testInfo.attachments.push({ name: 'pageSnapshot', path, contentType: 'text/plain' });
-  }
-
-
-  private async _pageSnapshotOnTestFailure() {
-    await Promise.all(this._allPages().map(page => this._snapshotPage(page, false)));
+    await this._screenshotRecorder.persistTemporary();
+    await this._pageSnapshotRecorder.persistTemporary();
   }
 
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {
