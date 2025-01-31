@@ -774,3 +774,41 @@ export default defineConfig({
   ]
 });
 ```
+
+#### Nuxt
+
+```ts
+// server/plugins/playwright-mocking-proxy.ts
+
+import { getGlobalDispatcher, setGlobalDispatcher } from "undici"
+import { useEvent, getRequestHeader } from '#imports'
+
+export default defineNitroPlugin(() => {
+  if (process.env.NODE_ENV !== 'test')
+    return;
+
+  const proxiedDispatcher = getGlobalDispatcher().compose(dispatch => (opts, handler) => {
+    const isInternal = opts.path.startsWith("/__nuxt")
+    const proxy = getRequestHeader(useEvent(), 'x-playwright-proxy')
+    if (!proxy || isInternal)
+      return dispatch(opts, handler)
+
+    const newURL = new URL(decodeURIComponent(proxy) + opts.origin + opts.path);
+    opts.origin = newURL.origin;
+    opts.path = newURL.pathname;
+    return dispatch(opts, handler)
+  })
+  setGlobalDispatcher(proxiedDispatcher)
+});
+```
+
+```ts
+// nuxt.config.ts
+export default defineNuxtConfig({
+  nitro: {
+    experimental: {
+      asyncContext: true,
+    }
+  }
+})
+```
