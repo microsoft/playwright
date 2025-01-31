@@ -9554,7 +9554,7 @@ export interface TestInfoError {
 }
 
 /**
- * `TestStepInfo` contains information about currently running test step. It is pass as an argument to the step
+ * `TestStepInfo` contains information about currently running test step. It is passed as an argument to the step
  * function. `TestStepInfo` provides utilities to control test step execution.
  *
  * ```js
@@ -9562,7 +9562,7 @@ export interface TestInfoError {
  *
  * test('basic test', async ({ page, browserName }, TestStepInfo) => {
  *   await test.step('check some behavior', async step => {
- *     await step.skip(browserName === 'webkit, 'The feature is not available in WebKit');
+ *     await step.skip(browserName === 'webkit', 'The feature is not available in WebKit');
  *     //... rest of the step code
  *     await page.check('input');
  *   });

@@ -52,7 +52,7 @@ List of steps inside this step.
 
 ## property: TestStep.annotations
 * since: v1.51
-- type: ?<[Array]<[Object]>>
+- type: <[Array]<[Object]>>
   - `type` <[string]> Annotation type, for example `'skip'`.
   - `description` ?<[string]> Optional description.
 

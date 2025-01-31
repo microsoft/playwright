@@ -508,16 +508,11 @@ export class TestInfoImpl implements TestInfo {
 }
 
 export class TestStepInfoImpl implements TestStepInfo {
-  annotations?: Annotation[];
-
-  private _addAnnotation(type: string, description?: string) {
-    this.annotations ??= [];
-    this.annotations.push({ type, description });
-  }
+  annotations: Annotation[] = [];
 
   async _runStepBody<T>(skip: boolean, body: (step: TestStepInfo) => T | Promise<T>) {
     if (skip) {
-      this._addAnnotation('skip');
+      this.annotations.push({ type: 'skip' });
       return undefined as T;
     }
     try {
@@ -535,7 +530,7 @@ export class TestStepInfoImpl implements TestStepInfo {
     if (args.length > 0 && !args[0])
       return;
     const description = args[1] as (string|undefined);
-    this._addAnnotation('skip', description);
+    this.annotations.push({ type: 'skip', description });
     throw new SkipError(description);
   }
 }

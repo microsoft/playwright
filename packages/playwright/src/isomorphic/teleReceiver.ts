@@ -549,7 +549,7 @@ class TeleTestStep implements reporterTypes.TestStep {
   }
 
   get annotations() {
-    return this._endPayload?.annotations;
+    return this._endPayload?.annotations ?? [];
   }
 }
 

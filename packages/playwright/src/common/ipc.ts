@@ -109,7 +109,7 @@ export type StepEndPayload = {
   wallTime: number;  // milliseconds since unix epoch
   error?: TestInfoErrorImpl;
   suggestedRebaseline?: string;
-  annotations?: { type: string, description?: string }[];
+  annotations: { type: string, description?: string }[];
 };
 
 export type TestEntry = {

@@ -321,6 +321,7 @@ class JobDispatcher {
       duration: -1,
       steps: [],
       attachments: [],
+      annotations: [],
       location: params.location,
     };
     steps.set(params.stepId, step);

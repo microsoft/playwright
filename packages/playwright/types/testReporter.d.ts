@@ -694,7 +694,7 @@ export interface TestStep {
   /**
    * The list of annotations applicable to the current test step.
    */
-  annotations?: Array<{
+  annotations: Array<{
     /**
      * Annotation type, for example `'skip'`.
      */
