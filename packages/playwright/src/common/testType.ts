@@ -23,7 +23,6 @@ import type { Fixtures, TestType, TestDetails, TestStepInfo } from '../../types/
 import type { Location } from '../../types/testReporter';
 import { getPackageManagerExecCommand, monotonicTime, raceAgainstDeadline, zones } from 'playwright-core/lib/utils';
 import { errors } from 'playwright-core';
-import { SkipError, TestStepInfoImpl } from '../worker/testInfo';
 
 const testTypeSymbol = Symbol('testType');
 
@@ -263,27 +262,18 @@ export class TestTypeImpl {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
-    if (expectation === 'skip') {
-      const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
-      step.annotations = [{ type: 'skip' }];
-      step.complete({});
-      return undefined as T;
-    }
     const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
-    const stepInfo = new TestStepInfoImpl(step, testInfo);
     return await zones.run('stepZone', step, async () => {
       try {
         let result: Awaited<ReturnType<typeof raceAgainstDeadline<T>>> | undefined = undefined;
         result = await raceAgainstDeadline(async () => {
           try {
-            return await body(stepInfo);
+            return await step.info._runStepBody(expectation === 'skip', body);
           } catch (e) {
             // If the step timed out, the test fixtures will tear down, which in turn
             // will abort unfinished actions in the step body. Record such errors here.
             if (result?.timedOut)
               testInfo._failWithError(e);
-            if (e instanceof SkipError)
-              return undefined as T;
             throw e;
           }
         }, options.timeout ? monotonicTime() + options.timeout : 0);

@@ -28,11 +28,10 @@ import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normal
 import { TestTracing } from './testTracing';
 import type { StackFrame } from '@protocol/channels';
 import { testInfoError } from './util';
-import { wrapFunctionWithLocation } from '../transform/transform';
 
 export interface TestStepInternal {
   complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;
-  annotations?: Annotation[];
+  info: TestStepInfoImpl
   attachmentIndices: number[];
   stepId: string;
   title: string;
@@ -246,7 +245,7 @@ export class TestInfoImpl implements TestInfo {
       ?? this._findLastStageStep(this._steps); // If no parent step on stack, assume the current stage as parent.
   }
 
-  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps' | 'attachmentIndices'>, parentStep?: TestStepInternal): TestStepInternal {
+  _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps' | 'attachmentIndices' | 'info'>, parentStep?: TestStepInternal): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
 
     if (data.isStage) {
@@ -271,6 +270,7 @@ export class TestInfoImpl implements TestInfo {
       ...data,
       steps: [],
       attachmentIndices,
+      info: new TestStepInfoImpl(),
       complete: result => {
         if (step.endWallTime)
           return;
@@ -304,12 +304,12 @@ export class TestInfoImpl implements TestInfo {
           wallTime: step.endWallTime,
           error: step.error,
           suggestedRebaseline: result.suggestedRebaseline,
-          annotations: step.annotations,
+          annotations: step.info.annotations,
         };
         this._onStepEnd(payload);
         const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
         const attachments = attachmentIndices.map(i => this.attachments[i]);
-        this._tracing.appendAfterActionForStep(stepId, errorForTrace, attachments, step.annotations);
+        this._tracing.appendAfterActionForStep(stepId, errorForTrace, attachments, step.info.annotations);
       }
     };
     const parentStepList = parentStep ? parentStep.steps : this._steps;
@@ -508,20 +508,34 @@ export class TestInfoImpl implements TestInfo {
 }
 
 export class TestStepInfoImpl implements TestStepInfo {
-  skip;
+  annotations?: Annotation[];
 
-  constructor(private _step: TestStepInternal, private _testInfo: TestInfoImpl) {
-    this.skip = wrapFunctionWithLocation(this._skip.bind(this));
+  private _addAnnotation(type: string, description?: string) {
+    this.annotations ??= [];
+    this.annotations.push({ type, description });
   }
 
-  private _skip(location: Location, ...args: unknown[]) {
+  async _runStepBody<T>(skip: boolean, body: (step: TestStepInfo) => T | Promise<T>) {
+    if (skip) {
+      this._addAnnotation('skip');
+      return undefined as T;
+    }
+    try {
+      return await body(this);
+    } catch (e) {
+      if (e instanceof SkipError)
+        return undefined as T;
+      throw e;
+    }
+  }
+
+  skip(...args: unknown[]) {
     // skip();
     // skip(condition: boolean, description: string);
     if (args.length > 0 && !args[0])
       return;
     const description = args[1] as (string|undefined);
-    this._step.annotations ??= [];
-    this._step.annotations.push({ type: 'skip', description });
+    this._addAnnotation('skip', description);
     throw new SkipError(description);
   }
 }
