@@ -331,7 +331,7 @@ test('should have watch icon highlighted when a test is focused and watch on the
   });
 
   await page.getByText('a.test.ts').click();
-  // watch icon should not be highlight till the watch icon is clicked 
+  // watch icon should not be highlight till the watch icon is clicked
   await expect(page.getByRole('treeitem', { name: 'a.test.ts' }).getByRole('button', { name: 'Watch' })).toHaveCSS('color', 'rgb(255, 255, 255)');
 
   await page.getByRole('treeitem', { name: 'passes' }).hover();
