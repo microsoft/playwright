@@ -69,6 +69,10 @@
   color: var(--vscode-list-activeSelectionForeground) !important;
 }
 
+.tree-view-content:focus .tree-view-entry.selected button.eye.toggled .codicon {
+  color: var(--vscode-editorInfo-foreground) !important;
+}
+
 .tree-view-empty {
   flex: auto;
   display: flex;

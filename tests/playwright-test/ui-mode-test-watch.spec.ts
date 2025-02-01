@@ -320,3 +320,25 @@ test('should not watch output', async ({ runUITest }) => {
   expect(commands).toContain('runTests');
   expect(commands).not.toContain('listTests');
 });
+
+
+test('should have watch icon highlighted when a test is focused and watch on the test is enabled', async ({ runUITest, writeFiles }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('passes', () => {});
+    `,
+  });
+
+  await page.getByText('a.test.ts').click();
+  // watch icon should not be highlight till the watch icon is clicked 
+  await expect(page.getByRole('treeitem', { name: 'a.test.ts' }).getByRole('button', { name: 'Watch' })).toHaveCSS('color', 'rgb(255, 255, 255)');
+
+  await page.getByRole('treeitem', { name: 'passes' }).hover();
+  await page.getByRole('treeitem', { name: 'passes' }).getByRole('button', { name: 'Watch' }).click();
+  await expect(page.getByRole('treeitem', { name: 'passes' }).getByRole('button', { name: 'Watch' }).locator('.codicon-eye')).toHaveCSS('color', 'rgb(26, 133, 255)');
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ a.test.ts
+        ◯ passes 👁 <=
+  `);
+});
