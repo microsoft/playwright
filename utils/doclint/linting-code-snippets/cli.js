@@ -44,8 +44,9 @@ function getAllMarkdownFiles(dirPath, filePaths = []) {
 }
 
 const run = async () => {
+  const jsOnly = process.argv.includes('--js-only');
+  const lintingServiceFactory = new LintingServiceFactory(jsOnly);
   const documentationRoot = path.join(PROJECT_DIR, 'docs', 'src');
-  const lintingServiceFactory = new LintingServiceFactory();
   let documentation = parseApi(path.join(documentationRoot, 'api'));
 
   /** @type {CodeSnippet[]} */
@@ -69,6 +70,8 @@ const run = async () => {
     });
   }
   await lintingServiceFactory.lintAndReport(codeSnippets);
+  if (jsOnly)
+    return;
   const { hasErrors } = lintingServiceFactory.reportMetrics();
   if (hasErrors)
     process.exit(1);
@@ -222,12 +225,12 @@ class JavaLintingService extends LintingService {
 }
 
 class LintingServiceFactory {
-  constructor() {
+  constructor(jsOnly) {
     /** @type {LintingService[]} */
     this.services = [
       new JSLintingService(),
     ]
-    if (!process.env.NO_EXTERNAL_DEPS) {
+    if (!jsOnly) {
       this.services.push(
         new PythonLintingService(),
         new CSharpLintingService(),
