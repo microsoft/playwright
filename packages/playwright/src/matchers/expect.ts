@@ -49,8 +49,9 @@ import {
   toHaveValues,
   toPass
 } from './matchers';
+import type { ExpectMatcherStateInternal } from './matchers';
 import { toMatchSnapshot, toHaveScreenshot, toHaveScreenshotStepTitle } from './toMatchSnapshot';
-import type { Expect, ExpectMatcherState } from '../../types/test';
+import type { Expect } from '../../types/test';
 import { currentTestInfo } from '../common/globals';
 import { filteredStackTrace, trimLongString } from '../util';
 import {
@@ -61,6 +62,7 @@ import {
 } from '../common/expectBundle';
 import { zones } from 'playwright-core/lib/utils';
 import { TestInfoImpl } from '../worker/testInfo';
+import type { TestStepInfoImpl } from '../worker/testInfo';
 import { ExpectError, isJestError } from './matcherHint';
 import { toMatchAriaSnapshot } from './toMatchAriaSnapshot';
 
@@ -195,6 +197,7 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], userMatchers: Reco
 type MatcherCallContext = {
   expectInfo: ExpectMetaInfo;
   testInfo: TestInfoImpl | null;
+  step?: TestStepInfoImpl;
 };
 
 let matcherCallContext: MatcherCallContext | undefined;
@@ -211,10 +214,6 @@ function takeMatcherCallContext(): MatcherCallContext {
   }
 }
 
-type ExpectMatcherStateInternal = ExpectMatcherState & {
-  _context: MatcherCallContext | undefined;
-};
-
 const defaultExpectTimeout = 5000;
 
 function wrapPlaywrightMatcherToPassNiceThis(matcher: any) {
@@ -227,7 +226,7 @@ function wrapPlaywrightMatcherToPassNiceThis(matcher: any) {
       promise,
       utils,
       timeout,
-      _context: context,
+      _stepInfo: context.step,
     };
     (newThis as any).equals = throwUnsupportedExpectMatcherError;
     return matcher.call(newThis, ...args);
@@ -376,6 +375,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       };
 
       try {
+        setMatcherCallContext({ expectInfo: this._info, testInfo, step: step.info });
         const callback = () => matcher.call(target, ...args);
         const result = zones.run('stepZone', step, callback);
         if (result instanceof Promise)
