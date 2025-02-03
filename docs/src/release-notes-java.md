@@ -4,6 +4,30 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.50
+
+### Miscellaneous
+
+* Added method [`method: LocatorAssertions.toHaveAccessibleErrorMessage`] to assert the Locator points to an element with a given [aria errormessage](https://w3c.github.io/aria/#aria-errormessage).
+
+### UI updates
+
+* New button in Codegen for picking elements to produce aria snapshots.
+* Additional details (such as keys pressed) are now displayed alongside action API calls in traces.
+* Display of `canvas` content in traces is error-prone. Display is now disabled by default, and can be enabled via the `Display canvas content` UI setting.
+* `Call` and `Network` panels now display additional time information.
+
+### Browser Versions
+
+* Chromium 133.0.6943.16
+* Mozilla Firefox 134.0
+* WebKit 18.2
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 132
+* Microsoft Edge 132
+
 ## Version 1.49
 
 ### Aria snapshots
