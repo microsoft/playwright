@@ -332,6 +332,7 @@ it('should support IndexedDB', async ({ page, contextFactory }) => {
       indexedDB: [
         {
           name: 'toDoList',
+          version: 4,
           stores: [
             {
               name: 'toDoList',
@@ -395,4 +396,7 @@ it('should support IndexedDB', async ({ page, contextFactory }) => {
       ]
     }
   ]);
+
+  const context = await contextFactory({ storageState });
+  expect(await context.storageState()).toEqual(storageState);
 });

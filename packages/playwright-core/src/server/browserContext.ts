@@ -549,7 +549,7 @@ export abstract class BrowserContext extends SdkObject {
               return;
 
             return {
-              key,
+              key: key.toString(),
               value: JSON.stringify(record)
             };
           }));
@@ -679,11 +679,42 @@ export abstract class BrowserContext extends SdkObject {
         for (const originState of state.origins) {
           const frame = page.mainFrame();
           await frame.goto(metadata, originState.origin);
-          await frame.evaluateExpression(`
-            originState => {
-              for (const { name, value } of (originState.localStorage || []))
-                localStorage.setItem(name, value);
-            }`, { isFunction: true, world: 'utility' }, originState);
+
+          async function _restoreStorageState(originState: channels.OriginStorage) {
+            for (const { name, value } of (originState.localStorage || []))
+              localStorage.setItem(name, value);
+
+            await Promise.all((originState.indexedDB || []).map(async dbInfo => {
+              await new Promise((resolve, reject) => {
+                const openRequest = indexedDB.open(dbInfo.name, dbInfo.version);
+                openRequest.addEventListener('upgradeneeded', () => {
+                  const db = openRequest.result;
+                  for (const store of dbInfo.stores) {
+                    const objectStore = db.createObjectStore(store.name, { autoIncrement: store.autoIncrement, keyPath: store.keyPath });
+                    for (const index of store.indexes)
+                      objectStore.createIndex(index.name, index.keyPath, { unique: index.unique, multiEntry: index.multiEntry });
+                  }
+                });
+                openRequest.addEventListener('success', async () => {
+                  const db = openRequest.result;
+                  const transaction = db.transaction(db.objectStoreNames, 'readwrite');
+                  Promise.all(dbInfo.stores.flatMap(store => {
+                    const objectStore = transaction.objectStore(store.name);
+                    return store.records.map(record => new Promise((resolve, reject) => {
+                      const request = objectStore.add(
+                          JSON.parse(record.value),
+                          objectStore.keyPath === null ? record.key : undefined
+                      );
+                      request.addEventListener('success', resolve);
+                      request.addEventListener('error', reject);
+                    }));
+                  })).then(resolve, reject);
+                });
+              });
+            }));
+          }
+
+          await frame.evaluateExpression(_restoreStorageState.toString(), { isFunction: true, world: 'utility' }, originState);
         }
         await page.close(internalMetadata);
       }

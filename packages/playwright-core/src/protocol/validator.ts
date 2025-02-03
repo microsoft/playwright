@@ -144,6 +144,7 @@ scheme.NameValue = tObject({
 });
 scheme.IndexedDBDatabase = tObject({
   name: tString,
+  version: tNumber,
   stores: tArray(tObject({
     name: tString,
     autoIncrement: tBoolean,

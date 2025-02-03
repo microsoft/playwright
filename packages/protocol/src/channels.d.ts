@@ -273,6 +273,7 @@ export type NameValue = {
 
 export type IndexedDBDatabase = {
   name: string,
+  version: number,
   stores: {
     name: string,
     autoIncrement: boolean,

@@ -226,6 +226,7 @@ IndexedDBDatabase:
   type: object
   properties:
     name: string
+    version: number
     stores:
       type: array
       items:
