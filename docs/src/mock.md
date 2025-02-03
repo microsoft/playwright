@@ -636,6 +636,14 @@ Note that this style of proxying, where the proxy URL is prepended to the reques
 This is because for HTTPS requests, a `CONNECT` proxy does not have access to the proxied traffic. That's great behaviour for a production proxy, but counteracts network interception!
 :::
 
+:::note
+Known Limitations:
+
+1. The mocking proxy is experimental and subject to change.
+2. The injected `x-playwright-proxy` header affects CORS and might turn [simple requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#simple_requests) into requests that require a preflight.
+3. Requests on the server that were not made in response to a browser request, like those triggered by CRON job, won't be routed because they don't have access to the `x-playwright-proxy` header.
+:::
+
 
 ### Recipes
 * langs: js
