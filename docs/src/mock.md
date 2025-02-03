@@ -790,12 +790,11 @@ export default defineNitroPlugin(() => {
   const proxiedDispatcher = getGlobalDispatcher().compose(dispatch => (opts, handler) => {
     const isInternal = opts.path.startsWith("/__nuxt")
     const proxy = getRequestHeader(useEvent(), 'x-playwright-proxy')
-    if (!proxy || isInternal)
-      return dispatch(opts, handler)
-
-    const newURL = new URL(decodeURIComponent(proxy) + opts.origin + opts.path);
-    opts.origin = newURL.origin;
-    opts.path = newURL.pathname;
+    if (proxy && !isInternal) {
+      const newURL = new URL(decodeURIComponent(proxy) + opts.origin + opts.path);
+      opts.origin = newURL.origin;
+      opts.path = newURL.pathname;
+    }
     return dispatch(opts, handler)
   })
   setGlobalDispatcher(proxiedDispatcher)
