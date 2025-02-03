@@ -259,13 +259,13 @@ Specify environment variables that will be visible to the browser. Defaults to `
     - `httpOnly` <[boolean]>
     - `secure` <[boolean]>
     - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">> sameSite flag
-  - `origins` <[Array]<[Object]>> localStorage to set for context
+  - `origins` <[Array]<[Object]>>
     - `origin` <[string]>
-    - `localStorage` <[Array]<[Object]>>
+    - `localStorage` <[Array]<[Object]>> localStorage to set for context
       - `name` <[string]>
       - `value` <[string]>
     - `indexedDB` ?<[Array]<[Object]>>
-      - `name` <[string]>
+      - `name` <[string]> TODO: document more
 
 Learn more about [storage state and auth](../auth.md).
 

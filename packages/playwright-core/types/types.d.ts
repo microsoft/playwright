@@ -10049,12 +10049,12 @@ export interface Browser {
         sameSite: "Strict"|"Lax"|"None";
       }>;
 
-      /**
-       * localStorage to set for context
-       */
       origins: Array<{
         origin: string;
 
+        /**
+         * localStorage to set for context
+         */
         localStorage: Array<{
           name: string;
 
@@ -10062,6 +10062,9 @@ export interface Browser {
         }>;
 
         indexedDB?: Array<{
+          /**
+           * TODO: document more
+           */
           name: string;
         }>;
       }>;
@@ -22220,12 +22223,12 @@ export interface BrowserContextOptions {
       sameSite: "Strict"|"Lax"|"None";
     }>;
 
-    /**
-     * localStorage to set for context
-     */
     origins: Array<{
       origin: string;
 
+      /**
+       * localStorage to set for context
+       */
       localStorage: Array<{
         name: string;
 
@@ -22233,6 +22236,9 @@ export interface BrowserContextOptions {
       }>;
 
       indexedDB?: Array<{
+        /**
+         * TODO: document more
+         */
         name: string;
       }>;
     }>;
