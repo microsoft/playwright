@@ -54,7 +54,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 ### UI updates
 
 * Updated default HTML reporter to improve display of attachments.
-* New button for picking elements to produce aria snapshots.
+* New button in Codegen for picking elements to produce aria snapshots.
 * Additional details (such as keys pressed) are now displayed alongside action API calls in traces.
 * Display of `canvas` content in traces is error-prone. Display is now disabled by default, and can be enabled via the `Display canvas content` UI setting.
 * `Call` and `Network` panels now display additional time information.
