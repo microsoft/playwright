@@ -6166,18 +6166,19 @@ export interface PlaywrightWorkerOptions {
    *
    * export default defineConfig({
    *   use: {
-   *     mockingProxy: true
+   *     mockingProxy: 'inject-via-header'
    *   },
    * });
    * ```
    *
    */
-  mockingProxy: boolean | undefined;
+  mockingProxy: MockingProxyMode | undefined;
 }
 
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
+export type MockingProxyMode = 'off' | 'inject-via-header';
 
 /**
  * Playwright Test provides many options to configure test environment,

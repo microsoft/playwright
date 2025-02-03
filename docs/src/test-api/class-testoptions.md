@@ -679,7 +679,7 @@ export default defineConfig({
 
 ## property: TestOptions.mockingProxy
 * since: v1.51
-- type: <[boolean]> Enables the mocking proxy. Playwright will inject the proxy URL into all outgoing requests under the `x-playwright-proxy` header.
+- type: <[MockingProxyMode]<"off"|"inject-via-header">> Enables the mocking proxy. Playwright will inject the proxy URL into all outgoing requests under the `x-playwright-proxy` header.
 
 **Usage**
 
@@ -688,7 +688,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   use: {
-    mockingProxy: true
+    mockingProxy: 'inject-via-header'
   },
 });
 ```

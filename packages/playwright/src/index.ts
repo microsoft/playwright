@@ -125,7 +125,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   }, { scope: 'worker', timeout: 0 }],
 
   _mockingProxy: [async ({ mockingProxy: mockingProxyOption, playwright }, use) => {
-    if (!mockingProxyOption)
+    if (mockingProxyOption !== 'inject-via-header')
       return await use(undefined);
     const mockingProxy = await (playwright as PlaywrightImpl)._startMockingProxy();
     await use(mockingProxy);
