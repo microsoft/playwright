@@ -513,15 +513,19 @@ export abstract class BrowserContext extends SdkObject {
     };
     const originsToSave = new Set(this._origins);
 
+    function _collectStorageScript() {
+      return {
+        localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
+      };
+    }
+
     // First try collecting storage stage from existing pages.
     for (const page of this.pages()) {
       const origin = page.mainFrame().origin();
       if (!origin || !originsToSave.has(origin))
         continue;
       try {
-        const storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`({
-          localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
-        })`, 'utility');
+        const storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`(${_collectStorageScript.toString()})()`, 'utility');
         if (storage.localStorage.length)
           result.origins.push({ origin, localStorage: storage.localStorage } as channels.OriginStorage);
         originsToSave.delete(origin);
@@ -539,15 +543,11 @@ export abstract class BrowserContext extends SdkObject {
         return true;
       });
       for (const origin of originsToSave) {
-        const originStorage: channels.OriginStorage = { origin, localStorage: [] };
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
-        const storage = await frame.evaluateExpression(`({
-          localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
-        })`, { world: 'utility' });
-        originStorage.localStorage = storage.localStorage;
+        const storage = await frame.evaluateExpression(`(${_collectStorageScript.toString()})()`, { world: 'utility' });
         if (storage.localStorage.length)
-          result.origins.push(originStorage);
+          result.origins.push({ origin, localStorage: storage.localStorage } as channels.OriginStorage);
       }
       await page.close(internalMetadata);
     }
