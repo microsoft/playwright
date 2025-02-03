@@ -35,23 +35,23 @@ export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.Mo
     });
 
     this.addObjectListener(MockingProxy.Events.Route, (route: Route) => {
-      const requestDispatcher = RequestDispatcher.from(this as any, route.request());
+      const requestDispatcher = RequestDispatcher.from(this, route.request());
       this._dispatchEvent('route', { route: RouteDispatcher.from(requestDispatcher, route) });
     });
     this.addObjectListener(MockingProxy.Events.Request, ({ request, correlation }: { request: Request, correlation: string }) => {
-      this._dispatchEvent('request', { request: RequestDispatcher.from(this as any, request), correlation });
+      this._dispatchEvent('request', { request: RequestDispatcher.from(this, request), correlation });
     });
     this.addObjectListener(MockingProxy.Events.RequestFailed, (request: Request) => {
       this._dispatchEvent('requestFailed', {
-        request: RequestDispatcher.from(this as any, request),
+        request: RequestDispatcher.from(this, request),
         failureText: request._failureText ?? undefined,
         responseEndTiming: request._responseEndTiming,
       });
     });
     this.addObjectListener(MockingProxy.Events.RequestFinished, (request: Request) => {
       this._dispatchEvent('requestFinished', {
-        request: RequestDispatcher.from(this as any, request),
-        response: ResponseDispatcher.fromNullable(this as any, request._existingResponse()),
+        request: RequestDispatcher.from(this, request),
+        response: ResponseDispatcher.fromNullable(this, request._existingResponse()),
         responseEndTiming: request._responseEndTiming,
       });
     });
