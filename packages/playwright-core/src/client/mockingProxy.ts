@@ -17,7 +17,6 @@ import * as network from './network';
 import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { APIRequestContext } from './fetch';
-import { Events } from './events';
 import { assert } from '../utils';
 import type { Page } from './page';
 
@@ -31,37 +30,37 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
     this._channel.on('route', async (params: channels.MockingProxyRouteEvent) => {
       const route = network.Route.from(params.route);
       route._context = requestContext;
-      this.emit(Events.MockingProxy.Route, route);
+      const page = route.request()._safePage()!;
+      await page._onRoute(route);
     });
 
     this._channel.on('request', async (params: channels.MockingProxyRequestEvent) => {
       const page = this._pages.get(params.correlation);
       assert(page);
       const request = network.Request.from(params.request);
-      request._page = page;
+      request._pageForMockingProxy = page;
+      page.context()._onRequest(request, page);
     });
 
     this._channel.on('requestFailed', async (params: channels.MockingProxyRequestFailedEvent) => {
       const request = network.Request.from(params.request);
-      request._failureText = params.failureText ?? null;
-      request._setResponseEndTiming(params.responseEndTiming);
+      const page = request._safePage()!;
+      page.context()._onRequestFailed(request, params.responseEndTiming, params.failureText, page);
     });
 
     this._channel.on('requestFinished', async (params: channels.MockingProxyRequestFinishedEvent) => {
       const { responseEndTiming } = params;
       const request = network.Request.from(params.request);
       const response = network.Response.fromNullable(params.response);
-      request._setResponseEndTiming(responseEndTiming);
-      response?._finishedPromise.resolve(null);
+      const page = request._safePage()!;
+      page.context()._onRequestFinished(request, response, page, responseEndTiming);
     });
 
     this._channel.on('response', async (params: channels.MockingProxyResponseEvent) => {
-      // no-op
+      const response = network.Response.from(params.response);
+      const page = response.request()._safePage()!;
+      page.context()._onResponse(response, page);
     });
-  }
-
-  async setInterceptionPatterns(params: channels.MockingProxySetInterceptionPatternsParams) {
-    await this._channel.setInterceptionPatterns(params);
   }
 
   async instrumentPage(page: Page) {

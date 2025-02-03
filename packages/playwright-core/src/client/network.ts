@@ -86,7 +86,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   private _actualHeadersPromise: Promise<RawHeaders> | undefined;
   _timing: ResourceTiming;
   private _fallbackOverrides: SerializedFallbackOverrides = {};
-  _page: Page | null = null;
+  _pageForMockingProxy: Page | null = null;
 
   static from(request: channels.RequestChannel): Request {
     return (request as any)._object;
@@ -217,7 +217,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   _safePage(): Page | null {
-    return this._page ?? Frame.fromNullable(this._initializer.frame)?._page ?? null;
+    return this._pageForMockingProxy ?? Frame.fromNullable(this._initializer.frame)?._page ?? null;
   }
 
   serviceWorker(): Worker | null {

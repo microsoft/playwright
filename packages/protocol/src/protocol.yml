@@ -682,18 +682,6 @@ MockingProxy:
     port: number
     requestContext: APIRequestContext
 
-  commands:
-    setInterceptionPatterns:
-      parameters:
-        patterns:
-          type: array
-          items:
-            type: object
-            properties:
-              glob: string?
-              regexSource: string?
-              regexFlags: string?
-
   events:
     route:
       parameters:
@@ -719,7 +707,6 @@ MockingProxy:
     response:
       parameters:
         response: Response
-        page: Page?
 
 Root:
   type: interface

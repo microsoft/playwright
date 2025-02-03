@@ -73,4 +73,9 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   static from(channel: channels.PlaywrightChannel): Playwright {
     return (channel as any)._object;
   }
+
+  async _startMockingProxy() {
+    const { mockingProxy } = await this._connection.localUtils()._channel.newMockingProxy({});
+    return (mockingProxy as any)._object;
+  }
 }

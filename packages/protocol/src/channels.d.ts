@@ -589,7 +589,6 @@ export interface MockingProxyEventTarget {
 }
 export interface MockingProxyChannel extends MockingProxyEventTarget, EventTargetChannel {
   _type_MockingProxy: boolean;
-  setInterceptionPatterns(params: MockingProxySetInterceptionPatternsParams, metadata?: CallMetadata): Promise<MockingProxySetInterceptionPatternsResult>;
 }
 export type MockingProxyRouteEvent = {
   route: RouteChannel,
@@ -610,19 +609,7 @@ export type MockingProxyRequestFinishedEvent = {
 };
 export type MockingProxyResponseEvent = {
   response: ResponseChannel,
-  page?: PageChannel,
 };
-export type MockingProxySetInterceptionPatternsParams = {
-  patterns: {
-    glob?: string,
-    regexSource?: string,
-    regexFlags?: string,
-  }[],
-};
-export type MockingProxySetInterceptionPatternsOptions = {
-
-};
-export type MockingProxySetInterceptionPatternsResult = void;
 
 export interface MockingProxyEvents {
   'route': MockingProxyRouteEvent;

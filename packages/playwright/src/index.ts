@@ -27,7 +27,7 @@ import type { ApiCallData, ClientInstrumentation, ClientInstrumentationListener 
 import type { MockingProxy } from '../../playwright-core/src/client/mockingProxy';
 import type { BrowserContext as BrowserContextImpl } from '../../playwright-core/src/client/browserContext';
 import { currentTestInfo } from './common/globals';
-import type { LocalUtils } from 'playwright-core/lib/client/localUtils';
+import type { Playwright as PlaywrightImpl } from 'playwright-core/lib/client/playwright';
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -127,9 +127,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   _mockingProxy: [async ({ mockingProxy: mockingProxyOption, playwright }, use) => {
     if (!mockingProxyOption)
       return await use(undefined);
-    const localUtils: LocalUtils = (playwright as any)._connection.localUtils();
-    const { mockingProxy } = await localUtils._channel.newMockingProxy({});
-    await use((mockingProxy as any)._object);
+    const mockingProxy = await (playwright as PlaywrightImpl)._startMockingProxy();
+    await use(mockingProxy);
   }, { scope: 'worker', box: true }],
 
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true }],

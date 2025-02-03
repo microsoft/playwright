@@ -363,16 +363,7 @@ scheme.MockingProxyRequestFinishedEvent = tObject({
 });
 scheme.MockingProxyResponseEvent = tObject({
   response: tChannel(['Response']),
-  page: tOptional(tChannel(['Page'])),
 });
-scheme.MockingProxySetInterceptionPatternsParams = tObject({
-  patterns: tArray(tObject({
-    glob: tOptional(tString),
-    regexSource: tOptional(tString),
-    regexFlags: tOptional(tString),
-  })),
-});
-scheme.MockingProxySetInterceptionPatternsResult = tOptional(tObject({}));
 scheme.RootInitializer = tOptional(tObject({}));
 scheme.RootInitializeParams = tObject({
   sdkLanguage: tEnum(['javascript', 'python', 'java', 'csharp']),

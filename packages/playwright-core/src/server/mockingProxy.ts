@@ -38,7 +38,6 @@ export class MockingProxy extends SdkObject implements RequestContext {
   };
 
   fetchRequest: APIRequestContext;
-  private _matches?: (url: string) => boolean;
   private _httpServer = new WorkerHttpServer();
 
   constructor(parent: SdkObject, requestContext: APIRequestContext) {
@@ -61,10 +60,6 @@ export class MockingProxy extends SdkObject implements RequestContext {
 
   get port() {
     return this._httpServer.port();
-  }
-
-  setInterceptionPatterns(matches?: (url: string) => boolean) {
-    this._matches = matches;
   }
 
   private async _proxy(req: http.IncomingMessage, res: http.ServerResponse) {
@@ -212,14 +207,7 @@ export class MockingProxy extends SdkObject implements RequestContext {
       },
     });
 
-    if (!correlation)
-      return await route.continue({ isFallback: false });
-
-
-    if (this._matches?.(req.url!))
-      this.emit(MockingProxy.Events.Route, route);
-    else
-      await route.continue({ isFallback: false });
+    this.emit(MockingProxy.Events.Route, route);
   }
 
   addRouteInFlight(route: Route): void {
@@ -258,7 +246,7 @@ async function collectBody(req: http.IncomingMessage) {
 }
 
 export class WorkerHttpServer extends HttpServer {
-  override _handleCORS(request: http.IncomingMessage, response: http.ServerResponse): boolean {
+  override handleCORS(request: http.IncomingMessage, response: http.ServerResponse): boolean {
     return false;
   }
 }

@@ -144,7 +144,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     });
     this._channel.on('request', ({ request, page }) => this._onRequest(network.Request.from(request), Page.fromNullable(page)));
     this._channel.on('requestFailed', ({ request, failureText, responseEndTiming, page }) => this._onRequestFailed(network.Request.from(request), responseEndTiming, failureText, Page.fromNullable(page)));
-    this._channel.on('requestFinished', params => this._onRequestFinished(params));
+    this._channel.on('requestFinished', ({ request, response, page, responseEndTiming }) => this._onRequestFinished(network.Request.from(request), network.Response.fromNullable(response), Page.fromNullable(page), responseEndTiming));
     this._channel.on('response', ({ response, page }) => this._onResponse(network.Response.from(response), Page.fromNullable(page)));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
 
@@ -165,27 +165,27 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this.tracing._tracesDir = browserOptions.tracesDir;
   }
 
-  private async _onPage(page: Page): Promise<void>{
+  private _onPage(page: Page): void {
     this._pages.add(page);
     this.emit(Events.BrowserContext.Page, page);
-    await this._mockingProxy?.instrumentPage(page);
     if (page._opener && !page._opener.isClosed())
       page._opener.emit(Events.Page.Popup, page);
+    this._mockingProxy?.instrumentPage(page);
   }
 
-  private _onRequest(request: network.Request, page: Page | null) {
+  _onRequest(request: network.Request, page: Page | null) {
     this.emit(Events.BrowserContext.Request, request);
     if (page)
       page.emit(Events.Page.Request, request);
   }
 
-  private _onResponse(response: network.Response, page: Page | null) {
+  _onResponse(response: network.Response, page: Page | null) {
     this.emit(Events.BrowserContext.Response, response);
     if (page)
       page.emit(Events.Page.Response, response);
   }
 
-  private _onRequestFailed(request: network.Request, responseEndTiming: number, failureText: string | undefined, page: Page | null) {
+  _onRequestFailed(request: network.Request, responseEndTiming: number, failureText: string | undefined, page: Page | null) {
     request._failureText = failureText || null;
     request._setResponseEndTiming(responseEndTiming);
     this.emit(Events.BrowserContext.RequestFailed, request);
@@ -193,11 +193,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       page.emit(Events.Page.RequestFailed, request);
   }
 
-  private _onRequestFinished(params: channels.BrowserContextRequestFinishedEvent) {
-    const { responseEndTiming } = params;
-    const request = network.Request.from(params.request);
-    const response = network.Response.fromNullable(params.response);
-    const page = Page.fromNullable(params.page);
+  _onRequestFinished(request: network.Request, response: network.Response | null, page: Page | null, responseEndTiming: number) {
     request._setResponseEndTiming(responseEndTiming);
     this.emit(Events.BrowserContext.RequestFinished, request);
     if (page)
@@ -250,13 +246,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (this._mockingProxy)
       throw new Error('Multiple mocking proxies are not supported');
     this._mockingProxy = mockingProxy;
-    this._registeredListeners.push(
-        eventsHelper.addEventListener(this._mockingProxy, Events.MockingProxy.Route, (route: network.Route) => {
-          const page = route.request()._safePage()!;
-          page._onRoute(route);
-        }),
-        // TODO: should we also emit `request`, `response`, `requestFinished`, `requestFailed` events?
-    );
   }
 
   setDefaultNavigationTimeout(timeout: number | undefined) {
@@ -421,15 +410,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   private async _updateInterceptionPatterns() {
     const patterns = network.RouteHandler.prepareInterceptionPatterns(this._routes);
     await this._channel.setNetworkInterceptionPatterns({ patterns });
-    await this._updateMockingProxyInterceptionPatterns();
-  }
-
-  async _updateMockingProxyInterceptionPatterns() {
-    if (!this._mockingProxy)
-      return;
-    const pageRoutes = this.pages().flatMap(page => page._routes);
-    const patterns = network.RouteHandler.prepareInterceptionPatterns(this._routes.concat(pageRoutes));
-    await this._mockingProxy.setInterceptionPatterns({ patterns });
   }
 
   private async _updateWebSocketInterceptionPatterns() {

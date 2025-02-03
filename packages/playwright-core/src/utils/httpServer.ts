@@ -213,7 +213,7 @@ export class HttpServer {
     readable.pipe(response);
   }
 
-  _handleCORS(request: http.IncomingMessage, response: http.ServerResponse): boolean {
+  handleCORS(request: http.IncomingMessage, response: http.ServerResponse): boolean {
     if (request.method === 'OPTIONS') {
       response.writeHead(200);
       response.end();
@@ -224,7 +224,7 @@ export class HttpServer {
   }
 
   private _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
-    if (this._handleCORS(request, response))
+    if (this.handleCORS(request, response))
       return;
 
     request.on('error', () => response.end());

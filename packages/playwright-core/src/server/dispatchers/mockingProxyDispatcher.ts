@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import type { CallMetadata } from '@protocol/callMetadata';
 import { MockingProxy } from '../mockingProxy';
 import type { RootDispatcher } from './dispatcher';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import type * as channels from '@protocol/channels';
 import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
 import type { Request, Route } from '../network';
-import { urlMatches } from '../../utils/isomorphic/urlMatch';
 
 export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.MockingProxyChannel, RootDispatcher> implements channels.MockingProxyChannel {
   _type_MockingProxy = true;
@@ -57,13 +55,5 @@ export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.Mo
         responseEndTiming: request._responseEndTiming,
       });
     });
-  }
-
-  async setInterceptionPatterns(params: channels.MockingProxySetInterceptionPatternsParams, metadata?: CallMetadata): Promise<channels.MockingProxySetInterceptionPatternsResult> {
-    if (params.patterns.length === 0)
-      return this._object.setInterceptionPatterns(undefined);
-
-    const urlMatchers = params.patterns.map(pattern => pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags!) : pattern.glob!);
-    this._object.setInterceptionPatterns(url => urlMatchers.some(urlMatch => urlMatches(undefined, url, urlMatch)));
   }
 }

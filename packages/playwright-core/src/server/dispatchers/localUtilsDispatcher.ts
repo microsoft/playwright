@@ -312,8 +312,7 @@ class HarBackend {
       redirectURL?: string,
       status?: number,
       headers?: HeadersArray,
-    body?: Buffer
-  }> {
+      body?: Buffer }> {
     let entry;
     try {
       entry = await this._harFindResponse(url, method, headers, postData);
