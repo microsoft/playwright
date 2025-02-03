@@ -734,3 +734,32 @@ test('step attachments are referentially equal to result attachments', async ({ 
     { title: 'After Hooks', attachments: [] },
   ]);
 });
+
+test('attachments are reported in onStepEnd', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14364' } }, async ({ runInlineTest }) => {
+  class TestReporter implements Reporter {
+    onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
+      console.log(`%%${step.title}: ${result.attachments.length} attachments in result`);
+    }
+  }
+  const result = await runInlineTest({
+    'reporter.ts': `module.exports = ${TestReporter.toString()}`,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        await test.step('step', async () => {
+          testInfo.attachments.push({ name: 'attachment', body: Buffer.from('content') });
+        });
+
+        await testInfo.attach('4', {body:'444'})
+      });
+    `,
+  }, { 'reporter': '', 'workers': 1 });
+
+  expect(result.outputLines).toEqual([
+    'Before Hooks: 0 attachments in result',
+    'step: 1 attachments in result',
+    'attach "4": 2 attachments in result',
+    'After Hooks: 2 attachments in result',
+  ]);
+});
