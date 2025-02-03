@@ -526,6 +526,56 @@ ContextOptions:
       - allow
       - block
 
+NewRequestParameters:
+  type: mixin
+  properties:
+    baseURL: string?
+    userAgent: string?
+    ignoreHTTPSErrors: boolean?
+    extraHTTPHeaders:
+      type: array?
+      items: NameValue
+    clientCertificates:
+      type: array?
+      items:
+        type: object
+        properties:
+          origin: string
+          cert: binary?
+          key: binary?
+          passphrase: string?
+          pfx: binary?
+    httpCredentials:
+      type: object?
+      properties:
+        username: string
+        password: string
+        origin: string?
+        send:
+          type: enum?
+          literals:
+          - always
+          - unauthorized
+    proxy:
+      type: object?
+      properties:
+        server: string
+        bypass: string?
+        username: string?
+        password: string?
+    timeout: number?
+    storageState:
+      type: object?
+      properties:
+        cookies:
+          type: array?
+          items: NetworkCookie
+        origins:
+          type: array?
+          items: OriginStorage
+    tracesDir: string?
+
+
 EventTarget:
   type: interface
 
@@ -669,7 +719,15 @@ LocalUtils:
       parameters:
         stacksId: string
 
+    newRequest:
+      parameters:
+        $mixin: NewRequestParameters
+      returns:
+        request: APIRequestContext
+
     newMockingProxy:
+      parameters:
+        requestContext: APIRequestContext
       returns:
         mockingProxy: MockingProxy
 
@@ -748,52 +806,7 @@ Playwright:
   commands:
     newRequest:
       parameters:
-        baseURL: string?
-        userAgent: string?
-        ignoreHTTPSErrors: boolean?
-        extraHTTPHeaders:
-          type: array?
-          items: NameValue
-        clientCertificates:
-          type: array?
-          items:
-            type: object
-            properties:
-              origin: string
-              cert: binary?
-              key: binary?
-              passphrase: string?
-              pfx: binary?
-        httpCredentials:
-          type: object?
-          properties:
-            username: string
-            password: string
-            origin: string?
-            send:
-              type: enum?
-              literals:
-              - always
-              - unauthorized
-        proxy:
-          type: object?
-          properties:
-            server: string
-            bypass: string?
-            username: string?
-            password: string?
-        timeout: number?
-        storageState:
-          type: object?
-          properties:
-            cookies:
-              type: array?
-              items: NetworkCookie
-            origins:
-              type: array?
-              items: OriginStorage
-        tracesDir: string?
-
+        $mixin: NewRequestParameters
       returns:
         request: APIRequestContext
 

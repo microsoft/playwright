@@ -45,7 +45,7 @@ export type FetchOptions = {
   maxRetries?: number,
 };
 
-type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'tracesDir'> & {
+export type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'tracesDir'> & {
   extraHTTPHeaders?: Headers,
   storageState?: string | StorageState,
   clientCertificates?: ClientCertificate[];
@@ -65,13 +65,17 @@ export class APIRequest implements api.APIRequest {
   }
 
   async newContext(options: NewContextOptions = {}): Promise<APIRequestContext> {
+    return this._newContext(options, this._playwright._channel);
+  }
+
+  async _newContext(options: NewContextOptions = {}, channel: channels.PlaywrightChannel | channels.LocalUtilsChannel): Promise<APIRequestContext> {
     options = { ...this._defaultContextOptions, ...options };
     const storageState = typeof options.storageState === 'string' ?
       JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) :
       options.storageState;
     // We do not expose tracesDir in the API, so do not allow options to accidentally override it.
     const tracesDir = this._defaultContextOptions?.tracesDir;
-    const context = APIRequestContext.from((await this._playwright._channel.newRequest({
+    const context = APIRequestContext.from((await channel.newRequest({
       ...options,
       extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       storageState,

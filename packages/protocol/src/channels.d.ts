@@ -466,7 +466,8 @@ export interface LocalUtilsChannel extends LocalUtilsEventTarget, Channel {
   tracingStarted(params: LocalUtilsTracingStartedParams, metadata?: CallMetadata): Promise<LocalUtilsTracingStartedResult>;
   addStackToTracingNoReply(params: LocalUtilsAddStackToTracingNoReplyParams, metadata?: CallMetadata): Promise<LocalUtilsAddStackToTracingNoReplyResult>;
   traceDiscarded(params: LocalUtilsTraceDiscardedParams, metadata?: CallMetadata): Promise<LocalUtilsTraceDiscardedResult>;
-  newMockingProxy(params?: LocalUtilsNewMockingProxyParams, metadata?: CallMetadata): Promise<LocalUtilsNewMockingProxyResult>;
+  newRequest(params: LocalUtilsNewRequestParams, metadata?: CallMetadata): Promise<LocalUtilsNewRequestResult>;
+  newMockingProxy(params: LocalUtilsNewMockingProxyParams, metadata?: CallMetadata): Promise<LocalUtilsNewMockingProxyResult>;
 }
 export type LocalUtilsZipParams = {
   zipFile: string,
@@ -566,8 +567,77 @@ export type LocalUtilsTraceDiscardedOptions = {
 
 };
 export type LocalUtilsTraceDiscardedResult = void;
-export type LocalUtilsNewMockingProxyParams = {};
-export type LocalUtilsNewMockingProxyOptions = {};
+export type LocalUtilsNewRequestParams = {
+  baseURL?: string,
+  userAgent?: string,
+  ignoreHTTPSErrors?: boolean,
+  extraHTTPHeaders?: NameValue[],
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
+  httpCredentials?: {
+    username: string,
+    password: string,
+    origin?: string,
+    send?: 'always' | 'unauthorized',
+  },
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+  timeout?: number,
+  storageState?: {
+    cookies?: NetworkCookie[],
+    origins?: OriginStorage[],
+  },
+  tracesDir?: string,
+};
+export type LocalUtilsNewRequestOptions = {
+  baseURL?: string,
+  userAgent?: string,
+  ignoreHTTPSErrors?: boolean,
+  extraHTTPHeaders?: NameValue[],
+  clientCertificates?: {
+    origin: string,
+    cert?: Binary,
+    key?: Binary,
+    passphrase?: string,
+    pfx?: Binary,
+  }[],
+  httpCredentials?: {
+    username: string,
+    password: string,
+    origin?: string,
+    send?: 'always' | 'unauthorized',
+  },
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+  timeout?: number,
+  storageState?: {
+    cookies?: NetworkCookie[],
+    origins?: OriginStorage[],
+  },
+  tracesDir?: string,
+};
+export type LocalUtilsNewRequestResult = {
+  request: APIRequestContextChannel,
+};
+export type LocalUtilsNewMockingProxyParams = {
+  requestContext: APIRequestContextChannel,
+};
+export type LocalUtilsNewMockingProxyOptions = {
+
+};
 export type LocalUtilsNewMockingProxyResult = {
   mockingProxy: MockingProxyChannel,
 };

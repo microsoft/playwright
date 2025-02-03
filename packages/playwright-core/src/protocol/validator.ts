@@ -336,7 +336,43 @@ scheme.LocalUtilsTraceDiscardedParams = tObject({
   stacksId: tString,
 });
 scheme.LocalUtilsTraceDiscardedResult = tOptional(tObject({}));
-scheme.LocalUtilsNewMockingProxyParams = tOptional(tObject({}));
+scheme.LocalUtilsNewRequestParams = tObject({
+  baseURL: tOptional(tString),
+  userAgent: tOptional(tString),
+  ignoreHTTPSErrors: tOptional(tBoolean),
+  extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
+  clientCertificates: tOptional(tArray(tObject({
+    origin: tString,
+    cert: tOptional(tBinary),
+    key: tOptional(tBinary),
+    passphrase: tOptional(tString),
+    pfx: tOptional(tBinary),
+  }))),
+  httpCredentials: tOptional(tObject({
+    username: tString,
+    password: tString,
+    origin: tOptional(tString),
+    send: tOptional(tEnum(['always', 'unauthorized'])),
+  })),
+  proxy: tOptional(tObject({
+    server: tString,
+    bypass: tOptional(tString),
+    username: tOptional(tString),
+    password: tOptional(tString),
+  })),
+  timeout: tOptional(tNumber),
+  storageState: tOptional(tObject({
+    cookies: tOptional(tArray(tType('NetworkCookie'))),
+    origins: tOptional(tArray(tType('OriginStorage'))),
+  })),
+  tracesDir: tOptional(tString),
+});
+scheme.LocalUtilsNewRequestResult = tObject({
+  request: tChannel(['APIRequestContext']),
+});
+scheme.LocalUtilsNewMockingProxyParams = tObject({
+  requestContext: tChannel(['APIRequestContext']),
+});
 scheme.LocalUtilsNewMockingProxyResult = tObject({
   mockingProxy: tChannel(['MockingProxy']),
 });

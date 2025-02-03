@@ -41,10 +41,10 @@ import type { Playwright } from '../playwright';
 import { SdkObject } from '../../server/instrumentation';
 import { serializeClientSideCallMetadata } from '../../utils';
 import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
-import type { APIRequestContext } from '../fetch';
-import { GlobalAPIRequestContext } from '../fetch';
 import { MockingProxy } from '../mockingProxy';
 import { MockingProxyDispatcher } from './mockingProxyDispatcher';
+import { APIRequestContextDispatcher } from './networkDispatchers';
+import { GlobalAPIRequestContext } from '../fetch';
 
 export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
@@ -55,21 +55,16 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
     tmpDir: string | undefined,
     callStacks: channels.ClientSideCallMetadata[]
   }>();
-  private _requestContext: APIRequestContext;
+  private _playwright: Playwright;
 
   constructor(scope: RootDispatcher, playwright: Playwright) {
     const localUtils = new SdkObject(playwright, 'localUtils', 'localUtils');
     const deviceDescriptors = Object.entries(descriptors)
         .map(([name, descriptor]) => ({ name, descriptor }));
-
-    const requestContext = new GlobalAPIRequestContext(
-        playwright,
-        {} // TODO: this should probably respect _combinedContextOptions from test runner
-    );
     super(scope, localUtils, 'LocalUtils', {
       deviceDescriptors,
     });
-    this._requestContext = requestContext;
+    this._playwright = playwright;
     this._type_LocalUtils = true;
   }
 
@@ -285,8 +280,14 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
     this._stackSessions.delete(stacksId!);
   }
 
+  async newRequest(params: channels.LocalUtilsNewRequestParams, metadata?: CallMetadata): Promise<channels.LocalUtilsNewRequestResult> {
+    const requestContext = new GlobalAPIRequestContext(this._playwright, params);
+    return { request: APIRequestContextDispatcher.from(this.parentScope(), requestContext) };
+  }
+
   async newMockingProxy(params: channels.LocalUtilsNewMockingProxyParams, metadata?: CallMetadata): Promise<channels.LocalUtilsNewMockingProxyResult> {
-    const mockingProxy = new MockingProxy(this._object, this._requestContext);
+    const requestContext = (params.requestContext as APIRequestContextDispatcher)._object;
+    const mockingProxy = new MockingProxy(this._object, requestContext);
     await mockingProxy.start();
     return { mockingProxy: MockingProxyDispatcher.from(this.parentScope(), mockingProxy) };
   }
