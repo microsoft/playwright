@@ -17,6 +17,10 @@ toc_max_heading_level: 2
 * Display of `canvas` content in traces is error-prone. Display is now disabled by default, and can be enabled via the `Display canvas content` UI setting.
 * `Call` and `Network` panels now display additional time information.
 
+### Breaking
+
+* [`method: LocatorAssertions.toBeEditable`] and [`method: Locator.isEditable`] now throw if the target element is not `<input>`, `<select>`, or a number of other editable elements.
+
 ### Browser Versions
 
 * Chromium 133.0.6943.16
