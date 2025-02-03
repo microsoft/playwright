@@ -735,7 +735,7 @@ test('step attachments are referentially equal to result attachments', async ({ 
   ]);
 });
 
-test('attachments are reported in onStepEnd', async ({ runInlineTest }) => {
+test('attachments are reported in onStepEnd', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14364' } }, async ({ runInlineTest }) => {
   class TestReporter implements Reporter {
     onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
       console.log(`%%${step.title}: ${result.attachments.length} attachments in result`);
