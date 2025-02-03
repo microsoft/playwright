@@ -271,9 +271,29 @@ export type NameValue = {
   value: string,
 };
 
+export type IndexedDBDatabase = {
+  name: string,
+  stores: {
+    name: string,
+    autoIncrement: boolean,
+    keyPath: string[],
+    records: {
+      key: string,
+      value: string,
+    }[],
+    indexes: {
+      name: string,
+      keyPath: string[],
+      multiEntry: boolean,
+      unique: boolean,
+    }[],
+  }[],
+};
+
 export type OriginStorage = {
   origin: string,
   localStorage: NameValue[],
+  indexedDB?: IndexedDBDatabase[],
 };
 
 export type SerializedError = {

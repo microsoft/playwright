@@ -142,9 +142,28 @@ scheme.NameValue = tObject({
   name: tString,
   value: tString,
 });
+scheme.IndexedDBDatabase = tObject({
+  name: tString,
+  stores: tArray(tObject({
+    name: tString,
+    autoIncrement: tBoolean,
+    keyPath: tArray(tString),
+    records: tArray(tObject({
+      key: tString,
+      value: tString,
+    })),
+    indexes: tArray(tObject({
+      name: tString,
+      keyPath: tArray(tString),
+      multiEntry: tBoolean,
+      unique: tBoolean,
+    })),
+  })),
+});
 scheme.OriginStorage = tObject({
   origin: tString,
   localStorage: tArray(tType('NameValue')),
+  indexedDB: tOptional(tArray(tType('IndexedDBDatabase'))),
 });
 scheme.SerializedError = tObject({
   error: tOptional(tObject({

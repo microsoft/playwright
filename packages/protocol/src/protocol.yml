@@ -222,6 +222,38 @@ NameValue:
     name: string
     value: string
 
+IndexedDBDatabase:
+  type: object
+  properties:
+    name: string
+    stores:
+      type: array
+      items:
+        type: object
+        properties:
+          name: string
+          autoIncrement: boolean
+          keyPath:
+            type: array
+            items: string
+          records:
+            type: array
+            items:
+              type: object
+              properties:
+                key: string
+                value: string
+          indexes:
+            type: array
+            items:
+              type: object
+              properties:
+                name: string
+                keyPath:
+                  type: array
+                  items: string
+                multiEntry: boolean
+                unique: boolean
 
 OriginStorage:
   type: object
@@ -230,7 +262,9 @@ OriginStorage:
     localStorage:
       type: array
       items: NameValue
-
+    indexedDB:
+      type: array?
+      items: IndexedDBDatabase
 
 SerializedError:
   type: object

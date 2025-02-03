@@ -316,3 +316,83 @@ it('should roundtrip local storage in third-party context', async ({ page, conte
   expect(localStorage).toEqual({ name1: 'value1' });
   await context2.close();
 });
+
+it('should support IndexedDB', async ({ page, contextFactory }) => {
+  await page.goto('https://mdn.github.io/dom-examples/to-do-notifications/');
+  await page.getByLabel('Task title').fill('Pet the cat');
+  await page.getByLabel('Hours').fill('1');
+  await page.getByLabel('Mins').fill('1');
+  await page.getByText('Add Task').click();
+
+  const storageState = await page.context().storageState();
+  expect(storageState.origins).toEqual([
+    {
+      origin: 'https://mdn.github.io',
+      localStorage: [],
+      indexedDB: [
+        {
+          name: 'toDoList',
+          stores: [
+            {
+              name: 'toDoList',
+              autoIncrement: false,
+              keyPath: ['taskTitle'],
+              records: [
+                {
+                  key: 'Pet the cat',
+                  value: JSON.stringify({
+                    taskTitle: 'Pet the cat',
+                    hours: '1',
+                    minutes: '1',
+                    day: '01',
+                    month: 'January',
+                    year: '2025',
+                    notified: 'no'
+                  })
+                }
+              ],
+              indexes: [
+                {
+                  'name': 'day',
+                  'keyPath': ['day'],
+                  'multiEntry': false,
+                  'unique': false,
+                },
+                {
+                  'name': 'hours',
+                  'keyPath': ['hours'],
+                  'multiEntry': false,
+                  'unique': false,
+                },
+                {
+                  'name': 'minutes',
+                  'keyPath': ['minutes'],
+                  'multiEntry': false,
+                  'unique': false,
+                },
+                {
+                  'name': 'month',
+                  'keyPath': ['month'],
+                  'multiEntry': false,
+                  'unique': false,
+                },
+                {
+                  'name': 'notified',
+                  'keyPath': ['notified'],
+                  'multiEntry': false,
+                  'unique': false,
+                },
+                {
+                  'name': 'year',
+                  'keyPath': ['year'],
+                  'multiEntry': false,
+                  'unique': false,
+                },
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]);
+});

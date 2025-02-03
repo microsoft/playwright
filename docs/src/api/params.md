@@ -264,6 +264,8 @@ Specify environment variables that will be visible to the browser. Defaults to `
     - `localStorage` <[Array]<[Object]>>
       - `name` <[string]>
       - `value` <[string]>
+    - `indexedDB` ?<[Array]<[Object]>>
+      - `name` <[string]>
 
 Learn more about [storage state and auth](../auth.md).
 

@@ -10060,6 +10060,10 @@ export interface Browser {
 
           value: string;
         }>;
+
+        indexedDB?: Array<{
+          name: string;
+        }>;
       }>;
     };
 
@@ -22226,6 +22230,10 @@ export interface BrowserContextOptions {
         name: string;
 
         value: string;
+      }>;
+
+      indexedDB?: Array<{
+        name: string;
       }>;
     }>;
   };

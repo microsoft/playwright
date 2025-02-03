@@ -513,9 +513,78 @@ export abstract class BrowserContext extends SdkObject {
     };
     const originsToSave = new Set(this._origins);
 
-    function _collectStorageScript() {
+    async function _collectStorageScript() {
+      async function _collectDatabase(dbInfo: IDBDatabaseInfo) {
+        if (!dbInfo.name)
+          return;
+
+        let db: IDBDatabase;
+        try {
+          db = await new Promise((resolve, reject) => {
+            const request = indexedDB.open(dbInfo.name!);
+            request.onerror = reject;
+            request.onsuccess = () => resolve(request.result);
+          });
+        } catch {
+          return;
+        }
+
+        const transaction = db.transaction(db.objectStoreNames, 'readonly');
+        const stores = await Promise.all([...db.objectStoreNames].map(async storeName => {
+          const objectStore = transaction.objectStore(storeName);
+          const keys = await new Promise<any[]>((resolve, reject) => {
+            const request = objectStore.getAllKeys();
+            request.addEventListener('success', () => resolve(request.result));
+            request.addEventListener('error', reject);
+          });
+
+          const records = await Promise.all(keys.map(async key => {
+            const record = await new Promise<any[]>((resolve, reject) => {
+              const request = objectStore.get(key);
+              request.addEventListener('success', () => resolve(request.result));
+              request.addEventListener('error', reject);
+            });
+
+            if (!record)
+              return;
+
+            return {
+              key,
+              value: JSON.stringify(record)
+            };
+          }));
+
+          const indexes = await Promise.all([...objectStore.indexNames].map(async indexName => {
+            const index = objectStore.index(indexName);
+            return {
+              name: index.name,
+              keyPath: Array.isArray(index.keyPath) ? index.keyPath : [index.keyPath],
+              multiEntry: index.multiEntry,
+              unique: index.unique,
+            };
+          }));
+
+          return {
+            name: storeName,
+            records: records.filter(Boolean),
+            indexes,
+            autoIncrement: objectStore.autoIncrement,
+            keyPath: Array.isArray(objectStore.keyPath) ? objectStore.keyPath : [objectStore.keyPath],
+          };
+        }));
+
+        return {
+          name: dbInfo.name,
+          version: dbInfo.version,
+          stores,
+        };
+      }
+
+      const idbResult = await Promise.all((await indexedDB.databases()).map(_collectDatabase).filter(Boolean));
+
       return {
         localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
+        indexedDB: idbResult.length ? idbResult : undefined,
       };
     }
 
@@ -526,8 +595,8 @@ export abstract class BrowserContext extends SdkObject {
         continue;
       try {
         const storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`(${_collectStorageScript.toString()})()`, 'utility');
-        if (storage.localStorage.length)
-          result.origins.push({ origin, localStorage: storage.localStorage } as channels.OriginStorage);
+        if (storage.localStorage.length || storage.indexedDB?.length)
+          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorage);
         originsToSave.delete(origin);
       } catch {
         // When failed on the live page, we'll retry on the blank page below.
@@ -546,8 +615,8 @@ export abstract class BrowserContext extends SdkObject {
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
         const storage = await frame.evaluateExpression(`(${_collectStorageScript.toString()})()`, { world: 'utility' });
-        if (storage.localStorage.length)
-          result.origins.push({ origin, localStorage: storage.localStorage } as channels.OriginStorage);
+        if (storage.localStorage.length || storage.indexedDB?.length)
+          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorage);
       }
       await page.close(internalMetadata);
     }
