@@ -159,8 +159,8 @@ class ApiParser {
     const clazz = this.classes.get(className);
     if (!clazz)
       throw new Error('Invalid class ' + className);
-    const method = clazz.membersArray.find(m => m.kind === 'method' && m.name === methodName);
-    if (!method)
+    const methods = clazz.membersArray.filter(m => m.kind === 'method' && m.name === methodName);
+    if (methods.length < 1)
       throw new Error(`Invalid method ${className}.${methodName} when parsing: ${match[0]}`);
     if (!name)
       throw new Error('Invalid member name ' + spec.text);
@@ -169,30 +169,34 @@ class ApiParser {
       if (!arg)
         return;
       arg.name = name;
-      const existingArg = method.argsArray.find(m => m.name === arg.name);
-      if (existingArg && isTypeOverride(existingArg, arg)) {
-        if (!arg.langs || !arg.langs.only)
-          throw new Error('Override does not have lang: ' + spec.text);
-        for (const lang of arg.langs.only) {
-          existingArg.langs.overrides = existingArg.langs.overrides || {};
-          existingArg.langs.overrides[lang] = arg;
+      for (const method of methods) {
+        const existingArg = method.argsArray.find(m => m.name === arg.name);
+        if (existingArg && isTypeOverride(existingArg, arg)) {
+          if (!arg.langs || !arg.langs.only)
+            throw new Error('Override does not have lang: ' + spec.text);
+          for (const lang of arg.langs.only) {
+            existingArg.langs.overrides = existingArg.langs.overrides || {};
+            existingArg.langs.overrides[lang] = arg;
+          }
+        } else {
+          method.argsArray.push(arg);
         }
-      } else {
-        method.argsArray.push(arg);
       }
     } else {
       // match[1] === 'option'
-      const p = this.parseProperty(spec, match[2]);
-      if (!p)
-        return;
-      let options = method.argsArray.find(o => o.name === 'options');
-      if (!options) {
-        const type = new docs.Type('Object', []);
-        options = docs.Member.createProperty({ langs: {}, since: method.since, deprecated: undefined, discouraged: undefined }, 'options', type, undefined, false);
-        method.argsArray.push(options);
+      for (const method of methods) {
+        const p = this.parseProperty(spec, match[2]);
+        if (!p)
+          return;
+        let options = method.argsArray.find(o => o.name === 'options');
+        if (!options) {
+          const type = new docs.Type('Object', []);
+          options = docs.Member.createProperty({ langs: {}, since: method.since, deprecated: undefined, discouraged: undefined }, 'options', type, undefined, false);
+          method.argsArray.push(options);
+        }
+        p.required = false;
+        options.type?.properties?.push(p);
       }
-      p.required = false;
-      options.type?.properties?.push(p);
     }
   }
 
@@ -419,7 +423,7 @@ function extractSince(spec) {
  * @param {MarkdownHeaderNode} spec
  * @returns {boolean}
  */
- function extractHidden(spec) {
+function extractHidden(spec) {
   for (const child of spec.children) {
     if (child.type === 'li' && child.liType === 'bullet' && child.text === 'hidden')
       return true;
@@ -432,7 +436,7 @@ function extractSince(spec) {
  * @param {string} name
  * @returns {string | undefined}
  */
- function extractAttribute(spec, name) {
+function extractAttribute(spec, name) {
   for (const child of spec.children) {
     if (child.type !== 'li' || child.liType !== 'bullet' || !child.text.startsWith(name + ':'))
       continue;
