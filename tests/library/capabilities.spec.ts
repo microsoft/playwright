@@ -434,7 +434,9 @@ it('should not crash when clicking a color input', {
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/33864'
   }
-}, async ({ page }) => {
+}, async ({ page, browserMajorVersion, browserName }) => {
+  it.skip(browserName === 'firefox' && browserMajorVersion < 135);
+
   await page.setContent('<input type="color">');
   const input = page.locator('input');
 
