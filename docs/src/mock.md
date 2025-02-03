@@ -566,7 +566,7 @@ If you send it a request, it will apply the network routes configured via `page.
 
 To get started, enable the `mockingProxy` option in your Playwright config:
 
-```ts
+```js
 export default defineConfig({
   use: { mockingProxy: true }
 });
@@ -581,9 +581,8 @@ const proxyURL = decodeURIComponent(headers.get('x-playwright-proxy') ?? '');
 await fetch(proxyURL + 'https://api.example.com/users');
 ```
 
-Prepending the URL will direct the request through the proxy. You can now intercept it with `context.route` and `page.route`, just like browser requests:
-
-```ts
+Prepending the URL will direct the request through the proxy. You can now intercept it with [`method: BrowserContext.route`] and [`method: Page.route`], just like browser requests:
+```js
 // shopping-cart.spec.ts
 import { test, expect } from '@playwright/test';
 
@@ -605,23 +604,15 @@ test('checkout applies customer loyalty bonus points', async ({ page }) => {
 });
 ```
 
-Now, prepending the proxy URL manually can be cumbersome. If your HTTP client supports it, consider updating your client baseURL ...
-
-```js
-import { axios } from 'axios';
-
-const api = axios.create({
-  baseURL: proxyURL + 'https://jsonplaceholder.typicode.com',
-});
-```
-
-... or setting up a global interceptor:
+Now, prepending the proxy URL manually can be cumbersome. If your HTTP client supports it, consider setting up a global interceptor:
 
 ```js
 import { axios } from 'axios';
 
 axios.interceptors.request.use(async config => {
-  config.baseURL = proxyURL + (config.baseURL ?? '/');
+  const headers = getCurrentRequestHeaders(); // this line looks different for each application
+  const proxy = decodeURIComponent(headers.get('x-playwright-proxy') ?? '');
+  config.url = new URL(proxy + config.url, config.baseURL).toString();
   return config;
 });
 ```
@@ -630,15 +621,18 @@ axios.interceptors.request.use(async config => {
 import { setGlobalDispatcher, getGlobalDispatcher } from 'undici';
 
 const proxyingDispatcher = getGlobalDispatcher().compose(dispatch => (opts, handler) => {
-  opts.path = opts.origin + opts.path;
-  opts.origin = proxyURL;
+  const headers = getCurrentRequestHeaders(); // this line looks different for each application
+  const proxy = decodeURIComponent(headers.get('x-playwright-proxy') ?? '');
+  const newURL = new URL(proxy + opts.origin + opts.path);
+  opts.origin = newURL.origin;
+  opts.path = newURL.pathname;
   return dispatch(opts, handler);
 });
 setGlobalDispatcher(proxyingDispatcher); // this will also apply to global fetch
 ```
 
 :::note
-Note that this style of proxying, where the proxy URL is prended to the request URL, does *not* use [`CONNECT`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT), which is the common way of establishing a proxy connection.
+Note that this style of proxying, where the proxy URL is prepended to the request URL, does *not* use [`CONNECT`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/CONNECT), which is the common way of establishing a proxy connection.
 This is because for HTTPS requests, a `CONNECT` proxy does not have access to the proxied traffic. That's great behaviour for a production proxy, but counteracts network interception!
 :::
 
@@ -651,7 +645,7 @@ This is because for HTTPS requests, a `CONNECT` proxy does not have access to th
 
 Monkey-patch `globalThis.fetch` in your `instrumentation.ts` file:
 
-```ts
+```js
 // instrumentation.ts
 
 import { headers } from 'next/headers';
@@ -676,7 +670,7 @@ export function register() {
 
 Monkey-patch `globalThis.fetch` in your `entry.server.ts` file, and use `AsyncLocalStorage` to make current request headers available:
 
-```ts
+```js
 import { setGlobalDispatcher, getGlobalDispatcher } from 'undici';
 import { AsyncLocalStorage } from 'node:async_hooks';
 
@@ -705,7 +699,7 @@ export default function handleRequest(request: Request, /* ... */) {
 
 Configure your `HttpClient` with an [interceptor](https://angular.dev/guide/http/setup#withinterceptors):
 
-```ts
+```js
 // app.config.server.ts
 
 import { inject, REQUEST } from '@angular/core';
@@ -736,7 +730,7 @@ const serverConfig = {
 
 Set up a server-side fetch override in an Astro integration:
 
-```ts
+```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
 import type { AstroIntegration } from "astro"
@@ -777,7 +771,7 @@ export default defineConfig({
 
 #### Nuxt
 
-```ts
+```js
 // server/plugins/playwright-mocking-proxy.ts
 
 import { getGlobalDispatcher, setGlobalDispatcher } from "undici"
@@ -801,7 +795,7 @@ export default defineNitroPlugin(() => {
 });
 ```
 
-```ts
+```js
 // nuxt.config.ts
 export default defineNuxtConfig({
   nitro: {
