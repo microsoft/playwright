@@ -8,7 +8,7 @@ toc_max_heading_level: 2
 
 ### Async Pytest Plugin
 
-* [Playwright's Pytest plugin](./test-runners.md) has now support for [Async Fixtures](https://playwright.dev/python/docs/test-runners#async-fixtures).
+* [Playwright's Pytest plugin](./test-runners.md) now has support for [Async Fixtures](https://playwright.dev/python/docs/test-runners#async-fixtures).
 
 ### Miscellaneous
 
