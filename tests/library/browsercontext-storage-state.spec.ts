@@ -399,4 +399,12 @@ it('should support IndexedDB', async ({ page, contextFactory }) => {
 
   const context = await contextFactory({ storageState });
   expect(await context.storageState()).toEqual(storageState);
+
+  const recreatedPage = await context.newPage();
+  await recreatedPage.goto('https://mdn.github.io/dom-examples/to-do-notifications/');
+  await expect(recreatedPage.locator('#task-list')).toMatchAriaSnapshot(`
+    - list:
+      - listitem:
+        - text: /Pet the cat/
+  `);
 });
