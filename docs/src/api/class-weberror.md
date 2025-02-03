@@ -63,5 +63,3 @@ Unhandled error that was thrown.
 * since: v1.38
 * langs: java, csharp
 - returns: <[string]>
-
-Unhandled error that was thrown.

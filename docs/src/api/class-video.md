@@ -36,6 +36,7 @@ Returns the file system path this video will be recorded to. The video is guaran
 upon closing the browser context. This method throws when connected remotely.
 
 ## async method: Video.saveAs
+* langs: js, csharp
 * since: v1.11
 
 Saves the video to a user-specified path. It is safe to call this method while the video

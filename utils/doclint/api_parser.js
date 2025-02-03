@@ -129,10 +129,18 @@ class ApiParser {
       return;
 
     const existingMember = clazz.membersArray.find(m => m.name === name && m.kind === member.kind);
-    if (existingMember && isTypeOverride(existingMember, member)) {
-      for (const lang of member?.langs?.only || []) {
-        existingMember.langs.types = existingMember.langs.types || {};
-        existingMember.langs.types[lang] = returnType;
+    if (existingMember) {
+      if (isTypeOverride(existingMember, member) && (member.spec === undefined || member.spec.length === 0)) {
+        // Can only override return types if the overriding entry (`member`) has no spec content
+        for (const lang of member.langs.only || []) {
+          existingMember.langs.types = existingMember.langs.types || {};
+          existingMember.langs.types[lang] = returnType;
+        }
+      } else if (!existingMember.langs.only || existingMember.langs.only.some(l => member.langs.only?.includes(l))) {
+        throw new Error(`Duplicate member ${clazz.name}.${name} for at least one language: ${member.langs.only}`);
+      } else {
+        // This member exists alongside the current one
+        clazz.membersArray.push(member);
       }
     } else {
       clazz.membersArray.push(member);
