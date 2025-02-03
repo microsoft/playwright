@@ -65,7 +65,7 @@ export class APIRequest implements api.APIRequest {
   }
 
   async newContext(options: NewContextOptions = {}): Promise<APIRequestContext> {
-    return this._newContext(options, this._playwright._channel);
+    return await this._newContext(options, this._playwright._channel);
   }
 
   async _newContext(options: NewContextOptions = {}, channel: channels.PlaywrightChannel | channels.LocalUtilsChannel): Promise<APIRequestContext> {
