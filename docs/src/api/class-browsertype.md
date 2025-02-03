@@ -87,6 +87,18 @@ class BrowserTypeExamples
 
 ## async method: BrowserType.connect
 * since: v1.8
+* langs: js
+- returns: <[Browser]>
+
+This method attaches Playwright to an existing browser instance created via [`method: BrowserType.launchServer`].
+
+:::note
+The major and minor version of the Playwright instance that connects needs to match the version of Playwright that launches the browser (1.2.3 → is compatible with 1.2.x).
+:::
+
+## async method: BrowserType.connect
+* since: v1.8
+* langs: python, csharp, java
 - returns: <[Browser]>
 
 This method attaches Playwright to an existing browser instance created via `BrowserType.launchServer` in Node.js.
@@ -97,9 +109,17 @@ The major and minor version of the Playwright instance that connects needs to ma
 
 ### param: BrowserType.connect.wsEndpoint
 * since: v1.10
+* langs: js
 - `wsEndpoint` <[string]>
 
-A Playwright browser websocket endpoint to connect to. You obtain this endpoint via `BrowserServer.wsEndpoint`.
+A Playwright browser websocket endpoint to connect to. You obtain this endpoint via [`method: BrowserServer.wsEndpoint`].
+
+### param: BrowserType.connect.wsEndpoint
+* since: v1.10
+* langs: python, csharp, java
+- `wsEndpoint` <[string]>
+
+A Playwright browser websocket endpoint to connect to. You obtain this endpoint via `BrowserServer.wsEndpoint` in Node.js.
 
 ### option: BrowserType.connect.headers
 * since: v1.11
