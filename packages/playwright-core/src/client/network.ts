@@ -201,6 +201,8 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   frame(): Frame {
+    if (this._pageForMockingProxy)
+      throw new Error('Frame for this request is not available, because the request was issued on the server.');
     if (!this._initializer.frame) {
       assert(this.serviceWorker());
       throw new Error('Service Worker requests do not have an associated frame.');

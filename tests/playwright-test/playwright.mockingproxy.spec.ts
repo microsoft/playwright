@@ -110,7 +110,7 @@ test('all properties are populated', async ({ runInlineTest, server, request }) 
     
         expect(await response.finished()).toBe(null);
         expect(request.serviceWorker()).toBe(null);
-        expect(() => request.frame()).toThrowError("Assertion error"); // we know the page, but not the frame. should probably improve the error message
+        expect(() => request.frame()).toThrowError("Frame for this request is not available, because the request was issued on the server.");
     
         expect(request.failure()).toBe(null);
         expect(request.isNavigationRequest()).toBe(false);
