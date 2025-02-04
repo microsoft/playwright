@@ -43,6 +43,7 @@ import type { Artifact } from './artifact';
 import { Clock } from './clock';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { RecorderApp } from './recorder/recorderApp';
+import * as utilitySerializers from './isomorphic/utilityScriptSerializers';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
@@ -550,7 +551,7 @@ export abstract class BrowserContext extends SdkObject {
 
             return {
               key: objectStore.keyPath === null ? key.toString() : undefined,
-              value: JSON.stringify(record)
+              value: record
             };
           }));
 
@@ -590,6 +591,15 @@ export abstract class BrowserContext extends SdkObject {
       };
     }
 
+    function serializeRecords(indexedDBs: channels.IndexedDBDatabase[]) {
+      for (const db of indexedDBs) {
+        for (const store of db.stores) {
+          for (const record of store.records)
+            record.value = JSON.stringify(utilitySerializers.serializeAsCallArgument(record.value, v => ({ fallThrough: v })));
+        }
+      }
+    }
+
     // First try collecting storage stage from existing pages.
     for (const page of this.pages()) {
       const origin = page.mainFrame().origin();
@@ -597,6 +607,8 @@ export abstract class BrowserContext extends SdkObject {
         continue;
       try {
         const storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`(${_collectStorageScript.toString()})()`, 'utility');
+        if (storage.indexedDB?.length)
+          serializeRecords(storage.indexedDB);
         if (storage.localStorage.length || storage.indexedDB?.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorage);
         originsToSave.delete(origin);
@@ -617,6 +629,8 @@ export abstract class BrowserContext extends SdkObject {
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
         const storage = await frame.evaluateExpression(`(${_collectStorageScript.toString()})()`, { world: 'utility' });
+        if (storage.indexedDB?.length)
+          serializeRecords(storage.indexedDB);
         if (storage.localStorage.length || storage.indexedDB?.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorage);
       }
@@ -682,6 +696,13 @@ export abstract class BrowserContext extends SdkObject {
           const frame = page.mainFrame();
           await frame.goto(metadata, originState.origin);
 
+          for (const dbInfo of (originState.indexedDB || [])) {
+            for (const store of dbInfo.stores) {
+              for (const record of store.records)
+                record.value = utilitySerializers.parseEvaluationResultValue(JSON.parse(record.value));
+            }
+          }
+
           async function _restoreStorageState(originState: channels.OriginStorage) {
             for (const { name, value } of (originState.localStorage || []))
               localStorage.setItem(name, value);
@@ -704,7 +725,7 @@ export abstract class BrowserContext extends SdkObject {
                     const objectStore = transaction.objectStore(store.name);
                     return store.records.map(record => new Promise((resolve, reject) => {
                       const request = objectStore.add(
-                          JSON.parse(record.value), // TODO: use better serialization
+                          record.value as any, // protocol says string, but this got deserialized above
                           objectStore.keyPath === null ? record.key : undefined
                       );
                       request.addEventListener('success', resolve);
