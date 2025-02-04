@@ -582,6 +582,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
   forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
   acceptDownloads: tOptional(tEnum(['accept', 'deny', 'internal-browser-default'])),
+  contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
     dir: tString,
@@ -668,6 +669,7 @@ scheme.BrowserNewContextParams = tObject({
   reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
   forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
   acceptDownloads: tOptional(tEnum(['accept', 'deny', 'internal-browser-default'])),
+  contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
     dir: tString,
@@ -737,6 +739,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
   reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
   forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
   acceptDownloads: tOptional(tEnum(['accept', 'deny', 'internal-browser-default'])),
+  contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
     dir: tString,
@@ -1118,6 +1121,7 @@ scheme.PageEmulateMediaParams = tObject({
   colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
   reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
   forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
+  contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
 });
 scheme.PageEmulateMediaResult = tOptional(tObject({}));
 scheme.PageExposeBindingParams = tObject({
@@ -2640,6 +2644,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
   forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
   acceptDownloads: tOptional(tEnum(['accept', 'deny', 'internal-browser-default'])),
+  contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
     dir: tString,

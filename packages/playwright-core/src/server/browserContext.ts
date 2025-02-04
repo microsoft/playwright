@@ -762,6 +762,7 @@ const paramsThatAllowContextReuse: (keyof channels.BrowserNewContextForReusePara
   'colorScheme',
   'forcedColors',
   'reducedMotion',
+  'contrast',
   'screen',
   'userAgent',
   'viewport',

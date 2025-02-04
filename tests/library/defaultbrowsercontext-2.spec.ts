@@ -51,6 +51,12 @@ it('should support forcedColors option', async ({ launchPersistent, browserName 
   expect(await page.evaluate(() => matchMedia('(forced-colors: none)').matches)).toBe(false);
 });
 
+it('should support contrast option', async ({ launchPersistent }) => {
+  const { page } = await launchPersistent({ contrast: 'more' });
+  expect.soft(await page.evaluate(() => matchMedia('(prefers-contrast: more)').matches)).toBe(true);
+  expect.soft(await page.evaluate(() => matchMedia('(prefers-contrast: no-preference)').matches)).toBe(false);
+});
+
 it('should support timezoneId option', async ({ launchPersistent, browserName }) => {
   const { page } = await launchPersistent({ locale: 'en-US', timezoneId: 'America/Jamaica' });
   expect(await page.evaluate(() => new Date(1479579154987).toString())).toBe('Sat Nov 19 2016 13:12:34 GMT-0500 (Eastern Standard Time)');

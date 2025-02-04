@@ -1026,10 +1026,12 @@ class FrameSession {
     const colorScheme = emulatedMedia.colorScheme === 'no-override' ? '' : emulatedMedia.colorScheme;
     const reducedMotion = emulatedMedia.reducedMotion === 'no-override' ? '' : emulatedMedia.reducedMotion;
     const forcedColors = emulatedMedia.forcedColors === 'no-override' ? '' : emulatedMedia.forcedColors;
+    const contrast = emulatedMedia.contrast === 'no-override' ? '' : emulatedMedia.contrast;
     const features = [
       { name: 'prefers-color-scheme', value: colorScheme },
       { name: 'prefers-reduced-motion', value: reducedMotion },
       { name: 'forced-colors', value: forcedColors },
+      { name: 'prefers-contrast', value: contrast },
     ];
     await this._client.send('Emulation.setEmulatedMedia', { media, features });
   }

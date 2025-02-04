@@ -1006,6 +1006,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
+  contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
     dir: string,
@@ -1086,6 +1087,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
+  contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
     dir: string,
@@ -1201,6 +1203,7 @@ export type BrowserNewContextParams = {
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
+  contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
     dir: string,
@@ -1267,6 +1270,7 @@ export type BrowserNewContextOptions = {
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
+  contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
     dir: string,
@@ -1336,6 +1340,7 @@ export type BrowserNewContextForReuseParams = {
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
+  contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
     dir: string,
@@ -1402,6 +1407,7 @@ export type BrowserNewContextForReuseOptions = {
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
+  contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
     dir: string,
@@ -2063,12 +2069,14 @@ export type PageEmulateMediaParams = {
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
+  contrast?: 'no-preference' | 'more' | 'no-override',
 };
 export type PageEmulateMediaOptions = {
   media?: 'screen' | 'print' | 'no-override',
   colorScheme?: 'dark' | 'light' | 'no-preference' | 'no-override',
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
+  contrast?: 'no-preference' | 'more' | 'no-override',
 };
 export type PageEmulateMediaResult = void;
 export type PageExposeBindingParams = {
@@ -4761,6 +4769,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
+  contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
     dir: string,
@@ -4825,6 +4834,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   reducedMotion?: 'reduce' | 'no-preference' | 'no-override',
   forcedColors?: 'active' | 'none' | 'no-override',
   acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
+  contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
     dir: string,

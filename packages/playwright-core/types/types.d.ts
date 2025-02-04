@@ -2566,6 +2566,12 @@ export interface Page {
     colorScheme?: null|"light"|"dark"|"no-preference";
 
     /**
+     * Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. Passing `null`
+     * disables contrast emulation.
+     */
+    contrast?: null|"no-preference"|"more";
+
+    /**
      * Emulates `'forced-colors'` media feature, supported values are `'active'` and `'none'`. Passing `null` disables
      * forced colors emulation.
      */
@@ -9771,6 +9777,13 @@ export interface Browser {
     colorScheme?: null|"light"|"dark"|"no-preference";
 
     /**
+     * Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+     * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+     */
+    contrast?: null|"no-preference"|"more";
+
+    /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
      * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
      */
@@ -14798,6 +14811,13 @@ export interface BrowserType<Unused = {}> {
     colorScheme?: null|"light"|"dark"|"no-preference";
 
     /**
+     * Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+     * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+     */
+    contrast?: null|"no-preference"|"more";
+
+    /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
      * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
      */
@@ -16608,6 +16628,13 @@ export interface AndroidDevice {
      * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
      */
     colorScheme?: null|"light"|"dark"|"no-preference";
+
+    /**
+     * Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+     * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+     */
+    contrast?: null|"no-preference"|"more";
 
     /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
@@ -21968,6 +21995,13 @@ export interface BrowserContextOptions {
    * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
    */
   colorScheme?: null|"light"|"dark"|"no-preference";
+
+  /**
+   * Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+   */
+  contrast?: null|"no-preference"|"more";
 
   /**
    * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about

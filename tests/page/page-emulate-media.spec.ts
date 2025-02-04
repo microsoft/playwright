@@ -15,7 +15,24 @@
  * limitations under the License.
  */
 
-import { test as it, expect } from './pageTest';
+import type { Page } from 'packages/playwright-test';
+import { test as it, expect as baseExpect } from './pageTest';
+
+const expect = baseExpect.extend({
+  async toMatchMedia(page: Page, mediaQuery: string) {
+    const pass = await page.evaluate(mediaQuery => matchMedia(mediaQuery).matches, mediaQuery).catch(() => false);
+    return {
+      message() {
+        if (pass)
+          return `Expected "${mediaQuery}" not to match, but it did`;
+        else
+          return `Expected "${mediaQuery}" to match, but it did not`;
+      },
+      pass,
+      name: 'toMatchMedia',
+    };
+  },
+});
 
 it('should emulate type @smoke', async ({ page }) => {
   expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
@@ -157,4 +174,16 @@ it('should emulate forcedColors ', async ({ page, browserName }) => {
   expect(await page.evaluate(() => matchMedia('(forced-colors: active)').matches)).toBe(true);
   await page.emulateMedia({ forcedColors: null });
   expect(await page.evaluate(() => matchMedia('(forced-colors: none)').matches)).toBe(true);
+});
+
+it('should emulate contrast ', async ({ page }) => {
+  await expect(page).toMatchMedia('(prefers-contrast: no-preference)');
+  await page.emulateMedia({ contrast: 'no-preference' });
+  await expect(page).toMatchMedia('(prefers-contrast: no-preference)');
+  await expect(page).not.toMatchMedia('(prefers-contrast: more)');
+  await page.emulateMedia({ contrast: 'more' });
+  await expect(page).not.toMatchMedia('(prefers-contrast: no-preference)');
+  await expect(page).toMatchMedia('(prefers-contrast: more)');
+  await page.emulateMedia({ contrast: null });
+  await expect(page).toMatchMedia('(prefers-contrast: no-preference)');
 });

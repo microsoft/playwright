@@ -240,6 +240,12 @@ export class FFBrowserContext extends BrowserContext {
         forcedColors: this._options.forcedColors !== undefined  ? this._options.forcedColors : 'none',
       }));
     }
+    if (this._options.contrast !== 'no-override') {
+      promises.push(this._browser.session.send('Browser.setContrast', {
+        browserContextId,
+        contrast: this._options.contrast !== undefined  ? this._options.contrast : 'no-preference',
+      }));
+    }
     if (this._options.recordVideo) {
       promises.push(this._ensureVideosPath().then(() => {
         return this._browser.session.send('Browser.setVideoRecordingOptions', {

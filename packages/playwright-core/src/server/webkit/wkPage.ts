@@ -191,8 +191,8 @@ export class WKPage implements PageDelegate {
     if (contextOptions.userAgent)
       promises.push(this.updateUserAgent());
     const emulatedMedia = this._page.emulatedMedia();
-    if (emulatedMedia.media || emulatedMedia.colorScheme || emulatedMedia.reducedMotion || emulatedMedia.forcedColors)
-      promises.push(WKPage._setEmulateMedia(session, emulatedMedia.media, emulatedMedia.colorScheme, emulatedMedia.reducedMotion, emulatedMedia.forcedColors));
+    if (emulatedMedia.media || emulatedMedia.colorScheme || emulatedMedia.reducedMotion || emulatedMedia.forcedColors || emulatedMedia.contrast)
+      promises.push(WKPage._setEmulateMedia(session, emulatedMedia.media, emulatedMedia.colorScheme, emulatedMedia.reducedMotion, emulatedMedia.forcedColors, emulatedMedia.contrast));
     const bootstrapScript = this._calculateBootstrapScript();
     if (bootstrapScript.length)
       promises.push(session.send('Page.setBootstrapScript', { source: bootstrapScript }));
@@ -615,7 +615,7 @@ export class WKPage implements PageDelegate {
     await this._page._onFileChooserOpened(handle);
   }
 
-  private static async _setEmulateMedia(session: WKSession, mediaType: types.MediaType, colorScheme: types.ColorScheme, reducedMotion: types.ReducedMotion, forcedColors: types.ForcedColors): Promise<void> {
+  private static async _setEmulateMedia(session: WKSession, mediaType: types.MediaType, colorScheme: types.ColorScheme, reducedMotion: types.ReducedMotion, forcedColors: types.ForcedColors, contrast: types.Contrast): Promise<void> {
     const promises = [];
     promises.push(session.send('Page.setEmulatedMedia', { media: mediaType === 'no-override' ? '' : mediaType }));
     let appearance: any = undefined;
@@ -639,6 +639,13 @@ export class WKPage implements PageDelegate {
       case 'no-override': forcedColorsWk = undefined; break;
     }
     promises.push(session.send('Page.setForcedColors', { forcedColors: forcedColorsWk }));
+    let contrastWk: any = undefined;
+    switch (contrast) {
+      case 'more': contrastWk = 'More'; break;
+      case 'no-preference': contrastWk = 'NoPreference'; break;
+      case 'no-override': contrastWk = undefined; break;
+    }
+    promises.push(session.send('Page.overrideUserPreference', { name: 'PrefersContrast', value: contrastWk }));
     await Promise.all(promises);
   }
 
@@ -661,7 +668,8 @@ export class WKPage implements PageDelegate {
     const colorScheme = emulatedMedia.colorScheme;
     const reducedMotion = emulatedMedia.reducedMotion;
     const forcedColors = emulatedMedia.forcedColors;
-    await this._forAllSessions(session => WKPage._setEmulateMedia(session, emulatedMedia.media, colorScheme, reducedMotion, forcedColors));
+    const contrast = emulatedMedia.contrast;
+    await this._forAllSessions(session => WKPage._setEmulateMedia(session, emulatedMedia.media, colorScheme, reducedMotion, forcedColors, contrast));
   }
 
   async updateEmulatedViewportSize(): Promise<void> {

@@ -162,6 +162,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       colorScheme: params.colorScheme,
       reducedMotion: params.reducedMotion,
       forcedColors: params.forcedColors,
+      contrast: params.contrast,
     });
   }
 

@@ -1309,6 +1309,18 @@ Emulates `'forced-colors'` media feature, supported values are `'active'` and `'
 * langs: csharp, python
 - `forcedColors` <[ForcedColors]<"active"|"none"|"null">>
 
+### option: Page.emulateMedia.contrast
+* since: v1.51
+* langs: js, java
+- `contrast` <null|[Contrast]<"no-preference"|"more">>
+
+Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. Passing `null` disables contrast emulation.
+
+### option: Page.emulateMedia.contrast
+* since: v1.51
+* langs: csharp, python
+- `contrast` <[Contrast]<"no-preference"|"more"|"null">>
+
 ## async method: Page.evalOnSelector
 * since: v1.9
 * discouraged: This method does not wait for the element to pass actionability
