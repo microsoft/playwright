@@ -412,15 +412,8 @@ class JobDispatcher {
     // - there are no remaining
     // - we are here not because something failed
     // - no unrecoverable worker error
-    if (!this._remainingByTestId.size && !this._failedTests.size && !params.fatalErrors.length && !params.skipTestsDueToSetupFailure.length && !params.fatalUnknownTestIds && !params.missingProjectById && !params.unexpectedExitError) {
+    if (!this._remainingByTestId.size && !this._failedTests.size && !params.fatalErrors.length && !params.skipTestsDueToSetupFailure.length && !params.fatalUnknownTestIds && !params.unexpectedExitError) {
       this._finished({ didFail: false });
-      return;
-    }
-
-    if (params.missingProjectById) {
-      this._failureTracker.onWorkerError();
-      this._reporter.onError?.({ message: `Project with name ${params.missingProjectById} not found. Make sure project name does not change.` });
-      this._finished({ didFail: true, newJob: undefined });
       return;
     }
 

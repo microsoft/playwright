@@ -105,18 +105,17 @@ export class WorkerMain extends ProcessRunner {
   }
 
   override async gracefullyClose() {
-    if (this._isMissingProject) {
-      // Never set anything up and we can crash on attempting cleanup
-      return;
-    }
-
     try {
       await this._stop();
+      if (this._isMissingProject) {
+        // We never set anything up and we can crash on attempting cleanup
+        return;
+      }
       // Ignore top-level errors, they are already inside TestInfo.errors.
       const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {});
       const runnable = { type: 'teardown' } as const;
       // We have to load the project to get the right deadline below.
-      await fakeTestInfo._runAsStage({ title: 'worker cleanup', runnable }, () => this._load()).catch(() => {});
+      await fakeTestInfo._runAsStage({ title: 'worker cleanup', runnable }, () => this._loadIfNeeded()).catch(() => {});
       await this._fixtureRunner.teardownScope('test', fakeTestInfo, runnable).catch(() => {});
       await this._fixtureRunner.teardownScope('worker', fakeTestInfo, runnable).catch(() => {});
       // Close any other browsers launched in this process. This includes anything launched
@@ -193,22 +192,18 @@ export class WorkerMain extends ProcessRunner {
       void this._stop();
   }
 
-  private async _load(): Promise<{
-    config: FullConfigInternal,
-    project: FullProjectInternal,
-    poolBuilder: PoolBuilder,
-  } | undefined> {
+  private async _loadIfNeeded() {
     if (this._config)
-      return { config: this._config, project: this._project, poolBuilder: this._poolBuilder };
+      return;
 
     this._config = await deserializeConfig(this._params.config);
     const project = this._config.projects.find(p => p.id === this._params.projectId);
-    if (!project)
-      return undefined;
+    if (!project) {
+      this._isMissingProject = true;
+      throw new Error(`Project with name "${this._params.projectId}" not found. Make sure project name does not change`);
+    }
     this._project = project;
     this._poolBuilder = PoolBuilder.createForWorker(this._project);
-
-    return { config: this._config, project: this._project, poolBuilder: this._poolBuilder };
   }
 
   async runTestGroup(runPayload: RunPayload) {
@@ -216,20 +211,14 @@ export class WorkerMain extends ProcessRunner {
     const entries = new Map(runPayload.entries.map(e => [e.testId, e]));
     let fatalUnknownTestIds: string[] | undefined;
     try {
-      const workerState = await this._load();
-      if (!workerState) {
-        this._isMissingProject = true;
-        void this._stop();
-        return;
-      }
-      const { config, project, poolBuilder } = workerState;
-      const fileSuite = await loadTestFile(runPayload.file, config.config.rootDir);
-      const suite = bindFileSuiteToProject(project, fileSuite);
+      await this._loadIfNeeded();
+      const fileSuite = await loadTestFile(runPayload.file, this._config.config.rootDir);
+      const suite = bindFileSuiteToProject(this._project, fileSuite);
       if (this._params.repeatEachIndex)
-        applyRepeatEachIndex(project, suite, this._params.repeatEachIndex);
+        applyRepeatEachIndex(this._project, suite, this._params.repeatEachIndex);
       const hasEntries = filterTestsRemoveEmptySuites(suite, test => entries.has(test.id));
       if (hasEntries) {
-        poolBuilder.buildPools(suite);
+        this._poolBuilder.buildPools(suite);
         this._activeSuites = new Map();
         this._didRunFullCleanup = false;
         const tests = suite.allTests();
@@ -257,8 +246,7 @@ export class WorkerMain extends ProcessRunner {
       const donePayload: DonePayload = {
         fatalErrors: this._fatalErrors,
         skipTestsDueToSetupFailure: [],
-        fatalUnknownTestIds,
-        missingProjectById: this._isMissingProject ? this._params.projectId : undefined
+        fatalUnknownTestIds
       };
       for (const test of this._skipRemainingTestsInSuite?.allTests() || []) {
         if (entries.has(test.id))
