@@ -49,7 +49,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   _defaultContextOptions?: BrowserContextOptions;
   _defaultContextTimeout?: number;
   _defaultContextNavigationTimeout?: number;
-  _defaultLaunchOptions?: LaunchOptions;
 
   static from(browserType: channels.BrowserTypeChannel): BrowserType {
     return (browserType as any)._object;
@@ -69,8 +68,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
 
-    const logger = options.logger || this._defaultLaunchOptions?.logger;
-    options = { ...this._defaultLaunchOptions, ...options };
+    const logger = options.logger || this._playwright._defaultLaunchOptions?.logger;
+    options = { ...this._playwright._defaultLaunchOptions, ...options };
     const launchOptions: channels.BrowserTypeLaunchParams = {
       ...options,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
@@ -87,14 +86,14 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   async launchServer(options: LaunchServerOptions = {}): Promise<api.BrowserServer> {
     if (!this._serverLauncher)
       throw new Error('Launching server is not supported');
-    options = { ...this._defaultLaunchOptions, ...options };
+    options = { ...this._playwright._defaultLaunchOptions, ...options };
     return await this._serverLauncher.launchServer(options);
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {
-    const logger = options.logger || this._defaultLaunchOptions?.logger;
+    const logger = options.logger || this._playwright._defaultLaunchOptions?.logger;
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
-    options = { ...this._defaultLaunchOptions, ...this._defaultContextOptions, ...options };
+    options = { ...this._playwright._defaultLaunchOptions, ...this._defaultContextOptions, ...options };
     const contextParams = await prepareBrowserContextParams(options);
     const persistentParams: channels.BrowserTypeLaunchPersistentContextParams = {
       ...contextParams,

@@ -85,11 +85,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.channel = channel;
     options.tracesDir = tracing().tracesDir();
 
-    for (const browserType of playwright._browserTypes())
-      browserType._defaultLaunchOptions = options;
+    playwright._defaultLaunchOptions = options;
     await use(options);
-    for (const browserType of playwright._browserTypes())
-      browserType._defaultLaunchOptions = undefined;
+    playwright._defaultLaunchOptions = undefined;
   }, { scope: 'worker', auto: true, box: true }],
 
   browser: [async ({ playwright, browserName, _browserOptions, connectOptions, _reuseContext }, use, testInfo) => {
@@ -562,17 +560,12 @@ class ArtifactsRecorder {
     this._screenshotOrdinal = testInfo.attachments.filter(a => a.name === 'screenshot').length;
 
     // Process existing contexts.
-    for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit]) {
-      const promises: (Promise<void> | undefined)[] = [];
-      const existingContexts = Array.from((browserType as any)._contexts) as BrowserContext[];
-      for (const context of existingContexts) {
-        if ((context as any)[kIsReusedContext])
-          this._reusedContexts.add(context);
-        else
-          promises.push(this.didCreateBrowserContext(context));
-      }
-      await Promise.all(promises);
-    }
+    await Promise.all(this._playwright._allContexts().map(async context => {
+      if ((context as any)[kIsReusedContext])
+        this._reusedContexts.add(context);
+      else
+        await this.didCreateBrowserContext(context);
+    }));
     {
       const existingApiRequests: APIRequestContext[] =  Array.from((this._playwright.request as any)._contexts as Set<APIRequestContext>);
       await Promise.all(existingApiRequests.map(c => this.didCreateRequestContext(c)));
@@ -622,10 +615,7 @@ class ArtifactsRecorder {
     if (captureScreenshots)
       await this._screenshotOnTestFailure();
 
-    let leftoverContexts: BrowserContext[] = [];
-    for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit])
-      leftoverContexts.push(...(browserType as any)._contexts);
-    leftoverContexts = leftoverContexts.filter(context => !this._reusedContexts.has(context));
+    const leftoverContexts = this._playwright._allContexts().filter(context => !this._reusedContexts.has(context));
     const leftoverApiRequests: APIRequestContext[] =  Array.from((this._playwright.request as any)._contexts as Set<APIRequestContext>);
 
     // Collect traces/screenshots for remaining contexts.
