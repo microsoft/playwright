@@ -234,9 +234,7 @@ IndexedDBDatabase:
         properties:
           name: string
           autoIncrement: boolean
-          keyPath:
-            type: array?
-            items: string
+          keyPath: string? # JSON of string | string[]
           records:
             type: array
             items:
@@ -250,9 +248,7 @@ IndexedDBDatabase:
               type: object
               properties:
                 name: string
-                keyPath:
-                  type: array
-                  items: string
+                keyPath: string # JSON of string | string[]
                 multiEntry: boolean
                 unique: boolean
 

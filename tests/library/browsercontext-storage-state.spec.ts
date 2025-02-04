@@ -337,7 +337,7 @@ it('should support IndexedDB', async ({ page, contextFactory }) => {
             {
               name: 'toDoList',
               autoIncrement: false,
-              keyPath: ['taskTitle'],
+              keyPath: '"taskTitle"',
               records: [
                 {
                   value: JSON.stringify({
@@ -354,37 +354,37 @@ it('should support IndexedDB', async ({ page, contextFactory }) => {
               indexes: [
                 {
                   'name': 'day',
-                  'keyPath': ['day'],
+                  'keyPath': '"day"',
                   'multiEntry': false,
                   'unique': false,
                 },
                 {
                   'name': 'hours',
-                  'keyPath': ['hours'],
+                  'keyPath': '"hours"',
                   'multiEntry': false,
                   'unique': false,
                 },
                 {
                   'name': 'minutes',
-                  'keyPath': ['minutes'],
+                  'keyPath': '"minutes"',
                   'multiEntry': false,
                   'unique': false,
                 },
                 {
                   'name': 'month',
-                  'keyPath': ['month'],
+                  'keyPath': '"month"',
                   'multiEntry': false,
                   'unique': false,
                 },
                 {
                   'name': 'notified',
-                  'keyPath': ['notified'],
+                  'keyPath': '"notified"',
                   'multiEntry': false,
                   'unique': false,
                 },
                 {
                   'name': 'year',
-                  'keyPath': ['year'],
+                  'keyPath': '"year"',
                   'multiEntry': false,
                   'unique': false,
                 },
@@ -411,9 +411,7 @@ it('should support IndexedDB', async ({ page, contextFactory }) => {
 it('indexedDb firebase acceptance test', async ({ page, contextFactory }) => {
   await page.goto('https://fir-ui-demo-84a6c.firebaseapp.com/');
   await page.getByText('Continue as guest').click();
-  await expect(page.locator('#user-info')).toMatchAriaSnapshot(`
-    - text: New User
-  `);
+  await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible();
   await page.close();
   const storageState = await page.context().storageState();
   expect(storageState).toEqual({
@@ -439,9 +437,7 @@ it('indexedDb firebase acceptance test', async ({ page, contextFactory }) => {
               {
                 'autoIncrement': false,
                 'indexes': [],
-                'keyPath': [
-                  'fbase_key',
-                ],
+                'keyPath': '"fbase_key"',
                 'name': 'firebaseLocalStorage',
                 'records': [
                   {
@@ -462,8 +458,6 @@ it('indexedDb firebase acceptance test', async ({ page, contextFactory }) => {
   const recreatedContext = await contextFactory({ storageState });
   const recreatedPage = await recreatedContext.newPage();
   await recreatedPage.goto('https://fir-ui-demo-84a6c.firebaseapp.com/');
+  await expect(recreatedPage.getByRole('button', { name: 'Sign Out' })).toBeVisible();
   expect(await recreatedContext.storageState()).toEqual(storageState);
-  await expect(recreatedPage.locator('body')).toMatchAriaSnapshot(`
-    - text: New User
-  `);
 });

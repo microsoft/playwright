@@ -558,7 +558,7 @@ export abstract class BrowserContext extends SdkObject {
             const index = objectStore.index(indexName);
             return {
               name: index.name,
-              keyPath: Array.isArray(index.keyPath) ? index.keyPath : [index.keyPath],
+              keyPath: JSON.stringify(index.keyPath),
               multiEntry: index.multiEntry,
               unique: index.unique,
             };
@@ -569,7 +569,7 @@ export abstract class BrowserContext extends SdkObject {
             records: records.filter(Boolean),
             indexes,
             autoIncrement: objectStore.autoIncrement,
-            keyPath: objectStore.keyPath === null ? undefined : (Array.isArray(objectStore.keyPath) ? objectStore.keyPath : [objectStore.keyPath]),
+            keyPath: objectStore.keyPath === null ? undefined : JSON.stringify(objectStore.keyPath),
           };
         }));
 
@@ -690,9 +690,9 @@ export abstract class BrowserContext extends SdkObject {
                 openRequest.addEventListener('upgradeneeded', () => {
                   const db = openRequest.result;
                   for (const store of dbInfo.stores) {
-                    const objectStore = db.createObjectStore(store.name, { autoIncrement: store.autoIncrement, keyPath: store.keyPath });
+                    const objectStore = db.createObjectStore(store.name, { autoIncrement: store.autoIncrement, keyPath: store.keyPath ? JSON.parse(store.keyPath) : undefined });
                     for (const index of store.indexes)
-                      objectStore.createIndex(index.name, index.keyPath, { unique: index.unique, multiEntry: index.multiEntry });
+                      objectStore.createIndex(index.name, JSON.parse(index.keyPath), { unique: index.unique, multiEntry: index.multiEntry });
                   }
                 });
                 openRequest.addEventListener('success', async () => {
@@ -709,7 +709,6 @@ export abstract class BrowserContext extends SdkObject {
                       request.addEventListener('error', reject);
                     }));
                   }));
-                  transaction.commit();
                   transaction.addEventListener('complete', () => resolve());
                   transaction.addEventListener('error', () => reject(transaction.error));
                 });
