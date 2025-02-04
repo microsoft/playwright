@@ -24,6 +24,7 @@ import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import { rootTestType } from './common/testType';
 import type { ContextReuseMode } from './common/config';
 import type { ApiCallData, ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
+import type { Playwright as PlaywrightImpl } from '../../playwright-core/src/client/playwright';
 import { currentTestInfo } from './common/globals';
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -50,6 +51,7 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
 };
 
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
+  playwright: PlaywrightImpl;
   _browserOptions: LaunchOptions;
   _optionContextReuseMode: ContextReuseMode,
   _optionConnectOptions: PlaywrightWorkerOptions['connectOptions'],
@@ -83,11 +85,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.channel = channel;
     options.tracesDir = tracing().tracesDir();
 
-    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit, playwright._bidiChromium, playwright._bidiFirefox])
-      (browserType as any)._defaultLaunchOptions = options;
+    for (const browserType of playwright._browserTypes())
+      browserType._defaultLaunchOptions = options;
     await use(options);
-    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit, playwright._bidiChromium, playwright._bidiFirefox])
-      (browserType as any)._defaultLaunchOptions = undefined;
+    for (const browserType of playwright._browserTypes())
+      browserType._defaultLaunchOptions = undefined;
   }, { scope: 'worker', auto: true, box: true }],
 
   browser: [async ({ playwright, browserName, _browserOptions, connectOptions, _reuseContext }, use, testInfo) => {
@@ -230,20 +232,21 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     testInfo.snapshotSuffix = process.platform;
     if (debugMode())
       (testInfo as TestInfoImpl)._setDebugMode();
-    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
-      (browserType as any)._defaultContextOptions = _combinedContextOptions;
-      (browserType as any)._defaultContextTimeout = actionTimeout || 0;
-      (browserType as any)._defaultContextNavigationTimeout = navigationTimeout || 0;
+
+    for (const browserType of playwright._browserTypes()) {
+      browserType._defaultContextOptions = _combinedContextOptions;
+      browserType._defaultContextTimeout = actionTimeout || 0;
+      browserType._defaultContextNavigationTimeout = navigationTimeout || 0;
     }
-    (playwright.request as any)._defaultContextOptions = { ..._combinedContextOptions };
-    (playwright.request as any)._defaultContextOptions.tracesDir = tracing().tracesDir();
-    (playwright.request as any)._defaultContextOptions.timeout = actionTimeout || 0;
+    playwright.request._defaultContextOptions = { ..._combinedContextOptions };
+    playwright.request._defaultContextOptions.tracesDir = tracing().tracesDir();
+    playwright.request._defaultContextOptions.timeout = actionTimeout || 0;
     await use();
-    (playwright.request as any)._defaultContextOptions = undefined;
-    for (const browserType of [playwright.chromium, playwright.firefox, playwright.webkit]) {
-      (browserType as any)._defaultContextOptions = undefined;
-      (browserType as any)._defaultContextTimeout = undefined;
-      (browserType as any)._defaultContextNavigationTimeout = undefined;
+    playwright.request._defaultContextOptions = undefined;
+    for (const browserType of playwright._browserTypes()) {
+      browserType._defaultContextOptions = undefined;
+      browserType._defaultContextTimeout = undefined;
+      browserType._defaultContextNavigationTimeout = undefined;
     }
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
@@ -451,7 +454,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 });
 
 type ScreenshotOption = PlaywrightWorkerOptions['screenshot'] | undefined;
-type Playwright = PlaywrightWorkerArgs['playwright'];
 
 function normalizeVideoMode(video: VideoMode | 'retry-with-video' | { mode: VideoMode } | undefined): VideoMode {
   if (!video)
@@ -525,7 +527,7 @@ function connectOptionsFromEnv() {
 
 class ArtifactsRecorder {
   private _testInfo!: TestInfoImpl;
-  private _playwright: Playwright;
+  private _playwright: PlaywrightImpl;
   private _artifactsDir: string;
   private _screenshotMode: ScreenshotMode;
   private _screenshotOptions: { mode: ScreenshotMode } & Pick<playwrightLibrary.PageScreenshotOptions, 'fullPage' | 'omitBackground'> | undefined;
@@ -536,7 +538,7 @@ class ArtifactsRecorder {
   private _screenshottedSymbol: symbol;
   private _startedCollectingArtifacts: symbol;
 
-  constructor(playwright: Playwright, artifactsDir: string, screenshot: ScreenshotOption) {
+  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
     this._screenshotMode = normalizeScreenshotMode(screenshot);
@@ -678,11 +680,7 @@ class ArtifactsRecorder {
   }
 
   private async _screenshotOnTestFailure() {
-    const contexts: BrowserContext[] = [];
-    for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit])
-      contexts.push(...(browserType as any)._contexts);
-    const pages = contexts.map(ctx => ctx.pages()).flat();
-    await Promise.all(pages.map(page => this._screenshotPage(page, false)));
+    await Promise.all(this._playwright._allPages().map(page => this._screenshotPage(page, false)));
   }
 
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {

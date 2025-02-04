@@ -49,7 +49,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   _defaultContextOptions?: BrowserContextOptions;
   _defaultContextTimeout?: number;
   _defaultContextNavigationTimeout?: number;
-  private _defaultLaunchOptions?: LaunchOptions;
+  _defaultLaunchOptions?: LaunchOptions;
 
   static from(browserType: channels.BrowserTypeChannel): BrowserType {
     return (browserType as any)._object;

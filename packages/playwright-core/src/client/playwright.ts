@@ -73,4 +73,16 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   static from(channel: channels.PlaywrightChannel): Playwright {
     return (channel as any)._object;
   }
+
+  _browserTypes(): BrowserType[] {
+    return [this.chromium, this.firefox, this.webkit, this._bidiChromium, this._bidiFirefox];
+  }
+
+  _allContexts() {
+    return this._browserTypes().flatMap(type => [...type._contexts]);
+  }
+
+  _allPages() {
+    return this._allContexts().flatMap(context => context.pages());
+  }
 }
