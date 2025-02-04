@@ -166,7 +166,7 @@ scheme.IndexedDBDatabase = tObject({
 scheme.OriginStorage = tObject({
   origin: tString,
   localStorage: tArray(tType('NameValue')),
-  indexedDB: tOptional(tArray(tType('IndexedDBDatabase'))),
+  indexedDB: tArray(tType('IndexedDBDatabase')),
 });
 scheme.SerializedError = tObject({
   error: tOptional(tObject({

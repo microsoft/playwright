@@ -265,7 +265,22 @@ Specify environment variables that will be visible to the browser. Defaults to `
       - `name` <[string]>
       - `value` <[string]>
     - `indexedDB` ?<[Array]<[Object]>>
-      - `name` <[string]> TODO: document more
+      - `name` <[string]>
+      - `version` <[int]>
+      - `stores` <[Array]<[Object]>>
+        - `name` <[string]>
+        - `keyPath` ?<[string]>
+        - `keyPathArray` ?<[Array]<[string]>>
+        - `autoIncrement` <[boolean]>
+        - `indexes` <[Array]<[Object]>>
+          - `name` <[string]>
+          - `keyPath` ?<[string]>
+          - `keyPathArray` ?<[Array]<[string]>>
+          - `unique` <[boolean]>
+          - `multiEntry` <[boolean]>
+        - `records` <[Array]<[Object]>>
+          - `key` ?<[string]>
+          - `value` <[string]>
 
 Learn more about [storage state and auth](../auth.md).
 

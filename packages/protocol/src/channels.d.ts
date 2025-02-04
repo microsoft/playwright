@@ -296,7 +296,7 @@ export type IndexedDBDatabase = {
 export type OriginStorage = {
   origin: string,
   localStorage: NameValue[],
-  indexedDB?: IndexedDBDatabase[],
+  indexedDB: IndexedDBDatabase[],
 };
 
 export type SerializedError = {

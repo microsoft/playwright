@@ -515,20 +515,16 @@ export abstract class BrowserContext extends SdkObject {
     const originsToSave = new Set(this._origins);
 
     async function _collectStorageScript() {
-      async function _collectDatabase(dbInfo: IDBDatabaseInfo) {
-        if (!dbInfo.name)
-          return;
 
-        let db: IDBDatabase;
-        try {
-          db = await new Promise((resolve, reject) => {
-            const request = indexedDB.open(dbInfo.name!);
-            request.onerror = reject;
-            request.onsuccess = () => resolve(request.result);
-          });
-        } catch {
-          return;
-        }
+      const idbResult = await Promise.all((await indexedDB.databases()).map(async dbInfo => {
+        if (!dbInfo.name)
+          throw new Error('Database name is empty');
+
+        const db = await new Promise<IDBDatabase>((resolve, reject) => {
+          const request = indexedDB.open(dbInfo.name!);
+          request.onerror = reject;
+          request.onsuccess = () => resolve(request.result);
+        });
 
         const transaction = db.transaction(db.objectStoreNames, 'readonly');
         const stores = await Promise.all([...db.objectStoreNames].map(async storeName => {
@@ -540,14 +536,11 @@ export abstract class BrowserContext extends SdkObject {
           });
 
           const records = await Promise.all(keys.map(async key => {
-            const record = await new Promise<any[]>((resolve, reject) => {
+            const record = await new Promise<any>((resolve, reject) => {
               const request = objectStore.get(key);
               request.addEventListener('success', () => resolve(request.result));
               request.addEventListener('error', reject);
             });
-
-            if (!record)
-              return;
 
             return {
               key: objectStore.keyPath === null ? key.toString() : undefined,
@@ -555,7 +548,7 @@ export abstract class BrowserContext extends SdkObject {
             };
           }));
 
-          const indexes = await Promise.all([...objectStore.indexNames].map(async indexName => {
+          const indexes = [...objectStore.indexNames].map(indexName => {
             const index = objectStore.index(indexName);
             return {
               name: index.name,
@@ -564,7 +557,7 @@ export abstract class BrowserContext extends SdkObject {
               multiEntry: index.multiEntry,
               unique: index.unique,
             };
-          }));
+          });
 
           return {
             name: storeName,
@@ -581,13 +574,11 @@ export abstract class BrowserContext extends SdkObject {
           version: dbInfo.version,
           stores,
         };
-      }
-
-      const idbResult = await Promise.all((await indexedDB.databases()).map(_collectDatabase).filter(Boolean));
+      }));
 
       return {
         localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
-        indexedDB: idbResult.length ? idbResult : undefined,
+        indexedDB: idbResult,
       };
     }
 
@@ -607,8 +598,7 @@ export abstract class BrowserContext extends SdkObject {
         continue;
       try {
         const storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`(${_collectStorageScript.toString()})()`, 'utility');
-        if (storage.indexedDB?.length)
-          serializeRecords(storage.indexedDB);
+        serializeRecords(storage.indexedDB);
         if (storage.localStorage.length || storage.indexedDB?.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorage);
         originsToSave.delete(origin);
@@ -629,9 +619,8 @@ export abstract class BrowserContext extends SdkObject {
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
         const storage = await frame.evaluateExpression(`(${_collectStorageScript.toString()})()`, { world: 'utility' });
-        if (storage.indexedDB?.length)
-          serializeRecords(storage.indexedDB);
-        if (storage.localStorage.length || storage.indexedDB?.length)
+        serializeRecords(storage.indexedDB);
+        if (storage.localStorage.length || storage.indexedDB.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorage);
       }
       await page.close(internalMetadata);
@@ -707,7 +696,7 @@ export abstract class BrowserContext extends SdkObject {
             for (const { name, value } of (originState.localStorage || []))
               localStorage.setItem(name, value);
 
-            await Promise.all((originState.indexedDB || []).map(async dbInfo => {
+            await Promise.all(originState.indexedDB.map(async dbInfo => {
               await new Promise<void>((resolve, reject) => {
                 const openRequest = indexedDB.open(dbInfo.name, dbInfo.version);
                 openRequest.addEventListener('upgradeneeded', () => {

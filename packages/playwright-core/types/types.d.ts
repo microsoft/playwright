@@ -9260,7 +9260,8 @@ export interface BrowserContext {
   setOffline(offline: boolean): Promise<void>;
 
   /**
-   * Returns storage state for this browser context, contains current cookies and local storage snapshot.
+   * Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB
+   * snapshot.
    * @param options
    */
   storageState(options?: {
@@ -9300,6 +9301,40 @@ export interface BrowserContext {
         name: string;
 
         value: string;
+      }>;
+
+      indexedDB: Array<{
+        name: string;
+
+        version: number;
+
+        stores: Array<{
+          name: string;
+
+          keyPath?: string;
+
+          keyPathArray?: Array<string>;
+
+          autoIncrement: boolean;
+
+          indexes: Array<{
+            name: string;
+
+            keyPath?: string;
+
+            keyPathArray?: Array<string>;
+
+            unique: boolean;
+
+            multiEntry: boolean;
+          }>;
+
+          records: Array<{
+            key?: string;
+
+            value: string;
+          }>;
+        }>;
       }>;
     }>;
   }>;
@@ -10062,10 +10097,37 @@ export interface Browser {
         }>;
 
         indexedDB?: Array<{
-          /**
-           * TODO: document more
-           */
           name: string;
+
+          version: number;
+
+          stores: Array<{
+            name: string;
+
+            keyPath?: string;
+
+            keyPathArray?: Array<string>;
+
+            autoIncrement: boolean;
+
+            indexes: Array<{
+              name: string;
+
+              keyPath?: string;
+
+              keyPathArray?: Array<string>;
+
+              unique: boolean;
+
+              multiEntry: boolean;
+            }>;
+
+            records: Array<{
+              key?: string;
+
+              value: string;
+            }>;
+          }>;
         }>;
       }>;
     };
@@ -22236,10 +22298,37 @@ export interface BrowserContextOptions {
       }>;
 
       indexedDB?: Array<{
-        /**
-         * TODO: document more
-         */
         name: string;
+
+        version: number;
+
+        stores: Array<{
+          name: string;
+
+          keyPath?: string;
+
+          keyPathArray?: Array<string>;
+
+          autoIncrement: boolean;
+
+          indexes: Array<{
+            name: string;
+
+            keyPath?: string;
+
+            keyPathArray?: Array<string>;
+
+            unique: boolean;
+
+            multiEntry: boolean;
+          }>;
+
+          records: Array<{
+            key?: string;
+
+            value: string;
+          }>;
+        }>;
       }>;
     }>;
   };
