@@ -27,6 +27,7 @@ import { assert, headersObjectToArray, monotonicTime } from '../utils';
 import type * as api from '../../types/types';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
 import type { Playwright } from './playwright';
+import type { Page } from './page';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
@@ -241,6 +242,14 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       context.setDefaultTimeout(this._defaultContextTimeout);
     if (this._defaultContextNavigationTimeout !== undefined)
       context.setDefaultNavigationTimeout(this._defaultContextNavigationTimeout);
+
+    if (this._playwright._mockingProxy) {
+      context.on(Events.BrowserContext.Page, (page: Page) => {
+        // TODO: funnel through protocol, so these headers are known to the server browsercontext and can be applied earlier
+        page.setExtraHTTPHeaders(this._playwright._mockingProxy!.instrumentationHeaders(page));
+      });
+    }
+
     await this._instrumentation.runAfterCreateBrowserContext(context);
   }
 

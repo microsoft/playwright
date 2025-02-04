@@ -32,13 +32,13 @@ export class MockingProxy extends SdkObject implements RequestContext {
   static Events = {
     Request: 'request',
     Response: 'response',
-    Route: 'route',
     RequestFailed: 'requestfailed',
     RequestFinished: 'requestfinished',
   };
 
   fetchRequest: APIRequestContext;
   private _httpServer = new WorkerHttpServer();
+  onRoute = (route: Route) => route.continue({ isFallback: true });
 
   constructor(parent: SdkObject, requestContext: APIRequestContext) {
     super(parent, 'MockingProxy');
@@ -64,6 +64,10 @@ export class MockingProxy extends SdkObject implements RequestContext {
 
   port() {
     return this._httpServer.port();
+  }
+
+  baseURL() {
+    return `http://localhost:${this.port()}/`;
   }
 
   private async _proxy(req: http.IncomingMessage, res: http.ServerResponse) {
@@ -211,7 +215,7 @@ export class MockingProxy extends SdkObject implements RequestContext {
       },
     });
 
-    this.emit(MockingProxy.Events.Route, route);
+    await this.onRoute(route);
   }
 
   addRouteInFlight(route: Route): void {

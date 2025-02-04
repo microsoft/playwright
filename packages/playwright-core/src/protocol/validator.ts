@@ -377,8 +377,7 @@ scheme.LocalUtilsNewMockingProxyResult = tObject({
   mockingProxy: tChannel(['MockingProxy']),
 });
 scheme.MockingProxyInitializer = tObject({
-  port: tNumber,
-  requestContext: tChannel(['APIRequestContext']),
+  baseURL: tString,
 });
 scheme.MockingProxyRouteEvent = tObject({
   route: tChannel(['Route']),

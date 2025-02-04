@@ -16,27 +16,27 @@
 import * as network from './network';
 import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
-import { APIRequestContext } from './fetch';
+import type { APIRequestContext } from './fetch';
 import { assert } from '../utils';
 import type { Page } from './page';
-import { Events } from './events';
+import type { Playwright } from './playwright';
 
 export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
-  private _pages = new Map<string, Page>();
+  _requestContext!: APIRequestContext;
+  _playwright!: Playwright;
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.MockingProxyInitializer) {
     super(parent, type, guid, initializer);
 
-    const requestContext = APIRequestContext.from(initializer.requestContext);
     this._channel.on('route', async (params: channels.MockingProxyRouteEvent) => {
       const route = network.Route.from(params.route);
-      route._apiRequestContext = requestContext;
+      route._apiRequestContext = this._requestContext;
       const page = route.request()._pageForMockingProxy!;
       await page._onRoute(route);
     });
 
     this._channel.on('request', async (params: channels.MockingProxyRequestEvent) => {
-      const page = this._pages.get(params.correlation);
+      const page = this.findPage(params.correlation);
       assert(page);
       const request = network.Request.from(params.request);
       request._pageForMockingProxy = page;
@@ -68,16 +68,23 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
     return (channel as any)._object;
   }
 
-  async instrumentPage(page: Page) {
-    const correlation = page._guid.split('@')[1];
-    this._pages.set(correlation, page);
-    page.on(Events.Page.Close, () => {
-      this._pages.delete(correlation);
-    });
-    const proxyUrl = `http://localhost:${this._initializer.port}/pw_meta:${correlation}/`;
-    await page.setExtraHTTPHeaders({
-      'x-playwright-proxy': encodeURIComponent(proxyUrl)
-    });
+  findPage(correlation: string): Page | undefined {
+    const guid = `Page@${correlation}`;
+    // TODO: move this as list onto Playwright directly
+    for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit]) {
+      for (const context of browserType._contexts) {
+        for (const page of context._pages) {
+          if (page._guid === guid)
+            return page;
+        }
+      }
+    }
   }
 
+  instrumentationHeaders(page: Page) {
+    const correlation = page._guid.substring('Page@'.length);
+    return {
+      'x-playwright-proxy': `${this._initializer.baseURL}/pw_meta:${correlation}/`,
+    };
+  }
 }

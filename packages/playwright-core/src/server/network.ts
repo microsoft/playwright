@@ -88,7 +88,7 @@ export function stripFragmentFromUrl(url: string): string {
 }
 
 export interface RequestContext extends SdkObject {
-  fetchRequest: APIRequestContext;
+  readonly fetchRequest: APIRequestContext;
 
   addRouteInFlight(route: Route): void;
   removeRouteInFlight(route: Route): void;

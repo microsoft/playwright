@@ -737,8 +737,7 @@ MockingProxy:
   extends: EventTarget
 
   initializer:
-    port: number
-    requestContext: APIRequestContext
+    baseURL: string
 
   events:
     route:

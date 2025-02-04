@@ -647,8 +647,7 @@ export interface LocalUtilsEvents {
 
 // ----------- MockingProxy -----------
 export type MockingProxyInitializer = {
-  port: number,
-  requestContext: APIRequestContextChannel,
+  baseURL: string,
 };
 export interface MockingProxyEventTarget {
   on(event: 'route', callback: (params: MockingProxyRouteEvent) => void): this;

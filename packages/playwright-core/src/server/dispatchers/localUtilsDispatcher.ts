@@ -289,7 +289,7 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
     const requestContext = (params.requestContext as APIRequestContextDispatcher)._object;
     const mockingProxy = new MockingProxy(this._object, requestContext);
     await mockingProxy.start();
-    return { mockingProxy: MockingProxyDispatcher.from(this.parentScope(), mockingProxy) };
+    return { mockingProxy: new MockingProxyDispatcher(this, mockingProxy) };
   }
 }
 

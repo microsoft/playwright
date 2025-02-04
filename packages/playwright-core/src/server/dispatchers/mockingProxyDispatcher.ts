@@ -14,30 +14,25 @@
  * limitations under the License.
  */
 import { MockingProxy } from '../mockingProxy';
-import type { RootDispatcher } from './dispatcher';
-import { Dispatcher, existingDispatcher } from './dispatcher';
+import { Dispatcher } from './dispatcher';
 import type * as channels from '@protocol/channels';
-import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
-import type { Request, Route } from '../network';
+import { RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
+import type { Request } from '../network';
+import type { LocalUtilsDispatcher } from './localUtilsDispatcher';
 
-export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.MockingProxyChannel, RootDispatcher> implements channels.MockingProxyChannel {
+export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.MockingProxyChannel, LocalUtilsDispatcher> implements channels.MockingProxyChannel {
   _type_MockingProxy = true;
   _type_EventTarget = true;
 
-  static from(scope: RootDispatcher, mockingProxy: MockingProxy): MockingProxyDispatcher {
-    return existingDispatcher<MockingProxyDispatcher>(mockingProxy) || new MockingProxyDispatcher(scope, mockingProxy);
-  }
-
-  private constructor(scope: RootDispatcher, mockingProxy: MockingProxy) {
+  constructor(scope: LocalUtilsDispatcher, mockingProxy: MockingProxy) {
     super(scope, mockingProxy, 'MockingProxy', {
-      port: mockingProxy.port(),
-      requestContext: APIRequestContextDispatcher.from(scope, mockingProxy.fetchRequest),
+      baseURL: mockingProxy.baseURL(),
     });
 
-    this.addObjectListener(MockingProxy.Events.Route, (route: Route) => {
+    mockingProxy.onRoute = async route => {
       const requestDispatcher = RequestDispatcher.from(this, route.request());
       this._dispatchEvent('route', { route: RouteDispatcher.from(requestDispatcher, route) });
-    });
+    };
     this.addObjectListener(MockingProxy.Events.Request, ({ request, correlation }: { request: Request, correlation: string }) => {
       this._dispatchEvent('request', { request: RequestDispatcher.from(this, request), correlation });
     });

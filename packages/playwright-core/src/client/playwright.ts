@@ -36,6 +36,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   selectors: Selectors;
   readonly request: APIRequest;
   readonly errors: { TimeoutError: typeof TimeoutError };
+  _mockingProxy?: MockingProxy;
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
     super(parent, type, guid, initializer);
@@ -77,7 +78,10 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
 
   async _startMockingProxy() {
     const requestContext = await this.request._newContext(undefined, this._connection.localUtils()._channel);
-    const { mockingProxy } = await this._connection.localUtils()._channel.newMockingProxy({ requestContext: requestContext._channel });
-    return MockingProxy.from(mockingProxy);
+    const result = await this._connection.localUtils()._channel.newMockingProxy({ requestContext: requestContext._channel });
+    this._mockingProxy = MockingProxy.from(result.mockingProxy);
+    this._mockingProxy._requestContext = requestContext;
+    this._mockingProxy._playwright = this;
+    return this._mockingProxy;
   }
 }
