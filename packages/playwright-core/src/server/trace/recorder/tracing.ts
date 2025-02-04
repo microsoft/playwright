@@ -170,10 +170,16 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._state.recording = true;
     this._state.callIds.clear();
 
+    // - Browser context network trace is shared across chunks as it contains resources
+    // used to serve page snapshots, so make a copy with the new name.
+    // - APIRequestContext network traces are chunk-specific, always start from scratch.
+    const preserveNetworkResources = this._context instanceof BrowserContext;
     if (options.name && options.name !== this._state.traceName)
-      this._changeTraceName(this._state, options.name);
+      this._changeTraceName(this._state, options.name, preserveNetworkResources);
     else
       this._allocateNewTraceFile(this._state);
+    if (!preserveNetworkResources)
+      this._fs.writeFile(this._state.networkFile, '');
 
     this._fs.mkdir(path.dirname(this._state.traceFile));
     const event: trace.TraceEvent = {
@@ -267,19 +273,14 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     state.traceFile = path.join(state.tracesDir, `${state.traceName}${suffix}.trace`);
   }
 
-  private _changeTraceName(state: RecordingState, name: string) {
+  private _changeTraceName(state: RecordingState, name: string, preserveNetworkResources: boolean) {
     state.traceName = name;
     state.chunkOrdinal = 0;  // Reset ordinal for the new name.
     this._allocateNewTraceFile(state);
 
-    // - Browser context network trace is shared across chunks as it contains resources
-    // used to serve page snapshots, so make a copy with the new name.
-    // - APIRequestContext network traces are chunk-specific, always start from scratch.
     const newNetworkFile = path.join(state.tracesDir, name + '.network');
-    if (this._context instanceof BrowserContext)
+    if (preserveNetworkResources)
       this._fs.copyFile(state.networkFile, newNetworkFile);
-    else
-      this._fs.writeFile(state.networkFile, '');
     state.networkFile = newNetworkFile;
   }
 
