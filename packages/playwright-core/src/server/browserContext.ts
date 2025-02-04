@@ -549,7 +549,7 @@ export abstract class BrowserContext extends SdkObject {
               return;
 
             return {
-              key: key.toString(),
+              key: objectStore.keyPath === null ? key.toString() : undefined,
               value: JSON.stringify(record)
             };
           }));
@@ -569,7 +569,7 @@ export abstract class BrowserContext extends SdkObject {
             records: records.filter(Boolean),
             indexes,
             autoIncrement: objectStore.autoIncrement,
-            keyPath: Array.isArray(objectStore.keyPath) ? objectStore.keyPath : [objectStore.keyPath],
+            keyPath: objectStore.keyPath === null ? undefined : (Array.isArray(objectStore.keyPath) ? objectStore.keyPath : [objectStore.keyPath]),
           };
         }));
 
@@ -685,7 +685,7 @@ export abstract class BrowserContext extends SdkObject {
               localStorage.setItem(name, value);
 
             await Promise.all((originState.indexedDB || []).map(async dbInfo => {
-              await new Promise((resolve, reject) => {
+              await new Promise<void>((resolve, reject) => {
                 const openRequest = indexedDB.open(dbInfo.name, dbInfo.version);
                 openRequest.addEventListener('upgradeneeded', () => {
                   const db = openRequest.result;
@@ -698,7 +698,7 @@ export abstract class BrowserContext extends SdkObject {
                 openRequest.addEventListener('success', async () => {
                   const db = openRequest.result;
                   const transaction = db.transaction(db.objectStoreNames, 'readwrite');
-                  Promise.all(dbInfo.stores.flatMap(store => {
+                  await Promise.all(dbInfo.stores.flatMap(store => {
                     const objectStore = transaction.objectStore(store.name);
                     return store.records.map(record => new Promise((resolve, reject) => {
                       const request = objectStore.add(
@@ -708,7 +708,10 @@ export abstract class BrowserContext extends SdkObject {
                       request.addEventListener('success', resolve);
                       request.addEventListener('error', reject);
                     }));
-                  })).then(resolve, reject);
+                  }));
+                  transaction.commit();
+                  transaction.addEventListener('complete', () => resolve());
+                  transaction.addEventListener('error', () => reject(transaction.error));
                 });
               });
             }));

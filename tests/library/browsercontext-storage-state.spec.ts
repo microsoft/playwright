@@ -340,7 +340,6 @@ it('should support IndexedDB', async ({ page, contextFactory }) => {
               keyPath: ['taskTitle'],
               records: [
                 {
-                  key: 'Pet the cat',
                   value: JSON.stringify({
                     taskTitle: 'Pet the cat',
                     hours: '1',
@@ -406,5 +405,65 @@ it('should support IndexedDB', async ({ page, contextFactory }) => {
     - list:
       - listitem:
         - text: /Pet the cat/
+  `);
+});
+
+it('indexedDb firebase acceptance test', async ({ page, contextFactory }) => {
+  await page.goto('https://fir-ui-demo-84a6c.firebaseapp.com/');
+  await page.getByText('Continue as guest').click();
+  await expect(page.locator('#user-info')).toMatchAriaSnapshot(`
+    - text: New User
+  `);
+  await page.close();
+  const storageState = await page.context().storageState();
+  expect(storageState).toEqual({
+    'cookies': [],
+    'origins': [
+      {
+        'indexedDB': [
+          {
+            'name': 'firebase-heartbeat-database',
+            'stores': [
+              {
+                'autoIncrement': false,
+                'indexes': [],
+                'name': 'firebase-heartbeat-store',
+                'records': [],
+              },
+            ],
+            'version': 1,
+          },
+          {
+            'name': 'firebaseLocalStorageDb',
+            'stores': [
+              {
+                'autoIncrement': false,
+                'indexes': [],
+                'keyPath': [
+                  'fbase_key',
+                ],
+                'name': 'firebaseLocalStorage',
+                'records': [
+                  {
+                    'value': expect.any(String),
+                  },
+                ],
+              },
+            ],
+            'version': 1,
+          },
+        ],
+        'localStorage': [],
+        'origin': 'https://fir-ui-demo-84a6c.firebaseapp.com',
+      },
+    ],
+  });
+
+  const recreatedContext = await contextFactory({ storageState });
+  const recreatedPage = await recreatedContext.newPage();
+  await recreatedPage.goto('https://fir-ui-demo-84a6c.firebaseapp.com/');
+  expect(await recreatedContext.storageState()).toEqual(storageState);
+  await expect(recreatedPage.locator('body')).toMatchAriaSnapshot(`
+    - text: New User
   `);
 });

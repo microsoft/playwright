@@ -277,9 +277,9 @@ export type IndexedDBDatabase = {
   stores: {
     name: string,
     autoIncrement: boolean,
-    keyPath: string[],
+    keyPath?: string[],
     records: {
-      key: string,
+      key?: string,
       value: string,
     }[],
     indexes: {

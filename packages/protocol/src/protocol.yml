@@ -235,14 +235,14 @@ IndexedDBDatabase:
           name: string
           autoIncrement: boolean
           keyPath:
-            type: array
+            type: array?
             items: string
           records:
             type: array
             items:
               type: object
               properties:
-                key: string
+                key: string?
                 value: string
           indexes:
             type: array
