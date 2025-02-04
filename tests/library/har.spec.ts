@@ -181,6 +181,7 @@ it('should include form params', async ({ contextFactory, server }, testInfo) =>
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<form method='POST' action='/post'><input type='text' name='foo' value='bar'><input type='number' name='baz' value='123'><input type='submit'></form>`);
   await page.click('input[type=submit]');
+  await expect(page).toHaveURL('**/post');
   const log = await getLog();
   expect(log.entries[1].request.postData).toEqual({
     mimeType: 'application/x-www-form-urlencoded',

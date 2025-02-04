@@ -95,6 +95,7 @@ it('goBack/goForward should work with bfcache-able pages', async ({ page, server
   await page.goto(server.PREFIX + '/cached/bfcached.html');
   await page.setContent(`<a href=${JSON.stringify(server.PREFIX + '/cached/bfcached.html?foo')}>click me</a>`);
   await page.click('a');
+  await expect(page).toHaveURL(/.*foo$/);
 
   let response = await page.goBack();
   expect(response.url()).toBe(server.PREFIX + '/cached/bfcached.html');

@@ -482,18 +482,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (restoreModifiers)
         await this._page.keyboard.ensureModifiers(restoreModifiers);
       if (hitTargetInterceptionHandle) {
+        // We do not want to accidentally stall on non-committed navigation blocking the evaluate.
         const stopHitTargetInterception = this._frame.raceAgainstEvaluationStallingEvents(() => {
           return hitTargetInterceptionHandle.evaluate(h => h.stop());
         }).catch(e => 'done' as const).finally(() => {
           hitTargetInterceptionHandle?.dispose();
         });
-        if (options.waitAfter !== false) {
-          // When noWaitAfter is passed, we do not want to accidentally stall on
-          // non-committed navigation blocking the evaluate.
-          const hitTargetResult = await stopHitTargetInterception;
-          if (hitTargetResult !== 'done')
-            return hitTargetResult;
-        }
+        const hitTargetResult = await stopHitTargetInterception;
+        if (hitTargetResult !== 'done')
+          return hitTargetResult;
       }
       progress.log(`  ${options.trial ? 'trial ' : ''}${actionName} action done`);
       progress.log('  waiting for scheduled navigations to finish');

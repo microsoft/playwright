@@ -161,6 +161,8 @@ export class FrameManager {
   }
 
   async waitForSignalsCreatedBy<T>(progress: Progress | null, waitAfter: boolean, action: () => Promise<T>): Promise<T> {
+    if (!process.env.PLAYWRIGHT_WAIT_AFTER_CLICK)
+      waitAfter = false;
     if (!waitAfter)
       return action();
     const barrier = new SignalBarrier(progress);

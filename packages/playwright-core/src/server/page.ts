@@ -473,8 +473,6 @@ export class Page extends SdkObject {
   }
 
   private async _performWaitForNavigationCheck(progress: Progress) {
-    if (process.env.PLAYWRIGHT_SKIP_NAVIGATION_CHECK)
-      return;
     const mainFrame = this._frameManager.mainFrame();
     if (!mainFrame || !mainFrame.pendingDocument())
       return;
