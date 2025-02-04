@@ -264,9 +264,9 @@ Specify environment variables that will be visible to the browser. Defaults to `
     - `localStorage` <[Array]<[Object]>> localStorage to set for context
       - `name` <[string]>
       - `value` <[string]>
-    - `indexedDB` ?<[Array]<[Object]>>
-      - `name` <[string]>
-      - `version` <[int]>
+    - `indexedDB` ?<[Array]<[Object]>> indexedDB to set for context
+      - `name` <[string]> database name
+      - `version` <[int]> database version
       - `stores` <[Array]<[Object]>>
         - `name` <[string]>
         - `keyPath` ?<[string]>
@@ -279,8 +279,8 @@ Specify environment variables that will be visible to the browser. Defaults to `
           - `unique` <[boolean]>
           - `multiEntry` <[boolean]>
         - `records` <[Array]<[Object]>>
-          - `key` ?<[string]>
-          - `value` <[string]>
+          - `key` ?<[string]> key, only defined if stores uses out-of-line keys
+          - `value` <[string]> opaque value
 
 Learn more about [storage state and auth](../auth.md).
 
