@@ -330,7 +330,7 @@ export class FFPage implements PageDelegate {
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
-    await this._session.send('Network.setExtraHTTPHeaders', { headers: this._page.extraHTTPHeaders() || [] });
+    await this._session.send('Network.setExtraHTTPHeaders', { headers: this._page.extraHTTPHeaders() });
   }
 
   async updateEmulatedViewportSize(): Promise<void> {

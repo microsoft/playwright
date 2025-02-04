@@ -365,8 +365,20 @@ export class Page extends SdkObject {
     return this._delegate.updateExtraHTTPHeaders();
   }
 
-  extraHTTPHeaders(): types.HeadersArray | undefined {
-    return this._extraHTTPHeaders;
+  extraHTTPHeaders(): types.HeadersArray {
+    return this.instrumentationHeaders().concat(this._extraHTTPHeaders ?? []);
+  }
+
+  instrumentationHeaders() {
+    const headers: channels.NameValue[] = [];
+
+    const mockingProxyBaseURL = this.context()._options.mockingProxyBaseURL;
+    if (mockingProxyBaseURL) {
+      const correlation = this.guid.substring('Page@'.length);
+      headers.push({ name: 'x-playwright-proxy', value: encodeURIComponent(mockingProxyBaseURL + `pw_meta:${correlation}/`) });
+    }
+
+    return headers;
   }
 
   async _onBindingCalled(payload: string, context: dom.FrameExecutionContext) {

@@ -29,8 +29,7 @@ import { Events } from './events';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
 import type { Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
-import type { RegisteredListener } from '../utils';
-import { type URLMatch, headersObjectToArray, isRegExp, isString, urlMatchesEqual, mkdirIfNeeded, eventsHelper } from '../utils';
+import { type URLMatch, headersObjectToArray, isRegExp, isString, urlMatchesEqual, mkdirIfNeeded } from '../utils';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
 import { CDPSession } from './cdpSession';
@@ -45,7 +44,6 @@ import { Dialog } from './dialog';
 import { WebError } from './webError';
 import { TargetClosedError, parseError } from './errors';
 import { Clock } from './clock';
-import type { MockingProxy } from './mockingProxy';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();
@@ -70,7 +68,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _closeWasCalled = false;
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
-  _mockingProxy?: MockingProxy;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -169,7 +166,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this.emit(Events.BrowserContext.Page, page);
     if (page._opener && !page._opener.isClosed())
       page._opener.emit(Events.Page.Popup, page);
-    this._mockingProxy?.instrumentPage(page);
   }
 
   _onRequest(request: network.Request, page: Page | null) {
@@ -239,12 +235,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (!func)
       return;
     await bindingCall.call(func);
-  }
-
-  async _subscribeToMockingProxy(mockingProxy: MockingProxy) {
-    if (this._mockingProxy)
-      throw new Error('Multiple mocking proxies are not supported');
-    this._mockingProxy = mockingProxy;
   }
 
   setDefaultNavigationTimeout(timeout: number | undefined) {
@@ -530,7 +520,7 @@ function prepareRecordHarOptions(options: BrowserContextOptions['recordHar']): c
   };
 }
 
-export async function prepareBrowserContextParams(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
+export async function prepareBrowserContextParams(options: BrowserContextOptions, type?: BrowserType): Promise<channels.BrowserNewContextParams> {
   if (options.videoSize && !options.videosPath)
     throw new Error(`"videoSize" option requires "videosPath" to be specified`);
   if (options.extraHTTPHeaders)
@@ -548,6 +538,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     forcedColors: options.forcedColors === null ? 'no-override' : options.forcedColors,
     acceptDownloads: toAcceptDownloadsProtocol(options.acceptDownloads),
     clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
+    mockingProxyBaseURL: type?._playwright._mockingProxy?.baseURL(),
   };
   if (!contextParams.recordVideo && options.videosPath) {
     contextParams.recordVideo = {

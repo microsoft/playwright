@@ -57,7 +57,7 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _optionContextReuseMode: ContextReuseMode,
   _optionConnectOptions: PlaywrightWorkerOptions['connectOptions'],
   _reuseContext: boolean,
-  _mockingProxy?: MockingProxy,
+  _mockingProxy?: void,
 };
 
 const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
@@ -124,12 +124,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     }, true);
   }, { scope: 'worker', timeout: 0 }],
 
-  _mockingProxy: [async ({ mockingProxy: mockingProxyOption, playwright }, use) => {
-    if (mockingProxyOption !== 'inject-via-header')
-      return await use(undefined);
-    const mockingProxy = await (playwright as PlaywrightImpl)._startMockingProxy();
-    await use(mockingProxy);
-  }, { scope: 'worker', box: true }],
+  _mockingProxy: [async ({ mockingProxy, playwright }, use) => {
+    if (mockingProxy === 'inject-via-header')
+      await (playwright as PlaywrightImpl)._startMockingProxy();
+    await use();
+  }, { scope: 'worker', box: true, auto: true }],
 
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true }],
   bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP ?? false), { option: true }],
@@ -259,7 +258,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     }
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
-  _setupArtifacts: [async ({ playwright, screenshot, _mockingProxy }, use, testInfo) => {
+  _setupArtifacts: [async ({ playwright, screenshot }, use, testInfo) => {
     // This fixture has a separate zero-timeout slot to ensure that artifact collection
     // happens even after some fixtures or hooks time out.
     // Now that default test timeout is known, we can replace zero with an actual value.
@@ -313,8 +312,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           currentTestInfo()?._setDebugMode();
       },
       runAfterCreateBrowserContext: async (context: BrowserContextImpl) => {
-        if (_mockingProxy)
-          await context._subscribeToMockingProxy(_mockingProxy);
         await artifactsRecorder?.didCreateBrowserContext(context);
         const testInfo = currentTestInfo();
         if (testInfo)

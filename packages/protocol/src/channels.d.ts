@@ -1369,6 +1369,7 @@ export type BrowserNewContextParams = {
     cookies?: SetNetworkCookie[],
     origins?: OriginStorage[],
   },
+  mockingProxyBaseURL?: string,
 };
 export type BrowserNewContextOptions = {
   noDefaultViewport?: boolean,
@@ -1435,6 +1436,7 @@ export type BrowserNewContextOptions = {
     cookies?: SetNetworkCookie[],
     origins?: OriginStorage[],
   },
+  mockingProxyBaseURL?: string,
 };
 export type BrowserNewContextResult = {
   context: BrowserContextChannel,

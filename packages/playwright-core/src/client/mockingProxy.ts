@@ -69,7 +69,7 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
   }
 
   findPage(correlation: string): Page | undefined {
-    const guid = `Page@${correlation}`;
+    const guid = `page@${correlation}`;
     // TODO: move this as list onto Playwright directly
     for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit]) {
       for (const context of browserType._contexts) {
@@ -81,10 +81,7 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
     }
   }
 
-  instrumentationHeaders(page: Page) {
-    const correlation = page._guid.substring('Page@'.length);
-    return {
-      'x-playwright-proxy': `${this._initializer.baseURL}/pw_meta:${correlation}/`,
-    };
+  baseURL() {
+    return this._initializer.baseURL;
   }
 }

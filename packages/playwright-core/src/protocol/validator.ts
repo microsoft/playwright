@@ -775,6 +775,7 @@ scheme.BrowserNewContextParams = tObject({
     cookies: tOptional(tArray(tType('SetNetworkCookie'))),
     origins: tOptional(tArray(tType('OriginStorage'))),
   })),
+  mockingProxyBaseURL: tOptional(tString),
 });
 scheme.BrowserNewContextResult = tObject({
   context: tChannel(['BrowserContext']),
