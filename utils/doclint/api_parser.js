@@ -173,11 +173,12 @@ class ApiParser {
     if (!name)
       throw new Error('Invalid member name ' + spec.text);
     if (match[1] === 'param') {
-      const arg = this.parseProperty(spec, match[2]);
-      if (!arg)
-        return;
-      arg.name = name;
       for (const method of methods) {
+        // Purposefully create separate instances of the same option for each method
+        const arg = this.parseProperty(spec, match[2]);
+        if (!arg)
+          continue;
+        arg.name = name;
         const existingArg = method.argsArray.find(m => m.name === arg.name);
         if (existingArg && isTypeOverride(existingArg, arg)) {
           if (!arg.langs || !arg.langs.only)
@@ -193,9 +194,10 @@ class ApiParser {
     } else {
       // match[1] === 'option'
       for (const method of methods) {
+        // Purposefully create separate instances of the same option for each method
         const p = this.parseProperty(spec, match[2]);
         if (!p)
-          return;
+          continue;
         let options = method.argsArray.find(o => o.name === 'options');
         if (!options) {
           const type = new docs.Type('Object', []);
