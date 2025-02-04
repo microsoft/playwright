@@ -21,7 +21,7 @@ const config = {
   'playwright.config.ts': `
     module.exports = {
       use: {
-        mockingProxy: true,
+        mockingProxy: "inject-via-header",
         ignoreHTTPSErrors: true,
       }
     };

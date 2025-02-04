@@ -568,7 +568,7 @@ To get started, enable the `mockingProxy` option in your Playwright config:
 
 ```js
 export default defineConfig({
-  use: { mockingProxy: true }
+  use: { mockingProxy: "inject-via-header" }
 });
 ```
 
