@@ -219,7 +219,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 
   _safePage(): Page | null {
-    return this._pageForMockingProxy ?? Frame.fromNullable(this._initializer.frame)?._page ?? null;
+    return Frame.fromNullable(this._initializer.frame)?._page ?? null;
   }
 
   serviceWorker(): Worker | null {
@@ -294,7 +294,7 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
 export class Route extends ChannelOwner<channels.RouteChannel> implements api.Route {
   private _handlingPromise: ManualPromise<boolean> | null = null;
-  _context!: APIRequestContext;
+  _apiRequestContext!: APIRequestContext;
   _didThrow: boolean = false;
 
   static from(route: channels.RouteChannel): Route {
@@ -342,7 +342,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
 
   async fetch(options: FallbackOverrides & { maxRedirects?: number, maxRetries?: number, timeout?: number } = {}): Promise<APIResponse> {
     return await this._wrapApiCall(async () => {
-      return await this._context._innerFetch({ request: this.request(), data: options.postData, ...options });
+      return await this._apiRequestContext._innerFetch({ request: this.request(), data: options.postData, ...options });
     });
   }
 

@@ -58,7 +58,11 @@ export class MockingProxy extends SdkObject implements RequestContext {
     await this._httpServer.start();
   }
 
-  get port() {
+  async stop() {
+    await this._httpServer.stop();
+  }
+
+  port() {
     return this._httpServer.port();
   }
 
@@ -245,7 +249,7 @@ async function collectBody(req: http.IncomingMessage) {
   });
 }
 
-export class WorkerHttpServer extends HttpServer {
+class WorkerHttpServer extends HttpServer {
   override handleCORS(request: http.IncomingMessage, response: http.ServerResponse): boolean {
     return false;
   }

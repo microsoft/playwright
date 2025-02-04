@@ -20,8 +20,9 @@ import { Android } from './android';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
-import { APIRequest, type NewContextOptions } from './fetch';
+import { APIRequest } from './fetch';
 import { Selectors, SelectorsOwner } from './selectors';
+import { MockingProxy } from './mockingProxy';
 
 export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly _android: Android;
@@ -77,6 +78,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   async _startMockingProxy() {
     const requestContext = await this.request._newContext(undefined, this._connection.localUtils()._channel);
     const { mockingProxy } = await this._connection.localUtils()._channel.newMockingProxy({ requestContext: requestContext._channel });
-    return (mockingProxy as any)._object;
+    return MockingProxy.from(mockingProxy);
   }
 }

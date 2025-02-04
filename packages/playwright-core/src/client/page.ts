@@ -140,7 +140,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._channel.on('locatorHandlerTriggered', ({ uid }) => this._onLocatorHandlerTriggered(uid));
     this._channel.on('route', params => {
       const route = Route.from(params.route);
-      route._context = this.context().request;
+      route._apiRequestContext = this.context().request;
       this._onRoute(route);
     });
     this._channel.on('webSocketRoute', ({ webSocketRoute }) => this._onWebSocketRoute(WebSocketRoute.from(webSocketRoute)));

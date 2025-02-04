@@ -30,7 +30,7 @@ export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.Mo
 
   private constructor(scope: RootDispatcher, mockingProxy: MockingProxy) {
     super(scope, mockingProxy, 'MockingProxy', {
-      port: mockingProxy.port,
+      port: mockingProxy.port(),
       requestContext: APIRequestContextDispatcher.from(scope, mockingProxy.fetchRequest),
     });
 
@@ -55,5 +55,9 @@ export class MockingProxyDispatcher extends Dispatcher<MockingProxy, channels.Mo
         responseEndTiming: request._responseEndTiming,
       });
     });
+  }
+
+  override _onDispose(): void {
+    this._object.stop();
   }
 }

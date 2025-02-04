@@ -70,7 +70,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _closeWasCalled = false;
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
-  private _registeredListeners: RegisteredListener[] = [];
   _mockingProxy?: MockingProxy;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
@@ -96,7 +95,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._channel.on('page', ({ page }) => this._onPage(Page.from(page)));
     this._channel.on('route', params => {
       const route = network.Route.from(params.route);
-      route._context = this.request;
+      route._apiRequestContext = this.request;
       this._onRoute(route);
     });
     this._channel.on('webSocketRoute', ({ webSocketRoute }) => this._onWebSocketRoute(network.WebSocketRoute.from(webSocketRoute)));
@@ -467,7 +466,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this._disposeHarRouters();
     this.tracing._resetStackCounter();
     this.emit(Events.BrowserContext.Close, this);
-    eventsHelper.removeEventListeners(this._registeredListeners);
   }
 
   async [Symbol.asyncDispose]() {

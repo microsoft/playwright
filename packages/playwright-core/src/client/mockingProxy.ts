@@ -19,6 +19,7 @@ import { ChannelOwner } from './channelOwner';
 import { APIRequestContext } from './fetch';
 import { assert } from '../utils';
 import type { Page } from './page';
+import { Events } from './events';
 
 export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
   private _pages = new Map<string, Page>();
@@ -29,8 +30,8 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
     const requestContext = APIRequestContext.from(initializer.requestContext);
     this._channel.on('route', async (params: channels.MockingProxyRouteEvent) => {
       const route = network.Route.from(params.route);
-      route._context = requestContext;
-      const page = route.request()._safePage()!;
+      route._apiRequestContext = requestContext;
+      const page = route.request()._pageForMockingProxy!;
       await page._onRoute(route);
     });
 
@@ -44,7 +45,7 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
 
     this._channel.on('requestFailed', async (params: channels.MockingProxyRequestFailedEvent) => {
       const request = network.Request.from(params.request);
-      const page = request._safePage()!;
+      const page = request._pageForMockingProxy!;
       page.context()._onRequestFailed(request, params.responseEndTiming, params.failureText, page);
     });
 
@@ -52,20 +53,27 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
       const { responseEndTiming } = params;
       const request = network.Request.from(params.request);
       const response = network.Response.fromNullable(params.response);
-      const page = request._safePage()!;
+      const page = request._pageForMockingProxy!;
       page.context()._onRequestFinished(request, response, page, responseEndTiming);
     });
 
     this._channel.on('response', async (params: channels.MockingProxyResponseEvent) => {
       const response = network.Response.from(params.response);
-      const page = response.request()._safePage()!;
+      const page = response.request()._pageForMockingProxy!;
       page.context()._onResponse(response, page);
     });
+  }
+
+  static from(channel: channels.MockingProxyChannel): MockingProxy {
+    return (channel as any)._object;
   }
 
   async instrumentPage(page: Page) {
     const correlation = page._guid.split('@')[1];
     this._pages.set(correlation, page);
+    page.on(Events.Page.Close, () => {
+      this._pages.delete(correlation);
+    });
     const proxyUrl = `http://localhost:${this._initializer.port}/pw_meta:${correlation}/`;
     await page.setExtraHTTPHeaders({
       'x-playwright-proxy': encodeURIComponent(proxyUrl)
