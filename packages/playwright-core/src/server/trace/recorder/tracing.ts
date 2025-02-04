@@ -272,9 +272,14 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     state.chunkOrdinal = 0;  // Reset ordinal for the new name.
     this._allocateNewTraceFile(state);
 
-    // Network file survives across chunks, so make a copy with the new name.
+    // - Browser context network trace is shared across chunks as it contains resources
+    // used to serve page snapshots, so make a copy with the new name.
+    // - APIRequestContext network traces are chunk-specific, always start from scratch.
     const newNetworkFile = path.join(state.tracesDir, name + '.network');
-    this._fs.copyFile(state.networkFile, newNetworkFile);
+    if (this._context instanceof BrowserContext)
+      this._fs.copyFile(state.networkFile, newNetworkFile);
+    else
+      this._fs.writeFile(state.networkFile, '');
     state.networkFile = newNetworkFile;
   }
 
