@@ -262,6 +262,17 @@ OriginStorage:
       type: array
       items: NameValue
     indexedDB:
+      type: array?
+      items: IndexedDBDatabase
+
+OriginStorageWithRequiredIndexedDB:
+  type: object
+  properties:
+    origin: string
+    localStorage:
+      type: array
+      items: NameValue
+    indexedDB:
       type: array
       items: IndexedDBDatabase
 
@@ -1217,7 +1228,7 @@ BrowserContext:
           items: NetworkCookie
         origins:
           type: array
-          items: OriginStorage
+          items: OriginStorageWithRequiredIndexedDB
 
     pause:
       experimental: True

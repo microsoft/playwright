@@ -28,7 +28,7 @@ import { Worker } from './worker';
 import { Events } from './events';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
-import type { Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
+import type { Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions, StorageStateWithIndexedDB } from './types';
 import { type URLMatch, headersObjectToArray, isRegExp, isString, urlMatchesEqual, mkdirIfNeeded } from '../utils';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
@@ -425,7 +425,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     });
   }
 
-  async storageState(options: { path?: string } = {}): Promise<StorageState> {
+  async storageState(options: { path?: string } = {}): Promise<StorageStateWithIndexedDB> {
     const state = await this._channel.storageState();
     if (options.path) {
       await mkdirIfNeeded(options.path);

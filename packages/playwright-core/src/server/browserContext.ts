@@ -600,7 +600,7 @@ export abstract class BrowserContext extends SdkObject {
         const storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`(${_collectStorageScript.toString()})()`, 'utility');
         serializeRecords(storage.indexedDB);
         if (storage.localStorage.length || storage.indexedDB?.length)
-          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorage);
+          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorageWithRequiredIndexedDB);
         originsToSave.delete(origin);
       } catch {
         // When failed on the live page, we'll retry on the blank page below.
@@ -621,7 +621,7 @@ export abstract class BrowserContext extends SdkObject {
         const storage = await frame.evaluateExpression(`(${_collectStorageScript.toString()})()`, { world: 'utility' });
         serializeRecords(storage.indexedDB);
         if (storage.localStorage.length || storage.indexedDB.length)
-          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorage);
+          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorageWithRequiredIndexedDB);
       }
       await page.close(internalMetadata);
     }
@@ -696,7 +696,7 @@ export abstract class BrowserContext extends SdkObject {
             for (const { name, value } of (originState.localStorage || []))
               localStorage.setItem(name, value);
 
-            await Promise.all(originState.indexedDB.map(async dbInfo => {
+            await Promise.all((originState.indexedDB ?? []).map(async dbInfo => {
               await new Promise<void>((resolve, reject) => {
                 const openRequest = indexedDB.open(dbInfo.name, dbInfo.version);
                 openRequest.addEventListener('upgradeneeded', () => {

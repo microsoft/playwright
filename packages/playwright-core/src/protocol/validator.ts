@@ -166,6 +166,11 @@ scheme.IndexedDBDatabase = tObject({
 scheme.OriginStorage = tObject({
   origin: tString,
   localStorage: tArray(tType('NameValue')),
+  indexedDB: tOptional(tArray(tType('IndexedDBDatabase'))),
+});
+scheme.OriginStorageWithRequiredIndexedDB = tObject({
+  origin: tString,
+  localStorage: tArray(tType('NameValue')),
   indexedDB: tArray(tType('IndexedDBDatabase')),
 });
 scheme.SerializedError = tObject({
@@ -985,7 +990,7 @@ scheme.BrowserContextSetOfflineResult = tOptional(tObject({}));
 scheme.BrowserContextStorageStateParams = tOptional(tObject({}));
 scheme.BrowserContextStorageStateResult = tObject({
   cookies: tArray(tType('NetworkCookie')),
-  origins: tArray(tType('OriginStorage')),
+  origins: tArray(tType('OriginStorageWithRequiredIndexedDB')),
 });
 scheme.BrowserContextPauseParams = tOptional(tObject({}));
 scheme.BrowserContextPauseResult = tOptional(tObject({}));

@@ -296,6 +296,12 @@ export type IndexedDBDatabase = {
 export type OriginStorage = {
   origin: string,
   localStorage: NameValue[],
+  indexedDB?: IndexedDBDatabase[],
+};
+
+export type OriginStorageWithRequiredIndexedDB = {
+  origin: string,
+  localStorage: NameValue[],
   indexedDB: IndexedDBDatabase[],
 };
 
@@ -1787,7 +1793,7 @@ export type BrowserContextStorageStateParams = {};
 export type BrowserContextStorageStateOptions = {};
 export type BrowserContextStorageStateResult = {
   cookies: NetworkCookie[],
-  origins: OriginStorage[],
+  origins: OriginStorageWithRequiredIndexedDB[],
 };
 export type BrowserContextPauseParams = {};
 export type BrowserContextPauseOptions = {};
