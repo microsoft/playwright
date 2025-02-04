@@ -337,7 +337,7 @@ it('should support IndexedDB', async ({ page, contextFactory }) => {
             {
               name: 'toDoList',
               autoIncrement: false,
-              keyPath: '"taskTitle"',
+              keyPath: 'taskTitle',
               records: [
                 {
                   value: JSON.stringify({
@@ -347,53 +347,53 @@ it('should support IndexedDB', async ({ page, contextFactory }) => {
                     day: '01',
                     month: 'January',
                     year: '2025',
-                    notified: 'no'
-                  })
-                }
+                    notified: 'no',
+                  }),
+                },
               ],
               indexes: [
                 {
-                  'name': 'day',
-                  'keyPath': '"day"',
-                  'multiEntry': false,
-                  'unique': false,
+                  name: 'day',
+                  keyPath: 'day',
+                  multiEntry: false,
+                  unique: false,
                 },
                 {
-                  'name': 'hours',
-                  'keyPath': '"hours"',
-                  'multiEntry': false,
-                  'unique': false,
+                  name: 'hours',
+                  keyPath: 'hours',
+                  multiEntry: false,
+                  unique: false,
                 },
                 {
-                  'name': 'minutes',
-                  'keyPath': '"minutes"',
-                  'multiEntry': false,
-                  'unique': false,
+                  name: 'minutes',
+                  keyPath: 'minutes',
+                  multiEntry: false,
+                  unique: false,
                 },
                 {
-                  'name': 'month',
-                  'keyPath': '"month"',
-                  'multiEntry': false,
-                  'unique': false,
+                  name: 'month',
+                  keyPath: 'month',
+                  multiEntry: false,
+                  unique: false,
                 },
                 {
-                  'name': 'notified',
-                  'keyPath': '"notified"',
-                  'multiEntry': false,
-                  'unique': false,
+                  name: 'notified',
+                  keyPath: 'notified',
+                  multiEntry: false,
+                  unique: false,
                 },
                 {
-                  'name': 'year',
-                  'keyPath': '"year"',
-                  'multiEntry': false,
-                  'unique': false,
+                  name: 'year',
+                  keyPath: 'year',
+                  multiEntry: false,
+                  unique: false,
                 },
-              ]
-            }
-          ]
-        }
-      ]
-    }
+              ],
+            },
+          ],
+        },
+      ],
+    },
   ]);
 
   const context = await contextFactory({ storageState });
@@ -415,42 +415,42 @@ it('indexedDb firebase acceptance test', async ({ page, contextFactory }) => {
   await page.close();
   const storageState = await page.context().storageState();
   expect(storageState).toEqual({
-    'cookies': [],
-    'origins': [
+    cookies: [],
+    origins: [
       {
-        'indexedDB': [
+        indexedDB: [
           {
-            'name': 'firebase-heartbeat-database',
-            'stores': [
+            name: 'firebase-heartbeat-database',
+            stores: [
               {
-                'autoIncrement': false,
-                'indexes': [],
-                'name': 'firebase-heartbeat-store',
-                'records': [],
+                autoIncrement: false,
+                indexes: [],
+                name: 'firebase-heartbeat-store',
+                records: [],
               },
             ],
-            'version': 1,
+            version: 1,
           },
           {
-            'name': 'firebaseLocalStorageDb',
-            'stores': [
+            name: 'firebaseLocalStorageDb',
+            stores: [
               {
-                'autoIncrement': false,
-                'indexes': [],
-                'keyPath': '"fbase_key"',
-                'name': 'firebaseLocalStorage',
-                'records': [
+                autoIncrement: false,
+                indexes: [],
+                keyPath: 'fbase_key',
+                name: 'firebaseLocalStorage',
+                records: [
                   {
-                    'value': expect.any(String),
+                    value: expect.any(String),
                   },
                 ],
               },
             ],
-            'version': 1,
+            version: 1,
           },
         ],
-        'localStorage': [],
-        'origin': 'https://fir-ui-demo-84a6c.firebaseapp.com',
+        localStorage: [],
+        origin: 'https://fir-ui-demo-84a6c.firebaseapp.com',
       },
     ],
   });

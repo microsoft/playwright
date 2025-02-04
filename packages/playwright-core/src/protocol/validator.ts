@@ -149,13 +149,15 @@ scheme.IndexedDBDatabase = tObject({
     name: tString,
     autoIncrement: tBoolean,
     keyPath: tOptional(tString),
+    keyPathArray: tOptional(tType('string[]')),
     records: tArray(tObject({
       key: tOptional(tString),
       value: tString,
     })),
     indexes: tArray(tObject({
       name: tString,
-      keyPath: tString,
+      keyPath: tOptional(tString),
+      keyPathArray: tOptional(tType('string[]')),
       multiEntry: tBoolean,
       unique: tBoolean,
     })),

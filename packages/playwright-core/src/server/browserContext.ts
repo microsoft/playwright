@@ -558,7 +558,8 @@ export abstract class BrowserContext extends SdkObject {
             const index = objectStore.index(indexName);
             return {
               name: index.name,
-              keyPath: JSON.stringify(index.keyPath),
+              keyPath: typeof index.keyPath === 'string' ? index.keyPath : undefined,
+              keyPathArray: Array.isArray(index.keyPath) ? index.keyPath : undefined,
               multiEntry: index.multiEntry,
               unique: index.unique,
             };
@@ -569,7 +570,8 @@ export abstract class BrowserContext extends SdkObject {
             records: records.filter(Boolean),
             indexes,
             autoIncrement: objectStore.autoIncrement,
-            keyPath: objectStore.keyPath === null ? undefined : JSON.stringify(objectStore.keyPath),
+            keyPath: typeof objectStore.keyPath === 'string' ? objectStore.keyPath : undefined,
+            keyPathArray: Array.isArray(objectStore.keyPath) ? objectStore.keyPath : undefined,
           };
         }));
 
@@ -690,9 +692,9 @@ export abstract class BrowserContext extends SdkObject {
                 openRequest.addEventListener('upgradeneeded', () => {
                   const db = openRequest.result;
                   for (const store of dbInfo.stores) {
-                    const objectStore = db.createObjectStore(store.name, { autoIncrement: store.autoIncrement, keyPath: store.keyPath ? JSON.parse(store.keyPath) : undefined });
+                    const objectStore = db.createObjectStore(store.name, { autoIncrement: store.autoIncrement, keyPath: store.keyPathArray ?? store.keyPath });
                     for (const index of store.indexes)
-                      objectStore.createIndex(index.name, JSON.parse(index.keyPath), { unique: index.unique, multiEntry: index.multiEntry });
+                      objectStore.createIndex(index.name, index.keyPathArray ?? index.keyPath!, { unique: index.unique, multiEntry: index.multiEntry });
                   }
                 });
                 openRequest.addEventListener('success', async () => {

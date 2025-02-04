@@ -278,13 +278,15 @@ export type IndexedDBDatabase = {
     name: string,
     autoIncrement: boolean,
     keyPath?: string,
+    keyPathArray?: string[],
     records: {
       key?: string,
       value: string,
     }[],
     indexes: {
       name: string,
-      keyPath: string,
+      keyPath?: string,
+      keyPathArray?: string[],
       multiEntry: boolean,
       unique: boolean,
     }[],
