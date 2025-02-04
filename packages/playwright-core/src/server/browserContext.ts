@@ -704,7 +704,7 @@ export abstract class BrowserContext extends SdkObject {
                     const objectStore = transaction.objectStore(store.name);
                     return store.records.map(record => new Promise((resolve, reject) => {
                       const request = objectStore.add(
-                          JSON.parse(record.value),
+                          JSON.parse(record.value), // TODO: use better serialization
                           objectStore.keyPath === null ? record.key : undefined
                       );
                       request.addEventListener('success', resolve);
