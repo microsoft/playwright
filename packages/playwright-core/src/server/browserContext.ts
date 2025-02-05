@@ -520,31 +520,23 @@ export abstract class BrowserContext extends SdkObject {
         if (!dbInfo.name)
           throw new Error('Database name is empty');
 
-        const db = await new Promise<IDBDatabase>((resolve, reject) => {
-          const request = indexedDB.open(dbInfo.name!);
-          request.onerror = reject;
-          request.onsuccess = () => resolve(request.result);
-        });
+        function idbRequestToPromise<T extends IDBOpenDBRequest | IDBRequest>(request: T) {
+          return new Promise<T['result']>((resolve, reject) => {
+            request.addEventListener('success', () => resolve(request.result));
+            request.addEventListener('error', () => reject(request.error));
+          });
+        }
 
+        const db = await idbRequestToPromise(indexedDB.open(dbInfo.name));
         const transaction = db.transaction(db.objectStoreNames, 'readonly');
         const stores = await Promise.all([...db.objectStoreNames].map(async storeName => {
           const objectStore = transaction.objectStore(storeName);
-          const keys = await new Promise<any[]>((resolve, reject) => {
-            const request = objectStore.getAllKeys();
-            request.addEventListener('success', () => resolve(request.result));
-            request.addEventListener('error', reject);
-          });
 
+          const keys = await idbRequestToPromise(objectStore.getAllKeys());
           const records = await Promise.all(keys.map(async key => {
-            const record = await new Promise<any>((resolve, reject) => {
-              const request = objectStore.get(key);
-              request.addEventListener('success', () => resolve(request.result));
-              request.addEventListener('error', reject);
-            });
-
             return {
-              key: objectStore.keyPath === null ? key.toString() : undefined,
-              value: record
+              key: objectStore.keyPath === null ? key.toString() : undefined, // TODO: fix this
+              value: await idbRequestToPromise(objectStore.get(key))
             };
           }));
 
