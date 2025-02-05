@@ -50,8 +50,6 @@ export class WorkerMain extends ProcessRunner {
   private _didRunFullCleanup = false;
   // Whether the worker was requested to stop.
   private _isStopped = false;
-  // Whether a fatal error was caused by a missing project.
-  private _isMissingProject = false;
   // This promise resolves once the single "run test group" call finishes.
   private _runFinished = new ManualPromise<void>();
   private _currentTest: TestInfoImpl | null = null;
@@ -107,7 +105,7 @@ export class WorkerMain extends ProcessRunner {
   override async gracefullyClose() {
     try {
       await this._stop();
-      if (this._isMissingProject) {
+      if (!this._config) {
         // We never set anything up and we can crash on attempting cleanup
         return;
       }
@@ -196,12 +194,11 @@ export class WorkerMain extends ProcessRunner {
     if (this._config)
       return;
 
-    this._config = await deserializeConfig(this._params.config);
-    const project = this._config.projects.find(p => p.id === this._params.projectId);
-    if (!project) {
-      this._isMissingProject = true;
-      throw new Error(`Project with name "${this._params.projectId}" not found. Make sure project name does not change`);
-    }
+    const config = await deserializeConfig(this._params.config);
+    const project = config.projects.find(p => p.id === this._params.projectId);
+    if (!project)
+      throw new Error(`Project "${this._params.projectId}" not found in the worker process. Make sure project name does not change.`);
+    this._config = config;
     this._project = project;
     this._poolBuilder = PoolBuilder.createForWorker(this._project);
   }
