@@ -349,6 +349,10 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
 
   /**
    * Project name is visible in the report and during test execution.
+   *
+   * **NOTE** Playwright executes the configuration file multiple times. Do not dynamically produce non-stable values in
+   * your configuration.
+   *
    */
   name?: string;
 
