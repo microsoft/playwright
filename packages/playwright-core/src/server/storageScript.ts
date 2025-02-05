@@ -35,17 +35,13 @@ export async function collect(serializers: ReturnType<typeof source>, isFirefox:
 
     function isPlainObject(v: any) {
       const ctor = v?.constructor;
-      if (ctor === Object)
-        return true;
-
-      // firefox bug. the above check doesn't work in the utility world.
       if (isFirefox) {
         const constructorImpl = ctor?.toString();
-        if (constructorImpl.startsWith('function Object() {') && constructorImpl.includes(' [native code]'))
+        if (constructorImpl.startsWith('function Object() {') && constructorImpl.includes('[native code]'))
           return true;
       }
 
-      return false;
+      return ctor === Object;
     }
 
     function trySerialize(value: any): { trivial?: any, encoded?: any } {
