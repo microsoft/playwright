@@ -761,7 +761,7 @@ test('should not throw when screenshot on failure fails', async ({ runInlineTest
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   const trace = await parseTrace(testInfo.outputPath('test-results', 'a-has-download-page', 'trace.zip'));
-  const attachedScreenshots = trace.actions.flatMap(a => a.attachments);
+  const attachedScreenshots = trace.actions.filter(a => a.attachments).flatMap(a => a.attachments);
   // One screenshot for the page, no screenshot for the download page since it should have failed.
   expect(attachedScreenshots.length).toBe(1);
 });
