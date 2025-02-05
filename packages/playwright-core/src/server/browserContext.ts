@@ -43,7 +43,7 @@ import type { Artifact } from './artifact';
 import { Clock } from './clock';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { RecorderApp } from './recorder/recorderApp';
-import * as storageScript from './injected/storageScript';
+import * as storageScript from './storageScript';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
