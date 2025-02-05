@@ -270,7 +270,7 @@ export class TestInfoImpl implements TestInfo {
       ...data,
       steps: [],
       attachmentIndices,
-      info: new TestStepInfoImpl(),
+      info: new TestStepInfoImpl(this, stepId),
       complete: result => {
         if (step.endWallTime)
           return;
@@ -417,7 +417,7 @@ export class TestInfoImpl implements TestInfo {
     step.complete({});
   }
 
-  private _attach(attachment: TestInfo['attachments'][0], stepId: string | undefined) {
+  _attach(attachment: TestInfo['attachments'][0], stepId: string | undefined) {
     const index = this._attachmentsPush(attachment) - 1;
     if (stepId) {
       this._stepMap.get(stepId)!.attachmentIndices.push(index);
@@ -510,6 +510,14 @@ export class TestInfoImpl implements TestInfo {
 export class TestStepInfoImpl implements TestStepInfo {
   annotations: Annotation[] = [];
 
+  private _testInfo: TestInfoImpl;
+  private _stepId: string;
+
+  constructor(testInfo: TestInfoImpl, stepId: string) {
+    this._testInfo = testInfo;
+    this._stepId = stepId;
+  }
+
   async _runStepBody<T>(skip: boolean, body: (step: TestStepInfo) => T | Promise<T>) {
     if (skip) {
       this.annotations.push({ type: 'skip' });
@@ -522,6 +530,14 @@ export class TestStepInfoImpl implements TestStepInfo {
         return undefined as T;
       throw e;
     }
+  }
+
+  _attachToStep(attachment: TestInfo['attachments'][0]): void {
+    this._testInfo._attach(attachment, this._stepId);
+  }
+
+  async attach(name: string, options?: { body?: string | Buffer; contentType?: string; path?: string; }): Promise<void> {
+    this._attachToStep(await normalizeAndSaveAttachment(this._testInfo.outputPath(), name, options));
   }
 
   skip(...args: unknown[]) {
