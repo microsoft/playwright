@@ -16,7 +16,9 @@
 
 import type * as channels from '@protocol/channels';
 
-export async function collect(): Promise<Omit<channels.OriginStorage, 'origin'>> {
+export type Storage = Omit<channels.OriginStorage, 'origin'>;
+
+export async function collect(): Promise<Storage> {
   const idbResult = await Promise.all((await indexedDB.databases()).map(async dbInfo => {
     if (!dbInfo.name)
       throw new Error('Database name is empty');
@@ -109,8 +111,8 @@ export async function restore(originState: channels.SetOriginStorage) {
       await Promise.all(store.records.map(async record => {
         await idbRequestToPromise(
             objectStore.add(
-              record.value as any, // protocol says string, but this got deserialized above
-              objectStore.keyPath === null ? record.key : undefined
+                record.value,
+                objectStore.keyPath === null ? record.key : undefined
             )
         );
       }));

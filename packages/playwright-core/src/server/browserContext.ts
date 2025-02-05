@@ -520,8 +520,8 @@ export abstract class BrowserContext extends SdkObject {
       if (!origin || !originsToSave.has(origin))
         continue;
       try {
-        const storage: Awaited<ReturnType<typeof storageScript.collect>> = await page.mainFrame().nonStallingEvaluateInExistingContext(`(${storageScript.collect})()`, 'utility');
-        if (storage.localStorage.length || storage.indexedDB?.length)
+        const storage: storageScript.Storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`(${storageScript.collect})()`, 'utility');
+        if (storage.localStorage.length || storage.indexedDB.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
         originsToSave.delete(origin);
       } catch {
@@ -605,8 +605,7 @@ export abstract class BrowserContext extends SdkObject {
         for (const originState of state.origins) {
           const frame = page.mainFrame();
           await frame.goto(metadata, originState.origin);
-          const args: Parameters<typeof storageScript.restore> = [originState];
-          await frame.evaluateExpression(storageScript.restore.toString(), { isFunction: true, world: 'utility' }, args);
+          await frame.evaluateExpression(storageScript.restore.toString(), { isFunction: true, world: 'utility' }, originState);
         }
         await page.close(internalMetadata);
       }
