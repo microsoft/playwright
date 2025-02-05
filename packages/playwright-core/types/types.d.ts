@@ -10133,7 +10133,7 @@ export interface Browser {
 
             records: Array<{
               /**
-               * key, only defined if stores uses out-of-line keys
+               * opaque key, only defined if stores uses out-of-line keys
                */
               key?: string;
 
@@ -22349,7 +22349,7 @@ export interface BrowserContextOptions {
 
           records: Array<{
             /**
-             * key, only defined if stores uses out-of-line keys
+             * opaque key, only defined if stores uses out-of-line keys
              */
             key?: string;
 
