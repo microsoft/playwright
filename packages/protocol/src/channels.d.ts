@@ -295,7 +295,7 @@ export type IndexedDBDatabase = {
 
 export type SetOriginStorage = {
   origin: string,
-  localStorage: NameValue[],
+  localStorage?: NameValue[],
   indexedDB?: IndexedDBDatabase[],
 };
 

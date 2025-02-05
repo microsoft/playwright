@@ -165,7 +165,7 @@ scheme.IndexedDBDatabase = tObject({
 });
 scheme.SetOriginStorage = tObject({
   origin: tString,
-  localStorage: tArray(tType('NameValue')),
+  localStorage: tOptional(tArray(tType('NameValue'))),
   indexedDB: tOptional(tArray(tType('IndexedDBDatabase'))),
 });
 scheme.OriginStorage = tObject({

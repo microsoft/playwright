@@ -61,7 +61,7 @@ Methods like [`method: APIRequestContext.get`] take the base URL into considerat
     - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">>
   - `origins` <[Array]<[Object]>>
     - `origin` <[string]>
-    - `localStorage` <[Array]<[Object]>>
+    - `localStorage` ?<[Array]<[Object]>>
       - `name` <[string]>
       - `value` <[string]>
     - `indexedDB` ?<[Array]<[Object]>> indexedDB to set for context

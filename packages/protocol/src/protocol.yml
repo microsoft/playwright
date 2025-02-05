@@ -263,7 +263,7 @@ SetOriginStorage:
   properties:
     origin: string
     localStorage:
-      type: array
+      type: array?
       items: NameValue
     indexedDB:
       type: array?

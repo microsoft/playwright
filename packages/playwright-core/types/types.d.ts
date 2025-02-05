@@ -10103,7 +10103,7 @@ export interface Browser {
         /**
          * localStorage to set for context
          */
-        localStorage: Array<{
+        localStorage?: Array<{
           name: string;
 
           value: string;
@@ -17681,7 +17681,7 @@ export interface APIRequest {
       origins: Array<{
         origin: string;
 
-        localStorage: Array<{
+        localStorage?: Array<{
           name: string;
 
           value: string;
@@ -22410,7 +22410,7 @@ export interface BrowserContextOptions {
       /**
        * localStorage to set for context
        */
-      localStorage: Array<{
+      localStorage?: Array<{
         name: string;
 
         value: string;

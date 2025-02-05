@@ -261,7 +261,7 @@ Specify environment variables that will be visible to the browser. Defaults to `
     - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">> sameSite flag
   - `origins` <[Array]<[Object]>>
     - `origin` <[string]>
-    - `localStorage` <[Array]<[Object]>> localStorage to set for context
+    - `localStorage` ?<[Array]<[Object]>> localStorage to set for context
       - `name` <[string]>
       - `value` <[string]>
     - `indexedDB` ?<[Array]<[Object]>> indexedDB to set for context
