@@ -9266,7 +9266,8 @@ export interface BrowserContext {
   setOffline(offline: boolean): Promise<void>;
 
   /**
-   * Returns storage state for this browser context, contains current cookies and local storage snapshot.
+   * Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB
+   * snapshot.
    * @param options
    */
   storageState(options?: {
@@ -9306,6 +9307,40 @@ export interface BrowserContext {
         name: string;
 
         value: string;
+      }>;
+
+      indexedDB: Array<{
+        name: string;
+
+        version: number;
+
+        stores: Array<{
+          name: string;
+
+          keyPath?: string;
+
+          keyPathArray?: Array<string>;
+
+          autoIncrement: boolean;
+
+          indexes: Array<{
+            name: string;
+
+            keyPath?: string;
+
+            keyPathArray?: Array<string>;
+
+            unique: boolean;
+
+            multiEntry: boolean;
+          }>;
+
+          records: Array<{
+            key?: Object;
+
+            value: Object;
+          }>;
+        }>;
       }>;
     }>;
   }>;
@@ -10062,16 +10097,59 @@ export interface Browser {
         sameSite: "Strict"|"Lax"|"None";
       }>;
 
-      /**
-       * localStorage to set for context
-       */
       origins: Array<{
         origin: string;
 
+        /**
+         * localStorage to set for context
+         */
         localStorage: Array<{
           name: string;
 
           value: string;
+        }>;
+
+        /**
+         * indexedDB to set for context
+         */
+        indexedDB?: Array<{
+          /**
+           * database name
+           */
+          name: string;
+
+          /**
+           * database version
+           */
+          version: number;
+
+          stores: Array<{
+            name: string;
+
+            keyPath?: string;
+
+            keyPathArray?: Array<string>;
+
+            autoIncrement: boolean;
+
+            indexes: Array<{
+              name: string;
+
+              keyPath?: string;
+
+              keyPathArray?: Array<string>;
+
+              unique: boolean;
+
+              multiEntry: boolean;
+            }>;
+
+            records: Array<{
+              key?: Object;
+
+              value: Object;
+            }>;
+          }>;
         }>;
       }>;
     };
@@ -17608,6 +17686,49 @@ export interface APIRequest {
 
           value: string;
         }>;
+
+        /**
+         * indexedDB to set for context
+         */
+        indexedDB?: Array<{
+          /**
+           * database name
+           */
+          name: string;
+
+          /**
+           * database version
+           */
+          version: number;
+
+          stores: Array<{
+            name: string;
+
+            keyPath?: string;
+
+            keyPathArray?: Array<string>;
+
+            autoIncrement: boolean;
+
+            indexes: Array<{
+              name: string;
+
+              keyPath?: string;
+
+              keyPathArray?: Array<string>;
+
+              unique: boolean;
+
+              multiEntry: boolean;
+            }>;
+
+            records: Array<{
+              key?: Object;
+
+              value: Object;
+            }>;
+          }>;
+        }>;
       }>;
     };
 
@@ -18416,6 +18537,40 @@ export interface APIRequestContext {
         name: string;
 
         value: string;
+      }>;
+
+      indexedDB: Array<{
+        name: string;
+
+        version: number;
+
+        stores: Array<{
+          name: string;
+
+          keyPath?: string;
+
+          keyPathArray?: Array<string>;
+
+          autoIncrement: boolean;
+
+          indexes: Array<{
+            name: string;
+
+            keyPath?: string;
+
+            keyPathArray?: Array<string>;
+
+            unique: boolean;
+
+            multiEntry: boolean;
+          }>;
+
+          records: Array<{
+            key?: Object;
+
+            value: Object;
+          }>;
+        }>;
       }>;
     }>;
   }>;
@@ -22249,16 +22404,59 @@ export interface BrowserContextOptions {
       sameSite: "Strict"|"Lax"|"None";
     }>;
 
-    /**
-     * localStorage to set for context
-     */
     origins: Array<{
       origin: string;
 
+      /**
+       * localStorage to set for context
+       */
       localStorage: Array<{
         name: string;
 
         value: string;
+      }>;
+
+      /**
+       * indexedDB to set for context
+       */
+      indexedDB?: Array<{
+        /**
+         * database name
+         */
+        name: string;
+
+        /**
+         * database version
+         */
+        version: number;
+
+        stores: Array<{
+          name: string;
+
+          keyPath?: string;
+
+          keyPathArray?: Array<string>;
+
+          autoIncrement: boolean;
+
+          indexes: Array<{
+            name: string;
+
+            keyPath?: string;
+
+            keyPathArray?: Array<string>;
+
+            unique: boolean;
+
+            multiEntry: boolean;
+          }>;
+
+          records: Array<{
+            key?: Object;
+
+            value: Object;
+          }>;
+        }>;
       }>;
     }>;
   };

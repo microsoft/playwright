@@ -222,6 +222,52 @@ NameValue:
     name: string
     value: string
 
+IndexedDBDatabase:
+  type: object
+  properties:
+    name: string
+    version: number
+    stores:
+      type: array
+      items:
+        type: object
+        properties:
+          name: string
+          autoIncrement: boolean
+          keyPath: string?
+          keyPathArray:
+            type: array?
+            items: string
+          records:
+            type: array
+            items:
+              type: object
+              properties:
+                key: json?
+                value: json
+          indexes:
+            type: array
+            items:
+              type: object
+              properties:
+                name: string
+                keyPath: string?
+                keyPathArray:
+                  type: array?
+                  items: string
+                multiEntry: boolean
+                unique: boolean
+
+SetOriginStorage:
+  type: object
+  properties:
+    origin: string
+    localStorage:
+      type: array
+      items: NameValue
+    indexedDB:
+      type: array?
+      items: IndexedDBDatabase
 
 OriginStorage:
   type: object
@@ -230,7 +276,9 @@ OriginStorage:
     localStorage:
       type: array
       items: NameValue
-
+    indexedDB:
+      type: array
+      items: IndexedDBDatabase
 
 SerializedError:
   type: object
@@ -736,7 +784,7 @@ Playwright:
               items: NetworkCookie
             origins:
               type: array?
-              items: OriginStorage
+              items: SetOriginStorage
         tracesDir: string?
 
       returns:
@@ -970,7 +1018,7 @@ Browser:
               items: SetNetworkCookie
             origins:
               type: array?
-              items: OriginStorage
+              items: SetOriginStorage
       returns:
         context: BrowserContext
 
@@ -992,7 +1040,7 @@ Browser:
               items: SetNetworkCookie
             origins:
               type: array?
-              items: OriginStorage
+              items: SetOriginStorage
       returns:
         context: BrowserContext
 

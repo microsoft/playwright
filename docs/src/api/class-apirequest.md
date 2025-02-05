@@ -64,6 +64,23 @@ Methods like [`method: APIRequestContext.get`] take the base URL into considerat
     - `localStorage` <[Array]<[Object]>>
       - `name` <[string]>
       - `value` <[string]>
+    - `indexedDB` ?<[Array]<[Object]>> indexedDB to set for context
+      - `name` <[string]> database name
+      - `version` <[int]> database version
+      - `stores` <[Array]<[Object]>>
+        - `name` <[string]>
+        - `keyPath` ?<[string]>
+        - `keyPathArray` ?<[Array]<[string]>>
+        - `autoIncrement` <[boolean]>
+        - `indexes` <[Array]<[Object]>>
+          - `name` <[string]>
+          - `keyPath` ?<[string]>
+          - `keyPathArray` ?<[Array]<[string]>>
+          - `unique` <[boolean]>
+          - `multiEntry` <[boolean]>
+        - `records` <[Array]<[Object]>>
+          - `key` ?<[Object]>
+          - `value` <[Object]>
 
 Populates context with given storage state. This option can be used to initialize context with logged-in information
 obtained via [`method: BrowserContext.storageState`] or [`method: APIRequestContext.storageState`]. Either a path to the

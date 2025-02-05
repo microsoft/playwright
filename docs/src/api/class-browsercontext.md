@@ -1511,8 +1511,25 @@ Whether to emulate network being offline for the browser context.
     - `localStorage` <[Array]<[Object]>>
       - `name` <[string]>
       - `value` <[string]>
+    - `indexedDB` <[Array]<[Object]>>
+      - `name` <[string]>
+      - `version` <[int]>
+      - `stores` <[Array]<[Object]>>
+        - `name` <[string]>
+        - `keyPath` ?<[string]>
+        - `keyPathArray` ?<[Array]<[string]>>
+        - `autoIncrement` <[boolean]>
+        - `indexes` <[Array]<[Object]>>
+          - `name` <[string]>
+          - `keyPath` ?<[string]>
+          - `keyPathArray` ?<[Array]<[string]>>
+          - `unique` <[boolean]>
+          - `multiEntry` <[boolean]>
+        - `records` <[Array]<[Object]>>
+          - `key` ?<[Object]>
+          - `value` <[Object]>
 
-Returns storage state for this browser context, contains current cookies and local storage snapshot.
+Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB snapshot.
 
 ## async method: BrowserContext.storageState
 * since: v1.8

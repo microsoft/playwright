@@ -271,9 +271,38 @@ export type NameValue = {
   value: string,
 };
 
+export type IndexedDBDatabase = {
+  name: string,
+  version: number,
+  stores: {
+    name: string,
+    autoIncrement: boolean,
+    keyPath?: string,
+    keyPathArray?: string[],
+    records: {
+      key?: any,
+      value: any,
+    }[],
+    indexes: {
+      name: string,
+      keyPath?: string,
+      keyPathArray?: string[],
+      multiEntry: boolean,
+      unique: boolean,
+    }[],
+  }[],
+};
+
+export type SetOriginStorage = {
+  origin: string,
+  localStorage: NameValue[],
+  indexedDB?: IndexedDBDatabase[],
+};
+
 export type OriginStorage = {
   origin: string,
   localStorage: NameValue[],
+  indexedDB: IndexedDBDatabase[],
 };
 
 export type SerializedError = {
@@ -610,7 +639,7 @@ export type PlaywrightNewRequestParams = {
   timeout?: number,
   storageState?: {
     cookies?: NetworkCookie[],
-    origins?: OriginStorage[],
+    origins?: SetOriginStorage[],
   },
   tracesDir?: string,
 };
@@ -641,7 +670,7 @@ export type PlaywrightNewRequestOptions = {
   timeout?: number,
   storageState?: {
     cookies?: NetworkCookie[],
-    origins?: OriginStorage[],
+    origins?: SetOriginStorage[],
   },
   tracesDir?: string,
 };
@@ -1223,7 +1252,7 @@ export type BrowserNewContextParams = {
   },
   storageState?: {
     cookies?: SetNetworkCookie[],
-    origins?: OriginStorage[],
+    origins?: SetOriginStorage[],
   },
 };
 export type BrowserNewContextOptions = {
@@ -1290,7 +1319,7 @@ export type BrowserNewContextOptions = {
   },
   storageState?: {
     cookies?: SetNetworkCookie[],
-    origins?: OriginStorage[],
+    origins?: SetOriginStorage[],
   },
 };
 export type BrowserNewContextResult = {
@@ -1360,7 +1389,7 @@ export type BrowserNewContextForReuseParams = {
   },
   storageState?: {
     cookies?: SetNetworkCookie[],
-    origins?: OriginStorage[],
+    origins?: SetOriginStorage[],
   },
 };
 export type BrowserNewContextForReuseOptions = {
@@ -1427,7 +1456,7 @@ export type BrowserNewContextForReuseOptions = {
   },
   storageState?: {
     cookies?: SetNetworkCookie[],
-    origins?: OriginStorage[],
+    origins?: SetOriginStorage[],
   },
 };
 export type BrowserNewContextForReuseResult = {

@@ -142,9 +142,36 @@ scheme.NameValue = tObject({
   name: tString,
   value: tString,
 });
+scheme.IndexedDBDatabase = tObject({
+  name: tString,
+  version: tNumber,
+  stores: tArray(tObject({
+    name: tString,
+    autoIncrement: tBoolean,
+    keyPath: tOptional(tString),
+    keyPathArray: tOptional(tArray(tString)),
+    records: tArray(tObject({
+      key: tOptional(tAny),
+      value: tAny,
+    })),
+    indexes: tArray(tObject({
+      name: tString,
+      keyPath: tOptional(tString),
+      keyPathArray: tOptional(tArray(tString)),
+      multiEntry: tBoolean,
+      unique: tBoolean,
+    })),
+  })),
+});
+scheme.SetOriginStorage = tObject({
+  origin: tString,
+  localStorage: tArray(tType('NameValue')),
+  indexedDB: tOptional(tArray(tType('IndexedDBDatabase'))),
+});
 scheme.OriginStorage = tObject({
   origin: tString,
   localStorage: tArray(tType('NameValue')),
+  indexedDB: tArray(tType('IndexedDBDatabase')),
 });
 scheme.SerializedError = tObject({
   error: tOptional(tObject({
@@ -361,7 +388,7 @@ scheme.PlaywrightNewRequestParams = tObject({
   timeout: tOptional(tNumber),
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('NetworkCookie'))),
-    origins: tOptional(tArray(tType('OriginStorage'))),
+    origins: tOptional(tArray(tType('SetOriginStorage'))),
   })),
   tracesDir: tOptional(tString),
 });
@@ -689,7 +716,7 @@ scheme.BrowserNewContextParams = tObject({
   })),
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('SetNetworkCookie'))),
-    origins: tOptional(tArray(tType('OriginStorage'))),
+    origins: tOptional(tArray(tType('SetOriginStorage'))),
   })),
 });
 scheme.BrowserNewContextResult = tObject({
@@ -759,7 +786,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
   })),
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('SetNetworkCookie'))),
-    origins: tOptional(tArray(tType('OriginStorage'))),
+    origins: tOptional(tArray(tType('SetOriginStorage'))),
   })),
 });
 scheme.BrowserNewContextForReuseResult = tObject({

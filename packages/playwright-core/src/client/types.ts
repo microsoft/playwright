@@ -41,7 +41,7 @@ export type StorageState = {
 };
 export type SetStorageState = {
   cookies?: channels.SetNetworkCookie[],
-  origins?: channels.OriginStorage[]
+  origins?: channels.SetOriginStorage[]
 };
 
 export type LifecycleEvent = channels.LifecycleEvent;

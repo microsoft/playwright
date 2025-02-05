@@ -1,0 +1,18 @@
+{
+  "version": "0.1",
+  "name": "To-do list",
+  "description": "Store to-do items on your device, and be notified when the deadlines are up.",
+  "launch_path": "/to-do-notifications/index.html",
+  "icons": {
+    "128": "/to-do-notifications/img/icon-128.png"
+  },
+  "developer": {
+    "name": "Chris Mills",
+    "url": "http://chrisdavidmills.github.io/to-do-notifications/"
+  },
+  "permissions": {
+    "desktop-notification": {
+      "description": "Needed for creating system notifications."
+    }
+  }
+}

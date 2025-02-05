@@ -40,12 +40,14 @@ it('should capture local storage', async ({ contextFactory }) => {
       name: 'name2',
       value: 'value2'
     }],
+    indexedDB: [],
   }, {
     origin: 'https://www.example.com',
     localStorage: [{
       name: 'name1',
       value: 'value1'
     }],
+    indexedDB: [],
   }]);
 });
 
@@ -81,9 +83,25 @@ it('should round-trip through the file', async ({ contextFactory }, testInfo) =>
     route.fulfill({ body: '<html></html>' }).catch(() => {});
   });
   await page1.goto('https://www.example.com');
-  await page1.evaluate(() => {
+  await page1.evaluate(async () => {
     localStorage['name1'] = 'value1';
     document.cookie = 'username=John Doe';
+
+    await new Promise((resolve, reject) => {
+      const openRequest = indexedDB.open('db', 42);
+      openRequest.onupgradeneeded = () => {
+        openRequest.result.createObjectStore('store');
+
+      };
+      openRequest.onsuccess = () => {
+        const request = openRequest.result.transaction('store', 'readwrite')
+            .objectStore('store')
+            .put('foo', 'bar');
+        request.addEventListener('success', resolve);
+        request.addEventListener('error', reject);
+      };
+    });
+
     return document.cookie;
   });
 
@@ -102,6 +120,18 @@ it('should round-trip through the file', async ({ contextFactory }, testInfo) =>
   expect(localStorage).toEqual({ name1: 'value1' });
   const cookie = await page2.evaluate('document.cookie');
   expect(cookie).toEqual('username=John Doe');
+  const idbValue = await page2.evaluate(() => new Promise<string>((resolve, reject) => {
+    const openRequest = indexedDB.open('db', 42);
+    openRequest.addEventListener('success', () => {
+      const db = openRequest.result;
+      const transaction = db.transaction('store', 'readonly');
+      const getRequest = transaction.objectStore('store').get('bar');
+      getRequest.addEventListener('success', () => resolve(getRequest.result));
+      getRequest.addEventListener('error', () => reject(getRequest.error));
+    });
+    openRequest.addEventListener('error', () => reject(openRequest.error));
+  }));
+  expect(idbValue).toEqual('foo');
   await context2.close();
 });
 
@@ -315,4 +345,95 @@ it('should roundtrip local storage in third-party context', async ({ page, conte
   const localStorage = await frame2.evaluate('window.localStorage');
   expect(localStorage).toEqual({ name1: 'value1' });
   await context2.close();
+});
+
+it('should support IndexedDB', async ({ page, server, contextFactory }) => {
+  await page.goto(server.PREFIX + '/to-do-notifications/index.html');
+  await page.getByLabel('Task title').fill('Pet the cat');
+  await page.getByLabel('Hours').fill('1');
+  await page.getByLabel('Mins').fill('1');
+  await page.getByText('Add Task').click();
+
+  const storageState = await page.context().storageState();
+  expect(storageState.origins).toEqual([
+    {
+      origin: server.PREFIX,
+      localStorage: [],
+      indexedDB: [
+        {
+          name: 'toDoList',
+          version: 4,
+          stores: [
+            {
+              name: 'toDoList',
+              autoIncrement: false,
+              keyPath: 'taskTitle',
+              records: [
+                {
+                  value: {
+                    day: '01',
+                    hours: '1',
+                    minutes: '1',
+                    month: 'January',
+                    notified: 'no',
+                    taskTitle: 'Pet the cat',
+                    year: '2025',
+                  },
+                },
+              ],
+              indexes: [
+                {
+                  name: 'day',
+                  keyPath: 'day',
+                  multiEntry: false,
+                  unique: false,
+                },
+                {
+                  name: 'hours',
+                  keyPath: 'hours',
+                  multiEntry: false,
+                  unique: false,
+                },
+                {
+                  name: 'minutes',
+                  keyPath: 'minutes',
+                  multiEntry: false,
+                  unique: false,
+                },
+                {
+                  name: 'month',
+                  keyPath: 'month',
+                  multiEntry: false,
+                  unique: false,
+                },
+                {
+                  name: 'notified',
+                  keyPath: 'notified',
+                  multiEntry: false,
+                  unique: false,
+                },
+                {
+                  name: 'year',
+                  keyPath: 'year',
+                  multiEntry: false,
+                  unique: false,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]);
+
+  const context = await contextFactory({ storageState });
+  expect(await context.storageState()).toEqual(storageState);
+
+  const recreatedPage = await context.newPage();
+  await recreatedPage.goto(server.PREFIX + '/to-do-notifications/index.html');
+  await expect(recreatedPage.locator('#task-list')).toMatchAriaSnapshot(`
+    - list:
+      - listitem:
+        - text: /Pet the cat/
+  `);
 });
