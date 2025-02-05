@@ -19,7 +19,7 @@ import type { source } from './isomorphic/utilityScriptSerializers';
 
 export type Storage = Omit<channels.OriginStorage, 'origin'>;
 
-export async function collect(serializers: ReturnType<typeof source>): Promise<Storage> {
+export async function collect(serializers: ReturnType<typeof source>, isFirefox: boolean): Promise<Storage> {
   const idbResult = await Promise.all((await indexedDB.databases()).map(async dbInfo => {
     if (!dbInfo.name)
       throw new Error('Database name is empty');
@@ -33,11 +33,26 @@ export async function collect(serializers: ReturnType<typeof source>): Promise<S
       });
     }
 
+    function isPlainObject(v: any) {
+      const ctor = v?.constructor;
+      if (ctor === Object)
+        return true;
+
+      // firefox bug. the above check doesn't work in the utility world.
+      if (isFirefox) {
+        const constructorImpl = ctor?.toString();
+        if (constructorImpl.startsWith('function Object() {') && constructorImpl.includes(' [native code]'))
+          return true;
+      }
+
+      return false;
+    }
+
     function trySerialize(value: any): { trivial?: any, encoded?: any } {
       let trivial = true;
       const encoded = serializers.serializeAsCallArgument(value, v => {
         const isTrivial = (
-          v?.constructor === Object
+          isPlainObject(v)
           || Array.isArray(v)
           || typeof v === 'string'
           || typeof v === 'number'

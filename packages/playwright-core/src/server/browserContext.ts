@@ -515,13 +515,15 @@ export abstract class BrowserContext extends SdkObject {
     };
     const originsToSave = new Set(this._origins);
 
+    const collectScript = `(${storageScript.collect})((${utilityScriptSerializers.source})(), ${this._browser.options.name === 'firefox'})`;
+
     // First try collecting storage stage from existing pages.
     for (const page of this.pages()) {
       const origin = page.mainFrame().origin();
       if (!origin || !originsToSave.has(origin))
         continue;
       try {
-        const storage: storageScript.Storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`(${storageScript.collect})((${utilityScriptSerializers.source})())`, 'utility');
+        const storage: storageScript.Storage = await page.mainFrame().nonStallingEvaluateInExistingContext(collectScript, 'utility');
         if (storage.localStorage.length || storage.indexedDB.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
         originsToSave.delete(origin);
@@ -541,7 +543,7 @@ export abstract class BrowserContext extends SdkObject {
       for (const origin of originsToSave) {
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
-        const storage: Awaited<ReturnType<typeof storageScript.collect>> = await frame.evaluateExpression(`(${storageScript.collect})((${utilityScriptSerializers.source})())`, { world: 'utility' });
+        const storage: storageScript.Storage = await frame.evaluateExpression(collectScript, { world: 'utility' });
         if (storage.localStorage.length || storage.indexedDB.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
       }
