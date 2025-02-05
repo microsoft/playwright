@@ -18516,7 +18516,7 @@ export interface APIRequestContext {
         value: string;
       }>;
 
-      indexedDB?: Array<{
+      indexedDB: Array<{
         name: string;
 
         version: number;

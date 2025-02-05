@@ -880,7 +880,7 @@ context cookies from the response. The method will automatically follow redirect
     - `localStorage` <[Array]<[Object]>>
       - `name` <[string]>
       - `value` <[string]>
-    - `indexedDB` ?<[Array]<[Object]>>
+    - `indexedDB` <[Array]<[Object]>>
         - `name` <[string]>
         - `version` <[int]>
         - `stores` <[Array]<[Object]>>
