@@ -535,7 +535,7 @@ export abstract class BrowserContext extends SdkObject {
           const keys = await idbRequestToPromise(objectStore.getAllKeys());
           const records = await Promise.all(keys.map(async key => {
             return {
-              key: objectStore.keyPath === null ? key.toString() : undefined, // TODO: fix this
+              key: objectStore.keyPath === null ? key : undefined,
               value: await idbRequestToPromise(objectStore.get(key))
             };
           }));
@@ -577,8 +577,11 @@ export abstract class BrowserContext extends SdkObject {
     function serializeRecords(indexedDBs: channels.IndexedDBDatabase[]) {
       for (const db of indexedDBs) {
         for (const store of db.stores) {
-          for (const record of store.records)
+          for (const record of store.records) {
+            if (record.key !== undefined)
+              record.key = JSON.stringify(utilitySerializers.serializeAsCallArgument(record.value, v => ({ fallThrough: v })));
             record.value = JSON.stringify(utilitySerializers.serializeAsCallArgument(record.value, v => ({ fallThrough: v })));
+          }
         }
       }
     }
@@ -679,8 +682,11 @@ export abstract class BrowserContext extends SdkObject {
 
           for (const dbInfo of (originState.indexedDB || [])) {
             for (const store of dbInfo.stores) {
-              for (const record of store.records)
+              for (const record of store.records) {
+                if (record.key !== undefined)
+                  record.key = utilitySerializers.parseEvaluationResultValue(JSON.parse(record.key));
                 record.value = utilitySerializers.parseEvaluationResultValue(JSON.parse(record.value));
+              }
             }
           }
 
