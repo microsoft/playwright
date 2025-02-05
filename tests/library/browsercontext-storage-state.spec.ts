@@ -83,9 +83,25 @@ it('should round-trip through the file', async ({ contextFactory }, testInfo) =>
     route.fulfill({ body: '<html></html>' }).catch(() => {});
   });
   await page1.goto('https://www.example.com');
-  await page1.evaluate(() => {
+  await page1.evaluate(async () => {
     localStorage['name1'] = 'value1';
     document.cookie = 'username=John Doe';
+
+    await new Promise((resolve, reject) => {
+      const openRequest = indexedDB.open('db', 42);
+      openRequest.onupgradeneeded = () => {
+        openRequest.result.createObjectStore('store');
+
+      };
+      openRequest.onsuccess = () => {
+        const request = openRequest.result.transaction('store', 'readwrite')
+            .objectStore('store')
+            .put('foo', 'bar');
+        request.addEventListener('success', resolve);
+        request.addEventListener('error', reject);
+      };
+    });
+
     return document.cookie;
   });
 
@@ -104,6 +120,18 @@ it('should round-trip through the file', async ({ contextFactory }, testInfo) =>
   expect(localStorage).toEqual({ name1: 'value1' });
   const cookie = await page2.evaluate('document.cookie');
   expect(cookie).toEqual('username=John Doe');
+  const idbValue = await page2.evaluate(() => new Promise<string>((resolve, reject) => {
+    const openRequest = indexedDB.open('db', 42);
+    openRequest.addEventListener('success', () => {
+      const db = openRequest.result;
+      const transaction = db.transaction('store', 'readonly');
+      const getRequest = transaction.objectStore('store').get('bar');
+      getRequest.addEventListener('success', () => resolve(getRequest.result));
+      getRequest.addEventListener('error', () => reject(getRequest.error));
+    });
+    openRequest.addEventListener('error', () => reject(openRequest.error));
+  }));
+  expect(idbValue).toEqual('foo');
   await context2.close();
 });
 
