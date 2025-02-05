@@ -514,7 +514,6 @@ export abstract class BrowserContext extends SdkObject {
     const originsToSave = new Set(this._origins);
 
     async function _collectStorageScript() {
-
       const idbResult = await Promise.all((await indexedDB.databases()).map(async dbInfo => {
         if (!dbInfo.name)
           throw new Error('Database name is empty');
@@ -552,7 +551,7 @@ export abstract class BrowserContext extends SdkObject {
 
           return {
             name: storeName,
-            records: records.filter(Boolean),
+            records: records,
             indexes,
             autoIncrement: objectStore.autoIncrement,
             keyPath: typeof objectStore.keyPath === 'string' ? objectStore.keyPath : undefined,
@@ -565,7 +564,9 @@ export abstract class BrowserContext extends SdkObject {
           version: dbInfo.version,
           stores,
         };
-      }));
+      })).catch(e => {
+        throw new Error('Unable to serialize IndexedDB: ' + e.message);
+      });
 
       return {
         localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
@@ -687,18 +688,19 @@ export abstract class BrowserContext extends SdkObject {
                 }
               });
 
+              // after `upgradeneeded` finishes, `success` event is fired.
               const db = await idbRequestToPromise(openRequest);
               const transaction = db.transaction(db.objectStoreNames, 'readwrite');
-              await Promise.all(dbInfo.stores.flatMap(store => {
+              await Promise.all(dbInfo.stores.map(async store => {
                 const objectStore = transaction.objectStore(store.name);
-                return store.records.map(async record => {
+                await Promise.all(store.records.map(async record => {
                   await idbRequestToPromise(
                       objectStore.add(
                         record.value as any, // protocol says string, but this got deserialized above
                         objectStore.keyPath === null ? record.key : undefined
                       )
                   );
-                });
+                }));
               }));
             }));
           }
