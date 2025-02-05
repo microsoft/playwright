@@ -94,6 +94,18 @@ Example:
     console.log('\nUpdating browser version in browsers.json...');
     for (const descriptor of descriptors)
       descriptor.browserVersion = browserVersion;
+
+    // 4.1 chromium-headless-shell is equal to chromium version.
+    if (browserName === 'chromium') {
+      const headlessShellBrowser = await browsersJSON.browsers.find(b => b.name === 'chromium-headless-shell');
+      headlessShellBrowser.revision = revision;
+      headlessShellBrowser.browserVersion = browserVersion;
+    } else if (browserName === 'chromium-tip-of-tree') {
+      const tipOfTreeBrowser = await browsersJSON.browsers.find(b => b.name === 'chromium-tip-of-tree-headless-shell');
+      tipOfTreeBrowser.revision = revision;
+      tipOfTreeBrowser.browserVersion = browserVersion;
+    }
+
     fs.writeFileSync(path.join(CORE_PATH, 'browsers.json'), JSON.stringify(browsersJSON, null, 2) + '\n');
   }
 
