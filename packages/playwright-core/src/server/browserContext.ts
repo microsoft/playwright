@@ -43,6 +43,7 @@ import type { Artifact } from './artifact';
 import { Clock } from './clock';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { RecorderApp } from './recorder/recorderApp';
+import * as storageScript from './injected/storageScript';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
@@ -513,76 +514,15 @@ export abstract class BrowserContext extends SdkObject {
     };
     const originsToSave = new Set(this._origins);
 
-    async function _collectStorageScript() {
-      const idbResult = await Promise.all((await indexedDB.databases()).map(async dbInfo => {
-        if (!dbInfo.name)
-          throw new Error('Database name is empty');
-
-        function idbRequestToPromise<T extends IDBOpenDBRequest | IDBRequest>(request: T) {
-          return new Promise<T['result']>((resolve, reject) => {
-            request.addEventListener('success', () => resolve(request.result));
-            request.addEventListener('error', () => reject(request.error));
-          });
-        }
-
-        const db = await idbRequestToPromise(indexedDB.open(dbInfo.name));
-        const transaction = db.transaction(db.objectStoreNames, 'readonly');
-        const stores = await Promise.all([...db.objectStoreNames].map(async storeName => {
-          const objectStore = transaction.objectStore(storeName);
-
-          const keys = await idbRequestToPromise(objectStore.getAllKeys());
-          const records = await Promise.all(keys.map(async key => {
-            return {
-              key: objectStore.keyPath === null ? key : undefined,
-              value: await idbRequestToPromise(objectStore.get(key))
-            };
-          }));
-
-          const indexes = [...objectStore.indexNames].map(indexName => {
-            const index = objectStore.index(indexName);
-            return {
-              name: index.name,
-              keyPath: typeof index.keyPath === 'string' ? index.keyPath : undefined,
-              keyPathArray: Array.isArray(index.keyPath) ? index.keyPath : undefined,
-              multiEntry: index.multiEntry,
-              unique: index.unique,
-            };
-          });
-
-          return {
-            name: storeName,
-            records: records,
-            indexes,
-            autoIncrement: objectStore.autoIncrement,
-            keyPath: typeof objectStore.keyPath === 'string' ? objectStore.keyPath : undefined,
-            keyPathArray: Array.isArray(objectStore.keyPath) ? objectStore.keyPath : undefined,
-          };
-        }));
-
-        return {
-          name: dbInfo.name,
-          version: dbInfo.version,
-          stores,
-        };
-      })).catch(e => {
-        throw new Error('Unable to serialize IndexedDB: ' + e.message);
-      });
-
-      return {
-        localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
-        indexedDB: idbResult,
-      };
-    }
-
     // First try collecting storage stage from existing pages.
     for (const page of this.pages()) {
       const origin = page.mainFrame().origin();
       if (!origin || !originsToSave.has(origin))
         continue;
       try {
-        const storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`(${_collectStorageScript.toString()})()`, 'utility');
+        const storage: Awaited<ReturnType<typeof storageScript.collect>> = await page.mainFrame().nonStallingEvaluateInExistingContext(`(${storageScript.collect})()`, 'utility');
         if (storage.localStorage.length || storage.indexedDB?.length)
-          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorage);
+          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
         originsToSave.delete(origin);
       } catch {
         // When failed on the live page, we'll retry on the blank page below.
@@ -600,9 +540,9 @@ export abstract class BrowserContext extends SdkObject {
       for (const origin of originsToSave) {
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
-        const storage = await frame.evaluateExpression(`(${_collectStorageScript.toString()})()`, { world: 'utility' });
+        const storage: Awaited<ReturnType<typeof storageScript.collect>> = await frame.evaluateExpression(`(${storageScript.collect})()`, { world: 'utility' });
         if (storage.localStorage.length || storage.indexedDB.length)
-          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorage);
+          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
       }
       await page.close(internalMetadata);
     }
@@ -665,47 +605,8 @@ export abstract class BrowserContext extends SdkObject {
         for (const originState of state.origins) {
           const frame = page.mainFrame();
           await frame.goto(metadata, originState.origin);
-
-          async function _restoreStorageState(originState: channels.OriginStorage) {
-            for (const { name, value } of (originState.localStorage || []))
-              localStorage.setItem(name, value);
-
-            function idbRequestToPromise<T extends IDBOpenDBRequest | IDBRequest>(request: T) {
-              return new Promise<T['result']>((resolve, reject) => {
-                request.addEventListener('success', () => resolve(request.result));
-                request.addEventListener('error', () => reject(request.error));
-              });
-            }
-
-            await Promise.all((originState.indexedDB ?? []).map(async dbInfo => {
-              const openRequest = indexedDB.open(dbInfo.name, dbInfo.version);
-              openRequest.addEventListener('upgradeneeded', () => {
-                const db = openRequest.result;
-                for (const store of dbInfo.stores) {
-                  const objectStore = db.createObjectStore(store.name, { autoIncrement: store.autoIncrement, keyPath: store.keyPathArray ?? store.keyPath });
-                  for (const index of store.indexes)
-                    objectStore.createIndex(index.name, index.keyPathArray ?? index.keyPath!, { unique: index.unique, multiEntry: index.multiEntry });
-                }
-              });
-
-              // after `upgradeneeded` finishes, `success` event is fired.
-              const db = await idbRequestToPromise(openRequest);
-              const transaction = db.transaction(db.objectStoreNames, 'readwrite');
-              await Promise.all(dbInfo.stores.map(async store => {
-                const objectStore = transaction.objectStore(store.name);
-                await Promise.all(store.records.map(async record => {
-                  await idbRequestToPromise(
-                      objectStore.add(
-                        record.value as any, // protocol says string, but this got deserialized above
-                        objectStore.keyPath === null ? record.key : undefined
-                      )
-                  );
-                }));
-              }));
-            }));
-          }
-
-          await frame.evaluateExpression(_restoreStorageState.toString(), { isFunction: true, world: 'utility' }, originState);
+          const args: Parameters<typeof storageScript.restore> = [originState];
+          await frame.evaluateExpression(storageScript.restore.toString(), { isFunction: true, world: 'utility' }, args);
         }
         await page.close(internalMetadata);
       }
