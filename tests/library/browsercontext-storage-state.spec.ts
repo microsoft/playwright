@@ -317,8 +317,8 @@ it('should roundtrip local storage in third-party context', async ({ page, conte
   await context2.close();
 });
 
-it('should support IndexedDB', async ({ page, contextFactory }) => {
-  await page.goto('https://mdn.github.io/dom-examples/to-do-notifications/');
+it('should support IndexedDB', async ({ page, server, contextFactory }) => {
+  await page.goto(server.PREFIX + '/to-do-notifications/index.html');
   await page.getByLabel('Task title').fill('Pet the cat');
   await page.getByLabel('Hours').fill('1');
   await page.getByLabel('Mins').fill('1');
@@ -327,7 +327,7 @@ it('should support IndexedDB', async ({ page, contextFactory }) => {
   const storageState = await page.context().storageState();
   expect(storageState.origins).toEqual([
     {
-      origin: 'https://mdn.github.io',
+      origin: server.PREFIX,
       localStorage: [],
       indexedDB: [
         {
@@ -403,64 +403,10 @@ it('should support IndexedDB', async ({ page, contextFactory }) => {
   expect(await context.storageState()).toEqual(storageState);
 
   const recreatedPage = await context.newPage();
-  await recreatedPage.goto('https://mdn.github.io/dom-examples/to-do-notifications/');
+  await recreatedPage.goto(server.PREFIX + '/to-do-notifications/index.html');
   await expect(recreatedPage.locator('#task-list')).toMatchAriaSnapshot(`
     - list:
       - listitem:
         - text: /Pet the cat/
   `);
-});
-
-it('indexedDb firebase acceptance test', async ({ page, contextFactory }) => {
-  await page.goto('https://fir-ui-demo-84a6c.firebaseapp.com/');
-  await page.getByText('Continue as guest').click();
-  await expect(page.getByRole('button', { name: 'Sign Out' })).toBeVisible();
-  await page.close();
-  const storageState = await page.context().storageState();
-  expect(storageState).toEqual({
-    cookies: [],
-    origins: [
-      {
-        indexedDB: [
-          {
-            name: 'firebase-heartbeat-database',
-            stores: [
-              {
-                autoIncrement: false,
-                indexes: [],
-                name: 'firebase-heartbeat-store',
-                records: [],
-              },
-            ],
-            version: 1,
-          },
-          {
-            name: 'firebaseLocalStorageDb',
-            stores: [
-              {
-                autoIncrement: false,
-                indexes: [],
-                keyPath: 'fbase_key',
-                name: 'firebaseLocalStorage',
-                records: [
-                  {
-                    value: expect.any(String),
-                  },
-                ],
-              },
-            ],
-            version: 1,
-          },
-        ],
-        localStorage: [],
-        origin: 'https://fir-ui-demo-84a6c.firebaseapp.com',
-      },
-    ],
-  });
-
-  const recreatedContext = await contextFactory({ storageState });
-  const recreatedPage = await recreatedContext.newPage();
-  await recreatedPage.goto('https://fir-ui-demo-84a6c.firebaseapp.com/');
-  await expect(recreatedPage.getByRole('button', { name: 'Sign Out' })).toBeVisible();
-  expect(await recreatedContext.storageState()).toEqual(storageState);
 });

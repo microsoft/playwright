@@ -10096,9 +10096,18 @@ export interface Browser {
           value: string;
         }>;
 
+        /**
+         * indexedDB to set for context
+         */
         indexedDB?: Array<{
+          /**
+           * database name
+           */
           name: string;
 
+          /**
+           * database version
+           */
           version: number;
 
           stores: Array<{
@@ -10123,8 +10132,14 @@ export interface Browser {
             }>;
 
             records: Array<{
+              /**
+               * key, only defined if stores uses out-of-line keys
+               */
               key?: string;
 
+              /**
+               * opaque value
+               */
               value: string;
             }>;
           }>;
@@ -22297,9 +22312,18 @@ export interface BrowserContextOptions {
         value: string;
       }>;
 
+      /**
+       * indexedDB to set for context
+       */
       indexedDB?: Array<{
+        /**
+         * database name
+         */
         name: string;
 
+        /**
+         * database version
+         */
         version: number;
 
         stores: Array<{
@@ -22324,8 +22348,14 @@ export interface BrowserContextOptions {
           }>;
 
           records: Array<{
+            /**
+             * key, only defined if stores uses out-of-line keys
+             */
             key?: string;
 
+            /**
+             * opaque value
+             */
             value: string;
           }>;
         }>;

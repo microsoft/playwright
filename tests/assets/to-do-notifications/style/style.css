@@ -1,0 +1,248 @@
+/* Basic set up + sizing for containers */
+
+html,
+body {
+  margin: 0;
+}
+
+html {
+  width: 100%;
+  height: 100%;
+  font-size: 10px;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  background: #111;
+}
+
+body {
+  width: 50rem;
+  position: relative;
+  background: #d88;
+  margin: 0 auto;
+  border-left: 2px solid #d33;
+  border-right: 2px solid #d33;
+}
+
+h1,
+h2 {
+  text-align: center;
+  background: #d88;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+h1 {
+  font-size: 6rem;
+  margin: 0;
+  background: #d66;
+}
+
+h2 {
+  font-size: 2.4rem;
+}
+
+/* Bottom toolbar styling  */
+
+#toolbar {
+  position: relative;
+  height: 6rem;
+  width: 100%;
+  background: #d66;
+  border-top: 2px solid #d33;
+  border-bottom: 2px solid #d33;
+}
+
+#enable,
+input[type="submit"] {
+  line-height: 1.8;
+  font-size: 1.3rem;
+  border-radius: 5px;
+  border: 1px solid black;
+  color: black;
+  text-shadow: 1px 1px 1px black;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow:
+    inset 0px 5px 3px rgba(255, 255, 255, 0.2),
+    inset 0px -5px 3px rgba(0, 0, 0, 0.2);
+}
+
+#enable {
+  position: absolute;
+  bottom: 0.3rem;
+  right: 0.3rem;
+}
+
+#notifications {
+  margin: 0;
+  position: relative;
+  padding: 0.3rem;
+  background: #ddd;
+  position: absolute;
+  top: 0rem;
+  left: 0rem;
+  height: 5.4rem;
+  width: 50%;
+  overflow: auto;
+  line-height: 1.2;
+}
+
+#notifications li {
+  margin-left: 1.5rem;
+}
+
+/* New item form styling */
+
+.form-box {
+  background: #d66;
+  width: 85%;
+  padding: 1rem;
+  margin: 2rem auto;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+}
+
+form div {
+  margin-bottom: 1rem;
+}
+
+form .full-width {
+  margin: 1rem auto 2rem;
+  width: 100%;
+}
+
+form .half-width {
+  width: 50%;
+  float: left;
+}
+
+form .third-width {
+  width: 33%;
+  float: left;
+}
+
+form div label {
+  width: 10rem;
+  float: left;
+  padding-right: 1rem;
+  font-size: 1.6rem;
+  line-height: 1.6;
+}
+
+form .full-width input {
+  width: 30rem;
+}
+
+form .half-width input {
+  width: 8.75rem;
+}
+
+form .third-width select {
+  width: 13.5rem;
+}
+
+form div input[type="submit"] {
+  clear: both;
+  width: 20rem;
+  display: block;
+  height: 3rem;
+  margin: 0 auto;
+  position: relative;
+  top: 0.5rem;
+}
+
+/* || tasks box */
+
+.task-box {
+  width: 85%;
+  padding: 1rem;
+  margin: 2rem auto;
+  font-size: 1.8rem;
+}
+
+.task-box ul {
+  margin: 0;
+  padding: 0;
+}
+
+.task-box li {
+  list-style-type: none;
+  padding: 1rem;
+  border-bottom: 2px solid #d33;
+}
+
+.task-box li:last-child {
+  border-bottom: none;
+}
+
+.task-box li:last-child {
+  margin-bottom: 0rem;
+}
+
+.task-box button {
+  margin-left: 2rem;
+  font-size: 1.6rem;
+  border: 1px solid #eee;
+  border-radius: 5px;
+  box-shadow: inset 0 -2px 5px rgba(0, 0, 0, 0.5) 1px 1px 1px black;
+}
+
+/* setting cursor for interactive controls */
+
+button,
+input[type="submit"],
+select {
+  cursor: pointer;
+}
+
+/* media query for small screens */
+
+@media (max-width: 32rem) {
+  body {
+    width: 100%;
+    border-left: none;
+    border-right: none;
+  }
+
+  form div {
+    clear: both;
+  }
+
+  form .full-width {
+    margin: 1rem auto;
+  }
+
+  form .half-width {
+    width: 100%;
+    float: none;
+  }
+
+  form .third-width {
+    width: 100%;
+    float: none;
+  }
+
+  form div label {
+    width: 36%;
+    padding-left: 1rem;
+  }
+
+  form input,
+  form select,
+  form label {
+    line-height: 2.5rem;
+    font-size: 2rem;
+  }
+
+  form .full-width input {
+    width: 50%;
+  }
+
+  form .half-width input {
+    width: 50%;
+  }
+
+  form .third-width select {
+    width: 50%;
+  }
+
+  #enable {
+    right: 1rem;
+  }
+}
