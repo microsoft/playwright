@@ -696,35 +696,37 @@ export abstract class BrowserContext extends SdkObject {
             for (const { name, value } of (originState.localStorage || []))
               localStorage.setItem(name, value);
 
-            await Promise.all((originState.indexedDB ?? []).map(async dbInfo => {
-              await new Promise<void>((resolve, reject) => {
-                const openRequest = indexedDB.open(dbInfo.name, dbInfo.version);
-                openRequest.addEventListener('upgradeneeded', () => {
-                  const db = openRequest.result;
-                  for (const store of dbInfo.stores) {
-                    const objectStore = db.createObjectStore(store.name, { autoIncrement: store.autoIncrement, keyPath: store.keyPathArray ?? store.keyPath });
-                    for (const index of store.indexes)
-                      objectStore.createIndex(index.name, index.keyPathArray ?? index.keyPath!, { unique: index.unique, multiEntry: index.multiEntry });
-                  }
-                });
-                openRequest.addEventListener('success', async () => {
-                  const db = openRequest.result;
-                  const transaction = db.transaction(db.objectStoreNames, 'readwrite');
-                  await Promise.all(dbInfo.stores.flatMap(store => {
-                    const objectStore = transaction.objectStore(store.name);
-                    return store.records.map(record => new Promise((resolve, reject) => {
-                      const request = objectStore.add(
-                          record.value as any, // protocol says string, but this got deserialized above
-                          objectStore.keyPath === null ? record.key : undefined
-                      );
-                      request.addEventListener('success', resolve);
-                      request.addEventListener('error', reject);
-                    }));
-                  }));
-                  transaction.addEventListener('complete', () => resolve());
-                  transaction.addEventListener('error', () => reject(transaction.error));
-                });
+            function idbRequestToPromise<T extends IDBOpenDBRequest | IDBRequest>(request: T) {
+              return new Promise<T['result']>((resolve, reject) => {
+                request.addEventListener('success', () => resolve(request.result));
+                request.addEventListener('error', () => reject(request.error));
               });
+            }
+
+            await Promise.all((originState.indexedDB ?? []).map(async dbInfo => {
+              const openRequest = indexedDB.open(dbInfo.name, dbInfo.version);
+              openRequest.addEventListener('upgradeneeded', () => {
+                const db = openRequest.result;
+                for (const store of dbInfo.stores) {
+                  const objectStore = db.createObjectStore(store.name, { autoIncrement: store.autoIncrement, keyPath: store.keyPathArray ?? store.keyPath });
+                  for (const index of store.indexes)
+                    objectStore.createIndex(index.name, index.keyPathArray ?? index.keyPath!, { unique: index.unique, multiEntry: index.multiEntry });
+                }
+              });
+
+              const db = await idbRequestToPromise(openRequest);
+              const transaction = db.transaction(db.objectStoreNames, 'readwrite');
+              await Promise.all(dbInfo.stores.flatMap(store => {
+                const objectStore = transaction.objectStore(store.name);
+                return store.records.map(async record => {
+                  await idbRequestToPromise(
+                      objectStore.add(
+                        record.value as any, // protocol says string, but this got deserialized above
+                        objectStore.keyPath === null ? record.key : undefined
+                      )
+                  );
+                });
+              }));
             }));
           }
 
