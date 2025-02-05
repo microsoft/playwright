@@ -105,6 +105,10 @@ export class WorkerMain extends ProcessRunner {
   override async gracefullyClose() {
     try {
       await this._stop();
+      if (!this._config) {
+        // We never set anything up and we can crash on attempting cleanup
+        return;
+      }
       // Ignore top-level errors, they are already inside TestInfo.errors.
       const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {});
       const runnable = { type: 'teardown' } as const;
@@ -190,15 +194,19 @@ export class WorkerMain extends ProcessRunner {
     if (this._config)
       return;
 
-    this._config = await deserializeConfig(this._params.config);
-    this._project = this._config.projects.find(p => p.id === this._params.projectId)!;
+    const config = await deserializeConfig(this._params.config);
+    const project = config.projects.find(p => p.id === this._params.projectId);
+    if (!project)
+      throw new Error(`Project "${this._params.projectId}" not found in the worker process. Make sure project name does not change.`);
+    this._config = config;
+    this._project = project;
     this._poolBuilder = PoolBuilder.createForWorker(this._project);
   }
 
   async runTestGroup(runPayload: RunPayload) {
     this._runFinished = new ManualPromise<void>();
     const entries = new Map(runPayload.entries.map(e => [e.testId, e]));
-    let fatalUnknownTestIds;
+    let fatalUnknownTestIds: string[] | undefined;
     try {
       await this._loadIfNeeded();
       const fileSuite = await loadTestFile(runPayload.file, this._config.config.rootDir);
