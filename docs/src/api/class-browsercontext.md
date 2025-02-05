@@ -1526,8 +1526,8 @@ Whether to emulate network being offline for the browser context.
           - `unique` <[boolean]>
           - `multiEntry` <[boolean]>
         - `records` <[Array]<[Object]>>
-          - `key` ?<[string]>
-          - `value` <[string]>
+          - `key` ?<[Object]>
+          - `value` <[Object]>
 
 Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB snapshot.
 

@@ -644,7 +644,7 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       proxy.server = url;
     }
     if (options.storageState) {
-      this._origins = options.storageState.origins;
+      this._origins = options.storageState.origins?.map(origin => ({ indexedDB: [], ...origin }));
       this._cookieStore.addCookies(options.storageState.cookies || []);
     }
     verifyClientCertificates(options.clientCertificates);

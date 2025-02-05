@@ -342,18 +342,15 @@ it('should support IndexedDB', async ({ page, server, contextFactory }) => {
               keyPath: 'taskTitle',
               records: [
                 {
-                  value: JSON.stringify({
-                    o: [
-                      { k: 'taskTitle', v: 'Pet the cat' },
-                      { k: 'hours', v: '1' },
-                      { k: 'minutes', v: '1' },
-                      { k: 'day', v: '01' },
-                      { k: 'month', v: 'January' },
-                      { k: 'year', v: '2025' },
-                      { k: 'notified', v: 'no' }
-                    ],
-                    id: 1
-                  }),
+                  value: {
+                    day: '01',
+                    hours: '1',
+                    minutes: '1',
+                    month: 'January',
+                    notified: 'no',
+                    taskTitle: 'Pet the cat',
+                    year: '2025',
+                  },
                 },
               ],
               indexes: [

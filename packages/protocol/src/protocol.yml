@@ -235,14 +235,16 @@ IndexedDBDatabase:
           name: string
           autoIncrement: boolean
           keyPath: string?
-          keyPathArray: string[]?
+          keyPathArray:
+            type: array?
+            items: string
           records:
             type: array
             items:
               type: object
               properties:
-                key: string?
-                value: string
+                key: json?
+                value: json
           indexes:
             type: array
             items:
@@ -250,11 +252,13 @@ IndexedDBDatabase:
               properties:
                 name: string
                 keyPath: string?
-                keyPathArray: string[]?
+                keyPathArray:
+                  type: array?
+                  items: string
                 multiEntry: boolean
                 unique: boolean
 
-OriginStorage:
+SetOriginStorage:
   type: object
   properties:
     origin: string
@@ -265,7 +269,7 @@ OriginStorage:
       type: array?
       items: IndexedDBDatabase
 
-OriginStorageWithRequiredIndexedDB:
+OriginStorage:
   type: object
   properties:
     origin: string
@@ -774,7 +778,7 @@ Playwright:
               items: NetworkCookie
             origins:
               type: array?
-              items: OriginStorage
+              items: SetOriginStorage
         tracesDir: string?
 
       returns:
@@ -1008,7 +1012,7 @@ Browser:
               items: SetNetworkCookie
             origins:
               type: array?
-              items: OriginStorage
+              items: SetOriginStorage
       returns:
         context: BrowserContext
 
@@ -1030,7 +1034,7 @@ Browser:
               items: SetNetworkCookie
             origins:
               type: array?
-              items: OriginStorage
+              items: SetOriginStorage
       returns:
         context: BrowserContext
 
@@ -1228,7 +1232,7 @@ BrowserContext:
           items: NetworkCookie
         origins:
           type: array
-          items: OriginStorageWithRequiredIndexedDB
+          items: OriginStorage
 
     pause:
       experimental: True

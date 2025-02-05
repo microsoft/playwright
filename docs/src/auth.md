@@ -268,7 +268,7 @@ in only once and then skip the log in step for all of the tests.
 
 Web apps use cookie-based or token-based authentication, where authenticated state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies), in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage) or in [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API). Playwright provides [`method: BrowserContext.storageState`] method that can be used to retrieve storage state from authenticated contexts and then create new contexts with prepopulated state.
 
-Cookies, local storage and IndexedDB state can be used across different browsers. They depend on your application's authentication model: some apps might require both cookies and local storage or IndexedDB.
+Cookies, local storage and IndexedDB state can be used across different browsers. They depend on your application's authentication model which may require some combination of cookies, local storage or IndexedDB.
 
 The following code snippet retrieves state from an authenticated context and creates a new context with that state.
 

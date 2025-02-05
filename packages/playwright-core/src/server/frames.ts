@@ -1717,7 +1717,7 @@ export class Frame extends SdkObject {
     }, { source, arg });
   }
 
-  async resetStorageForCurrentOriginBestEffort(newStorage: channels.OriginStorage | undefined) {
+  async resetStorageForCurrentOriginBestEffort(newStorage: channels.SetOriginStorage | undefined) {
     const context = await this._utilityContext();
     await context.evaluate(async ({ ls }) => {
       // Clean DOMStorage.

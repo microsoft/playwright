@@ -39,13 +39,9 @@ export type StorageState = {
   cookies: channels.NetworkCookie[],
   origins: channels.OriginStorage[]
 };
-export type StorageStateWithIndexedDB = {
-  cookies: channels.NetworkCookie[],
-  origins: channels.OriginStorageWithRequiredIndexedDB[]
-};
 export type SetStorageState = {
   cookies?: channels.SetNetworkCookie[],
-  origins?: channels.OriginStorage[]
+  origins?: channels.SetOriginStorage[]
 };
 
 export type LifecycleEvent = channels.LifecycleEvent;

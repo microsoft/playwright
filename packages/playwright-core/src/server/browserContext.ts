@@ -43,7 +43,6 @@ import type { Artifact } from './artifact';
 import { Clock } from './clock';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { RecorderApp } from './recorder/recorderApp';
-import * as utilitySerializers from './isomorphic/utilityScriptSerializers';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
@@ -574,18 +573,6 @@ export abstract class BrowserContext extends SdkObject {
       };
     }
 
-    function serializeRecords(indexedDBs: channels.IndexedDBDatabase[]) {
-      for (const db of indexedDBs) {
-        for (const store of db.stores) {
-          for (const record of store.records) {
-            if (record.key !== undefined)
-              record.key = JSON.stringify(utilitySerializers.serializeAsCallArgument(record.value, v => ({ fallThrough: v })));
-            record.value = JSON.stringify(utilitySerializers.serializeAsCallArgument(record.value, v => ({ fallThrough: v })));
-          }
-        }
-      }
-    }
-
     // First try collecting storage stage from existing pages.
     for (const page of this.pages()) {
       const origin = page.mainFrame().origin();
@@ -593,9 +580,8 @@ export abstract class BrowserContext extends SdkObject {
         continue;
       try {
         const storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`(${_collectStorageScript.toString()})()`, 'utility');
-        serializeRecords(storage.indexedDB);
         if (storage.localStorage.length || storage.indexedDB?.length)
-          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorageWithRequiredIndexedDB);
+          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorage);
         originsToSave.delete(origin);
       } catch {
         // When failed on the live page, we'll retry on the blank page below.
@@ -614,9 +600,8 @@ export abstract class BrowserContext extends SdkObject {
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
         const storage = await frame.evaluateExpression(`(${_collectStorageScript.toString()})()`, { world: 'utility' });
-        serializeRecords(storage.indexedDB);
         if (storage.localStorage.length || storage.indexedDB.length)
-          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorageWithRequiredIndexedDB);
+          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB } as channels.OriginStorage);
       }
       await page.close(internalMetadata);
     }
@@ -679,16 +664,6 @@ export abstract class BrowserContext extends SdkObject {
         for (const originState of state.origins) {
           const frame = page.mainFrame();
           await frame.goto(metadata, originState.origin);
-
-          for (const dbInfo of (originState.indexedDB || [])) {
-            for (const store of dbInfo.stores) {
-              for (const record of store.records) {
-                if (record.key !== undefined)
-                  record.key = utilitySerializers.parseEvaluationResultValue(JSON.parse(record.key));
-                record.value = utilitySerializers.parseEvaluationResultValue(JSON.parse(record.value));
-              }
-            }
-          }
 
           async function _restoreStorageState(originState: channels.OriginStorage) {
             for (const { name, value } of (originState.localStorage || []))

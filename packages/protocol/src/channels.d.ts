@@ -280,8 +280,8 @@ export type IndexedDBDatabase = {
     keyPath?: string,
     keyPathArray?: string[],
     records: {
-      key?: string,
-      value: string,
+      key?: any,
+      value: any,
     }[],
     indexes: {
       name: string,
@@ -293,13 +293,13 @@ export type IndexedDBDatabase = {
   }[],
 };
 
-export type OriginStorage = {
+export type SetOriginStorage = {
   origin: string,
   localStorage: NameValue[],
   indexedDB?: IndexedDBDatabase[],
 };
 
-export type OriginStorageWithRequiredIndexedDB = {
+export type OriginStorage = {
   origin: string,
   localStorage: NameValue[],
   indexedDB: IndexedDBDatabase[],
@@ -639,7 +639,7 @@ export type PlaywrightNewRequestParams = {
   timeout?: number,
   storageState?: {
     cookies?: NetworkCookie[],
-    origins?: OriginStorage[],
+    origins?: SetOriginStorage[],
   },
   tracesDir?: string,
 };
@@ -670,7 +670,7 @@ export type PlaywrightNewRequestOptions = {
   timeout?: number,
   storageState?: {
     cookies?: NetworkCookie[],
-    origins?: OriginStorage[],
+    origins?: SetOriginStorage[],
   },
   tracesDir?: string,
 };
@@ -1249,7 +1249,7 @@ export type BrowserNewContextParams = {
   },
   storageState?: {
     cookies?: SetNetworkCookie[],
-    origins?: OriginStorage[],
+    origins?: SetOriginStorage[],
   },
 };
 export type BrowserNewContextOptions = {
@@ -1315,7 +1315,7 @@ export type BrowserNewContextOptions = {
   },
   storageState?: {
     cookies?: SetNetworkCookie[],
-    origins?: OriginStorage[],
+    origins?: SetOriginStorage[],
   },
 };
 export type BrowserNewContextResult = {
@@ -1384,7 +1384,7 @@ export type BrowserNewContextForReuseParams = {
   },
   storageState?: {
     cookies?: SetNetworkCookie[],
-    origins?: OriginStorage[],
+    origins?: SetOriginStorage[],
   },
 };
 export type BrowserNewContextForReuseOptions = {
@@ -1450,7 +1450,7 @@ export type BrowserNewContextForReuseOptions = {
   },
   storageState?: {
     cookies?: SetNetworkCookie[],
-    origins?: OriginStorage[],
+    origins?: SetOriginStorage[],
   },
 };
 export type BrowserNewContextForReuseResult = {
@@ -1793,7 +1793,7 @@ export type BrowserContextStorageStateParams = {};
 export type BrowserContextStorageStateOptions = {};
 export type BrowserContextStorageStateResult = {
   cookies: NetworkCookie[],
-  origins: OriginStorageWithRequiredIndexedDB[],
+  origins: OriginStorage[],
 };
 export type BrowserContextPauseParams = {};
 export type BrowserContextPauseOptions = {};

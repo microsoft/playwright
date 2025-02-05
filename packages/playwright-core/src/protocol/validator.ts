@@ -149,26 +149,26 @@ scheme.IndexedDBDatabase = tObject({
     name: tString,
     autoIncrement: tBoolean,
     keyPath: tOptional(tString),
-    keyPathArray: tOptional(tType('string[]')),
+    keyPathArray: tOptional(tArray(tString)),
     records: tArray(tObject({
-      key: tOptional(tString),
-      value: tString,
+      key: tOptional(tAny),
+      value: tAny,
     })),
     indexes: tArray(tObject({
       name: tString,
       keyPath: tOptional(tString),
-      keyPathArray: tOptional(tType('string[]')),
+      keyPathArray: tOptional(tArray(tString)),
       multiEntry: tBoolean,
       unique: tBoolean,
     })),
   })),
 });
-scheme.OriginStorage = tObject({
+scheme.SetOriginStorage = tObject({
   origin: tString,
   localStorage: tArray(tType('NameValue')),
   indexedDB: tOptional(tArray(tType('IndexedDBDatabase'))),
 });
-scheme.OriginStorageWithRequiredIndexedDB = tObject({
+scheme.OriginStorage = tObject({
   origin: tString,
   localStorage: tArray(tType('NameValue')),
   indexedDB: tArray(tType('IndexedDBDatabase')),
@@ -388,7 +388,7 @@ scheme.PlaywrightNewRequestParams = tObject({
   timeout: tOptional(tNumber),
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('NetworkCookie'))),
-    origins: tOptional(tArray(tType('OriginStorage'))),
+    origins: tOptional(tArray(tType('SetOriginStorage'))),
   })),
   tracesDir: tOptional(tString),
 });
@@ -714,7 +714,7 @@ scheme.BrowserNewContextParams = tObject({
   })),
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('SetNetworkCookie'))),
-    origins: tOptional(tArray(tType('OriginStorage'))),
+    origins: tOptional(tArray(tType('SetOriginStorage'))),
   })),
 });
 scheme.BrowserNewContextResult = tObject({
@@ -783,7 +783,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
   })),
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('SetNetworkCookie'))),
-    origins: tOptional(tArray(tType('OriginStorage'))),
+    origins: tOptional(tArray(tType('SetOriginStorage'))),
   })),
 });
 scheme.BrowserNewContextForReuseResult = tObject({
@@ -990,7 +990,7 @@ scheme.BrowserContextSetOfflineResult = tOptional(tObject({}));
 scheme.BrowserContextStorageStateParams = tOptional(tObject({}));
 scheme.BrowserContextStorageStateResult = tObject({
   cookies: tArray(tType('NetworkCookie')),
-  origins: tArray(tType('OriginStorageWithRequiredIndexedDB')),
+  origins: tArray(tType('OriginStorage')),
 });
 scheme.BrowserContextPauseParams = tOptional(tObject({}));
 scheme.BrowserContextPauseResult = tOptional(tObject({}));

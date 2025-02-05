@@ -279,8 +279,8 @@ Specify environment variables that will be visible to the browser. Defaults to `
           - `unique` <[boolean]>
           - `multiEntry` <[boolean]>
         - `records` <[Array]<[Object]>>
-          - `key` ?<[string]> opaque key, only defined if stores uses out-of-line keys
-          - `value` <[string]> opaque value
+          - `key` ?<[Object]>
+          - `value` <[Object]>
 
 Learn more about [storage state and auth](../auth.md).
 

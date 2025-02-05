@@ -9330,9 +9330,9 @@ export interface BrowserContext {
           }>;
 
           records: Array<{
-            key?: string;
+            key?: Object;
 
-            value: string;
+            value: Object;
           }>;
         }>;
       }>;
@@ -10132,15 +10132,9 @@ export interface Browser {
             }>;
 
             records: Array<{
-              /**
-               * opaque key, only defined if stores uses out-of-line keys
-               */
-              key?: string;
+              key?: Object;
 
-              /**
-               * opaque value
-               */
-              value: string;
+              value: Object;
             }>;
           }>;
         }>;
@@ -18478,6 +18472,40 @@ export interface APIRequestContext {
 
         value: string;
       }>;
+
+      indexedDB?: Array<{
+        name: string;
+
+        version: number;
+
+        stores: Array<{
+          name: string;
+
+          keyPath?: string;
+
+          keyPathArray?: Array<string>;
+
+          autoIncrement: boolean;
+
+          indexes: Array<{
+            name: string;
+
+            keyPath?: string;
+
+            keyPathArray?: Array<string>;
+
+            unique: boolean;
+
+            multiEntry: boolean;
+          }>;
+
+          records: Array<{
+            key?: Object;
+
+            value: Object;
+          }>;
+        }>;
+      }>;
     }>;
   }>;
 
@@ -22348,15 +22376,9 @@ export interface BrowserContextOptions {
           }>;
 
           records: Array<{
-            /**
-             * opaque key, only defined if stores uses out-of-line keys
-             */
-            key?: string;
+            key?: Object;
 
-            /**
-             * opaque value
-             */
-            value: string;
+            value: Object;
           }>;
         }>;
       }>;
