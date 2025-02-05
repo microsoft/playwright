@@ -80,7 +80,6 @@ test.afterEach(() => {
 });
 
 test('click should not leak', async ({ page, toImpl }) => {
-  const start = Date.now();
   await page.setContent(`
     <button>static button 1</button>
     <button>static button 2</button>
@@ -103,7 +102,6 @@ test('click should not leak', async ({ page, toImpl }) => {
 
   expect(leakedJSHandles()).toBeFalsy();
   await checkWeakRefs(toImpl(page), 2, 25);
-  console.log('click should not leak', Date.now() - start);
 });
 
 test('fill should not leak', async ({ page, mode, toImpl }) => {
