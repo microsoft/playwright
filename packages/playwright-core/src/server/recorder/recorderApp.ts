@@ -39,6 +39,7 @@ export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
   async setSources(sources: Source[]): Promise<void> {}
   async setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void> {}
+  async setBasePageURL(url: string): Promise<void> {}
 }
 
 export class RecorderApp extends EventEmitter implements IRecorderApp {
@@ -156,6 +157,12 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
   }
 
   async setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void> {
+  }
+
+  async setBasePageURL(url: string): Promise<void> {
+    await this._page.mainFrame().evaluateExpression(((url: string) => {
+      window.playwrightSetBasePageURL(url);
+    }).toString(), { isFunction: true }, url).catch(() => {});
   }
 
   async elementPicked(elementInfo: ElementInfo, userGesture?: boolean): Promise<void> {

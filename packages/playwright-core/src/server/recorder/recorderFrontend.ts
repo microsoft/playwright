@@ -34,6 +34,7 @@ export interface IRecorderApp extends EventEmitter {
   updateCallLogs(callLogs: CallLog[]): Promise<void>;
   setSources(sources: Source[]): Promise<void>;
   setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void>;
+  setBasePageURL(url: string): Promise<void>;
 }
 
 export type IRecorderAppFactory = (recorder: IRecorder) => Promise<IRecorderApp>;

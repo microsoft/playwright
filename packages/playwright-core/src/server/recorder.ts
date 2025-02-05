@@ -32,6 +32,7 @@ import type * as actions from '@recorder/actions';
 import { stringifySelector } from '../utils/isomorphic/selectorParser';
 import type { Frame } from './frames';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
+import { Page } from './page';
 
 const recorderSymbol = Symbol('recorderSymbol');
 
@@ -148,6 +149,31 @@ export class Recorder implements InstrumentationListener, IRecorder {
       this._context.instrumentation.removeListener(this);
       this._recorderApp?.close().catch(() => {});
     });
+
+    // Report the URL of the first page in the context
+    let primaryPage: Page | undefined;
+    const registerNavigationListener = (page: Page) => {
+      if (primaryPage === undefined) {
+        primaryPage = page;
+        recorderApp.setBasePageURL(page.mainFrame().url());
+      }
+
+      page.on(Page.Events.InternalFrameNavigatedToNewDocument, (frame: Frame) => {
+        if (page === primaryPage && page.mainFrame() === frame)
+          recorderApp.setBasePageURL(frame.url());
+      });
+      page.on(Page.Events.Close, () => {
+        if (page === primaryPage) {
+          primaryPage = this._context.pages()[0];
+          if (primaryPage)
+            recorderApp.setBasePageURL(primaryPage.mainFrame().url());
+        }
+      });
+    };
+    for (const page of this._context.pages())
+      registerNavigationListener(page);
+    this._context.on(BrowserContext.Events.Page, registerNavigationListener);
+
     this._contextRecorder.on(ContextRecorder.Events.Change, (data: { sources: Source[], actions: actions.ActionInContext[] }) => {
       this._recorderSources = data.sources;
       recorderApp.setActions(data.actions, data.sources);

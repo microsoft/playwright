@@ -26,22 +26,31 @@ export const Main: React.FC = ({
   const [log, setLog] = React.useState(new Map<string, CallLog>());
   const [mode, setMode] = React.useState<Mode>('none');
 
-  window.playwrightSetMode = setMode;
-  window.playwrightSetSources = React.useCallback((sources: Source[]) => {
-    setSources(sources);
-    window.playwrightSourcesEchoForTest = sources;
+  React.useLayoutEffect(() => {
+    window.playwrightSetMode = setMode;
+    window.playwrightSetSources = (sources: Source[]) => {
+      setSources(sources);
+      window.playwrightSourcesEchoForTest = sources;
+    };
+    window.playwrightSetPaused = setPaused;
+    window.playwrightUpdateLogs = callLogs => {
+      setLog(log => {
+        const newLog = new Map<string, CallLog>(log);
+        for (const callLog of callLogs) {
+          callLog.reveal = !log.has(callLog.id);
+          newLog.set(callLog.id, callLog);
+        }
+        return newLog;
+      });
+    };
+    window.playwrightSetBasePageURL = (url: string) => {
+      if (url)
+        document.title = `Playwright Inspector - ${url}`;
+      else
+        document.title = `Playwright Inspector`;
+    };
   }, []);
-  window.playwrightSetPaused = setPaused;
-  window.playwrightUpdateLogs = callLogs => {
-    setLog(log => {
-      const newLog = new Map<string, CallLog>(log);
-      for (const callLog of callLogs) {
-        callLog.reveal = !log.has(callLog.id);
-        newLog.set(callLog.id, callLog);
-      }
-      return newLog;
-    });
-  };
+
 
   return <Recorder sources={sources} paused={paused} log={log} mode={mode} />;
 };
