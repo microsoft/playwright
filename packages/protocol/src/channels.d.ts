@@ -281,7 +281,9 @@ export type IndexedDBDatabase = {
     keyPathArray?: string[],
     records: {
       key?: any,
-      value: any,
+      keyEncoded?: any,
+      value?: any,
+      valueEncoded?: any,
     }[],
     indexes: {
       name: string,

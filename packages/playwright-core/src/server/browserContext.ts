@@ -44,6 +44,7 @@ import { Clock } from './clock';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { RecorderApp } from './recorder/recorderApp';
 import * as storageScript from './storageScript';
+import * as utilityScriptSerializers from './isomorphic/utilityScriptSerializers';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {
@@ -520,7 +521,7 @@ export abstract class BrowserContext extends SdkObject {
       if (!origin || !originsToSave.has(origin))
         continue;
       try {
-        const storage: storageScript.Storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`(${storageScript.collect})()`, 'utility');
+        const storage: storageScript.Storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`(${storageScript.collect})((${utilityScriptSerializers.source})())`, 'utility');
         if (storage.localStorage.length || storage.indexedDB.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
         originsToSave.delete(origin);
@@ -540,7 +541,7 @@ export abstract class BrowserContext extends SdkObject {
       for (const origin of originsToSave) {
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
-        const storage: Awaited<ReturnType<typeof storageScript.collect>> = await frame.evaluateExpression(`(${storageScript.collect})()`, { world: 'utility' });
+        const storage: Awaited<ReturnType<typeof storageScript.collect>> = await frame.evaluateExpression(`(${storageScript.collect})((${utilityScriptSerializers.source})())`, { world: 'utility' });
         if (storage.localStorage.length || storage.indexedDB.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
       }
@@ -605,7 +606,7 @@ export abstract class BrowserContext extends SdkObject {
         for (const originState of state.origins) {
           const frame = page.mainFrame();
           await frame.goto(metadata, originState.origin);
-          await frame.evaluateExpression(storageScript.restore.toString(), { isFunction: true, world: 'utility' }, originState);
+          await frame.evaluateExpression(`(${storageScript.restore})(${JSON.stringify(originState)}, (${utilityScriptSerializers.source})())`, { world: 'utility' });
         }
         await page.close(internalMetadata);
       }

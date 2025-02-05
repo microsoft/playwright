@@ -9338,7 +9338,17 @@ export interface BrowserContext {
           records: Array<{
             key?: Object;
 
+            /**
+             * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
+             */
+            keyEncoded?: Object;
+
             value: Object;
+
+            /**
+             * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
+             */
+            valueEncoded?: Object;
           }>;
         }>;
       }>;

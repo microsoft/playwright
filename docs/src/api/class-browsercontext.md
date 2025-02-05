@@ -1527,7 +1527,9 @@ Whether to emulate network being offline for the browser context.
           - `multiEntry` <[boolean]>
         - `records` <[Array]<[Object]>>
           - `key` ?<[Object]>
+          - `keyEncoded` ?<[Object]> if `key` is not JSON-serializable, this contains an encoded version that preserves types.
           - `value` <[Object]>
+          - `valueEncoded` ?<[Object]> if `value` is not JSON-serializable, this contains an encoded version that preserves types.
 
 Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB snapshot.
 
