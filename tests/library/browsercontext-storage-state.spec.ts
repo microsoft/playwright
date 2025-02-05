@@ -40,12 +40,14 @@ it('should capture local storage', async ({ contextFactory }) => {
       name: 'name2',
       value: 'value2'
     }],
+    indexedDB: [],
   }, {
     origin: 'https://www.example.com',
     localStorage: [{
       name: 'name1',
       value: 'value1'
     }],
+    indexedDB: [],
   }]);
 });
 
