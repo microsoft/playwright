@@ -64,6 +64,7 @@ export class APIRequest implements api.APIRequest {
   async newContext(options: NewContextOptions = {}): Promise<APIRequestContext> {
     options = {
       ...this._playwright._defaultContextOptions,
+      timeout: this._playwright._defaultContextTimeout,
       ...options,
     };
     const storageState = typeof options.storageState === 'string' ?
