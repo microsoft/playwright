@@ -18,6 +18,7 @@ import { createGuid, spawnAsync } from 'playwright-core/lib/utils';
 import type { TestRunnerPlugin } from './';
 import type { FullConfig } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
+import type { GitCommitInfo } from '../isomorphic/types';
 
 const GIT_OPERATIONS_TIMEOUT_MS = 1500;
 
@@ -31,38 +32,23 @@ export const gitCommitInfo = (options?: GitCommitInfoPluginOptions): TestRunnerP
     name: 'playwright:git-commit-info',
 
     setup: async (config: FullConfig, configDir: string) => {
-      const info = {
-        ...linksFromEnv(),
-        ...options?.info ? options.info : await gitStatusFromCLI(options?.directory || configDir),
-        timestamp: Date.now(),
-      };
-      // Normalize dates
-      const timestamp = info['revision.timestamp'];
-      if (timestamp instanceof Date)
-        info['revision.timestamp'] = timestamp.getTime();
+      const fromEnv = linksFromEnv();
+      const fromCLI = await gitStatusFromCLI(options?.directory || configDir);
+      const info = { ...fromEnv, ...fromCLI };
+      if (info['revision.timestamp'] instanceof Date)
+        info['revision.timestamp'] = info['revision.timestamp'].getTime();
 
       config.metadata = config.metadata || {};
-      Object.assign(config.metadata, info);
+      config.metadata['git.commit.info'] = info;
     },
   };
 };
 
-export interface GitCommitInfoPluginOptions {
-    directory?: string;
-    info?: Info;
+interface GitCommitInfoPluginOptions {
+  directory?: string;
 }
 
-export interface Info {
-  'revision.id'?: string;
-  'revision.author'?: string;
-  'revision.email'?: string;
-  'revision.subject'?: string;
-  'revision.timestamp'?: number | Date;
-  'revision.link'?: string;
-  'ci.link'?: string;
-}
-
-const linksFromEnv = (): Pick<Info, 'revision.link' | 'ci.link'> => {
+function linksFromEnv(): Pick<GitCommitInfo, 'revision.link' | 'ci.link'> {
   const out: { 'revision.link'?: string; 'ci.link'?: string; } = {};
   // Jenkins: https://www.jenkins.io/doc/book/pipeline/jenkinsfile/#using-environment-variables
   if (process.env.BUILD_URL)
@@ -78,9 +64,9 @@ const linksFromEnv = (): Pick<Info, 'revision.link' | 'ci.link'> => {
   if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID)
     out['ci.link'] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
   return out;
-};
+}
 
-export const gitStatusFromCLI = async (gitDir: string): Promise<Info | undefined> => {
+async function gitStatusFromCLI(gitDir: string): Promise<GitCommitInfo | undefined> {
   const separator = `:${createGuid().slice(0, 4)}:`;
   const { code, stdout } = await spawnAsync(
       'git',
@@ -101,4 +87,4 @@ export const gitStatusFromCLI = async (gitDir: string): Promise<Info | undefined
     'revision.subject': subject,
     'revision.timestamp': timestamp,
   };
-};
+}

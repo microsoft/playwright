@@ -351,7 +351,26 @@ it('should preserve local storage on import/export of storage state', async ({ p
         localStorage: [{
           name: 'name1',
           value: 'value1'
-        }]
+        }],
+        indexedDB: [
+          {
+            name: 'db',
+            version: 5,
+            stores: [
+              {
+                name: 'store',
+                keyPath: 'id',
+                autoIncrement: false,
+                indexes: [],
+                records: [
+                  {
+                    value: { id: 'foo', name: 'John Doe' }
+                  }
+                ],
+              }
+            ]
+          }
+        ],
       },
     ]
   };

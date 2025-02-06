@@ -43,7 +43,7 @@ export class TraceModel {
     const ordinals: string[] = [];
     let hasSource = false;
     for (const entryName of await this._backend.entryNames()) {
-      const match = entryName.match(/(.+)\.trace/);
+      const match = entryName.match(/(.+)\.trace$/);
       if (match)
         ordinals.push(match[1] || '');
       if (entryName.includes('src@'))

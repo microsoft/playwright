@@ -34,7 +34,7 @@ import { detectChangedTestFiles } from './vcs';
 import type { InternalReporter } from '../reporters/internalReporter';
 import { cacheDir } from '../transform/compilationCache';
 import type { FullResult } from '../../types/testReporter';
-import { applySuggestedRebaselines } from './rebase';
+import { applySuggestedRebaselines, clearSuggestedRebaselines } from './rebase';
 
 const readDirAsync = promisify(fs.readdir);
 
@@ -284,6 +284,9 @@ export function createLoadTask(mode: 'out-of-process' | 'in-process', options: {
 export function createApplyRebaselinesTask(): Task<TestRun> {
   return {
     title: 'apply rebaselines',
+    setup: async () => {
+      clearSuggestedRebaselines();
+    },
     teardown: async ({ config, reporter }) => {
       await applySuggestedRebaselines(config, reporter);
     },

@@ -2566,6 +2566,12 @@ export interface Page {
     colorScheme?: null|"light"|"dark"|"no-preference";
 
     /**
+     * Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. Passing `null`
+     * disables contrast emulation.
+     */
+    contrast?: null|"no-preference"|"more";
+
+    /**
      * Emulates `'forced-colors'` media feature, supported values are `'active'` and `'none'`. Passing `null` disables
      * forced colors emulation.
      */
@@ -9260,7 +9266,8 @@ export interface BrowserContext {
   setOffline(offline: boolean): Promise<void>;
 
   /**
-   * Returns storage state for this browser context, contains current cookies and local storage snapshot.
+   * Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB
+   * snapshot.
    * @param options
    */
   storageState(options?: {
@@ -9300,6 +9307,50 @@ export interface BrowserContext {
         name: string;
 
         value: string;
+      }>;
+
+      indexedDB: Array<{
+        name: string;
+
+        version: number;
+
+        stores: Array<{
+          name: string;
+
+          keyPath?: string;
+
+          keyPathArray?: Array<string>;
+
+          autoIncrement: boolean;
+
+          indexes: Array<{
+            name: string;
+
+            keyPath?: string;
+
+            keyPathArray?: Array<string>;
+
+            unique: boolean;
+
+            multiEntry: boolean;
+          }>;
+
+          records: Array<{
+            key?: Object;
+
+            /**
+             * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
+             */
+            keyEncoded?: Object;
+
+            value: Object;
+
+            /**
+             * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
+             */
+            valueEncoded?: Object;
+          }>;
+        }>;
       }>;
     }>;
   }>;
@@ -9771,6 +9822,13 @@ export interface Browser {
     colorScheme?: null|"light"|"dark"|"no-preference";
 
     /**
+     * Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+     * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+     */
+    contrast?: null|"no-preference"|"more";
+
+    /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
      * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
      */
@@ -10049,16 +10107,69 @@ export interface Browser {
         sameSite: "Strict"|"Lax"|"None";
       }>;
 
-      /**
-       * localStorage to set for context
-       */
       origins: Array<{
         origin: string;
 
+        /**
+         * localStorage to set for context
+         */
         localStorage: Array<{
           name: string;
 
           value: string;
+        }>;
+
+        /**
+         * indexedDB to set for context
+         */
+        indexedDB?: Array<{
+          /**
+           * database name
+           */
+          name: string;
+
+          /**
+           * database version
+           */
+          version: number;
+
+          stores: Array<{
+            name: string;
+
+            keyPath?: string;
+
+            keyPathArray?: Array<string>;
+
+            autoIncrement: boolean;
+
+            indexes: Array<{
+              name: string;
+
+              keyPath?: string;
+
+              keyPathArray?: Array<string>;
+
+              unique: boolean;
+
+              multiEntry: boolean;
+            }>;
+
+            records: Array<{
+              key?: Object;
+
+              /**
+               * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
+               */
+              keyEncoded?: Object;
+
+              value: Object;
+
+              /**
+               * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
+               */
+              valueEncoded?: Object;
+            }>;
+          }>;
         }>;
       }>;
     };
@@ -12417,7 +12528,7 @@ export interface Locator {
 
   /**
    * Captures the aria snapshot of the given element. Read more about [aria snapshots](https://playwright.dev/docs/aria-snapshots) and
-   * [expect(locator).toMatchAriaSnapshot(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-match-aria-snapshot-1)
+   * [expect(locator).toMatchAriaSnapshot(expected[, options])](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-match-aria-snapshot)
    * for the corresponding assertion.
    *
    * **Usage**
@@ -14554,6 +14665,11 @@ export interface BrowserType<Unused = {}> {
    *
    * **NOTE** Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
    *
+   * **NOTE** This connection is significantly lower fidelity than the Playwright protocol connection via
+   * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
+   * If you are experiencing issues or attempting to use advanced functionality, you probably want to use
+   * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
+   *
    * **Usage**
    *
    * ```js
@@ -14579,6 +14695,11 @@ export interface BrowserType<Unused = {}> {
    *
    * **NOTE** Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
    *
+   * **NOTE** This connection is significantly lower fidelity than the Playwright protocol connection via
+   * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
+   * If you are experiencing issues or attempting to use advanced functionality, you probably want to use
+   * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
+   *
    * **Usage**
    *
    * ```js
@@ -14593,10 +14714,12 @@ export interface BrowserType<Unused = {}> {
    */
   connectOverCDP(options: ConnectOverCDPOptions & { wsEndpoint?: string }): Promise<Browser>;
   /**
-   * This method attaches Playwright to an existing browser instance. When connecting to another browser launched via
-   * `BrowserType.launchServer` in Node.js, the major and minor version needs to match the client version (1.2.3 → is
-   * compatible with 1.2.x).
-   * @param wsEndpoint A browser websocket endpoint to connect to.
+   * This method attaches Playwright to an existing browser instance created via `BrowserType.launchServer` in Node.js.
+   *
+   * **NOTE** The major and minor version of the Playwright instance that connects needs to match the version of
+   * Playwright that launches the browser (1.2.3 → is compatible with 1.2.x).
+   *
+   * @param wsEndpoint A Playwright browser websocket endpoint to connect to. You obtain this endpoint via `BrowserServer.wsEndpoint`.
    * @param options
    */
   connect(wsEndpoint: string, options?: ConnectOptions): Promise<Browser>;
@@ -14607,10 +14730,12 @@ export interface BrowserType<Unused = {}> {
    * @deprecated
    */
   /**
-   * This method attaches Playwright to an existing browser instance. When connecting to another browser launched via
-   * `BrowserType.launchServer` in Node.js, the major and minor version needs to match the client version (1.2.3 → is
-   * compatible with 1.2.x).
-   * @param wsEndpoint A browser websocket endpoint to connect to.
+   * This method attaches Playwright to an existing browser instance created via `BrowserType.launchServer` in Node.js.
+   *
+   * **NOTE** The major and minor version of the Playwright instance that connects needs to match the version of
+   * Playwright that launches the browser (1.2.3 → is compatible with 1.2.x).
+   *
+   * @param wsEndpoint A Playwright browser websocket endpoint to connect to. You obtain this endpoint via `BrowserServer.wsEndpoint`.
    * @param options
    */
   connect(options: ConnectOptions & { wsEndpoint?: string }): Promise<Browser>;
@@ -14782,6 +14907,13 @@ export interface BrowserType<Unused = {}> {
      * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
      */
     colorScheme?: null|"light"|"dark"|"no-preference";
+
+    /**
+     * Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+     * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+     */
+    contrast?: null|"no-preference"|"more";
 
     /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
@@ -16596,6 +16728,13 @@ export interface AndroidDevice {
     colorScheme?: null|"light"|"dark"|"no-preference";
 
     /**
+     * Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+     * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+     */
+    contrast?: null|"no-preference"|"more";
+
+    /**
      * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
      * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
      */
@@ -17567,6 +17706,59 @@ export interface APIRequest {
 
           value: string;
         }>;
+
+        /**
+         * indexedDB to set for context
+         */
+        indexedDB?: Array<{
+          /**
+           * database name
+           */
+          name: string;
+
+          /**
+           * database version
+           */
+          version: number;
+
+          stores: Array<{
+            name: string;
+
+            keyPath?: string;
+
+            keyPathArray?: Array<string>;
+
+            autoIncrement: boolean;
+
+            indexes: Array<{
+              name: string;
+
+              keyPath?: string;
+
+              keyPathArray?: Array<string>;
+
+              unique: boolean;
+
+              multiEntry: boolean;
+            }>;
+
+            records: Array<{
+              key?: Object;
+
+              /**
+               * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
+               */
+              keyEncoded?: Object;
+
+              value: Object;
+
+              /**
+               * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
+               */
+              valueEncoded?: Object;
+            }>;
+          }>;
+        }>;
       }>;
     };
 
@@ -18375,6 +18567,50 @@ export interface APIRequestContext {
         name: string;
 
         value: string;
+      }>;
+
+      indexedDB: Array<{
+        name: string;
+
+        version: number;
+
+        stores: Array<{
+          name: string;
+
+          keyPath?: string;
+
+          keyPathArray?: Array<string>;
+
+          autoIncrement: boolean;
+
+          indexes: Array<{
+            name: string;
+
+            keyPath?: string;
+
+            keyPathArray?: Array<string>;
+
+            unique: boolean;
+
+            multiEntry: boolean;
+          }>;
+
+          records: Array<{
+            key?: Object;
+
+            /**
+             * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
+             */
+            keyEncoded?: Object;
+
+            value: Object;
+
+            /**
+             * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
+             */
+            valueEncoded?: Object;
+          }>;
+        }>;
       }>;
     }>;
   }>;
@@ -21287,8 +21523,11 @@ export interface WebError {
 }
 
 /**
- * The [WebSocket](https://playwright.dev/docs/api/class-websocket) class represents websocket connections in the
- * page.
+ * The [WebSocket](https://playwright.dev/docs/api/class-websocket) class represents WebSocket connections within a
+ * page. It provides the ability to inspect and manipulate the data being transmitted and received.
+ *
+ * If you want to intercept or modify WebSocket frames, consider using
+ * [WebSocketRoute](https://playwright.dev/docs/api/class-websocketroute).
  */
 export interface WebSocket {
   /**
@@ -21953,6 +22192,13 @@ export interface BrowserContextOptions {
   colorScheme?: null|"light"|"dark"|"no-preference";
 
   /**
+   * Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
+   */
+  contrast?: null|"no-preference"|"more";
+
+  /**
    * Specify device scale factor (can be thought of as dpr). Defaults to `1`. Learn more about
    * [emulating devices with device scale factor](https://playwright.dev/docs/emulation#devices).
    */
@@ -22198,16 +22444,69 @@ export interface BrowserContextOptions {
       sameSite: "Strict"|"Lax"|"None";
     }>;
 
-    /**
-     * localStorage to set for context
-     */
     origins: Array<{
       origin: string;
 
+      /**
+       * localStorage to set for context
+       */
       localStorage: Array<{
         name: string;
 
         value: string;
+      }>;
+
+      /**
+       * indexedDB to set for context
+       */
+      indexedDB?: Array<{
+        /**
+         * database name
+         */
+        name: string;
+
+        /**
+         * database version
+         */
+        version: number;
+
+        stores: Array<{
+          name: string;
+
+          keyPath?: string;
+
+          keyPathArray?: Array<string>;
+
+          autoIncrement: boolean;
+
+          indexes: Array<{
+            name: string;
+
+            keyPath?: string;
+
+            keyPathArray?: Array<string>;
+
+            unique: boolean;
+
+            multiEntry: boolean;
+          }>;
+
+          records: Array<{
+            key?: Object;
+
+            /**
+             * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
+             */
+            keyEncoded?: Object;
+
+            value: Object;
+
+            /**
+             * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
+             */
+            valueEncoded?: Object;
+          }>;
+        }>;
       }>;
     }>;
   };

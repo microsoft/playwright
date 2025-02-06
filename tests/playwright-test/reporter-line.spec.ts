@@ -125,7 +125,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
             });
           });
         `,
-      }, { reporter: 'line' });
+      }, { reporter: 'line' }, { PLAYWRIGHT_FORCE_TTY: '1' });
       const text = result.output;
       expect(text).toContain('[1/1] a.test.ts:3:15 › passes › outer › inner');
       expect(result.exitCode).toBe(0);

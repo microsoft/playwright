@@ -109,6 +109,7 @@ export type JsonTestStepEnd = {
   duration: number;
   error?: reporterTypes.TestError;
   attachments?: number[]; // index of JsonTestResultEnd.attachments
+  annotations?: Annotation[];
 };
 
 export type JsonFullResult = {
@@ -545,6 +546,10 @@ class TeleTestStep implements reporterTypes.TestStep {
 
   get attachments() {
     return this._endPayload?.attachments?.map(index => this._result.attachments[index]) ?? [];
+  }
+
+  get annotations() {
+    return this._endPayload?.annotations ?? [];
   }
 }
 

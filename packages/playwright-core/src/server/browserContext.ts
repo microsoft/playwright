@@ -43,6 +43,8 @@ import type { Artifact } from './artifact';
 import { Clock } from './clock';
 import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { RecorderApp } from './recorder/recorderApp';
+import * as storageScript from './storageScript';
+import * as utilityScriptSerializers from './isomorphic/utilityScriptSerializers';
 
 export abstract class BrowserContext extends SdkObject implements network.RequestContext {
   static Events = {
@@ -513,17 +515,17 @@ export abstract class BrowserContext extends SdkObject implements network.Reques
     };
     const originsToSave = new Set(this._origins);
 
+    const collectScript = `(${storageScript.collect})((${utilityScriptSerializers.source})(), ${this._browser.options.name === 'firefox'})`;
+
     // First try collecting storage stage from existing pages.
     for (const page of this.pages()) {
       const origin = page.mainFrame().origin();
       if (!origin || !originsToSave.has(origin))
         continue;
       try {
-        const storage = await page.mainFrame().nonStallingEvaluateInExistingContext(`({
-          localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
-        })`, 'utility');
-        if (storage.localStorage.length)
-          result.origins.push({ origin, localStorage: storage.localStorage } as channels.OriginStorage);
+        const storage: storageScript.Storage = await page.mainFrame().nonStallingEvaluateInExistingContext(collectScript, 'utility');
+        if (storage.localStorage.length || storage.indexedDB.length)
+          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
         originsToSave.delete(origin);
       } catch {
         // When failed on the live page, we'll retry on the blank page below.
@@ -539,15 +541,11 @@ export abstract class BrowserContext extends SdkObject implements network.Reques
         return true;
       });
       for (const origin of originsToSave) {
-        const originStorage: channels.OriginStorage = { origin, localStorage: [] };
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
-        const storage = await frame.evaluateExpression(`({
-          localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
-        })`, { world: 'utility' });
-        originStorage.localStorage = storage.localStorage;
-        if (storage.localStorage.length)
-          result.origins.push(originStorage);
+        const storage: storageScript.Storage = await frame.evaluateExpression(collectScript, { world: 'utility' });
+        if (storage.localStorage.length || storage.indexedDB.length)
+          result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
       }
       await page.close(internalMetadata);
     }
@@ -610,11 +608,7 @@ export abstract class BrowserContext extends SdkObject implements network.Reques
         for (const originState of state.origins) {
           const frame = page.mainFrame();
           await frame.goto(metadata, originState.origin);
-          await frame.evaluateExpression(`
-            originState => {
-              for (const { name, value } of (originState.localStorage || []))
-                localStorage.setItem(name, value);
-            }`, { isFunction: true, world: 'utility' }, originState);
+          await frame.evaluateExpression(`(${storageScript.restore})(${JSON.stringify(originState)}, (${utilityScriptSerializers.source})())`, { world: 'utility' });
         }
         await page.close(internalMetadata);
       }
@@ -762,6 +756,7 @@ const paramsThatAllowContextReuse: (keyof channels.BrowserNewContextForReusePara
   'colorScheme',
   'forcedColors',
   'reducedMotion',
+  'contrast',
   'screen',
   'userAgent',
   'viewport',

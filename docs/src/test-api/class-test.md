@@ -1751,7 +1751,7 @@ Step name.
 
 ### param: Test.step.body
 * since: v1.10
-- `body` <[function]\(\):[Promise]<[any]>>
+- `body` <[function]\([TestStepInfo]\):[Promise]<[any]>>
 
 Step body.
 

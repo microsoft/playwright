@@ -240,6 +240,24 @@ Expected accessible description.
 ### option: LocatorAssertions.NotToHaveAccessibleDescription.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.44
 
+## async method: LocatorAssertions.NotToHaveAccessibleErrorMessage
+* since: v1.50
+* langs: python
+
+The opposite of [`method: LocatorAssertions.toHaveAccessibleErrorMessage`].
+
+### param: LocatorAssertions.NotToHaveAccessibleErrorMessage.errorMessage
+* since: v1.50
+- `errorMessage` <[string]|[RegExp]>
+
+Expected accessible error message.
+
+### option: LocatorAssertions.NotToHaveAccessibleErrorMessage.ignoreCase = %%-assertions-ignore-case-%%
+* since: v1.50
+
+### option: LocatorAssertions.NotToHaveAccessibleErrorMessage.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.50
+
 
 ## async method: LocatorAssertions.NotToHaveAccessibleName
 * since: v1.44
@@ -446,7 +464,7 @@ Expected options currently selected.
 * since: v1.49
 * langs: python
 
-The opposite of [`method: LocatorAssertions.toMatchAriaSnapshot#1`].
+The opposite of [`method: LocatorAssertions.toMatchAriaSnapshot`].
 
 ### param: LocatorAssertions.NotToMatchAriaSnapshot.expected
 * since: v1.49
@@ -2180,7 +2198,7 @@ Expected options currently selected.
 * since: v1.23
 
 
-## async method: LocatorAssertions.toMatchAriaSnapshot#1
+## async method: LocatorAssertions.toMatchAriaSnapshot
 * since: v1.49
 * langs:
   - alias-java: matchesAriaSnapshot
@@ -2229,14 +2247,14 @@ assertThat(page.locator("body")).matchesAriaSnapshot("""
 """);
 ```
 
-### param: LocatorAssertions.toMatchAriaSnapshot#1.expected
+### param: LocatorAssertions.toMatchAriaSnapshot.expected
 * since: v1.49
 - `expected` <string>
 
-### option: LocatorAssertions.toMatchAriaSnapshot#1.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toMatchAriaSnapshot.timeout = %%-js-assertions-timeout-%%
 * since: v1.49
 
-### option: LocatorAssertions.toMatchAriaSnapshot#1.timeout = %%-csharp-java-python-assertions-timeout-%%
+### option: LocatorAssertions.toMatchAriaSnapshot.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.49
 
 ## async method: LocatorAssertions.toMatchAriaSnapshot#2
@@ -2245,27 +2263,13 @@ assertThat(page.locator("body")).matchesAriaSnapshot("""
 
 Asserts that the target element matches the given [accessibility snapshot](../aria-snapshots.md).
 
+Snapshot is stored in a separate `.yml` file in a location configured by `expect.toMatchAriaSnapshot.pathTemplate` and/or `snapshotPathTemplate` properties in the configuration file.
+
 **Usage**
 
 ```js
 await expect(page.locator('body')).toMatchAriaSnapshot();
-await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'snapshot' });
-```
-
-```python async
-await expect(page.locator('body')).to_match_aria_snapshot(path='/path/to/snapshot.yml')
-```
-
-```python sync
-expect(page.locator('body')).to_match_aria_snapshot(path='/path/to/snapshot.yml')
-```
-
-```csharp
-await Expect(page.Locator("body")).ToMatchAriaSnapshotAsync(new { Path = "/path/to/snapshot.yml" });
-```
-
-```java
-assertThat(page.locator("body")).matchesAriaSnapshot(new LocatorAssertions.MatchesAriaSnapshotOptions().setPath("/path/to/snapshot.yml"));
+await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'body.yml' });
 ```
 
 ### option: LocatorAssertions.toMatchAriaSnapshot#2.name
@@ -2273,7 +2277,7 @@ assertThat(page.locator("body")).matchesAriaSnapshot(new LocatorAssertions.Match
 * langs: js
 - `name` <[string]>
 
-Name of the snapshot to store in the snapshot (screenshot) folder corresponding to this test.
+Name of the snapshot to store in the snapshot folder corresponding to this test.
 Generates sequential names if not specified.
 
 ### option: LocatorAssertions.toMatchAriaSnapshot#2.timeout = %%-js-assertions-timeout-%%

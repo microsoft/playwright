@@ -1,7 +1,9 @@
 # class: WebSocket
 * since: v1.8
 
-The [WebSocket] class represents websocket connections in the page.
+The [WebSocket] class represents WebSocket connections within a page. It provides the ability to inspect and manipulate the data being transmitted and received.
+
+If you want to intercept or modify WebSocket frames, consider using [WebSocketRoute].
 
 ## event: WebSocket.close
 * since: v1.8

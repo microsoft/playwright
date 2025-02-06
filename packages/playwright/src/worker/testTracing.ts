@@ -252,19 +252,20 @@ export class TestTracing {
       parentId,
       startTime: monotonicTime(),
       class: 'Test',
-      method: category,
+      method: 'step',
       apiName,
       params: Object.fromEntries(Object.entries(params || {}).map(([name, value]) => [name, generatePreview(value)])),
       stack,
     });
   }
 
-  appendAfterActionForStep(callId: string, error?: SerializedError['error'], attachments: Attachment[] = []) {
+  appendAfterActionForStep(callId: string, error?: SerializedError['error'], attachments: Attachment[] = [], annotations?: trace.AfterActionTraceEventAnnotation[]) {
     this._appendTraceEvent({
       type: 'after',
       callId,
       endTime: monotonicTime(),
       attachments: serializeAttachments(attachments),
+      annotations,
       error,
     });
   }
@@ -277,6 +278,8 @@ export class TestTracing {
 }
 
 function serializeAttachments(attachments: Attachment[]): trace.AfterActionTraceEvent['attachments'] {
+  if (attachments.length === 0)
+    return undefined;
   return attachments.filter(a => a.name !== 'trace').map(a => {
     return {
       name: a.name,
@@ -335,7 +338,7 @@ async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) 
           // Keep the name for test traces so that the last test trace
           // that contains most of the information is kept in the trace.
           // Note the reverse order of the iteration (from new traces to old).
-        } else if (entry.fileName.match(/[\d-]*trace\./)) {
+        } else if (entry.fileName.match(/trace\.[a-z]*$/)) {
           entryName = i + '-' + entry.fileName;
         }
         if (entryNames.has(entryName)) {

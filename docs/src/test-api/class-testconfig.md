@@ -48,6 +48,9 @@ export default defineConfig({
     - `scale` ?<[ScreenshotScale]<"css"|"device">> See [`option: Page.screenshot.scale`] in [`method: Page.screenshot`]. Defaults to `"css"`.
     - `stylePath` ?<[string]|[Array]<[string]>> See [`option: Page.screenshot.style`] in [`method: Page.screenshot`].
     - `threshold` ?<[float]> An acceptable perceived color difference between the same pixel in compared images, ranging from `0` (strict) and `1` (lax). `"pixelmatch"` comparator computes color difference in [YIQ color space](https://en.wikipedia.org/wiki/YIQ) and defaults `threshold` value to `0.2`.
+    - `pathTemplate` ?<[string]> A template controlling location of the screenshots. See [`property: TestConfig.snapshotPathTemplate`] for details.
+  - `toMatchAriaSnapshot` ?<[Object]> Configuration for the [`method: LocatorAssertions.toMatchAriaSnapshot#2`] method.
+    - `pathTemplate` ?<[string]> A template controlling location of the aria snapshots. See [`property: TestConfig.snapshotPathTemplate`] for details.
   - `toMatchSnapshot` ?<[Object]> Configuration for the [`method: SnapshotAssertions.toMatchSnapshot#1`] method.
     - `maxDiffPixels` ?<[int]> An acceptable amount of pixels that could be different, unset by default.
     - `maxDiffPixelRatio` ?<[float]> An acceptable ratio of pixels that are different to the total amount of pixels, between `0` and `1` , unset by default.
@@ -234,7 +237,9 @@ export default defineConfig({
 * since: v1.10
 - type: ?<[Metadata]>
 
-Metadata that will be put directly to the test report serialized as JSON.
+Metadata contains key-value pairs to be included in the report. For example, HTML report will display it as key-value pairs, and JSON report will include metadata serialized as json.
+
+See also [`property: TestConfig.populateGitInfo`] that populates metadata.
 
 **Usage**
 
@@ -242,7 +247,7 @@ Metadata that will be put directly to the test report serialized as JSON.
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  metadata: 'acceptance tests',
+  metadata: { title: 'acceptance tests' },
 });
 ```
 
@@ -325,7 +330,9 @@ This path will serve as the base directory for each test file snapshot directory
 * since: v1.51
 - type: ?<[boolean]>
 
-Whether to populate [`property: TestConfig.metadata`] with Git info. The metadata will automatically appear in the HTML report and is available in Reporter API.
+Whether to populate `'git.commit.info'` field of the [`property: TestConfig.metadata`] with Git commit info and CI/CD information.
+
+This information will appear in the HTML and JSON reports and is available in the Reporter API.
 
 **Usage**
 
@@ -647,7 +654,7 @@ export default defineConfig({
   - `timeout` ?<[int]> How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
   - `gracefulShutdown` ?<[Object]> How to shut down the process. If unspecified, the process group is forcefully `SIGKILL`ed. If set to `{ signal: 'SIGTERM', timeout: 500 }`, the process group is sent a `SIGTERM` signal, followed by `SIGKILL` if it doesn't exit within 500ms. You can also use `SIGINT` as the signal instead. A `0` timeout means no `SIGKILL` will be sent. Windows doesn't support `SIGTERM` and `SIGINT` signals, so this option is ignored on Windows. Note that shutting down a Docker container requires `SIGTERM`.
     - `signal` <["SIGINT"|"SIGTERM"]>
-    - `timeout` <[int]> 
+    - `timeout` <[int]>
   - `url` ?<[string]> The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is checked. Either `port` or `url` should be specified.
 
 Launch a development web server (or multiple) during the tests.

@@ -347,12 +347,14 @@ export class FFPage implements PageDelegate {
     const colorScheme = emulatedMedia.colorScheme === 'no-override' ? undefined : emulatedMedia.colorScheme;
     const reducedMotion = emulatedMedia.reducedMotion === 'no-override' ? undefined : emulatedMedia.reducedMotion;
     const forcedColors = emulatedMedia.forcedColors === 'no-override' ? undefined : emulatedMedia.forcedColors;
+    const contrast = emulatedMedia.contrast === 'no-override' ? undefined : emulatedMedia.contrast;
     await this._session.send('Page.setEmulatedMedia', {
       // Empty string means reset.
       type: emulatedMedia.media === 'no-override' ? '' : emulatedMedia.media,
       colorScheme,
       reducedMotion,
       forcedColors,
+      contrast,
     });
   }
 

@@ -142,9 +142,38 @@ scheme.NameValue = tObject({
   name: tString,
   value: tString,
 });
+scheme.IndexedDBDatabase = tObject({
+  name: tString,
+  version: tNumber,
+  stores: tArray(tObject({
+    name: tString,
+    autoIncrement: tBoolean,
+    keyPath: tOptional(tString),
+    keyPathArray: tOptional(tArray(tString)),
+    records: tArray(tObject({
+      key: tOptional(tAny),
+      keyEncoded: tOptional(tAny),
+      value: tOptional(tAny),
+      valueEncoded: tOptional(tAny),
+    })),
+    indexes: tArray(tObject({
+      name: tString,
+      keyPath: tOptional(tString),
+      keyPathArray: tOptional(tArray(tString)),
+      multiEntry: tBoolean,
+      unique: tBoolean,
+    })),
+  })),
+});
+scheme.SetOriginStorage = tObject({
+  origin: tString,
+  localStorage: tArray(tType('NameValue')),
+  indexedDB: tOptional(tArray(tType('IndexedDBDatabase'))),
+});
 scheme.OriginStorage = tObject({
   origin: tString,
   localStorage: tArray(tType('NameValue')),
+  indexedDB: tArray(tType('IndexedDBDatabase')),
 });
 scheme.SerializedError = tObject({
   error: tOptional(tObject({
@@ -363,7 +392,7 @@ scheme.LocalUtilsNewRequestParams = tObject({
   timeout: tOptional(tNumber),
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('NetworkCookie'))),
-    origins: tOptional(tArray(tType('OriginStorage'))),
+    origins: tOptional(tArray(tType('SetOriginStorage'))),
   })),
   tracesDir: tOptional(tString),
 });
@@ -447,7 +476,7 @@ scheme.PlaywrightNewRequestParams = tObject({
   timeout: tOptional(tNumber),
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('NetworkCookie'))),
-    origins: tOptional(tArray(tType('OriginStorage'))),
+    origins: tOptional(tArray(tType('SetOriginStorage'))),
   })),
   tracesDir: tOptional(tString),
 });
@@ -668,6 +697,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
   forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
   acceptDownloads: tOptional(tEnum(['accept', 'deny', 'internal-browser-default'])),
+  contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
     dir: tString,
@@ -754,6 +784,7 @@ scheme.BrowserNewContextParams = tObject({
   reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
   forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
   acceptDownloads: tOptional(tEnum(['accept', 'deny', 'internal-browser-default'])),
+  contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
     dir: tString,
@@ -773,7 +804,7 @@ scheme.BrowserNewContextParams = tObject({
   })),
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('SetNetworkCookie'))),
-    origins: tOptional(tArray(tType('OriginStorage'))),
+    origins: tOptional(tArray(tType('SetOriginStorage'))),
   })),
   mockingProxyBaseURL: tOptional(tString),
 });
@@ -824,6 +855,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
   reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
   forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
   acceptDownloads: tOptional(tEnum(['accept', 'deny', 'internal-browser-default'])),
+  contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
     dir: tString,
@@ -843,7 +875,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
   })),
   storageState: tOptional(tObject({
     cookies: tOptional(tArray(tType('SetNetworkCookie'))),
-    origins: tOptional(tArray(tType('OriginStorage'))),
+    origins: tOptional(tArray(tType('SetOriginStorage'))),
   })),
 });
 scheme.BrowserNewContextForReuseResult = tObject({
@@ -1184,6 +1216,7 @@ scheme.PageEmulateMediaParams = tObject({
   colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference', 'no-override'])),
   reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
   forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
+  contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
 });
 scheme.PageEmulateMediaResult = tOptional(tObject({}));
 scheme.PageExposeBindingParams = tObject({
@@ -2706,6 +2739,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   reducedMotion: tOptional(tEnum(['reduce', 'no-preference', 'no-override'])),
   forcedColors: tOptional(tEnum(['active', 'none', 'no-override'])),
   acceptDownloads: tOptional(tEnum(['accept', 'deny', 'internal-browser-default'])),
+  contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
     dir: tString,

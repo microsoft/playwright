@@ -50,6 +50,14 @@ Start time of this particular test step.
 
 List of steps inside this step.
 
+## property: TestStep.annotations
+* since: v1.51
+- type: <[Array]<[Object]>>
+  - `type` <[string]> Annotation type, for example `'skip'`.
+  - `description` ?<[string]> Optional description.
+
+The list of annotations applicable to the current test step.
+
 ## property: TestStep.attachments
 * since: v1.50
 - type: <[Array]<[Object]>>

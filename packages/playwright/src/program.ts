@@ -411,7 +411,7 @@ const testOptions: [string, string][] = [
   ['--ui', `Run tests in interactive UI mode`],
   ['--ui-host <host>', 'Host to serve UI on; specifying this option opens UI in a browser tab'],
   ['--ui-port <port>', 'Port to serve UI on, 0 for any free port; specifying this option opens UI in a browser tab'],
-  ['-u, --update-snapshots [mode]', `Update snapshots with actual results. Possible values are 'all', 'changed', 'missing' and 'none'. Not passing defaults to 'missing', passing without value defaults to 'changed'`],
+  ['-u, --update-snapshots [mode]', `Update snapshots with actual results. Possible values are "all", "changed", "missing", and "none". Running tests without the flag defaults to "missing"; running tests with the flag but without a value defaults to "changed".`],
   ['--update-source-method <method>', `Chooses the way source is updated. Possible values are 'overwrite', '3way' and 'patch'. Defaults to 'patch'`],
   ['-j, --workers <workers>', `Number of concurrent workers or percentage of logical CPU cores, use 1 to run in a single worker (default: 50%)`],
   ['-x', `Stop after the first failure`],

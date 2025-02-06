@@ -57,7 +57,8 @@ export function generateAriaTree(rootElement: Element): AriaSnapshot {
 
     if (node.nodeType === Node.TEXT_NODE && node.nodeValue) {
       const text = node.nodeValue;
-      if (text)
+      // <textarea>AAA</textarea> should not report AAA as a child of the textarea.
+      if (ariaNode.role !== 'textbox' && text)
         ariaNode.children.push(node.nodeValue || '');
       return;
     }

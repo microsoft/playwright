@@ -232,9 +232,10 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
 
   const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
   transformData = new Map<string, any>();
-  const { code, map } = babelTransform(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
-  if (!code)
-    return { code: '', serializedCache };
+  const babelResult = babelTransform(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  if (!babelResult?.code)
+    return { code: originalCode, serializedCache };
+  const { code, map } = babelResult;
   const added = addToCache!(code, map, transformData);
   return { code, serializedCache: added.serializedCache };
 }

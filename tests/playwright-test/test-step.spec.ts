@@ -75,7 +75,9 @@ export default class MyReporter implements Reporter {
     let location = '';
     if (step.location)
       location = formatLocation(step.location);
-    console.log(formatPrefix(step.category) + indent + step.title + location);
+    const skip = step.annotations?.find(a => a.type === 'skip');
+    const skipped = skip?.description ? ' (skipped: ' + skip.description + ')' : skip ? ' (skipped)' : '';
+    console.log(formatPrefix(step.category) + indent + step.title + location + skipped);
     if (step.error) {
       const errorLocation = this.printErrorLocation ? formatLocation(step.error.location) : '';
       console.log(formatPrefix(step.category) + indent + '↪ error: ' + this.trimError(step.error.message!) + errorLocation);
@@ -362,18 +364,16 @@ hook      |Worker Cleanup
 `);
 });
 
-test('should not pass arguments and return value from step', async ({ runInlineTest }) => {
+test('should not pass return value from step', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('steps with return values', async ({ page }) => {
-        const v1 = await test.step('my step', (...args) => {
-          expect(args.length).toBe(0);
+        const v1 = await test.step('my step', () => {
           return 10;
         });
         console.log('v1 = ' + v1);
-        const v2 = await test.step('my step', async (...args) => {
-          expect(args.length).toBe(0);
+        const v2 = await test.step('my step', async () => {
           return new Promise(f => setTimeout(() => f(v1 + 10), 100));
         });
         console.log('v2 = ' + v2);
@@ -1549,9 +1549,9 @@ test('test.step.skip should work', async ({ runInlineTest }) => {
   expect(result.report.stats.unexpected).toBe(0);
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
-test.step.skip|outer step 1 @ a.test.ts:4
+test.step |outer step 1 @ a.test.ts:4 (skipped)
 test.step |outer step 2 @ a.test.ts:11
-test.step.skip|  inner step 2.1 @ a.test.ts:12
+test.step |  inner step 2.1 @ a.test.ts:12 (skipped)
 test.step |  inner step 2.2 @ a.test.ts:13
 expect    |    expect.toBe @ a.test.ts:14
 hook      |After Hooks
@@ -1581,11 +1581,55 @@ test('skip test.step.skip body', async ({ runInlineTest }) => {
   expect(stripAnsi(result.output)).toBe(`
 hook      |Before Hooks
 test.step |outer step 2 @ a.test.ts:5
-test.step.skip|  inner step 2 @ a.test.ts:6
+test.step |  inner step 2 @ a.test.ts:6 (skipped)
 expect    |expect.toBe @ a.test.ts:10
 hook      |After Hooks
 `);
 });
+
+test('step.skip should work at runtime', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ }) => {
+        await test.step('outer step 1', async () => {
+          await test.step('inner step 1.1', async (step) => {
+            step.skip();
+          });
+          await test.step('inner step 1.2', async (step) => {
+            step.skip(true, 'condition is true');
+          });
+          await test.step('inner step 1.3', async () => {});
+        });
+        await test.step('outer step 2', async () => {
+          await test.step.skip('inner step 2.1', async () => {});
+          await test.step('inner step 2.2', async () => {
+            expect(1).toBe(1);
+          });
+        });
+      });
+      `
+  }, { reporter: '' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.report.stats.expected).toBe(1);
+  expect(result.report.stats.unexpected).toBe(0);
+  expect(stripAnsi(result.output)).toBe(`
+hook      |Before Hooks
+test.step |outer step 1 @ a.test.ts:4
+test.step |  inner step 1.1 @ a.test.ts:5 (skipped)
+test.step |  inner step 1.2 @ a.test.ts:8 (skipped: condition is true)
+test.step |  inner step 1.3 @ a.test.ts:11
+test.step |outer step 2 @ a.test.ts:13
+test.step |  inner step 2.1 @ a.test.ts:14 (skipped)
+test.step |  inner step 2.2 @ a.test.ts:15
+expect    |    expect.toBe @ a.test.ts:16
+hook      |After Hooks
+`);
+});
+
 
 test('show api calls inside expects', async ({ runInlineTest }) => {
   const result = await runInlineTest({

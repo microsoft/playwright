@@ -84,6 +84,8 @@ export type ReducedMotion = 'no-preference' | 'reduce' | 'no-override';
 
 export type ForcedColors = 'active' | 'none' | 'no-override';
 
+export type Contrast = 'no-preference' | 'more' | 'no-override';
+
 export type DeviceDescriptor = {
   userAgent: string,
   viewport: Size,

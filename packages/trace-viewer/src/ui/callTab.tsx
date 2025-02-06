@@ -40,18 +40,12 @@ export const CallTab: React.FunctionComponent<{
   const startTimeMillis = action.startTime - startTimeOffset;
   const startTime = msToString(startTimeMillis);
 
-  const duration = action.endTime ? msToString(action.endTime - action.startTime) : 'Timed Out';
-
   return (
     <div className='call-tab'>
       <div className='call-line'>{action.apiName}</div>
-      {
-        <>
-          <div className='call-section'>Time</div>
-          <DateTimeCallLine name='start:' value={startTime} />
-          <DateTimeCallLine name='duration:' value={duration} />
-        </>
-      }
+      <div className='call-section'>Time</div>
+      <DateTimeCallLine name='start:' value={startTime} />
+      <DateTimeCallLine name='duration:' value={renderDuration(action)} />
       {
         !!paramKeys.length && <>
           <div className='call-section'>Parameters</div>
@@ -77,6 +71,15 @@ type Property = {
   type: 'string' | 'number' | 'object' | 'locator' | 'handle' | 'bigint' | 'boolean' | 'symbol' | 'undefined' | 'function';
   text: string;
 };
+
+function renderDuration(action: ActionTraceEventInContext): string {
+  if (action.endTime)
+    return msToString(action.endTime - action.startTime);
+  else if (!!action.error)
+    return 'Timed Out';
+  else
+    return 'Running';
+}
 
 function renderProperty(property: Property) {
   let text = property.text.replace(/\n/g, '↵');
