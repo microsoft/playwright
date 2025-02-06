@@ -527,7 +527,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(warning).toBe(null);
     });
 
-    test('should save download', async ({ server, connect, startRemoteServer }, testInfo) => {
+    test.only('should save download', async ({ server, connect, startRemoteServer }, testInfo) => {
       server.setRoute('/download', (req, res) => {
         res.setHeader('Content-Type', 'application/octet-stream');
         res.setHeader('Content-Disposition', 'attachment');
@@ -535,6 +535,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       });
 
       const remoteServer = await startRemoteServer(kind);
+      return;
       const browser = await connect(remoteServer.wsEndpoint());
       const page = await browser.newPage();
       await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);

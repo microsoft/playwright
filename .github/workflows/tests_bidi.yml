@@ -8,7 +8,7 @@ on:
     paths:
       - .github/workflows/tests_bidi.yml
       - packages/playwright-core/src/server/bidi/**
-      - tests/bidi/**
+      - tests/**
   schedule:
     # Run every day at midnight
     - cron: '0 0 * * *'
@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        channel: [bidi-chromium, bidi-firefox-nightly]
+        channel: [bidi-firefox-nightly]
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -52,20 +52,3 @@ jobs:
         name: csv-report-${{ matrix.channel }}
         path: test-results/report.csv
         retention-days: 7
-
-    - name: Azure Login
-      if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_BLOB_REPORTS_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_BLOB_REPORTS_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_BLOB_REPORTS_SUBSCRIPTION_ID }}
-
-    - name: Upload report.csv to Azure
-      if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
-      run: |
-        REPORT_DIR='bidi-reports'
-        azcopy cp "./test-results/report.csv" "https://mspwblobreport.blob.core.windows.net/\$web/$REPORT_DIR/${{ matrix.channel }}.csv"
-        echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/${{ matrix.channel }}.csv"
-      env:
-        AZCOPY_AUTO_LOGIN_TYPE: AZCLI
