@@ -8,7 +8,19 @@
       "browserVersion": "133.0.6943.35"
     },
     {
+      "name": "chromium-headless-shell",
+      "revision": "1157",
+      "installByDefault": true,
+      "browserVersion": "133.0.6943.35"
+    },
+    {
       "name": "chromium-tip-of-tree",
+      "revision": "1300",
+      "installByDefault": false,
+      "browserVersion": "134.0.6998.0"
+    },
+    {
+      "name": "chromium-tip-of-tree-headless-shell",
       "revision": "1300",
       "installByDefault": false,
       "browserVersion": "134.0.6998.0"
