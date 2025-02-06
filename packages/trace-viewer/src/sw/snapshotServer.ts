@@ -31,8 +31,8 @@ export class SnapshotServer {
     this._resourceLoader = resourceLoader;
   }
 
-  serveSnapshot(pathname: string, searchParams: URLSearchParams, snapshotUrl: string): Response {
-    const snapshot = this._snapshot(pathname.substring('/snapshot'.length), searchParams);
+  serveSnapshot(pageOrFrameId: string, searchParams: URLSearchParams, snapshotUrl: string): Response {
+    const snapshot = this._snapshot(pageOrFrameId, searchParams);
     if (!snapshot)
       return new Response(null, { status: 404 });
 
@@ -41,16 +41,16 @@ export class SnapshotServer {
     return new Response(renderedSnapshot.html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }
 
-  async serveClosestScreenshot(pathname: string, searchParams: URLSearchParams): Promise<Response> {
-    const snapshot = this._snapshot(pathname.substring('/closest-screenshot'.length), searchParams);
+  async serveClosestScreenshot(pageOrFrameId: string, searchParams: URLSearchParams): Promise<Response> {
+    const snapshot = this._snapshot(pageOrFrameId, searchParams);
     const sha1 = snapshot?.closestScreenshot();
     if (!sha1)
       return new Response(null, { status: 404 });
     return new Response(await this._resourceLoader(sha1));
   }
 
-  serveSnapshotInfo(pathname: string, searchParams: URLSearchParams): Response {
-    const snapshot = this._snapshot(pathname.substring('/snapshotInfo'.length), searchParams);
+  serveSnapshotInfo(pageOrFrameId: string, searchParams: URLSearchParams): Response {
+    const snapshot = this._snapshot(pageOrFrameId, searchParams);
     return this._respondWithJson(snapshot ? {
       viewport: snapshot.viewport(),
       url: snapshot.snapshot().frameUrl,
@@ -61,9 +61,9 @@ export class SnapshotServer {
     });
   }
 
-  private _snapshot(pathname: string, params: URLSearchParams) {
+  private _snapshot(pageOrFrameId: string, params: URLSearchParams) {
     const name = params.get('name')!;
-    return this._snapshotStorage.snapshotByName(pathname.slice(1), name);
+    return this._snapshotStorage.snapshotByName(pageOrFrameId, name);
   }
 
   private _respondWithJson(object: any): Response {
