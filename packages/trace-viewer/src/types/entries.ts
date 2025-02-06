@@ -40,6 +40,7 @@ export type ContextEntry = {
   stdio: trace.StdioTraceEvent[];
   errors: trace.ErrorTraceEvent[];
   hasSource: boolean;
+  contextId: string;
 };
 
 export type PageEntry = {

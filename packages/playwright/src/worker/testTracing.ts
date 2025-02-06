@@ -58,6 +58,7 @@ export class TestTracing {
       wallTime: Date.now(),
       monotonicTime: monotonicTime(),
       sdkLanguage: 'javascript',
+      contextId: '',
     };
     this._appendTraceEvent(this._contextCreatedEvent);
   }
