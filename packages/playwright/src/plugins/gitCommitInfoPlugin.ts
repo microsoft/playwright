@@ -44,8 +44,8 @@ interface GitCommitInfoPluginOptions {
   directory?: string;
 }
 
-function linksFromEnv(): Pick<GitCommitInfo, 'revision.link' | 'ci.link' | 'pull.link' | 'pull.base'> {
-  const out: { 'revision.link'?: string; 'ci.link'?: string; 'pull.link'?: string; 'pull.base'?: string; } = {};
+function linksFromEnv() {
+  const out: Partial<GitCommitInfo> = {};
   // Jenkins: https://www.jenkins.io/doc/book/pipeline/jenkinsfile/#using-environment-variables
   if (process.env.BUILD_URL)
     out['ci.link'] = process.env.BUILD_URL;
@@ -60,8 +60,8 @@ function linksFromEnv(): Pick<GitCommitInfo, 'revision.link' | 'ci.link' | 'pull
   if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID)
     out['ci.link'] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
   if (process.env.GITHUB_REF_NAME && process.env.GITHUB_REF_NAME.endsWith('/merge')) {
-    const pullId = process.env.GITHUB_REF_NAME.substring(0, process.env.GITHUB_REF_NAME.indexOf('/merge'));
-    out['pull.link'] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/pull/${pullId}`;
+    out['pull.id'] = process.env.GITHUB_REF_NAME.substring(0, process.env.GITHUB_REF_NAME.indexOf('/merge'));
+    out['pull.link'] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/pull/${out['pull.id']}`;
     out['pull.base'] = process.env.GITHUB_BASE_REF;
   }
   return out;
