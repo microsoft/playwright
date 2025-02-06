@@ -231,21 +231,15 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (debugMode())
       (testInfo as TestInfoImpl)._setDebugMode();
 
-    for (const browserType of playwright._browserTypes()) {
-      browserType._defaultContextOptions = _combinedContextOptions;
-      browserType._defaultContextTimeout = actionTimeout || 0;
-      browserType._defaultContextNavigationTimeout = navigationTimeout || 0;
-    }
-    playwright.request._defaultContextOptions = { ..._combinedContextOptions };
-    playwright.request._defaultContextOptions.tracesDir = tracing().tracesDir();
-    playwright.request._defaultContextOptions.timeout = actionTimeout || 0;
+    playwright._defaultContextOptions = _combinedContextOptions;
+    playwright._defaultContextTimeout = actionTimeout || 0;
+    playwright._defaultContextNavigationTimeout = navigationTimeout || 0;
+    playwright._tracesDir = tracing().tracesDir();
     await use();
-    playwright.request._defaultContextOptions = undefined;
-    for (const browserType of playwright._browserTypes()) {
-      browserType._defaultContextOptions = undefined;
-      browserType._defaultContextTimeout = undefined;
-      browserType._defaultContextNavigationTimeout = undefined;
-    }
+    playwright._defaultContextOptions = undefined;
+    playwright._defaultContextTimeout = undefined;
+    playwright._defaultContextNavigationTimeout = undefined;
+    playwright._tracesDir = undefined;
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
   _setupArtifacts: [async ({ playwright, screenshot }, use, testInfo) => {

@@ -22,7 +22,7 @@ import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
 import { APIRequest } from './fetch';
 import { Selectors, SelectorsOwner } from './selectors';
-import type { LaunchOptions } from './types';
+import type { BrowserContextOptions, LaunchOptions } from 'playwright-core';
 
 export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly _android: Android;
@@ -37,7 +37,13 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly request: APIRequest;
   readonly errors: { TimeoutError: typeof TimeoutError };
 
+  // Instrumentation.
   _defaultLaunchOptions?: LaunchOptions;
+  _defaultContextOptions?: BrowserContextOptions;
+  _defaultContextTimeout?: number;
+  _defaultContextNavigationTimeout?: number;
+  _defaultActionTimeout?: number;
+  _tracesDir?: string;
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
     super(parent, type, guid, initializer);

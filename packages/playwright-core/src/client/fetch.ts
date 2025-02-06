@@ -57,30 +57,29 @@ export class APIRequest implements api.APIRequest {
   private _playwright: Playwright;
   readonly _contexts = new Set<APIRequestContext>();
 
-  // Instrumentation.
-  _defaultContextOptions?: NewContextOptions & { tracesDir?: string };
-
   constructor(playwright: Playwright) {
     this._playwright = playwright;
   }
 
   async newContext(options: NewContextOptions = {}): Promise<APIRequestContext> {
-    options = { ...this._defaultContextOptions, ...options };
+    options = {
+      ...this._playwright._defaultContextOptions,
+      ...options,
+      timeout: this._playwright._defaultActionTimeout ?? options.timeout,
+    };
     const storageState = typeof options.storageState === 'string' ?
       JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) :
       options.storageState;
-    // We do not expose tracesDir in the API, so do not allow options to accidentally override it.
-    const tracesDir = this._defaultContextOptions?.tracesDir;
     const context = APIRequestContext.from((await this._playwright._channel.newRequest({
       ...options,
       extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       storageState,
-      tracesDir,
+      tracesDir: this._playwright._tracesDir,
       clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
     })).request);
     this._contexts.add(context);
     context._request = this;
-    context._tracing._tracesDir = tracesDir;
+    context._tracing._tracesDir = this._playwright._tracesDir;
     await context._instrumentation.runAfterCreateRequestContext(context);
     return context;
   }
