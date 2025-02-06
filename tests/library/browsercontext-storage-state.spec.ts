@@ -437,6 +437,5 @@ it('should support IndexedDB', async ({ page, server, contextFactory }) => {
         - text: /Pet the cat/
   `);
 
-
   expect(await context.storageState({ indexedDB: false })).toEqual({ cookies: [], origins: [] });
 });
