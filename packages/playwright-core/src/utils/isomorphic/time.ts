@@ -14,20 +14,6 @@
  * limitations under the License.
  */
 
-import { ChannelOwner } from './channelOwner';
-
-import type * as channels from '@protocol/channels';
-
-export class JsonPipe extends ChannelOwner<channels.JsonPipeChannel> {
-  static from(jsonPipe: channels.JsonPipeChannel): JsonPipe {
-    return (jsonPipe as any)._object;
-  }
-
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.JsonPipeInitializer) {
-    super(parent, type, guid, initializer);
-  }
-
-  channel() {
-    return this._channel;
-  }
+export function monotonicTime(): number {
+  return (performance.now() * 1000 | 0) / 1000;
 }

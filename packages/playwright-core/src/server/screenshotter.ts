@@ -24,7 +24,7 @@ import type { ParsedSelector } from '../utils/isomorphic/selectorParser';
 import type * as types from './types';
 import type { Progress } from './progress';
 import { assert } from '../utils';
-import { MultiMap } from '../utils/multimap';
+import { MultiMap } from '../utils/isomorphic/multimap';
 
 declare global {
   interface Window {

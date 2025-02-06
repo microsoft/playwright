@@ -14,26 +14,33 @@
  * limitations under the License.
  */
 
-import { URLSearchParams } from 'url';
-import type * as channels from '@protocol/channels';
+import fs from 'fs';
+
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
 import { Worker } from './worker';
-import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
-import fs from 'fs';
 import { mime } from '../utilsBundle';
-import { assert, isString, headersObjectToArray, isRegExp, rewriteErrorMessage, MultiMap, urlMatches, zones } from '../utils';
-import type { URLMatch, Zone } from '../utils';
+import { assert } from '../utils/debug';
+import { headersObjectToArray } from '../utils/isomorphic/headers';
+import { isString, isRegExp } from '../utils/isomorphic/rtti';
+import { MultiMap } from '../utils/isomorphic/multimap';
+import { urlMatches } from '../utils/isomorphic/urlMatch';
+import { rewriteErrorMessage } from '../utils/stackTrace';
+import { zones } from '../utils/zones';
 import { ManualPromise, LongStandingScope } from '../utils/manualPromise';
 import { Events } from './events';
-import type { Page } from './page';
 import { Waiter } from './waiter';
+import { APIResponse } from './fetch';
+import { isTargetClosedError } from './errors';
+
+import type * as channels from '@protocol/channels';
+import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
+import type { URLMatch, Zone } from '../utils';
+import type { Page } from './page';
 import type * as api from '../../types/types';
 import type { HeadersArray } from '../common/types';
-import { APIResponse } from './fetch';
 import type { Serializable } from '../../types/structs';
 import type { BrowserContext } from './browserContext';
-import { isTargetClosedError } from './errors';
 
 export type NetworkCookie = {
   name: string,

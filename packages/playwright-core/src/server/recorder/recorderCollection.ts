@@ -19,7 +19,7 @@ import type { Frame } from '../frames';
 import type { Page } from '../page';
 import type { Signal } from '../../../../recorder/src/actions';
 import type * as actions from '@recorder/actions';
-import { monotonicTime } from '../../utils/time';
+import { monotonicTime } from '../../utils/isomorphic/time';
 import { collapseActions } from './recorderUtils';
 import { performAction } from './recorderRunner';
 import { isUnderTest } from '../../utils/debug';

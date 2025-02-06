@@ -17,36 +17,48 @@
 
 import fs from 'fs';
 import path from 'path';
-import type * as structs from '../../types/structs';
-import type * as api from '../../types/types';
+
 import { serializeError, isTargetClosedError, TargetClosedError } from './errors';
 import { TimeoutSettings } from '../common/timeoutSettings';
-import type * as channels from '@protocol/channels';
-import { assert, headersObjectToArray, isObject, isRegExp, isString, LongStandingScope, urlMatches, urlMatchesEqual, mkdirIfNeeded, trimStringWithEllipsis, type URLMatch } from '../utils';
+
+import { assert } from '../utils/debug';
+import { isObject, isRegExp, isString } from '../utils/isomorphic/rtti';
+import { headersObjectToArray } from '../utils/isomorphic/headers';
+import { urlMatches, urlMatchesEqual } from '../utils/isomorphic/urlMatch';
+import { LongStandingScope } from '../utils/manualPromise';
+import { trimStringWithEllipsis } from '../utils/isomorphic/stringUtils';
+import { mkdirIfNeeded } from '../utils/fileUtils';
+
 import { Accessibility } from './accessibility';
 import { Artifact } from './artifact';
-import type { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
 import { Coverage } from './coverage';
 import { Download } from './download';
 import { determineScreenshotType, ElementHandle } from './elementHandle';
 import { Events } from './events';
-import type { APIRequestContext } from './fetch';
 import { FileChooser } from './fileChooser';
-import type { WaitForNavigationOptions } from './frame';
 import { Frame, verifyLoadState } from './frame';
 import { Keyboard, Mouse, Touchscreen } from './input';
 import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './jsHandle';
-import type { FrameLocator, Locator, LocatorOptions } from './locator';
-import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
-import { type RouteHandlerCallback, type Request, Response, Route, RouteHandler, validateHeaders, WebSocket, type WebSocketRouteHandlerCallback, WebSocketRoute, WebSocketRouteHandler } from './network';
-import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, WaitForEventOptions, WaitForFunctionOptions } from './types';
 import { Video } from './video';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
 import { HarRouter } from './harRouter';
+import { Response, Route, RouteHandler, validateHeaders, WebSocket, WebSocketRoute, WebSocketRouteHandler } from './network';
+
+import type * as structs from '../../types/structs';
+import type * as api from '../../types/types';
+import type * as channels from '@protocol/channels';
+import type { BrowserContext } from './browserContext';
+import type { APIRequestContext } from './fetch';
+import type { WaitForNavigationOptions } from './frame';
+import type { FrameLocator, Locator, LocatorOptions } from './locator';
+import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
+import type { RouteHandlerCallback, Request, WebSocketRouteHandlerCallback } from './network';
+import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, WaitForEventOptions, WaitForFunctionOptions } from './types';
 import type { Clock } from './clock';
+import type { URLMatch } from '../utils';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,

@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
+import { isTargetClosedError } from './errors';
+
+import type * as channels from '@protocol/channels';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
-import { isTargetClosedError } from './errors';
 
 export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel> implements api.JSHandle {
   private _preview: string;

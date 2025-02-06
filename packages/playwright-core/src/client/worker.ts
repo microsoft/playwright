@@ -15,15 +15,16 @@
  */
 
 import { Events } from './events';
-import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './jsHandle';
+import { LongStandingScope } from '../utils/manualPromise';
+import { TargetClosedError } from './errors';
+
+import type * as channels from '@protocol/channels';
 import type { Page } from './page';
 import type { BrowserContext } from './browserContext';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
-import { LongStandingScope } from '../utils';
-import { TargetClosedError } from './errors';
 
 export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.Worker {
   _page: Page | undefined;  // Set for web workers.

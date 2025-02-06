@@ -15,11 +15,14 @@
  */
 
 import EventEmitter from 'events';
-import type { AddressInfo } from 'net';
 import net from 'net';
+
 import { debugLogger } from '../utils/debugLogger';
 import { createSocket } from '../utils/happy-eyeballs';
-import { assert, createGuid,  } from '../utils';
+import { createGuid } from '../utils/crypto';
+import { assert } from '../utils/debug';
+
+import type { AddressInfo } from 'net';
 
 // https://tools.ietf.org/html/rfc1928
 

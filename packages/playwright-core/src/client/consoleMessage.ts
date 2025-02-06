@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-import * as util from 'util';
+import util from 'util';
+
 import { JSHandle } from './jsHandle';
+import { Page } from './page';
+
 import type * as channels from '@protocol/channels';
 import type * as api from '../../types/types';
-import { Page } from './page';
 
 type ConsoleMessageLocation = channels.BrowserContextConsoleEvent['location'];
 

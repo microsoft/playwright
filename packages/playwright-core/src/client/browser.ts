@@ -15,18 +15,20 @@
  */
 
 import fs from 'fs';
-import type * as channels from '@protocol/channels';
+
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
-import type { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
-import type { LaunchOptions, BrowserContextOptions, HeadersArray } from './types';
 import { isTargetClosedError } from './errors';
-import type * as api from '../../types/types';
 import { CDPSession } from './cdpSession';
-import type { BrowserType } from './browserType';
 import { Artifact } from './artifact';
-import { mkdirIfNeeded } from '../utils';
+import { mkdirIfNeeded } from '../utils/fileUtils';
+
+import type * as channels from '@protocol/channels';
+import type { Page } from './page';
+import type { LaunchOptions, BrowserContextOptions, HeadersArray } from './types';
+import type * as api from '../../types/types';
+import type { BrowserType } from './browserType';
 
 export class Browser extends ChannelOwner<channels.BrowserChannel> implements api.Browser {
   readonly _contexts = new Set<BrowserContext>();

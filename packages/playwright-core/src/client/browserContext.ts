@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
+
 import { Page, BindingCall } from './page';
 import { Frame } from './frame';
 import * as network from './network';
-import type * as channels from '@protocol/channels';
-import fs from 'fs';
-import path from 'path';
 import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
 import { Browser } from './browser';
@@ -28,13 +28,8 @@ import { Worker } from './worker';
 import { Events } from './events';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
-import type { Headers, WaitForEventOptions, BrowserContextOptions, LaunchOptions, StorageState } from './types';
-import { type URLMatch, headersObjectToArray, isRegExp, isString, urlMatchesEqual, mkdirIfNeeded } from '../utils';
-import type * as api from '../../types/types';
-import type * as structs from '../../types/structs';
 import { CDPSession } from './cdpSession';
 import { Tracing } from './tracing';
-import type { BrowserType } from './browserType';
 import { Artifact } from './artifact';
 import { APIRequestContext } from './fetch';
 import { rewriteErrorMessage } from '../utils/stackTrace';
@@ -44,6 +39,18 @@ import { Dialog } from './dialog';
 import { WebError } from './webError';
 import { TargetClosedError, parseError } from './errors';
 import { Clock } from './clock';
+import { isRegExp, isString } from '../utils/isomorphic/rtti';
+import { headersObjectToArray } from '../utils/isomorphic/headers';
+import { urlMatchesEqual } from '../utils/isomorphic/urlMatch';
+import { mkdirIfNeeded } from '../utils/fileUtils';
+
+import type * as channels from '@protocol/channels';
+import type { Headers, WaitForEventOptions, BrowserContextOptions, LaunchOptions, StorageState } from './types';
+import type * as api from '../../types/types';
+import type * as structs from '../../types/structs';
+import type { BrowserType } from './browserType';
+
+import type { URLMatch } from '../utils';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();

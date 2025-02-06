@@ -16,20 +16,24 @@
 
 import fs from 'fs';
 import path from 'path';
-import * as util from 'util';
+import util from 'util';
+
+import { assert } from '../utils/debug';
+import { headersObjectToArray } from '../utils/isomorphic/headers';
+import { isString } from '../utils/isomorphic/rtti';
+import { mkdirIfNeeded } from '../utils/fileUtils';
+import { ChannelOwner } from './channelOwner';
+import { RawHeaders } from './network';
+import { Tracing } from './tracing';
+import { TargetClosedError, isTargetClosedError } from './errors';
+import { toClientCertificatesProtocol } from './browserContext';
+
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray, NameValue } from '../common/types';
 import type * as channels from '@protocol/channels';
-import { assert, headersObjectToArray, isString } from '../utils';
-import { mkdirIfNeeded } from '../utils/fileUtils';
-import { ChannelOwner } from './channelOwner';
-import { RawHeaders } from './network';
 import type { ClientCertificate, FilePayload, Headers, StorageState } from './types';
 import type { Playwright } from './playwright';
-import { Tracing } from './tracing';
-import { TargetClosedError, isTargetClosedError } from './errors';
-import { toClientCertificatesProtocol } from './browserContext';
 
 export type FetchOptions = {
   params?: { [key: string]: string | number | boolean; } | URLSearchParams | string,

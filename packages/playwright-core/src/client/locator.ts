@@ -14,18 +14,22 @@
  * limitations under the License.
  */
 
+import util from 'util';
+
+import { isString } from '../utils/isomorphic/stringUtils';
+import { monotonicTime } from '../utils/isomorphic/time';
+import { asLocator } from '../utils/isomorphic/locatorGenerators';
+import { ElementHandle } from './elementHandle';
+import { parseResult, serializeArgument } from './jsHandle';
+import { escapeForTextSelector } from '../utils/isomorphic/stringUtils';
+import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
+
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
-import * as util from 'util';
-import { asLocator, isString, monotonicTime } from '../utils';
-import { ElementHandle } from './elementHandle';
 import type { Frame } from './frame';
 import type { FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
-import { parseResult, serializeArgument } from './jsHandle';
-import { escapeForTextSelector } from '../utils/isomorphic/stringUtils';
 import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
-import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
 
 export type LocatorOptions = {
   hasText?: string | RegExp;

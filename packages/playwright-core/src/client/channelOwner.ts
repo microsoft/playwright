@@ -15,12 +15,13 @@
  */
 
 import { EventEmitter } from './eventEmitter';
-import type * as channels from '@protocol/channels';
 import { maybeFindValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 import { debugLogger } from '../utils/debugLogger';
 import { captureLibraryStackTrace, stringifyStackFrames } from '../utils/stackTrace';
-import { isUnderTest } from '../utils';
+import { isUnderTest } from '../utils/debug';
 import { zones } from '../utils/zones';
+
+import type * as channels from '@protocol/channels';
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';

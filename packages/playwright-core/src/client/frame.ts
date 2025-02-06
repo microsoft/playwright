@@ -15,27 +15,30 @@
  * limitations under the License.
  */
 
-import { assert } from '../utils';
-import type * as channels from '@protocol/channels';
+import fs from 'fs';
+
+import { assert } from '../utils/debug';
 import { ChannelOwner } from './channelOwner';
 import { FrameLocator, Locator, testIdAttributeName } from './locator';
-import type { LocatorOptions } from './locator';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
-import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
 import { assertMaxArguments, JSHandle, serializeArgument, parseResult } from './jsHandle';
-import fs from 'fs';
 import * as network from './network';
-import type { Page } from './page';
 import { EventEmitter } from 'events';
 import { Waiter } from './waiter';
 import { Events } from './events';
-import type { LifecycleEvent, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions, StrictOptions } from './types';
 import { kLifecycleEvents } from './types';
-import { type URLMatch, urlMatches } from '../utils';
+import { urlMatches } from '../utils/isomorphic/urlMatch';
+import { addSourceUrlToScript } from './clientHelper';
+
+import type * as channels from '@protocol/channels';
+import type { LocatorOptions } from './locator';
+import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
+import type { Page } from './page';
+import type { LifecycleEvent, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions, StrictOptions } from './types';
 import type * as api from '../../types/types';
 import type * as structs from '../../types/structs';
-import { addSourceUrlToScript } from './clientHelper';
+import type { URLMatch } from '../utils';
 
 export type WaitForNavigationOptions = {
   timeout?: number,

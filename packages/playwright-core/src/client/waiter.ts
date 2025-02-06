@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-import type { EventEmitter } from 'events';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { TimeoutError } from './errors';
-import { createGuid, zones } from '../utils';
+import { createGuid } from '../utils/crypto';
+import { zones } from '../utils/zones';
+
+import type { EventEmitter } from 'events';
 import type { Zone } from '../utils';
 import type * as channels from '@protocol/channels';
 import type { ChannelOwner } from './channelOwner';

@@ -21,7 +21,7 @@ import * as net from 'net';
 import * as tls from 'tls';
 import { ManualPromise } from './manualPromise';
 import { assert } from './debug';
-import { monotonicTime } from './time';
+import { monotonicTime } from './isomorphic/time';
 
 // Implementation(partial) of Happy Eyeballs 2 algorithm described in
 // https://www.rfc-editor.org/rfc/rfc8305

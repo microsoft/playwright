@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import type { SerializedError } from '@protocol/channels';
-import { isError } from '../utils';
+import { isError } from '../utils/isomorphic/rtti';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
+
+import type { SerializedError } from '@protocol/channels';
 
 export class TimeoutError extends Error {
   constructor(message: string) {

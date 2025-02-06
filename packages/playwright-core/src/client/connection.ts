@@ -29,7 +29,6 @@ import { parseError, TargetClosedError } from './errors';
 import { CDPSession } from './cdpSession';
 import { Playwright } from './playwright';
 import { Electron, ElectronApplication } from './electron';
-import type * as channels from '@protocol/channels';
 import { Stream } from './stream';
 import { WritableStream } from './writableStream';
 import { debugLogger } from '../utils/debugLogger';
@@ -43,8 +42,11 @@ import { LocalUtils } from './localUtils';
 import { Tracing } from './tracing';
 import { findValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
 import { createInstrumentation } from './clientInstrumentation';
+import { formatCallLog, rewriteErrorMessage } from '../utils/stackTrace';
+import { zones } from '../utils/zones';
+
+import type * as channels from '@protocol/channels';
 import type { ClientInstrumentation } from './clientInstrumentation';
-import { formatCallLog, rewriteErrorMessage, zones } from '../utils';
 
 class Root extends ChannelOwner<channels.RootChannel> {
   constructor(connection: Connection) {

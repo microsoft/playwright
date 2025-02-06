@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
 import { TimeoutError } from './errors';
 import { Android } from './android';
 import { BrowserType } from './browserType';
@@ -22,6 +21,8 @@ import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
 import { APIRequest } from './fetch';
 import { Selectors, SelectorsOwner } from './selectors';
+
+import type * as channels from '@protocol/channels';
 
 export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly _android: Android;

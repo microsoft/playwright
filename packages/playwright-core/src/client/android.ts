@@ -15,20 +15,23 @@
  */
 
 import fs from 'fs';
-import { isString, isRegExp, monotonicTime } from '../utils';
-import type * as channels from '@protocol/channels';
+
+import { isString, isRegExp } from '../utils/isomorphic/rtti';
+import { monotonicTime } from '../utils/isomorphic/time';
 import { Events } from './events';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import type * as api from '../../types/types';
-import type * as types from './types';
-import type { Page } from './page';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { Waiter } from './waiter';
 import { EventEmitter } from 'events';
 import { Connection } from './connection';
 import { isTargetClosedError, TargetClosedError } from './errors';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
+
+import type * as channels from '@protocol/channels';
+import type * as api from '../../types/types';
+import type * as types from './types';
+import type { Page } from './page';
 import type { AndroidServerLauncherImpl } from '../androidServerImpl';
 
 type Direction = 'down' | 'up' | 'left' | 'right';
