@@ -9272,7 +9272,7 @@ export interface BrowserContext {
    */
   storageState(options?: {
     /**
-     * Set to `false` to omit IndexedDB from snapshot.
+     * Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.
      */
     indexedDB?: boolean;
 
@@ -18537,7 +18537,7 @@ export interface APIRequestContext {
    */
   storageState(options?: {
     /**
-     * Set to `false` to omit IndexedDB from snapshot.
+     * Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.
      */
     indexedDB?: boolean;
 

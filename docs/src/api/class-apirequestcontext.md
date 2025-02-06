@@ -914,4 +914,4 @@ Returns storage state for this request context, contains current cookies and loc
 * since: v1.51
 - `indexedDB` ?<boolean>
 
-Set to `false` to omit IndexedDB from snapshot.
+Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.

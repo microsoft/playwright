@@ -1545,7 +1545,7 @@ Returns storage state for this browser context, contains current cookies, local 
 * since: v1.51
 - `indexedDB` ?<boolean>
 
-Set to `false` to omit IndexedDB from snapshot.
+Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.
 
 ## property: BrowserContext.tracing
 * since: v1.12
