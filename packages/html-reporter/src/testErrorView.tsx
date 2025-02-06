@@ -24,11 +24,12 @@ import { GitCommitInfoContext } from './reportView';
 export const TestErrorView: React.FC<{
   error: string;
   testId?: string;
-}> = ({ error, testId }) => {
+  hidePrompt?: boolean;
+}> = ({ error, testId, hidePrompt }) => {
   const html = React.useMemo(() => ansiErrorToHtml(error), [error]);
   return (
     <div className='test-error-view test-error-text' data-testid={testId}>
-      <PromptButton error={error} />
+      {!hidePrompt && <PromptButton error={error} />}
       <div dangerouslySetInnerHTML={{ __html: html || '' }}></div>
     </div>
   );
@@ -42,6 +43,7 @@ export function stripAnsiEscapes(str: string): string {
 const PromptButton: React.FC<{
   error: string;
 }> = ({ error }) => {
+  const [copied, setCopied] = React.useState(false);
   const gitCommitInfo = React.useContext(GitCommitInfoContext);
   if (!gitCommitInfo)
     return undefined;
@@ -51,14 +53,20 @@ const PromptButton: React.FC<{
     return undefined;
 
   return (
-    <button onClick={() => {
-      navigator.clipboard.writeText([
-        'You are a helpful assistant. Help me understand the error cause. Here is the error:',
-        stripAnsiEscapes(error),
-        'And this is the code diff:',
-        diff
-      ].join('\n'));
-    }}>Copy AI Prompt</button>
+    <button
+      style={{ width: 200, padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc', backgroundColor: copied ? '#4caf50' : '#f0f0f0', color: copied ? '#fff' : '#000', cursor: 'pointer' }}
+      onClick={async () => {
+        await navigator.clipboard.writeText([
+          'You are a helpful assistant. Help me understand the error cause. Here is the error:',
+          stripAnsiEscapes(error),
+          'And this is the code diff:',
+          diff
+        ].join('\n\n'));
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1000);
+      }}>
+      {copied ? 'Copied!' : 'Copy prompt to fix with AI'}
+    </button>
   );
 };
 

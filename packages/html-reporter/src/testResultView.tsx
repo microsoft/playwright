@@ -182,7 +182,7 @@ const StepTreeItem: React.FC<{
     {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
     {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
   </span>} loadChildren={step.steps.length || step.snippet ? () => {
-    const snippet = step.snippet ? [<TestErrorView testId='test-snippet' key='line' error={step.snippet}/>] : [];
+    const snippet = step.snippet ? [<TestErrorView testId='test-snippet' key='line' error={step.snippet} hidePrompt />] : [];
     const steps = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} result={result} test={test} />);
     return snippet.concat(steps);
   } : undefined} depth={depth}/>;
