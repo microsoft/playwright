@@ -37,6 +37,7 @@ import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
 import { DefaultSettingsView } from './defaultSettingsView';
+import { FullscreenModal } from './shared/fullscreenModal';
 
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
@@ -98,6 +99,7 @@ export const UIModeView: React.FC<{}> = ({
   const [settingsVisible, setSettingsVisible] = React.useState(false);
   const [testingOptionsVisible, setTestingOptionsVisible] = React.useState(false);
   const [revealSource, setRevealSource] = React.useState(false);
+  const [critcalError, setCriticalError] = React.useState<string | undefined>();
   const onRevealSource = React.useCallback(() => setRevealSource(true), [setRevealSource]);
 
   const showTestingOptions = false;
@@ -113,6 +115,19 @@ export const UIModeView: React.FC<{}> = ({
       return new TestServerConnection(new WebSocketTestServerTransport(wsURL));
     });
   }, []);
+
+  const configProjects = React.useMemo(() => {
+    if (!testModel)
+      return;
+
+    const { config } = testModel;
+    return config.configFile
+      ? settings.getObject<string[] | undefined>(
+          config.configFile + ':projects',
+          undefined,
+      )
+      : undefined;
+  }, [testModel]);
 
   // Load tests on startup.
   React.useEffect(() => {
@@ -214,8 +229,7 @@ export const UIModeView: React.FC<{}> = ({
     if (!testModel)
       return;
 
-    const { config, rootSuite } = testModel;
-    const selectedProjects = config.configFile ? settings.getObject<string[] | undefined>(config.configFile + ':projects', undefined) : undefined;
+    const { rootSuite } = testModel;
     const newFilter = new Map(projectFilters);
     for (const projectName of newFilter.keys()) {
       if (!rootSuite.suites.find(s => s.title === projectName))
@@ -223,13 +237,13 @@ export const UIModeView: React.FC<{}> = ({
     }
     for (const projectSuite of rootSuite.suites) {
       if (!newFilter.has(projectSuite.title))
-        newFilter.set(projectSuite.title, !!selectedProjects?.includes(projectSuite.title));
+        newFilter.set(projectSuite.title, !!configProjects?.includes(projectSuite.title));
     }
-    if (!selectedProjects && newFilter.size && ![...newFilter.values()].includes(true))
+    if (!configProjects && newFilter.size && ![...newFilter.values()].includes(true))
       newFilter.set(newFilter.entries().next().value![0], true);
     if (projectFilters.size !== newFilter.size || [...projectFilters].some(([k, v]) => newFilter.get(k) !== v))
       setProjectFilters(newFilter);
-  }, [projectFilters, testModel]);
+  }, [projectFilters, configProjects, testModel]);
 
   // Update progress.
   React.useEffect(() => {
@@ -238,6 +252,21 @@ export const UIModeView: React.FC<{}> = ({
     else if (!testModel)
       setProgress(undefined);
   }, [testModel, isRunningTest]);
+
+  React.useEffect(() => {
+    if (!testModel)
+      return;
+
+    if (testModel.rootSuite.suites.length === 0) {
+      let prefix: string;
+      if (!configProjects || configProjects.length < 1)
+        prefix = 'No projects matched.';
+      else
+        prefix = `No projects matched. Available projects: ${configProjects.map(p => `"${p}"`).join(', ')}.`;
+
+      setCriticalError(`${prefix} Please check your configuration.`);
+    }
+  }, [testModel, configProjects]);
 
   // Test tree is built from the model and filters.
   const { testTree } = React.useMemo(() => {
@@ -398,6 +427,7 @@ export const UIModeView: React.FC<{}> = ({
   }, [closeInstallDialog, testServerConnection]);
 
   return <div className='vbox ui-mode'>
+    {critcalError && <FullscreenModal>{critcalError}</FullscreenModal>}
     {!hasBrowsers && <dialog ref={dialogRef}>
       <div className='title'><span className='codicon codicon-lightbulb'></span>Install browsers</div>
       <div className='body'>
