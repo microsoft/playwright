@@ -9782,6 +9782,12 @@ export interface Browser {
     extraHTTPHeaders?: { [key: string]: string; };
 
     /**
+     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
+     * default, response object is returned for all status codes.
+     */
+    fetchFailOnStatusCode?: boolean;
+
+    /**
      * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
      * Passing `null` resets emulation to system defaults. Defaults to `'none'`.
@@ -14835,6 +14841,12 @@ export interface BrowserType<Unused = {}> {
     extraHTTPHeaders?: { [key: string]: string; };
 
     /**
+     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
+     * default, response object is returned for all status codes.
+     */
+    fetchFailOnStatusCode?: boolean;
+
+    /**
      * Firefox user preferences. Learn more about the Firefox user preferences at
      * [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
      */
@@ -16619,6 +16631,12 @@ export interface AndroidDevice {
     extraHTTPHeaders?: { [key: string]: string; };
 
     /**
+     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
+     * default, response object is returned for all status codes.
+     */
+    fetchFailOnStatusCode?: boolean;
+
+    /**
      * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
      * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
      * Passing `null` resets emulation to system defaults. Defaults to `'none'`.
@@ -17481,6 +17499,12 @@ export interface APIRequest {
      * An object containing additional HTTP headers to be sent with every request. Defaults to none.
      */
     extraHTTPHeaders?: { [key: string]: string; };
+
+    /**
+     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
+     * default, response object is returned for all status codes.
+     */
+    fetchFailOnStatusCode?: boolean;
 
     /**
      * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
@@ -21974,6 +21998,12 @@ export interface BrowserContextOptions {
    * An object containing additional HTTP headers to be sent with every request. Defaults to none.
    */
   extraHTTPHeaders?: { [key: string]: string; };
+
+  /**
+   * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
+   * default, response object is returned for all status codes.
+   */
+  fetchFailOnStatusCode?: boolean;
 
   /**
    * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
