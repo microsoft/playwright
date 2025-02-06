@@ -1235,8 +1235,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.metadata-view')).toMatchAriaSnapshot(`
         - 'link "chore(html): make this test look nice"'
         - text: /^William <shakespeare@example.local> on/
-        - link "logs"
-        - link "pull request"
+        - link "Logs"
+        - link "Pull Request"
         - link /^[a-f0-9]{7}$/
         - text: 'foo: value1 bar: {"prop":"value2"} baz: ["value3",123]'
       `);
