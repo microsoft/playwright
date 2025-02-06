@@ -804,7 +804,7 @@ Sharding in CircleCI is indexed with 0 which means that you will need to overrid
       executor: pw-noble-development
       parallelism: 4
       steps:
-        - run: SHARD="$((${CIRCLE_NODE_INDEX}+1))"; npx playwright test -- --shard=${SHARD}/${CIRCLE_NODE_TOTAL}
+        - run: SHARD="$((${CIRCLE_NODE_INDEX}+1))"; npx playwright test --shard=${SHARD}/${CIRCLE_NODE_TOTAL}
   ```
 
 ### Jenkins

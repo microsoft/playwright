@@ -118,15 +118,15 @@ function isTypeScript(filename: string) {
   return filename.endsWith('.ts') || filename.endsWith('.tsx') || filename.endsWith('.mts') || filename.endsWith('.cts');
 }
 
-export function babelTransform(code: string, filename: string, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): BabelFileResult {
+export function babelTransform(code: string, filename: string, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): BabelFileResult | null {
   if (isTransforming)
-    return {};
+    return null;
 
   // Prevent reentry while requiring plugins lazily.
   isTransforming = true;
   try {
     const options = babelTransformOptions(isTypeScript(filename), isModule, pluginsPrologue, pluginsEpilogue);
-    return babel.transform(code, { filename, ...options })!;
+    return babel.transform(code, { filename, ...options });
   } finally {
     isTransforming = false;
   }
