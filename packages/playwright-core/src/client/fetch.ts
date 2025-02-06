@@ -25,7 +25,7 @@ import { assert, headersObjectToArray, isString } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import { ChannelOwner } from './channelOwner';
 import { RawHeaders } from './network';
-import type { ClientCertificate, FilePayload, Headers, StorageState } from './types';
+import type { ClientCertificate, FilePayload, Headers, SetStorageState, StorageState } from './types';
 import type { Playwright } from './playwright';
 import { Tracing } from './tracing';
 import { TargetClosedError, isTargetClosedError } from './errors';
@@ -47,7 +47,7 @@ export type FetchOptions = {
 
 type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'tracesDir'> & {
   extraHTTPHeaders?: Headers,
-  storageState?: string | StorageState,
+  storageState?: string | SetStorageState,
   clientCertificates?: ClientCertificate[];
 };
 
