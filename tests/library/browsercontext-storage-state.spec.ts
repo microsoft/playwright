@@ -90,15 +90,19 @@ it('should round-trip through the file', async ({ contextFactory }, testInfo) =>
     await new Promise((resolve, reject) => {
       const openRequest = indexedDB.open('db', 42);
       openRequest.onupgradeneeded = () => {
-        openRequest.result.createObjectStore('store');
-
+        openRequest.result.createObjectStore('store', { keyPath: 'name' });
+        openRequest.result.createObjectStore('store2');
       };
       openRequest.onsuccess = () => {
-        const request = openRequest.result.transaction('store', 'readwrite')
+        const transaction = openRequest.result.transaction(['store', 'store2'], 'readwrite');
+        transaction
             .objectStore('store')
-            .put('foo', 'bar');
-        request.addEventListener('success', resolve);
-        request.addEventListener('error', reject);
+            .put({ name: 'foo', date: new Date(0) });
+        transaction
+            .objectStore('store2')
+            .put('bar', 'foo');
+        transaction.addEventListener('complete', resolve);
+        transaction.addEventListener('error', reject);
       };
     });
 
@@ -120,18 +124,25 @@ it('should round-trip through the file', async ({ contextFactory }, testInfo) =>
   expect(localStorage).toEqual({ name1: 'value1' });
   const cookie = await page2.evaluate('document.cookie');
   expect(cookie).toEqual('username=John Doe');
-  const idbValue = await page2.evaluate(() => new Promise<string>((resolve, reject) => {
+  const idbValues = await page2.evaluate(() => new Promise((resolve, reject) => {
     const openRequest = indexedDB.open('db', 42);
     openRequest.addEventListener('success', () => {
       const db = openRequest.result;
-      const transaction = db.transaction('store', 'readonly');
-      const getRequest = transaction.objectStore('store').get('bar');
-      getRequest.addEventListener('success', () => resolve(getRequest.result));
-      getRequest.addEventListener('error', () => reject(getRequest.error));
+      const transaction = db.transaction(['store', 'store2'], 'readonly');
+      const request1 = transaction.objectStore('store').get('foo');
+      const request2 = transaction.objectStore('store2').get('foo');
+
+      Promise.all([request1, request2].map(request => new Promise((resolve, reject) => {
+        request.addEventListener('success', () => resolve(request.result));
+        request.addEventListener('error', () => reject(request.error));
+      }))).then(resolve, reject);
     });
     openRequest.addEventListener('error', () => reject(openRequest.error));
   }));
-  expect(idbValue).toEqual('foo');
+  expect(idbValues).toEqual([
+    { name: 'foo', date: new Date(0) },
+    'bar'
+  ]);
   await context2.close();
 });
 
