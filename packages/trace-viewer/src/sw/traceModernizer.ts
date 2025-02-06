@@ -92,7 +92,7 @@ export class TraceModernizer {
         contextEntry.sdkLanguage = event.sdkLanguage;
         contextEntry.options = event.options;
         contextEntry.testIdAttributeName = event.testIdAttributeName;
-        contextEntry.contextId = event.contextId;
+        contextEntry.contextId = event.contextId ?? '';
         break;
       }
       case 'screencast-frame': {
