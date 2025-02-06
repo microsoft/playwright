@@ -234,7 +234,9 @@ scheme.APIRequestContextFetchLogParams = tObject({
 scheme.APIRequestContextFetchLogResult = tObject({
   log: tArray(tString),
 });
-scheme.APIRequestContextStorageStateParams = tOptional(tObject({}));
+scheme.APIRequestContextStorageStateParams = tObject({
+  indexedDB: tBoolean,
+});
 scheme.APIRequestContextStorageStateResult = tObject({
   cookies: tArray(tType('NetworkCookie')),
   origins: tArray(tType('OriginStorage')),

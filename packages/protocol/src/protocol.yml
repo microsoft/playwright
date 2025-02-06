@@ -376,6 +376,8 @@ APIRequestContext:
           items: string
 
     storageState:
+      parameters:
+        indexedDB: boolean
       returns:
         cookies:
           type: array

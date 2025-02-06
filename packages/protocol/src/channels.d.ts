@@ -346,7 +346,7 @@ export interface APIRequestContextChannel extends APIRequestContextEventTarget, 
   fetch(params: APIRequestContextFetchParams, metadata?: CallMetadata): Promise<APIRequestContextFetchResult>;
   fetchResponseBody(params: APIRequestContextFetchResponseBodyParams, metadata?: CallMetadata): Promise<APIRequestContextFetchResponseBodyResult>;
   fetchLog(params: APIRequestContextFetchLogParams, metadata?: CallMetadata): Promise<APIRequestContextFetchLogResult>;
-  storageState(params?: APIRequestContextStorageStateParams, metadata?: CallMetadata): Promise<APIRequestContextStorageStateResult>;
+  storageState(params: APIRequestContextStorageStateParams, metadata?: CallMetadata): Promise<APIRequestContextStorageStateResult>;
   disposeAPIResponse(params: APIRequestContextDisposeAPIResponseParams, metadata?: CallMetadata): Promise<APIRequestContextDisposeAPIResponseResult>;
   dispose(params: APIRequestContextDisposeParams, metadata?: CallMetadata): Promise<APIRequestContextDisposeResult>;
 }
@@ -402,8 +402,12 @@ export type APIRequestContextFetchLogOptions = {
 export type APIRequestContextFetchLogResult = {
   log: string[],
 };
-export type APIRequestContextStorageStateParams = {};
-export type APIRequestContextStorageStateOptions = {};
+export type APIRequestContextStorageStateParams = {
+  indexedDB: boolean,
+};
+export type APIRequestContextStorageStateOptions = {
+
+};
 export type APIRequestContextStorageStateResult = {
   cookies: NetworkCookie[],
   origins: OriginStorage[],

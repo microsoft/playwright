@@ -9272,7 +9272,7 @@ export interface BrowserContext {
    */
   storageState(options?: {
     /**
-     * Set to `false` to disable IndexedDB snapshot.
+     * Set to `false` to omit IndexedDB from snapshot.
      */
     indexedDB?: boolean;
 
@@ -18536,6 +18536,11 @@ export interface APIRequestContext {
    * @param options
    */
   storageState(options?: {
+    /**
+     * Set to `false` to omit IndexedDB from snapshot.
+     */
+    indexedDB?: boolean;
+
     /**
      * The file path to save the storage state to. If
      * [`path`](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-storage-state-option-path) is
