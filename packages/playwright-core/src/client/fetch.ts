@@ -65,7 +65,6 @@ export class APIRequest implements api.APIRequest {
     options = {
       ...this._playwright._defaultContextOptions,
       ...options,
-      timeout: this._playwright._defaultContextTimeout ?? options.timeout,
     };
     const storageState = typeof options.storageState === 'string' ?
       JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) :
