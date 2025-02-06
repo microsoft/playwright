@@ -349,6 +349,10 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
 
   /**
    * Project name is visible in the report and during test execution.
+   *
+   * **NOTE** Playwright executes the configuration file multiple times. Do not dynamically produce non-stable values in
+   * your configuration.
+   *
    */
   name?: string;
 
@@ -9571,6 +9575,72 @@ export interface TestInfoError {
  *
  */
 export interface TestStepInfo {
+  /**
+   * Attach a value or a file from disk to the current test step. Some reporters show test step attachments. Either
+   * [`path`](https://playwright.dev/docs/api/class-teststepinfo#test-step-info-attach-option-path) or
+   * [`body`](https://playwright.dev/docs/api/class-teststepinfo#test-step-info-attach-option-body) must be specified,
+   * but not both. Calling this method will attribute the attachment to the step, as opposed to
+   * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach) which stores
+   * all attachments at the test level.
+   *
+   * For example, you can attach a screenshot to the test step:
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('basic test', async ({ page }) => {
+   *   await page.goto('https://playwright.dev');
+   *   await test.step('check page rendering', async step => {
+   *     const screenshot = await page.screenshot();
+   *     await step.attach('screenshot', { body: screenshot, contentType: 'image/png' });
+   *   });
+   * });
+   * ```
+   *
+   * Or you can attach files returned by your APIs:
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   * import { download } from './my-custom-helpers';
+   *
+   * test('basic test', async ({}) => {
+   *   await test.step('check download behavior', async step => {
+   *     const tmpPath = await download('a');
+   *     await step.attach('downloaded', { path: tmpPath });
+   *   });
+   * });
+   * ```
+   *
+   * **NOTE**
+   * [testStepInfo.attach(name[, options])](https://playwright.dev/docs/api/class-teststepinfo#test-step-info-attach)
+   * automatically takes care of copying attached files to a location that is accessible to reporters. You can safely
+   * remove the attachment after awaiting the attach call.
+   *
+   * @param name Attachment name. The name will also be sanitized and used as the prefix of file name when saving to disk.
+   * @param options
+   */
+  attach(name: string, options?: {
+    /**
+     * Attachment body. Mutually exclusive with
+     * [`path`](https://playwright.dev/docs/api/class-teststepinfo#test-step-info-attach-option-path).
+     */
+    body?: string|Buffer;
+
+    /**
+     * Content type of this attachment to properly present in the report, for example `'application/json'` or
+     * `'image/png'`. If omitted, content type is inferred based on the
+     * [`path`](https://playwright.dev/docs/api/class-teststepinfo#test-step-info-attach-option-path), or defaults to
+     * `text/plain` for [string] attachments and `application/octet-stream` for [Buffer] attachments.
+     */
+    contentType?: string;
+
+    /**
+     * Path on the filesystem to the attached file. Mutually exclusive with
+     * [`body`](https://playwright.dev/docs/api/class-teststepinfo#test-step-info-attach-option-body).
+     */
+    path?: string;
+  }): Promise<void>;
+
   /**
    * Unconditionally skip the currently running step. Test step is immediately aborted. This is similar to
    * [test.step.skip(title, body[, options])](https://playwright.dev/docs/api/class-test#test-step-skip).

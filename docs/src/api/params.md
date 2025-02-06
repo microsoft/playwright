@@ -280,7 +280,9 @@ Specify environment variables that will be visible to the browser. Defaults to `
           - `multiEntry` <[boolean]>
         - `records` <[Array]<[Object]>>
           - `key` ?<[Object]>
+          - `keyEncoded` ?<[Object]> if `key` is not JSON-serializable, this contains an encoded version that preserves types.
           - `value` <[Object]>
+          - `valueEncoded` ?<[Object]> if `value` is not JSON-serializable, this contains an encoded version that preserves types.
 
 Learn more about [storage state and auth](../auth.md).
 

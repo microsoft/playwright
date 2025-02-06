@@ -392,6 +392,24 @@ test('should print nice error when some of the projects are unknown', async ({ r
   expect(output).toContain('Project(s) "suIte3", "SUite4" not found. Available projects: "suite1", "suite2"');
 });
 
+test('should print nice error when project name is not stable', async ({ runInlineTest }) => {
+  const { output, exitCode } = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { projects: [
+        { name: \`calculated \$\{Date.now()\}\` },
+      ] };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {
+        console.log(testInfo.project.name);
+      });
+    `
+  });
+  expect(exitCode).toBe(1);
+  expect(output).toContain('not found in the worker process. Make sure project name does not change.');
+});
+
 test('should work without config file', async ({ runInlineTest }) => {
   const { exitCode, passed, failed, skipped } = await runInlineTest({
     'playwright.config.ts': `

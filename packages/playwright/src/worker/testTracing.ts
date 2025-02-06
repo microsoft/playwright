@@ -278,6 +278,8 @@ export class TestTracing {
 }
 
 function serializeAttachments(attachments: Attachment[]): trace.AfterActionTraceEvent['attachments'] {
+  if (attachments.length === 0)
+    return undefined;
   return attachments.filter(a => a.name !== 'trace').map(a => {
     return {
       name: a.name,

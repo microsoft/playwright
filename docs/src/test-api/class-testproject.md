@@ -183,6 +183,10 @@ Metadata that will be put directly to the test report serialized as JSON.
 
 Project name is visible in the report and during test execution.
 
+:::warning
+Playwright executes the configuration file multiple times. Do not dynamically produce non-stable values in your configuration.
+:::
+
 ## property: TestProject.snapshotDir
 * since: v1.10
 - type: ?<[string]>
