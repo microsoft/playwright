@@ -23,12 +23,15 @@ import type { Metadata } from '@playwright/test';
 import type { GitCommitInfo } from '@testIsomorphic/types';
 import { CopyToClipboardContainer } from './copyToClipboard';
 import { linkifyText } from '@web/renderUtils';
+import { GitCommitInfoContext } from './reportView';
 
 type MetadataEntries = [string, unknown][];
 
-export function filterMetadata(metadata: Metadata): MetadataEntries {
-  // TODO: do not plumb actualWorkers through metadata.
-  return Object.entries(metadata).filter(([key]) => key !== 'actualWorkers');
+export function filterMetadata(metadata: Metadata): { gitCommitInfo?: GitCommitInfo, metadataEntries: MetadataEntries } {
+  return {
+    gitCommitInfo: metadata['git.commit.info'],
+    metadataEntries: Object.entries(metadata).filter(([key]) => key !== 'git.commit.info' && key !== 'actualWorkers') // TODO: do not plumb actualWorkers through metadata.
+  };
 }
 
 class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, { error: Error | null, errorInfo: React.ErrorInfo | null }> {
@@ -61,9 +64,8 @@ export const MetadataView: React.FC<{ metadataEntries: MetadataEntries }> = ({ m
   return <ErrorBoundary><InnerMetadataView metadataEntries={metadataEntries}/></ErrorBoundary>;
 };
 
-const InnerMetadataView: React.FC<{ metadataEntries: MetadataEntries }> = ({ metadataEntries }) => {
-  const gitCommitInfo = metadataEntries.find(([key]) => key === 'git.commit.info')?.[1] as GitCommitInfo | undefined;
-  const entries = metadataEntries.filter(([key]) => key !== 'git.commit.info');
+const InnerMetadataView: React.FC<{ metadataEntries: MetadataEntries }> = ({ metadataEntries: entries }) => {
+  const gitCommitInfo = React.useContext(GitCommitInfoContext);
   if (!gitCommitInfo && !entries.length)
     return null;
   return <div className='metadata-view'>
