@@ -78,7 +78,7 @@ export const ReportView: React.FC<{
     return result;
   }, [report, filter]);
 
-  return <MetadataContext.Provider value={gitCommitInfo}><div className='htmlreport vbox px-4 pb-4'>
+  return <GitCommitInfoContext.Provider value={gitCommitInfo}><div className='htmlreport vbox px-4 pb-4'>
     <main>
       {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
       <Route predicate={testFilesRoutePredicate}>
@@ -94,7 +94,7 @@ export const ReportView: React.FC<{
         {!!report && <TestCaseViewLoader report={report} tests={filteredTests.tests} testIdToFileIdMap={testIdToFileIdMap} />}
       </Route>
     </main>
-  </div></MetadataContext.Provider>;
+  </div></GitCommitInfoContext.Provider>;
 };
 
 const TestCaseViewLoader: React.FC<{

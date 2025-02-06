@@ -19,13 +19,47 @@ import * as React from 'react';
 import './testErrorView.css';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
+import { GitCommitInfoContext } from './reportView';
 
 export const TestErrorView: React.FC<{
   error: string;
   testId?: string;
 }> = ({ error, testId }) => {
   const html = React.useMemo(() => ansiErrorToHtml(error), [error]);
-  return <div className='test-error-view test-error-text' data-testid={testId} dangerouslySetInnerHTML={{ __html: html || '' }}></div>;
+  return (
+    <div className='test-error-view test-error-text' data-testid={testId}>
+      <PromptButton error={error} />
+      <div dangerouslySetInnerHTML={{ __html: html || '' }}></div>
+    </div>
+  );
+};
+
+const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');
+export function stripAnsiEscapes(str: string): string {
+  return str.replace(ansiRegex, '');
+}
+
+const PromptButton: React.FC<{
+  error: string;
+}> = ({ error }) => {
+  const gitCommitInfo = React.useContext(GitCommitInfoContext);
+  if (!gitCommitInfo)
+    return undefined;
+
+  const diff = gitCommitInfo['pull.diff'] ?? gitCommitInfo['revision.diff'];
+  if (!diff)
+    return undefined;
+
+  return (
+    <button onClick={() => {
+      navigator.clipboard.writeText([
+        'You are a helpful assistant. Help me understand the error cause. Here is the error:',
+        stripAnsiEscapes(error),
+        'And this is the code diff:',
+        diff
+      ].join('\n'));
+    }}>Copy AI Prompt</button>
+  );
 };
 
 export const TestScreenshotErrorView: React.FC<{
