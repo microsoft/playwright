@@ -64,23 +64,33 @@ function linksFromEnv(): Pick<GitCommitInfo, 'revision.link' | 'ci.link'> {
 
 async function gitStatusFromCLI(gitDir: string): Promise<GitCommitInfo | undefined> {
   const separator = `:${createGuid().slice(0, 4)}:`;
-  const { code, stdout } = await spawnAsync(
+  const commitInfoResult = await spawnAsync(
       'git',
       ['show', '-s', `--format=%H${separator}%s${separator}%an${separator}%ae${separator}%ct`, 'HEAD'],
       { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS }
   );
-  if (code)
+  if (commitInfoResult.code)
     return;
-  const showOutput = stdout.trim();
+  const showOutput = commitInfoResult.stdout.trim();
   const [id, subject, author, email, rawTimestamp] = showOutput.split(separator);
   let timestamp: number = Number.parseInt(rawTimestamp, 10);
   timestamp = Number.isInteger(timestamp) ? timestamp * 1000 : 0;
 
-  return {
+  const result: GitCommitInfo = {
     'revision.id': id,
     'revision.author': author,
     'revision.email': email,
     'revision.subject': subject,
     'revision.timestamp': timestamp,
   };
+
+  const diffResult = await spawnAsync(
+      'git',
+      ['diff', 'HEAD~1'],
+      { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS }
+  );
+  if (!diffResult.code)
+    result['revision.diff'] = diffResult.stdout;
+
+  return result;
 }
