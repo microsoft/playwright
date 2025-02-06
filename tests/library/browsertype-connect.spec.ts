@@ -630,14 +630,14 @@ for (const kind of ['launchServer', 'run-server'] as const) {
 
     test('should filter launch options', async ({ connect, startRemoteServer, server, browserType }, testInfo) => {
       const tracesDir = testInfo.outputPath('traces');
-      const oldTracesDir = (browserType as any)._playwright._defaultLaunchOptions.tracesDir;
-      (browserType as any)._playwright._defaultLaunchOptions.tracesDir = tracesDir;
+      const oldTracesDir = (browserType as any)._playwright._defaultTracesDir;
+      (browserType as any)._playwright._defaultTracesDir = tracesDir;
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const page = await browser.newPage();
       await page.goto(server.EMPTY_PAGE);
       await browser.close();
-      (browserType as any)._playwright._defaultLaunchOptions.tracesDir = oldTracesDir;
+      (browserType as any)._playwright._defaultTracesDir = oldTracesDir;
       expect(fs.existsSync(tracesDir)).toBe(false);
     });
 

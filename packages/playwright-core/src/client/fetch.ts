@@ -65,7 +65,7 @@ export class APIRequest implements api.APIRequest {
     options = {
       ...this._playwright._defaultContextOptions,
       ...options,
-      timeout: this._playwright._defaultActionTimeout ?? options.timeout,
+      timeout: this._playwright._defaultContextTimeout ?? options.timeout,
     };
     const storageState = typeof options.storageState === 'string' ?
       JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) :
@@ -74,12 +74,12 @@ export class APIRequest implements api.APIRequest {
       ...options,
       extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       storageState,
-      tracesDir: this._playwright._tracesDir,
+      tracesDir: this._playwright._defaultTracesDir,
       clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
     })).request);
     this._contexts.add(context);
     context._request = this;
-    context._tracing._tracesDir = this._playwright._tracesDir;
+    context._tracing._tracesDir = this._playwright._defaultTracesDir;
     await context._instrumentation.runAfterCreateRequestContext(context);
     return context;
   }
