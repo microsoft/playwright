@@ -15,10 +15,11 @@
  */
 
 import type * as channels from '@protocol/channels';
+import type { source } from './isomorphic/utilityScriptSerializers';
 
 export type Storage = Omit<channels.OriginStorage, 'origin'>;
 
-export async function collect(): Promise<Storage> {
+export async function collect(serializers: ReturnType<typeof source>, isFirefox: boolean): Promise<Storage> {
   const idbResult = await Promise.all((await indexedDB.databases()).map(async dbInfo => {
     if (!dbInfo.name)
       throw new Error('Database name is empty');
@@ -32,6 +33,39 @@ export async function collect(): Promise<Storage> {
       });
     }
 
+    function isPlainObject(v: any) {
+      const ctor = v?.constructor;
+      if (isFirefox) {
+        const constructorImpl = ctor?.toString();
+        if (constructorImpl.startsWith('function Object() {') && constructorImpl.includes('[native code]'))
+          return true;
+      }
+
+      return ctor === Object;
+    }
+
+    function trySerialize(value: any): { trivial?: any, encoded?: any } {
+      let trivial = true;
+      const encoded = serializers.serializeAsCallArgument(value, v => {
+        const isTrivial = (
+          isPlainObject(v)
+          || Array.isArray(v)
+          || typeof v === 'string'
+          || typeof v === 'number'
+          || typeof v === 'boolean'
+          || Object.is(v, null)
+        );
+
+        if (!isTrivial)
+          trivial = false;
+
+        return { fallThrough: v };
+      });
+      if (trivial)
+        return { trivial: value };
+      return { encoded };
+    }
+
     const db = await idbRequestToPromise(indexedDB.open(dbInfo.name));
     const transaction = db.transaction(db.objectStoreNames, 'readonly');
     const stores = await Promise.all([...db.objectStoreNames].map(async storeName => {
@@ -39,10 +73,24 @@ export async function collect(): Promise<Storage> {
 
       const keys = await idbRequestToPromise(objectStore.getAllKeys());
       const records = await Promise.all(keys.map(async key => {
-        return {
-          key: objectStore.keyPath === null ? key : undefined,
-          value: await idbRequestToPromise(objectStore.get(key))
-        };
+        const record: channels.OriginStorage['indexedDB'][0]['stores'][0]['records'][0] = {};
+
+        if (objectStore.keyPath === null) {
+          const { encoded, trivial } = trySerialize(key);
+          if (trivial)
+            record.key = trivial;
+          else
+            record.keyEncoded = encoded;
+        }
+
+        const value = await idbRequestToPromise(objectStore.get(key));
+        const { encoded, trivial } = trySerialize(value);
+        if (trivial)
+          record.value = trivial;
+        else
+          record.valueEncoded = encoded;
+
+        return record;
       }));
 
       const indexes = [...objectStore.indexNames].map(indexName => {
@@ -81,7 +129,7 @@ export async function collect(): Promise<Storage> {
   };
 }
 
-export async function restore(originState: channels.SetOriginStorage) {
+export async function restore(originState: channels.SetOriginStorage, serializers: ReturnType<typeof source>) {
   for (const { name, value } of (originState.localStorage || []))
     localStorage.setItem(name, value);
 
@@ -111,8 +159,8 @@ export async function restore(originState: channels.SetOriginStorage) {
       await Promise.all(store.records.map(async record => {
         await idbRequestToPromise(
             objectStore.add(
-                record.value,
-                objectStore.keyPath === null ? record.key : undefined
+                record.value ?? serializers.parseEvaluationResultValue(record.valueEncoded),
+                record.key ?? serializers.parseEvaluationResultValue(record.keyEncoded),
             )
         );
       }));

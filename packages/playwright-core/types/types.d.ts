@@ -9338,7 +9338,17 @@ export interface BrowserContext {
           records: Array<{
             key?: Object;
 
+            /**
+             * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
+             */
+            keyEncoded?: Object;
+
             value: Object;
+
+            /**
+             * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
+             */
+            valueEncoded?: Object;
           }>;
         }>;
       }>;
@@ -10147,7 +10157,17 @@ export interface Browser {
             records: Array<{
               key?: Object;
 
+              /**
+               * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
+               */
+              keyEncoded?: Object;
+
               value: Object;
+
+              /**
+               * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
+               */
+              valueEncoded?: Object;
             }>;
           }>;
         }>;
@@ -17725,7 +17745,17 @@ export interface APIRequest {
             records: Array<{
               key?: Object;
 
+              /**
+               * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
+               */
+              keyEncoded?: Object;
+
               value: Object;
+
+              /**
+               * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
+               */
+              valueEncoded?: Object;
             }>;
           }>;
         }>;
@@ -18568,7 +18598,17 @@ export interface APIRequestContext {
           records: Array<{
             key?: Object;
 
+            /**
+             * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
+             */
+            keyEncoded?: Object;
+
             value: Object;
+
+            /**
+             * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
+             */
+            valueEncoded?: Object;
           }>;
         }>;
       }>;
@@ -22454,7 +22494,17 @@ export interface BrowserContextOptions {
           records: Array<{
             key?: Object;
 
+            /**
+             * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
+             */
+            keyEncoded?: Object;
+
             value: Object;
+
+            /**
+             * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
+             */
+            valueEncoded?: Object;
           }>;
         }>;
       }>;
