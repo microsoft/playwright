@@ -416,8 +416,10 @@ function objectToArray(map?: { [key: string]: any }): NameValue[] | undefined {
   if (!map)
     return undefined;
   const result = [];
-  for (const [name, value] of Object.entries(map))
-    result.push({ name, value: String(value) });
+  for (const [name, value] of Object.entries(map)) {
+    if (value !== undefined)
+      result.push({ name, value: String(value) });
+  }
   return result;
 }
 
