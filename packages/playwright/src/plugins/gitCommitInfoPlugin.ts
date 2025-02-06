@@ -60,8 +60,8 @@ function linksFromEnv() {
   if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID)
     out['ci.link'] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
   if (process.env.GITHUB_REF_NAME && process.env.GITHUB_REF_NAME.endsWith('/merge')) {
-    out['pull.id'] = process.env.GITHUB_REF_NAME.substring(0, process.env.GITHUB_REF_NAME.indexOf('/merge'));
-    out['pull.link'] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/pull/${out['pull.id']}`;
+    const pullId = process.env.GITHUB_REF_NAME.substring(0, process.env.GITHUB_REF_NAME.indexOf('/merge'));
+    out['pull.link'] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/pull/${pullId}`;
     out['pull.base'] = process.env.GITHUB_BASE_REF;
   }
   return out;
