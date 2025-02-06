@@ -133,7 +133,7 @@ export abstract class APIRequestContext extends SdkObject {
   abstract _defaultOptions(): FetchRequestOptions;
   abstract _addCookies(cookies: channels.NetworkCookie[]): Promise<void>;
   abstract _cookies(url: URL): Promise<channels.NetworkCookie[]>;
-  abstract storageState(): Promise<channels.APIRequestContextStorageStateResult>;
+  abstract storageState(indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult>;
 
   private _storeResponseBody(body: Buffer): string {
     const uid = createGuid();
@@ -618,8 +618,8 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
     return await this._context.cookies(url.toString());
   }
 
-  override async storageState(): Promise<channels.APIRequestContextStorageStateResult> {
-    return this._context.storageState();
+  override async storageState(indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult> {
+    return this._context.storageState(indexedDB);
   }
 }
 
@@ -684,10 +684,10 @@ export class GlobalAPIRequestContext extends APIRequestContext {
     return this._cookieStore.cookies(url);
   }
 
-  override async storageState(): Promise<channels.APIRequestContextStorageStateResult> {
+  override async storageState(indexedDB = true): Promise<channels.APIRequestContextStorageStateResult> {
     return {
       cookies: this._cookieStore.allCookies(),
-      origins: this._origins || []
+      origins: (this._origins || []).map(origin => ({ ...origin, indexedDB: indexedDB ? origin.indexedDB : [] })),
     };
   }
 }
