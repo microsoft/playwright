@@ -34,9 +34,8 @@ export const gitCommitInfo = (options?: GitCommitInfoPluginOptions): TestRunnerP
     setup: async (config: FullConfig, configDir: string) => {
       const fromEnv = linksFromEnv();
       const fromCLI = await gitStatusFromCLI(options?.directory || configDir);
-      const info = { ...fromEnv, ...fromCLI };
       config.metadata = config.metadata || {};
-      config.metadata['git.commit.info'] = info;
+      config.metadata['git.commit.info'] = { ...fromEnv, ...fromCLI };
     },
   };
 };
