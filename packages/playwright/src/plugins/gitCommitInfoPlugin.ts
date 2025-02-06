@@ -34,12 +34,8 @@ export const gitCommitInfo = (options?: GitCommitInfoPluginOptions): TestRunnerP
     setup: async (config: FullConfig, configDir: string) => {
       const fromEnv = linksFromEnv();
       const fromCLI = await gitStatusFromCLI(options?.directory || configDir);
-      const info = { ...fromEnv, ...fromCLI };
-      if (info['revision.timestamp'] instanceof Date)
-        info['revision.timestamp'] = info['revision.timestamp'].getTime();
-
       config.metadata = config.metadata || {};
-      config.metadata['git.commit.info'] = info;
+      config.metadata['git.commit.info'] = { ...fromEnv, ...fromCLI };
     },
   };
 };
