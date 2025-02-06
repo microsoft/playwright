@@ -533,7 +533,7 @@ class SnapshotRecorder {
 
   constructor(
     private _artifactsRecorder: ArtifactsRecorder,
-    private _mode: ScreenshotMode,
+    private _mode: ScreenshotMode | PageSnapshotOption,
     private _name: string,
     private _contentType: string,
     private _extension: string,
