@@ -50,6 +50,11 @@
   line-height: 24px;
 }
 
+.test-case-run-duration {
+  color: var(--color-fg-subtle);
+  padding-left: 8px;
+}
+
 .test-case-path {
   flex: none;
   align-items: center;

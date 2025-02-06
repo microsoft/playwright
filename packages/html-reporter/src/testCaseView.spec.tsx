@@ -212,7 +212,7 @@ test('should correctly render prev and next', async ({ mount }) => {
     - text: group
     - link "« previous"
     - link "next »"
-    - text: "My test test.spec.ts:42 100ms"
+    - text: "My test test.spec.ts:42 10ms"
   `);
 });
 
@@ -237,10 +237,15 @@ const testCaseWithTwoAttempts: TestCase = {
 test('total duration is selected run duration', async ({ mount, page }) => {
   const component = await mount(<TestCaseView projectNames={['chromium', 'webkit']} test={testCaseWithTwoAttempts} prev={undefined} next={undefined} run={0}></TestCaseView>);
   await expect(component).toMatchAriaSnapshot(`
-    - text: "My test test.spec.ts:42 50ms"
+    - text: "My test test.spec.ts:42 200ms"
+    - text: "Run 50ms Retry #1 150ms"
   `);
-  await page.getByText('Retry #1').click();
+  await page.locator('.tabbed-pane-tab-label', { hasText: 'Run50ms' }).click();
   await expect(component).toMatchAriaSnapshot(`
-    - text: "My test test.spec.ts:42 150ms"
+    - text: "My test test.spec.ts:42 200ms"
+  `);
+  await page.locator('.tabbed-pane-tab-label', { hasText: 'Retry #1150ms' }).click();
+  await expect(component).toMatchAriaSnapshot(`
+    - text: "My test test.spec.ts:42 200ms"
   `);
 });
