@@ -51,7 +51,7 @@ const test = baseTest.extend<Fixtures>({
     await use(async () => {
       const browser = await browserType.connect(wsEndpoint, {
         headers: {
-          'x-playwright-launch-options': JSON.stringify((browserType as any)._defaultLaunchOptions),
+          'x-playwright-launch-options': JSON.stringify((browserType as any)._playwright._defaultLaunchOptions),
           'x-playwright-reuse-context': '1',
         },
       }) as BrowserWithReuse;
