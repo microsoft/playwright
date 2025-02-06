@@ -83,11 +83,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.headless = headless;
     if (channel !== undefined)
       options.channel = channel;
-    playwright._defaultTracesDir = tracing().tracesDir();
+
     playwright._defaultLaunchOptions = options;
+    playwright._defaultLaunchOptions.tracesDir = tracing().tracesDir();
     await use(options);
     playwright._defaultLaunchOptions = undefined;
-    playwright._defaultTracesDir = undefined;
   }, { scope: 'worker', auto: true, box: true }],
 
   browser: [async ({ playwright, browserName, _browserOptions, connectOptions, _reuseContext }, use, testInfo) => {
@@ -234,12 +234,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     playwright._defaultContextOptions = _combinedContextOptions;
     playwright._defaultContextTimeout = actionTimeout || 0;
     playwright._defaultContextNavigationTimeout = navigationTimeout || 0;
-    playwright._defaultTracesDir = tracing().tracesDir();
     await use();
     playwright._defaultContextOptions = undefined;
     playwright._defaultContextTimeout = undefined;
     playwright._defaultContextNavigationTimeout = undefined;
-    playwright._defaultTracesDir = undefined;
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
   _setupArtifacts: [async ({ playwright, screenshot }, use, testInfo) => {

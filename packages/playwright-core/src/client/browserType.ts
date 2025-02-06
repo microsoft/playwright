@@ -67,7 +67,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     options = { ...this._playwright._defaultLaunchOptions, ...options };
     const launchOptions: channels.BrowserTypeLaunchParams = {
       ...options,
-      tracesDir: options.tracesDir ?? this._playwright._defaultTracesDir,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,

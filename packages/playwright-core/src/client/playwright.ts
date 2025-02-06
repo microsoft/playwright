@@ -42,7 +42,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   _defaultContextOptions?: BrowserContextOptions;
   _defaultContextTimeout?: number;
   _defaultContextNavigationTimeout?: number;
-  _defaultTracesDir?: string;
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
     super(parent, type, guid, initializer);
