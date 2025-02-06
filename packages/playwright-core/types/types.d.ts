@@ -9272,6 +9272,11 @@ export interface BrowserContext {
    */
   storageState(options?: {
     /**
+     * Set to `false` to disable IndexedDB snapshot.
+     */
+    indexedDB?: boolean;
+
+    /**
      * The file path to save the storage state to. If
      * [`path`](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state-option-path) is a
      * relative path, then it is resolved relative to current working directory. If no path is provided, storage state is

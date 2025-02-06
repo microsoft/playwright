@@ -1234,6 +1234,8 @@ BrowserContext:
         offline: boolean
 
     storageState:
+      parameters:
+        indexedDB: boolean
       returns:
         cookies:
           type: array

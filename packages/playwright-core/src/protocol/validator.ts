@@ -992,7 +992,9 @@ scheme.BrowserContextSetOfflineParams = tObject({
   offline: tBoolean,
 });
 scheme.BrowserContextSetOfflineResult = tOptional(tObject({}));
-scheme.BrowserContextStorageStateParams = tOptional(tObject({}));
+scheme.BrowserContextStorageStateParams = tObject({
+  indexedDB: tBoolean,
+});
 scheme.BrowserContextStorageStateResult = tObject({
   cookies: tArray(tType('NetworkCookie')),
   origins: tArray(tType('OriginStorage')),

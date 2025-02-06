@@ -1541,6 +1541,12 @@ Returns storage state for this browser context, contains current cookies, local 
 ### option: BrowserContext.storageState.path = %%-storagestate-option-path-%%
 * since: v1.8
 
+### option: BrowserContext.storageState.indexedDB
+* since: v1.51
+- `indexedDB` ?<boolean>
+
+Set to `false` to disable IndexedDB snapshot.
+
 ## property: BrowserContext.tracing
 * since: v1.12
 - type: <[Tracing]>
