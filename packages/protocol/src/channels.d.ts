@@ -403,10 +403,10 @@ export type APIRequestContextFetchLogResult = {
   log: string[],
 };
 export type APIRequestContextStorageStateParams = {
-  indexedDB: boolean,
+  indexedDB?: boolean,
 };
 export type APIRequestContextStorageStateOptions = {
-
+  indexedDB?: boolean,
 };
 export type APIRequestContextStorageStateResult = {
   cookies: NetworkCookie[],
@@ -1802,10 +1802,10 @@ export type BrowserContextSetOfflineOptions = {
 };
 export type BrowserContextSetOfflineResult = void;
 export type BrowserContextStorageStateParams = {
-  indexedDB: boolean,
+  indexedDB?: boolean,
 };
 export type BrowserContextStorageStateOptions = {
-
+  indexedDB?: boolean,
 };
 export type BrowserContextStorageStateResult = {
   cookies: NetworkCookie[],

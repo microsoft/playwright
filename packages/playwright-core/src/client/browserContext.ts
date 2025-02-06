@@ -426,7 +426,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async storageState(options: { path?: string, indexedDB?: boolean } = {}): Promise<StorageState> {
-    const state = await this._channel.storageState({ indexedDB: options.indexedDB ?? true });
+    const state = await this._channel.storageState({ indexedDB: options.indexedDB });
     if (options.path) {
       await mkdirIfNeeded(options.path);
       await fs.promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');

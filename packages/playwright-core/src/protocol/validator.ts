@@ -235,7 +235,7 @@ scheme.APIRequestContextFetchLogResult = tObject({
   log: tArray(tString),
 });
 scheme.APIRequestContextStorageStateParams = tObject({
-  indexedDB: tBoolean,
+  indexedDB: tOptional(tBoolean),
 });
 scheme.APIRequestContextStorageStateResult = tObject({
   cookies: tArray(tType('NetworkCookie')),
@@ -995,7 +995,7 @@ scheme.BrowserContextSetOfflineParams = tObject({
 });
 scheme.BrowserContextSetOfflineResult = tOptional(tObject({}));
 scheme.BrowserContextStorageStateParams = tObject({
-  indexedDB: tBoolean,
+  indexedDB: tOptional(tBoolean),
 });
 scheme.BrowserContextStorageStateResult = tObject({
   cookies: tArray(tType('NetworkCookie')),

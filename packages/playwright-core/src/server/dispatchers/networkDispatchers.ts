@@ -194,8 +194,8 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
     this.adopt(tracing);
   }
 
-  async storageState(): Promise<channels.APIRequestContextStorageStateResult> {
-    return this._object.storageState();
+  async storageState(params: channels.APIRequestContextStorageStateParams): Promise<channels.APIRequestContextStorageStateResult> {
+    return this._object.storageState(params.indexedDB);
   }
 
   async dispose(params: channels.APIRequestContextDisposeParams, metadata: CallMetadata): Promise<void> {

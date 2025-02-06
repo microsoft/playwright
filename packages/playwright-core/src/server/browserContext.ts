@@ -508,7 +508,7 @@ export abstract class BrowserContext extends SdkObject {
     this._origins.add(origin);
   }
 
-  async storageState(indexedDB: boolean): Promise<channels.BrowserContextStorageStateResult> {
+  async storageState(indexedDB = true): Promise<channels.BrowserContextStorageStateResult> {
     const result: channels.BrowserContextStorageStateResult = {
       cookies: await this.cookies(),
       origins: []
