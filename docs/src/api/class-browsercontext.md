@@ -1533,6 +1533,10 @@ Whether to emulate network being offline for the browser context.
 
 Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB snapshot.
 
+:::note
+IndexedDBs with typed arrays are currently not supported.
+:::
+
 ## async method: BrowserContext.storageState
 * since: v1.8
 * langs: csharp, java

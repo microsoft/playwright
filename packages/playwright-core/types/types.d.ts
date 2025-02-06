@@ -9268,6 +9268,9 @@ export interface BrowserContext {
   /**
    * Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB
    * snapshot.
+   *
+   * **NOTE** IndexedDBs with typed arrays are currently not supported.
+   *
    * @param options
    */
   storageState(options?: {
