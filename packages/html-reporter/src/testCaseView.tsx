@@ -65,7 +65,7 @@ export const TestCaseView: React.FC<{
         </CopyToClipboardContainer>
       </div>
       <div style={{ flex: 'auto' }}></div>
-      <div className='test-case-duration'>{msToString(test.duration)}</div>
+      <div className='test-case-duration'>{msToString(test.results[selectedResultIndex]?.duration ?? test.duration)}</div>
     </div>}
     {test && (!!test.projectName || labels) && <div className='test-case-project-labels-row'>
       {test && !!test.projectName && <ProjectLink projectNames={projectNames} projectName={test.projectName}></ProjectLink>}
