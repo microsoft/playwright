@@ -515,7 +515,7 @@ export abstract class BrowserContext extends SdkObject {
     };
     const originsToSave = new Set(this._origins);
 
-    const collectScript = `(${storageScript.collect})((${utilityScriptSerializers.source})(), ${this._browser.options.name === 'firefox'})`;
+    const collectScript = `(${storageScript.collect})((${utilityScriptSerializers.source})(), ${this._browser.options.name === 'firefox'}, ${Boolean(process.env.PLAYWRIGHT_SKIP_INDEXEDDB)})`;
 
     // First try collecting storage stage from existing pages.
     for (const page of this.pages()) {
