@@ -98,13 +98,13 @@ const GitCommitInfoView: React.FC<{ info: GitCommitInfo }> = ({ info }) => {
         {info['ci.link'] && (
           <>
             <span className='mx-2'>·</span>
-            <a href={info['ci.link']} target='_blank' rel='noopener noreferrer' title='CI/CD logs'>logs</a>
+            <a href={info['ci.link']} target='_blank' rel='noopener noreferrer' title='CI/CD logs'>Logs</a>
           </>
         )}
         {info['pull.link'] && (
           <>
             <span className='mx-2'>·</span>
-            <a href={info['pull.link']} target='_blank' rel='noopener noreferrer'>pull request</a>
+            <a href={info['pull.link']} target='_blank' rel='noopener noreferrer'>Pull Request</a>
           </>
         )}
       </div>
