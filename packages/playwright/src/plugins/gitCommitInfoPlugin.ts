@@ -89,14 +89,6 @@ async function gitStatusFromCLI(gitDir: string, envInfo: Pick<GitCommitInfo, 'pu
     'revision.timestamp': timestamp,
   };
 
-  const diffResult = await spawnAsync(
-      'git',
-      ['diff', 'HEAD~1'],
-      { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS }
-  );
-  if (!diffResult.code)
-    result['revision.diff'] = diffResult.stdout;
-
   if (envInfo['pull.base']) {
     const pullDiffResult = await spawnAsync(
         'git',
@@ -105,6 +97,14 @@ async function gitStatusFromCLI(gitDir: string, envInfo: Pick<GitCommitInfo, 'pu
     );
     if (!pullDiffResult.code)
       result['pull.diff'] = pullDiffResult.stdout;
+  } else {
+    const diffResult = await spawnAsync(
+        'git',
+        ['diff', 'HEAD~1'],
+        { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS }
+    );
+    if (!diffResult.code)
+      result['revision.diff'] = diffResult.stdout;
   }
 
   return result;
