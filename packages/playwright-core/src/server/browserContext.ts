@@ -46,7 +46,7 @@ import { RecorderApp } from './recorder/recorderApp';
 import * as storageScript from './storageScript';
 import * as utilityScriptSerializers from './isomorphic/utilityScriptSerializers';
 
-export abstract class BrowserContext extends SdkObject {
+export abstract class BrowserContext extends SdkObject implements network.RequestContext {
   static Events = {
     Console: 'console',
     Close: 'close',

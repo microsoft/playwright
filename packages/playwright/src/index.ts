@@ -24,6 +24,7 @@ import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import { rootTestType } from './common/testType';
 import type { ContextReuseMode } from './common/config';
 import type { ApiCallData, ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
+import type { BrowserContext as BrowserContextImpl } from '../../playwright-core/src/client/browserContext';
 import type { Playwright as PlaywrightImpl } from '../../playwright-core/src/client/playwright';
 import { currentTestInfo } from './common/globals';
 export { expect } from './matchers/expect';
@@ -56,6 +57,7 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _optionContextReuseMode: ContextReuseMode,
   _optionConnectOptions: PlaywrightWorkerOptions['connectOptions'],
   _reuseContext: boolean,
+  _mockingProxy?: void,
   _pageSnapshot: PageSnapshotOption,
 };
 
@@ -74,6 +76,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   screenshot: ['off', { scope: 'worker', option: true }],
   video: ['off', { scope: 'worker', option: true }],
   trace: ['off', { scope: 'worker', option: true }],
+  mockingProxy: [undefined, { scope: 'worker', option: true }],
   _pageSnapshot: ['off', { scope: 'worker', option: true }],
 
   _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
@@ -120,6 +123,12 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       await browser.close({ reason: 'Test ended.' });
     }, true);
   }, { scope: 'worker', timeout: 0 }],
+
+  _mockingProxy: [async ({ mockingProxy, playwright }, use) => {
+    if (mockingProxy === 'inject-via-header')
+      await (playwright as PlaywrightImpl)._startMockingProxy();
+    await use();
+  }, { scope: 'worker', box: true, auto: true }],
 
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true }],
   bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP ?? false), { option: true }],
@@ -295,7 +304,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         if (!keepTestTimeout)
           currentTestInfo()?._setDebugMode();
       },
-      runAfterCreateBrowserContext: async (context: BrowserContext) => {
+      runAfterCreateBrowserContext: async (context: BrowserContextImpl) => {
         await artifactsRecorder?.didCreateBrowserContext(context);
         const testInfo = currentTestInfo();
         if (testInfo)
@@ -343,7 +352,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           size: typeof video === 'string' ? undefined : video.size,
         }
       } : {};
-      const context = await browser.newContext({ ...videoOptions, ...options });
+      const context = await browser.newContext({ ...videoOptions, ...options }) as BrowserContextImpl;
       const contextData: { pagesWithVideo: Page[] } = { pagesWithVideo: [] };
       contexts.set(context, contextData);
       if (captureVideo)

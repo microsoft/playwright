@@ -45,6 +45,7 @@ import { findValidator, ValidationError, type ValidatorContext } from '../protoc
 import { createInstrumentation } from './clientInstrumentation';
 import type { ClientInstrumentation } from './clientInstrumentation';
 import { formatCallLog, rewriteErrorMessage, zones } from '../utils';
+import { MockingProxy } from './mockingProxy';
 
 class Root extends ChannelOwner<channels.RootChannel> {
   constructor(connection: Connection) {
@@ -278,6 +279,9 @@ export class Connection extends EventEmitter {
         result = new LocalUtils(parent, type, guid, initializer);
         if (!this._localUtils)
           this._localUtils = result as LocalUtils;
+        break;
+      case 'MockingProxy':
+        result = new MockingProxy(parent, type, guid, initializer);
         break;
       case 'Page':
         result = new Page(parent, type, guid, initializer);

@@ -6243,11 +6243,28 @@ export interface PlaywrightWorkerOptions {
    * Learn more about [recording video](https://playwright.dev/docs/test-use-options#recording-options).
    */
   video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
+  /**
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     mockingProxy: 'inject-via-header'
+   *   },
+   * });
+   * ```
+   *
+   */
+  mockingProxy: MockingProxyMode | undefined;
 }
 
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
+export type MockingProxyMode = 'off' | 'inject-via-header';
 
 /**
  * Playwright Test provides many options to configure test environment,

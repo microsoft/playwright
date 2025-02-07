@@ -45,7 +45,7 @@ export type FetchOptions = {
   maxRetries?: number,
 };
 
-type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'tracesDir'> & {
+export type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'tracesDir'> & {
   extraHTTPHeaders?: Headers,
   storageState?: string | SetStorageState,
   clientCertificates?: ClientCertificate[];
@@ -62,6 +62,10 @@ export class APIRequest implements api.APIRequest {
   }
 
   async newContext(options: NewContextOptions = {}): Promise<APIRequestContext> {
+    return await this._newContext(options, this._playwright._channel);
+  }
+
+  async _newContext(options: NewContextOptions = {}, channel: channels.PlaywrightChannel | channels.LocalUtilsChannel): Promise<APIRequestContext> {
     options = {
       ...this._playwright._defaultContextOptions,
       timeout: this._playwright._defaultContextTimeout,
@@ -70,7 +74,7 @@ export class APIRequest implements api.APIRequest {
     const storageState = typeof options.storageState === 'string' ?
       JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) :
       options.storageState;
-    const context = APIRequestContext.from((await this._playwright._channel.newRequest({
+    const context = APIRequestContext.from((await channel.newRequest({
       ...options,
       extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       storageState,

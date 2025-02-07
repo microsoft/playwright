@@ -89,7 +89,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     const logger = options.logger || this._playwright._defaultLaunchOptions?.logger;
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     options = { ...this._playwright._defaultLaunchOptions, ...this._playwright._defaultContextOptions, ...options };
-    const contextParams = await prepareBrowserContextParams(options);
+    const contextParams = await prepareBrowserContextParams(options, this);
     const persistentParams: channels.BrowserTypeLaunchPersistentContextParams = {
       ...contextParams,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,

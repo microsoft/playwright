@@ -22,6 +22,7 @@ import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
 import { APIRequest } from './fetch';
 import { Selectors, SelectorsOwner } from './selectors';
+import { MockingProxy } from './mockingProxy';
 import type { BrowserContextOptions, LaunchOptions } from 'playwright-core';
 
 export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
@@ -36,6 +37,7 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   selectors: Selectors;
   readonly request: APIRequest;
   readonly errors: { TimeoutError: typeof TimeoutError };
+  _mockingProxy?: MockingProxy;
 
   // Instrumentation.
   _defaultLaunchOptions?: LaunchOptions;
@@ -91,5 +93,15 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
 
   _allPages() {
     return this._allContexts().flatMap(context => context.pages());
+  }
+
+
+  async _startMockingProxy() {
+    const requestContext = await this.request._newContext(undefined, this._connection.localUtils()._channel);
+    const result = await this._connection.localUtils()._channel.newMockingProxy({ requestContext: requestContext._channel });
+    this._mockingProxy = MockingProxy.from(result.mockingProxy);
+    this._mockingProxy._requestContext = requestContext;
+    this._mockingProxy._playwright = this;
+    return this._mockingProxy;
   }
 }

@@ -26,30 +26,33 @@ import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { WorkerDispatcher } from './pageDispatcher';
+import type { MockingProxyDispatcher } from './mockingProxyDispatcher';
 
-export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel, BrowserContextDispatcher | PageDispatcher | FrameDispatcher> implements channels.RequestChannel {
+type NetworkScope = BrowserContextDispatcher | MockingProxyDispatcher;
+
+export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel, NetworkScope | PageDispatcher | FrameDispatcher> implements channels.RequestChannel {
   _type_Request: boolean;
-  private _browserContextDispatcher: BrowserContextDispatcher;
+  private _networkScope: NetworkScope;
 
-  static from(scope: BrowserContextDispatcher, request: Request): RequestDispatcher {
+  static from(scope: NetworkScope, request: Request): RequestDispatcher {
     const result = existingDispatcher<RequestDispatcher>(request);
     return result || new RequestDispatcher(scope, request);
   }
 
-  static fromNullable(scope: BrowserContextDispatcher, request: Request | null): RequestDispatcher | undefined {
+  static fromNullable(scope: NetworkScope, request: Request | null): RequestDispatcher | undefined {
     return request ? RequestDispatcher.from(scope, request) : undefined;
   }
 
-  private constructor(scope: BrowserContextDispatcher, request: Request) {
+  private constructor(scope: NetworkScope, request: Request) {
     const postData = request.postDataBuffer();
     // Always try to attach request to the page, if not, frame.
     const frame = request.frame();
     const page = request.frame()?._page;
     const pageDispatcher = page ? existingDispatcher<PageDispatcher>(page) : null;
-    const frameDispatcher = frame ? FrameDispatcher.from(scope, frame) : null;
+    const frameDispatcher = frame ? FrameDispatcher.from(scope as BrowserContextDispatcher, frame) : null;
     super(pageDispatcher || frameDispatcher || scope, request, 'Request', {
-      frame: FrameDispatcher.fromNullable(scope, request.frame()),
-      serviceWorker: WorkerDispatcher.fromNullable(scope, request.serviceWorker()),
+      frame: FrameDispatcher.fromNullable(scope as BrowserContextDispatcher, request.frame()),
+      serviceWorker: WorkerDispatcher.fromNullable(scope as BrowserContextDispatcher, request.serviceWorker()),
       url: request.url(),
       resourceType: request.resourceType(),
       method: request.method(),
@@ -59,7 +62,7 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
       redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
     });
     this._type_Request = true;
-    this._browserContextDispatcher = scope;
+    this._networkScope = scope;
   }
 
   async rawRequestHeaders(params?: channels.RequestRawRequestHeadersParams): Promise<channels.RequestRawRequestHeadersResult> {
@@ -67,20 +70,20 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
   }
 
   async response(): Promise<channels.RequestResponseResult> {
-    return { response: ResponseDispatcher.fromNullable(this._browserContextDispatcher, await this._object.response()) };
+    return { response: ResponseDispatcher.fromNullable(this._networkScope, await this._object.response()) };
   }
 }
 
 export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseChannel, RequestDispatcher> implements channels.ResponseChannel {
   _type_Response = true;
 
-  static from(scope: BrowserContextDispatcher, response: Response): ResponseDispatcher {
+  static from(scope: NetworkScope, response: Response): ResponseDispatcher {
     const result = existingDispatcher<ResponseDispatcher>(response);
     const requestDispatcher = RequestDispatcher.from(scope, response.request());
     return result || new ResponseDispatcher(requestDispatcher, response);
   }
 
-  static fromNullable(scope: BrowserContextDispatcher, response: Response | null): ResponseDispatcher | undefined {
+  static fromNullable(scope: NetworkScope, response: Response | null): ResponseDispatcher | undefined {
     return response ? ResponseDispatcher.from(scope, response) : undefined;
   }
 

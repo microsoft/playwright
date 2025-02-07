@@ -584,6 +584,78 @@ ContextOptions:
       - allow
       - block
 
+NewRequestParameters:
+  type: mixin
+  properties:
+    baseURL: string?
+    userAgent: string?
+    ignoreHTTPSErrors: boolean?
+    extraHTTPHeaders:
+      type: array?
+      items: NameValue
+    clientCertificates:
+      type: array?
+      items:
+        type: object
+        properties:
+          origin: string
+          cert: binary?
+          key: binary?
+          passphrase: string?
+          pfx: binary?
+    httpCredentials:
+      type: object?
+      properties:
+        username: string
+        password: string
+        origin: string?
+        send:
+          type: enum?
+          literals:
+          - always
+          - unauthorized
+    proxy:
+      type: object?
+      properties:
+        server: string
+        bypass: string?
+        username: string?
+        password: string?
+    timeout: number?
+    storageState:
+      type: object?
+      properties:
+        cookies:
+          type: array?
+          items: NetworkCookie
+        origins:
+          type: array?
+          items: SetOriginStorage
+    tracesDir: string?
+
+
+EventTarget:
+  type: interface
+
+  commands:
+    waitForEventInfo:
+      parameters:
+        info:
+          type: object
+          properties:
+            waitId: string
+            phase:
+              type: enum
+              literals:
+              - before
+              - after
+              - log
+            event: string?
+            message: string?
+            error: string?
+      flags:
+        snapshot: true
+
 LocalUtils:
   type: interface
 
@@ -705,6 +777,52 @@ LocalUtils:
       parameters:
         stacksId: string
 
+    newRequest:
+      parameters:
+        $mixin: NewRequestParameters
+      returns:
+        request: APIRequestContext
+
+    newMockingProxy:
+      parameters:
+        requestContext: APIRequestContext
+      returns:
+        mockingProxy: MockingProxy
+
+MockingProxy:
+  type: interface
+
+  extends: EventTarget
+
+  initializer:
+    baseURL: string
+
+  events:
+    route:
+      parameters:
+        route: Route
+
+    request:
+      parameters:
+        request: Request
+        correlation: string
+
+    requestFailed:
+      parameters:
+        request: Request
+        failureText: string?
+        responseEndTiming: number
+
+    requestFinished:
+      parameters:
+        request: Request
+        response: Response?
+        responseEndTiming: number
+    
+    response:
+      parameters:
+        response: Response
+
 Root:
   type: interface
 
@@ -745,52 +863,7 @@ Playwright:
   commands:
     newRequest:
       parameters:
-        baseURL: string?
-        userAgent: string?
-        ignoreHTTPSErrors: boolean?
-        extraHTTPHeaders:
-          type: array?
-          items: NameValue
-        clientCertificates:
-          type: array?
-          items:
-            type: object
-            properties:
-              origin: string
-              cert: binary?
-              key: binary?
-              passphrase: string?
-              pfx: binary?
-        httpCredentials:
-          type: object?
-          properties:
-            username: string
-            password: string
-            origin: string?
-            send:
-              type: enum?
-              literals:
-              - always
-              - unauthorized
-        proxy:
-          type: object?
-          properties:
-            server: string
-            bypass: string?
-            username: string?
-            password: string?
-        timeout: number?
-        storageState:
-          type: object?
-          properties:
-            cookies:
-              type: array?
-              items: NetworkCookie
-            origins:
-              type: array?
-              items: SetOriginStorage
-        tracesDir: string?
-
+        $mixin: NewRequestParameters
       returns:
         request: APIRequestContext
 
@@ -1023,6 +1096,7 @@ Browser:
             origins:
               type: array?
               items: SetOriginStorage
+        mockingProxyBaseURL: string?
       returns:
         context: BrowserContext
 
@@ -1087,29 +1161,6 @@ ConsoleMessage:
         url: string
         lineNumber: number
         columnNumber: number
-
-
-EventTarget:
-  type: interface
-
-  commands:
-    waitForEventInfo:
-      parameters:
-        info:
-          type: object
-          properties:
-            waitId: string
-            phase:
-              type: enum
-              literals:
-              - before
-              - after
-              - log
-            event: string?
-            message: string?
-            error: string?
-      flags:
-        snapshot: true
 
 BrowserContext:
   type: interface
