@@ -86,9 +86,10 @@ export const Workbench: React.FunctionComponent<{
   const sources = React.useMemo(() => model?.sources || new Map<string, modelUtil.SourceModel>(), [model]);
 
   React.useEffect(() => {
+    setSelectedAction(undefined);
     setSelectedTime(undefined);
     setRevealedError(undefined);
-  }, [model]);
+  }, [model, setSelectedAction]);
 
   const selectedAction = React.useMemo(() => {
     if (selectedCallId) {
