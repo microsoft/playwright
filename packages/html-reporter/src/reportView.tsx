@@ -27,7 +27,7 @@ import { TestCaseView } from './testCaseView';
 import { TestFilesHeader, TestFilesView } from './testFilesView';
 import './theme.css';
 import { filterMetadata } from './metadataView';
-import type { GitCommitInfo } from '@playwright/isomorphic/types';
+import type { GitCommitInfo } from '@testIsomorphic/types';
 
 export const GitCommitInfoContext = React.createContext<GitCommitInfo | undefined>(undefined);
 
