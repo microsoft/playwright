@@ -7,8 +7,6 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
 
-  populateGitInfo: true,
-
   testDir: './tests',
 
   /* Maximum time one test can run for. */
