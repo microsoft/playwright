@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import type { TestGroup } from './testGroups';
-import { stdioChunkToParams } from '../common/ipc';
-import type { RunPayload, SerializedConfig, WorkerInitParams } from '../common/ipc';
-import { ProcessHost } from './processHost';
-import { artifactsFolderName } from '../isomorphic/folders';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { removeFolders } from 'playwright-core/lib/utils';
+
+import { ProcessHost } from './processHost';
+import { stdioChunkToParams } from '../common/ipc';
+import { artifactsFolderName } from '../isomorphic/folders';
+
+import type { TestGroup } from './testGroups';
+import type { RunPayload, SerializedConfig, WorkerInitParams } from '../common/ipc';
+
 
 let lastWorkerIndex = 0;
 

@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-import { colors as realColors, ms as milliseconds, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
-import path from 'path';
-import type { FullConfig, TestCase, Suite, TestResult, TestError, FullResult, TestStep, Location } from '../../types/testReporter';
+import * as path from 'path';
+
 import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
-import { getEastAsianWidth } from '../utilsBundle';
-import type { ReporterV2 } from './reporterV2';
+import { colors as realColors, ms as milliseconds, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
+
 import { resolveReporterOutputPath } from '../util';
+import { getEastAsianWidth } from '../utilsBundle';
+
+import type { ReporterV2 } from './reporterV2';
+import type { FullConfig, FullResult, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
 

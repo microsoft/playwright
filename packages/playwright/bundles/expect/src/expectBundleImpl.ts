@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
+import * as mu from 'jest-matcher-utils';
+
+import * as am from '../third_party/asymmetricMatchers';
 import expectLibrary from '../third_party/index';
+
 export const expect = expectLibrary;
 export * as mock from 'jest-mock';
-import * as am from '../third_party/asymmetricMatchers';
-import * as mu from 'jest-matcher-utils';
 
 export const asymmetricMatchers = {
   any: am.any,

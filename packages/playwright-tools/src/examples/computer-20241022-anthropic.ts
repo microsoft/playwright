@@ -16,11 +16,13 @@
 
 /* eslint-disable no-console */
 
-import playwright from 'playwright';
 import Anthropic from '@anthropic-ai/sdk';
+import computer from '@playwright/experimental-tools/computer-20241022';
 import dotenv from 'dotenv';
-import computer, { type ToolResult } from '@playwright/experimental-tools/computer-20241022';
+import playwright from 'playwright';
+
 import type { BetaImageBlockParam, BetaTextBlockParam } from '@anthropic-ai/sdk/resources/beta/messages/messages';
+import type { ToolResult } from '@playwright/experimental-tools/computer-20241022';
 
 dotenv.config();
 

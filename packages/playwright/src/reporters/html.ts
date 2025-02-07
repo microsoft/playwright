@@ -14,23 +14,26 @@
  * limitations under the License.
  */
 
-import { colors, open } from 'playwright-core/lib/utilsBundle';
-import { MultiMap, getPackageManagerExecCommand } from 'playwright-core/lib/utils';
-import fs from 'fs';
-import path from 'path';
-import type { TransformCallback } from 'stream';
+import * as fs from 'fs';
+import * as path from 'path';
 import { Transform } from 'stream';
-import { codeFrameColumns } from '../transform/babelBundle';
-import type * as api from '../../types/testReporter';
+
+import { MultiMap, getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath, toPosixPath } from 'playwright-core/lib/utils';
-import { formatError, formatResultFailure, internalScreen, stripAnsiEscapes } from './base';
-import { resolveReporterOutputPath } from '../util';
-import type { Metadata } from '../../types/test';
-import type { ZipFile } from 'playwright-core/lib/zipBundle';
-import { yazl } from 'playwright-core/lib/zipBundle';
+import { colors, open } from 'playwright-core/lib/utilsBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
-import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
+import { yazl } from 'playwright-core/lib/zipBundle';
+
+import { formatError, formatResultFailure, internalScreen, stripAnsiEscapes } from './base';
+import { codeFrameColumns } from '../transform/babelBundle';
+import { resolveReporterOutputPath } from '../util';
+
 import type { ReporterV2 } from './reporterV2';
+import type { Metadata } from '../../types/test';
+import type * as api from '../../types/testReporter';
+import type { HTMLReport, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
+import type { ZipFile } from 'playwright-core/lib/zipBundle';
+import type { TransformCallback } from 'stream';
 
 type TestEntry = {
   testCase: TestCase;

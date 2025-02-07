@@ -15,17 +15,19 @@
  */
 
 
-import { expectTypes, callLogText } from '../util';
+import { colors } from 'playwright-core/lib/utilsBundle';
+
+import { callLogText, expectTypes } from '../util';
 import {
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring
 } from './expect';
-import { EXPECTED_COLOR } from '../common/expectBundle';
-import type { ExpectMatcherState } from '../../types/test';
 import { kNoElementsFoundError, matcherHint } from './matcherHint';
+import { EXPECTED_COLOR } from '../common/expectBundle';
+
 import type { MatcherResult } from './matcherHint';
+import type { ExpectMatcherState } from '../../types/test';
 import type { Locator } from 'playwright-core';
-import { colors } from 'playwright-core/lib/utilsBundle';
 
 export async function toMatchText(
   this: ExpectMatcherState,

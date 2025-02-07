@@ -233,7 +233,9 @@ export default [{
     }],
   }
 }, {
-  files: ['packages/playwright-core/**/*.ts'],
+  files: [
+    'packages/**/*.ts',
+  ],
   rules: {
     ...importOrderRules
   },

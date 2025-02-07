@@ -15,18 +15,21 @@
  */
 
 import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
-import url from 'url';
-import { sourceMapSupport, pirates } from '../utilsBundle';
+import * as fs from 'fs';
+import Module from 'module';
+import * as path from 'path';
+import * as url from 'url';
+
+import { loadTsConfig } from '../third_party/tsconfig-loader';
+import { createFileMatcher, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
+import { pirates, sourceMapSupport } from '../utilsBundle';
+import { belongsToNodeModules, currentFileDepsCollector, getFromCompilationCache, installSourceMapSupport } from './compilationCache';
+
+import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
 import type { Location } from '../../types/testReporter';
 import type { LoadedTsConfig } from '../third_party/tsconfig-loader';
-import { loadTsConfig } from '../third_party/tsconfig-loader';
-import Module from 'module';
-import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
-import { createFileMatcher, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
 import type { Matcher } from '../util';
-import { getFromCompilationCache, currentFileDepsCollector, belongsToNodeModules, installSourceMapSupport } from './compilationCache';
+
 
 const version = require('../../package.json').version;
 

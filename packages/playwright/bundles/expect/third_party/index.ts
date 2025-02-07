@@ -9,6 +9,7 @@
 import { equals, iterableEquality, subsetEquality } from '@jest/expect-utils';
 import * as matcherUtils from 'jest-matcher-utils';
 import { isPromise } from 'jest-util';
+
 import {
   any,
   anything,
@@ -38,6 +39,7 @@ import spyMatchers from './spyMatchers';
 import toThrowMatchers, {
   createMatcher as createThrowMatcher,
 } from './toThrowMatchers';
+
 import type {
   Expect,
   ExpectationResult,
@@ -54,8 +56,8 @@ import type {
 export type { Tester, TesterContext } from '@jest/expect-utils';
 export { AsymmetricMatcher } from './asymmetricMatchers';
 export type {
-  AsyncExpectationResult,
   AsymmetricMatchers,
+  AsyncExpectationResult,
   BaseExpect,
   Expect,
   ExpectationResult,

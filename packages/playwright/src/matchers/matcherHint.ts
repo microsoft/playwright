@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import { colors } from 'playwright-core/lib/utilsBundle';
-import type { ExpectMatcherState } from '../../types/test';
-import type { Locator } from 'playwright-core';
-import type { StackFrame } from '@protocol/channels';
 import { stringifyStackFrames } from 'playwright-core/lib/utils';
+import { colors } from 'playwright-core/lib/utilsBundle';
+
+import type { ExpectMatcherState } from '../../types/test';
+import type { StackFrame } from '@protocol/channels';
+import type { Locator } from 'playwright-core';
 
 export const kNoElementsFoundError = '<element(s) not found>';
 

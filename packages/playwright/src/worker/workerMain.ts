@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-import { colors } from 'playwright-core/lib/utilsBundle';
-import { debugTest, relativeFilePath } from '../util';
-import type { TestBeginPayload, TestEndPayload, RunPayload, DonePayload, WorkerInitParams, TeardownErrorsPayload, TestInfoErrorImpl } from '../common/ipc';
-import { stdioChunkToParams } from '../common/ipc';
-import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
-import { deserializeConfig } from '../common/configLoader';
-import type { Suite, TestCase } from '../common/test';
-import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
-import { FixtureRunner } from './fixtureRunner';
 import { ManualPromise, gracefullyCloseAll, removeFolders } from 'playwright-core/lib/utils';
+import { colors } from 'playwright-core/lib/utilsBundle';
+
+import { deserializeConfig } from '../common/configLoader';
+import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
+import { stdioChunkToParams } from '../common/ipc';
+import { debugTest, relativeFilePath } from '../util';
+import { FixtureRunner } from './fixtureRunner';
 import { SkipError, TestInfoImpl } from './testInfo';
-import { ProcessRunner } from '../common/process';
-import { loadTestFile } from '../common/testLoader';
-import { applyRepeatEachIndex, bindFileSuiteToProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
-import { PoolBuilder } from '../common/poolBuilder';
-import type { Location } from '../../types/testReporter';
-import { inheritFixtureNames } from '../common/fixtures';
-import { type TimeSlot } from './timeoutManager';
 import { testInfoError } from './util';
+import { inheritFixtureNames } from '../common/fixtures';
+import { PoolBuilder } from '../common/poolBuilder';
+import { ProcessRunner } from '../common/process';
+import { applyRepeatEachIndex, bindFileSuiteToProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
+import { loadTestFile } from '../common/testLoader';
+
+import type { TimeSlot } from './timeoutManager';
+import type { Location } from '../../types/testReporter';
+import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
+import type { DonePayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
+import type { Suite, TestCase } from '../common/test';
 
 export class WorkerMain extends ProcessRunner {
   private _params: WorkerInitParams;

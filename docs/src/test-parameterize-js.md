@@ -262,7 +262,7 @@ To make environment variables easier to manage, consider something like `.env` f
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
-import path from 'path';
+import * as path from 'path';
 
 // Read from ".env" file.
 dotenv.config({ path: path.resolve(__dirname, '.env') });
@@ -309,8 +309,8 @@ See for example this CSV file, in our example `input.csv`:
 Based on this we'll generate some tests by using the [csv-parse](https://www.npmjs.com/package/csv-parse) library from NPM:
 
 ```js title="test.spec.ts"
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { test } from '@playwright/test';
 import { parse } from 'csv-parse/sync';
 

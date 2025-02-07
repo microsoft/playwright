@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { expectTypes, callLogText } from '../util';
+import { callLogText, expectTypes } from '../util';
 import { kNoElementsFoundError, matcherHint } from './matcherHint';
+
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherState } from '../../types/test';
 import type { Locator } from 'playwright-core';

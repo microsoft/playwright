@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-import type playwright from 'playwright';
 import { ManualPromise } from 'playwright-core/lib/utils';
+
+import type playwright from 'playwright';
 
 export async function waitForNetwork<R>(page: playwright.Page, callback: () => Promise<R>): Promise<R> {
   const requests = new Set<playwright.Request>();

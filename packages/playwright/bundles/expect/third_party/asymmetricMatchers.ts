@@ -15,7 +15,9 @@ import {
 } from '@jest/expect-utils';
 import * as matcherUtils from 'jest-matcher-utils';
 import { pluralize } from 'jest-util';
+
 import { getCustomEqualityTesters, getState } from './jestMatchersObject';
+
 import type {
   AsymmetricMatcher as AsymmetricMatcherInterface,
   MatcherContext,

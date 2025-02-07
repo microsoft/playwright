@@ -72,9 +72,9 @@ Using the following, Playwright will run your WebView2 application as a sub-proc
 
 ```js title="webView2Test.ts"
 import { test as base } from '@playwright/test';
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import childProcess from 'child_process';
 
 const EXECUTABLE_PATH = path.join(

@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-import path from 'path';
+import * as path from 'path';
 import util from 'util';
-import type { TestError } from '../../types/testReporter';
+
+import * as esmLoaderHost from './esmLoaderHost';
 import { isWorkerProcess, setCurrentlyLoadingFileSuite } from './globals';
 import { Suite } from './test';
+import { startCollectingFileDeps, stopCollectingFileDeps } from '../transform/compilationCache';
 import { requireOrImport } from '../transform/transform';
 import { filterStackTrace } from '../util';
-import { startCollectingFileDeps, stopCollectingFileDeps } from '../transform/compilationCache';
-import * as esmLoaderHost from './esmLoaderHost';
+
+import type { TestError } from '../../types/testReporter';
 
 export const defaultTimeout = 30000;
 

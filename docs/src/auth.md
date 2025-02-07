@@ -47,7 +47,7 @@ Create `tests/auth.setup.ts` that will prepare authenticated browser state for a
 
 ```js title="tests/auth.setup.ts"
 import { test as setup, expect } from '@playwright/test';
-import path from 'path';
+import * as path from 'path';
 
 const authFile = path.join(__dirname, '../playwright/.auth/user.json');
 
@@ -143,8 +143,8 @@ Create `playwright/fixtures.ts` file that will [override `storageState` fixture]
 
 ```js title="playwright/fixtures.ts"
 import { test as baseTest, expect } from '@playwright/test';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export * from '@playwright/test';
 export const test = baseTest.extend<{}, { workerStorageState: string }>({
@@ -348,8 +348,8 @@ Alternatively, in a [worker fixture](#moderate-one-account-per-parallel-worker):
 
 ```js title="playwright/fixtures.ts"
 import { test as baseTest, request } from '@playwright/test';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export * from '@playwright/test';
 export const test = baseTest.extend<{}, { workerStorageState: string }>({

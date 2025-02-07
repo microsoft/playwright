@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { debug } from 'playwright-core/lib/utilsBundle';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { getUserData } from 'playwright/lib/transform/compilationCache';
+import { resolveHook } from 'playwright/lib/transform/transform';
+import { debug } from 'playwright-core/lib/utilsBundle';
+
+import type { ImportInfo } from './tsxTransform';
 import type { PlaywrightTestConfig as BasePlaywrightTestConfig } from 'playwright/types/test';
 import type { FullConfig } from 'playwright/types/testReporter';
 import type { InlineConfig, Plugin, TransformResult, UserConfig } from 'vite';
-import type { ImportInfo } from './tsxTransform';
-import { resolveHook } from 'playwright/lib/transform/transform';
+
 
 const log = debug('pw:vite');
 

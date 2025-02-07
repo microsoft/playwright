@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import type { StackFrame } from '@protocol/channels';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as url from 'url';
 import util from 'util';
-import path from 'path';
-import url from 'url';
-import { debug, mime, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
+
 import { formatCallLog } from 'playwright-core/lib/utils';
-import type { Location } from './../types/testReporter';
 import { calculateSha1, isRegExp, isString, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
-import type { RawStack } from 'playwright-core/lib/utils';
+import { debug, mime, minimatch, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
+
+import type { Location } from './../types/testReporter';
 import type { TestInfoErrorImpl } from './common/ipc';
+import type { StackFrame } from '@protocol/channels';
+import type { RawStack } from 'playwright-core/lib/utils';
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));

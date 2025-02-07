@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import type { FullResult, TestCase } from '../../types/testReporter';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { resolveReporterOutputPath } from '../util';
 import { TerminalReporter } from './base';
+
+import type { FullResult, TestCase } from '../../types/testReporter';
 
 type MarkdownReporterOptions = {
   configDir: string,

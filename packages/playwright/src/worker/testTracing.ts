@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
+
+import { ManualPromise, SerializedFS, calculateSha1, createGuid, monotonicTime } from 'playwright-core/lib/utils';
+import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
+
+import { filteredStackTrace } from '../util';
+
+import type { TestInfoImpl } from './testInfo';
+import type { PlaywrightWorkerOptions, TestInfo, TraceMode } from '../../types/test';
+import type { TestInfoErrorImpl } from '../common/ipc';
 import type { SerializedError, StackFrame } from '@protocol/channels';
 import type * as trace from '@trace/trace';
 import type EventEmitter from 'events';
-import fs from 'fs';
-import path from 'path';
-import { ManualPromise, calculateSha1, monotonicTime, createGuid, SerializedFS } from 'playwright-core/lib/utils';
-import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
-import { filteredStackTrace } from '../util';
-import type { TestInfo, TraceMode, PlaywrightWorkerOptions } from '../../types/test';
-import type { TestInfoImpl } from './testInfo';
-import type { TestInfoErrorImpl } from '../common/ipc';
 
 export type Attachment = TestInfo['attachments'][0];
 export const testTraceEntryName = 'test.trace';

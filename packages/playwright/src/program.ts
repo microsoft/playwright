@@ -16,25 +16,28 @@
 
 /* eslint-disable no-console */
 
-import type { Command } from 'playwright-core/lib/utilsBundle';
-import fs from 'fs';
-import path from 'path';
-import { Runner } from './runner/runner';
-import { stopProfiling, startProfiling, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
-import { serializeError } from './util';
+import * as fs from 'fs';
+import * as path from 'path';
+
+import { program } from 'playwright-core/lib/cli/program';
+import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
+
+import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
+import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
+export { program } from 'playwright-core/lib/cli/program';
+import { prepareErrorStack } from './reporters/base';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
-import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
-import type { ConfigCLIOverrides } from './common/ipc';
-import type { TestError } from '../types/testReporter';
-import type { TraceMode } from '../types/test';
-import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
-import { program } from 'playwright-core/lib/cli/program';
-export { program } from 'playwright-core/lib/cli/program';
-import type { ReporterDescription } from '../types/test';
-import { prepareErrorStack } from './reporters/base';
+import { Runner } from './runner/runner';
 import * as testServer from './runner/testServer';
 import { runWatchModeLoop } from './runner/watchMode';
+import { serializeError } from './util';
+
+import type { TestError } from '../types/testReporter';
+import type { ConfigCLIOverrides } from './common/ipc';
+import type { TraceMode } from '../types/test';
+import type { ReporterDescription } from '../types/test';
+import type { Command } from 'playwright-core/lib/utilsBundle';
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
