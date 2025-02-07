@@ -32,6 +32,7 @@ import type * as actions from '@recorder/actions';
 import { stringifySelector } from '../utils/isomorphic/selectorParser';
 import type { Frame } from './frames';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
+import type { Page } from './page';
 
 const recorderSymbol = Symbol('recorderSymbol');
 
@@ -148,6 +149,7 @@ export class Recorder implements InstrumentationListener, IRecorder {
       this._context.instrumentation.removeListener(this);
       this._recorderApp?.close().catch(() => {});
     });
+
     this._contextRecorder.on(ContextRecorder.Events.Change, (data: { sources: Source[], actions: actions.ActionInContext[] }) => {
       this._recorderSources = data.sources;
       recorderApp.setActions(data.actions, data.sources);
@@ -346,7 +348,8 @@ export class Recorder implements InstrumentationListener, IRecorder {
   }
 
   private _pushAllSources() {
-    this._recorderApp?.setSources([...this._recorderSources, ...this._userSources.values()]);
+    const primaryPage: Page | undefined = this._context.pages()[0];
+    this._recorderApp?.setSources([...this._recorderSources, ...this._userSources.values()], primaryPage?.mainFrame().url());
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {

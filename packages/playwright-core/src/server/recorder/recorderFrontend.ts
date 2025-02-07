@@ -32,7 +32,7 @@ export interface IRecorderApp extends EventEmitter {
   setRunningFile(file: string | undefined): Promise<void>;
   elementPicked(elementInfo: ElementInfo, userGesture?: boolean): Promise<void>;
   updateCallLogs(callLogs: CallLog[]): Promise<void>;
-  setSources(sources: Source[]): Promise<void>;
+  setSources(sources: Source[], primaryPageURL: string | undefined): Promise<void>;
   setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void>;
 }
 
