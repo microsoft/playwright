@@ -15,14 +15,20 @@
  */
 
 import { EventEmitter } from 'events';
+
 import { createGuid } from '../utils';
-import type { APIRequestContext } from './fetch';
+
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
 import type { BrowserType } from './browserType';
+import type { Dialog } from './dialog';
+import type { Download } from './download';
+import type { APIRequestContext } from './fetch';
 import type { Frame } from './frames';
 import type { Page } from './page';
 import type { Playwright } from './playwright';
+import type { CallMetadata } from '@protocol/callMetadata';
+export type { CallMetadata } from '@protocol/callMetadata';
 
 export type Attribution = {
   playwright: Playwright;
@@ -32,11 +38,6 @@ export type Attribution = {
   page?: Page;
   frame?: Frame;
 };
-
-import type { CallMetadata } from '@protocol/callMetadata';
-import type { Dialog } from './dialog';
-import type { Download } from './download';
-export type { CallMetadata } from '@protocol/callMetadata';
 
 export class SdkObject extends EventEmitter {
   guid: string;

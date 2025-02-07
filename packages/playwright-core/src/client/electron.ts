@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-import type { BrowserWindow } from 'electron';
-import type * as childProcess from 'child_process';
-import type * as structs from '../../types/structs';
-import type * as api from '../../types/types';
-import type * as channels from '@protocol/channels';
-import { TimeoutSettings } from '../common/timeoutSettings';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
+import { ConsoleMessage } from './consoleMessage';
+import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
-import type { Page } from './page';
-import { ConsoleMessage } from './consoleMessage';
-import type { Env, WaitForEventOptions, Headers, BrowserContextOptions } from './types';
 import { Waiter } from './waiter';
-import { TargetClosedError, isTargetClosedError } from './errors';
+import { TimeoutSettings } from '../common/timeoutSettings';
+
+import type { Page } from './page';
+import type { BrowserContextOptions, Env, Headers, WaitForEventOptions } from './types';
+import type * as structs from '../../types/structs';
+import type * as api from '../../types/types';
+import type * as channels from '@protocol/channels';
+import type * as childProcess from 'child_process';
+import type { BrowserWindow } from 'electron';
 
 type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'|'extraHTTPHeaders'|'recordHar'|'colorScheme'|'acceptDownloads'> & {
   env?: Env,

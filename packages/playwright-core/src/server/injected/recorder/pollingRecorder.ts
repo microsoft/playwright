@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
-import type * as actions from '@recorder/actions';
-import type { InjectedScript } from '../injectedScript';
 import { Recorder } from './recorder';
+
+import type { InjectedScript } from '../injectedScript';
 import type { RecorderDelegate } from './recorder';
+import type * as actions from '@recorder/actions';
+import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
 
 interface Embedder {
   __pw_recorderPerformAction(action: actions.PerformOnRecordAction): Promise<void>;

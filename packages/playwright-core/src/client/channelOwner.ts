@@ -15,15 +15,17 @@
  */
 
 import { EventEmitter } from './eventEmitter';
-import type * as channels from '@protocol/channels';
-import { maybeFindValidator, ValidationError, type ValidatorContext } from '../protocol/validator';
+import { ValidationError, maybeFindValidator  } from '../protocol/validator';
+import { isUnderTest } from '../utils';
 import { debugLogger } from '../utils/debugLogger';
 import { captureLibraryStackTrace, stringifyStackFrames } from '../utils/stackTrace';
-import { isUnderTest } from '../utils';
 import { zones } from '../utils/zones';
+
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';
+import type { ValidatorContext } from '../protocol/validator';
+import type * as channels from '@protocol/channels';
 
 type Listener = (...args: any[]) => void;
 

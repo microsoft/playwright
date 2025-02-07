@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
 import { Browser } from './browser';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import type { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions, Logger } from './types';
+import { envObjectToArray } from './clientHelper';
 import { Connection } from './connection';
 import { Events } from './events';
-import type { ChildProcess } from 'child_process';
-import { envObjectToArray } from './clientHelper';
 import { assert, headersObjectToArray, monotonicTime } from '../utils';
-import type * as api from '../../types/types';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
+
 import type { Playwright } from './playwright';
+import type { ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, LaunchServerOptions, Logger } from './types';
+import type * as api from '../../types/types';
+import type * as channels from '@protocol/channels';
+import type { ChildProcess } from 'child_process';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;

@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-import * as socks from '../common/socksProxy';
 import EventEmitter from 'events';
-import type * as channels from '@protocol/channels';
+
+import * as socks from '../common/socksProxy';
+import { ValidationError, findValidator } from '../protocol/validator';
+
 import type { WebSocketTransport } from './transport';
-import { findValidator, ValidationError } from '../protocol/validator';
 import type { ValidatorContext } from '../protocol/validator';
+import type * as channels from '@protocol/channels';
 
 export class SocksInterceptor {
   private _handler: socks.SocksProxyHandler;

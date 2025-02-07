@@ -14,22 +14,25 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
-import type { Source } from '@recorder/recorderTypes';
 import { EventEmitter } from 'events';
+
+import { RecorderCollection } from './recorderCollection';
 import * as recorderSource from '../../generated/pollingRecorderSource';
-import { eventsHelper, monotonicTime, quoteCSSAttributeValue, type RegisteredListener } from '../../utils';
+import { eventsHelper, monotonicTime, quoteCSSAttributeValue  } from '../../utils';
 import { raceAgainstDeadline } from '../../utils/timeoutRunner';
 import { BrowserContext } from '../browserContext';
-import type { LanguageGeneratorOptions, Language, LanguageGenerator } from '../codegen/types';
 import { languageSet } from '../codegen/languages';
-import type { Dialog } from '../dialog';
 import { Frame } from '../frames';
 import { Page } from '../page';
-import type * as actions from '@recorder/actions';
 import { ThrottledFile } from './throttledFile';
-import { RecorderCollection } from './recorderCollection';
 import { generateCode } from '../codegen/language';
+
+import type { RegisteredListener } from '../../utils';
+import type { Language, LanguageGenerator, LanguageGeneratorOptions } from '../codegen/types';
+import type { Dialog } from '../dialog';
+import type * as channels from '@protocol/channels';
+import type * as actions from '@recorder/actions';
+import type { Source } from '@recorder/recorderTypes';
 
 type BindingSource = { frame: Frame, page: Page };
 

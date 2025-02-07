@@ -15,37 +15,38 @@
  * limitations under the License.
  */
 
-import type * as dom from './dom';
-import * as frames from './frames';
-import * as input from './input';
-import * as js from './javascript';
-import type * as network from './network';
-import type * as channels from '@protocol/channels';
-import type { ScreenshotOptions } from './screenshotter';
-import { Screenshotter, validateScreenshotOptions } from './screenshotter';
-import { TimeoutSettings } from '../common/timeoutSettings';
-import type * as types from './types';
+import * as accessibility from './accessibility';
 import { BrowserContext } from './browserContext';
 import { ConsoleMessage } from './console';
-import * as accessibility from './accessibility';
-import { FileChooser } from './fileChooser';
-import type { Progress } from './progress';
-import { ProgressController } from './progress';
-import { LongStandingScope, assert, compressCallLog, createGuid, trimStringWithEllipsis } from '../utils';
-import { ManualPromise } from '../utils/manualPromise';
-import { debugLogger } from '../utils/debugLogger';
-import type { ImageComparatorOptions } from '../utils/comparators';
-import { getComparator } from '../utils/comparators';
-import type { CallMetadata } from './instrumentation';
-import { SdkObject } from './instrumentation';
-import type { Artifact } from './artifact';
-import type { TimeoutOptions } from '../common/types';
-import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
-import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSerializers';
-import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
 import { TargetClosedError, TimeoutError } from './errors';
-import { asLocator } from '../utils';
+import { FileChooser } from './fileChooser';
+import * as frames from './frames';
 import { helper } from './helper';
+import * as input from './input';
+import { SdkObject } from './instrumentation';
+import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSerializers';
+import * as js from './javascript';
+import { ProgressController } from './progress';
+import { Screenshotter, validateScreenshotOptions } from './screenshotter';
+import { TimeoutSettings } from '../common/timeoutSettings';
+import { LongStandingScope, assert, compressCallLog, createGuid, trimStringWithEllipsis } from '../utils';
+import { asLocator } from '../utils';
+import { getComparator } from '../utils/comparators';
+import { debugLogger } from '../utils/debugLogger';
+import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
+import { ManualPromise } from '../utils/manualPromise';
+
+import type { Artifact } from './artifact';
+import type * as dom from './dom';
+import type { CallMetadata } from './instrumentation';
+import type { SerializedValue } from './isomorphic/utilityScriptSerializers';
+import type * as network from './network';
+import type { Progress } from './progress';
+import type { ScreenshotOptions } from './screenshotter';
+import type * as types from './types';
+import type { TimeoutOptions } from '../common/types';
+import type { ImageComparatorOptions } from '../utils/comparators';
+import type * as channels from '@protocol/channels';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;

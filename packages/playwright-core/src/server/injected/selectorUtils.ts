@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import type { AttributeSelectorPart } from '../../utils/isomorphic/selectorParser';
-import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 import { getAriaLabelledByElements } from './roleUtils';
+import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
+
+import type { AttributeSelectorPart } from '../../utils/isomorphic/selectorParser';
 
 export function matchesComponentAttribute(obj: any, attr: AttributeSelectorPart) {
   for (const token of attr.jsonPath) {

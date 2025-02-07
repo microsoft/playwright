@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-import net from 'net';
-import http2 from 'http2';
-import type https from 'https';
-import tls from 'tls';
-import stream from 'stream';
-import { createSocket, createTLSSocket } from '../utils/happy-eyeballs';
-import { escapeHTML, generateSelfSignedCertificate, ManualPromise, rewriteErrorMessage } from '../utils';
-import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
-import { SocksProxy } from '../common/socksProxy';
-import type * as types from './types';
-import { debugLogger } from '../utils/debugLogger';
-import { createProxyAgent } from './fetch';
 import { EventEmitter } from 'events';
+import * as http2 from 'http2';
+import * as net from 'net';
+import * as stream from 'stream';
+import * as tls from 'tls';
+
+import { SocksProxy } from '../common/socksProxy';
+import { ManualPromise, escapeHTML, generateSelfSignedCertificate, rewriteErrorMessage } from '../utils';
 import { verifyClientCertificates } from './browserContext';
+import { createProxyAgent } from './fetch';
+import { debugLogger } from '../utils/debugLogger';
+import { createSocket, createTLSSocket } from '../utils/happy-eyeballs';
+
+import type * as types from './types';
+import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
+import type https from 'https';
 
 let dummyServerTlsOptions: tls.TlsOptions | undefined = undefined;
 function loadDummyServerCertsIfNeeded() {

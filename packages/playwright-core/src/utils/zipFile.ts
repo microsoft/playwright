@@ -15,7 +15,8 @@
  */
 
 import { yauzl } from '../zipBundle';
-import type { UnzipFile, Entry } from '../zipBundle';
+
+import type { Entry, UnzipFile } from '../zipBundle';
 
 export class ZipFile {
   private _fileName: string;

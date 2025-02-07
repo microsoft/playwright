@@ -15,27 +15,28 @@
  * limitations under the License.
  */
 
+import { eventsHelper } from '../../utils/eventsHelper';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
-import type * as frames from '../frames';
-import type { RegisteredListener } from '../../utils/eventsHelper';
-import { eventsHelper } from '../../utils/eventsHelper';
-import type { PageDelegate } from '../page';
 import { InitScript } from '../page';
 import { Page, Worker } from '../page';
-import type * as types from '../types';
 import { getAccessibilityTree } from './ffAccessibility';
-import type { FFBrowserContext } from './ffBrowser';
 import { FFSession } from './ffConnection';
 import { FFExecutionContext } from './ffExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
-import type { Protocol } from './protocol';
-import type { Progress } from '../progress';
-import { splitErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../utils/debugLogger';
+import { splitErrorMessage } from '../../utils/stackTrace';
 import { BrowserContext } from '../browserContext';
 import { TargetClosedError } from '../errors';
+
+import type { Progress } from '../progress';
+import type { FFBrowserContext } from './ffBrowser';
+import type { Protocol } from './protocol';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import type * as frames from '../frames';
+import type { PageDelegate } from '../page';
+import type * as types from '../types';
 
 export const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 

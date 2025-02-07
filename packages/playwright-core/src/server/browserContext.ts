@@ -15,36 +15,38 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { createGuid, debugMode } from '../utils';
-import { mkdirIfNeeded } from '../utils/fileUtils';
-import type { Browser, BrowserOptions } from './browser';
-import type { Download } from './download';
-import type * as frames from './frames';
+import { Clock } from './clock';
+import { Debugger } from './debugger';
+import { BrowserContextAPIRequestContext } from './fetch';
+import { HarRecorder } from './har/harRecorder';
 import { helper } from './helper';
+import { SdkObject, serverSideCallMetadata } from './instrumentation';
+import * as utilityScriptSerializers from './isomorphic/utilityScriptSerializers';
 import * as network from './network';
 import { InitScript } from './page';
 import { Page, PageBinding } from './page';
+import { Recorder } from './recorder';
+import * as storageScript from './storageScript';
+import { mkdirIfNeeded } from '../utils/fileUtils';
+import { RecorderApp } from './recorder/recorderApp';
+import * as consoleApiSource from '../generated/consoleApiSource';
+import { Tracing } from './trace/recorder/tracing';
+
+import type { Artifact } from './artifact';
+import type { Browser, BrowserOptions } from './browser';
+import type { Download } from './download';
+import type * as frames from './frames';
+import type { CallMetadata } from './instrumentation';
 import type { Progress, ProgressController } from './progress';
 import type { Selectors } from './selectors';
+import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
-import path from 'path';
-import fs from 'fs';
-import type { CallMetadata } from './instrumentation';
-import { serverSideCallMetadata, SdkObject } from './instrumentation';
-import { Debugger } from './debugger';
-import { Tracing } from './trace/recorder/tracing';
-import { HarRecorder } from './har/harRecorder';
-import { Recorder } from './recorder';
-import * as consoleApiSource from '../generated/consoleApiSource';
-import { BrowserContextAPIRequestContext } from './fetch';
-import type { Artifact } from './artifact';
-import { Clock } from './clock';
-import type { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
-import { RecorderApp } from './recorder/recorderApp';
-import * as storageScript from './storageScript';
-import * as utilityScriptSerializers from './isomorphic/utilityScriptSerializers';
 
 export abstract class BrowserContext extends SdkObject {
   static Events = {

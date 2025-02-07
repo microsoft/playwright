@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-import { visitAllSelectorParts, InvalidSelectorError, type ParsedSelector, parseSelector, stringifySelector } from '../utils/isomorphic/selectorParser';
 import { createGuid } from '../utils';
+import { InvalidSelectorError,  parseSelector, stringifySelector, visitAllSelectorParts } from '../utils/isomorphic/selectorParser';
+
+import type { ParsedSelector } from '../utils/isomorphic/selectorParser';
 
 export class Selectors {
   private readonly _builtinEngines: Set<string>;

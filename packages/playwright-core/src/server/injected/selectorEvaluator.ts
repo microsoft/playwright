@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-import type { CSSComplexSelector, CSSSimpleSelector, CSSComplexSelectorList, CSSFunctionArgument } from '../../utils/isomorphic/cssParser';
-import { customCSSNames } from '../../utils/isomorphic/selectorParser';
 import { isElementVisible, parentElementOrShadowHost } from './domUtils';
-import { type LayoutSelectorName, layoutSelectorScore } from './layoutSelectorUtils';
-import { elementMatchesText, elementText, shouldSkipForTextMatching, type ElementText } from './selectorUtils';
+import {  layoutSelectorScore } from './layoutSelectorUtils';
+import { elementMatchesText, elementText, shouldSkipForTextMatching  } from './selectorUtils';
+import { customCSSNames } from '../../utils/isomorphic/selectorParser';
 import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
+
+import type { LayoutSelectorName } from './layoutSelectorUtils';
+import type { ElementText } from './selectorUtils';
+import type { CSSComplexSelector, CSSComplexSelectorList, CSSFunctionArgument, CSSSimpleSelector } from '../../utils/isomorphic/cssParser';
 
 type QueryContext = {
   scope: Element | Document;

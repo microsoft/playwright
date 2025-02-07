@@ -15,7 +15,7 @@
  */
 
 import type * as actions from '@recorder/actions';
-import type { CallLog, Mode, Source, ElementInfo } from '@recorder/recorderTypes';
+import type { CallLog, ElementInfo, Mode, Source } from '@recorder/recorderTypes';
 import type { EventEmitter } from 'events';
 
 export interface IRecorder {

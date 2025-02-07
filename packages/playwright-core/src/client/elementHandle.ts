@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
-import { Frame } from './frame';
-import type { Locator } from './locator';
-import { JSHandle, serializeArgument, parseResult } from './jsHandle';
-import type { ChannelOwner } from './channelOwner';
-import type { SelectOption, FilePayload, Rect, SelectOptionOptions } from './types';
-import fs from 'fs';
-import { mime } from '../utilsBundle';
-import path from 'path';
-import { assert, isString } from '../utils';
-import { fileUploadSizeLimit, mkdirIfNeeded } from '../utils/fileUtils';
-import type * as api from '../../types/types';
-import type * as structs from '../../types/structs';
-import type { BrowserContext } from './browserContext';
-import { WritableStream } from './writableStream';
+import * as fs from 'fs';
+import * as path from 'path';
 import { pipeline } from 'stream';
 import { promisify } from 'util';
+
+import { Frame } from './frame';
+import { JSHandle, parseResult, serializeArgument } from './jsHandle';
+import { assert, isString } from '../utils';
+import { fileUploadSizeLimit, mkdirIfNeeded } from '../utils/fileUtils';
+import { mime } from '../utilsBundle';
+import { WritableStream } from './writableStream';
+
+import type { BrowserContext } from './browserContext';
+import type { ChannelOwner } from './channelOwner';
+import type { Locator } from './locator';
+import type { FilePayload, Rect, SelectOption, SelectOptionOptions } from './types';
+import type * as structs from '../../types/structs';
+import type * as api from '../../types/types';
+import type * as channels from '@protocol/channels';
 
 const pipelineAsync = promisify(pipeline);
 

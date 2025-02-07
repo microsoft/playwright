@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import type { Page } from './page';
-import type * as api from '../../types/types';
+import { ManualPromise } from '../utils';
+
 import type { Artifact } from './artifact';
 import type { Connection } from './connection';
-import { ManualPromise } from '../utils';
+import type { Page } from './page';
+import type * as api from '../../types/types';
 
 export class Video implements api.Video {
   private _artifact: Promise<Artifact | null> | null = null;

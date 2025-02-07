@@ -14,39 +14,41 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
-import type { CRBrowserContext } from '../chromium/crBrowser';
-import { CRBrowser } from '../chromium/crBrowser';
-import type { CRSession } from '../chromium/crConnection';
-import { CRConnection } from '../chromium/crConnection';
-import type { CRPage } from '../chromium/crPage';
-import { CRExecutionContext } from '../chromium/crExecutionContext';
-import type { Protocol } from '../chromium/protocol';
-import * as js from '../javascript';
-import type { Page } from '../page';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import * as readline from 'readline';
+
 import { TimeoutSettings } from '../../common/timeoutSettings';
 import { ManualPromise, wrapInASCIIBox } from '../../utils';
-import { WebSocketTransport } from '../transport';
-import { launchProcess, envArrayToObject } from '../../utils/processLauncher';
-import type { BrowserContext } from '../browserContext';
-import { validateBrowserContextOptions } from '../browserContext';
-import type { BrowserWindow } from 'electron';
-import type { Progress } from '../progress';
-import { ProgressController } from '../progress';
-import { helper } from '../helper';
-import type * as types from '../types';
-import { eventsHelper } from '../../utils/eventsHelper';
-import type { BrowserOptions, BrowserProcess } from '../browser';
-import type { Playwright } from '../playwright';
-import type * as childProcess from 'child_process';
-import * as readline from 'readline';
 import { RecentLogsCollector } from '../../utils/debugLogger';
-import { serverSideCallMetadata, SdkObject } from '../instrumentation';
-import type * as channels from '@protocol/channels';
+import { eventsHelper } from '../../utils/eventsHelper';
+import { envArrayToObject, launchProcess } from '../../utils/processLauncher';
+import { validateBrowserContextOptions } from '../browserContext';
+import { CRBrowser } from '../chromium/crBrowser';
+import { CRConnection } from '../chromium/crConnection';
+import { CRExecutionContext } from '../chromium/crExecutionContext';
 import { toConsoleMessageLocation } from '../chromium/crProtocolHelper';
 import { ConsoleMessage } from '../console';
+import { helper } from '../helper';
+import { SdkObject, serverSideCallMetadata } from '../instrumentation';
+import * as js from '../javascript';
+import { ProgressController } from '../progress';
+import { WebSocketTransport } from '../transport';
+
+import type { BrowserOptions, BrowserProcess } from '../browser';
+import type { BrowserContext } from '../browserContext';
+import type { CRBrowserContext } from '../chromium/crBrowser';
+import type { CRSession } from '../chromium/crConnection';
+import type { CRPage } from '../chromium/crPage';
+import type { Protocol } from '../chromium/protocol';
+import type { Page } from '../page';
+import type { Playwright } from '../playwright';
+import type { Progress } from '../progress';
+import type * as types from '../types';
+import type * as channels from '@protocol/channels';
+import type * as childProcess from 'child_process';
+import type { BrowserWindow } from 'electron';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 

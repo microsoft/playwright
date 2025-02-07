@@ -14,25 +14,27 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
-import type { Browser } from '../browser';
-import { GlobalAPIRequestContext } from '../fetch';
-import type { Playwright } from '../playwright';
-import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../../common/socksProxy';
 import { SocksProxy } from '../../common/socksProxy';
+import { GlobalAPIRequestContext } from '../fetch';
 import { AndroidDispatcher } from './androidDispatcher';
+import { AndroidDeviceDispatcher } from './androidDispatcher';
+import { ConnectedBrowserDispatcher } from './browserDispatcher';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
-import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
 import { ElectronDispatcher } from './electronDispatcher';
 import { LocalUtilsDispatcher } from './localUtilsDispatcher';
 import { APIRequestContextDispatcher } from './networkDispatchers';
 import { SelectorsDispatcher } from './selectorsDispatcher';
-import { ConnectedBrowserDispatcher } from './browserDispatcher';
 import { createGuid } from '../../utils';
+import { eventsHelper  } from '../../utils/eventsHelper';
+
+import type { RootDispatcher } from './dispatcher';
+import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../../common/socksProxy';
+import type { RegisteredListener } from '../../utils/eventsHelper';
 import type { AndroidDevice } from '../android/android';
-import { AndroidDeviceDispatcher } from './androidDispatcher';
-import { eventsHelper, type RegisteredListener } from '../../utils/eventsHelper';
+import type { Browser } from '../browser';
+import type { Playwright } from '../playwright';
+import type * as channels from '@protocol/channels';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightChannel, RootDispatcher> implements channels.PlaywrightChannel {
   _type_Playwright;

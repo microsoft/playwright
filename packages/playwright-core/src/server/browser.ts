@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-import type * as types from './types';
-import type * as channels from '@protocol/channels';
-import { BrowserContext, validateBrowserContextOptions } from './browserContext';
-import { Page } from './page';
-import { Download } from './download';
-import type { ProxySettings } from './types';
-import type { ChildProcess } from 'child_process';
-import type { RecentLogsCollector } from '../utils/debugLogger';
-import type { CallMetadata } from './instrumentation';
-import { SdkObject } from './instrumentation';
 import { Artifact } from './artifact';
+import { BrowserContext, validateBrowserContextOptions } from './browserContext';
+import { Download } from './download';
+import { SdkObject } from './instrumentation';
+import { Page } from './page';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
+
+import type { CallMetadata } from './instrumentation';
+import type * as types from './types';
+import type { ProxySettings } from './types';
+import type { RecentLogsCollector } from '../utils/debugLogger';
+import type * as channels from '@protocol/channels';
+import type { ChildProcess } from 'child_process';
+
 
 export interface BrowserProcess {
   onclose?: ((exitCode: number | null, signal: string | null) => void);

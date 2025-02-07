@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-import type { NavigationEvent } from '../frames';
 import { Frame } from '../frames';
-import type * as channels from '@protocol/channels';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher } from './networkDispatchers';
 import { RequestDispatcher } from './networkDispatchers';
-import type { CallMetadata } from '../instrumentation';
-import type { BrowserContextDispatcher } from './browserContextDispatcher';
-import type { PageDispatcher } from './pageDispatcher';
 import { debugAssert } from '../../utils';
 import { parseAriaSnapshotUnsafe } from '../../utils/isomorphic/ariaSnapshot';
 import { yaml } from '../../utilsBundle';
+
+import type { CallMetadata } from '../instrumentation';
+import type { BrowserContextDispatcher } from './browserContextDispatcher';
+import type { PageDispatcher } from './pageDispatcher';
+import type { NavigationEvent } from '../frames';
+import type * as channels from '@protocol/channels';
 
 export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, BrowserContextDispatcher | PageDispatcher> implements channels.FrameChannel {
   _type_Frame = true;

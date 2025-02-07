@@ -15,35 +15,38 @@
  * limitations under the License.
  */
 
-import { Page, BindingCall } from './page';
-import { Frame } from './frame';
-import * as network from './network';
-import type * as channels from '@protocol/channels';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
+
+import { Artifact } from './artifact';
+import { Browser } from './browser';
+import { CDPSession } from './cdpSession';
 import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
-import { Browser } from './browser';
-import { Worker } from './worker';
-import { Events } from './events';
-import { TimeoutSettings } from '../common/timeoutSettings';
-import { Waiter } from './waiter';
-import type { Headers, WaitForEventOptions, BrowserContextOptions, LaunchOptions, StorageState } from './types';
-import { type URLMatch, headersObjectToArray, isRegExp, isString, urlMatchesEqual, mkdirIfNeeded } from '../utils';
-import type * as api from '../../types/types';
-import type * as structs from '../../types/structs';
-import { CDPSession } from './cdpSession';
-import { Tracing } from './tracing';
-import type { BrowserType } from './browserType';
-import { Artifact } from './artifact';
-import { APIRequestContext } from './fetch';
-import { rewriteErrorMessage } from '../utils/stackTrace';
-import { HarRouter } from './harRouter';
+import { Clock } from './clock';
 import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
-import { WebError } from './webError';
 import { TargetClosedError, parseError } from './errors';
-import { Clock } from './clock';
+import { Events } from './events';
+import { APIRequestContext } from './fetch';
+import { Frame } from './frame';
+import { HarRouter } from './harRouter';
+import * as network from './network';
+import { BindingCall, Page } from './page';
+import { Tracing } from './tracing';
+import { Waiter } from './waiter';
+import { WebError } from './webError';
+import { Worker } from './worker';
+import { TimeoutSettings } from '../common/timeoutSettings';
+import { headersObjectToArray, isRegExp, isString, mkdirIfNeeded, urlMatchesEqual } from '../utils';
+import { rewriteErrorMessage } from '../utils/stackTrace';
+
+import type { BrowserType } from './browserType';
+import type { BrowserContextOptions, Headers, LaunchOptions, StorageState, WaitForEventOptions } from './types';
+import type * as structs from '../../types/structs';
+import type * as api from '../../types/types';
+import type { URLMatch } from '../utils';
+import type * as channels from '@protocol/channels';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
   _pages = new Set<Page>();

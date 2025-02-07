@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import type { Page } from '../page';
-import { ProgressController } from '../progress';
 import { EventEmitter } from 'events';
-import { serverSideCallMetadata } from '../instrumentation';
-import type { CallLog, ElementInfo, Mode, Source } from '@recorder/recorderTypes';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { isUnderTest } from '../../utils';
 import { mime } from '../../utilsBundle';
+import { serverSideCallMetadata } from '../instrumentation';
 import { syncLocalStorageWithSettings } from '../launchApp';
-import type { BrowserContext } from '../browserContext';
 import { launchApp } from '../launchApp';
+import { ProgressController } from '../progress';
+
+import type { BrowserContext } from '../browserContext';
+import type { Page } from '../page';
 import type { IRecorder, IRecorderApp, IRecorderAppFactory } from './recorderFrontend';
 import type * as actions from '@recorder/actions';
+import type { CallLog, ElementInfo, Mode, Source } from '@recorder/recorderTypes';
 
 export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   wsEndpointForTest: undefined;

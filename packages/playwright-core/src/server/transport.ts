@@ -15,13 +15,14 @@
  * limitations under the License.
  */
 
-import { ws } from '../utilsBundle';
-import type { WebSocket } from '../utilsBundle';
-import type { ClientRequest, IncomingMessage } from 'http';
-import type { Progress } from './progress';
 import { makeWaitForNextTask } from '../utils';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../utils/happy-eyeballs';
+import { ws } from '../utilsBundle';
+
+import type { WebSocket } from '../utilsBundle';
+import type { Progress } from './progress';
 import type { HeadersArray } from './types';
+import type { ClientRequest, IncomingMessage } from 'http';
 
 export const perMessageDeflate = {
   clientNoContextTakeover: true,

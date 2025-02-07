@@ -15,12 +15,15 @@
  * limitations under the License.
  */
 
-import type { CRSession } from './crConnection';
-import type { Protocol } from './protocol';
-import fs from 'fs';
-import type * as types from '../types';
+import * as fs from 'fs';
+
 import { mkdirIfNeeded } from '../../utils/fileUtils';
 import { splitErrorMessage } from '../../utils/stackTrace';
+
+import type { CRSession } from './crConnection';
+import type { Protocol } from './protocol';
+import type * as types from '../types';
+
 
 export function getExceptionMessage(exceptionDetails: Protocol.Runtime.ExceptionDetails): string {
   if (exceptionDetails.exception)

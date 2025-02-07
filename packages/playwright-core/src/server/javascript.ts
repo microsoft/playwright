@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import type * as dom from './dom';
-import * as utilityScriptSource from '../generated/utilityScriptSource';
-import { serializeAsCallArgument } from './isomorphic/utilityScriptSerializers';
-import type { UtilityScript } from './injected/utilityScript';
 import { SdkObject } from './instrumentation';
-import { LongStandingScope } from '../utils/manualPromise';
+import * as utilityScriptSource from '../generated/utilityScriptSource';
 import { isUnderTest } from '../utils';
+import { serializeAsCallArgument } from './isomorphic/utilityScriptSerializers';
+import { LongStandingScope } from '../utils/manualPromise';
+
+import type * as dom from './dom';
+import type { UtilityScript } from './injected/utilityScript';
 
 export type ObjectId = string;
 export type RemoteObject = {

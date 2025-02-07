@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
+import deviceDescriptorsSource from './deviceDescriptorsSource.json';
+
 import type { Devices } from './types';
 
-import deviceDescriptorsSource from './deviceDescriptorsSource.json';
 
 export const deviceDescriptors = deviceDescriptorsSource as Devices;

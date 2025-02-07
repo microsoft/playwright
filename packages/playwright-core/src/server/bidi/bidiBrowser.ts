@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
-import type { RegisteredListener } from '../../utils/eventsHelper';
 import { eventsHelper } from '../../utils/eventsHelper';
-import type { BrowserOptions } from '../browser';
 import { Browser } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext } from '../browserContext';
-import type { SdkObject } from '../instrumentation';
+import { BrowserContext, assertBrowserContextIsNotOwned } from '../browserContext';
 import * as network from '../network';
-import type { InitScript, Page } from '../page';
-import type { ConnectionTransport } from '../transport';
-import type * as types from '../types';
-import type { BidiSession } from './bidiConnection';
 import { BidiConnection } from './bidiConnection';
 import { bidiBytesValueToString } from './bidiNetworkManager';
 import { BidiPage } from './bidiPage';
 import * as bidi from './third_party/bidiProtocol';
+
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import type { BrowserOptions } from '../browser';
+import type { SdkObject } from '../instrumentation';
+import type { InitScript, Page } from '../page';
+import type { ConnectionTransport } from '../transport';
+import type * as types from '../types';
+import type { BidiSession } from './bidiConnection';
+import type * as channels from '@protocol/channels';
+
 
 export class BidiBrowser extends Browser {
   private readonly _connection: BidiConnection;

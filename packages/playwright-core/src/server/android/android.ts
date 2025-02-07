@@ -14,30 +14,32 @@
  * limitations under the License.
  */
 
-import { debug } from '../../utilsBundle';
 import { EventEmitter } from 'events';
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
-import type * as stream from 'stream';
-import { wsReceiver, wsSender } from '../../utilsBundle';
-import { createGuid, makeWaitForNextTask, isUnderTest, getPackageManagerExecCommand } from '../../utils';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+
+import { TimeoutSettings } from '../../common/timeoutSettings';
+import { PipeTransport } from '../../protocol/transport';
+import { createGuid, getPackageManagerExecCommand, isUnderTest, makeWaitForNextTask } from '../../utils';
+import { RecentLogsCollector } from '../../utils/debugLogger';
 import { removeFolders } from '../../utils/fileUtils';
-import type { BrowserOptions, BrowserProcess } from '../browser';
-import type { BrowserContext } from '../browserContext';
+import { gracefullyCloseSet } from '../../utils/processLauncher';
+import { debug } from '../../utilsBundle';
+import { wsReceiver, wsSender } from '../../utilsBundle';
 import { validateBrowserContextOptions } from '../browserContext';
-import { ProgressController } from '../progress';
+import { chromiumSwitches } from '../chromium/chromiumSwitches';
 import { CRBrowser } from '../chromium/crBrowser';
 import { helper } from '../helper';
-import type * as types from '../types';
-import { PipeTransport } from '../../protocol/transport';
-import { RecentLogsCollector } from '../../utils/debugLogger';
-import { gracefullyCloseSet } from '../../utils/processLauncher';
-import { TimeoutSettings } from '../../common/timeoutSettings';
-import type * as channels from '@protocol/channels';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
-import { chromiumSwitches } from '../chromium/chromiumSwitches';
+import { ProgressController } from '../progress';
 import { registry } from '../registry';
+
+import type { BrowserOptions, BrowserProcess } from '../browser';
+import type { BrowserContext } from '../browserContext';
+import type * as types from '../types';
+import type * as channels from '@protocol/channels';
+import type * as stream from 'stream';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 

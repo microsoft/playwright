@@ -16,25 +16,28 @@
 
 /* eslint-disable no-console */
 
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
-import type { Command } from '../utilsBundle';
-import { program, dotenv } from '../utilsBundle';
-export { program } from '../utilsBundle';
-import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
-import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/traceViewer';
-import type { TraceViewerServerOptions } from '../server/trace/viewer/traceViewer';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+
 import * as playwright from '../..';
-import type { BrowserContext } from '../client/browserContext';
-import type { Browser } from '../client/browser';
-import type { Page } from '../client/page';
-import type { BrowserType } from '../client/browserType';
-import type { BrowserContextOptions, LaunchOptions } from '../client/types';
-import { wrapInASCIIBox, isLikelyNpxGlobal, assert, gracefullyProcessExitDoNotHang, getPackageManagerExecCommand } from '../utils';
-import type { Executable } from '../server';
 import { registry, writeDockerVersion } from '../server';
+import { launchBrowserServer, printApiJson, runDriver, runServer } from './driver';
 import { isTargetClosedError } from '../client/errors';
+import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/traceViewer';
+import { assert, getPackageManagerExecCommand, gracefullyProcessExitDoNotHang, isLikelyNpxGlobal, wrapInASCIIBox } from '../utils';
+import { dotenv, program } from '../utilsBundle';
+
+import type { Browser } from '../client/browser';
+import type { BrowserContext } from '../client/browserContext';
+import type { BrowserType } from '../client/browserType';
+import type { Page } from '../client/page';
+import type { BrowserContextOptions, LaunchOptions } from '../client/types';
+import type { Executable } from '../server';
+import type { TraceViewerServerOptions } from '../server/trace/viewer/traceViewer';
+import type { Command } from '../utilsBundle';
+
+export { program } from '../utilsBundle';
 
 const packageJSON = require('../../package.json');
 

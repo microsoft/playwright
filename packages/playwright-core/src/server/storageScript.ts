@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
 import type { source } from './isomorphic/utilityScriptSerializers';
+import type * as channels from '@protocol/channels';
 
 export type Storage = Omit<channels.OriginStorage, 'origin'>;
 

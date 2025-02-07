@@ -14,31 +14,34 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
-import type { NameValue } from '../../../common/types';
-import type { TracingTracingStopChunkParams, StackFrame } from '@protocol/channels';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+
+import { Snapshotter } from './snapshotter';
 import { commandsWithTracingSnapshots } from '../../../protocol/debug';
-import { assert, createGuid, monotonicTime, SerializedFS, removeFolders, eventsHelper, type RegisteredListener } from '../../../utils';
+import { SerializedFS, assert, createGuid, eventsHelper, monotonicTime, removeFolders  } from '../../../utils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
-import type { APIRequestContext } from '../../fetch';
-import type { CallMetadata, InstrumentationListener } from '../../instrumentation';
-import { SdkObject } from '../../instrumentation';
-import { Page } from '../../page';
-import type * as har from '@trace/har';
-import type { HarTracerDelegate } from '../../har/harTracer';
-import { HarTracer } from '../../har/harTracer';
-import type { FrameSnapshot } from '@trace/snapshot';
-import type * as trace from '@trace/trace';
-import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
-import { Snapshotter } from './snapshotter';
-import type { ConsoleMessage } from '../../console';
 import { Dispatcher } from '../../dispatchers/dispatcher';
 import { serializeError } from '../../errors';
+import { HarTracer } from '../../har/harTracer';
+import { SdkObject } from '../../instrumentation';
+import { Page } from '../../page';
+
+import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
+import type { NameValue } from '../../../common/types';
+import type { RegisteredListener } from '../../../utils';
+import type { ConsoleMessage } from '../../console';
 import type { Dialog } from '../../dialog';
 import type { Download } from '../../download';
+import type { APIRequestContext } from '../../fetch';
+import type { HarTracerDelegate } from '../../har/harTracer';
+import type { CallMetadata, InstrumentationListener } from '../../instrumentation';
+import type { StackFrame, TracingTracingStopChunkParams } from '@protocol/channels';
+import type * as har from '@trace/har';
+import type { FrameSnapshot } from '@trace/snapshot';
+import type * as trace from '@trace/trace';
 
 const version: trace.VERSION = 7;
 

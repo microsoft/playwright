@@ -15,13 +15,14 @@
  * limitations under the License.
  */
 
-import type { CRSession } from './crConnection';
 import { getExceptionMessage, releaseObject } from './crProtocolHelper';
-import type { Protocol } from './protocol';
-import * as js from '../javascript';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
+import * as js from '../javascript';
 import { isSessionClosedError } from '../protocolError';
+
+import type { CRSession } from './crConnection';
+import type { Protocol } from './protocol';
 
 export class CRExecutionContext implements js.ExecutionContextDelegate {
   _client: CRSession;

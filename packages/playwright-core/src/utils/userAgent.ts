@@ -15,9 +15,10 @@
  */
 
 import { execSync } from 'child_process';
-import os from 'os';
-import { getLinuxDistributionInfoSync } from '../utils/linuxUtils';
+import * as os from 'os';
+
 import { wrapInASCIIBox } from './ascii';
+import { getLinuxDistributionInfoSync } from '../utils/linuxUtils';
 
 let cachedUserAgent: string | undefined;
 

@@ -16,7 +16,7 @@
 
 import { blendWithWhite, colorDeltaE94, rgb2gray } from './colorUtils';
 import { ImageChannel } from './imageChannel';
-import { ssim, FastStats } from './stats';
+import { FastStats, ssim } from './stats';
 
 const SSIM_WINDOW_RADIUS = 15;
 const VARIANCE_WINDOW_RADIUS = 1;
