@@ -641,7 +641,7 @@ class ArtifactsRecorder {
     });
 
     this._pageSnapshotRecorder = new SnapshotRecorder(this, pageSnapshot ?? 'only-on-failure', 'pageSnapshot', 'text/plain', '.ariasnapshot', async (page, path) => {
-      const ariaSnapshot = await page.locator('body').ariaSnapshot();
+      const ariaSnapshot = await page.locator('body').ariaSnapshot({ timeout: 5000 });
       await fs.promises.writeFile(path, ariaSnapshot);
     });
   }
