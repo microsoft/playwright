@@ -15,17 +15,19 @@
  * limitations under the License.
  */
 
-import type { FullResult, TestError } from '../../types/testReporter';
-import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
-import { addGitCommitInfoPlugin } from '../plugins/gitCommitInfoPlugin';
+import { LastRunReporter } from './lastRun';
 import { collectFilesForProject, filterProjects } from './projectUtils';
 import { createErrorCollectingReporter, createReporters } from './reporters';
 import { TestRun, createApplyRebaselinesTask, createClearCacheTask, createGlobalSetupTasks, createLoadTask, createPluginSetupTasks, createReportBeginTask, createRunTestsTasks, createStartDevServerTask, runTasks } from './tasks';
-import type { FullConfigInternal } from '../common/config';
-import { affectedTestFiles } from '../transform/compilationCache';
-import { InternalReporter } from '../reporters/internalReporter';
-import { LastRunReporter } from './lastRun';
+import { addGitCommitInfoPlugin } from '../plugins/gitCommitInfoPlugin';
+import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
 import { terminalScreen } from '../reporters/base';
+import { InternalReporter } from '../reporters/internalReporter';
+import { affectedTestFiles } from '../transform/compilationCache';
+
+import type { FullResult, TestError } from '../../types/testReporter';
+import type { FullConfigInternal } from '../common/config';
+
 
 type ProjectConfigWithFiles = {
   name: string;

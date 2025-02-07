@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-import { expectTypes, callLogText } from '../util';
+import { isRegExp } from 'playwright-core/lib/utils';
+
+import { callLogText, expectTypes } from '../util';
 import { matcherHint } from './matcherHint';
+
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherState } from '../../types/test';
 import type { Locator } from 'playwright-core';
-import { isRegExp } from 'playwright-core/lib/utils';
 
 // Omit colon and one or more spaces, so can call getLabelPrinter.
 const EXPECTED_LABEL = 'Expected';

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FullConfig, TestCase, TestError, TestResult, FullResult, TestStep, Reporter, Suite } from '../../types/testReporter';
+import type { FullConfig, FullResult, Reporter, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 
 export interface ReporterV2 {
   onConfigure?(config: FullConfig): void;

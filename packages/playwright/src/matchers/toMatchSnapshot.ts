@@ -14,25 +14,29 @@
  * limitations under the License.
  */
 
-import type { Locator, Page } from 'playwright-core';
-import type { ExpectScreenshotOptions, Page as PageEx } from 'playwright-core/lib/client/page';
-import { currentTestInfo } from '../common/globals';
-import type { ImageComparatorOptions, Comparator } from 'playwright-core/lib/utils';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { compareBuffersOrStrings, getComparator, isString, sanitizeForFilePath } from 'playwright-core/lib/utils';
+import { colors } from 'playwright-core/lib/utilsBundle';
+import { mime } from 'playwright-core/lib/utilsBundle';
+
 import {
-  addSuffixToFilePath,
-  trimLongString, callLogText,
+  addSuffixToFilePath, callLogText,
   expectTypes,
   sanitizeFilePathBeforeExtension,
+  trimLongString,
   windowsFilesystemFriendlyLength } from '../util';
-import { colors } from 'playwright-core/lib/utilsBundle';
-import fs from 'fs';
-import path from 'path';
-import { mime } from 'playwright-core/lib/utilsBundle';
-import type { TestInfoImpl, TestStepInfoImpl } from '../worker/testInfo';
+import {  matcherHint } from './matcherHint';
+import { currentTestInfo } from '../common/globals';
+
+import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherStateInternal } from './matchers';
-import { matcherHint, type MatcherResult } from './matcherHint';
 import type { FullProjectInternal } from '../common/config';
+import type { TestInfoImpl, TestStepInfoImpl } from '../worker/testInfo';
+import type { Locator, Page } from 'playwright-core';
+import type { ExpectScreenshotOptions, Page as PageEx } from 'playwright-core/lib/client/page';
+import type { Comparator, ImageComparatorOptions } from 'playwright-core/lib/utils';
 
 type NameOrSegments = string | string[];
 const snapshotNamesSymbol = Symbol('snapshotNames');

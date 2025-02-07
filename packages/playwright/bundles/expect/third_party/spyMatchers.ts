@@ -10,7 +10,7 @@ import { getType, isPrimitive } from 'jest-get-type';
 import {
   DIM_COLOR,
   EXPECTED_COLOR,
-  type MatcherHintOptions,
+
   RECEIVED_COLOR,
   diff,
   ensureExpectedIsNonNegativeInteger,
@@ -20,14 +20,17 @@ import {
   printExpected,
   printReceived,
   printWithType,
-  stringify,
+  stringify
 } from 'jest-matcher-utils';
+
 import { getCustomEqualityTesters } from './jestMatchersObject';
+
 import type {
   MatcherFunction,
   MatchersObject,
   SyncExpectationResult,
 } from './types';
+import type { MatcherHintOptions } from 'jest-matcher-utils';
 
 /* eslint-disable eqeqeq */
 

@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
+import { promisify } from 'util';
+
 import { escapeRegExp } from 'playwright-core/lib/utils';
 import { minimatch } from 'playwright-core/lib/utilsBundle';
-import { promisify } from 'util';
-import type { FullProjectInternal } from '../common/config';
+
 import { createFileMatcher } from '../util';
+
+import type { FullProjectInternal } from '../common/config';
+
 
 const readFileAsync = promisify(fs.readFile);
 const readDirAsync = promisify(fs.readdir);

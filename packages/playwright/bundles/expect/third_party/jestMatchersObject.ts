@@ -6,15 +6,17 @@
  *
  */
 
-import type { Tester } from '@jest/expect-utils';
 import { getType } from 'jest-get-type';
+
 import { AsymmetricMatcher } from './asymmetricMatchers';
+
 import type {
   Expect,
   MatcherState,
   MatchersObject,
   SyncExpectationResult,
 } from './types';
+import type { Tester } from '@jest/expect-utils';
 
 // Global matchers object holds the list of available matchers and
 // the state, that can hold matcher specific values that change over time.

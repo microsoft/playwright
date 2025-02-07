@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-import type { Locator, Page, APIResponse } from 'playwright-core';
-import type { FrameExpectParams } from 'playwright-core/lib/client/types';
+import { isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utilsBundle';
-import { expectTypes, callLogText } from '../util';
+
+import { callLogText, expectTypes } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
+import { toHaveURL as toHaveURLExternal } from './toHaveURL';
 import { toMatchText } from './toMatchText';
-import { isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues } from 'playwright-core/lib/utils';
+import { takeFirst } from '../common/config';
 import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl } from '../worker/testInfo';
-import type { TestStepInfoImpl } from '../worker/testInfo';
+
 import type { ExpectMatcherState } from '../../types/test';
-import { takeFirst } from '../common/config';
-import { toHaveURL as toHaveURLExternal } from './toHaveURL';
+import type { TestStepInfoImpl } from '../worker/testInfo';
+import type { APIResponse, Locator, Page } from 'playwright-core';
+import type { FrameExpectParams } from 'playwright-core/lib/client/types';
 
 export type ExpectMatcherStateInternal = ExpectMatcherState & { _stepInfo?: TestStepInfoImpl };
 

@@ -14,20 +14,24 @@
  * limitations under the License.
  */
 
-import type { TestBeginPayload, TestEndPayload, DonePayload, TestOutputPayload, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, RunPayload, SerializedConfig, AttachmentPayload } from '../common/ipc';
-import { serializeConfig } from '../common/ipc';
-import type { TestResult, TestStep, TestError } from '../../types/testReporter';
-import type { Suite } from '../common/test';
-import type { ProcessExitData } from './processHost';
-import type { TestCase } from '../common/test';
-import { ManualPromise, type RegisteredListener, eventsHelper } from 'playwright-core/lib/utils';
-import { WorkerHost } from './workerHost';
-import type { TestGroup } from './testGroups';
-import type { FullConfigInternal } from '../common/config';
-import type { ReporterV2 } from '../reporters/reporterV2';
-import type { FailureTracker } from './failureTracker';
+import { ManualPromise,  eventsHelper } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utilsBundle';
+
 import { addSuggestedRebaseline } from './rebase';
+import { WorkerHost } from './workerHost';
+import { serializeConfig } from '../common/ipc';
+
+import type { FailureTracker } from './failureTracker';
+import type { ProcessExitData } from './processHost';
+import type { TestGroup } from './testGroups';
+import type { TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { FullConfigInternal } from '../common/config';
+import type { AttachmentPayload, DonePayload, RunPayload, SerializedConfig, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestOutputPayload } from '../common/ipc';
+import type { Suite } from '../common/test';
+import type { TestCase } from '../common/test';
+import type { ReporterV2 } from '../reporters/reporterV2';
+import type { RegisteredListener } from 'playwright-core/lib/utils';
+
 
 export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
 

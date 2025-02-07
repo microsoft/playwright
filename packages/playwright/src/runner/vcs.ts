@@ -15,8 +15,9 @@
  */
 
 import childProcess from 'child_process';
+import * as path from 'path';
+
 import { affectedTestFiles } from '../transform/compilationCache';
-import path from 'path';
 
 export async function detectChangedTestFiles(baseCommit: string, configDir: string): Promise<Set<string>> {
   function gitFileList(command: string) {

@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-import path from 'path';
-import type { BabelFileResult, NodePath, PluginObj, TransformOptions } from '@babel/core';
-import type { TSExportAssignment, ImportDeclaration } from '@babel/types';
-import type { TemplateBuilder } from '@babel/template';
+import * as path from 'path';
+
 import * as babel from '@babel/core';
+import traverseFunction from '@babel/traverse';
+
+import type { BabelFileResult, NodePath, PluginObj, TransformOptions } from '@babel/core';
+import type { TemplateBuilder } from '@babel/template';
+import type { ImportDeclaration, TSExportAssignment } from '@babel/types';
 
 export { codeFrameColumns } from '@babel/code-frame';
 export { declare } from '@babel/helper-plugin-utils';
 export { types } from '@babel/core';
-import traverseFunction from '@babel/traverse';
 export const traverse = traverseFunction;
 
 function babelTransformOptions(isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): TransformOptions {

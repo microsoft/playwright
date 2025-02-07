@@ -14,20 +14,24 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { captureRawStack, monotonicTime, zones, sanitizeForFilePath, stringifyStackFrames } from 'playwright-core/lib/utils';
-import type { TestInfo, TestStatus, FullProject, TestStepInfo } from '../../types/test';
-import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
-import type { TestCase } from '../common/test';
+import * as fs from 'fs';
+import * as path from 'path';
+
+import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, zones } from 'playwright-core/lib/utils';
+
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
-import type { RunnableDescription } from './timeoutManager';
-import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { FullConfig, Location } from '../../types/testReporter';
 import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
-import type { StackFrame } from '@protocol/channels';
 import { testInfoError } from './util';
+
+import type { RunnableDescription } from './timeoutManager';
+import type { FullProject, TestInfo, TestStatus, TestStepInfo } from '../../types/test';
+import type { FullConfig, Location } from '../../types/testReporter';
+import type { Annotation, FullConfigInternal, FullProjectInternal } from '../common/config';
+import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
+import type { TestCase } from '../common/test';
+import type { StackFrame } from '@protocol/channels';
+
 
 export interface TestStepInternal {
   complete(result: { error?: Error | unknown, suggestedRebaseline?: string }): void;

@@ -16,12 +16,15 @@
 
 import child_process from 'child_process';
 import { EventEmitter } from 'events';
+
+import { assert } from 'playwright-core/lib/utils';
 import { debug } from 'playwright-core/lib/utilsBundle';
+
+import { esmLoaderRegistered } from '../common/esmLoaderHost';
+import { execArgvWithExperimentalLoaderOptions } from '../transform/esmUtils';
+
 import type { EnvProducedPayload, ProcessInitParams } from '../common/ipc';
 import type { ProtocolResponse } from '../common/process';
-import { execArgvWithExperimentalLoaderOptions } from '../transform/esmUtils';
-import { assert } from 'playwright-core/lib/utils';
-import { esmLoaderRegistered } from '../common/esmLoaderHost';
 
 export type ProcessExitData = {
   unexpectedly: boolean;

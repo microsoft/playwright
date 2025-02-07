@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
+import * as path from 'path';
 import readline from 'readline';
-import path from 'path';
-import { createGuid, eventsHelper, getPackageManagerExecCommand, ManualPromise } from 'playwright-core/lib/utils';
-import type { ConfigLocation } from '../common/config';
-import type { FullResult } from '../../types/testReporter';
-import { colors } from 'playwright-core/lib/utilsBundle';
-import { enquirer } from '../utilsBundle';
-import { separator, terminalScreen } from '../reporters/base';
-import { PlaywrightServer } from 'playwright-core/lib/remote/playwrightServer';
-import { TestServerDispatcher } from './testServer';
 import { EventEmitter } from 'stream';
-import { type TestServerTransport, TestServerConnection } from '../isomorphic/testServerConnection';
-import { TeleSuiteUpdater } from '../isomorphic/teleSuiteUpdater';
+
+import { PlaywrightServer } from 'playwright-core/lib/remote/playwrightServer';
+import { ManualPromise, createGuid, eventsHelper, getPackageManagerExecCommand } from 'playwright-core/lib/utils';
+import { colors } from 'playwright-core/lib/utilsBundle';
+
+import { separator, terminalScreen } from '../reporters/base';
+import { enquirer } from '../utilsBundle';
+import { TestServerDispatcher } from './testServer';
 import { restartWithExperimentalTsEsm } from '../common/configLoader';
+import { TeleSuiteUpdater } from '../isomorphic/teleSuiteUpdater';
+import { TestServerConnection  } from '../isomorphic/testServerConnection';
+
+import type { FullResult } from '../../types/testReporter';
+import type { ConfigLocation } from '../common/config';
+import type { TestServerTransport } from '../isomorphic/testServerConnection';
+
 
 class InMemoryTransport extends EventEmitter implements TestServerTransport {
   public readonly _send: (data: string) => void;

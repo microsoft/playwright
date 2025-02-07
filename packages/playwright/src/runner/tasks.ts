@@ -14,27 +14,34 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import { promisify } from 'util';
+
+import {  monotonicTime, removeFolders } from 'playwright-core/lib/utils';
 import { debug } from 'playwright-core/lib/utilsBundle';
-import { type ManualPromise, monotonicTime, removeFolders } from 'playwright-core/lib/utils';
-import { Dispatcher, type EnvByProjectId } from './dispatcher';
-import type { TestRunnerPluginRegistration } from '../plugins';
-import { createTestGroups, type TestGroup } from '../runner/testGroups';
-import type { Task } from './taskRunner';
-import { TaskRunner } from './taskRunner';
-import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook } from './loadUtils';
-import { removeDirAndLogToConsole, type Matcher } from '../util';
-import { Suite } from '../common/test';
-import { buildDependentProjects, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
+
+import { Dispatcher  } from './dispatcher';
 import { FailureTracker } from './failureTracker';
-import { detectChangedTestFiles } from './vcs';
-import type { InternalReporter } from '../reporters/internalReporter';
-import { cacheDir } from '../transform/compilationCache';
-import type { FullResult } from '../../types/testReporter';
+import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook } from './loadUtils';
+import { buildDependentProjects, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
 import { applySuggestedRebaselines, clearSuggestedRebaselines } from './rebase';
+import { Suite } from '../common/test';
+import {  createTestGroups } from '../runner/testGroups';
+import {  removeDirAndLogToConsole } from '../util';
+import { TaskRunner } from './taskRunner';
+import { detectChangedTestFiles } from './vcs';
+import { cacheDir } from '../transform/compilationCache';
+
+import type { TestGroup } from '../runner/testGroups';
+import type { Matcher } from '../util';
+import type { EnvByProjectId } from './dispatcher';
+import type { TestRunnerPluginRegistration } from '../plugins';
+import type { Task } from './taskRunner';
+import type { FullResult } from '../../types/testReporter';
+import type { FullConfigInternal, FullProjectInternal } from '../common/config';
+import type { InternalReporter } from '../reporters/internalReporter';
+import type { ManualPromise } from 'playwright-core/lib/utils';
 
 const readDirAsync = promisify(fs.readdir);
 

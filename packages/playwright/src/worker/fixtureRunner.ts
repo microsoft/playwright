@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-import { formatLocation, filterStackFile } from '../util';
 import { ManualPromise } from 'playwright-core/lib/utils';
+
+import {    fixtureParameterNames } from '../common/fixtures';
+import { filterStackFile, formatLocation } from '../util';
+
 import type { TestInfoImpl } from './testInfo';
-import { type FixtureDescription, type RunnableDescription } from './timeoutManager';
-import { fixtureParameterNames, type FixturePool, type FixtureRegistration, type FixtureScope } from '../common/fixtures';
+import type { FixtureDescription, RunnableDescription } from './timeoutManager';
 import type { WorkerInfo } from '../../types/test';
 import type { Location } from '../../types/testReporter';
+import type { FixturePool, FixtureRegistration, FixtureScope } from '../common/fixtures';
 
 class Fixture {
   runner: FixtureRunner;

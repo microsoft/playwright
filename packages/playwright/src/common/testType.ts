@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-import { expect } from '../matchers/expect';
-import { currentlyLoadingFileSuite, currentTestInfo, setCurrentlyLoadingFileSuite } from './globals';
-import { TestCase, Suite } from './test';
-import { wrapFunctionWithLocation } from '../transform/transform';
-import type { FixturesWithLocation } from './config';
-import type { Fixtures, TestType, TestDetails, TestStepInfo } from '../../types/test';
-import type { Location } from '../../types/testReporter';
-import { getPackageManagerExecCommand, monotonicTime, raceAgainstDeadline, zones } from 'playwright-core/lib/utils';
 import { errors } from 'playwright-core';
+import { getPackageManagerExecCommand, monotonicTime, raceAgainstDeadline, zones } from 'playwright-core/lib/utils';
+
+import { currentTestInfo, currentlyLoadingFileSuite, setCurrentlyLoadingFileSuite } from './globals';
+import { Suite, TestCase } from './test';
+import { expect } from '../matchers/expect';
+import { wrapFunctionWithLocation } from '../transform/transform';
+
+import type { FixturesWithLocation } from './config';
+import type { Fixtures, TestDetails, TestStepInfo, TestType } from '../../types/test';
+import type { Location } from '../../types/testReporter';
+
 
 const testTypeSymbol = Symbol('testType');
 

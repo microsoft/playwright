@@ -109,7 +109,7 @@ First, add fixtures that will load the extension:
 
 ```js title="fixtures.ts"
 import { test as base, chromium, type BrowserContext } from '@playwright/test';
-import path from 'path';
+import * as path from 'path';
 
 export const test = base.extend<{
   context: BrowserContext;

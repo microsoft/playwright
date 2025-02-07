@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import { codeFrameColumns } from '../transform/babelBundle';
-import type { FullConfig, TestCase, TestError, TestResult, FullResult, TestStep } from '../../types/testReporter';
-import { Suite } from '../common/test';
-import { internalScreen, prepareErrorStack, relativeFilePath } from './base';
-import type { ReporterV2 } from './reporterV2';
+import * as fs from 'fs';
+
 import { monotonicTime } from 'playwright-core/lib/utils';
+
+import { internalScreen, prepareErrorStack, relativeFilePath } from './base';
 import { Multiplexer } from './multiplexer';
+import { Suite } from '../common/test';
+import { codeFrameColumns } from '../transform/babelBundle';
+
+import type { ReporterV2 } from './reporterV2';
+import type { FullConfig, FullResult, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
+
 
 export class InternalReporter implements ReporterV2 {
   private _reporter: ReporterV2;

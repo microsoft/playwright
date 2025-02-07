@@ -15,8 +15,8 @@
  */
 
 import { devices, defineConfig } from '@playwright/experimental-ct-react';
-import path from 'path';
-import url from 'url';
+import * as path from 'path';
+import * as url from 'url';
 
 export default defineConfig({
   testDir: 'src',

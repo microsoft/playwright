@@ -14,32 +14,35 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { installRootRedirect, openTraceInBrowser, openTraceViewerApp, registry, startTraceViewerServer } from 'playwright-core/lib/server';
 import { ManualPromise, gracefullyProcessExitDoNotHang, isUnderTest } from 'playwright-core/lib/utils';
-import type { Transport, HttpServer } from 'playwright-core/lib/utils';
-import type * as reporterTypes from '../../types/testReporter';
-import { affectedTestFiles, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
-import type { ConfigLocation, FullConfigInternal } from '../common/config';
-import { createErrorCollectingReporter, createReporterForTestServer, createReporters } from './reporters';
-import { TestRun, runTasks, createLoadTask, createRunTestsTasks, createReportBeginTask, createListFilesTask, runTasksDeferCleanup, createClearCacheTask, createGlobalSetupTasks, createStartDevServerTask, createApplyRebaselinesTask } from './tasks';
 import { open } from 'playwright-core/lib/utilsBundle';
-import ListReporter from '../reporters/list';
+
+import { createErrorCollectingReporter, createReporterForTestServer, createReporters } from './reporters';
 import { SigIntWatcher } from './sigIntWatcher';
-import { Watcher } from '../fsWatcher';
-import type { ReportEntry, TestServerInterface, TestServerInterfaceEventEmitters } from '../isomorphic/testServerInterface';
-import type { ConfigCLIOverrides } from '../common/ipc';
+import { TestRun, createApplyRebaselinesTask, createClearCacheTask, createGlobalSetupTasks, createListFilesTask, createLoadTask, createReportBeginTask, createRunTestsTasks, createStartDevServerTask, runTasks, runTasksDeferCleanup } from './tasks';
 import { loadConfig, resolveConfigLocation, restartWithExperimentalTsEsm } from '../common/configLoader';
-import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
-import type { TraceViewerRedirectOptions, TraceViewerServerOptions } from 'playwright-core/lib/server/trace/viewer/traceViewer';
-import type { TestRunnerPluginRegistration } from '../plugins';
-import { serializeError } from '../util';
+import { Watcher } from '../fsWatcher';
 import { baseFullConfig } from '../isomorphic/teleReceiver';
-import { InternalReporter } from '../reporters/internalReporter';
-import type { ReporterV2 } from '../reporters/reporterV2';
-import { internalScreen } from '../reporters/base';
 import { addGitCommitInfoPlugin } from '../plugins/gitCommitInfoPlugin';
+import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
+import { internalScreen } from '../reporters/base';
+import { InternalReporter } from '../reporters/internalReporter';
+import ListReporter from '../reporters/list';
+import { affectedTestFiles, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
+import { serializeError } from '../util';
+
+import type * as reporterTypes from '../../types/testReporter';
+import type { ConfigLocation, FullConfigInternal } from '../common/config';
+import type { ConfigCLIOverrides } from '../common/ipc';
+import type { ReportEntry, TestServerInterface, TestServerInterfaceEventEmitters } from '../isomorphic/testServerInterface';
+import type { TestRunnerPluginRegistration } from '../plugins';
+import type { ReporterV2 } from '../reporters/reporterV2';
+import type { TraceViewerRedirectOptions, TraceViewerServerOptions } from 'playwright-core/lib/server/trace/viewer/traceViewer';
+import type { HttpServer, Transport } from 'playwright-core/lib/utils';
 
 const originalStdoutWrite = process.stdout.write;
 const originalStderrWrite = process.stderr.write;

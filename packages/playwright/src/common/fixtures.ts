@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-import { filterStackFile, formatLocation } from '../util';
 import * as crypto from 'crypto';
+
+import { filterStackFile, formatLocation } from '../util';
+
+import type { FixturesWithLocation } from './config';
 import type { Fixtures } from '../../types/test';
 import type { Location } from '../../types/testReporter';
-import type { FixturesWithLocation } from './config';
 
 export type FixtureScope = 'test' | 'worker';
 type FixtureAuto = boolean | 'all-hooks-included';
