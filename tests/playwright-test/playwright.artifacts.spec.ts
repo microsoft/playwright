@@ -420,3 +420,71 @@ test('should take screenshot when page is closed in afterEach', async ({ runInli
   expect(result.failed).toBe(1);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fails', 'test-failed-1.png'))).toBeTruthy();
 });
+
+test('should work with _pageSnapshot: on', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...testFiles,
+    'playwright.config.ts': `
+      module.exports = { use: { _pageSnapshot: 'on' } };
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(5);
+  expect(result.failed).toBe(5);
+  expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    '.last-run.json',
+    'artifacts-failing',
+    '  test-failed-1.ariasnapshot',
+    'artifacts-own-context-failing',
+    '  test-failed-1.ariasnapshot',
+    'artifacts-own-context-passing',
+    '  test-finished-1.ariasnapshot',
+    'artifacts-passing',
+    '  test-finished-1.ariasnapshot',
+    'artifacts-persistent-failing',
+    '  test-failed-1.ariasnapshot',
+    'artifacts-persistent-passing',
+    '  test-finished-1.ariasnapshot',
+    'artifacts-shared-shared-failing',
+    '  test-failed-1.ariasnapshot',
+    '  test-failed-2.ariasnapshot',
+    'artifacts-shared-shared-passing',
+    '  test-finished-1.ariasnapshot',
+    '  test-finished-2.ariasnapshot',
+    'artifacts-two-contexts',
+    '  test-finished-1.ariasnapshot',
+    '  test-finished-2.ariasnapshot',
+    'artifacts-two-contexts-failing',
+    '  test-failed-1.ariasnapshot',
+    '  test-failed-2.ariasnapshot',
+  ]);
+});
+
+test('should work with _pageSnapshot: only-on-failure', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...testFiles,
+    'playwright.config.ts': `
+      module.exports = { use: { _pageSnapshot: 'only-on-failure' } };
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(5);
+  expect(result.failed).toBe(5);
+  expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    '.last-run.json',
+    'artifacts-failing',
+    '  test-failed-1.ariasnapshot',
+    'artifacts-own-context-failing',
+    '  test-failed-1.ariasnapshot',
+    'artifacts-persistent-failing',
+    '  test-failed-1.ariasnapshot',
+    'artifacts-shared-shared-failing',
+    '  test-failed-1.ariasnapshot',
+    '  test-failed-2.ariasnapshot',
+    'artifacts-two-contexts-failing',
+    '  test-failed-1.ariasnapshot',
+    '  test-failed-2.ariasnapshot',
+  ]);
+});

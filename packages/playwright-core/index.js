@@ -19,7 +19,6 @@ const semver = currentNodeVersion.split('.');
 const [major] = [+semver[0]];
 
 if (major < minimumMajorNodeVersion) {
-  // eslint-disable-next-line no-console
   console.error(
       'You are running Node.js ' +
       currentNodeVersion +

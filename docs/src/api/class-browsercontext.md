@@ -1533,6 +1533,10 @@ Whether to emulate network being offline for the browser context.
 
 Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB snapshot.
 
+:::note
+IndexedDBs with typed arrays are currently not supported.
+:::
+
 ## async method: BrowserContext.storageState
 * since: v1.8
 * langs: csharp, java
@@ -1540,6 +1544,12 @@ Returns storage state for this browser context, contains current cookies, local 
 
 ### option: BrowserContext.storageState.path = %%-storagestate-option-path-%%
 * since: v1.8
+
+### option: BrowserContext.storageState.indexedDB
+* since: v1.51
+- `indexedDB` ?<boolean>
+
+Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.
 
 ## property: BrowserContext.tracing
 * since: v1.12

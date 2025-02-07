@@ -346,7 +346,7 @@ export interface APIRequestContextChannel extends APIRequestContextEventTarget, 
   fetch(params: APIRequestContextFetchParams, metadata?: CallMetadata): Promise<APIRequestContextFetchResult>;
   fetchResponseBody(params: APIRequestContextFetchResponseBodyParams, metadata?: CallMetadata): Promise<APIRequestContextFetchResponseBodyResult>;
   fetchLog(params: APIRequestContextFetchLogParams, metadata?: CallMetadata): Promise<APIRequestContextFetchLogResult>;
-  storageState(params?: APIRequestContextStorageStateParams, metadata?: CallMetadata): Promise<APIRequestContextStorageStateResult>;
+  storageState(params: APIRequestContextStorageStateParams, metadata?: CallMetadata): Promise<APIRequestContextStorageStateResult>;
   disposeAPIResponse(params: APIRequestContextDisposeAPIResponseParams, metadata?: CallMetadata): Promise<APIRequestContextDisposeAPIResponseResult>;
   dispose(params: APIRequestContextDisposeParams, metadata?: CallMetadata): Promise<APIRequestContextDisposeResult>;
 }
@@ -402,8 +402,12 @@ export type APIRequestContextFetchLogOptions = {
 export type APIRequestContextFetchLogResult = {
   log: string[],
 };
-export type APIRequestContextStorageStateParams = {};
-export type APIRequestContextStorageStateOptions = {};
+export type APIRequestContextStorageStateParams = {
+  indexedDB?: boolean,
+};
+export type APIRequestContextStorageStateOptions = {
+  indexedDB?: boolean,
+};
 export type APIRequestContextStorageStateResult = {
   cookies: NetworkCookie[],
   origins: OriginStorage[],
@@ -1564,7 +1568,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   setNetworkInterceptionPatterns(params: BrowserContextSetNetworkInterceptionPatternsParams, metadata?: CallMetadata): Promise<BrowserContextSetNetworkInterceptionPatternsResult>;
   setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams, metadata?: CallMetadata): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
   setOffline(params: BrowserContextSetOfflineParams, metadata?: CallMetadata): Promise<BrowserContextSetOfflineResult>;
-  storageState(params?: BrowserContextStorageStateParams, metadata?: CallMetadata): Promise<BrowserContextStorageStateResult>;
+  storageState(params: BrowserContextStorageStateParams, metadata?: CallMetadata): Promise<BrowserContextStorageStateResult>;
   pause(params?: BrowserContextPauseParams, metadata?: CallMetadata): Promise<BrowserContextPauseResult>;
   enableRecorder(params: BrowserContextEnableRecorderParams, metadata?: CallMetadata): Promise<BrowserContextEnableRecorderResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, metadata?: CallMetadata): Promise<BrowserContextNewCDPSessionResult>;
@@ -1797,8 +1801,12 @@ export type BrowserContextSetOfflineOptions = {
 
 };
 export type BrowserContextSetOfflineResult = void;
-export type BrowserContextStorageStateParams = {};
-export type BrowserContextStorageStateOptions = {};
+export type BrowserContextStorageStateParams = {
+  indexedDB?: boolean,
+};
+export type BrowserContextStorageStateOptions = {
+  indexedDB?: boolean,
+};
 export type BrowserContextStorageStateResult = {
   cookies: NetworkCookie[],
   origins: OriginStorage[],

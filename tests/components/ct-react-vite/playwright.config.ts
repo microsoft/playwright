@@ -15,7 +15,8 @@
  */
 
 import { defineConfig, devices } from '@playwright/experimental-ct-react';
-import { resolve } from 'path';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 export default defineConfig({
   testDir: 'tests',
@@ -30,7 +31,7 @@ export default defineConfig({
       },
       resolve: {
         alias: {
-          '@': resolve(__dirname, './src'),
+          '@': path.resolve(path.dirname(fileURLToPath(import.meta.url)), './src'),
         }
       }
     }

@@ -445,14 +445,7 @@ type BrowsersJSONDescriptor = {
 };
 
 function readDescriptors(browsersJSON: BrowsersJSON): BrowsersJSONDescriptor[] {
-  const headlessShells: BrowsersJSON['browsers'] = [];
-  for (const browserName of ['chromium', 'chromium-tip-of-tree']) {
-    headlessShells.push({
-      ...browsersJSON.browsers.find(browser => browser.name === browserName)!,
-      name: `${browserName}-headless-shell`,
-    });
-  }
-  return [...browsersJSON.browsers, ...headlessShells].map(obj => {
+  return (browsersJSON['browsers']).map(obj => {
     const name = obj.name;
     const revisionOverride = (obj.revisionOverrides || {})[hostPlatform];
     const revision = revisionOverride || obj.revision;

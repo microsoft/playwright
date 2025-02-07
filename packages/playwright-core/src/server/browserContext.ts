@@ -508,14 +508,14 @@ export abstract class BrowserContext extends SdkObject {
     this._origins.add(origin);
   }
 
-  async storageState(): Promise<channels.BrowserContextStorageStateResult> {
+  async storageState(indexedDB = true): Promise<channels.BrowserContextStorageStateResult> {
     const result: channels.BrowserContextStorageStateResult = {
       cookies: await this.cookies(),
       origins: []
     };
     const originsToSave = new Set(this._origins);
 
-    const collectScript = `(${storageScript.collect})((${utilityScriptSerializers.source})(), ${this._browser.options.name === 'firefox'})`;
+    const collectScript = `(${storageScript.collect})((${utilityScriptSerializers.source})(), ${this._browser.options.name === 'firefox'}, ${indexedDB})`;
 
     // First try collecting storage stage from existing pages.
     for (const page of this.pages()) {
