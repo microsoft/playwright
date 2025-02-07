@@ -19,7 +19,7 @@ import * as path from 'path';
 import type { APIRequestContext, BrowserContext, Browser, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
 import * as playwrightLibrary from 'playwright-core';
 import { createGuid, debugMode, addInternalStackPrefix, isString, asLocator, jsonStringifyForceASCII, zones } from 'playwright-core/lib/utils';
-import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
+import type { Fixtures, PageSnapshotMode, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import { rootTestType } from './common/testType';
 import type { ContextReuseMode } from './common/config';
@@ -454,7 +454,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
 type ScreenshotOption = PlaywrightWorkerOptions['screenshot'] | undefined;
 type Playwright = PlaywrightWorkerArgs['playwright'];
-type PageSnapshotOption = 'off' | 'on' | 'only-on-failure';
+type PageSnapshotOption = PlaywrightWorkerOptions['pageSnapshot'] | undefined;
 
 function normalizeVideoMode(video: VideoMode | 'retry-with-video' | { mode: VideoMode } | undefined): VideoMode {
   if (!video)
@@ -533,7 +533,7 @@ class SnapshotRecorder {
 
   constructor(
     private _artifactsRecorder: ArtifactsRecorder,
-    private _mode: ScreenshotMode | PageSnapshotOption,
+    private _mode: ScreenshotMode | PageSnapshotMode,
     private _name: string,
     private _contentType: string,
     private _extension: string,
@@ -640,7 +640,7 @@ class ArtifactsRecorder {
       await page.screenshot({ ...screenshotOptions, timeout: 5000, path, caret: 'initial' });
     });
 
-    this._pageSnapshotRecorder = new SnapshotRecorder(this, pageSnapshot, 'pageSnapshot', 'text/plain', '.ariasnapshot', async (page, path) => {
+    this._pageSnapshotRecorder = new SnapshotRecorder(this, pageSnapshot ?? 'only-on-failure', 'pageSnapshot', 'text/plain', '.ariasnapshot', async (page, path) => {
       const ariaSnapshot = await page.locator('body').ariaSnapshot();
       await fs.promises.writeFile(path, ariaSnapshot);
     });

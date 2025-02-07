@@ -6188,6 +6188,27 @@ export interface PlaywrightWorkerOptions {
    */
   screenshot: ScreenshotMode | { mode: ScreenshotMode } & Pick<PageScreenshotOptions, 'fullPage' | 'omitBackground'>;
   /**
+   * Whether to automatically capture a ARIA snapshot of the page after each test. Defaults to `'only-on-failure'`.
+   * - `'off'`: Do not capture page snapshots.
+   * - `'on'`: Capture page snapshot after each test.
+   * - `'only-on-failure'`: Capture page snapshot after each test failure.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   use: {
+   *     pageSnapshot: 'on',
+   *   },
+   * });
+   * ```
+   *
+   */
+  pageSnapshot: PageSnapshotMode;
+  /**
    * Whether to record trace for each test. Defaults to `'off'`.
    * - `'off'`: Do not record trace.
    * - `'on'`: Record trace for each test.
@@ -6246,6 +6267,7 @@ export interface PlaywrightWorkerOptions {
 }
 
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';
+export type PageSnapshotMode = 'off' | 'on' | 'only-on-failure';
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 

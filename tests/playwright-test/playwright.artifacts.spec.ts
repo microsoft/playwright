@@ -421,11 +421,11 @@ test('should take screenshot when page is closed in afterEach', async ({ runInli
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fails', 'test-failed-1.png'))).toBeTruthy();
 });
 
-test('should work with _pageSnapshot: on', async ({ runInlineTest }, testInfo) => {
+test('should work with pageSnapshot: on', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { _pageSnapshot: 'on' } };
+      module.exports = { use: { pageSnapshot: 'on' } };
     `,
   }, { workers: 1 });
 
@@ -461,11 +461,11 @@ test('should work with _pageSnapshot: on', async ({ runInlineTest }, testInfo) =
   ]);
 });
 
-test('should work with _pageSnapshot: only-on-failure', async ({ runInlineTest }, testInfo) => {
+test('should work with pageSnapshot: only-on-failure', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { _pageSnapshot: 'only-on-failure' } };
+      module.exports = { use: { pageSnapshot: 'only-on-failure' } };
     `,
   }, { workers: 1 });
 
