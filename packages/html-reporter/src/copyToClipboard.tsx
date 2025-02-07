@@ -27,7 +27,11 @@ type CopyToClipboardProps = {
 /**
  * A copy to clipboard button.
  */
-export const CopyToClipboard: React.FunctionComponent<CopyToClipboardProps> = ({ value, icon: copyIcon = icons.copy(), title }) => {
+export const CopyToClipboard: React.FunctionComponent<CopyToClipboardProps> = ({
+  value,
+  icon: copyIcon = icons.copy(),
+  title
+}) => {
   type IconType = 'copy' | 'check' | 'cross';
   const [icon, setIcon] = React.useState<IconType>('copy');
   const handleCopy = React.useCallback(() => {
