@@ -69,8 +69,11 @@
   color: var(--vscode-list-activeSelectionForeground) !important;
 }
 
-.tree-view-content:focus .tree-view-entry.selected button.eye.toggled .codicon {
-  color: var(--vscode-editorInfo-foreground) !important;
+.tree-view-content:focus .tree-view-entry.selected button.eye.toggled {
+  color: var(--vscode-button-secondaryForeground) !important;
+  border-radius: 5px;
+  margin: -1px;
+  border: 1px inset var(--vscode-button-foreground);
 }
 
 .tree-view-empty {

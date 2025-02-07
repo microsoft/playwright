@@ -335,8 +335,10 @@ test('should have watch icon highlighted when a test is focused and watch on the
   await expect(page.getByRole('treeitem', { name: 'a.test.ts' }).getByRole('button', { name: 'Watch' })).toHaveCSS('color', 'rgb(255, 255, 255)');
 
   await page.getByRole('treeitem', { name: 'passes' }).hover();
+  await expect(page.getByRole('treeitem', { name: 'passes' }).getByRole('button', { name: 'Watch' })).not.toHaveCSS('border', '1px inset rgb(255, 255, 255)');
   await page.getByRole('treeitem', { name: 'passes' }).getByRole('button', { name: 'Watch' }).click();
-  await expect(page.getByRole('treeitem', { name: 'passes' }).getByRole('button', { name: 'Watch' }).locator('.codicon-eye')).toHaveCSS('color', 'rgb(26, 133, 255)');
+  await expect(page.getByRole('treeitem', { name: 'passes' }).getByRole('button', { name: 'Watch' }).locator('.codicon-eye')).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(page.getByRole('treeitem', { name: 'passes' }).getByRole('button', { name: 'Watch' })).toHaveCSS('border', '1px inset rgb(255, 255, 255)');
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ◯ passes 👁 <=
