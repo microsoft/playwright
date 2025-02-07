@@ -453,7 +453,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
 type ScreenshotOption = PlaywrightWorkerOptions['screenshot'] | undefined;
 type Playwright = PlaywrightWorkerArgs['playwright'];
-type PageSnapshotOption = PlaywrightWorkerOptions['pageSnapshot'] | undefined;
 
 function normalizeVideoMode(video: VideoMode | 'retry-with-video' | { mode: VideoMode } | undefined): VideoMode {
   if (!video)
