@@ -577,12 +577,13 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.setWebSocketInterceptionPatterns({ patterns });
   }
 
-  async screenshot(options: Omit<channels.PageScreenshotOptions, 'mask'> & { path?: string, mask?: Locator[] } = {}): Promise<Buffer> {
+  async screenshot(options: Omit<channels.PageScreenshotOptions, 'mask'> & { path?: string, mask?: api.Locator[] } = {}): Promise<Buffer> {
+    const mask = options.mask as Locator[] | undefined;
     const copy: channels.PageScreenshotOptions = { ...options, mask: undefined };
     if (!copy.type)
       copy.type = determineScreenshotType(options);
-    if (options.mask) {
-      copy.mask = options.mask.map(locator => ({
+    if (mask) {
+      copy.mask = mask.map(locator => ({
         frame: locator._frame._channel,
         selector: locator._selector,
       }));
