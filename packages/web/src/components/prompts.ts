@@ -16,31 +16,33 @@
 
 const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');
 function stripAnsiEscapes(str: string): string {
-    return str.replace(ansiRegex, '');
+  return str.replace(ansiRegex, '');
 }
 
 export function fixTestPrompt(error: string, diff?: string, pageSnapshot?: string) {
-    const promptParts = [
-        'This test failed, suggest how to fix it. Please be correct, concise and keep Playwright best practices in mind.',
-        'Here is the error:',
-        '\n',
-        stripAnsiEscapes(error),
-        '\n',
-    ];
+  const promptParts = [
+    'This test failed, suggest how to fix it. Please be correct, concise and keep Playwright best practices in mind.',
+    'Here is the error:',
+    '\n',
+    stripAnsiEscapes(error),
+    '\n',
+  ];
 
-    if (pageSnapshot)
-        promptParts.push(
-            'This is how the page looked at the end of the test:',
-            pageSnapshot,
-            '\n'
-        );
+  if (pageSnapshot) {
+    promptParts.push(
+        'This is how the page looked at the end of the test:',
+        pageSnapshot,
+        '\n'
+    );
+  }
 
-    if (diff)
-        promptParts.push(
-            'And this is the code diff:',
-            diff,
-            '\n'
-        );
+  if (diff) {
+    promptParts.push(
+        'And this is the code diff:',
+        diff,
+        '\n'
+    );
+  }
 
-    return promptParts.join('\n');
+  return promptParts.join('\n');
 }
