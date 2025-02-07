@@ -70,15 +70,7 @@ export class MockingProxy extends ChannelOwner<channels.MockingProxyChannel> {
 
   findPage(correlation: string): Page | undefined {
     const guid = `page@${correlation}`;
-    // TODO: move this as list onto Playwright directly
-    for (const browserType of [this._playwright.chromium, this._playwright.firefox, this._playwright.webkit]) {
-      for (const context of browserType._contexts) {
-        for (const page of context._pages) {
-          if (page._guid === guid)
-            return page;
-        }
-      }
-    }
+    return this._playwright._allPages().find(page => page._guid === guid);
   }
 
   baseURL() {
