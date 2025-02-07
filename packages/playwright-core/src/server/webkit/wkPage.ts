@@ -1202,6 +1202,10 @@ export class WKPage implements PageDelegate {
   shouldToggleStyleSheetToSyncAnimations(): boolean {
     return true;
   }
+
+  shouldClickAtIntegerCoordinates(): boolean {
+    return false;
+  }
 }
 
 /**

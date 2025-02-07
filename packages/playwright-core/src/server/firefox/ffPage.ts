@@ -574,6 +574,10 @@ export class FFPage implements PageDelegate {
   shouldToggleStyleSheetToSyncAnimations(): boolean {
     return false;
   }
+
+  shouldClickAtIntegerCoordinates(): boolean {
+    return true;
+  }
 }
 
 function webSocketId(frameId: string, wsid: string): string {

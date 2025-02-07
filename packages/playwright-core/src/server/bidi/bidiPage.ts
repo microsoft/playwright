@@ -576,6 +576,13 @@ export class BidiPage implements PageDelegate {
   shouldToggleStyleSheetToSyncAnimations(): boolean {
     return true;
   }
+
+  shouldClickAtIntegerCoordinates(): boolean {
+    // TODO: bidi spec requires integer coordinates, but Chromium actually supports
+    // fractional coordinates, perhaps the spec should be updated and we wouldn't need
+    // this hack.
+    return true;
+  }
 }
 
 function addMainBinding(callback: (arg: any) => void) {

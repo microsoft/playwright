@@ -275,7 +275,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const filtered = quads.map(quad => intersectQuadWithViewport(quad)).filter(quad => computeQuadArea(quad) > 0.99);
     if (!filtered.length)
       return 'error:notinviewport';
-    if (this._page._browserContext._browser.options.name === 'firefox') {
+    if (this._page._delegate.shouldClickAtIntegerCoordinates()) {
       // Firefox internally uses integer coordinates, so 8.x is converted to 8 or 9 when clicking.
       //
       // This does not work nicely for small elements. For example, 1x1 square with corners

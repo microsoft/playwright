@@ -96,6 +96,8 @@ export interface PageDelegate {
   readonly cspErrorsAsynchronousForInlineScripts?: boolean;
   // Work around for mouse position in Firefox.
   resetForReuse(): Promise<void>;
+  // Firefox can only click at integer coordinates.
+  shouldClickAtIntegerCoordinates(): boolean;
   // WebKit hack.
   shouldToggleStyleSheetToSyncAnimations(): boolean;
 }

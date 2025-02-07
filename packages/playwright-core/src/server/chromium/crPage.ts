@@ -370,6 +370,10 @@ export class CRPage implements PageDelegate {
   shouldToggleStyleSheetToSyncAnimations(): boolean {
     return false;
   }
+
+  shouldClickAtIntegerCoordinates(): boolean {
+    return false;
+  }
 }
 
 class FrameSession {
