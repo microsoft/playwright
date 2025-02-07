@@ -20,7 +20,7 @@ import type { BrowserContext, Page } from '@playwright/test';
 const test = browserTest.extend<{ reusedContext: () => Promise<BrowserContext> }>({
   reusedContext: async ({ browserType, browser }, use) => {
     await use(async () => {
-      const defaultContextOptions = (browserType as any)._defaultContextOptions;
+      const defaultContextOptions = (browserType as any)._playwright._defaultContextOptions;
       const context = await (browser as any)._newContextForReuse(defaultContextOptions);
       return context;
     });

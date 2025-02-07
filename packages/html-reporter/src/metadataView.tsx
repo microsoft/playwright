@@ -95,7 +95,18 @@ const GitCommitInfoView: React.FC<{ info: GitCommitInfo }> = ({ info }) => {
       <div className='hbox m-2 mt-1'>
         <div className='mr-1'>{author}</div>
         <div title={longTimestamp}> on {shortTimestamp}</div>
-        {info['ci.link'] && <><span className='mx-2'>·</span><a href={info['ci.link']} target='_blank' rel='noopener noreferrer' title='CI/CD logs'>logs</a></>}
+        {info['ci.link'] && (
+          <>
+            <span className='mx-2'>·</span>
+            <a href={info['ci.link']} target='_blank' rel='noopener noreferrer' title='CI/CD logs'>Logs</a>
+          </>
+        )}
+        {info['pull.link'] && (
+          <>
+            <span className='mx-2'>·</span>
+            <a href={info['pull.link']} target='_blank' rel='noopener noreferrer'>Pull Request</a>
+          </>
+        )}
       </div>
     </div>
     {!!info['revision.link'] && <a href={info['revision.link']} target='_blank' rel='noopener noreferrer'>

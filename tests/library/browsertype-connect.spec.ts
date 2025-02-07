@@ -40,7 +40,7 @@ const test = playwrightTest.extend<ExtraFixtures>({
     await use(async (wsEndpoint, options = {}, redirectPortForTest): Promise<Browser> => {
       (options as any).__testHookRedirectPortForwarding = redirectPortForTest;
       options.headers = {
-        'x-playwright-launch-options': JSON.stringify((browserType as any)._defaultLaunchOptions || {}),
+        'x-playwright-launch-options': JSON.stringify((browserType as any)._playwright._defaultLaunchOptions || {}),
         ...options.headers,
       };
       browser = await browserType.connect(wsEndpoint, options);
@@ -173,8 +173,8 @@ for (const kind of ['launchServer', 'run-server'] as const) {
     test('should ignore page.pause when headed', async ({ connect, startRemoteServer, browserType, channel }) => {
       test.skip(channel === 'chromium-headless-shell', 'shell is never headed');
 
-      const headless = (browserType as any)._defaultLaunchOptions.headless;
-      (browserType as any)._defaultLaunchOptions.headless = false;
+      const headless = (browserType as any)._playwright._defaultLaunchOptions.headless;
+      (browserType as any)._playwright._defaultLaunchOptions.headless = false;
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const browserContext = await browser.newContext();
@@ -182,7 +182,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       // @ts-ignore
       await page.pause({ __testHookKeepTestTimeout: true });
       await browser.close();
-      (browserType as any)._defaultLaunchOptions.headless = headless;
+      (browserType as any)._playwright._defaultLaunchOptions.headless = headless;
     });
 
     test('should be able to visit ipv6 through localhost', async ({ connect, startRemoteServer, ipV6ServerPort }) => {
@@ -599,7 +599,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       const browser = await browserType.connect({
         wsEndpoint: remoteServer.wsEndpoint(),
         headers: {
-          'x-playwright-launch-options': JSON.stringify((browserType as any)._defaultLaunchOptions || {}),
+          'x-playwright-launch-options': JSON.stringify((browserType as any)._playwright._defaultLaunchOptions || {}),
         },
       });
       const page = await browser.newPage();
@@ -630,14 +630,14 @@ for (const kind of ['launchServer', 'run-server'] as const) {
 
     test('should filter launch options', async ({ connect, startRemoteServer, server, browserType }, testInfo) => {
       const tracesDir = testInfo.outputPath('traces');
-      const oldTracesDir = (browserType as any)._defaultLaunchOptions.tracesDir;
-      (browserType as any)._defaultLaunchOptions.tracesDir = tracesDir;
+      const oldTracesDir = (browserType as any)._playwright._defaultTracesDir;
+      (browserType as any)._playwright._defaultTracesDir = tracesDir;
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const page = await browser.newPage();
       await page.goto(server.EMPTY_PAGE);
       await browser.close();
-      (browserType as any)._defaultLaunchOptions.tracesDir = oldTracesDir;
+      (browserType as any)._playwright._defaultTracesDir = oldTracesDir;
       expect(fs.existsSync(tracesDir)).toBe(false);
     });
 
