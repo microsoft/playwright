@@ -368,8 +368,8 @@ test('should not crash when browser closes mid-trace', async ({ browserType, ser
 });
 
 test('should survive browser.close with auto-created traces dir', async ({ browserType }, testInfo) => {
-  const oldTracesDir = (browserType as any)._defaultLaunchOptions.tracesDir;
-  (browserType as any)._defaultLaunchOptions.tracesDir = undefined;
+  const oldTracesDir = (browserType as any)._playwright._defaultTracesDir;
+  (browserType as any)._playwright._defaultTracesDir = undefined;
   const browser = await browserType.launch();
   const page = await browser.newPage();
   await page.context().tracing.start();
@@ -394,7 +394,7 @@ test('should survive browser.close with auto-created traces dir', async ({ brows
   ]);
 
   done.value = true;
-  (browserType as any)._defaultLaunchOptions.tracesDir = oldTracesDir;
+  (browserType as any)._playwright._defaultTracesDir = oldTracesDir;
 });
 
 test('should not stall on dialogs', async ({ page, context, server }) => {
