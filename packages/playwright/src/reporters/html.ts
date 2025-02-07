@@ -453,7 +453,7 @@ class HtmlBuilder {
             name: 'pageSnapshot',
             contentType: a.contentType,
             body,
-          }
+          };
         } catch {}
       }
 
