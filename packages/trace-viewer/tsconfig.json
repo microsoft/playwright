@@ -30,6 +30,6 @@
     },
     "useUnknownInCatchVariables": false,
   },
-  "include": ["src"],
+  "include": ["src", "../web/src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

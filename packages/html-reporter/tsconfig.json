@@ -20,11 +20,12 @@
       "@protocol/*": ["../protocol/src/*"],
       "@web/*": ["../web/src/*"],
       "@playwright/*": ["../playwright/src/*"],
+      "@recorder/*": ["../recorder/src/*"],
       "@testIsomorphic/*": ["../playwright/src/isomorphic/*"],
       "playwright-core/lib/*": ["../playwright-core/src/*"],
       "playwright/lib/*": ["../playwright/src/*"],
     }
   },
-  "include": ["src"],
+  "include": ["src", "../web/src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

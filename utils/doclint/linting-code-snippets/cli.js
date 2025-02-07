@@ -137,29 +137,55 @@ class JSLintingService extends LintingService {
     'vue-router',
     'experimental-ct',
   ];
-  constructor() {
-    super();
-    this.eslint = new ESLint({
-      overrideConfigFile: path.join(PROJECT_DIR, '.eslintrc.js'),
-      useEslintrc: false,
+
+  async _init() {
+    if (this._eslint)
+      return this._eslint;
+
+    const { fixupConfigRules } = await import('@eslint/compat');
+    const { FlatCompat }  = await import('@eslint/eslintrc');
       // @ts-ignore
+    const js = (await import('@eslint/js')).default;
+
+    const compat = new FlatCompat({
+      baseDirectory: __dirname,
+      // @ts-ignore
+      recommendedConfig: js.configs.recommended,
+      allConfig: js.configs.all
+    });
+    const baseConfig = fixupConfigRules(compat.extends('plugin:react/recommended', 'plugin:@typescript-eslint/disable-type-checked'));
+    const { baseRules }= await import('../../../eslint.config.mjs');
+
+    this._eslint = new ESLint({
+      baseConfig,
+      plugins: /** @type {any}*/({
+        '@stylistic': (await import('@stylistic/eslint-plugin')).default,
+        'notice': await import('eslint-plugin-notice'),
+      }),
+      ignore: false,
       overrideConfig: {
-        plugins: ['react'],
+        files: ['**/*.ts', '**/*.tsx'],
         settings: {
-          react: { version: 'detect', }
+          react: { version: 'detect' },
         },
-        extends: [
-          'plugin:react/recommended',
-        ],
-        rules: {
+        languageOptions: {
+          // @ts-ignore
+          parser: await import('@typescript-eslint/parser'),
+          ecmaVersion: 'latest',
+          sourceType: 'module',
+        },
+        rules: /** @type {any}*/({
+          ...baseRules,
           'notice/notice': 'off',
           '@typescript-eslint/no-unused-vars': 'off',
           'max-len': ['error', { code: 100 }],
           'react/react-in-jsx-scope': 'off',
           'eol-last': 'off',
-        },
+          '@typescript-eslint/consistent-type-imports': 'off',
+        }),
       }
     });
+    return this._eslint;
   }
 
   supports(codeLang) {
@@ -171,9 +197,10 @@ class JSLintingService extends LintingService {
    * @returns {Promise<LintResult>}
    */
   async _lintSnippet(snippet) {
+    const eslint = await this._init();
     if (this._knownBadSnippets.some(s => snippet.code.includes(s)))
       return { status: 'ok' };
-    const results = await this.eslint.lintText(snippet.code);
+    const results = await eslint.lintText(snippet.code, { filePath: path.join(__dirname, 'file.tsx') });
     if (!results || !results.length || !results[0].messages.length)
       return { status: 'ok' };
     const result = results[0];
