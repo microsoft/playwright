@@ -568,7 +568,7 @@ To get started, enable the `mockingProxy` option in your Playwright config:
 
 ```js
 export default defineConfig({
-  use: { mockingProxy: "inject-via-header" }
+  use: { mockingProxy: 'inject-via-header' }
 });
 ```
 
@@ -724,7 +724,7 @@ const serverConfig = {
           (req, next) => {
             const proxy = inject(REQUEST)?.headers.get('x-playwright-proxy');
             if (proxy)
-              req = req.clone({ url: decodeURIComponent(proxy) + req.url })
+              req = req.clone({ url: decodeURIComponent(proxy) + req.url });
             return next(req);
           },
         ]),
@@ -743,8 +743,8 @@ Set up a server-side fetch override in an Astro integration:
 ```js
 // astro.config.mjs
 import { defineConfig } from 'astro/config';
-import type { AstroIntegration } from "astro"
-import { AsyncLocalStorage } from "async_hooks";
+import type { AstroIntegration } from 'astro';
+import { AsyncLocalStorage } from 'async_hooks';
 
 const playwrightMockingProxy: AstroIntegration = {
   name: 'playwrightMockingProxy',
@@ -784,24 +784,24 @@ export default defineConfig({
 ```js
 // server/plugins/playwright-mocking-proxy.ts
 
-import { getGlobalDispatcher, setGlobalDispatcher } from "undici"
-import { useEvent, getRequestHeader } from '#imports'
+import { getGlobalDispatcher, setGlobalDispatcher } from 'undici';
+import { useEvent, getRequestHeader } from '#imports';
 
 export default defineNitroPlugin(() => {
   if (process.env.NODE_ENV !== 'test')
     return;
 
   const proxiedDispatcher = getGlobalDispatcher().compose(dispatch => (opts, handler) => {
-    const isInternal = opts.path.startsWith("/__nuxt")
-    const proxy = getRequestHeader(useEvent(), 'x-playwright-proxy')
+    const isInternal = opts.path.startsWith('/__nuxt');
+    const proxy = getRequestHeader(useEvent(), 'x-playwright-proxy');
     if (proxy && !isInternal) {
       const newURL = new URL(decodeURIComponent(proxy) + opts.origin + opts.path);
       opts.origin = newURL.origin;
       opts.path = newURL.pathname;
     }
-    return dispatch(opts, handler)
-  })
-  setGlobalDispatcher(proxiedDispatcher)
+    return dispatch(opts, handler);
+  });
+  setGlobalDispatcher(proxiedDispatcher);
 });
 ```
 
@@ -813,5 +813,5 @@ export default defineNuxtConfig({
       asyncContext: true,
     }
   }
-})
+});
 ```
