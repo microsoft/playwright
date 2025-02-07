@@ -10,16 +10,16 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.1.5"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.6.1"
   },
   "devDependencies": {
-    "@types/react": "^19.0.8",
-    "@types/react-dom": "^19.0.3",
+    "@types/react": "^18.0.26",
+    "@types/react-dom": "^18.0.10",
     "@vitejs/plugin-react": "^4.2.1",
     "msw": "^2.3.0",
     "typescript": "^5.2.2",
-    "vite": "^6.1.0"
+    "vite": "^5.2.8"
   }
 }
