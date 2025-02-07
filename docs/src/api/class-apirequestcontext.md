@@ -909,3 +909,9 @@ Returns storage state for this request context, contains current cookies and loc
 
 ### option: APIRequestContext.storageState.path = %%-storagestate-option-path-%%
 * since: v1.16
+
+### option: APIRequestContext.storageState.indexedDB
+* since: v1.51
+- `indexedDB` ?<boolean>
+
+Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.

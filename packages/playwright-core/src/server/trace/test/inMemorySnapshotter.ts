@@ -72,7 +72,7 @@ export class InMemorySnapshotter implements SnapshotterDelegate, HarTracerDelega
   }
 
   onEntryFinished(entry: har.Entry) {
-    this._storage.addResource(entry);
+    this._storage.addResource('', entry);
   }
 
   onContentBlob(sha1: string, buffer: Buffer) {
@@ -85,7 +85,7 @@ export class InMemorySnapshotter implements SnapshotterDelegate, HarTracerDelega
 
   onFrameSnapshot(snapshot: FrameSnapshot): void {
     ++this._snapshotCount;
-    const renderer = this._storage.addFrameSnapshot(snapshot, []);
+    const renderer = this._storage.addFrameSnapshot('', snapshot, []);
     this._snapshotReadyPromises.get(snapshot.snapshotName || '')?.resolve(renderer);
   }
 

@@ -2,6 +2,7 @@
   "name": "ct-react-vite",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

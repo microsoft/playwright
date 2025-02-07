@@ -82,7 +82,7 @@ export class RemoteServer implements PlaywrightServer {
 
   async _start(childProcess: CommonFixtures['childProcess'], browserType: BrowserType, channel: string, remoteServerOptions: RemoteServerOptions = {}) {
     this._browserType = browserType;
-    const browserOptions = (browserType as any)._defaultLaunchOptions;
+    const browserOptions = (browserType as any)._playwright._defaultLaunchOptions;
     // Copy options to prevent a large JSON string when launching subprocess.
     // Otherwise, we get `Error: spawn ENAMETOOLONG` on Windows.
     const launchOptions: Parameters<BrowserType['launchServer']>[0] = {

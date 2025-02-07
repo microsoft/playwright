@@ -19,8 +19,8 @@ import type { source } from './isomorphic/utilityScriptSerializers';
 
 export type Storage = Omit<channels.OriginStorage, 'origin'>;
 
-export async function collect(serializers: ReturnType<typeof source>, isFirefox: boolean): Promise<Storage> {
-  const idbResult = await Promise.all((await indexedDB.databases()).map(async dbInfo => {
+export async function collect(serializers: ReturnType<typeof source>, isFirefox: boolean, recordIndexedDB: boolean): Promise<Storage> {
+  async function collectDB(dbInfo: IDBDatabaseInfo) {
     if (!dbInfo.name)
       throw new Error('Database name is empty');
     if (!dbInfo.version)
@@ -119,13 +119,13 @@ export async function collect(serializers: ReturnType<typeof source>, isFirefox:
       version: dbInfo.version,
       stores,
     };
-  })).catch(e => {
-    throw new Error('Unable to serialize IndexedDB: ' + e.message);
-  });
+  }
 
   return {
     localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name)! })),
-    indexedDB: idbResult,
+    indexedDB: recordIndexedDB ? await Promise.all((await indexedDB.databases()).map(collectDB)).catch(e => {
+      throw new Error('Unable to serialize IndexedDB: ' + e.message);
+    }) : [],
   };
 }
 

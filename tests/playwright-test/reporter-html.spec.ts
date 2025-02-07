@@ -1213,6 +1213,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await execGit(['init']);
       await execGit(['config', '--local', 'user.email', 'shakespeare@example.local']);
       await execGit(['config', '--local', 'user.name', 'William']);
+      await execGit(['add', 'playwright.config.ts']);
+      await execGit(['commit', '-m', 'init']);
       await execGit(['add', '*.ts']);
       await execGit(['commit', '-m', 'chore(html): make this test look nice']);
 
@@ -1222,6 +1224,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         GITHUB_RUN_ID: 'example-run-id',
         GITHUB_SERVER_URL: 'https://playwright.dev',
         GITHUB_SHA: 'example-sha',
+        GITHUB_REF_NAME: '42/merge',
+        GITHUB_BASE_REF: 'HEAD~1',
       });
 
       await showReport();
@@ -1231,7 +1235,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.metadata-view')).toMatchAriaSnapshot(`
         - 'link "chore(html): make this test look nice"'
         - text: /^William <shakespeare@example.local> on/
-        - link "logs"
+        - link "Logs"
+        - link "Pull Request"
         - link /^[a-f0-9]{7}$/
         - text: 'foo: value1 bar: {"prop":"value2"} baz: ["value3",123]'
       `);

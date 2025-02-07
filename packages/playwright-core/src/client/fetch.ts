@@ -25,7 +25,7 @@ import { assert, headersObjectToArray, isString } from '../utils';
 import { mkdirIfNeeded } from '../utils/fileUtils';
 import { ChannelOwner } from './channelOwner';
 import { RawHeaders } from './network';
-import type { ClientCertificate, FilePayload, Headers, StorageState } from './types';
+import type { ClientCertificate, FilePayload, Headers, SetStorageState, StorageState } from './types';
 import type { Playwright } from './playwright';
 import { Tracing } from './tracing';
 import { TargetClosedError, isTargetClosedError } from './errors';
@@ -47,7 +47,7 @@ export type FetchOptions = {
 
 export type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'tracesDir'> & {
   extraHTTPHeaders?: Headers,
-  storageState?: string | StorageState,
+  storageState?: string | SetStorageState,
   clientCertificates?: ClientCertificate[];
 };
 
@@ -56,9 +56,6 @@ type RequestWithBodyOptions = Omit<FetchOptions, 'method'>;
 export class APIRequest implements api.APIRequest {
   private _playwright: Playwright;
   readonly _contexts = new Set<APIRequestContext>();
-
-  // Instrumentation.
-  _defaultContextOptions?: NewContextOptions & { tracesDir?: string };
 
   constructor(playwright: Playwright) {
     this._playwright = playwright;
@@ -69,22 +66,24 @@ export class APIRequest implements api.APIRequest {
   }
 
   async _newContext(options: NewContextOptions = {}, channel: channels.PlaywrightChannel | channels.LocalUtilsChannel): Promise<APIRequestContext> {
-    options = { ...this._defaultContextOptions, ...options };
+    options = {
+      ...this._playwright._defaultContextOptions,
+      timeout: this._playwright._defaultContextTimeout,
+      ...options,
+    };
     const storageState = typeof options.storageState === 'string' ?
       JSON.parse(await fs.promises.readFile(options.storageState, 'utf8')) :
       options.storageState;
-    // We do not expose tracesDir in the API, so do not allow options to accidentally override it.
-    const tracesDir = this._defaultContextOptions?.tracesDir;
     const context = APIRequestContext.from((await channel.newRequest({
       ...options,
       extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       storageState,
-      tracesDir,
+      tracesDir: this._playwright._defaultLaunchOptions?.tracesDir, // We do not expose tracesDir in the API, so do not allow options to accidentally override it.
       clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
     })).request);
     this._contexts.add(context);
     context._request = this;
-    context._tracing._tracesDir = tracesDir;
+    context._tracing._tracesDir = this._playwright._defaultLaunchOptions?.tracesDir;
     await context._instrumentation.runAfterCreateRequestContext(context);
     return context;
   }
@@ -264,8 +263,8 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
     });
   }
 
-  async storageState(options: { path?: string } = {}): Promise<StorageState> {
-    const state = await this._channel.storageState();
+  async storageState(options: { path?: string, indexedDB?: boolean } = {}): Promise<StorageState> {
+    const state = await this._channel.storageState({ indexedDB: options.indexedDB });
     if (options.path) {
       await mkdirIfNeeded(options.path);
       await fs.promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');
@@ -420,8 +419,10 @@ function objectToArray(map?: { [key: string]: any }): NameValue[] | undefined {
   if (!map)
     return undefined;
   const result = [];
-  for (const [name, value] of Object.entries(map))
-    result.push({ name, value: String(value) });
+  for (const [name, value] of Object.entries(map)) {
+    if (value !== undefined)
+      result.push({ name, value: String(value) });
+  }
   return result;
 }
 

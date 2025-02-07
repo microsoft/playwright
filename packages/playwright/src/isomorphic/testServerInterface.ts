@@ -96,6 +96,7 @@ export interface TestServerInterface {
     workers?: number | string;
     updateSnapshots?: 'all' | 'changed' | 'missing' | 'none';
     updateSourceMethod?: 'overwrite' | 'patch' | '3way';
+    pageSnapshot?: 'off' | 'on' | 'only-on-failure';
     reporters?: string[],
     trace?: 'on' | 'off';
     video?: 'on' | 'off';

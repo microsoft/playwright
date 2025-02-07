@@ -23,6 +23,7 @@ import { Electron } from './electron';
 import { APIRequest } from './fetch';
 import { Selectors, SelectorsOwner } from './selectors';
 import { MockingProxy } from './mockingProxy';
+import type { BrowserContextOptions, LaunchOptions } from 'playwright-core';
 
 export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly _android: Android;
@@ -37,6 +38,12 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly request: APIRequest;
   readonly errors: { TimeoutError: typeof TimeoutError };
   _mockingProxy?: MockingProxy;
+
+  // Instrumentation.
+  _defaultLaunchOptions?: LaunchOptions;
+  _defaultContextOptions?: BrowserContextOptions;
+  _defaultContextTimeout?: number;
+  _defaultContextNavigationTimeout?: number;
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
     super(parent, type, guid, initializer);
@@ -75,6 +82,19 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   static from(channel: channels.PlaywrightChannel): Playwright {
     return (channel as any)._object;
   }
+
+  private _browserTypes(): BrowserType[] {
+    return [this.chromium, this.firefox, this.webkit, this._bidiChromium, this._bidiFirefox];
+  }
+
+  _allContexts() {
+    return this._browserTypes().flatMap(type => [...type._contexts]);
+  }
+
+  _allPages() {
+    return this._allContexts().flatMap(context => context.pages());
+  }
+
 
   async _startMockingProxy() {
     const requestContext = await this.request._newContext(undefined, this._connection.localUtils()._channel);

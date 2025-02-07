@@ -311,6 +311,7 @@ export class TestServerDispatcher implements TestServerInterface {
         ...(params.headed !== undefined ? { headless: !params.headed } : {}),
         _optionContextReuseMode: params.reuseContext ? 'when-possible' : undefined,
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
+        _pageSnapshot: params.pageSnapshot,
       },
       ...(params.updateSnapshots ? { updateSnapshots: params.updateSnapshots } : {}),
       ...(params.updateSourceMethod ? { updateSourceMethod: params.updateSourceMethod } : {}),

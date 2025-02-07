@@ -15,7 +15,8 @@
  */
 
 import { defineConfig, devices } from '@playwright/experimental-ct-vue';
-import { resolve } from 'path';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 export default defineConfig({
   testDir: 'tests',
@@ -27,7 +28,7 @@ export default defineConfig({
     ctViteConfig: {
       resolve: {
         alias: {
-          '@': resolve(__dirname, './src'),
+          '@': path.resolve(path.dirname(fileURLToPath(import.meta.url)), './src'),
         }
       }
     }
