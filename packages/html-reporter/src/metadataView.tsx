@@ -23,15 +23,28 @@ import type { Metadata } from '@playwright/test';
 import type { GitCommitInfo } from '@testIsomorphic/types';
 import { CopyToClipboardContainer } from './copyToClipboard';
 import { linkifyText } from '@web/renderUtils';
-import { GitCommitInfoContext } from './reportView';
 
 type MetadataEntries = [string, unknown][];
 
-export function filterMetadata(metadata: Metadata): { gitCommitInfo?: GitCommitInfo, metadataEntries: MetadataEntries } {
-  return {
-    gitCommitInfo: metadata['git.commit.info'],
-    metadataEntries: Object.entries(metadata).filter(([key]) => key !== 'actualWorkers') // TODO: do not plumb actualWorkers through metadata.
-  };
+export const MetadataContext = React.createContext<MetadataEntries>([]);
+
+export function MetadataProvider({ metadata}: React.PropsWithChildren<{ metadata: Metadata }>) {
+  const entries = React.useMemo(() => {
+    // TODO: do not plumb actualWorkers through metadata.
+  
+    return Object.entries(metadata).filter(([key]) => key !== 'actualWorkers')
+  }, [metadata]);
+
+  return <MetadataContext.Provider value={entries} />;
+}
+
+export function useMetadata() {
+  return React.useContext(MetadataContext);
+}
+
+export function useGitCommitInfo() {
+  const metadataEntries = useMetadata();
+  return metadataEntries.find(([key]) => key === 'git.commit.info')?.[1] as GitCommitInfo | undefined;
 }
 
 class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, { error: Error | null, errorInfo: React.ErrorInfo | null }> {
@@ -60,12 +73,13 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, { error
   }
 }
 
-export const MetadataView: React.FC<{ metadataEntries: MetadataEntries }> = ({ metadataEntries }) => {
-  return <ErrorBoundary><InnerMetadataView metadataEntries={metadataEntries}/></ErrorBoundary>;
+export const MetadataView = () => {
+  return <ErrorBoundary><InnerMetadataView/></ErrorBoundary>;
 };
 
-const InnerMetadataView: React.FC<{ metadataEntries: MetadataEntries }> = ({ metadataEntries }) => {
-  const gitCommitInfo = React.useContext(GitCommitInfoContext);
+const InnerMetadataView = () => {
+  const metadataEntries = useMetadata();
+  const gitCommitInfo = useGitCommitInfo();
   const entries = metadataEntries.filter(([key]) => key !== 'git.commit.info');
   if (!gitCommitInfo && !entries.length)
     return null;

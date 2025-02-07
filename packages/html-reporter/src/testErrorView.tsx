@@ -20,10 +20,10 @@ import './testErrorView.css';
 import * as icons from './icons';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import { GitCommitInfoContext } from './reportView';
 import { TestResult } from './types';
 import { CopyToClipboard } from './copyToClipboard';
 import { fixTestPrompt } from '@web/components/prompts';
+import { useGitCommitInfo } from './metadataView';
 
 export const TestErrorView: React.FC<{ error: string; testId?: string; result?: TestResult }> = ({ error, testId, result }) => {
   return (
@@ -49,7 +49,7 @@ const PromptButton: React.FC<{
   error: string;
   result?: TestResult;
 }> = ({ error, result }) => {
-  const gitCommitInfo = React.useContext(GitCommitInfoContext);
+  const gitCommitInfo = useGitCommitInfo();
   const prompt = React.useMemo(() => fixTestPrompt(
     error,
     gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'],

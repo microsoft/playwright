@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { FilteredStats, TestCase, TestCaseSummary, TestFile, TestFileSummary } from './types';
+import type { FilteredStats, HTMLReport, TestCase, TestCaseSummary, TestFile, TestFileSummary } from './types';
 import * as React from 'react';
 import './colors.css';
 import './common.css';
@@ -26,10 +26,7 @@ import './reportView.css';
 import { TestCaseView } from './testCaseView';
 import { TestFilesHeader, TestFilesView } from './testFilesView';
 import './theme.css';
-import { filterMetadata } from './metadataView';
-import type { GitCommitInfo } from '@testIsomorphic/types';
-
-export const GitCommitInfoContext = React.createContext<GitCommitInfo | undefined>(undefined);
+import { MetadataProvider } from './metadataView';
 
 declare global {
   interface Window {
@@ -54,8 +51,6 @@ export const ReportView: React.FC<{
   const [filterText, setFilterText] = React.useState(searchParams.get('q') || '');
   const [metadataVisible, setMetadataVisible] = React.useState(false);
 
-  const gitCommitInfo = React.useMemo(() => filterMetadata(report?.json().metadata || {}).gitCommitInfo, [report]);
-
   const testIdToFileIdMap = React.useMemo(() => {
     const map = new Map<string, string>();
     for (const file of report?.json().files || []) {
@@ -78,7 +73,7 @@ export const ReportView: React.FC<{
     return result;
   }, [report, filter]);
 
-  return <GitCommitInfoContext.Provider value={gitCommitInfo}><div className='htmlreport vbox px-4 pb-4'>
+  return <MetadataProvider metadata={report?.json().metadata ?? {}}><div className='htmlreport vbox px-4 pb-4'>
     <main>
       {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
       <Route predicate={testFilesRoutePredicate}>
@@ -94,7 +89,7 @@ export const ReportView: React.FC<{
         {!!report && <TestCaseViewLoader report={report} tests={filteredTests.tests} testIdToFileIdMap={testIdToFileIdMap} />}
       </Route>
     </main>
-  </div></GitCommitInfoContext.Provider>;
+  </div></MetadataProvider>;
 };
 
 const TestCaseViewLoader: React.FC<{
