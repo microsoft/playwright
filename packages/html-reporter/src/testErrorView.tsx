@@ -55,17 +55,31 @@ const PromptButton: React.FC<{
 }> = ({ error, result }) => {
   const gitCommitInfo = React.useContext(GitCommitInfoContext);
   const prompt = React.useMemo(() => {
-    const diff = gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'];
-    const pageSnapshot = result?.attachments.find(a => a.name === 'pageSnapshot')?.body;
-
-    return [
-      'You are a helpful assistant. Help me understand the error cause. Here is the error:',
+    const promptParts = [
+      'This test failed, suggest how to fix it. Please be correct, concise and keep Playwright best practices in mind.',
+      'Here is the error:',
+      '\n',
       stripAnsiEscapes(error),
-      'And this is the code diff:',
-      diff,
-      'And this is how the page looked:',
-      pageSnapshot,
-    ].join('\n\n');
+      '\n',
+    ];
+
+    const pageSnapshot = result?.attachments.find(a => a.name === 'pageSnapshot')?.body;
+    if (pageSnapshot)
+      promptParts.push(
+        'This is how the page looked at the end of the test:',
+        pageSnapshot,
+        '\n'
+      );
+
+    const diff = gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'];
+    if (diff)
+      promptParts.push(
+        'And this is the code diff:',
+        diff,
+        '\n'
+      );
+
+    return promptParts.join('\n');
   }, [gitCommitInfo, result])
 
   return <CopyToClipboard value={prompt} icon={<icons.copilot />} title="Copy prompt to clipboard" />;
