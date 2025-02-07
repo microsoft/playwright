@@ -19,8 +19,7 @@ import * as React from 'react';
 import { Recorder } from './recorder';
 import './recorder.css';
 
-export const Main: React.FC = ({
-}) => {
+export const Main: React.FC = ({}) => {
   const [sources, setSources] = React.useState<Source[]>([]);
   const [paused, setPaused] = React.useState(false);
   const [log, setLog] = React.useState(new Map<string, CallLog>());
@@ -28,9 +27,12 @@ export const Main: React.FC = ({
 
   React.useLayoutEffect(() => {
     window.playwrightSetMode = setMode;
-    window.playwrightSetSources = (sources: Source[]) => {
+    window.playwrightSetSources = (sources, primaryPageURL) => {
       setSources(sources);
       window.playwrightSourcesEchoForTest = sources;
+      document.title = primaryPageURL
+        ? `Playwright Inspector - ${primaryPageURL}`
+        : `Playwright Inspector`;
     };
     window.playwrightSetPaused = setPaused;
     window.playwrightUpdateLogs = callLogs => {
@@ -43,14 +45,7 @@ export const Main: React.FC = ({
         return newLog;
       });
     };
-    window.playwrightSetBasePageURL = (url: string) => {
-      if (url)
-        document.title = `Playwright Inspector - ${url}`;
-      else
-        document.title = `Playwright Inspector`;
-    };
   }, []);
-
 
   return <Recorder sources={sources} paused={paused} log={log} mode={mode} />;
 };

@@ -101,9 +101,8 @@ declare global {
   interface Window {
     playwrightSetMode: (mode: Mode) => void;
     playwrightSetPaused: (paused: boolean) => void;
-    playwrightSetSources: (sources: Source[]) => void;
+    playwrightSetSources: (sources: Source[], primaryPageURL: string | undefined) => void;
     playwrightSetOverlayVisible: (visible: boolean) => void;
-    playwrightSetBasePageURL: (url: string) => void;
     playwrightUpdateLogs: (callLogs: CallLog[]) => void;
     playwrightSetRunningFile: (file: string | undefined) => void;
     playwrightElementPicked: (elementInfo: ElementInfo, userGesture?: boolean) => void;

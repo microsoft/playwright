@@ -37,9 +37,8 @@ export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   async setRunningFile(file: string | undefined): Promise<void> {}
   async elementPicked(elementInfo: ElementInfo, userGesture?: boolean): Promise<void> {}
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
-  async setSources(sources: Source[]): Promise<void> {}
+  async setSources(sources: Source[], primaryPageURL: string | undefined): Promise<void> {}
   async setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void> {}
-  async setBasePageURL(url: string): Promise<void> {}
 }
 
 export class RecorderApp extends EventEmitter implements IRecorderApp {
@@ -144,10 +143,10 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     }).toString(), { isFunction: true }, paused).catch(() => {});
   }
 
-  async setSources(sources: Source[]): Promise<void> {
-    await this._page.mainFrame().evaluateExpression(((sources: Source[]) => {
-      window.playwrightSetSources(sources);
-    }).toString(), { isFunction: true }, sources).catch(() => {});
+  async setSources(sources: Source[], primaryPageURL: string | undefined): Promise<void> {
+    await this._page.mainFrame().evaluateExpression((({ sources, primaryPageURL }: { sources: Source[], primaryPageURL: string | undefined }) => {
+      window.playwrightSetSources(sources, primaryPageURL);
+    }).toString(), { isFunction: true }, { sources, primaryPageURL }).catch(() => {});
 
     // Testing harness for runCLI mode.
     if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length) {
@@ -157,12 +156,6 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
   }
 
   async setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void> {
-  }
-
-  async setBasePageURL(url: string): Promise<void> {
-    await this._page.mainFrame().evaluateExpression(((url: string) => {
-      window.playwrightSetBasePageURL(url);
-    }).toString(), { isFunction: true }, url).catch(() => {});
   }
 
   async elementPicked(elementInfo: ElementInfo, userGesture?: boolean): Promise<void> {

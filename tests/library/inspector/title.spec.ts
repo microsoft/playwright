@@ -16,38 +16,68 @@
 
 import { test, expect } from './inspectorTest';
 
-test('should reflect formatted URL of the page', async ({ openRecorder, server }) => {
+test('should reflect formatted URL of the page', async ({
+  openRecorder,
+  server,
+}) => {
   const { recorder } = await openRecorder();
   await recorder.setContentAndWait('');
-  await expect(await recorder.recorderPage.title()).toBe('Playwright Inspector - about:blank');
+  await expect(recorder.recorderPage).toHaveTitle(
+      'Playwright Inspector - about:blank',
+  );
 
   await recorder.setContentAndWait('', server.EMPTY_PAGE);
-  await expect(await recorder.recorderPage.title()).toBe(`Playwright Inspector - ${server.EMPTY_PAGE}`);
+  await expect(recorder.recorderPage).toHaveTitle(
+      `Playwright Inspector - ${server.EMPTY_PAGE}`,
+  );
 });
 
-test('should update primary page URL when original primary closes', async ({ context, openRecorder, server }) => {
+test('should update primary page URL when original primary closes', async ({
+  context,
+  openRecorder,
+  server,
+}) => {
   const { recorder } = await openRecorder();
-  await recorder.setContentAndWait('', `${server.PREFIX}/background-color.html`);
-  await expect(await recorder.recorderPage.title()).toBe(`Playwright Inspector - ${server.PREFIX}/background-color.html`);
+  await recorder.setContentAndWait(
+      '',
+      `${server.PREFIX}/background-color.html`,
+  );
+  await expect(recorder.recorderPage).toHaveTitle(
+      `Playwright Inspector - ${server.PREFIX}/background-color.html`,
+  );
 
   const page2 = await context.newPage();
   await page2.goto(`${server.PREFIX}/empty.html`);
-  await expect(await recorder.recorderPage.title()).toBe(`Playwright Inspector - ${server.PREFIX}/background-color.html`);
+  await expect(recorder.recorderPage).toHaveTitle(
+      `Playwright Inspector - ${server.PREFIX}/background-color.html`,
+  );
 
   const page3 = await context.newPage();
   await page3.goto(`${server.PREFIX}/dom.html`);
-  await expect(await recorder.recorderPage.title()).toBe(`Playwright Inspector - ${server.PREFIX}/background-color.html`);
+  await expect(recorder.recorderPage).toHaveTitle(
+      `Playwright Inspector - ${server.PREFIX}/background-color.html`,
+  );
 
   const page4 = await context.newPage();
   await page4.goto(`${server.PREFIX}/grid.html`);
-  await expect(await recorder.recorderPage.title()).toBe(`Playwright Inspector - ${server.PREFIX}/background-color.html`);
+  await expect(recorder.recorderPage).toHaveTitle(
+      `Playwright Inspector - ${server.PREFIX}/background-color.html`,
+  );
 
   await page2.close();
-  await expect(await recorder.recorderPage.title()).toBe(`Playwright Inspector - ${server.PREFIX}/background-color.html`);
+  await expect(recorder.recorderPage).toHaveTitle(
+      `Playwright Inspector - ${server.PREFIX}/background-color.html`,
+  );
 
   await recorder.page.close();
-  await expect(await recorder.recorderPage.title()).toBe(`Playwright Inspector - ${server.PREFIX}/dom.html`);
+  // URL will not update without performing some action
+  await page3.getByRole('checkbox').click();
+  await expect(recorder.recorderPage).toHaveTitle(
+      `Playwright Inspector - ${server.PREFIX}/dom.html`,
+  );
 
   await page3.close();
-  await expect(await recorder.recorderPage.title()).toBe(`Playwright Inspector - ${server.PREFIX}/grid.html`);
+  await expect(recorder.recorderPage).toHaveTitle(
+      `Playwright Inspector - ${server.PREFIX}/grid.html`,
+  );
 });
