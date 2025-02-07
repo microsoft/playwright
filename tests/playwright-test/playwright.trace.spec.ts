@@ -290,7 +290,7 @@ test('should work in serial mode', async ({ runInlineTest }, testInfo) => {
 test('should not override trace file in afterAll', async ({ runInlineTest, server }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'retain-on-failure', , pageSnapshot: 'off' } };
+      module.exports = { use: { trace: 'retain-on-failure', pageSnapshot: 'off' } };
     `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -642,7 +642,7 @@ test('should expand expect.toPass', async ({ runInlineTest }, testInfo) => {
 test('should show non-expect error in trace', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { trace: { mode: 'on', pageSnapshot: 'off' } } };
+      module.exports = { use: { trace: { mode: 'on' }, pageSnapshot: 'off' } };
     `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -850,7 +850,7 @@ test('should record nested steps, even after timeout', async ({ runInlineTest },
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
-        use: { trace: { mode: 'on', pageSnapshot: 'off' } },
+        use: { trace: { mode: 'on' }, pageSnapshot: 'off' },
         timeout: 5000,
       };
     `,
