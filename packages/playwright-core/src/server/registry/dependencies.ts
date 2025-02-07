@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
+import * as childProcess from 'child_process';
+import * as fs from 'fs';
 import * as os from 'os';
-import childProcess from 'child_process';
-import * as utils from '../../utils';
-import { spawnAsync } from '../../utils/spawnAsync';
-import { hostPlatform, isOfficiallySupportedPlatform } from '../../utils/hostPlatform';
-import { buildPlaywrightCLICommand, registry } from '.';
+import * as path from 'path';
+
 import { deps } from './nativeDeps';
+import * as utils from '../../utils';
+import { hostPlatform, isOfficiallySupportedPlatform } from '../../utils/hostPlatform';
+import { spawnAsync } from '../../utils/spawnAsync';
 import { getPlaywrightVersion } from '../../utils/userAgent';
+
+import { buildPlaywrightCLICommand, registry } from '.';
 
 const BIN_DIRECTORY = path.join(__dirname, '..', '..', '..', 'bin');
 const languageBindingVersion = process.env.PW_CLI_DISPLAY_VERSION || require('../../../package.json').version;

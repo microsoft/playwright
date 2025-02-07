@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-import path from 'path';
-import fs from 'fs';
-import { HttpServer } from '../../../utils/httpServer';
-import type { Transport } from '../../../utils/httpServer';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { gracefullyProcessExitDoNotHang, isUnderTest } from '../../../utils';
-import { syncLocalStorageWithSettings } from '../../launchApp';
+import { HttpServer } from '../../../utils/httpServer';
+import { open } from '../../../utilsBundle';
 import { serverSideCallMetadata } from '../../instrumentation';
+import { syncLocalStorageWithSettings } from '../../launchApp';
+import { launchApp } from '../../launchApp';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
-import { open } from '../../../utilsBundle';
-import type { Page } from '../../page';
+
+import type { Transport } from '../../../utils/httpServer';
 import type { BrowserType } from '../../browserType';
-import { launchApp } from '../../launchApp';
+import type { Page } from '../../page';
 
 export type TraceViewerServerOptions = {
   host?: string;

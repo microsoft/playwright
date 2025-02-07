@@ -14,33 +14,35 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../browserContext';
-import { Dispatcher, existingDispatcher } from './dispatcher';
-import type { DispatcherScope } from './dispatcher';
-import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
-import type { FrameDispatcher } from './frameDispatcher';
-import type * as channels from '@protocol/channels';
-import { RouteDispatcher, RequestDispatcher, ResponseDispatcher, APIRequestContextDispatcher } from './networkDispatchers';
-import { CRBrowserContext } from '../chromium/crBrowser';
-import { CDPSessionDispatcher } from './cdpSessionDispatcher';
-import { Recorder } from '../recorder';
-import type { CallMetadata } from '../instrumentation';
-import { ArtifactDispatcher } from './artifactDispatcher';
-import type { Artifact } from '../artifact';
-import type { Request, Response } from '../network';
-import { TracingDispatcher } from './tracingDispatcher';
 import * as fs from 'fs';
 import * as path from 'path';
-import { createGuid, urlMatches } from '../../utils';
-import { WritableStreamDispatcher } from './writableStreamDispatcher';
+
+import { BrowserContext } from '../browserContext';
+import { ArtifactDispatcher } from './artifactDispatcher';
+import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
-import type { Page } from '../page';
-import type { Dialog } from '../dialog';
-import type { ConsoleMessage } from '../console';
-import { serializeError } from '../errors';
+import { Dispatcher, existingDispatcher } from './dispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
-import { RecorderApp } from '../recorder/recorderApp';
+import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
+import { BindingCallDispatcher, PageDispatcher, WorkerDispatcher } from './pageDispatcher';
+import { CRBrowserContext } from '../chromium/crBrowser';
+import { serializeError } from '../errors';
+import { Recorder } from '../recorder';
+import { TracingDispatcher } from './tracingDispatcher';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
+import { WritableStreamDispatcher } from './writableStreamDispatcher';
+import { createGuid, urlMatches } from '../../utils';
+import { RecorderApp } from '../recorder/recorderApp';
+
+import type { Artifact } from '../artifact';
+import type { ConsoleMessage } from '../console';
+import type { Dialog } from '../dialog';
+import type { CallMetadata } from '../instrumentation';
+import type { Request, Response } from '../network';
+import type { Page } from '../page';
+import type { DispatcherScope } from './dispatcher';
+import type { FrameDispatcher } from './frameDispatcher';
+import type * as channels from '@protocol/channels';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
   _type_EventTarget = true;

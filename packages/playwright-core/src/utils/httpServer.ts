@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-import type http from 'http';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { mime, wsServer } from '../utilsBundle';
-import { assert } from './debug';
-import { createHttpServer } from './network';
-import { ManualPromise } from './manualPromise';
 import { createGuid } from './crypto';
+import { assert } from './debug';
+import { ManualPromise } from './manualPromise';
+import { createHttpServer } from './network';
+
+import type http from 'http';
 
 export type ServerRouteHandler = (request: http.IncomingMessage, response: http.ServerResponse) => boolean;
 

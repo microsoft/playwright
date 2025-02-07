@@ -15,16 +15,19 @@
  */
 
 import { EventEmitter } from 'events';
-import type * as channels from '@protocol/channels';
-import { findValidator, ValidationError, createMetadataValidator, type ValidatorContext } from '../../protocol/validator';
+
+import { eventsHelper } from '../..//utils/eventsHelper';
+import { ValidationError, createMetadataValidator, findValidator  } from '../../protocol/validator';
 import { LongStandingScope, assert, compressCallLog, isUnderTest, monotonicTime, rewriteErrorMessage } from '../../utils';
 import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
-import type { CallMetadata } from '../instrumentation';
 import { SdkObject } from '../instrumentation';
-import type { PlaywrightDispatcher } from './playwrightDispatcher';
-import { eventsHelper } from '../..//utils/eventsHelper';
-import type { RegisteredListener } from '../..//utils/eventsHelper';
 import { isProtocolError } from '../protocolError';
+
+import type { CallMetadata } from '../instrumentation';
+import type { PlaywrightDispatcher } from './playwrightDispatcher';
+import type { RegisteredListener } from '../..//utils/eventsHelper';
+import type { ValidatorContext } from '../../protocol/validator';
+import type * as channels from '@protocol/channels';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 const metadataValidator = createMetadataValidator();

@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-import type * as contexts from './browserContext';
-import type * as pages from './page';
-import type * as frames from './frames';
-import type * as types from './types';
-import type * as channels from '@protocol/channels';
 import { assert } from '../utils';
-import { ManualPromise } from '../utils/manualPromise';
-import { SdkObject } from './instrumentation';
-import type { HeadersArray, NameValue } from '../common/types';
-import { APIRequestContext } from './fetch';
-import type { NormalizedContinueOverrides } from './types';
 import { BrowserContext } from './browserContext';
+import { APIRequestContext } from './fetch';
+import { SdkObject } from './instrumentation';
+import { ManualPromise } from '../utils/manualPromise';
+
+import type * as contexts from './browserContext';
+import type * as frames from './frames';
+import type * as pages from './page';
+import type * as types from './types';
+import type { NormalizedContinueOverrides } from './types';
+import type { HeadersArray, NameValue } from '../common/types';
+import type * as channels from '@protocol/channels';
+
 
 export function filterCookies(cookies: channels.NetworkCookie[], urls: string[]): channels.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));

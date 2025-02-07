@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
 import type { Size } from '../common/types';
-export type { Size, Point, Rect, Quad, TimeoutOptions, HeadersArray } from '../common/types';
+import type * as channels from '@protocol/channels';
+export type { HeadersArray, Point, Quad, Rect, Size, TimeoutOptions } from '../common/types';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 export interface Logger {

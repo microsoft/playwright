@@ -15,27 +15,22 @@
  * limitations under the License.
  */
 
-import path from 'path';
-import { PNG, jpegjs } from '../../utilsBundle';
-import { splitErrorMessage } from '../../utils/stackTrace';
+import * as path from 'path';
+
 import { assert, createGuid, debugAssert, headersArrayToObject } from '../../utils';
+import { eventsHelper } from '../../utils/eventsHelper';
 import { hostPlatform } from '../../utils/hostPlatform';
-import type * as accessibility from '../accessibility';
+import { splitErrorMessage } from '../../utils/stackTrace';
+import { PNG, jpegjs } from '../../utilsBundle';
+import { BrowserContext } from '../browserContext';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
-import type * as frames from '../frames';
-import type { RegisteredListener } from '../../utils/eventsHelper';
-import { eventsHelper } from '../../utils/eventsHelper';
+import { TargetClosedError } from '../errors';
 import { helper } from '../helper';
-import type { JSHandle } from '../javascript';
 import * as network from '../network';
-import { type InitScript, PageBinding, type PageDelegate } from '../page';
+import {  PageBinding  } from '../page';
 import { Page } from '../page';
-import type { Progress } from '../progress';
-import type * as types from '../types';
-import type { Protocol } from './protocol';
 import { getAccessibilityTree } from './wkAccessibility';
-import type { WKBrowserContext } from './wkBrowser';
 import { WKSession } from './wkConnection';
 import { WKExecutionContext } from './wkExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wkInput';
@@ -43,8 +38,16 @@ import { WKInterceptableRequest, WKRouteImpl } from './wkInterceptableRequest';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
 import { debugLogger } from '../../utils/debugLogger';
-import { BrowserContext } from '../browserContext';
-import { TargetClosedError } from '../errors';
+
+import type { Protocol } from './protocol';
+import type { WKBrowserContext } from './wkBrowser';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import type * as accessibility from '../accessibility';
+import type * as frames from '../frames';
+import type { JSHandle } from '../javascript';
+import type { InitScript, PageDelegate } from '../page';
+import type { Progress } from '../progress';
+import type * as types from '../types';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 

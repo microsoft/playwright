@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-import { Events } from './events';
-import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
-import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './jsHandle';
-import type { Page } from './page';
-import type { BrowserContext } from './browserContext';
-import type * as api from '../../types/types';
-import type * as structs from '../../types/structs';
+import { Events } from './events';
+import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
 import { LongStandingScope } from '../utils';
 import { TargetClosedError } from './errors';
+
+import type { BrowserContext } from './browserContext';
+import type { Page } from './page';
+import type * as structs from '../../types/structs';
+import type * as api from '../../types/types';
+import type * as channels from '@protocol/channels';
+
 
 export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.Worker {
   _page: Page | undefined;  // Set for web workers.

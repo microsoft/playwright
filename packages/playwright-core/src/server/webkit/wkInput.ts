@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-import * as input from '../input';
-import type * as types from '../types';
-import { macEditingCommands } from '../macEditingCommands';
-import type { WKSession } from './wkConnection';
 import { isString } from '../../utils';
+import * as input from '../input';
+import { macEditingCommands } from '../macEditingCommands';
+
+import type * as types from '../types';
+import type { WKSession } from './wkConnection';
 import type { Page } from '../page';
 
 function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {

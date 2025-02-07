@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
+import { BrowserContextDispatcher } from './browserContextDispatcher';
+import { existingDispatcher } from './dispatcher';
+import { FrameDispatcher } from './frameDispatcher';
+import { JSHandleDispatcher, parseArgument, serializeResult } from './jsHandleDispatcher';
+import { PageDispatcher, WorkerDispatcher } from './pageDispatcher';
+
 import type { ElementHandle } from '../dom';
 import type { Frame } from '../frames';
-import type * as js from '../javascript';
-import type * as channels from '@protocol/channels';
-import { existingDispatcher } from './dispatcher';
-import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
-import type { JSHandleDispatcherParentScope } from './jsHandleDispatcher';
-import { FrameDispatcher } from './frameDispatcher';
 import type { CallMetadata } from '../instrumentation';
-import { BrowserContextDispatcher } from './browserContextDispatcher';
-import { PageDispatcher, WorkerDispatcher } from './pageDispatcher';
+import type * as js from '../javascript';
+import type { JSHandleDispatcherParentScope } from './jsHandleDispatcher';
+import type * as channels from '@protocol/channels';
+
 
 export class ElementHandleDispatcher extends JSHandleDispatcher implements channels.ElementHandleChannel {
   _type_ElementHandle = true;

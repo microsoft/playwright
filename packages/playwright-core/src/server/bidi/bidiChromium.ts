@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-import os from 'os';
+import * as os from 'os';
+
 import { assert, wrapInASCIIBox } from '../../utils';
+import { BrowserReadyState, BrowserType, kNoXServerRunningError } from '../browserType';
+import { BidiBrowser } from './bidiBrowser';
+import { kBrowserCloseMessageId } from './bidiConnection';
+import { chromiumSwitches } from '../chromium/chromiumSwitches';
+
 import type { Env } from '../../utils/processLauncher';
 import type { BrowserOptions } from '../browser';
-import { BrowserReadyState, BrowserType, kNoXServerRunningError } from '../browserType';
-import { chromiumSwitches } from '../chromium/chromiumSwitches';
 import type { SdkObject } from '../instrumentation';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
-import { BidiBrowser } from './bidiBrowser';
-import { kBrowserCloseMessageId } from './bidiConnection';
+
 
 export class BidiChromium extends BrowserType {
   constructor(parent: SdkObject) {

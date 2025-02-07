@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
+
 import type { Size } from './types';
+import type * as channels from '@protocol/channels';
 
 type DeviceDescriptor = {
   userAgent: string,

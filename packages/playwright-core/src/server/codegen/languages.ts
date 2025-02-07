@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+import { CSharpLanguageGenerator } from './csharp';
 import { JavaLanguageGenerator } from './java';
 import { JavaScriptLanguageGenerator } from './javascript';
 import { JsonlLanguageGenerator } from './jsonl';
-import { CSharpLanguageGenerator } from './csharp';
 import { PythonLanguageGenerator } from './python';
 
 export function languageSet() {

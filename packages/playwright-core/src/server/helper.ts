@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
-import type { EventEmitter } from 'events';
-import type * as types from './types';
-import type { Progress } from './progress';
 import { debugLogger } from '../utils/debugLogger';
-import type { RegisteredListener } from '../utils/eventsHelper';
 import { eventsHelper } from '../utils/eventsHelper';
+
+import type { Progress } from './progress';
+import type * as types from './types';
+import type { RegisteredListener } from '../utils/eventsHelper';
+import type { EventEmitter } from 'events';
+
 
 const MAX_LOG_LENGTH = process.env.MAX_LOG_LENGTH ? +process.env.MAX_LOG_LENGTH : Infinity;
 

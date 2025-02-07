@@ -15,6 +15,7 @@
  */
 
 import { mime } from '../utilsBundle';
+
 import type * as channels from '@protocol/channels';
 
 export class MultipartFormData {

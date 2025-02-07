@@ -14,22 +14,25 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import type * as channels from '@protocol/channels';
-import * as injectedScriptSource from '../generated/injectedScriptSource';
-import { isSessionClosedError } from './protocolError';
-import type { ScreenshotOptions } from './screenshotter';
-import type * as frames from './frames';
-import type { InjectedScript, HitTargetInterceptionResult, ElementState } from './injected/injectedScript';
-import type { CallMetadata } from './instrumentation';
+import * as fs from 'fs';
+
 import * as js from './javascript';
-import type { Page } from './page';
-import type { Progress } from './progress';
 import { ProgressController } from './progress';
-import type * as types from './types';
-import type { TimeoutOptions } from '../common/types';
 import { asLocator, isUnderTest } from '../utils';
 import { prepareFilesForUpload } from './fileUploadUtils';
+import { isSessionClosedError } from './protocolError';
+import * as injectedScriptSource from '../generated/injectedScriptSource';
+
+import type * as frames from './frames';
+import type { ElementState, HitTargetInterceptionResult, InjectedScript } from './injected/injectedScript';
+import type { CallMetadata } from './instrumentation';
+import type { Page } from './page';
+import type { Progress } from './progress';
+import type { ScreenshotOptions } from './screenshotter';
+import type * as types from './types';
+import type { TimeoutOptions } from '../common/types';
+import type * as channels from '@protocol/channels';
+
 
 export type InputFilesItems = {
   filePayloads?: types.FilePayload[],

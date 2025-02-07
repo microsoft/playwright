@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import type * as actions from '@recorder/actions';
-import type { InjectedScript } from '../injectedScript';
-import type { Point } from '../../../common/types';
-import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
-import type { ElementText } from '../selectorUtils';
-import type { Highlight, HighlightOptions } from '../highlight';
 import clipPaths from './clipPaths';
+
+import type { Point } from '../../../common/types';
+import type { Highlight, HighlightOptions } from '../highlight';
+import type { InjectedScript } from '../injectedScript';
+import type { ElementText } from '../selectorUtils';
+import type * as actions from '@recorder/actions';
+import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
 
 export interface RecorderDelegate {
   performAction?(action: actions.PerformOnRecordAction): Promise<void>;

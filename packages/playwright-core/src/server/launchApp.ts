@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import type { Page } from './page';
-import { findChromiumChannel } from './registry';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { isUnderTest } from '../utils';
 import { serverSideCallMetadata } from './instrumentation';
-import type * as types from './types';
+import { findChromiumChannel } from './registry';
+import { registryDirectory } from './registry';
+
 import type { BrowserType } from './browserType';
 import type { CRPage } from './chromium/crPage';
-import { registryDirectory } from './registry';
+import type { Page } from './page';
+import type * as types from './types';
+
 
 export async function launchApp(browserType: BrowserType, options: {
   sdkLanguage: string,

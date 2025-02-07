@@ -15,14 +15,16 @@
  */
 
 
-import http from 'http';
-import https from 'https';
-import http2 from 'http2';
-import type net from 'net';
+import * as http from 'http';
+import * as http2 from 'http2';
+import * as https from 'https';
+import * as url from 'url';
+
 import { getProxyForUrl } from '../utilsBundle';
 import { HttpsProxyAgent } from '../utilsBundle';
-import url from 'url';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happy-eyeballs';
+
+import type net from 'net';
 
 export type HTTPRequestParams = {
   url: string,

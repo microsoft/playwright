@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
+
+import type * as channels from '@protocol/channels';
 
 export class JsonPipe extends ChannelOwner<channels.JsonPipeChannel> {
   static from(jsonPipe: channels.JsonPipeChannel): JsonPipe {

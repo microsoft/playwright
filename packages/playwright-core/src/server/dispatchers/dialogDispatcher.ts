@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import type { Dialog } from '../dialog';
-import type * as channels from '@protocol/channels';
 import { Dispatcher } from './dispatcher';
 import { PageDispatcher } from './pageDispatcher';
+
+import type { Dialog } from '../dialog';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
+import type * as channels from '@protocol/channels';
 
 export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogChannel, BrowserContextDispatcher | PageDispatcher> implements channels.DialogChannel {
   _type_Dialog = true;

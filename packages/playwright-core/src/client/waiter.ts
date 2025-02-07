@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import type { EventEmitter } from 'events';
-import { rewriteErrorMessage } from '../utils/stackTrace';
 import { TimeoutError } from './errors';
 import { createGuid, zones } from '../utils';
+import { rewriteErrorMessage } from '../utils/stackTrace';
+
 import type { Zone } from '../utils';
-import type * as channels from '@protocol/channels';
 import type { ChannelOwner } from './channelOwner';
+import type * as channels from '@protocol/channels';
+import type { EventEmitter } from 'events';
 
 export class Waiter {
   private _dispose: (() => void)[];

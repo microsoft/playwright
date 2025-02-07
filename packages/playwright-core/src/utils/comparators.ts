@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { colors, jpegjs } from '../utilsBundle';
+import { compare } from '../image_tools/compare';
 // @ts-ignore
 import pixelmatch from '../third_party/pixelmatch';
-import { compare } from '../image_tools/compare';
+import { colors, jpegjs } from '../utilsBundle';
 import { diff } from '../utilsBundle';
 import { PNG } from '../utilsBundle';
 

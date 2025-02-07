@@ -15,28 +15,30 @@
  * limitations under the License.
  */
 
-import type { BrowserOptions } from '../browser';
-import path from 'path';
-import { Browser } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
+import * as path from 'path';
+
 import { assert, createGuid } from '../../utils';
-import * as network from '../network';
-import type { InitScript, Worker } from '../page';
-import { Page } from '../page';
+import { Artifact } from '../artifact';
+import { Browser } from '../browser';
+import { BrowserContext, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';
 import { Frame } from '../frames';
-import type { Dialog } from '../dialog';
-import type { ConnectionTransport } from '../transport';
-import type * as types from '../types';
-import type * as channels from '@protocol/channels';
-import type { CRSession, CDPSession } from './crConnection';
-import { ConnectionEvents, CRConnection } from './crConnection';
+import * as network from '../network';
+import { Page } from '../page';
+import { CRConnection, ConnectionEvents } from './crConnection';
 import { CRPage } from './crPage';
 import { saveProtocolStream } from './crProtocolHelper';
-import type { Protocol } from './protocol';
-import type { CRDevTools } from './crDevTools';
 import { CRServiceWorker } from './crServiceWorker';
+
+import type { Dialog } from '../dialog';
+import type { InitScript, Worker } from '../page';
+import type { ConnectionTransport } from '../transport';
+import type * as types from '../types';
+import type { CDPSession, CRSession } from './crConnection';
+import type { CRDevTools } from './crDevTools';
+import type { Protocol } from './protocol';
+import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
-import { Artifact } from '../artifact';
+import type * as channels from '@protocol/channels';
 
 export class CRBrowser extends Browser {
   readonly _connection: CRConnection;

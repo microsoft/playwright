@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import type { CallMetadata } from '../instrumentation';
-import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
-import type { Page } from '../page';
 import type { Frame } from '../frames';
+import type { CallMetadata } from '../instrumentation';
+import type { Page } from '../page';
 import type * as actions from '@recorder/actions';
+import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
 
 export function buildFullSelector(framePath: string[], selector: string) {
   return [...framePath, selector].join(' >> internal:control=enter-frame >> ');

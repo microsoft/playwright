@@ -15,32 +15,34 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
-import type { ConsoleMessage } from './console';
-import * as dom from './dom';
-import { helper } from './helper';
-import type { RegisteredListener } from '../utils/eventsHelper';
-import { eventsHelper } from '../utils/eventsHelper';
-import * as js from './javascript';
-import * as network from './network';
-import type { Dialog } from './dialog';
-import { Page } from './page';
-import * as types from './types';
 import { BrowserContext } from './browserContext';
-import type { Progress } from './progress';
-import { ProgressController } from './progress';
-import { LongStandingScope, assert, constructURLBasedOnBaseURL, makeWaitForNextTask, monotonicTime, asLocator, compressCallLog } from '../utils';
-import { ManualPromise } from '../utils/manualPromise';
-import { debugLogger } from '../utils/debugLogger';
-import type { CallMetadata } from './instrumentation';
-import { serverSideCallMetadata, SdkObject } from './instrumentation';
-import type { InjectedScript, ElementStateWithoutStable, FrameExpectParams } from './injected/injectedScript';
-import { isSessionClosedError } from './protocolError';
-import { type ParsedSelector, isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
-import type { ScreenshotOptions } from './screenshotter';
-import { FrameSelectors } from './frameSelectors';
+import * as dom from './dom';
 import { TimeoutError } from './errors';
 import { prepareFilesForUpload } from './fileUploadUtils';
+import { FrameSelectors } from './frameSelectors';
+import { helper } from './helper';
+import { SdkObject, serverSideCallMetadata } from './instrumentation';
+import * as js from './javascript';
+import * as network from './network';
+import { Page } from './page';
+import { ProgressController } from './progress';
+import * as types from './types';
+import { LongStandingScope, asLocator, assert, compressCallLog, constructURLBasedOnBaseURL, makeWaitForNextTask, monotonicTime } from '../utils';
+import { isSessionClosedError } from './protocolError';
+import { debugLogger } from '../utils/debugLogger';
+import { eventsHelper } from '../utils/eventsHelper';
+import {  isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
+import { ManualPromise } from '../utils/manualPromise';
+
+import type { ConsoleMessage } from './console';
+import type { Dialog } from './dialog';
+import type { ElementStateWithoutStable, FrameExpectParams, InjectedScript } from './injected/injectedScript';
+import type { CallMetadata } from './instrumentation';
+import type { Progress } from './progress';
+import type { ScreenshotOptions } from './screenshotter';
+import type { RegisteredListener } from '../utils/eventsHelper';
+import type { ParsedSelector } from '../utils/isomorphic/selectorParser';
+import type * as channels from '@protocol/channels';
 
 type ContextData = {
   contextPromise: ManualPromise<dom.FrameExecutionContext | { destroyedReason: string }>;

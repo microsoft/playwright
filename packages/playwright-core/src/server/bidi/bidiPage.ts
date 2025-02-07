@@ -14,26 +14,27 @@
  * limitations under the License.
  */
 
-import type { RegisteredListener } from '../../utils/eventsHelper';
-import { eventsHelper } from '../../utils/eventsHelper';
 import { assert } from '../../utils';
-import type * as accessibility from '../accessibility';
-import * as dom from '../dom';
+import { eventsHelper } from '../../utils/eventsHelper';
+import { BrowserContext } from '../browserContext';
 import * as dialog from '../dialog';
-import type * as frames from '../frames';
+import * as dom from '../dom';
 import { Page } from '../page';
-import type * as channels from '@protocol/channels';
+import { BidiExecutionContext } from './bidiExecutionContext';
+import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
+import { BidiNetworkManager } from './bidiNetworkManager';
+import { BidiPDF } from './bidiPdf';
+import * as bidi from './third_party/bidiProtocol';
+
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import type * as accessibility from '../accessibility';
+import type * as frames from '../frames';
 import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
 import type { BidiBrowserContext } from './bidiBrowser';
 import type { BidiSession } from './bidiConnection';
-import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
-import * as bidi from './third_party/bidiProtocol';
-import { BidiExecutionContext } from './bidiExecutionContext';
-import { BidiNetworkManager } from './bidiNetworkManager';
-import { BrowserContext } from '../browserContext';
-import { BidiPDF } from './bidiPdf';
+import type * as channels from '@protocol/channels';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const kPlaywrightBindingChannel = 'playwrightChannel';

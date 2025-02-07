@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-import { evaluationScript } from './clientHelper';
-import type * as channels from '@protocol/channels';
 import { ChannelOwner } from './channelOwner';
+import { evaluationScript } from './clientHelper';
+import { setTestIdAttribute, testIdAttributeName } from './locator';
+
 import type { SelectorEngine } from './types';
 import type * as api from '../../types/types';
-import { setTestIdAttribute, testIdAttributeName } from './locator';
+import type * as channels from '@protocol/channels';
+
 
 export class Selectors implements api.Selectors {
   private _channels = new Set<SelectorsOwner>();

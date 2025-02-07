@@ -15,23 +15,27 @@
  * limitations under the License.
  */
 
-import * as os from 'os';
-import path from 'path';
-import * as util from 'util';
 import * as fs from 'fs';
-import { lockfile } from '../../utilsBundle';
-import { fetchData } from '../../utils/network';
-import { getEmbedderName } from '../../utils/userAgent';
-import { getFromENV, getAsBooleanFromENV, calculateSha1, wrapInASCIIBox, getPackageManagerExecCommand } from '../../utils';
-import { removeFolders, existsAsync, canAccessFile } from '../../utils/fileUtils';
-import { type HostPlatform, hostPlatform, isOfficiallySupportedPlatform } from '../../utils/hostPlatform';
-import { spawnAsync } from '../../utils/spawnAsync';
-import type { DependencyGroup } from './dependencies';
-import { transformCommandsForRoot, dockerVersion, readDockerVersionSync } from './dependencies';
-import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
+import * as os from 'os';
+import * as path from 'path';
+import * as util from 'util';
+
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
-export { writeDockerVersion } from './dependencies';
+import { dockerVersion, readDockerVersionSync, transformCommandsForRoot } from './dependencies';
+import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
+import { calculateSha1, getAsBooleanFromENV, getFromENV, getPackageManagerExecCommand, wrapInASCIIBox } from '../../utils';
 import { debugLogger } from '../../utils/debugLogger';
+import { canAccessFile, existsAsync, removeFolders } from '../../utils/fileUtils';
+import {  hostPlatform, isOfficiallySupportedPlatform } from '../../utils/hostPlatform';
+import { fetchData } from '../../utils/network';
+import { spawnAsync } from '../../utils/spawnAsync';
+import { getEmbedderName } from '../../utils/userAgent';
+import { lockfile } from '../../utilsBundle';
+
+import type { DependencyGroup } from './dependencies';
+import type { HostPlatform } from '../../utils/hostPlatform';
+
+export { writeDockerVersion } from './dependencies';
 
 const PACKAGE_PATH = path.join(__dirname, '..', '..', '..');
 const BIN_PATH = path.join(__dirname, '..', '..', '..', 'bin');

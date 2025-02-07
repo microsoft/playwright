@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import type { RootDispatcher } from './dispatcher';
-import { Dispatcher, existingDispatcher } from './dispatcher';
-import type { Android, SocketBackend } from '../android/android';
-import { AndroidDevice } from '../android/android';
-import type * as channels from '@protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
+import { Dispatcher, existingDispatcher } from './dispatcher';
+import { AndroidDevice } from '../android/android';
+
+import type { RootDispatcher } from './dispatcher';
+import type { Android, SocketBackend } from '../android/android';
 import type { CallMetadata } from '../instrumentation';
+import type * as channels from '@protocol/channels';
 
 export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidChannel, RootDispatcher> implements channels.AndroidChannel {
   _type_Android = true;

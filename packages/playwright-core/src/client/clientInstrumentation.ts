@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { StackFrame } from '@protocol/channels';
 import type { BrowserContext } from './browserContext';
 import type { APIRequestContext } from './fetch';
+import type { StackFrame } from '@protocol/channels';
 
 // Instrumentation can mutate the data, for example change apiName or stepId.
 export interface ApiCallData {
