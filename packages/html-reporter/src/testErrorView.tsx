@@ -80,7 +80,7 @@ const PromptButton: React.FC<{
       );
 
     return promptParts.join('\n');
-  }, [gitCommitInfo, result])
+  }, [gitCommitInfo, result, error])
 
   return <CopyToClipboard value={prompt} icon={<icons.copilot />} title="Copy prompt to clipboard" />;
 };
