@@ -30,7 +30,7 @@ type MetadataEntries = [string, unknown][];
 export function filterMetadata(metadata: Metadata): { gitCommitInfo?: GitCommitInfo, metadataEntries: MetadataEntries } {
   return {
     gitCommitInfo: metadata['git.commit.info'],
-    metadataEntries: Object.entries(metadata).filter(([key]) => key !== 'git.commit.info' && key !== 'actualWorkers') // TODO: do not plumb actualWorkers through metadata.
+    metadataEntries: Object.entries(metadata).filter(([key]) => key !== 'actualWorkers') // TODO: do not plumb actualWorkers through metadata.
   };
 }
 
@@ -64,8 +64,9 @@ export const MetadataView: React.FC<{ metadataEntries: MetadataEntries }> = ({ m
   return <ErrorBoundary><InnerMetadataView metadataEntries={metadataEntries}/></ErrorBoundary>;
 };
 
-const InnerMetadataView: React.FC<{ metadataEntries: MetadataEntries }> = ({ metadataEntries: entries }) => {
+const InnerMetadataView: React.FC<{ metadataEntries: MetadataEntries }> = ({ metadataEntries }) => {
   const gitCommitInfo = React.useContext(GitCommitInfoContext);
+  const entries = metadataEntries.filter(([key]) => key !== 'git.commit.info');
   if (!gitCommitInfo && !entries.length)
     return null;
   return <div className='metadata-view'>
