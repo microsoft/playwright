@@ -2742,7 +2742,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
 
       await page.getByRole('link', { name: 'sample' }).click();
-      await page.getByRole('button', { name: 'Copy AI Prompt' }).click();
+      await page.getByRole('button', { name: 'Copy prompt to clipboard' }).click();
       const prompt = await page.evaluate(() => navigator.clipboard.readText());
       expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
       expect(prompt, 'contains diff').toContain(`+          test('sample', async ({}) => { expect(2).toBe(3); });`);
