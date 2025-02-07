@@ -54,7 +54,6 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _optionContextReuseMode: ContextReuseMode,
   _optionConnectOptions: PlaywrightWorkerOptions['connectOptions'],
   _reuseContext: boolean,
-  _pageSnapshot: PageSnapshotOption,
 };
 
 const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
@@ -72,7 +71,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   screenshot: ['off', { scope: 'worker', option: true }],
   video: ['off', { scope: 'worker', option: true }],
   trace: ['off', { scope: 'worker', option: true }],
-  _pageSnapshot: ['off', { scope: 'worker', option: true }],
+  pageSnapshot: ['only-on-failure', { scope: 'worker', option: true }],
 
   _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
     const options: LaunchOptions = {
@@ -249,13 +248,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     }
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
-  _setupArtifacts: [async ({ playwright, screenshot, _pageSnapshot }, use, testInfo) => {
+  _setupArtifacts: [async ({ playwright, screenshot, pageSnapshot }, use, testInfo) => {
     // This fixture has a separate zero-timeout slot to ensure that artifact collection
     // happens even after some fixtures or hooks time out.
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, _pageSnapshot);
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, pageSnapshot);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
     const tracingGroupSteps: TestStepInternal[] = [];
@@ -630,7 +629,7 @@ class ArtifactsRecorder {
   private _pageSnapshotRecorder: SnapshotRecorder;
   private _screenshotRecorder: SnapshotRecorder;
 
-  constructor(playwright: Playwright, artifactsDir: string, screenshot: ScreenshotOption, pageSnapshot: PageSnapshotOption) {
+  constructor(playwright: Playwright, artifactsDir: string, screenshot: ScreenshotOption, pageSnapshot: PageSnapshotMode) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
@@ -640,7 +639,7 @@ class ArtifactsRecorder {
       await page.screenshot({ ...screenshotOptions, timeout: 5000, path, caret: 'initial' });
     });
 
-    this._pageSnapshotRecorder = new SnapshotRecorder(this, pageSnapshot ?? 'only-on-failure', 'pageSnapshot', 'text/plain', '.ariasnapshot', async (page, path) => {
+    this._pageSnapshotRecorder = new SnapshotRecorder(this, pageSnapshot, 'pageSnapshot', 'text/plain', '.ariasnapshot', async (page, path) => {
       const ariaSnapshot = await page.locator('body').ariaSnapshot({ timeout: 5000 });
       await fs.promises.writeFile(path, ariaSnapshot);
     });
