@@ -853,6 +853,12 @@ export default defineConfig({
 });
 ```
 
+### I have a project that doesn't use CSS modules. How can I configure Vite to handle CSS files?
+
+If you test a component that imports a CSS file, you might receive an error like `RollupError: "default" is not exported by "<file>.css"`.
+
+Unfortunately, Vite requires CSS modules by design. The only way to handle this is to use CSS modules. You can do this by renaming your CSS files to `.module.css` and renaming your imports to include the `.module` part. This applies CSS preprocessors as well.
+
 ### How can I test components that uses Pinia?
 
 Pinia needs to be initialized in `playwright/index.{js,ts,jsx,tsx}`. If you do this inside a `beforeMount` hook, the `initialState` can be overwritten on a per-test basis:
