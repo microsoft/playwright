@@ -67,9 +67,9 @@ export const TestFilesHeader: React.FC<{
   metadataVisible: boolean,
   toggleMetadataVisible: () => void,
 }> = ({ report, filteredStats, metadataVisible, toggleMetadataVisible }) => {
+  const metadataEntries = useMetadata();
   if (!report)
     return;
-  const metadataEntries = useMetadata();
   return <>
     <div className='mx-1' style={{ display: 'flex', marginTop: 10 }}>
       {metadataEntries.length > 0 && <div className='metadata-toggle' role='button' onClick={toggleMetadataVisible} title={metadataVisible ? 'Hide metadata' : 'Show metadata'}>

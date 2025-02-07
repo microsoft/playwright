@@ -24,7 +24,7 @@ import { Anchor, AttachmentLink, generateTraceUrl, testResultHref } from './link
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import { CodeSnippet, PromptButton, TestErrorView, TestScreenshotErrorView } from './testErrorView';
+import { CodeSnippet, TestErrorView, TestScreenshotErrorView } from './testErrorView';
 import * as icons from './icons';
 import './testResultView.css';
 

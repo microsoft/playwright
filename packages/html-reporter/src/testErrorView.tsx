@@ -20,7 +20,7 @@ import './testErrorView.css';
 import * as icons from './icons';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import { TestResult } from './types';
+import type { TestResult } from './types';
 import { CopyToClipboard } from './copyToClipboard';
 import { fixTestPrompt } from '@web/components/prompts';
 import { useGitCommitInfo } from './metadataView';
@@ -51,12 +51,12 @@ const PromptButton: React.FC<{
 }> = ({ error, result }) => {
   const gitCommitInfo = useGitCommitInfo();
   const prompt = React.useMemo(() => fixTestPrompt(
-    error,
-    gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'],
-    result?.attachments.find(a => a.name === 'pageSnapshot')?.body
-  ), [gitCommitInfo, result, error])
+      error,
+      gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'],
+      result?.attachments.find(a => a.name === 'pageSnapshot')?.body
+  ), [gitCommitInfo, result, error]);
 
-  return <CopyToClipboard value={prompt} icon={<icons.copilot />} title="Copy prompt to clipboard" />;
+  return <CopyToClipboard value={prompt} icon={<icons.copilot />} title='Copy prompt to clipboard' />;
 };
 
 export const TestScreenshotErrorView: React.FC<{

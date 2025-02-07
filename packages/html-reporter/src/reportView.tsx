@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { FilteredStats, HTMLReport, TestCase, TestCaseSummary, TestFile, TestFileSummary } from './types';
+import type { FilteredStats, TestCase, TestCaseSummary, TestFile, TestFileSummary } from './types';
 import * as React from 'react';
 import './colors.css';
 import './common.css';
