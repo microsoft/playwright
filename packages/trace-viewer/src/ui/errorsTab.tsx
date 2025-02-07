@@ -21,6 +21,33 @@ import { PlaceholderPanel } from './placeholderPanel';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { StackFrame } from '@protocol/channels';
+import { CopyToClipboard } from './copyToClipboard';
+import { attachmentURL } from './attachmentsTab';
+import { fixTestPrompt } from '@web/components/prompts';
+
+const PromptButton: React.FC<{
+  error: string;
+  actions: modelUtil.ActionTraceEventInContext[];
+}> = ({ error, actions }) => {
+  const [pageSnapshot, setPageSnapshot] = React.useState<string>();
+
+  React.useEffect(( )=> {
+    for (const action of actions) {
+      for (const attachment of action.attachments ?? []) {
+        if (attachment.name === 'pageSnapshot') {
+          fetch(attachmentURL({ ...attachment, traceUrl: action.context.traceUrl })).then(async response => {
+            setPageSnapshot(await response.text());
+          });
+          return;
+        }
+      }
+    }
+  }, [actions]);
+
+  const prompt = React.useMemo(() => fixTestPrompt(error, undefined, pageSnapshot), [error, pageSnapshot]);
+
+  return <CopyToClipboard value={prompt} copyIcon='copilot' description="Copy prompt to clipboard" />;
+};
 
 export type ErrorDescription = {
   action?: modelUtil.ActionTraceEventInContext;
@@ -44,9 +71,10 @@ export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined):
 
 export const ErrorsTab: React.FunctionComponent<{
   errorsModel: ErrorsTabModel,
+  actions: modelUtil.ActionTraceEventInContext[],
   sdkLanguage: Language,
   revealInSource: (error: ErrorDescription) => void,
-}> = ({ errorsModel, sdkLanguage, revealInSource }) => {
+}> = ({ errorsModel, sdkLanguage, revealInSource, actions }) => {
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
 
@@ -72,7 +100,11 @@ export const ErrorsTab: React.FunctionComponent<{
           {location && <div className='action-location'>
             @ <span title={longLocation} onClick={() => revealInSource(error)}>{location}</span>
           </div>}
+          <span style={{ position: 'absolute', right: '20px' }}>
+            <PromptButton error={message} actions={actions} />
+          </span>
         </div>
+        
         <ErrorMessage error={message} />
       </div>;
     })}
