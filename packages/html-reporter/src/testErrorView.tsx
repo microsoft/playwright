@@ -23,6 +23,7 @@ import { ImageDiffView } from '@web/shared/imageDiffView';
 import { GitCommitInfoContext } from './reportView';
 import { TestResult } from './types';
 import { CopyToClipboard } from './copyToClipboard';
+import { fixTestPrompt } from '@web/components/prompts';
 
 export const TestErrorView: React.FC<{ error: string; testId?: string; result?: TestResult }> = ({ error, testId, result }) => {
   return (
@@ -44,43 +45,16 @@ export const CodeSnippet = ({ code, children, testId }: React.PropsWithChildren<
   );
 };
 
-const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');
-function stripAnsiEscapes(str: string): string {
-  return str.replace(ansiRegex, '');
-}
-
 const PromptButton: React.FC<{
   error: string;
   result?: TestResult;
 }> = ({ error, result }) => {
   const gitCommitInfo = React.useContext(GitCommitInfoContext);
-  const prompt = React.useMemo(() => {
-    const promptParts = [
-      'This test failed, suggest how to fix it. Please be correct, concise and keep Playwright best practices in mind.',
-      'Here is the error:',
-      '\n',
-      stripAnsiEscapes(error),
-      '\n',
-    ];
-
-    const pageSnapshot = result?.attachments.find(a => a.name === 'pageSnapshot')?.body;
-    if (pageSnapshot)
-      promptParts.push(
-        'This is how the page looked at the end of the test:',
-        pageSnapshot,
-        '\n'
-      );
-
-    const diff = gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'];
-    if (diff)
-      promptParts.push(
-        'And this is the code diff:',
-        diff,
-        '\n'
-      );
-
-    return promptParts.join('\n');
-  }, [gitCommitInfo, result, error])
+  const prompt = React.useMemo(() => fixTestPrompt(
+    error,
+    gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'],
+    result?.attachments.find(a => a.name === 'pageSnapshot')?.body
+  ), [gitCommitInfo, result, error])
 
   return <CopyToClipboard value={prompt} icon={<icons.copilot />} title="Copy prompt to clipboard" />;
 };
