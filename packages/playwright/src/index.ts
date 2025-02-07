@@ -78,6 +78,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const options: LaunchOptions = {
       handleSIGINT: false,
       ...launchOptions,
+      tracesDir: tracing().tracesDir(),
     };
     if (headless !== undefined)
       options.headless = headless;
@@ -85,7 +86,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.channel = channel;
 
     playwright._defaultLaunchOptions = options;
-    playwright._defaultLaunchOptions.tracesDir = tracing().tracesDir();
     await use(options);
     playwright._defaultLaunchOptions = undefined;
   }, { scope: 'worker', auto: true, box: true }],
