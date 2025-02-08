@@ -20,8 +20,8 @@ import { Connection } from './client/connection';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from './server';
 
 import type { Playwright as PlaywrightAPI } from './client/playwright';
-import type { Platform } from './common/platform';
 import type { Language } from './utils';
+import type { Platform } from './utils/platform';
 
 export function createInProcessPlaywright(platform: Platform): PlaywrightAPI {
   const playwright = createPlaywright({ sdkLanguage: (process.env.PW_LANG_NAME as Language | undefined) || 'javascript' });

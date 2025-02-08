@@ -24,8 +24,8 @@ import { zones } from '../utils/zones';
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';
-import type { Platform } from '../common/platform';
 import type { ValidatorContext } from '../protocol/validator';
+import type { Platform } from '../utils/platform';
 import type * as channels from '@protocol/channels';
 
 type Listener = (...args: any[]) => void;

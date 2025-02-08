@@ -31,7 +31,7 @@ import type { Page } from './page';
 import type * as types from './types';
 import type * as api from '../../types/types';
 import type { AndroidServerLauncherImpl } from '../androidServerImpl';
-import type { Platform } from '../common/platform';
+import type { Platform } from '../utils/platform';
 import type * as channels from '@protocol/channels';
 
 type Direction = 'down' | 'up' | 'left' | 'right';
@@ -72,7 +72,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
       const headers = { 'x-playwright-browser': 'android', ...options.headers };
       const localUtils = this._connection.localUtils();
       const connectParams: channels.LocalUtilsConnectParams = { wsEndpoint, headers, slowMo: options.slowMo, timeout: options.timeout };
-      const { pipe } = await localUtils._channel.connect(connectParams);
+      const { pipe } = await localUtils.connect(connectParams);
       const closePipe = () => pipe.close().catch(() => {});
       const connection = new Connection(localUtils, this._platform, this._instrumentation);
       connection.markAsRemote();

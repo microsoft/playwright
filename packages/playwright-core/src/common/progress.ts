@@ -1,7 +1,7 @@
 /**
  * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License");
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-import { createInProcessPlaywright } from './inProcessFactory';
-import { nodePlatform } from './utils/platform';
-
-module.exports = createInProcessPlaywright(nodePlatform);
+export interface Progress {
+  log(message: string): void;
+  timeUntilDeadline(): number;
+  isRunning(): boolean;
+  cleanupWhenAborted(cleanup: () => any): void;
+  throwIfAborted(): void;
+}

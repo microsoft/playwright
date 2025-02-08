@@ -17,7 +17,7 @@
 import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
 import { setTestIdAttribute, testIdAttributeName } from './locator';
-import { nodePlatform } from '../common/platform';
+import { nodePlatform } from '../utils/platform';
 
 import type { SelectorEngine } from './types';
 import type * as api from '../../types/types';
