@@ -322,7 +322,7 @@ test('should not watch output', async ({ runUITest }) => {
 });
 
 
-test('should have watch icon highlighted when a test is focused and watch on the test is enabled', async ({ runUITest, writeFiles }) => {
+test('should have watch icon highlighted when a test is focused and watch on the test is enabled', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
