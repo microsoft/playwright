@@ -23,6 +23,7 @@ import { createGuid, debugMode } from '../utils';
 import { Clock } from './clock';
 import { Debugger } from './debugger';
 import { BrowserContextAPIRequestContext } from './fetch';
+import { mkdirIfNeeded } from './fileUtils';
 import { HarRecorder } from './har/harRecorder';
 import { helper } from './helper';
 import { SdkObject, serverSideCallMetadata } from './instrumentation';
@@ -31,9 +32,8 @@ import * as network from './network';
 import { InitScript } from './page';
 import { Page, PageBinding } from './page';
 import { Recorder } from './recorder';
-import * as storageScript from './storageScript';
-import { mkdirIfNeeded } from '../utils/fileUtils';
 import { RecorderApp } from './recorder/recorderApp';
+import * as storageScript from './storageScript';
 import * as consoleApiSource from '../generated/consoleApiSource';
 import { Tracing } from './trace/recorder/tracing';
 

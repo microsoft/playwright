@@ -20,8 +20,7 @@ import * as fs from 'fs';
 import * as readline from 'readline';
 
 import { removeFolders } from './fileUtils';
-
-import { isUnderTest } from './';
+import { isUnderTest } from '../utils';
 
 export type Env = {[key: string]: string | number | boolean | undefined};
 

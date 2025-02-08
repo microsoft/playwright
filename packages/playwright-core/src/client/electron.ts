@@ -53,7 +53,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
 
   async launch(options: ElectronOptions = {}): Promise<ElectronApplication> {
     const params: channels.ElectronLaunchParams = {
-      ...await prepareBrowserContextParams(options),
+      ...await prepareBrowserContextParams(this._platform, options),
       env: envObjectToArray(options.env ? options.env : process.env),
       tracesDir: options.tracesDir,
     };
@@ -81,7 +81,7 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     this._channel.on('close', () => {
       this.emit(Events.ElectronApplication.Close);
     });
-    this._channel.on('console', event => this.emit(Events.ElectronApplication.Console, new ConsoleMessage(event)));
+    this._channel.on('console', event => this.emit(Events.ElectronApplication.Console, new ConsoleMessage(this._platform, event)));
     this._setEventToSubscriptionMapping(new Map<string, channels.ElectronApplicationUpdateSubscriptionParams['event']>([
       [Events.ElectronApplication.Console, 'console'],
     ]));

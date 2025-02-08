@@ -25,12 +25,12 @@ import { dockerVersion, readDockerVersionSync, transformCommandsForRoot } from '
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
 import { calculateSha1, getAsBooleanFromENV, getFromENV, getPackageManagerExecCommand, wrapInASCIIBox } from '../../utils';
 import { debugLogger } from '../../utils/debugLogger';
-import { canAccessFile, existsAsync, removeFolders } from '../../utils/fileUtils';
 import {  hostPlatform, isOfficiallySupportedPlatform } from '../../utils/hostPlatform';
 import { fetchData } from '../../utils/network';
 import { spawnAsync } from '../../utils/spawnAsync';
 import { getEmbedderName } from '../../utils/userAgent';
 import { lockfile } from '../../utilsBundle';
+import { canAccessFile, existsAsync, removeFolders } from '../fileUtils';
 
 import type { DependencyGroup } from './dependencies';
 import type { HostPlatform } from '../../utils/hostPlatform';

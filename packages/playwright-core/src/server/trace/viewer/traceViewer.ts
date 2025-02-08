@@ -17,7 +17,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { gracefullyProcessExitDoNotHang, isUnderTest } from '../../../utils';
+import { gracefullyProcessExitDoNotHang } from '../../../server';
+import { isUnderTest } from '../../../utils';
 import { HttpServer } from '../../../utils/httpServer';
 import { open } from '../../../utilsBundle';
 import { serverSideCallMetadata } from '../../instrumentation';

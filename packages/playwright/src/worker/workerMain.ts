@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import { ManualPromise, gracefullyCloseAll, removeFolders } from 'playwright-core/lib/utils';
+import { removeFolders } from 'playwright-core/lib/server';
+import { gracefullyCloseAll } from 'playwright-core/lib/server';
+import { ManualPromise } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utilsBundle';
 
 import { deserializeConfig } from '../common/configLoader';

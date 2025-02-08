@@ -16,28 +16,27 @@
  */
 
 import { EventEmitter } from 'events';
-import * as fs from 'fs';
 
 import { ChannelOwner } from './channelOwner';
-import { FrameLocator, Locator, testIdAttributeName } from './locator';
-import { assert } from '../utils';
-import {  urlMatches } from '../utils';
 import { addSourceUrlToScript } from './clientHelper';
 import { ElementHandle, convertInputFiles, convertSelectOptionValues } from './elementHandle';
 import { Events } from './events';
 import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
+import { FrameLocator, Locator, testIdAttributeName } from './locator';
 import * as network from './network';
 import { kLifecycleEvents } from './types';
 import { Waiter } from './waiter';
+import { assert } from '../utils/debug';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
+import { urlMatches } from '../utils/isomorphic/urlMatch';
 
 import type { LocatorOptions } from './locator';
 import type { Page } from './page';
 import type { FilePayload, LifecycleEvent, SelectOption, SelectOptionOptions, StrictOptions, WaitForFunctionOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type { URLMatch } from '../utils';
 import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
+import type { URLMatch } from '../utils/isomorphic/urlMatch';
 import type * as channels from '@protocol/channels';
 
 export type WaitForNavigationOptions = {
@@ -269,7 +268,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   async addScriptTag(options: { url?: string, path?: string, content?: string, type?: string } = {}): Promise<ElementHandle> {
     const copy = { ...options };
     if (copy.path) {
-      copy.content = (await fs.promises.readFile(copy.path)).toString();
+      copy.content = (await this._platform.fs().promises.readFile(copy.path)).toString();
       copy.content = addSourceUrlToScript(copy.content, copy.path);
     }
     return ElementHandle.from((await this._channel.addScriptTag({ ...copy })).element);
@@ -278,7 +277,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   async addStyleTag(options: { url?: string; path?: string; content?: string; } = {}): Promise<ElementHandle> {
     const copy = { ...options };
     if (copy.path) {
-      copy.content = (await fs.promises.readFile(copy.path)).toString();
+      copy.content = (await this._platform.fs().promises.readFile(copy.path)).toString();
       copy.content += '/*# sourceURL=' + copy.path.replace(/\n/g, '') + '*/';
     }
     return ElementHandle.from((await this._channel.addStyleTag({ ...copy })).element);
@@ -403,7 +402,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   async setInputFiles(selector: string, files: string | FilePayload | string[] | FilePayload[], options: channels.FrameSetInputFilesOptions = {}): Promise<void> {
-    const converted = await convertInputFiles(files, this.page().context());
+    const converted = await convertInputFiles(this._platform, files, this.page().context());
     await this._channel.setInputFiles({ selector, ...converted, ...options });
   }
 

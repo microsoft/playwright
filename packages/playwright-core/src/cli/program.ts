@@ -21,11 +21,11 @@ import * as os from 'os';
 import * as path from 'path';
 
 import * as playwright from '../..';
-import { registry, writeDockerVersion } from '../server';
 import { launchBrowserServer, printApiJson, runDriver, runServer } from './driver';
 import { isTargetClosedError } from '../client/errors';
+import { gracefullyProcessExitDoNotHang, registry, writeDockerVersion } from '../server';
 import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/traceViewer';
-import { assert, getPackageManagerExecCommand, gracefullyProcessExitDoNotHang, isLikelyNpxGlobal, wrapInASCIIBox } from '../utils';
+import { assert, getPackageManagerExecCommand, isLikelyNpxGlobal, wrapInASCIIBox } from '../utils';
 import { dotenv, program } from '../utilsBundle';
 
 import type { Browser } from '../client/browser';

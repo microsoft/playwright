@@ -20,7 +20,9 @@ import { ChannelOwner } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
 import { Connection } from './connection';
 import { Events } from './events';
-import { assert, headersObjectToArray, monotonicTime } from '../utils';
+import { assert } from '../utils/debug';
+import { headersObjectToArray } from '../utils/headers';
+import { monotonicTime } from '../utils/time';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
 
 import type { Playwright } from './playwright';
@@ -90,7 +92,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     const logger = options.logger || this._playwright._defaultLaunchOptions?.logger;
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     options = { ...this._playwright._defaultLaunchOptions, ...this._playwright._defaultContextOptions, ...options };
-    const contextParams = await prepareBrowserContextParams(options);
+    const contextParams = await prepareBrowserContextParams(this._platform, options);
     const persistentParams: channels.BrowserTypeLaunchPersistentContextParams = {
       ...contextParams,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
@@ -133,7 +135,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
       const { pipe, headers: connectHeaders } = await localUtils._channel.connect(connectParams);
       const closePipe = () => pipe.close().catch(() => {});
-      const connection = new Connection(localUtils, this._instrumentation);
+      const connection = new Connection(localUtils, this._platform, this._instrumentation);
       connection.markAsRemote();
       connection.on('close', closePipe);
 

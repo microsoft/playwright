@@ -20,12 +20,13 @@ import { Connection } from './client/connection';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from './server';
 
 import type { Playwright as PlaywrightAPI } from './client/playwright';
+import type { Platform } from './common/platform';
 import type { Language } from './utils';
 
-export function createInProcessPlaywright(): PlaywrightAPI {
+export function createInProcessPlaywright(platform: Platform): PlaywrightAPI {
   const playwright = createPlaywright({ sdkLanguage: (process.env.PW_LANG_NAME as Language | undefined) || 'javascript' });
 
-  const clientConnection = new Connection(undefined, undefined);
+  const clientConnection = new Connection(undefined, platform, undefined);
   clientConnection.useRawBuffers();
   const dispatcherConnection = new DispatcherConnection(true /* local */);
 

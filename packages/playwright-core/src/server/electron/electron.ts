@@ -23,7 +23,6 @@ import { TimeoutSettings } from '../../common/timeoutSettings';
 import { ManualPromise, wrapInASCIIBox } from '../../utils';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { eventsHelper } from '../../utils/eventsHelper';
-import { envArrayToObject, launchProcess } from '../../utils/processLauncher';
 import { validateBrowserContextOptions } from '../browserContext';
 import { CRBrowser } from '../chromium/crBrowser';
 import { CRConnection } from '../chromium/crConnection';
@@ -33,6 +32,7 @@ import { ConsoleMessage } from '../console';
 import { helper } from '../helper';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
 import * as js from '../javascript';
+import { envArrayToObject, launchProcess } from '../processLauncher';
 import { ProgressController } from '../progress';
 import { WebSocketTransport } from '../transport';
 

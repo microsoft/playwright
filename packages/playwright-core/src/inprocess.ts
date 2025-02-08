@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { nodePlatform } from './common/platform';
 import { createInProcessPlaywright } from './inProcessFactory';
 
-module.exports = createInProcessPlaywright();
+module.exports = createInProcessPlaywright(nodePlatform);
