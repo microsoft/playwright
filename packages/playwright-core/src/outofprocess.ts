@@ -48,7 +48,7 @@ class PlaywrightClient {
     this._driverProcess.unref();
     this._driverProcess.stderr!.on('data', data => process.stderr.write(data));
 
-    const connection = new Connection(undefined, nodePlatform, undefined);
+    const connection = new Connection(undefined, nodePlatform, undefined, []);
     const transport = new PipeTransport(this._driverProcess.stdin!, this._driverProcess.stdout!);
     connection.onmessage = message => transport.send(JSON.stringify(message));
     transport.onmessage = message => connection.dispatch(JSON.parse(message));

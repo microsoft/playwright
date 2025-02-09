@@ -26,7 +26,7 @@ import type { Platform } from './utils/platform';
 export function createInProcessPlaywright(platform: Platform): PlaywrightAPI {
   const playwright = createPlaywright({ sdkLanguage: (process.env.PW_LANG_NAME as Language | undefined) || 'javascript' });
 
-  const clientConnection = new Connection(undefined, platform, undefined);
+  const clientConnection = new Connection(undefined, platform, undefined, []);
   clientConnection.useRawBuffers();
   const dispatcherConnection = new DispatcherConnection(true /* local */);
 
