@@ -28,11 +28,11 @@ export { program } from 'playwright-core/lib/cli/program';
 import { prepareErrorStack } from './reporters/base';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
+import { filterProjects } from './runner/projectUtils';
 import { Runner } from './runner/runner';
 import * as testServer from './runner/testServer';
 import { runWatchModeLoop } from './runner/watchMode';
 import { serializeError } from './util';
-import { filterProjects } from './runner/projectUtils';
 
 import type { TestError } from '../types/testReporter';
 import type { ConfigCLIOverrides } from './common/ipc';
