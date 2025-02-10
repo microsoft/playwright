@@ -952,7 +952,7 @@ Should be updated alongside RequestIdTokenStatus in
 third_party/blink/public/mojom/devtools/inspector_issue.mojom to include
 all cases except for success.
      */
-    export type FederatedAuthRequestIssueReason = "ShouldEmbargo"|"TooManyRequests"|"WellKnownHttpNotFound"|"WellKnownNoResponse"|"WellKnownInvalidResponse"|"WellKnownListEmpty"|"WellKnownInvalidContentType"|"ConfigNotInWellKnown"|"WellKnownTooBig"|"ConfigHttpNotFound"|"ConfigNoResponse"|"ConfigInvalidResponse"|"ConfigInvalidContentType"|"ClientMetadataHttpNotFound"|"ClientMetadataNoResponse"|"ClientMetadataInvalidResponse"|"ClientMetadataInvalidContentType"|"IdpNotPotentiallyTrustworthy"|"DisabledInSettings"|"DisabledInFlags"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"AccountsListEmpty"|"AccountsInvalidContentType"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenInvalidResponse"|"IdTokenIdpErrorResponse"|"IdTokenCrossSiteIdpErrorResponse"|"IdTokenInvalidRequest"|"IdTokenInvalidContentType"|"ErrorIdToken"|"Canceled"|"RpPageNotVisible"|"SilentMediationFailure"|"ThirdPartyCookiesBlocked"|"NotSignedInWithIdp"|"MissingTransientUserActivation"|"ReplacedByActiveMode"|"InvalidFieldsSpecified"|"RelyingPartyOriginIsOpaque"|"TypeNotMatching";
+    export type FederatedAuthRequestIssueReason = "ShouldEmbargo"|"TooManyRequests"|"WellKnownHttpNotFound"|"WellKnownNoResponse"|"WellKnownInvalidResponse"|"WellKnownListEmpty"|"WellKnownInvalidContentType"|"ConfigNotInWellKnown"|"WellKnownTooBig"|"ConfigHttpNotFound"|"ConfigNoResponse"|"ConfigInvalidResponse"|"ConfigInvalidContentType"|"ClientMetadataHttpNotFound"|"ClientMetadataNoResponse"|"ClientMetadataInvalidResponse"|"ClientMetadataInvalidContentType"|"IdpNotPotentiallyTrustworthy"|"DisabledInSettings"|"DisabledInFlags"|"ErrorFetchingSignin"|"InvalidSigninResponse"|"AccountsHttpNotFound"|"AccountsNoResponse"|"AccountsInvalidResponse"|"AccountsListEmpty"|"AccountsInvalidContentType"|"IdTokenHttpNotFound"|"IdTokenNoResponse"|"IdTokenInvalidResponse"|"IdTokenIdpErrorResponse"|"IdTokenCrossSiteIdpErrorResponse"|"IdTokenInvalidRequest"|"IdTokenInvalidContentType"|"ErrorIdToken"|"Canceled"|"RpPageNotVisible"|"SilentMediationFailure"|"ThirdPartyCookiesBlocked"|"NotSignedInWithIdp"|"MissingTransientUserActivation"|"ReplacedByActiveMode"|"InvalidFieldsSpecified"|"RelyingPartyOriginIsOpaque"|"TypeNotMatching"|"UiDismissedNoEmbargo";
     export interface FederatedAuthUserInfoRequestIssueDetails {
       federatedAuthUserInfoRequestIssueReason: FederatedAuthUserInfoRequestIssueReason;
     }
@@ -983,7 +983,7 @@ features, encourage the use of new ones, and provide general guidance.
     }
     export type SelectElementAccessibilityIssueReason = "DisallowedSelectChild"|"DisallowedOptGroupChild"|"NonPhrasingContentOptionChild"|"InteractiveContentOptionChild"|"InteractiveContentLegendChild";
     /**
-     * This isue warns about errors in the select element content model.
+     * This issue warns about errors in the select element content model.
      */
     export interface SelectElementAccessibilityIssueDetails {
       nodeId: DOM.BackendNodeId;
@@ -1186,6 +1186,19 @@ flag is set.
        * Extension id.
        */
       id: string;
+    }
+    /**
+     * Uninstalls an unpacked extension (others not supported) from the profile.
+Available if the client is connected using the --remote-debugging-pipe flag
+and the --enable-unsafe-extension-debugging.
+     */
+    export type uninstallParameters = {
+      /**
+       * Extension id.
+       */
+      id: string;
+    }
+    export type uninstallReturnValue = {
     }
     /**
      * Gets data from extension storage in the given `storageArea`. If `keys` is
@@ -2913,6 +2926,13 @@ incorrect results if the declaration contains a var() for example.
        * Identifier of the frame where "via-inspector" stylesheet should be created.
        */
       frameId: Page.FrameId;
+      /**
+       * If true, creates a new stylesheet for every call. If false,
+returns a stylesheet previously created by a call with force=false
+for the frame's document if it exists or creates a new stylesheet
+(default: false).
+       */
+      force?: boolean;
     }
     export type createStyleSheetReturnValue = {
       /**
@@ -5971,81 +5991,6 @@ The final text color opacity is computed based on the opacity of all overlapping
       value: string;
     }
     export type setDOMStorageItemReturnValue = {
-    }
-  }
-  
-  export module Database {
-    /**
-     * Unique identifier of Database object.
-     */
-    export type DatabaseId = string;
-    /**
-     * Database object.
-     */
-    export interface Database {
-      /**
-       * Database ID.
-       */
-      id: DatabaseId;
-      /**
-       * Database domain.
-       */
-      domain: string;
-      /**
-       * Database name.
-       */
-      name: string;
-      /**
-       * Database version.
-       */
-      version: string;
-    }
-    /**
-     * Database error.
-     */
-    export interface Error {
-      /**
-       * Error message.
-       */
-      message: string;
-      /**
-       * Error code.
-       */
-      code: number;
-    }
-    
-    export type addDatabasePayload = {
-      database: Database;
-    }
-    
-    /**
-     * Disables database tracking, prevents database events from being sent to the client.
-     */
-    export type disableParameters = {
-    }
-    export type disableReturnValue = {
-    }
-    /**
-     * Enables database tracking, database events will now be delivered to the client.
-     */
-    export type enableParameters = {
-    }
-    export type enableReturnValue = {
-    }
-    export type executeSQLParameters = {
-      databaseId: DatabaseId;
-      query: string;
-    }
-    export type executeSQLReturnValue = {
-      columnNames?: string[];
-      values?: any[];
-      sqlError?: Error;
-    }
-    export type getDatabaseTableNamesParameters = {
-      databaseId: DatabaseId;
-    }
-    export type getDatabaseTableNamesReturnValue = {
-      tableNames: string[];
     }
   }
   
@@ -9126,7 +9071,7 @@ This is a temporary ability and it will be removed in the future.
     /**
      * Types of reasons why a cookie should have been blocked by 3PCD but is exempted for the request.
      */
-    export type CookieExemptionReason = "None"|"UserSetting"|"TPCDMetadata"|"TPCDDeprecationTrial"|"TopLevelTPCDDeprecationTrial"|"TPCDHeuristics"|"EnterprisePolicy"|"StorageAccess"|"TopLevelStorageAccess"|"Scheme";
+    export type CookieExemptionReason = "None"|"UserSetting"|"TPCDMetadata"|"TPCDDeprecationTrial"|"TopLevelTPCDDeprecationTrial"|"TPCDHeuristics"|"EnterprisePolicy"|"StorageAccess"|"TopLevelStorageAccess"|"Scheme"|"SameSiteNoneCookiesInSandbox";
     /**
      * A cookie which was not stored from a response with the corresponding reason.
      */
@@ -11702,7 +11647,7 @@ as an ad.
      * All Permissions Policy features. This enum should match the one defined
 in third_party/blink/renderer/core/permissions_policy/permissions_policy_features.json5.
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-private"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"fenced-unpartitioned-storage-read"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"local-fonts"|"magnetometer"|"media-playback-while-not-visible"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"popins"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-autofill"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"sync-xhr"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"web-printing"|"web-share"|"window-management"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"attribution-reporting"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-private"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"fenced-unpartitioned-storage-read"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"local-fonts"|"magnetometer"|"media-playback-while-not-visible"|"microphone"|"midi"|"otp-credentials"|"payment"|"picture-in-picture"|"popins"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-autofill"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"sync-xhr"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"web-printing"|"web-share"|"window-management"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -12431,6 +12376,33 @@ subtree is actually detached.
       frame: Frame;
     }
     export type frameResizedPayload = void;
+    /**
+     * Fired when a navigation starts. This event is fired for both
+renderer-initiated and browser-initiated navigations. For renderer-initiated
+navigations, the event is fired after `frameRequestedNavigation`.
+Navigation may still be cancelled after the event is issued. Multiple events
+can be fired for a single navigation, for example, when a same-document
+navigation becomes a cross-document navigation (such as in the case of a
+frameset).
+     */
+    export type frameStartedNavigatingPayload = {
+      /**
+       * ID of the frame that is being navigated.
+       */
+      frameId: FrameId;
+      /**
+       * The URL the navigation started with. The final URL can be different.
+       */
+      url: string;
+      /**
+       * Loader identifier. Even though it is present in case of same-document
+navigation, the previously committed loaderId would not change unless
+the navigation changes from a same-document to a cross-document
+navigation.
+       */
+      loaderId: Network.LoaderId;
+      navigationType: "reload"|"reloadBypassingCache"|"restore"|"restoreWithPost"|"historySameDocument"|"historyDifferentDocument"|"sameDocument"|"differentDocument";
+    }
     /**
      * Fired when a renderer-initiated navigation is requested.
 Navigation may still be cancelled after the event is issued.
@@ -14281,7 +14253,7 @@ For cached script it is the last time the cache entry was validated.
     /**
      * Enum of possible storage types.
      */
-    export type StorageType = "appcache"|"cookies"|"file_systems"|"indexeddb"|"local_storage"|"shader_cache"|"websql"|"service_workers"|"cache_storage"|"interest_groups"|"shared_storage"|"storage_buckets"|"all"|"other";
+    export type StorageType = "cookies"|"file_systems"|"indexeddb"|"local_storage"|"shader_cache"|"websql"|"service_workers"|"cache_storage"|"interest_groups"|"shared_storage"|"storage_buckets"|"all"|"other";
     /**
      * Usage for a storage type.
      */
@@ -15193,6 +15165,28 @@ session. The effective Related Website Sets will not change during a browser ses
     export type getRelatedWebsiteSetsReturnValue = {
       sets: RelatedWebsiteSet[];
     }
+    /**
+     * Returns the list of URLs from a page and its embedded resources that match
+existing grace period URL pattern rules.
+https://developers.google.com/privacy-sandbox/cookies/temporary-exceptions/grace-period
+     */
+    export type getAffectedUrlsForThirdPartyCookieMetadataParameters = {
+      /**
+       * The URL of the page currently being visited.
+       */
+      firstPartyUrl: string;
+      /**
+       * The list of embedded resource URLs from the page.
+       */
+      thirdPartyUrls: string[];
+    }
+    export type getAffectedUrlsForThirdPartyCookieMetadataReturnValue = {
+      /**
+       * Array of matching URLs. If there is a primary pattern match for the first-
+party URL, only the first-party URL is returned in the array.
+       */
+      matchedUrls: string[];
+    }
   }
   
   /**
@@ -15485,6 +15479,10 @@ If filter is not specified, the one assumed is
       host: string;
       port: number;
     }
+    /**
+     * The state of the target window.
+     */
+    export type WindowState = "normal"|"minimized"|"maximized"|"fullscreen";
     
     /**
      * Issued when attached to target because of auto-attach or `attachToTarget` command.
@@ -15677,37 +15675,42 @@ Parts of the URL other than those constituting origin are ignored.
        */
       url: string;
       /**
-       * Frame left origin in DIP (headless chrome only).
+       * Frame left origin in DIP (requires newWindow to be true or headless shell).
        */
       left?: number;
       /**
-       * Frame top origin in DIP (headless chrome only).
+       * Frame top origin in DIP (requires newWindow to be true or headless shell).
        */
       top?: number;
       /**
-       * Frame width in DIP (headless chrome only).
+       * Frame width in DIP (requires newWindow to be true or headless shell).
        */
       width?: number;
       /**
-       * Frame height in DIP (headless chrome only).
+       * Frame height in DIP (requires newWindow to be true or headless shell).
        */
       height?: number;
+      /**
+       * Frame window state (requires newWindow to be true or headless shell).
+Default is normal.
+       */
+      windowState?: WindowState;
       /**
        * The browser context to create the page in.
        */
       browserContextId?: Browser.BrowserContextID;
       /**
-       * Whether BeginFrames for this target will be controlled via DevTools (headless chrome only,
+       * Whether BeginFrames for this target will be controlled via DevTools (headless shell only,
 not supported on MacOS yet, false by default).
        */
       enableBeginFrameControl?: boolean;
       /**
-       * Whether to create a new Window or Tab (chrome-only, false by default).
+       * Whether to create a new Window or Tab (false by default, not supported by headless shell).
        */
       newWindow?: boolean;
       /**
-       * Whether to create the target in background or foreground (chrome-only,
-false by default).
+       * Whether to create the target in background or foreground (false by default, not supported
+by headless shell).
        */
       background?: boolean;
       /**
@@ -18012,9 +18015,20 @@ variables as its properties.
        */
       externalURL?: string;
     }
+    export interface ResolvedBreakpoint {
+      /**
+       * Breakpoint unique identifier.
+       */
+      breakpointId: BreakpointId;
+      /**
+       * Actual breakpoint location.
+       */
+      location: Location;
+    }
     
     /**
      * Fired when breakpoint is resolved to an actual script and location.
+Deprecated in favor of `resolvedBreakpoints` in the `scriptParsed` event.
      */
     export type breakpointResolvedPayload = {
       /**
@@ -18225,6 +18239,12 @@ scripts upon enabling debugger.
        * The name the embedder supplied for this script.
        */
       embedderName?: string;
+      /**
+       * The list of set breakpoints in this script if calls to `setBreakpointByUrl`
+matches this script's URL or hash. Clients that use this list can ignore the
+`breakpointResolved` event. They are equivalent.
+       */
+      resolvedBreakpoints?: ResolvedBreakpoint[];
     }
     
     /**
@@ -20150,13 +20170,21 @@ It is the total usage of the corresponding isolate not scoped to a particular Ru
     }
     export type getHeapUsageReturnValue = {
       /**
-       * Used heap size in bytes.
+       * Used JavaScript heap size in bytes.
        */
       usedSize: number;
       /**
-       * Allocated heap size in bytes.
+       * Allocated JavaScript heap size in bytes.
        */
       totalSize: number;
+      /**
+       * Used size in bytes in the embedder's garbage-collected heap.
+       */
+      embedderHeapUsedSize: number;
+      /**
+       * Size in bytes of backing storage for array buffers and external strings.
+       */
+      backingStorageSize: number;
     }
     /**
      * Returns properties of a given object. Object group of the result is inherited from the target
@@ -20472,7 +20500,6 @@ Error was thrown.
     "DOMStorage.domStorageItemRemoved": DOMStorage.domStorageItemRemovedPayload;
     "DOMStorage.domStorageItemUpdated": DOMStorage.domStorageItemUpdatedPayload;
     "DOMStorage.domStorageItemsCleared": DOMStorage.domStorageItemsClearedPayload;
-    "Database.addDatabase": Database.addDatabasePayload;
     "Emulation.virtualTimeBudgetExpired": Emulation.virtualTimeBudgetExpiredPayload;
     "Input.dragIntercepted": Input.dragInterceptedPayload;
     "Inspector.detached": Inspector.detachedPayload;
@@ -20526,6 +20553,7 @@ Error was thrown.
     "Page.frameNavigated": Page.frameNavigatedPayload;
     "Page.documentOpened": Page.documentOpenedPayload;
     "Page.frameResized": Page.frameResizedPayload;
+    "Page.frameStartedNavigating": Page.frameStartedNavigatingPayload;
     "Page.frameRequestedNavigation": Page.frameRequestedNavigationPayload;
     "Page.frameScheduledNavigation": Page.frameScheduledNavigationPayload;
     "Page.frameStartedLoading": Page.frameStartedLoadingPayload;
@@ -20656,6 +20684,7 @@ Error was thrown.
     "Audits.checkContrast": Audits.checkContrastParameters;
     "Audits.checkFormsIssues": Audits.checkFormsIssuesParameters;
     "Extensions.loadUnpacked": Extensions.loadUnpackedParameters;
+    "Extensions.uninstall": Extensions.uninstallParameters;
     "Extensions.getStorageItems": Extensions.getStorageItemsParameters;
     "Extensions.removeStorageItems": Extensions.removeStorageItemsParameters;
     "Extensions.clearStorageItems": Extensions.clearStorageItemsParameters;
@@ -20808,10 +20837,6 @@ Error was thrown.
     "DOMStorage.getDOMStorageItems": DOMStorage.getDOMStorageItemsParameters;
     "DOMStorage.removeDOMStorageItem": DOMStorage.removeDOMStorageItemParameters;
     "DOMStorage.setDOMStorageItem": DOMStorage.setDOMStorageItemParameters;
-    "Database.disable": Database.disableParameters;
-    "Database.enable": Database.enableParameters;
-    "Database.executeSQL": Database.executeSQLParameters;
-    "Database.getDatabaseTableNames": Database.getDatabaseTableNamesParameters;
     "DeviceOrientation.clearDeviceOrientationOverride": DeviceOrientation.clearDeviceOrientationOverrideParameters;
     "DeviceOrientation.setDeviceOrientationOverride": DeviceOrientation.setDeviceOrientationOverrideParameters;
     "Emulation.canEmulate": Emulation.canEmulateParameters;
@@ -21088,6 +21113,7 @@ Error was thrown.
     "Storage.setAttributionReportingTracking": Storage.setAttributionReportingTrackingParameters;
     "Storage.sendPendingAttributionReports": Storage.sendPendingAttributionReportsParameters;
     "Storage.getRelatedWebsiteSets": Storage.getRelatedWebsiteSetsParameters;
+    "Storage.getAffectedUrlsForThirdPartyCookieMetadata": Storage.getAffectedUrlsForThirdPartyCookieMetadataParameters;
     "SystemInfo.getInfo": SystemInfo.getInfoParameters;
     "SystemInfo.getFeatureState": SystemInfo.getFeatureStateParameters;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoParameters;
@@ -21273,6 +21299,7 @@ Error was thrown.
     "Audits.checkContrast": Audits.checkContrastReturnValue;
     "Audits.checkFormsIssues": Audits.checkFormsIssuesReturnValue;
     "Extensions.loadUnpacked": Extensions.loadUnpackedReturnValue;
+    "Extensions.uninstall": Extensions.uninstallReturnValue;
     "Extensions.getStorageItems": Extensions.getStorageItemsReturnValue;
     "Extensions.removeStorageItems": Extensions.removeStorageItemsReturnValue;
     "Extensions.clearStorageItems": Extensions.clearStorageItemsReturnValue;
@@ -21425,10 +21452,6 @@ Error was thrown.
     "DOMStorage.getDOMStorageItems": DOMStorage.getDOMStorageItemsReturnValue;
     "DOMStorage.removeDOMStorageItem": DOMStorage.removeDOMStorageItemReturnValue;
     "DOMStorage.setDOMStorageItem": DOMStorage.setDOMStorageItemReturnValue;
-    "Database.disable": Database.disableReturnValue;
-    "Database.enable": Database.enableReturnValue;
-    "Database.executeSQL": Database.executeSQLReturnValue;
-    "Database.getDatabaseTableNames": Database.getDatabaseTableNamesReturnValue;
     "DeviceOrientation.clearDeviceOrientationOverride": DeviceOrientation.clearDeviceOrientationOverrideReturnValue;
     "DeviceOrientation.setDeviceOrientationOverride": DeviceOrientation.setDeviceOrientationOverrideReturnValue;
     "Emulation.canEmulate": Emulation.canEmulateReturnValue;
@@ -21705,6 +21728,7 @@ Error was thrown.
     "Storage.setAttributionReportingTracking": Storage.setAttributionReportingTrackingReturnValue;
     "Storage.sendPendingAttributionReports": Storage.sendPendingAttributionReportsReturnValue;
     "Storage.getRelatedWebsiteSets": Storage.getRelatedWebsiteSetsReturnValue;
+    "Storage.getAffectedUrlsForThirdPartyCookieMetadata": Storage.getAffectedUrlsForThirdPartyCookieMetadataReturnValue;
     "SystemInfo.getInfo": SystemInfo.getInfoReturnValue;
     "SystemInfo.getFeatureState": SystemInfo.getFeatureStateReturnValue;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoReturnValue;
