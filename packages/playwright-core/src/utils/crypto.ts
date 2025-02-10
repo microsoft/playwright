@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import crypto from 'crypto';
+import * as crypto from 'crypto';
+
 import { assert } from './debug';
 
 export function createGuid(): string {

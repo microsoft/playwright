@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-import type { Page } from 'playwright-core';
-import type { ExpectMatcherState } from '../../types/test';
-import { EXPECTED_COLOR, printReceived } from '../common/expectBundle';
-import { matcherHint, type MatcherResult } from './matcherHint';
 import { constructURLBasedOnBaseURL, urlMatches } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utilsBundle';
+
 import { printReceivedStringContainExpectedResult, printReceivedStringContainExpectedSubstring } from './expect';
+import {  matcherHint } from './matcherHint';
+import { EXPECTED_COLOR, printReceived } from '../common/expectBundle';
+
+import type { MatcherResult } from './matcherHint';
+import type { ExpectMatcherState } from '../../types/test';
+import type { Page } from 'playwright-core';
 
 export async function toHaveURL(
   this: ExpectMatcherState,

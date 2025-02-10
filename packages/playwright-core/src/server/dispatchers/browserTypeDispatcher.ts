@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import type { BrowserType } from '../browserType';
-import { BrowserDispatcher } from './browserDispatcher';
-import type * as channels from '@protocol/channels';
-import type { RootDispatcher } from './dispatcher';
-import { Dispatcher } from './dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
+import { BrowserDispatcher } from './browserDispatcher';
+import { Dispatcher } from './dispatcher';
+
+import type { BrowserType } from '../browserType';
+import type { RootDispatcher } from './dispatcher';
 import type { CallMetadata } from '../instrumentation';
+import type * as channels from '@protocol/channels';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeChannel, RootDispatcher> implements channels.BrowserTypeChannel {
   _type_BrowserType = true;

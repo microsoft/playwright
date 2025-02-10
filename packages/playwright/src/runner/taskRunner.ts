@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-import { colors, debug } from 'playwright-core/lib/utilsBundle';
 import { ManualPromise, monotonicTime } from 'playwright-core/lib/utils';
-import type { FullResult, TestError } from '../../types/testReporter';
+import { colors, debug } from 'playwright-core/lib/utilsBundle';
+
+
 import { SigIntWatcher } from './sigIntWatcher';
 import { serializeError } from '../util';
+
+import type { FullResult, TestError } from '../../types/testReporter';
 import type { InternalReporter } from '../reporters/internalReporter';
 
 type TaskPhase<Context> = (context: Context, errors: TestError[], softErrors: TestError[]) => Promise<void> | void;

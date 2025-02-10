@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import type { BrowserContextOptions } from '../../../types/types';
-import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
-import type * as actions from '@recorder/actions';
-import { sanitizeDeviceOptions, toSignalMap, toKeyboardModifiers, toClickOptionsForSourceCode } from './language';
-import { escapeWithQuotes, toSnakeCase, asLocator } from '../../utils';
+import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
+import { asLocator, escapeWithQuotes, toSnakeCase } from '../../utils';
 import { deviceDescriptors } from '../deviceDescriptors';
+
+import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
+import type { BrowserContextOptions } from '../../../types/types';
+import type * as actions from '@recorder/actions';
 
 export class PythonLanguageGenerator implements LanguageGenerator {
   id: string;

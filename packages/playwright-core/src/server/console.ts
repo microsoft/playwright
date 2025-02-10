@@ -15,8 +15,8 @@
  */
 
 import type * as js from './javascript';
-import type { ConsoleMessageLocation } from './types';
 import type { Page } from './page';
+import type { ConsoleMessageLocation } from './types';
 
 export class ConsoleMessage {
   private _type: string;

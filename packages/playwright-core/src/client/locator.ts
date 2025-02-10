@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-import type * as structs from '../../types/structs';
-import type * as api from '../../types/types';
-import type * as channels from '@protocol/channels';
 import * as util from 'util';
+
 import { asLocator, isString, monotonicTime } from '../utils';
 import { ElementHandle } from './elementHandle';
+import { parseResult, serializeArgument } from './jsHandle';
+import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
+import { escapeForTextSelector } from '../utils/isomorphic/stringUtils';
+
 import type { Frame } from './frame';
 import type { FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';
-import { parseResult, serializeArgument } from './jsHandle';
-import { escapeForTextSelector } from '../utils/isomorphic/stringUtils';
+import type * as structs from '../../types/structs';
+import type * as api from '../../types/types';
 import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
-import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
+import type * as channels from '@protocol/channels';
+
 
 export type LocatorOptions = {
   hasText?: string | RegExp;

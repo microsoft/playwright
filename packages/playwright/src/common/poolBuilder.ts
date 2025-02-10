@@ -15,11 +15,12 @@
  */
 
 import { FixturePool } from './fixtures';
+import { formatLocation } from '../util';
+
+import type { FullProjectInternal } from './config';
 import type { LoadError } from './fixtures';
 import type { Suite, TestCase } from './test';
 import type { TestTypeImpl } from './testType';
-import type { FullProjectInternal } from './config';
-import { formatLocation } from '../util';
 import type { TestError } from '../../types/testReporter';
 
 export class PoolBuilder {

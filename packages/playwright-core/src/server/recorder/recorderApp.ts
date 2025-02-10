@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import type { Page } from '../page';
-import { ProgressController } from '../progress';
 import { EventEmitter } from 'events';
-import { serverSideCallMetadata } from '../instrumentation';
-import type { CallLog, ElementInfo, Mode, Source } from '@recorder/recorderTypes';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { isUnderTest } from '../../utils';
 import { mime } from '../../utilsBundle';
+import { serverSideCallMetadata } from '../instrumentation';
 import { syncLocalStorageWithSettings } from '../launchApp';
-import type { BrowserContext } from '../browserContext';
 import { launchApp } from '../launchApp';
+import { ProgressController } from '../progress';
+
+import type { BrowserContext } from '../browserContext';
+import type { Page } from '../page';
 import type { IRecorder, IRecorderApp, IRecorderAppFactory } from './recorderFrontend';
 import type * as actions from '@recorder/actions';
+import type { CallLog, ElementInfo, Mode, Source } from '@recorder/recorderTypes';
 
 export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   wsEndpointForTest: undefined;
@@ -37,7 +39,7 @@ export class EmptyRecorderApp extends EventEmitter implements IRecorderApp {
   async setRunningFile(file: string | undefined): Promise<void> {}
   async elementPicked(elementInfo: ElementInfo, userGesture?: boolean): Promise<void> {}
   async updateCallLogs(callLogs: CallLog[]): Promise<void> {}
-  async setSources(sources: Source[]): Promise<void> {}
+  async setSources(sources: Source[], primaryPageURL: string | undefined): Promise<void> {}
   async setActions(actions: actions.ActionInContext[], sources: Source[]): Promise<void> {}
 }
 
@@ -143,10 +145,10 @@ export class RecorderApp extends EventEmitter implements IRecorderApp {
     }).toString(), { isFunction: true }, paused).catch(() => {});
   }
 
-  async setSources(sources: Source[]): Promise<void> {
-    await this._page.mainFrame().evaluateExpression(((sources: Source[]) => {
-      window.playwrightSetSources(sources);
-    }).toString(), { isFunction: true }, sources).catch(() => {});
+  async setSources(sources: Source[], primaryPageURL: string | undefined): Promise<void> {
+    await this._page.mainFrame().evaluateExpression((({ sources, primaryPageURL }: { sources: Source[], primaryPageURL: string | undefined }) => {
+      window.playwrightSetSources(sources, primaryPageURL);
+    }).toString(), { isFunction: true }, { sources, primaryPageURL }).catch(() => {});
 
     // Testing harness for runCLI mode.
     if (process.env.PWTEST_CLI_IS_UNDER_TEST && sources.length) {

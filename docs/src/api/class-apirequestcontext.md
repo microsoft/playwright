@@ -897,7 +897,7 @@ context cookies from the response. The method will automatically follow redirect
           - `records` <[Array]<[Object]>>
             - `key` ?<[Object]>
             - `keyEncoded` ?<[Object]> if `key` is not JSON-serializable, this contains an encoded version that preserves types.
-            - `value` <[Object]>
+            - `value` ?<[Object]>
             - `valueEncoded` ?<[Object]> if `value` is not JSON-serializable, this contains an encoded version that preserves types.
 
 Returns storage state for this request context, contains current cookies and local storage snapshot if it was passed to the constructor.

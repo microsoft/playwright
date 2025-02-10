@@ -15,6 +15,7 @@
  */
 
 import { WebSocketTransport } from '../transport';
+
 import type { ConnectionTransport, ProtocolResponse } from '../transport';
 
 export type ChatMessage = {

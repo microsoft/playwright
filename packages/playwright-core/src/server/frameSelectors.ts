@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-import type { Frame } from './frames';
-import type * as types from './types';
-import { stringifySelector, type ParsedSelector, splitSelectorByFrame, InvalidSelectorError, visitAllSelectorParts } from '../utils/isomorphic/selectorParser';
-import type { FrameExecutionContext, ElementHandle } from './dom';
-import type { JSHandle } from './javascript';
-import type { InjectedScript } from './injected/injectedScript';
 import { asLocator } from '../utils';
+import { InvalidSelectorError,  splitSelectorByFrame, stringifySelector, visitAllSelectorParts } from '../utils/isomorphic/selectorParser';
+
+import type { ElementHandle, FrameExecutionContext } from './dom';
+import type { Frame } from './frames';
+import type { InjectedScript } from './injected/injectedScript';
+import type { JSHandle } from './javascript';
+import type * as types from './types';
+import type { ParsedSelector } from '../utils/isomorphic/selectorParser';
+
 
 export type SelectorInfo = {
   parsed: ParsedSelector,

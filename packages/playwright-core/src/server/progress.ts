@@ -16,9 +16,10 @@
 
 import { TimeoutError } from './errors';
 import { assert, monotonicTime } from '../utils';
-import type { LogName } from '../utils/debugLogger';
-import type { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
 import { ManualPromise } from '../utils/manualPromise';
+
+import type { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
+import type { LogName } from '../utils/debugLogger';
 
 export interface Progress {
   log(message: string): void;

@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-import type { SerializedConfig } from '../common/ipc';
 import { deserializeConfig } from '../common/configLoader';
-import { ProcessRunner } from '../common/process';
-import type { FullConfigInternal } from '../common/config';
-import { loadTestFile } from '../common/testLoader';
-import type { TestError } from '../../types/testReporter';
-import { serializeCompilationCache } from '../transform/compilationCache';
-import { PoolBuilder } from '../common/poolBuilder';
 import { incorporateCompilationCache } from '../common/esmLoaderHost';
+import { PoolBuilder } from '../common/poolBuilder';
+import { ProcessRunner } from '../common/process';
+import { loadTestFile } from '../common/testLoader';
+import { serializeCompilationCache } from '../transform/compilationCache';
+
+import type { TestError } from '../../types/testReporter';
+import type { FullConfigInternal } from '../common/config';
+import type { SerializedConfig } from '../common/ipc';
 
 export class LoaderMain extends ProcessRunner {
   private _serializedConfig: SerializedConfig;

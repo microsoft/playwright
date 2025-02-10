@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type * as api from '../../types/types';
 import type { Page } from './page';
+import type * as api from '../../types/types';
 
 export class WebError implements api.WebError {
   private _page: Page | null;

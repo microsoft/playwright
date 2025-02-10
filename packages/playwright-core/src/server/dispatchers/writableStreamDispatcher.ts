@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
-import { Dispatcher } from './dispatcher';
 import * as fs from 'fs';
+
+import { Dispatcher } from './dispatcher';
 import { createGuid } from '../../utils';
+
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
+import type * as channels from '@protocol/channels';
 
 export class WritableStreamDispatcher extends Dispatcher<{ guid: string, streamOrDirectory: fs.WriteStream | string }, channels.WritableStreamChannel, BrowserContextDispatcher> implements channels.WritableStreamChannel {
   _type_WritableStream = true;

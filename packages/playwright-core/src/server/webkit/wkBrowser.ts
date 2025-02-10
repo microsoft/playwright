@@ -15,21 +15,22 @@
  * limitations under the License.
  */
 
-import type { BrowserOptions } from '../browser';
-import { Browser } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
 import { assert } from '../../utils';
+import { Browser } from '../browser';
+import { BrowserContext, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';
 import * as network from '../network';
+import { WKConnection, WKSession, kPageProxyMessageReceived } from './wkConnection';
+import { WKPage } from './wkPage';
+import { TargetClosedError } from '../errors';
+
+import type { BrowserOptions } from '../browser';
+import type { SdkObject } from '../instrumentation';
 import type { InitScript, Page } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
-import type * as channels from '@protocol/channels';
 import type { Protocol } from './protocol';
 import type { PageProxyMessageReceivedPayload } from './wkConnection';
-import { kPageProxyMessageReceived, WKConnection, WKSession } from './wkConnection';
-import { WKPage } from './wkPage';
-import { TargetClosedError } from '../errors';
-import type { SdkObject } from '../instrumentation';
+import type * as channels from '@protocol/channels';
 
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15';
 const BROWSER_VERSION = '18.2';

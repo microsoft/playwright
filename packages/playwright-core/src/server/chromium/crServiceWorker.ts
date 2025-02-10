@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 import { Worker } from '../page';
-import type { CRBrowserContext } from './crBrowser';
-import type { CRSession } from './crConnection';
 import { CRExecutionContext } from './crExecutionContext';
 import { CRNetworkManager } from './crNetworkManager';
-import * as network from '../network';
 import { BrowserContext } from '../browserContext';
+import * as network from '../network';
+
+import type { CRBrowserContext } from './crBrowser';
+import type { CRSession } from './crConnection';
 
 export class CRServiceWorker extends Worker {
   readonly _browserContext: CRBrowserContext;

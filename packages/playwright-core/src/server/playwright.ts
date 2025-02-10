@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 
+import { debugLogger  } from '../utils';
 import { Android } from './android/android';
 import { AdbBackend } from './android/backendAdb';
-import type { Browser } from './browser';
-import { Chromium } from './chromium/chromium';
-import { Electron } from './electron/electron';
-import { Firefox } from './firefox/firefox';
-import { Selectors } from './selectors';
-import { WebKit } from './webkit/webkit';
-import type { CallMetadata } from './instrumentation';
-import { createInstrumentation, SdkObject } from './instrumentation';
-import { debugLogger, type Language } from '../utils';
-import type { Page } from './page';
-import { DebugController } from './debugController';
-import type { BrowserType } from './browserType';
 import { BidiChromium } from './bidi/bidiChromium';
 import { BidiFirefox } from './bidi/bidiFirefox';
+import { Chromium } from './chromium/chromium';
+import { DebugController } from './debugController';
+import { Electron } from './electron/electron';
+import { Firefox } from './firefox/firefox';
+import { SdkObject, createInstrumentation } from './instrumentation';
+import { Selectors } from './selectors';
+import { WebKit } from './webkit/webkit';
+
+import type { BrowserType } from './browserType';
+import type { Language } from '../utils';
+import type { Browser } from './browser';
+import type { CallMetadata } from './instrumentation';
+import type { Page } from './page';
 
 type PlaywrightOptions = {
   socksProxyPort?: number;

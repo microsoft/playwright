@@ -15,10 +15,12 @@
  */
 
 import { EventEmitter } from 'events';
+
 import { debugMode, isUnderTest, monotonicTime } from '../utils';
 import { BrowserContext } from './browserContext';
-import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import { commandsWithTracingSnapshots, pausesBeforeInputActions, slowMoActions } from '../protocol/debug';
+
+import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 
 const symbol = Symbol('Debugger');
 

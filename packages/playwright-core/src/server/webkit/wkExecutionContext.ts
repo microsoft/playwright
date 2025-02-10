@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-import type { WKSession } from './wkConnection';
-import type { Protocol } from './protocol';
-import * as js from '../javascript';
 import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
+import * as js from '../javascript';
 import { isSessionClosedError } from '../protocolError';
+
+import type { Protocol } from './protocol';
+import type { WKSession } from './wkConnection';
 
 export class WKExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: WKSession;

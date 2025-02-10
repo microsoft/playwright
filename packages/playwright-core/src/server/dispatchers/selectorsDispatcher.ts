@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
-import type * as channels from '@protocol/channels';
+
+import type { RootDispatcher } from './dispatcher';
 import type { Selectors } from '../selectors';
+import type * as channels from '@protocol/channels';
 
 export class SelectorsDispatcher extends Dispatcher<Selectors, channels.SelectorsChannel, RootDispatcher> implements channels.SelectorsChannel {
   _type_Selectors = true;

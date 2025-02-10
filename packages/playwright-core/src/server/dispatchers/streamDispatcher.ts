@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
 import { Dispatcher } from './dispatcher';
-import type * as stream from 'stream';
 import { ManualPromise, createGuid } from '../../utils';
+
 import type { ArtifactDispatcher } from './artifactDispatcher';
+import type * as channels from '@protocol/channels';
+import type * as stream from 'stream';
 
 export class StreamDispatcher extends Dispatcher<{ guid: string, stream: stream.Readable }, channels.StreamChannel, ArtifactDispatcher> implements channels.StreamChannel {
   _type_Stream = true;

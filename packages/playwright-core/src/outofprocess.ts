@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-import { Connection } from './client/connection';
-import { PipeTransport } from './protocol/transport';
-import type { Playwright } from './client/playwright';
 import * as childProcess from 'child_process';
 import * as path from 'path';
+
+import { Connection } from './client/connection';
+import { PipeTransport } from './protocol/transport';
 import { ManualPromise } from './utils/manualPromise';
+
+import type { Playwright } from './client/playwright';
+
 
 export async function start(env: any = {}): Promise<{ playwright: Playwright, stop: () => Promise<void> }> {
   const client = new PlaywrightClient(env);

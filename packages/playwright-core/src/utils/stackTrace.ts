@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-import path from 'path';
+import * as path from 'path';
+
 import { parseStackTraceLine } from '../utilsBundle';
-import type { StackFrame } from '@protocol/channels';
 import { colors } from '../utilsBundle';
 import { findRepeatedSubsequences } from './sequence';
+
+import type { StackFrame } from '@protocol/channels';
 
 export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): E {
   const lines: string[] = (e.stack?.split('\n') || []).filter(l => l.startsWith('    at '));

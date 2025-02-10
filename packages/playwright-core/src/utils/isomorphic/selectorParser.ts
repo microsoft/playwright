@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import type { CSSComplexSelectorList } from './cssParser';
 import { InvalidSelectorError, parseCSS } from './cssParser';
+
+import type { CSSComplexSelectorList } from './cssParser';
 export { InvalidSelectorError, isInvalidSelectorError } from './cssParser';
 
 export type NestedSelectorBody = { parsed: ParsedSelector, distance?: number };

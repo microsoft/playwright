@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { ClientSideCallMetadata } from '@protocol/channels';
 import type { SerializedClientSideCallMetadata, SerializedStack, SerializedStackFrame } from './isomorphic/traceUtils';
+import type { ClientSideCallMetadata } from '@protocol/channels';
 
 export function serializeClientSideCallMetadata(metadatas: ClientSideCallMetadata[]): SerializedClientSideCallMetadata {
   const fileNames = new Map<string, number>();

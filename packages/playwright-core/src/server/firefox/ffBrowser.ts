@@ -15,21 +15,23 @@
  * limitations under the License.
  */
 
-import { TargetClosedError } from '../errors';
 import { assert } from '../../utils';
-import type { BrowserOptions } from '../browser';
 import { Browser } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, verifyGeolocation } from '../browserContext';
+import { BrowserContext, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';
+import { TargetClosedError } from '../errors';
 import * as network from '../network';
-import type { InitScript, Page } from '../page';
 import { PageBinding } from '../page';
+import { ConnectionEvents, FFConnection  } from './ffConnection';
+import { FFPage } from './ffPage';
+
+import type { BrowserOptions } from '../browser';
+import type { SdkObject } from '../instrumentation';
+import type { InitScript, Page } from '../page';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
-import type * as channels from '@protocol/channels';
-import { ConnectionEvents, FFConnection, type FFSession } from './ffConnection';
-import { FFPage } from './ffPage';
+import type { FFSession } from './ffConnection';
 import type { Protocol } from './protocol';
-import type { SdkObject } from '../instrumentation';
+import type * as channels from '@protocol/channels';
 
 export class FFBrowser extends Browser {
   private _connection: FFConnection;

@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import { escapeForAttributeSelector, escapeForTextSelector } from './stringUtils';
 import { asLocators } from './locatorGenerators';
-import type { Language, Quote } from './locatorGenerators';
 import { parseSelector } from './selectorParser';
+import { escapeForAttributeSelector, escapeForTextSelector } from './stringUtils';
+
+import type { Language, Quote } from './locatorGenerators';
 
 type TemplateParams = { quote: string, text: string }[];
 function parseLocator(locator: string, testIdAttributeName: string): { selector: string, preferredQuote: Quote | undefined } {

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+/* eslint-disable import/order */
+
 import colorsLibrary from 'colors/safe';
 export const colors = colorsLibrary;
 

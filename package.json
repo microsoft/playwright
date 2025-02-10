@@ -91,6 +91,7 @@
     "electron": "^30.1.2",
     "esbuild": "^0.18.11",
     "eslint": "^9.19.0",
+    "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-notice": "^1.0.0",
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.1.0",

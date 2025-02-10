@@ -26,9 +26,25 @@ import { linkifyText } from '@web/renderUtils';
 
 type MetadataEntries = [string, unknown][];
 
-export function filterMetadata(metadata: Metadata): MetadataEntries {
-  // TODO: do not plumb actualWorkers through metadata.
-  return Object.entries(metadata).filter(([key]) => key !== 'actualWorkers');
+export const MetadataContext = React.createContext<MetadataEntries>([]);
+
+export function MetadataProvider({ metadata, children }: React.PropsWithChildren<{ metadata: Metadata }>) {
+  const entries = React.useMemo(() => {
+    // TODO: do not plumb actualWorkers through metadata.
+
+    return Object.entries(metadata).filter(([key]) => key !== 'actualWorkers');
+  }, [metadata]);
+
+  return <MetadataContext.Provider value={entries}>{children}</MetadataContext.Provider>;
+}
+
+export function useMetadata() {
+  return React.useContext(MetadataContext);
+}
+
+export function useGitCommitInfo() {
+  const metadataEntries = useMetadata();
+  return metadataEntries.find(([key]) => key === 'git.commit.info')?.[1] as GitCommitInfo | undefined;
 }
 
 class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, { error: Error | null, errorInfo: React.ErrorInfo | null }> {
@@ -57,12 +73,13 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, { error
   }
 }
 
-export const MetadataView: React.FC<{ metadataEntries: MetadataEntries }> = ({ metadataEntries }) => {
-  return <ErrorBoundary><InnerMetadataView metadataEntries={metadataEntries}/></ErrorBoundary>;
+export const MetadataView = () => {
+  return <ErrorBoundary><InnerMetadataView/></ErrorBoundary>;
 };
 
-const InnerMetadataView: React.FC<{ metadataEntries: MetadataEntries }> = ({ metadataEntries }) => {
-  const gitCommitInfo = metadataEntries.find(([key]) => key === 'git.commit.info')?.[1] as GitCommitInfo | undefined;
+const InnerMetadataView = () => {
+  const metadataEntries = useMetadata();
+  const gitCommitInfo = useGitCommitInfo();
   const entries = metadataEntries.filter(([key]) => key !== 'git.commit.info');
   if (!gitCommitInfo && !entries.length)
     return null;

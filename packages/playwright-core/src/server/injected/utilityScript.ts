@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { serializeAsCallArgument, parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
+import { parseEvaluationResultValue, serializeAsCallArgument } from '../isomorphic/utilityScriptSerializers';
 
 export class UtilityScript {
   constructor(isUnderTest: boolean) {

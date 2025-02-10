@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import type { SerializedError } from '@protocol/channels';
-import { isError } from '../utils';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
+import { isError } from '../utils';
+
+import type { SerializedError } from '@protocol/channels';
 
 class CustomError extends Error {
   constructor(message: string) {

@@ -18,12 +18,13 @@ UI Mode lets you explore, run, and debug tests with a time travel experience com
 
 To open UI mode, run the following command in your terminal:
 
-  ```bash
-  npx playwright test --ui
-  ```
+```bash
+npx playwright test --ui
+```
+
 ## Running your tests
 
-Once you launch UI Mode you will see a list of all your test files. You can run all your tests by clicking the triangle icon in the sidebar. You can also run a single test file, a block of tests or a single test by hovering over the name and clicking on the triangle next to it. 
+Once you launch UI Mode you will see a list of all your test files. You can run all your tests by clicking the triangle icon in the sidebar. You can also run a single test file, a block of tests or a single test by hovering over the name and clicking on the triangle next to it.
 
 ![running tests in ui mode](https://github.com/microsoft/playwright/assets/13063165/6b87712f-64a5-4d73-a91d-6562b864712c)
 
@@ -33,17 +34,15 @@ Filter tests by text or `@tag` or by passed, failed or skipped tests. You can al
 
 ![filtering tests in ui mode](https://github.com/microsoft/playwright/assets/13063165/6f05e589-036d-45d5-9078-38134e1261e4)
 
-
 ## Timeline view
 
 At the top of the trace you can see a timeline view of your test with different colors to highlight navigation and actions. Hover back and forth to see an image snapshot for each action. Double click on an action to see the time range for that action. You can use the slider in the timeline to increase the actions selected and these will be shown in the Actions tab and all console logs and network logs will be filtered to only show the logs for the actions selected.
 
 ![timeline view in ui mode](https://github.com/microsoft/playwright/assets/13063165/811a9985-32aa-4a3e-9869-de32053cf468)
 
-
 ## Actions
 
-In the Actions tab you can see what locator was used for every action and how long each one took to run. Hover over each action of your test and visually see the change in the DOM snapshot. Go back and forward in time and click an action to inspect and debug. Use the Before and After tabs to visually see what happened before and after the action. 
+In the Actions tab you can see what locator was used for every action and how long each one took to run. Hover over each action of your test and visually see the change in the DOM snapshot. Go back and forward in time and click an action to inspect and debug. Use the Before and After tabs to visually see what happened before and after the action.
 ![use before and after actions in ui mode](https://github.com/microsoft/playwright/assets/13063165/7b22fab5-7346-4b98-8fdd-a78ed280647f)
 
 ## Pop out and inspect the DOM
@@ -60,7 +59,7 @@ Click on the pick locator button and hover over the DOM snapshot to see the loca
 
 ## Source
 
-As you hover over each action of your test the line of code for that action is highlighted in the source panel.
+As you hover over each action of your test the line of code for that action is highlighted in the source panel. The button "Open in VSCode" is at the top-right of this section. Upon clicking the button, it will open your test in VS Code right at the line of code that you clicked on.
 
 ![showing source code of tests in ui mode](https://github.com/microsoft/playwright/assets/13063165/49b9fa2a-8a57-4044-acaa-0a2ea4784c5c)
 
@@ -108,7 +107,7 @@ Next to the Actions tab you will find the Metadata tab which will show you more 
 
 ## Watch mode
 
-Next to the name of each test in the sidebar you will find an eye icon. Clicking on the icon will activate watch mode which will re-run the test when you make changes to it. You can watch a number of tests at the same time be clicking the eye icon next to each one or all tests by clicking the eye icon at the top of the sidebar. If you are using VS Code then you can easily open your test by clicking on the file icon next to the eye icon. This will open your test in VS Code right at the line of code that you clicked on.
+Next to the name of each test in the sidebar you will find an eye icon. Clicking on the icon will activate watch mode which will re-run the test when you make changes to it. You can watch a number of tests at the same time be clicking the eye icon next to each one or all tests by clicking the eye icon at the top of the sidebar.
 
 ![watch mode in ui mode](https://github.com/microsoft/playwright/assets/13063165/20d7d44c-b52d-43ff-8871-8b828671f3da)
 

@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../../browserContext';
-import { Page } from '../../page';
-import type { RegisteredListener } from '../../../utils/eventsHelper';
-import { eventsHelper } from '../../../utils/eventsHelper';
-import { debugLogger } from '../../../utils/debugLogger';
-import type { Frame } from '../../frames';
-import type { SnapshotData } from './snapshotterInjected';
 import { frameSnapshotStreamer } from './snapshotterInjected';
 import { calculateSha1, createGuid, monotonicTime } from '../../../utils';
-import type { FrameSnapshot } from '@trace/snapshot';
+import { debugLogger } from '../../../utils/debugLogger';
+import { eventsHelper } from '../../../utils/eventsHelper';
 import { mime } from '../../../utilsBundle';
+import { BrowserContext } from '../../browserContext';
+import { Page } from '../../page';
+
+import type { SnapshotData } from './snapshotterInjected';
+import type { RegisteredListener } from '../../../utils/eventsHelper';
+import type { Frame } from '../../frames';
+import type { FrameSnapshot } from '@trace/snapshot';
 
 export type SnapshotterBlob = {
   buffer: Buffer,

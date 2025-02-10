@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-import type playwright from 'playwright';
-import type { JSONSchemaType, ToolDeclaration } from '../../types';
-import type { ToolResult } from '../../browser';
 import { waitForNetwork } from './utils';
+
+import type { ToolResult } from '../../browser';
+import type { JSONSchemaType, ToolDeclaration } from '../../types';
+import type playwright from 'playwright';
+
 
 type LocatorEx = playwright.Locator & {
   _generateLocatorString: () => Promise<string>;

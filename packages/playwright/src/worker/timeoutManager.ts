@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { colors } from 'playwright-core/lib/utilsBundle';
 import { ManualPromise, monotonicTime } from 'playwright-core/lib/utils';
+import { colors } from 'playwright-core/lib/utilsBundle';
+
 import type { Location } from '../../types/testReporter';
 
 export type TimeSlot = {

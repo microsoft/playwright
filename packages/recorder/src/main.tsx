@@ -19,29 +19,33 @@ import * as React from 'react';
 import { Recorder } from './recorder';
 import './recorder.css';
 
-export const Main: React.FC = ({
-}) => {
+export const Main: React.FC = ({}) => {
   const [sources, setSources] = React.useState<Source[]>([]);
   const [paused, setPaused] = React.useState(false);
   const [log, setLog] = React.useState(new Map<string, CallLog>());
   const [mode, setMode] = React.useState<Mode>('none');
 
-  window.playwrightSetMode = setMode;
-  window.playwrightSetSources = React.useCallback((sources: Source[]) => {
-    setSources(sources);
-    window.playwrightSourcesEchoForTest = sources;
+  React.useLayoutEffect(() => {
+    window.playwrightSetMode = setMode;
+    window.playwrightSetSources = (sources, primaryPageURL) => {
+      setSources(sources);
+      window.playwrightSourcesEchoForTest = sources;
+      document.title = primaryPageURL
+        ? `Playwright Inspector - ${primaryPageURL}`
+        : `Playwright Inspector`;
+    };
+    window.playwrightSetPaused = setPaused;
+    window.playwrightUpdateLogs = callLogs => {
+      setLog(log => {
+        const newLog = new Map<string, CallLog>(log);
+        for (const callLog of callLogs) {
+          callLog.reveal = !log.has(callLog.id);
+          newLog.set(callLog.id, callLog);
+        }
+        return newLog;
+      });
+    };
   }, []);
-  window.playwrightSetPaused = setPaused;
-  window.playwrightUpdateLogs = callLogs => {
-    setLog(log => {
-      const newLog = new Map<string, CallLog>(log);
-      for (const callLog of callLogs) {
-        callLog.reveal = !log.has(callLog.id);
-        newLog.set(callLog.id, callLog);
-      }
-      return newLog;
-    });
-  };
 
   return <Recorder sources={sources} paused={paused} log={log} mode={mode} />;
 };

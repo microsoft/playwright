@@ -19,8 +19,9 @@ import * as http from 'http';
 import * as https from 'https';
 import * as net from 'net';
 import * as tls from 'tls';
-import { ManualPromise } from './manualPromise';
+
 import { assert } from './debug';
+import { ManualPromise } from './manualPromise';
 import { monotonicTime } from './time';
 
 // Implementation(partial) of Happy Eyeballs 2 algorithm described in

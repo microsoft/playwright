@@ -15,17 +15,22 @@
  */
 
 
-import type { LocatorEx } from './matchers';
-import type { ExpectMatcherState } from '../../types/test';
-import { kNoElementsFoundError, matcherHint, type MatcherResult } from './matcherHint';
+import * as fs from 'fs';
+import * as path from 'path';
+
+import { escapeTemplateString, isString, sanitizeForFilePath } from 'playwright-core/lib/utils';
+
+import {  kNoElementsFoundError, matcherHint } from './matcherHint';
 import { EXPECTED_COLOR } from '../common/expectBundle';
 import { callLogText, sanitizeFilePathBeforeExtension, trimLongString } from '../util';
 import { printReceivedStringContainExpectedSubstring } from './expect';
 import { currentTestInfo } from '../common/globals';
+
+import type { MatcherResult } from './matcherHint';
+import type { LocatorEx } from './matchers';
+import type { ExpectMatcherState } from '../../types/test';
 import type { MatcherReceived } from '@injected/ariaSnapshot';
-import { escapeTemplateString, isString, sanitizeForFilePath } from 'playwright-core/lib/utils';
-import fs from 'fs';
-import path from 'path';
+
 
 type ToMatchAriaSnapshotExpected = {
   name?: string;

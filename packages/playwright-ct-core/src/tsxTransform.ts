@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-import path from 'path';
-import type { T, BabelAPI, PluginObj } from 'playwright/src/transform/babelBundle';
-import { types, declare, traverse } from 'playwright/lib/transform/babelBundle';
+import * as path from 'path';
+
+import { declare, traverse, types } from 'playwright/lib/transform/babelBundle';
 import { setTransformData } from 'playwright/lib/transform/transform';
+
+import type { BabelAPI, PluginObj, T } from 'playwright/src/transform/babelBundle';
 const t: typeof T = types;
 
 let jsxComponentNames: Set<string>;

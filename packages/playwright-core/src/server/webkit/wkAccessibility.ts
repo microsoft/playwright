@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import type * as accessibility from '../accessibility';
-import type { WKSession } from './wkConnection';
 import type { Protocol } from './protocol';
+import type { WKSession } from './wkConnection';
 import type * as dom from '../dom';
 import type * as channels from '@protocol/channels';
 

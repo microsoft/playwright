@@ -9351,7 +9351,7 @@ export interface BrowserContext {
              */
             keyEncoded?: Object;
 
-            value: Object;
+            value?: Object;
 
             /**
              * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
@@ -10170,7 +10170,7 @@ export interface Browser {
                */
               keyEncoded?: Object;
 
-              value: Object;
+              value?: Object;
 
               /**
                * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
@@ -17758,7 +17758,7 @@ export interface APIRequest {
                */
               keyEncoded?: Object;
 
-              value: Object;
+              value?: Object;
 
               /**
                * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
@@ -18616,7 +18616,7 @@ export interface APIRequestContext {
              */
             keyEncoded?: Object;
 
-            value: Object;
+            value?: Object;
 
             /**
              * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
@@ -22512,7 +22512,7 @@ export interface BrowserContextOptions {
              */
             keyEncoded?: Object;
 
-            value: Object;
+            value?: Object;
 
             /**
              * if `value` is not JSON-serializable, this contains an encoded version that preserves types.

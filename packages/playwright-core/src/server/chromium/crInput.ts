@@ -15,14 +15,16 @@
  * limitations under the License.
  */
 
+import { isString } from '../../utils';
 import * as input from '../input';
+import { macEditingCommands } from '../macEditingCommands';
+import { toButtonsMask, toModifiersMask } from './crProtocolHelper';
+
 import type * as types from '../types';
 import type { CRSession } from './crConnection';
-import { macEditingCommands } from '../macEditingCommands';
-import { isString } from '../../utils';
 import type { DragManager } from './crDragDrop';
 import type { CRPage } from './crPage';
-import { toButtonsMask, toModifiersMask } from './crProtocolHelper';
+
 
 export class RawKeyboardImpl implements input.RawKeyboard {
   constructor(

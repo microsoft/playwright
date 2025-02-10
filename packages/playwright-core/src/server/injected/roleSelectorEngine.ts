@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-import type { SelectorEngine, SelectorRoot } from './selectorEngine';
-import { matchesAttributePart } from './selectorUtils';
 import { beginAriaCaches, endAriaCaches, getAriaChecked, getAriaDisabled, getAriaExpanded, getAriaLevel, getAriaPressed, getAriaRole, getAriaSelected, getElementAccessibleName, isElementHiddenForAria, kAriaCheckedRoles, kAriaExpandedRoles, kAriaLevelRoles, kAriaPressedRoles, kAriaSelectedRoles } from './roleUtils';
-import { parseAttributeSelector, type AttributeSelectorPart, type AttributeSelectorOperator } from '../../utils/isomorphic/selectorParser';
+import { matchesAttributePart } from './selectorUtils';
+import { parseAttributeSelector   } from '../../utils/isomorphic/selectorParser';
 import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
+
+import type { SelectorEngine, SelectorRoot } from './selectorEngine';
+import type { AttributeSelectorOperator, AttributeSelectorPart } from '../../utils/isomorphic/selectorParser';
 
 type RoleEngineOptions = {
   role: string;

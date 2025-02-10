@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-import type { Config, Fixtures, Project, ReporterDescription } from '../../types/test';
-import type { Location } from '../../types/testReporter';
-import type { TestRunnerPluginRegistration } from '../plugins';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+
 import { getPackageJsonPath, mergeObjects } from '../util';
+
+import type { Config, Fixtures, Project, ReporterDescription } from '../../types/test';
+import type { TestRunnerPluginRegistration } from '../plugins';
 import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
+import type { Location } from '../../types/testReporter';
 import type { FullConfig, FullProject } from '../../types/testReporter';
 
 export type ConfigLocation = {

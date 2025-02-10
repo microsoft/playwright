@@ -16,10 +16,11 @@
 
 /* eslint-disable no-console */
 
-import playwright from 'playwright';
 import browser from '@playwright/experimental-tools/browser';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
+import playwright from 'playwright';
+
 import type { ChatCompletionMessageParam, ChatCompletionTool } from 'openai/resources';
 
 dotenv.config();

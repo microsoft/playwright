@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { ManualPromise } from './manualPromise';
-import type { EventEmitter } from 'events';
 import { yazl } from '../zipBundle';
+
+import type { EventEmitter } from 'events';
 
 export const fileUploadSizeLimit = 50 * 1024 * 1024;
 

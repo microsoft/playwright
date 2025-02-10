@@ -16,10 +16,11 @@
 
 import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 import * as js from '../javascript';
-import type { BidiSession } from './bidiConnection';
 import { BidiDeserializer } from './third_party/bidiDeserializer';
 import * as bidi from './third_party/bidiProtocol';
 import { BidiSerializer } from './third_party/bidiSerializer';
+
+import type { BidiSession } from './bidiConnection';
 
 export class BidiExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: BidiSession;

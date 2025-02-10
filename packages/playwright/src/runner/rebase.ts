@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
-import path from 'path';
-import fs from 'fs';
-import type { T } from '../transform/babelBundle';
-import { types, traverse, babelParse } from '../transform/babelBundle';
+import * as fs from 'fs';
+import * as path from 'path';
+
+
 import { MultiMap } from 'playwright-core/lib/utils';
 import { colors, diff } from 'playwright-core/lib/utilsBundle';
-import type { FullConfigInternal } from '../common/config';
+
 import { filterProjects } from './projectUtils';
+import { babelParse, traverse, types } from '../transform/babelBundle';
+
+import type { FullConfigInternal } from '../common/config';
 import type { InternalReporter } from '../reporters/internalReporter';
+import type { T } from '../transform/babelBundle';
 const t: typeof T = types;
 
 type Location = {

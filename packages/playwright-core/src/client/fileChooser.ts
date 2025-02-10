@@ -17,8 +17,8 @@
 import type { ElementHandle } from './elementHandle';
 import type { Page } from './page';
 import type { FilePayload } from './types';
-import type * as channels from '@protocol/channels';
 import type * as api from '../../types/types';
+import type * as channels from '@protocol/channels';
 
 export class FileChooser implements api.FileChooser {
   private _page: Page;

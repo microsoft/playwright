@@ -14,33 +14,35 @@
  * limitations under the License.
  */
 
-import type EventEmitter from 'events';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-import type * as channels from '@protocol/channels';
-import { ManualPromise } from '../../utils/manualPromise';
-import { assert, calculateSha1, createGuid, removeFolders } from '../../utils';
-import type { RootDispatcher } from './dispatcher';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+
 import { Dispatcher } from './dispatcher';
-import { yazl, yauzl } from '../../zipBundle';
-import { ZipFile } from '../../utils/zipFile';
-import type * as har from '@trace/har';
-import type { HeadersArray } from '../types';
-import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
-import { WebSocketTransport } from '../transport';
-import { SocksInterceptor } from '../socksInterceptor';
-import type { CallMetadata } from '../instrumentation';
-import { getUserAgent } from '../../utils/userAgent';
-import type { Progress } from '../progress';
-import { ProgressController } from '../progress';
-import { fetchData } from '../../utils/network';
-import type { HTTPRequestParams } from '../../utils/network';
-import type http from 'http';
-import type { Playwright } from '../playwright';
 import { SdkObject } from '../../server/instrumentation';
+import { assert, calculateSha1, createGuid, removeFolders } from '../../utils';
 import { serializeClientSideCallMetadata } from '../../utils';
+import { ManualPromise } from '../../utils/manualPromise';
+import { fetchData } from '../../utils/network';
+import { getUserAgent } from '../../utils/userAgent';
+import { ZipFile } from '../../utils/zipFile';
+import { yauzl, yazl } from '../../zipBundle';
 import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
+import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
+import { ProgressController } from '../progress';
+import { SocksInterceptor } from '../socksInterceptor';
+import { WebSocketTransport } from '../transport';
+
+import type { HTTPRequestParams } from '../../utils/network';
+import type { CallMetadata } from '../instrumentation';
+import type { Playwright } from '../playwright';
+import type { Progress } from '../progress';
+import type { HeadersArray } from '../types';
+import type { RootDispatcher } from './dispatcher';
+import type * as channels from '@protocol/channels';
+import type * as har from '@trace/har';
+import type EventEmitter from 'events';
+import type http from 'http';
 
 export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;

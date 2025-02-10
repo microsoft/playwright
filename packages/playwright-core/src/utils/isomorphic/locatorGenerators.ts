@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+import {  parseAttributeSelector, parseSelector, stringifySelector } from './selectorParser';
 import { escapeWithQuotes, normalizeEscapedRegexQuotes, toSnakeCase, toTitleCase } from './stringUtils';
-import { type NestedSelectorBody, parseAttributeSelector, parseSelector, stringifySelector } from './selectorParser';
+
+import type { NestedSelectorBody } from './selectorParser';
 import type { ParsedSelector } from './selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';

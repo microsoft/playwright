@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import type { SpawnOptions } from 'child_process';
 import { spawn } from 'child_process';
+
+import type { SpawnOptions } from 'child_process';
 
 export function spawnAsync(cmd: string, args: string[], options: SpawnOptions = {}): Promise<{stdout: string, stderr: string, code: number | null, error?: Error}> {
   const process = spawn(cmd, args, Object.assign({ windowsHide: true }, options));

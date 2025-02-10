@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 import * as util from 'util';
+
+import { assert, headersObjectToArray, isString } from '../utils';
+import { toClientCertificatesProtocol } from './browserContext';
+import { ChannelOwner } from './channelOwner';
+import { TargetClosedError, isTargetClosedError } from './errors';
+import { RawHeaders } from './network';
+import { Tracing } from './tracing';
+import { mkdirIfNeeded } from '../utils/fileUtils';
+
+import type { Playwright } from './playwright';
+import type { ClientCertificate, FilePayload, Headers, SetStorageState, StorageState } from './types';
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray, NameValue } from '../common/types';
 import type * as channels from '@protocol/channels';
-import { assert, headersObjectToArray, isString } from '../utils';
-import { mkdirIfNeeded } from '../utils/fileUtils';
-import { ChannelOwner } from './channelOwner';
-import { RawHeaders } from './network';
-import type { ClientCertificate, FilePayload, Headers, SetStorageState, StorageState } from './types';
-import type { Playwright } from './playwright';
-import { Tracing } from './tracing';
-import { TargetClosedError, isTargetClosedError } from './errors';
-import { toClientCertificatesProtocol } from './browserContext';
 
 export type FetchOptions = {
   params?: { [key: string]: string | number | boolean; } | URLSearchParams | string,

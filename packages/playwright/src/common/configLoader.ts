@@ -16,16 +16,19 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+
 import { gracefullyProcessExitDoNotHang, isRegExp } from 'playwright-core/lib/utils';
-import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
+
 import { requireOrImport, setSingleTSConfig, setTransformConfig } from '../transform/transform';
-import type { Config, Project } from '../../types/test';
 import { errorWithFile, fileIsModule } from '../util';
-import type { ConfigLocation } from './config';
 import { FullConfigInternal } from './config';
-import { addToCompilationCache } from '../transform/compilationCache';
 import { configureESMLoader, configureESMLoaderTransformConfig, registerESMLoader } from './esmLoaderHost';
+import { addToCompilationCache } from '../transform/compilationCache';
 import { execArgvWithExperimentalLoaderOptions, execArgvWithoutExperimentalLoaderOptions } from '../transform/esmUtils';
+
+import type { ConfigLocation } from './config';
+import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
+import type { Config, Project } from '../../types/test';
 
 const kDefineConfigWasUsed = Symbol('defineConfigWasUsed');
 export const defineConfig = (...configs: any[]) => {
