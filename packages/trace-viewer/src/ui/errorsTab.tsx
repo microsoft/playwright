@@ -24,6 +24,9 @@ import type { StackFrame } from '@protocol/channels';
 import { CopyToClipboardTextButton } from './copyToClipboard';
 import { attachmentURL } from './attachmentsTab';
 import { fixTestPrompt } from '@web/components/prompts';
+import type { GitCommitInfo } from '@testIsomorphic/types';
+
+export const GitCommitInfoContext = React.createContext<GitCommitInfo | undefined>(undefined);
 
 const PromptButton: React.FC<{
   error: string;
@@ -44,7 +47,9 @@ const PromptButton: React.FC<{
     }
   }, [actions]);
 
-  const prompt = React.useMemo(() => fixTestPrompt(error, undefined, pageSnapshot), [error, pageSnapshot]);
+  const gitCommitInfo = React.useContext(GitCommitInfoContext);
+  console.log({ gitCommitInfo })
+  const prompt = React.useMemo(() => fixTestPrompt(error, gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'], pageSnapshot), [error, gitCommitInfo, pageSnapshot]);
 
   return <CopyToClipboardTextButton value={prompt} description='Fix with AI' copiedDescription={<>Copied <span className='codicon codicon-copy' style={{ marginLeft: '5px' }}/></>} style={{ width: '90px', justifyContent: 'center' }} />;
 };

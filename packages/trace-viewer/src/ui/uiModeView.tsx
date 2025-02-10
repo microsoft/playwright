@@ -37,6 +37,8 @@ import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
 import { DefaultSettingsView } from './defaultSettingsView';
+import type { GitCommitInfo } from '@testIsomorphic/types';
+import { GitCommitInfoContext } from './errorsTab';
 
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
@@ -397,6 +399,8 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, [closeInstallDialog, testServerConnection]);
 
+  const gitCommitInfo = React.useMemo(() => testModel?.config.metadata['git.commit.info'] as GitCommitInfo | undefined, [testModel]);
+
   return <div className='vbox ui-mode'>
     {!hasBrowsers && <dialog ref={dialogRef}>
       <div className='title'><span className='codicon codicon-lightbulb'></span>Install browsers</div>
@@ -430,13 +434,15 @@ export const UIModeView: React.FC<{}> = ({
           <XtermWrapper source={xtermDataSource}></XtermWrapper>
         </div>
         <div className={clsx('vbox', isShowingOutput && 'hidden')}>
-          <TraceView
-            pathSeparator={queryParams.pathSeparator}
-            item={selectedItem}
-            rootDir={testModel?.config?.rootDir}
-            revealSource={revealSource}
-            onOpenExternally={location => testServerConnection?.openNoReply({ location: { file: location.file, line: location.line, column: location.column } })}
-          />
+          <GitCommitInfoContext.Provider value={gitCommitInfo}>
+            <TraceView
+              pathSeparator={queryParams.pathSeparator}
+              item={selectedItem}
+              rootDir={testModel?.config?.rootDir}
+              revealSource={revealSource}
+              onOpenExternally={location => testServerConnection?.openNoReply({ location: { file: location.file, line: location.line, column: location.column } })}
+            />
+          </GitCommitInfoContext.Provider>
         </div>
       </div>}
       sidebar={<div className='vbox ui-mode-sidebar'>
