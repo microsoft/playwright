@@ -28,14 +28,14 @@ type MetadataEntries = [string, unknown][];
 
 export const MetadataContext = React.createContext<MetadataEntries>([]);
 
-export function MetadataProvider({ metadata }: React.PropsWithChildren<{ metadata: Metadata }>) {
+export function MetadataProvider({ metadata, children }: React.PropsWithChildren<{ metadata: Metadata }>) {
   const entries = React.useMemo(() => {
     // TODO: do not plumb actualWorkers through metadata.
 
     return Object.entries(metadata).filter(([key]) => key !== 'actualWorkers');
   }, [metadata]);
 
-  return <MetadataContext.Provider value={entries} />;
+  return <MetadataContext.Provider value={entries}>{children}</MetadataContext.Provider>;
 }
 
 export function useMetadata() {
