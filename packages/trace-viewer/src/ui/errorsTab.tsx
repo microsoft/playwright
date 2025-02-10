@@ -21,6 +21,59 @@ import { PlaceholderPanel } from './placeholderPanel';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { StackFrame } from '@protocol/channels';
+import { CopyToClipboardTextButton } from './copyToClipboard';
+import { attachmentURL } from './attachmentsTab';
+import { fixTestPrompt } from '@web/components/prompts';
+import type { GitCommitInfo } from '@testIsomorphic/types';
+
+const GitCommitInfoContext = React.createContext<GitCommitInfo | undefined>(undefined);
+
+export function GitCommitInfoProvider({ children, gitCommitInfo }: React.PropsWithChildren<{ gitCommitInfo: GitCommitInfo }>) {
+  return <GitCommitInfoContext.Provider value={gitCommitInfo}>{children}</GitCommitInfoContext.Provider>;
+}
+
+export function useGitCommitInfo() {
+  return React.useContext(GitCommitInfoContext);
+}
+
+const PromptButton: React.FC<{
+  error: string;
+  actions: modelUtil.ActionTraceEventInContext[];
+}> = ({ error, actions }) => {
+  const [pageSnapshot, setPageSnapshot] = React.useState<string>();
+
+  React.useEffect(() => {
+    for (const action of actions) {
+      for (const attachment of action.attachments ?? []) {
+        if (attachment.name === 'pageSnapshot') {
+          fetch(attachmentURL({ ...attachment, traceUrl: action.context.traceUrl })).then(async response => {
+            setPageSnapshot(await response.text());
+          });
+          return;
+        }
+      }
+    }
+  }, [actions]);
+
+  const gitCommitInfo = useGitCommitInfo();
+  const prompt = React.useMemo(
+      () => fixTestPrompt(
+          error,
+          gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'],
+          pageSnapshot
+      ),
+      [error, gitCommitInfo, pageSnapshot]
+  );
+
+  return (
+    <CopyToClipboardTextButton
+      value={prompt}
+      description='Fix with AI'
+      copiedDescription={<>Copied <span className='codicon codicon-copy' style={{ marginLeft: '5px' }}/></>}
+      style={{ width: '90px', justifyContent: 'center' }}
+    />
+  );
+};
 
 export type ErrorDescription = {
   action?: modelUtil.ActionTraceEventInContext;
@@ -44,9 +97,10 @@ export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined):
 
 export const ErrorsTab: React.FunctionComponent<{
   errorsModel: ErrorsTabModel,
+  actions: modelUtil.ActionTraceEventInContext[],
   sdkLanguage: Language,
   revealInSource: (error: ErrorDescription) => void,
-}> = ({ errorsModel, sdkLanguage, revealInSource }) => {
+}> = ({ errorsModel, sdkLanguage, revealInSource, actions }) => {
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
 
@@ -72,6 +126,9 @@ export const ErrorsTab: React.FunctionComponent<{
           {location && <div className='action-location'>
             @ <span title={longLocation} onClick={() => revealInSource(error)}>{location}</span>
           </div>}
+          <span style={{ position: 'absolute', right: '5px' }}>
+            <PromptButton error={message} actions={actions} />
+          </span>
         </div>
         <ErrorMessage error={message} />
       </div>;
