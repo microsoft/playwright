@@ -26,7 +26,15 @@ import { attachmentURL } from './attachmentsTab';
 import { fixTestPrompt } from '@web/components/prompts';
 import type { GitCommitInfo } from '@testIsomorphic/types';
 
-export const GitCommitInfoContext = React.createContext<GitCommitInfo | undefined>(undefined);
+const GitCommitInfoContext = React.createContext<GitCommitInfo | undefined>(undefined);
+
+export function GitCommitInfoProvider({ children, gitCommitInfo }: React.PropsWithChildren<{ gitCommitInfo: GitCommitInfo }>) {
+  return <GitCommitInfoContext.Provider value={gitCommitInfo}>{children}</GitCommitInfoContext.Provider>;
+}
+
+export function useGitCommitInfo() {
+  return React.useContext(GitCommitInfoContext);
+}
 
 const PromptButton: React.FC<{
   error: string;
@@ -47,7 +55,7 @@ const PromptButton: React.FC<{
     }
   }, [actions]);
 
-  const gitCommitInfo = React.useContext(GitCommitInfoContext);
+  const gitCommitInfo = useGitCommitInfo();
   const prompt = React.useMemo(
     () => fixTestPrompt(
       error,

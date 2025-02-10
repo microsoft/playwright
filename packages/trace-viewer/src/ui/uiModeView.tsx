@@ -37,8 +37,7 @@ import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
 import { DefaultSettingsView } from './defaultSettingsView';
-import type { GitCommitInfo } from '@testIsomorphic/types';
-import { GitCommitInfoContext } from './errorsTab';
+import { GitCommitInfoProvider } from './errorsTab';
 
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
@@ -432,7 +431,7 @@ export const UIModeView: React.FC<{}> = ({
           <XtermWrapper source={xtermDataSource}></XtermWrapper>
         </div>
         <div className={clsx('vbox', isShowingOutput && 'hidden')}>
-          <GitCommitInfoContext.Provider value={testModel?.config.metadata['git.commit.info']}>
+          <GitCommitInfoProvider gitCommitInfo={testModel?.config.metadata['git.commit.info']}>
             <TraceView
               pathSeparator={queryParams.pathSeparator}
               item={selectedItem}
@@ -440,7 +439,7 @@ export const UIModeView: React.FC<{}> = ({
               revealSource={revealSource}
               onOpenExternally={location => testServerConnection?.openNoReply({ location: { file: location.file, line: location.line, column: location.column } })}
             />
-          </GitCommitInfoContext.Provider>
+          </GitCommitInfoProvider>
         </div>
       </div>}
       sidebar={<div className='vbox ui-mode-sidebar'>
