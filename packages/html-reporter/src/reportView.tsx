@@ -26,6 +26,7 @@ import './reportView.css';
 import { TestCaseView } from './testCaseView';
 import { TestFilesHeader, TestFilesView } from './testFilesView';
 import './theme.css';
+import { MetadataProvider } from './metadataView';
 
 declare global {
   interface Window {
@@ -72,7 +73,7 @@ export const ReportView: React.FC<{
     return result;
   }, [report, filter]);
 
-  return <div className='htmlreport vbox px-4 pb-4'>
+  return <MetadataProvider metadata={report?.json().metadata ?? {}}><div className='htmlreport vbox px-4 pb-4'>
     <main>
       {report?.json() && <HeaderView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText}></HeaderView>}
       <Route predicate={testFilesRoutePredicate}>
@@ -88,7 +89,7 @@ export const ReportView: React.FC<{
         {!!report && <TestCaseViewLoader report={report} tests={filteredTests.tests} testIdToFileIdMap={testIdToFileIdMap} />}
       </Route>
     </main>
-  </div>;
+  </div></MetadataProvider>;
 };
 
 const TestCaseViewLoader: React.FC<{

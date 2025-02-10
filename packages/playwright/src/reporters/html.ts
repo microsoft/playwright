@@ -449,6 +449,17 @@ class HtmlBuilder {
         return a;
       }
 
+      if (a.name === 'pageSnapshot') {
+        try {
+          const body = fs.readFileSync(a.path!, { encoding: 'utf-8' });
+          return {
+            name: 'pageSnapshot',
+            contentType: a.contentType,
+            body,
+          };
+        } catch {}
+      }
+
       if (a.path) {
         let fileName = a.path;
         try {

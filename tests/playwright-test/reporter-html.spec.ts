@@ -2694,6 +2694,59 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByText('my test').click();
       await expect(page.locator('.tree-item', { hasText: 'stdout' })).toHaveCount(1);
     });
+
+    test('should show AI prompt', async ({ runInlineTest, writeFiles, showReport, page }) => {
+      const files = {
+        'uncommitted.txt': `uncommitted file`,
+        'playwright.config.ts': `
+          export default {
+            populateGitInfo: true,
+            metadata: { foo: 'value1', bar: { prop: 'value2' }, baz: ['value3', 123] }
+          };
+        `,
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('sample', async ({}) => { expect(2).toBe(3); });
+        `,
+      };
+      const baseDir = await writeFiles(files);
+
+      const execGit = async (args: string[]) => {
+        const { code, stdout, stderr } = await spawnAsync('git', args, { stdio: 'pipe', cwd: baseDir });
+        if (!!code)
+          throw new Error(`Non-zero exit of:\n$ git ${args.join(' ')}\nConsole:\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\n`);
+        return;
+      };
+
+      await execGit(['init']);
+      await execGit(['config', '--local', 'user.email', 'shakespeare@example.local']);
+      await execGit(['config', '--local', 'user.name', 'William']);
+      await execGit(['add', 'playwright.config.ts']);
+      await execGit(['commit', '-m', 'init']);
+      await execGit(['add', '*.ts']);
+      await execGit(['commit', '-m', 'chore(html): make this test look nice']);
+
+      const result = await runInlineTest(files, { reporter: 'dot,html' }, {
+        PLAYWRIGHT_HTML_OPEN: 'never',
+        GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test',
+        GITHUB_RUN_ID: 'example-run-id',
+        GITHUB_SERVER_URL: 'https://playwright.dev',
+        GITHUB_SHA: 'example-sha',
+        GITHUB_REF_NAME: '42/merge',
+        GITHUB_BASE_REF: 'HEAD~1',
+      });
+
+      expect(result.exitCode).toBe(1);
+      await showReport();
+
+      await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+
+      await page.getByRole('link', { name: 'sample' }).click();
+      await page.getByRole('button', { name: 'Fix with AI' }).click();
+      const prompt = await page.evaluate(() => navigator.clipboard.readText());
+      expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
+      expect(prompt, 'contains diff').toContain(`+          test('sample', async ({}) => { expect(2).toBe(3); });`);
+    });
   });
 }
 
