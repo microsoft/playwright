@@ -42,7 +42,7 @@ const PromptButton: React.FC<{
 }> = ({ error, actions }) => {
   const [pageSnapshot, setPageSnapshot] = React.useState<string>();
 
-  React.useEffect(( )=> {
+  React.useEffect(() => {
     for (const action of actions) {
       for (const attachment of action.attachments ?? []) {
         if (attachment.name === 'pageSnapshot') {
@@ -57,12 +57,12 @@ const PromptButton: React.FC<{
 
   const gitCommitInfo = useGitCommitInfo();
   const prompt = React.useMemo(
-    () => fixTestPrompt(
-      error,
-      gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'],
-      pageSnapshot
-    ),
-    [error, gitCommitInfo, pageSnapshot]
+      () => fixTestPrompt(
+          error,
+          gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'],
+          pageSnapshot
+      ),
+      [error, gitCommitInfo, pageSnapshot]
   );
 
   return (
@@ -70,7 +70,7 @@ const PromptButton: React.FC<{
       value={prompt}
       description='Fix with AI'
       copiedDescription={<>Copied <span className='codicon codicon-copy' style={{ marginLeft: '5px' }}/></>}
-      style={{ width: '90px', justifyContent: 'center' }} 
+      style={{ width: '90px', justifyContent: 'center' }}
     />
   );
 };
