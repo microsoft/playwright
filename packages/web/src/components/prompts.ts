@@ -21,25 +21,33 @@ function stripAnsiEscapes(str: string): string {
 
 export function fixTestPrompt(error: string, diff?: string, pageSnapshot?: string) {
   const promptParts = [
-    'This test failed, suggest how to fix it. Please be correct, concise and keep Playwright best practices in mind.',
+    `My Playwright test failed. What's going wrong?`,
+    `Please give me a suggestion how to fix it, and then explain what went wrong. Be very concise and apply Playwright best practices.`,
+    `Don't include many headings in your output. Make sure what you're saying is correct, and take into account whether there might be a bug in the app.`,
     'Here is the error:',
     '\n',
+    '```js',
     stripAnsiEscapes(error),
+    '```',
     '\n',
   ];
 
   if (pageSnapshot) {
     promptParts.push(
-        'This is how the page looked at the end of the test:',
+        'This is how the page looked at the end of the test:\n',
+        '```yaml',
         pageSnapshot,
+        '```',
         '\n'
     );
   }
 
   if (diff) {
     promptParts.push(
-        'And this is the code diff:',
+        'And this is the code diff:\n',
+        '```diff',
         diff,
+        '```',
         '\n'
     );
   }
