@@ -41,12 +41,15 @@
   align-items: center;
 }
 
-.metadata-properties > div {
-  height: 24px;
+.metadata-properties {
+  display: flex;
+  flex-direction: column;
+  align-items: normal;
+  gap: 8px;
 }
 
-.metadata-properties > div:not(:last-of-type) {
-  margin-bottom: 8px;
+.metadata-properties > div {
+  height: 24px;
 }
 
 .metadata-separator {
