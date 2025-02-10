@@ -329,7 +329,7 @@ test('should print nice error when project is unknown', async ({ runInlineTest }
 
 test('should print nice error when project is unknown and launching UI mode', async ({ runInlineTest }) => {
   // Prevent UI mode from opening and the test never finishing
-  setTimeout(() => expect(false).toBeTruthy(), 30000);
+  test.setTimeout(5000);
   const { output, exitCode } = await runInlineTest({
     'playwright.config.ts': `
       module.exports = { projects: [
