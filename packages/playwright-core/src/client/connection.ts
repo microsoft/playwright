@@ -47,6 +47,7 @@ import { formatCallLog, rewriteErrorMessage } from '../utils/stackTrace';
 import { zones } from '../utils/zones';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
+import type { HeadersArray } from './types';
 import type { ValidatorContext } from '../protocol/validator';
 import type { Platform } from '../utils/platform';
 import type * as channels from '@protocol/channels';
@@ -81,13 +82,16 @@ export class Connection extends EventEmitter {
   private _tracingCount = 0;
   readonly _instrumentation: ClientInstrumentation;
   readonly platform: Platform;
+  // Used from @playwright/test fixtures -> TODO remove?
+  readonly headers: HeadersArray;
 
-  constructor(localUtils: LocalUtils | undefined, platform: Platform, instrumentation: ClientInstrumentation | undefined) {
+  constructor(localUtils: LocalUtils | undefined, platform: Platform, instrumentation: ClientInstrumentation | undefined, headers: HeadersArray) {
     super();
     this._instrumentation = instrumentation || createInstrumentation();
     this._localUtils = localUtils;
     this.platform = platform;
     this._rootObject = new Root(this);
+    this.headers = headers;
   }
 
   markAsRemote() {

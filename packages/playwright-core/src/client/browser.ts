@@ -24,7 +24,7 @@ import { mkdirIfNeeded } from '../utils/fileUtils';
 
 import type { BrowserType } from './browserType';
 import type { Page } from './page';
-import type { BrowserContextOptions, HeadersArray, LaunchOptions } from './types';
+import type { BrowserContextOptions, LaunchOptions } from './types';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 
@@ -37,9 +37,6 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   _options: LaunchOptions = {};
   readonly _name: string;
   private _path: string | undefined;
-
-  // Used from @playwright/test fixtures.
-  _connectHeaders?: HeadersArray;
   _closeReason: string | undefined;
 
   static from(browser: channels.BrowserChannel): Browser {

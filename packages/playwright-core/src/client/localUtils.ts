@@ -15,6 +15,7 @@
  */
 
 import { ChannelOwner } from './channelOwner';
+import { Connection } from './connection';
 import * as localUtils from '../utils/localUtils';
 
 import type { Size } from './types';
@@ -76,7 +77,28 @@ export class LocalUtils extends ChannelOwner<channels.LocalUtilsChannel> {
     return await localUtils.addStackToTracingNoReply(this._stackSessions, params);
   }
 
-  async connect(params: channels.LocalUtilsConnectParams): Promise<channels.LocalUtilsConnectResult> {
-    return await this._channel.connect(params);
+  async connect(params: channels.LocalUtilsConnectParams): Promise<Connection> {
+    const { pipe, headers: connectHeaders } = await this._channel.connect(params);
+    const closePipe = () => this._wrapApiCall(() => pipe.close().catch(() => {}), /* isInternal */ true);
+    const connection = new Connection(this, this._platform, this._instrumentation, connectHeaders);
+    connection.markAsRemote();
+    connection.on('close', closePipe);
+
+    let closeError: string | undefined;
+    const onPipeClosed = (reason?: string) => {
+      connection.close(reason || closeError);
+    };
+    pipe.on('closed', params => onPipeClosed(params.reason));
+    connection.onmessage = message => this._wrapApiCall(() => pipe.send({ message }).catch(() => onPipeClosed()), /* isInternal */ true);
+
+    pipe.on('message', ({ message }) => {
+      try {
+        connection!.dispatch(message);
+      } catch (e) {
+        closeError = String(e);
+        closePipe();
+      }
+    });
+    return connection;
   }
 }

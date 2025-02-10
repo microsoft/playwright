@@ -18,7 +18,6 @@ import { EventEmitter } from 'events';
 
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { Connection } from './connection';
 import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
 import { Waiter } from './waiter';
@@ -72,45 +71,28 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
       const headers = { 'x-playwright-browser': 'android', ...options.headers };
       const localUtils = this._connection.localUtils();
       const connectParams: channels.LocalUtilsConnectParams = { wsEndpoint, headers, slowMo: options.slowMo, timeout: options.timeout };
-      const { pipe } = await localUtils.connect(connectParams);
-      const closePipe = () => pipe.close().catch(() => {});
-      const connection = new Connection(localUtils, this._platform, this._instrumentation);
-      connection.markAsRemote();
-      connection.on('close', closePipe);
+      const connection = await localUtils.connect(connectParams);
 
       let device: AndroidDevice;
-      let closeError: string | undefined;
-      const onPipeClosed = () => {
+      connection.on('close', () => {
         device?._didClose();
-        connection.close(closeError);
-      };
-      pipe.on('closed', onPipeClosed);
-      connection.onmessage = message => pipe.send({ message }).catch(onPipeClosed);
-
-      pipe.on('message', ({ message }) => {
-        try {
-          connection!.dispatch(message);
-        } catch (e) {
-          closeError = String(e);
-          closePipe();
-        }
       });
 
       const result = await raceAgainstDeadline(async () => {
         const playwright = await connection!.initializePlaywright();
         if (!playwright._initializer.preConnectedAndroidDevice) {
-          closePipe();
+          connection.close();
           throw new Error('Malformed endpoint. Did you use Android.launchServer method?');
         }
         device = AndroidDevice.from(playwright._initializer.preConnectedAndroidDevice!);
         device._shouldCloseConnectionOnClose = true;
-        device.on(Events.AndroidDevice.Close, closePipe);
+        device.on(Events.AndroidDevice.Close, () => connection.close());
         return device;
       }, deadline);
       if (!result.timedOut) {
         return result.result;
       } else {
-        closePipe();
+        connection.close();
         throw new Error(`Timeout ${options.timeout}ms exceeded`);
       }
     });
