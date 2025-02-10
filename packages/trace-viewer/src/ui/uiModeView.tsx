@@ -399,8 +399,6 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, [closeInstallDialog, testServerConnection]);
 
-  const gitCommitInfo = React.useMemo(() => testModel?.config.metadata['git.commit.info'] as GitCommitInfo | undefined, [testModel]);
-
   return <div className='vbox ui-mode'>
     {!hasBrowsers && <dialog ref={dialogRef}>
       <div className='title'><span className='codicon codicon-lightbulb'></span>Install browsers</div>
@@ -434,7 +432,7 @@ export const UIModeView: React.FC<{}> = ({
           <XtermWrapper source={xtermDataSource}></XtermWrapper>
         </div>
         <div className={clsx('vbox', isShowingOutput && 'hidden')}>
-          <GitCommitInfoContext.Provider value={gitCommitInfo}>
+          <GitCommitInfoContext.Provider value={testModel?.config.metadata['git.commit.info']}>
             <TraceView
               pathSeparator={queryParams.pathSeparator}
               item={selectedItem}

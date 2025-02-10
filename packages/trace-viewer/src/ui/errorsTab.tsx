@@ -48,10 +48,23 @@ const PromptButton: React.FC<{
   }, [actions]);
 
   const gitCommitInfo = React.useContext(GitCommitInfoContext);
-  console.log({ gitCommitInfo })
-  const prompt = React.useMemo(() => fixTestPrompt(error, gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'], pageSnapshot), [error, gitCommitInfo, pageSnapshot]);
+  const prompt = React.useMemo(
+    () => fixTestPrompt(
+      error,
+      gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'],
+      pageSnapshot
+    ),
+    [error, gitCommitInfo, pageSnapshot]
+  );
 
-  return <CopyToClipboardTextButton value={prompt} description='Fix with AI' copiedDescription={<>Copied <span className='codicon codicon-copy' style={{ marginLeft: '5px' }}/></>} style={{ width: '90px', justifyContent: 'center' }} />;
+  return (
+    <CopyToClipboardTextButton
+      value={prompt}
+      description='Fix with AI'
+      copiedDescription={<>Copied <span className='codicon codicon-copy' style={{ marginLeft: '5px' }}/></>}
+      style={{ width: '90px', justifyContent: 'center' }} 
+    />
+  );
 };
 
 export type ErrorDescription = {
@@ -109,7 +122,6 @@ export const ErrorsTab: React.FunctionComponent<{
             <PromptButton error={message} actions={actions} />
           </span>
         </div>
-        
         <ErrorMessage error={message} />
       </div>;
     })}
