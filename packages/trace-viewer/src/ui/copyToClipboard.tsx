@@ -21,9 +21,8 @@ import './copyToClipboard.css';
 export const CopyToClipboard: React.FunctionComponent<{
   value: string | (() => Promise<string>),
   description?: string,
-  copyIcon?: string;
-}> = ({ value, description, copyIcon = 'copy' }) => {
-  const [icon, setIcon] = React.useState(copyIcon);
+}> = ({ value, description }) => {
+  const [icon, setIcon] = React.useState('copy');
 
   const handleCopy = React.useCallback(() => {
     const valuePromise = typeof value === 'function' ? value() : Promise.resolve(value);
@@ -31,7 +30,7 @@ export const CopyToClipboard: React.FunctionComponent<{
       navigator.clipboard.writeText(value).then(() => {
         setIcon('check');
         setTimeout(() => {
-          setIcon(copyIcon);
+          setIcon('copy');
         }, 3000);
       }, () => {
         setIcon('close');
@@ -40,8 +39,8 @@ export const CopyToClipboard: React.FunctionComponent<{
       setIcon('close');
     });
 
-  }, [value, copyIcon]);
-  return <ToolbarButton title={description ?? 'Copy'} icon={icon} onClick={handleCopy}/>;
+  }, [value]);
+  return <ToolbarButton title={description ? description : 'Copy'} icon={icon} onClick={handleCopy}/>;
 };
 
 export const CopyToClipboardTextButton: React.FunctionComponent<{
