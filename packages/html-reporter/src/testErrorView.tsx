@@ -55,18 +55,18 @@ const PromptButton: React.FC<{
       result?.attachments.find(a => a.name === 'pageSnapshot')?.body
   ), [gitCommitInfo, result, error]);
 
-  const [copied, setCopied] = React.useState(false);  
+  const [copied, setCopied] = React.useState(false);
 
   return <button
     className='prompt-button'
     onClick={async () => {
-      await navigator.clipboard.writeText(prompt)
+      await navigator.clipboard.writeText(prompt);
       setCopied(true);
       setTimeout(() => {
         setCopied(false);
       }, 3000);
     }}>
-      {copied ? <span className='prompt-button-copied'>Copied <icons.copy/></span> : 'Fix with AI'}
+    {copied ? <span className='prompt-button-copied'>Copied <icons.copy/></span> : 'Fix with AI'}
   </button>;
 };
 
