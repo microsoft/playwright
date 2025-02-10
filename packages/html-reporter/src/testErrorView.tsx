@@ -21,7 +21,6 @@ import * as icons from './icons';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
 import type { TestResult } from './types';
-import { CopyToClipboard } from './copyToClipboard';
 import { fixTestPrompt } from '@web/components/prompts';
 import { useGitCommitInfo } from './metadataView';
 
@@ -56,7 +55,19 @@ const PromptButton: React.FC<{
       result?.attachments.find(a => a.name === 'pageSnapshot')?.body
   ), [gitCommitInfo, result, error]);
 
-  return <CopyToClipboard value={prompt} icon={<icons.copilot />} title='Copy prompt to clipboard' />;
+  const [copied, setCopied] = React.useState(false);  
+
+  return <button
+    className='prompt-button'
+    onClick={async () => {
+      await navigator.clipboard.writeText(prompt)
+      setCopied(true);
+      setTimeout(() => {
+        setCopied(false);
+      }, 3000);
+    }}>
+      {copied ? <span className='prompt-button-copied'>Copied <icons.copy/></span> : 'Fix with AI'}
+  </button>;
 };
 
 export const TestScreenshotErrorView: React.FC<{
