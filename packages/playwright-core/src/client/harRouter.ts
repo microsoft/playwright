@@ -19,8 +19,8 @@ import { debugLogger } from '../utils/debugLogger';
 import type { BrowserContext } from './browserContext';
 import type { LocalUtils } from './localUtils';
 import type { Route } from './network';
-import type { URLMatch } from '../utils';
 import type { Page } from './page';
+import type { URLMatch } from '../utils/isomorphic/urlMatch';
 
 type HarNotFoundAction = 'abort' | 'fallback';
 

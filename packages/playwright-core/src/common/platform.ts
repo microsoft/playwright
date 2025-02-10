@@ -14,11 +14,30 @@
  * limitations under the License.
  */
 
-import type { Platform } from '../common/platform';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as util from 'util';
 
-export const fileUploadSizeLimit = 50 * 1024 * 1024;
+export type Platform = {
+  fs: () => typeof fs;
+  path: () => typeof path;
+  inspectCustom: symbol | undefined;
+};
 
-export async function mkdirIfNeeded(platform: Platform, filePath: string) {
-  // This will harmlessly throw on windows if the dirname is the root directory.
-  await platform.fs().promises.mkdir(platform.path().dirname(filePath), { recursive: true }).catch(() => {});
-}
+export const emptyPlatform: Platform = {
+  fs: () => {
+    throw new Error('File system is not available');
+  },
+
+  path: () => {
+    throw new Error('Path module is not available');
+  },
+
+  inspectCustom: undefined,
+};
+
+export const nodePlatform: Platform = {
+  fs: () => fs,
+  path: () => path,
+  inspectCustom: util.inspect.custom,
+};

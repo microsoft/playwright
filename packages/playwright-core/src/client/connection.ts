@@ -42,10 +42,12 @@ import { Tracing } from './tracing';
 import { Worker } from './worker';
 import { WritableStream } from './writableStream';
 import { ValidationError, findValidator  } from '../protocol/validator';
-import { formatCallLog, rewriteErrorMessage, zones } from '../utils';
 import { debugLogger } from '../utils/debugLogger';
+import { formatCallLog, rewriteErrorMessage } from '../utils/stackTrace';
+import { zones } from '../utils/zones';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
+import type { Platform } from '../common/platform';
 import type { ValidatorContext } from '../protocol/validator';
 import type * as channels from '@protocol/channels';
 
@@ -78,11 +80,13 @@ export class Connection extends EventEmitter {
   toImpl: ((client: ChannelOwner) => any) | undefined;
   private _tracingCount = 0;
   readonly _instrumentation: ClientInstrumentation;
+  readonly platform: Platform;
 
-  constructor(localUtils: LocalUtils | undefined, instrumentation: ClientInstrumentation | undefined) {
+  constructor(localUtils: LocalUtils | undefined, platform: Platform, instrumentation: ClientInstrumentation | undefined) {
     super();
     this._instrumentation = instrumentation || createInstrumentation();
     this._localUtils = localUtils;
+    this.platform = platform;
     this._rootObject = new Root(this);
   }
 

@@ -33,7 +33,6 @@ export * from './isomorphic/stringUtils';
 export * from './isomorphic/urlMatch';
 export * from './multimap';
 export * from './network';
-export * from './processLauncher';
 export * from './profiler';
 export * from './rtti';
 export * from './semaphore';

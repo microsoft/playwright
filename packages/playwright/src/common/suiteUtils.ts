@@ -16,7 +16,8 @@
 
 import * as path from 'path';
 
-import { calculateSha1, toPosixPath } from 'playwright-core/lib/utils';
+import { toPosixPath } from 'playwright-core/lib/server';
+import { calculateSha1 } from 'playwright-core/lib/utils';
 
 import { createFileMatcher } from '../util';
 

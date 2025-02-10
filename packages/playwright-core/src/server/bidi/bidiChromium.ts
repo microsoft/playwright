@@ -22,9 +22,9 @@ import { BidiBrowser } from './bidiBrowser';
 import { kBrowserCloseMessageId } from './bidiConnection';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
 
-import type { Env } from '../../utils/processLauncher';
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
+import type { Env } from '../processLauncher';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';

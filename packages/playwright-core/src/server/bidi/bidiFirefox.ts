@@ -23,9 +23,9 @@ import { BidiBrowser } from './bidiBrowser';
 import { kBrowserCloseMessageId } from './bidiConnection';
 import { createProfile } from './third_party/firefoxPrefs';
 
-import type { Env } from '../../utils/processLauncher';
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
+import type { Env } from '../processLauncher';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';

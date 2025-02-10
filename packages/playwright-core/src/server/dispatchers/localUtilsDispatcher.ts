@@ -20,7 +20,7 @@ import * as path from 'path';
 
 import { Dispatcher } from './dispatcher';
 import { SdkObject } from '../../server/instrumentation';
-import { assert, calculateSha1, createGuid, removeFolders } from '../../utils';
+import { assert, calculateSha1, createGuid } from '../../utils';
 import { serializeClientSideCallMetadata } from '../../utils';
 import { ManualPromise } from '../../utils/manualPromise';
 import { fetchData } from '../../utils/network';
@@ -29,6 +29,7 @@ import { ZipFile } from '../../utils/zipFile';
 import { yauzl, yazl } from '../../zipBundle';
 import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
+import { removeFolders } from '../fileUtils';
 import { ProgressController } from '../progress';
 import { SocksInterceptor } from '../socksInterceptor';
 import { WebSocketTransport } from '../transport';

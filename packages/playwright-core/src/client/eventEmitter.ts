@@ -24,7 +24,7 @@
 
 import { EventEmitter as OriginalEventEmitter } from 'events';
 
-import { isUnderTest } from '../utils';
+import { isUnderTest } from '../utils/debug';
 
 import type { EventEmitter as EventEmitterType } from 'events';
 

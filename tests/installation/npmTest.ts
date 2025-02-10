@@ -22,7 +22,7 @@ import debugLogger from 'debug';
 import { Registry }  from './registry';
 import type { CommonFixtures, CommonWorkerFixtures } from '../config/commonFixtures';
 import { commonFixtures } from '../config/commonFixtures';
-import { removeFolders } from '../../packages/playwright-core/lib/utils/fileUtils';
+import { removeFolders } from '../../packages/playwright-core/lib/server/fileUtils';
 import { spawnAsync } from '../../packages/playwright-core/lib/utils/spawnAsync';
 import type { SpawnOptions } from 'child_process';
 
