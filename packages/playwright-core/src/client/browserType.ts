@@ -133,7 +133,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       };
       if ((params as any).__testHookRedirectPortForwarding)
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
-      const { pipe, headers: connectHeaders } = await localUtils._channel.connect(connectParams);
+      const { pipe, headers: connectHeaders } = await localUtils.connect(connectParams);
       const closePipe = () => pipe.close().catch(() => {});
       const connection = new Connection(localUtils, this._platform, this._instrumentation);
       connection.markAsRemote();

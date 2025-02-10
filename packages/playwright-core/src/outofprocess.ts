@@ -18,9 +18,9 @@ import * as childProcess from 'child_process';
 import * as path from 'path';
 
 import { Connection } from './client/connection';
-import { nodePlatform } from './common/platform';
 import { PipeTransport } from './protocol/transport';
 import { ManualPromise } from './utils/manualPromise';
+import { nodePlatform } from './utils/platform';
 
 import type { Playwright } from './client/playwright';
 

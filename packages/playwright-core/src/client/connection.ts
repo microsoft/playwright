@@ -47,8 +47,8 @@ import { formatCallLog, rewriteErrorMessage } from '../utils/stackTrace';
 import { zones } from '../utils/zones';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
-import type { Platform } from '../common/platform';
 import type { ValidatorContext } from '../protocol/validator';
+import type { Platform } from '../utils/platform';
 import type * as channels from '@protocol/channels';
 
 class Root extends ChannelOwner<channels.RootChannel> {
@@ -142,7 +142,7 @@ export class Connection extends EventEmitter {
     const location = frames[0] ? { file: frames[0].file, line: frames[0].line, column: frames[0].column } : undefined;
     const metadata: channels.Metadata = { apiName, location, internal: !apiName, stepId };
     if (this._tracingCount && frames && type !== 'LocalUtils')
-      this._localUtils?._channel.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
+      this._localUtils?.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
     // We need to exit zones before calling into the server, otherwise
     // when we receive events from the server, we would be in an API zone.
     zones.empty().run(() => this.onmessage({ ...message, metadata }));

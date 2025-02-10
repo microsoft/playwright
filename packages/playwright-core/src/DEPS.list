@@ -8,7 +8,7 @@
 **
 
 [inprocess.ts]
-common/
+utils/
 
 [outofprocess.ts]
 client/

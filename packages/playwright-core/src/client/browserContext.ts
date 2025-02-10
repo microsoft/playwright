@@ -45,8 +45,8 @@ import type { BrowserType } from './browserType';
 import type { BrowserContextOptions, Headers, LaunchOptions, StorageState, WaitForEventOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type { Platform } from '../common/platform';
 import type { URLMatch } from '../utils/isomorphic/urlMatch';
+import type { Platform } from '../utils/platform';
 import type * as channels from '@protocol/channels';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
@@ -485,7 +485,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         const needCompressed = harParams.path.endsWith('.zip');
         if (isCompressed && !needCompressed) {
           await artifact.saveAs(harParams.path + '.tmp');
-          await this._connection.localUtils()._channel.harUnzip({ zipFile: harParams.path + '.tmp', harFile: harParams.path });
+          await this._connection.localUtils().harUnzip({ zipFile: harParams.path + '.tmp', harFile: harParams.path });
         } else {
           await artifact.saveAs(harParams.path);
         }

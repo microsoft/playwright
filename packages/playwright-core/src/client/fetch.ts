@@ -28,8 +28,8 @@ import type { Playwright } from './playwright';
 import type { ClientCertificate, FilePayload, Headers, SetStorageState, StorageState } from './types';
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
-import type { Platform } from '../common/platform';
 import type { HeadersArray, NameValue } from '../common/types';
+import type { Platform } from '../utils/platform';
 import type * as channels from '@protocol/channels';
 import type * as fs from 'fs';
 
