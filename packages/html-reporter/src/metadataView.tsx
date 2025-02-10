@@ -92,8 +92,8 @@ const InnerMetadataView = () => {
         const valueString = typeof value !== 'object' || value === null || value === undefined ? String(value) : JSON.stringify(value);
         const trimmedValue = valueString.length > 1000 ? valueString.slice(0, 1000) + '\u2026' : valueString;
         return (
-          <div className='copyable-property'>
-            <CopyToClipboardContainer key={propertyName} value={valueString}>
+          <div key={propertyName} className='copyable-property'>
+            <CopyToClipboardContainer value={valueString}>
               <span style={{ fontWeight: 'bold' }} title={propertyName}>{propertyName}</span>
               : <span title={trimmedValue}>{linkifyText(trimmedValue)}</span>
             </CopyToClipboardContainer>
