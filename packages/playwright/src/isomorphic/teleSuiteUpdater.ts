@@ -16,8 +16,9 @@
 
 import { TeleReporterReceiver, TeleSuite } from './teleReceiver';
 import { statusEx } from './testTree';
-import type { ReporterV2 } from '../reporters/reporterV2';
+
 import type * as reporterTypes from '../../types/testReporter';
+import type { ReporterV2 } from '../reporters/reporterV2';
 
 export type TeleSuiteUpdaterProgress = {
   total: number;

@@ -9,16 +9,17 @@
 import { isError } from '@jest/expect-utils';
 import {
   EXPECTED_COLOR,
-  type MatcherHintOptions,
+
   RECEIVED_COLOR,
   matcherErrorMessage,
   matcherHint,
   printDiffOrStringify,
   printExpected,
   printReceived,
-  printWithType,
+  printWithType
 } from 'jest-matcher-utils';
 import { formatStackTrace, separateMessageFromStack } from 'jest-message-util';
+
 import {
   printExpectedConstructorName,
   printExpectedConstructorNameNot,
@@ -27,12 +28,14 @@ import {
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring,
 } from './print';
+
 import type {
   ExpectationResult,
   MatcherFunction,
   MatchersObject,
   SyncExpectationResult,
 } from './types';
+import type { MatcherHintOptions } from 'jest-matcher-utils';
 
 /* eslint-disable eqeqeq */
 

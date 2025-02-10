@@ -15,20 +15,22 @@
  * limitations under the License.
  */
 
-import type { CRSession } from './crConnection';
-import type { Page } from '../page';
-import { helper } from '../helper';
-import type { RegisteredListener } from '../../utils/eventsHelper';
+import { assert, headersArrayToObject, headersObjectToArray } from '../../utils';
 import { eventsHelper } from '../../utils/eventsHelper';
-import type { Protocol } from './protocol';
+import { helper } from '../helper';
 import * as network from '../network';
+import { isProtocolError, isSessionClosedError } from '../protocolError';
+
+import type { CRSession } from './crConnection';
+import type { Protocol } from './protocol';
+import type { RegisteredListener } from '../../utils/eventsHelper';
 import type * as contexts from '../browserContext';
 import type * as frames from '../frames';
+import type { Page } from '../page';
 import type * as types from '../types';
 import type { CRPage } from './crPage';
-import { assert, headersArrayToObject, headersObjectToArray } from '../../utils';
 import type { CRServiceWorker } from './crServiceWorker';
-import { isProtocolError, isSessionClosedError } from '../protocolError';
+
 
 type SessionInfo = {
   session: CRSession;

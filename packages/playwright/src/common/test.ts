@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-import type { FixturePool } from './fixtures';
-import type * as reporterTypes from '../../types/testReporter';
-import type { TestTypeImpl } from './testType';
 import { rootTestType } from './testType';
-import type { Annotation, FixturesWithLocation, FullProjectInternal } from './config';
-import type { Location, FullProject } from '../../types/testReporter';
 import { computeTestCaseOutcome } from '../isomorphic/teleReceiver';
+
+import type { Annotation, FixturesWithLocation, FullProjectInternal } from './config';
+import type { FixturePool } from './fixtures';
+import type { TestTypeImpl } from './testType';
+import type * as reporterTypes from '../../types/testReporter';
+import type { FullProject, Location } from '../../types/testReporter';
+
 
 class Base {
   title: string;

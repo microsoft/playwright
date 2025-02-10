@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import type { TestInfoErrorImpl } from '../common/ipc';
 import { ExpectError } from '../matchers/matcherHint';
 import { serializeError } from '../util';
+
+import type { TestInfoErrorImpl } from '../common/ipc';
 
 export function testInfoError(error: Error | any): TestInfoErrorImpl {
   const result = serializeError(error);

@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import type { Playwright as PlaywrightAPI } from './client/playwright';
-import { createPlaywright, DispatcherConnection, RootDispatcher, PlaywrightDispatcher } from './server';
-import { Connection } from './client/connection';
-import { BrowserServerLauncherImpl } from './browserServerImpl';
 import { AndroidServerLauncherImpl } from './androidServerImpl';
+import { BrowserServerLauncherImpl } from './browserServerImpl';
+import { Connection } from './client/connection';
+import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from './server';
+
+import type { Playwright as PlaywrightAPI } from './client/playwright';
 import type { Language } from './utils';
 
 export function createInProcessPlaywright(): PlaywrightAPI {

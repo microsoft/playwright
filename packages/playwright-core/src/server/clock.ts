@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import type { BrowserContext } from './browserContext';
 import * as clockSource from '../generated/clockSource';
+
+import type { BrowserContext } from './browserContext';
 
 export class Clock {
   private _browserContext: BrowserContext;

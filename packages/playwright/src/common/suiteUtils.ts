@@ -14,12 +14,15 @@
 * limitations under the License.
 */
 
-import path from 'path';
+import * as path from 'path';
+
 import { calculateSha1, toPosixPath } from 'playwright-core/lib/utils';
-import type { Suite, TestCase } from './test';
-import type { FullProjectInternal } from './config';
-import type { Matcher, TestFileFilter } from '../util';
+
 import { createFileMatcher } from '../util';
+
+import type { FullProjectInternal } from './config';
+import type { Suite, TestCase } from './test';
+import type { Matcher, TestFileFilter } from '../util';
 
 
 export function filterSuite(suite: Suite, suiteFilter: (suites: Suite) => boolean, testFilter: (test: TestCase) => boolean) {

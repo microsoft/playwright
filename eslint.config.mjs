@@ -20,6 +20,7 @@ import notice from 'eslint-plugin-notice';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import stylistic from '@stylistic/eslint-plugin';
+import importRules from 'eslint-plugin-import';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,6 +29,7 @@ const plugins = {
   '@stylistic': stylistic,
   '@typescript-eslint': typescriptEslint,
   notice,
+  import: importRules,
 };
 
 const ignores = [
@@ -57,7 +59,7 @@ const ignores = [
 
 export const baseRules = {
   '@typescript-eslint/no-unused-vars': [2, { args: 'none', caughtErrors: 'none' }],
-  '@typescript-eslint/consistent-type-imports': [2, { disallowTypeAnnotations: false }],
+
   /**
    * Enforced rules
    */
@@ -184,6 +186,19 @@ const noRestrictedGlobalsRules = {
   ],
 };
 
+const importOrderRules = {
+  'import/order': [2, {
+    'alphabetize': {
+      'order': 'asc',
+      'caseInsensitive': false
+    },
+    'named': true,
+    'groups': ['builtin', 'external', 'internal', ['parent', 'sibling'], 'index', 'type'],
+    'newlines-between': 'always',
+  }],
+  'import/consistent-type-specifier-style': [2, 'prefer-top-level']
+};
+
 const languageOptions = {
   parser: tsParser,
   ecmaVersion: 9,
@@ -217,6 +232,13 @@ export default [{
       'message': 'Please use gracefullyProcessExitDoNotHang function to exit the process.',
     }],
   }
+}, {
+  files: [
+    'packages/**/*.ts',
+  ],
+  rules: {
+    ...importOrderRules
+  },
 }, {
   files: ['packages/playwright/**/*.ts'],
   rules: {

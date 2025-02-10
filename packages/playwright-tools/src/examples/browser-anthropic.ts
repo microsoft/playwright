@@ -16,10 +16,10 @@
 
 /* eslint-disable no-console */
 
-import playwright from 'playwright';
 import Anthropic from '@anthropic-ai/sdk';
-import dotenv from 'dotenv';
 import browser from '@playwright/experimental-tools/browser';
+import dotenv from 'dotenv';
+import playwright from 'playwright';
 
 dotenv.config();
 

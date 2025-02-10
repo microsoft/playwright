@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import * as childProcess from 'child_process';
+import * as fs from 'fs';
 import * as readline from 'readline';
-import { isUnderTest } from './';
+
 import { removeFolders } from './fileUtils';
+
+import { isUnderTest } from './';
 
 export type Env = {[key: string]: string | number | boolean | undefined};
 

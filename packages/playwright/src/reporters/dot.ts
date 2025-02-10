@@ -15,7 +15,8 @@
  */
 
 import { TerminalReporter } from './base';
-import type { FullResult, TestCase, TestResult, Suite, TestError } from '../../types/testReporter';
+
+import type { FullResult, Suite, TestCase, TestError, TestResult } from '../../types/testReporter';
 
 class DotReporter extends TerminalReporter {
   private _counter = 0;

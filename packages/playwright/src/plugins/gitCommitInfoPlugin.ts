@@ -15,6 +15,7 @@
  */
 
 import { createGuid, spawnAsync } from 'playwright-core/lib/utils';
+
 import type { TestRunnerPlugin } from './';
 import type { FullConfig } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';

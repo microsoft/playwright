@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
-import { formatFailure, nonTerminalScreen, resolveOutputFile, stripAnsiEscapes } from './base';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { getAsBooleanFromENV } from 'playwright-core/lib/utils';
+
+import { formatFailure, nonTerminalScreen, resolveOutputFile, stripAnsiEscapes } from './base';
+
 import type { ReporterV2 } from './reporterV2';
+import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
 
 type JUnitOptions = {
   outputFile?: string,

@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
+import { Page } from '../page';
+import { Dispatcher, existingDispatcher } from './dispatcher';
+import { PageDispatcher } from './pageDispatcher';
+import * as webSocketMockSource from '../../generated/webSocketMockSource';
+import { createGuid, urlMatches } from '../../utils';
+import { eventsHelper } from '../../utils/eventsHelper';
+
+import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { BrowserContext } from '../browserContext';
 import type { Frame } from '../frames';
-import { Page } from '../page';
-import type * as channels from '@protocol/channels';
-import { Dispatcher, existingDispatcher } from './dispatcher';
-import { createGuid, urlMatches } from '../../utils';
-import { PageDispatcher } from './pageDispatcher';
-import type { BrowserContextDispatcher } from './browserContextDispatcher';
-import * as webSocketMockSource from '../../generated/webSocketMockSource';
 import type * as ws from '../injected/webSocketMock';
-import { eventsHelper } from '../../utils/eventsHelper';
+import type * as channels from '@protocol/channels';
 
 export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, channels.WebSocketRouteChannel, PageDispatcher | BrowserContextDispatcher> implements channels.WebSocketRouteChannel {
   _type_WebSocketRoute = true;

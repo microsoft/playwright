@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-import * as roleUtils from './roleUtils';
-import { getElementComputedStyle } from './domUtils';
 import { escapeRegExp, longestCommonSubstring, normalizeWhiteSpace } from '@isomorphic/stringUtils';
+
+import { getElementComputedStyle } from './domUtils';
+import * as roleUtils from './roleUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
+
 import type { AriaProps, AriaRegex, AriaRole, AriaTemplateNode, AriaTemplateRoleNode, AriaTemplateTextNode } from '@isomorphic/ariaSnapshot';
 
 export type AriaNode = AriaProps & {

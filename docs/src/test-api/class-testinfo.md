@@ -254,7 +254,7 @@ Returns a path inside the [`property: TestInfo.outputDir`] where the test can sa
 
 ```js
 import { test, expect } from '@playwright/test';
-import fs from 'fs';
+import * as fs from 'fs';
 
 test('example test', async ({}, testInfo) => {
   const file = testInfo.outputPath('dir', 'temporary-file.txt');

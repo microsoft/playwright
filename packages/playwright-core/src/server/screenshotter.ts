@@ -15,16 +15,18 @@
  * limitations under the License.
  */
 
-import type * as dom from './dom';
-import type { Rect } from '../common/types';
 import { helper } from './helper';
-import type { Page } from './page';
-import type { Frame } from './frames';
-import type { ParsedSelector } from '../utils/isomorphic/selectorParser';
-import type * as types from './types';
-import type { Progress } from './progress';
 import { assert } from '../utils';
 import { MultiMap } from '../utils/multimap';
+
+import type * as dom from './dom';
+import type { Frame } from './frames';
+import type { Page } from './page';
+import type { Progress } from './progress';
+import type * as types from './types';
+import type { Rect } from '../common/types';
+import type { ParsedSelector } from '../utils/isomorphic/selectorParser';
+
 
 declare global {
   interface Window {

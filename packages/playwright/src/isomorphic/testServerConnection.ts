@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import type { TestServerInterface, TestServerInterfaceEvents } from '@testIsomorphic/testServerInterface';
 import * as events from './events';
+
+import type { TestServerInterface, TestServerInterfaceEvents } from '@testIsomorphic/testServerInterface';
 
 // -- Reuse boundary -- Everything below this line is reused in the vscode extension.
 

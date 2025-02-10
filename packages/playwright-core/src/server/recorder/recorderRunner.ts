@@ -17,10 +17,11 @@
 import { serializeExpectedTextValues } from '../../utils';
 import { toKeyboardModifiers } from '../codegen/language';
 import { serverSideCallMetadata } from '../instrumentation';
-import type { Page } from '../page';
-import type * as actions from '@recorder/actions';
-import type * as types from '../types';
 import { buildFullSelector, mainFrameForAction } from './recorderUtils';
+
+import type { Page } from '../page';
+import type * as types from '../types';
+import type * as actions from '@recorder/actions';
 
 export async function performAction(pageAliases: Map<Page, string>, actionInContext: actions.ActionInContext) {
   const callMetadata = serverSideCallMetadata();

@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import type { BrowserContextOptions } from '../../../types/types';
-import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
-import type * as actions from '@recorder/actions';
-import { sanitizeDeviceOptions, toSignalMap, toKeyboardModifiers, toClickOptionsForSourceCode } from './language';
+import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
+import { asLocator, escapeWithQuotes } from '../../utils';
 import { deviceDescriptors } from '../deviceDescriptors';
-import { escapeWithQuotes, asLocator } from '../../utils';
+
+import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
+import type { BrowserContextOptions } from '../../../types/types';
+import type * as actions from '@recorder/actions';
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
   id: string;

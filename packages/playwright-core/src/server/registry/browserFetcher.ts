@@ -15,16 +15,19 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
-import childProcess from 'child_process';
-import { existsAsync } from '../../utils/fileUtils';
+import * as childProcess from 'child_process';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+
 import { debugLogger } from '../../utils/debugLogger';
+import { existsAsync } from '../../utils/fileUtils';
 import { ManualPromise } from '../../utils/manualPromise';
-import { colors, progress as ProgressBar } from '../../utilsBundle';
-import { browserDirectoryToMarkerFilePath } from '.';
 import { getUserAgent } from '../../utils/userAgent';
+import { colors, progress as ProgressBar } from '../../utilsBundle';
+
+import { browserDirectoryToMarkerFilePath } from '.';
+
 import type { DownloadParams } from './oopDownloadBrowserMain';
 
 export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string | undefined, downloadURLs: string[], downloadFileName: string, downloadConnectionTimeout: number): Promise<boolean> {

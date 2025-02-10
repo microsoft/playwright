@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
-import type * as types from './types';
-import fs from 'fs';
+import * as fs from 'fs';
+
 import { isString } from '../utils';
+
+import type * as types from './types';
 
 export function envObjectToArray(env: types.Env): { name: string, value: string }[] {
   const result: { name: string, value: string }[] = [];

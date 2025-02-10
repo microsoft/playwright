@@ -16,8 +16,9 @@
  */
 
 import { assert } from '../../utils';
-import type * as channels from '@protocol/channels';
+
 import type { BidiSession } from './bidiConnection';
+import type * as channels from '@protocol/channels';
 
 const PagePaperFormats: { [key: string]: { width: number, height: number }} = {
   letter: { width: 8.5, height: 11 },

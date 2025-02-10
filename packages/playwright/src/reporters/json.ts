@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import type { FullConfig, TestCase, Suite, TestResult, TestError, TestStep, FullResult, Location, JSONReport, JSONReportSuite, JSONReportSpec, JSONReportTest, JSONReportTestResult, JSONReportTestStep, JSONReportError } from '../../types/testReporter';
-import { formatError, nonTerminalScreen, prepareErrorStack, resolveOutputFile } from './base';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { MultiMap, toPosixPath } from 'playwright-core/lib/utils';
+
+import { formatError, nonTerminalScreen, prepareErrorStack, resolveOutputFile } from './base';
 import { getProjectId } from '../common/config';
+
 import type { ReporterV2 } from './reporterV2';
+import type { FullConfig, FullResult, JSONReport, JSONReportError, JSONReportSpec, JSONReportSuite, JSONReportTest, JSONReportTestResult, JSONReportTestStep, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 
 type JSONOptions = {
   outputFile?: string,

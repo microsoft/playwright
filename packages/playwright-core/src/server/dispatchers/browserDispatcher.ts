@@ -15,19 +15,20 @@
  */
 
 import { Browser } from '../browser';
-import type * as channels from '@protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { existingDispatcher } from './dispatcher';
-import type { RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
-import type { CRBrowser } from '../chromium/crBrowser';
-import type { PageDispatcher } from './pageDispatcher';
-import type { CallMetadata } from '../instrumentation';
 import { BrowserContext } from '../browserContext';
 import { Selectors } from '../selectors';
-import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import { ArtifactDispatcher } from './artifactDispatcher';
+
+import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
+import type { RootDispatcher } from './dispatcher';
+import type { PageDispatcher } from './pageDispatcher';
+import type { CRBrowser } from '../chromium/crBrowser';
+import type { CallMetadata } from '../instrumentation';
+import type * as channels from '@protocol/channels';
 
 export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChannel, BrowserTypeDispatcher> implements channels.BrowserChannel {
   _type_Browser = true;

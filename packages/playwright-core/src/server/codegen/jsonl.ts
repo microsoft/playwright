@@ -15,8 +15,9 @@
  */
 
 import { asLocator } from '../../utils';
-import type * as actions from '@recorder/actions';
+
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
+import type * as actions from '@recorder/actions';
 
 export class JsonlLanguageGenerator implements LanguageGenerator {
   id = 'jsonl';

@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import type { ReporterDescription } from '../../types/test';
-import type { FullConfigInternal } from '../common/config';
-import type { JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonProject, JsonSuite, JsonTestCase, JsonTestResultEnd, JsonTestStepStart, JsonTestStepEnd } from '../isomorphic/teleReceiver';
-import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
-import { JsonStringInternalizer, StringInternPool } from '../isomorphic/stringInternPool';
-import { createReporters } from '../runner/reporters';
-import { Multiplexer } from './multiplexer';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { ZipFile } from 'playwright-core/lib/utils';
-import { currentBlobReportVersion, type BlobReportMetadata } from './blob';
+
+import {  currentBlobReportVersion } from './blob';
+import { Multiplexer } from './multiplexer';
+import { JsonStringInternalizer, StringInternPool } from '../isomorphic/stringInternPool';
+import { TeleReporterReceiver } from '../isomorphic/teleReceiver';
+import { createReporters } from '../runner/reporters';
 import { relativeFilePath } from '../util';
+
+import type { BlobReportMetadata } from './blob';
+import type { ReporterDescription } from '../../types/test';
 import type { TestError } from '../../types/testReporter';
+import type { FullConfigInternal } from '../common/config';
+import type { JsonConfig, JsonEvent, JsonFullResult, JsonLocation, JsonProject, JsonSuite, JsonTestCase, JsonTestResultEnd, JsonTestStepEnd, JsonTestStepStart } from '../isomorphic/teleReceiver';
 import type * as blobV1 from './versions/blobV1';
 
 type StatusCallback = (message: string) => void;

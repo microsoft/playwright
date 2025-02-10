@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
 import { eventsHelper } from '../../utils';
-import type { RegisteredListener } from '../../utils/eventsHelper';
 import { DebugController } from '../debugController';
-import type { DispatcherConnection, RootDispatcher } from './dispatcher';
 import { Dispatcher } from './dispatcher';
+
+import type { DispatcherConnection, RootDispatcher } from './dispatcher';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import type * as channels from '@protocol/channels';
+
 
 export class DebugControllerDispatcher extends Dispatcher<DebugController, channels.DebugControllerChannel, RootDispatcher> implements channels.DebugControllerChannel {
   _type_DebugController;

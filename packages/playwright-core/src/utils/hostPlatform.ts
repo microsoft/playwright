@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import os from 'os';
+import * as os from 'os';
+
 import { getLinuxDistributionInfoSync } from './linuxUtils';
 
 export type HostPlatform = 'win64' |

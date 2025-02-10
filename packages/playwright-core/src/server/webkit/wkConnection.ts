@@ -16,14 +16,17 @@
  */
 
 import { EventEmitter } from 'events';
+
 import { assert } from '../../utils';
+import { debugLogger } from '../../utils/debugLogger';
+import { helper } from '../helper';
+import { ProtocolError } from '../protocolError';
+
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import type { Protocol } from './protocol';
 import type { RecentLogsCollector } from '../../utils/debugLogger';
-import { debugLogger } from '../../utils/debugLogger';
 import type { ProtocolLogger } from '../types';
-import { helper } from '../helper';
-import { ProtocolError } from '../protocolError';
+
 
 // WKPlaywright uses this special id to issue Browser.close command which we
 // should ignore.

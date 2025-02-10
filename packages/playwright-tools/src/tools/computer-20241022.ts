@@ -15,10 +15,12 @@
  * limitations under the License.
  */
 
-import type playwright from 'playwright';
-import type { JSONSchemaType } from '../../types';
-import type { ToolResult } from '../../computer-20241022';
 import { waitForNetwork } from './utils';
+
+import type { ToolResult } from '../../computer-20241022';
+import type { JSONSchemaType } from '../../types';
+import type playwright from 'playwright';
+
 
 export async function call(page: playwright.Page, toolName: string, input: Record<string, JSONSchemaType>): Promise<ToolResult> {
   if (toolName !== 'computer')

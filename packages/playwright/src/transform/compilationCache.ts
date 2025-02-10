@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
-import { sourceMapSupport } from '../utilsBundle';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+
 import { isWorkerProcess } from '../common/globals';
+import { sourceMapSupport } from '../utilsBundle';
 
 export type MemoryCache = {
   codePath: string;

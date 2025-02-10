@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-import { stringifySelector } from '../../utils/isomorphic/selectorParser';
-import type { ParsedSelector } from '../../utils/isomorphic/selectorParser';
-import type { InjectedScript } from './injectedScript';
-import { asLocator } from '../../utils/isomorphic/locatorGenerators';
-import type { Language } from '../../utils/isomorphic/locatorGenerators';
 import highlightCSS from './highlight.css?inline';
+import { asLocator } from '../../utils/isomorphic/locatorGenerators';
+import { stringifySelector } from '../../utils/isomorphic/selectorParser';
+
+import type { InjectedScript } from './injectedScript';
+import type { Language } from '../../utils/isomorphic/locatorGenerators';
+import type { ParsedSelector } from '../../utils/isomorphic/selectorParser';
+
 
 type HighlightEntry = {
   targetElement: Element,

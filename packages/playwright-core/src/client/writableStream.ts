@@ -15,8 +15,10 @@
  */
 
 import { Writable } from 'stream';
-import type * as channels from '@protocol/channels';
+
 import { ChannelOwner } from './channelOwner';
+
+import type * as channels from '@protocol/channels';
 
 export class WritableStream extends ChannelOwner<channels.WritableStreamChannel> {
   static from(Stream: channels.WritableStreamChannel): WritableStream {

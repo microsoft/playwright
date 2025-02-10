@@ -16,9 +16,10 @@
 
 import { assert } from '../utils';
 import * as keyboardLayout from './usKeyboardLayout';
-import type * as types from './types';
-import type { Page } from './page';
+
 import type { CallMetadata } from './instrumentation';
+import type { Page } from './page';
+import type * as types from './types';
 
 export const keypadLocation = keyboardLayout.keypadLocation;
 

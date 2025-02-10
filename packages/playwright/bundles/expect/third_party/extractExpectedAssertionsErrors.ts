@@ -12,7 +12,9 @@ import {
   matcherHint,
   pluralize,
 } from 'jest-matcher-utils';
+
 import { getState, setState } from './jestMatchersObject';
+
 import type { Expect, ExpectedAssertionsErrors } from './types';
 
 const resetAssertionsLocalState = () => {

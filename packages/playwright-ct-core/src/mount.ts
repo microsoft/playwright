@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import type { Fixtures, Locator, Page, BrowserContextOptions, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, BrowserContext } from 'playwright/test';
-import type { Component, JsxComponent, MountOptions, ObjectComponentOptions } from '../types/component';
-import type { ContextReuseMode, FullConfigInternal } from '../../playwright/src/common/config';
-import type { ImportRef } from './injected/importRegistry';
 import { wrapObject } from './injected/serializers';
 import { Router } from './router';
+
+import type { ContextReuseMode, FullConfigInternal } from '../../playwright/src/common/config';
 import type { RouterFixture } from '../index';
+import type { ImportRef } from './injected/importRegistry';
+import type { Component, JsxComponent, MountOptions, ObjectComponentOptions } from '../types/component';
+import type { BrowserContext, BrowserContextOptions, Fixtures, Locator, Page, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from 'playwright/test';
 
 let boundCallbacksForMount: Function[] = [];
 

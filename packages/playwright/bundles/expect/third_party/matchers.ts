@@ -23,7 +23,7 @@ import { getType, isPrimitive } from 'jest-get-type';
 import {
   DIM_COLOR,
   EXPECTED_COLOR,
-  type MatcherHintOptions,
+
   RECEIVED_COLOR,
   SUGGEST_TO_CONTAIN_EQUAL,
   ensureExpectedIsNonNegativeInteger,
@@ -36,8 +36,9 @@ import {
   printExpected,
   printReceived,
   printWithType,
-  stringify,
+  stringify
 } from 'jest-matcher-utils';
+
 import {
   printCloseTo,
   printExpectedConstructorName,
@@ -48,7 +49,9 @@ import {
   printReceivedStringContainExpectedResult,
   printReceivedStringContainExpectedSubstring,
 } from './print';
+
 import type { MatchersObject } from './types';
+import type { MatcherHintOptions } from 'jest-matcher-utils';
 
 // Omit colon and one or more spaces, so can call getLabelPrinter.
 const EXPECTED_LABEL = 'Expected';

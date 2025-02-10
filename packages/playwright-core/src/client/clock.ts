@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type * as api from '../../types/types';
 import type { BrowserContext } from './browserContext';
+import type * as api from '../../types/types';
 
 export class Clock implements api.Clock {
   private _browserContext: BrowserContext;

@@ -371,7 +371,7 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * import { test, expect } from '@playwright/test';
-   * import fs from 'fs';
+   * import * as fs from 'fs';
    *
    * test('example test', async ({}, testInfo) => {
    *   const file = testInfo.outputPath('temporary-file.txt');
@@ -1349,7 +1349,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * import { test, expect } from '@playwright/test';
-   * import fs from 'fs';
+   * import * as fs from 'fs';
    *
    * test('example test', async ({}, testInfo) => {
    *   const file = testInfo.outputPath('temporary-file.txt');
@@ -9191,7 +9191,7 @@ export interface TestInfo {
    *
    * ```js
    * import { test, expect } from '@playwright/test';
-   * import fs from 'fs';
+   * import * as fs from 'fs';
    *
    * test('example test', async ({}, testInfo) => {
    *   const file = testInfo.outputPath('dir', 'temporary-file.txt');

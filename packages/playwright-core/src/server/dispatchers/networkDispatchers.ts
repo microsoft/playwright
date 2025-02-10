@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
+import { WebSocket } from '../network';
+import { Dispatcher, existingDispatcher } from './dispatcher';
+import { FrameDispatcher } from './frameDispatcher';
+import { WorkerDispatcher } from './pageDispatcher';
+import { TracingDispatcher } from './tracingDispatcher';
+
 import type { APIRequestContext } from '../fetch';
 import type { CallMetadata } from '../instrumentation';
 import type { Request, Response, Route } from '../network';
-import { WebSocket } from '../network';
-import type { RootDispatcher } from './dispatcher';
-import { Dispatcher, existingDispatcher } from './dispatcher';
-import { TracingDispatcher } from './tracingDispatcher';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
+import type { RootDispatcher } from './dispatcher';
 import type { PageDispatcher } from './pageDispatcher';
-import { FrameDispatcher } from './frameDispatcher';
-import { WorkerDispatcher } from './pageDispatcher';
+import type * as channels from '@protocol/channels';
+
 
 export class RequestDispatcher extends Dispatcher<Request, channels.RequestChannel, BrowserContextDispatcher | PageDispatcher | FrameDispatcher> implements channels.RequestChannel {
   _type_Request: boolean;

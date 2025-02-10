@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
+import * as fs from 'fs';
+
 import { assert } from '../utils';
-import { ManualPromise } from '../utils/manualPromise';
-import { SdkObject } from './instrumentation';
 import { TargetClosedError } from './errors';
+import { SdkObject } from './instrumentation';
+import { ManualPromise } from '../utils/manualPromise';
 
 type SaveCallback = (localPath: string, error?: Error) => Promise<void>;
 type CancelCallback = () => Promise<void>;

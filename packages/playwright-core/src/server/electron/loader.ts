@@ -15,6 +15,7 @@
  */
 
 const { app } = require('electron');
+
 const { chromiumSwitches } = require('../chromium/chromiumSwitches');
 
 // Always pass user arguments first, see https://github.com/microsoft/playwright/issues/16614 and

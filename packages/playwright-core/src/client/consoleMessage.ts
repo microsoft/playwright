@@ -15,10 +15,12 @@
  */
 
 import * as util from 'util';
+
 import { JSHandle } from './jsHandle';
-import type * as channels from '@protocol/channels';
-import type * as api from '../../types/types';
 import { Page } from './page';
+
+import type * as api from '../../types/types';
+import type * as channels from '@protocol/channels';
 
 type ConsoleMessageLocation = channels.BrowserContextConsoleEvent['location'];
 

@@ -14,22 +14,24 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import { isString, isRegExp, monotonicTime } from '../utils';
-import type * as channels from '@protocol/channels';
-import { Events } from './events';
+import { EventEmitter } from 'events';
+import * as fs from 'fs';
+
+import { isRegExp, isString, monotonicTime } from '../utils';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import type * as api from '../../types/types';
-import type * as types from './types';
-import type { Page } from './page';
-import { TimeoutSettings } from '../common/timeoutSettings';
-import { Waiter } from './waiter';
-import { EventEmitter } from 'events';
 import { Connection } from './connection';
-import { isTargetClosedError, TargetClosedError } from './errors';
+import { TargetClosedError, isTargetClosedError } from './errors';
+import { Events } from './events';
+import { Waiter } from './waiter';
+import { TimeoutSettings } from '../common/timeoutSettings';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
+
+import type { Page } from './page';
+import type * as types from './types';
+import type * as api from '../../types/types';
 import type { AndroidServerLauncherImpl } from '../androidServerImpl';
+import type * as channels from '@protocol/channels';
 
 type Direction = 'down' | 'up' | 'left' | 'right';
 type SpeedOptions = { speed?: number };

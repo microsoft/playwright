@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-import type { LaunchServerOptions, Logger } from './client/types';
-import { ws } from './utilsBundle';
-import type { WebSocketEventEmitter } from './utilsBundle';
-import type { BrowserServerLauncher, BrowserServer } from './client/browserType';
 import { envObjectToArray } from './client/clientHelper';
-import { createGuid } from './utils';
-import type { ProtocolLogger } from './server/types';
-import { serverSideCallMetadata } from './server/instrumentation';
-import { createPlaywright } from './server/playwright';
+import { SocksProxy } from './common/socksProxy';
 import { PlaywrightServer } from './remote/playwrightServer';
 import { helper } from './server/helper';
+import { serverSideCallMetadata } from './server/instrumentation';
+import { createPlaywright } from './server/playwright';
+import { createGuid } from './utils';
 import { rewriteErrorMessage } from './utils/stackTrace';
-import { SocksProxy } from './common/socksProxy';
+import { ws } from './utilsBundle';
+
+import type { BrowserServer, BrowserServerLauncher } from './client/browserType';
+import type { LaunchServerOptions, Logger } from './client/types';
+import type { ProtocolLogger } from './server/types';
+import type { WebSocketEventEmitter } from './utilsBundle';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserName: 'chromium' | 'firefox' | 'webkit' | 'bidiFirefox' | 'bidiChromium';

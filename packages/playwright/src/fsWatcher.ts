@@ -15,6 +15,7 @@
  */
 
 import { chokidar } from './utilsBundle';
+
 import type { FSWatcher } from 'chokidar';
 
 export type FSEvent = { event: 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir', file: string };

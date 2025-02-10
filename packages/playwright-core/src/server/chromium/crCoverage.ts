@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
-import type { CRSession } from './crConnection';
-import type { RegisteredListener } from '../../utils/eventsHelper';
-import { eventsHelper } from '../../utils/eventsHelper';
-import type { Protocol } from './protocol';
-import type * as channels from '@protocol/channels';
 import { assert } from '../../utils';
+import { eventsHelper } from '../../utils/eventsHelper';
+
+import type { CRSession } from './crConnection';
+import type { Protocol } from './protocol';
+import type { RegisteredListener } from '../../utils/eventsHelper';
+import type * as channels from '@protocol/channels';
+
 
 export class CRCoverage {
   private _jsCoverage: JSCoverage;

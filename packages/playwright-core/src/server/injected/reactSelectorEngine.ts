@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { isInsideScope } from './domUtils';
 import { matchesComponentAttribute } from './selectorUtils';
 import { parseAttributeSelector } from '../../utils/isomorphic/selectorParser';
+
+import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 
 type ComponentNode = {
   key?: any,

@@ -24,5 +24,5 @@ export type BabelTransformFunction = (code: string, filename: string, isModule: 
 export const babelTransform: BabelTransformFunction = require('./babelBundleImpl').babelTransform;
 export type BabelParseFunction = (code: string, filename: string, isModule: boolean) => ParseResult;
 export const babelParse: BabelParseFunction = require('./babelBundleImpl').babelParse;
-export type { NodePath, types as T, PluginObj } from '../../bundles/babel/node_modules/@types/babel__core';
+export type { NodePath, PluginObj, types as T } from '../../bundles/babel/node_modules/@types/babel__core';
 export type { BabelAPI } from '../../bundles/babel/node_modules/@types/babel__helper-plugin-utils';

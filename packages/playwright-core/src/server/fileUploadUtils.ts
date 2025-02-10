@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { assert, fileUploadSizeLimit } from '../utils';
 import { mime } from '../utilsBundle';
+
 import type { WritableStreamDispatcher } from './dispatchers/writableStreamDispatcher';
 import type { InputFilesItems } from './dom';
 import type { Frame } from './frames';
 import type * as types from './types';
+import type * as channels from '@protocol/channels';
 
 async function filesExceedUploadLimit(files: string[]) {
   const sizes = await Promise.all(files.map(async file => (await fs.promises.stat(file)).size));
