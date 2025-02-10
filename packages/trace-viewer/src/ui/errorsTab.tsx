@@ -21,7 +21,7 @@ import { PlaceholderPanel } from './placeholderPanel';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { StackFrame } from '@protocol/channels';
-import { CopyToClipboard } from './copyToClipboard';
+import { CopyToClipboardTextButton } from './copyToClipboard';
 import { attachmentURL } from './attachmentsTab';
 import { fixTestPrompt } from '@web/components/prompts';
 
@@ -46,7 +46,7 @@ const PromptButton: React.FC<{
 
   const prompt = React.useMemo(() => fixTestPrompt(error, undefined, pageSnapshot), [error, pageSnapshot]);
 
-  return <CopyToClipboard value={prompt} copyIcon='copilot' description="Copy prompt to clipboard" />;
+  return <CopyToClipboardTextButton value={prompt} description='Fix with AI' copiedDescription={<>Copied <span className='codicon codicon-copy' style={{ marginLeft: '5px' }}/></>} style={{ width: '90px', justifyContent: 'center' }} />;
 };
 
 export type ErrorDescription = {
@@ -100,7 +100,7 @@ export const ErrorsTab: React.FunctionComponent<{
           {location && <div className='action-location'>
             @ <span title={longLocation} onClick={() => revealInSource(error)}>{location}</span>
           </div>}
-          <span style={{ position: 'absolute', right: '20px' }}>
+          <span style={{ position: 'absolute', right: '5px' }}>
             <PromptButton error={message} actions={actions} />
           </span>
         </div>
