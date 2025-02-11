@@ -101,6 +101,20 @@ it('should accept userDataDir', async ({ createUserDataDir, browserType }) => {
   expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
 });
 
+it('should accept relative userDataDir', async ({ createUserDataDir, browserType }) => {
+  const userDataDir = await createUserDataDir();
+  const cwd = process.cwd();
+  try {
+    console.log(userDataDir);
+    process.chdir(userDataDir);
+    const context = await browserType.launchPersistentContext('foobar');
+    expect(fs.readdirSync(path.join(userDataDir, 'foobar')).length).toBeGreaterThan(0);
+    await context.close();
+  } finally {
+    process.chdir(cwd);
+  }
+});
+
 it('should restore state from userDataDir', async ({ browserType, server, createUserDataDir, isMac, browserName }) => {
   it.slow();
 

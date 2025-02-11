@@ -188,6 +188,8 @@ export abstract class BrowserType extends SdkObject {
     tempDirectories.push(artifactsDir);
 
     if (userDataDir) {
+      if (!path.isAbsolute(userDataDir))
+        userDataDir = path.resolve(userDataDir);
       // Firefox bails if the profile directory does not exist, Chrome creates it. We ensure consistent behavior here.
       if (!await existsAsync(userDataDir))
         await fs.promises.mkdir(userDataDir, { recursive: true, mode: 0o700 });
