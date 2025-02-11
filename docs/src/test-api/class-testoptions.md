@@ -508,7 +508,7 @@ export default defineConfig({
 Learn more about [automatic screenshots](../test-use-options.md#recording-options).
 
 ## property: TestOptions.pageSnapshot
-* since: v1.10
+* since: v1.51
 - type: <[PageSnapshotMode]<"off"|"on"|"only-on-failure">>
 
 Whether to automatically capture a ARIA snapshot of the page after each test. Defaults to `'only-on-failure'`.
