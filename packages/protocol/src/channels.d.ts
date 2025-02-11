@@ -623,6 +623,7 @@ export type PlaywrightNewRequestParams = {
   userAgent?: string,
   ignoreHTTPSErrors?: boolean,
   extraHTTPHeaders?: NameValue[],
+  apiRequestFailsOnErrorStatus?: boolean,
   clientCertificates?: {
     origin: string,
     cert?: Binary,
@@ -654,6 +655,7 @@ export type PlaywrightNewRequestOptions = {
   userAgent?: string,
   ignoreHTTPSErrors?: boolean,
   extraHTTPHeaders?: NameValue[],
+  apiRequestFailsOnErrorStatus?: boolean,
   clientCertificates?: {
     origin: string,
     cert?: Binary,
@@ -1027,6 +1029,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   },
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
+  apiRequestFailsOnErrorStatus?: boolean,
   offline?: boolean,
   httpCredentials?: {
     username: string,
@@ -1108,6 +1111,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   },
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
+  apiRequestFailsOnErrorStatus?: boolean,
   offline?: boolean,
   httpCredentials?: {
     username: string,
@@ -1224,6 +1228,7 @@ export type BrowserNewContextParams = {
   },
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
+  apiRequestFailsOnErrorStatus?: boolean,
   offline?: boolean,
   httpCredentials?: {
     username: string,
@@ -1291,6 +1296,7 @@ export type BrowserNewContextOptions = {
   },
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
+  apiRequestFailsOnErrorStatus?: boolean,
   offline?: boolean,
   httpCredentials?: {
     username: string,
@@ -1361,6 +1367,7 @@ export type BrowserNewContextForReuseParams = {
   },
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
+  apiRequestFailsOnErrorStatus?: boolean,
   offline?: boolean,
   httpCredentials?: {
     username: string,
@@ -1428,6 +1435,7 @@ export type BrowserNewContextForReuseOptions = {
   },
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
+  apiRequestFailsOnErrorStatus?: boolean,
   offline?: boolean,
   httpCredentials?: {
     username: string,
@@ -4794,6 +4802,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   },
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
+  apiRequestFailsOnErrorStatus?: boolean,
   offline?: boolean,
   httpCredentials?: {
     username: string,
@@ -4859,6 +4868,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   },
   permissions?: string[],
   extraHTTPHeaders?: NameValue[],
+  apiRequestFailsOnErrorStatus?: boolean,
   offline?: boolean,
   httpCredentials?: {
     username: string,

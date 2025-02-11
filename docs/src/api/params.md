@@ -639,6 +639,11 @@ A list of permissions to grant to all pages in this context. See
 
 An object containing additional HTTP headers to be sent with every request. Defaults to none.
 
+## context-option-apiRequestFailsOnErrorStatus
+- `apiRequestFailsOnErrorStatus` <[boolean]> 
+
+An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By default, response object is returned for all status codes.
+
 ## context-option-offline
 - `offline` <[boolean]>
 
@@ -996,6 +1001,7 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 - %%-context-option-locale-%%
 - %%-context-option-permissions-%%
 - %%-context-option-extrahttpheaders-%%
+- %%-context-option-apiRequestFailsOnErrorStatus-%%
 - %%-context-option-offline-%%
 - %%-context-option-httpcredentials-%%
 - %%-context-option-colorscheme-%%

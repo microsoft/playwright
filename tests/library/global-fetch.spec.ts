@@ -536,3 +536,27 @@ it('should retry ECONNRESET', {
   expect(requestCount).toBe(4);
   await request.dispose();
 });
+
+it('should throw when apiRequestFailsOnErrorStatus is set to true inside APIRequest context options', async ({ playwright, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34204' });
+  const request = await playwright.request.newContext({ apiRequestFailsOnErrorStatus: true });
+  server.setRoute('/empty.html', (req, res) => {
+    res.writeHead(404, { 'Content-Length': 10, 'Content-Type': 'text/plain' });
+    res.end('Not found.');
+  });
+  const error = await request.fetch(server.EMPTY_PAGE).catch(e => e);
+  expect(error.message).toContain('404 Not Found');
+  await request.dispose();
+});
+
+it('should not throw when apiRequestFailsOnErrorStatus is set to false inside APIRequest context options', async ({ playwright, server }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34204' });
+  const request = await playwright.request.newContext({ apiRequestFailsOnErrorStatus: false });
+  server.setRoute('/empty.html', (req, res) => {
+    res.writeHead(404, { 'Content-Length': 10, 'Content-Type': 'text/plain' });
+    res.end('Not found.');
+  });
+  const response = await request.fetch(server.EMPTY_PAGE);
+  expect(response.status()).toBe(404);
+  await request.dispose();
+});
