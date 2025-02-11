@@ -23,15 +23,15 @@ import { TimeoutSettings } from '../../common/timeoutSettings';
 import { PipeTransport } from '../../protocol/transport';
 import { createGuid, getPackageManagerExecCommand, isUnderTest, makeWaitForNextTask } from '../../utils';
 import { RecentLogsCollector } from '../../utils/debugLogger';
-import { removeFolders } from '../../utils/fileUtils';
-import { gracefullyCloseSet } from '../../utils/processLauncher';
 import { debug } from '../../utilsBundle';
 import { wsReceiver, wsSender } from '../../utilsBundle';
 import { validateBrowserContextOptions } from '../browserContext';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
 import { CRBrowser } from '../chromium/crBrowser';
+import { removeFolders } from '../fileUtils';
 import { helper } from '../helper';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
+import { gracefullyCloseSet } from '../processLauncher';
 import { ProgressController } from '../progress';
 import { registry } from '../registry';
 

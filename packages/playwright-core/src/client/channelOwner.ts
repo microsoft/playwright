@@ -16,7 +16,7 @@
 
 import { EventEmitter } from './eventEmitter';
 import { ValidationError, maybeFindValidator  } from '../protocol/validator';
-import { isUnderTest } from '../utils';
+import { isUnderTest } from '../utils/debug';
 import { debugLogger } from '../utils/debugLogger';
 import { captureLibraryStackTrace, stringifyStackFrames } from '../utils/stackTrace';
 import { zones } from '../utils/zones';
@@ -25,6 +25,7 @@ import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';
 import type { ValidatorContext } from '../protocol/validator';
+import type { Platform } from '../utils/platform';
 import type * as channels from '@protocol/channels';
 
 type Listener = (...args: any[]) => void;
@@ -39,6 +40,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
   readonly _channel: T;
   readonly _initializer: channels.InitializerTraits<T>;
   _logger: Logger | undefined;
+  readonly _platform: Platform;
   readonly _instrumentation: ClientInstrumentation;
   private _eventToSubscriptionMapping: Map<string, string> = new Map();
   private _isInternalType = false;
@@ -52,6 +54,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     this._guid = guid;
     this._parent = parent instanceof ChannelOwner ? parent : undefined;
     this._instrumentation = this._connection._instrumentation;
+    this._platform = this._connection.platform;
 
     this._connection._objects.set(guid, this);
     if (this._parent) {

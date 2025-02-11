@@ -24,7 +24,7 @@ import { Anchor, AttachmentLink, generateTraceUrl, testResultHref } from './link
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import { TestErrorView, TestScreenshotErrorView } from './testErrorView';
+import { CodeSnippet, TestErrorView, TestScreenshotErrorView } from './testErrorView';
 import * as icons from './icons';
 import './testResultView.css';
 
@@ -90,7 +90,7 @@ export const TestResultView: React.FC<{
       {errors.map((error, index) => {
         if (error.type === 'screenshot')
           return <TestScreenshotErrorView key={'test-result-error-message-' + index} errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
-        return <TestErrorView key={'test-result-error-message-' + index} error={error.error!}></TestErrorView>;
+        return <TestErrorView key={'test-result-error-message-' + index} error={error.error!} result={result}></TestErrorView>;
       })}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
@@ -182,7 +182,7 @@ const StepTreeItem: React.FC<{
     {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
     {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
   </span>} loadChildren={step.steps.length || step.snippet ? () => {
-    const snippet = step.snippet ? [<TestErrorView testId='test-snippet' key='line' error={step.snippet}/>] : [];
+    const snippet = step.snippet ? [<CodeSnippet testId='test-snippet' key='line' code={step.snippet} />] : [];
     const steps = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} result={result} test={test} />);
     return snippet.concat(steps);
   } : undefined} depth={depth}/>;

@@ -1,3 +1,4 @@
 [*]
 ../utils/
 ../utilsBundle.ts
+../zipBundle.ts

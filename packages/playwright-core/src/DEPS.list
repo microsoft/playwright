@@ -7,7 +7,11 @@
 [inProcessFactory.ts]
 **
 
+[inprocess.ts]
+utils/
+
 [outofprocess.ts]
 client/
 protocol/
 utils/
+common/

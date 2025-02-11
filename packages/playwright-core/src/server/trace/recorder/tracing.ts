@@ -20,11 +20,12 @@ import * as path from 'path';
 
 import { Snapshotter } from './snapshotter';
 import { commandsWithTracingSnapshots } from '../../../protocol/debug';
-import { SerializedFS, assert, createGuid, eventsHelper, monotonicTime, removeFolders  } from '../../../utils';
+import { assert, createGuid, eventsHelper, monotonicTime  } from '../../../utils';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { Dispatcher } from '../../dispatchers/dispatcher';
 import { serializeError } from '../../errors';
+import { SerializedFS, removeFolders  } from '../../fileUtils';
 import { HarTracer } from '../../har/harTracer';
 import { SdkObject } from '../../instrumentation';
 import { Page } from '../../page';

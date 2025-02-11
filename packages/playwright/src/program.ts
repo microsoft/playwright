@@ -20,7 +20,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { program } from 'playwright-core/lib/cli/program';
-import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
+import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/server';
+import { startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
@@ -28,6 +29,7 @@ export { program } from 'playwright-core/lib/cli/program';
 import { prepareErrorStack } from './reporters/base';
 import { showHTMLReport } from './reporters/html';
 import { createMergedReport } from './reporters/merge';
+import { filterProjects } from './runner/projectUtils';
 import { Runner } from './runner/runner';
 import * as testServer from './runner/testServer';
 import { runWatchModeLoop } from './runner/watchMode';
@@ -160,6 +162,23 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   await startProfiling();
   const cliOverrides = overridesFromOptions(opts);
 
+  const config = await loadConfigFromFileRestartIfNeeded(opts.config, cliOverrides, opts.deps === false);
+  if (!config)
+    return;
+
+  config.cliArgs = args;
+  config.cliGrep = opts.grep as string | undefined;
+  config.cliOnlyChanged = opts.onlyChanged === true ? 'HEAD' : opts.onlyChanged;
+  config.cliGrepInvert = opts.grepInvert as string | undefined;
+  config.cliListOnly = !!opts.list;
+  config.cliProjectFilter = opts.project || undefined;
+  config.cliPassWithNoTests = !!opts.passWithNoTests;
+  config.cliFailOnFlakyTests = !!opts.failOnFlakyTests;
+  config.cliLastFailed = !!opts.lastFailed;
+
+  // Evaluate project filters against config before starting execution. This enables a consistent error message across run modes
+  filterProjects(config.projects, config.cliProjectFilter);
+
   if (opts.ui || opts.uiHost || opts.uiPort) {
     if (opts.onlyChanged)
       throw new Error(`--only-changed is not supported in UI mode. If you'd like that to change, see https://github.com/microsoft/playwright/issues/15075 for more details.`);
@@ -200,20 +219,6 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
     gracefullyProcessExitDoNotHang(exitCode);
     return;
   }
-
-  const config = await loadConfigFromFileRestartIfNeeded(opts.config, cliOverrides, opts.deps === false);
-  if (!config)
-    return;
-
-  config.cliArgs = args;
-  config.cliGrep = opts.grep as string | undefined;
-  config.cliOnlyChanged = opts.onlyChanged === true ? 'HEAD' : opts.onlyChanged;
-  config.cliGrepInvert = opts.grepInvert as string | undefined;
-  config.cliListOnly = !!opts.list;
-  config.cliProjectFilter = opts.project || undefined;
-  config.cliPassWithNoTests = !!opts.passWithNoTests;
-  config.cliFailOnFlakyTests = !!opts.failOnFlakyTests;
-  config.cliLastFailed = !!opts.lastFailed;
 
   const runner = new Runner(config);
   const status = await runner.runAllTests();

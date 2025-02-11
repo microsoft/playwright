@@ -15,7 +15,7 @@
  */
 
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
-import { isError } from '../utils';
+import { isError } from '../utils/rtti';
 
 import type { SerializedError } from '@protocol/channels';
 

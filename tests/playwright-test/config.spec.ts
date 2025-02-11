@@ -327,6 +327,25 @@ test('should print nice error when project is unknown', async ({ runInlineTest }
   expect(output).toContain('Project(s) "suite3" not found. Available projects: "suite1", "suite2"');
 });
 
+test('should print nice error when project is unknown and launching UI mode', async ({ runInlineTest }) => {
+  // Prevent UI mode from opening and the test never finishing
+  test.setTimeout(5000);
+  const { output, exitCode } = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { projects: [
+        { name: 'suite1' },
+        { name: 'suite2' },
+      ] };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}, testInfo) => {});
+    `
+  }, { project: 'suite3', ui: true });
+  expect(exitCode).toBe(1);
+  expect(output).toContain('Project(s) "suite3" not found. Available projects: "suite1", "suite2"');
+});
+
 test('should filter by project list, case-insensitive', async ({ runInlineTest }) => {
   const { passed, failed, outputLines, skipped } = await runInlineTest({
     'playwright.config.ts': `

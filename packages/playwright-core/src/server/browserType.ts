@@ -20,28 +20,28 @@ import * as path from 'path';
 
 import { normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
-import { ManualPromise, debugMode } from '../utils';
+import { ManualPromise, assert, debugMode } from '../utils';
+import { existsAsync } from './fileUtils';
 import { helper } from './helper';
 import { SdkObject } from './instrumentation';
 import { PipeTransport } from './pipeTransport';
+import { envArrayToObject, launchProcess } from './processLauncher';
 import { ProgressController } from './progress';
 import {  isProtocolError } from './protocolError';
 import { registry } from './registry';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { WebSocketTransport } from './transport';
 import { RecentLogsCollector } from '../utils/debugLogger';
-import { existsAsync } from '../utils/fileUtils';
-import { envArrayToObject, launchProcess } from '../utils/processLauncher';
 
 import type { Browser, BrowserOptions, BrowserProcess } from './browser';
 import type { BrowserContext } from './browserContext';
 import type { CallMetadata } from './instrumentation';
+import type { Env } from './processLauncher';
 import type { Progress } from './progress';
 import type { ProtocolError } from './protocolError';
 import type { BrowserName } from './registry';
 import type { ConnectionTransport } from './transport';
 import type * as types from './types';
-import type { Env } from '../utils/processLauncher';
 import type * as channels from '@protocol/channels';
 
 export const kNoXServerRunningError = 'Looks like you launched a headed browser without having a XServer running.\n' +
@@ -188,6 +188,7 @@ export abstract class BrowserType extends SdkObject {
     tempDirectories.push(artifactsDir);
 
     if (userDataDir) {
+      assert(path.isAbsolute(userDataDir), 'userDataDir must be an absolute path');
       // Firefox bails if the profile directory does not exist, Chrome creates it. We ensure consistent behavior here.
       if (!await existsAsync(userDataDir))
         await fs.promises.mkdir(userDataDir, { recursive: true, mode: 0o700 });

@@ -18,8 +18,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Transform } from 'stream';
 
-import { MultiMap, getPackageManagerExecCommand } from 'playwright-core/lib/utils';
-import { HttpServer, assert, calculateSha1, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath, toPosixPath } from 'playwright-core/lib/utils';
+import { copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath, toPosixPath } from 'playwright-core/lib/server';
+import { HttpServer, MultiMap, assert, calculateSha1, getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 import { colors, open } from 'playwright-core/lib/utilsBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
@@ -447,6 +447,17 @@ class HtmlBuilder {
         a.body = stripAnsiEscapes(a.body as string);
         lastAttachment = a as TestAttachment;
         return a;
+      }
+
+      if (a.name === 'pageSnapshot') {
+        try {
+          const body = fs.readFileSync(a.path!, { encoding: 'utf-8' });
+          return {
+            name: 'pageSnapshot',
+            contentType: a.contentType,
+            body,
+          };
+        } catch {}
       }
 
       if (a.path) {

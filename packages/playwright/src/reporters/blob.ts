@@ -18,7 +18,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Readable } from 'stream';
 
-import { ManualPromise, calculateSha1, createGuid, getUserAgent, removeFolders, sanitizeForFilePath } from 'playwright-core/lib/utils';
+import { removeFolders, sanitizeForFilePath } from 'playwright-core/lib/server';
+import { ManualPromise, calculateSha1, createGuid, getUserAgent } from 'playwright-core/lib/utils';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 

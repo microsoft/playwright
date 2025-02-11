@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
+import path from 'path';
+
 import { Browser } from './browser';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
-import { Connection } from './connection';
 import { Events } from './events';
-import { assert, headersObjectToArray, monotonicTime } from '../utils';
+import { assert } from '../utils/debug';
+import { headersObjectToArray } from '../utils/headers';
+import { monotonicTime } from '../utils/time';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
 
 import type { Playwright } from './playwright';
@@ -90,14 +93,14 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     const logger = options.logger || this._playwright._defaultLaunchOptions?.logger;
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     options = { ...this._playwright._defaultLaunchOptions, ...this._playwright._defaultContextOptions, ...options };
-    const contextParams = await prepareBrowserContextParams(options);
+    const contextParams = await prepareBrowserContextParams(this._platform, options);
     const persistentParams: channels.BrowserTypeLaunchPersistentContextParams = {
       ...contextParams,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
       channel: options.channel,
-      userDataDir,
+      userDataDir: path.isAbsolute(userDataDir) ? userDataDir : path.resolve(userDataDir),
     };
     return await this._wrapApiCall(async () => {
       const result = await this._channel.launchPersistentContext(persistentParams);
@@ -131,40 +134,16 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       };
       if ((params as any).__testHookRedirectPortForwarding)
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
-      const { pipe, headers: connectHeaders } = await localUtils._channel.connect(connectParams);
-      const closePipe = () => pipe.close().catch(() => {});
-      const connection = new Connection(localUtils, this._instrumentation);
-      connection.markAsRemote();
-      connection.on('close', closePipe);
-
+      const connection = await localUtils.connect(connectParams);
       let browser: Browser;
-      let closeError: string | undefined;
-      const onPipeClosed = (reason?: string) => {
+      connection.on('close', () => {
         // Emulate all pages, contexts and the browser closing upon disconnect.
         for (const context of browser?.contexts() || []) {
           for (const page of context.pages())
             page._onClose();
           context._onClose();
         }
-        connection.close(reason || closeError);
-        // Give a chance to any API call promises to reject upon page/context closure.
-        // This happens naturally when we receive page.onClose and browser.onClose from the server
-        // in separate tasks. However, upon pipe closure we used to dispatch them all synchronously
-        // here and promises did not have a chance to reject.
-        // The order of rejects vs closure is a part of the API contract and our test runner
-        // relies on it to attribute rejections to the right test.
         setTimeout(() => browser?._didClose(), 0);
-      };
-      pipe.on('closed', params => onPipeClosed(params.reason));
-      connection.onmessage = message => this._wrapApiCall(() => pipe.send({ message }).catch(() => onPipeClosed()), /* isInternal */ true);
-
-      pipe.on('message', ({ message }) => {
-        try {
-          connection!.dispatch(message);
-        } catch (e) {
-          closeError = String(e);
-          closePipe();
-        }
       });
 
       const result = await raceAgainstDeadline(async () => {
@@ -174,21 +153,20 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
 
         const playwright = await connection!.initializePlaywright();
         if (!playwright._initializer.preLaunchedBrowser) {
-          closePipe();
+          connection.close();
           throw new Error('Malformed endpoint. Did you use BrowserType.launchServer method?');
         }
         playwright._setSelectors(this._playwright.selectors);
         browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
         this._didLaunchBrowser(browser, {}, logger);
         browser._shouldCloseConnectionOnClose = true;
-        browser._connectHeaders = connectHeaders;
-        browser.on(Events.Browser.Disconnected, () => this._wrapApiCall(() => closePipe(), /* isInternal */ true));
+        browser.on(Events.Browser.Disconnected, () => connection.close());
         return browser;
       }, deadline);
       if (!result.timedOut) {
         return result.result;
       } else {
-        closePipe();
+        connection.close();
         throw new Error(`Timeout ${params.timeout}ms exceeded`);
       }
     });

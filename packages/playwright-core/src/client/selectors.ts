@@ -17,6 +17,7 @@
 import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
 import { setTestIdAttribute, testIdAttributeName } from './locator';
+import { nodePlatform } from '../utils/platform';
 
 import type { SelectorEngine } from './types';
 import type * as api from '../../types/types';
@@ -28,7 +29,7 @@ export class Selectors implements api.Selectors {
   private _registrations: channels.SelectorsRegisterParams[] = [];
 
   async register(name: string, script: string | (() => SelectorEngine) | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
-    const source = await evaluationScript(script, undefined, false);
+    const source = await evaluationScript(nodePlatform, script, undefined, false);
     const params = { ...options, name, source };
     for (const channel of this._channels)
       await channel._channel.register(params);

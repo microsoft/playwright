@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-
 import { Artifact } from './artifact';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { CDPSession } from './cdpSession';
 import { ChannelOwner } from './channelOwner';
 import { isTargetClosedError } from './errors';
 import { Events } from './events';
-import { mkdirIfNeeded } from '../utils';
+import { mkdirIfNeeded } from '../utils/fileUtils';
 
 import type { BrowserType } from './browserType';
 import type { Page } from './page';
-import type { BrowserContextOptions, HeadersArray, LaunchOptions } from './types';
+import type { BrowserContextOptions, LaunchOptions } from './types';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 
@@ -39,9 +37,6 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   _options: LaunchOptions = {};
   readonly _name: string;
   private _path: string | undefined;
-
-  // Used from @playwright/test fixtures.
-  _connectHeaders?: HeadersArray;
   _closeReason: string | undefined;
 
   static from(browser: channels.BrowserChannel): Browser {
@@ -83,7 +78,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
 
   async _innerNewContext(options: BrowserContextOptions = {}, forReuse: boolean): Promise<BrowserContext> {
     options = { ...this._browserType._playwright._defaultContextOptions, ...options };
-    const contextOptions = await prepareBrowserContextParams(options);
+    const contextOptions = await prepareBrowserContextParams(this._platform, options);
     const response = forReuse ? await this._channel.newContextForReuse(contextOptions) : await this._channel.newContext(contextOptions);
     const context = BrowserContext.from(response.context);
     await this._browserType._didCreateContext(context, contextOptions, this._options, options.logger || this._logger);
@@ -126,8 +121,8 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     const buffer = await artifact.readIntoBuffer();
     await artifact.delete();
     if (this._path) {
-      await mkdirIfNeeded(this._path);
-      await fs.promises.writeFile(this._path, buffer);
+      await mkdirIfNeeded(this._platform, this._path);
+      await this._platform.fs().promises.writeFile(this._path, buffer);
       this._path = undefined;
     }
     return buffer;

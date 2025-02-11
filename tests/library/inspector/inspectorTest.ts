@@ -22,6 +22,7 @@ import type { Source } from '../../../packages/recorder/src/recorderTypes';
 import type { CommonFixtures, TestChildProcess } from '../../config/commonFixtures';
 import { stripAnsi } from '../../config/utils';
 import { expect } from '@playwright/test';
+import { nodePlatform } from '../../../packages/playwright-core/lib/utils/platform';
 export { expect } from '@playwright/test';
 
 type CLITestArgs = {
@@ -46,7 +47,7 @@ const codegenLang2Id: Map<string, string> = new Map([
 ]);
 const codegenLangId2lang = new Map([...codegenLang2Id.entries()].map(([lang, langId]) => [langId, lang]));
 
-const playwrightToAutomateInspector = require('../../../packages/playwright-core/lib/inProcessFactory').createInProcessPlaywright();
+const playwrightToAutomateInspector = require('../../../packages/playwright-core/lib/inProcessFactory').createInProcessPlaywright(nodePlatform);
 
 export const test = contextTest.extend<CLITestArgs>({
   recorderPageGetter: async ({ context, toImpl, mode }, run, testInfo) => {

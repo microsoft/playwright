@@ -16,15 +16,17 @@
 
 import * as fs from 'fs';
 import * as os from 'os';
-import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 import * as path from 'path';
-import type { BrowserContext, BrowserContextOptions, BrowserType, Page } from 'playwright-core';
-import { removeFolders } from '../../packages/playwright-core/lib/utils/fileUtils';
 import { baseTest } from './baseTest';
-import { type RemoteServerOptions, type PlaywrightServer, RunServer, RemoteServer } from './remoteServer';
-import type { Log } from '../../packages/trace/src/har';
+import { RunServer, RemoteServer } from './remoteServer';
+import { removeFolders } from '../../packages/playwright-core/lib/server/fileUtils';
 import { parseHar } from '../config/utils';
 import { createSkipTestPredicate } from '../bidi/expectationUtil';
+
+import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
+import type { RemoteServerOptions, PlaywrightServer } from './remoteServer';
+import type { BrowserContext, BrowserContextOptions, BrowserType, Page } from 'playwright-core';
+import type { Log } from '../../packages/trace/src/har';
 import type { TestInfo } from '@playwright/test';
 
 export type BrowserTestWorkerFixtures = PageWorkerFixtures & {

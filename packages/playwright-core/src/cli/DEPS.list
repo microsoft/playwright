@@ -4,6 +4,7 @@
 ../common
 ../debug/injected
 ../generated/
+../server/
 ../server/injected/
 ../server/trace
 ../utils
