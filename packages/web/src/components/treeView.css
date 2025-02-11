@@ -69,6 +69,11 @@
   color: var(--vscode-list-activeSelectionForeground) !important;
 }
 
+.tree-view-content:focus .tree-view-entry.selected button.eye.toggled {
+  border-radius: 6px;
+  outline: 1px solid var(--vscode-button-foreground);
+}
+
 .tree-view-empty {
   flex: auto;
   display: flex;
