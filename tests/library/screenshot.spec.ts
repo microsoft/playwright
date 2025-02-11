@@ -75,7 +75,6 @@ browserTest.describe('page screenshot', () => {
   });
 
   browserTest('should work with device scale factor', async ({ browser, server, isMac, browserName }) => {
-    browserTest.fixme(isMac && browserName === 'webkit');
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/grid.html');
@@ -218,7 +217,6 @@ browserTest.describe('element screenshot', () => {
 
   browserTest('element screenshot should work with device scale factor', async ({ browser, server, browserName, isMac }) => {
     browserTest.skip(browserName === 'firefox');
-    browserTest.fixme(isMac && browserName === 'webkit');
 
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
     const page = await context.newPage();
