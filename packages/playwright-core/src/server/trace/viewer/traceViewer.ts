@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { gracefullyProcessExitDoNotHang } from '../../../server';
+import { getLLMFromEnv, gracefullyProcessExitDoNotHang } from '../../../server';
 import { isUnderTest } from '../../../utils';
 import { HttpServer } from '../../../utils/httpServer';
 import { open } from '../../../utilsBundle';
@@ -29,6 +29,7 @@ import { ProgressController } from '../../progress';
 
 import type { Transport } from '../../../utils/httpServer';
 import type { BrowserType } from '../../browserType';
+import type { LLM, LLMMessage } from '../../llm';
 import type { Page } from '../../page';
 
 export type TraceViewerServerOptions = {
@@ -36,6 +37,7 @@ export type TraceViewerServerOptions = {
   port?: number;
   isServer?: boolean;
   transport?: Transport;
+  llm?: LLM;
 };
 
 export type TraceViewerRedirectOptions = {
@@ -46,6 +48,7 @@ export type TraceViewerRedirectOptions = {
   reporter?: string[];
   webApp?: string;
   isServer?: boolean;
+  llm?: LLM;
 };
 
 export type TraceViewerAppOptions = {
@@ -76,6 +79,24 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
     }
     if (relativePath.endsWith('/stall.js'))
       return true;
+    if (relativePath.startsWith('/llm/chat-completion') && options?.llm) {
+      const chunks: Buffer[] = [];
+      request.on('data', chunk => chunks.push(chunk));
+      request.on('end', async () => {
+        const messages = JSON.parse(Buffer.concat(chunks).toString()) as LLMMessage[];
+        response.setHeader('Content-Type', 'text/plain');
+        try {
+          const stream = options.llm!.chatCompletion(messages);
+          for await (const chunk of stream)
+            response.write(chunk);
+          response.end();
+        } catch (error) {
+          response.statusCode = 500;
+          response.end(error.toString());
+        }
+      });
+      return true;
+    }
     if (relativePath.startsWith('/file')) {
       try {
         const filePath = url.searchParams.get('path')!;
@@ -131,6 +152,8 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
     params.append('project', project);
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
+  if (options.llm)
+    params.append('llm', 'true');
 
   let baseUrl = '.';
   if (process.env.PW_HMR) {
@@ -149,6 +172,7 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
 
 export async function runTraceViewerApp(traceUrls: string[], browserName: string, options: TraceViewerServerOptions & { headless?: boolean }, exitOnClose?: boolean) {
   validateTraceUrls(traceUrls);
+  options.llm = getLLMFromEnv();
   const server = await startTraceViewerServer(options);
   await installRootRedirect(server, traceUrls, options);
   const page = await openTraceViewerApp(server.urlPrefix('precise'), browserName, options);
@@ -159,6 +183,7 @@ export async function runTraceViewerApp(traceUrls: string[], browserName: string
 
 export async function runTraceInBrowser(traceUrls: string[], options: TraceViewerServerOptions) {
   validateTraceUrls(traceUrls);
+  options.llm = getLLMFromEnv();
   const server = await startTraceViewerServer(options);
   await installRootRedirect(server, traceUrls, options);
   await openTraceInBrowser(server.urlPrefix('human-readable'));

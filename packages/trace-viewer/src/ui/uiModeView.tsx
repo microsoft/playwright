@@ -61,6 +61,7 @@ const queryParams = {
   updateSnapshots: (searchParams.get('updateSnapshots') as 'all' | 'none' | 'missing' | undefined) || undefined,
   reporters: searchParams.has('reporter') ? searchParams.getAll('reporter') : undefined,
   pathSeparator: searchParams.get('pathSeparator') || '/',
+  llm: searchParams.has('llm'),
 };
 if (queryParams.updateSnapshots && !['all', 'none', 'missing'].includes(queryParams.updateSnapshots))
   queryParams.updateSnapshots = undefined;
@@ -438,6 +439,7 @@ export const UIModeView: React.FC<{}> = ({
               rootDir={testModel?.config?.rootDir}
               revealSource={revealSource}
               onOpenExternally={location => testServerConnection?.openNoReply({ location: { file: location.file, line: location.line, column: location.column } })}
+              llmAvailable={queryParams.llm}
             />
           </GitCommitInfoProvider>
         </div>

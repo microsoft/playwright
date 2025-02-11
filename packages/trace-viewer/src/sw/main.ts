@@ -36,16 +36,25 @@ const scopePath = new URL(self.registration.scope).pathname;
 
 const loadedTraces = new Map<string, { traceModel: TraceModel, snapshotServer: SnapshotServer }>();
 
-const clientIdToTraceUrls = new Map<string, { limit: number | undefined, traceUrls: Set<string>, traceViewerServer: TraceViewerServer }>();
+const clientIdToTraceViewerServer = new Map<string, TraceViewerServer>();
+const clientIdToTraceUrls = new Map<string, { limit: number | undefined, traceUrls: Set<string> }>();
+
+function getTraceViewerServer(client: any) {
+  const clientId: string = client?.id ?? '';
+  if (!clientIdToTraceViewerServer.has(clientId)) {
+    const clientURL = new URL(client?.url ?? self.registration.scope);
+    const traceViewerServerBaseUrl = new URL(clientURL.searchParams.get('server') ?? '../', clientURL);
+    clientIdToTraceViewerServer.set(clientId, new TraceViewerServer(traceViewerServerBaseUrl));
+  }
+  return clientIdToTraceViewerServer.get(clientId)!;
+}
 
 async function loadTrace(traceUrl: string, traceFileName: string | null, client: any | undefined, limit: number | undefined, progress: (done: number, total: number) => undefined): Promise<TraceModel> {
   await gc();
   const clientId = client?.id ?? '';
   let data = clientIdToTraceUrls.get(clientId);
   if (!data) {
-    const clientURL = new URL(client?.url ?? self.registration.scope);
-    const traceViewerServerBaseUrl = new URL(clientURL.searchParams.get('server') ?? '../', clientURL);
-    data = { limit, traceUrls: new Set(), traceViewerServer: new TraceViewerServer(traceViewerServerBaseUrl) };
+    data = { limit, traceUrls: new Set() };
     clientIdToTraceUrls.set(clientId, data);
   }
   data.traceUrls.add(traceUrl);
@@ -54,7 +63,8 @@ async function loadTrace(traceUrl: string, traceFileName: string | null, client:
   try {
     // Allow 10% to hop from sw to page.
     const [fetchProgress, unzipProgress] = splitProgress(progress, [0.5, 0.4, 0.1]);
-    const backend = traceUrl.endsWith('json') ? new FetchTraceModelBackend(traceUrl, data.traceViewerServer) : new ZipTraceModelBackend(traceUrl, data.traceViewerServer, fetchProgress);
+    const traceViewerServer = getTraceViewerServer(client);
+    const backend = traceUrl.endsWith('json') ? new FetchTraceModelBackend(traceUrl, traceViewerServer) : new ZipTraceModelBackend(traceUrl, traceViewerServer, fetchProgress);
     await traceModel.load(backend, unzipProgress);
   } catch (error: any) {
     // eslint-disable-next-line no-console
@@ -156,13 +166,16 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 
     if (relativePath.startsWith('/file/')) {
       const path = url.searchParams.get('path')!;
-      const traceViewerServer = clientIdToTraceUrls.get(event.clientId ?? '')?.traceViewerServer;
-      if (!traceViewerServer)
-        throw new Error('client is not initialized');
+      const traceViewerServer = getTraceViewerServer(client);
       const response = await traceViewerServer.readFile(path);
       if (!response)
         return new Response(null, { status: 404 });
       return response;
+    }
+
+    if (relativePath.startsWith('/llm/chat-completion')) {
+      const traceViewerServer = getTraceViewerServer(client);
+      return traceViewerServer.chatCompletion(await request.text());
     }
 
     // Fallback for static assets.

@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { gracefullyProcessExitDoNotHang, installRootRedirect, openTraceInBrowser, openTraceViewerApp, registry, startTraceViewerServer } from 'playwright-core/lib/server';
+import { getLLMFromEnv, gracefullyProcessExitDoNotHang, installRootRedirect, openTraceInBrowser, openTraceViewerApp, registry, startTraceViewerServer } from 'playwright-core/lib/server';
 import { ManualPromise, isUnderTest } from 'playwright-core/lib/utils';
 import { open } from 'playwright-core/lib/utilsBundle';
 
@@ -59,7 +59,7 @@ class TestServer {
 
   async start(options: { host?: string, port?: number }): Promise<HttpServer> {
     this._dispatcher = new TestServerDispatcher(this._configLocation, this._configCLIOverrides);
-    return await startTraceViewerServer({ ...options, transport: this._dispatcher.transport });
+    return await startTraceViewerServer({ ...options, transport: this._dispatcher.transport, llm: getLLMFromEnv() });
   }
 
   async stop() {
@@ -437,6 +437,7 @@ export class TestServerDispatcher implements TestServerInterface {
 
 export async function runUIMode(configFile: string | undefined, configCLIOverrides: ConfigCLIOverrides, options: TraceViewerServerOptions & TraceViewerRedirectOptions): Promise<reporterTypes.FullResult['status'] | 'restarted'> {
   const configLocation = resolveConfigLocation(configFile);
+  options.llm = getLLMFromEnv();
   return await innerRunTestServer(configLocation, configCLIOverrides, options, async (server: HttpServer, cancelPromise: ManualPromise<void>) => {
     await installRootRedirect(server, [], { ...options, webApp: 'uiMode.html' });
     if (options.host !== undefined || options.port !== undefined) {

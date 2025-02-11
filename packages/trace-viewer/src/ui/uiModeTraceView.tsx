@@ -31,7 +31,8 @@ export const TraceView: React.FC<{
   onOpenExternally?: (location: SourceLocation) => void,
   revealSource?: boolean,
   pathSeparator: string,
-}> = ({ item, rootDir, onOpenExternally, revealSource, pathSeparator }) => {
+  llmAvailable?: boolean,
+}> = ({ item, rootDir, onOpenExternally, revealSource, pathSeparator, llmAvailable }) => {
   const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean } | undefined>();
   const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
@@ -97,6 +98,7 @@ export const TraceView: React.FC<{
     annotations={item.testCase?.annotations || []}
     onOpenExternally={onOpenExternally}
     revealSource={revealSource}
+    llmAvailable={llmAvailable}
   />;
 };
 

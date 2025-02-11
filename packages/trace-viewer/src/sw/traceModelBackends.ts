@@ -160,4 +160,15 @@ export class TraceViewerServer {
       return;
     return response;
   }
+
+  async chatCompletion(body: string): Promise<Response> {
+    const url = new URL('trace/llm/chat-completion', this.baseUrl);
+    return await fetch(url, {
+      body,
+      method: "POST",
+      headers: {
+        'content-type': 'application/json'
+      }
+    });
+  }
 }

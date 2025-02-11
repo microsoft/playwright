@@ -43,6 +43,7 @@ import { testStatusIcon, testStatusText } from './testUtils';
 import type { UITestStatus } from './testUtils';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import type { HighlightedElement } from './snapshotTab';
+import { AIState, AITab } from './aiTab';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -56,7 +57,8 @@ export const Workbench: React.FunctionComponent<{
   inert?: boolean,
   onOpenExternally?: (location: modelUtil.SourceLocation) => void,
   revealSource?: boolean,
-}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource }) => {
+  llmAvailable?: boolean,
+}> = ({ model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource, llmAvailable }) => {
   const [selectedCallId, setSelectedCallId] = React.useState<string | undefined>(undefined);
   const [revealedError, setRevealedError] = React.useState<ErrorDescription | undefined>(undefined);
   const [revealedAttachment, setRevealedAttachment] = React.useState<[attachment: AfterActionTraceEventAttachment, renderCounter: number] | undefined>(undefined);
@@ -67,8 +69,10 @@ export const Workbench: React.FunctionComponent<{
   const [selectedPropertiesTab, setSelectedPropertiesTab] = useSetting<string>('propertiesTab', showSourcesFirst ? 'source' : 'call');
   const [isInspecting, setIsInspectingState] = React.useState(false);
   const [highlightedElement, setHighlightedElement] = React.useState<HighlightedElement>({ lastEdited: 'none' });
+  const [aiState, setAIState] = React.useState<AIState>();
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
+  const [showAITab, setShowAITab] = useSetting<'on' | 'off'>('aiTab', 'off')
 
   const setSelectedAction = React.useCallback((action: modelUtil.ActionTraceEventInContext | undefined) => {
     setSelectedCallId(action?.callId);
@@ -199,7 +203,11 @@ export const Workbench: React.FunctionComponent<{
       else
         setRevealedError(error);
       selectPropertiesTab('source');
-    }} actions={model?.actions ?? []} />
+    }} actions={model?.actions ?? []} fixWithAI={showLLMChat ? prompt => {
+      setShowAITab('on');
+      setAIState(prompt);
+      selectPropertiesTab('ai');
+    } : undefined} />
   };
 
   // Fallback location w/o action stands for file / test.
@@ -266,6 +274,14 @@ export const Workbench: React.FunctionComponent<{
     };
     tabs.push(annotationsTab);
   }
+
+  const showLLMChat = llmAvailable && showAITab === 'on';
+  if (showLLMChat)
+    tabs.push({
+      id: 'ai',
+      title: 'AI',
+      render: () => <AITab state={aiState} />,
+    });
 
   if (showSourcesFirst) {
     const sourceTabIndex = tabs.indexOf(sourceTab);

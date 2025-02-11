@@ -25,6 +25,8 @@ import { CopyToClipboardTextButton } from './copyToClipboard';
 import { attachmentURL } from './attachmentsTab';
 import { fixTestPrompt } from '@web/components/prompts';
 import type { GitCommitInfo } from '@testIsomorphic/types';
+import type { AIState } from './aiTab';
+import { ToolbarButton } from '@web/components/toolbarButton';
 
 const GitCommitInfoContext = React.createContext<GitCommitInfo | undefined>(undefined);
 
@@ -36,7 +38,45 @@ export function useGitCommitInfo() {
   return React.useContext(GitCommitInfoContext);
 }
 
-const PromptButton: React.FC<{
+const OpenInAITabButton: React.FC<{
+  error: string;
+  actions: modelUtil.ActionTraceEventInContext[];
+  fixWithAI(state: AIState): void;
+}> = ({ error, actions, fixWithAI }) => {
+  const [pageSnapshot, setPageSnapshot] = React.useState<string>();
+
+  React.useEffect(( )=> {
+    for (const action of actions) {
+      for (const attachment of action.attachments ?? []) {
+        if (attachment.name === 'pageSnapshot') {
+          fetch(attachmentURL({ ...attachment, traceUrl: action.context.traceUrl })).then(async response => {
+            setPageSnapshot(await response.text());
+          });
+          return;
+        }
+      }
+    }
+  }, [actions]);
+
+  const gitCommitInfo = useGitCommitInfo();
+  const prompt = React.useMemo(
+      () => fixTestPrompt(
+          error,
+          gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'],
+          pageSnapshot
+      ),
+      [error, gitCommitInfo, pageSnapshot]
+  );
+
+  return <ToolbarButton onClick={() => {
+    fixWithAI({
+      prompt: "What's going wrong in this error? @error",
+      variables: { '@error': prompt },
+    });
+  }} title="Fix with AI" className='copy-to-clipboard-text-button'>Fix with AI</ToolbarButton>;
+};
+
+const CopyPromptButton: React.FC<{
   error: string;
   actions: modelUtil.ActionTraceEventInContext[];
 }> = ({ error, actions }) => {
@@ -100,7 +140,8 @@ export const ErrorsTab: React.FunctionComponent<{
   actions: modelUtil.ActionTraceEventInContext[],
   sdkLanguage: Language,
   revealInSource: (error: ErrorDescription) => void,
-}> = ({ errorsModel, sdkLanguage, revealInSource, actions }) => {
+  fixWithAI?(state: AIState): void;
+}> = ({ errorsModel, sdkLanguage, revealInSource, actions, fixWithAI }) => {
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
 
@@ -127,9 +168,10 @@ export const ErrorsTab: React.FunctionComponent<{
             @ <span title={longLocation} onClick={() => revealInSource(error)}>{location}</span>
           </div>}
           <span style={{ position: 'absolute', right: '5px' }}>
-            <PromptButton error={message} actions={actions} />
+            {fixWithAI ? <OpenInAITabButton error={message} actions={actions} fixWithAI={fixWithAI} /> : <CopyPromptButton error={message} actions={actions} />}
           </span>
         </div>
+        
         <ErrorMessage error={message} />
       </div>;
     })}

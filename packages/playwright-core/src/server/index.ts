@@ -29,6 +29,7 @@ export { createPlaywright } from './playwright';
 export type { DispatcherScope } from './dispatchers/dispatcher';
 export type { Playwright } from './playwright';
 export { installRootRedirect, openTraceInBrowser, openTraceViewerApp, runTraceViewerApp, startTraceViewerServer } from './trace/viewer/traceViewer';
+export { getLLMFromEnv } from './llm';
 export { serverSideCallMetadata } from './instrumentation';
 export { SocksProxy } from '../common/socksProxy';
 export * from './fileUtils';
