@@ -100,7 +100,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
       channel: options.channel,
-      userDataDir: path.isAbsolute(userDataDir) ? userDataDir : path.resolve(userDataDir),
+      userDataDir: (path.isAbsolute(userDataDir) || !userDataDir) ? userDataDir : path.resolve(userDataDir),
     };
     return await this._wrapApiCall(async () => {
       const result = await this._channel.launchPersistentContext(persistentParams);
