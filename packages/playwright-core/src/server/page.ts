@@ -31,7 +31,7 @@ import { Screenshotter, validateScreenshotOptions } from './screenshotter';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { LongStandingScope, assert, compressCallLog, createGuid, trimStringWithEllipsis } from '../utils';
 import { asLocator } from '../utils';
-import { getComparator } from '../utils/comparators';
+import { getComparator } from './utils/comparators';
 import { debugLogger } from '../utils/debugLogger';
 import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { ManualPromise } from '../utils/manualPromise';
@@ -45,7 +45,7 @@ import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
 import type * as types from './types';
 import type { TimeoutOptions } from '../common/types';
-import type { ImageComparatorOptions } from '../utils/comparators';
+import type { ImageComparatorOptions } from './utils/comparators';
 import type * as channels from '@protocol/channels';
 
 export interface PageDelegate {

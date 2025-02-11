@@ -18,7 +18,7 @@
 import * as fs from 'fs';
 
 import { splitErrorMessage } from '../../utils/stackTrace';
-import { mkdirIfNeeded } from '../fileUtils';
+import { mkdirIfNeeded } from '../utils/fileUtils';
 
 import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';

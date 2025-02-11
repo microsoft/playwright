@@ -20,7 +20,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 import { deps } from './nativeDeps';
-import * as utils from '../../utils';
+import { wrapInASCIIBox } from '../utils/ascii';
 import { hostPlatform, isOfficiallySupportedPlatform } from '../../utils/hostPlatform';
 import { spawnAsync } from '../../utils/spawnAsync';
 import { getPlaywrightVersion } from '../../utils/userAgent';
@@ -271,7 +271,7 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
     ]);
   }
 
-  throw new Error('\n' + utils.wrapInASCIIBox(errorLines.join('\n'), 1));
+  throw new Error('\n' + wrapInASCIIBox(errorLines.join('\n'), 1));
 }
 
 function isSharedLib(basename: string) {

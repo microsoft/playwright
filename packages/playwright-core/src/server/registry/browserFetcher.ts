@@ -24,7 +24,7 @@ import { debugLogger } from '../../utils/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
 import { getUserAgent } from '../../utils/userAgent';
 import { colors, progress as ProgressBar } from '../../utilsBundle';
-import { existsAsync } from '../fileUtils';
+import { existsAsync } from '../utils/fileUtils';
 
 import { browserDirectoryToMarkerFilePath } from '.';
 

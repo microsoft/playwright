@@ -7,4 +7,5 @@
 ../../../utilsBundle.ts
 ../../../zipBundle.ts
 ../../dispatchers/dispatcher.ts
+../../utils
 ../common/

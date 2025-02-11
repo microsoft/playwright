@@ -188,11 +188,6 @@ const noRestrictedGlobalsRules = {
 
 const importOrderRules = {
   'import/order': [2, {
-    'alphabetize': {
-      'order': 'asc',
-      'caseInsensitive': false
-    },
-    'named': true,
     'groups': ['builtin', 'external', 'internal', ['parent', 'sibling'], 'index', 'type'],
     'newlines-between': 'always',
   }],

@@ -17,7 +17,8 @@
 import * as os from 'os';
 import * as path from 'path';
 
-import { assert, wrapInASCIIBox } from '../../utils';
+import { assert } from '../../utils';
+import { wrapInASCIIBox } from '../utils/ascii';
 import { BrowserReadyState, BrowserType, kNoXServerRunningError } from '../browserType';
 import { BidiBrowser } from './bidiBrowser';
 import { kBrowserCloseMessageId } from './bidiConnection';
@@ -25,7 +26,7 @@ import { createProfile } from './third_party/firefoxPrefs';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
-import type { Env } from '../processLauncher';
+import type { Env } from '../utils/processLauncher';
 import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';

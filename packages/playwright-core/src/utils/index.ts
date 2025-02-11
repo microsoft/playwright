@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-export * from './ascii';
-export * from './comparators';
 export * from './crypto';
 export * from './debug';
 export * from './debugLogger';

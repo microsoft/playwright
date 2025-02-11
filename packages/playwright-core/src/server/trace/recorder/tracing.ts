@@ -25,7 +25,7 @@ import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { Dispatcher } from '../../dispatchers/dispatcher';
 import { serializeError } from '../../errors';
-import { SerializedFS, removeFolders  } from '../../fileUtils';
+import { SerializedFS, removeFolders  } from '../../utils/fileUtils';
 import { HarTracer } from '../../har/harTracer';
 import { SdkObject } from '../../instrumentation';
 import { Page } from '../../page';

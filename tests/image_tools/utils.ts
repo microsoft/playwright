@@ -15,7 +15,7 @@
  */
 
 import { PNG } from 'playwright-core/lib/utilsBundle';
-import { ImageChannel } from 'playwright-core/lib/image_tools/imageChannel';
+import { ImageChannel } from 'playwright-core/lib/server/utils/image_tools/imageChannel';
 
 // mulberry32
 export function createRandom(seed) {

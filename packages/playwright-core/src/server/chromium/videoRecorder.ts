@@ -17,7 +17,7 @@
 import { assert, monotonicTime } from '../../utils';
 import { serverSideCallMetadata } from '../instrumentation';
 import { Page } from '../page';
-import { launchProcess } from '../processLauncher';
+import { launchProcess } from '../utils/processLauncher';
 import { ProgressController } from '../progress';
 
 import type { Progress } from '../progress';
