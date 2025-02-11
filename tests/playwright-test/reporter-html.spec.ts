@@ -1238,7 +1238,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         - link "Logs"
         - link "Pull Request"
         - link /^[a-f0-9]{7}$/
-        - text: 'foo: value1 bar: {"prop":"value2"} baz: ["value3",123]'
+        - text: 'foo : value1 bar : {"prop":"value2"} baz : ["value3",123]'
       `);
     });
 

@@ -18,6 +18,7 @@
   cursor: pointer;
   user-select: none;
   margin-left: 5px;
+  color: var(--color-fg-default);
 }
 
 .metadata-view {
@@ -26,16 +27,46 @@
   margin-top: 8px;
 }
 
+.metadata-view .metadata-section {
+  margin: 8px 10px 8px 32px;
+}
+
+.metadata-view span:not(.copy-button-container),
+.metadata-view a {
+  display: inline-block;
+  line-height: 24px;
+}
+
+.metadata-section {
+  align-items: center;
+}
+
+.metadata-properties {
+  display: flex;
+  flex-direction: column;
+  align-items: normal;
+  gap: 8px;
+}
+
+.metadata-properties > div {
+  height: 24px;
+}
+
 .metadata-separator {
   height: 1px;
   border-bottom: 1px solid var(--color-border-default);
 }
 
-.metadata-view .copy-value-container {
-  margin-top: -2px;
-}
-
 .git-commit-info a {
   color: var(--color-fg-default);
   font-weight: 600;
+}
+
+.copyable-property {
+  white-space: pre;
+}
+
+.copyable-property > span {
+  display: flex;
+  align-items: center;
 }

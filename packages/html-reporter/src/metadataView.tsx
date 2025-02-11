@@ -31,7 +31,6 @@ export const MetadataContext = React.createContext<MetadataEntries>([]);
 export function MetadataProvider({ metadata, children }: React.PropsWithChildren<{ metadata: Metadata }>) {
   const entries = React.useMemo(() => {
     // TODO: do not plumb actualWorkers through metadata.
-
     return Object.entries(metadata).filter(([key]) => key !== 'actualWorkers');
   }, [metadata]);
 
@@ -88,30 +87,43 @@ const InnerMetadataView = () => {
       <GitCommitInfoView info={gitCommitInfo}/>
       {entries.length > 0 && <div className='metadata-separator' />}
     </>}
-    {entries.map(([key, value]) => {
-      const valueString = typeof value !== 'object' || value === null || value === undefined ? String(value) : JSON.stringify(value);
-      const trimmedValue = valueString.length > 1000 ? valueString.slice(0, 1000) + '\u2026' : valueString;
-      return <div className='m-1 ml-5' key={key}>
-        <span style={{ fontWeight: 'bold' }} title={key}>{key}</span>
-        {valueString && <CopyToClipboardContainer value={valueString}>: <span title={trimmedValue}>{linkifyText(trimmedValue)}</span></CopyToClipboardContainer>}
-      </div>;
-    })}
+    <div className='metadata-section metadata-properties'>
+      {entries.map(([propertyName, value]) => {
+        const valueString = typeof value !== 'object' || value === null || value === undefined ? String(value) : JSON.stringify(value);
+        const trimmedValue = valueString.length > 1000 ? valueString.slice(0, 1000) + '\u2026' : valueString;
+        return (
+          <div key={propertyName} className='copyable-property'>
+            <CopyToClipboardContainer value={valueString}>
+              <span style={{ fontWeight: 'bold' }} title={propertyName}>{propertyName}</span>
+              : <span title={trimmedValue}>{linkifyText(trimmedValue)}</span>
+            </CopyToClipboardContainer>
+          </div>
+        );
+      })}
+    </div>
   </div>;
 };
 
 const GitCommitInfoView: React.FC<{ info: GitCommitInfo }> = ({ info }) => {
   const email = info['revision.email'] ? ` <${info['revision.email']}>` : '';
   const author = `${info['revision.author'] || ''}${email}`;
+  const subject = info['revision.subject'] || '';
   const shortTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(info['revision.timestamp']);
   const longTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(info['revision.timestamp']);
-  return <div className='hbox pl-4 pr-2 git-commit-info' style={{ alignItems: 'center' }}>
-    <div className='vbox'>
-      <a className='m-2' href={info['revision.link']} target='_blank' rel='noopener noreferrer'>
-        <span title={info['revision.subject'] || ''}>{info['revision.subject'] || ''}</span>
-      </a>
-      <div className='hbox m-2 mt-1'>
-        <div className='mr-1'>{author}</div>
-        <div title={longTimestamp}> on {shortTimestamp}</div>
+  return <div className='hbox git-commit-info metadata-section'>
+    <div className='vbox metadata-properties'>
+      <div>
+        {info['revision.link'] ? (
+          <a href={info['revision.link']} target='_blank' rel='noopener noreferrer' title={subject}>
+            {subject}
+          </a>
+        ) : <span title={subject}>
+          {subject}
+        </span>}
+      </div>
+      <div className='hbox'>
+        <span className='mr-1'>{author}</span>
+        <span title={longTimestamp}> on {shortTimestamp}</span>
         {info['ci.link'] && (
           <>
             <span className='mx-2'>·</span>
@@ -126,9 +138,10 @@ const GitCommitInfoView: React.FC<{ info: GitCommitInfo }> = ({ info }) => {
         )}
       </div>
     </div>
-    {!!info['revision.link'] && <a href={info['revision.link']} target='_blank' rel='noopener noreferrer'>
-      <span title='View commit details'>{info['revision.id']?.slice(0, 7) || 'unknown'}</span>
-    </a>}
-    {!info['revision.link'] && !!info['revision.id'] && <span>{info['revision.id'].slice(0, 7)}</span>}
+    {!!info['revision.link'] ? (
+      <a href={info['revision.link']} target='_blank' rel='noopener noreferrer' title='View commit details'>
+        {info['revision.id']?.slice(0, 7) || 'unknown'}
+      </a>
+    ) : !!info['revision.id'] && <span>{info['revision.id'].slice(0, 7)}</span>}
   </div>;
 };

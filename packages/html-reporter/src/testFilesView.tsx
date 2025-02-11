@@ -69,14 +69,16 @@ export const TestFilesHeader: React.FC<{
 }> = ({ report, filteredStats, metadataVisible, toggleMetadataVisible }) => {
   const metadataEntries = useMetadata();
   if (!report)
-    return;
+    return null;
   return <>
     <div className='mx-1' style={{ display: 'flex', marginTop: 10 }}>
-      {metadataEntries.length > 0 && <div className='metadata-toggle' role='button' onClick={toggleMetadataVisible} title={metadataVisible ? 'Hide metadata' : 'Show metadata'}>
-        {metadataVisible ? icons.downArrow() : icons.rightArrow()}Metadata
-      </div>}
-      {report.projectNames.length === 1 && !!report.projectNames[0] && <div data-testid='project-name' style={{ color: 'var(--color-fg-subtle)' }}>Project: {report.projectNames[0]}</div>}
-      {filteredStats && <div data-testid='filtered-tests-count' style={{ color: 'var(--color-fg-subtle)', padding: '0 10px' }}>Filtered: {filteredStats.total} {!!filteredStats.total && ('(' + msToString(filteredStats.duration) + ')')}</div>}
+      <div className='test-file-header-info'>
+        {metadataEntries.length > 0 && <div className='metadata-toggle' role='button' onClick={toggleMetadataVisible} title={metadataVisible ? 'Hide metadata' : 'Show metadata'}>
+          {metadataVisible ? icons.downArrow() : icons.rightArrow()}Metadata
+        </div>}
+        {report.projectNames.length === 1 && !!report.projectNames[0] && <div data-testid='project-name'>Project: {report.projectNames[0]}</div>}
+        {filteredStats && <div data-testid='filtered-tests-count'>Filtered: {filteredStats.total} {!!filteredStats.total && ('(' + msToString(filteredStats.duration) + ')')}</div>}
+      </div>
       <div style={{ flex: 'auto' }}></div>
       <div data-testid='overall-time' style={{ color: 'var(--color-fg-subtle)', marginRight: '10px' }}>{report ? new Date(report.startTime).toLocaleString() : ''}</div>
       <div data-testid='overall-duration' style={{ color: 'var(--color-fg-subtle)' }}>Total time: {msToString(report.duration ?? 0)}</div>
