@@ -16,9 +16,9 @@
 
 import { browserTest as it, expect } from '../config/browserTest';
 
-it('should throw when fetchFailOnStatusCode is set to true inside BrowserContext options', async ({ browser, server }) => {
+it('should throw when apiRequestFailsOnErrorStatus is set to true inside BrowserContext options', async ({ browser, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34204' });
-  const context = await browser.newContext({ fetchFailOnStatusCode: true });
+  const context = await browser.newContext({ apiRequestFailsOnErrorStatus: true });
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(404, { 'Content-Length': 10, 'Content-Type': 'text/plain' });
     res.end('Not found.');
@@ -30,7 +30,7 @@ it('should throw when fetchFailOnStatusCode is set to true inside BrowserContext
 
 it('should not throw when failOnStatusCode is set to false inside BrowserContext options', async ({ browser, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34204' });
-  const context = await browser.newContext({ fetchFailOnStatusCode: false });
+  const context = await browser.newContext({ apiRequestFailsOnErrorStatus: false });
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(404, { 'Content-Length': 10, 'Content-Type': 'text/plain' });
     res.end('Not found.');
@@ -40,10 +40,10 @@ it('should not throw when failOnStatusCode is set to false inside BrowserContext
   await context.close();
 });
 
-it('should throw when fetchFailOnStatusCode is set to true inside browserType.launchPersistentContext options', async ({ browserType, server, createUserDataDir }) => {
+it('should throw when apiRequestFailsOnErrorStatus is set to true inside browserType.launchPersistentContext options', async ({ browserType, server, createUserDataDir }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34204' });
   const userDataDir = await createUserDataDir();
-  const context = await browserType.launchPersistentContext(userDataDir, { fetchFailOnStatusCode: true });
+  const context = await browserType.launchPersistentContext(userDataDir, { apiRequestFailsOnErrorStatus: true });
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(404, { 'Content-Length': 10, 'Content-Type': 'text/plain' });
     res.end('Not found.');
@@ -53,10 +53,10 @@ it('should throw when fetchFailOnStatusCode is set to true inside browserType.la
   await context.close();
 });
 
-it('should not throw when fetchFailOnStatusCode is set to false inside browserType.launchPersistentContext options', async ({ browserType, server, createUserDataDir }) => {
+it('should not throw when apiRequestFailsOnErrorStatus is set to false inside browserType.launchPersistentContext options', async ({ browserType, server, createUserDataDir }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34204' });
   const userDataDir = await createUserDataDir();
-  const context = await browserType.launchPersistentContext(userDataDir, { fetchFailOnStatusCode: false });
+  const context = await browserType.launchPersistentContext(userDataDir, { apiRequestFailsOnErrorStatus: false });
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(404, { 'Content-Length': 10, 'Content-Type': 'text/plain' });
     res.end('Not found.');

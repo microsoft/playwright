@@ -468,7 +468,7 @@ ContextOptions:
     extraHTTPHeaders:
       type: array?
       items: NameValue
-    fetchFailOnStatusCode: boolean?
+    apiRequestFailsOnErrorStatus: boolean?
     offline: boolean?
     httpCredentials:
       type: object?
@@ -694,7 +694,7 @@ Playwright:
         extraHTTPHeaders:
           type: array?
           items: NameValue
-        fetchFailOnStatusCode: boolean?
+        apiRequestFailsOnErrorStatus: boolean?
         clientCertificates:
           type: array?
           items:

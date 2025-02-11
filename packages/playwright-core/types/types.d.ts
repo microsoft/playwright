@@ -9684,6 +9684,12 @@ export interface Browser {
     acceptDownloads?: boolean;
 
     /**
+     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
+     * default, response object is returned for all status codes.
+     */
+    apiRequestFailsOnErrorStatus?: boolean;
+
+    /**
      * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
      * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
      * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
@@ -9780,12 +9786,6 @@ export interface Browser {
      * An object containing additional HTTP headers to be sent with every request. Defaults to none.
      */
     extraHTTPHeaders?: { [key: string]: string; };
-
-    /**
-     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
-     * default, response object is returned for all status codes.
-     */
-    fetchFailOnStatusCode?: boolean;
 
     /**
      * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
@@ -14692,6 +14692,12 @@ export interface BrowserType<Unused = {}> {
     acceptDownloads?: boolean;
 
     /**
+     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
+     * default, response object is returned for all status codes.
+     */
+    apiRequestFailsOnErrorStatus?: boolean;
+
+    /**
      * **NOTE** Use custom browser args at your own risk, as some of them may break Playwright functionality.
      *
      * Additional arguments to pass to the browser instance. The list of Chromium flags can be found
@@ -14839,12 +14845,6 @@ export interface BrowserType<Unused = {}> {
      * An object containing additional HTTP headers to be sent with every request. Defaults to none.
      */
     extraHTTPHeaders?: { [key: string]: string; };
-
-    /**
-     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
-     * default, response object is returned for all status codes.
-     */
-    fetchFailOnStatusCode?: boolean;
 
     /**
      * Firefox user preferences. Learn more about the Firefox user preferences at
@@ -16581,6 +16581,12 @@ export interface AndroidDevice {
     acceptDownloads?: boolean;
 
     /**
+     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
+     * default, response object is returned for all status codes.
+     */
+    apiRequestFailsOnErrorStatus?: boolean;
+
+    /**
      * **NOTE** Use custom browser args at your own risk, as some of them may break Playwright functionality.
      *
      * Additional arguments to pass to the browser instance. The list of Chromium flags can be found
@@ -16629,12 +16635,6 @@ export interface AndroidDevice {
      * An object containing additional HTTP headers to be sent with every request. Defaults to none.
      */
     extraHTTPHeaders?: { [key: string]: string; };
-
-    /**
-     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
-     * default, response object is returned for all status codes.
-     */
-    fetchFailOnStatusCode?: boolean;
 
     /**
      * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See
@@ -17426,6 +17426,12 @@ export interface APIRequest {
    */
   newContext(options?: {
     /**
+     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
+     * default, response object is returned for all status codes.
+     */
+    apiRequestFailsOnErrorStatus?: boolean;
+
+    /**
      * Methods like
      * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
      * take the base URL into consideration by using the
@@ -17499,12 +17505,6 @@ export interface APIRequest {
      * An object containing additional HTTP headers to be sent with every request. Defaults to none.
      */
     extraHTTPHeaders?: { [key: string]: string; };
-
-    /**
-     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
-     * default, response object is returned for all status codes.
-     */
-    fetchFailOnStatusCode?: boolean;
 
     /**
      * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
@@ -21902,6 +21902,12 @@ export interface BrowserContextOptions {
   acceptDownloads?: boolean;
 
   /**
+   * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
+   * default, response object is returned for all status codes.
+   */
+  apiRequestFailsOnErrorStatus?: boolean;
+
+  /**
    * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
    * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
    * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
@@ -21998,12 +22004,6 @@ export interface BrowserContextOptions {
    * An object containing additional HTTP headers to be sent with every request. Defaults to none.
    */
   extraHTTPHeaders?: { [key: string]: string; };
-
-  /**
-   * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
-   * default, response object is returned for all status codes.
-   */
-  fetchFailOnStatusCode?: boolean;
 
   /**
    * Emulates `'forced-colors'` media feature, supported values are `'active'`, `'none'`. See

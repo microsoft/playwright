@@ -45,7 +45,7 @@ import { TLSSocket } from 'tls';
 type FetchRequestOptions = {
   userAgent: string;
   extraHTTPHeaders?: HeadersArray;
-  fetchFailOnStatusCode?: boolean;
+  apiRequestFailsOnErrorStatus?: boolean;
   httpCredentials?: HTTPCredentials;
   proxy?: ProxySettings;
   timeoutSettings: TimeoutSettings;
@@ -206,7 +206,7 @@ export abstract class APIRequestContext extends SdkObject {
     });
     const fetchUid = this._storeResponseBody(fetchResponse.body);
     this.fetchLog.set(fetchUid, controller.metadata.log);
-    const failOnStatusCode = params.failOnStatusCode !== undefined ? params.failOnStatusCode : !!defaults.fetchFailOnStatusCode;
+    const failOnStatusCode = params.failOnStatusCode !== undefined ? params.failOnStatusCode : !!defaults.apiRequestFailsOnErrorStatus;
     if (failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400)) {
       let responseText = '';
       if (fetchResponse.body.byteLength) {
@@ -612,7 +612,7 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
     return {
       userAgent: this._context._options.userAgent || this._context._browser.userAgent(),
       extraHTTPHeaders: this._context._options.extraHTTPHeaders,
-      fetchFailOnStatusCode: this._context._options.fetchFailOnStatusCode,
+      apiRequestFailsOnErrorStatus: this._context._options.apiRequestFailsOnErrorStatus,
       httpCredentials: this._context._options.httpCredentials,
       proxy: this._context._options.proxy || this._context._browser.options.proxy,
       timeoutSettings: this._context._timeoutSettings,
@@ -664,7 +664,7 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       baseURL: options.baseURL,
       userAgent: options.userAgent || getUserAgent(),
       extraHTTPHeaders: options.extraHTTPHeaders,
-      fetchFailOnStatusCode: !!options.fetchFailOnStatusCode,
+      apiRequestFailsOnErrorStatus: !!options.apiRequestFailsOnErrorStatus,
       ignoreHTTPSErrors: !!options.ignoreHTTPSErrors,
       httpCredentials: options.httpCredentials,
       clientCertificates: options.clientCertificates,

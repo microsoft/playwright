@@ -21,7 +21,7 @@ Creates new instances of [APIRequestContext].
 ### option: APIRequest.newContext.extraHTTPHeaders = %%-context-option-extrahttpheaders-%%
 * since: v1.16
 
-### option: APIRequest.newContext.fetchFailOnStatusCode = %%-context-option-fetchFailOnStatusCode-%%
+### option: APIRequest.newContext.apiRequestFailsOnErrorStatus = %%-context-option-apiRequestFailsOnErrorStatus-%%
 * since: v1.51
 
 ### option: APIRequest.newContext.httpCredentials = %%-context-option-httpcredentials-%%
