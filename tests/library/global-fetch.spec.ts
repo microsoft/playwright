@@ -556,8 +556,7 @@ it('should not throw when fetchFailOnStatusCode is set to false inside APIReques
     res.writeHead(404, { 'Content-Length': 10, 'Content-Type': 'text/plain' });
     res.end('Not found.');
   });
-const response = await request.fetch(server.EMPTY_PAGE);
-expect(response.status()).toBe(404);
-  expect(error.message).toBeUndefined();
+  const response = await request.fetch(server.EMPTY_PAGE);
+  expect(response.status()).toBe(404);
   await request.dispose();
 });
