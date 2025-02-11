@@ -89,10 +89,10 @@ export class RemoteServer implements PlaywrightServer {
       args: browserOptions.args,
       headless: browserOptions.headless,
       channel: browserOptions.channel,
+      executablePath: browserOptions.executablePath,
       handleSIGINT: true,
       handleSIGTERM: true,
       handleSIGHUP: true,
-      executablePath: browserOptions.channel ? undefined : browserOptions.executablePath,
       logger: undefined,
     };
     const options = {
