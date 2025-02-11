@@ -4,5 +4,6 @@
 ../server/
 ../server/android/
 ../server/dispatchers/
+../server/utils/
 ../utils/
 ../utilsBundle.ts

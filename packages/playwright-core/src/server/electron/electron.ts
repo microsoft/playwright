@@ -20,7 +20,8 @@ import * as path from 'path';
 import * as readline from 'readline';
 
 import { TimeoutSettings } from '../../common/timeoutSettings';
-import { ManualPromise, wrapInASCIIBox } from '../../utils';
+import { ManualPromise } from '../../utils';
+import { wrapInASCIIBox } from '../utils/ascii';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { eventsHelper } from '../../utils/eventsHelper';
 import { validateBrowserContextOptions } from '../browserContext';
@@ -32,7 +33,7 @@ import { ConsoleMessage } from '../console';
 import { helper } from '../helper';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
 import * as js from '../javascript';
-import { envArrayToObject, launchProcess } from '../processLauncher';
+import { envArrayToObject, launchProcess } from '../utils/processLauncher';
 import { ProgressController } from '../progress';
 import { WebSocketTransport } from '../transport';
 

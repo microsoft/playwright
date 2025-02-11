@@ -15,7 +15,7 @@
  */
 
 import { SdkObject, createInstrumentation, serverSideCallMetadata } from './instrumentation';
-import { gracefullyProcessExitDoNotHang } from './processLauncher';
+import { gracefullyProcessExitDoNotHang } from './utils/processLauncher';
 import { Recorder } from './recorder';
 import { asLocator  } from '../utils';
 import { parseAriaSnapshotUnsafe } from '../utils/isomorphic/ariaSnapshot';

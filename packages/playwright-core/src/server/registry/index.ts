@@ -23,14 +23,15 @@ import * as util from 'util';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 import { dockerVersion, readDockerVersionSync, transformCommandsForRoot } from './dependencies';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
-import { calculateSha1, getAsBooleanFromENV, getFromENV, getPackageManagerExecCommand, wrapInASCIIBox } from '../../utils';
+import { calculateSha1, getAsBooleanFromENV, getFromENV, getPackageManagerExecCommand } from '../../utils';
+import { wrapInASCIIBox } from '../utils/ascii';
 import { debugLogger } from '../../utils/debugLogger';
 import {  hostPlatform, isOfficiallySupportedPlatform } from '../../utils/hostPlatform';
 import { fetchData } from '../../utils/network';
 import { spawnAsync } from '../../utils/spawnAsync';
 import { getEmbedderName } from '../../utils/userAgent';
 import { lockfile } from '../../utilsBundle';
-import { canAccessFile, existsAsync, removeFolders } from '../fileUtils';
+import { canAccessFile, existsAsync, removeFolders } from '../utils/fileUtils';
 
 import type { DependencyGroup } from './dependencies';
 import type { HostPlatform } from '../../utils/hostPlatform';

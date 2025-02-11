@@ -23,7 +23,7 @@ import { createGuid, debugMode } from '../utils';
 import { Clock } from './clock';
 import { Debugger } from './debugger';
 import { BrowserContextAPIRequestContext } from './fetch';
-import { mkdirIfNeeded } from './fileUtils';
+import { mkdirIfNeeded } from './utils/fileUtils';
 import { HarRecorder } from './har/harRecorder';
 import { helper } from './helper';
 import { SdkObject, serverSideCallMetadata } from './instrumentation';

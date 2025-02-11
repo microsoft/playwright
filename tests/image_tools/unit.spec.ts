@@ -15,9 +15,9 @@
  */
 
 import { test } from '../playwright-test/stable-test-runner';
-import { ssim, FastStats } from 'playwright-core/lib/image_tools/stats';
-import { ImageChannel } from 'playwright-core/lib/image_tools/imageChannel';
-import { srgb2xyz, xyz2lab, colorDeltaE94 } from 'playwright-core/lib/image_tools/colorUtils';
+import { ssim, FastStats } from 'playwright-core/lib/server/utils/image_tools/stats';
+import { ImageChannel } from 'playwright-core/lib/server/utils/image_tools/imageChannel';
+import { srgb2xyz, xyz2lab, colorDeltaE94 } from 'playwright-core/lib/server/utils/image_tools/colorUtils';
 import referenceSSIM from 'ssim.js';
 import { randomPNG, assertEqual, grayChannel } from './utils';
 

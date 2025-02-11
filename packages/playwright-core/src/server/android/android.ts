@@ -28,10 +28,10 @@ import { wsReceiver, wsSender } from '../../utilsBundle';
 import { validateBrowserContextOptions } from '../browserContext';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
 import { CRBrowser } from '../chromium/crBrowser';
-import { removeFolders } from '../fileUtils';
+import { removeFolders } from '../utils/fileUtils';
 import { helper } from '../helper';
 import { SdkObject, serverSideCallMetadata } from '../instrumentation';
-import { gracefullyCloseSet } from '../processLauncher';
+import { gracefullyCloseSet } from '../utils/processLauncher';
 import { ProgressController } from '../progress';
 import { registry } from '../registry';
 

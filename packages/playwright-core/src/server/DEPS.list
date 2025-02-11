@@ -13,6 +13,7 @@
 ./recorder/
 ./registry/
 ./trace/recorder/tracing.ts
+./utils/
 
 [playwright.ts]
 ./android/

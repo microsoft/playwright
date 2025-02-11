@@ -25,7 +25,8 @@ import { launchBrowserServer, printApiJson, runDriver, runServer } from './drive
 import { isTargetClosedError } from '../client/errors';
 import { gracefullyProcessExitDoNotHang, registry, writeDockerVersion } from '../server';
 import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/traceViewer';
-import { assert, getPackageManagerExecCommand, isLikelyNpxGlobal, wrapInASCIIBox } from '../utils';
+import { assert, getPackageManagerExecCommand, isLikelyNpxGlobal } from '../utils';
+import { wrapInASCIIBox } from '../server/utils/ascii';
 import { dotenv, program } from '../utilsBundle';
 
 import type { Browser } from '../client/browser';

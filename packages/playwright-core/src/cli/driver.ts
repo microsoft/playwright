@@ -22,7 +22,7 @@ import * as playwright from '../..';
 import { PipeTransport } from '../protocol/transport';
 import { PlaywrightServer } from '../remote/playwrightServer';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from '../server';
-import { gracefullyProcessExitDoNotHang } from '../server/processLauncher';
+import { gracefullyProcessExitDoNotHang } from '../server/utils/processLauncher';
 
 import type { BrowserType } from '../client/browserType';
 import type { LaunchServerOptions } from '../client/types';

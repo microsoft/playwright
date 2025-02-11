@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-import { compare } from '../image_tools/compare';
+import { compare } from './image_tools/compare';
 // @ts-ignore
-import pixelmatch from '../third_party/pixelmatch';
-import { colors, jpegjs } from '../utilsBundle';
-import { diff } from '../utilsBundle';
-import { PNG } from '../utilsBundle';
+import pixelmatch from '../../third_party/pixelmatch';
+import { colors, jpegjs } from '../../utilsBundle';
+import { diff } from '../../utilsBundle';
+import { PNG } from '../../utilsBundle';
 
 export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, comparator?: string };
 export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;

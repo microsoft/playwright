@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { compare } from 'playwright-core/lib/image_tools/compare';
+import { compare } from 'playwright-core/lib/server/utils/image_tools/compare';
 import { PNG } from 'playwright-core/lib/utilsBundle';
 import { expect, playwrightTest as it } from '../config/browserTest';
 
