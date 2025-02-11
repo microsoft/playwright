@@ -16,11 +16,29 @@
 
 import * as path from 'path';
 
-import { parseStackTraceLine } from '../utilsBundle';
 import { colors } from '../utilsBundle';
 import { findRepeatedSubsequences } from './sequence';
+import { StackUtils } from './stackUtils';
 
 import type { StackFrame } from '@protocol/channels';
+
+const stackUtils = new StackUtils();
+
+export function parseStackTraceLine(line: string): StackFrame | null {
+  const frame = stackUtils.parseLine(line);
+  if (!frame)
+    return null;
+  if (!process.env.PWDEBUGIMPL && (frame.file?.startsWith('internal') || frame.file?.startsWith('node:')))
+    return null;
+  if (!frame.file)
+    return null;
+  return {
+    file: frame.file,
+    line: frame.line || 0,
+    column: frame.column || 0,
+    function: frame.function,
+  };
+}
 
 export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): E {
   const lines: string[] = (e.stack?.split('\n') || []).filter(l => l.startsWith('    at '));

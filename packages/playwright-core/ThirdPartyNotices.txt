@@ -19,7 +19,6 @@ This project incorporates components from the projects listed below. The origina
 -	diff@7.0.0 (https://github.com/kpdecker/jsdiff)
 -	dotenv@16.4.5 (https://github.com/motdotla/dotenv)
 -	end-of-stream@1.4.4 (https://github.com/mafintosh/end-of-stream)
--	escape-string-regexp@2.0.0 (https://github.com/sindresorhus/escape-string-regexp)
 -	extract-zip@2.0.1 (https://github.com/maxogden/extract-zip)
 -	fd-slicer@1.1.0 (https://github.com/andrewrk/node-fd-slicer)
 -	get-stream@5.2.0 (https://github.com/sindresorhus/get-stream)
@@ -46,7 +45,6 @@ This project incorporates components from the projects listed below. The origina
 -	socks-proxy-agent@6.1.1 (https://github.com/TooTallNate/node-socks-proxy-agent)
 -	socks@2.8.3 (https://github.com/JoshGlazebrook/socks)
 -	sprintf-js@1.1.3 (https://github.com/alexei/sprintf.js)
--	stack-utils@2.0.5 (https://github.com/tapjs/stack-utils)
 -	wrappy@1.0.2 (https://github.com/npm/wrappy)
 -	ws@8.17.1 (https://github.com/websockets/ws)
 -	yaml@2.6.0 (https://github.com/eemeli/yaml)
@@ -562,20 +560,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
 END OF end-of-stream@1.4.4 AND INFORMATION
-
-%% escape-string-regexp@2.0.0 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-MIT License
-
-Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-=========================================
-END OF escape-string-regexp@2.0.0 AND INFORMATION
 
 %% extract-zip@2.0.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1454,32 +1438,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 =========================================
 END OF sprintf-js@1.1.3 AND INFORMATION
 
-%% stack-utils@2.0.5 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-The MIT License (MIT)
-
-Copyright (c) Isaac Z. Schlueter <i@izs.me>, James Talmage <james@talmage.io> (github.com/jamestalmage), and Contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-=========================================
-END OF stack-utils@2.0.5 AND INFORMATION
-
 %% wrappy@1.0.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The ISC License
@@ -1597,6 +1555,6 @@ END OF yazl@2.5.1 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================
-Total Packages: 48
+Total Packages: 46
 =========================================
 END OF SUMMARY

@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
-import * as url from 'url';
-
 export const colors: typeof import('../bundles/utils/node_modules/colors/safe') = require('./utilsBundleImpl').colors;
 export const debug: typeof import('../bundles/utils/node_modules/@types/debug') = require('./utilsBundleImpl').debug;
 export const diff: typeof import('../bundles/utils/node_modules/@types/diff') = require('./utilsBundleImpl').diff;
@@ -40,28 +37,6 @@ export const wsReceiver = require('./utilsBundleImpl').wsReceiver;
 export const wsSender = require('./utilsBundleImpl').wsSender;
 export type { Command } from '../bundles/utils/node_modules/commander';
 export type { EventEmitter as WebSocketEventEmitter, RawData as WebSocketRawData, WebSocket, WebSocketServer } from '../bundles/utils/node_modules/@types/ws';
-import type { StackFrame } from '@protocol/channels';
-
-const StackUtils: typeof import('../bundles/utils/node_modules/@types/stack-utils') = require('./utilsBundleImpl').StackUtils;
-const stackUtils = new StackUtils({ internals: StackUtils.nodeInternals() });
-
-export function parseStackTraceLine(line: string): StackFrame | null {
-  const frame = stackUtils.parseLine(line);
-  if (!frame)
-    return null;
-  if (!process.env.PWDEBUGIMPL && (frame.file?.startsWith('internal') || frame.file?.startsWith('node:')))
-    return null;
-  if (!frame.file)
-    return null;
-  // ESM files return file:// URLs, see here: https://github.com/tapjs/stack-utils/issues/60
-  const file = frame.file.startsWith('file://') ? url.fileURLToPath(frame.file) : path.resolve(process.cwd(), frame.file);
-  return {
-    file,
-    line: frame.line || 0,
-    column: frame.column || 0,
-    function: frame.function,
-  };
-}
 
 export function ms(ms: number): string {
   if (!isFinite(ms))

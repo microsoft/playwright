@@ -17,7 +17,8 @@
 import * as path from 'path';
 
 import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
-import { colors as realColors, ms as milliseconds, parseStackTraceLine } from 'playwright-core/lib/utilsBundle';
+import { parseStackTraceLine } from 'playwright-core/lib/utils';
+import { colors as realColors, ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 
 import { resolveReporterOutputPath } from '../util';
 import { getEastAsianWidth } from '../utilsBundle';
