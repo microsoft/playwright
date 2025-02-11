@@ -464,7 +464,7 @@ await page1.GotoAsync("about:blank?foo");`);
       expect(exitCode).toBe(130);
     } else {
       // If the runner is slow enough, the process will be forcibly terminated by the signal
-      expect(signal).toMatch(/SIGINT|SIGTERM/);
+      expect(signal).toMatch(/SIGINT|SIGKILL/);
     }
     expect(fs.existsSync(storageFileName)).toBeTruthy();
     expect(fs.existsSync(harFileName)).toBeTruthy();
