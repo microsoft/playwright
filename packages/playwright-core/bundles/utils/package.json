@@ -26,7 +26,6 @@
     "retry": "0.12.0",
     "signal-exit": "3.0.7",
     "socks-proxy-agent": "6.1.1",
-    "stack-utils": "2.0.5",
     "ws": "8.17.1",
     "yaml": "^2.6.0"
   },
