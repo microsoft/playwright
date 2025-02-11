@@ -20,7 +20,7 @@ import * as path from 'path';
 
 import { normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
 import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
-import { ManualPromise, debugMode } from '../utils';
+import { ManualPromise, assert, debugMode } from '../utils';
 import { helper } from './helper';
 import { SdkObject } from './instrumentation';
 import { PipeTransport } from './pipeTransport';
@@ -188,8 +188,7 @@ export abstract class BrowserType extends SdkObject {
     tempDirectories.push(artifactsDir);
 
     if (userDataDir) {
-      if (!path.isAbsolute(userDataDir))
-        throw new Error('userDataDir must be an absolute path');
+      assert(path.isAbsolute(userDataDir), 'userDataDir must be an absolute path');
       // Firefox bails if the profile directory does not exist, Chrome creates it. We ensure consistent behavior here.
       if (!await existsAsync(userDataDir))
         await fs.promises.mkdir(userDataDir, { recursive: true, mode: 0o700 });
