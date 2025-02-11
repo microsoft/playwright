@@ -89,7 +89,7 @@
     "cross-env": "^7.0.3",
     "dotenv": "^16.4.5",
     "electron": "^30.1.2",
-    "esbuild": "^0.18.11",
+    "esbuild": "^0.25.0",
     "eslint": "^9.19.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-notice": "^1.0.0",
