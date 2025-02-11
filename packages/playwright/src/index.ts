@@ -23,7 +23,7 @@ import { addInternalStackPrefix, asLocator, createGuid, debugMode, isString, jso
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
 
-import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
+import type { Fixtures, PageSnapshotMode, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import type { ApiCallData, ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
@@ -59,7 +59,6 @@ type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
   _optionContextReuseMode: ContextReuseMode,
   _optionConnectOptions: PlaywrightWorkerOptions['connectOptions'],
   _reuseContext: boolean,
-  _pageSnapshot: PageSnapshotOption,
 };
 
 const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
@@ -77,7 +76,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   screenshot: ['off', { scope: 'worker', option: true }],
   video: ['off', { scope: 'worker', option: true }],
   trace: ['off', { scope: 'worker', option: true }],
-  _pageSnapshot: ['off', { scope: 'worker', option: true }],
+  pageSnapshot: ['only-on-failure', { scope: 'worker', option: true }],
 
   _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
     const options: LaunchOptions = {
@@ -245,13 +244,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     playwright._defaultContextNavigationTimeout = undefined;
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
-  _setupArtifacts: [async ({ playwright, screenshot, _pageSnapshot }, use, testInfo) => {
+  _setupArtifacts: [async ({ playwright, screenshot, pageSnapshot }, use, testInfo) => {
     // This fixture has a separate zero-timeout slot to ensure that artifact collection
     // happens even after some fixtures or hooks time out.
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, _pageSnapshot);
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, pageSnapshot);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
     const tracingGroupSteps: TestStepInternal[] = [];
@@ -449,7 +448,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 });
 
 type ScreenshotOption = PlaywrightWorkerOptions['screenshot'] | undefined;
-type PageSnapshotOption = 'off' | 'on' | 'only-on-failure';
 
 function normalizeVideoMode(video: VideoMode | 'retry-with-video' | { mode: VideoMode } | undefined): VideoMode {
   if (!video)
@@ -528,7 +526,7 @@ class SnapshotRecorder {
 
   constructor(
     private _artifactsRecorder: ArtifactsRecorder,
-    private _mode: ScreenshotMode | PageSnapshotOption,
+    private _mode: ScreenshotMode | PageSnapshotMode,
     private _name: string,
     private _contentType: string,
     private _extension: string,
@@ -620,7 +618,7 @@ class ArtifactsRecorder {
   private _pageSnapshotRecorder: SnapshotRecorder;
   private _screenshotRecorder: SnapshotRecorder;
 
-  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, pageSnapshot: PageSnapshotOption) {
+  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, pageSnapshot: PageSnapshotMode) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
@@ -631,7 +629,7 @@ class ArtifactsRecorder {
     });
 
     this._pageSnapshotRecorder = new SnapshotRecorder(this, pageSnapshot, 'pageSnapshot', 'text/plain', '.ariasnapshot', async (page, path) => {
-      const ariaSnapshot = await page.locator('body').ariaSnapshot();
+      const ariaSnapshot = await page.locator('body').ariaSnapshot({ timeout: 5000 });
       await fs.promises.writeFile(path, ariaSnapshot);
     });
   }

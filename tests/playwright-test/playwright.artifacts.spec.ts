@@ -128,7 +128,7 @@ test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { screenshot: 'on' } };
+      module.exports = { use: { screenshot: 'on', pageSnapshot: 'off' } };
     `,
   }, { workers: 1 });
 
@@ -168,7 +168,7 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { screenshot: 'only-on-failure' } };
+      module.exports = { use: { screenshot: 'only-on-failure', pageSnapshot: 'off' } };
     `,
   }, { workers: 1 });
 
@@ -204,7 +204,7 @@ test('should work with screenshot: on-first-failure', async ({ runInlineTest }, 
     'playwright.config.ts': `
       module.exports = {
         retries: 1,
-        use: { screenshot: 'on-first-failure' }
+        use: { screenshot: 'on-first-failure', pageSnapshot: 'off' }
       };
     `,
   }, { workers: 1 });
@@ -231,7 +231,7 @@ test('should work with screenshot: only-on-failure & fullPage', async ({ runInli
     });
     `,
     'playwright.config.ts': `
-      module.exports = { use: { screenshot: { mode: 'only-on-failure', fullPage: true } } };
+      module.exports = { use: { screenshot: { mode: 'only-on-failure', fullPage: true }, pageSnapshot: 'off' } };
     `,
   }, { workers: 1 });
   expect(result.exitCode).toBe(1);
@@ -252,7 +252,7 @@ test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'on' } };
+      module.exports = { use: { trace: 'on', pageSnapshot: 'off' } };
     `,
   }, { workers: 1 });
 
@@ -288,7 +288,7 @@ test('should work with trace: retain-on-failure', async ({ runInlineTest }, test
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'retain-on-failure' } };
+      module.exports = { use: { trace: 'retain-on-failure', pageSnapshot: 'off' } };
     `,
   }, { workers: 1 });
 
@@ -314,7 +314,7 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'on-first-retry' } };
+      module.exports = { use: { trace: 'on-first-retry', pageSnapshot: 'off' } };
     `,
   }, { workers: 1, retries: 1 });
 
@@ -340,7 +340,7 @@ test('should work with trace: on-all-retries', async ({ runInlineTest }, testInf
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'on-all-retries' } };
+      module.exports = { use: { trace: 'on-all-retries', pageSnapshot: 'off' } };
     `,
   }, { workers: 1, retries: 2 });
 
@@ -376,7 +376,7 @@ test('should work with trace: retain-on-first-failure', async ({ runInlineTest }
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'retain-on-first-failure' } };
+      module.exports = { use: { trace: 'retain-on-first-failure', pageSnapshot: 'off' } };
     `,
   }, { workers: 1, retries: 2 });
 
@@ -421,11 +421,11 @@ test('should take screenshot when page is closed in afterEach', async ({ runInli
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fails', 'test-failed-1.png'))).toBeTruthy();
 });
 
-test('should work with _pageSnapshot: on', async ({ runInlineTest }, testInfo) => {
+test('should work with pageSnapshot: on', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { _pageSnapshot: 'on' } };
+      module.exports = { use: { pageSnapshot: 'on' } };
     `,
   }, { workers: 1 });
 
@@ -461,11 +461,11 @@ test('should work with _pageSnapshot: on', async ({ runInlineTest }, testInfo) =
   ]);
 });
 
-test('should work with _pageSnapshot: only-on-failure', async ({ runInlineTest }, testInfo) => {
+test('should work with pageSnapshot: only-on-failure', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { _pageSnapshot: 'only-on-failure' } };
+      module.exports = { use: { pageSnapshot: 'only-on-failure' } };
     `,
   }, { workers: 1 });
 

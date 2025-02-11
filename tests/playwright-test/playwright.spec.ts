@@ -485,7 +485,7 @@ test('should work with video: retain-on-failure', async ({ runInlineTest }) => {
 test('should work with video: on-first-retry', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { video: 'on-first-retry' }, retries: 1, name: 'chromium' };
+      module.exports = { use: { video: 'on-first-retry', pageSnapshot: 'off' }, retries: 1, name: 'chromium' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';

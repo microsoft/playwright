@@ -507,6 +507,27 @@ export default defineConfig({
 
 Learn more about [automatic screenshots](../test-use-options.md#recording-options).
 
+## property: TestOptions.pageSnapshot
+* since: v1.51
+- type: <[PageSnapshotMode]<"off"|"on"|"only-on-failure">>
+
+Whether to automatically capture a ARIA snapshot of the page after each test. Defaults to `'only-on-failure'`.
+* `'off'`: Do not capture page snapshots.
+* `'on'`: Capture page snapshot after each test.
+* `'only-on-failure'`: Capture page snapshot after each test failure.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    pageSnapshot: 'on',
+  },
+});
+```
+
 ## property: TestOptions.storageState = %%-js-python-context-option-storage-state-%%
 * since: v1.10
 
