@@ -41,15 +41,15 @@ export function AITab({ state }: { state?: AIState }) {
       return { ...message, content };
     })
 
-    const response = await fetch('./llm/chat-completion', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(hydratedMessages),
-      signal: controller.signal,
-    });
     try {
+      const response = await fetch('./llm/chat-completion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(hydratedMessages),
+        signal: controller.signal,
+      });
       const decoder = new TextDecoder();
       let reply = '';
       function update() {
