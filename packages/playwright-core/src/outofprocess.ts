@@ -20,9 +20,9 @@ import * as path from 'path';
 import { Connection } from './client/connection';
 import { PipeTransport } from './protocol/transport';
 import { ManualPromise } from './utils/manualPromise';
+import { nodePlatform } from './utils/platform';
 
 import type { Playwright } from './client/playwright';
-
 
 export async function start(env: any = {}): Promise<{ playwright: Playwright, stop: () => Promise<void> }> {
   const client = new PlaywrightClient(env);
@@ -48,7 +48,7 @@ class PlaywrightClient {
     this._driverProcess.unref();
     this._driverProcess.stderr!.on('data', data => process.stderr.write(data));
 
-    const connection = new Connection(undefined, undefined);
+    const connection = new Connection(undefined, nodePlatform, undefined, []);
     const transport = new PipeTransport(this._driverProcess.stdin!, this._driverProcess.stdout!);
     connection.onmessage = message => transport.send(JSON.stringify(message));
     transport.onmessage = message => connection.dispatch(JSON.parse(message));

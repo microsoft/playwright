@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
 import { URLSearchParams } from 'url';
 
 import { ChannelOwner } from './channelOwner';
@@ -22,19 +21,26 @@ import { isTargetClosedError } from './errors';
 import { Events } from './events';
 import { APIResponse } from './fetch';
 import { Frame } from './frame';
-import { Worker } from './worker';
-import { MultiMap, assert, headersObjectToArray, isRegExp, isString, rewriteErrorMessage, urlMatches, zones } from '../utils';
 import { Waiter } from './waiter';
+import { Worker } from './worker';
+import { assert } from '../utils/debug';
+import { headersObjectToArray } from '../utils/headers';
+import { urlMatches } from '../utils/isomorphic/urlMatch';
 import { LongStandingScope, ManualPromise } from '../utils/manualPromise';
+import { MultiMap } from '../utils/multimap';
+import { isRegExp, isString } from '../utils/rtti';
+import { rewriteErrorMessage } from '../utils/stackTrace';
+import { zones } from '../utils/zones';
 import { mime } from '../utilsBundle';
 
-import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
-import type { URLMatch, Zone } from '../utils';
 import type { BrowserContext } from './browserContext';
 import type { Page } from './page';
+import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray } from '../common/types';
+import type { URLMatch } from '../utils/isomorphic/urlMatch';
+import type { Zone } from '../utils/zones';
 import type * as channels from '@protocol/channels';
 
 export type NetworkCookie = {
@@ -387,7 +393,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     let isBase64 = false;
     let length = 0;
     if (options.path) {
-      const buffer = await fs.promises.readFile(options.path);
+      const buffer = await this._platform.fs().promises.readFile(options.path);
       body = buffer.toString('base64');
       isBase64 = true;
       length = buffer.length;

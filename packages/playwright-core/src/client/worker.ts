@@ -15,10 +15,10 @@
  */
 
 import { ChannelOwner } from './channelOwner';
+import { TargetClosedError } from './errors';
 import { Events } from './events';
 import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
-import { LongStandingScope } from '../utils';
-import { TargetClosedError } from './errors';
+import { LongStandingScope } from '../utils/manualPromise';
 
 import type { BrowserContext } from './browserContext';
 import type { Page } from './page';

@@ -42,11 +42,14 @@ import { Tracing } from './tracing';
 import { Worker } from './worker';
 import { WritableStream } from './writableStream';
 import { ValidationError, findValidator  } from '../protocol/validator';
-import { formatCallLog, rewriteErrorMessage, zones } from '../utils';
 import { debugLogger } from '../utils/debugLogger';
+import { formatCallLog, rewriteErrorMessage } from '../utils/stackTrace';
+import { zones } from '../utils/zones';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
+import type { HeadersArray } from './types';
 import type { ValidatorContext } from '../protocol/validator';
+import type { Platform } from '../utils/platform';
 import type * as channels from '@protocol/channels';
 
 class Root extends ChannelOwner<channels.RootChannel> {
@@ -78,12 +81,17 @@ export class Connection extends EventEmitter {
   toImpl: ((client: ChannelOwner) => any) | undefined;
   private _tracingCount = 0;
   readonly _instrumentation: ClientInstrumentation;
+  readonly platform: Platform;
+  // Used from @playwright/test fixtures -> TODO remove?
+  readonly headers: HeadersArray;
 
-  constructor(localUtils: LocalUtils | undefined, instrumentation: ClientInstrumentation | undefined) {
+  constructor(localUtils: LocalUtils | undefined, platform: Platform, instrumentation: ClientInstrumentation | undefined, headers: HeadersArray) {
     super();
     this._instrumentation = instrumentation || createInstrumentation();
     this._localUtils = localUtils;
+    this.platform = platform;
     this._rootObject = new Root(this);
+    this.headers = headers;
   }
 
   markAsRemote() {
@@ -138,7 +146,7 @@ export class Connection extends EventEmitter {
     const location = frames[0] ? { file: frames[0].file, line: frames[0].line, column: frames[0].column } : undefined;
     const metadata: channels.Metadata = { apiName, location, internal: !apiName, stepId };
     if (this._tracingCount && frames && type !== 'LocalUtils')
-      this._localUtils?._channel.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
+      this._localUtils?.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
     // We need to exit zones before calling into the server, otherwise
     // when we receive events from the server, we would be in an API zone.
     zones.empty().run(() => this.onmessage({ ...message, metadata }));

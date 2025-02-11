@@ -15,13 +15,13 @@
  */
 
 import { SdkObject, createInstrumentation, serverSideCallMetadata } from './instrumentation';
+import { gracefullyProcessExitDoNotHang } from './processLauncher';
 import { Recorder } from './recorder';
 import { asLocator  } from '../utils';
 import { parseAriaSnapshotUnsafe } from '../utils/isomorphic/ariaSnapshot';
 import { yaml } from '../utilsBundle';
 import { EmptyRecorderApp } from './recorder/recorderApp';
 import { unsafeLocatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
-import { gracefullyProcessExitDoNotHang } from '../utils/processLauncher';
 
 import type { Language } from '../utils';
 import type { Browser } from './browser';

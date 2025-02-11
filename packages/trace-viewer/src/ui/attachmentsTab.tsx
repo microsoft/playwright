@@ -165,7 +165,7 @@ function isEqualAttachment(a: Attachment, b: AfterActionTraceEventAttachment): b
   return a.name === b.name && a.path === b.path && a.sha1 === b.sha1;
 }
 
-function attachmentURL(attachment: Attachment, queryParams: Record<string, string> = {}) {
+export function attachmentURL(attachment: Attachment, queryParams: Record<string, string> = {}) {
   const params = new URLSearchParams(queryParams);
   if (attachment.sha1) {
     params.set('trace', attachment.traceUrl);

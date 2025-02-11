@@ -15,9 +15,6 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-
 import { Artifact } from './artifact';
 import { Browser } from './browser';
 import { CDPSession } from './cdpSession';
@@ -38,14 +35,18 @@ import { Waiter } from './waiter';
 import { WebError } from './webError';
 import { Worker } from './worker';
 import { TimeoutSettings } from '../common/timeoutSettings';
-import { headersObjectToArray, isRegExp, isString, mkdirIfNeeded, urlMatchesEqual } from '../utils';
+import { mkdirIfNeeded } from '../utils/fileUtils';
+import { headersObjectToArray } from '../utils/headers';
+import { urlMatchesEqual } from '../utils/isomorphic/urlMatch';
+import { isRegExp, isString } from '../utils/rtti';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 
 import type { BrowserType } from './browserType';
 import type { BrowserContextOptions, Headers, LaunchOptions, StorageState, WaitForEventOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type { URLMatch } from '../utils';
+import type { URLMatch } from '../utils/isomorphic/urlMatch';
+import type { Platform } from '../utils/platform';
 import type * as channels from '@protocol/channels';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
@@ -107,7 +108,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       this.emit(Events.BrowserContext.ServiceWorker, serviceWorker);
     });
     this._channel.on('console', event => {
-      const consoleMessage = new ConsoleMessage(event);
+      const consoleMessage = new ConsoleMessage(this._platform, event);
       this.emit(Events.BrowserContext.Console, consoleMessage);
       const page = consoleMessage.page();
       if (page)
@@ -321,7 +322,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any): Promise<void> {
-    const source = await evaluationScript(script, arg);
+    const source = await evaluationScript(this._platform, script, arg);
     await this._channel.addInitScript({ source });
   }
 
@@ -431,8 +432,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   async storageState(options: { path?: string, indexedDB?: boolean } = {}): Promise<StorageState> {
     const state = await this._channel.storageState({ indexedDB: options.indexedDB });
     if (options.path) {
-      await mkdirIfNeeded(options.path);
-      await fs.promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');
+      await mkdirIfNeeded(this._platform, options.path);
+      await this._platform.fs().promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');
     }
     return state;
   }
@@ -484,7 +485,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         const needCompressed = harParams.path.endsWith('.zip');
         if (isCompressed && !needCompressed) {
           await artifact.saveAs(harParams.path + '.tmp');
-          await this._connection.localUtils()._channel.harUnzip({ zipFile: harParams.path + '.tmp', harFile: harParams.path });
+          await this._connection.localUtils().harUnzip({ zipFile: harParams.path + '.tmp', harFile: harParams.path });
         } else {
           await artifact.saveAs(harParams.path);
         }
@@ -500,11 +501,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 }
 
-async function prepareStorageState(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams['storageState']> {
+async function prepareStorageState(platform: Platform, options: BrowserContextOptions): Promise<channels.BrowserNewContextParams['storageState']> {
   if (typeof options.storageState !== 'string')
     return options.storageState;
   try {
-    return JSON.parse(await fs.promises.readFile(options.storageState, 'utf8'));
+    return JSON.parse(await platform.fs().promises.readFile(options.storageState, 'utf8'));
   } catch (e) {
     rewriteErrorMessage(e, `Error reading storage state from ${options.storageState}:\n` + e.message);
     throw e;
@@ -524,7 +525,7 @@ function prepareRecordHarOptions(options: BrowserContextOptions['recordHar']): c
   };
 }
 
-export async function prepareBrowserContextParams(options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
+export async function prepareBrowserContextParams(platform: Platform, options: BrowserContextOptions): Promise<channels.BrowserNewContextParams> {
   if (options.videoSize && !options.videosPath)
     throw new Error(`"videoSize" option requires "videosPath" to be specified`);
   if (options.extraHTTPHeaders)
@@ -534,7 +535,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     viewport: options.viewport === null ? undefined : options.viewport,
     noDefaultViewport: options.viewport === null,
     extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
-    storageState: await prepareStorageState(options),
+    storageState: await prepareStorageState(platform, options),
     serviceWorkers: options.serviceWorkers,
     recordHar: prepareRecordHarOptions(options.recordHar),
     colorScheme: options.colorScheme === null ? 'no-override' : options.colorScheme,
@@ -542,7 +543,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     forcedColors: options.forcedColors === null ? 'no-override' : options.forcedColors,
     contrast: options.contrast === null ? 'no-override' : options.contrast,
     acceptDownloads: toAcceptDownloadsProtocol(options.acceptDownloads),
-    clientCertificates: await toClientCertificatesProtocol(options.clientCertificates),
+    clientCertificates: await toClientCertificatesProtocol(platform, options.clientCertificates),
   };
   if (!contextParams.recordVideo && options.videosPath) {
     contextParams.recordVideo = {
@@ -551,7 +552,7 @@ export async function prepareBrowserContextParams(options: BrowserContextOptions
     };
   }
   if (contextParams.recordVideo && contextParams.recordVideo.dir)
-    contextParams.recordVideo.dir = path.resolve(process.cwd(), contextParams.recordVideo.dir);
+    contextParams.recordVideo.dir = platform.path().resolve(process.cwd(), contextParams.recordVideo.dir);
   return contextParams;
 }
 
@@ -563,7 +564,7 @@ function toAcceptDownloadsProtocol(acceptDownloads?: boolean) {
   return 'deny';
 }
 
-export async function toClientCertificatesProtocol(certs?: BrowserContextOptions['clientCertificates']): Promise<channels.PlaywrightNewRequestParams['clientCertificates']> {
+export async function toClientCertificatesProtocol(platform: Platform, certs?: BrowserContextOptions['clientCertificates']): Promise<channels.PlaywrightNewRequestParams['clientCertificates']> {
   if (!certs)
     return undefined;
 
@@ -571,7 +572,7 @@ export async function toClientCertificatesProtocol(certs?: BrowserContextOptions
     if (value)
       return value;
     if (path)
-      return await fs.promises.readFile(path);
+      return await platform.fs().promises.readFile(path);
   };
 
   return await Promise.all(certs.map(async cert => ({

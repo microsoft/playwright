@@ -19,14 +19,10 @@ import { assert, monotonicTime } from '../utils';
 import { ManualPromise } from '../utils/manualPromise';
 
 import type { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
+import type { Progress as CommonProgress } from '../common/progress';
 import type { LogName } from '../utils/debugLogger';
 
-export interface Progress {
-  log(message: string): void;
-  timeUntilDeadline(): number;
-  isRunning(): boolean;
-  cleanupWhenAborted(cleanup: () => any): void;
-  throwIfAborted(): void;
+export interface Progress extends CommonProgress {
   metadata: CallMetadata;
 }
 

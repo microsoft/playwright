@@ -19,8 +19,8 @@ import { debugLogger } from '../utils/debugLogger';
 import type { BrowserContext } from './browserContext';
 import type { LocalUtils } from './localUtils';
 import type { Route } from './network';
-import type { URLMatch } from '../utils';
 import type { Page } from './page';
+import type { URLMatch } from '../utils/isomorphic/urlMatch';
 
 type HarNotFoundAction = 'abort' | 'fallback';
 
@@ -31,7 +31,7 @@ export class HarRouter {
   private _options: { urlMatch?: URLMatch; baseURL?: string; };
 
   static async create(localUtils: LocalUtils, file: string, notFoundAction: HarNotFoundAction, options: { urlMatch?: URLMatch }): Promise<HarRouter> {
-    const { harId, error } = await localUtils._channel.harOpen({ file });
+    const { harId, error } = await localUtils.harOpen({ file });
     if (error)
       throw new Error(error);
     return new HarRouter(localUtils, harId!, notFoundAction, options);
@@ -47,7 +47,7 @@ export class HarRouter {
   private async _handle(route: Route) {
     const request = route.request();
 
-    const response = await this._localUtils._channel.harLookup({
+    const response = await this._localUtils.harLookup({
       harId: this._harId,
       url: request.url(),
       method: request.method(),
@@ -103,6 +103,6 @@ export class HarRouter {
   }
 
   dispose() {
-    this._localUtils._channel.harClose({ harId: this._harId }).catch(() => {});
+    this._localUtils.harClose({ harId: this._harId }).catch(() => {});
   }
 }

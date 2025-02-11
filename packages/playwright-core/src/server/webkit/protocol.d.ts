@@ -7782,6 +7782,18 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type setIgnoreCertificateErrorsReturnValue = {
     }
     /**
+     * Changes page zoom factor.
+     */
+    export type setPageZoomFactorParameters = {
+      /**
+       * Unique identifier of the page proxy.
+       */
+      pageProxyId: PageProxyID;
+      zoomFactor: number;
+    }
+    export type setPageZoomFactorReturnValue = {
+    }
+    /**
      * Returns all cookies in the given browser context.
      */
     export type getAllCookiesParameters = {
@@ -9658,6 +9670,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.grantFileReadAccess": Playwright.grantFileReadAccessParameters;
     "Playwright.takePageScreenshot": Playwright.takePageScreenshotParameters;
     "Playwright.setIgnoreCertificateErrors": Playwright.setIgnoreCertificateErrorsParameters;
+    "Playwright.setPageZoomFactor": Playwright.setPageZoomFactorParameters;
     "Playwright.getAllCookies": Playwright.getAllCookiesParameters;
     "Playwright.setCookies": Playwright.setCookiesParameters;
     "Playwright.deleteAllCookies": Playwright.deleteAllCookiesParameters;
@@ -9970,6 +9983,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.grantFileReadAccess": Playwright.grantFileReadAccessReturnValue;
     "Playwright.takePageScreenshot": Playwright.takePageScreenshotReturnValue;
     "Playwright.setIgnoreCertificateErrors": Playwright.setIgnoreCertificateErrorsReturnValue;
+    "Playwright.setPageZoomFactor": Playwright.setPageZoomFactorReturnValue;
     "Playwright.getAllCookies": Playwright.getAllCookiesReturnValue;
     "Playwright.setCookies": Playwright.setCookiesReturnValue;
     "Playwright.deleteAllCookies": Playwright.deleteAllCookiesReturnValue;

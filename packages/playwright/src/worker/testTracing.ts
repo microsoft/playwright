@@ -17,7 +17,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { ManualPromise, SerializedFS, calculateSha1, createGuid, monotonicTime } from 'playwright-core/lib/utils';
+import { SerializedFS } from 'playwright-core/lib/server';
+import { ManualPromise, calculateSha1, createGuid, monotonicTime } from 'playwright-core/lib/utils';
 import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
 
 import { filteredStackTrace } from '../util';

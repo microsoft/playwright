@@ -70,3 +70,10 @@
 .test-file-test-status-icon {
   flex: none;
 }
+
+.test-file-header-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-fg-subtle);
+}

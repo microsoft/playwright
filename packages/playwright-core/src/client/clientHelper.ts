@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-
-import { isString } from '../utils';
+import { isString } from '../utils/rtti';
 
 import type * as types from './types';
+import type { Platform } from '../utils/platform';
 
 export function envObjectToArray(env: types.Env): { name: string, value: string }[] {
   const result: { name: string, value: string }[] = [];
@@ -30,7 +29,7 @@ export function envObjectToArray(env: types.Env): { name: string, value: string 
   return result;
 }
 
-export async function evaluationScript(fun: Function | string | { path?: string, content?: string }, arg?: any, addSourceUrl: boolean = true): Promise<string> {
+export async function evaluationScript(platform: Platform, fun: Function | string | { path?: string, content?: string }, arg?: any, addSourceUrl: boolean = true): Promise<string> {
   if (typeof fun === 'function') {
     const source = fun.toString();
     const argString = Object.is(arg, undefined) ? 'undefined' : JSON.stringify(arg);
@@ -43,7 +42,7 @@ export async function evaluationScript(fun: Function | string | { path?: string,
   if (fun.content !== undefined)
     return fun.content;
   if (fun.path !== undefined) {
-    let source = await fs.promises.readFile(fun.path, 'utf8');
+    let source = await platform.fs().promises.readFile(fun.path, 'utf8');
     if (addSourceUrl)
       source = addSourceUrlToScript(source, fun.path);
     return source;

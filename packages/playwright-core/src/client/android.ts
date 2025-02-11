@@ -15,22 +15,22 @@
  */
 
 import { EventEmitter } from 'events';
-import * as fs from 'fs';
 
-import { isRegExp, isString, monotonicTime } from '../utils';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { Connection } from './connection';
 import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
 import { Waiter } from './waiter';
 import { TimeoutSettings } from '../common/timeoutSettings';
+import { isRegExp, isString } from '../utils/rtti';
+import { monotonicTime } from '../utils/time';
 import { raceAgainstDeadline } from '../utils/timeoutRunner';
 
 import type { Page } from './page';
 import type * as types from './types';
 import type * as api from '../../types/types';
 import type { AndroidServerLauncherImpl } from '../androidServerImpl';
+import type { Platform } from '../utils/platform';
 import type * as channels from '@protocol/channels';
 
 type Direction = 'down' | 'up' | 'left' | 'right';
@@ -71,45 +71,28 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
       const headers = { 'x-playwright-browser': 'android', ...options.headers };
       const localUtils = this._connection.localUtils();
       const connectParams: channels.LocalUtilsConnectParams = { wsEndpoint, headers, slowMo: options.slowMo, timeout: options.timeout };
-      const { pipe } = await localUtils._channel.connect(connectParams);
-      const closePipe = () => pipe.close().catch(() => {});
-      const connection = new Connection(localUtils, this._instrumentation);
-      connection.markAsRemote();
-      connection.on('close', closePipe);
+      const connection = await localUtils.connect(connectParams);
 
       let device: AndroidDevice;
-      let closeError: string | undefined;
-      const onPipeClosed = () => {
+      connection.on('close', () => {
         device?._didClose();
-        connection.close(closeError);
-      };
-      pipe.on('closed', onPipeClosed);
-      connection.onmessage = message => pipe.send({ message }).catch(onPipeClosed);
-
-      pipe.on('message', ({ message }) => {
-        try {
-          connection!.dispatch(message);
-        } catch (e) {
-          closeError = String(e);
-          closePipe();
-        }
       });
 
       const result = await raceAgainstDeadline(async () => {
         const playwright = await connection!.initializePlaywright();
         if (!playwright._initializer.preConnectedAndroidDevice) {
-          closePipe();
+          connection.close();
           throw new Error('Malformed endpoint. Did you use Android.launchServer method?');
         }
         device = AndroidDevice.from(playwright._initializer.preConnectedAndroidDevice!);
         device._shouldCloseConnectionOnClose = true;
-        device.on(Events.AndroidDevice.Close, closePipe);
+        device.on(Events.AndroidDevice.Close, () => connection.close());
         return device;
       }, deadline);
       if (!result.timedOut) {
         return result.result;
       } else {
-        closePipe();
+        connection.close();
         throw new Error(`Timeout ${options.timeout}ms exceeded`);
       }
     });
@@ -232,7 +215,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   async screenshot(options: { path?: string } = {}): Promise<Buffer> {
     const { binary } = await this._channel.screenshot();
     if (options.path)
-      await fs.promises.writeFile(options.path, binary);
+      await this._platform.fs().promises.writeFile(options.path, binary);
     return binary;
   }
 
@@ -267,15 +250,15 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   }
 
   async installApk(file: string | Buffer, options?: { args: string[] }): Promise<void> {
-    await this._channel.installApk({ file: await loadFile(file), args: options && options.args });
+    await this._channel.installApk({ file: await loadFile(this._platform, file), args: options && options.args });
   }
 
   async push(file: string | Buffer, path: string, options?: { mode: number }): Promise<void> {
-    await this._channel.push({ file: await loadFile(file), path, mode: options ? options.mode : undefined });
+    await this._channel.push({ file: await loadFile(this._platform, file), path, mode: options ? options.mode : undefined });
   }
 
   async launchBrowser(options: types.BrowserContextOptions & { pkg?: string } = {}): Promise<BrowserContext> {
-    const contextOptions = await prepareBrowserContextParams(options);
+    const contextOptions = await prepareBrowserContextParams(this._platform, options);
     const result = await this._channel.launchBrowser(contextOptions);
     const context = BrowserContext.from(result.context) as BrowserContext;
     context._setOptions(contextOptions, {});
@@ -321,9 +304,9 @@ export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel> i
   }
 }
 
-async function loadFile(file: string | Buffer): Promise<Buffer> {
+async function loadFile(platform: Platform, file: string | Buffer): Promise<Buffer> {
   if (isString(file))
-    return await fs.promises.readFile(file);
+    return await platform.fs().promises.readFile(file);
   return file;
 }
 

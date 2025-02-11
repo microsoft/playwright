@@ -17,7 +17,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { compareBuffersOrStrings, getComparator, isString, sanitizeForFilePath } from 'playwright-core/lib/utils';
+import { sanitizeForFilePath } from 'playwright-core/lib/server';
+import { compareBuffersOrStrings, getComparator, isString } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
 

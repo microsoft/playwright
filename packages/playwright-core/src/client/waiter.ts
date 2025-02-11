@@ -15,11 +15,12 @@
  */
 
 import { TimeoutError } from './errors';
-import { createGuid, zones } from '../utils';
+import { createGuid } from '../utils/crypto';
 import { rewriteErrorMessage } from '../utils/stackTrace';
+import { zones } from '../utils/zones';
 
-import type { Zone } from '../utils';
 import type { ChannelOwner } from './channelOwner';
+import type { Zone } from '../utils/zones';
 import type * as channels from '@protocol/channels';
 import type { EventEmitter } from 'events';
 

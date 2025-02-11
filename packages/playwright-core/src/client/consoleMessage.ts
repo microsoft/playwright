@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import * as util from 'util';
-
 import { JSHandle } from './jsHandle';
 import { Page } from './page';
 
 import type * as api from '../../types/types';
+import type { Platform } from '../utils/platform';
 import type * as channels from '@protocol/channels';
 
 type ConsoleMessageLocation = channels.BrowserContextConsoleEvent['location'];
@@ -29,9 +28,11 @@ export class ConsoleMessage implements api.ConsoleMessage {
   private _page: Page | null;
   private _event: channels.BrowserContextConsoleEvent | channels.ElectronApplicationConsoleEvent;
 
-  constructor(event: channels.BrowserContextConsoleEvent | channels.ElectronApplicationConsoleEvent) {
+  constructor(platform: Platform, event: channels.BrowserContextConsoleEvent | channels.ElectronApplicationConsoleEvent) {
     this._page = ('page' in event && event.page) ? Page.from(event.page) : null;
     this._event = event;
+    if (platform.inspectCustom)
+      (this as any)[platform.inspectCustom] = () => this._inspect();
   }
 
   page() {
@@ -54,7 +55,7 @@ export class ConsoleMessage implements api.ConsoleMessage {
     return this._event.location;
   }
 
-  [util.inspect.custom]() {
+  private _inspect() {
     return this.text();
   }
 }

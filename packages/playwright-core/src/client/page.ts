@@ -15,12 +15,6 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-
-import { TargetClosedError, isTargetClosedError, serializeError } from './errors';
-import { TimeoutSettings } from '../common/timeoutSettings';
-import { LongStandingScope, assert, headersObjectToArray, isObject, isRegExp, isString, mkdirIfNeeded, trimStringWithEllipsis, urlMatches, urlMatchesEqual  } from '../utils';
 import { Accessibility } from './accessibility';
 import { Artifact } from './artifact';
 import { ChannelOwner } from './channelOwner';
@@ -28,16 +22,25 @@ import { evaluationScript } from './clientHelper';
 import { Coverage } from './coverage';
 import { Download } from './download';
 import { ElementHandle, determineScreenshotType } from './elementHandle';
+import { TargetClosedError, isTargetClosedError, serializeError } from './errors';
 import { Events } from './events';
 import { FileChooser } from './fileChooser';
 import { Frame, verifyLoadState } from './frame';
 import { HarRouter } from './harRouter';
 import { Keyboard, Mouse, Touchscreen } from './input';
 import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
-import {   Response, Route, RouteHandler, WebSocket,  WebSocketRoute, WebSocketRouteHandler, validateHeaders } from './network';
+import { Response, Route, RouteHandler, WebSocket,  WebSocketRoute, WebSocketRouteHandler, validateHeaders } from './network';
 import { Video } from './video';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
+import { TimeoutSettings } from '../common/timeoutSettings';
+import { assert } from '../utils/debug';
+import { mkdirIfNeeded } from '../utils/fileUtils';
+import { headersObjectToArray } from '../utils/headers';
+import { trimStringWithEllipsis  } from '../utils/isomorphic/stringUtils';
+import { urlMatches, urlMatchesEqual } from '../utils/isomorphic/urlMatch';
+import { LongStandingScope } from '../utils/manualPromise';
+import { isObject, isRegExp, isString } from '../utils/rtti';
 
 import type { BrowserContext } from './browserContext';
 import type { Clock } from './clock';
@@ -48,8 +51,8 @@ import type { Request, RouteHandlerCallback, WebSocketRouteHandlerCallback } fro
 import type { FilePayload, Headers, LifecycleEvent, SelectOption, SelectOptionOptions, Size, WaitForEventOptions, WaitForFunctionOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type { URLMatch } from '../utils';
 import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
+import type { URLMatch } from '../utils/isomorphic/urlMatch';
 import type * as channels from '@protocol/channels';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
@@ -512,7 +515,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
-    const source = await evaluationScript(script, arg);
+    const source = await evaluationScript(this._platform, script, arg);
     await this._channel.addInitScript({ source });
   }
 
@@ -590,8 +593,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     }
     const result = await this._channel.screenshot(copy);
     if (options.path) {
-      await mkdirIfNeeded(options.path);
-      await fs.promises.writeFile(options.path, result.binary);
+      await mkdirIfNeeded(this._platform, options.path);
+      await this._platform.fs().promises.writeFile(options.path, result.binary);
     }
     return result.binary;
   }
@@ -820,8 +823,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     }
     const result = await this._channel.pdf(transportOptions);
     if (options.path) {
-      await fs.promises.mkdir(path.dirname(options.path), { recursive: true });
-      await fs.promises.writeFile(options.path, result.pdf);
+      const platform = this._platform;
+      await platform.fs().promises.mkdir(platform.path().dirname(options.path), { recursive: true });
+      await platform.fs().promises.writeFile(options.path, result.pdf);
     }
     return result.pdf;
   }

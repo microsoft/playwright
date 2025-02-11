@@ -471,7 +471,7 @@ function normalizeScreenshotMode(screenshot: ScreenshotOption): ScreenshotMode {
 }
 
 function attachConnectedHeaderIfNeeded(testInfo: TestInfo, browser: Browser | null) {
-  const connectHeaders: { name: string, value: string }[] | undefined = (browser as any)?._connectHeaders;
+  const connectHeaders: { name: string, value: string }[] | undefined = (browser as any)?._connection.headers;
   if (!connectHeaders)
     return;
   for (const header of connectHeaders) {
