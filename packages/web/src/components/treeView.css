@@ -70,10 +70,8 @@
 }
 
 .tree-view-content:focus .tree-view-entry.selected button.eye.toggled {
-  color: var(--vscode-button-secondaryForeground) !important;
-  border-radius: 5px;
-  margin: -1px;
-  border: 1px inset var(--vscode-button-foreground);
+  border-radius: 6px;
+  outline: 1px solid var(--vscode-button-foreground);
 }
 
 .tree-view-empty {
