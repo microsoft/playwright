@@ -22,6 +22,7 @@ export type Platform = {
   fs: () => typeof fs;
   path: () => typeof path;
   inspectCustom: symbol | undefined;
+  ws?: (url: string) => WebSocket;
 };
 
 export const emptyPlatform: Platform = {
@@ -40,4 +41,9 @@ export const nodePlatform: Platform = {
   fs: () => fs,
   path: () => path,
   inspectCustom: util.inspect.custom,
+};
+
+export const webPlatform: Platform = {
+  ...emptyPlatform,
+  ws: (url: string) => new WebSocket(url),
 };

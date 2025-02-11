@@ -18,8 +18,9 @@ import { ChannelOwner } from './channelOwner';
 import { Connection } from './connection';
 import * as localUtils from '../utils/localUtils';
 
-import type { Size } from './types';
+import type { HeadersArray, Size } from './types';
 import type { HarBackend } from '../utils/harBackend';
+import type { Platform } from '../utils/platform';
 import type * as channels from '@protocol/channels';
 
 type DeviceDescriptor = {
@@ -78,27 +79,100 @@ export class LocalUtils extends ChannelOwner<channels.LocalUtilsChannel> {
   }
 
   async connect(params: channels.LocalUtilsConnectParams): Promise<Connection> {
-    const { pipe, headers: connectHeaders } = await this._channel.connect(params);
-    const closePipe = () => this._wrapApiCall(() => pipe.close().catch(() => {}), /* isInternal */ true);
+    const transport = this._platform.ws ? new WebSocketTransport(this._platform) : new JsonPipeTransport(this);
+    const connectHeaders = await transport.connect(params);
     const connection = new Connection(this, this._platform, this._instrumentation, connectHeaders);
     connection.markAsRemote();
-    connection.on('close', closePipe);
+    connection.on('close', () => transport.close());
 
     let closeError: string | undefined;
-    const onPipeClosed = (reason?: string) => {
+    const onTransportClosed = (reason?: string) => {
       connection.close(reason || closeError);
     };
-    pipe.on('closed', params => onPipeClosed(params.reason));
-    connection.onmessage = message => this._wrapApiCall(() => pipe.send({ message }).catch(() => onPipeClosed()), /* isInternal */ true);
-
-    pipe.on('message', ({ message }) => {
+    transport.onClose(reason => onTransportClosed(reason));
+    connection.onmessage = message => transport.send(message).catch(() => onTransportClosed());
+    transport.onMessage(message => {
       try {
         connection!.dispatch(message);
       } catch (e) {
         closeError = String(e);
-        closePipe();
+        transport.close();
       }
     });
     return connection;
+  }
+}
+interface Transport {
+  connect(params: channels.LocalUtilsConnectParams): Promise<HeadersArray>;
+  send(message: any): Promise<void>;
+  onMessage(callback: (message: object) => void): void;
+  onClose(callback: (reason?: string) => void): void;
+  close(): Promise<void>;
+}
+
+class JsonPipeTransport implements Transport {
+  private _pipe: channels.JsonPipeChannel | undefined;
+  private _owner: ChannelOwner<channels.LocalUtilsChannel>;
+
+  constructor(owner: ChannelOwner<channels.LocalUtilsChannel>) {
+    this._owner = owner;
+  }
+
+  async connect(params: channels.LocalUtilsConnectParams) {
+    const { pipe, headers: connectHeaders } = await this._owner._wrapApiCall(async () => {
+      return await this._owner._channel.connect(params);
+    }, /* isInternal */ true);
+    this._pipe = pipe;
+    return connectHeaders;
+  }
+
+  async send(message: object) {
+    this._owner._wrapApiCall(async () => {
+      await this._pipe!.send({ message });
+    }, /* isInternal */ true);
+  }
+
+  onMessage(callback: (message: object) => void) {
+    this._pipe!.on('message', ({ message }) => callback(message));
+  }
+
+  onClose(callback: (reason?: string) => void) {
+    this._pipe!.on('closed', ({ reason }) => callback(reason));
+  }
+
+  async close() {
+    await this._owner._wrapApiCall(async () => {
+      await this._pipe!.close().catch(() => {});
+    }, /* isInternal */ true);
+  }
+}
+
+class WebSocketTransport implements Transport {
+  private _platform: Platform;
+  private _ws: WebSocket | undefined;
+
+  constructor(platform: Platform) {
+    this._platform = platform;
+  }
+
+  async connect(params: channels.LocalUtilsConnectParams) {
+    this._ws = this._platform.ws!(params.wsEndpoint);
+    return [];
+  }
+
+  async send(message: object) {
+    this._ws!.send(JSON.stringify(message));
+  }
+
+  onMessage(callback: (message: object) => void) {
+    this._ws!.addEventListener('message', event => callback(JSON.parse(event.data)));
+  }
+
+  onClose(callback: (reason?: string) => void) {
+    this._ws!.addEventListener('close', () => callback());
+  }
+
+  async close() {
+    this._ws!.close();
   }
 }
