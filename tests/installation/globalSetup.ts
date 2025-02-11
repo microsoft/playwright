@@ -16,7 +16,7 @@
 
 import path from 'path';
 import fs from 'fs';
-import { spawnAsync } from '../../packages/playwright-core/lib/utils/spawnAsync';
+import { spawnAsync } from '../../packages/playwright-core/lib/server/utils/spawnAsync';
 import { removeFolders } from '../../packages/playwright-core/lib/server/utils/fileUtils';
 import { TMP_WORKSPACES } from './npmTest';
 

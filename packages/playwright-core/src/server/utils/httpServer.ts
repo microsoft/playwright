@@ -17,10 +17,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { mime, wsServer } from '../utilsBundle';
-import { createGuid } from './crypto';
-import { assert } from './debug';
-import { ManualPromise } from './manualPromise';
+import { mime, wsServer } from '../../utilsBundle';
+import { createGuid } from '../../utils/crypto';
+import { assert } from '../../utils/debug';
+import { ManualPromise } from '../../utils/manualPromise';
 import { createHttpServer } from './network';
 
 import type http from 'http';

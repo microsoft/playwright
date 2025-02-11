@@ -18,8 +18,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { sanitizeForFilePath } from 'playwright-core/lib/server';
-import { escapeTemplateString, isString } from 'playwright-core/lib/utils';
+import { escapeTemplateString, isString, sanitizeForFilePath } from 'playwright-core/lib/utils';
 
 import {  kNoElementsFoundError, matcherHint } from './matcherHint';
 import { EXPECTED_COLOR } from '../common/expectBundle';

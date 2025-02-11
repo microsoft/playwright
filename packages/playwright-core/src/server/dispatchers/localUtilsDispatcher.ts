@@ -21,15 +21,18 @@ import { nodePlatform } from '../../utils/platform';
 import { getUserAgent } from '../../utils/userAgent';
 import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
-import { ProgressController } from '../progress';
+import { Progress, ProgressController } from '../progress';
 import { SocksInterceptor } from '../socksInterceptor';
 import { WebSocketTransport } from '../transport';
+import { fetchData } from '../utils/network';
 
 import type { HarBackend } from '../../utils/harBackend';
 import type { CallMetadata } from '../instrumentation';
 import type { Playwright } from '../playwright';
 import type { RootDispatcher } from './dispatcher';
 import type * as channels from '@protocol/channels';
+import type * as http from 'http';
+import type { HTTPRequestParams } from '../utils/network';
 
 export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.LocalUtilsChannel, RootDispatcher> implements channels.LocalUtilsChannel {
   _type_LocalUtils: boolean;
@@ -87,7 +90,7 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
         'x-playwright-proxy': params.exposeNetwork ?? '',
         ...params.headers,
       };
-      const wsEndpoint = await localUtils.urlToWSEndpoint(progress, params.wsEndpoint);
+      const wsEndpoint = await urlToWSEndpoint(progress, params.wsEndpoint);
 
       const transport = await WebSocketTransport.connect(progress, wsEndpoint, wsHeaders, true, 'x-playwright-debug-log');
       const socksInterceptor = new SocksInterceptor(transport, params.exposeNetwork, params.socksProxyRedirectPortForTest);
@@ -118,4 +121,35 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
       return { pipe, headers: transport.headers };
     }, params.timeout || 0);
   }
+}
+
+async function urlToWSEndpoint(progress: Progress | undefined, endpointURL: string): Promise<string> {
+  if (endpointURL.startsWith('ws'))
+    return endpointURL;
+
+  progress?.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
+  const fetchUrl = new URL(endpointURL);
+  if (!fetchUrl.pathname.endsWith('/'))
+    fetchUrl.pathname += '/';
+  fetchUrl.pathname += 'json';
+  const json = await fetchData({
+    url: fetchUrl.toString(),
+    method: 'GET',
+    timeout: progress?.timeUntilDeadline() ?? 30_000,
+    headers: { 'User-Agent': getUserAgent() },
+  }, async (params: HTTPRequestParams, response: http.IncomingMessage) => {
+    return new Error(`Unexpected status ${response.statusCode} when connecting to ${fetchUrl.toString()}.\n` +
+        `This does not look like a Playwright server, try connecting via ws://.`);
+  });
+  progress?.throwIfAborted();
+
+  const wsUrl = new URL(endpointURL);
+  let wsEndpointPath = JSON.parse(json).wsEndpointPath;
+  if (wsEndpointPath.startsWith('/'))
+    wsEndpointPath = wsEndpointPath.substring(1);
+  if (!wsUrl.pathname.endsWith('/'))
+    wsUrl.pathname += '/';
+  wsUrl.pathname += wsEndpointPath;
+  wsUrl.protocol = wsUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+  return wsUrl.toString();
 }

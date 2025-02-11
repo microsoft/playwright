@@ -18,8 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import * as playwrightLibrary from 'playwright-core';
-import { jsonStringifyForceASCII } from 'playwright-core/lib/server';
-import { addInternalStackPrefix, asLocator, createGuid, debugMode, isString, zones } from 'playwright-core/lib/utils';
+import { addInternalStackPrefix, asLocator, createGuid, debugMode, isString, jsonStringifyForceASCII, zones } from 'playwright-core/lib/utils';
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';

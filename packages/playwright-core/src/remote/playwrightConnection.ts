@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { SocksProxy } from '../common/socksProxy';
+import { SocksProxy } from '../server/utils/socksProxy';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from '../server';
 import { AndroidDevice } from '../server/android/android';
 import { Browser } from '../server/browser';
 import { DebugControllerDispatcher } from '../server/dispatchers/debugControllerDispatcher';
 import { serverSideCallMetadata } from '../server/instrumentation';
 import { assert, isUnderTest } from '../utils';
-import { startProfiling, stopProfiling } from '../utils';
+import { startProfiling, stopProfiling } from '../server/utils/profiler';
 import { monotonicTime } from '../utils';
 import { debugLogger } from '../utils/debugLogger';
 

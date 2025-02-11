@@ -17,8 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { toPosixPath } from 'playwright-core/lib/server';
-import { MultiMap } from 'playwright-core/lib/utils';
+import { toPosixPath, MultiMap } from 'playwright-core/lib/utils';
 
 import { formatError, nonTerminalScreen, prepareErrorStack, resolveOutputFile } from './base';
 import { getProjectId } from '../common/config';

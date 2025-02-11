@@ -20,15 +20,15 @@ import * as net from 'net';
 import * as stream from 'stream';
 import * as tls from 'tls';
 
-import { SocksProxy } from '../common/socksProxy';
+import { SocksProxy } from './utils/socksProxy';
 import { ManualPromise, escapeHTML, generateSelfSignedCertificate, rewriteErrorMessage } from '../utils';
 import { verifyClientCertificates } from './browserContext';
 import { createProxyAgent } from './fetch';
 import { debugLogger } from '../utils/debugLogger';
-import { createSocket, createTLSSocket } from '../utils/happy-eyeballs';
+import { createSocket, createTLSSocket } from './utils/happyEyeballs';
 
 import type * as types from './types';
-import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../common/socksProxy';
+import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from './utils/socksProxy';
 import type https from 'https';
 
 let dummyServerTlsOptions: tls.TlsOptions | undefined = undefined;

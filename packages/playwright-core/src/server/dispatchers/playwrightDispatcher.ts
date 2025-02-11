@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { SocksProxy } from '../../common/socksProxy';
+import { SocksProxy } from '../utils/socksProxy';
 import { GlobalAPIRequestContext } from '../fetch';
 import { AndroidDispatcher } from './androidDispatcher';
 import { AndroidDeviceDispatcher } from './androidDispatcher';
@@ -29,7 +29,7 @@ import { createGuid } from '../../utils';
 import { eventsHelper  } from '../../utils/eventsHelper';
 
 import type { RootDispatcher } from './dispatcher';
-import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../../common/socksProxy';
+import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../utils/socksProxy';
 import type { RegisteredListener } from '../../utils/eventsHelper';
 import type { AndroidDevice } from '../android/android';
 import type { Browser } from '../browser';

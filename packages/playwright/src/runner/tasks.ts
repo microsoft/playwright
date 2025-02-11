@@ -18,8 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 
-import { removeFolders } from 'playwright-core/lib/server';
-import { monotonicTime } from 'playwright-core/lib/utils';
+import { monotonicTime, removeFolders } from 'playwright-core/lib/utils';
 import { debug } from 'playwright-core/lib/utilsBundle';
 
 import { Dispatcher  } from './dispatcher';

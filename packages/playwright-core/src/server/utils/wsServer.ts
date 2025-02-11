@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { createHttpServer } from '../utils';
-import { wsServer } from '../utilsBundle';
-import { debugLogger } from './debugLogger';
+import { createHttpServer } from './network';
+import { wsServer } from '../../utilsBundle';
+import { debugLogger } from '../../utils/debugLogger';
 
-import type { WebSocket, WebSocketServer } from '../utilsBundle';
+import type { WebSocket, WebSocketServer } from '../../utilsBundle';
 import type http from 'http';
 import type stream from 'stream';
 

@@ -16,7 +16,7 @@
 
 import EventEmitter from 'events';
 
-import * as socks from '../common/socksProxy';
+import * as socks from './utils/socksProxy';
 import { ValidationError, findValidator } from '../protocol/validator';
 
 import type { WebSocketTransport } from './transport';

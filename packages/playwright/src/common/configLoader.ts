@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/server';
+import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 import { isRegExp } from 'playwright-core/lib/utils';
 
 import { requireOrImport, setSingleTSConfig, setTransformConfig } from '../transform/transform';

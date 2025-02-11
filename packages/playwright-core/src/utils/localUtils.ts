@@ -21,21 +21,15 @@ import * as path from 'path';
 import { removeFolders } from './fileUtils';
 import { HarBackend } from './harBackend';
 import { ManualPromise } from './manualPromise';
-import { fetchData } from './network';
-import { getUserAgent } from './userAgent';
 import { ZipFile } from './zipFile';
 import { yauzl, yazl } from '../zipBundle';
+import { serializeClientSideCallMetadata } from '../utils';
+import { assert, calculateSha1 } from '../utils';
 
-import { serializeClientSideCallMetadata } from '.';
-import { assert, calculateSha1 } from '.';
-
-import type { HTTPRequestParams } from './network';
 import type { Platform } from './platform';
-import type { Progress } from '../common/progress';
 import type * as channels from '@protocol/channels';
 import type * as har from '@trace/har';
 import type EventEmitter from 'events';
-import type http from 'http';
 
 
 export type StackSession = {
@@ -214,35 +208,4 @@ export async function addStackToTracingNoReply(stackSessions: Map<string, StackS
       });
     }
   }
-}
-
-export async function urlToWSEndpoint(progress: Progress | undefined, endpointURL: string): Promise<string> {
-  if (endpointURL.startsWith('ws'))
-    return endpointURL;
-
-  progress?.log(`<ws preparing> retrieving websocket url from ${endpointURL}`);
-  const fetchUrl = new URL(endpointURL);
-  if (!fetchUrl.pathname.endsWith('/'))
-    fetchUrl.pathname += '/';
-  fetchUrl.pathname += 'json';
-  const json = await fetchData({
-    url: fetchUrl.toString(),
-    method: 'GET',
-    timeout: progress?.timeUntilDeadline() ?? 30_000,
-    headers: { 'User-Agent': getUserAgent() },
-  }, async (params: HTTPRequestParams, response: http.IncomingMessage) => {
-    return new Error(`Unexpected status ${response.statusCode} when connecting to ${fetchUrl.toString()}.\n` +
-        `This does not look like a Playwright server, try connecting via ws://.`);
-  });
-  progress?.throwIfAborted();
-
-  const wsUrl = new URL(endpointURL);
-  let wsEndpointPath = JSON.parse(json).wsEndpointPath;
-  if (wsEndpointPath.startsWith('/'))
-    wsEndpointPath = wsEndpointPath.substring(1);
-  if (!wsUrl.pathname.endsWith('/'))
-    wsUrl.pathname += '/';
-  wsUrl.pathname += wsEndpointPath;
-  wsUrl.protocol = wsUrl.protocol === 'https:' ? 'wss:' : 'ws:';
-  return wsUrl.toString();
 }

@@ -18,8 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Transform } from 'stream';
 
-import { copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath, toPosixPath } from 'playwright-core/lib/server';
-import { HttpServer, MultiMap, assert, calculateSha1, getPackageManagerExecCommand } from 'playwright-core/lib/utils';
+import { HttpServer, MultiMap, assert, calculateSha1, getPackageManagerExecCommand, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath, toPosixPath } from 'playwright-core/lib/utils';
 import { colors, open } from 'playwright-core/lib/utilsBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';

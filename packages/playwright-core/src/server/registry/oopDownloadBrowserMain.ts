@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { ManualPromise } from '../../utils/manualPromise';
-import { httpRequest } from '../../utils/network';
+import { httpRequest } from '../utils/network';
 import { extract } from '../../zipBundle';
 
 export type DownloadParams = {

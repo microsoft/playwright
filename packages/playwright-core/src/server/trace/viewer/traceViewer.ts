@@ -17,9 +17,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { gracefullyProcessExitDoNotHang } from '../../../server';
+import { gracefullyProcessExitDoNotHang } from '../../../utils';
 import { isUnderTest } from '../../../utils';
-import { HttpServer } from '../../../utils/httpServer';
+import { HttpServer } from '../../utils/httpServer';
 import { open } from '../../../utilsBundle';
 import { serverSideCallMetadata } from '../../instrumentation';
 import { syncLocalStorageWithSettings } from '../../launchApp';
@@ -27,7 +27,7 @@ import { launchApp } from '../../launchApp';
 import { createPlaywright } from '../../playwright';
 import { ProgressController } from '../../progress';
 
-import type { Transport } from '../../../utils/httpServer';
+import type { Transport } from '../../utils/httpServer';
 import type { BrowserType } from '../../browserType';
 import type { Page } from '../../page';
 

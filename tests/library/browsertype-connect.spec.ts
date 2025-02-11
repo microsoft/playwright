@@ -25,7 +25,7 @@ import { expect, playwrightTest } from '../config/browserTest';
 import { parseTrace, suppressCertificateWarning } from '../config/utils';
 import formidable from 'formidable';
 import type { Browser, ConnectOptions } from 'playwright-core';
-import { createHttpServer } from '../../packages/playwright-core/lib/utils/network';
+import { createHttpServer } from '../../packages/playwright-core/lib/server/utils/network';
 import { kTargetClosedErrorMessage } from '../config/errors';
 import { RunServer } from '../config/remoteServer';
 

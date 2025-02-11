@@ -18,12 +18,12 @@ import { PlaywrightConnection } from './playwrightConnection';
 import { createPlaywright } from '../server/playwright';
 import { debugLogger } from '../utils/debugLogger';
 import { Semaphore } from '../utils/semaphore';
-import { WSServer } from '../utils/wsServer';
+import { WSServer } from '../server/utils/wsServer';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { getPlaywrightVersion } from '../utils/userAgent';
 
 import type { ClientType } from './playwrightConnection';
-import type { SocksProxy } from '../common/socksProxy';
+import type { SocksProxy } from '../server/utils/socksProxy';
 import type { AndroidDevice } from '../server/android/android';
 import type { Browser } from '../server/browser';
 import type { Playwright } from '../server/playwright';
