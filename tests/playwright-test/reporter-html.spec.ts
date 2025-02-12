@@ -2706,7 +2706,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         `,
         'example.spec.ts': `
           import { test, expect } from '@playwright/test';
-          test('sample', async ({}) => { expect(2).toBe(3); });
+          test('sample', async ({ page }) => {
+            await page.setContent('<button>Click me</button>');
+            expect(2).toBe(3);
+          });
         `,
       };
       const baseDir = await writeFiles(files);
@@ -2744,8 +2747,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'sample' }).click();
       await page.getByRole('button', { name: 'Fix with AI' }).click();
       const prompt = await page.evaluate(() => navigator.clipboard.readText());
+      expect(prompt, 'first line').toContain(`My Playwright test failed, what's going wrong? I've included the error, a code diff and a snapshot of the page below.`);
       expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
-      expect(prompt, 'contains diff').toContain(`+          test('sample', async ({}) => { expect(2).toBe(3); });`);
+      expect(prompt, 'contains snapshot').toContain('- button "Click me"');
+      expect(prompt, 'contains diff').toContain(`+            expect(2).toBe(3);`);
     });
   });
 }
