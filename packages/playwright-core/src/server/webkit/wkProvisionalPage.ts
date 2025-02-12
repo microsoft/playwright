@@ -15,12 +15,12 @@
  */
 
 import { assert } from '../../utils';
-import { eventsHelper } from '../../utils/eventsHelper';
+import { eventsHelper } from '../utils/eventsHelper';
 
 import type { Protocol } from './protocol';
 import type { WKSession } from './wkConnection';
 import type { WKPage } from './wkPage';
-import type { RegisteredListener } from '../../utils/eventsHelper';
+import type { RegisteredListener } from '../utils/eventsHelper';
 import type * as network from '../network';
 
 export class WKProvisionalPage {

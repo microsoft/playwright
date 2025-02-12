@@ -15,7 +15,7 @@
  */
 
 import { assert } from '../../utils';
-import { eventsHelper } from '../../utils/eventsHelper';
+import { eventsHelper } from '../utils/eventsHelper';
 import { BrowserContext } from '../browserContext';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
@@ -26,7 +26,7 @@ import { BidiNetworkManager } from './bidiNetworkManager';
 import { BidiPDF } from './bidiPdf';
 import * as bidi from './third_party/bidiProtocol';
 
-import type { RegisteredListener } from '../../utils/eventsHelper';
+import type { RegisteredListener } from '../utils/eventsHelper';
 import type * as accessibility from '../accessibility';
 import type * as frames from '../frames';
 import type { InitScript, PageDelegate } from '../page';

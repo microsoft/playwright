@@ -18,13 +18,13 @@ import { frameSnapshotStreamer } from './snapshotterInjected';
 import { monotonicTime } from '../../../utils/isomorphic/time';
 import { calculateSha1, createGuid } from '../../utils/crypto';
 import { debugLogger } from '../../../utils/debugLogger';
-import { eventsHelper } from '../../../utils/eventsHelper';
+import { eventsHelper } from '../../utils/eventsHelper';
 import { mime } from '../../../utilsBundle';
 import { BrowserContext } from '../../browserContext';
 import { Page } from '../../page';
 
 import type { SnapshotData } from './snapshotterInjected';
-import type { RegisteredListener } from '../../../utils/eventsHelper';
+import type { RegisteredListener } from '../../utils/eventsHelper';
 import type { Frame } from '../../frames';
 import type { FrameSnapshot } from '@trace/snapshot';
 

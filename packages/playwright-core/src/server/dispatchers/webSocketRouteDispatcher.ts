@@ -20,7 +20,7 @@ import { PageDispatcher } from './pageDispatcher';
 import * as webSocketMockSource from '../../generated/webSocketMockSource';
 import { createGuid } from '../utils/crypto';
 import { urlMatches } from '../../utils/isomorphic/urlMatch';
-import { eventsHelper } from '../../utils/eventsHelper';
+import { eventsHelper } from '../utils/eventsHelper';
 
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { BrowserContext } from '../browserContext';
