@@ -30,8 +30,3 @@ export type { DispatcherScope } from './dispatchers/dispatcher';
 export type { Playwright } from './playwright';
 export { installRootRedirect, openTraceInBrowser, openTraceViewerApp, runTraceViewerApp, startTraceViewerServer } from './trace/viewer/traceViewer';
 export { serverSideCallMetadata } from './instrumentation';
-export { SocksProxy } from '../common/socksProxy';
-export * from './utils/processLauncher';
-export * from './utils/ascii';
-export * from './utils/comparators';
-export * from './utils/fileUtils';

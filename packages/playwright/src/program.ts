@@ -20,8 +20,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { program } from 'playwright-core/lib/cli/program';
-import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/server';
-import { startProfiling, stopProfiling } from 'playwright-core/lib/utils';
+import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import { loadConfigFromFileRestartIfNeeded, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';

@@ -17,8 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { sanitizeForFilePath } from 'playwright-core/lib/server';
-import { captureRawStack, monotonicTime, stringifyStackFrames, zones } from 'playwright-core/lib/utils';
+import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, zones } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
 import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';

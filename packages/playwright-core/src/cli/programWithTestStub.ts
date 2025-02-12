@@ -16,7 +16,7 @@
 
 /* eslint-disable no-console */
 
-import { gracefullyProcessExitDoNotHang } from '../server';
+import { gracefullyProcessExitDoNotHang } from '../server/utils/processLauncher';
 import { getPackageManager } from '../utils';
 import { program } from './program';
 export { program } from './program';

@@ -20,9 +20,8 @@ import * as http2 from 'http2';
 import * as https from 'https';
 import * as url from 'url';
 
-import { getProxyForUrl } from '../utilsBundle';
-import { HttpsProxyAgent } from '../utilsBundle';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happy-eyeballs';
+import { HttpsProxyAgent, getProxyForUrl } from '../../utilsBundle';
+import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happyEyeballs';
 
 import type net from 'net';
 

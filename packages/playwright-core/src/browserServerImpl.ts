@@ -15,7 +15,7 @@
  */
 
 import { envObjectToArray } from './client/clientHelper';
-import { SocksProxy } from './common/socksProxy';
+import { SocksProxy } from './server/utils/socksProxy';
 import { PlaywrightServer } from './remote/playwrightServer';
 import { helper } from './server/helper';
 import { serverSideCallMetadata } from './server/instrumentation';

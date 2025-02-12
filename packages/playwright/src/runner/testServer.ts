@@ -17,8 +17,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { gracefullyProcessExitDoNotHang, installRootRedirect, openTraceInBrowser, openTraceViewerApp, registry, startTraceViewerServer } from 'playwright-core/lib/server';
-import { ManualPromise, isUnderTest } from 'playwright-core/lib/utils';
+import { installRootRedirect, openTraceInBrowser, openTraceViewerApp, registry, startTraceViewerServer } from 'playwright-core/lib/server';
+import { ManualPromise, isUnderTest, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 import { open } from 'playwright-core/lib/utilsBundle';
 
 import { createErrorCollectingReporter, createReporterForTestServer, createReporters } from './reporters';

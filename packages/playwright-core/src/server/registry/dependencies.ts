@@ -22,7 +22,7 @@ import * as path from 'path';
 import { deps } from './nativeDeps';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { hostPlatform, isOfficiallySupportedPlatform } from '../../utils/hostPlatform';
-import { spawnAsync } from '../../utils/spawnAsync';
+import { spawnAsync } from '../utils/spawnAsync';
 import { getPlaywrightVersion } from '../../utils/userAgent';
 
 import { buildPlaywrightCLICommand, registry } from '.';

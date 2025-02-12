@@ -21,7 +21,8 @@ import { setExternalDependencies } from 'playwright/lib/transform/compilationCac
 import { resolveHook } from 'playwright/lib/transform/transform';
 import { removeDirAndLogToConsole } from 'playwright/lib/util';
 import { stoppable } from 'playwright/lib/utilsBundle';
-import { assert, calculateSha1, getPlaywrightVersion, isURLAvailable } from 'playwright-core/lib/utils';
+import { isURLAvailable } from 'playwright-core/lib/utils';
+import { assert, calculateSha1, getPlaywrightVersion } from 'playwright-core/lib/utils';
 import { debug } from 'playwright-core/lib/utilsBundle';
 
 import { runDevServer } from './devServer';

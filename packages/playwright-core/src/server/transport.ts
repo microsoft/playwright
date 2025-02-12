@@ -16,7 +16,7 @@
  */
 
 import { makeWaitForNextTask } from '../utils';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '../utils/happy-eyeballs';
+import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './utils/happyEyeballs';
 import { ws } from '../utilsBundle';
 
 import type { WebSocket } from '../utilsBundle';

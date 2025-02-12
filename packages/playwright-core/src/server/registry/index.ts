@@ -27,8 +27,8 @@ import { calculateSha1, getAsBooleanFromENV, getFromENV, getPackageManagerExecCo
 import { wrapInASCIIBox } from '../utils/ascii';
 import { debugLogger } from '../../utils/debugLogger';
 import {  hostPlatform, isOfficiallySupportedPlatform } from '../../utils/hostPlatform';
-import { fetchData } from '../../utils/network';
-import { spawnAsync } from '../../utils/spawnAsync';
+import { fetchData } from '../utils/network';
+import { spawnAsync } from '../utils/spawnAsync';
 import { getEmbedderName } from '../../utils/userAgent';
 import { lockfile } from '../../utilsBundle';
 import { canAccessFile, existsAsync, removeFolders } from '../utils/fileUtils';

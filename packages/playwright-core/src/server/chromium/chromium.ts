@@ -27,7 +27,7 @@ import { debugMode, headersArrayToObject, headersObjectToArray, } from '../../ut
 import { wrapInASCIIBox } from '../utils/ascii';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { ManualPromise } from '../../utils/manualPromise';
-import { fetchData } from '../../utils/network';
+import { fetchData } from '../utils/network';
 import { getUserAgent } from '../../utils/userAgent';
 import { validateBrowserContextOptions } from '../browserContext';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
@@ -41,7 +41,7 @@ import { removeFolders } from '../utils/fileUtils';
 import { gracefullyCloseSet } from '../utils/processLauncher';
 import { ProgressController } from '../progress';
 
-import type { HTTPRequestParams } from '../../utils/network';
+import type { HTTPRequestParams } from '../utils/network';
 import type { BrowserOptions, BrowserProcess } from '../browser';
 import type { CallMetadata, SdkObject } from '../instrumentation';
 import type { Env } from '../utils/processLauncher';

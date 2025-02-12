@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { monotonicTime } from './';
+import { monotonicTime } from '../utils';
 
 export async function raceAgainstDeadline<T>(cb: () => Promise<T>, deadline: number): Promise<{ result: T, timedOut: false } | { timedOut: true }> {
   let timer: NodeJS.Timeout | undefined;

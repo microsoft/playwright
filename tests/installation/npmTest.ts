@@ -23,7 +23,7 @@ import { Registry }  from './registry';
 import type { CommonFixtures, CommonWorkerFixtures } from '../config/commonFixtures';
 import { commonFixtures } from '../config/commonFixtures';
 import { removeFolders } from '../../packages/playwright-core/lib/server/utils/fileUtils';
-import { spawnAsync } from '../../packages/playwright-core/lib/utils/spawnAsync';
+import { spawnAsync } from '../../packages/playwright-core/lib/server/utils/spawnAsync';
 import type { SpawnOptions } from 'child_process';
 
 export const TMP_WORKSPACES = path.join(os.platform() === 'darwin' ? '/tmp' : os.tmpdir(), 'pwt', 'workspaces');

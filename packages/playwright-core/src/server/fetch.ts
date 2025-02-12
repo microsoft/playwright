@@ -31,7 +31,7 @@ import { MultipartFormData } from './formData';
 import { SdkObject } from './instrumentation';
 import { ProgressController } from './progress';
 import { getMatchingTLSOptionsForOrigin, rewriteOpenSSLErrorIfNeeded } from './socksClientCertificatesInterceptor';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent, timingForSocket } from '../utils/happy-eyeballs';
+import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent, timingForSocket } from './utils/happyEyeballs';
 import { Tracing } from './trace/recorder/tracing';
 
 import type { CallMetadata } from './instrumentation';

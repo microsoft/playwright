@@ -17,9 +17,9 @@
 import EventEmitter from 'events';
 import * as net from 'net';
 
-import { assert, createGuid,  } from '../utils';
-import { debugLogger } from '../utils/debugLogger';
-import { createSocket } from '../utils/happy-eyeballs';
+import { assert, createGuid,  } from '../../utils';
+import { debugLogger } from '../../utils/debugLogger';
+import { createSocket } from './happyEyeballs';
 
 import type { AddressInfo } from 'net';
 

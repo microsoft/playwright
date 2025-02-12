@@ -20,9 +20,9 @@ import * as https from 'https';
 import * as net from 'net';
 import * as tls from 'tls';
 
-import { assert } from './debug';
-import { ManualPromise } from './manualPromise';
-import { monotonicTime } from './time';
+import { assert } from '../../utils/debug';
+import { ManualPromise } from '../../utils/manualPromise';
+import { monotonicTime } from '../../utils/time';
 
 // Implementation(partial) of Happy Eyeballs 2 algorithm described in
 // https://www.rfc-editor.org/rfc/rfc8305

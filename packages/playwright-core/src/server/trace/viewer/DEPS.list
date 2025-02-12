@@ -1,5 +1,6 @@
 [*]
 ../../
+../../utils/
 ../../registry/
 ../../../generated/
 ../../../utils/

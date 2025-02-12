@@ -25,7 +25,7 @@ import util from 'util';
 import type stream from 'stream';
 import ws from 'ws';
 import zlib, { gzip } from 'zlib';
-import { createHttpServer, createHttpsServer } from '../../../packages/playwright-core/lib/utils/network';
+import { createHttpServer, createHttpsServer } from '../../../packages/playwright-core/lib/server/utils/network';
 
 const fulfillSymbol = Symbol('fulfil callback');
 const rejectSymbol = Symbol('reject callback');
