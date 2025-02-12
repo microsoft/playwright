@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Markdown from 'react-markdown'
 import './aiTab.css';
 import type { LLMMessage } from 'playwright-core/lib/server/llm';
 import { clsx } from '@web/uiUtils';
+import { useLLMChat } from './llm';
 
 export interface AIState {
   prompt?: string;
@@ -11,62 +12,27 @@ export interface AIState {
 
 export function AITab({ state }: { state?: AIState }) {
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<LLMMessage[]>([
-    {
-      role: "developer",
-      content: 'You are a helpful assistant, skilled in programming and software testing with Playwright. Help me write good code. Be bold, creative and assertive when you suggest solutions.'
-    }
-  ]);
+
+  const [messages, setMessages] = useState<LLMMessage[]>([]);
+  const chat = useLLMChat();
+  const conversation = useMemo(() => chat?.startConversation('You are a helpful assistant, skilled in programming and software testing with Playwright. Help me write good code. Be bold, creative and assertive when you suggest solutions.'), [chat]);
+
   const [abort, setAbort] = useState<AbortController>();
 
   const onSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
+    if (!conversation)
+      return;
+
     event.preventDefault();
     setInput('');
     const content = new FormData(event.target as any).get('content') as string;
-    const messages = await new Promise<LLMMessage[]>(resolve => {
-      setMessages(messages => {
-          const newMessages = [...messages, { role: 'user', content } as LLMMessage];
-          resolve(newMessages);
-          return newMessages;
-      })
-    });
+
     const controller = new AbortController();
     setAbort(controller);
 
-    const hydratedMessages = messages.map(message => {
-      let content = message.content;
-      for (const [variable, value] of Object.entries(state?.variables || {})) {
-        content = content.replaceAll(variable, value);
-      }
-      return { ...message, content };
-    })
-
     try {
-      const response = await fetch('./llm/chat-completion', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(hydratedMessages),
-        signal: controller.signal,
-      });
-      const decoder = new TextDecoder();
-      let reply = '';
-      function update() {
-        setMessages(messages => {
-          return messages.slice(0, -1).concat([{ role: 'assistant', content: reply }]);
-        });
-      }
-      await response.body?.pipeTo(new WritableStream({
-        write(chunk) {
-          reply += decoder.decode(chunk, { stream: true });
-          update();
-        },
-        close() {
-          reply += decoder.decode();
-          update();
-        }
-      }));
+      for await (const _chunk of conversation?.send(content, controller.signal))
+        setMessages([...conversation?.history])
     } finally {
       setAbort(undefined);
     }

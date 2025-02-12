@@ -38,6 +38,7 @@ import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
 import { DefaultSettingsView } from './defaultSettingsView';
 import { GitCommitInfoProvider } from './errorsTab';
+import { LLMProvider } from './llm';
 
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
@@ -61,7 +62,8 @@ const queryParams = {
   updateSnapshots: (searchParams.get('updateSnapshots') as 'all' | 'none' | 'missing' | undefined) || undefined,
   reporters: searchParams.has('reporter') ? searchParams.getAll('reporter') : undefined,
   pathSeparator: searchParams.get('pathSeparator') || '/',
-  llm: searchParams.has('llm'),
+  openai_api_key: searchParams.get('openai_api_key') || undefined,
+  anthropic_api_key: searchParams.get('anthropic_api_key') || undefined,
 };
 if (queryParams.updateSnapshots && !['all', 'none', 'missing'].includes(queryParams.updateSnapshots))
   queryParams.updateSnapshots = undefined;
@@ -399,7 +401,7 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, [closeInstallDialog, testServerConnection]);
 
-  return <div className='vbox ui-mode'>
+  return <LLMProvider openai={queryParams.openai_api_key} anthropic={queryParams.anthropic_api_key}><div className='vbox ui-mode'>
     {!hasBrowsers && <dialog ref={dialogRef}>
       <div className='title'><span className='codicon codicon-lightbulb'></span>Install browsers</div>
       <div className='body'>
@@ -439,7 +441,6 @@ export const UIModeView: React.FC<{}> = ({
               rootDir={testModel?.config?.rootDir}
               revealSource={revealSource}
               onOpenExternally={location => testServerConnection?.openNoReply({ location: { file: location.file, line: location.line, column: location.column } })}
-              llmAvailable={queryParams.llm}
             />
           </GitCommitInfoProvider>
         </div>
@@ -529,5 +530,5 @@ export const UIModeView: React.FC<{}> = ({
       </div>
       }
     />
-  </div>;
+  </div></LLMProvider>;
 };

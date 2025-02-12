@@ -152,8 +152,10 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
     params.append('project', project);
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
-  if (options.llm)
-    params.append('llm', 'true');
+  if (process.env.OPENAI_API_KEY)
+    params.append('openai_api_key', process.env.OPENAI_API_KEY);
+  if (process.env.ANTHROPIC_API_KEY)
+    params.append('anthropic_api_key', process.env.ANTHROPIC_API_KEY);
 
   let baseUrl = '.';
   if (process.env.PW_HMR) {
