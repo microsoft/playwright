@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ManualPromise } from '../utils/manualPromise';
+import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import type { Artifact } from './artifact';
 import type { Connection } from './connection';

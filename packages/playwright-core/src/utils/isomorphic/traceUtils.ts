@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { StackFrame } from '@protocol/channels';
+import type { ClientSideCallMetadata, StackFrame } from '@protocol/channels';
 
 export type SerializedStackFrame = [number, number, number, string];
 export type SerializedStack = [number, SerializedStackFrame[]];
@@ -32,4 +32,25 @@ export function parseClientSideCallMetadata(data: SerializedClientSideCallMetada
     result.set(`call@${id}`, ff.map(f => ({ file: files[f[0]], line: f[1], column: f[2], function: f[3] })));
   }
   return result;
+}
+
+export function serializeClientSideCallMetadata(metadatas: ClientSideCallMetadata[]): SerializedClientSideCallMetadata {
+  const fileNames = new Map<string, number>();
+  const stacks: SerializedStack[] = [];
+  for (const m of metadatas) {
+    if (!m.stack || !m.stack.length)
+      continue;
+    const stack: SerializedStackFrame[] = [];
+    for (const frame of m.stack) {
+      let ordinal = fileNames.get(frame.file);
+      if (typeof ordinal !== 'number') {
+        ordinal = fileNames.size;
+        fileNames.set(frame.file, ordinal);
+      }
+      const stackFrame: SerializedStackFrame = [ordinal, frame.line || 0, frame.column || 0, frame.function || ''];
+      stack.push(stackFrame);
+    }
+    stacks.push([m.id, stack]);
+  }
+  return { files: [...fileNames.keys()], stacks };
 }

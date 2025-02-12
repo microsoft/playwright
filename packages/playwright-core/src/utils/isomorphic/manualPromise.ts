@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { captureRawStack } from './stackTrace';
-
 export class ManualPromise<T = void> extends Promise<T> {
   private _resolve!: (t: T) => void;
   private _reject!: (e: Error) => void;
@@ -117,4 +115,13 @@ function cloneError(error: Error, frames: string[]) {
   clone.message = error.message;
   clone.stack = [error.name + ':' + error.message, ...frames].join('\n');
   return clone;
+}
+
+function captureRawStack(): string[] {
+  const stackTraceLimit = Error.stackTraceLimit;
+  Error.stackTraceLimit = 50;
+  const error = new Error();
+  const stack = error.stack || '';
+  Error.stackTraceLimit = stackTraceLimit;
+  return stack.split('\n');
 }

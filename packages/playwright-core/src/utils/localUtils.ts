@@ -20,11 +20,12 @@ import * as path from 'path';
 
 import { removeFolders } from './fileUtils';
 import { HarBackend } from './harBackend';
-import { ManualPromise } from './manualPromise';
+import { ManualPromise } from './isomorphic/manualPromise';
 import { ZipFile } from './zipFile';
 import { yauzl, yazl } from '../zipBundle';
-import { serializeClientSideCallMetadata } from '../utils';
-import { assert, calculateSha1 } from '../utils';
+import { serializeClientSideCallMetadata } from '../utils/isomorphic/traceUtils';
+import { assert } from '../utils/debug';
+import { calculateSha1 } from '../utils/crypto';
 
 import type { Platform } from './platform';
 import type * as channels from '@protocol/channels';

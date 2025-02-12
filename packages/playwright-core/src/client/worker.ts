@@ -18,7 +18,7 @@ import { ChannelOwner } from './channelOwner';
 import { TargetClosedError } from './errors';
 import { Events } from './events';
 import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
-import { LongStandingScope } from '../utils/manualPromise';
+import { LongStandingScope } from '../utils/isomorphic/manualPromise';
 
 import type { BrowserContext } from './browserContext';
 import type { Page } from './page';

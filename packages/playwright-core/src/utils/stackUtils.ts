@@ -35,84 +35,82 @@ type StackData = {
   evalFile?: string | undefined;
 };
 
-export class StackUtils {
-  parseLine(line: string) {
-    const match = line && line.match(re);
-    if (!match)
-      return null;
+export function parseStackFrame(line: string): StackData | null {
+  const match = line && line.match(re);
+  if (!match)
+    return null;
 
-    const ctor = match[1] === 'new';
-    let fname = match[2];
-    const evalOrigin = match[3];
-    const evalFile = match[4];
-    const evalLine = Number(match[5]);
-    const evalCol = Number(match[6]);
-    let file = match[7];
-    const lnum = match[8];
-    const col = match[9];
-    const native = match[10] === 'native';
-    const closeParen = match[11] === ')';
-    let method;
+  const ctor = match[1] === 'new';
+  let fname = match[2];
+  const evalOrigin = match[3];
+  const evalFile = match[4];
+  const evalLine = Number(match[5]);
+  const evalCol = Number(match[6]);
+  let file = match[7];
+  const lnum = match[8];
+  const col = match[9];
+  const native = match[10] === 'native';
+  const closeParen = match[11] === ')';
+  let method;
 
-    const res: StackData = {};
+  const res: StackData = {};
 
-    if (lnum)
-      res.line = Number(lnum);
+  if (lnum)
+    res.line = Number(lnum);
 
-    if (col)
-      res.column = Number(col);
+  if (col)
+    res.column = Number(col);
 
-    if (closeParen && file) {
-      // make sure parens are balanced
-      // if we have a file like "asdf) [as foo] (xyz.js", then odds are
-      // that the fname should be += " (asdf) [as foo]" and the file
-      // should be just "xyz.js"
-      // walk backwards from the end to find the last unbalanced (
-      let closes = 0;
-      for (let i = file.length - 1; i > 0; i--) {
-        if (file.charAt(i) === ')') {
-          closes++;
-        } else if (file.charAt(i) === '(' && file.charAt(i - 1) === ' ') {
-          closes--;
-          if (closes === -1 && file.charAt(i - 1) === ' ') {
-            const before = file.slice(0, i - 1);
-            const after = file.slice(i + 1);
-            file = after;
-            fname += ` (${before}`;
-            break;
-          }
+  if (closeParen && file) {
+    // make sure parens are balanced
+    // if we have a file like "asdf) [as foo] (xyz.js", then odds are
+    // that the fname should be += " (asdf) [as foo]" and the file
+    // should be just "xyz.js"
+    // walk backwards from the end to find the last unbalanced (
+    let closes = 0;
+    for (let i = file.length - 1; i > 0; i--) {
+      if (file.charAt(i) === ')') {
+        closes++;
+      } else if (file.charAt(i) === '(' && file.charAt(i - 1) === ' ') {
+        closes--;
+        if (closes === -1 && file.charAt(i - 1) === ' ') {
+          const before = file.slice(0, i - 1);
+          const after = file.slice(i + 1);
+          file = after;
+          fname += ` (${before}`;
+          break;
         }
       }
     }
-
-    if (fname) {
-      const methodMatch = fname.match(methodRe);
-      if (methodMatch) {
-        fname = methodMatch[1];
-        method = methodMatch[2];
-      }
-    }
-
-    setFile(res, file);
-
-    if (ctor)
-      res.isConstructor = true;
-
-    if (evalOrigin) {
-      res.evalOrigin = evalOrigin;
-      res.evalLine = evalLine;
-      res.evalColumn = evalCol;
-      res.evalFile = evalFile && evalFile.replace(/\\/g, '/');
-    }
-
-    if (native)
-      res.native = true;
-    if (fname)
-      res.function = fname;
-    if (method && fname !== method)
-      res.method = method;
-    return res;
   }
+
+  if (fname) {
+    const methodMatch = fname.match(methodRe);
+    if (methodMatch) {
+      fname = methodMatch[1];
+      method = methodMatch[2];
+    }
+  }
+
+  setFile(res, file);
+
+  if (ctor)
+    res.isConstructor = true;
+
+  if (evalOrigin) {
+    res.evalOrigin = evalOrigin;
+    res.evalLine = evalLine;
+    res.evalColumn = evalCol;
+    res.evalFile = evalFile && evalFile.replace(/\\/g, '/');
+  }
+
+  if (native)
+    res.native = true;
+  if (fname)
+    res.function = fname;
+  if (method && fname !== method)
+    res.method = method;
+  return res;
 }
 
 function setFile(result: StackData, filename: string) {

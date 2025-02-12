@@ -21,7 +21,7 @@ import { Frame } from './frame';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import { assert } from '../utils/debug';
 import { fileUploadSizeLimit, mkdirIfNeeded } from '../utils/fileUtils';
-import { isString } from '../utils/rtti';
+import { isString } from '../utils/isomorphic/rtti';
 import { mime } from '../utilsBundle';
 import { WritableStream } from './writableStream';
 

@@ -19,8 +19,8 @@ import { parseResult, serializeArgument } from './jsHandle';
 import { asLocator } from '../utils/isomorphic/locatorGenerators';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
 import { escapeForTextSelector } from '../utils/isomorphic/stringUtils';
-import { isString } from '../utils/rtti';
-import { monotonicTime } from '../utils/time';
+import { isString } from '../utils/isomorphic/rtti';
+import { monotonicTime } from '../utils/isomorphic/time';
 
 import type { Frame } from './frame';
 import type { FilePayload, FrameExpectParams, Rect, SelectOption, SelectOptionOptions, TimeoutOptions } from './types';

@@ -16,7 +16,7 @@
 
 import { TimeoutError } from './errors';
 import { assert, monotonicTime } from '../utils';
-import { ManualPromise } from '../utils/manualPromise';
+import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import type { CallMetadata, Instrumentation, SdkObject } from './instrumentation';
 import type { Progress as CommonProgress } from '../common/progress';

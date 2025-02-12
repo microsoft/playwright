@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-import { makeWaitForNextTask } from '../utils';
+import { makeWaitForNextTask } from './task';
 
-export interface WritableStream {
+interface WritableStream {
   write(data: Buffer): void;
 }
 
-export interface ReadableStream {
+interface ReadableStream {
   on(event: 'data', callback: (b: Buffer) => void): void;
   on(event: 'close', callback: () => void): void;
 }
 
-export interface ClosableStream {
+interface ClosableStream {
   close(): void;
 }
 

@@ -34,7 +34,7 @@ import { asLocator } from '../utils';
 import { getComparator } from './utils/comparators';
 import { debugLogger } from '../utils/debugLogger';
 import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
-import { ManualPromise } from '../utils/manualPromise';
+import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import type { Artifact } from './artifact';
 import type * as dom from './dom';

@@ -20,7 +20,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 import { TimeoutSettings } from '../../common/timeoutSettings';
-import { PipeTransport } from '../../protocol/transport';
+import { PipeTransport } from '../../utils/pipeTransport';
 import { createGuid, getPackageManagerExecCommand, isUnderTest, makeWaitForNextTask } from '../../utils';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { debug } from '../../utilsBundle';

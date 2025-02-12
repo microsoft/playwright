@@ -18,8 +18,8 @@ import * as childProcess from 'child_process';
 import * as path from 'path';
 
 import { Connection } from './client/connection';
-import { PipeTransport } from './protocol/transport';
-import { ManualPromise } from './utils/manualPromise';
+import { PipeTransport } from './utils/pipeTransport';
+import { ManualPromise } from './utils/isomorphic/manualPromise';
 import { nodePlatform } from './utils/platform';
 
 import type { Playwright } from './client/playwright';

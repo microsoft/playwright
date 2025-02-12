@@ -22,9 +22,9 @@ import { ChannelOwner } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
 import { Events } from './events';
 import { assert } from '../utils/debug';
-import { headersObjectToArray } from '../utils/headers';
-import { monotonicTime } from '../utils/time';
-import { raceAgainstDeadline } from '../utils/timeoutRunner';
+import { headersObjectToArray } from '../utils/isomorphic/headers';
+import { monotonicTime } from '../utils/isomorphic/time';
+import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';
 
 import type { Playwright } from './playwright';
 import type { ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, LaunchServerOptions, Logger } from './types';

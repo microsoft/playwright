@@ -20,7 +20,7 @@ import * as path from 'path';
 import { mime, wsServer } from '../../utilsBundle';
 import { createGuid } from '../../utils/crypto';
 import { assert } from '../../utils/debug';
-import { ManualPromise } from '../../utils/manualPromise';
+import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { createHttpServer } from './network';
 
 import type http from 'http';

@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { ManualPromise } from '../../utils/manualPromise';
+import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { yazl } from '../../zipBundle';
 
 import type { EventEmitter } from 'events';
