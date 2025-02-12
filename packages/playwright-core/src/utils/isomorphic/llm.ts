@@ -54,6 +54,7 @@ export class OpenAI implements LLM {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.apiKey}`,
+        'x-pw-serviceworker': 'forward',
       },
       body: JSON.stringify({
         model: 'gpt-4o',
@@ -86,7 +87,8 @@ export class Anthropic implements LLM {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': this.apiKey,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
+        'x-pw-serviceworker': 'forward',
       },
       body: JSON.stringify({
         model: 'claude-3-5-sonnet-20241022',
