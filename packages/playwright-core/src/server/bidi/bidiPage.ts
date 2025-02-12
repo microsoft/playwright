@@ -423,7 +423,22 @@ export class BidiPage implements PageDelegate {
   }
 
   async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
-    throw new Error('Method not implemented.');
+    // TODO: switch to utility world?
+    const windowHandle = await handle.evaluateHandle(node => {
+      const doc = node.ownerDocument ?? node as Document;
+      return doc.defaultView;
+    });
+    if (!windowHandle)
+      return null;
+    if (!windowHandle._objectId)
+      return null;
+    const executionContext = toBidiExecutionContext(windowHandle._context as dom.FrameExecutionContext);
+    const contentWindow = await executionContext.rawCallFunction('e => e', { handle: windowHandle._objectId });
+    if (contentWindow.type === 'window') {
+      const frameId = contentWindow.value.context;
+      return frameId;
+    }
+    return null;
   }
 
   isElementHandle(remoteObject: bidi.Script.RemoteValue): boolean {
