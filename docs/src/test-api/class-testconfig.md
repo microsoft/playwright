@@ -334,6 +334,8 @@ Whether to populate `'git.commit.info'` field of the [`property: TestConfig.meta
 
 This information will appear in the HTML and JSON reports and is available in the Reporter API.
 
+On Github Actions, this feature is enabled by default.
+
 **Usage**
 
 ```js title="playwright.config.ts"
