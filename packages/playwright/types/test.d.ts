@@ -1097,6 +1097,25 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   };
 
   /**
+   * Whether to exit with an error if any tests are marked as flaky. Useful on CI.
+   *
+   * Also available in the [command line](https://playwright.dev/docs/test-cli) with the `--fail-on-flaky-tests` option.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   failOnFlakyTests: process.env.CI ? true : false,
+   * });
+   * ```
+   *
+   */
+  failOnFlakyTests?: boolean;
+
+  /**
    * Whether to exit with an error if any tests or groups are marked as
    * [test.only(title[, details, body])](https://playwright.dev/docs/api/class-test#test-only) or
    * [test.describe.only([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe-only).
@@ -1854,6 +1873,12 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * Path to the configuration file used to run the tests. The value is an empty string if no config file was used.
    */
   configFile?: string;
+
+  /**
+   * See
+   * [testConfig.failOnFlakyTests](https://playwright.dev/docs/api/class-testconfig#test-config-fail-on-flaky-tests).
+   */
+  failOnFlakyTests: boolean;
 
   /**
    * See [testConfig.forbidOnly](https://playwright.dev/docs/api/class-testconfig#test-config-forbid-only).

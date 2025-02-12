@@ -90,6 +90,7 @@ export class FullConfigInternal {
     this.config = {
       configFile: resolvedConfigFile,
       rootDir: pathResolve(configDir, userConfig.testDir) || configDir,
+      failOnFlakyTests: takeFirst(configCLIOverrides.failOnFlakyTests, userConfig.failOnFlakyTests, false),
       forbidOnly: takeFirst(configCLIOverrides.forbidOnly, userConfig.forbidOnly, false),
       fullyParallel: takeFirst(configCLIOverrides.fullyParallel, userConfig.fullyParallel, false),
       globalSetup: this.globalSetups[0] ?? null,
