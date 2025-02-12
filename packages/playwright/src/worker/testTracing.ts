@@ -46,6 +46,7 @@ export class TestTracing {
   private _artifactsDir: string;
   private _tracesDir: string;
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
+  private _didFinishTestFunctionAndAfterEachHooks = false;
 
   constructor(testInfo: TestInfoImpl, artifactsDir: string) {
     this._testInfo = testInfo;
@@ -113,6 +114,10 @@ export class TestTracing {
     }
   }
 
+  didFinishTestFunctionAndAfterEachHooks() {
+    this._didFinishTestFunctionAndAfterEachHooks = true;
+  }
+
   artifactsDir() {
     return this._artifactsDir;
   }
@@ -133,7 +138,7 @@ export class TestTracing {
     return `${this._testInfo.testId}${retrySuffix}${ordinalSuffix}`;
   }
 
-  generateNextTraceRecordingPath() {
+  private _generateNextTraceRecordingPath() {
     const file = path.join(this._artifactsDir, createGuid() + '.zip');
     this._temporaryTraceFiles.push(file);
     return file;
@@ -141,6 +146,22 @@ export class TestTracing {
 
   traceOptions() {
     return this._options;
+  }
+
+  maybeGenerateNextTraceRecordingPath() {
+    // Forget about traces that should be saved on failure, when no failure happened
+    // during the test and beforeEach/afterEach hooks.
+    // This avoids downloading traces over the wire when not really needed.
+    if (this._didFinishTestFunctionAndAfterEachHooks && this._shouldAbandonTrace())
+      return;
+    return this._generateNextTraceRecordingPath();
+  }
+
+  private _shouldAbandonTrace() {
+    if (!this._options)
+      return true;
+    const testFailed = this._testInfo.status !== this._testInfo.expectedStatus;
+    return !testFailed && (this._options.mode === 'retain-on-failure' || this._options.mode === 'retain-on-first-failure');
   }
 
   async stopIfNeeded() {
@@ -151,10 +172,7 @@ export class TestTracing {
     if (error)
       throw error;
 
-    const testFailed = this._testInfo.status !== this._testInfo.expectedStatus;
-    const shouldAbandonTrace = !testFailed && (this._options.mode === 'retain-on-failure' || this._options.mode === 'retain-on-first-failure');
-
-    if (shouldAbandonTrace) {
+    if (this._shouldAbandonTrace()) {
       for (const file of this._temporaryTraceFiles)
         await fs.promises.unlink(file).catch(() => {});
       return;
@@ -213,7 +231,7 @@ export class TestTracing {
 
     await new Promise(f => {
       zipFile.end(undefined, () => {
-        zipFile.outputStream.pipe(fs.createWriteStream(this.generateNextTraceRecordingPath())).on('close', f);
+        zipFile.outputStream.pipe(fs.createWriteStream(this._generateNextTraceRecordingPath())).on('close', f);
       });
     });
 
