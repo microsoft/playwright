@@ -16,7 +16,7 @@
 
 import { expect, playwrightTest as baseTest } from '../config/browserTest';
 import { PlaywrightServer } from '../../packages/playwright-core/lib/remote/playwrightServer';
-import { createGuid } from '../../packages/playwright-core/lib/utils/crypto';
+import { createGuid } from '../../packages/playwright-core/lib/server/utils/crypto';
 import { Backend } from '../config/debugControllerBackend';
 import type { Browser, BrowserContext } from '@playwright/test';
 import type * as channels from '@protocol/channels';

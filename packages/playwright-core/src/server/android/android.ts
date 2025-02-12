@@ -21,7 +21,10 @@ import * as path from 'path';
 
 import { TimeoutSettings } from '../../common/timeoutSettings';
 import { PipeTransport } from '../../utils/pipeTransport';
-import { createGuid, getPackageManagerExecCommand, isUnderTest, makeWaitForNextTask } from '../../utils';
+import { createGuid } from '../utils/crypto';
+import { isUnderTest } from '../../utils/debug';
+import { getPackageManagerExecCommand } from '../../utils/env';
+import { makeWaitForNextTask } from '../../utils/task';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { debug } from '../../utilsBundle';
 import { wsReceiver, wsSender } from '../../utilsBundle';

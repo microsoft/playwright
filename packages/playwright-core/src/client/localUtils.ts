@@ -51,7 +51,7 @@ export class LocalUtils extends ChannelOwner<channels.LocalUtilsChannel> {
   }
 
   async harOpen(params: channels.LocalUtilsHarOpenParams): Promise<channels.LocalUtilsHarOpenResult> {
-    return await localUtils.harOpen(this._harBackends, params);
+    return await localUtils.harOpen(this._platform, this._harBackends, params);
   }
 
   async harLookup(params: channels.LocalUtilsHarLookupParams): Promise<channels.LocalUtilsHarLookupResult> {

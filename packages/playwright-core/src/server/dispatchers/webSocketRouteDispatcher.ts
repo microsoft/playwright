@@ -18,7 +18,8 @@ import { Page } from '../page';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import { PageDispatcher } from './pageDispatcher';
 import * as webSocketMockSource from '../../generated/webSocketMockSource';
-import { createGuid, urlMatches } from '../../utils';
+import { createGuid } from '../utils/crypto';
+import { urlMatches } from '../../utils/isomorphic/urlMatch';
 import { eventsHelper } from '../../utils/eventsHelper';
 
 import type { BrowserContextDispatcher } from './browserContextDispatcher';

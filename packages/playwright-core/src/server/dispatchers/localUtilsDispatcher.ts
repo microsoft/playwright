@@ -54,7 +54,7 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
   }
 
   async harOpen(params: channels.LocalUtilsHarOpenParams, metadata: CallMetadata): Promise<channels.LocalUtilsHarOpenResult> {
-    return await localUtils.harOpen(this._harBackends, params);
+    return await localUtils.harOpen(nodePlatform, this._harBackends, params);
   }
 
   async harLookup(params: channels.LocalUtilsHarLookupParams, metadata: CallMetadata): Promise<channels.LocalUtilsHarLookupResult> {

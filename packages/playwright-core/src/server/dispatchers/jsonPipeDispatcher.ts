@@ -15,7 +15,7 @@
  */
 
 import { Dispatcher } from './dispatcher';
-import { createGuid } from '../../utils';
+import { createGuid } from '../utils/crypto';
 
 import type { LocalUtilsDispatcher } from './localUtilsDispatcher';
 import type * as channels from '@protocol/channels';
