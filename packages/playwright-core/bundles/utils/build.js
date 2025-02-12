@@ -39,6 +39,12 @@ if (!fs.existsSync(outdir))
     target: 'ES2019',
     sourcemap: process.argv.includes('--sourcemap'),
     minify: process.argv.includes('--minify'),
+    // Replace 'import.meta.url' with the CJS equivalent.
+    // See https://github.com/evanw/esbuild/issues/1492#issuecomment-893144483
+    inject: [path.join(__dirname, 'inject.js')],
+    define: {
+      'import.meta.url': 'import_meta_url'
+    }
   });
   await ctx.rebuild();
   if (process.argv.includes('--watch'))
