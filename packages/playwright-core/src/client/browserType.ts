@@ -22,9 +22,9 @@ import { ChannelOwner } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
 import { Events } from './events';
 import { assert } from '../utils/debug';
-import { headersObjectToArray } from '../utils/headers';
-import { monotonicTime } from '../utils/time';
-import { raceAgainstDeadline } from '../utils/timeoutRunner';
+import { headersObjectToArray } from '../utils/isomorphic/headers';
+import { monotonicTime } from '../utils/isomorphic/time';
+import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';
 
 import type { Playwright } from './playwright';
 import type { ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, LaunchServerOptions, Logger } from './types';
@@ -100,7 +100,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
       channel: options.channel,
-      userDataDir: path.isAbsolute(userDataDir) ? userDataDir : path.resolve(userDataDir),
+      userDataDir: (path.isAbsolute(userDataDir) || !userDataDir) ? userDataDir : path.resolve(userDataDir),
     };
     return await this._wrapApiCall(async () => {
       const result = await this._channel.launchPersistentContext(persistentParams);

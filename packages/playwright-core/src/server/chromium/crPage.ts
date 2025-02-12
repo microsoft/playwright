@@ -17,8 +17,9 @@
 
 import * as path from 'path';
 
-import { assert, createGuid } from '../../utils';
-import { eventsHelper } from '../../utils/eventsHelper';
+import { assert } from '../../utils/debug';
+import { createGuid } from '../utils/crypto';
+import { eventsHelper } from '../utils/eventsHelper';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
@@ -45,7 +46,7 @@ import { isSessionClosedError } from '../protocolError';
 
 import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
-import type { RegisteredListener } from '../../utils/eventsHelper';
+import type { RegisteredListener } from '../utils/eventsHelper';
 import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';

@@ -22,7 +22,8 @@ import * as url from 'url';
 import * as zlib from 'zlib';
 
 import { TimeoutSettings } from '../common/timeoutSettings';
-import { assert, constructURLBasedOnBaseURL, createGuid, eventsHelper, monotonicTime  } from '../utils';
+import { assert, constructURLBasedOnBaseURL, eventsHelper, monotonicTime  } from '../utils';
+import { createGuid } from './utils/crypto';
 import { getUserAgent } from '../utils/userAgent';
 import { HttpsProxyAgent, SocksProxyAgent } from '../utilsBundle';
 import { BrowserContext, verifyClientCertificates } from './browserContext';

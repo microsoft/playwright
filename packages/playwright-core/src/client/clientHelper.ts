@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { isString } from '../utils/rtti';
+import { isString } from '../utils/isomorphic/rtti';
 
 import type * as types from './types';
 import type { Platform } from '../utils/platform';

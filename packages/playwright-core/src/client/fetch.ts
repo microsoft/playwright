@@ -21,8 +21,8 @@ import { RawHeaders } from './network';
 import { Tracing } from './tracing';
 import { assert } from '../utils/debug';
 import { mkdirIfNeeded } from '../utils/fileUtils';
-import { headersObjectToArray } from '../utils/headers';
-import { isString } from '../utils/rtti';
+import { headersObjectToArray } from '../utils/isomorphic/headers';
+import { isString } from '../utils/isomorphic/rtti';
 
 import type { Playwright } from './playwright';
 import type { ClientCertificate, FilePayload, Headers, SetStorageState, StorageState } from './types';

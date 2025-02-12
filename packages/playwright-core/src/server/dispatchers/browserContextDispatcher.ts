@@ -31,7 +31,8 @@ import { Recorder } from '../recorder';
 import { TracingDispatcher } from './tracingDispatcher';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
-import { createGuid, urlMatches } from '../../utils';
+import { createGuid } from '../utils/crypto';
+import { urlMatches } from '../../utils/isomorphic/urlMatch';
 import { RecorderApp } from '../recorder/recorderApp';
 
 import type { Artifact } from '../artifact';

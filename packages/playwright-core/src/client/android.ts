@@ -22,9 +22,9 @@ import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
 import { Waiter } from './waiter';
 import { TimeoutSettings } from '../common/timeoutSettings';
-import { isRegExp, isString } from '../utils/rtti';
-import { monotonicTime } from '../utils/time';
-import { raceAgainstDeadline } from '../utils/timeoutRunner';
+import { isRegExp, isString } from '../utils/isomorphic/rtti';
+import { monotonicTime } from '../utils/isomorphic/time';
+import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';
 
 import type { Page } from './page';
 import type * as types from './types';

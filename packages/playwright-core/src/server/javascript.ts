@@ -18,7 +18,7 @@ import { SdkObject } from './instrumentation';
 import * as utilityScriptSource from '../generated/utilityScriptSource';
 import { isUnderTest } from '../utils';
 import { serializeAsCallArgument } from './isomorphic/utilityScriptSerializers';
-import { LongStandingScope } from '../utils/manualPromise';
+import { LongStandingScope } from '../utils/isomorphic/manualPromise';
 
 import type * as dom from './dom';
 import type { UtilityScript } from './injected/utilityScript';

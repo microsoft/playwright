@@ -17,7 +17,7 @@
 
 import { helper } from './helper';
 import { assert } from '../utils';
-import { MultiMap } from '../utils/multimap';
+import { MultiMap } from '../utils/isomorphic/multimap';
 
 import type * as dom from './dom';
 import type { Frame } from './frames';

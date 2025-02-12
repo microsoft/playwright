@@ -399,6 +399,8 @@ export class WorkerMain extends ProcessRunner {
         firstAfterHooksError = firstAfterHooksError ?? error;
       }
 
+      testInfo._tracing.didFinishTestFunctionAndAfterEachHooks();
+
       try {
         // Teardown test-scoped fixtures. Attribute to 'test' so that users understand
         // they should probably increase the test timeout to fix this issue.

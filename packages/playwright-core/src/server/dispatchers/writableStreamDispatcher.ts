@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 
 import { Dispatcher } from './dispatcher';
-import { createGuid } from '../../utils';
+import { createGuid } from '../utils/crypto';
 
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type * as channels from '@protocol/channels';

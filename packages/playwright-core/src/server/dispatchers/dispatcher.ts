@@ -16,7 +16,7 @@
 
 import { EventEmitter } from 'events';
 
-import { eventsHelper } from '../..//utils/eventsHelper';
+import { eventsHelper } from '../utils/eventsHelper';
 import { ValidationError, createMetadataValidator, findValidator  } from '../../protocol/validator';
 import { LongStandingScope, assert, compressCallLog, isUnderTest, monotonicTime, rewriteErrorMessage } from '../../utils';
 import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
@@ -25,7 +25,7 @@ import { isProtocolError } from '../protocolError';
 
 import type { CallMetadata } from '../instrumentation';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';
-import type { RegisteredListener } from '../..//utils/eventsHelper';
+import type { RegisteredListener } from '../utils/eventsHelper';
 import type { ValidatorContext } from '../../protocol/validator';
 import type * as channels from '@protocol/channels';
 

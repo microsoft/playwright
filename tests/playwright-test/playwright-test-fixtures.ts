@@ -222,6 +222,7 @@ export function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
     CI_COMMIT_SHA: undefined,
     CI_JOB_URL: undefined,
     CI_PROJECT_URL: undefined,
+    GITHUB_ACTIONS: undefined,
     GITHUB_REPOSITORY: undefined,
     GITHUB_RUN_ID: undefined,
     GITHUB_SERVER_URL: undefined,

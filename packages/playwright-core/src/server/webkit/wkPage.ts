@@ -17,8 +17,10 @@
 
 import * as path from 'path';
 
-import { assert, createGuid, debugAssert, headersArrayToObject } from '../../utils';
-import { eventsHelper } from '../../utils/eventsHelper';
+import { assert, debugAssert } from '../../utils';
+import { headersArrayToObject } from '../../utils/isomorphic/headers';
+import { createGuid } from '../utils/crypto';
+import { eventsHelper } from '../utils/eventsHelper';
 import { hostPlatform } from '../../utils/hostPlatform';
 import { splitErrorMessage } from '../../utils/stackTrace';
 import { PNG, jpegjs } from '../../utilsBundle';
@@ -41,7 +43,7 @@ import { debugLogger } from '../../utils/debugLogger';
 
 import type { Protocol } from './protocol';
 import type { WKBrowserContext } from './wkBrowser';
-import type { RegisteredListener } from '../../utils/eventsHelper';
+import type { RegisteredListener } from '../utils/eventsHelper';
 import type * as accessibility from '../accessibility';
 import type * as frames from '../frames';
 import type { JSHandle } from '../javascript';

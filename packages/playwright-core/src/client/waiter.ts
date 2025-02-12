@@ -15,7 +15,6 @@
  */
 
 import { TimeoutError } from './errors';
-import { createGuid } from '../utils/crypto';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { zones } from '../utils/zones';
 
@@ -35,7 +34,7 @@ export class Waiter {
   private _savedZone: Zone;
 
   constructor(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
-    this._waitId = createGuid();
+    this._waitId = channelOwner._platform.createGuid();
     this._channelOwner = channelOwner;
     this._savedZone = zones.current().without('apiZone');
 

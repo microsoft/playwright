@@ -16,7 +16,7 @@
 
 import { PlaywrightServer } from './remote/playwrightServer';
 import { createPlaywright } from './server/playwright';
-import { createGuid } from './utils';
+import { createGuid } from './server/utils/crypto';
 import { ws } from './utilsBundle';
 
 import type { BrowserServer } from './client/browserType';

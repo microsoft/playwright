@@ -30,9 +30,9 @@ import * as types from './types';
 import { LongStandingScope, asLocator, assert, compressCallLog, constructURLBasedOnBaseURL, makeWaitForNextTask, monotonicTime } from '../utils';
 import { isSessionClosedError } from './protocolError';
 import { debugLogger } from '../utils/debugLogger';
-import { eventsHelper } from '../utils/eventsHelper';
+import { eventsHelper } from './utils/eventsHelper';
 import {  isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
-import { ManualPromise } from '../utils/manualPromise';
+import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import type { ConsoleMessage } from './console';
 import type { Dialog } from './dialog';
@@ -40,7 +40,7 @@ import type { ElementStateWithoutStable, FrameExpectParams, InjectedScript } fro
 import type { CallMetadata } from './instrumentation';
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
-import type { RegisteredListener } from '../utils/eventsHelper';
+import type { RegisteredListener } from './utils/eventsHelper';
 import type { ParsedSelector } from '../utils/isomorphic/selectorParser';
 import type * as channels from '@protocol/channels';
 

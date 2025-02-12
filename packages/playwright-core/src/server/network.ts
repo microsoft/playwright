@@ -18,7 +18,7 @@ import { assert } from '../utils';
 import { BrowserContext } from './browserContext';
 import { APIRequestContext } from './fetch';
 import { SdkObject } from './instrumentation';
-import { ManualPromise } from '../utils/manualPromise';
+import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import type * as contexts from './browserContext';
 import type * as frames from './frames';

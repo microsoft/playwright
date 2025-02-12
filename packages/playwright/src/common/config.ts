@@ -78,7 +78,7 @@ export class FullConfigInternal {
     const privateConfiguration = (userConfig as any)['@playwright/test'];
     this.plugins = (privateConfiguration?.plugins || []).map((p: any) => ({ factory: p }));
     this.singleTSConfigPath = pathResolve(configDir, userConfig.tsconfig);
-    this.populateGitInfo = takeFirst(userConfig.populateGitInfo, false);
+    this.populateGitInfo = takeFirst(userConfig.populateGitInfo, defaultPopulateGitInfo);
 
     this.globalSetups = (Array.isArray(userConfig.globalSetup) ? userConfig.globalSetup : [userConfig.globalSetup]).map(s => resolveScript(s, configDir)).filter(script => script !== undefined);
     this.globalTeardowns = (Array.isArray(userConfig.globalTeardown) ? userConfig.globalTeardown : [userConfig.globalTeardown]).map(s => resolveScript(s, configDir)).filter(script => script !== undefined);
@@ -301,6 +301,7 @@ function resolveScript(id: string | undefined, rootDir: string): string | undefi
 
 export const defaultGrep = /.*/;
 export const defaultReporter = process.env.CI ? 'dot' : 'list';
+const defaultPopulateGitInfo = process.env.GITHUB_ACTIONS === 'true';
 
 const configInternalSymbol = Symbol('configInternalSymbol');
 

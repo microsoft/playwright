@@ -20,11 +20,11 @@ import * as path from 'path';
 
 import { removeFolders } from './fileUtils';
 import { HarBackend } from './harBackend';
-import { ManualPromise } from './manualPromise';
+import { ManualPromise } from './isomorphic/manualPromise';
 import { ZipFile } from './zipFile';
 import { yauzl, yazl } from '../zipBundle';
-import { serializeClientSideCallMetadata } from '../utils';
-import { assert, calculateSha1 } from '../utils';
+import { serializeClientSideCallMetadata } from '../utils/isomorphic/traceUtils';
+import { assert } from '../utils/debug';
 
 import type { Platform } from './platform';
 import type * as channels from '@protocol/channels';
@@ -77,7 +77,7 @@ export async function zip(platform: Platform, stackSessions: Map<string, StackSe
         sourceFiles.add(file);
     }
     for (const sourceFile of sourceFiles)
-      addFile(sourceFile, 'resources/src@' + calculateSha1(sourceFile) + '.txt');
+      addFile(sourceFile, 'resources/src@' + await platform.calculateSha1(sourceFile) + '.txt');
   }
 
   if (params.mode === 'write') {
@@ -137,7 +137,7 @@ async function deleteStackSession(platform: Platform, stackSessions: Map<string,
   stackSessions.delete(stacksId!);
 }
 
-export async function harOpen(harBackends: Map<string, HarBackend>, params: channels.LocalUtilsHarOpenParams): Promise<channels.LocalUtilsHarOpenResult> {
+export async function harOpen(platform: Platform, harBackends: Map<string, HarBackend>, params: channels.LocalUtilsHarOpenParams): Promise<channels.LocalUtilsHarOpenResult> {
   let harBackend: HarBackend;
   if (params.file.endsWith('.zip')) {
     const zipFile = new ZipFile(params.file);
@@ -147,10 +147,10 @@ export async function harOpen(harBackends: Map<string, HarBackend>, params: chan
       return { error: 'Specified archive does not have a .har file' };
     const har = await zipFile.read(harEntryName);
     const harFile = JSON.parse(har.toString()) as har.HARFile;
-    harBackend = new HarBackend(harFile, null, zipFile);
+    harBackend = new HarBackend(platform, harFile, null, zipFile);
   } else {
     const harFile = JSON.parse(await fs.promises.readFile(params.file, 'utf-8')) as har.HARFile;
-    harBackend = new HarBackend(harFile, path.dirname(params.file), null);
+    harBackend = new HarBackend(platform, harFile, path.dirname(params.file), null);
   }
   harBackends.set(harBackend.id, harBackend);
   return { harId: harBackend.id };

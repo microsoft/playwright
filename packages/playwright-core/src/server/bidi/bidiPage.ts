@@ -15,7 +15,7 @@
  */
 
 import { assert } from '../../utils';
-import { eventsHelper } from '../../utils/eventsHelper';
+import { eventsHelper } from '../utils/eventsHelper';
 import { BrowserContext } from '../browserContext';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
@@ -26,7 +26,7 @@ import { BidiNetworkManager } from './bidiNetworkManager';
 import { BidiPDF } from './bidiPdf';
 import * as bidi from './third_party/bidiProtocol';
 
-import type { RegisteredListener } from '../../utils/eventsHelper';
+import type { RegisteredListener } from '../utils/eventsHelper';
 import type * as accessibility from '../accessibility';
 import type * as frames from '../frames';
 import type { InitScript, PageDelegate } from '../page';
@@ -423,7 +423,22 @@ export class BidiPage implements PageDelegate {
   }
 
   async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
-    throw new Error('Method not implemented.');
+    // TODO: switch to utility world?
+    const windowHandle = await handle.evaluateHandle(node => {
+      const doc = node.ownerDocument ?? node as Document;
+      return doc.defaultView;
+    });
+    if (!windowHandle)
+      return null;
+    if (!windowHandle._objectId)
+      return null;
+    const executionContext = toBidiExecutionContext(windowHandle._context as dom.FrameExecutionContext);
+    const contentWindow = await executionContext.rawCallFunction('e => e', { handle: windowHandle._objectId });
+    if (contentWindow.type === 'window') {
+      const frameId = contentWindow.value.context;
+      return frameId;
+    }
+    return null;
   }
 
   isElementHandle(remoteObject: bidi.Script.RemoteValue): boolean {
@@ -515,11 +530,21 @@ export class BidiPage implements PageDelegate {
   }
 
   async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
-    throw new Error('Method not implemented.');
+    throw new Error('Setting FilePayloads is not supported in Bidi.');
   }
 
   async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
-    throw new Error('Method not implemented.');
+    const fromContext = toBidiExecutionContext(handle._context);
+    const shared = await fromContext.rawCallFunction('x => x',  { handle: handle._objectId });
+    // TODO: store sharedId in the handle.
+    if (!('sharedId' in shared))
+      throw new Error('Element is not a node');
+    const sharedId = shared.sharedId!;
+    await this._session.send('input.setFiles', {
+      context: this._session.sessionId,
+      element: { sharedId },
+      files: paths,
+    });
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {

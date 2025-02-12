@@ -19,8 +19,8 @@ import * as path from 'path';
 
 import { Artifact } from '../artifact';
 import { HarTracer } from './harTracer';
-import { createGuid } from '../../utils';
-import { ManualPromise } from '../../utils/manualPromise';
+import { createGuid } from '../utils/crypto';
+import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { yazl } from '../../zipBundle';
 
 import type { BrowserContext } from '../browserContext';

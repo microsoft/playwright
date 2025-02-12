@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-import { eventsHelper } from '../../utils/eventsHelper';
+import { eventsHelper } from '../utils/eventsHelper';
 import * as network from '../network';
 
 import type { FFSession } from './ffConnection';
 import type { HeadersArray } from '../../server/types';
-import type { RegisteredListener } from '../../utils/eventsHelper';
+import type { RegisteredListener } from '../utils/eventsHelper';
 import type * as frames from '../frames';
 import type { Page } from '../page';
 import type * as types from '../types';

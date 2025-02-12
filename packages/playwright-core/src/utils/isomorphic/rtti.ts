@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export { isString } from  './isomorphic/stringUtils';
+export { isString } from  './stringUtils';
 
 export function isRegExp(obj: any): obj is RegExp {
   return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
