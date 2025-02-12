@@ -17,7 +17,8 @@
 
 import * as path from 'path';
 
-import { assert, createGuid } from '../../utils';
+import { assert } from '../../utils/debug';
+import { createGuid } from '../utils/crypto';
 import { eventsHelper } from '../../utils/eventsHelper';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import * as dialog from '../dialog';

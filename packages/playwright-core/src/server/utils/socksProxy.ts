@@ -17,7 +17,8 @@
 import EventEmitter from 'events';
 import * as net from 'net';
 
-import { assert, createGuid,  } from '../../utils';
+import { assert } from '../../utils/debug';
+import { createGuid } from './crypto';
 import { debugLogger } from '../../utils/debugLogger';
 import { createSocket } from './happyEyeballs';
 

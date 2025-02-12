@@ -20,7 +20,7 @@ import { PlaywrightServer } from './remote/playwrightServer';
 import { helper } from './server/helper';
 import { serverSideCallMetadata } from './server/instrumentation';
 import { createPlaywright } from './server/playwright';
-import { createGuid } from './utils';
+import { createGuid } from './server/utils/crypto';
 import { rewriteErrorMessage } from './utils/stackTrace';
 import { ws } from './utilsBundle';
 

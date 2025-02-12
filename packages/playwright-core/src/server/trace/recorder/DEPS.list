@@ -5,6 +5,7 @@
 ../../../protocol/
 ../../../utils/
 ../../../utilsBundle.ts
+../../../utils/isomorphic/
 ../../../zipBundle.ts
 ../../dispatchers/dispatcher.ts
 ../../utils

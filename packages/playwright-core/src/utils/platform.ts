@@ -14,36 +14,56 @@
  * limitations under the License.
  */
 
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
 
 export type Platform = {
+  calculateSha1(text: string): Promise<string>;
+  createGuid: () => string;
   fs: () => typeof fs;
-  path: () => typeof path;
   inspectCustom: symbol | undefined;
+  path: () => typeof path;
   ws?: (url: string) => WebSocket;
 };
 
-export const emptyPlatform: Platform = {
+export const nodePlatform: Platform = {
+  calculateSha1: (text: string) => {
+    const sha1 = crypto.createHash('sha1');
+    sha1.update(text);
+    return Promise.resolve(sha1.digest('hex'));
+  },
+
+  createGuid: () => crypto.randomBytes(16).toString('hex'),
+
+  fs: () => fs,
+
+  inspectCustom: util.inspect.custom,
+
+  path: () => path,
+};
+
+export const webPlatform: Platform = {
+  calculateSha1: async (text: string) => {
+    const bytes = new TextEncoder().encode(text);
+    const hashBuffer = await crypto.subtle.digest('SHA-1', bytes);
+    return Array.from(new Uint8Array(hashBuffer), b => b.toString(16).padStart(2, '0')).join('');
+  },
+
+  createGuid: () => {
+    return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+  },
+
   fs: () => {
     throw new Error('File system is not available');
   },
+
+  inspectCustom: undefined,
 
   path: () => {
     throw new Error('Path module is not available');
   },
 
-  inspectCustom: undefined,
-};
-
-export const nodePlatform: Platform = {
-  fs: () => fs,
-  path: () => path,
-  inspectCustom: util.inspect.custom,
-};
-
-export const webPlatform: Platform = {
-  ...emptyPlatform,
   ws: (url: string) => new WebSocket(url),
 };

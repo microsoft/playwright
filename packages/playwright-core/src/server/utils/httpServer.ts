@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { mime, wsServer } from '../../utilsBundle';
-import { createGuid } from '../../utils/crypto';
+import { createGuid } from './crypto';
 import { assert } from '../../utils/debug';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { createHttpServer } from './network';

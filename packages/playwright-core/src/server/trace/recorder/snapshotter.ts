@@ -15,7 +15,8 @@
  */
 
 import { frameSnapshotStreamer } from './snapshotterInjected';
-import { calculateSha1, createGuid, monotonicTime } from '../../../utils';
+import { monotonicTime } from '../../../utils/isomorphic/time';
+import { calculateSha1, createGuid } from '../../utils/crypto';
 import { debugLogger } from '../../../utils/debugLogger';
 import { eventsHelper } from '../../../utils/eventsHelper';
 import { mime } from '../../../utilsBundle';

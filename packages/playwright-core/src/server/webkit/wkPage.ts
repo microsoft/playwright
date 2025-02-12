@@ -17,7 +17,9 @@
 
 import * as path from 'path';
 
-import { assert, createGuid, debugAssert, headersArrayToObject } from '../../utils';
+import { assert, debugAssert } from '../../utils';
+import { headersArrayToObject } from '../../utils/isomorphic/headers';
+import { createGuid } from '../utils/crypto';
 import { eventsHelper } from '../../utils/eventsHelper';
 import { hostPlatform } from '../../utils/hostPlatform';
 import { splitErrorMessage } from '../../utils/stackTrace';

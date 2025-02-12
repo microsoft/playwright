@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { createGuid } from '../utils';
+import { createGuid } from './utils/crypto';
 import { InvalidSelectorError,  parseSelector, stringifySelector, visitAllSelectorParts } from '../utils/isomorphic/selectorParser';
 
 import type { ParsedSelector } from '../utils/isomorphic/selectorParser';

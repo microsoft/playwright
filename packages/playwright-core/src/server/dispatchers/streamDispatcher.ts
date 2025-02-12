@@ -15,7 +15,8 @@
  */
 
 import { Dispatcher } from './dispatcher';
-import { ManualPromise, createGuid } from '../../utils';
+import { ManualPromise } from '../../utils/isomorphic/manualPromise';
+import { createGuid } from '../utils/crypto';
 
 import type { ArtifactDispatcher } from './artifactDispatcher';
 import type * as channels from '@protocol/channels';

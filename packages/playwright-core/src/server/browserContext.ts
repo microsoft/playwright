@@ -19,7 +19,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { TimeoutSettings } from '../common/timeoutSettings';
-import { createGuid, debugMode } from '../utils';
+import { createGuid } from './utils/crypto';
+import { debugMode } from '../utils/debug';
 import { Clock } from './clock';
 import { Debugger } from './debugger';
 import { BrowserContextAPIRequestContext } from './fetch';

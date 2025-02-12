@@ -25,7 +25,7 @@ import { ElectronDispatcher } from './electronDispatcher';
 import { LocalUtilsDispatcher } from './localUtilsDispatcher';
 import { APIRequestContextDispatcher } from './networkDispatchers';
 import { SelectorsDispatcher } from './selectorsDispatcher';
-import { createGuid } from '../../utils';
+import { createGuid } from '../utils/crypto';
 import { eventsHelper  } from '../../utils/eventsHelper';
 
 import type { RootDispatcher } from './dispatcher';
