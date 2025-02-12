@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Markdown from 'react-markdown'
 import './aiTab.css';
-import type { LLMMessage } from 'playwright-core/lib/server/llm';
 import { clsx } from '@web/uiUtils';
-import { useLLMChat } from './llm';
+import { useLLMConversation } from './llm';
 
 export interface AIState {
   prompt?: string;
@@ -12,11 +11,7 @@ export interface AIState {
 
 export function AITab({ state }: { state?: AIState }) {
   const [input, setInput] = useState('');
-
-  const [messages, setMessages] = useState<LLMMessage[]>([]);
-  const chat = useLLMChat();
-  const conversation = useMemo(() => chat?.startConversation('You are a helpful assistant, skilled in programming and software testing with Playwright. Help me write good code. Be bold, creative and assertive when you suggest solutions.'), [chat]);
-
+  const [history, conversation] = useLLMConversation('aitab', 'You are a helpful assistant, skilled in programming and software testing with Playwright. Help me write good code. Be bold, creative and assertive when you suggest solutions.');
   const [abort, setAbort] = useState<AbortController>();
 
   const onSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
@@ -28,11 +23,9 @@ export function AITab({ state }: { state?: AIState }) {
     const content = new FormData(event.target as any).get('content') as string;
 
     const controller = new AbortController();
-    setAbort(controller);
-
-    try {
-      for await (const _chunk of conversation?.send(content, controller.signal))
-        setMessages([...conversation?.history])
+    try { 
+      setAbort(controller);
+      await conversation.send(content, undefined, controller.signal);
     } finally {
       setAbort(undefined);
     }
@@ -46,7 +39,7 @@ export function AITab({ state }: { state?: AIState }) {
   return (
     <div className="chat-container">
       <div className="messages-container">
-        {messages.filter(({ role }) => role !== 'developer').map((message, index) => (
+        {history.filter(({ role }) => role !== 'developer').map((message, index) => (
           <div
             key={'' + index}
             className={clsx('message', message.role === 'user' && 'user-message')}
@@ -57,7 +50,7 @@ export function AITab({ state }: { state?: AIState }) {
               </div>
             )}
             <div className="message-content">
-              <Markdown>{message.content}</Markdown>
+              <Markdown>{message.displayContent ?? message.content}</Markdown>
             </div>
           </div>
         ))}

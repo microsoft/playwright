@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
+import { EventEmitter } from '@testIsomorphic/events';
+
 export type LLMMessage = {
-    role: 'user' | 'assistant' | 'developer';
-    content: string;
+  role: 'user' | 'assistant' | 'developer';
+  content: string;
+  displayContent?: string;
 };
 
 export interface LLM {
-    chatCompletion(messages: LLMMessage[], signal: AbortSignal): AsyncGenerator<string>;
+  chatCompletion(messages: LLMMessage[], signal: AbortSignal): AsyncGenerator<string>;
 }
 
 async function *parseSSE(body: Response['body']): AsyncGenerator<string> {
@@ -58,7 +61,7 @@ export class OpenAI implements LLM {
       },
       body: JSON.stringify({
         model: 'gpt-4o',
-        messages,
+        messages: messages.map(({ role, content }) => ({ role, content })),
         stream: true,
       }),
     });
@@ -92,7 +95,7 @@ export class Anthropic implements LLM {
       },
       body: JSON.stringify({
         model: 'claude-3-5-sonnet-20241022',
-        messages: messages.filter(({ role }) => role !== 'developer'),
+        messages: messages.filter(({ role }) => role !== 'developer').map(({ role, content }) => ({ role, content })),
         system: messages.find(({ role }) => role === 'developer')?.content,
         max_tokens: 1024,
         stream: true,
@@ -111,30 +114,33 @@ export class Anthropic implements LLM {
 }
 
 export class LLMChat {
-  conversations: Conversation[] = [];
+  conversations = new Map<string, Conversation>();
 
   constructor(readonly api: LLM) {}
 
-  startConversation(systemPrompt: string) {
-    const conversation = new Conversation(this, systemPrompt);
-    this.conversations.push(conversation);
-    return conversation;
+  getConversation(id: string, systemPrompt: string) {
+    if (!this.conversations.has(id)) {
+      const conversation = new Conversation(this, systemPrompt);
+      this.conversations.set(id, conversation);
+    }
+    return this.conversations.get(id)!;
   }
 }
 
 export class Conversation {
   history: LLMMessage[];
+  onChange = new EventEmitter<void>();
 
   constructor(private chat: LLMChat, systemPrompt: string) {
     this.history = [{ role: 'developer', content: systemPrompt }];
   }
 
-  async *send(message: string, signal: AbortSignal) {
+  async send(content: string, displayContent: string | undefined, signal: AbortSignal) {
     const response: LLMMessage = { role: 'assistant', content: '' };
-    this.history.push({ role: 'user', content: message }, response);
+    this.history.push({ role: 'user', content, displayContent }, response);
     for await (const chunk of this.chat.api.chatCompletion(this.history, signal)) {
       response.content += chunk;
-      yield response.content;
+      this.onChange.fire();
     }
   }
 }
