@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { eventsHelper } from '../../utils/eventsHelper';
+import { eventsHelper } from '../utils/eventsHelper';
 import { parseRawCookie } from '../cookieStore';
 import * as network from '../network';
 import * as bidi from './third_party/bidiProtocol';
 
-import type { RegisteredListener } from '../../utils/eventsHelper';
+import type { RegisteredListener } from '../utils/eventsHelper';
 import type * as frames from '../frames';
 import type { Page } from '../page';
 import type * as types from '../types';

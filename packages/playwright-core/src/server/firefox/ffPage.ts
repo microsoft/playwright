@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { eventsHelper } from '../../utils/eventsHelper';
+import { eventsHelper } from '../utils/eventsHelper';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { InitScript } from '../page';
@@ -33,7 +33,7 @@ import { TargetClosedError } from '../errors';
 import type { Progress } from '../progress';
 import type { FFBrowserContext } from './ffBrowser';
 import type { Protocol } from './protocol';
-import type { RegisteredListener } from '../../utils/eventsHelper';
+import type { RegisteredListener } from '../utils/eventsHelper';
 import type * as frames from '../frames';
 import type { PageDelegate } from '../page';
 import type * as types from '../types';

@@ -19,7 +19,7 @@ import { DebugController } from '../debugController';
 import { Dispatcher } from './dispatcher';
 
 import type { DispatcherConnection, RootDispatcher } from './dispatcher';
-import type { RegisteredListener } from '../../utils/eventsHelper';
+import type { RegisteredListener } from '../utils/eventsHelper';
 import type * as channels from '@protocol/channels';
 
 

@@ -16,11 +16,11 @@
  */
 
 import { debugLogger } from '../utils/debugLogger';
-import { eventsHelper } from '../utils/eventsHelper';
+import { eventsHelper } from './utils/eventsHelper';
 
 import type { Progress } from './progress';
 import type * as types from './types';
-import type { RegisteredListener } from '../utils/eventsHelper';
+import type { RegisteredListener } from './utils/eventsHelper';
 import type { EventEmitter } from 'events';
 
 

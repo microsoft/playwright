@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { eventsHelper } from '../../utils/eventsHelper';
+import { eventsHelper } from '../utils/eventsHelper';
 import { Browser } from '../browser';
 import { BrowserContext, assertBrowserContextIsNotOwned } from '../browserContext';
 import * as network from '../network';
@@ -23,7 +23,7 @@ import { bidiBytesValueToString } from './bidiNetworkManager';
 import { BidiPage } from './bidiPage';
 import * as bidi from './third_party/bidiProtocol';
 
-import type { RegisteredListener } from '../../utils/eventsHelper';
+import type { RegisteredListener } from '../utils/eventsHelper';
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
 import type { InitScript, Page } from '../page';

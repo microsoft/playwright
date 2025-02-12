@@ -16,7 +16,7 @@
 
 import { assert, calculateSha1, monotonicTime } from '../../utils';
 import { getPlaywrightVersion, isTextualMimeType, urlMatches } from '../../utils';
-import { eventsHelper } from '../../utils/eventsHelper';
+import { eventsHelper } from '../utils/eventsHelper';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { mime } from '../../utilsBundle';
 import { BrowserContext } from '../browserContext';
@@ -25,7 +25,7 @@ import { Frame } from '../frames';
 import { helper } from '../helper';
 import * as network from '../network';
 
-import type { RegisteredListener } from '../../utils/eventsHelper';
+import type { RegisteredListener } from '../utils/eventsHelper';
 import type { APIRequestEvent, APIRequestFinishedEvent } from '../fetch';
 import type { Page } from '../page';
 import type { Worker } from '../page';

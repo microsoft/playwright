@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isRegExp, isString } from './isomorphic/rtti';
+import { isRegExp, isString } from '../../utils/isomorphic/rtti';
 
 import type { ExpectedTextValue } from '@protocol/channels';
 
