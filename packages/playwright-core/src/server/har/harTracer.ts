@@ -17,7 +17,7 @@
 import { assert, calculateSha1, monotonicTime } from '../../utils';
 import { getPlaywrightVersion, isTextualMimeType, urlMatches } from '../../utils';
 import { eventsHelper } from '../../utils/eventsHelper';
-import { ManualPromise } from '../../utils/manualPromise';
+import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { mime } from '../../utilsBundle';
 import { BrowserContext } from '../browserContext';
 import { APIRequestContext } from '../fetch';

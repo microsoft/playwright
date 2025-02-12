@@ -32,7 +32,7 @@ import { isSessionClosedError } from './protocolError';
 import { debugLogger } from '../utils/debugLogger';
 import { eventsHelper } from '../utils/eventsHelper';
 import {  isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
-import { ManualPromise } from '../utils/manualPromise';
+import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import type { ConsoleMessage } from './console';
 import type { Dialog } from './dialog';

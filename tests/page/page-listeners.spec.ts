@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { ManualPromise } from '../../packages/playwright-core/lib/utils/manualPromise';
+import { ManualPromise } from '../../packages/playwright-core/lib/utils/isomorphic/manualPromise';
 import { test as it, expect } from './pageTest';
 
 // This test is mostly for type checking, the actual tests are in the library/events.

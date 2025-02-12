@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
+export * from './utils/isomorphic/manualPromise';
+export * from './utils/isomorphic/locatorGenerators';
+export * from './utils/isomorphic/mimeType';
+export * from './utils/isomorphic/stringUtils';
+export * from './utils/isomorphic/urlMatch';
+export * from './utils/isomorphic/multimap';
+export * from './utils/isomorphic/rtti';
+export * from './utils/isomorphic/time';
+export * from './utils/isomorphic/timeoutRunner';
+
 export * from './utils/crypto';
 export * from './utils/debug';
 export * from './utils/debugLogger';
 export * from './utils/env';
 export * from './utils/eventsHelper';
 export * from './utils/expectUtils';
-export * from './utils/headers';
+export * from './utils/isomorphic/headers';
 export * from './utils/hostPlatform';
-export * from './utils/manualPromise';
-export * from './utils/isomorphic/locatorGenerators';
-export * from './utils/isomorphic/mimeType';
-export * from './utils/isomorphic/stringUtils';
-export * from './utils/isomorphic/urlMatch';
-export * from './utils/multimap';
-export * from './utils/rtti';
-export * from './utils/semaphore';
+export * from './utils/platform';
+export * from './utils/isomorphic/semaphore';
 export * from './utils/stackTrace';
 export * from './utils/task';
-export * from './utils/time';
-export * from './utils/timeoutRunner';
-export * from './utils/traceUtils';
 export * from './utils/userAgent';
 export * from './utils/zipFile';
 export * from './utils/zones';

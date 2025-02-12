@@ -17,15 +17,13 @@
 import * as path from 'path';
 
 import { colors } from '../utilsBundle';
-import { findRepeatedSubsequences } from './sequence';
-import { StackUtils } from './stackUtils';
+import { findRepeatedSubsequences } from './isomorphic/sequence';
+import { parseStackFrame } from './stackUtils';
 
 import type { StackFrame } from '@protocol/channels';
 
-const stackUtils = new StackUtils();
-
 export function parseStackTraceLine(line: string): StackFrame | null {
-  const frame = stackUtils.parseLine(line);
+  const frame = parseStackFrame(line);
   if (!frame)
     return null;
   if (!process.env.PWDEBUGIMPL && (frame.file?.startsWith('internal') || frame.file?.startsWith('node:')))

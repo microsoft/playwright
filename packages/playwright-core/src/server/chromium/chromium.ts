@@ -26,7 +26,7 @@ import { TimeoutSettings } from '../../common/timeoutSettings';
 import { debugMode, headersArrayToObject, headersObjectToArray, } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { RecentLogsCollector } from '../../utils/debugLogger';
-import { ManualPromise } from '../../utils/manualPromise';
+import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { fetchData } from '../utils/network';
 import { getUserAgent } from '../../utils/userAgent';
 import { validateBrowserContextOptions } from '../browserContext';

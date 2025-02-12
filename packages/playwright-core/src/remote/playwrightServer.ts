@@ -17,7 +17,7 @@
 import { PlaywrightConnection } from './playwrightConnection';
 import { createPlaywright } from '../server/playwright';
 import { debugLogger } from '../utils/debugLogger';
-import { Semaphore } from '../utils/semaphore';
+import { Semaphore } from '../utils/isomorphic/semaphore';
 import { WSServer } from '../server/utils/wsServer';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { getPlaywrightVersion } from '../utils/userAgent';

@@ -21,7 +21,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 import { debugLogger } from '../../utils/debugLogger';
-import { ManualPromise } from '../../utils/manualPromise';
+import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { getUserAgent } from '../../utils/userAgent';
 import { colors, progress as ProgressBar } from '../../utilsBundle';
 import { existsAsync } from '../utils/fileUtils';

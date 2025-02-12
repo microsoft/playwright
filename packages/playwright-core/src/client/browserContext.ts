@@ -36,9 +36,9 @@ import { WebError } from './webError';
 import { Worker } from './worker';
 import { TimeoutSettings } from '../common/timeoutSettings';
 import { mkdirIfNeeded } from '../utils/fileUtils';
-import { headersObjectToArray } from '../utils/headers';
+import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { urlMatchesEqual } from '../utils/isomorphic/urlMatch';
-import { isRegExp, isString } from '../utils/rtti';
+import { isRegExp, isString } from '../utils/isomorphic/rtti';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 
 import type { BrowserType } from './browserType';
