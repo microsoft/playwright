@@ -15,7 +15,7 @@
  */
 
 import { ManualPromise, monotonicTime } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { colors } from 'playwright-core/lib/utils';
 
 import type { Location } from '../../types/testReporter';
 

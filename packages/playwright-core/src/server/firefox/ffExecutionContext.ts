@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { rewriteErrorMessage } from '../../utils/stackTrace';
+import { rewriteErrorMessage } from '../../utils/isomorphic/stackTrace';
 import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 import * as js from '../javascript';
 import { isSessionClosedError } from '../protocolError';

@@ -29,7 +29,7 @@ import { urlMatches } from '../utils/isomorphic/urlMatch';
 import { LongStandingScope, ManualPromise } from '../utils/isomorphic/manualPromise';
 import { MultiMap } from '../utils/isomorphic/multimap';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
-import { rewriteErrorMessage } from '../utils/stackTrace';
+import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 import { zones } from '../utils/zones';
 import { mime } from '../utilsBundle';
 

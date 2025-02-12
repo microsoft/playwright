@@ -43,7 +43,7 @@ import { Worker } from './worker';
 import { WritableStream } from './writableStream';
 import { ValidationError, findValidator  } from '../protocol/validator';
 import { debugLogger } from '../utils/debugLogger';
-import { formatCallLog, rewriteErrorMessage } from '../utils/stackTrace';
+import { formatCallLog, rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 import { zones } from '../utils/zones';
 
 import type { ClientInstrumentation } from './clientInstrumentation';

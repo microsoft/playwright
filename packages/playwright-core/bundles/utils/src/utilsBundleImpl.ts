@@ -16,9 +16,6 @@
 
 /* eslint-disable import/order */
 
-import colorsLibrary from 'colors/safe';
-export const colors = colorsLibrary;
-
 import debugLibrary from 'debug';
 export const debug = debugLibrary;
 

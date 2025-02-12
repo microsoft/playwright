@@ -39,7 +39,7 @@ import { mkdirIfNeeded } from '../utils/fileUtils';
 import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { urlMatchesEqual } from '../utils/isomorphic/urlMatch';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
-import { rewriteErrorMessage } from '../utils/stackTrace';
+import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 
 import type { BrowserType } from './browserType';
 import type { BrowserContextOptions, Headers, LaunchOptions, StorageState, WaitForEventOptions } from './types';

@@ -18,7 +18,8 @@
 import { compare } from './image_tools/compare';
 // @ts-ignore
 import pixelmatch from '../../third_party/pixelmatch';
-import { colors, jpegjs } from '../../utilsBundle';
+import { jpegjs } from '../../utilsBundle';
+import { colors } from '../../utils/isomorphic/colors';
 import { diff } from '../../utilsBundle';
 import { PNG } from '../../utilsBundle';
 

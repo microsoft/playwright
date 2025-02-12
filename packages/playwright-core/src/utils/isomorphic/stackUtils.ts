@@ -19,8 +19,6 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import * as url from 'url';
-
 type StackData = {
   line?: number;
   column?: number;
@@ -35,7 +33,7 @@ type StackData = {
   evalFile?: string | undefined;
 };
 
-export function parseStackFrame(line: string): StackData | null {
+export function parseStackFrame(line: string, pathSeparator: string): StackData | null {
   const match = line && line.match(re);
   if (!match)
     return null;
@@ -92,7 +90,7 @@ export function parseStackFrame(line: string): StackData | null {
     }
   }
 
-  setFile(res, file);
+  setFile(res, file, pathSeparator);
 
   if (ctor)
     res.isConstructor = true;
@@ -113,10 +111,10 @@ export function parseStackFrame(line: string): StackData | null {
   return res;
 }
 
-function setFile(result: StackData, filename: string) {
+function setFile(result: StackData, filename: string, pathSeparator: string) {
   if (filename) {
     if (filename.startsWith('file://'))
-      filename = url.fileURLToPath(filename);
+      filename = fileURLToPath(filename, pathSeparator);
     result.file = filename;
   }
 }
@@ -147,3 +145,14 @@ const re = new RegExp('^' +
 );
 
 const methodRe = /^(.*?) \[as (.*?)\]$/;
+
+function fileURLToPath(fileUrl: string, pathSeparator: string): string {
+  if (!fileUrl.startsWith('file://'))
+    return fileUrl;
+
+  let path = decodeURIComponent(fileUrl.slice(7));
+  if (path.startsWith('/') && /^[a-zA-Z]:/.test(path.slice(1)))
+    path = path.slice(1);
+
+  return path.replace(/\//g, pathSeparator);
+}
