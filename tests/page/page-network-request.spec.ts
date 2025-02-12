@@ -288,11 +288,10 @@ it('should parse the json post data', async ({ page, server }) => {
 it('should parse the data if content-type is application/x-www-form-urlencoded', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
-  let request = null;
-  page.on('request', r => request = r);
+  const requestPromise = page.waitForRequest('**/post');
   await page.setContent(`<form method='POST' action='/post'><input type='text' name='foo' value='bar'><input type='number' name='baz' value='123'><input type='submit'></form>`);
   await page.click('input[type=submit]');
-  expect(request).toBeTruthy();
+  const request = await requestPromise;
   expect(request.postDataJSON()).toEqual({ 'foo': 'bar', 'baz': '123' });
 });
 

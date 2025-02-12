@@ -30,6 +30,7 @@ test('bindings should work after restoring from bfcache', async ({ page, server 
 
   await page.setContent(`<a href='about:blank'}>click me</a>`);
   await page.click('a');
+  await expect(page).toHaveURL('about:blank');
 
   await page.goBack({ waitUntil: 'commit' });
   await page.evaluate('window.didShow');

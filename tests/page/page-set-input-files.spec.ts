@@ -519,12 +519,12 @@ it('should accept single file', async ({ page, asset }) => {
 });
 
 it('should detect mime type', async ({ page, server, asset }) => {
-
-  let files: Record<string, formidable.File>;
+  let resolveFiles;
+  const files = new Promise<Record<string, formidable.File>>(r => resolveFiles = r);
   server.setRoute('/upload', async (req, res) => {
     const form = new formidable.IncomingForm();
     form.parse(req, function(err, fields, f) {
-      files = f as Record<string, formidable.File>;
+      resolveFiles(f);
       res.end();
     });
   });
@@ -541,7 +541,7 @@ it('should detect mime type', async ({ page, server, asset }) => {
     page.click('input[type=submit]'),
     server.waitForRequest('/upload'),
   ]);
-  const { file1, file2 } = files;
+  const { file1, file2 } = await files;
   expect(file1.originalFilename).toBe('file-to-upload.txt');
   expect(file1.mimetype).toBe('text/plain');
   expect(fs.readFileSync(file1.filepath).toString()).toBe(
