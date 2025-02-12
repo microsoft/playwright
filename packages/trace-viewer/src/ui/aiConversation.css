@@ -1,0 +1,96 @@
+/* Main container */
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #e0e0e0;
+}
+
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  gap: 16px;
+}
+
+.message {
+  gap: 12px;
+  max-width: 85%;
+}
+
+.user-message {
+  flex-direction: row-reverse;
+  margin-left: auto;
+  width: fit-content
+}
+
+.message-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--vscode-titleBar-inactiveBackground);
+  flex-shrink: 0;
+}
+
+.message-content {
+  background-color: var(--vscode-titleBar-inactiveBackground);
+  color: var(--vscode-titleBar-activeForeground);
+  padding: 1px 8px;
+  margin-bottom: 16px;
+}
+
+.message-content pre {
+  text-wrap: auto;
+}
+
+.user-message .message-content {
+  background-color: var(--vscode-titleBar-activeBackground);
+}
+
+/* Input form styles */
+.input-form {
+  display: flex;
+  height: 50px;
+  gap: 8px;
+  padding: 10px;
+  background-color: var(--vscode-sideBar-background);
+  border-top: 1px solid var(--vscode-sideBarSectionHeader-border);
+}
+
+.message-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--vscode-settings-textInputBorder);
+  background-color: var(--vscode-settings-textInputBackground);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.message-input:focus {
+  border-color: #0078d4;
+}
+
+.send-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background-color: var(--vscode-button-background);
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.send-button:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.send-button:disabled {
+  background-color: var(--vscode-disabledForeground);
+  cursor: not-allowed;
+}

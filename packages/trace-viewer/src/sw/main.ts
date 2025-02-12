@@ -78,6 +78,9 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   if (event.request.url.startsWith('chrome-extension://'))
     return fetch(event.request);
 
+  if (event.request.headers.get('x-pw-serviceworker') === 'forward')
+    return fetch(event.request);
+
   const request = event.request;
   const client = await self.clients.get(event.clientId);
 
