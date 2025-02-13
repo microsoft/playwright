@@ -18,8 +18,14 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { webColors, noColors } from '../utils/isomorphic/colors';
+
+import type { Colors } from '../utils/isomorphic/colors';
+
+
 export type Platform = {
   calculateSha1(text: string): Promise<string>;
+  colors: Colors;
   createGuid: () => string;
   fs: () => typeof fs;
   inspectCustom: symbol | undefined;
@@ -36,6 +42,8 @@ export const webPlatform: Platform = {
     const hashBuffer = await crypto.subtle.digest('SHA-1', bytes);
     return Array.from(new Uint8Array(hashBuffer), b => b.toString(16).padStart(2, '0')).join('');
   },
+
+  colors: webColors,
 
   createGuid: () => {
     return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
@@ -67,6 +75,8 @@ export const emptyPlatform: Platform = {
   calculateSha1: async () => {
     throw new Error('Not implemented');
   },
+
+  colors: noColors,
 
   createGuid: () => {
     throw new Error('Not implemented');

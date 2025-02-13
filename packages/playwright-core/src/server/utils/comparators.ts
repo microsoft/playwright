@@ -19,8 +19,7 @@ import { compare } from './image_tools/compare';
 // @ts-ignore
 import pixelmatch from '../../third_party/pixelmatch';
 import { jpegjs } from '../../utilsBundle';
-import { colors } from '../../utils/isomorphic/colors';
-import { diff } from '../../utilsBundle';
+import { colors, diff } from '../../utilsBundle';
 import { PNG } from '../../utilsBundle';
 
 export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, comparator?: string };

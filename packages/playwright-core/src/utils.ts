@@ -44,9 +44,12 @@ export * from './server/utils/fileUtils';
 export * from './server/utils/hostPlatform';
 export * from './server/utils/httpServer';
 export * from './server/utils/network';
+export * from './server/utils/nodePlatform';
 export * from './server/utils/processLauncher';
 export * from './server/utils/profiler';
 export * from './server/utils/socksProxy';
 export * from './server/utils/spawnAsync';
 export * from './server/utils/userAgent';
 export * from './server/utils/wsServer';
+
+export { colors } from './utilsBundle';
