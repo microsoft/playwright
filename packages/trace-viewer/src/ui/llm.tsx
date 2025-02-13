@@ -108,7 +108,7 @@ class OpenAI implements LLM {
         'x-pw-serviceworker': 'forward',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
+        model: 'gpt-4o', // TODO: make configurable
         messages: messages.map(({ role, content }) => ({ role, content })),
         stream: true,
       }),
@@ -140,7 +140,7 @@ class Anthropic implements LLM {
         'x-pw-serviceworker': 'forward',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-3-5-sonnet-20241022', // TODO: make configurable
         messages: messages.filter(({ role }) => role !== 'developer').map(({ role, content }) => ({ role, content })),
         system: messages.find(({ role }) => role === 'developer')?.content,
         max_tokens: 1024,
@@ -173,7 +173,7 @@ class LLMChat {
   }
 }
 
-class Conversation {
+export class Conversation {
   history: LLMMessage[];
   onChange = new EventEmitter<void>();
 

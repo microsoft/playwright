@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Markdown from 'react-markdown'
 import './aiConversation.css';
 import { clsx } from '@web/uiUtils';
-import { Conversation, LLMMessage } from '@isomorphic/llm';
+import type { Conversation, LLMMessage } from './llm';
 
 export function AIConversation({ history, conversation, firstPrompt }: { history: LLMMessage[], conversation: Conversation, firstPrompt?: LLMMessage }) {
   const [input, setInput] = useState('');
