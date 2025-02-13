@@ -43,7 +43,6 @@ import { Worker } from './worker';
 import { WritableStream } from './writableStream';
 import { ValidationError, findValidator  } from '../protocol/validator';
 import { formatCallLog, rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
-import { zones } from '../utils/zones';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { HeadersArray } from './types';
@@ -148,7 +147,7 @@ export class Connection extends EventEmitter {
       this._localUtils?.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
     // We need to exit zones before calling into the server, otherwise
     // when we receive events from the server, we would be in an API zone.
-    zones.empty().run(() => this.onmessage({ ...message, metadata }));
+    this.platform.zones.empty.run(() => this.onmessage({ ...message, metadata }));
     return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, apiName, type, method }));
   }
 

@@ -18,7 +18,6 @@ import { EventEmitter } from './eventEmitter';
 import { ValidationError, maybeFindValidator  } from '../protocol/validator';
 import { isUnderTest } from '../utils/isomorphic/debug';
 import { captureLibraryStackTrace, stringifyStackFrames } from '../utils/isomorphic/stackTrace';
-import { zones } from '../utils/zones';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
@@ -176,7 +175,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
 
   async _wrapApiCall<R>(func: (apiZone: ApiZone) => Promise<R>, isInternal?: boolean): Promise<R> {
     const logger = this._logger;
-    const existingApiZone = zones.zoneData<ApiZone>('apiZone');
+    const existingApiZone = this._platform.zones.current().data<ApiZone>();
     if (existingApiZone)
       return await func(existingApiZone);
 
@@ -186,7 +185,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     const apiZone: ApiZone = { apiName: stackTrace.apiName, frames: stackTrace.frames, isInternal, reported: false, userData: undefined, stepId: undefined };
 
     try {
-      const result = await zones.run('apiZone', apiZone, async () => await func(apiZone));
+      const result = await this._platform.zones.current().push(apiZone).run(async () => await func(apiZone));
       if (!isInternal) {
         logApiCall(this._platform, logger, `<= ${apiZone.apiName} succeeded`);
         this._instrumentation.onApiCallEnd(apiZone);
