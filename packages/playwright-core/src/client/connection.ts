@@ -108,8 +108,8 @@ export class Connection extends EventEmitter {
     return this._rawBuffers;
   }
 
-  localUtils(): LocalUtils {
-    return this._localUtils!;
+  localUtils(): LocalUtils | undefined {
+    return this._localUtils;
   }
 
   async initializePlaywright(): Promise<Playwright> {

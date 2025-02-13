@@ -18,15 +18,15 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-import { removeFolders } from './fileUtils';
+import { calculateSha1 } from './utils/crypto';
 import { HarBackend } from './harBackend';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
-import { ZipFile } from '../utils/zipFile';
+import { ZipFile } from './utils/zipFile';
 import { yauzl, yazl } from '../zipBundle';
 import { serializeClientSideCallMetadata } from '../utils/isomorphic/traceUtils';
 import { assert } from '../utils/isomorphic/debug';
+import { removeFolders } from './utils/fileUtils';
 
-import type { Platform } from './platform';
 import type * as channels from '@protocol/channels';
 import type * as har from '@trace/har';
 import type EventEmitter from 'events';
@@ -39,7 +39,7 @@ export type StackSession = {
   callStacks: channels.ClientSideCallMetadata[];
 };
 
-export async function zip(platform: Platform, stackSessions: Map<string, StackSession>, params: channels.LocalUtilsZipParams): Promise<void> {
+export async function zip(stackSessions: Map<string, StackSession>, params: channels.LocalUtilsZipParams): Promise<void> {
   const promise = new ManualPromise<void>();
   const zipFile = new yazl.ZipFile();
   (zipFile as any as EventEmitter).on('error', error => promise.reject(error));
@@ -77,7 +77,7 @@ export async function zip(platform: Platform, stackSessions: Map<string, StackSe
         sourceFiles.add(file);
     }
     for (const sourceFile of sourceFiles)
-      addFile(sourceFile, 'resources/src@' + await platform.calculateSha1(sourceFile) + '.txt');
+      addFile(sourceFile, 'resources/src@' + await calculateSha1(sourceFile) + '.txt');
   }
 
   if (params.mode === 'write') {
@@ -89,7 +89,7 @@ export async function zip(platform: Platform, stackSessions: Map<string, StackSe
           .on('error', error => promise.reject(error));
     });
     await promise;
-    await deleteStackSession(platform, stackSessions, params.stacksId);
+    await deleteStackSession(stackSessions, params.stacksId);
     return;
   }
 
@@ -124,20 +124,20 @@ export async function zip(platform: Platform, stackSessions: Map<string, StackSe
     });
   });
   await promise;
-  await deleteStackSession(platform, stackSessions, params.stacksId);
+  await deleteStackSession(stackSessions, params.stacksId);
 }
 
-async function deleteStackSession(platform: Platform, stackSessions: Map<string, StackSession>, stacksId?: string) {
+async function deleteStackSession(stackSessions: Map<string, StackSession>, stacksId?: string) {
   const session = stacksId ? stackSessions.get(stacksId) : undefined;
   if (!session)
     return;
   await session.writer;
   if (session.tmpDir)
-    await removeFolders(platform, [session.tmpDir]);
+    await removeFolders([session.tmpDir]);
   stackSessions.delete(stacksId!);
 }
 
-export async function harOpen(platform: Platform, harBackends: Map<string, HarBackend>, params: channels.LocalUtilsHarOpenParams): Promise<channels.LocalUtilsHarOpenResult> {
+export async function harOpen(harBackends: Map<string, HarBackend>, params: channels.LocalUtilsHarOpenParams): Promise<channels.LocalUtilsHarOpenResult> {
   let harBackend: HarBackend;
   if (params.file.endsWith('.zip')) {
     const zipFile = new ZipFile(params.file);
@@ -147,10 +147,10 @@ export async function harOpen(platform: Platform, harBackends: Map<string, HarBa
       return { error: 'Specified archive does not have a .har file' };
     const har = await zipFile.read(harEntryName);
     const harFile = JSON.parse(har.toString()) as har.HARFile;
-    harBackend = new HarBackend(platform, harFile, null, zipFile);
+    harBackend = new HarBackend(harFile, null, zipFile);
   } else {
     const harFile = JSON.parse(await fs.promises.readFile(params.file, 'utf-8')) as har.HARFile;
-    harBackend = new HarBackend(platform, harFile, path.dirname(params.file), null);
+    harBackend = new HarBackend(harFile, path.dirname(params.file), null);
   }
   harBackends.set(harBackend.id, harBackend);
   return { harId: harBackend.id };
@@ -194,8 +194,8 @@ export async function tracingStarted(stackSessions: Map<string, StackSession>, p
   return { stacksId: traceStacksFile };
 }
 
-export async function traceDiscarded(platform: Platform, stackSessions: Map<string, StackSession>, params: channels.LocalUtilsTraceDiscardedParams): Promise<void> {
-  await deleteStackSession(platform, stackSessions, params.stacksId);
+export async function traceDiscarded(stackSessions: Map<string, StackSession>, params: channels.LocalUtilsTraceDiscardedParams): Promise<void> {
+  await deleteStackSession(stackSessions, params.stacksId);
 }
 
 export async function addStackToTracingNoReply(stackSessions: Map<string, StackSession>, params: channels.LocalUtilsAddStackToTracingNoReplyParams): Promise<void> {

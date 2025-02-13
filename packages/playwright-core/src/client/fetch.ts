@@ -20,7 +20,7 @@ import { TargetClosedError, isTargetClosedError } from './errors';
 import { RawHeaders } from './network';
 import { Tracing } from './tracing';
 import { assert } from '../utils/isomorphic/debug';
-import { mkdirIfNeeded } from '../common/fileUtils';
+import { mkdirIfNeeded } from './fileUtils';
 import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { isString } from '../utils/isomorphic/rtti';
 
