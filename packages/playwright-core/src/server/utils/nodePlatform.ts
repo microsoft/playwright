@@ -19,6 +19,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
 
+import { colors } from '../../utilsBundle';
 import { Platform } from '../../common/platform';
 import { debugLogger } from './debugLogger';
 
@@ -28,6 +29,8 @@ export const nodePlatform: Platform = {
     sha1.update(text);
     return Promise.resolve(sha1.digest('hex'));
   },
+
+  colors,
 
   createGuid: () => crypto.randomBytes(16).toString('hex'),
 

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { colors } from './colors';
 import { findRepeatedSubsequences } from './sequence';
 import { parseStackFrame } from './stackUtils';
 
 import type { StackFrame } from '@protocol/channels';
+import type { Platform } from '../../common/platform';
 
 export function parseStackTraceLine(line: string, pathSeparator: string): StackFrame | null {
   const frame = parseStackFrame(line, pathSeparator);
@@ -142,12 +142,12 @@ export function splitErrorMessage(message: string): { name: string, message: str
   };
 }
 
-export function formatCallLog(log: string[] | undefined): string {
+export function formatCallLog(platform: Platform, log: string[] | undefined): string {
   if (!log || !log.some(l => !!l))
     return '';
   return `
 Call log:
-${colors.dim(log.join('\n'))}
+${platform.colors.dim(log.join('\n'))}
 `;
 }
 

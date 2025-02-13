@@ -166,7 +166,7 @@ export class Connection extends EventEmitter {
       this._callbacks.delete(id);
       if (error && !result) {
         const parsedError = parseError(error);
-        rewriteErrorMessage(parsedError, parsedError.message + formatCallLog(log));
+        rewriteErrorMessage(parsedError, parsedError.message + formatCallLog(this.platform, log));
         callback.reject(parsedError);
       } else {
         const validator = findValidator(callback.type, callback.method, 'Result');

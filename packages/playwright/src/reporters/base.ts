@@ -26,10 +26,10 @@ import { getEastAsianWidth } from '../utilsBundle';
 
 import type { ReporterV2 } from './reporterV2';
 import type { FullConfig, FullResult, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { Colors } from '@isomorphic/colors';
+
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
-
-type Colors = typeof realColors;
 
 type ErrorDetails = {
   message: string;
