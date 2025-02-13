@@ -25,5 +25,6 @@ export interface GitCommitInfo {
   'pull.link'?: string;
   'pull.diff'?: string;
   'pull.base'?: string;
+  'pull.title'?: string;
   'ci.link'?: string;
 }

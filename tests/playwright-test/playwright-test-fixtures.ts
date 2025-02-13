@@ -227,6 +227,7 @@ export function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
     GITHUB_RUN_ID: undefined,
     GITHUB_SERVER_URL: undefined,
     GITHUB_SHA: undefined,
+    GITHUB_EVENT_PATH: undefined,
     // END: Reserved CI
     PW_TEST_HTML_REPORT_OPEN: undefined,
     PLAYWRIGHT_HTML_OPEN: undefined,
