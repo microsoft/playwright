@@ -381,8 +381,22 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         setMatcherCallContext({ expectInfo: this._info, testInfo, step: step.info });
         const callback = () => matcher.call(target, ...args);
         const result = zones.run('stepZone', step, callback);
-        if (result instanceof Promise)
-          return result.then(finalizer).catch(reportStepError);
+        if (result instanceof Promise) {
+          const promise = result.then(finalizer).catch(reportStepError);
+
+          testInfo?.unusedAsyncApiCalls.add(promise);
+
+          const oldThen = promise.then;
+          promise.then = ((...args: any[]) => {
+            if (args[0] !== undefined) {
+              // onfulfilled callback
+              testInfo?.unusedAsyncApiCalls.delete(promise);
+            }
+            return oldThen.call(promise, ...args);
+          }) as any;
+
+          return promise;
+        }
         finalizer();
         return result;
       } catch (e) {

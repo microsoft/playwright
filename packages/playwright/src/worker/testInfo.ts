@@ -99,6 +99,7 @@ export class TestInfoImpl implements TestInfo {
   duration: number = 0;
   readonly annotations: Annotation[] = [];
   readonly attachments: TestInfo['attachments'] = [];
+  readonly unusedAsyncApiCalls: Set<Promise<any>> = new Set();
   status: TestStatus = 'passed';
   snapshotSuffix: string = '';
   readonly outputDir: string;
