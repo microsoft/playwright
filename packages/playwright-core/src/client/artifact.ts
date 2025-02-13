@@ -16,7 +16,7 @@
 
 import { ChannelOwner } from './channelOwner';
 import { Stream } from './stream';
-import { mkdirIfNeeded } from '../utils/fileUtils';
+import { mkdirIfNeeded } from '../common/fileUtils';
 
 import type * as channels from '@protocol/channels';
 import type { Readable } from 'stream';

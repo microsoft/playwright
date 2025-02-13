@@ -18,8 +18,8 @@
 import { compare } from './image_tools/compare';
 // @ts-ignore
 import pixelmatch from '../../third_party/pixelmatch';
-import { colors, jpegjs } from '../../utilsBundle';
-import { diff } from '../../utilsBundle';
+import { jpegjs } from '../../utilsBundle';
+import { colors, diff } from '../../utilsBundle';
 import { PNG } from '../../utilsBundle';
 
 export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, comparator?: string };

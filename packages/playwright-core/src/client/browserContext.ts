@@ -34,19 +34,19 @@ import { Tracing } from './tracing';
 import { Waiter } from './waiter';
 import { WebError } from './webError';
 import { Worker } from './worker';
-import { TimeoutSettings } from '../common/timeoutSettings';
-import { mkdirIfNeeded } from '../utils/fileUtils';
-import { headersObjectToArray } from '../utils/headers';
+import { TimeoutSettings } from '../utils/isomorphic/timeoutSettings';
+import { mkdirIfNeeded } from '../common/fileUtils';
+import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { urlMatchesEqual } from '../utils/isomorphic/urlMatch';
-import { isRegExp, isString } from '../utils/rtti';
-import { rewriteErrorMessage } from '../utils/stackTrace';
+import { isRegExp, isString } from '../utils/isomorphic/rtti';
+import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 
 import type { BrowserType } from './browserType';
 import type { BrowserContextOptions, Headers, LaunchOptions, StorageState, WaitForEventOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { URLMatch } from '../utils/isomorphic/urlMatch';
-import type { Platform } from '../utils/platform';
+import type { Platform } from '../common/platform';
 import type * as channels from '@protocol/channels';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {

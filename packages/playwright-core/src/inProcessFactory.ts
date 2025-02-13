@@ -14,17 +14,29 @@
  * limitations under the License.
  */
 
+import path from 'path';
+
 import { AndroidServerLauncherImpl } from './androidServerImpl';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
 import { Connection } from './client/connection';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from './server';
+import { setLibraryStackPrefix } from './utils/isomorphic/stackTrace';
+import { setDebugMode } from './utils/isomorphic/debug';
+import { getFromENV } from './server/utils/env';
+import { nodePlatform } from './server/utils/nodePlatform';
+import { setPlatformForSelectors } from './client/selectors';
 
 import type { Playwright as PlaywrightAPI } from './client/playwright';
 import type { Language } from './utils';
-import type { Platform } from './utils/platform';
+import type { Platform } from './common/platform';
+
 
 export function createInProcessPlaywright(platform: Platform): PlaywrightAPI {
   const playwright = createPlaywright({ sdkLanguage: (process.env.PW_LANG_NAME as Language | undefined) || 'javascript' });
+  setDebugMode(getFromENV('PWDEBUG') || '');
+  setPlatformForSelectors(nodePlatform);
+
+  setLibraryStackPrefix(path.join(__dirname, '..'));
 
   const clientConnection = new Connection(undefined, platform, undefined, []);
   clientConnection.useRawBuffers();

@@ -19,7 +19,7 @@ import fs from 'fs';
 import type http from 'http';
 import type net from 'net';
 import * as path from 'path';
-import { getUserAgent, getPlaywrightVersion } from '../../packages/playwright-core/lib/utils/userAgent';
+import { getUserAgent, getPlaywrightVersion } from '../../packages/playwright-core/lib/server/utils/userAgent';
 import WebSocket from 'ws';
 import { expect, playwrightTest } from '../config/browserTest';
 import { parseTrace, suppressCertificateWarning } from '../config/utils';
@@ -258,7 +258,9 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         }).catch(() => {})
       ]);
       expect(request.headers['user-agent']).toBe(getUserAgent());
-      expect(request.headers['x-playwright-browser']).toBe(browserName);
+      // _bidiFirefox and _bidiChromium are initialized with 'bidi' as browser name.
+      const bidiAwareBrowserName = browserName.startsWith('_bidi') ? 'bidi' : browserName;
+      expect(request.headers['x-playwright-browser']).toBe(bidiAwareBrowserName);
       expect(request.headers['foo']).toBe('bar');
     });
 

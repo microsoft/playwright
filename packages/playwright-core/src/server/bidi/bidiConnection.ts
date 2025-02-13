@@ -16,11 +16,11 @@
 
 import { EventEmitter } from 'events';
 
-import { debugLogger } from '../../utils/debugLogger';
+import { debugLogger } from '../utils/debugLogger';
 import { helper } from '../helper';
 import { ProtocolError } from '../protocolError';
 
-import type { RecentLogsCollector } from '../../utils/debugLogger';
+import type { RecentLogsCollector } from '../utils/debugLogger';
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import type { ProtocolLogger } from '../types';
 import type * as bidiCommands from './third_party/bidiCommands';

@@ -20,7 +20,10 @@ import * as path from 'path';
 
 import { Snapshotter } from './snapshotter';
 import { commandsWithTracingSnapshots } from '../../../protocol/debug';
-import { assert, createGuid, eventsHelper, monotonicTime  } from '../../../utils';
+import { assert } from '../../../utils/isomorphic/debug';
+import { monotonicTime } from '../../../utils/isomorphic/time';
+import { eventsHelper  } from '../../utils/eventsHelper';
+import { createGuid  } from '../../utils/crypto';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { Dispatcher } from '../../dispatchers/dispatcher';

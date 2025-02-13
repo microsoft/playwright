@@ -17,7 +17,8 @@
 
 import * as path from 'path';
 
-import { assert, createGuid } from '../../utils';
+import { assert } from '../../utils/isomorphic/debug';
+import { createGuid } from '../utils/crypto';
 import { Artifact } from '../artifact';
 import { Browser } from '../browser';
 import { BrowserContext, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';

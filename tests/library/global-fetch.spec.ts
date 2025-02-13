@@ -16,7 +16,7 @@
 
 import os from 'os';
 import * as util from 'util';
-import { getPlaywrightVersion } from '../../packages/playwright-core/lib/utils/userAgent';
+import { getPlaywrightVersion } from '../../packages/playwright-core/lib/server/utils/userAgent';
 import { expect, playwrightTest as base } from '../config/browserTest';
 import { kTargetClosedErrorMessage } from 'tests/config/errors';
 

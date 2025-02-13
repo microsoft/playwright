@@ -19,9 +19,18 @@ function stripAnsiEscapes(str: string): string {
   return str.replace(ansiRegex, '');
 }
 
+function enumerate(items: string[]) {
+  if (items.length === 0)
+    return '';
+  if (items.length === 1)
+    return items[0];
+  return items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1];
+}
+
 export function fixTestPrompt(error: string, diff?: string, pageSnapshot?: string) {
+  const includedData = ['the error', diff && 'a code diff', pageSnapshot && 'a snapshot of the page'].filter((v): v is string => Boolean(v));
   const promptParts = [
-    `My Playwright test failed. What's going wrong?`,
+    `My Playwright test failed, what's going wrong? I've included ${enumerate(includedData)} below.`,
     `Please give me a suggestion how to fix it, and then explain what went wrong. Be very concise and apply Playwright best practices.`,
     `Don't include many headings in your output. Make sure what you're saying is correct, and take into account whether there might be a bug in the app.`,
     'Here is the error:',

@@ -16,6 +16,7 @@
 
 import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 import * as js from '../javascript';
+import * as dom from '../dom';
 import { BidiDeserializer } from './third_party/bidiDeserializer';
 import * as bidi from './third_party/bidiProtocol';
 import { BidiSerializer } from './third_party/bidiSerializer';
@@ -137,7 +138,45 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     });
   }
 
-  async rawCallFunction(functionDeclaration: string, arg: bidi.Script.LocalValue): Promise<bidi.Script.RemoteValue> {
+
+  async nodeIdForElementHandle(handle: dom.ElementHandle): Promise<bidi.Script.SharedReference> {
+    const shared = await this._remoteValueForReference({ handle: handle._objectId });
+    // TODO: store sharedId in the handle.
+    if (!('sharedId' in shared))
+      throw new Error('Element is not a node');
+    return {
+      sharedId: shared.sharedId!,
+    };
+  }
+
+  async remoteObjectForNodeId(nodeId: bidi.Script.SharedReference): Promise<js.RemoteObject> {
+    const result = await this._remoteValueForReference(nodeId);
+    if ('handle' in result)
+      return { objectId: result.handle!, ...result };
+    throw new Error('Can\'t get remote object for nodeId');
+  }
+
+  async contentFrameIdForFrame(handle: dom.ElementHandle) {
+    const contentWindow = await this._rawCallFunction('e => e.contentWindow', { handle: handle._objectId });
+    if (contentWindow?.type === 'window')
+      return contentWindow.value.context;
+    return null;
+  }
+
+  async frameIdForWindowHandle(handle: js.JSHandle): Promise<string | null> {
+    if (!handle._objectId)
+      throw new Error('JSHandle is not a DOM node handle');
+    const contentWindow = await this._remoteValueForReference({ handle: handle._objectId });
+    if (contentWindow.type === 'window')
+      return contentWindow.value.context;
+    return null;
+  }
+
+  private async _remoteValueForReference(reference: bidi.Script.RemoteReference) {
+    return await this._rawCallFunction('e => e', reference);
+  }
+
+  private async _rawCallFunction(functionDeclaration: string, arg: bidi.Script.LocalValue): Promise<bidi.Script.RemoteValue> {
     const response = await this._session.send('script.callFunction', {
       functionDeclaration,
       target: this._target,

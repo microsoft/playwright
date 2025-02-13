@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 
-import { debug } from '../utilsBundle';
+import { debug } from '../../utilsBundle';
 
 const debugLoggerColorMap = {
   'api': 45, // cyan

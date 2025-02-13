@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { hostPlatform } from '../../packages/playwright-core/src/utils/hostPlatform';
+import { hostPlatform } from '../../packages/playwright-core/src/server/utils/hostPlatform';
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
 import os from 'os';

@@ -17,8 +17,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { assert } from '../utils/debug';
-import { fileUploadSizeLimit } from '../utils/fileUtils';
+import { assert } from '../utils/isomorphic/debug';
+import { fileUploadSizeLimit } from '../common/fileUtils';
 import { mime } from '../utilsBundle';
 
 import type { WritableStreamDispatcher } from './dispatchers/writableStreamDispatcher';

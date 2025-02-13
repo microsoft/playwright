@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { debugLogger } from '../utils/debugLogger';
-
 import type { BrowserContext } from './browserContext';
 import type { LocalUtils } from './localUtils';
 import type { Route } from './network';
@@ -57,7 +55,7 @@ export class HarRouter {
     });
 
     if (response.action === 'redirect') {
-      debugLogger.log('api', `HAR: ${route.request().url()} redirected to ${response.redirectURL}`);
+      route._platform.log('api', `HAR: ${route.request().url()} redirected to ${response.redirectURL}`);
       await route._redirectNavigationRequest(response.redirectURL!);
       return;
     }
@@ -79,7 +77,7 @@ export class HarRouter {
     }
 
     if (response.action === 'error')
-      debugLogger.log('api', 'HAR: ' + response.message!);
+      route._platform.log('api', 'HAR: ' + response.message!);
     // Report the error, but fall through to the default handler.
 
     if (this._notFoundAction === 'abort') {

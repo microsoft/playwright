@@ -15,7 +15,7 @@
  */
 
 import { ManualPromise,  eventsHelper } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { colors } from 'playwright-core/lib/utils';
 
 import { addSuggestedRebaseline } from './rebase';
 import { WorkerHost } from './workerHost';

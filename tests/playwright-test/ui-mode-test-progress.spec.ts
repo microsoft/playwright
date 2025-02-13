@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ManualPromise } from '../../packages/playwright-core/lib/utils/manualPromise';
+import { ManualPromise } from '../../packages/playwright-core/lib/utils/isomorphic/manualPromise';
 import { test, expect, retries, dumpTestTree } from './ui-mode-fixtures';
 
 test.describe.configure({ mode: 'parallel', retries });

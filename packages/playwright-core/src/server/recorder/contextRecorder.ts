@@ -19,7 +19,7 @@ import { EventEmitter } from 'events';
 import { RecorderCollection } from './recorderCollection';
 import * as recorderSource from '../../generated/pollingRecorderSource';
 import { eventsHelper, monotonicTime, quoteCSSAttributeValue  } from '../../utils';
-import { raceAgainstDeadline } from '../../utils/timeoutRunner';
+import { raceAgainstDeadline } from '../../utils/isomorphic/timeoutRunner';
 import { BrowserContext } from '../browserContext';
 import { languageSet } from '../codegen/languages';
 import { Frame } from '../frames';

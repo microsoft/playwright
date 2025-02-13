@@ -17,7 +17,8 @@
 import { EventEmitter } from 'events';
 import * as net from 'net';
 
-import { assert, createGuid } from '../../utils';
+import { assert } from '../../utils/isomorphic/debug';
+import { createGuid } from '../utils/crypto';
 import { debug } from '../../utilsBundle';
 
 import type { Backend, DeviceBackend, SocketBackend } from './android';

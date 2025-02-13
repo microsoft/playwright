@@ -14,36 +14,39 @@
  * limitations under the License.
  */
 
+import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
 
-export type Platform = {
-  fs: () => typeof fs;
-  path: () => typeof path;
-  inspectCustom: symbol | undefined;
-  ws?: (url: string) => WebSocket;
-};
-
-export const emptyPlatform: Platform = {
-  fs: () => {
-    throw new Error('File system is not available');
-  },
-
-  path: () => {
-    throw new Error('Path module is not available');
-  },
-
-  inspectCustom: undefined,
-};
+import { colors } from '../../utilsBundle';
+import { Platform } from '../../common/platform';
+import { debugLogger } from './debugLogger';
 
 export const nodePlatform: Platform = {
-  fs: () => fs,
-  path: () => path,
-  inspectCustom: util.inspect.custom,
-};
+  calculateSha1: (text: string) => {
+    const sha1 = crypto.createHash('sha1');
+    sha1.update(text);
+    return Promise.resolve(sha1.digest('hex'));
+  },
 
-export const webPlatform: Platform = {
-  ...emptyPlatform,
-  ws: (url: string) => new WebSocket(url),
+  colors,
+
+  createGuid: () => crypto.randomBytes(16).toString('hex'),
+
+  fs: () => fs,
+
+  inspectCustom: util.inspect.custom,
+
+  isLogEnabled(name: 'api' | 'channel') {
+    return debugLogger.isEnabled(name);
+  },
+
+  log(name: 'api' | 'channel', message: string | Error | object) {
+    debugLogger.log(name, message);
+  },
+
+  path: () => path,
+
+  pathSeparator: path.sep
 };

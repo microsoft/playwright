@@ -15,7 +15,7 @@
  */
 
 import { ManualPromise, gracefullyCloseAll, removeFolders } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { colors } from 'playwright-core/lib/utils';
 
 import { deserializeConfig } from '../common/configLoader';
 import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
@@ -398,6 +398,8 @@ export class WorkerMain extends ProcessRunner {
       } catch (error) {
         firstAfterHooksError = firstAfterHooksError ?? error;
       }
+
+      testInfo._tracing.didFinishTestFunctionAndAfterEachHooks();
 
       try {
         // Teardown test-scoped fixtures. Attribute to 'test' so that users understand

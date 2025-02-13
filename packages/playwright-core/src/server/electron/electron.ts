@@ -19,11 +19,11 @@ import * as os from 'os';
 import * as path from 'path';
 import * as readline from 'readline';
 
-import { TimeoutSettings } from '../../common/timeoutSettings';
+import { TimeoutSettings } from '../../utils/isomorphic/timeoutSettings';
 import { ManualPromise } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
-import { RecentLogsCollector } from '../../utils/debugLogger';
-import { eventsHelper } from '../../utils/eventsHelper';
+import { RecentLogsCollector } from '../utils/debugLogger';
+import { eventsHelper } from '../utils/eventsHelper';
 import { validateBrowserContextOptions } from '../browserContext';
 import { CRBrowser } from '../chromium/crBrowser';
 import { CRConnection } from '../chromium/crConnection';

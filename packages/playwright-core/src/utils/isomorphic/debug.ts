@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { getFromENV } from './env';
-
 export function assert(value: any, message?: string): asserts value {
   if (!value)
     throw new Error(message || 'Assertion error');
@@ -26,13 +24,18 @@ export function debugAssert(value: any, message?: string): asserts value {
     throw new Error(message);
 }
 
-const debugEnv = getFromENV('PWDEBUG') || '';
+let _debugMode: string | undefined;
+
+export function setDebugMode(mode: string) {
+  _debugMode = mode;
+}
+
 export function debugMode() {
-  if (debugEnv === 'console')
+  if (_debugMode === 'console')
     return 'console';
-  if (debugEnv === '0' || debugEnv === 'false')
+  if (_debugMode === '0' || _debugMode === 'false')
     return '';
-  return debugEnv ? 'inspector' : '';
+  return _debugMode ? 'inspector' : '';
 }
 
 let _isUnderTest = !!process.env.PWTEST_UNDER_TEST;

@@ -15,7 +15,7 @@
  */
 
 import { isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { colors } from 'playwright-core/lib/utils';
 
 import { callLogText, expectTypes } from '../util';
 import { toBeTruthy } from './toBeTruthy';

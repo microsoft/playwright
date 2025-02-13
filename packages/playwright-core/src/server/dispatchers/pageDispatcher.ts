@@ -25,7 +25,8 @@ import { RequestDispatcher } from './networkDispatchers';
 import { ResponseDispatcher } from './networkDispatchers';
 import { RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
-import { createGuid, urlMatches } from '../../utils';
+import { createGuid } from '../utils/crypto';
+import { urlMatches } from '../../utils/isomorphic/urlMatch';
 
 import type { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';

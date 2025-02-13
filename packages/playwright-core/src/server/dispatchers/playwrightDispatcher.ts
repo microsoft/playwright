@@ -25,12 +25,12 @@ import { ElectronDispatcher } from './electronDispatcher';
 import { LocalUtilsDispatcher } from './localUtilsDispatcher';
 import { APIRequestContextDispatcher } from './networkDispatchers';
 import { SelectorsDispatcher } from './selectorsDispatcher';
-import { createGuid } from '../../utils';
-import { eventsHelper  } from '../../utils/eventsHelper';
+import { createGuid } from '../utils/crypto';
+import { eventsHelper  } from '../utils/eventsHelper';
 
 import type { RootDispatcher } from './dispatcher';
 import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../utils/socksProxy';
-import type { RegisteredListener } from '../../utils/eventsHelper';
+import type { RegisteredListener } from '../utils/eventsHelper';
 import type { AndroidDevice } from '../android/android';
 import type { Browser } from '../browser';
 import type { Playwright } from '../playwright';

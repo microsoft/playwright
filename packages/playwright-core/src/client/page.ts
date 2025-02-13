@@ -33,14 +33,14 @@ import { Response, Route, RouteHandler, WebSocket,  WebSocketRoute, WebSocketRou
 import { Video } from './video';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
-import { TimeoutSettings } from '../common/timeoutSettings';
-import { assert } from '../utils/debug';
-import { mkdirIfNeeded } from '../utils/fileUtils';
-import { headersObjectToArray } from '../utils/headers';
+import { TimeoutSettings } from '../utils/isomorphic/timeoutSettings';
+import { assert } from '../utils/isomorphic/debug';
+import { mkdirIfNeeded } from '../common/fileUtils';
+import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { trimStringWithEllipsis  } from '../utils/isomorphic/stringUtils';
 import { urlMatches, urlMatchesEqual } from '../utils/isomorphic/urlMatch';
-import { LongStandingScope } from '../utils/manualPromise';
-import { isObject, isRegExp, isString } from '../utils/rtti';
+import { LongStandingScope } from '../utils/isomorphic/manualPromise';
+import { isObject, isRegExp, isString } from '../utils/isomorphic/rtti';
 
 import type { BrowserContext } from './browserContext';
 import type { Clock } from './clock';

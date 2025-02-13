@@ -18,8 +18,8 @@ import { EventEmitter } from 'events';
 
 import { performAction } from './recorderRunner';
 import { collapseActions } from './recorderUtils';
-import { isUnderTest } from '../../utils/debug';
-import { monotonicTime } from '../../utils/time';
+import { isUnderTest } from '../../utils/isomorphic/debug';
+import { monotonicTime } from '../../utils/isomorphic/time';
 
 import type { Signal } from '../../../../recorder/src/actions';
 import type { Frame } from '../frames';
