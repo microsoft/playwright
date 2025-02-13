@@ -198,16 +198,22 @@ class Conversation {
 
 const llmContext = React.createContext<LLMChat | undefined>(undefined);
 
-export function LLMProvider({ openai, anthropic, children }: React.PropsWithChildren<{ openai?: string, anthropic?: string }>) {
-    const chat = React.useMemo(() => {
-        let llm: LLM | undefined;
-        if (openai)
-            llm = new OpenAI(openai);
-        if (anthropic)
-            llm = new Anthropic(anthropic);
-        if (llm)
-            return new LLMChat(llm);
-    }, [openai, anthropic]);
+function parseCookie(cookie: string): [name: string, value: string][] {
+  return cookie.split(";").filter(v => v.includes("=")).map(kv => {
+    const separator = kv.indexOf("=");
+    return [kv.substring(0, separator), kv.substring(separator + 1)];
+  }) 
+}
+
+export function LLMProvider({ children }: React.PropsWithChildren<{}>) {
+  const chat = React.useMemo(() => {
+    for (const [name, value] of parseCookie(document.cookie)) {
+      if (name === 'openai_api_key')
+        return new LLMChat(new OpenAI(value));
+      if (name === 'anthropic_api_key')
+        return new LLMChat(new Anthropic(value))
+    }
+  }, []);
   return <llmContext.Provider value={chat}>{children}</llmContext.Provider>;
 };
 

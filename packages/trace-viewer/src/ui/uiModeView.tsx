@@ -62,8 +62,6 @@ const queryParams = {
   updateSnapshots: (searchParams.get('updateSnapshots') as 'all' | 'none' | 'missing' | undefined) || undefined,
   reporters: searchParams.has('reporter') ? searchParams.getAll('reporter') : undefined,
   pathSeparator: searchParams.get('pathSeparator') || '/',
-  openai_api_key: searchParams.get('openai_api_key') || undefined,
-  anthropic_api_key: searchParams.get('anthropic_api_key') || undefined,
 };
 if (queryParams.updateSnapshots && !['all', 'none', 'missing'].includes(queryParams.updateSnapshots))
   queryParams.updateSnapshots = undefined;
