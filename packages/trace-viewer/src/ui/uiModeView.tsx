@@ -38,6 +38,7 @@ import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
 import { DefaultSettingsView } from './defaultSettingsView';
 import { GitCommitInfoProvider } from './errorsTab';
+import { LLMProvider } from './llm';
 
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
@@ -398,7 +399,7 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, [closeInstallDialog, testServerConnection]);
 
-  return <div className='vbox ui-mode'>
+  return <LLMProvider><div className='vbox ui-mode'>
     {!hasBrowsers && <dialog ref={dialogRef}>
       <div className='title'><span className='codicon codicon-lightbulb'></span>Install browsers</div>
       <div className='body'>
@@ -527,5 +528,5 @@ export const UIModeView: React.FC<{}> = ({
       </div>
       }
     />
-  </div>;
+  </div></LLMProvider>;
 };

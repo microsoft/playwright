@@ -199,7 +199,7 @@ export const Workbench: React.FunctionComponent<{
       else
         setRevealedError(error);
       selectPropertiesTab('source');
-    }} actions={model?.actions ?? []} />
+    }} actions={model?.actions ?? []} wallTime={model?.wallTime ?? 0} />
   };
 
   // Fallback location w/o action stands for file / test.

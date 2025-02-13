@@ -142,6 +142,16 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
   server.routePath('/', (_, response) => {
     response.statusCode = 302;
     response.setHeader('Location', urlPath);
+
+    if (process.env.OPENAI_API_KEY)
+      response.appendHeader('Set-Cookie', `openai_api_key=${process.env.OPENAI_API_KEY}`);
+    if (process.env.OPENAI_BASE_URL)
+      response.appendHeader('Set-Cookie', `openai_base_url=${process.env.OPENAI_BASE_URL}`);
+    if (process.env.ANTHROPIC_API_KEY)
+      response.appendHeader('Set-Cookie', `anthropic_api_key=${process.env.ANTHROPIC_API_KEY}`);
+    if (process.env.ANTHROPIC_BASE_URL)
+      response.appendHeader('Set-Cookie', `anthropic_base_url=${process.env.ANTHROPIC_BASE_URL}`);
+
     response.end();
     return true;
   });
