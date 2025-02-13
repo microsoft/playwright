@@ -399,7 +399,7 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, [closeInstallDialog, testServerConnection]);
 
-  return <LLMProvider openai={queryParams.openai_api_key} anthropic={queryParams.anthropic_api_key}><div className='vbox ui-mode'>
+  return <LLMProvider><div className='vbox ui-mode'>
     {!hasBrowsers && <dialog ref={dialogRef}>
       <div className='title'><span className='codicon codicon-lightbulb'></span>Install browsers</div>
       <div className='body'>
