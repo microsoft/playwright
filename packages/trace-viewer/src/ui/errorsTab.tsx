@@ -27,7 +27,7 @@ import { fixTestPrompt } from '@web/components/prompts';
 import type { GitCommitInfo } from '@testIsomorphic/types';
 import { AIConversation } from './aiConversation';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { LLMMessage, useLLMChat, useLLMConversation } from './llm';
+import { useLLMChat, useLLMConversation } from './llm';
 import { useAsyncMemo } from '@web/uiUtils';
 
 const GitCommitInfoContext = React.createContext<GitCommitInfo | undefined>(undefined);
@@ -167,25 +167,22 @@ export function AIErrorConversation({ conversationId, error, pageSnapshot, diff 
     ].join('\n')
   );
 
-  const firstPrompt = React.useMemo<LLMMessage>(() => {
-    const message: LLMMessage = {
-      role: 'user',
-      content: `Here's the error: ${error}`,
-      displayContent: `Help me with the error above.`
-    }
+  React.useEffect(() => {
+    let content = `Here's the error: ${error}`;
+    let displayContent = `Help me with the error above.`;
 
     if (diff)
-      message.content += `\n\nCode diff:\n${diff}`;
+      content += `\n\nCode diff:\n${diff}`;
     if (pageSnapshot)
-      message.content += `\n\nPage snapshot:\n${pageSnapshot}`;
+      content += `\n\nPage snapshot:\n${pageSnapshot}`;
 
     if (diff)
-      message.displayContent += ` Take the code diff${pageSnapshot ? ' and page snapshot' : ''} into account.`;
+      displayContent += ` Take the code diff${pageSnapshot ? ' and page snapshot' : ''} into account.`;
     else if (pageSnapshot)
-      message.displayContent += ` Take the page snapshot into account.`;
+      displayContent += ` Take the page snapshot into account.`;
 
-    return message;
-  }, [diff, pageSnapshot, error]);
+    conversation.send(content, displayContent);
+  }, []);
 
-  return <AIConversation history={history} conversation={conversation} firstPrompt={firstPrompt} />;
+  return <AIConversation history={history} conversation={conversation} />;
 }

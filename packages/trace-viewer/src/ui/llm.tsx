@@ -98,7 +98,7 @@ class OpenAI implements LLM {
 
   constructor(private apiKey: string, private baseURL = 'https://api.openai.com') {}
 
-  async *chatCompletion(messages: LLMMessage[])  {
+  async *chatCompletion(messages: LLMMessage[], signal: AbortSignal)  {
     const url = new URL('./v1/chat/completions', this.baseURL);
     const response = await fetch(url, {
       method: 'POST',
@@ -112,6 +112,7 @@ class OpenAI implements LLM {
         messages: messages.map(({ role, content }) => ({ role, content })),
         stream: true,
       }),
+      signal,
     });
 
     if (response.status !== 200 || !response.body)
@@ -130,7 +131,7 @@ class OpenAI implements LLM {
 
 class Anthropic implements LLM {
   constructor(private apiKey: string, private baseURL = 'https://api.anthropic.com') {}
-  async *chatCompletion(messages: LLMMessage[]): AsyncGenerator<string> {
+  async *chatCompletion(messages: LLMMessage[], signal: AbortSignal): AsyncGenerator<string> {
     const response = await fetch(new URL('./v1/messages', this.baseURL), {
       method: 'POST',
       headers: {
@@ -145,7 +146,8 @@ class Anthropic implements LLM {
         system: messages.find(({ role }) => role === 'developer')?.content,
         max_tokens: 1024,
         stream: true,
-      })
+      }),
+      signal,
     });
 
     if (response.status !== 200 || !response.body)
@@ -176,19 +178,37 @@ class LLMChat {
 export class Conversation {
   history: LLMMessage[];
   onChange = new EventEmitter<void>();
+  private _abortController: AbortController | undefined;
 
   constructor(private chat: LLMChat, systemPrompt: string) {
     this.history = [{ role: 'developer', content: systemPrompt }];
   }
 
-  async send(content: string, displayContent: string | undefined, signal: AbortSignal) {
+  async send(content: string, displayContent?: string) {
+    if (this.isSending())
+      throw new Error('Already sending');
+
     const response: LLMMessage = { role: 'assistant', content: '' };
     this.history.push({ role: 'user', content, displayContent }, response);
     this.onChange.fire();
-    for await (const chunk of this.chat.api.chatCompletion(this.history, signal)) {
-      response.content += chunk;
-      this.onChange.fire();
+    this._abortController = new AbortController();
+    try {
+      for await (const chunk of this.chat.api.chatCompletion(this.history, this._abortController.signal)) {
+        response.content += chunk;
+        this.onChange.fire();
+      }
+    } finally {
+      this._abortController = undefined;
     }
+  }
+
+  isSending(): boolean {
+    return this._abortController !== undefined;
+  }
+
+  abortSending() {
+    this._abortController!.abort();
+    this.onChange.fire();
   }
 
   isEmpty() {
@@ -223,12 +243,12 @@ export function useLLMConversation(id: string, systemPrompt: string) {
     const conversation = React.useMemo(() => chat.getConversation(id, systemPrompt), [chat, id]);
     const [history, setHistory] = React.useState(conversation.history);
     React.useEffect(() => {
-        function update() {
-            setHistory([...conversation.history]);
-        }
-        update();
-        const subscription = conversation.onChange.event(update);
-        return subscription.dispose;
+      function update() {
+        setHistory([...conversation.history]);
+      }
+      update();
+      const subscription = conversation.onChange.event(update);
+      return subscription.dispose;
     }, [conversation]);
 
     return [history, conversation] as const;

@@ -1,38 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import Markdown from 'react-markdown'
 import './aiConversation.css';
 import { clsx } from '@web/uiUtils';
 import type { Conversation, LLMMessage } from './llm';
 
-export function AIConversation({ history, conversation, firstPrompt }: { history: LLMMessage[], conversation: Conversation, firstPrompt?: LLMMessage }) {
+export function AIConversation({ history, conversation }: { history: LLMMessage[], conversation: Conversation }) {
   const [input, setInput] = useState('');
-  const [abort, setAbort] = useState<AbortController>();
-
-  const send = useCallback(async (prompt: string, visiblePrompt?: string) => {
-    const controller = new AbortController();
-    setAbort(controller);
-    try {
-      await conversation.send(prompt, visiblePrompt, controller.signal);
-    } finally {
-      setAbort(undefined);
-    }
-  }, [conversation]);
 
   const onSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setInput('');
     const content = new FormData(event.target as any).get('content') as string;
-    await send(content);
-  }, [send]);
-
-  useEffect(() => {
-    if (!conversation.isEmpty())
-      return;
-    if (!firstPrompt)
-      return;
-
-    send(firstPrompt.content, firstPrompt.displayContent);
-  }, [conversation, firstPrompt, send]);
+    await conversation.send(content);
+  }, [conversation]);
 
   return (
     <div className="chat-container">
@@ -63,10 +43,11 @@ export function AIConversation({ history, conversation, firstPrompt }: { history
           placeholder="Ask a question..."
           className="message-input"
         />
-        {abort ? (
+        {conversation.isSending() ? (
           <button type="button" className="send-button" onClick={(evt) => {
             evt.preventDefault()
-            abort.abort()
+            console.log("aborting")
+            conversation.abortSending();
           }}>
             Cancel
           </button>
