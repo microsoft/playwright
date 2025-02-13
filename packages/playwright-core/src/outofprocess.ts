@@ -18,7 +18,7 @@ import * as childProcess from 'child_process';
 import * as path from 'path';
 
 import { Connection } from './client/connection';
-import { PipeTransport } from './utils/pipeTransport';
+import { PipeTransport } from './server/utils/pipeTransport';
 import { ManualPromise } from './utils/isomorphic/manualPromise';
 import { nodePlatform } from './server/utils/nodePlatform';
 
