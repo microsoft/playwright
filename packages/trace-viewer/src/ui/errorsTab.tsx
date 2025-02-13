@@ -129,7 +129,7 @@ function Error({ message, error, wallTime, sdkLanguage, pageSnapshot, revealInSo
       </div>}
       <span style={{ position: 'absolute', right: '5px' }}>
         {llmAvailable
-          ? <ToolbarButton onClick={() => setShowLLM(v => !v)} title="Fix with AI" className='copy-to-clipboard-text-button'>{showLLM ? 'Hide AI' : 'Fix with AI'}</ToolbarButton>
+          ? <ToolbarButton onClick={() => setShowLLM(v => !v)} style={{ width: "96px", justifyContent: 'center' }} title="Fix with AI" className='copy-to-clipboard-text-button'>{showLLM ? 'Hide AI' : 'Fix with AI'}</ToolbarButton>
           : <CopyPromptButton error={message} pageSnapshot={pageSnapshot} diff={diff} />}
       </span>
     </div>
