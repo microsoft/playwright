@@ -20,7 +20,7 @@ import * as path from 'path';
 import { assert } from '../../utils/debug';
 import { createGuid } from '../utils/crypto';
 import { eventsHelper } from '../utils/eventsHelper';
-import { rewriteErrorMessage } from '../../utils/stackTrace';
+import { rewriteErrorMessage } from '../../utils/isomorphic/stackTrace';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as frames from '../frames';

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-export const colors: typeof import('../bundles/utils/node_modules/colors/safe') = require('./utilsBundleImpl').colors;
 export const debug: typeof import('../bundles/utils/node_modules/@types/debug') = require('./utilsBundleImpl').debug;
 export const diff: typeof import('../bundles/utils/node_modules/@types/diff') = require('./utilsBundleImpl').diff;
 export const dotenv: typeof import('../bundles/utils/node_modules/dotenv') = require('./utilsBundleImpl').dotenv;

@@ -15,7 +15,7 @@
  */
 
 import { TimeoutError } from './errors';
-import { rewriteErrorMessage } from '../utils/stackTrace';
+import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 import { zones } from '../utils/zones';
 
 import type { ChannelOwner } from './channelOwner';

@@ -23,7 +23,8 @@ import * as path from 'path';
 import { debugLogger } from '../../utils/debugLogger';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { getUserAgent } from '../../utils/userAgent';
-import { colors, progress as ProgressBar } from '../../utilsBundle';
+import { progress as ProgressBar } from '../../utilsBundle';
+import { colors } from '../../utils/isomorphic/colors';
 import { existsAsync } from '../utils/fileUtils';
 
 import { browserDirectoryToMarkerFilePath } from '.';

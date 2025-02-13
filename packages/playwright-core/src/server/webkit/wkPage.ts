@@ -22,7 +22,7 @@ import { headersArrayToObject } from '../../utils/isomorphic/headers';
 import { createGuid } from '../utils/crypto';
 import { eventsHelper } from '../utils/eventsHelper';
 import { hostPlatform } from '../../utils/hostPlatform';
-import { splitErrorMessage } from '../../utils/stackTrace';
+import { splitErrorMessage } from '../../utils/isomorphic/stackTrace';
 import { PNG, jpegjs } from '../../utilsBundle';
 import { BrowserContext } from '../browserContext';
 import * as dialog from '../dialog';

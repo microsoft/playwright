@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+export * from './utils/isomorphic/colors';
 export * from './utils/isomorphic/locatorGenerators';
 export * from './utils/isomorphic/manualPromise';
 export * from './utils/isomorphic/mimeType';
@@ -31,7 +32,7 @@ export * from './utils/hostPlatform';
 export * from './utils/isomorphic/headers';
 export * from './utils/isomorphic/semaphore';
 export * from './utils/platform';
-export * from './utils/stackTrace';
+export * from './utils/isomorphic/stackTrace';
 export * from './utils/task';
 export * from './utils/userAgent';
 export * from './utils/zipFile';

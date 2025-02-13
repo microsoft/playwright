@@ -25,6 +25,7 @@ export type Platform = {
   fs: () => typeof fs;
   inspectCustom: symbol | undefined;
   path: () => typeof path;
+  pathSeparator: string;
   ws?: (url: string) => WebSocket;
 };
 
@@ -42,6 +43,8 @@ export const nodePlatform: Platform = {
   inspectCustom: util.inspect.custom,
 
   path: () => path,
+
+  pathSeparator: path.sep
 };
 
 export const webPlatform: Platform = {
@@ -64,6 +67,8 @@ export const webPlatform: Platform = {
   path: () => {
     throw new Error('Path module is not available');
   },
+
+  pathSeparator: '/',
 
   ws: (url: string) => new WebSocket(url),
 };

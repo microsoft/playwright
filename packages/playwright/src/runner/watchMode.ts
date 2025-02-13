@@ -20,7 +20,7 @@ import { EventEmitter } from 'stream';
 
 import { PlaywrightServer } from 'playwright-core/lib/remote/playwrightServer';
 import { ManualPromise, createGuid, eventsHelper, getPackageManagerExecCommand } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { colors } from 'playwright-core/lib/utils';
 
 import { separator, terminalScreen } from '../reporters/base';
 import { enquirer } from '../utilsBundle';

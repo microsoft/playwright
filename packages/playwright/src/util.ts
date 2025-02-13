@@ -55,7 +55,7 @@ export function filterStackFile(file: string) {
 export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
   const frames: StackFrame[] = [];
   for (const line of rawStack) {
-    const frame = parseStackTraceLine(line);
+    const frame = parseStackTraceLine(line, path.sep);
     if (!frame || !frame.file)
       continue;
     if (!filterStackFile(frame.file))

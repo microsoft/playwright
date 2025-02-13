@@ -19,7 +19,8 @@ import * as path from 'path';
 
 
 import { MultiMap } from 'playwright-core/lib/utils';
-import { colors, diff } from 'playwright-core/lib/utilsBundle';
+import { colors } from 'playwright-core/lib/utils';
+import { diff } from 'playwright-core/lib/utilsBundle';
 
 import { filterProjects } from './projectUtils';
 import { babelParse, traverse, types } from '../transform/babelBundle';

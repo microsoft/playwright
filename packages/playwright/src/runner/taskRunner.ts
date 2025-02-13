@@ -15,7 +15,8 @@
  */
 
 import { ManualPromise, monotonicTime } from 'playwright-core/lib/utils';
-import { colors, debug } from 'playwright-core/lib/utilsBundle';
+import { colors } from 'playwright-core/lib/utils';
+import { debug } from 'playwright-core/lib/utilsBundle';
 
 
 import { SigIntWatcher } from './sigIntWatcher';

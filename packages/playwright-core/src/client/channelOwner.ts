@@ -18,7 +18,7 @@ import { EventEmitter } from './eventEmitter';
 import { ValidationError, maybeFindValidator  } from '../protocol/validator';
 import { isUnderTest } from '../utils/debug';
 import { debugLogger } from '../utils/debugLogger';
-import { captureLibraryStackTrace, stringifyStackFrames } from '../utils/stackTrace';
+import { captureLibraryStackTrace, stringifyStackFrames } from '../utils/isomorphic/stackTrace';
 import { zones } from '../utils/zones';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
@@ -183,7 +183,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
 
     if (isInternal === undefined)
       isInternal = this._isInternalType;
-    const stackTrace = captureLibraryStackTrace();
+    const stackTrace = captureLibraryStackTrace(this._platform.pathSeparator);
     const apiZone: ApiZone = { apiName: stackTrace.apiName, frames: stackTrace.frames, isInternal, reported: false, userData: undefined, stepId: undefined };
 
     try {

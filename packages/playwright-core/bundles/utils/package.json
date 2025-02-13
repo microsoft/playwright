@@ -9,7 +9,6 @@
     "generate-license": "node ../../../../utils/generate_third_party_notice.js"
   },
   "dependencies": {
-    "colors": "1.4.0",
     "commander": "8.3.0",
     "debug": "^4.3.4",
     "diff": "^7.0.0",
