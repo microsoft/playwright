@@ -22,6 +22,18 @@
   color: #e0e0e0;
 }
 
+.chat-disclaimer {
+  text-align: center;
+  color: var(--vscode-editorBracketMatch-border);
+  margin: 0px;
+}
+
+.chat-container hr {
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--vscode-titleBar-inactiveBackground);
+}
+
 .messages-container {
   flex: 1;
   overflow-y: auto;

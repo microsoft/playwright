@@ -24,7 +24,8 @@ export type LLMMessage = {
   displayContent?: string;
 };
 
-interface LLM {
+interface LLM { 
+  readonly name: string;
   chatCompletion(messages: LLMMessage[], signal: AbortSignal): AsyncGenerator<string>;
 }
 
@@ -96,6 +97,8 @@ async function *parseSSE(body: NonNullable<Response['body']>): AsyncGenerator<{ 
 
 class OpenAI implements LLM {
 
+  name = 'OpenAI';
+
   constructor(private apiKey: string, private baseURL = 'https://api.openai.com') {}
 
   async *chatCompletion(messages: LLMMessage[], signal: AbortSignal)  {
@@ -130,6 +133,7 @@ class OpenAI implements LLM {
 }
 
 class Anthropic implements LLM {
+  name = 'Anthropic';
   constructor(private apiKey: string, private baseURL = 'https://api.anthropic.com') {}
   async *chatCompletion(messages: LLMMessage[], signal: AbortSignal): AsyncGenerator<string> {
     const response = await fetch(new URL('./v1/messages', this.baseURL), {
@@ -180,7 +184,7 @@ export class Conversation {
   onChange = new EventEmitter<void>();
   private _abortControllers = new Set<AbortController>();
 
-  constructor(private chat: LLMChat, systemPrompt: string) {
+  constructor(public chat: LLMChat, systemPrompt: string) {
     this.history = [{ role: 'developer', content: systemPrompt }];
   }
 

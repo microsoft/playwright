@@ -31,6 +31,8 @@ export function AIConversation({ history, conversation }: { history: LLMMessage[
 
   return (
     <div className='chat-container'>
+      <p className='chat-disclaimer'>Chat based on {conversation.chat.api.name}. Check for mistakes.</p>
+      <hr/>
       <div className='messages-container'>
         {history.filter(({ role }) => role !== 'developer').map((message, index) => (
           <div
