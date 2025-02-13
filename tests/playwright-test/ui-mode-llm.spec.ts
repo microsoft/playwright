@@ -18,9 +18,6 @@ import { test, expect, retries } from './ui-mode-fixtures';
 
 test.describe.configure({ mode: 'parallel', retries });
 
-test.beforeAll(() => process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = '1');
-test.afterAll(() => delete process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS);
-
 test('openai', async ({ runUITest, server }) => {
   server.setRoute('/v1/chat/completions', async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
