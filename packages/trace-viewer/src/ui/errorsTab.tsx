@@ -97,6 +97,49 @@ export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined):
   }, [model]);
 }
 
+function Error({ message, error, wallTime, sdkLanguage, pageSnapshot, revealInSource }: { message: string, error: ErrorDescription, wallTime: number, sdkLanguage: Language, pageSnapshot?: string, revealInSource: (error: ErrorDescription) => void  }) {
+  const [showLLM, setShowLLM] = React.useState(false);
+  const llmAvailable = !!useLLMChat();
+  const gitCommitInfo = useGitCommitInfo();
+  const diff = gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'];
+
+  let location: string | undefined;
+  let longLocation: string | undefined;
+  const stackFrame = error.stack?.[0];
+  if (stackFrame) {
+    const file = stackFrame.file.replace(/.*[/\\](.*)/, '$1');
+    location = file + ':' + stackFrame.line;
+    longLocation = stackFrame.file + ':' + stackFrame.line;
+  }
+
+  const errorId = `error-${wallTime}-${longLocation}`;
+
+  return <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <div className='hbox' style={{
+      alignItems: 'center',
+      padding: '5px 10px',
+      minHeight: 36,
+      fontWeight: 'bold',
+      color: 'var(--vscode-errorForeground)',
+      flex: 0,
+    }}>
+      {error.action && renderAction(error.action, { sdkLanguage })}
+      {location && <div className='action-location'>
+        @ <span title={longLocation} onClick={() => revealInSource(error)}>{location}</span>
+      </div>}
+      <span style={{ position: 'absolute', right: '5px' }}>
+        {llmAvailable
+          ? <ToolbarButton onClick={() => setShowLLM(v => !v)} title="Fix with AI" className='copy-to-clipboard-text-button'>Fix with AI</ToolbarButton>
+          : <CopyPromptButton error={message} pageSnapshot={pageSnapshot} diff={diff} />}
+      </span>
+    </div>
+    
+    <ErrorMessage error={message} />
+
+    {showLLM && <AIErrorConversation error={message} pageSnapshot={pageSnapshot} conversationId={errorId} diff={diff} />}
+  </div>;
+}
+
 export const ErrorsTab: React.FunctionComponent<{
   errorsModel: ErrorsTabModel,
   actions: modelUtil.ActionTraceEventInContext[],
@@ -104,53 +147,13 @@ export const ErrorsTab: React.FunctionComponent<{
   sdkLanguage: Language,
   revealInSource: (error: ErrorDescription) => void,
 }> = ({ errorsModel, sdkLanguage, revealInSource, actions, wallTime }) => {
-  const [showLLM, setShowLLM] = React.useState(false);
-  const llmAvailable = !!useLLMChat();
   const pageSnapshot = usePageSnapshot(actions);
-  const gitCommitInfo = useGitCommitInfo();
-  const diff = gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'];
+  
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
 
-  
   return <div className='fill' style={{ overflow: 'auto' }}>
-    {[...errorsModel.errors.entries()].map(([message, error]) => {
-      let location: string | undefined;
-      let longLocation: string | undefined;
-      const stackFrame = error.stack?.[0];
-      if (stackFrame) {
-        const file = stackFrame.file.replace(/.*[/\\](.*)/, '$1');
-        location = file + ':' + stackFrame.line;
-        longLocation = stackFrame.file + ':' + stackFrame.line;
-      }
-
-      const errorId = `error-${wallTime}-${longLocation}`;
-
-      return <div key={message} style={{ minHeight: errorsModel.errors.size === 1 ? '100%' : undefined, display: 'flex', flexDirection: 'column' }}>
-        <div className='hbox' style={{
-          alignItems: 'center',
-          padding: '5px 10px',
-          minHeight: 36,
-          fontWeight: 'bold',
-          color: 'var(--vscode-errorForeground)',
-          flex: 0,
-        }}>
-          {error.action && renderAction(error.action, { sdkLanguage })}
-          {location && <div className='action-location'>
-            @ <span title={longLocation} onClick={() => revealInSource(error)}>{location}</span>
-          </div>}
-          <span style={{ position: 'absolute', right: '5px' }}>
-            {llmAvailable
-              ? <ToolbarButton onClick={() => setShowLLM(v => !v)} title="Fix with AI" className='copy-to-clipboard-text-button'>Fix with AI</ToolbarButton>
-              : <CopyPromptButton error={message} pageSnapshot={pageSnapshot} diff={diff} />}
-          </span>
-        </div>
-        
-        <ErrorMessage error={message} />
-
-        {showLLM && <AIErrorConversation error={message} pageSnapshot={pageSnapshot} conversationId={errorId} diff={diff} />}
-      </div>;
-    })}
+    {[...errorsModel.errors.entries()].map(([message, error]) => <Error message={message} error={error} revealInSource={revealInSource} sdkLanguage={sdkLanguage} wallTime={wallTime} pageSnapshot={pageSnapshot} />)}
   </div>;
 };
 
