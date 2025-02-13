@@ -156,6 +156,13 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     throw new Error('Can\'t get remote object for nodeId');
   }
 
+  async contentFrameIdForFrame(handle: dom.ElementHandle) {
+    const contentWindow = await this._rawCallFunction('e => e.contentWindow', { handle: handle._objectId });
+    if (contentWindow?.type === 'window')
+      return contentWindow.value.context;
+    return null;
+  }
+
   async frameIdForWindowHandle(handle: js.JSHandle): Promise<string | null> {
     if (!handle._objectId)
       throw new Error('JSHandle is not a DOM node handle');

@@ -413,17 +413,10 @@ export class BidiPage implements PageDelegate {
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     const executionContext = toBidiExecutionContext(handle._context);
-    const contentWindow = await handle.evaluateHandle('e => e.contentWindow');
-    if (!contentWindow)
+    const frameId = await executionContext.contentFrameIdForFrame(handle);
+    if (!frameId)
       return null;
-    try {
-      const frameId = await executionContext.frameIdForWindowHandle(contentWindow);
-      if (!frameId)
-        return null;
-      return this._page._frameManager.frame(frameId);
-    } finally {
-      contentWindow.dispose();
-    }
+    return this._page._frameManager.frame(frameId);
   }
 
   async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
