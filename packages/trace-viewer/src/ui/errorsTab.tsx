@@ -97,7 +97,7 @@ export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined):
   }, [model]);
 }
 
-function Error({ message, error, wallTime, sdkLanguage, pageSnapshot, revealInSource }: { message: string, error: ErrorDescription, wallTime: number, sdkLanguage: Language, pageSnapshot?: string, revealInSource: (error: ErrorDescription) => void  }) {
+function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSource }: { message: string, error: ErrorDescription, errorId: string, sdkLanguage: Language, pageSnapshot?: string, revealInSource: (error: ErrorDescription) => void  }) {
   const [showLLM, setShowLLM] = React.useState(false);
   const llmAvailable = !!useLLMChat();
   const gitCommitInfo = useGitCommitInfo();
@@ -111,8 +111,6 @@ function Error({ message, error, wallTime, sdkLanguage, pageSnapshot, revealInSo
     location = file + ':' + stackFrame.line;
     longLocation = stackFrame.file + ':' + stackFrame.line;
   }
-
-  const errorId = `error-${wallTime}-${longLocation}`;
 
   return <div style={{ display: 'flex', flexDirection: 'column' }}>
     <div className='hbox' style={{
@@ -153,7 +151,10 @@ export const ErrorsTab: React.FunctionComponent<{
     return <PlaceholderPanel text='No errors' />;
 
   return <div className='fill' style={{ overflow: 'auto' }}>
-    {[...errorsModel.errors.entries()].map(([message, error]) => <Error message={message} error={error} revealInSource={revealInSource} sdkLanguage={sdkLanguage} wallTime={wallTime} pageSnapshot={pageSnapshot} />)}
+    {[...errorsModel.errors.entries()].map(([message, error]) => {
+      const errorId = `error-${wallTime}-${message}`;
+      return <Error key={errorId} errorId={errorId} message={message} error={error} revealInSource={revealInSource} sdkLanguage={sdkLanguage} pageSnapshot={pageSnapshot} />;
+    })}
   </div>;
 };
 
@@ -182,7 +183,7 @@ export function AIErrorConversation({ conversationId, error, pageSnapshot, diff 
       displayContent += ` Take the page snapshot into account.`;
 
     conversation.send(content, displayContent);
-  }, []);
+  }, [conversation]);
 
   return <AIConversation history={history} conversation={conversation} />;
 }
