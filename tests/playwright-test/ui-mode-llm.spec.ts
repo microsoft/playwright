@@ -21,7 +21,23 @@ test.describe.configure({ mode: 'parallel', retries });
 test.beforeAll(() => process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = '1');
 test.afterAll(() => delete process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS);
 
-test('openai', async ({ runUITest }) => {
+test('openai', async ({ runUITest, server }) => {
+  server.setRoute('/v1/chat/completions', async (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+    if (req.method === 'OPTIONS')
+      return res.end();
+
+    expect(req.headers.authorization).toBe('Bearer fake-key');
+    expect((await req.postBody).toString()).toContain(`- button \\"Submit\\"`);
+    const event = {
+      object: 'chat.completion.chunk',
+      choices: [{ delta: { content: 'This is a mock response' } }]
+    };
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.write(`data: ${JSON.stringify(event)}\n\n`);
+  });
+
   const { page } = await runUITest({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -31,19 +47,8 @@ test('openai', async ({ runUITest }) => {
       });
     `,
   }, {
-    OPENAI_API_KEY: 'fake-key'
-  });
-
-  await page.context().route('https://api.openai.com/**', async (route, request) => {
-    expect(await request.headerValue('authorization')).toBe('Bearer fake-key');
-    expect(request.postData()).toContain(`- button \\"Submit\\"`);
-    const event = {
-      object: 'chat.completion.chunk',
-      choices: [{ delta: { content: 'This is a mock response' } }]
-    };
-    await route.fulfill({
-      body: `\n\ndata: ${JSON.stringify(event)}\n\n`
-    });
+    OPENAI_API_KEY: 'fake-key',
+    OPENAI_BASE_URL: server.PREFIX,
   });
 
   await page.getByTitle('Run all').click();

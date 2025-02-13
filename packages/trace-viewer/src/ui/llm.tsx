@@ -221,15 +221,15 @@ export class Conversation {
 const llmContext = React.createContext<LLMChat | undefined>(undefined);
 
 export function LLMProvider({ children }: React.PropsWithChildren<{}>) {
-  const cookies = useCookies();
+  const cookiePairs = useCookies();
   const chat = React.useMemo(() => {
-    for (const [name, value] of cookies) {
-      if (name === 'openai_api_key')
-        return new LLMChat(new OpenAI(value));
-      if (name === 'anthropic_api_key')
-        return new LLMChat(new Anthropic(value))
-    }
-  }, [cookies]);
+    const cookies = Object.fromEntries(cookiePairs);
+    console.log({ cookies })
+    if (cookies.openai_api_key)
+      return new LLMChat(new OpenAI(cookies.openai_api_key, cookies.openai_base_url));
+    if (cookies.anthropic_api_key)
+      return new LLMChat(new Anthropic(cookies.anthropic_api_key, cookies.anthropic_base_url));
+  }, [cookiePairs]);
   return <llmContext.Provider value={chat}>{children}</llmContext.Provider>;
 };
 

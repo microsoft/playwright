@@ -250,7 +250,7 @@ export function useFlash(): [boolean, EffectCallback] {
 }
 
 export function useCookies() {
-  return document.cookie.split(";").filter(v => v.includes("=")).map(kv => {
+  return document.cookie.split("; ").filter(v => v.includes("=")).map(kv => {
     const separator = kv.indexOf("=");
     return [kv.substring(0, separator), kv.substring(separator + 1)];
   }) 
