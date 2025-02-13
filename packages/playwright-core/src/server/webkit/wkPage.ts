@@ -21,7 +21,7 @@ import { assert, debugAssert } from '../../utils';
 import { headersArrayToObject } from '../../utils/isomorphic/headers';
 import { createGuid } from '../utils/crypto';
 import { eventsHelper } from '../utils/eventsHelper';
-import { hostPlatform } from '../../utils/hostPlatform';
+import { hostPlatform } from '../utils/hostPlatform';
 import { splitErrorMessage } from '../../utils/isomorphic/stackTrace';
 import { PNG, jpegjs } from '../../utilsBundle';
 import { BrowserContext } from '../browserContext';
@@ -39,7 +39,7 @@ import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wkInput';
 import { WKInterceptableRequest, WKRouteImpl } from './wkInterceptableRequest';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
-import { debugLogger } from '../../utils/debugLogger';
+import { debugLogger } from '../utils/debugLogger';
 
 import type { Protocol } from './protocol';
 import type { WKBrowserContext } from './wkBrowser';

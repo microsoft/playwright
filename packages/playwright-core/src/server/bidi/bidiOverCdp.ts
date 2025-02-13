@@ -17,7 +17,7 @@
 import * as bidiMapper from 'chromium-bidi/lib/cjs/bidiMapper/BidiMapper';
 import * as bidiCdpConnection from 'chromium-bidi/lib/cjs/cdp/CdpConnection';
 
-import { debugLogger } from '../../utils/debugLogger';
+import { debugLogger } from '../utils/debugLogger';
 
 import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import type { ChromiumBidi } from 'chromium-bidi/lib/cjs/protocol/protocol';

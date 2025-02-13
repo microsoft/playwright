@@ -20,7 +20,7 @@ import { CDPSession } from './cdpSession';
 import { ChannelOwner } from './channelOwner';
 import { isTargetClosedError } from './errors';
 import { Events } from './events';
-import { mkdirIfNeeded } from '../utils/fileUtils';
+import { mkdirIfNeeded } from '../common/fileUtils';
 
 import type { BrowserType } from './browserType';
 import type { Page } from './page';

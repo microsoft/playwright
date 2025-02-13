@@ -8,10 +8,13 @@
 **
 
 [inprocess.ts]
+common/
 utils/
+server/utils
 
 [outofprocess.ts]
 client/
+common/
 protocol/
 utils/
 utils/isomorphic

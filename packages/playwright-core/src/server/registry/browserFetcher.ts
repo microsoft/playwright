@@ -20,9 +20,9 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-import { debugLogger } from '../../utils/debugLogger';
+import { debugLogger } from '../utils/debugLogger';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { getUserAgent } from '../../utils/userAgent';
+import { getUserAgent } from '../utils/userAgent';
 import { progress as ProgressBar } from '../../utilsBundle';
 import { colors } from '../../utils/isomorphic/colors';
 import { existsAsync } from '../utils/fileUtils';

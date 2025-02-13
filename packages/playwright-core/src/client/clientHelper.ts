@@ -18,7 +18,7 @@
 import { isString } from '../utils/isomorphic/rtti';
 
 import type * as types from './types';
-import type { Platform } from '../utils/platform';
+import type { Platform } from '../common/platform';
 
 export function envObjectToArray(env: types.Env): { name: string, value: string }[] {
   const result: { name: string, value: string }[] = [];

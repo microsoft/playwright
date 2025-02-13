@@ -16,9 +16,9 @@
 
 import { Dispatcher } from './dispatcher';
 import { SdkObject } from '../../server/instrumentation';
-import * as localUtils from '../../utils/localUtils';
-import { nodePlatform } from '../../utils/platform';
-import { getUserAgent } from '../../utils/userAgent';
+import * as localUtils from '../../common/localUtils';
+import { nodePlatform } from '../utils/nodePlatform';
+import { getUserAgent } from '../utils/userAgent';
 import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
 import { Progress, ProgressController } from '../progress';
@@ -26,7 +26,7 @@ import { SocksInterceptor } from '../socksInterceptor';
 import { WebSocketTransport } from '../transport';
 import { fetchData } from '../utils/network';
 
-import type { HarBackend } from '../../utils/harBackend';
+import type { HarBackend } from '../../common/harBackend';
 import type { CallMetadata } from '../instrumentation';
 import type { Playwright } from '../playwright';
 import type { RootDispatcher } from './dispatcher';

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { ZipFile } from './zipFile';
+import { ZipFile } from '../utils/zipFile';
 
-import type { HeadersArray } from '../common/types';
+import type { HeadersArray } from './types';
 import type * as har from '@trace/har';
 import type { Platform } from './platform';
 

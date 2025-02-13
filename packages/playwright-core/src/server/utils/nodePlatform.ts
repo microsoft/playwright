@@ -19,15 +19,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
 
-export type Platform = {
-  calculateSha1(text: string): Promise<string>;
-  createGuid: () => string;
-  fs: () => typeof fs;
-  inspectCustom: symbol | undefined;
-  path: () => typeof path;
-  pathSeparator: string;
-  ws?: (url: string) => WebSocket;
-};
+import { Platform } from '../../common/platform';
+import { debugLogger } from './debugLogger';
 
 export const nodePlatform: Platform = {
   calculateSha1: (text: string) => {
@@ -42,33 +35,15 @@ export const nodePlatform: Platform = {
 
   inspectCustom: util.inspect.custom,
 
+  isLogEnabled(name: 'api' | 'channel') {
+    return debugLogger.isEnabled(name);
+  },
+
+  log(name: 'api' | 'channel', message: string | Error | object) {
+    debugLogger.log(name, message);
+  },
+
   path: () => path,
 
   pathSeparator: path.sep
-};
-
-export const webPlatform: Platform = {
-  calculateSha1: async (text: string) => {
-    const bytes = new TextEncoder().encode(text);
-    const hashBuffer = await crypto.subtle.digest('SHA-1', bytes);
-    return Array.from(new Uint8Array(hashBuffer), b => b.toString(16).padStart(2, '0')).join('');
-  },
-
-  createGuid: () => {
-    return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
-  },
-
-  fs: () => {
-    throw new Error('File system is not available');
-  },
-
-  inspectCustom: undefined,
-
-  path: () => {
-    throw new Error('Path module is not available');
-  },
-
-  pathSeparator: '/',
-
-  ws: (url: string) => new WebSocket(url),
 };

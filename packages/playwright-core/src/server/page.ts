@@ -28,12 +28,12 @@ import { parseEvaluationResultValue, source } from './isomorphic/utilityScriptSe
 import * as js from './javascript';
 import { ProgressController } from './progress';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
-import { TimeoutSettings } from '../common/timeoutSettings';
+import { TimeoutSettings } from '../utils/isomorphic/timeoutSettings';
 import { LongStandingScope, assert, compressCallLog, trimStringWithEllipsis } from '../utils';
 import { createGuid } from './utils/crypto';
 import { asLocator } from '../utils';
 import { getComparator } from './utils/comparators';
-import { debugLogger } from '../utils/debugLogger';
+import { debugLogger } from './utils/debugLogger';
 import { isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
 

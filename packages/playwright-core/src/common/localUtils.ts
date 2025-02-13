@@ -20,11 +20,11 @@ import * as path from 'path';
 
 import { removeFolders } from './fileUtils';
 import { HarBackend } from './harBackend';
-import { ManualPromise } from './isomorphic/manualPromise';
-import { ZipFile } from './zipFile';
+import { ManualPromise } from '../utils/isomorphic/manualPromise';
+import { ZipFile } from '../utils/zipFile';
 import { yauzl, yazl } from '../zipBundle';
 import { serializeClientSideCallMetadata } from '../utils/isomorphic/traceUtils';
-import { assert } from '../utils/debug';
+import { assert } from '../utils/isomorphic/debug';
 
 import type { Platform } from './platform';
 import type * as channels from '@protocol/channels';

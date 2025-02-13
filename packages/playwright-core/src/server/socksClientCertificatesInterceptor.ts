@@ -24,7 +24,7 @@ import { SocksProxy } from './utils/socksProxy';
 import { ManualPromise, escapeHTML, generateSelfSignedCertificate, rewriteErrorMessage } from '../utils';
 import { verifyClientCertificates } from './browserContext';
 import { createProxyAgent } from './fetch';
-import { debugLogger } from '../utils/debugLogger';
+import { debugLogger } from './utils/debugLogger';
 import { createSocket, createTLSSocket } from './utils/happyEyeballs';
 
 import type * as types from './types';

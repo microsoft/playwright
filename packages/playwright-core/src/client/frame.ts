@@ -26,7 +26,7 @@ import { FrameLocator, Locator, testIdAttributeName } from './locator';
 import * as network from './network';
 import { kLifecycleEvents } from './types';
 import { Waiter } from './waiter';
-import { assert } from '../utils/debug';
+import { assert } from '../utils/isomorphic/debug';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
 import { urlMatches } from '../utils/isomorphic/urlMatch';
 

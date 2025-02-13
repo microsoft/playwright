@@ -17,7 +17,7 @@
 
 import * as path from 'path';
 
-import { assert } from '../../utils/debug';
+import { assert } from '../../utils/isomorphic/debug';
 import { createGuid } from '../utils/crypto';
 import { eventsHelper } from '../utils/eventsHelper';
 import { rewriteErrorMessage } from '../../utils/isomorphic/stackTrace';
