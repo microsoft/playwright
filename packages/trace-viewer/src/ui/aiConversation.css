@@ -67,6 +67,8 @@
 
 /* Input form styles */
 .input-form {
+  position: sticky;
+  bottom: 0;
   display: flex;
   height: 50px;
   gap: 8px;
