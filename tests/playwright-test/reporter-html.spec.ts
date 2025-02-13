@@ -1221,11 +1221,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       const result = await runInlineTest(files, { reporter: 'dot,html' }, {
         PLAYWRIGHT_HTML_OPEN: 'never',
         GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test',
-        GITHUB_RUN_ID: 'example-run-id',
         GITHUB_SERVER_URL: 'https://playwright.dev',
         GITHUB_SHA: 'example-sha',
-        GITHUB_REF_NAME: '42/merge',
-        GITHUB_BASE_REF: 'HEAD~1',
       });
 
       await showReport();
@@ -1235,9 +1232,69 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.metadata-view')).toMatchAriaSnapshot(`
         - 'link "chore(html): make this test look nice"'
         - text: /^William <shakespeare@example.local> on/
+        - link /^[a-f0-9]{7}$/
+        - text: 'foo : value1 bar : {"prop":"value2"} baz : ["value3",123]'
+      `);
+    });
+
+    test('should include metadata with populateGitInfo on GHA', async ({ runInlineTest, writeFiles, showReport, page }) => {
+      const files = {
+        'uncommitted.txt': `uncommitted file`,
+        'playwright.config.ts': `
+          export default {
+            populateGitInfo: true,
+            metadata: { foo: 'value1', bar: { prop: 'value2' }, baz: ['value3', 123] }
+          };
+        `,
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('sample', async ({}) => { expect(2).toBe(2); });
+        `,
+      };
+      const baseDir = await writeFiles(files);
+
+      const execGit = async (args: string[]) => {
+        const { code, stdout, stderr } = await spawnAsync('git', args, { stdio: 'pipe', cwd: baseDir });
+        if (!!code)
+          throw new Error(`Non-zero exit of:\n$ git ${args.join(' ')}\nConsole:\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\n`);
+        return;
+      };
+
+      await execGit(['init']);
+      await execGit(['config', '--local', 'user.email', 'shakespeare@example.local']);
+      await execGit(['config', '--local', 'user.name', 'William']);
+      await execGit(['add', 'playwright.config.ts']);
+      await execGit(['commit', '-m', 'init']);
+      await execGit(['add', '*.ts']);
+      await execGit(['commit', '-m', 'chore(html): make this test look nice']);
+
+      const eventPath = path.join(baseDir, 'event.json');
+      await fs.promises.writeFile(eventPath, JSON.stringify({
+        pull_request: {
+          title: 'My PR',
+          number: 42,
+          base: { ref: 'main' },
+        },
+      }));
+
+      const result = await runInlineTest(files, { reporter: 'dot,html' }, {
+        PLAYWRIGHT_HTML_OPEN: 'never',
+        GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test',
+        GITHUB_RUN_ID: 'example-run-id',
+        GITHUB_SERVER_URL: 'https://playwright.dev',
+        GITHUB_SHA: 'example-sha',
+        GITHUB_EVENT_PATH: eventPath,
+      });
+
+      await showReport();
+
+      expect(result.exitCode).toBe(0);
+      await page.getByRole('button', { name: 'Metadata' }).click();
+      await expect(page.locator('.metadata-view')).toMatchAriaSnapshot(`
+        - 'link "My PR"'
+        - text: /^William <shakespeare@example.local> on/
         - link "Logs"
         - link "Pull Request"
-        - link /^[a-f0-9]{7}$/
         - text: 'foo : value1 bar : {"prop":"value2"} baz : ["value3",123]'
       `);
     });
