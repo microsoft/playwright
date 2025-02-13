@@ -458,6 +458,9 @@ await page1.GotoAsync("about:blank?foo");`);
     const harFileName = testInfo.outputPath('har.har');
     const cli = runCLI([`--save-storage=${storageFileName}`, `--save-har=${harFileName}`]);
     await cli.waitFor(`import { test, expect } from '@playwright/test'`);
+    cli.process.process.on('SIGINT', () => {
+      console.log('Local SIGINT');
+    });
     await cli.process.kill('SIGINT');
     const { exitCode, signal } = await cli.process.exited;
     if (exitCode !== null) {

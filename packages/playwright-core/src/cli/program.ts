@@ -527,6 +527,7 @@ async function launchContext(options: Options, extraOptions: LaunchOptions): Pro
     });
   });
   process.on('SIGINT', async () => {
+    console.log('SIGINT received, closing browser...');
     await closeBrowser();
     gracefullyProcessExitDoNotHang(130);
   });

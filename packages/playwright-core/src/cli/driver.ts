@@ -57,6 +57,7 @@ export function runDriver() {
   // We still will destruct everything (close browsers and exit) when the transport pipe closes.
   process.on('SIGINT', () => {
     // Keep the process running.
+    console.log('SIGINT received');
   });
 }
 
