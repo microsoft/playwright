@@ -23,7 +23,7 @@ import { APIResponse } from './fetch';
 import { Frame } from './frame';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
-import { assert } from '../utils/debug';
+import { assert } from '../utils/isomorphic/debug';
 import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { urlMatches } from '../utils/isomorphic/urlMatch';
 import { LongStandingScope, ManualPromise } from '../utils/isomorphic/manualPromise';

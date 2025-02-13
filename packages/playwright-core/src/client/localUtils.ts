@@ -16,11 +16,11 @@
 
 import { ChannelOwner } from './channelOwner';
 import { Connection } from './connection';
-import * as localUtils from '../utils/localUtils';
+import * as localUtils from '../common/localUtils';
 
 import type { HeadersArray, Size } from './types';
-import type { HarBackend } from '../utils/harBackend';
-import type { Platform } from '../utils/platform';
+import type { HarBackend } from '../common/harBackend';
+import type { Platform } from '../common/platform';
 import type * as channels from '@protocol/channels';
 
 type DeviceDescriptor = {

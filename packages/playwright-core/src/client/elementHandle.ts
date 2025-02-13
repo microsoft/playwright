@@ -19,8 +19,8 @@ import { promisify } from 'util';
 
 import { Frame } from './frame';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
-import { assert } from '../utils/debug';
-import { fileUploadSizeLimit, mkdirIfNeeded } from '../utils/fileUtils';
+import { assert } from '../utils/isomorphic/debug';
+import { fileUploadSizeLimit, mkdirIfNeeded } from '../common/fileUtils';
 import { isString } from '../utils/isomorphic/rtti';
 import { mime } from '../utilsBundle';
 import { WritableStream } from './writableStream';
@@ -31,7 +31,7 @@ import type { Locator } from './locator';
 import type { FilePayload, Rect, SelectOption, SelectOptionOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type { Platform } from '../utils/platform';
+import type { Platform } from '../common/platform';
 import type * as channels from '@protocol/channels';
 
 const pipelineAsync = promisify(pipeline);

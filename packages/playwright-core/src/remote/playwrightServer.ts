@@ -16,11 +16,11 @@
 
 import { PlaywrightConnection } from './playwrightConnection';
 import { createPlaywright } from '../server/playwright';
-import { debugLogger } from '../utils/debugLogger';
+import { debugLogger } from '../server/utils/debugLogger';
 import { Semaphore } from '../utils/isomorphic/semaphore';
 import { WSServer } from '../server/utils/wsServer';
 import { wrapInASCIIBox } from '../server/utils/ascii';
-import { getPlaywrightVersion } from '../utils/userAgent';
+import { getPlaywrightVersion } from '../server/utils/userAgent';
 
 import type { ClientType } from './playwrightConnection';
 import type { SocksProxy } from '../server/utils/socksProxy';

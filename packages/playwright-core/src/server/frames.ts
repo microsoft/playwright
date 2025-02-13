@@ -29,7 +29,7 @@ import { ProgressController } from './progress';
 import * as types from './types';
 import { LongStandingScope, asLocator, assert, compressCallLog, constructURLBasedOnBaseURL, makeWaitForNextTask, monotonicTime } from '../utils';
 import { isSessionClosedError } from './protocolError';
-import { debugLogger } from '../utils/debugLogger';
+import { debugLogger } from './utils/debugLogger';
 import { eventsHelper } from './utils/eventsHelper';
 import {  isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';

@@ -23,7 +23,7 @@ import { serverSideCallMetadata } from '../server/instrumentation';
 import { assert, isUnderTest } from '../utils';
 import { startProfiling, stopProfiling } from '../server/utils/profiler';
 import { monotonicTime } from '../utils';
-import { debugLogger } from '../utils/debugLogger';
+import { debugLogger } from '../server/utils/debugLogger';
 
 import type { DispatcherScope, Playwright } from '../server';
 import type { LaunchOptions } from '../server/types';

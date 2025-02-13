@@ -20,7 +20,7 @@ import * as https from 'https';
 import * as net from 'net';
 import * as tls from 'tls';
 
-import { assert } from '../../utils/debug';
+import { assert } from '../../utils/isomorphic/debug';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { monotonicTime } from '../../utils/isomorphic/time';
 

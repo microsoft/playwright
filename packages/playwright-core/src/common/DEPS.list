@@ -1,4 +1,5 @@
 [*]
 ../utils/
+../utils/isomorphic/
 ../utilsBundle.ts
 ../zipBundle.ts

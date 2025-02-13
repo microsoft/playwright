@@ -22,7 +22,7 @@ import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import { Waiter } from './waiter';
-import { TimeoutSettings } from '../common/timeoutSettings';
+import { TimeoutSettings } from '../utils/isomorphic/timeoutSettings';
 
 import type { Page } from './page';
 import type { BrowserContextOptions, Env, Headers, WaitForEventOptions } from './types';

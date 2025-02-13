@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { debugLogger } from '../utils/debugLogger';
+import { debugLogger } from './utils/debugLogger';
 import { eventsHelper } from './utils/eventsHelper';
 
 import type { Progress } from './progress';

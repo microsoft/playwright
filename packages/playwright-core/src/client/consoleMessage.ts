@@ -18,7 +18,7 @@ import { JSHandle } from './jsHandle';
 import { Page } from './page';
 
 import type * as api from '../../types/types';
-import type { Platform } from '../utils/platform';
+import type { Platform } from '../common/platform';
 import type * as channels from '@protocol/channels';
 
 type ConsoleMessageLocation = channels.BrowserContextConsoleEvent['location'];

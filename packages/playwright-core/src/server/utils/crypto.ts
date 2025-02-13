@@ -16,7 +16,7 @@
 
 import * as crypto from 'crypto';
 
-import { assert } from '../../utils/debug';
+import { assert } from '../../utils/isomorphic/debug';
 
 export function createGuid(): string {
   return crypto.randomBytes(16).toString('hex');

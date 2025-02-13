@@ -21,7 +21,7 @@ import { ChannelOwner } from './channelOwner';
 import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
 import { Waiter } from './waiter';
-import { TimeoutSettings } from '../common/timeoutSettings';
+import { TimeoutSettings } from '../utils/isomorphic/timeoutSettings';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
 import { monotonicTime } from '../utils/isomorphic/time';
 import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';
@@ -30,7 +30,7 @@ import type { Page } from './page';
 import type * as types from './types';
 import type * as api from '../../types/types';
 import type { AndroidServerLauncherImpl } from '../androidServerImpl';
-import type { Platform } from '../utils/platform';
+import type { Platform } from '../common/platform';
 import type * as channels from '@protocol/channels';
 
 type Direction = 'down' | 'up' | 'left' | 'right';

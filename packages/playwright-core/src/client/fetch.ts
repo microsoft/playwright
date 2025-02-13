@@ -19,8 +19,8 @@ import { ChannelOwner } from './channelOwner';
 import { TargetClosedError, isTargetClosedError } from './errors';
 import { RawHeaders } from './network';
 import { Tracing } from './tracing';
-import { assert } from '../utils/debug';
-import { mkdirIfNeeded } from '../utils/fileUtils';
+import { assert } from '../utils/isomorphic/debug';
+import { mkdirIfNeeded } from '../common/fileUtils';
 import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { isString } from '../utils/isomorphic/rtti';
 
@@ -29,7 +29,7 @@ import type { ClientCertificate, FilePayload, Headers, SetStorageState, StorageS
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray, NameValue } from '../common/types';
-import type { Platform } from '../utils/platform';
+import type { Platform } from '../common/platform';
 import type * as channels from '@protocol/channels';
 import type * as fs from 'fs';
 

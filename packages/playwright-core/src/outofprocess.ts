@@ -20,7 +20,7 @@ import * as path from 'path';
 import { Connection } from './client/connection';
 import { PipeTransport } from './utils/pipeTransport';
 import { ManualPromise } from './utils/isomorphic/manualPromise';
-import { nodePlatform } from './utils/platform';
+import { nodePlatform } from './server/utils/nodePlatform';
 
 import type { Playwright } from './client/playwright';
 
