@@ -127,11 +127,11 @@ function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSou
       </div>}
       <span style={{ position: 'absolute', right: '5px' }}>
         {llmAvailable
-          ? <ToolbarButton onClick={() => setShowLLM(v => !v)} style={{ width: "96px", justifyContent: 'center' }} title="Fix with AI" className='copy-to-clipboard-text-button'>{showLLM ? 'Hide AI' : 'Fix with AI'}</ToolbarButton>
+          ? <ToolbarButton onClick={() => setShowLLM(v => !v)} style={{ width: '96px', justifyContent: 'center' }} title='Fix with AI' className='copy-to-clipboard-text-button'>{showLLM ? 'Hide AI' : 'Fix with AI'}</ToolbarButton>
           : <CopyPromptButton error={message} pageSnapshot={pageSnapshot} diff={diff} />}
       </span>
     </div>
-    
+
     <ErrorMessage error={message} />
 
     {showLLM && <AIErrorConversation error={message} pageSnapshot={pageSnapshot} conversationId={errorId} diff={diff} />}
@@ -146,7 +146,7 @@ export const ErrorsTab: React.FunctionComponent<{
   revealInSource: (error: ErrorDescription) => void,
 }> = ({ errorsModel, sdkLanguage, revealInSource, actions, wallTime }) => {
   const pageSnapshot = usePageSnapshot(actions);
-  
+
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
 
@@ -160,12 +160,12 @@ export const ErrorsTab: React.FunctionComponent<{
 
 export function AIErrorConversation({ conversationId, error, pageSnapshot, diff }: { conversationId: string, error: string, pageSnapshot?: string, diff?: string }) {
   const [history, conversation] = useLLMConversation(
-    conversationId,
-    [
-      `My Playwright test failed. What's going wrong?`,
-      `Please give me a suggestion how to fix it, and then explain what went wrong. Be very concise and apply Playwright best practices.`,
-      `Don't include many headings in your output. Make sure what you're saying is correct, and take into account whether there might be a bug in the app.`
-    ].join('\n')
+      conversationId,
+      [
+        `My Playwright test failed. What's going wrong?`,
+        `Please give me a suggestion how to fix it, and then explain what went wrong. Be very concise and apply Playwright best practices.`,
+        `Don't include many headings in your output. Make sure what you're saying is correct, and take into account whether there might be a bug in the app.`
+      ].join('\n')
   );
 
   React.useEffect(() => {

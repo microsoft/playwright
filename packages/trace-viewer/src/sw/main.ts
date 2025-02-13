@@ -80,7 +80,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
 
   if (event.request.headers.get('x-pw-serviceworker') === 'forward') {
     const request = new Request(event.request);
-    request.headers.delete('x-pw-serviceworker')
+    request.headers.delete('x-pw-serviceworker');
     return fetch(request);
   }
 

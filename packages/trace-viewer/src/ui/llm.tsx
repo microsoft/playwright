@@ -224,33 +224,32 @@ export function LLMProvider({ children }: React.PropsWithChildren<{}>) {
   const cookiePairs = useCookies();
   const chat = React.useMemo(() => {
     const cookies = Object.fromEntries(cookiePairs);
-    console.log({ cookies })
     if (cookies.openai_api_key)
       return new LLMChat(new OpenAI(cookies.openai_api_key, cookies.openai_base_url));
     if (cookies.anthropic_api_key)
       return new LLMChat(new Anthropic(cookies.anthropic_api_key, cookies.anthropic_base_url));
   }, [cookiePairs]);
   return <llmContext.Provider value={chat}>{children}</llmContext.Provider>;
-};
+}
 
 export function useLLMChat() {
-    return React.useContext(llmContext);
-};
+  return React.useContext(llmContext);
+}
 
 export function useLLMConversation(id: string, systemPrompt: string) {
-    const chat = useLLMChat();
-    if (!chat)
-        throw new Error('No LLM chat available, make sure theres a LLMProvider above');
-    const conversation = React.useMemo(() => chat.getConversation(id, systemPrompt), [chat, id]);
-    const [history, setHistory] = React.useState(conversation.history);
-    React.useEffect(() => {
-      function update() {
-        setHistory([...conversation.history]);
-      }
-      update();
-      const subscription = conversation.onChange.event(update);
-      return subscription.dispose;
-    }, [conversation]);
+  const chat = useLLMChat();
+  if (!chat)
+    throw new Error('No LLM chat available, make sure theres a LLMProvider above');
+  const conversation = React.useMemo(() => chat.getConversation(id, systemPrompt), [chat, id]);
+  const [history, setHistory] = React.useState(conversation.history);
+  React.useEffect(() => {
+    function update() {
+      setHistory([...conversation.history]);
+    }
+    update();
+    const subscription = conversation.onChange.event(update);
+    return subscription.dispose;
+  }, [conversation]);
 
-    return [history, conversation] as const;
-};
+  return [history, conversation] as const;
+}
