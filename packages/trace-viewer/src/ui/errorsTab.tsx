@@ -112,7 +112,7 @@ function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSou
     longLocation = stackFrame.file + ':' + stackFrame.line;
   }
 
-  return <div style={{ display: 'flex', flexDirection: 'column' }}>
+  return <div style={{ display: 'flex', flexDirection: 'column', overflowX: 'clip' }}>
     <div className='hbox' style={{
       alignItems: 'center',
       padding: '5px 10px',
