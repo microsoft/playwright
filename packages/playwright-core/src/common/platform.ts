@@ -22,6 +22,19 @@ import { webColors, noColors } from '../utils/isomorphic/colors';
 
 import type { Colors } from '../utils/isomorphic/colors';
 
+export type Zone = {
+  push(data: unknown): Zone;
+  pop(): Zone;
+  run<R>(func: () => R): R;
+  data<T>(): T | undefined;
+};
+
+const noopZone: Zone = {
+  push: () => noopZone,
+  pop: () => noopZone,
+  run: func => func(),
+  data: () => undefined,
+};
 
 export type Platform = {
   calculateSha1(text: string): Promise<string>;
@@ -34,6 +47,7 @@ export type Platform = {
   path: () => typeof path;
   pathSeparator: string;
   ws?: (url: string) => WebSocket;
+  zones: { empty: Zone, current: () => Zone; };
 };
 
 export const webPlatform: Platform = {
@@ -69,6 +83,8 @@ export const webPlatform: Platform = {
   pathSeparator: '/',
 
   ws: (url: string) => new WebSocket(url),
+
+  zones: { empty: noopZone, current: () => noopZone },
 };
 
 export const emptyPlatform: Platform = {
@@ -98,5 +114,7 @@ export const emptyPlatform: Platform = {
     throw new Error('Function not implemented.');
   },
 
-  pathSeparator: '/'
+  pathSeparator: '/',
+
+  zones: { empty: noopZone, current: () => noopZone },
 };

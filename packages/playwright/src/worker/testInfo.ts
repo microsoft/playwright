@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, zones } from 'playwright-core/lib/utils';
+import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
 import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
@@ -245,7 +245,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   private _parentStep() {
-    return zones.zoneData<TestStepInternal>('stepZone')
+    return currentZone().data<TestStepInternal>('stepZone')
       ?? this._findLastStageStep(this._steps); // If no parent step on stack, assume the current stage as parent.
   }
 

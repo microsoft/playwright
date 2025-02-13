@@ -17,9 +17,9 @@
 import {
   captureRawStack,
   createGuid,
+  currentZone,
   isString,
   pollAgainstDeadline } from 'playwright-core/lib/utils';
-import { zones } from 'playwright-core/lib/utils';
 
 import { ExpectError, isJestError } from './matcherHint';
 import {
@@ -380,7 +380,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       try {
         setMatcherCallContext({ expectInfo: this._info, testInfo, step: step.info });
         const callback = () => matcher.call(target, ...args);
-        const result = zones.run('stepZone', step, callback);
+        const result = currentZone().with('stepZone', step).run(callback);
         if (result instanceof Promise)
           return result.then(finalizer).catch(reportStepError);
         finalizer();

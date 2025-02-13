@@ -20,8 +20,39 @@ import * as path from 'path';
 import * as util from 'util';
 
 import { colors } from '../../utilsBundle';
-import { Platform } from '../../common/platform';
 import { debugLogger } from './debugLogger';
+import { currentZone, emptyZone } from './zones';
+
+import type { Platform, Zone } from '../../common/platform';
+import type { Zone as ZoneImpl } from './zones';
+
+class NodeZone implements Zone {
+  private _zone: ZoneImpl;
+
+  constructor(zone: ZoneImpl) {
+    this._zone = zone;
+  }
+
+  push<T>(data: T) {
+    return new NodeZone(this._zone.with('apiZone', data));
+  }
+
+  pop() {
+    return new NodeZone(this._zone.without('apiZone'));
+  }
+
+  run<R>(func: () => R): R {
+    return this._zone.run(func);
+  }
+
+  runIgnoreCurrent<R>(func: () => R): R {
+    return emptyZone.run(func);
+  }
+
+  data<T>(): T | undefined {
+    return this._zone.data('apiZone');
+  }
+}
 
 export const nodePlatform: Platform = {
   calculateSha1: (text: string) => {
@@ -48,5 +79,10 @@ export const nodePlatform: Platform = {
 
   path: () => path,
 
-  pathSeparator: path.sep
+  pathSeparator: path.sep,
+
+  zones: {
+    current: () => new NodeZone(currentZone()),
+    empty: new NodeZone(emptyZone),
+  }
 };

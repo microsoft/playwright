@@ -30,7 +30,6 @@ import { LongStandingScope, ManualPromise } from '../utils/isomorphic/manualProm
 import { MultiMap } from '../utils/isomorphic/multimap';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
 import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
-import { zones } from '../utils/zones';
 import { mime } from '../utilsBundle';
 
 import type { BrowserContext } from './browserContext';
@@ -40,8 +39,8 @@ import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray } from '../common/types';
 import type { URLMatch } from '../utils/isomorphic/urlMatch';
-import type { Zone } from '../utils/zones';
 import type * as channels from '@protocol/channels';
+import type { Platform, Zone } from '../common/platform';
 
 export type NetworkCookie = {
   name: string,
@@ -821,14 +820,14 @@ export class RouteHandler {
   readonly handler: RouteHandlerCallback;
   private _ignoreException: boolean = false;
   private _activeInvocations: Set<{ complete: Promise<void>, route: Route }> = new Set();
-  private _svedZone: Zone;
+  private _savedZone: Zone;
 
-  constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER) {
+  constructor(platform: Platform, baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER) {
     this._baseURL = baseURL;
     this._times = times;
     this.url = url;
     this.handler = handler;
-    this._svedZone = zones.current().without('apiZone');
+    this._savedZone = platform.zones.current().pop();
   }
 
   static prepareInterceptionPatterns(handlers: RouteHandler[]) {
@@ -852,7 +851,7 @@ export class RouteHandler {
   }
 
   public async handle(route: Route): Promise<boolean> {
-    return await this._svedZone.run(async () => this._handleImpl(route));
+    return await this._savedZone.run(async () => this._handleImpl(route));
   }
 
   private async _handleImpl(route: Route): Promise<boolean> {

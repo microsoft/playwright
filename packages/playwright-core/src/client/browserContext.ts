@@ -338,7 +338,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
-    this._routes.unshift(new network.RouteHandler(this._options.baseURL, url, handler, options.times));
+    this._routes.unshift(new network.RouteHandler(this._platform, this._options.baseURL, url, handler, options.times));
     await this._updateInterceptionPatterns();
   }
 
