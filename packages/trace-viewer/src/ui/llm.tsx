@@ -169,7 +169,7 @@ class LLMChat {
   getConversation(id: string, systemPrompt: string) {
     if (!this.conversations.has(id)) {
       const conversation = new Conversation(this, systemPrompt);
-      this.conversations.set(id, conversation);
+      this.conversations.set(id, conversation); // TODO: cleanup
     }
     return this.conversations.get(id)!;
   }
@@ -178,36 +178,37 @@ class LLMChat {
 export class Conversation {
   history: LLMMessage[];
   onChange = new EventEmitter<void>();
-  private _abortController: AbortController | undefined;
+  private _abortControllers = new Set<AbortController>();
 
   constructor(private chat: LLMChat, systemPrompt: string) {
     this.history = [{ role: 'developer', content: systemPrompt }];
   }
 
   async send(content: string, displayContent?: string) {
-    if (this.isSending())
-      throw new Error('Already sending');
-
     const response: LLMMessage = { role: 'assistant', content: '' };
     this.history.push({ role: 'user', content, displayContent }, response);
+    const abortController = new AbortController();
+    this._abortControllers.add(abortController);
     this.onChange.fire();
-    this._abortController = new AbortController();
     try {
-      for await (const chunk of this.chat.api.chatCompletion(this.history, this._abortController.signal)) {
+      for await (const chunk of this.chat.api.chatCompletion(this.history, abortController.signal)) {
         response.content += chunk;
         this.onChange.fire();
       }
     } finally {
-      this._abortController = undefined;
+      this._abortControllers.delete(abortController);
+      this.onChange.fire();
     }
   }
 
   isSending(): boolean {
-    return this._abortController !== undefined;
+    return this._abortControllers.size > 0;
   }
 
   abortSending() {
-    this._abortController!.abort();
+    for (const controller of this._abortControllers)
+      controller.abort();
+    this._abortControllers.clear();
     this.onChange.fire();
   }
 

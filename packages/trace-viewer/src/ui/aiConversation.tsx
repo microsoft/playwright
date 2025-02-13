@@ -7,11 +7,11 @@ import type { Conversation, LLMMessage } from './llm';
 export function AIConversation({ history, conversation }: { history: LLMMessage[], conversation: Conversation }) {
   const [input, setInput] = useState('');
 
-  const onSubmit = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setInput('');
-    const content = new FormData(event.target as any).get('content') as string;
-    await conversation.send(content);
+  const onSubmit = useCallback(() => {
+    setInput(content => {
+      conversation.send(content);
+      return '';
+    });
   }, [conversation]);
 
   return (
@@ -34,29 +34,33 @@ export function AIConversation({ history, conversation }: { history: LLMMessage[
         ))}
       </div>
 
-      <form onSubmit={onSubmit} className="input-form">
-        <input
-          type="text"
+      <div className="input-form">
+        <textarea
           name='content'
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              onSubmit();
+            }
+          }}
           placeholder="Ask a question..."
           className="message-input"
         />
         {conversation.isSending() ? (
           <button type="button" className="send-button" onClick={(evt) => {
             evt.preventDefault()
-            console.log("aborting")
             conversation.abortSending();
           }}>
             Cancel
           </button>
         ) : (
-          <button type="submit" className="send-button" disabled={!input.trim()}>
+          <button className="send-button" disabled={!input.trim()} onClick={onSubmit}>
             Send
           </button>  
         )}
-      </form>
+      </div>
     </div>
   );
 }
