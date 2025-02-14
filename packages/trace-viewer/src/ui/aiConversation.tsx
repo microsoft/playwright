@@ -46,7 +46,7 @@ export function AIConversation({ conversationId }: { conversationId: string }) {
               </div>
             )}
             <div className='message-content'>
-              <Markdown>{message.displayContent ?? message.content}</Markdown>
+              <Markdown options={{ disableParsingRawHTML: true }}>{message.displayContent ?? message.content}</Markdown>
             </div>
           </div>
         ))}

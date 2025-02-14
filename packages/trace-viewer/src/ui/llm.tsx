@@ -250,8 +250,7 @@ export function useIsLLMAvailable() {
 }
 
 export function useLLMConversation(id: string) {
-  const chat = useLLMChat();
-  const conversation = React.useMemo(() => chat.getConversation(id), [chat, id]);
+  const conversation = useLLMChat().getConversation(id);
   if (!conversation)
     throw new Error('No conversation found for id: ' + id);
   const [history, setHistory] = React.useState(conversation.history);
