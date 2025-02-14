@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
 
+import { EventEmitter } from './eventEmitter';
 import { Android, AndroidDevice, AndroidSocket } from './android';
 import { Artifact } from './artifact';
 import { Browser } from './browser';
