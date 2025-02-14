@@ -248,3 +248,13 @@ export function useFlash(): [boolean, EffectCallback] {
   }, [setFlash]);
   return [flash, trigger];
 }
+
+export function useCookies() {
+  const cookies = React.useMemo(() => {
+    return document.cookie.split('; ').filter(v => v.includes('=')).map(kv => {
+      const separator = kv.indexOf('=');
+      return [kv.substring(0, separator), kv.substring(separator + 1)];
+    });
+  }, []);
+  return cookies;
+}
