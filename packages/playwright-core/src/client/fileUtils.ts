@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-import type { Platform } from './platform';
+import type { Platform } from '../common/platform';
 
+// Keep in sync with the server.
 export const fileUploadSizeLimit = 50 * 1024 * 1024;
 
 export async function mkdirIfNeeded(platform: Platform, filePath: string) {
   // This will harmlessly throw on windows if the dirname is the root directory.
   await platform.fs().promises.mkdir(platform.path().dirname(filePath), { recursive: true }).catch(() => {});
-}
-
-export async function removeFolders(platform: Platform, dirs: string[]): Promise<Error[]> {
-  return await Promise.all(dirs.map((dir: string) =>
-    platform.fs().promises.rm(dir, { recursive: true, force: true, maxRetries: 10 }).catch(e => e)
-  ));
 }

@@ -25,6 +25,7 @@ import { assert } from '../utils/isomorphic/debug';
 import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { monotonicTime } from '../utils/isomorphic/time';
 import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';
+import { connectOverWebSocket } from './webSocket';
 
 import type { Playwright } from './playwright';
 import type { ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, LaunchServerOptions, Logger } from './types';
@@ -124,7 +125,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     return await this._wrapApiCall(async () => {
       const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
       const headers = { 'x-playwright-browser': this.name(), ...params.headers };
-      const localUtils = this._connection.localUtils();
       const connectParams: channels.LocalUtilsConnectParams = {
         wsEndpoint: params.wsEndpoint,
         headers,
@@ -134,7 +134,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       };
       if ((params as any).__testHookRedirectPortForwarding)
         connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
-      const connection = await localUtils.connect(connectParams);
+      const connection = await connectOverWebSocket(this._connection, connectParams);
       let browser: Browser;
       connection.on('close', () => {
         // Emulate all pages, contexts and the browser closing upon disconnect.

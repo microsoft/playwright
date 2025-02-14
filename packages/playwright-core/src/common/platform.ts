@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import * as crypto from 'crypto';
-import * as fs from 'fs';
-import * as path from 'path';
-
 import { webColors, noColors } from '../utils/isomorphic/colors';
 
+import type * as fs from 'fs';
+import type * as path from 'path';
 import type { Colors } from '../utils/isomorphic/colors';
 
 export type Zone = {
@@ -37,6 +35,8 @@ const noopZone: Zone = {
 };
 
 export type Platform = {
+  name: 'node' | 'web' | 'empty';
+
   calculateSha1(text: string): Promise<string>;
   colors: Colors;
   createGuid: () => string;
@@ -46,21 +46,22 @@ export type Platform = {
   log(name: 'api' | 'channel', message: string | Error | object): void;
   path: () => typeof path;
   pathSeparator: string;
-  ws?: (url: string) => WebSocket;
   zones: { empty: Zone, current: () => Zone; };
 };
 
 export const webPlatform: Platform = {
+  name: 'web',
+
   calculateSha1: async (text: string) => {
     const bytes = new TextEncoder().encode(text);
-    const hashBuffer = await crypto.subtle.digest('SHA-1', bytes);
+    const hashBuffer = await window.crypto.subtle.digest('SHA-1', bytes);
     return Array.from(new Uint8Array(hashBuffer), b => b.toString(16).padStart(2, '0')).join('');
   },
 
   colors: webColors,
 
   createGuid: () => {
-    return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+    return Array.from(window.crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
   },
 
   fs: () => {
@@ -82,12 +83,12 @@ export const webPlatform: Platform = {
 
   pathSeparator: '/',
 
-  ws: (url: string) => new WebSocket(url),
-
   zones: { empty: noopZone, current: () => noopZone },
 };
 
 export const emptyPlatform: Platform = {
+  name: 'empty',
+
   calculateSha1: async () => {
     throw new Error('Not implemented');
   },

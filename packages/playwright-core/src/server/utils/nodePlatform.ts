@@ -45,16 +45,14 @@ class NodeZone implements Zone {
     return this._zone.run(func);
   }
 
-  runIgnoreCurrent<R>(func: () => R): R {
-    return emptyZone.run(func);
-  }
-
   data<T>(): T | undefined {
     return this._zone.data('apiZone');
   }
 }
 
 export const nodePlatform: Platform = {
+  name: 'node',
+
   calculateSha1: (text: string) => {
     const sha1 = crypto.createHash('sha1');
     sha1.update(text);

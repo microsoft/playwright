@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isUnderTest } from '../utils';
+import { isUnderTest } from '../utils/isomorphic/debug';
 
 export class ValidationError extends Error {}
 export type Validator = (arg: any, path: string, context: ValidatorContext) => any;

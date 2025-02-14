@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-import { ZipFile } from '../utils/zipFile';
+import * as fs from 'fs';
+import * as path from 'path';
 
-import type { HeadersArray } from './types';
+import { createGuid } from './utils/crypto';
+import { ZipFile } from './utils/zipFile';
+
+import type { HeadersArray } from '../common/types';
 import type * as har from '@trace/har';
-import type { Platform } from './platform';
 
 const redirectStatus = [301, 302, 303, 307, 308];
 
@@ -27,11 +30,9 @@ export class HarBackend {
   private _harFile: har.HARFile;
   private _zipFile: ZipFile | null;
   private _baseDir: string | null;
-  private _platform: Platform;
 
-  constructor(platform: Platform, harFile: har.HARFile, baseDir: string | null, zipFile: ZipFile | null) {
-    this._platform = platform;
-    this.id = platform.createGuid();
+  constructor(harFile: har.HARFile, baseDir: string | null, zipFile: ZipFile | null) {
+    this.id = createGuid();
     this._harFile = harFile;
     this._baseDir = baseDir;
     this._zipFile = zipFile;
@@ -79,7 +80,7 @@ export class HarBackend {
       if (this._zipFile)
         buffer = await this._zipFile.read(file);
       else
-        buffer = await this._platform.fs().promises.readFile(this._platform.path().resolve(this._baseDir!, file));
+        buffer = await fs.promises.readFile(path.resolve(this._baseDir!, file));
     } else {
       buffer = Buffer.from(content.text || '', content.encoding === 'base64' ? 'base64' : 'utf-8');
     }

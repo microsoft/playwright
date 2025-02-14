@@ -30,7 +30,7 @@ import { LongStandingScope, ManualPromise } from '../utils/isomorphic/manualProm
 import { MultiMap } from '../utils/isomorphic/multimap';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
 import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
-import { mime } from '../utilsBundle';
+import { getMimeTypeForPath } from '../utils/isomorphic/mimeType';
 
 import type { BrowserContext } from './browserContext';
 import type { Page } from './page';
@@ -413,7 +413,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     else if (options.json)
       headers['content-type'] = 'application/json';
     else if (options.path)
-      headers['content-type'] = mime.getType(options.path) || 'application/octet-stream';
+      headers['content-type'] = getMimeTypeForPath(options.path) || 'application/octet-stream';
     if (length && !('content-length' in headers))
       headers['content-length'] = String(length);
 

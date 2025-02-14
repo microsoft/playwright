@@ -20,10 +20,10 @@ import { promisify } from 'util';
 import { Frame } from './frame';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import { assert } from '../utils/isomorphic/debug';
-import { fileUploadSizeLimit, mkdirIfNeeded } from '../common/fileUtils';
+import { fileUploadSizeLimit, mkdirIfNeeded } from './fileUtils';
 import { isString } from '../utils/isomorphic/rtti';
-import { mime } from '../utilsBundle';
 import { WritableStream } from './writableStream';
+import { getMimeTypeForPath } from '../utils/isomorphic/mimeType';
 
 import type { BrowserContext } from './browserContext';
 import type { ChannelOwner } from './channelOwner';
@@ -327,7 +327,7 @@ export async function convertInputFiles(platform: Platform, files: string | File
 
 export function determineScreenshotType(options: { path?: string, type?: 'png' | 'jpeg' }): 'png' | 'jpeg' | undefined {
   if (options.path) {
-    const mimeType = mime.getType(options.path);
+    const mimeType = getMimeTypeForPath(options.path);
     if (mimeType === 'image/png')
       return 'png';
     else if (mimeType === 'image/jpeg')
