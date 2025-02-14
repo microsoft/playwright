@@ -411,6 +411,26 @@ export class TestInfoImpl implements TestInfo {
     this._timeoutManager.setIgnoreTimeouts();
   }
 
+  /**
+   * Enables a promise API call to be tracked by the test, alerting if unawaited.
+   *
+   * **NOTE:** Returning from an async function wraps the result in a promise, regardless of whether the return value is a promise. This will automatically mark the promise as awaited. Avoid this.
+   */
+  _wrapPromiseAPIResult<T>(promise: Promise<T>): Promise<T> {
+    this.unusedAsyncApiCalls.add(promise);
+
+    const oldThen = promise.then;
+    promise.then = ((...args: any[]) => {
+      if (args[0] !== undefined) {
+        // onfulfilled callback, which means .then() was called
+        this.unusedAsyncApiCalls.delete(promise);
+      }
+      return oldThen.call(promise, ...args);
+    }) as any;
+
+    return promise;
+  }
+
   // ------------ TestInfo methods ------------
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
