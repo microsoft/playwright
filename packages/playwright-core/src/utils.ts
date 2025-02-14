@@ -29,9 +29,6 @@ export * from './utils/isomorphic/urlMatch';
 export * from './utils/isomorphic/headers';
 export * from './utils/isomorphic/semaphore';
 export * from './utils/isomorphic/stackTrace';
-export * from './utils/task';
-export * from './utils/zipFile';
-export * from './utils/zones';
 
 export * from './server/utils/ascii';
 export * from './server/utils/comparators';
@@ -49,7 +46,10 @@ export * from './server/utils/processLauncher';
 export * from './server/utils/profiler';
 export * from './server/utils/socksProxy';
 export * from './server/utils/spawnAsync';
+export * from './server/utils/task';
 export * from './server/utils/userAgent';
 export * from './server/utils/wsServer';
+export * from './server/utils/zipFile';
+export * from './server/utils/zones';
 
 export { colors } from './utilsBundle';

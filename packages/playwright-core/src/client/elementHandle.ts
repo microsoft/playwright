@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-import { pipeline } from 'stream';
-import { promisify } from 'util';
-
 import { Frame } from './frame';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import { assert } from '../utils/isomorphic/debug';
-import { fileUploadSizeLimit, mkdirIfNeeded } from '../common/fileUtils';
+import { fileUploadSizeLimit, mkdirIfNeeded } from './fileUtils';
 import { isString } from '../utils/isomorphic/rtti';
-import { mime } from '../utilsBundle';
 import { WritableStream } from './writableStream';
+import { getMimeTypeForPath } from '../utils/isomorphic/mimeType';
 
 import type { BrowserContext } from './browserContext';
 import type { ChannelOwner } from './channelOwner';
@@ -33,8 +30,6 @@ import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { Platform } from '../common/platform';
 import type * as channels from '@protocol/channels';
-
-const pipelineAsync = promisify(pipeline);
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements api.ElementHandle {
   readonly _elementChannel: channels.ElementHandleChannel;
@@ -306,7 +301,7 @@ export async function convertInputFiles(platform: Platform, files: string | File
       }), true);
       for (let i = 0; i < files.length; i++) {
         const writable = WritableStream.from(writableStreams[i]);
-        await pipelineAsync(platform.fs().createReadStream(files[i]), writable.stream());
+        await platform.streamFile(files[i], writable.stream());
       }
       return {
         directoryStream: rootDir,
@@ -327,7 +322,7 @@ export async function convertInputFiles(platform: Platform, files: string | File
 
 export function determineScreenshotType(options: { path?: string, type?: 'png' | 'jpeg' }): 'png' | 'jpeg' | undefined {
   if (options.path) {
-    const mimeType = mime.getType(options.path);
+    const mimeType = getMimeTypeForPath(options.path);
     if (mimeType === 'image/png')
       return 'png';
     else if (mimeType === 'image/jpeg')

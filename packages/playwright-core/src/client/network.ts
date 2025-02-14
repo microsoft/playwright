@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { URLSearchParams } from 'url';
-
 import { ChannelOwner } from './channelOwner';
 import { isTargetClosedError } from './errors';
 import { Events } from './events';
@@ -30,8 +28,7 @@ import { LongStandingScope, ManualPromise } from '../utils/isomorphic/manualProm
 import { MultiMap } from '../utils/isomorphic/multimap';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
 import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
-import { zones } from '../utils/zones';
-import { mime } from '../utilsBundle';
+import { getMimeTypeForPath } from '../utils/isomorphic/mimeType';
 
 import type { BrowserContext } from './browserContext';
 import type { Page } from './page';
@@ -40,8 +37,8 @@ import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
 import type { HeadersArray } from '../common/types';
 import type { URLMatch } from '../utils/isomorphic/urlMatch';
-import type { Zone } from '../utils/zones';
 import type * as channels from '@protocol/channels';
+import type { Platform, Zone } from '../common/platform';
 
 export type NetworkCookie = {
   name: string,
@@ -414,7 +411,7 @@ export class Route extends ChannelOwner<channels.RouteChannel> implements api.Ro
     else if (options.json)
       headers['content-type'] = 'application/json';
     else if (options.path)
-      headers['content-type'] = mime.getType(options.path) || 'application/octet-stream';
+      headers['content-type'] = getMimeTypeForPath(options.path) || 'application/octet-stream';
     if (length && !('content-length' in headers))
       headers['content-length'] = String(length);
 
@@ -821,14 +818,14 @@ export class RouteHandler {
   readonly handler: RouteHandlerCallback;
   private _ignoreException: boolean = false;
   private _activeInvocations: Set<{ complete: Promise<void>, route: Route }> = new Set();
-  private _svedZone: Zone;
+  private _savedZone: Zone;
 
-  constructor(baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER) {
+  constructor(platform: Platform, baseURL: string | undefined, url: URLMatch, handler: RouteHandlerCallback, times: number = Number.MAX_SAFE_INTEGER) {
     this._baseURL = baseURL;
     this._times = times;
     this.url = url;
     this.handler = handler;
-    this._svedZone = zones.current().without('apiZone');
+    this._savedZone = platform.zones.current().pop();
   }
 
   static prepareInterceptionPatterns(handlers: RouteHandler[]) {
@@ -852,7 +849,7 @@ export class RouteHandler {
   }
 
   public async handle(route: Route): Promise<boolean> {
-    return await this._svedZone.run(async () => this._handleImpl(route));
+    return await this._savedZone.run(async () => this._handleImpl(route));
   }
 
   private async _handleImpl(route: Route): Promise<boolean> {

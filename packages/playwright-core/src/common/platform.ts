@@ -14,64 +14,50 @@
  * limitations under the License.
  */
 
-import * as crypto from 'crypto';
-import * as fs from 'fs';
-import * as path from 'path';
-
 import { webColors, noColors } from '../utils/isomorphic/colors';
 
+import type * as fs from 'fs';
+import type * as path from 'path';
 import type { Colors } from '../utils/isomorphic/colors';
+import type { Readable, Writable } from 'stream';
+import type * as channels from '@protocol/channels';
 
+export type Zone = {
+  push(data: unknown): Zone;
+  pop(): Zone;
+  run<R>(func: () => R): R;
+  data<T>(): T | undefined;
+};
+
+const noopZone: Zone = {
+  push: () => noopZone,
+  pop: () => noopZone,
+  run: func => func(),
+  data: () => undefined,
+};
 
 export type Platform = {
+  name: 'node' | 'web' | 'empty';
+
   calculateSha1(text: string): Promise<string>;
   colors: Colors;
   createGuid: () => string;
   fs: () => typeof fs;
   inspectCustom: symbol | undefined;
+  isDebuggerAttached(): boolean;
   isLogEnabled(name: 'api' | 'channel'): boolean;
   log(name: 'api' | 'channel', message: string | Error | object): void;
   path: () => typeof path;
   pathSeparator: string;
-  ws?: (url: string) => WebSocket;
-};
-
-export const webPlatform: Platform = {
-  calculateSha1: async (text: string) => {
-    const bytes = new TextEncoder().encode(text);
-    const hashBuffer = await crypto.subtle.digest('SHA-1', bytes);
-    return Array.from(new Uint8Array(hashBuffer), b => b.toString(16).padStart(2, '0')).join('');
-  },
-
-  colors: webColors,
-
-  createGuid: () => {
-    return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
-  },
-
-  fs: () => {
-    throw new Error('File system is not available');
-  },
-
-  inspectCustom: undefined,
-
-
-  isLogEnabled(name: 'api' | 'channel') {
-    return false;
-  },
-
-  log(name: 'api' | 'channel', message: string | Error | object) {},
-
-  path: () => {
-    throw new Error('Path module is not available');
-  },
-
-  pathSeparator: '/',
-
-  ws: (url: string) => new WebSocket(url),
+  streamFile(path: string, writable: Writable): Promise<void>,
+  streamReadable: (channel: channels.StreamChannel) => Readable,
+  streamWritable: (channel: channels.WritableStreamChannel) => Writable,
+  zones: { empty: Zone, current: () => Zone; };
 };
 
 export const emptyPlatform: Platform = {
+  name: 'empty',
+
   calculateSha1: async () => {
     throw new Error('Not implemented');
   },
@@ -88,6 +74,8 @@ export const emptyPlatform: Platform = {
 
   inspectCustom: undefined,
 
+  isDebuggerAttached: () => false,
+
   isLogEnabled(name: 'api' | 'channel') {
     return false;
   },
@@ -98,5 +86,37 @@ export const emptyPlatform: Platform = {
     throw new Error('Function not implemented.');
   },
 
-  pathSeparator: '/'
+  pathSeparator: '/',
+
+  streamFile(path: string, writable: Writable): Promise<void> {
+    throw new Error('Streams are not available');
+  },
+
+  streamReadable: (channel: channels.StreamChannel) => {
+    throw new Error('Streams are not available');
+  },
+
+  streamWritable: (channel: channels.WritableStreamChannel) => {
+    throw new Error('Streams are not available');
+  },
+
+  zones: { empty: noopZone, current: () => noopZone },
+};
+
+export const webPlatform: Platform = {
+  ...emptyPlatform,
+
+  name: 'web',
+
+  calculateSha1: async (text: string) => {
+    const bytes = new TextEncoder().encode(text);
+    const hashBuffer = await window.crypto.subtle.digest('SHA-1', bytes);
+    return Array.from(new Uint8Array(hashBuffer), b => b.toString(16).padStart(2, '0')).join('');
+  },
+
+  colors: webColors,
+
+  createGuid: () => {
+    return Array.from(window.crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+  },
 };

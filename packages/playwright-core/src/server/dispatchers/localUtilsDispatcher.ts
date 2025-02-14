@@ -16,8 +16,7 @@
 
 import { Dispatcher } from './dispatcher';
 import { SdkObject } from '../../server/instrumentation';
-import * as localUtils from '../../common/localUtils';
-import { nodePlatform } from '../utils/nodePlatform';
+import * as localUtils from '../localUtils';
 import { getUserAgent } from '../utils/userAgent';
 import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
@@ -26,7 +25,7 @@ import { SocksInterceptor } from '../socksInterceptor';
 import { WebSocketTransport } from '../transport';
 import { fetchData } from '../utils/network';
 
-import type { HarBackend } from '../../common/harBackend';
+import type { HarBackend } from '../harBackend';
 import type { CallMetadata } from '../instrumentation';
 import type { Playwright } from '../playwright';
 import type { RootDispatcher } from './dispatcher';
@@ -50,11 +49,11 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
   }
 
   async zip(params: channels.LocalUtilsZipParams): Promise<void> {
-    return await localUtils.zip(nodePlatform, this._stackSessions, params);
+    return await localUtils.zip(this._stackSessions, params);
   }
 
   async harOpen(params: channels.LocalUtilsHarOpenParams, metadata: CallMetadata): Promise<channels.LocalUtilsHarOpenResult> {
-    return await localUtils.harOpen(nodePlatform, this._harBackends, params);
+    return await localUtils.harOpen(this._harBackends, params);
   }
 
   async harLookup(params: channels.LocalUtilsHarLookupParams, metadata: CallMetadata): Promise<channels.LocalUtilsHarLookupResult> {
@@ -74,7 +73,7 @@ export class LocalUtilsDispatcher extends Dispatcher<{ guid: string }, channels.
   }
 
   async traceDiscarded(params: channels.LocalUtilsTraceDiscardedParams, metadata?: CallMetadata | undefined): Promise<void> {
-    return await localUtils.traceDiscarded(nodePlatform, this._stackSessions, params);
+    return await localUtils.traceDiscarded(this._stackSessions, params);
   }
 
   async addStackToTracingNoReply(params: channels.LocalUtilsAddStackToTracingNoReplyParams, metadata?: CallMetadata | undefined): Promise<void> {

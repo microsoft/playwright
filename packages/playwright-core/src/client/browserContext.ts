@@ -35,7 +35,7 @@ import { Waiter } from './waiter';
 import { WebError } from './webError';
 import { Worker } from './worker';
 import { TimeoutSettings } from '../utils/isomorphic/timeoutSettings';
-import { mkdirIfNeeded } from '../common/fileUtils';
+import { mkdirIfNeeded } from './fileUtils';
 import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { urlMatchesEqual } from '../utils/isomorphic/urlMatch';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
@@ -338,7 +338,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
-    this._routes.unshift(new network.RouteHandler(this._options.baseURL, url, handler, options.times));
+    this._routes.unshift(new network.RouteHandler(this._platform, this._options.baseURL, url, handler, options.times));
     await this._updateInterceptionPatterns();
   }
 
@@ -361,11 +361,14 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full' } = {}): Promise<void> {
+    const localUtils = this._connection.localUtils();
+    if (!localUtils)
+      throw new Error('Route from har is not supported in thin clients');
     if (options.update) {
       await this._recordIntoHAR(har, null, options);
       return;
     }
-    const harRouter = await HarRouter.create(this._connection.localUtils(), har, options.notFound || 'abort', { urlMatch: options.url });
+    const harRouter = await HarRouter.create(localUtils, har, options.notFound || 'abort', { urlMatch: options.url });
     this._harRouters.push(harRouter);
     await harRouter.addContextRoute(this);
   }
@@ -484,8 +487,11 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         const isCompressed = harParams.content === 'attach' || harParams.path.endsWith('.zip');
         const needCompressed = harParams.path.endsWith('.zip');
         if (isCompressed && !needCompressed) {
+          const localUtils = this._connection.localUtils();
+          if (!localUtils)
+            throw new Error('Uncompressed har is not supported in thin clients');
           await artifact.saveAs(harParams.path + '.tmp');
-          await this._connection.localUtils().harUnzip({ zipFile: harParams.path + '.tmp', harFile: harParams.path });
+          await localUtils.harUnzip({ zipFile: harParams.path + '.tmp', harFile: harParams.path });
         } else {
           await artifact.saveAs(harParams.path);
         }

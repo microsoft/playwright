@@ -520,7 +520,8 @@ export class BidiPage implements PageDelegate {
   }
 
   async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
-    throw new Error('Setting FilePayloads is not supported in Bidi.');
+    await handle.evaluateInUtility(([injected, node, files]) =>
+      injected.setInputFiles(node, files), files);
   }
 
   async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {

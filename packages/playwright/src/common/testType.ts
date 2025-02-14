@@ -15,7 +15,7 @@
  */
 
 import { errors } from 'playwright-core';
-import { getPackageManagerExecCommand, monotonicTime, raceAgainstDeadline, zones } from 'playwright-core/lib/utils';
+import { getPackageManagerExecCommand, monotonicTime, raceAgainstDeadline, currentZone } from 'playwright-core/lib/utils';
 
 import { currentTestInfo, currentlyLoadingFileSuite, setCurrentlyLoadingFileSuite } from './globals';
 import { Suite, TestCase } from './test';
@@ -266,7 +266,7 @@ export class TestTypeImpl {
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
     const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
-    return await zones.run('stepZone', step, async () => {
+    return await currentZone().with('stepZone', step).run(async () => {
       try {
         let result: Awaited<ReturnType<typeof raceAgainstDeadline<T>>> | undefined = undefined;
         result = await raceAgainstDeadline(async () => {
