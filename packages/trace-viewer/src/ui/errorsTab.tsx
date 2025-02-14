@@ -27,7 +27,7 @@ import { fixTestPrompt } from '@web/components/prompts';
 import type { GitCommitInfo } from '@testIsomorphic/types';
 import { AIConversation } from './aiConversation';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { useLLMChat, useLLMConversation } from './llm';
+import { useIsLLMAvailable, useLLMChat, useLLMConversation } from './llm';
 import { useAsyncMemo } from '@web/uiUtils';
 
 const GitCommitInfoContext = React.createContext<GitCommitInfo | undefined>(undefined);
@@ -99,7 +99,7 @@ export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined):
 
 function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSource }: { message: string, error: ErrorDescription, errorId: string, sdkLanguage: Language, pageSnapshot?: string, revealInSource: (error: ErrorDescription) => void  }) {
   const [showLLM, setShowLLM] = React.useState(false);
-  const llmAvailable = !!useLLMChat();
+  const llmAvailable = useIsLLMAvailable();
   const gitCommitInfo = useGitCommitInfo();
   const diff = gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'];
 
@@ -127,7 +127,7 @@ function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSou
       </div>}
       <span style={{ position: 'absolute', right: '5px' }}>
         {llmAvailable
-          ? <ToolbarButton onClick={() => setShowLLM(v => !v)} style={{ width: '96px', justifyContent: 'center' }} title='Fix with AI' className='copy-to-clipboard-text-button'>{showLLM ? 'Hide AI' : 'Fix with AI'}</ToolbarButton>
+          ? <FixWithAIButton conversationId={errorId} onChange={setShowLLM} value={showLLM} />
           : <CopyPromptButton error={message} pageSnapshot={pageSnapshot} diff={diff} />}
       </span>
     </div>
@@ -136,6 +136,29 @@ function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSou
 
     {showLLM && <AIErrorConversation error={message} pageSnapshot={pageSnapshot} conversationId={errorId} diff={diff} />}
   </div>;
+}
+
+function FixWithAIButton({ conversationId, value, onChange }: { conversationId: string, value: boolean, onChange: React.Dispatch<React.SetStateAction<boolean>> }) {
+  const chat = useLLMChat();
+
+  return <ToolbarButton
+    onClick={() => {
+      if (!chat.getConversation(conversationId)) {
+        chat.startConversation(conversationId, [
+          `My Playwright test failed. What's going wrong?`,
+          `Please give me a suggestion how to fix it, and then explain what went wrong. Be very concise and apply Playwright best practices.`,
+          `Don't include many headings in your output. Make sure what you're saying is correct, and take into account whether there might be a bug in the app.`
+        ].join('\n'));
+      }
+
+      onChange(v => !v);
+    }}
+    style={{ width: '96px', justifyContent: 'center' }}
+    title='Fix with AI'
+    className='copy-to-clipboard-text-button'
+  >
+    {value ? 'Hide AI' : 'Fix with AI'}
+  </ToolbarButton>;
 }
 
 export const ErrorsTab: React.FunctionComponent<{
@@ -159,14 +182,7 @@ export const ErrorsTab: React.FunctionComponent<{
 };
 
 export function AIErrorConversation({ conversationId, error, pageSnapshot, diff }: { conversationId: string, error: string, pageSnapshot?: string, diff?: string }) {
-  const [history, conversation] = useLLMConversation(
-      conversationId,
-      [
-        `My Playwright test failed. What's going wrong?`,
-        `Please give me a suggestion how to fix it, and then explain what went wrong. Be very concise and apply Playwright best practices.`,
-        `Don't include many headings in your output. Make sure what you're saying is correct, and take into account whether there might be a bug in the app.`
-      ].join('\n')
-  );
+  const [history, conversation] = useLLMConversation(conversationId);
 
   React.useEffect(() => {
     let content = `Here's the error: ${error}`;

@@ -170,12 +170,14 @@ class LLMChat {
 
   constructor(readonly api: LLM) {}
 
-  getConversation(id: string, systemPrompt: string) {
-    if (!this.conversations.has(id)) {
-      const conversation = new Conversation(this, systemPrompt);
-      this.conversations.set(id, conversation); // TODO: cleanup
-    }
-    return this.conversations.get(id)!;
+  getConversation(id: string) {
+    return this.conversations.get(id);
+  }
+
+  startConversation(id: string, systemPrompt: string) {
+    const conversation = new Conversation(this, systemPrompt);
+    this.conversations.set(id, conversation); // TODO: cleanup
+    return conversation;
   }
 }
 
@@ -237,18 +239,25 @@ export function LLMProvider({ children }: React.PropsWithChildren<{}>) {
 }
 
 export function useLLMChat() {
-  return React.useContext(llmContext);
-}
-
-export function useLLMConversation(id: string, systemPrompt: string) {
-  const chat = useLLMChat();
+  const chat = React.useContext(llmContext);
   if (!chat)
     throw new Error('No LLM chat available, make sure theres a LLMProvider above');
-  const conversation = React.useMemo(() => chat.getConversation(id, systemPrompt), [chat, id]); // eslint-disable-line react-hooks/exhaustive-deps
+  return chat;
+}
+
+export function useIsLLMAvailable() {
+  return !!React.useContext(llmContext);
+}
+
+export function useLLMConversation(id: string) {
+  const chat = useLLMChat();
+  const conversation = React.useMemo(() => chat.getConversation(id), [chat, id]);
+  if (!conversation)
+    throw new Error('No conversation found for id: ' + id);
   const [history, setHistory] = React.useState(conversation.history);
   React.useEffect(() => {
     function update() {
-      setHistory([...conversation.history]);
+      setHistory([...conversation!.history]);
     }
     update();
     const subscription = conversation.onChange.event(update);
