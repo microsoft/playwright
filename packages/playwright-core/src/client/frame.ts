@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
-
+import { EventEmitter } from './eventEmitter';
 import { ChannelOwner } from './channelOwner';
 import { addSourceUrlToScript } from './clientHelper';
 import { ElementHandle, convertInputFiles, convertSelectOptionValues } from './elementHandle';

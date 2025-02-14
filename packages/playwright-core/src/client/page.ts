@@ -799,7 +799,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async pause(_options?: { __testHookKeepTestTimeout: boolean }) {
-    if (require('inspector').url())
+    if (this._platform.isDebuggerAttached())
       return;
     const defaultNavigationTimeout = this._browserContext._timeoutSettings.defaultNavigationTimeout();
     const defaultTimeout = this._browserContext._timeoutSettings.defaultTimeout();

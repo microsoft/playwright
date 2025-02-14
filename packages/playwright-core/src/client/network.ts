@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { URLSearchParams } from 'url';
-
 import { ChannelOwner } from './channelOwner';
 import { isTargetClosedError } from './errors';
 import { Events } from './events';

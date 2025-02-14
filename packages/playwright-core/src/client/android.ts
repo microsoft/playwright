@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
-
+import { EventEmitter } from './eventEmitter';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { TargetClosedError, isTargetClosedError } from './errors';

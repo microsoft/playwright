@@ -67,6 +67,8 @@ export const nodePlatform: Platform = {
 
   inspectCustom: util.inspect.custom,
 
+  isDebuggerAttached: () => !!require('inspector').url(),
+
   isLogEnabled(name: 'api' | 'channel') {
     return debugLogger.isEnabled(name);
   },

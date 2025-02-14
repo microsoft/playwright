@@ -42,6 +42,7 @@ export type Platform = {
   createGuid: () => string;
   fs: () => typeof fs;
   inspectCustom: symbol | undefined;
+  isDebuggerAttached(): boolean;
   isLogEnabled(name: 'api' | 'channel'): boolean;
   log(name: 'api' | 'channel', message: string | Error | object): void;
   path: () => typeof path;
@@ -70,6 +71,7 @@ export const webPlatform: Platform = {
 
   inspectCustom: undefined,
 
+  isDebuggerAttached: () => false,
 
   isLogEnabled(name: 'api' | 'channel') {
     return false;
@@ -104,6 +106,8 @@ export const emptyPlatform: Platform = {
   },
 
   inspectCustom: undefined,
+
+  isDebuggerAttached: () => false,
 
   isLogEnabled(name: 'api' | 'channel') {
     return false;
