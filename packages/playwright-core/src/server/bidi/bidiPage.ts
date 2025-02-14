@@ -519,11 +519,6 @@ export class BidiPage implements PageDelegate {
     return quads as types.Quad[];
   }
 
-  async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
-    await handle.evaluateInUtility(([injected, node, files]) =>
-      injected.setInputFiles(node, files), files);
-  }
-
   async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
     const fromContext = toBidiExecutionContext(handle._context);
     await this._session.send('input.setFiles', {
