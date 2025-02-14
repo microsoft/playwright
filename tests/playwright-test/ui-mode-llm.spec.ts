@@ -53,8 +53,8 @@ test('openai', async ({ runUITest, server }) => {
   await page.getByRole('button', { name: 'Fix with AI' }).click();
   await expect(page.getByRole('tabpanel', { name: 'Errors' })).toMatchAriaSnapshot(`
     - tabpanel "Errors":
-      - paragraph: Help me with the error above. Take the page snapshot into account.
-      - paragraph: This is a mock response
+      - text: Help me with the error above. Take the page snapshot into account.
+      - text: This is a mock response
   `);
 });
 
@@ -93,7 +93,7 @@ test('anthropic', async ({ runUITest, server }) => {
   await page.getByRole('button', { name: 'Fix with AI' }).click();
   await expect(page.getByRole('tabpanel', { name: 'Errors' })).toMatchAriaSnapshot(`
     - tabpanel "Errors":
-      - paragraph: Help me with the error above. Take the page snapshot into account.
-      - paragraph: This is a mock response
+      - text: Help me with the error above. Take the page snapshot into account.
+      - text: This is a mock response
   `);
 });
