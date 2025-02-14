@@ -66,7 +66,6 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless }
   }
 
   if (platform === 'win32') {
-    expected.datalistelem = false;
     expected.getusermedia = false;
     expected.peerconnection = false;
     expected.speechrecognition = false;
@@ -75,7 +74,6 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless }
     expected.webaudio = false;
     expected.gamepads = false;
 
-    expected.input.list = false;
     delete expected.datalistelem;
 
     expected.publickeycredential = false;
@@ -84,8 +82,6 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless }
     expected.datachannel = false;
 
     expected.inputtypes.color = false;
-    expected.inputtypes.month = false;
-    expected.inputtypes.week = false;
     expected.inputtypes.date = false;
     expected.inputtypes['datetime-local'] = false;
     expected.inputtypes.time = false;
@@ -133,7 +129,6 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, server,
   }
 
   if (platform === 'win32') {
-    expected.datalistelem = false;
     expected.getusermedia = false;
     expected.peerconnection = false;
     expected.speechrecognition = false;
@@ -141,8 +136,6 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, server,
     expected.todataurljpeg = false;
     expected.webaudio = false;
     expected.gamepads = false;
-
-    expected.input.list = false;
 
     delete expected.datalistelem;
 
@@ -152,8 +145,6 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, server,
     expected.datachannel = false;
 
     expected.inputtypes.color = false;
-    expected.inputtypes.month = false;
-    expected.inputtypes.week = false;
     expected.inputtypes.date = false;
     expected.inputtypes['datetime-local'] = false;
     expected.inputtypes.time = false;
