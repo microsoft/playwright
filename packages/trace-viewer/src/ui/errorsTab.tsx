@@ -127,28 +127,43 @@ function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSou
       </div>}
       <span style={{ position: 'absolute', right: '5px' }}>
         {llmAvailable
-          ? <FixWithAIButton conversationId={errorId} onChange={setShowLLM} value={showLLM} />
+          ? <FixWithAIButton conversationId={errorId} onChange={setShowLLM} value={showLLM} error={message} diff={diff} pageSnapshot={pageSnapshot} />
           : <CopyPromptButton error={message} pageSnapshot={pageSnapshot} diff={diff} />}
       </span>
     </div>
 
     <ErrorMessage error={message} />
 
-    {showLLM && <AIErrorConversation error={message} pageSnapshot={pageSnapshot} conversationId={errorId} diff={diff} />}
+    {showLLM && <AIConversation conversationId={errorId} />}
   </div>;
 }
 
-function FixWithAIButton({ conversationId, value, onChange }: { conversationId: string, value: boolean, onChange: React.Dispatch<React.SetStateAction<boolean>> }) {
+function FixWithAIButton({ conversationId, value, onChange, error, diff, pageSnapshot }: { conversationId: string, value: boolean, onChange: React.Dispatch<React.SetStateAction<boolean>>, error: string, diff?: string, pageSnapshot?: string }) {
   const chat = useLLMChat();
 
   return <ToolbarButton
     onClick={() => {
       if (!chat.getConversation(conversationId)) {
-        chat.startConversation(conversationId, [
+        const conversation = chat.startConversation(conversationId, [
           `My Playwright test failed. What's going wrong?`,
           `Please give me a suggestion how to fix it, and then explain what went wrong. Be very concise and apply Playwright best practices.`,
           `Don't include many headings in your output. Make sure what you're saying is correct, and take into account whether there might be a bug in the app.`
         ].join('\n'));
+
+        let content = `Here's the error: ${error}`;
+        let displayContent = `Help me with the error above.`;
+
+        if (diff)
+          content += `\n\nCode diff:\n${diff}`;
+        if (pageSnapshot)
+          content += `\n\nPage snapshot:\n${pageSnapshot}`;
+
+        if (diff)
+          displayContent += ` Take the code diff${pageSnapshot ? ' and page snapshot' : ''} into account.`;
+        else if (pageSnapshot)
+          displayContent += ` Take the page snapshot into account.`;
+
+        conversation.send(content, displayContent);
       }
 
       onChange(v => !v);
@@ -180,26 +195,3 @@ export const ErrorsTab: React.FunctionComponent<{
     })}
   </div>;
 };
-
-export function AIErrorConversation({ conversationId, error, pageSnapshot, diff }: { conversationId: string, error: string, pageSnapshot?: string, diff?: string }) {
-  const [history, conversation] = useLLMConversation(conversationId);
-
-  React.useEffect(() => {
-    let content = `Here's the error: ${error}`;
-    let displayContent = `Help me with the error above.`;
-
-    if (diff)
-      content += `\n\nCode diff:\n${diff}`;
-    if (pageSnapshot)
-      content += `\n\nPage snapshot:\n${pageSnapshot}`;
-
-    if (diff)
-      displayContent += ` Take the code diff${pageSnapshot ? ' and page snapshot' : ''} into account.`;
-    else if (pageSnapshot)
-      displayContent += ` Take the page snapshot into account.`;
-
-    conversation.send(content, displayContent);
-  }, [conversation]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return <AIConversation history={history} conversation={conversation} />;
-}

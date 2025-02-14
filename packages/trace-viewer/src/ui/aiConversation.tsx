@@ -17,9 +17,10 @@ import { useCallback, useState } from 'react';
 import Markdown from 'react-markdown';
 import './aiConversation.css';
 import { clsx } from '@web/uiUtils';
-import type { Conversation, LLMMessage } from './llm';
+import { useLLMConversation } from './llm';
 
-export function AIConversation({ history, conversation }: { history: LLMMessage[], conversation: Conversation }) {
+export function AIConversation({ conversationId }: { conversationId: string }) {
+  const [history, conversation] = useLLMConversation(conversationId);
   const [input, setInput] = useState('');
 
   const onSubmit = useCallback(() => {
