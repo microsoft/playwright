@@ -82,8 +82,6 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless }
     expected.datachannel = false;
 
     expected.inputtypes.color = false;
-    expected.inputtypes.month = false;
-    expected.inputtypes.week = false;
     expected.inputtypes.date = false;
     expected.inputtypes['datetime-local'] = false;
     expected.inputtypes.time = false;
@@ -147,8 +145,6 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, server,
     expected.datachannel = false;
 
     expected.inputtypes.color = false;
-    expected.inputtypes.month = false;
-    expected.inputtypes.week = false;
     expected.inputtypes.date = false;
     expected.inputtypes['datetime-local'] = false;
     expected.inputtypes.time = false;
