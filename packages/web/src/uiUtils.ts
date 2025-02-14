@@ -255,6 +255,6 @@ export function useCookies() {
       const separator = kv.indexOf('=');
       return [kv.substring(0, separator), kv.substring(separator + 1)];
     });
-  }, [document.cookie]);
+  }, []);
   return cookies;
 }

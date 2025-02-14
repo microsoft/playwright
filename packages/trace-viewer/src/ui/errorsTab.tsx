@@ -183,7 +183,7 @@ export function AIErrorConversation({ conversationId, error, pageSnapshot, diff 
       displayContent += ` Take the page snapshot into account.`;
 
     conversation.send(content, displayContent);
-  }, [conversation]);
+  }, [conversation]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <AIConversation history={history} conversation={conversation} />;
 }

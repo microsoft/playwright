@@ -244,7 +244,7 @@ export function useLLMConversation(id: string, systemPrompt: string) {
   const chat = useLLMChat();
   if (!chat)
     throw new Error('No LLM chat available, make sure theres a LLMProvider above');
-  const conversation = React.useMemo(() => chat.getConversation(id, systemPrompt), [chat, id]);
+  const conversation = React.useMemo(() => chat.getConversation(id, systemPrompt), [chat, id]); // eslint-disable-line react-hooks/exhaustive-deps
   const [history, setHistory] = React.useState(conversation.history);
   React.useEffect(() => {
     function update() {
