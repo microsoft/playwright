@@ -24,7 +24,7 @@ export type LLMMessage = {
   displayContent?: string;
 };
 
-interface LLM { 
+interface LLM {
   readonly name: string;
   chatCompletion(messages: LLMMessage[], signal: AbortSignal): AsyncGenerator<string>;
 }
