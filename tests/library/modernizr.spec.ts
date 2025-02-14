@@ -66,7 +66,6 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless }
   }
 
   if (platform === 'win32') {
-    expected.datalistelem = false;
     expected.getusermedia = false;
     expected.peerconnection = false;
     expected.speechrecognition = false;
@@ -75,7 +74,6 @@ it('Safari Desktop', async ({ browser, browserName, platform, server, headless }
     expected.webaudio = false;
     expected.gamepads = false;
 
-    expected.input.list = false;
     delete expected.datalistelem;
 
     expected.publickeycredential = false;
@@ -133,7 +131,6 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, server,
   }
 
   if (platform === 'win32') {
-    expected.datalistelem = false;
     expected.getusermedia = false;
     expected.peerconnection = false;
     expected.speechrecognition = false;
@@ -141,8 +138,6 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, server,
     expected.todataurljpeg = false;
     expected.webaudio = false;
     expected.gamepads = false;
-
-    expected.input.list = false;
 
     delete expected.datalistelem;
 
