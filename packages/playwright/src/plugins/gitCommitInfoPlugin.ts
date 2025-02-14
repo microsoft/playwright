@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { createGuid, spawnAsync } from 'playwright-core/lib/utils';
 
 import type { TestRunnerPlugin } from './';
@@ -33,7 +35,7 @@ export const gitCommitInfo = (options?: GitCommitInfoPluginOptions): TestRunnerP
     name: 'playwright:git-commit-info',
 
     setup: async (config: FullConfig, configDir: string) => {
-      const fromEnv = linksFromEnv();
+      const fromEnv = await linksFromEnv();
       const fromCLI = await gitStatusFromCLI(options?.directory || configDir, fromEnv);
       config.metadata = config.metadata || {};
       config.metadata['git.commit.info'] = { ...fromEnv, ...fromCLI };
@@ -45,7 +47,7 @@ interface GitCommitInfoPluginOptions {
   directory?: string;
 }
 
-function linksFromEnv() {
+async function linksFromEnv() {
   const out: Partial<GitCommitInfo> = {};
   // Jenkins: https://www.jenkins.io/doc/book/pipeline/jenkinsfile/#using-environment-variables
   if (process.env.BUILD_URL)
@@ -55,15 +57,21 @@ function linksFromEnv() {
     out['revision.link'] = `${process.env.CI_PROJECT_URL}/-/commit/${process.env.CI_COMMIT_SHA}`;
   if (process.env.CI_JOB_URL)
     out['ci.link'] = process.env.CI_JOB_URL;
-    // GitHub: https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
+  // GitHub: https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
   if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_SHA)
     out['revision.link'] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`;
   if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID)
     out['ci.link'] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-  if (process.env.GITHUB_REF_NAME && process.env.GITHUB_REF_NAME.endsWith('/merge')) {
-    const pullId = process.env.GITHUB_REF_NAME.substring(0, process.env.GITHUB_REF_NAME.indexOf('/merge'));
-    out['pull.link'] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/pull/${pullId}`;
-    out['pull.base'] = process.env.GITHUB_BASE_REF;
+  if (process.env.GITHUB_EVENT_PATH) {
+    try {
+      const json = JSON.parse(await fs.promises.readFile(process.env.GITHUB_EVENT_PATH, 'utf8'));
+      if (json.pull_request) {
+        out['pull.title'] = json.pull_request.title;
+        out['pull.link'] = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/pull/${json.pull_request.number}`;
+        out['pull.base'] = json.pull_request.base.ref;
+      }
+    } catch {
+    }
   }
   return out;
 }
