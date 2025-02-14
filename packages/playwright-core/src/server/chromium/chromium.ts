@@ -22,7 +22,7 @@ import * as path from 'path';
 import { chromiumSwitches } from './chromiumSwitches';
 import { CRBrowser } from './crBrowser';
 import { kBrowserCloseMessageId } from './crConnection';
-import { TimeoutSettings } from '../../utils/isomorphic/timeoutSettings';
+import { TimeoutSettings } from '../timeoutSettings';
 import { debugMode, headersArrayToObject, headersObjectToArray, } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { RecentLogsCollector } from '../utils/debugLogger';

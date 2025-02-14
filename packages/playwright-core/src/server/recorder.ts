@@ -30,7 +30,7 @@ import type { Frame } from './frames';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import type { Page } from './page';
 import type { IRecorder, IRecorderApp, IRecorderAppFactory } from './recorder/recorderFrontend';
-import type { Point } from '../common/types';
+import type { Point } from '../utils/isomorphic/types';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 import type * as channels from '@protocol/channels';
 import type * as actions from '@recorder/actions';

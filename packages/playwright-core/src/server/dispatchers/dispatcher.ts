@@ -18,10 +18,12 @@ import { EventEmitter } from 'events';
 
 import { eventsHelper } from '../utils/eventsHelper';
 import { ValidationError, createMetadataValidator, findValidator  } from '../../protocol/validator';
-import { LongStandingScope, assert, compressCallLog, isUnderTest, monotonicTime, rewriteErrorMessage } from '../../utils';
+import { LongStandingScope, assert, monotonicTime, rewriteErrorMessage } from '../../utils';
+import { isUnderTest } from '../utils/debug';
 import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
 import { SdkObject } from '../instrumentation';
 import { isProtocolError } from '../protocolError';
+import { compressCallLog } from '../callLog';
 
 import type { CallMetadata } from '../instrumentation';
 import type { PlaywrightDispatcher } from './playwrightDispatcher';

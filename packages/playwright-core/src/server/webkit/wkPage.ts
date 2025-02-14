@@ -17,7 +17,7 @@
 
 import * as path from 'path';
 
-import { assert, debugAssert } from '../../utils';
+import { assert } from '../../utils';
 import { headersArrayToObject } from '../../utils/isomorphic/headers';
 import { createGuid } from '../utils/crypto';
 import { eventsHelper } from '../utils/eventsHelper';
@@ -294,7 +294,6 @@ export class WKPage implements PageDelegate {
   }
 
   handleWindowOpen(event: Protocol.Playwright.windowOpenPayload) {
-    debugAssert(!this._nextWindowOpenPopupFeatures);
     this._nextWindowOpenPopupFeatures = event.windowFeatures;
   }
 

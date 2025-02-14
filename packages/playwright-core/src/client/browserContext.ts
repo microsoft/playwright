@@ -34,7 +34,7 @@ import { Tracing } from './tracing';
 import { Waiter } from './waiter';
 import { WebError } from './webError';
 import { Worker } from './worker';
-import { TimeoutSettings } from '../utils/isomorphic/timeoutSettings';
+import { TimeoutSettings } from './timeoutSettings';
 import { mkdirIfNeeded } from './fileUtils';
 import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { urlMatchesEqual } from '../utils/isomorphic/urlMatch';
@@ -46,7 +46,7 @@ import type { BrowserContextOptions, Headers, LaunchOptions, StorageState, WaitF
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type { URLMatch } from '../utils/isomorphic/urlMatch';
-import type { Platform } from '../common/platform';
+import type { Platform } from './platform';
 import type * as channels from '@protocol/channels';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel> implements api.BrowserContext {
@@ -56,7 +56,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   readonly _browser: Browser | null = null;
   _browserType: BrowserType | undefined;
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
-  _timeoutSettings = new TimeoutSettings();
+  _timeoutSettings: TimeoutSettings;
   _ownerPage: Page | undefined;
   private _closedPromise: Promise<void>;
   _options: channels.BrowserNewContextParams = { };
@@ -83,6 +83,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer) {
     super(parent, type, guid, initializer);
+    this._timeoutSettings = new TimeoutSettings(this._platform);
     if (parent instanceof Browser)
       this._browser = parent;
     this._browser?._contexts.add(this);

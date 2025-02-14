@@ -16,14 +16,14 @@
 
 import { EventEmitter } from './eventEmitter';
 import { ValidationError, maybeFindValidator  } from '../protocol/validator';
-import { isUnderTest } from '../utils/isomorphic/debug';
-import { captureLibraryStackTrace, stringifyStackFrames } from '../utils/isomorphic/stackTrace';
+import { captureLibraryStackTrace } from './clientStackTrace';
+import { stringifyStackFrames } from '../utils/isomorphic/stackTrace';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { Connection } from './connection';
 import type { Logger } from './types';
 import type { ValidatorContext } from '../protocol/validator';
-import type { Platform } from '../common/platform';
+import type { Platform } from './platform';
 import type * as channels from '@protocol/channels';
 
 type Listener = (...args: any[]) => void;
@@ -181,7 +181,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
 
     if (isInternal === undefined)
       isInternal = this._isInternalType;
-    const stackTrace = captureLibraryStackTrace(this._platform.pathSeparator);
+    const stackTrace = captureLibraryStackTrace(this._platform);
     const apiZone: ApiZone = { apiName: stackTrace.apiName, frames: stackTrace.frames, isInternal, reported: false, userData: undefined, stepId: undefined };
 
     try {
@@ -192,7 +192,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       }
       return result;
     } catch (e) {
-      const innerError = ((process.env.PWDEBUGIMPL || isUnderTest()) && e.stack) ? '\n<inner error>\n' + e.stack : '';
+      const innerError = ((process.env.PWDEBUGIMPL || this._platform.isUnderTest()) && e.stack) ? '\n<inner error>\n' + e.stack : '';
       if (apiZone.apiName && !apiZone.apiName.includes('<anonymous>'))
         e.message = apiZone.apiName + ': ' + e.message;
       const stackFrames = '\n' + stringifyStackFrames(stackTrace.frames).join('\n') + innerError;

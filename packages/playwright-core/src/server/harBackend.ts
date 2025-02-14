@@ -20,7 +20,7 @@ import * as path from 'path';
 import { createGuid } from './utils/crypto';
 import { ZipFile } from './utils/zipFile';
 
-import type { HeadersArray } from '../common/types';
+import type { HeadersArray } from '../utils/isomorphic/types';
 import type * as har from '@trace/har';
 
 const redirectStatus = [301, 302, 303, 307, 308];

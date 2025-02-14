@@ -15,24 +15,24 @@
  */
 
 export * from './utils/isomorphic/colors';
-export * from './utils/isomorphic/debug';
+export * from './utils/isomorphic/assert';
+export * from './utils/isomorphic/headers';
 export * from './utils/isomorphic/locatorGenerators';
 export * from './utils/isomorphic/manualPromise';
 export * from './utils/isomorphic/mimeType';
 export * from './utils/isomorphic/multimap';
 export * from './utils/isomorphic/rtti';
+export * from './utils/isomorphic/semaphore';
+export * from './utils/isomorphic/stackTrace';
 export * from './utils/isomorphic/stringUtils';
 export * from './utils/isomorphic/time';
 export * from './utils/isomorphic/timeoutRunner';
 export * from './utils/isomorphic/urlMatch';
 
-export * from './utils/isomorphic/headers';
-export * from './utils/isomorphic/semaphore';
-export * from './utils/isomorphic/stackTrace';
-
 export * from './server/utils/ascii';
 export * from './server/utils/comparators';
 export * from './server/utils/crypto';
+export * from './server/utils/debug';
 export * from './server/utils/debugLogger';
 export * from './server/utils/env';
 export * from './server/utils/eventsHelper';

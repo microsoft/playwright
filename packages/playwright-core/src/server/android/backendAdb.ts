@@ -17,7 +17,7 @@
 import { EventEmitter } from 'events';
 import * as net from 'net';
 
-import { assert } from '../../utils/isomorphic/debug';
+import { assert } from '../../utils/isomorphic/assert';
 import { createGuid } from '../utils/crypto';
 import { debug } from '../../utilsBundle';
 

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 import { EventEmitter } from './eventEmitter';
 import { Android, AndroidDevice, AndroidSocket } from './android';
 import { Artifact } from './artifact';
@@ -42,12 +41,12 @@ import { Tracing } from './tracing';
 import { Worker } from './worker';
 import { WritableStream } from './writableStream';
 import { ValidationError, findValidator  } from '../protocol/validator';
-import { formatCallLog, rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
+import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { HeadersArray } from './types';
 import type { ValidatorContext } from '../protocol/validator';
-import type { Platform } from '../common/platform';
+import type { Platform } from './platform';
 import type * as channels from '@protocol/channels';
 
 class Root extends ChannelOwner<channels.RootChannel> {
@@ -83,7 +82,7 @@ export class Connection extends EventEmitter {
   // Used from @playwright/test fixtures -> TODO remove?
   readonly headers: HeadersArray;
 
-  constructor(localUtils: LocalUtils | undefined, platform: Platform, instrumentation: ClientInstrumentation | undefined, headers: HeadersArray) {
+  constructor(platform: Platform, localUtils?: LocalUtils, instrumentation?: ClientInstrumentation, headers: HeadersArray = []) {
     super();
     this._instrumentation = instrumentation || createInstrumentation();
     this._localUtils = localUtils;
@@ -332,4 +331,13 @@ export class Connection extends EventEmitter {
     }
     return result;
   }
+}
+
+function formatCallLog(platform: Platform, log: string[] | undefined): string {
+  if (!log || !log.some(l => !!l))
+    return '';
+  return `
+Call log:
+${platform.colors.dim(log.join('\n'))}
+`;
 }

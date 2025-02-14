@@ -20,7 +20,6 @@ import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher } from './networkDispatchers';
 import { RequestDispatcher } from './networkDispatchers';
-import { debugAssert } from '../../utils';
 import { parseAriaSnapshotUnsafe } from '../../utils/isomorphic/ariaSnapshot';
 import { yaml } from '../../utilsBundle';
 
@@ -50,7 +49,6 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     // Main frames are gc'ed separately from any other frames, so that
     // methods on Page that redirect to the main frame remain operational.
     // Note: we cannot check parentFrame() here because it may be null after the frame has been detached.
-    debugAssert(frame._page.mainFrame(), 'Cannot determine whether the frame is a main frame');
     const gcBucket = frame._page.mainFrame() === frame ? 'MainFrame' : 'Frame';
     const pageDispatcher = existingDispatcher<PageDispatcher>(frame._page);
     super(pageDispatcher || scope, frame, 'Frame', {

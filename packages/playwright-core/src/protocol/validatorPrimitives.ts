@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-import { isUnderTest } from '../utils/isomorphic/debug';
+let isUnderTest = () => false;
+
+export function setIsUnderTestForValidator(getter: () => boolean) {
+  isUnderTest = getter;
+}
 
 export class ValidationError extends Error {}
 export type Validator = (arg: any, path: string, context: ValidatorContext) => any;

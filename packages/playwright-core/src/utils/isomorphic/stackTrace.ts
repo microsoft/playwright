@@ -1,61 +1,32 @@
 /**
- * Copyright (c) Microsoft Corporation.
+ * The MIT License (MIT)
+ * Modifications copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Copyright (c) 2016-2023 Isaac Z. Schlueter i@izs.me, James Talmage james@talmage.io (github.com/jamestalmage), and
+ * Contributors
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { findRepeatedSubsequences } from './sequence';
-import { parseStackFrame } from './stackUtils';
-
-import type { StackFrame } from '@protocol/channels';
-import type { Platform } from '../../common/platform';
-
-export function parseStackTraceLine(line: string, pathSeparator: string): StackFrame | null {
-  const frame = parseStackFrame(line, pathSeparator);
-  if (!frame)
-    return null;
-  if (!process.env.PWDEBUGIMPL && (frame.file?.startsWith('internal') || frame.file?.startsWith('node:')))
-    return null;
-  if (!frame.file)
-    return null;
-  return {
-    file: frame.file,
-    line: frame.line || 0,
-    column: frame.column || 0,
-    function: frame.function,
-  };
-}
-
-export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): E {
-  const lines: string[] = (e.stack?.split('\n') || []).filter(l => l.startsWith('    at '));
-  e.message = newMessage;
-  const errorTitle = `${e.name}: ${e.message}`;
-  if (lines.length)
-    e.stack = `${errorTitle}\n${lines.join('\n')}`;
-  return e;
-}
-
-let coreDir: string | undefined;
-
-const playwrightStackPrefixes: string[] = [];
-export const addInternalStackPrefix = (prefix: string) => playwrightStackPrefixes.push(prefix);
-
-export const setLibraryStackPrefix = (prefix: string) => {
-  coreDir = prefix;
-  playwrightStackPrefixes.push(prefix);
-};
-
 export type RawStack = string[];
+
+export type StackFrame = {
+  file: string,
+  line: number,
+  column: number,
+  function?: string,
+};
 
 export function captureRawStack(): RawStack {
   const stackTraceLimit = Error.stackTraceLimit;
@@ -66,61 +37,82 @@ export function captureRawStack(): RawStack {
   return stack.split('\n');
 }
 
-export function captureLibraryStackTrace(pathSeparator: string): { frames: StackFrame[], apiName: string } {
-  const stack = captureRawStack();
+export function parseStackFrame(text: string, pathSeparator: string): StackFrame | null {
+  const match = text && text.match(re);
+  if (!match)
+    return null;
 
-  type ParsedFrame = {
-    frame: StackFrame;
-    frameText: string;
-    isPlaywrightLibrary: boolean;
+  let fname = match[2];
+  let file = match[7];
+  if (!file)
+    return null;
+  if (!process.env.PWDEBUGIMPL && (file.startsWith('internal') || file.startsWith('node:')))
+    return null;
+
+  const line = match[8];
+  const column = match[9];
+  const closeParen = match[11] === ')';
+
+  const frame: StackFrame = {
+    file: '',
+    line: 0,
+    column: 0,
   };
-  let parsedFrames = stack.map(line => {
-    const frame = parseStackTraceLine(line, pathSeparator);
-    if (!frame || !frame.file)
-      return null;
-    const isPlaywrightLibrary = !!coreDir && frame.file.startsWith(coreDir);
-    const parsed: ParsedFrame = {
-      frame,
-      frameText: line,
-      isPlaywrightLibrary
-    };
-    return parsed;
-  }).filter(Boolean) as ParsedFrame[];
 
-  let apiName = '';
+  if (line)
+    frame.line = Number(line);
 
-  // Deepest transition between non-client code calling into client
-  // code is the api entry.
-  for (let i = 0; i < parsedFrames.length - 1; i++) {
-    const parsedFrame = parsedFrames[i];
-    if (parsedFrame.isPlaywrightLibrary && !parsedFrames[i + 1].isPlaywrightLibrary) {
-      apiName = apiName || normalizeAPIName(parsedFrame.frame.function);
-      break;
+  if (column)
+    frame.column = Number(column);
+
+  if (closeParen && file) {
+    // make sure parens are balanced
+    // if we have a file like "asdf) [as foo] (xyz.js", then odds are
+    // that the fname should be += " (asdf) [as foo]" and the file
+    // should be just "xyz.js"
+    // walk backwards from the end to find the last unbalanced (
+    let closes = 0;
+    for (let i = file.length - 1; i > 0; i--) {
+      if (file.charAt(i) === ')') {
+        closes++;
+      } else if (file.charAt(i) === '(' && file.charAt(i - 1) === ' ') {
+        closes--;
+        if (closes === -1 && file.charAt(i - 1) === ' ') {
+          const before = file.slice(0, i - 1);
+          const after = file.slice(i + 1);
+          file = after;
+          fname += ` (${before}`;
+          break;
+        }
+      }
     }
   }
 
-  function normalizeAPIName(name?: string): string {
-    if (!name)
-      return '';
-    const match = name.match(/(API|JS|CDP|[A-Z])(.*)/);
-    if (!match)
-      return name;
-    return match[1].toLowerCase() + match[2];
+  if (fname) {
+    const methodMatch = fname.match(methodRe);
+    if (methodMatch)
+      fname = methodMatch[1];
   }
 
-  // This is for the inspector so that it did not include the test runner stack frames.
-  parsedFrames = parsedFrames.filter(f => {
-    if (process.env.PWDEBUGIMPL)
-      return true;
-    if (playwrightStackPrefixes.some(prefix => f.frame.file.startsWith(prefix)))
-      return false;
-    return true;
-  });
+  if (file) {
+    if (file.startsWith('file://'))
+      file = fileURLToPath(file, pathSeparator);
+    frame.file = file;
+  }
 
-  return {
-    frames: parsedFrames.map(p => p.frame),
-    apiName
-  };
+  if (fname)
+    frame.function = fname;
+
+  return frame;
+}
+
+export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): E {
+  const lines: string[] = (e.stack?.split('\n') || []).filter(l => l.startsWith('    at '));
+  e.message = newMessage;
+  const errorTitle = `${e.name}: ${e.message}`;
+  if (lines.length)
+    e.stack = `${errorTitle}\n${lines.join('\n')}`;
+  return e;
 }
 
 export function stringifyStackFrames(frames: StackFrame[]): string[] {
@@ -142,31 +134,40 @@ export function splitErrorMessage(message: string): { name: string, message: str
   };
 }
 
-export function formatCallLog(platform: Platform, log: string[] | undefined): string {
-  if (!log || !log.some(l => !!l))
-    return '';
-  return `
-Call log:
-${platform.colors.dim(log.join('\n'))}
-`;
-}
+const re = new RegExp('^' +
+  // Sometimes we strip out the '    at' because it's noisy
+  '(?:\\s*at )?' +
+  // $1 = ctor if 'new'
+  '(?:(new) )?' +
+  // $2 = function name (can be literally anything)
+  // May contain method at the end as [as xyz]
+  '(?:(.*?) \\()?' +
+  // (eval at <anonymous> (file.js:1:1),
+  // $3 = eval origin
+  // $4:$5:$6 are eval file/line/col, but not normally reported
+  '(?:eval at ([^ ]+) \\((.+?):(\\d+):(\\d+)\\), )?' +
+  // file:line:col
+  // $7:$8:$9
+  // $10 = 'native' if native
+  '(?:(.+?):(\\d+):(\\d+)|(native))' +
+  // maybe close the paren, then end
+  // if $11 is ), then we only allow balanced parens in the filename
+  // any imbalance is placed on the fname.  This is a heuristic, and
+  // bound to be incorrect in some edge cases.  The bet is that
+  // having weird characters in method names is more common than
+  // having weird characters in filenames, which seems reasonable.
+  '(\\)?)$'
+);
 
-export function compressCallLog(log: string[]): string[] {
-  const lines: string[] = [];
+const methodRe = /^(.*?) \[as (.*?)\]$/;
 
-  for (const block of findRepeatedSubsequences(log)) {
-    for (let i = 0; i < block.sequence.length; i++) {
-      const line = block.sequence[i];
-      const leadingWhitespace = line.match(/^\s*/);
-      const whitespacePrefix = '  ' + leadingWhitespace?.[0] || '';
-      const countPrefix = `${block.count} × `;
-      if (block.count > 1 && i === 0)
-        lines.push(whitespacePrefix + countPrefix + line.trim());
-      else if (block.count > 1)
-        lines.push(whitespacePrefix + ' '.repeat(countPrefix.length - 2) + '- ' + line.trim());
-      else
-        lines.push(whitespacePrefix + '- ' + line.trim());
-    }
-  }
-  return lines;
+function fileURLToPath(fileUrl: string, pathSeparator: string): string {
+  if (!fileUrl.startsWith('file://'))
+    return fileUrl;
+
+  let path = decodeURIComponent(fileUrl.slice(7));
+  if (path.startsWith('/') && /^[a-zA-Z]:/.test(path.slice(1)))
+    path = path.slice(1);
+
+  return path.replace(/\//g, pathSeparator);
 }

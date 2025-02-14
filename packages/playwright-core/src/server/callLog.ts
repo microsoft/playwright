@@ -1,7 +1,7 @@
 /**
  * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the 'License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,7 +14,27 @@
  * limitations under the License.
  */
 
-export function findRepeatedSubsequences(s: string[]): { sequence: string[]; count: number }[] {
+export function compressCallLog(log: string[]): string[] {
+  const lines: string[] = [];
+
+  for (const block of findRepeatedSubsequences(log)) {
+    for (let i = 0; i < block.sequence.length; i++) {
+      const line = block.sequence[i];
+      const leadingWhitespace = line.match(/^\s*/);
+      const whitespacePrefix = '  ' + leadingWhitespace?.[0] || '';
+      const countPrefix = `${block.count} × `;
+      if (block.count > 1 && i === 0)
+        lines.push(whitespacePrefix + countPrefix + line.trim());
+      else if (block.count > 1)
+        lines.push(whitespacePrefix + ' '.repeat(countPrefix.length - 2) + '- ' + line.trim());
+      else
+        lines.push(whitespacePrefix + '- ' + line.trim());
+    }
+  }
+  return lines;
+}
+
+function findRepeatedSubsequences(s: string[]): { sequence: string[]; count: number }[] {
   const n = s.length;
   const result = [];
   let i = 0;
@@ -64,3 +84,5 @@ export function findRepeatedSubsequences(s: string[]): { sequence: string[]; cou
 
   return result;
 }
+
+export const findRepeatedSubsequencesForTest = findRepeatedSubsequences;

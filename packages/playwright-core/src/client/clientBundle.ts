@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
-import { createInProcessPlaywright } from './inProcessFactory';
+import { Connection } from './connection';
+import { setPlatformForSelectors } from './selectors';
+import { setPlatformForEventEmitter } from './eventEmitter';
+import { setIsUnderTestForValidator } from '../protocol/validatorPrimitives';
 
-module.exports = createInProcessPlaywright();
+import type { Platform } from './platform';
+
+export function createConnectionFactory(platform: Platform): () => Connection {
+  setPlatformForSelectors(platform);
+  setPlatformForEventEmitter(platform);
+  setIsUnderTestForValidator(() => platform.isUnderTest());
+  return () => new Connection(platform);
+}

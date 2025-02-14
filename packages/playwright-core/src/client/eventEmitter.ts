@@ -22,18 +22,19 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { isUnderTest } from '../utils/isomorphic/debug';
+import { emptyPlatform } from './platform';
 
 import type { EventEmitter as EventEmitterType } from 'events';
+import type { Platform } from './platform';
 
 type EventType = string | symbol;
 type Listener = (...args: any[]) => any;
 type EventMap = Record<EventType, Listener | Listener[]>;
 
-let defaultMaxListenersProvider = () => 10;
+let platform = emptyPlatform;
 
-export function setDefaultMaxListenersProvider(provider: () => number) {
-  defaultMaxListenersProvider = provider;
+export function setPlatformForEventEmitter(p: Platform) {
+  platform = p;
 }
 
 export class EventEmitter implements EventEmitterType {
@@ -62,7 +63,7 @@ export class EventEmitter implements EventEmitterType {
   }
 
   getMaxListeners(): number {
-    return this._maxListeners === undefined ? defaultMaxListenersProvider() : this._maxListeners;
+    return this._maxListeners === undefined ? platform.defaultMaxListeners() : this._maxListeners;
   }
 
   emit(type: EventType, ...args: any[]): boolean {
@@ -160,7 +161,7 @@ export class EventEmitter implements EventEmitterType {
         w.emitter = this;
         w.type = type;
         w.count = existing.length;
-        if (!isUnderTest()) {
+        if (!platform.isUnderTest()) {
           // eslint-disable-next-line no-console
           console.warn(w);
         }

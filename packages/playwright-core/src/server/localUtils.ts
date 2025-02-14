@@ -24,7 +24,7 @@ import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { ZipFile } from './utils/zipFile';
 import { yauzl, yazl } from '../zipBundle';
 import { serializeClientSideCallMetadata } from '../utils/isomorphic/traceUtils';
-import { assert } from '../utils/isomorphic/debug';
+import { assert } from '../utils/isomorphic/assert';
 import { removeFolders } from './utils/fileUtils';
 
 import type * as channels from '@protocol/channels';

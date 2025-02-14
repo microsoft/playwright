@@ -20,7 +20,7 @@ import * as path from 'path';
 
 import { Snapshotter } from './snapshotter';
 import { commandsWithTracingSnapshots } from '../../../protocol/debug';
-import { assert } from '../../../utils/isomorphic/debug';
+import { assert } from '../../../utils/isomorphic/assert';
 import { monotonicTime } from '../../../utils/isomorphic/time';
 import { eventsHelper  } from '../../utils/eventsHelper';
 import { createGuid  } from '../../utils/crypto';
@@ -34,7 +34,7 @@ import { SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
 
 import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
-import type { NameValue } from '../../../common/types';
+import type { NameValue } from '../../../utils/isomorphic/types';
 import type { RegisteredListener } from '../../../utils';
 import type { ConsoleMessage } from '../../console';
 import type { Dialog } from '../../dialog';

@@ -16,7 +16,7 @@
 
 import clipPaths from './clipPaths';
 
-import type { Point } from '../../../common/types';
+import type { Point } from '../../../utils/isomorphic/types';
 import type { Highlight, HighlightOptions } from '../highlight';
 import type { InjectedScript } from '../injectedScript';
 import type { ElementText } from '../selectorUtils';
