@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { isUnderTest } from '../../utils';
+import { isUnderTest } from '../utils/debug';
 import { mime } from '../../utilsBundle';
 import { serverSideCallMetadata } from '../instrumentation';
 import { syncLocalStorageWithSettings } from '../launchApp';

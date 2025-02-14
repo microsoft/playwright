@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import * as playwrightLibrary from 'playwright-core';
-import { addInternalStackPrefix, asLocator, createGuid, currentZone, debugMode, isString, jsonStringifyForceASCII } from 'playwright-core/lib/utils';
+import { setBoxedStackPrefixes, asLocator, createGuid, currentZone, debugMode, isString, jsonStringifyForceASCII } from 'playwright-core/lib/utils';
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
@@ -32,7 +32,7 @@ import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions,
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
-addInternalStackPrefix(path.dirname(require.resolve('../package.json')));
+setBoxedStackPrefixes([path.dirname(require.resolve('../package.json'))]);
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;

@@ -19,9 +19,8 @@ import * as path from 'path';
 import * as url from 'url';
 import util from 'util';
 
-import { parseStackTraceLine, sanitizeForFilePath, calculateSha1, formatCallLog, isRegExp, isString, stringifyStackFrames } from 'playwright-core/lib/utils';
-import { debug, mime, minimatch } from 'playwright-core/lib/utilsBundle';
-import { nodePlatform } from 'playwright-core/lib/utils';
+import { parseStackFrame, sanitizeForFilePath, calculateSha1, isRegExp, isString, stringifyStackFrames } from 'playwright-core/lib/utils';
+import { colors, debug, mime, minimatch } from 'playwright-core/lib/utilsBundle';
 
 import type { Location } from './../types/testReporter';
 import type { TestInfoErrorImpl } from './common/ipc';
@@ -56,7 +55,7 @@ export function filterStackFile(file: string) {
 export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
   const frames: StackFrame[] = [];
   for (const line of rawStack) {
-    const frame = parseStackTraceLine(line, path.sep);
+    const frame = parseStackFrame(line, path.sep);
     if (!frame || !frame.file)
       continue;
     if (!filterStackFile(frame.file))
@@ -225,7 +224,14 @@ export function getContainedPath(parentPath: string, subPath: string = ''): stri
 
 export const debugTest = debug('pw:test');
 
-export const callLogText = (log: string[] | undefined) => formatCallLog(nodePlatform, log);
+export const callLogText = (log: string[] | undefined) => {
+  if (!log || !log.some(l => !!l))
+    return '';
+  return `
+Call log:
+${colors.dim(log.join('\n'))}
+`;
+};
 
 const folderToPackageJsonPath = new Map<string, string>();
 

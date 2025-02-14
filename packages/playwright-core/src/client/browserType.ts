@@ -19,7 +19,7 @@ import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { envObjectToArray } from './clientHelper';
 import { Events } from './events';
-import { assert } from '../utils/isomorphic/debug';
+import { assert } from '../utils/isomorphic/assert';
 import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { monotonicTime } from '../utils/isomorphic/time';
 import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';

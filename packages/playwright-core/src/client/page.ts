@@ -33,8 +33,8 @@ import { Response, Route, RouteHandler, WebSocket,  WebSocketRoute, WebSocketRou
 import { Video } from './video';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
-import { TimeoutSettings } from '../utils/isomorphic/timeoutSettings';
-import { assert } from '../utils/isomorphic/debug';
+import { TimeoutSettings } from './timeoutSettings';
+import { assert } from '../utils/isomorphic/assert';
 import { mkdirIfNeeded } from './fileUtils';
 import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { trimStringWithEllipsis  } from '../utils/isomorphic/stringUtils';
@@ -118,7 +118,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PageInitializer) {
     super(parent, type, guid, initializer);
     this._browserContext = parent as unknown as BrowserContext;
-    this._timeoutSettings = new TimeoutSettings(this._browserContext._timeoutSettings);
+    this._timeoutSettings = new TimeoutSettings(this._platform, this._browserContext._timeoutSettings);
 
     this.accessibility = new Accessibility(this._channel);
     this.keyboard = new Keyboard(this);
@@ -799,7 +799,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async pause(_options?: { __testHookKeepTestTimeout: boolean }) {
-    if (this._platform.isDebuggerAttached())
+    if (this._platform.isJSDebuggerAttached())
       return;
     const defaultNavigationTimeout = this._browserContext._timeoutSettings.defaultNavigationTimeout();
     const defaultTimeout = this._browserContext._timeoutSettings.defaultTimeout();

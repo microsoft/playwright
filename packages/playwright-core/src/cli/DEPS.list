@@ -1,7 +1,5 @@
 [*]
 ../../
-../client
-../common
 ../debug/injected
 ../generated/
 ../server/

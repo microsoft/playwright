@@ -19,12 +19,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
 import { Readable, Writable, pipeline } from 'stream';
+import { EventEmitter } from 'events';
 
 import { colors } from '../../utilsBundle';
 import { debugLogger } from './debugLogger';
 import { currentZone, emptyZone } from './zones';
+import { debugMode, isUnderTest } from './debug';
 
-import type { Platform, Zone } from '../../common/platform';
+import type { Platform, Zone } from '../../client/platform';
 import type { Zone as ZoneImpl } from './zones';
 import type * as channels from '@protocol/channels';
 
@@ -54,8 +56,15 @@ class NodeZone implements Zone {
   }
 }
 
+let boxedStackPrefixes: string[] = [];
+export function setBoxedStackPrefixes(prefixes: string[]) {
+  boxedStackPrefixes = prefixes;
+}
+
 export const nodePlatform: Platform = {
   name: 'node',
+
+  boxedStackPrefixes: () => boxedStackPrefixes,
 
   calculateSha1: (text: string) => {
     const sha1 = crypto.createHash('sha1');
@@ -65,17 +74,24 @@ export const nodePlatform: Platform = {
 
   colors,
 
+  coreDir: path.dirname(require.resolve('../../../package.json')),
+
   createGuid: () => crypto.randomBytes(16).toString('hex'),
 
+  defaultMaxListeners: () => EventEmitter.defaultMaxListeners,
   fs: () => fs,
 
   inspectCustom: util.inspect.custom,
 
-  isDebuggerAttached: () => !!require('inspector').url(),
+  isDebugMode: () => !!debugMode(),
+
+  isJSDebuggerAttached: () => !!require('inspector').url(),
 
   isLogEnabled(name: 'api' | 'channel') {
     return debugLogger.isEnabled(name);
   },
+
+  isUnderTest: () => isUnderTest(),
 
   log(name: 'api' | 'channel', message: string | Error | object) {
     debugLogger.log(name, message);

@@ -18,8 +18,8 @@ import { webColors, noColors } from '../utils/isomorphic/colors';
 
 import type * as fs from 'fs';
 import type * as path from 'path';
-import type { Colors } from '../utils/isomorphic/colors';
 import type { Readable, Writable } from 'stream';
+import type { Colors } from '@isomorphic/colors';
 import type * as channels from '@protocol/channels';
 
 export type Zone = {
@@ -39,17 +39,22 @@ const noopZone: Zone = {
 export type Platform = {
   name: 'node' | 'web' | 'empty';
 
-  calculateSha1(text: string): Promise<string>;
+  boxedStackPrefixes: () => string[];
+  calculateSha1: (text: string) => Promise<string>;
   colors: Colors;
+  coreDir?: string;
   createGuid: () => string;
+  defaultMaxListeners: () => number;
   fs: () => typeof fs;
   inspectCustom: symbol | undefined;
-  isDebuggerAttached(): boolean;
-  isLogEnabled(name: 'api' | 'channel'): boolean;
-  log(name: 'api' | 'channel', message: string | Error | object): void;
+  isDebugMode: () => boolean;
+  isJSDebuggerAttached: () => boolean;
+  isLogEnabled: (name: 'api' | 'channel') => boolean;
+  isUnderTest: () => boolean,
+  log: (name: 'api' | 'channel', message: string | Error | object) => void;
   path: () => typeof path;
   pathSeparator: string;
-  streamFile(path: string, writable: Writable): Promise<void>,
+  streamFile: (path: string, writable: Writable) => Promise<void>,
   streamReadable: (channel: channels.StreamChannel) => Readable,
   streamWritable: (channel: channels.WritableStreamChannel) => Writable,
   zones: { empty: Zone, current: () => Zone; };
@@ -57,6 +62,8 @@ export type Platform = {
 
 export const emptyPlatform: Platform = {
   name: 'empty',
+
+  boxedStackPrefixes: () => [],
 
   calculateSha1: async () => {
     throw new Error('Not implemented');
@@ -68,17 +75,23 @@ export const emptyPlatform: Platform = {
     throw new Error('Not implemented');
   },
 
+  defaultMaxListeners: () => 10,
+
   fs: () => {
     throw new Error('Not implemented');
   },
 
   inspectCustom: undefined,
 
-  isDebuggerAttached: () => false,
+  isDebugMode: () => false,
+
+  isJSDebuggerAttached: () => false,
 
   isLogEnabled(name: 'api' | 'channel') {
     return false;
   },
+
+  isUnderTest: () => false,
 
   log(name: 'api' | 'channel', message: string | Error | object) { },
 
@@ -107,6 +120,8 @@ export const webPlatform: Platform = {
   ...emptyPlatform,
 
   name: 'web',
+
+  boxedStackPrefixes: () => [],
 
   calculateSha1: async (text: string) => {
     const bytes = new TextEncoder().encode(text);

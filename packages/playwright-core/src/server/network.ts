@@ -25,7 +25,7 @@ import type * as frames from './frames';
 import type * as pages from './page';
 import type * as types from './types';
 import type { NormalizedContinueOverrides } from './types';
-import type { HeadersArray, NameValue } from '../common/types';
+import type { HeadersArray, NameValue } from '../utils/isomorphic/types';
 import type * as channels from '@protocol/channels';
 
 

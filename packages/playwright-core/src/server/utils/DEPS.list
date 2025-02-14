@@ -1,5 +1,4 @@
 [*]
-../../common
 ../../utils
 ../../utils/isomorphic
 ../../utilsBundle.ts

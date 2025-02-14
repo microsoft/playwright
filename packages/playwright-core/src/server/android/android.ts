@@ -19,10 +19,10 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-import { TimeoutSettings } from '../../utils/isomorphic/timeoutSettings';
+import { TimeoutSettings } from '../timeoutSettings';
 import { PipeTransport } from '../utils/pipeTransport';
 import { createGuid } from '../utils/crypto';
-import { isUnderTest } from '../../utils/isomorphic/debug';
+import { isUnderTest } from '../utils/debug';
 import { getPackageManagerExecCommand } from '../utils/env';
 import { makeWaitForNextTask } from '../utils/task';
 import { RecentLogsCollector } from '../utils/debugLogger';

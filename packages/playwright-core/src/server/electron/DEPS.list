@@ -1,6 +1,5 @@
 [*]
 ../
-../../common/
 ../../utils/
 ../../utils/isomorphic/
 ../chromium/

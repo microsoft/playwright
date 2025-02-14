@@ -24,7 +24,7 @@ import type { Frame } from './frames';
 import type { Page } from './page';
 import type { Progress } from './progress';
 import type * as types from './types';
-import type { Rect } from '../common/types';
+import type { Rect } from '../utils/isomorphic/types';
 import type { ParsedSelector } from '../utils/isomorphic/selectorParser';
 
 

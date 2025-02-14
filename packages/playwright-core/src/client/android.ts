@@ -20,7 +20,7 @@ import { ChannelOwner } from './channelOwner';
 import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
 import { Waiter } from './waiter';
-import { TimeoutSettings } from '../utils/isomorphic/timeoutSettings';
+import { TimeoutSettings } from './timeoutSettings';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
 import { monotonicTime } from '../utils/isomorphic/time';
 import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';
@@ -30,7 +30,7 @@ import type { Page } from './page';
 import type * as types from './types';
 import type * as api from '../../types/types';
 import type { AndroidServerLauncherImpl } from '../androidServerImpl';
-import type { Platform } from '../common/platform';
+import type { Platform } from './platform';
 import type * as channels from '@protocol/channels';
 
 type Direction = 'down' | 'up' | 'left' | 'right';
@@ -46,7 +46,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.AndroidInitializer) {
     super(parent, type, guid, initializer);
-    this._timeoutSettings = new TimeoutSettings();
+    this._timeoutSettings = new TimeoutSettings(this._platform);
   }
 
   setDefaultTimeout(timeout: number) {
@@ -112,7 +112,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.AndroidDeviceInitializer) {
     super(parent, type, guid, initializer);
     this.input = new AndroidInput(this);
-    this._timeoutSettings = new TimeoutSettings((parent as Android)._timeoutSettings);
+    this._timeoutSettings = new TimeoutSettings(this._platform, (parent as Android)._timeoutSettings);
     this._channel.on('webViewAdded', ({ webView }) => this._onWebViewAdded(webView));
     this._channel.on('webViewRemoved', ({ socketName }) => this._onWebViewRemoved(socketName));
     this._channel.on('close', () => this._didClose());

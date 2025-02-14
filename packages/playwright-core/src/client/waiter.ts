@@ -20,7 +20,7 @@ import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 import type { ChannelOwner } from './channelOwner';
 import type * as channels from '@protocol/channels';
 import type { EventEmitter } from 'events';
-import type { Zone } from '../common/platform';
+import type { Zone } from './platform';
 
 export class Waiter {
   private _dispose: (() => void)[];
