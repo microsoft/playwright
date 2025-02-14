@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { useCallback, useState } from 'react';
-import Markdown from 'react-markdown';
+import Markdown from 'markdown-to-jsx';
 import './aiConversation.css';
 import { clsx } from '@web/uiUtils';
 import { useLLMConversation } from './llm';
