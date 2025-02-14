@@ -27,7 +27,7 @@ import { fixTestPrompt } from '@web/components/prompts';
 import type { GitCommitInfo } from '@testIsomorphic/types';
 import { AIConversation } from './aiConversation';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { useIsLLMAvailable, useLLMChat, useLLMConversation } from './llm';
+import { useIsLLMAvailable, useLLMChat } from './llm';
 import { useAsyncMemo } from '@web/uiUtils';
 
 const GitCommitInfoContext = React.createContext<GitCommitInfo | undefined>(undefined);
