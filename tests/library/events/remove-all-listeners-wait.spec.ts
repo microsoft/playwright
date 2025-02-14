@@ -16,7 +16,7 @@
  */
 
 import { ManualPromise } from '../../../packages/playwright-core/lib/utils/isomorphic/manualPromise';
-import { EventEmitter } from '../../../packages/playwright-core/lib/client/eventEmitter';
+import { EventEmitter } from './utils';
 import { test, expect } from '@playwright/test';
 
 test('should not throw with ignoreErrors', async () => {

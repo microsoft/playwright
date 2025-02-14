@@ -24,7 +24,7 @@ export async function connectOverWebSocket(parentConnection: Connection, params:
   const localUtils = parentConnection.localUtils();
   const transport = localUtils ? new JsonPipeTransport(localUtils) : new WebSocketTransport();
   const connectHeaders = await transport.connect(params);
-  const connection = new Connection(parentConnection.platform, localUtils, parentConnection._instrumentation, connectHeaders);
+  const connection = new Connection(parentConnection._platform, localUtils, parentConnection._instrumentation, connectHeaders);
   connection.markAsRemote();
   connection.on('close', () => transport.close());
 
