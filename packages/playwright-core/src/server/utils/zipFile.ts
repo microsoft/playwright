@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { yauzl } from '../zipBundle';
+import { yauzl } from '../../zipBundle';
 
-import type { Entry, UnzipFile } from '../zipBundle';
+import type { Entry, UnzipFile } from '../../zipBundle';
 
 export class ZipFile {
   private _fileName: string;

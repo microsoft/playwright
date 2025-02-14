@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
-
+import { EventEmitter } from './eventEmitter';
 import { BrowserContext, prepareBrowserContextParams } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
 import { Waiter } from './waiter';
-import { TimeoutSettings } from '../common/timeoutSettings';
+import { TimeoutSettings } from '../utils/isomorphic/timeoutSettings';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
 import { monotonicTime } from '../utils/isomorphic/time';
 import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';
+import { connectOverWebSocket } from './webSocket';
 
 import type { Page } from './page';
 import type * as types from './types';
 import type * as api from '../../types/types';
 import type { AndroidServerLauncherImpl } from '../androidServerImpl';
-import type { Platform } from '../utils/platform';
+import type { Platform } from '../common/platform';
 import type * as channels from '@protocol/channels';
 
 type Direction = 'down' | 'up' | 'left' | 'right';
@@ -69,9 +69,8 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
     return await this._wrapApiCall(async () => {
       const deadline = options.timeout ? monotonicTime() + options.timeout : 0;
       const headers = { 'x-playwright-browser': 'android', ...options.headers };
-      const localUtils = this._connection.localUtils();
       const connectParams: channels.LocalUtilsConnectParams = { wsEndpoint, headers, slowMo: options.slowMo, timeout: options.timeout };
-      const connection = await localUtils.connect(connectParams);
+      const connection = await connectOverWebSocket(this._connection, connectParams);
 
       let device: AndroidDevice;
       connection.on('close', () => {

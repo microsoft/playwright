@@ -15,7 +15,7 @@
  */
 
 
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { colors } from 'playwright-core/lib/utils';
 
 import { callLogText, expectTypes } from '../util';
 import {

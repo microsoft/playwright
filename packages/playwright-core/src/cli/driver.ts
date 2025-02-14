@@ -19,7 +19,7 @@
 import * as fs from 'fs';
 
 import * as playwright from '../..';
-import { PipeTransport } from '../utils/pipeTransport';
+import { PipeTransport } from '../server/utils/pipeTransport';
 import { PlaywrightServer } from '../remote/playwrightServer';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from '../server';
 import { gracefullyProcessExitDoNotHang } from '../server/utils/processLauncher';

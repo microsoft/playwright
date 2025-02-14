@@ -18,17 +18,18 @@ import * as path from 'path';
 
 import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 import { parseStackTraceLine } from 'playwright-core/lib/utils';
-import { colors as realColors, ms as milliseconds } from 'playwright-core/lib/utilsBundle';
+import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
+import { colors as realColors, noColors } from 'playwright-core/lib/utils';
 
 import { resolveReporterOutputPath } from '../util';
 import { getEastAsianWidth } from '../utilsBundle';
 
 import type { ReporterV2 } from './reporterV2';
 import type { FullConfig, FullResult, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
+import type { Colors } from '@isomorphic/colors';
+
 export type TestResultOutput = { chunk: string | Buffer, type: 'stdout' | 'stderr' };
 export const kOutputSymbol = Symbol('output');
-
-type Colors = typeof realColors;
 
 type ErrorDetails = {
   message: string;
@@ -51,48 +52,6 @@ export type Screen = {
   colors: Colors;
   isTTY: boolean;
   ttyWidth: number;
-};
-
-export const noColors: Colors = {
-  bold: (t: string) => t,
-  cyan: (t: string) => t,
-  dim: (t: string) => t,
-  gray: (t: string) => t,
-  green: (t: string) => t,
-  red: (t: string) => t,
-  yellow: (t: string) => t,
-  black: (t: string) => t,
-  blue: (t: string) => t,
-  magenta: (t: string) => t,
-  white: (t: string) => t,
-  grey: (t: string) => t,
-  bgBlack: (t: string) => t,
-  bgRed: (t: string) => t,
-  bgGreen: (t: string) => t,
-  bgYellow: (t: string) => t,
-  bgBlue: (t: string) => t,
-  bgMagenta: (t: string) => t,
-  bgCyan: (t: string) => t,
-  bgWhite: (t: string) => t,
-  strip: (t: string) => t,
-  stripColors: (t: string) => t,
-  reset: (t: string) => t,
-  italic: (t: string) => t,
-  underline: (t: string) => t,
-  inverse: (t: string) => t,
-  hidden: (t: string) => t,
-  strikethrough: (t: string) => t,
-  rainbow: (t: string) => t,
-  zebra: (t: string) => t,
-  america: (t: string) => t,
-  trap: (t: string) => t,
-  random: (t: string) => t,
-  zalgo: (t: string) => t,
-
-  enabled: false,
-  enable: () => {},
-  disable: () => {},
-  setTheme: () => {},
 };
 
 // Output goes to terminal.
@@ -563,7 +522,7 @@ export function prepareErrorStack(stack: string): {
   const stackLines = lines.slice(firstStackLine);
   let location: Location | undefined;
   for (const line of stackLines) {
-    const frame = parseStackTraceLine(line);
+    const frame = parseStackTraceLine(line, path.sep);
     if (!frame || !frame.file)
       continue;
     if (belongsToNodeModules(frame.file))

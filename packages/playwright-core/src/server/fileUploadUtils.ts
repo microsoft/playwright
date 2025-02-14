@@ -17,8 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { assert } from '../utils/debug';
-import { fileUploadSizeLimit } from '../utils/fileUtils';
+import { assert } from '../utils/isomorphic/debug';
 import { mime } from '../utilsBundle';
 
 import type { WritableStreamDispatcher } from './dispatchers/writableStreamDispatcher';
@@ -26,6 +25,9 @@ import type { InputFilesItems } from './dom';
 import type { Frame } from './frames';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
+
+// Keep in sync with the client.
+export const fileUploadSizeLimit = 50 * 1024 * 1024;
 
 async function filesExceedUploadLimit(files: string[]) {
   const sizes = await Promise.all(files.map(async file => (await fs.promises.stat(file)).size));

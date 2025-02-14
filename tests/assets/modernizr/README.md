@@ -7,8 +7,8 @@
 
 ## Updating expectations
 
-1. `npx http-server .`
-1. Navigate to `http://127.0.0.1:8080/tests/assets/modernizr/index.html`
+1. Serve `tests/assets/modernizr/index.html` from a remote (localhost results will be different) https origin (e.g. https://pages.github.com).
+1. Navigate to `https://your-domain.com/tests/assets/modernizr/index.html`
 
 Do this with:
 

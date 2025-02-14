@@ -25,8 +25,8 @@ import { FFSession } from './ffConnection';
 import { FFExecutionContext } from './ffExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
-import { debugLogger } from '../../utils/debugLogger';
-import { splitErrorMessage } from '../../utils/stackTrace';
+import { debugLogger } from '../utils/debugLogger';
+import { splitErrorMessage } from '../../utils/isomorphic/stackTrace';
 import { BrowserContext } from '../browserContext';
 import { TargetClosedError } from '../errors';
 

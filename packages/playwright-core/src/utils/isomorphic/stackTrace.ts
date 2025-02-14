@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
-
-import { colors } from '../utilsBundle';
-import { findRepeatedSubsequences } from './isomorphic/sequence';
+import { findRepeatedSubsequences } from './sequence';
 import { parseStackFrame } from './stackUtils';
 
 import type { StackFrame } from '@protocol/channels';
+import type { Platform } from '../../common/platform';
 
-export function parseStackTraceLine(line: string): StackFrame | null {
-  const frame = parseStackFrame(line);
+export function parseStackTraceLine(line: string, pathSeparator: string): StackFrame | null {
+  const frame = parseStackFrame(line, pathSeparator);
   if (!frame)
     return null;
   if (!process.env.PWDEBUGIMPL && (frame.file?.startsWith('internal') || frame.file?.startsWith('node:')))
@@ -47,12 +45,15 @@ export function rewriteErrorMessage<E extends Error>(e: E, newMessage: string): 
   return e;
 }
 
-const CORE_DIR = path.resolve(__dirname, '..', '..');
+let coreDir: string | undefined;
 
-const internalStackPrefixes = [
-  CORE_DIR,
-];
-export const addInternalStackPrefix = (prefix: string) => internalStackPrefixes.push(prefix);
+const playwrightStackPrefixes: string[] = [];
+export const addInternalStackPrefix = (prefix: string) => playwrightStackPrefixes.push(prefix);
+
+export const setLibraryStackPrefix = (prefix: string) => {
+  coreDir = prefix;
+  playwrightStackPrefixes.push(prefix);
+};
 
 export type RawStack = string[];
 
@@ -65,7 +66,7 @@ export function captureRawStack(): RawStack {
   return stack.split('\n');
 }
 
-export function captureLibraryStackTrace(): { frames: StackFrame[], apiName: string } {
+export function captureLibraryStackTrace(pathSeparator: string): { frames: StackFrame[], apiName: string } {
   const stack = captureRawStack();
 
   type ParsedFrame = {
@@ -74,10 +75,10 @@ export function captureLibraryStackTrace(): { frames: StackFrame[], apiName: str
     isPlaywrightLibrary: boolean;
   };
   let parsedFrames = stack.map(line => {
-    const frame = parseStackTraceLine(line);
+    const frame = parseStackTraceLine(line, pathSeparator);
     if (!frame || !frame.file)
       return null;
-    const isPlaywrightLibrary = frame.file.startsWith(CORE_DIR);
+    const isPlaywrightLibrary = !!coreDir && frame.file.startsWith(coreDir);
     const parsed: ParsedFrame = {
       frame,
       frameText: line,
@@ -111,7 +112,7 @@ export function captureLibraryStackTrace(): { frames: StackFrame[], apiName: str
   parsedFrames = parsedFrames.filter(f => {
     if (process.env.PWDEBUGIMPL)
       return true;
-    if (internalStackPrefixes.some(prefix => f.frame.file.startsWith(prefix)))
+    if (playwrightStackPrefixes.some(prefix => f.frame.file.startsWith(prefix)))
       return false;
     return true;
   });
@@ -133,11 +134,6 @@ export function stringifyStackFrames(frames: StackFrame[]): string[] {
   return stackLines;
 }
 
-export function captureLibraryStackText() {
-  const parsed = captureLibraryStackTrace();
-  return stringifyStackFrames(parsed.frames).join('\n');
-}
-
 export function splitErrorMessage(message: string): { name: string, message: string } {
   const separationIdx = message.indexOf(':');
   return {
@@ -146,12 +142,12 @@ export function splitErrorMessage(message: string): { name: string, message: str
   };
 }
 
-export function formatCallLog(log: string[] | undefined): string {
+export function formatCallLog(platform: Platform, log: string[] | undefined): string {
   if (!log || !log.some(l => !!l))
     return '';
   return `
 Call log:
-${colors.dim(log.join('\n'))}
+${platform.colors.dim(log.join('\n'))}
 `;
 }
 

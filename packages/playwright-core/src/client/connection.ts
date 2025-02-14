@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
 
+import { EventEmitter } from './eventEmitter';
 import { Android, AndroidDevice, AndroidSocket } from './android';
 import { Artifact } from './artifact';
 import { Browser } from './browser';
@@ -42,14 +42,12 @@ import { Tracing } from './tracing';
 import { Worker } from './worker';
 import { WritableStream } from './writableStream';
 import { ValidationError, findValidator  } from '../protocol/validator';
-import { debugLogger } from '../utils/debugLogger';
-import { formatCallLog, rewriteErrorMessage } from '../utils/stackTrace';
-import { zones } from '../utils/zones';
+import { formatCallLog, rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { HeadersArray } from './types';
 import type { ValidatorContext } from '../protocol/validator';
-import type { Platform } from '../utils/platform';
+import type { Platform } from '../common/platform';
 import type * as channels from '@protocol/channels';
 
 class Root extends ChannelOwner<channels.RootChannel> {
@@ -110,8 +108,8 @@ export class Connection extends EventEmitter {
     return this._rawBuffers;
   }
 
-  localUtils(): LocalUtils {
-    return this._localUtils!;
+  localUtils(): LocalUtils | undefined {
+    return this._localUtils;
   }
 
   async initializePlaywright(): Promise<Playwright> {
@@ -139,9 +137,9 @@ export class Connection extends EventEmitter {
     const type = object._type;
     const id = ++this._lastId;
     const message = { id, guid, method, params };
-    if (debugLogger.isEnabled('channel')) {
+    if (this.platform.isLogEnabled('channel')) {
       // Do not include metadata in debug logs to avoid noise.
-      debugLogger.log('channel', 'SEND> ' + JSON.stringify(message));
+      this.platform.log('channel', 'SEND> ' + JSON.stringify(message));
     }
     const location = frames[0] ? { file: frames[0].file, line: frames[0].line, column: frames[0].column } : undefined;
     const metadata: channels.Metadata = { apiName, location, internal: !apiName, stepId };
@@ -149,7 +147,7 @@ export class Connection extends EventEmitter {
       this._localUtils?.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
     // We need to exit zones before calling into the server, otherwise
     // when we receive events from the server, we would be in an API zone.
-    zones.empty().run(() => this.onmessage({ ...message, metadata }));
+    this.platform.zones.empty.run(() => this.onmessage({ ...message, metadata }));
     return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, apiName, type, method }));
   }
 
@@ -159,15 +157,15 @@ export class Connection extends EventEmitter {
 
     const { id, guid, method, params, result, error, log } = message as any;
     if (id) {
-      if (debugLogger.isEnabled('channel'))
-        debugLogger.log('channel', '<RECV ' + JSON.stringify(message));
+      if (this.platform.isLogEnabled('channel'))
+        this.platform.log('channel', '<RECV ' + JSON.stringify(message));
       const callback = this._callbacks.get(id);
       if (!callback)
         throw new Error(`Cannot find command to respond: ${id}`);
       this._callbacks.delete(id);
       if (error && !result) {
         const parsedError = parseError(error);
-        rewriteErrorMessage(parsedError, parsedError.message + formatCallLog(log));
+        rewriteErrorMessage(parsedError, parsedError.message + formatCallLog(this.platform, log));
         callback.reject(parsedError);
       } else {
         const validator = findValidator(callback.type, callback.method, 'Result');
@@ -176,8 +174,8 @@ export class Connection extends EventEmitter {
       return;
     }
 
-    if (debugLogger.isEnabled('channel'))
-      debugLogger.log('channel', '<EVENT ' + JSON.stringify(message));
+    if (this.platform.isLogEnabled('channel'))
+      this.platform.log('channel', '<EVENT ' + JSON.stringify(message));
     if (method === '__create__') {
       this._createRemoteObject(guid, params.type, params.guid, params.initializer);
       return;

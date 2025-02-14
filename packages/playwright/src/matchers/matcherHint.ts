@@ -15,7 +15,7 @@
  */
 
 import { stringifyStackFrames } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { colors } from 'playwright-core/lib/utils';
 
 import type { ExpectMatcherState } from '../../types/test';
 import type { StackFrame } from '@protocol/channels';

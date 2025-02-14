@@ -413,13 +413,10 @@ export class BidiPage implements PageDelegate {
 
   async getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
     const executionContext = toBidiExecutionContext(handle._context);
-    const contentWindow = await executionContext.rawCallFunction('e => e.contentWindow', { handle: handle._objectId });
-    if (contentWindow.type === 'window') {
-      const frameId = contentWindow.value.context;
-      const result = this._page._frameManager.frame(frameId);
-      return result;
-    }
-    return null;
+    const frameId = await executionContext.contentFrameIdForFrame(handle);
+    if (!frameId)
+      return null;
+    return this._page._frameManager.frame(frameId);
   }
 
   async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
@@ -430,15 +427,8 @@ export class BidiPage implements PageDelegate {
     });
     if (!windowHandle)
       return null;
-    if (!windowHandle._objectId)
-      return null;
-    const executionContext = toBidiExecutionContext(windowHandle._context as dom.FrameExecutionContext);
-    const contentWindow = await executionContext.rawCallFunction('e => e', { handle: windowHandle._objectId });
-    if (contentWindow.type === 'window') {
-      const frameId = contentWindow.value.context;
-      return frameId;
-    }
-    return null;
+    const executionContext = toBidiExecutionContext(handle._context);
+    return executionContext.frameIdForWindowHandle(windowHandle);
   }
 
   isElementHandle(remoteObject: bidi.Script.RemoteValue): boolean {
@@ -530,34 +520,26 @@ export class BidiPage implements PageDelegate {
   }
 
   async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
-    throw new Error('Setting FilePayloads is not supported in Bidi.');
+    await handle.evaluateInUtility(([injected, node, files]) =>
+      injected.setInputFiles(node, files), files);
   }
 
   async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
     const fromContext = toBidiExecutionContext(handle._context);
-    const shared = await fromContext.rawCallFunction('x => x',  { handle: handle._objectId });
-    // TODO: store sharedId in the handle.
-    if (!('sharedId' in shared))
-      throw new Error('Element is not a node');
-    const sharedId = shared.sharedId!;
     await this._session.send('input.setFiles', {
       context: this._session.sessionId,
-      element: { sharedId },
+      element: await fromContext.nodeIdForElementHandle(handle),
       files: paths,
     });
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
     const fromContext = toBidiExecutionContext(handle._context);
-    const shared = await fromContext.rawCallFunction('x => x',  { handle: handle._objectId });
-    // TODO: store sharedId in the handle.
-    if (!('sharedId' in shared))
-      throw new Error('Element is not a node');
-    const sharedId = shared.sharedId!;
+    const nodeId = await fromContext.nodeIdForElementHandle(handle);
     const executionContext = toBidiExecutionContext(to);
-    const result = await executionContext.rawCallFunction('x => x',  { sharedId });
-    if ('handle' in result)
-      return to.createHandle({ objectId: result.handle!, ...result }) as dom.ElementHandle<T>;
+    const objectId = await executionContext.remoteObjectForNodeId(nodeId);
+    if (objectId)
+      return to.createHandle(objectId) as dom.ElementHandle<T>;
     throw new Error('Failed to adopt element handle.');
   }
 

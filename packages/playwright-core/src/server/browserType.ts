@@ -19,7 +19,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 import { normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
-import { DEFAULT_TIMEOUT, TimeoutSettings } from '../common/timeoutSettings';
+import { DEFAULT_TIMEOUT, TimeoutSettings } from '../utils/isomorphic/timeoutSettings';
 import { ManualPromise, assert, debugMode } from '../utils';
 import { existsAsync } from './utils/fileUtils';
 import { helper } from './helper';
@@ -31,7 +31,7 @@ import {  isProtocolError } from './protocolError';
 import { registry } from './registry';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { WebSocketTransport } from './transport';
-import { RecentLogsCollector } from '../utils/debugLogger';
+import { RecentLogsCollector } from './utils/debugLogger';
 
 import type { Browser, BrowserOptions, BrowserProcess } from './browser';
 import type { BrowserContext } from './browserContext';

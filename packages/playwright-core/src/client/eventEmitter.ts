@@ -22,15 +22,19 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { EventEmitter as OriginalEventEmitter } from 'events';
-
-import { isUnderTest } from '../utils/debug';
+import { isUnderTest } from '../utils/isomorphic/debug';
 
 import type { EventEmitter as EventEmitterType } from 'events';
 
 type EventType = string | symbol;
 type Listener = (...args: any[]) => any;
 type EventMap = Record<EventType, Listener | Listener[]>;
+
+let defaultMaxListenersProvider = () => 10;
+
+export function setDefaultMaxListenersProvider(provider: () => number) {
+  defaultMaxListenersProvider = provider;
+}
 
 export class EventEmitter implements EventEmitterType {
 
@@ -58,7 +62,7 @@ export class EventEmitter implements EventEmitterType {
   }
 
   getMaxListeners(): number {
-    return this._maxListeners === undefined ? OriginalEventEmitter.defaultMaxListeners : this._maxListeners;
+    return this._maxListeners === undefined ? defaultMaxListenersProvider() : this._maxListeners;
   }
 
   emit(type: EventType, ...args: any[]): boolean {
