@@ -148,6 +148,14 @@ export class Connection extends EventEmitter {
     return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, apiName, type, method }));
   }
 
+  private _validatorFromWireContext(): ValidatorContext {
+    return {
+      tChannelImpl: this._tChannelImplFromWire.bind(this),
+      binary: this._rawBuffers ? 'buffer' : 'fromBase64',
+      isUnderTest: () => this._platform.isUnderTest(),
+    };
+  }
+
   dispatch(message: object) {
     if (this._closedError)
       return;
@@ -166,7 +174,7 @@ export class Connection extends EventEmitter {
         callback.reject(parsedError);
       } else {
         const validator = findValidator(callback.type, callback.method, 'Result');
-        callback.resolve(validator(result, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._rawBuffers ? 'buffer' : 'fromBase64' }));
+        callback.resolve(validator(result, '', this._validatorFromWireContext()));
       }
       return;
     }
@@ -196,7 +204,7 @@ export class Connection extends EventEmitter {
     }
 
     const validator = findValidator(object._type, method, 'Event');
-    (object._channel as any).emit(method, validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._rawBuffers ? 'buffer' : 'fromBase64' }));
+    (object._channel as any).emit(method, validator(params, '', this._validatorFromWireContext()));
   }
 
   close(cause?: string) {
@@ -227,7 +235,7 @@ export class Connection extends EventEmitter {
       throw new Error(`Cannot find parent object ${parentGuid} to create ${guid}`);
     let result: ChannelOwner<any>;
     const validator = findValidator(type, '', 'Initializer');
-    initializer = validator(initializer, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._rawBuffers ? 'buffer' : 'fromBase64' });
+    initializer = validator(initializer, '', this._validatorFromWireContext());
     switch (type) {
       case 'Android':
         result = new Android(parent, type, guid, initializer);
