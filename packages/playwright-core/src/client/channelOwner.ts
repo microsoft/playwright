@@ -141,6 +141,14 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     };
   }
 
+  private _validatorToWireContext(): ValidatorContext {
+    return {
+      tChannelImpl: tChannelImplToWire,
+      binary: this._connection.rawBuffers() ? 'buffer' : 'toBase64',
+      isUnderTest: () => this._platform.isUnderTest(),
+    };
+  }
+
   private _createChannel(base: Object): T {
     const channel = new Proxy(base, {
       get: (obj: any, prop: string | symbol) => {
@@ -149,7 +157,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
           if (validator) {
             return async (params: any) => {
               return await this._wrapApiCall(async apiZone => {
-                const validatedParams = validator(params, '', { tChannelImpl: tChannelImplToWire, binary: this._connection.rawBuffers() ? 'buffer' : 'toBase64' });
+                const validatedParams = validator(params, '', this._validatorToWireContext());
                 if (!apiZone.isInternal && !apiZone.reported) {
                   // Reporting/tracing/logging this api call for the first time.
                   apiZone.params = params;

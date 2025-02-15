@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-let isUnderTest = () => false;
-
-export function setIsUnderTestForValidator(getter: () => boolean) {
-  isUnderTest = getter;
-}
-
 export class ValidationError extends Error {}
 export type Validator = (arg: any, path: string, context: ValidatorContext) => any;
 export type ValidatorContext = {
-  tChannelImpl: (names: '*' | string[], arg: any, path: string, context: ValidatorContext) => any,
-  binary: 'toBase64' | 'fromBase64' | 'buffer',
+  tChannelImpl: (names: '*' | string[], arg: any, path: string, context: ValidatorContext) => any;
+  binary: 'toBase64' | 'fromBase64' | 'buffer';
+  isUnderTest: () => boolean;
 };
 export const scheme: { [key: string]: Validator } = {};
 
@@ -117,7 +112,7 @@ export const tObject = (s: { [key: string]: Validator }): Validator => {
       if (!Object.is(value, undefined))
         result[key] = value;
     }
-    if (isUnderTest()) {
+    if (context.isUnderTest()) {
       for (const [key, value] of Object.entries(arg)) {
         if (key.startsWith('__testHook'))
           result[key] = value;

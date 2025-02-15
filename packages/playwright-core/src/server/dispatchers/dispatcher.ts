@@ -200,13 +200,13 @@ export class DispatcherConnection {
 
   sendEvent(dispatcher: DispatcherScope, event: string, params: any) {
     const validator = findValidator(dispatcher._type, event, 'Event');
-    params = validator(params, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
+    params = validator(params, '', this._validatorToWireContext());
     this.onmessage({ guid: dispatcher._guid, method: event, params });
   }
 
   sendCreate(parent: DispatcherScope, type: string, guid: string, initializer: any) {
     const validator = findValidator(type, '', 'Initializer');
-    initializer = validator(initializer, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
+    initializer = validator(initializer, '', this._validatorToWireContext());
     this.onmessage({ guid: parent._guid, method: '__create__', params: { type, initializer, guid } });
   }
 
@@ -216,6 +216,22 @@ export class DispatcherConnection {
 
   sendDispose(dispatcher: DispatcherScope, reason?: 'gc') {
     this.onmessage({ guid: dispatcher._guid, method: '__dispose__', params: { reason } });
+  }
+
+  private _validatorToWireContext(): ValidatorContext {
+    return {
+      tChannelImpl: this._tChannelImplToWire.bind(this),
+      binary: this._isLocal ? 'buffer' : 'toBase64',
+      isUnderTest,
+    };
+  }
+
+  private _validatorFromWireContext(): ValidatorContext {
+    return {
+      tChannelImpl: this._tChannelImplFromWire.bind(this),
+      binary: this._isLocal ? 'buffer' : 'fromBase64',
+      isUnderTest,
+    };
   }
 
   private _tChannelImplFromWire(names: '*' | string[], arg: any, path: string, context: ValidatorContext): any {
@@ -279,8 +295,9 @@ export class DispatcherConnection {
     let validMetadata: channels.Metadata;
     try {
       const validator = findValidator(dispatcher._type, method, 'Params');
-      validParams = validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._isLocal ? 'buffer' : 'fromBase64' });
-      validMetadata = metadataValidator(metadata, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._isLocal ? 'buffer' : 'fromBase64' });
+      const validatorContext = this._validatorFromWireContext();
+      validParams = validator(params, '', validatorContext);
+      validMetadata = metadataValidator(metadata, '', validatorContext);
       if (typeof (dispatcher as any)[method] !== 'function')
         throw new Error(`Mismatching dispatcher: "${dispatcher._type}" does not implement "${method}"`);
     } catch (e) {
@@ -338,7 +355,7 @@ export class DispatcherConnection {
     try {
       const result = await dispatcher._handleCommand(callMetadata, method, validParams);
       const validator = findValidator(dispatcher._type, method, 'Result');
-      response.result = validator(result, '', { tChannelImpl: this._tChannelImplToWire.bind(this), binary: this._isLocal ? 'buffer' : 'toBase64' });
+      response.result = validator(result, '', this._validatorToWireContext());
       callMetadata.result = result;
     } catch (e) {
       if (isTargetClosedError(e) && sdkObject) {
