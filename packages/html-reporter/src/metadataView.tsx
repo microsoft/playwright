@@ -107,14 +107,24 @@ const InnerMetadataView = () => {
 const GitCommitInfoView: React.FC<{ info: GitCommitInfo }> = ({ info }) => {
   const email = info['revision.email'] ? ` <${info['revision.email']}>` : '';
   const author = `${info['revision.author'] || ''}${email}`;
-  const subject = info['revision.subject'] || '';
+
+  let subject = info['revision.subject'] || '';
+  let link = info['revision.link'];
+  let shortSubject = info['revision.id']?.slice(0, 7) || 'unknown';
+
+  if (info['pull.link'] && info['pull.title']) {
+    subject = info['pull.title'];
+    link = info['pull.link'];
+    shortSubject = link ? 'Pull Request' : '';
+  }
+
   const shortTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(info['revision.timestamp']);
   const longTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(info['revision.timestamp']);
   return <div className='hbox git-commit-info metadata-section'>
     <div className='vbox metadata-properties'>
       <div>
-        {info['revision.link'] ? (
-          <a href={info['revision.link']} target='_blank' rel='noopener noreferrer' title={subject}>
+        {link ? (
+          <a href={link} target='_blank' rel='noopener noreferrer' title={subject}>
             {subject}
           </a>
         ) : <span title={subject}>
@@ -130,18 +140,12 @@ const GitCommitInfoView: React.FC<{ info: GitCommitInfo }> = ({ info }) => {
             <a href={info['ci.link']} target='_blank' rel='noopener noreferrer' title='CI/CD logs'>Logs</a>
           </>
         )}
-        {info['pull.link'] && (
-          <>
-            <span className='mx-2'>·</span>
-            <a href={info['pull.link']} target='_blank' rel='noopener noreferrer'>Pull Request</a>
-          </>
-        )}
       </div>
     </div>
-    {!!info['revision.link'] ? (
-      <a href={info['revision.link']} target='_blank' rel='noopener noreferrer' title='View commit details'>
-        {info['revision.id']?.slice(0, 7) || 'unknown'}
+    {link ? (
+      <a href={link} target='_blank' rel='noopener noreferrer' title='View commit details'>
+        {shortSubject}
       </a>
-    ) : !!info['revision.id'] && <span>{info['revision.id'].slice(0, 7)}</span>}
+    ) : !!shortSubject && <span>{shortSubject}</span>}
   </div>;
 };

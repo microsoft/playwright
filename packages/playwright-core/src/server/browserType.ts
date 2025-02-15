@@ -19,8 +19,10 @@ import * as os from 'os';
 import * as path from 'path';
 
 import { normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
-import { DEFAULT_TIMEOUT, TimeoutSettings } from '../utils/isomorphic/timeoutSettings';
-import { ManualPromise, assert, debugMode } from '../utils';
+import { DEFAULT_TIMEOUT, TimeoutSettings } from './timeoutSettings';
+import { debugMode } from './utils/debug';
+import { assert } from '../utils/isomorphic/assert';
+import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { existsAsync } from './utils/fileUtils';
 import { helper } from './helper';
 import { SdkObject } from './instrumentation';

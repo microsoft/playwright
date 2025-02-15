@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-import { pipeline } from 'stream';
-import { promisify } from 'util';
-
 import { Frame } from './frame';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
-import { assert } from '../utils/isomorphic/debug';
+import { assert } from '../utils/isomorphic/assert';
 import { fileUploadSizeLimit, mkdirIfNeeded } from './fileUtils';
 import { isString } from '../utils/isomorphic/rtti';
 import { WritableStream } from './writableStream';
@@ -31,10 +28,8 @@ import type { Locator } from './locator';
 import type { FilePayload, Rect, SelectOption, SelectOptionOptions } from './types';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
-import type { Platform } from '../common/platform';
+import type { Platform } from './platform';
 import type * as channels from '@protocol/channels';
-
-const pipelineAsync = promisify(pipeline);
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements api.ElementHandle {
   readonly _elementChannel: channels.ElementHandleChannel;
@@ -306,7 +301,7 @@ export async function convertInputFiles(platform: Platform, files: string | File
       }), true);
       for (let i = 0; i < files.length; i++) {
         const writable = WritableStream.from(writableStreams[i]);
-        await pipelineAsync(platform.fs().createReadStream(files[i]), writable.stream());
+        await platform.streamFile(files[i], writable.stream());
       }
       return {
         directoryStream: rootDir,

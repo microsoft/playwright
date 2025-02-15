@@ -21,7 +21,7 @@ import { APIResponse } from './fetch';
 import { Frame } from './frame';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
-import { assert } from '../utils/isomorphic/debug';
+import { assert } from '../utils/isomorphic/assert';
 import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { urlMatches } from '../utils/isomorphic/urlMatch';
 import { LongStandingScope, ManualPromise } from '../utils/isomorphic/manualPromise';
@@ -35,10 +35,10 @@ import type { Page } from './page';
 import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
-import type { HeadersArray } from '../common/types';
+import type { HeadersArray } from '../utils/isomorphic/types';
 import type { URLMatch } from '../utils/isomorphic/urlMatch';
 import type * as channels from '@protocol/channels';
-import type { Platform, Zone } from '../common/platform';
+import type { Platform, Zone } from './platform';
 
 export type NetworkCookie = {
   name: string,

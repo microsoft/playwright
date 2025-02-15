@@ -30,7 +30,7 @@ import type { Page } from './page';
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
 import type * as types from './types';
-import type { TimeoutOptions } from '../common/types';
+import type { TimeoutOptions } from '../utils/isomorphic/types';
 import type * as channels from '@protocol/channels';
 
 
@@ -705,7 +705,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await this._page._delegate.setInputFilePaths(retargeted, localPathsOrDirectory);
       await waitForInputEvent;
     } else {
-      await this._page._delegate.setInputFiles(retargeted, filePayloads!);
+      await retargeted.evaluateInUtility(([injected, node, files]) =>
+        injected.setInputFiles(node, files), filePayloads!);
     }
     return 'done';
   }

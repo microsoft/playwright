@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-import { debugMode } from './debug';
+import { debugMode } from './utils/debug';
 
+// Keep in sync with client.
 export const DEFAULT_TIMEOUT = 30000;
 export const DEFAULT_LAUNCH_TIMEOUT = 3 * 60 * 1000; // 3 minutes
 

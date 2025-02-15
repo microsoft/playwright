@@ -18,13 +18,19 @@ import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
+import { Readable, Writable, pipeline } from 'stream';
+import { EventEmitter } from 'events';
 
 import { colors } from '../../utilsBundle';
 import { debugLogger } from './debugLogger';
 import { currentZone, emptyZone } from './zones';
+import { debugMode, isUnderTest } from './debug';
 
-import type { Platform, Zone } from '../../common/platform';
+import type { Platform, Zone } from '../../client/platform';
 import type { Zone as ZoneImpl } from './zones';
+import type * as channels from '@protocol/channels';
+
+const pipelineAsync = util.promisify(pipeline);
 
 class NodeZone implements Zone {
   private _zone: ZoneImpl;
@@ -50,8 +56,15 @@ class NodeZone implements Zone {
   }
 }
 
+let boxedStackPrefixes: string[] = [];
+export function setBoxedStackPrefixes(prefixes: string[]) {
+  boxedStackPrefixes = prefixes;
+}
+
 export const nodePlatform: Platform = {
   name: 'node',
+
+  boxedStackPrefixes: () => boxedStackPrefixes,
 
   calculateSha1: (text: string) => {
     const sha1 = crypto.createHash('sha1');
@@ -61,17 +74,24 @@ export const nodePlatform: Platform = {
 
   colors,
 
+  coreDir: path.dirname(require.resolve('../../../package.json')),
+
   createGuid: () => crypto.randomBytes(16).toString('hex'),
 
+  defaultMaxListeners: () => EventEmitter.defaultMaxListeners,
   fs: () => fs,
 
   inspectCustom: util.inspect.custom,
 
-  isDebuggerAttached: () => !!require('inspector').url(),
+  isDebugMode: () => !!debugMode(),
+
+  isJSDebuggerAttached: () => !!require('inspector').url(),
 
   isLogEnabled(name: 'api' | 'channel') {
     return debugLogger.isEnabled(name);
   },
+
+  isUnderTest: () => isUnderTest(),
 
   log(name: 'api' | 'channel', message: string | Error | object) {
     debugLogger.log(name, message);
@@ -81,8 +101,63 @@ export const nodePlatform: Platform = {
 
   pathSeparator: path.sep,
 
+  async streamFile(path: string, stream: Writable): Promise<void> {
+    await pipelineAsync(fs.createReadStream(path), stream);
+  },
+
+  streamReadable: (channel: channels.StreamChannel) => {
+    return new ReadableStreamImpl(channel);
+  },
+
+  streamWritable: (channel: channels.WritableStreamChannel) => {
+    return new WritableStreamImpl(channel);
+  },
+
   zones: {
     current: () => new NodeZone(currentZone()),
     empty: new NodeZone(emptyZone),
   }
 };
+
+class ReadableStreamImpl extends Readable {
+  private _channel: channels.StreamChannel;
+
+  constructor(channel: channels.StreamChannel) {
+    super();
+    this._channel = channel;
+  }
+
+  override async _read() {
+    const result = await this._channel.read({ size: 1024 * 1024 });
+    if (result.binary.byteLength)
+      this.push(result.binary);
+    else
+      this.push(null);
+  }
+
+  override _destroy(error: Error | null, callback: (error: Error | null | undefined) => void): void {
+    // Stream might be destroyed after the connection was closed.
+    this._channel.close().catch(e => null);
+    super._destroy(error, callback);
+  }
+}
+
+class WritableStreamImpl extends Writable {
+  private _channel: channels.WritableStreamChannel;
+
+  constructor(channel: channels.WritableStreamChannel) {
+    super();
+    this._channel = channel;
+  }
+
+  override async _write(chunk: Buffer | string, encoding: BufferEncoding, callback: (error?: Error | null) => void) {
+    const error = await this._channel.write({ binary: typeof chunk === 'string' ? Buffer.from(chunk) : chunk }).catch(e => e);
+    callback(error || null);
+  }
+
+  override async _final(callback: (error?: Error | null) => void) {
+    // Stream might be destroyed after the connection was closed.
+    const error = await this._channel.close().catch(e => e);
+    callback(error || null);
+  }
+}

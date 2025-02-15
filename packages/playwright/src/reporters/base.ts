@@ -17,7 +17,7 @@
 import * as path from 'path';
 
 import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
-import { parseStackTraceLine } from 'playwright-core/lib/utils';
+import { parseStackFrame } from 'playwright-core/lib/utils';
 import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import { colors as realColors, noColors } from 'playwright-core/lib/utils';
 
@@ -522,7 +522,7 @@ export function prepareErrorStack(stack: string): {
   const stackLines = lines.slice(firstStackLine);
   let location: Location | undefined;
   for (const line of stackLines) {
-    const frame = parseStackTraceLine(line, path.sep);
+    const frame = parseStackFrame(line, path.sep);
     if (!frame || !frame.file)
       continue;
     if (belongsToNodeModules(frame.file))

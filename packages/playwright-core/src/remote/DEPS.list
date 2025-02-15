@@ -1,6 +1,4 @@
 [*]
-../client/
-../common/
 ../server/
 ../server/android/
 ../server/dispatchers/
