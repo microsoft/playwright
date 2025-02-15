@@ -38,21 +38,20 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
   readonly _channel: T;
   readonly _initializer: channels.InitializerTraits<T>;
   _logger: Logger | undefined;
-  readonly _platform: Platform;
   readonly _instrumentation: ClientInstrumentation;
   private _eventToSubscriptionMapping: Map<string, string> = new Map();
   private _isInternalType = false;
   _wasCollected: boolean = false;
 
   constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: channels.InitializerTraits<T>) {
-    super();
+    const connection = parent instanceof ChannelOwner ? parent._connection : parent;
+    super(connection._platform);
     this.setMaxListeners(0);
-    this._connection = parent instanceof ChannelOwner ? parent._connection : parent;
+    this._connection = connection;
     this._type = type;
     this._guid = guid;
     this._parent = parent instanceof ChannelOwner ? parent : undefined;
     this._instrumentation = this._connection._instrumentation;
-    this._platform = this._connection.platform;
 
     this._connection._objects.set(guid, this);
     if (this._parent) {
@@ -60,7 +59,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       this._logger = this._parent._logger;
     }
 
-    this._channel = this._createChannel(new EventEmitter());
+    this._channel = this._createChannel(new EventEmitter(connection._platform));
     this._initializer = initializer;
   }
 

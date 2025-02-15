@@ -20,7 +20,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-import { EventEmitter } from '../../../packages/playwright-core/lib/client/eventEmitter';
+import { EventEmitter } from './utils';
 import { test, expect } from '@playwright/test';
 
 test('EventEmitter prototype test', () => {

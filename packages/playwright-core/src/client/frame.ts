@@ -64,7 +64,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.FrameInitializer) {
     super(parent, type, guid, initializer);
-    this._eventEmitter = new EventEmitter();
+    this._eventEmitter = new EventEmitter(parent._platform);
     this._eventEmitter.setMaxListeners(0);
     this._parentFrame = Frame.fromNullable(initializer.parentFrame);
     if (this._parentFrame)

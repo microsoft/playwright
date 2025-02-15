@@ -393,7 +393,7 @@ export class AndroidWebView extends EventEmitter implements api.AndroidWebView {
   private _pagePromise: Promise<Page> | undefined;
 
   constructor(device: AndroidDevice, data: channels.AndroidWebView) {
-    super();
+    super(device._platform);
     this._device = device;
     this._data = data;
   }

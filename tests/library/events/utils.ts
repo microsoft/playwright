@@ -20,6 +20,8 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import { expect } from '@playwright/test';
+import { EventEmitter as OriginalEventEmitter } from '../../../packages/playwright-core/lib/client/eventEmitter';
+import { nodePlatform } from '../../../packages/playwright-core/lib/server/utils/nodePlatform';
 
 export const mustNotCall = (msg?: string) => {
   return function mustNotCall() {
@@ -44,3 +46,9 @@ export const mustCall = (fn?: Function, exact?: number) => {
     --count;
   };
 };
+
+export class EventEmitter extends OriginalEventEmitter {
+  constructor() {
+    super(nodePlatform);
+  }
+}
