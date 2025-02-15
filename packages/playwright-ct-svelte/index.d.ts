@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import type { Snippet } from "svelte"
 import type {
   SvelteComponent as V4Component,
   Component as V5Component,
@@ -21,7 +22,7 @@ import type {
 } from 'svelte/types/runtime';
 import type { TestType, Locator } from '@playwright/experimental-ct-core';
 
-type ComponentSlot = string | string[];
+type ComponentSlot = Snippet | string;
 type ComponentSlots = Record<string, ComponentSlot> & { default?: ComponentSlot };
 type ComponentEvents = Record<string, Function>;
 

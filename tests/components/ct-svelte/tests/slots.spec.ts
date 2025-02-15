@@ -5,7 +5,7 @@ import NamedSlots from '@/components/NamedSlots.svelte';
 test('render a default slot', async ({ mount }) => {
   const component = await mount(DefaultSlot, {
     slots: {
-      default: 'Main Content',
+      children: 'Main Content',
     },
   });
   await expect(component).toContainText('Main Content');

@@ -19,10 +19,10 @@
 // This file is injected into the registry as text, no dependencies are allowed.
 
 import { asClassComponent } from 'svelte/legacy';
+import { createRawSnippet } from "svelte";
 
 /** @typedef {import('../playwright-ct-core/types/component').Component} Component */
 /** @typedef {import('../playwright-ct-core/types/component').ObjectComponent} ObjectComponent */
-/** @typedef {any} FrameworkComponent */
 /** @typedef {import('svelte').SvelteComponent} SvelteComponent */
 /** @typedef {import('svelte').ComponentType} ComponentType */
 
@@ -38,6 +38,30 @@ function isObjectComponent(component) {
   );
 }
 
+/** @type {( component: ObjectComponent ) => Record<string, any>} */
+function extractParams(component) {
+  let {props, slots, on} = component;
+
+  slots = Object.fromEntries(
+    Object.entries(slots ?? {}).map(([key, snippet]) => {
+      if(typeof snippet === "string") {
+        console.log("ugraded", key);
+        return [key, createRawSnippet(() => ({render: () => snippet}))];
+      }
+
+      return [key, snippet]
+    })
+  );
+
+  on = Object.fromEntries(
+    Object.entries(on ?? {}).map(([key, fn]) => {
+      return [`on${key}`, fn]
+    })
+  );
+
+  return {props, slots, on};
+}
+
 const __pwSvelteComponentKey = Symbol('svelteComponent');
 
 window.playwrightMount = async (component, rootElement, hooksConfig) => {
@@ -45,17 +69,20 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
     throw new Error('JSX mount notation is not supported');
 
   const objectComponent = component;
-  component.type = component.type;
-
-  /** @type {ComponentType} */
   const componentCtor = asClassComponent(component.type);
   class App extends componentCtor {
     constructor(options = {}) {
+      if (!isObjectComponent(component))
+        throw new Error('JSX mount notation is not supported');
+
+      let {props, slots, on} = extractParams(component);
+
       super({
         target: rootElement,
         props: {
-          ...objectComponent.props,
-          $$scope: {}
+          ...props,
+          ...slots,
+          ...on,
         },
         ...options
       });
@@ -63,9 +90,7 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   }
 
   /** @type {SvelteComponent | undefined} */
-
   let svelteComponent;
-
   for (const hook of window.__pw_hooks_before_mount || []) {
     svelteComponent = await hook({ hooksConfig, App });
   }
@@ -75,9 +100,6 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
   }
 
   rootElement[__pwSvelteComponentKey] = svelteComponent;
-
-  for (const [key, listener] of Object.entries(objectComponent.on || {}))
-    svelteComponent.$on(key, event => listener(event.detail));
 
   for (const hook of window.__pw_hooks_after_mount || [])
     await hook({ hooksConfig, svelteComponent });
@@ -101,8 +123,11 @@ window.playwrightUpdate = async (rootElement, component) => {
   );
   if (!svelteComponent) throw new Error('Component was not mounted');
 
-  for (const [key, listener] of Object.entries(component.on || {}))
-    svelteComponent.$on(key, event => listener(event.detail));
+  let {props, slots, on} = extractParams(component);
 
-  if (component.props) svelteComponent.$set(component.props);
+  svelteComponent.$set({
+    ...props,
+    ...slots,
+    ...on,
+  });
 };
