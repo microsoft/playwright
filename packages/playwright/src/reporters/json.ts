@@ -203,6 +203,7 @@ class JSONReporter implements ReporterV2 {
     const steps = result.steps.filter(s => s.category === 'test.step');
     const jsonResult: JSONReportTestResult = {
       workerIndex: result.workerIndex,
+      parallelIndex: result.parallelIndex,
       status: result.status,
       duration: result.duration,
       error: result.error,
