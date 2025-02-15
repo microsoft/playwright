@@ -45,6 +45,7 @@ export type Platform = {
   coreDir?: string;
   createGuid: () => string;
   defaultMaxListeners: () => number;
+  env: Record<string, string | undefined>;
   fs: () => typeof fs;
   inspectCustom: symbol | undefined;
   isDebugMode: () => boolean;
@@ -54,6 +55,7 @@ export type Platform = {
   log: (name: 'api' | 'channel', message: string | Error | object) => void;
   path: () => typeof path;
   pathSeparator: string;
+  showInternalStackFrames: () => boolean,
   streamFile: (path: string, writable: Writable) => Promise<void>,
   streamReadable: (channel: channels.StreamChannel) => Readable,
   streamWritable: (channel: channels.WritableStreamChannel) => Writable,
@@ -76,6 +78,8 @@ export const emptyPlatform: Platform = {
   },
 
   defaultMaxListeners: () => 10,
+
+  env: {},
 
   fs: () => {
     throw new Error('Not implemented');
@@ -100,6 +104,8 @@ export const emptyPlatform: Platform = {
   },
 
   pathSeparator: '/',
+
+  showInternalStackFrames: () => false,
 
   streamFile(path: string, writable: Writable): Promise<void> {
     throw new Error('Streams are not available');

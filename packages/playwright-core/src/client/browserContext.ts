@@ -246,15 +246,15 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   setDefaultNavigationTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultNavigationTimeout(timeout);
     this._wrapApiCall(async () => {
-      this._channel.setDefaultNavigationTimeoutNoReply({ timeout }).catch(() => {});
-    }, true);
+      await this._channel.setDefaultNavigationTimeoutNoReply({ timeout });
+    }, true).catch(() => {});
   }
 
   setDefaultTimeout(timeout: number | undefined) {
     this._timeoutSettings.setDefaultTimeout(timeout);
     this._wrapApiCall(async () => {
-      this._channel.setDefaultTimeoutNoReply({ timeout }).catch(() => {});
-    }, true);
+      await this._channel.setDefaultTimeoutNoReply({ timeout });
+    }, true).catch(() => {});
   }
 
   browser(): Browser | null {
@@ -559,7 +559,7 @@ export async function prepareBrowserContextParams(platform: Platform, options: B
     };
   }
   if (contextParams.recordVideo && contextParams.recordVideo.dir)
-    contextParams.recordVideo.dir = platform.path().resolve(process.cwd(), contextParams.recordVideo.dir);
+    contextParams.recordVideo.dir = platform.path().resolve(contextParams.recordVideo.dir);
   return contextParams;
 }
 

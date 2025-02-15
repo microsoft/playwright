@@ -37,7 +37,7 @@ export function captureRawStack(): RawStack {
   return stack.split('\n');
 }
 
-export function parseStackFrame(text: string, pathSeparator: string): StackFrame | null {
+export function parseStackFrame(text: string, pathSeparator: string, showInternalStackFrames: boolean): StackFrame | null {
   const match = text && text.match(re);
   if (!match)
     return null;
@@ -46,7 +46,7 @@ export function parseStackFrame(text: string, pathSeparator: string): StackFrame
   let file = match[7];
   if (!file)
     return null;
-  if (!process.env.PWDEBUGIMPL && (file.startsWith('internal') || file.startsWith('node:')))
+  if (!showInternalStackFrames && (file.startsWith('internal') || file.startsWith('node:')))
     return null;
 
   const line = match[8];

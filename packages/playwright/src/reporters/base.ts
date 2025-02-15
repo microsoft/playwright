@@ -522,7 +522,7 @@ export function prepareErrorStack(stack: string): {
   const stackLines = lines.slice(firstStackLine);
   let location: Location | undefined;
   for (const line of stackLines) {
-    const frame = parseStackFrame(line, path.sep);
+    const frame = parseStackFrame(line, path.sep, !!process.env.PWDEBUGIMPL);
     if (!frame || !frame.file)
       continue;
     if (belongsToNodeModules(frame.file))
