@@ -31,11 +31,7 @@ import { createRawSnippet } from "svelte";
  * @returns {component is ObjectComponent}
  */
 function isObjectComponent(component) {
-  return (
-    typeof component === 'object' &&
-    component &&
-    component.__pw_type === 'object-component'
-  );
+  return typeof component === 'object' && component && component.__pw_type === 'object-component';
 }
 
 /** @type {( component: ObjectComponent ) => Record<string, any>} */
@@ -59,7 +55,7 @@ function extractParams(component) {
     })
   );
 
-  return {props, slots, on};
+  return {...props, ...slots, ...on};
 }
 
 const __pwSvelteComponentKey = Symbol('svelteComponent');
@@ -75,15 +71,9 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
       if (!isObjectComponent(component))
         throw new Error('JSX mount notation is not supported');
 
-      let {props, slots, on} = extractParams(component);
-
       super({
         target: rootElement,
-        props: {
-          ...props,
-          ...slots,
-          ...on,
-        },
+        props: extractParams(component),
         ...options
       });
     }
@@ -106,10 +96,9 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 };
 
 window.playwrightUnmount = async rootElement => {
-  const svelteComponent = /** @type {SvelteComponent} */ (
-    rootElement[__pwSvelteComponentKey]
-  );
-  if (!svelteComponent) throw new Error('Component was not mounted');
+  const svelteComponent = /** @type {SvelteComponent} */ (rootElement[__pwSvelteComponentKey]);
+  if (!svelteComponent)
+    throw new Error('Component was not mounted');
   svelteComponent.$destroy();
   delete rootElement[__pwSvelteComponentKey];
 };
@@ -118,16 +107,9 @@ window.playwrightUpdate = async (rootElement, component) => {
   if (!isObjectComponent(component))
     throw new Error('JSX mount notation is not supported');
 
-  const svelteComponent = /** @type {SvelteComponent} */ (
-    rootElement[__pwSvelteComponentKey]
-  );
-  if (!svelteComponent) throw new Error('Component was not mounted');
+  const svelteComponent = /** @type {SvelteComponent} */ (rootElement[__pwSvelteComponentKey]);
+  if (!svelteComponent)
+    throw new Error('Component was not mounted');
 
-  let {props, slots, on} = extractParams(component);
-
-  svelteComponent.$set({
-    ...props,
-    ...slots,
-    ...on,
-  });
+  svelteComponent.$set(extractParams(component));
 };
