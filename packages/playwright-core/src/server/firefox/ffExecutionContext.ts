@@ -26,10 +26,15 @@ import type { Protocol } from './protocol';
 export class FFExecutionContext implements js.ExecutionContextDelegate {
   _session: FFSession;
   _executionContextId: string;
+  private _handleFactory!: js.HandleFactory;
 
   constructor(session: FFSession, executionContextId: string) {
     this._session = session;
     this._executionContextId = executionContextId;
+  }
+
+  setHandleFactory(handleFactory: js.HandleFactory) {
+    this._handleFactory = handleFactory;
   }
 
   async rawEvaluateJSON(expression: string): Promise<any> {
@@ -66,22 +71,24 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     checkException(payload.exceptionDetails);
     if (returnByValue)
       return parseEvaluationResultValue(payload.result!.value);
-    return utilityScript._context.createHandle(payload.result!);
+    return toFFExecutionContext(utilityScript._context)._createHandle(payload.result!);
   }
 
-  async getProperties(context: js.ExecutionContext, objectId: js.ObjectId): Promise<Map<string, js.JSHandle>> {
+  async getProperties(context: js.ExecutionContext, object: js.JSHandle): Promise<Map<string, js.JSHandle>> {
     const response = await this._session.send('Runtime.getObjectProperties', {
       executionContextId: this._executionContextId,
-      objectId,
+      objectId: object._objectId!,
     });
     const result = new Map();
     for (const property of response.properties)
-      result.set(property.name, context.createHandle(property.value));
+      result.set(property.name, toFFExecutionContext(context)._createHandle(property.value));
     return result;
   }
 
-  createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
-    return new js.JSHandle(context, remoteObject.subtype || remoteObject.type || '', renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
+  _createHandle(remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
+    if (remoteObject.subtype === 'node')
+      return this._handleFactory.createElementHandle(remoteObject.objectId!);
+    return this._handleFactory.createJSHandle(remoteObject.subtype || remoteObject.type || '', renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
   }
 
   async releaseHandle(objectId: js.ObjectId): Promise<void> {
@@ -134,4 +141,8 @@ function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefine
     return object.subtype[0].toUpperCase() + object.subtype.slice(1);
   if ('value' in object)
     return String(object.value);
+}
+
+export function toFFExecutionContext(executionContext: js.ExecutionContext): FFExecutionContext {
+  return executionContext._delegate as FFExecutionContext;
 }

@@ -25,10 +25,15 @@ import type { WKSession } from './wkConnection';
 export class WKExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: WKSession;
   readonly _contextId: number | undefined;
+  private _handleFactory!: js.HandleFactory;
 
   constructor(session: WKSession, contextId: number | undefined) {
     this._session = session;
     this._contextId = contextId;
+  }
+
+  setHandleFactory(handleFactory: js.HandleFactory) {
+    this._handleFactory = handleFactory;
   }
 
   async rawEvaluateJSON(expression: string): Promise<any> {
@@ -79,29 +84,31 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
         throw new js.JavaScriptErrorInEvaluate(response.result.description);
       if (returnByValue)
         return parseEvaluationResultValue(response.result.value);
-      return utilityScript._context.createHandle(response.result);
+      return toWKExecutionContext(utilityScript._context)._createHandle(response.result);
     } catch (error) {
       throw rewriteError(error);
     }
   }
 
-  async getProperties(context: js.ExecutionContext, objectId: js.ObjectId): Promise<Map<string, js.JSHandle>> {
+  async getProperties(context: js.ExecutionContext, object: js.JSHandle): Promise<Map<string, js.JSHandle>> {
     const response = await this._session.send('Runtime.getProperties', {
-      objectId,
+      objectId: object._objectId!,
       ownProperties: true
     });
     const result = new Map();
     for (const property of response.properties) {
       if (!property.enumerable || !property.value)
         continue;
-      result.set(property.name, context.createHandle(property.value));
+      result.set(property.name, toWKExecutionContext(context)._createHandle(property.value));
     }
     return result;
   }
 
-  createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
+  _createHandle(remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
+    if (remoteObject.subtype === 'node')
+      return this._handleFactory.createElementHandle(remoteObject.objectId!);
     const isPromise = remoteObject.className === 'Promise';
-    return new js.JSHandle(context, isPromise ? 'promise' : remoteObject.subtype || remoteObject.type, renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
+    return this._handleFactory.createJSHandle(isPromise ? 'promise' : remoteObject.subtype || remoteObject.type, renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
   }
 
   async releaseHandle(objectId: js.ObjectId): Promise<void> {
@@ -138,4 +145,8 @@ function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefine
   if (object.subtype === 'array' && object.preview)
     return js.sparseArrayToString(object.preview.properties!);
   return object.description;
+}
+
+export function toWKExecutionContext(executionContext: js.ExecutionContext): WKExecutionContext {
+  return executionContext._delegate as WKExecutionContext;
 }

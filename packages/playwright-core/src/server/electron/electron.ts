@@ -116,7 +116,7 @@ export class ElectronApplication extends SdkObject {
     }
     if (!this._nodeExecutionContext)
       return;
-    const args = event.args.map(arg => this._nodeExecutionContext!.createHandle(arg));
+    const args = event.args.map(arg => toCRExecutionContext(this._nodeExecutionContext!)._createHandle(arg));
     const message = new ConsoleMessage(null, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
     this.emit(ElectronApplication.Events.Console, message);
   }
@@ -149,6 +149,10 @@ export class ElectronApplication extends SdkObject {
       return BrowserWindow.fromWebContents(wc!)!;
     }, targetId);
   }
+}
+
+function toCRExecutionContext(executionContext: js.ExecutionContext): CRExecutionContext {
+  return executionContext._delegate as CRExecutionContext;
 }
 
 export class Electron extends SdkObject {

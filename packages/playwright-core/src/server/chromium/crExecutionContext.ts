@@ -27,10 +27,15 @@ import type { Protocol } from './protocol';
 export class CRExecutionContext implements js.ExecutionContextDelegate {
   _client: CRSession;
   _contextId: number;
+  private _handleFactory!: js.HandleFactory;
 
   constructor(client: CRSession, contextPayload: Protocol.Runtime.ExecutionContextDescription) {
     this._client = client;
     this._contextId = contextPayload.id;
+  }
+
+  setHandleFactory(handleFactory: js.HandleFactory) {
+    this._handleFactory = handleFactory;
   }
 
   async rawEvaluateJSON(expression: string): Promise<any> {
@@ -69,25 +74,27 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     }).catch(rewriteError);
     if (exceptionDetails)
       throw new js.JavaScriptErrorInEvaluate(getExceptionMessage(exceptionDetails));
-    return returnByValue ? parseEvaluationResultValue(remoteObject.value) : utilityScript._context.createHandle(remoteObject);
+    return returnByValue ? parseEvaluationResultValue(remoteObject.value) : this._createHandle(remoteObject);
   }
 
-  async getProperties(context: js.ExecutionContext, objectId: js.ObjectId): Promise<Map<string, js.JSHandle>> {
+  async getProperties(context: js.ExecutionContext, object: js.JSHandle): Promise<Map<string, js.JSHandle>> {
     const response = await this._client.send('Runtime.getProperties', {
-      objectId,
+      objectId: object._objectId!,
       ownProperties: true
     });
     const result = new Map();
     for (const property of response.result) {
       if (!property.enumerable || !property.value)
         continue;
-      result.set(property.name, context.createHandle(property.value));
+      result.set(property.name, this._createHandle(property.value));
     }
     return result;
   }
 
-  createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
-    return new js.JSHandle(context, remoteObject.subtype || remoteObject.type, renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
+  _createHandle(remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
+    if (remoteObject.subtype === 'node')
+      return this._handleFactory.createElementHandle(remoteObject.objectId!);
+    return this._handleFactory.createJSHandle(remoteObject.subtype || remoteObject.type, renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
   }
 
   async releaseHandle(objectId: js.ObjectId): Promise<void> {

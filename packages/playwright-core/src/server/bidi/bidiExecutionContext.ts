@@ -26,6 +26,7 @@ import type { BidiSession } from './bidiConnection';
 export class BidiExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: BidiSession;
   readonly _target: bidi.Script.Target;
+  private _handleFactory!: js.HandleFactory;
 
   constructor(session: BidiSession, realmInfo: bidi.Script.RealmInfo) {
     this._session = session;
@@ -40,6 +41,10 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
         realm: realmInfo.realm
       };
     }
+  }
+
+  setHandleFactory(handleFactory: js.HandleFactory) {
+    this._handleFactory = handleFactory;
   }
 
   async rawEvaluateJSON(expression: string): Promise<any> {
@@ -98,37 +103,26 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     if (response.type === 'success') {
       if (returnByValue)
         return parseEvaluationResultValue(BidiDeserializer.deserialize(response.result));
-      const objectId = 'handle' in response.result ? response.result.handle : undefined ;
-      return utilityScript._context.createHandle({ objectId, ...response.result });
+      return this._createHandle(response.result);
     }
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 
-  async getProperties(context: js.ExecutionContext, objectId: js.ObjectId): Promise<Map<string, js.JSHandle>> {
-    const handle = this.createHandle(context, { objectId });
-    try {
-      const names = await handle.evaluate(object => {
-        const names = [];
-        const descriptors = Object.getOwnPropertyDescriptors(object);
-        for (const name in descriptors) {
-          if (descriptors[name]?.enumerable)
-            names.push(name);
-        }
-        return names;
-      });
-      const values = await Promise.all(names.map(name => handle.evaluateHandle((object, name) => object[name], name)));
-      const map = new Map<string, js.JSHandle>();
-      for (let i = 0; i < names.length; i++)
-        map.set(names[i], values[i]);
-      return map;
-    } finally {
-      handle.dispose();
-    }
-  }
-
-  createHandle(context: js.ExecutionContext, jsRemoteObject: js.RemoteObject): js.JSHandle {
-    const remoteObject: bidi.Script.RemoteValue = jsRemoteObject as bidi.Script.RemoteValue;
-    return new js.JSHandle(context, remoteObject.type, renderPreview(remoteObject), jsRemoteObject.objectId, remoteObjectValue(remoteObject));
+  async getProperties(context: js.ExecutionContext, handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
+    const names = await handle.evaluate(object => {
+      const names = [];
+      const descriptors = Object.getOwnPropertyDescriptors(object);
+      for (const name in descriptors) {
+        if (descriptors[name]?.enumerable)
+          names.push(name);
+      }
+      return names;
+    });
+    const values = await Promise.all(names.map(name => handle.evaluateHandle((object, name) => object[name], name)));
+    const map = new Map<string, js.JSHandle>();
+    for (let i = 0; i < names.length; i++)
+      map.set(names[i], values[i]);
+    return map;
   }
 
   async releaseHandle(objectId: js.ObjectId): Promise<void> {
@@ -149,11 +143,11 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     };
   }
 
-  async remoteObjectForNodeId(nodeId: bidi.Script.SharedReference): Promise<js.RemoteObject> {
+  async remoteObjectForNodeId(nodeId: bidi.Script.SharedReference): Promise<js.JSHandle> {
     const result = await this._remoteValueForReference(nodeId);
-    if ('handle' in result)
-      return { objectId: result.handle!, ...result };
-    throw new Error('Can\'t get remote object for nodeId');
+    if (!('handle' in result))
+      throw new Error('Can\'t get remote object for nodeId');
+    return this._createHandle(result);
   }
 
   async contentFrameIdForFrame(handle: dom.ElementHandle) {
@@ -191,6 +185,13 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     if (response.type === 'success')
       return response.result;
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
+  }
+
+  _createHandle(remoteObject: bidi.Script.RemoteValue): js.JSHandle {
+    if (remoteObject.type === 'node')
+      return this._handleFactory.createElementHandle(remoteObject.handle!);
+    const objectId = 'handle' in remoteObject ? remoteObject.handle : undefined;
+    return this._handleFactory.createJSHandle(remoteObject.type, renderPreview(remoteObject), objectId, remoteObjectValue(remoteObject));
   }
 }
 
