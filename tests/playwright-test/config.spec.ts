@@ -72,6 +72,92 @@ test('should prioritize command line timeout over project timeout', async ({ run
   expect(result.output).toContain('Test timeout of 500ms exceeded.');
 });
 
+test('should default to failOnFlakyTests false', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('flake', async ({}, testInfo) => {
+        expect(testInfo.retry).toBe(1);
+      });
+    `,
+  });
+  expect(result.exitCode).not.toBe(0);
+  expect(result.flaky).toBe(0);
+});
+
+test('should prioritize command line --fail-on-flaky-tests flag over config failOnFlakyTests', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        failOnFlakyTests: false
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('flake', async ({}, testInfo) => {
+        expect(testInfo.retry).toBe(1);
+      });
+    `,
+  }, { 'retries': 1, 'fail-on-flaky-tests': true });
+  expect(result.exitCode).not.toBe(0);
+  expect(result.flaky).toBe(1);
+});
+
+test('should support failOnFlakyTests config option', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+        module.exports = {
+          failOnFlakyTests: true,
+          retries: 1
+        };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('flake', async ({}, testInfo) => {
+        expect(testInfo.retry).toBe(1);
+      });
+    `,
+  }, { 'retries': 1 });
+  expect(result.exitCode).not.toBe(0);
+  expect(result.flaky).toBe(1);
+});
+
+test('should support failOnFlakyTests config option + retries CLI flag', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+        module.exports = {
+          failOnFlakyTests: true,
+        };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('flake', async ({}, testInfo) => {
+        expect(testInfo.retry).toBe(1);
+      });
+    `,
+  }, { 'retries': 1 });
+  expect(result.exitCode).not.toBe(0);
+  expect(result.flaky).toBe(1);
+});
+
+test('should support fail-on-flaky-tests CLI flag + retries config option', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+        module.exports = {
+          retries: 1,
+        };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('flake', async ({}, testInfo) => {
+        expect(testInfo.retry).toBe(1);
+      });
+    `,
+  }, { 'fail-on-flaky-tests': true });
+  expect(result.exitCode).not.toBe(0);
+  expect(result.flaky).toBe(1);
+});
+
 test('should read config from --config, resolve relative testDir', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'my.config.ts': `
