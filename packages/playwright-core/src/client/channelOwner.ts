@@ -199,7 +199,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       }
       return result;
     } catch (e) {
-      const innerError = ((process.env.PWDEBUGIMPL || this._platform.isUnderTest()) && e.stack) ? '\n<inner error>\n' + e.stack : '';
+      const innerError = ((this._platform.showInternalStackFrames() || this._platform.isUnderTest()) && e.stack) ? '\n<inner error>\n' + e.stack : '';
       if (apiZone.apiName && !apiZone.apiName.includes('<anonymous>'))
         e.message = apiZone.apiName + ': ' + e.message;
       const stackFrames = '\n' + stringifyStackFrames(stackTrace.frames).join('\n') + innerError;

@@ -61,10 +61,16 @@ export function setBoxedStackPrefixes(prefixes: string[]) {
   boxedStackPrefixes = prefixes;
 }
 
+const coreDir = path.dirname(require.resolve('../../../package.json'));
+
 export const nodePlatform: Platform = {
   name: 'node',
 
-  boxedStackPrefixes: () => boxedStackPrefixes,
+  boxedStackPrefixes: () => {
+    if (process.env.PWDEBUGIMPL)
+      return [];
+    return [coreDir, ...boxedStackPrefixes];
+  },
 
   calculateSha1: (text: string) => {
     const sha1 = crypto.createHash('sha1');
@@ -74,12 +80,14 @@ export const nodePlatform: Platform = {
 
   colors,
 
-  coreDir: path.dirname(require.resolve('../../../package.json')),
+  coreDir,
 
   createGuid: () => crypto.randomBytes(16).toString('hex'),
 
   defaultMaxListeners: () => EventEmitter.defaultMaxListeners,
   fs: () => fs,
+
+  env: process.env,
 
   inspectCustom: util.inspect.custom,
 
@@ -100,6 +108,8 @@ export const nodePlatform: Platform = {
   path: () => path,
 
   pathSeparator: path.sep,
+
+  showInternalStackFrames: () => !!process.env.PWDEBUGIMPL,
 
   async streamFile(path: string, stream: Writable): Promise<void> {
     await pipelineAsync(fs.createReadStream(path), stream);

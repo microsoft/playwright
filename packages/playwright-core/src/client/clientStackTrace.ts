@@ -28,7 +28,7 @@ export function captureLibraryStackTrace(platform: Platform): { frames: StackFra
     isPlaywrightLibrary: boolean;
   };
   let parsedFrames = stack.map(line => {
-    const frame = parseStackFrame(line, platform.pathSeparator);
+    const frame = parseStackFrame(line, platform.pathSeparator, platform.showInternalStackFrames());
     if (!frame || !frame.file)
       return null;
     const isPlaywrightLibrary = !!platform.coreDir && frame.file.startsWith(platform.coreDir);
@@ -62,10 +62,8 @@ export function captureLibraryStackTrace(platform: Platform): { frames: StackFra
   }
 
   // This is for the inspector so that it did not include the test runner stack frames.
-  const filterPrefixes = platform.coreDir ? [platform.coreDir, ...platform.boxedStackPrefixes()] : platform.boxedStackPrefixes();
+  const filterPrefixes = platform.boxedStackPrefixes();
   parsedFrames = parsedFrames.filter(f => {
-    if (process.env.PWDEBUGIMPL)
-      return true;
     if (filterPrefixes.some(prefix => f.frame.file.startsWith(prefix)))
       return false;
     return true;

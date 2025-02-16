@@ -96,8 +96,8 @@ export class Waiter {
   log(s: string) {
     this._logs.push(s);
     this._channelOwner._wrapApiCall(async () => {
-      await this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'log', message: s } }).catch(() => {});
-    }, true);
+      await this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'log', message: s } });
+    }, true).catch(() => {});
   }
 
   private _rejectOn(promise: Promise<any>, dispose?: () => void) {

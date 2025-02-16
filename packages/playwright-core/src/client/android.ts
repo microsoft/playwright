@@ -51,7 +51,9 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
-    this._channel.setDefaultTimeoutNoReply({ timeout });
+    this._wrapApiCall(async () => {
+      await this._channel.setDefaultTimeoutNoReply({ timeout });
+    }, true).catch(() => {});
   }
 
   async devices(options: { port?: number } = {}): Promise<AndroidDevice[]> {
@@ -133,7 +135,9 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel> i
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
-    this._channel.setDefaultTimeoutNoReply({ timeout });
+    this._wrapApiCall(async () => {
+      await this._channel.setDefaultTimeoutNoReply({ timeout });
+    }, true).catch(() => {});
   }
 
   serial(): string {

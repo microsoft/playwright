@@ -39,7 +39,7 @@ export async function connectOverWebSocket(parentConnection: Connection, params:
       connection!.dispatch(message);
     } catch (e) {
       closeError = String(e);
-      transport.close();
+      transport.close().catch(() => {});
     }
   });
   return connection;
@@ -70,7 +70,7 @@ class JsonPipeTransport implements Transport {
   }
 
   async send(message: object) {
-    this._owner._wrapApiCall(async () => {
+    await this._owner._wrapApiCall(async () => {
       await this._pipe!.send({ message });
     }, /* isInternal */ true);
   }

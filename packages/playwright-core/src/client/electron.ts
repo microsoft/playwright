@@ -54,7 +54,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
   async launch(options: ElectronOptions = {}): Promise<ElectronApplication> {
     const params: channels.ElectronLaunchParams = {
       ...await prepareBrowserContextParams(this._platform, options),
-      env: envObjectToArray(options.env ? options.env : process.env),
+      env: envObjectToArray(options.env ? options.env : this._platform.env),
       tracesDir: options.tracesDir,
     };
     const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);
