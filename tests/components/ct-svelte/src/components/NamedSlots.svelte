@@ -1,7 +1,5 @@
 <script>
   const {header, main, footer} = $props()
-
-  console.log({header, main, footer});
 </script>
 
 <div>
