@@ -1,7 +1,6 @@
 <script>
-  const {header, main, footer} = $props()
-
-  console.log({header, main, footer});
+/** @type {{header?: import("svelte").Snippet, main?: import("svelte").Snippet, footer?: import("svelte").Snippet}} */
+const {header, main, footer} = $props()
 </script>
 
 <div>
