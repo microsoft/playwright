@@ -192,7 +192,7 @@ export class TeleReporterEmitter implements ReporterV2 {
   private _serializeProjectUseOptions(use: reporterTypes.FullProject['use']): Record<string, any> {
     return {
       testIdAttribute: use.testIdAttribute,
-    }
+    };
   }
 
   private _serializeSuite(suite: reporterTypes.Suite): teleReceiver.JsonSuite {
