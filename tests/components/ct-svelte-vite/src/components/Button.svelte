@@ -1,4 +1,5 @@
 <script>
+/** @type {{title: string, onsubmit: (msg: string) => void}} */
 const { title, onsubmit } = $props();
 </script>
 

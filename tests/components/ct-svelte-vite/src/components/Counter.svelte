@@ -1,5 +1,6 @@
 <script>
 import { update, remountCount } from '../store'
+/** @type {{count: number; onsubmit: (msg: string) => void; main?: import("svelte").Snippet; children?: import("svelte").Snippet}} */
 const { count, onsubmit, main, children } = $props()
 update();
 </script>
