@@ -41,7 +41,6 @@ function extractParams(component) {
   slots = Object.fromEntries(
     Object.entries(slots ?? {}).map(([key, snippet]) => {
       if(typeof snippet === "string") {
-        console.log("ugraded", key);
         return [key, createRawSnippet(() => ({render: () => snippet}))];
       }
 
