@@ -52,6 +52,7 @@ export type JsonProject = {
   testIgnore: JsonPattern[];
   testMatch: JsonPattern[];
   timeout: number;
+  use: { [key: string]: any };
 };
 
 export type JsonSuite = {
@@ -326,7 +327,7 @@ export class TeleReporterReceiver {
       dependencies: project.dependencies,
       teardown: project.teardown,
       snapshotDir: this._absolutePath(project.snapshotDir),
-      use: {},
+      use: project.use,
     };
   }
 
