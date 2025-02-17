@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/experimental-ct-svelte';
-import type { HooksConfig } from '../playwright';
 import Button from '@/components/Button.svelte';
 import Empty from '@/components/Empty.svelte';
 import Context from '@/components/Context.svelte';
@@ -21,7 +20,7 @@ test('get textContent of the empty component', async ({ mount }) => {
 });
 
 test('render context', async ({ mount }) => {
-  const component = await mount<HooksConfig>(Context, {
+  const component = await mount(Context, {
     hooksConfig: {
       context: 'context-value',
     }
