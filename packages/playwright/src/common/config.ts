@@ -56,7 +56,6 @@ export class FullConfigInternal {
   cliProjectFilter?: string[];
   cliListOnly = false;
   cliPassWithNoTests?: boolean;
-  cliFailOnFlakyTests?: boolean;
   cliLastFailed?: boolean;
   testIdMatcher?: Matcher;
   lastFailedTestIdMatcher?: Matcher;
