@@ -158,4 +158,18 @@ test.describe('await', () => {
     expect(exitCode).toBe(0);
     expect(stdout).toContain(warningSnippet);
   });
+
+  test('traced promise should be instanceof Promise', async ({ runInlineTest }) => {
+    const { exitCode } = await runInlineTest({
+      'a.test.ts': `
+        import { test, expect } from '@playwright/test';
+        test('test', async ({ page }) => {
+          await page.setContent('data:text/html,<div>A</div>');
+          const expectPromise = expect(page.locator('div')).toHaveText('A');
+          expect(expectPromise instanceof Promise).toBeTruthy();
+        });
+      `
+    });
+    expect(exitCode).toBe(0);
+  });
 });
