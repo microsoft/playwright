@@ -196,3 +196,28 @@ test('should focus a single test suite', async ({ runInlineTest }) => {
   expect(result.report.suites[0].suites[0].suites[0].specs[0].title).toEqual('pass2');
   expect(result.report.suites[0].suites[0].suites[0].specs[1].title).toEqual('pass3');
 });
+
+test('should filter by folder with absolute path', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34813' } }, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'foo/x.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fails', () => { expect(1).toBe(2); });
+    `,
+    'foo/y.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fails', () => { expect(1).toBe(2); });
+    `,
+    'foobar/x.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fails', () => { expect(1).toBe(2); });
+    `,
+    'foobar/y.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fails', () => { expect(1).toBe(2); });
+    `,
+  }, undefined, undefined, { additionalArgs: [test.info().outputPath('foo') + '/'] });
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(2);
+  expect(result.output).toMatch(/foo[\\/]x.spec.ts/);
+  expect(result.output).toMatch(/foo[\\/]y.spec.ts/);
+});
