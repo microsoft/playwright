@@ -16,12 +16,11 @@
 
 import { TimeoutError } from './errors';
 import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
-import { zones } from '../utils/zones';
 
 import type { ChannelOwner } from './channelOwner';
-import type { Zone } from '../utils/zones';
 import type * as channels from '@protocol/channels';
 import type { EventEmitter } from 'events';
+import type { Zone } from './platform';
 
 export class Waiter {
   private _dispose: (() => void)[];
@@ -36,7 +35,7 @@ export class Waiter {
   constructor(channelOwner: ChannelOwner<channels.EventTargetChannel>, event: string) {
     this._waitId = channelOwner._platform.createGuid();
     this._channelOwner = channelOwner;
-    this._savedZone = zones.current().without('apiZone');
+    this._savedZone = channelOwner._platform.zones.current().pop();
 
     this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'before', event } }).catch(() => {});
     this._dispose = [
@@ -97,8 +96,8 @@ export class Waiter {
   log(s: string) {
     this._logs.push(s);
     this._channelOwner._wrapApiCall(async () => {
-      await this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'log', message: s } }).catch(() => {});
-    }, true);
+      await this._channelOwner._channel.waitForEventInfo({ info: { waitId: this._waitId, phase: 'log', message: s } });
+    }, true).catch(() => {});
   }
 
   private _rejectOn(promise: Promise<any>, dispose?: () => void) {

@@ -15,6 +15,5 @@
  */
 
 import { createInProcessPlaywright } from './inProcessFactory';
-import { nodePlatform } from './server/utils/nodePlatform';
 
-module.exports = createInProcessPlaywright(nodePlatform);
+module.exports = createInProcessPlaywright();

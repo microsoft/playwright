@@ -17,7 +17,7 @@
 
 import * as path from 'path';
 
-import { assert, debugAssert } from '../../utils';
+import { assert } from '../../utils';
 import { headersArrayToObject } from '../../utils/isomorphic/headers';
 import { createGuid } from '../utils/crypto';
 import { eventsHelper } from '../utils/eventsHelper';
@@ -294,7 +294,6 @@ export class WKPage implements PageDelegate {
   }
 
   handleWindowOpen(event: Protocol.Playwright.windowOpenPayload) {
-    debugAssert(!this._nextWindowOpenPopupFeatures);
     this._nextWindowOpenPopupFeatures = event.windowFeatures;
   }
 
@@ -945,16 +944,6 @@ export class WKPage implements PageDelegate {
       { x: quad[4], y: quad[5] },
       { x: quad[6], y: quad[7] }
     ]);
-  }
-
-  async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
-    const objectId = handle._objectId;
-    const protocolFiles = files.map(file => ({
-      name: file.name,
-      type: file.mimeType,
-      data: file.buffer,
-    }));
-    await this._session.send('DOM.setInputFiles', { objectId, files: protocolFiles });
   }
 
   async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {

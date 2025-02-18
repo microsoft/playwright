@@ -17,12 +17,12 @@
 import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
 import { setTestIdAttribute, testIdAttributeName } from './locator';
-import { emptyPlatform } from '../common/platform';
+import { emptyPlatform } from './platform';
 
 import type { SelectorEngine } from './types';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
-import type { Platform } from '../common/platform';
+import type { Platform } from './platform';
 
 let platform = emptyPlatform;
 

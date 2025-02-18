@@ -22,11 +22,10 @@ import * as path from 'path';
 
 import * as playwright from '../..';
 import { launchBrowserServer, printApiJson, runDriver, runServer } from './driver';
-import { isTargetClosedError } from '../client/errors';
 import { registry, writeDockerVersion } from '../server';
-import { gracefullyProcessExitDoNotHang } from '../utils';
+import { gracefullyProcessExitDoNotHang, isLikelyNpxGlobal } from '../utils';
 import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/traceViewer';
-import { assert, getPackageManagerExecCommand, isLikelyNpxGlobal } from '../utils';
+import { assert, getPackageManagerExecCommand } from '../utils';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { dotenv, program } from '../utilsBundle';
 
@@ -553,7 +552,7 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
     else if (!url.startsWith('http') && !url.startsWith('file://') && !url.startsWith('about:') && !url.startsWith('data:'))
       url = 'http://' + url;
     await page.goto(url).catch(error => {
-      if (process.env.PWTEST_CLI_AUTO_EXIT_WHEN && isTargetClosedError(error)) {
+      if (process.env.PWTEST_CLI_AUTO_EXIT_WHEN) {
         // Tests with PWTEST_CLI_AUTO_EXIT_WHEN might close page too fast, resulting
         // in a stray navigation aborted error. We should ignore it.
       } else {

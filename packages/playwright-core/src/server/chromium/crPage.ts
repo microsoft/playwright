@@ -17,7 +17,7 @@
 
 import * as path from 'path';
 
-import { assert } from '../../utils/isomorphic/debug';
+import { assert } from '../../utils/isomorphic/assert';
 import { createGuid } from '../utils/crypto';
 import { eventsHelper } from '../utils/eventsHelper';
 import { rewriteErrorMessage } from '../../utils/isomorphic/stackTrace';
@@ -312,11 +312,6 @@ export class CRPage implements PageDelegate {
 
   async getContentQuads(handle: dom.ElementHandle): Promise<types.Quad[] | null> {
     return this._sessionForHandle(handle)._getContentQuads(handle);
-  }
-
-  async setInputFiles(handle: dom.ElementHandle<HTMLInputElement>, files: types.FilePayload[]): Promise<void> {
-    await handle.evaluateInUtility(([injected, node, files]) =>
-      injected.setInputFiles(node, files), files);
   }
 
   async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void> {

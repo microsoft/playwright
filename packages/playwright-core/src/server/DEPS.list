@@ -1,8 +1,7 @@
 [*]
-../common/
 ../generated/
 ../protocol/
-../utils/
+../utils
 ../utils/isomorphic/
 ../utilsBundle.ts
 ../zipBundle.ts

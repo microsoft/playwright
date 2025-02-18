@@ -1,9 +1,7 @@
 [*]
 ../../
 ../../har/
-../../../common/
 ../../../protocol/
-../../../utils/
 ../../../utilsBundle.ts
 ../../../utils/isomorphic/
 ../../../zipBundle.ts

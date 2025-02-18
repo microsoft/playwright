@@ -21,7 +21,7 @@ import { TLSSocket } from 'tls';
 import * as url from 'url';
 import * as zlib from 'zlib';
 
-import { TimeoutSettings } from '../utils/isomorphic/timeoutSettings';
+import { TimeoutSettings } from './timeoutSettings';
 import { assert, constructURLBasedOnBaseURL, eventsHelper, monotonicTime  } from '../utils';
 import { createGuid } from './utils/crypto';
 import { getUserAgent } from './utils/userAgent';

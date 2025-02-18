@@ -22,7 +22,7 @@ import { TargetClosedError, isTargetClosedError } from './errors';
 import { Events } from './events';
 import { JSHandle, parseResult, serializeArgument } from './jsHandle';
 import { Waiter } from './waiter';
-import { TimeoutSettings } from '../utils/isomorphic/timeoutSettings';
+import { TimeoutSettings } from './timeoutSettings';
 
 import type { Page } from './page';
 import type { BrowserContextOptions, Env, Headers, WaitForEventOptions } from './types';
@@ -54,7 +54,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
   async launch(options: ElectronOptions = {}): Promise<ElectronApplication> {
     const params: channels.ElectronLaunchParams = {
       ...await prepareBrowserContextParams(this._platform, options),
-      env: envObjectToArray(options.env ? options.env : process.env),
+      env: envObjectToArray(options.env ? options.env : this._platform.env),
       tracesDir: options.tracesDir,
     };
     const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);
@@ -66,7 +66,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
 export class ElectronApplication extends ChannelOwner<channels.ElectronApplicationChannel> implements api.ElectronApplication {
   readonly _context: BrowserContext;
   private _windows = new Set<Page>();
-  private _timeoutSettings = new TimeoutSettings();
+  private _timeoutSettings: TimeoutSettings;
 
   static from(electronApplication: channels.ElectronApplicationChannel): ElectronApplication {
     return (electronApplication as any)._object;
@@ -74,6 +74,8 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ElectronApplicationInitializer) {
     super(parent, type, guid, initializer);
+
+    this._timeoutSettings = new TimeoutSettings(this._platform);
     this._context = BrowserContext.from(initializer.context);
     for (const page of this._context._pages)
       this._onPage(page);

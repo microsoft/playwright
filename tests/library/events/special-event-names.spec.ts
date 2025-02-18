@@ -21,7 +21,7 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import { test, expect } from '@playwright/test';
-import { EventEmitter } from '../../../packages/playwright-core/lib/client/eventEmitter';
+import { EventEmitter } from './utils';
 
 
 test('should support special event names', () => {

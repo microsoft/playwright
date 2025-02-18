@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import * as playwrightLibrary from 'playwright-core';
-import { addInternalStackPrefix, asLocator, createGuid, debugMode, isString, jsonStringifyForceASCII, zones } from 'playwright-core/lib/utils';
+import { setBoxedStackPrefixes, asLocator, createGuid, currentZone, debugMode, isString, jsonStringifyForceASCII } from 'playwright-core/lib/utils';
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
@@ -32,7 +32,7 @@ import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions,
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
-addInternalStackPrefix(path.dirname(require.resolve('../package.json')));
+setBoxedStackPrefixes([path.dirname(require.resolve('../package.json'))]);
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;
@@ -260,7 +260,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         // Some special calls do not get into steps.
         if (!testInfo || data.apiName.includes('setTestIdAttribute') || data.apiName === 'tracing.groupEnd')
           return;
-        const zone = zones.zoneData<TestStepInternal>('stepZone');
+        const zone = currentZone().data<TestStepInternal>('stepZone');
         if (zone && zone.category === 'expect') {
           // Display the internal locator._expect call under the name of the enclosing expect call,
           // and connect it to the existing expect step.

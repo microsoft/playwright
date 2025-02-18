@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "dependencies": {
-    "yaml": "^2.6.0"
+    "yaml": "^2.6.0",
+    "markdown-to-jsx": "^7.7.3"
   }
 }

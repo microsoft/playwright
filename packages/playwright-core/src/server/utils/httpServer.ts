@@ -19,7 +19,7 @@ import * as path from 'path';
 
 import { mime, wsServer } from '../../utilsBundle';
 import { createGuid } from './crypto';
-import { assert } from '../../utils/isomorphic/debug';
+import { assert } from '../../utils/isomorphic/assert';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { createHttpServer } from './network';
 

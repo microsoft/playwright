@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import type { HeadersArray, Point, Size, TimeoutOptions } from '../common/types';
-export type { HeadersArray, Point, Quad, Rect, Size, TimeoutOptions } from '../common/types';
+import type { HeadersArray, Point, Size, TimeoutOptions } from '../utils/isomorphic/types';
+export type { HeadersArray, Point, Quad, Rect, Size, TimeoutOptions } from '../utils/isomorphic/types';
 import type * as channels from '@protocol/channels';
 
 export type StrictOptions = {

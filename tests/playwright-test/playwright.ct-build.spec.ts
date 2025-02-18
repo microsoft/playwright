@@ -196,31 +196,24 @@ test('should extract component list', async ({ runInlineTest }, testInfo) => {
 
   expect(Object.entries(metainfo.deps)).toEqual([
     [expect.stringContaining('clashingNames1.tsx'), [
-      expect.stringContaining('jsx-runtime.js'),
       expect.stringContaining('clashingNames1.tsx'),
     ]],
     [expect.stringContaining('clashingNames2.tsx'), [
-      expect.stringContaining('jsx-runtime.js'),
       expect.stringContaining('clashingNames2.tsx'),
     ]],
     [expect.stringContaining('defaultExport.tsx'), [
-      expect.stringContaining('jsx-runtime.js'),
       expect.stringContaining('defaultExport.tsx'),
     ]],
     [expect.stringContaining('components.tsx'), [
-      expect.stringContaining('jsx-runtime.js'),
       expect.stringContaining('components.tsx'),
     ]],
     [expect.stringContaining('button.tsx'), [
-      expect.stringContaining('jsx-runtime.js'),
       expect.stringContaining('button.tsx'),
     ]],
     [expect.stringContaining(`one${path.sep}index.tsx`), [
-      expect.stringContaining('jsx-runtime.js'),
       expect.stringContaining(`one${path.sep}index.tsx`),
     ]],
     [expect.stringContaining(`two${path.sep}index.tsx`), [
-      expect.stringContaining('jsx-runtime.js'),
       expect.stringContaining(`two${path.sep}index.tsx`),
     ]],
   ]);
@@ -503,7 +496,6 @@ test('should retain deps when test changes', async ({ runInlineTest }, testInfo)
     [
       expect.stringContaining('button.tsx'),
       [
-        expect.stringContaining('jsx-runtime.js'),
         expect.stringContaining('button.tsx'),
       ],
     ]

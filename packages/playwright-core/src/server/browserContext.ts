@@ -18,9 +18,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { TimeoutSettings } from '../utils/isomorphic/timeoutSettings';
+import { TimeoutSettings } from './timeoutSettings';
 import { createGuid } from './utils/crypto';
-import { debugMode } from '../utils/isomorphic/debug';
+import { debugMode } from './utils/debug';
 import { Clock } from './clock';
 import { Debugger } from './debugger';
 import { BrowserContextAPIRequestContext } from './fetch';

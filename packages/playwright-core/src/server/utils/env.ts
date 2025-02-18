@@ -47,3 +47,7 @@ export function getPackageManagerExecCommand() {
     return 'pnpm exec';
   return 'npx';
 }
+
+export function isLikelyNpxGlobal() {
+  return process.argv.length >= 2 && process.argv[1].includes('_npx');
+}

@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
-
+import { EventEmitter } from './eventEmitter';
 import { ChannelOwner } from './channelOwner';
 import { addSourceUrlToScript } from './clientHelper';
 import { ElementHandle, convertInputFiles, convertSelectOptionValues } from './elementHandle';
@@ -26,7 +25,7 @@ import { FrameLocator, Locator, testIdAttributeName } from './locator';
 import * as network from './network';
 import { kLifecycleEvents } from './types';
 import { Waiter } from './waiter';
-import { assert } from '../utils/isomorphic/debug';
+import { assert } from '../utils/isomorphic/assert';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
 import { urlMatches } from '../utils/isomorphic/urlMatch';
 
@@ -65,7 +64,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.FrameInitializer) {
     super(parent, type, guid, initializer);
-    this._eventEmitter = new EventEmitter();
+    this._eventEmitter = new EventEmitter(parent._platform);
     this._eventEmitter.setMaxListeners(0);
     this._parentFrame = Frame.fromNullable(initializer.parentFrame);
     if (this._parentFrame)
