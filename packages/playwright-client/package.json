@@ -1,0 +1,34 @@
+{
+  "name": "@playwright/client",
+  "private": true,
+  "version": "1.51.0-next",
+  "description": "A thin client for Playwright",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/microsoft/playwright.git"
+  },
+  "homepage": "https://playwright.dev",
+  "engines": {
+    "node": ">=18"
+  },
+  "author": {
+    "name": "Microsoft Corporation"
+  },
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "require": "./index.js",
+      "default": "./index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "esbuild ./src/index.ts --outdir=lib --format=cjs --bundle --platform=node --target=ES2019",
+    "watch": "esbuild ./src/index.ts --outdir=lib --format=cjs --bundle --platform=node --target=ES2019 --watch"
+  },
+  "dependencies": {
+    "playwright-core": "1.51.0-next"
+  }
+}
