@@ -34,7 +34,7 @@
     "@sveltejs/vite-plugin-svelte": "^5.0.3"
   },
   "devDependencies": {
-    "svelte": "^5.19.9"
+    "svelte": "^5.20.2"
   },
   "bin": {
     "playwright": "cli.js"
