@@ -3,7 +3,7 @@ import { onMount, onDestroy } from 'svelte';
 import LoginPage from './pages/LoginPage.svelte';
 import DashboardPage from './pages/DashboardPage.svelte';
 
-let path = '';
+let path = '/';
 function updatePath() {
   path = window.location.pathname;
 }
