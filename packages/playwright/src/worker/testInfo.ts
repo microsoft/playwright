@@ -417,18 +417,24 @@ export class TestInfoImpl implements TestInfo {
    * **NOTE:** Returning from an async function wraps the result in a promise, regardless of whether the return value is a promise. This will automatically mark the promise as awaited. Avoid this.
    */
   _wrapPromiseAPIResult<T>(promise: Promise<T>): Promise<T> {
+    const promiseProxy = new Proxy(promise, {
+      get: (target, prop, reciever) => {
+        if (prop === 'then') {
+          return (...args: any[]) => {
+            this.unusedAsyncApiCalls.delete(promise);
+
+            const originalThen = Reflect.get(target, prop, reciever) as Promise<T>['then'];
+            return originalThen.call(target, ...args);
+          };
+        } else {
+          return Reflect.get(target, prop, reciever);
+        }
+      }
+    });
+
     this.unusedAsyncApiCalls.add(promise);
 
-    const oldThen = promise.then;
-    promise.then = ((...args: any[]) => {
-      if (args[0] !== undefined) {
-        // onfulfilled callback, which means .then() was called
-        this.unusedAsyncApiCalls.delete(promise);
-      }
-      return oldThen.call(promise, ...args);
-    }) as any;
-
-    return promise;
+    return promiseProxy;
   }
 
   // ------------ TestInfo methods ------------
