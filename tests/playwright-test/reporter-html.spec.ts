@@ -2804,7 +2804,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'sample' }).click();
       await page.getByRole('button', { name: 'Copy as Prompt' }).click();
       const prompt = await page.evaluate(() => navigator.clipboard.readText());
-      expect(prompt, 'first line').toContain(`My Playwright test failed, what's going wrong? I've included the error, a code diff and a snapshot of the page below.`);
+      expect(prompt, 'first line').toContain(`Playwright test failed.`);
       expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
       expect(prompt, 'contains snapshot').toContain('- button "Click me"');
       expect(prompt, 'contains diff').toContain(`+            expect(2).toBe(3);`);
