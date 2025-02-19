@@ -15,7 +15,7 @@
  */
 
 import childProcess from 'child_process';
-import * as path from 'path';
+import path from 'path';
 
 import { affectedTestFiles } from '../transform/compilationCache';
 

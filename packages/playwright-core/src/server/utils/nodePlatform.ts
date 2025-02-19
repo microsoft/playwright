@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import * as crypto from 'crypto';
-import * as fs from 'fs';
-import * as path from 'path';
+import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 import * as util from 'util';
 import { Readable, Writable, pipeline } from 'stream';
 import { EventEmitter } from 'events';

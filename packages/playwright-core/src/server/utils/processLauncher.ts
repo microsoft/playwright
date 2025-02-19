@@ -16,7 +16,7 @@
  */
 
 import * as childProcess from 'child_process';
-import * as fs from 'fs';
+import fs from 'fs';
 import * as readline from 'readline';
 
 import { removeFolders } from './fileUtils';

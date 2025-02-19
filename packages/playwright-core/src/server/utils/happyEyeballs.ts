@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import * as dns from 'dns';
-import * as http from 'http';
-import * as https from 'https';
-import * as net from 'net';
-import * as tls from 'tls';
+import dns from 'dns';
+import http from 'http';
+import https from 'https';
+import net from 'net';
+import tls from 'tls';
 
 import { assert } from '../../utils/isomorphic/assert';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';

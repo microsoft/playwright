@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
+import fs from 'fs';
 
 import * as consoleApiSource from '../generated/consoleApiSource';
 import { isUnderTest } from '../utils';

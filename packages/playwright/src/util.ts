@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import * as url from 'url';
+import fs from 'fs';
+import path from 'path';
+import url from 'url';
 import util from 'util';
 
 import { parseStackFrame, sanitizeForFilePath, calculateSha1, isRegExp, isString, stringifyStackFrames } from 'playwright-core/lib/utils';

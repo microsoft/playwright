@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
+import path from 'path';
 
 import { assert } from '../../utils/isomorphic/assert';
 import { createGuid } from '../utils/crypto';

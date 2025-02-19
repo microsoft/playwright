@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
+import path from 'path';
 
 import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
 import { parseStackFrame } from 'playwright-core/lib/utils';

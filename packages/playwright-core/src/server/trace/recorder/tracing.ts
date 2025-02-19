@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 import { Snapshotter } from './snapshotter';
 import { commandsWithTracingSnapshots } from '../../../protocol/debug';

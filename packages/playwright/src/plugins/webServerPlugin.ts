@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as net from 'net';
-import * as path from 'path';
+import net from 'net';
+import path from 'path';
 
 import { launchProcess, isURLAvailable, monotonicTime, raceAgainstDeadline } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utils';

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import * as http from 'http';
-import * as https from 'https';
+import http from 'http';
+import https from 'https';
 import { Transform, pipeline } from 'stream';
 import { TLSSocket } from 'tls';
-import * as url from 'url';
+import url from 'url';
 import * as zlib from 'zlib';
 
 import { TimeoutSettings } from './timeoutSettings';

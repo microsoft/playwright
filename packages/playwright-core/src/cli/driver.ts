@@ -16,7 +16,7 @@
 
 /* eslint-disable no-console */
 
-import * as fs from 'fs';
+import fs from 'fs';
 
 import * as playwright from '../..';
 import { PipeTransport } from '../server/utils/pipeTransport';

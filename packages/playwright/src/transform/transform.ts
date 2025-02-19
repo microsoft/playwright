@@ -15,10 +15,10 @@
  */
 
 import crypto from 'crypto';
-import * as fs from 'fs';
+import fs from 'fs';
 import Module from 'module';
-import * as path from 'path';
-import * as url from 'url';
+import path from 'path';
+import url from 'url';
 
 import { loadTsConfig } from '../third_party/tsconfig-loader';
 import { createFileMatcher, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';

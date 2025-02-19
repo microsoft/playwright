@@ -15,10 +15,10 @@
  */
 
 
-import * as http from 'http';
-import * as http2 from 'http2';
-import * as https from 'https';
-import * as url from 'url';
+import http from 'http';
+import http2 from 'http2';
+import https from 'https';
+import url from 'url';
 
 import { HttpsProxyAgent, getProxyForUrl } from '../../utilsBundle';
 import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './happyEyeballs';

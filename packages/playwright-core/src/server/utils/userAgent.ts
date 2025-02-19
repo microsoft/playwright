@@ -15,7 +15,7 @@
  */
 
 import { execSync } from 'child_process';
-import * as os from 'os';
+import os from 'os';
 
 import { getLinuxDistributionInfoSync } from '../utils/linuxUtils';
 
