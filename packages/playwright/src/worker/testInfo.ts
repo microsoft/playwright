@@ -70,7 +70,6 @@ export class TestInfoImpl implements TestInfo {
   readonly _tracing: TestTracing;
   readonly _floatingPromiseScope: FloatingPromiseScope = new FloatingPromiseScope();
 
-
   _wasInterrupted = false;
   _lastStepId = 0;
   private readonly _requireFile: string;
