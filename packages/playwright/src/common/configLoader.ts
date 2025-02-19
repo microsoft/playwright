@@ -258,6 +258,8 @@ function validateConfig(file: string, config: Config) {
   if ('tsconfig' in config && config.tsconfig !== undefined) {
     if (typeof config.tsconfig !== 'string')
       throw errorWithFile(file, `config.tsconfig must be a string`);
+    if (!fs.existsSync(path.resolve(file, '..', config.tsconfig)))
+      throw errorWithFile(file, `config.tsconfig does not exist`);
   }
 }
 

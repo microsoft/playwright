@@ -698,3 +698,35 @@ test('should merge ct configs', async ({ runInlineTest }) => {
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should throw on invalid config.tsconfig option', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        tsconfig: true,
+      };
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`config.tsconfig must be a string`);
+});
+
+test('should throw on nonexistant config.tsconfig', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        tsconfig: './does-not-exist.json',
+      };
+    `,
+    'tests/a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', ({}) => {
+        expect(1).toBe(1);
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`config.tsconfig does not exist`);
+});

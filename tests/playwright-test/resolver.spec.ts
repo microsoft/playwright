@@ -734,19 +734,6 @@ test('should respect config.tsconfig option', async ({ runInlineTest }) => {
   expect(result.output).not.toContain(`Could not`);
 });
 
-test('should throw on invalid config.tsconfig option', async ({ runInlineTest }) => {
-  const result = await runInlineTest({
-    'playwright.config.ts': `
-      export default {
-        tsconfig: true,
-      };
-    `,
-  });
-
-  expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`config.tsconfig must be a string`);
-});
-
 test.describe('directory imports', () => {
   test('should resolve index.js without path mapping in CJS', async ({ runInlineTest, runTSC }) => {
     const files = {
