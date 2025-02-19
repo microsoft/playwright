@@ -719,14 +719,14 @@ test('should throw on nonexistant config.tsconfig', async ({ runInlineTest }) =>
         tsconfig: './does-not-exist.json',
       };
     `,
-    'tests/a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('test', ({}) => {
-        expect(1).toBe(1);
-      });
-    `,
   });
 
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain(`config.tsconfig does not exist`);
+});
+
+test('should throw on invalid --tsconfig', async ({ runInlineTest }) => {
+  const result = await runInlineTest({}, { 'tsconfig': 'does-not-exist.json' });
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain(`--tsconfig "does-not-exist.json" does not exist`);
 });
