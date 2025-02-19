@@ -70,7 +70,7 @@ const CopyPromptButton: React.FC<{
   return (
     <CopyToClipboardTextButton
       value={prompt}
-      description='Fix with AI'
+      description='Copy as Prompt'
       copiedDescription={<>Copied <span className='codicon codicon-copy' style={{ marginLeft: '5px' }}/></>}
       style={{ width: '90px', justifyContent: 'center' }}
     />
