@@ -66,7 +66,7 @@ const PromptButton: React.FC<{
         setCopied(false);
       }, 3000);
     }}>
-    {copied ? <span className='prompt-button-copied'>Copied <icons.copy/></span> : 'Fix with AI'}
+    {copied ? <span className='prompt-button-copied'>Copied <icons.copy/></span> : 'Copy as Prompt'}
   </button>;
 };
 

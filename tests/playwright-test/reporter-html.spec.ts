@@ -2802,7 +2802,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
 
       await page.getByRole('link', { name: 'sample' }).click();
-      await page.getByRole('button', { name: 'Fix with AI' }).click();
+      await page.getByRole('button', { name: 'Copy as Prompt' }).click();
       const prompt = await page.evaluate(() => navigator.clipboard.readText());
       expect(prompt, 'first line').toContain(`My Playwright test failed, what's going wrong? I've included the error, a code diff and a snapshot of the page below.`);
       expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');

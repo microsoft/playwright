@@ -514,7 +514,7 @@ test('should show copy prompt button in errors tab', async ({ runUITest }) => {
 
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.getByText('Errors', { exact: true }).click();
-  await page.locator('.tab-errors').getByRole('button', { name: 'Fix with AI' }).click();
+  await page.locator('.tab-errors').getByRole('button', { name: 'Copy as Prompt' }).click();
   const prompt = await page.evaluate(() => navigator.clipboard.readText());
   expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
 });
