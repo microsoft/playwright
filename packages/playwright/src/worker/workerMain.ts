@@ -370,7 +370,7 @@ export class WorkerMain extends ProcessRunner {
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
         await fn(testFunctionParams, testInfo);
         // Create warning if any of the async calls were not awaited.
-        if (testInfo.unusedAsyncApiCalls.size > 0)
+        if (testInfo._floatingPromiseScope.hasFloatingPromises())
           testInfo.annotations.push({ type: 'warning', description: 'Some async calls were not awaited by the end of the test. This can cause flakiness.' });
       });
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.

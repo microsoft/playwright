@@ -23,6 +23,7 @@ import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutMana
 import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
+import { FloatingPromiseScope } from './floatingPromiseScope';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo } from '../../types/test';
@@ -67,6 +68,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _startTime: number;
   readonly _startWallTime: number;
   readonly _tracing: TestTracing;
+  readonly _floatingPromiseScope: FloatingPromiseScope = new FloatingPromiseScope();
 
   _wasInterrupted = false;
   _lastStepId = 0;
@@ -99,7 +101,6 @@ export class TestInfoImpl implements TestInfo {
   duration: number = 0;
   readonly annotations: Annotation[] = [];
   readonly attachments: TestInfo['attachments'] = [];
-  readonly unusedAsyncApiCalls: Set<Promise<any>> = new Set();
   status: TestStatus = 'passed';
   snapshotSuffix: string = '';
   readonly outputDir: string;
@@ -409,32 +410,6 @@ export class TestInfoImpl implements TestInfo {
 
   _setDebugMode() {
     this._timeoutManager.setIgnoreTimeouts();
-  }
-
-  /**
-   * Enables a promise API call to be tracked by the test, alerting if unawaited.
-   *
-   * **NOTE:** Returning from an async function wraps the result in a promise, regardless of whether the return value is a promise. This will automatically mark the promise as awaited. Avoid this.
-   */
-  _wrapPromiseAPIResult<T>(promise: Promise<T>): Promise<T> {
-    const promiseProxy = new Proxy(promise, {
-      get: (target, prop, reciever) => {
-        if (prop === 'then') {
-          return (...args: any[]) => {
-            this.unusedAsyncApiCalls.delete(promise);
-
-            const originalThen = Reflect.get(target, prop, reciever) as Promise<T>['then'];
-            return originalThen.call(target, ...args);
-          };
-        } else {
-          return Reflect.get(target, prop, reciever);
-        }
-      }
-    });
-
-    this.unusedAsyncApiCalls.add(promise);
-
-    return promiseProxy;
   }
 
   // ------------ TestInfo methods ------------

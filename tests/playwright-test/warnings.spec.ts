@@ -38,13 +38,14 @@ test.describe('await', () => {
     const { exitCode, stdout } = await runInlineTest({
       'a.test.ts': `
         import { test, expect } from '@playwright/test';
-        test('test', async ({ page }) => {
+        test('custom test name', async ({ page }) => {
           expect(page.locator('div')).toHaveText('A', { timeout: 100 });
         });
       `
     });
     expect(exitCode).toBe(1);
     expect(stdout).toContain(warningSnippet);
+    expect(stdout).toContain('custom test name');
   });
 
   test('should warn about missing await on expects when passing', async ({ runInlineTest }) => {

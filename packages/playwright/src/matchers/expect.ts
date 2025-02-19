@@ -383,7 +383,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         const result = currentZone().with('stepZone', step).run(callback);
         if (result instanceof Promise) {
           const promise = result.then(finalizer).catch(reportStepError);
-          return testInfo._wrapPromiseAPIResult(promise);
+          return testInfo._floatingPromiseScope.wrapPromiseAPIResult(promise);
         }
         finalizer();
         return result;

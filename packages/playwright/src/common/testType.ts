@@ -266,10 +266,10 @@ export class TestTypeImpl {
     const testInfo = currentTestInfo();
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
-    return testInfo._wrapPromiseAPIResult(this._stepInternal(expectation, testInfo, title, body, options));
+    return testInfo._floatingPromiseScope.wrapPromiseAPIResult(this._stepInternal(expectation, testInfo, title, body, options));
   }
 
-  async _stepInternal<T>(expectation: 'pass'|'skip', testInfo: TestInfoImpl, title: string, body: (step: TestStepInfo) => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
+  private async _stepInternal<T>(expectation: 'pass'|'skip', testInfo: TestInfoImpl, title: string, body: (step: TestStepInfo) => T | Promise<T>, options: {box?: boolean, location?: Location, timeout?: number } = {}): Promise<T> {
     const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
     return await currentZone().with('stepZone', step).run(async () => {
       try {
