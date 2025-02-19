@@ -1,7 +1,7 @@
 /**
  * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License");
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,12 +14,4 @@
  * limitations under the License.
  */
 
-import { Connection } from './connection';
-import { setPlatformForSelectors } from './selectors';
-
-import type { Platform } from './platform';
-
-export function createConnectionFactory(platform: Platform): () => Connection {
-  setPlatformForSelectors(platform);
-  return () => new Connection(platform);
-}
+export { connect } from './index.js';

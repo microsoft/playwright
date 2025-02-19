@@ -15,6 +15,7 @@
  */
 
 import { Android } from './android';
+import { Browser } from './browser';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { Electron } from './electron';
@@ -84,6 +85,12 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
 
   private _browserTypes(): BrowserType[] {
     return [this.chromium, this.firefox, this.webkit, this._bidiChromium, this._bidiFirefox];
+  }
+
+  _preLaunchedBrowser(): Browser {
+    const browser = Browser.from(this._initializer.preLaunchedBrowser!);
+    browser._browserType = this[browser._name as 'chromium' | 'firefox' | 'webkit'];
+    return browser;
   }
 
   _allContexts() {

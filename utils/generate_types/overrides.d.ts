@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import { ChildProcess } from 'child_process';
-import { EventEmitter } from 'events';
 import { Readable } from 'stream';
 import { ReadStream } from 'fs';
 import { Protocol } from './protocol';

@@ -622,13 +622,16 @@ class TypesGenerator {
   }
 
   const coreTypesDir = path.join(PROJECT_DIR, 'packages', 'playwright-core', 'types');
+  const clientTypesDir = path.join(PROJECT_DIR, 'packages', 'playwright-client', 'types');
   if (!fs.existsSync(coreTypesDir))
     fs.mkdirSync(coreTypesDir)
   const playwrightTypesDir = path.join(PROJECT_DIR, 'packages', 'playwright', 'types');
   if (!fs.existsSync(playwrightTypesDir))
     fs.mkdirSync(playwrightTypesDir)
   writeFile(path.join(coreTypesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'packages', 'playwright-core', 'src', 'server', 'chromium', 'protocol.d.ts'), 'utf8'), false);
-  writeFile(path.join(coreTypesDir, 'types.d.ts'), await generateCoreTypes(), true);
+  const coreTypes = await generateCoreTypes();
+  writeFile(path.join(coreTypesDir, 'types.d.ts'), coreTypes, true);
+  writeFile(path.join(clientTypesDir, 'types.d.ts'), coreTypes, true);
   writeFile(path.join(playwrightTypesDir, 'test.d.ts'), await generateTestTypes(), true);
   writeFile(path.join(playwrightTypesDir, 'testReporter.d.ts'), await generateReporterTypes(), true);
   process.exit(0);
