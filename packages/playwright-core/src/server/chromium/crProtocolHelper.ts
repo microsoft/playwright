@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
+import fs from 'fs';
 
 import { splitErrorMessage } from '../../utils/isomorphic/stackTrace';
 import { mkdirIfNeeded } from '../utils/fileUtils';

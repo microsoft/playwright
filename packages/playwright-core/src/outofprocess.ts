@@ -15,7 +15,7 @@
  */
 
 import * as childProcess from 'child_process';
-import * as path from 'path';
+import path from 'path';
 
 import { createConnectionFactory } from './client/clientBundle';
 import { PipeTransport } from './server/utils/pipeTransport';

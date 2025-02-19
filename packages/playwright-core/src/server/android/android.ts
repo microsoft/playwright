@@ -15,9 +15,9 @@
  */
 
 import { EventEmitter } from 'events';
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 import { TimeoutSettings } from '../timeoutSettings';
 import { PipeTransport } from '../utils/pipeTransport';

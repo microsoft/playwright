@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as os from 'os';
-import * as path from 'path';
+import os from 'os';
+import path from 'path';
 
 import { assert } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';

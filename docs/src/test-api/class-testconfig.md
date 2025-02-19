@@ -291,7 +291,7 @@ Here is an example that uses [`method: TestInfo.outputPath`] to create a tempora
 
 ```js
 import { test, expect } from '@playwright/test';
-import * as fs from 'fs';
+import fs from 'fs';
 
 test('example test', async ({}, testInfo) => {
   const file = testInfo.outputPath('temporary-file.txt');

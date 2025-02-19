@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as url from 'url';
+import url from 'url';
 
 import { addToCompilationCache, serializeCompilationCache } from '../transform/compilationCache';
 import { PortTransport } from '../transform/portTransport';

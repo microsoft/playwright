@@ -389,7 +389,7 @@ Next, add init script to the page.
 
 ```js
 import { test, expect } from '@playwright/test';
-import * as path from 'path';
+import path from 'path';
 
 test.beforeEach(async ({ page }) => {
   // Add script for every test in the beforeEach hook.

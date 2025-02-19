@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
+import fs from 'fs';
 
 let didFailToReadOSRelease = false;
 let osRelease: {

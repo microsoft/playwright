@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
 import { TimeoutSettings } from './timeoutSettings';
 import { createGuid } from './utils/crypto';

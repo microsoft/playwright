@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as url from 'url';
+import url from 'url';
 
 const kExperimentalLoaderOptions = [
   '--no-warnings',
