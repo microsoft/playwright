@@ -27,6 +27,7 @@ import { PlaceholderPanel } from './placeholderPanel';
 export type ConsoleEntry = {
   browserMessage?: {
     body: JSX.Element[];
+    bodyString: string;
     location: string;
   },
   browserError?: channels.SerializedError;
@@ -36,6 +37,7 @@ export type ConsoleEntry = {
   isError: boolean;
   isWarning: boolean;
   timestamp: number;
+  repeat: number;
 };
 
 type ConsoleTabModel = {
@@ -50,6 +52,23 @@ export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined,
     if (!model)
       return { entries: [] };
     const entries: ConsoleEntry[] = [];
+    function addEntry(entry: Omit<ConsoleEntry, 'repeat'>) {
+      const lastEntry = entries[entries.length - 1];
+      const isSameAsLast =
+        lastEntry
+        && entry.browserMessage?.bodyString === lastEntry.browserMessage?.bodyString
+        && entry.browserMessage?.location === lastEntry.browserMessage?.location
+        && entry.browserError === lastEntry.browserError
+        && entry.nodeMessage?.html === lastEntry.nodeMessage?.html
+        && entry.isError === lastEntry.isError
+        && entry.isWarning === lastEntry.isWarning
+        && entry.timestamp - lastEntry.timestamp < 1000;
+      if (isSameAsLast) {
+        lastEntry.repeat++;
+      } else {
+        entries.push({ ...entry, repeat: 1 });
+      }
+    }
     for (const event of model.events) {
       if (event.type === 'console') {
         const body = event.args && event.args.length ? format(event.args) : formatAnsi(event.text);
@@ -57,9 +76,10 @@ export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined,
         const filename = url ? url.substring(url.lastIndexOf('/') + 1) : '<anonymous>';
         const location = `${filename}:${event.location.lineNumber}`;
 
-        entries.push({
+        addEntry({
           browserMessage: {
             body,
+            bodyString: event.text,
             location,
           },
           isError: event.messageType === 'error',
@@ -68,7 +88,7 @@ export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined,
         });
       }
       if (event.type === 'event' && event.method === 'pageError') {
-        entries.push({
+        addEntry({
           browserError: event.params.error,
           isError: true,
           isWarning: false,
@@ -83,7 +103,7 @@ export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined,
       if (event.base64)
         html = ansi2html(atob(event.base64).trim()) || '';
 
-      entries.push({
+      addEntry({
         nodeMessage: { html },
         isError: event.type === 'stderr',
         isWarning: false,
@@ -154,6 +174,7 @@ export const ConsoleTab: React.FunctionComponent<{
           {timestampElement}
           {statusElement}
           {locationText && <span className='console-location'>{locationText}</span>}
+          {entry.repeat > 1 && <span className='console-repeat'>{entry.repeat}</span>}
           {messageBody && <span className='console-line-message'>{messageBody}</span>}
           {messageInnerHTML && <span className='console-line-message' dangerouslySetInnerHTML={{ __html: messageInnerHTML }}></span>}
           {messageStack && <div className='console-stack'>{messageStack}</div>}

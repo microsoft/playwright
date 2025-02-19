@@ -83,3 +83,18 @@
 .console-line .codicon.status-warning::after {
   background-color: var(--vscode-list-warningForeground);
 }
+
+.console-repeat {
+  display: inline-block;
+  padding: 0 2px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  border: 1px solid transparent;
+  border-radius: 0.5em;
+  background-color: #8c959f;
+  color: white;
+  margin-right: 10px;
+  flex: none;
+  font-weight: 600;
+}
