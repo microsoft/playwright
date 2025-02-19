@@ -88,10 +88,8 @@
   display: inline-block;
   padding: 0 2px;
   font-size: 12px;
-  font-weight: 500;
   line-height: 18px;
-  border: 1px solid transparent;
-  border-radius: 0.5em;
+  border-radius: 6px;
   background-color: #8c959f;
   color: white;
   margin-right: 10px;
