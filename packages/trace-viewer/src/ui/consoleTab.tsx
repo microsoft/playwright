@@ -63,11 +63,10 @@ export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined,
         && entry.isError === lastEntry.isError
         && entry.isWarning === lastEntry.isWarning
         && entry.timestamp - lastEntry.timestamp < 1000;
-      if (isSameAsLast) {
+      if (isSameAsLast)
         lastEntry.repeat++;
-      } else {
+      else
         entries.push({ ...entry, repeat: 1 });
-      }
     }
     for (const event of model.events) {
       if (event.type === 'console') {
