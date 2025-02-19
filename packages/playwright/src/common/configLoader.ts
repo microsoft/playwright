@@ -254,6 +254,11 @@ function validateConfig(file: string, config: Config) {
     else if (typeof config.workers === 'string' && !config.workers.endsWith('%'))
       throw errorWithFile(file, `config.workers must be a number or percentage`);
   }
+
+  if ('tsconfig' in config && config.tsconfig !== undefined) {
+    if (typeof config.tsconfig !== 'string')
+      throw errorWithFile(file, `config.tsconfig must be a string`);
+  }
 }
 
 function validateProject(file: string, project: Project, title: string) {
