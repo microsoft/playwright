@@ -321,6 +321,15 @@ export class WorkerMain extends ProcessRunner {
     let shouldRunAfterEachHooks = false;
 
     testInfo._allowSkips = true;
+
+    // Create warning if any of the async calls were not awaited in various stages.
+    const checkForFloatingPromises = (functionDescription: string) => {
+      if (!testInfo._floatingPromiseScope.hasFloatingPromises())
+        return;
+      testInfo.annotations.push({ type: 'warning', description: `Some async calls were not awaited by the end of ${functionDescription}. This can cause flakiness.` });
+      testInfo._floatingPromiseScope.clear();
+    };
+
     await testInfo._runAsStage({ title: 'setup and test' }, async () => {
       await testInfo._runAsStage({ title: 'start tracing', runnable: { type: 'test' } }, async () => {
         // Ideally, "trace" would be an config-level option belonging to the
@@ -360,6 +369,8 @@ export class WorkerMain extends ProcessRunner {
         testFunctionParams = await this._fixtureRunner.resolveParametersForFunction(test.fn, testInfo, 'test', { type: 'test' });
       });
 
+      checkForFloatingPromises('beforeAll/beforeEach hooks');
+
       if (testFunctionParams === null) {
         // Fixture setup failed or was skipped, we should not run the test now.
         return;
@@ -369,9 +380,7 @@ export class WorkerMain extends ProcessRunner {
         // Now run the test itself.
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
         await fn(testFunctionParams, testInfo);
-        // Create warning if any of the async calls were not awaited.
-        if (testInfo._floatingPromiseScope.hasFloatingPromises())
-          testInfo.annotations.push({ type: 'warning', description: 'Some async calls were not awaited by the end of the test. This can cause flakiness.' });
+        checkForFloatingPromises('the test');
       });
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
@@ -428,6 +437,8 @@ export class WorkerMain extends ProcessRunner {
       if (firstAfterHooksError)
         throw firstAfterHooksError;
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
+
+    checkForFloatingPromises('afterAll/afterEach hooks');
 
     if (testInfo._isFailure())
       this._isStopped = true;

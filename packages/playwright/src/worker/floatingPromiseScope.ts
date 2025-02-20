@@ -43,6 +43,10 @@ export class FloatingPromiseScope {
     return promiseProxy;
   }
 
+  clear() {
+    this._floatingCalls.clear();
+  }
+
   hasFloatingPromises(): boolean {
     return this._floatingCalls.size > 0;
   }

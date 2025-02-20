@@ -45,6 +45,7 @@ test.describe('await', () => {
     });
     expect(exitCode).toBe(1);
     expect(stdout).toContain(warningSnippet);
+    expect(stdout).toContain('the test');
     expect(stdout).toContain('custom test name');
   });
 
@@ -53,7 +54,7 @@ test.describe('await', () => {
       'a.test.ts': `
         import { test, expect } from '@playwright/test';
         test('test', async ({ page }) => {
-          await page.setContent('data:text/html,<div>A</div>');
+          await page.setContent('<div>A</div>');
           expect(page.locator('div')).toHaveText('A');
         });
       `
@@ -80,8 +81,22 @@ test.describe('await', () => {
       'a.test.ts': `
         import { test, expect } from '@playwright/test';
         test('test', async ({ page }) => {
-          await page.setContent('data:text/html,<div>A</div>');
+          await page.setContent('<div>A</div>');
           await expect(page.locator('div')).toHaveText('A');
+        });
+      `
+    });
+    expect(exitCode).toBe(0);
+    expect(stdout).not.toContain(warningSnippet);
+  });
+
+  test('should not warn when using then on expects when passing', async ({ runInlineTest }) => {
+    const { exitCode, stdout } = await runInlineTest({
+      'a.test.ts': `
+        import { test, expect } from '@playwright/test';
+        test('test', async ({ page }) => {
+          await page.setContent('<div>A</div>');
+          expect(page.locator('div')).toHaveText('A').then(() => {});
         });
       `
     });
@@ -120,7 +135,7 @@ test.describe('await', () => {
       'a.test.ts': `
         import { test, expect } from '@playwright/test';
         test('test', async ({ page }) => {
-          await page.setContent('data:text/html,<div>A</div>');
+          await page.setContent('<div>A</div>');
           test.step('step', () => {});
           await expect(page.locator('div')).toHaveText('A');
         });
@@ -135,7 +150,7 @@ test.describe('await', () => {
       'a.test.ts': `
         import { test, expect } from '@playwright/test';
         test('test', async ({ page }) => {
-          await page.setContent('data:text/html,<div>A</div>');
+          await page.setContent('<div>A</div>');
           await test.step('step', () => {});
           await expect(page.locator('div')).toHaveText('A');
         });
@@ -150,7 +165,7 @@ test.describe('await', () => {
       'a.test.ts': `
         import { test, expect } from '@playwright/test';
         test('test', async ({ page }) => {
-          await page.setContent('data:text/html,<div>A</div>');
+          await page.setContent('<div>A</div>');
           test.step.skip('step', () => {});
           await expect(page.locator('div')).toHaveText('A');
         });
@@ -165,12 +180,83 @@ test.describe('await', () => {
       'a.test.ts': `
         import { test, expect } from '@playwright/test';
         test('test', async ({ page }) => {
-          await page.setContent('data:text/html,<div>A</div>');
+          await page.setContent('<div>A</div>');
           const expectPromise = expect(page.locator('div')).toHaveText('A');
           expect(expectPromise instanceof Promise).toBeTruthy();
         });
       `
     });
     expect(exitCode).toBe(0);
+  });
+
+  test('should warn about missing await in before hooks', async ({ runInlineTest }) => {
+    const group = ['beforeAll', 'beforeEach'];
+    for (const hook of group) {
+      await test.step(hook, async () => {
+        const { exitCode, stdout } = await runInlineTest({
+          'a.test.ts': `
+            import { test, expect } from '@playwright/test';
+            let page;
+            test.${hook}(async ({ browser }) => {
+              page = await browser.newPage();
+              await page.setContent('<div>A</div>');
+              expect(page.locator('div')).toHaveText('A');
+            });
+            test('test ${hook}', async () => {
+              await expect(page.locator('div')).toBeVisible();
+            });
+          `
+        });
+
+        expect(exitCode).toBe(0);
+        expect(stdout).toContain(warningSnippet);
+        expect(stdout).toContain(`${group[0]}/${group[1]} hooks`);
+      });
+    }
+  });
+
+  test.describe('should warn about missing await in after hooks', () => {
+    const group = ['afterAll', 'afterEach'];
+    for (const hook of group) {
+      test(hook, async ({ runInlineTest }) => {
+        const { exitCode, stdout } = await runInlineTest({
+          'a.test.ts': `
+            import { test, expect } from '@playwright/test';
+            let page;
+            test('test ${hook}', async ({ browser }) => {
+              await expect(Promise.resolve()).resolves.toBe(undefined);
+            });
+            test.${hook}(async () => {
+              expect(Promise.resolve()).resolves.toBe(undefined);
+            });
+          `
+        });
+
+        expect(exitCode).toBe(0);
+        expect(stdout).toContain(warningSnippet);
+        expect(stdout).toContain(`${group[0]}/${group[1]} hooks`);
+      });
+    }
+  });
+
+  test('should warn about missing await across hooks and test', async ({ runInlineTest }) => {
+    const { exitCode, stdout } = await runInlineTest({
+      'a.test.ts': `
+        import { test, expect } from '@playwright/test';
+        test.beforeAll(async () => {
+          expect(Promise.resolve()).resolves.toBe(undefined);
+        });
+        test('test', async () => {
+          expect(Promise.resolve()).resolves.toBe(undefined);
+        });
+        test.afterEach(async () => {
+          expect(Promise.resolve()).resolves.toBe(undefined);
+        });
+      `
+    });
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain(`${warningSnippet} by the end of beforeAll/beforeEach hooks.`);
+    expect(stdout).toContain(`${warningSnippet} by the end of the test.`);
+    expect(stdout).toContain(`${warningSnippet} by the end of afterAll/afterEach hooks.`);
   });
 });
