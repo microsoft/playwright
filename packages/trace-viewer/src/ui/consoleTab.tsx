@@ -72,7 +72,7 @@ export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined,
       const aTimestamp = 'time' in a ? a.time : a.timestamp;
       const bTimestamp = 'time' in b ? b.time : b.timestamp;
       return aTimestamp - bTimestamp;
-    })
+    });
     for (const event of logEvents) {
       if (event.type === 'console') {
         const body = event.args && event.args.length ? format(event.args) : formatAnsi(event.text);
