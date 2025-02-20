@@ -68,7 +68,12 @@ export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined,
       else
         entries.push({ ...entry, repeat: 1 });
     }
-    for (const event of model.events) {
+    const logEvents = [...model.events, ...model.stdio].sort((a, b) => {
+      const aTimestamp = 'time' in a ? a.time : a.timestamp;
+      const bTimestamp = 'time' in b ? b.time : b.timestamp;
+      return aTimestamp - bTimestamp;
+    })
+    for (const event of logEvents) {
       if (event.type === 'console') {
         const body = event.args && event.args.length ? format(event.args) : formatAnsi(event.text);
         const url = event.location.url;
@@ -94,22 +99,21 @@ export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined,
           timestamp: event.time,
         });
       }
-    }
-    for (const event of model.stdio) {
-      let html = '';
-      if (event.text)
-        html = ansi2html(event.text.trim()) || '';
-      if (event.base64)
-        html = ansi2html(atob(event.base64).trim()) || '';
+      if (event.type === 'stderr' || event.type === 'stdout') {
+        let html = '';
+        if (event.text)
+          html = ansi2html(event.text.trim()) || '';
+        if (event.base64)
+          html = ansi2html(atob(event.base64).trim()) || '';
 
-      addEntry({
-        nodeMessage: { html },
-        isError: event.type === 'stderr',
-        isWarning: false,
-        timestamp: event.timestamp,
-      });
+        addEntry({
+          nodeMessage: { html },
+          isError: event.type === 'stderr',
+          isWarning: false,
+          timestamp: event.timestamp,
+        });
+      }
     }
-    entries.sort((a, b) => a.timestamp - b.timestamp);
     return { entries };
   }, [model]);
 

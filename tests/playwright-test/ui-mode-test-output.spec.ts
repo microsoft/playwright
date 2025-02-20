@@ -120,6 +120,7 @@ test('should collapse repeated console messages for test', async ({ runUITest })
       import { test, expect } from '@playwright/test';
       test('print', async ({ page }) => {
         await page.evaluate(() => {
+          console.log('page message')
           for (let i = 0; i < 10; ++i)
             console.log('page message')
         });
@@ -146,6 +147,7 @@ test('should collapse repeated console messages for test', async ({ runUITest })
   await expect(page.getByRole('tabpanel', { name: 'Console' })).toMatchAriaSnapshot(`
     - tabpanel "Console":
       - list:
+        - listitem: /page message/
         - listitem: /10 page message/
         - listitem: /10 node message/
         - listitem: /10 page message/
