@@ -337,6 +337,9 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     overrides.use = overrides.use || {};
     overrides.use.trace = options.trace;
   }
+  if (overrides.tsconfig && !fs.existsSync(overrides.tsconfig))
+    throw new Error(`--tsconfig "${options.tsconfig}" does not exist`);
+
   return overrides;
 }
 
