@@ -17,7 +17,6 @@
 import { ansi2html } from '@web/ansi2html';
 import * as React from 'react';
 import './testErrorView.css';
-import * as icons from './icons';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
 import type { TestResult } from './types';
