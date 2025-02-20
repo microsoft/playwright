@@ -1285,9 +1285,8 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * Metadata contains key-value pairs to be included in the report. For example, HTML report will display it as
    * key-value pairs, and JSON report will include metadata serialized as json.
    *
-   * See also
-   * [testConfig.populateGitInfo](https://playwright.dev/docs/api/class-testconfig#test-config-populate-git-info) that
-   * populates metadata.
+   * Providing `'git.commit.info': {}` property will populate it with the git commit details. This is useful for CI/CD
+   * environments.
    *
    * **Usage**
    *
@@ -1359,29 +1358,6 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   outputDir?: string;
-
-  /**
-   * Whether to populate `'git.commit.info'` field of the
-   * [testConfig.metadata](https://playwright.dev/docs/api/class-testconfig#test-config-metadata) with Git commit info
-   * and CI/CD information.
-   *
-   * This information will appear in the HTML and JSON reports and is available in the Reporter API.
-   *
-   * On Github Actions, this feature is enabled by default.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   populateGitInfo: !!process.env.CI,
-   * });
-   * ```
-   *
-   */
-  populateGitInfo?: boolean;
 
   /**
    * Whether to preserve test output in the

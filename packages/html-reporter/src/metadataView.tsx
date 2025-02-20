@@ -87,12 +87,12 @@ const InnerMetadataView = () => {
       <GitCommitInfoView info={gitCommitInfo}/>
       {entries.length > 0 && <div className='metadata-separator' />}
     </>}
-    <div className='metadata-section metadata-properties'>
+    <div className='metadata-section metadata-properties' role='list'>
       {entries.map(([propertyName, value]) => {
         const valueString = typeof value !== 'object' || value === null || value === undefined ? String(value) : JSON.stringify(value);
         const trimmedValue = valueString.length > 1000 ? valueString.slice(0, 1000) + '\u2026' : valueString;
         return (
-          <div key={propertyName} className='copyable-property'>
+          <div key={propertyName} className='copyable-property' role='listitem'>
             <CopyToClipboardContainer value={valueString}>
               <span style={{ fontWeight: 'bold' }} title={propertyName}>{propertyName}</span>
               : <span title={trimmedValue}>{linkifyText(trimmedValue)}</span>
@@ -105,47 +105,38 @@ const InnerMetadataView = () => {
 };
 
 const GitCommitInfoView: React.FC<{ info: GitCommitInfo }> = ({ info }) => {
-  const email = info['revision.email'] ? ` <${info['revision.email']}>` : '';
-  const author = `${info['revision.author'] || ''}${email}`;
+  const email = info.revision?.email ? ` <${info.revision?.email}>` : '';
+  const author = `${info.revision?.author || ''}${email}`;
 
-  let subject = info['revision.subject'] || '';
-  let link = info['revision.link'];
-  let shortSubject = info['revision.id']?.slice(0, 7) || 'unknown';
+  let subject = info.revision?.subject || '';
+  let link = info.revision?.link;
 
-  if (info['pull.link'] && info['pull.title']) {
-    subject = info['pull.title'];
-    link = info['pull.link'];
-    shortSubject = link ? 'Pull Request' : '';
+  if (info.pull_request?.link && info.pull_request?.title) {
+    subject = info.pull_request?.title;
+    link = info.pull_request?.link;
   }
 
-  const shortTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(info['revision.timestamp']);
-  const longTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(info['revision.timestamp']);
-  return <div className='hbox git-commit-info metadata-section'>
-    <div className='vbox metadata-properties'>
-      <div>
-        {link ? (
-          <a href={link} target='_blank' rel='noopener noreferrer' title={subject}>
-            {subject}
-          </a>
-        ) : <span title={subject}>
+  const shortTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(info.revision?.timestamp);
+  const longTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(info.revision?.timestamp);
+  return <div className='metadata-section' role='list'>
+    <div role='listitem'>
+      {link ? (
+        <a href={link} target='_blank' rel='noopener noreferrer' title={subject}>
           {subject}
-        </span>}
-      </div>
-      <div className='hbox'>
-        <span className='mr-1'>{author}</span>
-        <span title={longTimestamp}> on {shortTimestamp}</span>
-        {info['ci.link'] && (
-          <>
-            <span className='mx-2'>·</span>
-            <a href={info['ci.link']} target='_blank' rel='noopener noreferrer' title='CI/CD logs'>Logs</a>
-          </>
-        )}
-      </div>
+        </a>
+      ) : <span title={subject}>
+        {subject}
+      </span>}
     </div>
-    {link ? (
-      <a href={link} target='_blank' rel='noopener noreferrer' title='View commit details'>
-        {shortSubject}
-      </a>
-    ) : !!shortSubject && <span>{shortSubject}</span>}
+    <div role='listitem' className='hbox'>
+      <span className='mr-1'>{author}</span>
+      <span title={longTimestamp}> on {shortTimestamp}</span>
+      {info.ci?.link && (
+        <>
+          <span className='mx-2'>·</span>
+          <a href={info.ci?.link} target='_blank' rel='noopener noreferrer' title='CI/CD logs'>Logs</a>
+        </>
+      )}
+    </div>
   </div>;
 };

@@ -1187,13 +1187,12 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]);
     });
 
-    test('should include metadata with populateGitInfo = true', async ({ runInlineTest, writeFiles, showReport, page }) => {
+    test('should include metadata with git.commit.info', async ({ runInlineTest, writeFiles, showReport, page }) => {
       const files = {
         'uncommitted.txt': `uncommitted file`,
         'playwright.config.ts': `
           export default {
-            populateGitInfo: true,
-            metadata: { foo: 'value1', bar: { prop: 'value2' }, baz: ['value3', 123] }
+            metadata: { 'git.commit.info': {}, foo: 'value1', bar: { prop: 'value2' }, baz: ['value3', 123] }
           };
         `,
         'example.spec.ts': `
@@ -1230,20 +1229,23 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.exitCode).toBe(0);
       await page.getByRole('button', { name: 'Metadata' }).click();
       await expect(page.locator('.metadata-view')).toMatchAriaSnapshot(`
-        - 'link "chore(html): make this test look nice"'
-        - text: /^William <shakespeare@example.local> on/
-        - link /^[a-f0-9]{7}$/
-        - text: 'foo : value1 bar : {"prop":"value2"} baz : ["value3",123]'
+        - list:
+          - listitem:
+            - 'link "chore(html): make this test look nice"'
+          - listitem: /William <shakespeare@example\\.local>/
+        - list:
+          - listitem: "foo : value1"
+          - listitem: "bar : {\\"prop\\":\\"value2\\"}"
+          - listitem: "baz : [\\"value3\\",123]"
       `);
     });
 
-    test('should include metadata with populateGitInfo on GHA', async ({ runInlineTest, writeFiles, showReport, page }) => {
+    test('should include metadata with git.commit.info on GHA', async ({ runInlineTest, writeFiles, showReport, page }) => {
       const files = {
         'uncommitted.txt': `uncommitted file`,
         'playwright.config.ts': `
           export default {
-            populateGitInfo: true,
-            metadata: { foo: 'value1', bar: { prop: 'value2' }, baz: ['value3', 123] }
+            metadata: { 'git.commit.info': {}, foo: 'value1', bar: { prop: 'value2' }, baz: ['value3', 123] }
           };
         `,
         'example.spec.ts': `
@@ -1291,18 +1293,23 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.exitCode).toBe(0);
       await page.getByRole('button', { name: 'Metadata' }).click();
       await expect(page.locator('.metadata-view')).toMatchAriaSnapshot(`
-        - 'link "My PR"'
-        - text: /^William <shakespeare@example.local> on/
-        - link "Logs"
-        - link "Pull Request"
-        - text: 'foo : value1 bar : {"prop":"value2"} baz : ["value3",123]'
+        - list:
+          - listitem:
+            - link "My PR"
+          - listitem:
+            - text: /William <shakespeare@example\\.local>/
+            - link "Logs"
+        - list:
+          - listitem: "foo : value1"
+          - listitem: "bar : {\\"prop\\":\\"value2\\"}"
+          - listitem: "baz : [\\"value3\\",123]"
       `);
     });
 
-    test('should not include git metadata with populateGitInfo = false', async ({ runInlineTest, showReport, page }) => {
+    test('should not include git metadata w/o git.commit.info', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
-          export default { populateGitInfo: false };
+          export default {};
         `,
         'example.spec.ts': `
           import { test, expect } from '@playwright/test';
@@ -1323,7 +1330,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         'playwright.config.ts': `
           export default {
             metadata: {
-              'git.commit.info': { 'revision.timestamp': 'hi' }
+              'git.commit.info': { revision: { timestamp: 'hi' } }
             },
           };
         `,
@@ -2757,8 +2764,12 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         'uncommitted.txt': `uncommitted file`,
         'playwright.config.ts': `
           export default {
-            populateGitInfo: true,
-            metadata: { foo: 'value1', bar: { prop: 'value2' }, baz: ['value3', 123] }
+            metadata: {
+              'git.commit.info': {},
+              foo: 'value1',
+              bar: { prop: 'value2' },
+              baz: ['value3', 123]
+            }
           };
         `,
         'example.spec.ts': `
