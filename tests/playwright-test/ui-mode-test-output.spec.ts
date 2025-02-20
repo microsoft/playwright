@@ -114,6 +114,47 @@ test('should show console messages for test', async ({ runUITest }, testInfo) =>
   await expect.soft(page.getByText('GREEN', { exact: true })).toHaveCSS('color', 'rgb(0, 188, 0)');
 });
 
+test('should collapse repeated console messages for test', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('print', async ({ page }) => {
+        await page.evaluate(() => {
+          console.log('page message')
+          for (let i = 0; i < 10; ++i)
+            console.log('page message')
+        });
+        for (let i = 0; i < 10; ++i)
+          console.log('node message')
+        await page.evaluate(async () => {
+          await new Promise(resolve => {
+            for (let i = 0; i < 10; ++i)
+              console.log('page message')
+            setTimeout(() => {
+              for (let i = 0; i < 10; ++i)
+                console.log('page message')
+              resolve()
+            }, 1500)
+          })
+        });
+      });
+    `,
+  });
+  await page.getByTitle('Run all').click();
+  await page.getByRole('tab', { name: 'Console' }).click();
+  await page.getByText('print').click();
+
+  await expect(page.getByRole('tabpanel', { name: 'Console' })).toMatchAriaSnapshot(`
+    - tabpanel "Console":
+      - list:
+        - listitem: /page message/
+        - listitem: /10 page message/
+        - listitem: /10 node message/
+        - listitem: /10 page message/
+        - listitem: /10 page message/
+  `);
+});
+
 test('should format console messages in page', async ({ runUITest }, testInfo) => {
   const { page } = await runUITest({
     'a.spec.ts': `
