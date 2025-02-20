@@ -224,12 +224,10 @@ test.describe('await', () => {
             import { test, expect } from '@playwright/test';
             let page;
             test('test ${hook}', async ({ browser }) => {
-              page = await browser.newPage();
-              await page.setContent('<div>A</div>');
-              await expect(page.locator('div')).toBeVisible();
+              await expect(Promise.resolve()).resolves.toBe(undefined);
             });
             test.${hook}(async () => {
-              expect(page.locator('div')).toBeVisible();
+              expect(Promise.resolve()).resolves.toBe(undefined);
             });
           `
         });
