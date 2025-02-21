@@ -321,7 +321,7 @@ it.describe('Drag and drop', () => {
     await page.goto(server.PREFIX + '/drag-n-drop-manual.html');
     const events = await page.evaluateHandle(() => {
       const events = [];
-      document.addEventListener('drop', (event: MouseEvent) => {
+      document.addEventListener('mousemove', (event: MouseEvent) => {
         events.push({
           type: event.type,
           x: event.clientX,
