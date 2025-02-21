@@ -51,7 +51,6 @@ import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
 import type * as channels from '@protocol/channels';
-import type * as js from '../javascript';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
