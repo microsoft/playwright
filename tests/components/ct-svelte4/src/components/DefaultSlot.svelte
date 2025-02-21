@@ -1,11 +1,7 @@
-<script>
-const {children} = $props()
-</script>
-
 <div>
   <h1>Welcome!</h1>
   <main>
-    {@render children?.()}
+    <slot />
   </main>
   <footer>
     Thanks for visiting.
