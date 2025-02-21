@@ -88,7 +88,8 @@ export class ExecutionContext extends SdkObject {
     return this._raceAgainstContextDestroyed(this._delegate.rawEvaluateHandle(expression));
   }
 
-  evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle<any>, values: any[], objectIds: ObjectId[]): Promise<any> {
+  async evaluateWithArguments(expression: string, returnByValue: boolean, values: any[], objectIds: ObjectId[]): Promise<any> {
+    const utilityScript = await this._utilityScript();
     return this._raceAgainstContextDestroyed(this._delegate.evaluateWithArguments(expression, returnByValue, utilityScript, values, objectIds));
   }
 
@@ -108,7 +109,7 @@ export class ExecutionContext extends SdkObject {
     return null;
   }
 
-  utilityScript(): Promise<JSHandle<UtilityScript>> {
+  private _utilityScript(): Promise<JSHandle<UtilityScript>> {
     if (!this._utilityScriptPromise) {
       const source = `
       (() => {
@@ -192,9 +193,8 @@ export class JSHandle<T = any> extends SdkObject {
   async jsonValue(): Promise<T> {
     if (!this._objectId)
       return this._value;
-    const utilityScript = await this._context.utilityScript();
     const script = `(utilityScript, ...args) => utilityScript.jsonValue(...args)`;
-    return this._context.evaluateWithArguments(script, true, utilityScript, [true], [this._objectId]);
+    return this._context.evaluateWithArguments(script, true, [true], [this._objectId]);
   }
 
   asElement(): dom.ElementHandle | null {
@@ -240,7 +240,6 @@ export async function evaluate(context: ExecutionContext, returnByValue: boolean
 }
 
 export async function evaluateExpression(context: ExecutionContext, expression: string, options: { returnByValue?: boolean, isFunction?: boolean }, ...args: any[]): Promise<any> {
-  const utilityScript = await context.utilityScript();
   expression = normalizeEvaluationExpression(expression, options.isFunction);
   const handles: (Promise<JSHandle>)[] = [];
   const toDispose: Promise<JSHandle>[] = [];
@@ -276,7 +275,7 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
 
   const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)`;
   try {
-    return await context.evaluateWithArguments(script, options.returnByValue || false, utilityScript, utilityScriptValues, utilityScriptObjectIds);
+    return await context.evaluateWithArguments(script, options.returnByValue || false, utilityScriptValues, utilityScriptObjectIds);
   } finally {
     toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
   }
