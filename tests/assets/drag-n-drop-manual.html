@@ -1,0 +1,129 @@
+<style>
+* {
+  box-sizing: border-box;
+}
+body, html {
+  margin: 0;
+  padding: 0;
+}
+div:not(.mouse-helper) {
+  margin: 0;
+  padding: 0;
+}
+#source {
+  color: blue;
+  border: 1px solid black;
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  width: 200px;
+  height: 100px;
+  cursor: move;
+  user-select: none;
+}
+#target {
+  border: 1px solid black;
+  position: absolute;
+  left: 40px;
+  top: 200px;
+  width: 400px;
+  height: 300px;
+}
+</style>
+    
+    <body>
+      <div>
+        <p id="source">
+          Select this element, drag it to the Drop Zone and then release the selection to move the element.</p>
+      </div>
+      <div id="target">Drop Zone</div>
+    
+      <script>
+        // Elements
+        const sourceElement = document.getElementById('source');
+        const targetElement = document.getElementById('target');
+        
+        // State variables
+        let isDragging = false;
+        let offsetX, offsetY;
+        let originalPosition = { left: 0, top: 0 };
+        
+        // Mouse down handler - start dragging
+        sourceElement.addEventListener('mousedown', function(e) {
+          e.preventDefault();
+          
+          // Store the original position
+          const rect = sourceElement.getBoundingClientRect();
+          originalPosition = {
+            left: rect.left,
+            top: rect.top
+          };
+          
+          // Calculate the mouse offset
+          offsetX = e.clientX - rect.left;
+          offsetY = e.clientY - rect.top;
+          
+          // Start dragging
+          isDragging = true;
+          sourceElement.style.border = 'dashed'
+          
+          console.log('mousedown', e.clientX, e.clientY);
+        });
+        
+        // Mouse move handler - move the element
+        document.addEventListener('mousemove', function(e) {
+          if (!isDragging) return;
+          
+          // Set new position
+          sourceElement.style.left = (e.clientX - offsetX) + 'px';
+          sourceElement.style.top = (e.clientY - offsetY) + 'px';
+        });
+        
+        // Mouse up handler - stop dragging and check if dropped on target
+        document.addEventListener('mouseup', function(e) {
+          if (!isDragging) return;
+          
+          isDragging = false;
+          
+          // Check if dropped on target area
+          const sourceRect = sourceElement.getBoundingClientRect();
+          const targetRect = targetElement.getBoundingClientRect();
+          
+          const isOverlapping = !(
+            sourceRect.right < targetRect.left || 
+            sourceRect.left > targetRect.right || 
+            sourceRect.bottom < targetRect.top || 
+            sourceRect.top > targetRect.bottom
+          );
+          
+          if (isOverlapping) {
+            // Successful drop - append to target
+            targetElement.appendChild(sourceElement);
+            
+            // Reset position relative to the new parent
+            sourceElement.style.removeProperty('position')
+            sourceElement.style.removeProperty('top')
+            sourceElement.style.removeProperty('left')
+            
+            console.log('Drop successful');
+          } else {
+            // Failed drop - return to original position
+            sourceElement.style.left = originalPosition.left + 'px';
+            sourceElement.style.top = originalPosition.top + 'px';
+            
+            console.log('Drop failed - returning to original position');
+          }
+        });
+        
+        // Cancel dragging if mouse leaves the window
+        document.addEventListener('mouseleave', function() {
+          if (isDragging) {
+            isDragging = false;
+            
+            // Return to original position
+            sourceElement.style.left = originalPosition.left + 'px';
+            sourceElement.style.top = originalPosition.top + 'px';
+          }
+        });
+      </script>
+    </body>

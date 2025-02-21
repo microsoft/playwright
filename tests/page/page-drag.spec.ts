@@ -53,6 +53,25 @@ it.describe('Drag and drop', () => {
     ]);
   });
 
+  it('should send the right events when using dragTo', async ({ server, page, browserName }) => {
+    await page.goto(server.PREFIX + '/drag-n-drop.html');
+    const events = await trackEvents(await page.$('body'));
+    await page.locator('#source').dragTo(page.locator('#target'));
+    expect(await events.jsonValue()).toEqual([
+      'mousemove at 120;86',
+      'mousedown at 120;86',
+      browserName === 'firefox' ? 'dragstart at 120;86' : 'mousemove at 240;350',
+      browserName === 'firefox' ? 'mousemove at 240;350' : 'dragstart at 120;86',
+      'dragenter at 240;350',
+      // NOTE: Normal browsers emit usually a lot of dragover events during drag'n
+      // drop operations. We want to emit minimal (2) to make the ecosystem work.
+      'dragover at 240;350',
+      'dragover at 240;350',
+      'drop at 240;350',
+      'dragend',
+    ]);
+  });
+
   it('should not send dragover on the first mousemove', async ({ server, page, browserName }) => {
     it.fixme(browserName !== 'chromium');
 
@@ -291,6 +310,34 @@ it.describe('Drag and drop', () => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     await page.dragAndDrop('#source', '#target');
     expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
+  });
+
+  it('should work with manual drag\'n drop and emit correct mousemove events', {
+    annotation: {
+      type: 'issue',
+      description: 'https://github.com/microsoft/playwright/issues/34688',
+    }
+  }, async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/drag-n-drop-manual.html');
+    const events = await page.evaluateHandle(() => {
+      const events = [];
+      document.addEventListener('drop', (event: MouseEvent) => {
+        events.push({
+          type: event.type,
+          x: event.clientX,
+          y: event.clientY,
+        });
+      });
+      return events;
+    });
+    await page.dragAndDrop('#source', '#target');
+    expect(await events.jsonValue()).toEqual([
+      { type: 'mousemove', x: 120, y: 86 },
+      // NOTE: Normal browsers emit usually a lot of mousemove events during drag'n
+      // drop operations. We want to emit minimal(2) to make the ecosystem work.
+      { type: 'mousemove', x: 240, y: 350 },
+      { type: 'mousemove', x: 240, y: 350 },
+    ]);
   });
 
   it('should allow specifying the position', async ({ page, server }) => {
