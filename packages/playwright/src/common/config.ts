@@ -88,6 +88,7 @@ export class FullConfigInternal {
     userConfig.metadata = userConfig.metadata || {};
 
     this.config = {
+      skipAfterAnyFailure: userConfig.skipAfterAnyFailure ?? true,
       configFile: resolvedConfigFile,
       rootDir: pathResolve(configDir, userConfig.testDir) || configDir,
       forbidOnly: takeFirst(configCLIOverrides.forbidOnly, userConfig.forbidOnly, false),
