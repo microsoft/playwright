@@ -130,7 +130,7 @@ test('should collapse repeated console messages for test', async ({ runUITest })
           await new Promise(resolve => {
             for (let i = 0; i < 10; ++i)
               console.log('page message')
-            setTimeout(() => {
+            builtinSetTimeout(() => {
               for (let i = 0; i < 10; ++i)
                 console.log('page message')
               resolve()
