@@ -15,16 +15,22 @@
  */
 
 export interface GitCommitInfo {
-  'revision.id'?: string;
-  'revision.author'?: string;
-  'revision.email'?: string;
-  'revision.subject'?: string;
-  'revision.timestamp'?: number | Date;
-  'revision.link'?: string;
-  'revision.diff'?: string;
-  'pull.link'?: string;
-  'pull.diff'?: string;
-  'pull.base'?: string;
-  'pull.title'?: string;
-  'ci.link'?: string;
+  revision?: {
+    id?: string;
+    author?: string;
+    email?: string;
+    subject?: string;
+    timestamp?: number;
+    link?: string;
+    diff?: string;
+  },
+  pull_request?: {
+    link?: string;
+    diff?: string;
+    base?: string;
+    title?: string;
+  },
+  ci?: {
+    link?: string;
+  }
 }
