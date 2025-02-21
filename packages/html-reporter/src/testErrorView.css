@@ -34,29 +34,3 @@
 .test-error-text {
   font-family: monospace;
 }
-
-.prompt-button {
-  flex: none;
-  height: 24px;
-  width: 80px;
-  border: 1px solid var(--color-btn-border);
-  outline: none;
-  color: var(--color-btn-text);
-  background: var(--color-btn-bg);
-  padding: 4px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-}
-
-.prompt-button svg {
-  color: var(--color-fg-subtle);
-}
-
-.prompt-button:not(:disabled):hover {
-  border-color: var(--color-btn-hover-border);
-  background-color: var(--color-btn-hover-bg);
-}
-

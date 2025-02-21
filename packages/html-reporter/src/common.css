@@ -267,6 +267,26 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
   flex: none;
 }
 
+.button {
+  flex: none;
+  height: 24px;
+  border: 1px solid var(--color-btn-border);
+  outline: none;
+  color: var(--color-btn-text);
+  background: var(--color-btn-bg);
+  padding: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.button:not(:disabled):hover {
+  border-color: var(--color-btn-hover-border);
+  background-color: var(--color-btn-hover-bg);
+}
+
 @media only screen and (max-width: 600px) {
   .subnav-item, .form-control {
     border-radius: 0 !important;
