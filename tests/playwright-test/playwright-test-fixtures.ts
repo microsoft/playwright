@@ -48,7 +48,7 @@ export type RunResult = {
   interrupted: number,
   didNotRun: number,
   report: JSONReport,
-  results: any[],
+  results: JSONReportTestResult[],
 };
 
 type TSCResult = {
