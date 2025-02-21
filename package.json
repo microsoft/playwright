@@ -78,7 +78,7 @@
     "@typescript-eslint/eslint-plugin": "^8.23.0",
     "@typescript-eslint/parser": "^8.23.0",
     "@typescript-eslint/utils": "^8.23.0",
-    "@vitejs/plugin-basic-ssl": "^1.1.0",
+    "@vitejs/plugin-basic-ssl": "^1.2.0",
     "@vitejs/plugin-react": "^4.2.1",
     "@zip.js/zip.js": "^2.7.29",
     "ansi-styles": "^4.3.0",
