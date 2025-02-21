@@ -1229,6 +1229,7 @@ Specify screenshot type, defaults to `png`.
 
 Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with
 a pink box `#FF00FF` (customized by [`option: maskColor`]) that completely covers its bounding box.
+The mask is also applied to invisible elements, see [Matching only visible elements](../locators.md#matching-only-visible-elements) to disable that.
 
 ## screenshot-option-mask-color
 * since: v1.35
