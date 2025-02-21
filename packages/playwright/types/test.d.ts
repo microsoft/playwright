@@ -792,8 +792,6 @@ type LiteralUnion<T extends U, U = string> = T | (U & { zz_IGNORE_ME?: never });
  *
  */
 interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
-  skipAfterAnyFailure: boolean;
-
   /**
    * Playwright Test supports running multiple test projects at the same time. See
    * [TestProject](https://playwright.dev/docs/api/class-testproject) for more information.
@@ -1527,6 +1525,8 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
     total: number;
   };
 
+  skipAfterAnyFailure: boolean;
+
   /**
    * **NOTE** Use
    * [testConfig.snapshotPathTemplate](https://playwright.dev/docs/api/class-testconfig#test-config-snapshot-path-template)
@@ -1842,6 +1842,8 @@ export type Metadata = { [key: string]: any };
  * [TestConfig](https://playwright.dev/docs/api/class-testconfig) instead.
  */
 export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
+  skipAfterAnyFailure: boolean;
+
   /**
    * List of resolved projects.
    */
