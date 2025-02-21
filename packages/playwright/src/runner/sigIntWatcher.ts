@@ -49,6 +49,7 @@ class FixedNodeSIGINTHandler {
   private static _handlerInstalled = false;
 
   static _dispatch = () => {
+    console.log('SIGINT received');
     if (this._ignoreNextSIGINTs)
       return;
 
