@@ -17,7 +17,7 @@
 import { eventsHelper } from '../utils/eventsHelper';
 import { Worker } from '../page';
 import { WKSession } from './wkConnection';
-import { toWKExecutionContext, WKExecutionContext } from './wkExecutionContext';
+import { createHandle, WKExecutionContext } from './wkExecutionContext';
 
 import type { Protocol } from './protocol';
 import type { RegisteredListener } from '../utils/eventsHelper';
@@ -95,7 +95,7 @@ export class WKWorkers {
       derivedType = 'timeEnd';
 
     const handles = (parameters || []).map(p => {
-      return toWKExecutionContext(worker._existingExecutionContext!)._createHandle(p);
+      return createHandle(worker._existingExecutionContext!, p);
     });
     const location: types.ConsoleMessageLocation = {
       url: url || '',

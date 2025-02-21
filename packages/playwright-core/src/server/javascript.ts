@@ -53,25 +53,18 @@ export interface ExecutionContextDelegate {
   evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle<any>, values: any[], objectIds: ObjectId[]): Promise<any>;
   getProperties(context: ExecutionContext, object: JSHandle): Promise<Map<string, JSHandle>>;
   releaseHandle(objectId: ObjectId): Promise<void>;
-  setHandleFactory(factory: HandleFactory): void;
 }
 
-export interface HandleFactory {
-  createElementHandle(objectId: ObjectId): dom.ElementHandle;
-  createJSHandle(type: string, preview: string | undefined, objectId?: ObjectId, value?: any): JSHandle;
-}
-
-export class ExecutionContext extends SdkObject implements HandleFactory {
-  _delegate: ExecutionContextDelegate;
+export class ExecutionContext extends SdkObject {
+  private _delegate: ExecutionContextDelegate;
   private _utilityScriptPromise: Promise<JSHandle> | undefined;
   private _contextDestroyedScope = new LongStandingScope();
   readonly worldNameForTest: string;
 
-  constructor(parent: SdkObject, delegate: ExecutionContextDelegate, worldNameForTest: string, handleFactory?: HandleFactory) {
+  constructor(parent: SdkObject, delegate: ExecutionContextDelegate, worldNameForTest: string) {
     super(parent, 'execution-context');
     this.worldNameForTest = worldNameForTest;
     this._delegate = delegate;
-    delegate.setHandleFactory(this);
   }
 
   contextDestroyed(reason: string) {
@@ -122,14 +115,6 @@ export class ExecutionContext extends SdkObject implements HandleFactory {
 
   async doSlowMo() {
     // overridden in FrameExecutionContext
-  }
-
-  createElementHandle(objectId: string): dom.ElementHandle {
-    throw new Error('Not supported');
-  }
-
-  createJSHandle(type: string, preview: string | undefined, objectId?: ObjectId, value?: any): JSHandle {
-    return new JSHandle(this, type, preview, objectId, value);
   }
 }
 

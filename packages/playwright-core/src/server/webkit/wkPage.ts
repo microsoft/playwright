@@ -34,7 +34,7 @@ import {  PageBinding  } from '../page';
 import { Page } from '../page';
 import { getAccessibilityTree } from './wkAccessibility';
 import { WKSession } from './wkConnection';
-import { toWKExecutionContext, WKExecutionContext } from './wkExecutionContext';
+import { createHandle, WKExecutionContext } from './wkExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wkInput';
 import { WKInterceptableRequest, WKRouteImpl } from './wkInterceptableRequest';
 import { WKProvisionalPage } from './wkProvisionalPage';
@@ -562,7 +562,7 @@ export class WKPage implements PageDelegate {
       }
       if (!context)
         return;
-      handles.push(toWKExecutionContext(context)._createHandle(p));
+      handles.push(createHandle(context, p));
     }
     this._lastConsoleMessage = {
       derivedType,
@@ -611,7 +611,7 @@ export class WKPage implements PageDelegate {
     let handle;
     try {
       const context = await this._page._frameManager.frame(event.frameId)!._mainContext();
-      handle =  toWKExecutionContext(context)._createHandle(event.element).asElement()!;
+      handle =  createHandle(context, event.element).asElement()!;
     } catch (e) {
       // During async processing, frame/context may go away. We should not throw.
       return;
@@ -958,7 +958,7 @@ export class WKPage implements PageDelegate {
     });
     if (!result || result.object.subtype === 'null')
       throw new Error(dom.kUnableToAdoptErrorMessage);
-    return toWKExecutionContext(to)._createHandle(result.object) as dom.ElementHandle<T>;
+    return createHandle(to, result.object) as dom.ElementHandle<T>;
   }
 
   async getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
@@ -982,7 +982,7 @@ export class WKPage implements PageDelegate {
     });
     if (!result || result.object.subtype === 'null')
       throw new Error('Frame has been detached.');
-    return toWKExecutionContext(context)._createHandle(result.object) as dom.ElementHandle;
+    return createHandle(context, result.object) as dom.ElementHandle;
   }
 
   private _maybeCancelCoopNavigationRequest(provisionalPage: WKProvisionalPage) {

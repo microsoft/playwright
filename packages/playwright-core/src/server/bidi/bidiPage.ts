@@ -20,7 +20,7 @@ import { BrowserContext } from '../browserContext';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { Page } from '../page';
-import { BidiExecutionContext } from './bidiExecutionContext';
+import { BidiExecutionContext, createHandle } from './bidiExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
 import { BidiNetworkManager } from './bidiNetworkManager';
 import { BidiPDF } from './bidiPdf';
@@ -242,7 +242,7 @@ export class BidiPage implements PageDelegate {
       return;
     const callFrame = params.stackTrace?.callFrames[0];
     const location = callFrame ?? { url: '', lineNumber: 1, columnNumber: 1 };
-    this._page._addConsoleMessage(entry.method, entry.args.map(arg => toBidiExecutionContext(context)._createHandle(arg)), location, params.text || undefined);
+    this._page._addConsoleMessage(entry.method, entry.args.map(arg => createHandle(context, arg)), location, params.text || undefined);
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
@@ -528,7 +528,7 @@ export class BidiPage implements PageDelegate {
     const fromContext = toBidiExecutionContext(handle._context);
     const nodeId = await fromContext.nodeIdForElementHandle(handle);
     const executionContext = toBidiExecutionContext(to);
-    return await executionContext.remoteObjectForNodeId(nodeId) as dom.ElementHandle<T>;
+    return await executionContext.remoteObjectForNodeId(to, nodeId) as dom.ElementHandle<T>;
   }
 
   async getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {

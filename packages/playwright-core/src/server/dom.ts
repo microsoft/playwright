@@ -109,10 +109,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
     }
     return this._injectedScriptPromise;
   }
-
-  override createElementHandle(objectId: js.ObjectId): ElementHandle {
-    return new ElementHandle(this, objectId);
-  }
 }
 
 export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {

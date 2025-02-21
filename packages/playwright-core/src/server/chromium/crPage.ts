@@ -33,7 +33,7 @@ import { getAccessibilityTree } from './crAccessibility';
 import { CRBrowserContext } from './crBrowser';
 import { CRCoverage } from './crCoverage';
 import { DragManager } from './crDragDrop';
-import { CRExecutionContext } from './crExecutionContext';
+import { createHandle, CRExecutionContext } from './crExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './crInput';
 import { CRNetworkManager } from './crNetworkManager';
 import { CRPDF } from './crPdf';
@@ -736,7 +736,7 @@ class FrameSession {
     session.on('Target.attachedToTarget', event => this._onAttachedToTarget(event));
     session.on('Target.detachedFromTarget', event => this._onDetachedFromTarget(event));
     session.on('Runtime.consoleAPICalled', event => {
-      const args = event.args.map(o => toCRExecutionContext(worker._existingExecutionContext!)._createHandle(o));
+      const args = event.args.map(o => createHandle(worker._existingExecutionContext!, o));
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
     });
     session.on('Runtime.exceptionThrown', exception => this._page.emitOnContextOnceInitialized(BrowserContext.Events.PageError, exceptionToError(exception.exceptionDetails), this._page));
@@ -799,7 +799,7 @@ class FrameSession {
     const context = this._contextIdToContext.get(event.executionContextId);
     if (!context)
       return;
-    const values = event.args.map(arg => toCRExecutionContext(context)._createHandle(arg));
+    const values = event.args.map(arg => createHandle(context, arg));
     this._page._addConsoleMessage(event.type, values, toConsoleMessageLocation(event.stackTrace));
   }
 
@@ -1168,7 +1168,7 @@ class FrameSession {
     });
     if (!result || result.object.subtype === 'null')
       throw new Error(dom.kUnableToAdoptErrorMessage);
-    return toCRExecutionContext(to)._createHandle(result.object).asElement()!;
+    return createHandle(to, result.object).asElement()!;
   }
 }
 
@@ -1242,8 +1242,4 @@ function calculateUserAgentMetadata(options: types.BrowserContextOptions) {
   if (ua.includes('ARM'))
     metadata.architecture = 'arm';
   return metadata;
-}
-
-function toCRExecutionContext(executionContext: js.ExecutionContext): CRExecutionContext {
-  return executionContext._delegate as CRExecutionContext;
 }
