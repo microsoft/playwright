@@ -1,0 +1,112 @@
+<style>
+* {
+  box-sizing: border-box;
+}
+body, html {
+  margin: 0;
+  padding: 0;
+}
+div:not(.mouse-helper) {
+  margin: 0;
+  padding: 0;
+}
+#source {
+  color: blue;
+  border: 1px solid black;
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  width: 200px;
+  height: 100px;
+  cursor: move;
+  user-select: none;
+}
+#target {
+  border: 1px solid black;
+  position: absolute;
+  left: 40px;
+  top: 200px;
+  width: 400px;
+  height: 300px;
+}
+</style>
+    
+    <body>
+      <div>
+        <p id="source">
+          Select this element, drag it to the Drop Zone and then release the selection to move the element.</p>
+      </div>
+      <div id="target">Drop Zone</div>
+    
+      <script>
+        const sourceElement = document.getElementById('source');
+        const targetElement = document.getElementById('target');
+        
+        let isDragging = false;
+        let offsetX, offsetY;
+        let originalPosition = { left: 0, top: 0 };
+        
+        sourceElement.addEventListener('mousedown', function(e) {
+          e.preventDefault();
+          
+          const rect = sourceElement.getBoundingClientRect();
+          originalPosition = {
+            left: rect.left,
+            top: rect.top
+          };
+          
+          offsetX = e.clientX - rect.left;
+          offsetY = e.clientY - rect.top;
+          
+          isDragging = true;
+          sourceElement.style.border = 'dashed'
+        });
+        
+        document.addEventListener('mousemove', function(e) {
+          if (!isDragging) return;
+          
+          sourceElement.style.left = (e.clientX - offsetX) + 'px';
+          sourceElement.style.top = (e.clientY - offsetY) + 'px';
+        });
+        
+        document.addEventListener('mouseup', function(e) {
+          if (!isDragging) return;
+          
+          isDragging = false;
+          
+          const sourceRect = sourceElement.getBoundingClientRect();
+          const targetRect = targetElement.getBoundingClientRect();
+          
+          const isOverlapping = !(
+            sourceRect.right < targetRect.left || 
+            sourceRect.left > targetRect.right || 
+            sourceRect.bottom < targetRect.top || 
+            sourceRect.top > targetRect.bottom
+          );
+          
+          if (isOverlapping) {
+            targetElement.appendChild(sourceElement);
+            
+            sourceElement.style.removeProperty('position')
+            sourceElement.style.removeProperty('top')
+            sourceElement.style.removeProperty('left')
+            
+            console.log('Drop successful');
+          } else {
+            sourceElement.style.left = originalPosition.left + 'px';
+            sourceElement.style.top = originalPosition.top + 'px';
+            
+            console.log('Drop failed - returning to original position');
+          }
+        });
+        
+        document.addEventListener('mouseleave', function() {
+          if (isDragging) {
+            isDragging = false;
+            
+            sourceElement.style.left = originalPosition.left + 'px';
+            sourceElement.style.top = originalPosition.top + 'px';
+          }
+        });
+      </script>
+    </body>
