@@ -25,6 +25,7 @@ import type { SerializedCompilationCache  } from '../transform/compilationCache'
 
 export type ConfigCLIOverrides = {
   debug?: boolean;
+  failOnFlakyTests?: boolean;
   forbidOnly?: boolean;
   fullyParallel?: boolean;
   globalTimeout?: number;
