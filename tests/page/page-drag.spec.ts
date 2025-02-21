@@ -64,7 +64,7 @@ it.describe('Drag and drop', () => {
       browserName === 'firefox' ? 'mousemove at 240;350' : 'dragstart at 120;86',
       'dragenter at 240;350',
       // NOTE: Normal browsers emit usually a lot of dragover events during drag'n
-      // drop operations. We want to emit minimal (2) to make the ecosystem work.
+      // drop operations. We want to emit minimal (2) to make Angular CDK work.
       'dragover at 240;350',
       'dragover at 240;350',
       'drop at 240;350',
@@ -334,7 +334,7 @@ it.describe('Drag and drop', () => {
     expect(await events.jsonValue()).toEqual([
       { type: 'mousemove', x: 120, y: 86 },
       // NOTE: Normal browsers emit usually a lot of mousemove events during drag'n
-      // drop operations. We want to emit minimal(2) to make the ecosystem work.
+      // drop operations. We want to emit minimal (2) to make Angular CDK work.
       { type: 'mousemove', x: 240, y: 350 },
       { type: 'mousemove', x: 240, y: 350 },
     ]);

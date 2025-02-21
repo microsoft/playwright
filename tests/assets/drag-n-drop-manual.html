@@ -62,7 +62,6 @@ div:not(.mouse-helper) {
           sourceElement.style.border = 'dashed'
         });
         
-        // Mouse move handler - move the element
         document.addEventListener('mousemove', function(e) {
           if (!isDragging) return;
           
@@ -70,7 +69,6 @@ div:not(.mouse-helper) {
           sourceElement.style.top = (e.clientY - offsetY) + 'px';
         });
         
-        // Mouse up handler - stop dragging and check if dropped on target
         document.addEventListener('mouseup', function(e) {
           if (!isDragging) return;
           

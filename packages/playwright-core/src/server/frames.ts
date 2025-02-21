@@ -1211,8 +1211,7 @@ export class Frame extends SdkObject {
       dom.assertDone(await this._retryWithProgressIfNotConnected(progress, target, options.strict, false /* performActionPreChecks */, async handle => {
         return handle._retryPointerAction(progress, 'move and up', false, async point => {
           // NOTE: Normal browsers emit usually a lot of dragover/mousemove events during drag'n
-          // drop operations. We want to emit minimal to make the ecosystem work. When using
-          // Native drag'n drop the browser does emit dropover events instead.
+          // drop operations. We want to emit minimal (2) to make Angular CDK work.
           await this._page.mouse.move(point.x, point.y);
           await this._page.mouse.move(point.x, point.y);
           await this._page.mouse.up();
