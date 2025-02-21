@@ -37,6 +37,13 @@ test('should work with regex', async ({ page }) => {
   await expect(locator).toHaveValue(/Text/);
 });
 
+test('should normalize NBSP to regular space', async ({ page }) => {
+  await page.setContent('<input id=node></input>');
+  const locator = page.locator('#node');
+  await locator.fill('Text\u00A0and\u0020content');
+  await expect(locator).toHaveValue('Text and content');
+});
+
 test('should support failure', async ({ page }) => {
   await page.setContent('<input id=node></input>');
   const locator = page.locator('#node');
