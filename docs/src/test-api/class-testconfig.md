@@ -506,6 +506,9 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.skipAfterAnyFailure?
+* since: v1.51
+- type: <[boolean]>
 
 ## property: TestConfig.testDir
 * since: v1.10

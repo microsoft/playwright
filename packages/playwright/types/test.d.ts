@@ -1949,6 +1949,8 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
     current: number;
   };
 
+  skipAfterAnyFailure: boolean;
+
   /**
    * See [testConfig.updateSnapshots](https://playwright.dev/docs/api/class-testconfig#test-config-update-snapshots).
    */

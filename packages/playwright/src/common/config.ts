@@ -49,7 +49,6 @@ export class FullConfigInternal {
   readonly projects: FullProjectInternal[] = [];
   readonly singleTSConfigPath?: string;
   readonly populateGitInfo: boolean;
-  readonly skipAfterAnyFailure: boolean;
   cliArgs: string[] = [];
   cliGrep: string | undefined;
   cliGrepInvert: string | undefined;
@@ -88,8 +87,6 @@ export class FullConfigInternal {
     // so that plugins such as gitCommitInfoPlugin can populate metadata once.
     userConfig.metadata = userConfig.metadata || {};
 
-    this.skipAfterAnyFailure = userConfig.skipAfterAnyFailure ?? true;
-
     this.config = {
       configFile: resolvedConfigFile,
       rootDir: pathResolve(configDir, userConfig.testDir) || configDir,
@@ -108,6 +105,7 @@ export class FullConfigInternal {
       quiet: takeFirst(configCLIOverrides.quiet, userConfig.quiet, false),
       projects: [],
       shard: takeFirst(configCLIOverrides.shard, userConfig.shard, null),
+      skipAfterAnyFailure: userConfig.skipAfterAnyFailure ?? true,
       updateSnapshots: takeFirst(configCLIOverrides.updateSnapshots, userConfig.updateSnapshots, 'missing'),
       updateSourceMethod: takeFirst(configCLIOverrides.updateSourceMethod, userConfig.updateSourceMethod, 'patch'),
       version: require('../../package.json').version,
