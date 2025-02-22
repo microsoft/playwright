@@ -394,7 +394,7 @@ export class WorkerMain extends ProcessRunner {
     const afterHooksTimeout = calculateMaxTimeout(this._project.project.timeout, testInfo.timeout);
     const afterHooksSlot = { timeout: afterHooksTimeout, elapsed: 0 };
 
-    const FAILURE_AND_SkIP_NOW = testInfo._isFailure() && this._config.config.skipAfterAnyFailure;
+    const FAILURE_AND_SkIP_NOW = testInfo._isFailure() && this._config.skipAfterAnyFailure;
 
     await testInfo._runAsStage({ title: 'After Hooks', stepInfo: { category: 'hook' } }, async () => {
       let firstAfterHooksError: Error | undefined;
