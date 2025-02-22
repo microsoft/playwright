@@ -394,7 +394,7 @@ export class WorkerMain extends ProcessRunner {
     const afterHooksTimeout = calculateMaxTimeout(this._project.project.timeout, testInfo.timeout);
     const afterHooksSlot = { timeout: afterHooksTimeout, elapsed: 0 };
 
-    const FAILURE_AND_SkIP_NOW = testInfo._isFailure() && this._config.recreateWorkerAfterFailure;
+    const FAILURE_AND_CREATE_WORKER = testInfo._isFailure() && this._config.recreateWorkerAfterFailure;
 
     await testInfo._runAsStage({ title: 'After Hooks', stepInfo: { category: 'hook' } }, async () => {
       let firstAfterHooksError: Error | undefined;
@@ -428,7 +428,7 @@ export class WorkerMain extends ProcessRunner {
       // In case of failure the worker will be stopped and we have to make sure that afterAll
       // hooks run before worker fixtures teardown.
       for (const suite of reversedSuites) {
-        if (!nextSuites.has(suite) || FAILURE_AND_SkIP_NOW) {
+        if (!nextSuites.has(suite) || FAILURE_AND_CREATE_WORKER) {
           try {
             await this._runAfterAllHooksForSuite(suite, testInfo);
           } catch (error) {
@@ -443,7 +443,7 @@ export class WorkerMain extends ProcessRunner {
 
     checkForFloatingPromises('afterAll/afterEach hooks');
 
-    if (FAILURE_AND_SkIP_NOW)
+    if (FAILURE_AND_CREATE_WORKER)
       this._isStopped = true;
 
     if (this._isStopped) {
