@@ -1422,6 +1422,8 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   quiet?: boolean;
 
+  recreateWorkerAfterFailure?: boolean;
+
   /**
    * The number of times to repeat each test, useful for debugging flaky tests.
    *
@@ -1524,8 +1526,6 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
      */
     total: number;
   };
-
-  recreateWorkerAfterFailure?: boolean;
 
   /**
    * **NOTE** Use
