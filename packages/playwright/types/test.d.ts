@@ -1842,8 +1842,6 @@ export type Metadata = { [key: string]: any };
  * [TestConfig](https://playwright.dev/docs/api/class-testconfig) instead.
  */
 export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
-  skipAfterAnyFailure?: boolean;
-
   /**
    * List of resolved projects.
    */
