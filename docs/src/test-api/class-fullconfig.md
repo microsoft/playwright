@@ -112,10 +112,6 @@ Base directory for all relative paths used in the reporters.
 
 See [`property: TestConfig.shard`].
 
-## property: FullConfig.skipAfterAnyFailure
-* since: v1.51
-- type: <[boolean]>
-
 ## property: FullConfig.updateSnapshots
 * since: v1.10
 - type: <[UpdateSnapshots]<"all"|"changed"|"missing"|"none">>
