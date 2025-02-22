@@ -74,7 +74,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     return returnByValue ? parseEvaluationResultValue(remoteObject.value) : createHandle(utilityScript._context, remoteObject);
   }
 
-  async getProperties(context: js.ExecutionContext, object: js.JSHandle): Promise<Map<string, js.JSHandle>> {
+  async getProperties(object: js.JSHandle): Promise<Map<string, js.JSHandle>> {
     const response = await this._client.send('Runtime.getProperties', {
       objectId: object._objectId!,
       ownProperties: true

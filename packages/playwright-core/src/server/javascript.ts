@@ -51,7 +51,7 @@ export interface ExecutionContextDelegate {
   rawEvaluateJSON(expression: string): Promise<any>;
   rawEvaluateHandle(expression: string): Promise<ObjectId>;
   evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle<any>, values: any[], objectIds: ObjectId[]): Promise<any>;
-  getProperties(context: ExecutionContext, object: JSHandle): Promise<Map<string, JSHandle>>;
+  getProperties(object: JSHandle): Promise<Map<string, JSHandle>>;
   releaseHandle(objectId: ObjectId): Promise<void>;
 }
 
@@ -88,8 +88,8 @@ export class ExecutionContext extends SdkObject {
     return this._raceAgainstContextDestroyed(this._delegate.evaluateWithArguments(expression, returnByValue, utilityScript, values, objectIds));
   }
 
-  getProperties(context: ExecutionContext, object: JSHandle): Promise<Map<string, JSHandle>> {
-    return this._raceAgainstContextDestroyed(this._delegate.getProperties(context, object));
+  getProperties(object: JSHandle): Promise<Map<string, JSHandle>> {
+    return this._raceAgainstContextDestroyed(this._delegate.getProperties(object));
   }
 
   releaseHandle(objectId: ObjectId): Promise<void> {
@@ -174,7 +174,7 @@ export class JSHandle<T = any> extends SdkObject {
   async getProperties(): Promise<Map<string, JSHandle>> {
     if (!this._objectId)
       return new Map();
-    return this._context.getProperties(this._context, this);
+    return this._context.getProperties(this);
   }
 
   rawValue() {

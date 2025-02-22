@@ -104,7 +104,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 
-  async getProperties(context: js.ExecutionContext, handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
+  async getProperties(handle: js.JSHandle): Promise<Map<string, js.JSHandle>> {
     const names = await handle.evaluate(object => {
       const names = [];
       const descriptors = Object.getOwnPropertyDescriptors(object);
