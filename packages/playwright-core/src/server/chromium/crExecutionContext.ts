@@ -46,24 +46,24 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     return remoteObject.value;
   }
 
-  async rawEvaluateHandle(expression: string): Promise<js.ObjectId> {
+  async rawEvaluateHandle(context: js.ExecutionContext, expression: string, handlePreview: string): Promise<js.JSHandle> {
     const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.evaluate', {
       expression,
       contextId: this._contextId,
     }).catch(rewriteError);
     if (exceptionDetails)
       throw new js.JavaScriptErrorInEvaluate(getExceptionMessage(exceptionDetails));
-    return remoteObject.objectId!;
+    return createHandle(context, remoteObject, handlePreview);
   }
 
-  async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
+  async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle, values: any[], handles: js.JSHandle[]): Promise<any> {
     const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
       functionDeclaration: expression,
       objectId: utilityScript._objectId,
       arguments: [
         { objectId: utilityScript._objectId },
         ...values.map(value => ({ value })),
-        ...objectIds.map(objectId => ({ objectId })),
+        ...handles.map(handle => ({ objectId: handle._objectId! })),
       ],
       returnByValue,
       awaitPromise: true,
@@ -88,8 +88,8 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     return result;
   }
 
-  async releaseHandle(objectId: js.ObjectId): Promise<void> {
-    await releaseObject(this._client, objectId);
+  async releaseHandle(handle: js.JSHandle): Promise<void> {
+    await releaseObject(this._client, handle._objectId!);
   }
 }
 
@@ -131,10 +131,10 @@ function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefine
   return object.description;
 }
 
-export function createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
+export function createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject, handlePreview?: string): js.JSHandle {
   if (remoteObject.subtype === 'node') {
     assert(context instanceof dom.FrameExecutionContext);
     return new dom.ElementHandle(context, remoteObject.objectId!);
   }
-  return new js.JSHandle(context, remoteObject.subtype || remoteObject.type, renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
+  return new js.JSHandle(context, remoteObject.subtype || remoteObject.type, handlePreview ?? renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
 }
