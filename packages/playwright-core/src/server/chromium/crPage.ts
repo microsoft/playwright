@@ -675,7 +675,6 @@ class FrameSession {
     else if (contextPayload.name === UTILITY_WORLD_NAME)
       worldName = 'utility';
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
-    (context as any)[contextDelegateSymbol] = delegate;
     if (worldName)
       frame._contextCreated(worldName, context);
     this._contextIdToContext.set(contextPayload.id, context);
@@ -1163,7 +1162,7 @@ class FrameSession {
   async _adoptBackendNodeId(backendNodeId: Protocol.DOM.BackendNodeId, to: dom.FrameExecutionContext): Promise<dom.ElementHandle> {
     const result = await this._client._sendMayFail('DOM.resolveNode', {
       backendNodeId,
-      executionContextId: ((to as any)[contextDelegateSymbol] as CRExecutionContext)._contextId,
+      executionContextId: (to.delegate as CRExecutionContext)._contextId,
     });
     if (!result || result.object.subtype === 'null')
       throw new Error(dom.kUnableToAdoptErrorMessage);
@@ -1195,8 +1194,6 @@ async function emulateTimezone(session: CRSession, timezoneId: string) {
     throw exception;
   }
 }
-
-const contextDelegateSymbol = Symbol('delegate');
 
 // Chromium reference: https://source.chromium.org/chromium/chromium/src/+/main:components/embedder_support/user_agent_utils.cc;l=434;drc=70a6711e08e9f9e0d8e4c48e9ba5cab62eb010c2
 function calculateUserAgentMetadata(options: types.BrowserContextOptions) {

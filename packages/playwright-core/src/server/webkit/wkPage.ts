@@ -496,7 +496,6 @@ export class WKPage implements PageDelegate {
     else if (contextPayload.type === 'user' && contextPayload.name === UTILITY_WORLD_NAME)
       worldName = 'utility';
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
-    (context as any)[contextDelegateSymbol] = delegate;
     if (worldName)
       frame._contextCreated(worldName, context);
     this._contextIdToContext.set(contextPayload.id, context);
@@ -954,7 +953,7 @@ export class WKPage implements PageDelegate {
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
     const result = await this._session.sendMayFail('DOM.resolveNode', {
       objectId: handle._objectId,
-      executionContextId: ((to as any)[contextDelegateSymbol] as WKExecutionContext)._contextId
+      executionContextId: (to.delegate as WKExecutionContext)._contextId
     });
     if (!result || result.object.subtype === 'null')
       throw new Error(dom.kUnableToAdoptErrorMessage);
@@ -978,7 +977,7 @@ export class WKPage implements PageDelegate {
     const context = await parent._mainContext();
     const result = await this._session.send('DOM.resolveNode', {
       frameId: frame._id,
-      executionContextId: ((context as any)[contextDelegateSymbol] as WKExecutionContext)._contextId
+      executionContextId: (context.delegate as WKExecutionContext)._contextId
     });
     if (!result || result.object.subtype === 'null')
       throw new Error('Frame has been detached.');
@@ -1253,5 +1252,3 @@ function isLoadedSecurely(url: string, timing: network.ResourceTiming) {
     return true;
   } catch (_) {}
 }
-
-const contextDelegateSymbol = Symbol('delegate');

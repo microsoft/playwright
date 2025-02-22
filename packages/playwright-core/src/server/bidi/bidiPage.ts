@@ -142,7 +142,6 @@ export class BidiPage implements PageDelegate {
     }
     const delegate = new BidiExecutionContext(this._session, realmInfo);
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
-    (context as any)[contextDelegateSymbol] = delegate;
     frame._contextCreated(worldName, context);
     this._realmToContext.set(realmInfo.realm, context);
   }
@@ -579,7 +578,5 @@ function addMainBinding(callback: (arg: any) => void) {
 }
 
 function toBidiExecutionContext(executionContext: dom.FrameExecutionContext): BidiExecutionContext {
-  return (executionContext as any)[contextDelegateSymbol] as BidiExecutionContext;
+  return executionContext.delegate as BidiExecutionContext;
 }
-
-const contextDelegateSymbol = Symbol('delegate');
