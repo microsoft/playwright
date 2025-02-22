@@ -506,7 +506,7 @@ export default defineConfig({
 });
 ```
 
-## property: TestConfig.skipAfterAnyFailure?
+## property: TestConfig.recreateWorkerAfterFailure?
 * since: v1.51
 - type: <[boolean]>
 

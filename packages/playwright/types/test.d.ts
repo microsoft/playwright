@@ -1525,7 +1525,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
     total: number;
   };
 
-  skipAfterAnyFailure?: boolean;
+  recreateWorkerAfterFailure?: boolean;
 
   /**
    * **NOTE** Use
