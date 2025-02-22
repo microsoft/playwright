@@ -401,6 +401,10 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.recreateWorkerAfterFailure?
+* since: v1.51
+- type: <[boolean]>
+
 ## property: TestConfig.repeatEach
 * since: v1.10
 - type: ?<[int]>
@@ -505,10 +509,6 @@ export default defineConfig({
   shard: { total: 10, current: 3 },
 });
 ```
-
-## property: TestConfig.recreateWorkerAfterFailure?
-* since: v1.51
-- type: <[boolean]>
 
 ## property: TestConfig.testDir
 * since: v1.10
