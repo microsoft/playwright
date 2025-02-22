@@ -33,7 +33,7 @@ import { getAccessibilityTree } from './crAccessibility';
 import { CRBrowserContext } from './crBrowser';
 import { CRCoverage } from './crCoverage';
 import { DragManager } from './crDragDrop';
-import { CRExecutionContext } from './crExecutionContext';
+import { createHandle, CRExecutionContext } from './crExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './crInput';
 import { CRNetworkManager } from './crNetworkManager';
 import { CRPDF } from './crPdf';
@@ -279,10 +279,6 @@ export class CRPage implements PageDelegate {
 
   async getOwnerFrame(handle: dom.ElementHandle): Promise<string | null> {
     return this._sessionForHandle(handle)._getOwnerFrame(handle);
-  }
-
-  isElementHandle(remoteObject: any): boolean {
-    return (remoteObject as Protocol.Runtime.RemoteObject).subtype === 'node';
   }
 
   async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
@@ -739,7 +735,7 @@ class FrameSession {
     session.on('Target.attachedToTarget', event => this._onAttachedToTarget(event));
     session.on('Target.detachedFromTarget', event => this._onDetachedFromTarget(event));
     session.on('Runtime.consoleAPICalled', event => {
-      const args = event.args.map(o => worker._existingExecutionContext!.createHandle(o));
+      const args = event.args.map(o => createHandle(worker._existingExecutionContext!, o));
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
     });
     session.on('Runtime.exceptionThrown', exception => this._page.emitOnContextOnceInitialized(BrowserContext.Events.PageError, exceptionToError(exception.exceptionDetails), this._page));
@@ -802,7 +798,7 @@ class FrameSession {
     const context = this._contextIdToContext.get(event.executionContextId);
     if (!context)
       return;
-    const values = event.args.map(arg => context.createHandle(arg));
+    const values = event.args.map(arg => createHandle(context, arg));
     this._page._addConsoleMessage(event.type, values, toConsoleMessageLocation(event.stackTrace));
   }
 
@@ -1171,7 +1167,7 @@ class FrameSession {
     });
     if (!result || result.object.subtype === 'null')
       throw new Error(dom.kUnableToAdoptErrorMessage);
-    return to.createHandle(result.object).asElement()!;
+    return createHandle(to, result.object).asElement()!;
   }
 }
 

@@ -27,7 +27,7 @@ import { eventsHelper } from '../utils/eventsHelper';
 import { validateBrowserContextOptions } from '../browserContext';
 import { CRBrowser } from '../chromium/crBrowser';
 import { CRConnection } from '../chromium/crConnection';
-import { CRExecutionContext } from '../chromium/crExecutionContext';
+import { createHandle, CRExecutionContext } from '../chromium/crExecutionContext';
 import { toConsoleMessageLocation } from '../chromium/crProtocolHelper';
 import { ConsoleMessage } from '../console';
 import { helper } from '../helper';
@@ -116,7 +116,7 @@ export class ElectronApplication extends SdkObject {
     }
     if (!this._nodeExecutionContext)
       return;
-    const args = event.args.map(arg => this._nodeExecutionContext!.createHandle(arg));
+    const args = event.args.map(arg => createHandle(this._nodeExecutionContext!, arg));
     const message = new ConsoleMessage(null, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
     this.emit(ElectronApplication.Events.Console, message);
   }
