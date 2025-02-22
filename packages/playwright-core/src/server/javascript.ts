@@ -56,7 +56,7 @@ export interface ExecutionContextDelegate {
 }
 
 export class ExecutionContext extends SdkObject {
-  private _delegate: ExecutionContextDelegate;
+  readonly delegate: ExecutionContextDelegate;
   private _utilityScriptPromise: Promise<JSHandle> | undefined;
   private _contextDestroyedScope = new LongStandingScope();
   readonly worldNameForTest: string;
@@ -64,7 +64,7 @@ export class ExecutionContext extends SdkObject {
   constructor(parent: SdkObject, delegate: ExecutionContextDelegate, worldNameForTest: string) {
     super(parent, 'execution-context');
     this.worldNameForTest = worldNameForTest;
-    this._delegate = delegate;
+    this.delegate = delegate;
   }
 
   contextDestroyed(reason: string) {
@@ -76,24 +76,24 @@ export class ExecutionContext extends SdkObject {
   }
 
   rawEvaluateJSON(expression: string): Promise<any> {
-    return this._raceAgainstContextDestroyed(this._delegate.rawEvaluateJSON(expression));
+    return this._raceAgainstContextDestroyed(this.delegate.rawEvaluateJSON(expression));
   }
 
   rawEvaluateHandle(expression: string): Promise<ObjectId> {
-    return this._raceAgainstContextDestroyed(this._delegate.rawEvaluateHandle(expression));
+    return this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(expression));
   }
 
   async evaluateWithArguments(expression: string, returnByValue: boolean, values: any[], objectIds: ObjectId[]): Promise<any> {
     const utilityScript = await this._utilityScript();
-    return this._raceAgainstContextDestroyed(this._delegate.evaluateWithArguments(expression, returnByValue, utilityScript, values, objectIds));
+    return this._raceAgainstContextDestroyed(this.delegate.evaluateWithArguments(expression, returnByValue, utilityScript, values, objectIds));
   }
 
   getProperties(object: JSHandle): Promise<Map<string, JSHandle>> {
-    return this._raceAgainstContextDestroyed(this._delegate.getProperties(object));
+    return this._raceAgainstContextDestroyed(this.delegate.getProperties(object));
   }
 
   releaseHandle(objectId: ObjectId): Promise<void> {
-    return this._delegate.releaseHandle(objectId);
+    return this.delegate.releaseHandle(objectId);
   }
 
   adoptIfNeeded(handle: JSHandle): Promise<JSHandle> | null {
@@ -108,7 +108,7 @@ export class ExecutionContext extends SdkObject {
         ${utilityScriptSource.source}
         return new (module.exports.UtilityScript())(${isUnderTest()});
       })();`;
-      this._utilityScriptPromise = this._raceAgainstContextDestroyed(this._delegate.rawEvaluateHandle(source).then(objectId => new JSHandle(this, 'object', 'UtilityScript', objectId)));
+      this._utilityScriptPromise = this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(source).then(objectId => new JSHandle(this, 'object', 'UtilityScript', objectId)));
     }
     return this._utilityScriptPromise;
   }
