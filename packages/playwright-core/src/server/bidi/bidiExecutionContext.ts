@@ -140,7 +140,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async remoteObjectForNodeId(context: dom.FrameExecutionContext, nodeId: bidi.Script.SharedReference): Promise<js.JSHandle> {
-    const result = await this._remoteValueForReference(nodeId);
+    const result = await this._remoteValueForReference(nodeId, true);
     if (!('handle' in result))
       throw new Error('Can\'t get remote object for nodeId');
     return createHandle(context, result);
@@ -162,16 +162,17 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     return null;
   }
 
-  private async _remoteValueForReference(reference: bidi.Script.RemoteReference) {
-    return await this._rawCallFunction('e => e', reference);
+  private async _remoteValueForReference(reference: bidi.Script.RemoteReference, createHandle?: boolean) {
+    return await this._rawCallFunction('e => e', reference, createHandle);
   }
 
-  private async _rawCallFunction(functionDeclaration: string, arg: bidi.Script.LocalValue): Promise<bidi.Script.RemoteValue> {
+  private async _rawCallFunction(functionDeclaration: string, arg: bidi.Script.LocalValue, createHandle?: boolean): Promise<bidi.Script.RemoteValue> {
     const response = await this._session.send('script.callFunction', {
       functionDeclaration,
       target: this._target,
       arguments: [arg],
-      resultOwnership: bidi.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
+      // "Root" is necessary for the handle to be returned.
+      resultOwnership: createHandle ? bidi.Script.ResultOwnership.Root : bidi.Script.ResultOwnership.None,
       serializationOptions: { maxObjectDepth: 0, maxDomDepth: 0 },
       awaitPromise: true,
       userActivation: true,
