@@ -109,12 +109,12 @@ Base directory for all relative paths used in the reporters.
 - type: <[null]|[Object]>
   - `total` <[int]> The total number of shards.
   - `current` <[int]> The index of the shard to execute, one-based.
- 
+
+See [`property: TestConfig.shard`].
+
 ## property: FullConfig.skipAfterAnyFailure
 * since: v1.51
 - type: <[boolean]>
-
-See [`property: TestConfig.shard`].
 
 ## property: FullConfig.updateSnapshots
 * since: v1.10
