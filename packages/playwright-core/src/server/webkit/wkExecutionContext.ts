@@ -87,7 +87,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     }
   }
 
-  async getProperties(context: js.ExecutionContext, object: js.JSHandle): Promise<Map<string, js.JSHandle>> {
+  async getProperties(object: js.JSHandle): Promise<Map<string, js.JSHandle>> {
     const response = await this._session.send('Runtime.getProperties', {
       objectId: object._objectId!,
       ownProperties: true
@@ -96,7 +96,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     for (const property of response.properties) {
       if (!property.enumerable || !property.value)
         continue;
-      result.set(property.name, createHandle(context, property.value));
+      result.set(property.name, createHandle(object._context, property.value));
     }
     return result;
   }

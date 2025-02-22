@@ -71,14 +71,14 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     return createHandle(utilityScript._context, payload.result!);
   }
 
-  async getProperties(context: js.ExecutionContext, object: js.JSHandle): Promise<Map<string, js.JSHandle>> {
+  async getProperties(object: js.JSHandle): Promise<Map<string, js.JSHandle>> {
     const response = await this._session.send('Runtime.getObjectProperties', {
       executionContextId: this._executionContextId,
       objectId: object._objectId!,
     });
     const result = new Map();
     for (const property of response.properties)
-      result.set(property.name, createHandle(context, property.value));
+      result.set(property.name, createHandle(object._context, property.value));
     return result;
   }
 
