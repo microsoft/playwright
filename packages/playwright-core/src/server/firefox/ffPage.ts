@@ -555,7 +555,7 @@ export class FFPage implements PageDelegate {
     const context = await parent._mainContext();
     const result = await this._session.send('Page.adoptNode', {
       frameId: frame._id,
-      executionContextId: ((context as any)[contextDelegateSymbol] as FFExecutionContext)._executionContextId
+      executionContextId: (context.delegate as FFExecutionContext)._executionContextId
     });
     if (!result.remoteObject)
       throw new Error('Frame has been detached.');
@@ -570,5 +570,3 @@ export class FFPage implements PageDelegate {
 function webSocketId(frameId: string, wsid: string): string {
   return `${frameId}---${wsid}`;
 }
-
-const contextDelegateSymbol = Symbol('delegate');
