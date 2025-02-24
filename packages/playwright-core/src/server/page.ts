@@ -75,7 +75,6 @@ export interface PageDelegate {
   setBackgroundColor(color?: { r: number; g: number; b: number; a: number; }): Promise<void>;
   takeScreenshot(progress: Progress, format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined, fitsViewport: boolean, scale: 'css' | 'device'): Promise<Buffer>;
 
-  isElementHandle(remoteObject: any): boolean;
   adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>>;
   getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null>;  // Only called for frame owner elements.
   getOwnerFrame(handle: dom.ElementHandle): Promise<string | null>; // Returns frameId.
@@ -834,6 +833,7 @@ export class Worker extends SdkObject {
   _createExecutionContext(delegate: js.ExecutionContextDelegate) {
     this._existingExecutionContext = new js.ExecutionContext(this, delegate, 'worker');
     this._executionContextCallback(this._existingExecutionContext);
+    return this._existingExecutionContext;
   }
 
   url(): string {

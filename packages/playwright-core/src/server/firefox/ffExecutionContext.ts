@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+import { assert } from '../../utils/isomorphic/assert';
 import { rewriteErrorMessage } from '../../utils/isomorphic/stackTrace';
 import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 import * as js from '../javascript';
+import * as dom from '../dom';
 import { isSessionClosedError } from '../protocolError';
 
 import type { FFSession } from './ffConnection';
@@ -66,22 +68,18 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     checkException(payload.exceptionDetails);
     if (returnByValue)
       return parseEvaluationResultValue(payload.result!.value);
-    return utilityScript._context.createHandle(payload.result!);
+    return createHandle(utilityScript._context, payload.result!);
   }
 
-  async getProperties(context: js.ExecutionContext, objectId: js.ObjectId): Promise<Map<string, js.JSHandle>> {
+  async getProperties(object: js.JSHandle): Promise<Map<string, js.JSHandle>> {
     const response = await this._session.send('Runtime.getObjectProperties', {
       executionContextId: this._executionContextId,
-      objectId,
+      objectId: object._objectId!,
     });
     const result = new Map();
     for (const property of response.properties)
-      result.set(property.name, context.createHandle(property.value));
+      result.set(property.name, createHandle(object._context, property.value));
     return result;
-  }
-
-  createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
-    return new js.JSHandle(context, remoteObject.subtype || remoteObject.type || '', renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
   }
 
   async releaseHandle(objectId: js.ObjectId): Promise<void> {
@@ -134,4 +132,12 @@ function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefine
     return object.subtype[0].toUpperCase() + object.subtype.slice(1);
   if ('value' in object)
     return String(object.value);
+}
+
+export function createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
+  if (remoteObject.subtype === 'node') {
+    assert(context instanceof dom.FrameExecutionContext);
+    return new dom.ElementHandle(context, remoteObject.objectId!);
+  }
+  return new js.JSHandle(context, remoteObject.subtype || remoteObject.type || '', renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
 }

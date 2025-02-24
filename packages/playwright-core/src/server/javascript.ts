@@ -24,10 +24,6 @@ import type * as dom from './dom';
 import type { UtilityScript } from './injected/utilityScript';
 
 export type ObjectId = string;
-export type RemoteObject = {
-  objectId?: ObjectId,
-  value?: any
-};
 
 interface TaggedAsJSHandle<T> {
   __jshandle: T;
@@ -55,13 +51,12 @@ export interface ExecutionContextDelegate {
   rawEvaluateJSON(expression: string): Promise<any>;
   rawEvaluateHandle(expression: string): Promise<ObjectId>;
   evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle<any>, values: any[], objectIds: ObjectId[]): Promise<any>;
-  getProperties(context: ExecutionContext, objectId: ObjectId): Promise<Map<string, JSHandle>>;
-  createHandle(context: ExecutionContext, remoteObject: RemoteObject): JSHandle;
+  getProperties(object: JSHandle): Promise<Map<string, JSHandle>>;
   releaseHandle(objectId: ObjectId): Promise<void>;
 }
 
 export class ExecutionContext extends SdkObject {
-  private _delegate: ExecutionContextDelegate;
+  readonly delegate: ExecutionContextDelegate;
   private _utilityScriptPromise: Promise<JSHandle> | undefined;
   private _contextDestroyedScope = new LongStandingScope();
   readonly worldNameForTest: string;
@@ -69,7 +64,7 @@ export class ExecutionContext extends SdkObject {
   constructor(parent: SdkObject, delegate: ExecutionContextDelegate, worldNameForTest: string) {
     super(parent, 'execution-context');
     this.worldNameForTest = worldNameForTest;
-    this._delegate = delegate;
+    this.delegate = delegate;
   }
 
   contextDestroyed(reason: string) {
@@ -81,28 +76,24 @@ export class ExecutionContext extends SdkObject {
   }
 
   rawEvaluateJSON(expression: string): Promise<any> {
-    return this._raceAgainstContextDestroyed(this._delegate.rawEvaluateJSON(expression));
+    return this._raceAgainstContextDestroyed(this.delegate.rawEvaluateJSON(expression));
   }
 
   rawEvaluateHandle(expression: string): Promise<ObjectId> {
-    return this._raceAgainstContextDestroyed(this._delegate.rawEvaluateHandle(expression));
+    return this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(expression));
   }
 
   async evaluateWithArguments(expression: string, returnByValue: boolean, values: any[], objectIds: ObjectId[]): Promise<any> {
     const utilityScript = await this._utilityScript();
-    return this._raceAgainstContextDestroyed(this._delegate.evaluateWithArguments(expression, returnByValue, utilityScript, values, objectIds));
+    return this._raceAgainstContextDestroyed(this.delegate.evaluateWithArguments(expression, returnByValue, utilityScript, values, objectIds));
   }
 
-  getProperties(context: ExecutionContext, objectId: ObjectId): Promise<Map<string, JSHandle>> {
-    return this._raceAgainstContextDestroyed(this._delegate.getProperties(context, objectId));
-  }
-
-  createHandle(remoteObject: RemoteObject): JSHandle {
-    return this._delegate.createHandle(this, remoteObject);
+  getProperties(object: JSHandle): Promise<Map<string, JSHandle>> {
+    return this._raceAgainstContextDestroyed(this.delegate.getProperties(object));
   }
 
   releaseHandle(objectId: ObjectId): Promise<void> {
-    return this._delegate.releaseHandle(objectId);
+    return this.delegate.releaseHandle(objectId);
   }
 
   adoptIfNeeded(handle: JSHandle): Promise<JSHandle> | null {
@@ -117,7 +108,7 @@ export class ExecutionContext extends SdkObject {
         ${utilityScriptSource.source}
         return new (module.exports.UtilityScript())(${isUnderTest()});
       })();`;
-      this._utilityScriptPromise = this._raceAgainstContextDestroyed(this._delegate.rawEvaluateHandle(source).then(objectId => new JSHandle(this, 'object', 'UtilityScript', objectId)));
+      this._utilityScriptPromise = this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(source).then(objectId => new JSHandle(this, 'object', 'UtilityScript', objectId)));
     }
     return this._utilityScriptPromise;
   }
@@ -183,7 +174,7 @@ export class JSHandle<T = any> extends SdkObject {
   async getProperties(): Promise<Map<string, JSHandle>> {
     if (!this._objectId)
       return new Map();
-    return this._context.getProperties(this._context, this._objectId);
+    return this._context.getProperties(this);
   }
 
   rawValue() {

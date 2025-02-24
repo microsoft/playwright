@@ -17,7 +17,9 @@
 
 import { parseEvaluationResultValue } from '../isomorphic/utilityScriptSerializers';
 import * as js from '../javascript';
+import * as dom from '../dom';
 import { isSessionClosedError } from '../protocolError';
+import { assert } from '../../utils/isomorphic/assert';
 
 import type { Protocol } from './protocol';
 import type { WKSession } from './wkConnection';
@@ -79,29 +81,24 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
         throw new js.JavaScriptErrorInEvaluate(response.result.description);
       if (returnByValue)
         return parseEvaluationResultValue(response.result.value);
-      return utilityScript._context.createHandle(response.result);
+      return createHandle(utilityScript._context, response.result);
     } catch (error) {
       throw rewriteError(error);
     }
   }
 
-  async getProperties(context: js.ExecutionContext, objectId: js.ObjectId): Promise<Map<string, js.JSHandle>> {
+  async getProperties(object: js.JSHandle): Promise<Map<string, js.JSHandle>> {
     const response = await this._session.send('Runtime.getProperties', {
-      objectId,
+      objectId: object._objectId!,
       ownProperties: true
     });
     const result = new Map();
     for (const property of response.properties) {
       if (!property.enumerable || !property.value)
         continue;
-      result.set(property.name, context.createHandle(property.value));
+      result.set(property.name, createHandle(object._context, property.value));
     }
     return result;
-  }
-
-  createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
-    const isPromise = remoteObject.className === 'Promise';
-    return new js.JSHandle(context, isPromise ? 'promise' : remoteObject.subtype || remoteObject.type, renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
   }
 
   async releaseHandle(objectId: js.ObjectId): Promise<void> {
@@ -138,4 +135,13 @@ function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefine
   if (object.subtype === 'array' && object.preview)
     return js.sparseArrayToString(object.preview.properties!);
   return object.description;
+}
+
+export function createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
+  if (remoteObject.subtype === 'node') {
+    assert(context instanceof dom.FrameExecutionContext);
+    return new dom.ElementHandle(context as dom.FrameExecutionContext, remoteObject.objectId!);
+  }
+  const isPromise = remoteObject.className === 'Promise';
+  return new js.JSHandle(context, isPromise ? 'promise' : remoteObject.subtype || remoteObject.type, renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
 }

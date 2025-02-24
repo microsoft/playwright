@@ -34,7 +34,7 @@ import {  PageBinding  } from '../page';
 import { Page } from '../page';
 import { getAccessibilityTree } from './wkAccessibility';
 import { WKSession } from './wkConnection';
-import { WKExecutionContext } from './wkExecutionContext';
+import { createHandle, WKExecutionContext } from './wkExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wkInput';
 import { WKInterceptableRequest, WKRouteImpl } from './wkInterceptableRequest';
 import { WKProvisionalPage } from './wkProvisionalPage';
@@ -496,7 +496,6 @@ export class WKPage implements PageDelegate {
     else if (contextPayload.type === 'user' && contextPayload.name === UTILITY_WORLD_NAME)
       worldName = 'utility';
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
-    (context as any)[contextDelegateSymbol] = delegate;
     if (worldName)
       frame._contextCreated(worldName, context);
     this._contextIdToContext.set(contextPayload.id, context);
@@ -562,7 +561,7 @@ export class WKPage implements PageDelegate {
       }
       if (!context)
         return;
-      handles.push(context.createHandle(p));
+      handles.push(createHandle(context, p));
     }
     this._lastConsoleMessage = {
       derivedType,
@@ -611,7 +610,7 @@ export class WKPage implements PageDelegate {
     let handle;
     try {
       const context = await this._page._frameManager.frame(event.frameId)!._mainContext();
-      handle = context.createHandle(event.element).asElement()!;
+      handle =  createHandle(context, event.element).asElement()!;
     } catch (e) {
       // During async processing, frame/context may go away. We should not throw.
       return;
@@ -869,10 +868,6 @@ export class WKPage implements PageDelegate {
     return nodeInfo.ownerFrameId || null;
   }
 
-  isElementHandle(remoteObject: any): boolean {
-    return (remoteObject as Protocol.Runtime.RemoteObject).subtype === 'node';
-  }
-
   async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
     const quads = await this.getContentQuads(handle);
     if (!quads || !quads.length)
@@ -958,11 +953,11 @@ export class WKPage implements PageDelegate {
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
     const result = await this._session.sendMayFail('DOM.resolveNode', {
       objectId: handle._objectId,
-      executionContextId: ((to as any)[contextDelegateSymbol] as WKExecutionContext)._contextId
+      executionContextId: (to.delegate as WKExecutionContext)._contextId
     });
     if (!result || result.object.subtype === 'null')
       throw new Error(dom.kUnableToAdoptErrorMessage);
-    return to.createHandle(result.object) as dom.ElementHandle<T>;
+    return createHandle(to, result.object) as dom.ElementHandle<T>;
   }
 
   async getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
@@ -982,11 +977,11 @@ export class WKPage implements PageDelegate {
     const context = await parent._mainContext();
     const result = await this._session.send('DOM.resolveNode', {
       frameId: frame._id,
-      executionContextId: ((context as any)[contextDelegateSymbol] as WKExecutionContext)._contextId
+      executionContextId: (context.delegate as WKExecutionContext)._contextId
     });
     if (!result || result.object.subtype === 'null')
       throw new Error('Frame has been detached.');
-    return context.createHandle(result.object) as dom.ElementHandle;
+    return createHandle(context, result.object) as dom.ElementHandle;
   }
 
   private _maybeCancelCoopNavigationRequest(provisionalPage: WKProvisionalPage) {
@@ -1257,5 +1252,3 @@ function isLoadedSecurely(url: string, timing: network.ResourceTiming) {
     return true;
   } catch (_) {}
 }
-
-const contextDelegateSymbol = Symbol('delegate');

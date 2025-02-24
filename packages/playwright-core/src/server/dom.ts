@@ -83,12 +83,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return js.evaluateExpression(this, expression, { ...options, returnByValue: false }, arg);
   }
 
-  override createHandle(remoteObject: js.RemoteObject): js.JSHandle {
-    if (this.frame._page._delegate.isElementHandle(remoteObject))
-      return new ElementHandle(this, remoteObject.objectId!);
-    return super.createHandle(remoteObject);
-  }
-
   injectedScript(): Promise<js.JSHandle<InjectedScript>> {
     if (!this._injectedScriptPromise) {
       const custom: string[] = [];
@@ -124,7 +118,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   declare readonly _objectId: string;
   readonly _frame: frames.Frame;
 
-  constructor(context: FrameExecutionContext, objectId: string) {
+  constructor(context: FrameExecutionContext, objectId: js.ObjectId) {
     super(context, 'node', undefined, objectId);
     this._page = context.frame._page;
     this._frame = context.frame;
