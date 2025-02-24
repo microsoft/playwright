@@ -25,7 +25,8 @@ test('pointer events', async ({ page }) => {
     </script>
     `);
   await page.getByText('Hello!').click();
-  expect(await page.evaluate(() => (window as any).events)).toEqual(['pointermove', 'pointerdown', 'pointerup']);
+  expect(await page.evaluate(() => (window as any).events))
+      .toEqual(['pointermove', 'pointerdown', 'pointerup']);
 });
 ```
 
