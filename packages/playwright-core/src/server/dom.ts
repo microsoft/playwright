@@ -105,7 +105,11 @@ export class FrameExecutionContext extends js.ExecutionContext {
         );
         })();
       `;
-      this._injectedScriptPromise = this.rawEvaluateHandle(source, 'InjectedScript');
+      this._injectedScriptPromise = this.rawEvaluateHandle(source)
+          .then(handle => {
+            handle._setPreview('InjectedScript');
+            return handle;
+          });
     }
     return this._injectedScriptPromise;
   }

@@ -44,14 +44,14 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     return payload.result!.value;
   }
 
-  async rawEvaluateHandle(context: js.ExecutionContext, expression: string, handlePreview: string): Promise<js.JSHandle> {
+  async rawEvaluateHandle(context: js.ExecutionContext, expression: string): Promise<js.JSHandle> {
     const payload = await this._session.send('Runtime.evaluate', {
       expression,
       returnByValue: false,
       executionContextId: this._executionContextId,
     }).catch(rewriteError);
     checkException(payload.exceptionDetails);
-    return createHandle(context, payload.result!, handlePreview);
+    return createHandle(context, payload.result!);
   }
 
   async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle, values: any[], handles: js.JSHandle[]): Promise<any> {
@@ -134,10 +134,10 @@ function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefine
     return String(object.value);
 }
 
-export function createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject, handlePreview?: string): js.JSHandle {
+export function createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
   if (remoteObject.subtype === 'node') {
     assert(context instanceof dom.FrameExecutionContext);
     return new dom.ElementHandle(context, remoteObject.objectId!);
   }
-  return new js.JSHandle(context, remoteObject.subtype || remoteObject.type || '', handlePreview ?? renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
+  return new js.JSHandle(context, remoteObject.subtype || remoteObject.type || '', renderPreview(remoteObject), remoteObject.objectId, potentiallyUnserializableValue(remoteObject));
 }

@@ -47,7 +47,7 @@ export type SmartHandle<T> = T extends Node ? dom.ElementHandle<T> : JSHandle<T>
 
 export interface ExecutionContextDelegate {
   rawEvaluateJSON(expression: string): Promise<any>;
-  rawEvaluateHandle(context: ExecutionContext, expression: string, handlePreview: string): Promise<JSHandle>;
+  rawEvaluateHandle(context: ExecutionContext, expression: string): Promise<JSHandle>;
   evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle, values: any[], handles: JSHandle[]): Promise<any>;
   getProperties(object: JSHandle): Promise<Map<string, JSHandle>>;
   releaseHandle(handle: JSHandle): Promise<void>;
@@ -77,8 +77,8 @@ export class ExecutionContext extends SdkObject {
     return this._raceAgainstContextDestroyed(this.delegate.rawEvaluateJSON(expression));
   }
 
-  rawEvaluateHandle(expression: string, preview: string): Promise<JSHandle> {
-    return this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(this, expression, preview));
+  rawEvaluateHandle(expression: string): Promise<JSHandle> {
+    return this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(this, expression));
   }
 
   async evaluateWithArguments(expression: string, returnByValue: boolean, values: any[], handles: JSHandle[]): Promise<any> {
@@ -106,7 +106,11 @@ export class ExecutionContext extends SdkObject {
         ${utilityScriptSource.source}
         return new (module.exports.UtilityScript())(${isUnderTest()});
       })();`;
-      this._utilityScriptPromise = this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(this, source, 'UtilityScript'));
+      this._utilityScriptPromise = this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(this, source))
+          .then(handle => {
+            handle._setPreview('UtilityScript');
+            return handle;
+          });
     }
     return this._utilityScriptPromise;
   }

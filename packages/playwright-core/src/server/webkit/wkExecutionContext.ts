@@ -48,7 +48,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     }
   }
 
-  async rawEvaluateHandle(context: js.ExecutionContext, expression: string, handlePreview: string): Promise<js.JSHandle> {
+  async rawEvaluateHandle(context: js.ExecutionContext, expression: string): Promise<js.JSHandle> {
     try {
       const response = await this._session.send('Runtime.evaluate', {
         expression,
@@ -57,7 +57,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       });
       if (response.wasThrown)
         throw new js.JavaScriptErrorInEvaluate(response.result.description);
-      return createHandle(context, response.result, handlePreview);
+      return createHandle(context, response.result);
     } catch (error) {
       throw rewriteError(error);
     }
@@ -137,7 +137,7 @@ function renderPreview(object: Protocol.Runtime.RemoteObject): string | undefine
   return object.description;
 }
 
-export function createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject, handlePreview?: string): js.JSHandle {
+export function createHandle(context: js.ExecutionContext, remoteObject: Protocol.Runtime.RemoteObject): js.JSHandle {
   if (remoteObject.subtype === 'node') {
     assert(context instanceof dom.FrameExecutionContext);
     return new dom.ElementHandle(context as dom.FrameExecutionContext, remoteObject.objectId!);
