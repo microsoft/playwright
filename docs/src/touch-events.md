@@ -5,7 +5,7 @@ title: "Emulating touch events"
 
 ## Introduction
 
-Touch gestures on a webpage can generate both legacy [TouchEvent]((https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)s) and modern [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent)s. Depending on which type your application relies on, you can emulate touch interactions using different approaches. The following guide explains how to simulate both PointerEvent-based and TouchEvent-based gestures for testing purposes.
+Touch gestures on a webpage can generate both legacy [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)s and modern [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent)s. Depending on which type your application relies on, you can emulate touch interactions using different approaches. The following guide explains how to simulate both PointerEvent-based and TouchEvent-based gestures for testing purposes.
 
 ### Dispatching PointerEvent
 
