@@ -89,7 +89,9 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async releaseHandle(handle: js.JSHandle): Promise<void> {
-    await releaseObject(this._client, handle._objectId!);
+    if (!handle._objectId)
+      return;
+    await releaseObject(this._client, handle._objectId);
   }
 }
 

@@ -122,9 +122,11 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async releaseHandle(handle: js.JSHandle): Promise<void> {
+    if (!handle._objectId)
+      return;
     await this._session.send('script.disown', {
       target: this._target,
-      handles: [handle._objectId!],
+      handles: [handle._objectId],
     });
   }
 
