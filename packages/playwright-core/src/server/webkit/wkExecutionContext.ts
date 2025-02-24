@@ -48,7 +48,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     }
   }
 
-  async rawEvaluateHandle(expression: string): Promise<js.ObjectId> {
+  async rawEvaluateHandle(context: js.ExecutionContext, expression: string): Promise<js.JSHandle> {
     try {
       const response = await this._session.send('Runtime.evaluate', {
         expression,
@@ -57,13 +57,13 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
       });
       if (response.wasThrown)
         throw new js.JavaScriptErrorInEvaluate(response.result.description);
-      return response.result.objectId!;
+      return createHandle(context, response.result);
     } catch (error) {
       throw rewriteError(error);
     }
   }
 
-  async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
+  async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], handles: js.JSHandle[]): Promise<any> {
     try {
       const response = await this._session.send('Runtime.callFunctionOn', {
         functionDeclaration: expression,
@@ -71,7 +71,7 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
         arguments: [
           { objectId: utilityScript._objectId },
           ...values.map(value => ({ value })),
-          ...objectIds.map(objectId => ({ objectId })),
+          ...handles.map(handle => ({ objectId: handle._objectId! })),
         ],
         returnByValue,
         emulateUserGesture: true,
@@ -101,8 +101,10 @@ export class WKExecutionContext implements js.ExecutionContextDelegate {
     return result;
   }
 
-  async releaseHandle(objectId: js.ObjectId): Promise<void> {
-    await this._session.send('Runtime.releaseObject', { objectId });
+  async releaseHandle(handle: js.JSHandle): Promise<void> {
+    if (!handle._objectId)
+      return;
+    await this._session.send('Runtime.releaseObject', { objectId: handle._objectId });
   }
 }
 
