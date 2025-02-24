@@ -92,6 +92,9 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 
   for (const hook of window.__pw_hooks_after_mount || [])
     await hook({ hooksConfig, svelteComponent });
+
+  for (const [key, listener] of Object.entries(component.on || {}))
+    svelteComponent.$on(key, event => listener(event.detail));
 };
 
 window.playwrightUnmount = async rootElement => {
@@ -111,4 +114,7 @@ window.playwrightUpdate = async (rootElement, component) => {
     throw new Error('Component was not mounted');
 
   svelteComponent.$set(extractParams(component));
+
+  for (const [key, listener] of Object.entries(component.on || {}))
+    svelteComponent.$on(key, event => listener(event.detail));
 };
