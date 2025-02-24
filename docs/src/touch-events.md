@@ -1,40 +1,13 @@
 ---
 id: touch-events
-title: "Emulating touch events"
+title: "Emulating legacy touch events"
 ---
 
 ## Introduction
 
-Touch gestures on a webpage can generate both legacy [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)s and modern [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent)s. Depending on which type your application relies on, you can emulate touch interactions using different approaches. The following guide explains how to simulate both PointerEvent-based and TouchEvent-based gestures for testing purposes.
-
-### Dispatching PointerEvent
-
-If your web application relies on [pointer events](https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events), you can use [`method: Locator.click`] and raw [Mouse] events to simulate a single-finger touch, and this will trigger [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent)s just as a touch would do:
-
-```js
-import { test, expect } from '@playwright/test';
-
-test('pointer events', async ({ page }) => {
-  await page.setContent(`
-    <div>Hello!</div>
-    <script>
-      window.events = [];
-      const div = document.querySelector('div');
-      for (const name of ['pointerdown', 'pointerup', 'pointermove'])
-        div.addEventListener(name, e => window.events.push(name));
-    </script>
-    `);
-  await page.getByText('Hello!').click();
-  expect(await page.evaluate(() => (window as any).events))
-      .toEqual(['pointermove', 'pointerdown', 'pointerup']);
-});
-```
-
-### Dispatching TouchEvent
-
 Web applications that handle [touch events](https://developer.mozilla.org/en-US/docs/Web/API/Touch_events) to respond to gestures like swipe, pinch, and tap can be tested by manually dispatching [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)s to the page. The examples below demonstrate how to use [`method: Locator.dispatchEvent`] and pass [Touch](https://developer.mozilla.org/en-US/docs/Web/API/Touch) points as arguments.
 
-#### Emulating pan gesture
+### Emulating pan gesture
 
 In the example below, we emulate pan gesture that is expected to move the map. The app under test only uses `clientX/clientY` coordinates of the touch point, so we initialize just that. In a more complex scenario you may need to also set `pageX/pageY/screenX/screenY`, if your app needs them.
 
@@ -90,7 +63,7 @@ test(`pan gesture to move the map`, async ({ page }) => {
 });
 ```
 
-#### Emulating pinch gesture
+### Emulating pinch gesture
 
 In the example below, we emulate pinch gesture, i.e. two touch points moving closer to each other. It is expected to zoom out the map. The app under test only uses `clientX/clientY` coordinates of touch points, so we initialize just that. In a more complex scenario you may need to also set `pageX/pageY/screenX/screenY`, if your app needs them.
 
