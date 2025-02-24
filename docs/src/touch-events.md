@@ -5,13 +5,33 @@ title: "Emulating touch events"
 
 ## Introduction
 
-Mobile web sites may listen to [touch events](https://developer.mozilla.org/en-US/docs/Web/API/Touch_events) and react to user touch gestures such as swipe, pinch, tap etc. To test this functionality you can manually generate [TouchEvent]s in the page context using [`method: Locator.evaluate`].
+Touch gestures on a webpage can generate both legacy [TouchEvent]((https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)s) and modern [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent)s. Depending on which type your application relies on, you can emulate touch interactions using different approaches. The following guide explains how to simulate both PointerEvent-based and TouchEvent-based gestures for testing purposes.
 
-If your web application relies on [pointer events](https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events) instead of touch events, you can use [`method: Locator.click`] and raw [`Mouse`] events to simulate a single-finger touch, and this will trigger all the same pointer events.
+### Dispatching PointerEvent
+
+If your web application relies on [pointer events](https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events), you can use [`method: Locator.click`] and raw [Mouse] events to simulate a single-finger touch, and this will trigger [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent)s just as a touch would do:
+
+```js
+import { test, expect } from '@playwright/test';
+
+test('pointer events', async ({ page }) => {
+  await page.setContent(`
+    <div>Hello!</div>
+    <script>
+      window.events = [];
+      const div = document.querySelector('div');
+      for (const name of ['pointerdown', 'pointerup', 'pointermove'])
+        div.addEventListener(name, e => window.events.push(name));
+    </script>
+    `);
+  await page.getByText('Hello!').click();
+  expect(await page.evaluate(() => (window as any).events)).toEqual(['pointermove', 'pointerdown', 'pointerup']);
+});
+```
 
 ### Dispatching TouchEvent
 
-You can dispatch touch events to the page using [`method: Locator.dispatchEvent`]. [Touch](https://developer.mozilla.org/en-US/docs/Web/API/Touch) points can be passed as arguments, see examples below.
+Web applications that handle [touch events](https://developer.mozilla.org/en-US/docs/Web/API/Touch_events) to respond to gestures like swipe, pinch, and tap can be tested by manually dispatching [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)s to the page. The examples below demonstrate how to use [`method: Locator.dispatchEvent`] and pass [Touch](https://developer.mozilla.org/en-US/docs/Web/API/Touch) points as arguments.
 
 #### Emulating pan gesture
 
