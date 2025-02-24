@@ -21,7 +21,7 @@ import type { NestedSelectorBody } from './selectorParser';
 import type { ParsedSelector } from './selectorParser';
 
 export type Language = 'javascript' | 'python' | 'java' | 'csharp' | 'jsonl';
-export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'frame-locator' | 'and' | 'or' | 'chain';
+export type LocatorType = 'default' | 'role' | 'text' | 'label' | 'placeholder' | 'alt' | 'title' | 'test-id' | 'nth' | 'first' | 'last' | 'visible' | 'has-text' | 'has-not-text' | 'has' | 'hasNot' | 'frame' | 'frame-locator' | 'and' | 'or' | 'chain';
 export type LocatorBase = 'page' | 'locator' | 'frame-locator';
 export type Quote = '\'' | '"' | '`';
 
@@ -66,6 +66,10 @@ function innerAsLocators(factory: LocatorFactory, parsed: ParsedSelector, isFram
         tokens.push([factory.generateLocator(base, 'last', ''), factory.generateLocator(base, 'nth', '-1')]);
       else
         tokens.push([factory.generateLocator(base, 'nth', part.body as string)]);
+      continue;
+    }
+    if (part.name === 'visible') {
+      tokens.push([factory.generateLocator(base, 'visible', part.body as string), factory.generateLocator(base, 'default', `visible=${part.body}`)]);
       continue;
     }
     if (part.name === 'internal:text') {
@@ -275,6 +279,8 @@ export class JavaScriptLocatorFactory implements LocatorFactory {
         return `first()`;
       case 'last':
         return `last()`;
+      case 'visible':
+        return `visible(${body === 'true' ? '' : '{ visible: false }'})`;
       case 'role':
         const attrs: string[] = [];
         if (isRegExp(options.name)) {
@@ -369,6 +375,8 @@ export class PythonLocatorFactory implements LocatorFactory {
         return `first`;
       case 'last':
         return `last`;
+      case 'visible':
+        return `visible(${body === 'true' ? '' : 'visible=False'})`;
       case 'role':
         const attrs: string[] = [];
         if (isRegExp(options.name)) {
@@ -476,6 +484,8 @@ export class JavaLocatorFactory implements LocatorFactory {
         return `first()`;
       case 'last':
         return `last()`;
+      case 'visible':
+        return `visible(${body === 'true' ? '' : `new ${clazz}.VisibleOptions().setVisible(false)`})`;
       case 'role':
         const attrs: string[] = [];
         if (isRegExp(options.name)) {
@@ -573,6 +583,8 @@ export class CSharpLocatorFactory implements LocatorFactory {
         return `First`;
       case 'last':
         return `Last`;
+      case 'visible':
+        return `Visible(${body === 'true' ? '' : 'new() { Visible = false }'})`;
       case 'role':
         const attrs: string[] = [];
         if (isRegExp(options.name)) {

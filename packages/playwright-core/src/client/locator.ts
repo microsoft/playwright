@@ -218,6 +218,11 @@ export class Locator implements api.Locator {
     return new Locator(this._frame, this._selector + ` >> nth=${index}`);
   }
 
+  visible(options: { visible?: boolean } = {}): Locator {
+    const { visible = true } = options;
+    return new Locator(this._frame, this._selector + ` >> visible=${visible ? 'true' : 'false'}`);
+  }
+
   and(locator: Locator): Locator {
     if (locator._frame !== this._frame)
       throw new Error(`Locators must belong to the same frame.`);

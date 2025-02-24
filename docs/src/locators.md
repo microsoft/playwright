@@ -1310,19 +1310,19 @@ Consider a page with two buttons, the first invisible and the second [visible](.
 * This will only find a second button, because it is visible, and then click it.
 
   ```js
-  await page.locator('button').locator('visible=true').click();
+  await page.locator('button').visible().click();
   ```
   ```java
-  page.locator("button").locator("visible=true").click();
+  page.locator("button").visible().click();
   ```
   ```python async
-  await page.locator("button").locator("visible=true").click()
+  await page.locator("button").visible().click()
   ```
   ```python sync
-  page.locator("button").locator("visible=true").click()
+  page.locator("button").visible().click()
   ```
   ```csharp
-  await page.Locator("button").Locator("visible=true").ClickAsync();
+  await page.Locator("button").Visible().ClickAsync();
   ```
 
 ## Lists

@@ -150,6 +150,23 @@ it('should combine visible with other selectors', async ({ page }) => {
   await expect(page.locator('.item >> visible=true >> text=data3')).toHaveText('visible data3');
 });
 
+it('should support .visible()', async ({ page }) => {
+  await page.setContent(`<div>
+    <div class="item" style="display: none">Hidden data0</div>
+    <div class="item">visible data1</div>
+    <div class="item" style="display: none">Hidden data1</div>
+    <div class="item">visible data2</div>
+    <div class="item" style="display: none">Hidden data2</div>
+    <div class="item">visible data3</div>
+    </div>
+  `);
+  const locator = page.locator('.item').visible().nth(1);
+  await expect(locator).toHaveText('visible data2');
+  await expect(page.locator('.item').visible().getByText('data3')).toHaveText('visible data3');
+  await expect(page.locator('.item').visible({ visible: true }).getByText('data2')).toHaveText('visible data2');
+  await expect(page.locator('.item').visible({ visible: false }).getByText('data1')).toHaveText('Hidden data1');
+});
+
 it('locator.count should work with deleted Map in main world', async ({ page }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11254' });
   await page.evaluate('Map = 1');
