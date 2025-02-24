@@ -72,7 +72,7 @@ const CopyPromptButton: React.FC<{
       value={prompt}
       description='Copy as Prompt'
       copiedDescription={<>Copied <span className='codicon codicon-copy' style={{ marginLeft: '5px' }}/></>}
-      style={{ width: '90px', justifyContent: 'center' }}
+      style={{ width: '120px', justifyContent: 'center' }}
     />
   );
 };
