@@ -256,11 +256,11 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
     return { fallThrough: handle };
   }));
 
-  const utilityScriptObjectIds: JSHandle[] = [];
+  const utilityScriptObjects: JSHandle[] = [];
   for (const handle of await Promise.all(handles)) {
     if (handle._context !== context)
       throw new JavaScriptErrorInEvaluate('JSHandles can be evaluated only in the context they were created!');
-    utilityScriptObjectIds.push(handle);
+    utilityScriptObjects.push(handle);
   }
 
   // See UtilityScript for arguments.
@@ -268,7 +268,7 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
 
   const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)`;
   try {
-    return await context.evaluateWithArguments(script, options.returnByValue || false, utilityScriptValues, utilityScriptObjectIds);
+    return await context.evaluateWithArguments(script, options.returnByValue || false, utilityScriptValues, utilityScriptObjects);
   } finally {
     toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
   }
