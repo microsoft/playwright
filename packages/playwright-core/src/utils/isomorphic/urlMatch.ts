@@ -101,24 +101,18 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
     // Allow http(s) baseURL to match ws(s) urls.
     if (baseURL && /^https?:\/\//.test(baseURL) && /^wss?:\/\//.test(urlString))
       baseURL = baseURL.replace(/^http/, 'ws');
-    if (baseURL) {
-      // String starting with a dot are treated as explicit relative URL.
-      if (match.startsWith('.')) {
-        match = constructURLBasedOnBaseURL(baseURL, match);
-      } else {
-        // We cannot pass `match` as the relative URL as regex symbols would be misinterpreted.
-        const relativeBase = match.startsWith('/') ? '/' : '.';
-        let prefix = constructURLBasedOnBaseURL(baseURL, relativeBase);
-        if (prefix !== relativeBase) {
-          if (match.startsWith('/') && prefix.endsWith('/'))
-            prefix = prefix.substring(0, prefix.length - 1);
-          match = prefix + match;
-        }
-      }
-    }
+    // Resolve match relative to baseURL only if baseURL is set and match is not an absolute URL.
+    // Otherwise, leave it unchanged to prevent the URL constructor from interpreting glob symbols
+    // like ?, {, and }, which could alter the pattern.
+    if (baseURL && !parseURL(match))
+      match = constructURLBasedOnBaseURL(baseURL, match);
   }
-  if (isString(match))
+  if (isString(match)) {
+    const tryWithoutTrailingSlash = urlString.endsWith('/') && !match.endsWith('/');
     match = globToRegex(match);
+    if (tryWithoutTrailingSlash && match.test(urlString.substring(0, urlString.length - 1)))
+      return true;
+  }
   if (isRegExp(match))
     return match.test(urlString);
   const url = parseURL(urlString);
