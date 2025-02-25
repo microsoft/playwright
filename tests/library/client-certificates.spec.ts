@@ -24,6 +24,7 @@ import { expect, playwrightTest as base } from '../config/browserTest';
 import type net from 'net';
 import type { BrowserContextOptions } from 'packages/playwright-test';
 import { setupSocksForwardingServer } from '../config/proxy';
+import { LookupAddress } from 'dns';
 const { createHttpsServer, createHttp2Server } = require('../../packages/playwright-core/lib/utils');
 
 type TestOptions = {
@@ -371,6 +372,50 @@ test.describe('browser', () => {
     await page.close();
   });
 
+  test('should pass with matching certificates and when a http proxy is used on an otherwise unreachable server', async ({ browser, startCCServer, asset, browserName, proxyServer, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
+    const serverPort = parseInt(new URL(serverURL).port, 10);
+    const privateDomain = `private.playwright.test`;
+    proxyServer.forwardTo(parseInt(new URL(serverURL).port, 10), { allowConnectRequests: true });
+
+    // make private domain resolve to unreachable server 192.0.2.0
+    // any attempt to connect there will timeout
+    let interceptedHostnameLookup: string | undefined;
+    const __testHookLookup = (hostname: string): LookupAddress[] => {
+      if (hostname === privateDomain) {
+        interceptedHostnameLookup = hostname;
+        return [
+          { address: '192.0.2.0', family: 4 },
+        ];
+      }
+      return [];
+    };
+
+    const context = await browser.newContext({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL(serverURL).origin.replace('127.0.0.1', privateDomain),
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+      proxy: { server: `localhost:${proxyServer.PORT}` },
+      ...
+      {  __testHookLookup } as any
+    });
+
+    const page = await context.newPage();
+    const requestURL = serverURL.replace('127.0.0.1', privateDomain);
+    expect(proxyServer.connectHosts).toEqual([]);
+    await page.goto(requestURL);
+
+    // only the proxy server should have tried to resolve the private domain
+    // and the test proxy server does not resolve domains
+    expect(interceptedHostnameLookup).toBe(undefined);
+    expect([...new Set(proxyServer.connectHosts)]).toEqual([`${privateDomain}:${serverPort}`]);
+    await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
+    await page.close();
+  });
+
   test('should pass with matching certificates and when a socks proxy is used', async ({ browser, startCCServer, asset, browserName, isMac }) => {
     const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
     const serverPort = parseInt(new URL(serverURL).port, 10);
@@ -392,6 +437,55 @@ test.describe('browser', () => {
     await page.goto(serverURL);
     const host = browserName === 'webkit' && isMac ? 'localhost' : '127.0.0.1';
     expect(connectHosts).toEqual([`${host}:${serverPort}`]);
+    await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
+    await page.close();
+    await closeProxyServer();
+  });
+
+  test('should pass with matching certificates and when a socks proxy is used on an otherwise unreachable server', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
+    const serverPort = parseInt(new URL(serverURL).port, 10);
+    const privateDomain = `private.playwright.test`;
+    const { proxyServerAddr, closeProxyServer, connectHosts } = await setupSocksForwardingServer({
+      port: test.info().workerIndex + 2048 + 2,
+      forwardPort: serverPort,
+      allowedTargetPort: serverPort,
+      additionalAllowedHosts: [privateDomain],
+    });
+
+    // make private domain resolve to unreachable server 192.0.2.0
+    // any attempt to connect will timeout
+    let interceptedHostnameLookup: string | undefined;
+    const __testHookLookup = (hostname: string): LookupAddress[] => {
+      if (hostname === privateDomain) {
+        interceptedHostnameLookup = hostname;
+        return [
+          { address: '192.0.2.0', family: 4 },
+        ];
+      }
+      return [];
+    };
+
+    const context = await browser.newContext({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: new URL(serverURL).origin.replace('127.0.0.1', privateDomain),
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+      proxy: { server: proxyServerAddr },
+      ...
+      {  __testHookLookup } as any
+    });
+    const page = await context.newPage();
+    expect(connectHosts).toEqual([]);
+    const requestURL = serverURL.replace('127.0.0.1', privateDomain);
+    await page.goto(requestURL);
+
+    // only the proxy server should have tried to resolve the private domain
+    // and the test proxy server does not resolve domains
+    expect(interceptedHostnameLookup).toBe(undefined);
+    expect(connectHosts).toEqual([`${privateDomain}:${serverPort}`]);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
     await page.close();
     await closeProxyServer();

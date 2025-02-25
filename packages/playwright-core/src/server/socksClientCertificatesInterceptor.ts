@@ -39,10 +39,15 @@ function loadDummyServerCertsIfNeeded() {
   dummyServerTlsOptions = { key, cert };
 }
 
+type ALPNCacheOptions = {
+  socket?: stream.Duplex | undefined;
+  secureContext: tls.SecureContext | undefined;
+};
+
 class ALPNCache {
   private _cache = new Map<string, ManualPromise<string>>();
 
-  get(host: string, port: number, success: (protocol: string) => void) {
+  get(host: string, port: number, options: ALPNCacheOptions, success: (protocol: string) => void) {
     const cacheKey = `${host}:${port}`;
     {
       const result = this._cache.get(cacheKey);
@@ -54,22 +59,55 @@ class ALPNCache {
     const result = new ManualPromise<string>();
     this._cache.set(cacheKey, result);
     result.then(success);
-    createTLSSocket({
-      host,
-      port,
-      servername: net.isIP(host) ? undefined : host,
-      ALPNProtocols: ['h2', 'http/1.1'],
-      rejectUnauthorized: false,
-    }).then(socket => {
-      // The server may not respond with ALPN, in which case we default to http/1.1.
-      result.resolve(socket.alpnProtocol || 'http/1.1');
-      socket.end();
-    }).catch(error => {
-      debugLogger.log('client-certificates', `ALPN error: ${error.message}`);
-      result.resolve('http/1.1');
-    });
+    const fixtures = {
+      __testHookLookup: (options as any).__testHookLookup
+    };
+
+    if (!options.socket) {
+      createTLSSocket({
+        host,
+        port,
+        servername: net.isIP(host) ? undefined : host,
+        ALPNProtocols: ['h2', 'http/1.1'],
+        rejectUnauthorized: false,
+        secureContext: options.secureContext,
+        ...fixtures,
+      }).then(socket => {
+        // The server may not respond with ALPN, in which case we default to http/1.1.
+        result.resolve(socket.alpnProtocol || 'http/1.1');
+        socket.end();
+      }).catch(error => {
+        debugLogger.log('client-certificates', `ALPN error: ${error.message}`);
+        result.resolve('http/1.1');
+      });
+    } else {
+      // a socket might be provided, for example, when using a proxy.
+      const socket = tls.connect({
+        socket: options.socket,
+        port: port,
+        host: host,
+        ALPNProtocols: ['h2', 'http/1.1'],
+        rejectUnauthorized: false,
+        secureContext: options.secureContext,
+        servername: net.isIP(host) ? undefined : host
+      });
+      socket.on('secureConnect', () => {
+        result.resolve(socket.alpnProtocol || 'http/1.1');
+        socket.end();
+      });
+      socket.on('error', error => {
+        result.resolve('http/1.1');
+      });
+      socket.on('timeout', () => {
+        result.resolve('http/1.1');
+      });
+    }
   }
 }
+
+// Only used for fixtures
+type SocksProxyConnectionOptions = {
+};
 
 class SocksProxyConnection {
   private readonly socksProxy: ClientCertificatesProxy;
@@ -84,12 +122,14 @@ class SocksProxyConnection {
   private _targetCloseEventListener: () => void;
   private _dummyServer: tls.Server | undefined;
   private _closed = false;
+  private _options: SocksProxyConnectionOptions;
 
-  constructor(socksProxy: ClientCertificatesProxy, uid: string, host: string, port: number) {
+  constructor(socksProxy: ClientCertificatesProxy, uid: string, host: string, port: number, options: SocksProxyConnectionOptions) {
     this.socksProxy = socksProxy;
     this.uid = uid;
     this.host = host;
     this.port = port;
+    this._options = options;
     this._targetCloseEventListener = () => {
       // Close the other end and cleanup TLS resources.
       this.socksProxy._socksProxy.sendSocketEnd({ uid: this.uid });
@@ -142,7 +182,7 @@ class SocksProxyConnection {
       this.target.write(data);
   }
 
-  private _attachTLSListeners() {
+  private async _attachTLSListeners() {
     this.internal = new stream.Duplex({
       read: () => {},
       write: (data, encoding, callback) => {
@@ -150,7 +190,20 @@ class SocksProxyConnection {
         callback();
       }
     });
-    this.socksProxy.alpnCache.get(rewriteToLocalhostIfNeeded(this.host), this.port, alpnProtocolChosenByServer => {
+    const secureContext = this.socksProxy.secureContextMap.get(new URL(`https://${this.host}:${this.port}`).origin);
+    const fixtures = {
+      __testHookLookup: (this._options as any).__testHookLookup
+    };
+
+    const alpnCacheOptions: ALPNCacheOptions = {
+      secureContext,
+      ...fixtures
+    };
+    if (this.socksProxy.proxyAgentFromOptions)
+      alpnCacheOptions.socket = await this.socksProxy.proxyAgentFromOptions.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
+
+    this.socksProxy.alpnCache.get(rewriteToLocalhostIfNeeded(this.host), this.port, alpnCacheOptions, alpnProtocolChosenByServer => {
+      alpnCacheOptions.socket?.destroy();
       debugLogger.log('client-certificates', `Proxy->Target ${this.host}:${this.port} chooses ALPN ${alpnProtocolChosenByServer}`);
       if (this._closed)
         return;
@@ -221,7 +274,7 @@ class SocksProxyConnection {
           rejectUnauthorized: !this.socksProxy.ignoreHTTPSErrors,
           ALPNProtocols: [internalTLS.alpnProtocol || 'http/1.1'],
           servername: !net.isIP(this.host) ? this.host : undefined,
-          secureContext: this.socksProxy.secureContextMap.get(new URL(`https://${this.host}:${this.port}`).origin),
+          secureContext: secureContext,
         });
 
         targetTLS.once('secureConnect', () => {
@@ -256,7 +309,9 @@ export class ClientCertificatesProxy {
     this._socksProxy.setPattern('*');
     this._socksProxy.addListener(SocksProxy.Events.SocksRequested, async (payload: SocksSocketRequestedPayload) => {
       try {
-        const connection = new SocksProxyConnection(this, payload.uid, payload.host, payload.port);
+        const connection = new SocksProxyConnection(this, payload.uid, payload.host, payload.port, {
+          __testHookLookup: (contextOptions as any).__testHookLookup
+        });
         await connection.connect();
         this._connections.set(payload.uid, connection);
       } catch (error) {
