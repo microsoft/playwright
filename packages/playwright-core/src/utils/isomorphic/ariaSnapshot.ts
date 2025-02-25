@@ -220,7 +220,8 @@ export function parseAriaSnapshot(yaml: YamlLibrary, text: string, options: yaml
 const emptyFragment: AriaTemplateRoleNode = { kind: 'role', role: 'fragment' };
 
 function normalizeWhitespace(text: string) {
-  return text.replace(/[\r\n\s\t]+/g, ' ').trim();
+  // TODO: why is this different from normalizeWhitespace in stringUtils.ts?
+  return text.replace(/[\u200b\u00ad]/g, '').replace(/[\r\n\s\t]+/g, ' ').trim();
 }
 
 export function valueOrRegex(value: string): string | AriaRegex {
