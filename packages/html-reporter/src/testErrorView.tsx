@@ -50,7 +50,7 @@ const PromptButton: React.FC<{
   const gitCommitInfo = useGitCommitInfo();
   const prompt = React.useMemo(() => fixTestPrompt(
       error,
-      gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'],
+      gitCommitInfo?.pull_request?.diff ?? gitCommitInfo?.revision?.diff,
       result?.attachments.find(a => a.name === 'pageSnapshot')?.body
   ), [gitCommitInfo, result, error]);
 
