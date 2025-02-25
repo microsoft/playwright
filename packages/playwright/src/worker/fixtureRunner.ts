@@ -35,7 +35,7 @@ class Fixture {
   private _selfTeardownComplete: Promise<void> | undefined;
   private _setupDescription: FixtureDescription;
   private _teardownDescription: FixtureDescription;
-  private _stepInfo: { category: 'fixture', location?: Location } | undefined;
+  private _stepInfo: { title: string, category: 'fixture', location?: Location } | undefined;
   _deps = new Set<Fixture>();
   _usages = new Set<Fixture>();
 
@@ -47,7 +47,7 @@ class Fixture {
     const isUserFixture = this.registration.location && filterStackFile(this.registration.location.file);
     const title = this.registration.customTitle || this.registration.name;
     const location = isUserFixture ? this.registration.location : undefined;
-    this._stepInfo = shouldGenerateStep ? { category: 'fixture', location } : undefined;
+    this._stepInfo = shouldGenerateStep ? { title: `fixture: ${title}`, category: 'fixture', location } : undefined;
     this._setupDescription = {
       title,
       phase: 'setup',
@@ -68,13 +68,11 @@ class Fixture {
       return;
     }
 
-    await testInfo._runAsStage({
-      title: `fixture: ${this.registration.customTitle ?? this.registration.name}`,
-      runnable: { ...runnable, fixture: this._setupDescription },
-      stepInfo: this._stepInfo,
-    }, async () => {
-      await this._setupInternal(testInfo);
-    });
+    const run = () => testInfo._runWithTimeout({ ...runnable, fixture: this._setupDescription }, () => this._setupInternal(testInfo));
+    if (this._stepInfo)
+      await testInfo._runAsStep(this._stepInfo, run);
+    else
+      await run();
   }
 
   private async _setupInternal(testInfo: TestInfoImpl) {
@@ -133,13 +131,11 @@ class Fixture {
       // Do not even start the teardown for a fixture that does not have any
       // time remaining in the time slot. This avoids cascading timeouts.
       if (!testInfo._timeoutManager.isTimeExhaustedFor(fixtureRunnable)) {
-        await testInfo._runAsStage({
-          title: `fixture: ${this.registration.customTitle ?? this.registration.name}`,
-          runnable: fixtureRunnable,
-          stepInfo: this._stepInfo,
-        }, async () => {
-          await this._teardownInternal();
-        });
+        const run = () => testInfo._runWithTimeout(fixtureRunnable, () => this._teardownInternal());
+        if (this._stepInfo)
+          await testInfo._runAsStep(this._stepInfo, run);
+        else
+          await run();
       }
     } finally {
       // To preserve fixtures integrity, forcefully cleanup fixtures
@@ -268,9 +264,7 @@ export class FixtureRunner {
       // Do not run the function when fixture setup has already failed.
       return null;
     }
-    await testInfo._runAsStage({ title: 'run function', runnable }, async () => {
-      await fn(params, testInfo);
-    });
+    await testInfo._runWithTimeout(runnable, () => fn(params, testInfo));
   }
 
   private async _setupFixtureForRegistration(registration: FixtureRegistration, testInfo: TestInfoImpl, runnable: RunnableDescription): Promise<Fixture> {
