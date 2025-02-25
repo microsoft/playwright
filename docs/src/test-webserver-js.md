@@ -18,7 +18,7 @@ export default defineConfig({
   // Run your local dev server before starting the tests
   webServer: {
     command: 'npm run start',
-    url: 'http://127.0.0.1:3000',
+    url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     stdout: 'ignore',
     stderr: 'pipe',
@@ -52,7 +52,7 @@ export default defineConfig({
   // Run your local dev server before starting the tests
   webServer: {
     command: 'npm run start',
-    url: 'http://127.0.0.1:3000',
+    url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },
@@ -63,7 +63,7 @@ export default defineConfig({
 
 It is also recommended to specify the `baseURL` in the `use: {}` section of your config, so that tests can use relative urls and you don't have to specify the full URL over and over again. 
 
-When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitForURL`], [`method: Page.waitForRequest`], or [`method: Page.waitForResponse`] it takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL. For Example, by setting the baseURL to `http://127.0.0.1:3000` and navigating to `/login` in your tests, Playwright will run the test using `http://127.0.0.1:3000/login`.
+When using [`method: Page.goto`], [`method: Page.route`], [`method: Page.waitForURL`], [`method: Page.waitForRequest`], or [`method: Page.waitForResponse`] it takes the base URL in consideration by using the [`URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor for building the corresponding URL. For Example, by setting the baseURL to `http://localhost:3000` and navigating to `/login` in your tests, Playwright will run the test using `http://localhost:3000/login`.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
@@ -74,11 +74,11 @@ export default defineConfig({
   // Run your local dev server before starting the tests
   webServer: {
     command: 'npm run start',
-    url: 'http://127.0.0.1:3000',
+    url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
   },
   use: {
-    baseURL: 'http://127.0.0.1:3000',
+    baseURL: 'http://localhost:3000',
   },
 });
 ```
@@ -89,7 +89,7 @@ Now you can use a relative path when navigating the page:
 import { test } from '@playwright/test';
 
 test('test', async ({ page }) => {
-  // This will navigate to http://127.0.0.1:3000/login
+  // This will navigate to http://localhost:3000/login
   await page.goto('./login');
 });
 ```
@@ -106,19 +106,19 @@ export default defineConfig({
   webServer: [
     {
       command: 'npm run start',
-      url: 'http://127.0.0.1:3000',
+      url: 'http://localhost:3000',
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     },
     {
       command: 'npm run backend',
-      url: 'http://127.0.0.1:3333',
+      url: 'http://localhost:3333',
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     }
   ],
   use: {
-    baseURL: 'http://127.0.0.1:3000',
+    baseURL: 'http://localhost:3000',
   },
 });
 ```
