@@ -14616,6 +14616,17 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * Returns a locator that only matches [visible](https://playwright.dev/docs/actionability#visible) elements.
+   * @param options
+   */
+  visible(options?: {
+    /**
+     * Whether to match visible or invisible elements.
+     */
+    visible?: boolean;
+  }): Locator;
+
+  /**
    * Returns when element specified by locator satisfies the
    * [`state`](https://playwright.dev/docs/api/class-locator#locator-wait-for-option-state) option.
    *
