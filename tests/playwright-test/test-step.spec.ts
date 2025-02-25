@@ -1448,7 +1448,10 @@ fixture   |  fixture: context
 });
 
 test('reading network request / response should not be listed as step', {
-  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33558' }
+  annotation: [
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33558' },
+    { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34840' },
+  ]
 }, async ({ runInlineTest, server }) => {
   const result = await runInlineTest({
     'reporter.ts': stepIndentReporter,
@@ -1461,6 +1464,11 @@ test('reading network request / response should not be listed as step', {
         });
         page.on('response', async response => {
           await response.text();
+        });
+        await page.route('**/*', async route => {
+          const response = await route.fetch();
+          await response.text();
+          await route.fallback();
         });
         await page.goto('${server.EMPTY_PAGE}');
       });
@@ -1476,7 +1484,8 @@ fixture   |  fixture: context
 pw:api    |    browser.newContext
 fixture   |  fixture: page
 pw:api    |    browserContext.newPage
-pw:api    |page.goto(${server.EMPTY_PAGE}) @ a.test.ts:10
+pw:api    |page.route @ a.test.ts:10
+pw:api    |page.goto(${server.EMPTY_PAGE}) @ a.test.ts:15
 hook      |After Hooks
 fixture   |  fixture: page
 fixture   |  fixture: context
