@@ -16,7 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
-import { globToRegex } from '../../packages/playwright-core/lib/utils/isomorphic/urlMatch';
+import { globToRegex, urlMatches } from '../../packages/playwright-core/lib/utils/isomorphic/urlMatch';
 import vm from 'vm';
 
 it('should work with navigation @smoke', async ({ page, server }) => {
@@ -105,6 +105,20 @@ it('should work with glob', async () => {
   expect(globToRegex('\\[')).toEqual(/^\[$/);
   expect(globToRegex('[a-z]')).toEqual(/^[a-z]$/);
   expect(globToRegex('$^+.\\*()|\\?\\{\\}\\[\\]')).toEqual(/^\$\^\+\.\*\(\)\|\?\{\}\[\]$/);
+});
+
+it('should intercept by glob', async function({ page, server, isAndroid }) {
+  it.skip(isAndroid);
+
+  await page.goto(server.EMPTY_PAGE);
+  await page.route('http://localhos*?/?oo', async route => {
+    await route.fulfill({
+      status: 200,
+      body: 'intercepted',
+    });
+  });
+  const result = await page.evaluate(url => fetch(url).then(r => r.text()), server.PREFIX + '/foo');
+  expect(result).toBe('intercepted');
 });
 
 it('should intercept network activity from worker', async function({ page, server, isAndroid }) {

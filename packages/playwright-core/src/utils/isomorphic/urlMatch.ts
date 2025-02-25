@@ -101,7 +101,21 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
     // Allow http(s) baseURL to match ws(s) urls.
     if (baseURL && /^https?:\/\//.test(baseURL) && /^wss?:\/\//.test(urlString))
       baseURL = baseURL.replace(/^http/, 'ws');
-    match = constructURLBasedOnBaseURL(baseURL, match);
+    if (baseURL) {
+      // String starting with a dot are treated as explicit relative URL.
+      if (match.startsWith('.')) {
+        match = constructURLBasedOnBaseURL(baseURL, match);
+      } else {
+        // We cannot pass `match` as the relative URL as regex symbols would be misinterpreted.
+        const relativeBase = match.startsWith('/') ? '/' : '.';
+        let prefix = constructURLBasedOnBaseURL(baseURL, relativeBase);
+        if (prefix !== relativeBase) {
+          if (match.startsWith('/') && prefix.endsWith('/'))
+            prefix = prefix.substring(0, prefix.length - 1);
+          match = prefix + match;
+        }
+      }
+    }
   }
   if (isString(match))
     match = globToRegex(match);
