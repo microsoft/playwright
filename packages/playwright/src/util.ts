@@ -203,9 +203,10 @@ export function trimLongString(s: string, length = 100) {
 function findNthFromEnd(string: string, searchString: string, n: number) {
   let i = string.length;
   while (n--) {
-    i = string.lastIndexOf(searchString, i - 1);
-    if (i === -1)
+    const pos = string.lastIndexOf(searchString, i - 1);
+    if (pos === -1)
       break;
+    i = pos;
   }
   return i;
 }
@@ -219,6 +220,7 @@ function multiExtname(filePath: string, maximum = 2): string {
 export function parsePathMultiExt(filePath: string, maximum = 2) {
   const startOfExtension = findNthFromEnd(filePath, '.', maximum);
   const result = path.parse(filePath.substring(0, startOfExtension) + '.ext');
+  result.base = filePath.substring(0, startOfExtension);
   result.ext = filePath.substring(startOfExtension);
   return result;
 }
@@ -412,6 +414,15 @@ export function resolveImportSpecifierAfterMapping(resolved: string, afterPathMa
 
 function fileExists(resolved: string) {
   return fs.statSync(resolved, { throwIfNoEntry: false })?.isFile();
+}
+
+export async function fileExistsAsync(resolved: string) {
+  try {
+    const stat = await fs.promises.stat(resolved);
+    return stat.isFile();
+  } catch {
+    return false;
+  }
 }
 
 function dirExists(resolved: string) {

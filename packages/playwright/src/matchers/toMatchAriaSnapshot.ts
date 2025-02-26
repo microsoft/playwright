@@ -22,7 +22,7 @@ import { escapeTemplateString, isString, sanitizeForFilePath } from 'playwright-
 
 import {  kNoElementsFoundError, matcherHint } from './matcherHint';
 import { EXPECTED_COLOR } from '../common/expectBundle';
-import { callLogText, sanitizeFilePathBeforeExtension, trimLongString } from '../util';
+import { callLogText, fileExistsAsync, sanitizeFilePathBeforeExtension, trimLongString } from '../util';
 import { printReceivedStringContainExpectedSubstring } from './expect';
 import { currentTestInfo } from '../common/globals';
 
@@ -79,6 +79,13 @@ export async function toMatchAriaSnapshot(
       }
       const fullTitleWithoutSpec = [...testInfo.titlePath.slice(1), ++snapshotNames.anonymousSnapshotIndex].join(' ');
       expectedPath = testInfo._resolveSnapshotPath(pathTemplate, defaultTemplate, [sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.snapshot.yml']);
+      // in 1.51, we changed the default template to use .snapshot.yml extension
+      // for backwards compatibility, we check for the legacy .yml extension
+      if (!(await fileExistsAsync(expectedPath))) {
+        const legacyPath = testInfo._resolveSnapshotPath(pathTemplate, defaultTemplate, [sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.yml']);
+        if (await fileExistsAsync(legacyPath))
+          expectedPath = legacyPath;
+      }
     }
     expected = await fs.promises.readFile(expectedPath, 'utf8').catch(() => '');
     timeout = expectedParam?.timeout ?? this.timeout;

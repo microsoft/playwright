@@ -130,6 +130,24 @@ test('should generate snapshot name', async ({ runInlineTest }, testInfo) => {
   expect(snapshot2).toBe('- heading "hello world 2" [level=1]');
 });
 
+test('backwads compat with .yml extension', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts-snapshots/test-1.yml': `
+      - heading "hello old world"
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<h1>hello new world</h1>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot();
+      });
+    `
+  }, { 'update-snapshots': 'changed' });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain(`A snapshot is generated at a.spec.ts-snapshots${path.sep}test-1.yml.`);
+});
+
 for (const updateSnapshots of ['all', 'changed', 'missing', 'none']) {
   test(`should update snapshot with the update-snapshots=${updateSnapshots} (config)`, async ({ runInlineTest }, testInfo) => {
     const result = await runInlineTest({
