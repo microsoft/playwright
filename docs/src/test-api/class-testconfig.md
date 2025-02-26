@@ -239,7 +239,10 @@ export default defineConfig({
 
 Metadata contains key-value pairs to be included in the report. For example, HTML report will display it as key-value pairs, and JSON report will include metadata serialized as json.
 
-Providing `'git.commit.info': {}` property will populate it with the git commit details. This is useful for CI/CD environments.
+* Providing `gitCommit: 'generate'` property will populate it with the git commit details.
+* Providing `gitDiff: 'generate'` property will populate it with the git diff details.
+
+On selected CI providers, both will be generated automatically. Specifying values will prevent the automatic generation.
 
 **Usage**
 

@@ -1187,12 +1187,12 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]);
     });
 
-    test('should include metadata with git.commit.info', async ({ runInlineTest, writeFiles, showReport, page }) => {
+    test('should include metadata with gitCommit', async ({ runInlineTest, writeFiles, showReport, page }) => {
       const files = {
         'uncommitted.txt': `uncommitted file`,
         'playwright.config.ts': `
           export default {
-            metadata: { 'git.commit.info': {}, foo: 'value1', bar: { prop: 'value2' }, baz: ['value3', 123] }
+            metadata: { foo: 'value1', bar: { prop: 'value2' }, baz: ['value3', 123] }
           };
         `,
         'example.spec.ts': `
@@ -1219,6 +1219,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       const result = await runInlineTest(files, { reporter: 'dot,html' }, {
         PLAYWRIGHT_HTML_OPEN: 'never',
+        GITHUB_ACTIONS: '1',
         GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test',
         GITHUB_SERVER_URL: 'https://playwright.dev',
         GITHUB_SHA: 'example-sha',
@@ -1240,12 +1241,12 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       `);
     });
 
-    test('should include metadata with git.commit.info on GHA', async ({ runInlineTest, writeFiles, showReport, page }) => {
+    test('should include metadata on GHA', async ({ runInlineTest, writeFiles, showReport, page }) => {
       const files = {
         'uncommitted.txt': `uncommitted file`,
         'playwright.config.ts': `
           export default {
-            metadata: { 'git.commit.info': {}, foo: 'value1', bar: { prop: 'value2' }, baz: ['value3', 123] }
+            metadata: { foo: 'value1', bar: { prop: 'value2' }, baz: ['value3', 123] }
           };
         `,
         'example.spec.ts': `
@@ -1281,6 +1282,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       const result = await runInlineTest(files, { reporter: 'dot,html' }, {
         PLAYWRIGHT_HTML_OPEN: 'never',
+        GITHUB_ACTIONS: '1',
         GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test',
         GITHUB_RUN_ID: 'example-run-id',
         GITHUB_SERVER_URL: 'https://playwright.dev',
@@ -1295,10 +1297,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.metadata-view')).toMatchAriaSnapshot(`
         - list:
           - listitem:
-            - link "My PR"
-          - listitem:
-            - text: /William <shakespeare@example\\.local>/
-            - link "Logs"
+            - link "https://playwright.dev/microsoft/playwright-example-for-test/commit/example-sha"
         - list:
           - listitem: "foo : value1"
           - listitem: "bar : {\\"prop\\":\\"value2\\"}"
@@ -1306,7 +1305,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       `);
     });
 
-    test('should not include git metadata w/o git.commit.info', async ({ runInlineTest, showReport, page }) => {
+    test('should not include git metadata w/o gitCommit', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
           export default {};
@@ -1330,7 +1329,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         'playwright.config.ts': `
           export default {
             metadata: {
-              'git.commit.info': { revision: { timestamp: 'hi' } }
+              gitCommit: { author: { date: 'hi' } }
             },
           };
         `,
@@ -2765,7 +2764,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         'playwright.config.ts': `
           export default {
             metadata: {
-              'git.commit.info': {},
               foo: 'value1',
               bar: { prop: 'value2' },
               baz: ['value3', 123]
@@ -2799,6 +2797,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       const result = await runInlineTest(files, { reporter: 'dot,html' }, {
         PLAYWRIGHT_HTML_OPEN: 'never',
+        GITHUB_ACTIONS: '1',
         GITHUB_REPOSITORY: 'microsoft/playwright-example-for-test',
         GITHUB_RUN_ID: 'example-run-id',
         GITHUB_SERVER_URL: 'https://playwright.dev',

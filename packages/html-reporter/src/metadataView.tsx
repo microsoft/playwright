@@ -20,31 +20,9 @@ import './common.css';
 import './theme.css';
 import './metadataView.css';
 import type { Metadata } from '@playwright/test';
-import type { GitCommitInfo } from '@testIsomorphic/types';
+import type { CIInfo, GitCommitInfo, MetadataWithCommitInfo } from '@testIsomorphic/types';
 import { CopyToClipboardContainer } from './copyToClipboard';
 import { linkifyText } from '@web/renderUtils';
-
-type MetadataEntries = [string, unknown][];
-
-export const MetadataContext = React.createContext<MetadataEntries>([]);
-
-export function MetadataProvider({ metadata, children }: React.PropsWithChildren<{ metadata: Metadata }>) {
-  const entries = React.useMemo(() => {
-    // TODO: do not plumb actualWorkers through metadata.
-    return Object.entries(metadata).filter(([key]) => key !== 'actualWorkers');
-  }, [metadata]);
-
-  return <MetadataContext.Provider value={entries}>{children}</MetadataContext.Provider>;
-}
-
-export function useMetadata() {
-  return React.useContext(MetadataContext);
-}
-
-export function useGitCommitInfo() {
-  const metadataEntries = useMetadata();
-  return metadataEntries.find(([key]) => key === 'git.commit.info')?.[1] as GitCommitInfo | undefined;
-}
 
 class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, { error: Error | null, errorInfo: React.ErrorInfo | null }> {
   override state: { error: Error | null, errorInfo: React.ErrorInfo | null } = {
@@ -72,23 +50,22 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, { error
   }
 }
 
-export const MetadataView = () => {
-  return <ErrorBoundary><InnerMetadataView/></ErrorBoundary>;
+export const MetadataView: React.FC<{ metadata: Metadata }> = params => {
+  return <ErrorBoundary><InnerMetadataView metadata={params.metadata}/></ErrorBoundary>;
 };
 
-const InnerMetadataView = () => {
-  const metadataEntries = useMetadata();
-  const gitCommitInfo = useGitCommitInfo();
-  const entries = metadataEntries.filter(([key]) => key !== 'git.commit.info');
-  if (!gitCommitInfo && !entries.length)
-    return null;
+const InnerMetadataView: React.FC<{ metadata: Metadata }> = params => {
+  const commitInfo = params.metadata as MetadataWithCommitInfo;
+  const otherEntries = Object.entries(params.metadata).filter(([key]) => !ignoreKeys.has(key));
+  const hasMetadata = commitInfo.ci || commitInfo.gitCommit || otherEntries.length > 0;
+  if (!hasMetadata)
+    return;
   return <div className='metadata-view'>
-    {gitCommitInfo && <>
-      <GitCommitInfoView info={gitCommitInfo}/>
-      {entries.length > 0 && <div className='metadata-separator' />}
-    </>}
+    {commitInfo.ci && <CiInfoView info={commitInfo.ci}/>}
+    {commitInfo.gitCommit && <GitCommitInfoView link={commitInfo.ci?.commitHref} info={commitInfo.gitCommit}/>}
+    {otherEntries.length > 0 && (commitInfo.gitCommit || commitInfo.ci) && <div className='metadata-separator' />}
     <div className='metadata-section metadata-properties' role='list'>
-      {entries.map(([propertyName, value]) => {
+      {otherEntries.map(([propertyName, value]) => {
         const valueString = typeof value !== 'object' || value === null || value === undefined ? String(value) : JSON.stringify(value);
         const trimmedValue = valueString.length > 1000 ? valueString.slice(0, 1000) + '\u2026' : valueString;
         return (
@@ -104,20 +81,24 @@ const InnerMetadataView = () => {
   </div>;
 };
 
-const GitCommitInfoView: React.FC<{ info: GitCommitInfo }> = ({ info }) => {
-  const email = info.revision?.email ? ` <${info.revision?.email}>` : '';
-  const author = `${info.revision?.author || ''}${email}`;
+const CiInfoView: React.FC<{ info: CIInfo }> = ({ info }) => {
+  const link = info.commitHref;
+  return <div className='metadata-section' role='list'>
+    <div role='listitem'>
+      <a href={link} target='_blank' rel='noopener noreferrer' title={link}>
+        {link}
+      </a>
+    </div>
+  </div>;
+};
 
-  let subject = info.revision?.subject || '';
-  let link = info.revision?.link;
+const GitCommitInfoView: React.FC<{ link?: string, info: GitCommitInfo }> = ({ link, info }) => {
+  const subject = info.subject;
+  const email = ` <${info.author.email}>`;
+  const author = `${info.author.name}${email}`;
+  const shortTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(info.committer.time);
+  const longTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(info.committer.time);
 
-  if (info.pull_request?.link && info.pull_request?.title) {
-    subject = info.pull_request?.title;
-    link = info.pull_request?.link;
-  }
-
-  const shortTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(info.revision?.timestamp);
-  const longTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(info.revision?.timestamp);
   return <div className='metadata-section' role='list'>
     <div role='listitem'>
       {link ? (
@@ -131,12 +112,13 @@ const GitCommitInfoView: React.FC<{ info: GitCommitInfo }> = ({ info }) => {
     <div role='listitem' className='hbox'>
       <span className='mr-1'>{author}</span>
       <span title={longTimestamp}> on {shortTimestamp}</span>
-      {info.ci?.link && (
-        <>
-          <span className='mx-2'>·</span>
-          <a href={info.ci?.link} target='_blank' rel='noopener noreferrer' title='CI/CD logs'>Logs</a>
-        </>
-      )}
     </div>
   </div>;
+};
+
+const ignoreKeys = new Set(['ci', 'gitCommit', 'gitDiff', 'actualWorkers']);
+
+export const isMetadataEmpty = (metadata: MetadataWithCommitInfo): boolean => {
+  const otherEntries = Object.entries(metadata).filter(([key]) => !ignoreKeys.has(key));
+  return !metadata.ci && !metadata.gitCommit && !otherEntries.length;
 };

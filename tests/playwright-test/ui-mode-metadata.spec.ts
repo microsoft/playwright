@@ -21,14 +21,13 @@ test('should render html report git info metadata', async ({ runUITest }) => {
     'reporter.ts': `
       module.exports = class Reporter {
         onBegin(config, suite) {
-          console.log('ci.link:', config.metadata['git.commit.info'].ci.link);
+          console.log('ci.link:', config.metadata['ci'].commitHref);
         }
       }
     `,
     'playwright.config.ts': `
       import { defineConfig } from '@playwright/test';
       export default defineConfig({
-        metadata: { 'git.commit.info': {} },
         reporter: './reporter.ts',
       });
     `,
@@ -37,6 +36,7 @@ test('should render html report git info metadata', async ({ runUITest }) => {
       test('should work', async ({}) => {});
     `
   }, {
+    JENKINS_URL: '1',
     BUILD_URL: 'https://playwright.dev',
   });
 

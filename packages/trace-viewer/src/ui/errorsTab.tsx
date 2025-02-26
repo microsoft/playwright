@@ -24,20 +24,20 @@ import type { StackFrame } from '@protocol/channels';
 import { CopyToClipboardTextButton } from './copyToClipboard';
 import { attachmentURL } from './attachmentsTab';
 import { fixTestPrompt } from '@web/components/prompts';
-import type { GitCommitInfo } from '@testIsomorphic/types';
+import type { MetadataWithCommitInfo } from '@testIsomorphic/types';
 import { AIConversation } from './aiConversation';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { useIsLLMAvailable, useLLMChat } from './llm';
 import { useAsyncMemo } from '@web/uiUtils';
 
-const GitCommitInfoContext = React.createContext<GitCommitInfo | undefined>(undefined);
+const CommitInfoContext = React.createContext<MetadataWithCommitInfo | undefined>(undefined);
 
-export function GitCommitInfoProvider({ children, gitCommitInfo }: React.PropsWithChildren<{ gitCommitInfo: GitCommitInfo }>) {
-  return <GitCommitInfoContext.Provider value={gitCommitInfo}>{children}</GitCommitInfoContext.Provider>;
+export function CommitInfoProvider({ children, commitInfo }: React.PropsWithChildren<{ commitInfo: MetadataWithCommitInfo }>) {
+  return <CommitInfoContext.Provider value={commitInfo}>{children}</CommitInfoContext.Provider>;
 }
 
-export function useGitCommitInfo() {
-  return React.useContext(GitCommitInfoContext);
+export function useCommitInfo() {
+  return React.useContext(CommitInfoContext);
 }
 
 function usePageSnapshot(actions: modelUtil.ActionTraceEventInContext[]) {
@@ -100,8 +100,7 @@ export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined):
 function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSource }: { message: string, error: ErrorDescription, errorId: string, sdkLanguage: Language, pageSnapshot?: string, revealInSource: (error: ErrorDescription) => void  }) {
   const [showLLM, setShowLLM] = React.useState(false);
   const llmAvailable = useIsLLMAvailable();
-  const gitCommitInfo = useGitCommitInfo();
-  const diff = gitCommitInfo?.pull_request?.diff ?? gitCommitInfo?.revision?.diff;
+  const metadata = useCommitInfo();
 
   let location: string | undefined;
   let longLocation: string | undefined;
@@ -127,8 +126,8 @@ function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSou
       </div>}
       <span style={{ position: 'absolute', right: '5px' }}>
         {llmAvailable
-          ? <FixWithAIButton conversationId={errorId} onChange={setShowLLM} value={showLLM} error={message} diff={diff} pageSnapshot={pageSnapshot} />
-          : <CopyPromptButton error={message} pageSnapshot={pageSnapshot} diff={diff} />}
+          ? <FixWithAIButton conversationId={errorId} onChange={setShowLLM} value={showLLM} error={message} diff={metadata?.gitDiff} pageSnapshot={pageSnapshot} />
+          : <CopyPromptButton error={message} pageSnapshot={pageSnapshot} diff={metadata?.gitDiff} />}
       </span>
     </div>
 
