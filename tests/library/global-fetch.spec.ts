@@ -537,9 +537,9 @@ it('should retry ECONNRESET', {
   await request.dispose();
 });
 
-it('should throw when apiRequestFailsOnErrorStatus is set to true inside APIRequest context options', async ({ playwright, server }) => {
+it('should throw when failOnStatusCode is set to true inside APIRequest context options', async ({ playwright, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34204' });
-  const request = await playwright.request.newContext({ apiRequestFailsOnErrorStatus: true });
+  const request = await playwright.request.newContext({ failOnStatusCode: true });
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(404, { 'Content-Length': 10, 'Content-Type': 'text/plain' });
     res.end('Not found.');
@@ -549,9 +549,9 @@ it('should throw when apiRequestFailsOnErrorStatus is set to true inside APIRequ
   await request.dispose();
 });
 
-it('should not throw when apiRequestFailsOnErrorStatus is set to false inside APIRequest context options', async ({ playwright, server }) => {
+it('should not throw when failOnStatusCode is set to false inside APIRequest context options', async ({ playwright, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34204' });
-  const request = await playwright.request.newContext({ apiRequestFailsOnErrorStatus: false });
+  const request = await playwright.request.newContext({ failOnStatusCode: false });
   server.setRoute('/empty.html', (req, res) => {
     res.writeHead(404, { 'Content-Length': 10, 'Content-Type': 'text/plain' });
     res.end('Not found.');
