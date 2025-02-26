@@ -118,15 +118,12 @@ export const renderAction = (
   const { errors, warnings } = modelUtil.stats(action);
   const showAttachments = !!action.attachments?.length && !!revealAttachment;
 
-  let apiName = action.apiName;
-  if (apiName === 'apiRequestContext.get')
-    apiName = 'GET';
-  else if (apiName === 'apiRequestContext.post')
-    apiName = 'POST';
-  else if (apiName === 'apiRequestContext.put')
-    apiName = 'PUT';
-  else if (apiName === 'apiRequestContext.delete')
-    apiName = 'DELETE';
+  const apiName = {
+    'apiRequestContext.get': 'GET',
+    'apiRequestContext.post': 'POST',
+    'apiRequestContext.put': 'PUT',
+    'apiRequestContext.delete': 'DELETE',
+  }[action.apiName] ?? action.apiName;
 
   const parameterString = actionParameterDisplayString(action, sdkLanguage || 'javascript');
 
