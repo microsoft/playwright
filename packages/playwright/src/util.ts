@@ -206,8 +206,8 @@ export function addSuffixToFilePath(filePath: string, suffix: string): string {
   return base + suffix + ext;
 }
 
-export function sanitizeFilePathBeforeExtension(filePath: string): string {
-  const ext = path.extname(filePath);
+export function sanitizeFilePathBeforeExtension(filePath: string, ext?: string): string {
+  ext ??= path.extname(filePath);
   const base = filePath.substring(0, filePath.length - ext.length);
   return sanitizeForFilePath(base) + ext;
 }
@@ -389,6 +389,15 @@ export function resolveImportSpecifierAfterMapping(resolved: string, afterPathMa
 
 function fileExists(resolved: string) {
   return fs.statSync(resolved, { throwIfNoEntry: false })?.isFile();
+}
+
+export async function fileExistsAsync(resolved: string) {
+  try {
+    const stat = await fs.promises.stat(resolved);
+    return stat.isFile();
+  } catch {
+    return false;
+  }
 }
 
 function dirExists(resolved: string) {

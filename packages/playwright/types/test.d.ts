@@ -8791,14 +8791,14 @@ interface LocatorAssertions {
   /**
    * Asserts that the target element matches the given [accessibility snapshot](https://playwright.dev/docs/aria-snapshots).
    *
-   * Snapshot is stored in a separate `.yml` file in a location configured by `expect.toMatchAriaSnapshot.pathTemplate`
-   * and/or `snapshotPathTemplate` properties in the configuration file.
+   * Snapshot is stored in a separate `.snapshot.yml` file in a location configured by
+   * `expect.toMatchAriaSnapshot.pathTemplate` and/or `snapshotPathTemplate` properties in the configuration file.
    *
    * **Usage**
    *
    * ```js
    * await expect(page.locator('body')).toMatchAriaSnapshot();
-   * await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'body.yml' });
+   * await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'body.snapshot.yml' });
    * ```
    *
    * @param options
