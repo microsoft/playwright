@@ -78,7 +78,7 @@ export async function toMatchAriaSnapshot(
         (testInfo as any)[snapshotNamesSymbol] = snapshotNames;
       }
       const fullTitleWithoutSpec = [...testInfo.titlePath.slice(1), ++snapshotNames.anonymousSnapshotIndex].join(' ');
-      expectedPath = testInfo._resolveSnapshotPath(pathTemplate, defaultTemplate, [sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.yml']);
+      expectedPath = testInfo._resolveSnapshotPath(pathTemplate, defaultTemplate, [sanitizeForFilePath(trimLongString(fullTitleWithoutSpec)) + '.snapshot.yml']);
     }
     expected = await fs.promises.readFile(expectedPath, 'utf8').catch(() => '');
     timeout = expectedParam?.timeout ?? this.timeout;

@@ -200,14 +200,37 @@ export function trimLongString(s: string, length = 100) {
   return s.substring(0, start) + middle + s.slice(-end);
 }
 
+function findNthFromEnd(string: string, searchString: string, n: number) {
+  let i = string.length;
+  while (n--) {
+    i = string.lastIndexOf(searchString, i - 1);
+    if (i === -1)
+      break;
+  }
+  return i;
+}
+
+function multiExtname(filePath: string, maximum = 2): string {
+  const basename = path.basename(filePath);
+  const startOfExtension = findNthFromEnd(basename, '.', maximum);
+  return basename.substring(startOfExtension);
+}
+
+export function parsePathMultiExt(filePath: string, maximum = 2) {
+  const startOfExtension = findNthFromEnd(filePath, '.', maximum);
+  const result = path.parse(filePath.substring(0, startOfExtension) + '.ext');
+  result.ext = filePath.substring(startOfExtension);
+  return result;
+}
+
 export function addSuffixToFilePath(filePath: string, suffix: string): string {
-  const ext = path.extname(filePath);
+  const ext = multiExtname(filePath);
   const base = filePath.substring(0, filePath.length - ext.length);
   return base + suffix + ext;
 }
 
 export function sanitizeFilePathBeforeExtension(filePath: string): string {
-  const ext = path.extname(filePath);
+  const ext = multiExtname(filePath);
   const base = filePath.substring(0, filePath.length - ext.length);
   return sanitizeForFilePath(base) + ext;
 }

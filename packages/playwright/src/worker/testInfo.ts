@@ -20,7 +20,7 @@ import path from 'path';
 import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
-import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
+import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength, parsePathMultiExt } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { FloatingPromiseScope } from './floatingPromiseScope';
@@ -465,7 +465,7 @@ export class TestInfoImpl implements TestInfo {
 
   _resolveSnapshotPath(template: string | undefined, defaultTemplate: string, pathSegments: string[]) {
     const subPath = path.join(...pathSegments);
-    const parsedSubPath = path.parse(subPath);
+    const parsedSubPath = parsePathMultiExt(subPath);
     const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
