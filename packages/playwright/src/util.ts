@@ -206,7 +206,8 @@ export function addSuffixToFilePath(filePath: string, suffix: string): string {
   return base + suffix + ext;
 }
 
-export function sanitizeFilePathBeforeExtension(filePath: string, ext = path.extname(filePath)): string {
+export function sanitizeFilePathBeforeExtension(filePath: string, ext?: string): string {
+  ext ??= path.extname(filePath);
   const base = filePath.substring(0, filePath.length - ext.length);
   return sanitizeForFilePath(base) + ext;
 }
