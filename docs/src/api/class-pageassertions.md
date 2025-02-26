@@ -296,10 +296,10 @@ Ensures the page is navigated to the given URL.
 **Usage**
 
 ```js
-// Check for the page URL to be "https://playwright.dev/docs/intro" (including query string)
-await expect(page).toHaveURL("https://playwright.dev/docs/intro");
+// Check for the page URL to be 'https://playwright.dev/docs/intro' (including query string)
+await expect(page).toHaveURL('https://playwright.dev/docs/intro');
 
-// Check for the page URL to contain "doc", followed by an optional "s", followed by "/"
+// Check for the page URL to contain 'doc', followed by an optional 's', followed by '/'
 await expect(page).toHaveURL(/docs?\//);
 
 // Check for the predicate to be satisfied
