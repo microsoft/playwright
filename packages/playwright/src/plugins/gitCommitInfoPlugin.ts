@@ -14,119 +14,139 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-
-import { createGuid, spawnAsync } from 'playwright-core/lib/utils';
+import { spawnAsync } from 'playwright-core/lib/utils';
 
 import type { TestRunnerPlugin } from './';
 import type { FullConfig } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
-import type { GitCommitInfo } from '../isomorphic/types';
+import type { GitCommitInfo, CIInfo, UserMetadataWithCommitInfo } from '../isomorphic/types';
 
-const GIT_OPERATIONS_TIMEOUT_MS = 1500;
+const GIT_OPERATIONS_TIMEOUT_MS = 3000;
 
 export const addGitCommitInfoPlugin = (fullConfig: FullConfigInternal) => {
-  const commitProperty = fullConfig.config.metadata['git.commit.info'];
-  if (commitProperty && typeof commitProperty === 'object' && Object.keys(commitProperty).length === 0)
-    fullConfig.plugins.push({ factory: gitCommitInfo });
+  fullConfig.plugins.push({ factory: gitCommitInfoPlugin });
 };
 
-export const gitCommitInfo = (options?: GitCommitInfoPluginOptions): TestRunnerPlugin => {
+type GitCommitInfoPluginOptions = {
+  directory?: string;
+};
+
+export const gitCommitInfoPlugin = (options?: GitCommitInfoPluginOptions): TestRunnerPlugin => {
   return {
     name: 'playwright:git-commit-info',
 
     setup: async (config: FullConfig, configDir: string) => {
-      const commitInfo = await linksFromEnv();
-      await enrichStatusFromCLI(options?.directory || configDir, commitInfo);
-      config.metadata = config.metadata || {};
-      config.metadata['git.commit.info'] = commitInfo;
+      const metadata = config.metadata as UserMetadataWithCommitInfo;
+      const ci = ciInfo();
+      if (!metadata.ci && ci)
+        metadata.ci = ci;
+
+      if ((ci && !metadata.gitCommit) || metadata.gitCommit === 'generate') {
+        const git = await gitCommitInfo(options?.directory || configDir).catch(e => {
+          // eslint-disable-next-line no-console
+          console.error('Failed to get git commit info', e);
+        });
+        if (git)
+          metadata.gitCommit = git;
+      }
+
+      if ((ci && !metadata.gitDiff) || metadata.gitDiff === 'generate') {
+        const diffResult = await gitDiff(options?.directory || configDir, ci).catch(e => {
+          // eslint-disable-next-line no-console
+          console.error('Failed to get git diff', e);
+        });
+        if (diffResult)
+          metadata.gitDiff = diffResult;
+      }
     },
   };
 };
 
-interface GitCommitInfoPluginOptions {
-  directory?: string;
+function ciInfo(): CIInfo | undefined {
+  if (process.env.GITHUB_ACTIONS) {
+    return {
+      commitHref: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`,
+      buildHref: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
+      commitHash: process.env.GITHUB_SHA,
+      baseHash: process.env.GITHUB_BASE_REF,
+      branch: process.env.GITHUB_REF_NAME,
+    };
+  }
+
+  if (process.env.GITLAB_CI) {
+    return {
+      commitHref: `${process.env.CI_PROJECT_URL}/-/commit/${process.env.CI_COMMIT_SHA}`,
+      buildHref: process.env.CI_JOB_URL,
+      commitHash: process.env.CI_COMMIT_SHA,
+      baseHash: process.env.CI_COMMIT_BEFORE_SHA,
+      branch: process.env.CI_COMMIT_REF_NAME,
+    };
+  }
+
+  if (process.env.JENKINS_URL && process.env.BUILD_URL) {
+    return {
+      commitHref: process.env.BUILD_URL,
+      commitHash: process.env.GIT_COMMIT,
+      baseHash: process.env.GIT_PREVIOUS_COMMIT,
+      branch: process.env.GIT_BRANCH,
+    };
+  }
+
+  // Open to PRs.
 }
 
-async function linksFromEnv(): Promise<GitCommitInfo> {
-  const out: GitCommitInfo = {};
-  // Jenkins: https://www.jenkins.io/doc/book/pipeline/jenkinsfile/#using-environment-variables
-  if (process.env.BUILD_URL) {
-    out.ci = out.ci || {};
-    out.ci.link = process.env.BUILD_URL;
-  }
-  // GitLab: https://docs.gitlab.com/ee/ci/variables/predefined_variables.html
-  if (process.env.CI_PROJECT_URL && process.env.CI_COMMIT_SHA) {
-    out.revision = out.revision || {};
-    out.revision.link = `${process.env.CI_PROJECT_URL}/-/commit/${process.env.CI_COMMIT_SHA}`;
-  }
-  if (process.env.CI_JOB_URL) {
-    out.ci = out.ci || {};
-    out.ci.link = process.env.CI_JOB_URL;
-  }
-  // GitHub: https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
-  if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_SHA) {
-    out.revision = out.revision || {};
-    out.revision.link = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`;
-  }
-  if (process.env.GITHUB_SERVER_URL && process.env.GITHUB_REPOSITORY && process.env.GITHUB_RUN_ID) {
-    out.ci = out.ci || {};
-    out.ci.link = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-  }
-  if (process.env.GITHUB_EVENT_PATH) {
-    try {
-      const json = JSON.parse(await fs.promises.readFile(process.env.GITHUB_EVENT_PATH, 'utf8'));
-      if (json.pull_request) {
-        out.pull_request = out.pull_request || {};
-        out.pull_request.title = json.pull_request.title;
-        out.pull_request.link = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/pull/${json.pull_request.number}`;
-        out.pull_request.base = json.pull_request.base.ref;
-      }
-    } catch {
-    }
-  }
-  return out;
-}
-
-async function enrichStatusFromCLI(gitDir: string, commitInfo: GitCommitInfo) {
-  const separator = `:${createGuid().slice(0, 4)}:`;
+async function gitCommitInfo(gitDir: string): Promise<GitCommitInfo | undefined> {
+  const separator = `---786eec917292---`;
+  const tokens = [
+    '%H',  // commit hash
+    '%h',  // abbreviated commit hash
+    '%s',  // subject
+    '%B',  // raw body (unwrapped subject and body)
+    '%an', // author name
+    '%ae', // author email
+    '%at', // author date, UNIX timestamp
+    '%cn', // committer name
+    '%ce', // committer email
+    '%ct', // committer date, UNIX timestamp
+    '',    // branch
+  ];
   const commitInfoResult = await spawnAsync(
-      'git',
-      ['show', '-s', `--format=%H${separator}%s${separator}%an${separator}%ae${separator}%ct`, 'HEAD'],
-      { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS }
+      `git log -1 --pretty=format:"${tokens.join(separator)}" && git rev-parse --abbrev-ref HEAD`, [],
+      { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS, shell: true }
   );
   if (commitInfoResult.code)
-    return;
+    return undefined;
   const showOutput = commitInfoResult.stdout.trim();
-  const [id, subject, author, email, rawTimestamp] = showOutput.split(separator);
-  let timestamp: number = Number.parseInt(rawTimestamp, 10);
-  timestamp = Number.isInteger(timestamp) ? timestamp * 1000 : 0;
+  const [hash, shortHash, subject, body, authorName, authorEmail, authorTime, committerName, committerEmail, committerTime, branch] = showOutput.split(separator);
 
-  commitInfo.revision = {
-    ...commitInfo.revision,
-    id,
-    author,
-    email,
+  return {
+    shortHash,
+    hash,
     subject,
-    timestamp,
+    body,
+    author: {
+      name: authorName,
+      email: authorEmail,
+      time: +authorTime * 1000,
+    },
+    committer: {
+      name: committerName,
+      email: committerEmail,
+      time: +committerTime * 1000,
+    },
+    branch: branch.trim(),
   };
+}
 
-  const diffLimit = 1_000_000; // 1MB
-  if (commitInfo.pull_request?.base) {
-    const pullDiffResult = await spawnAsync(
-        'git',
-        ['diff', commitInfo.pull_request?.base],
-        { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS }
-    );
-    if (!pullDiffResult.code)
-      commitInfo.pull_request!.diff = pullDiffResult.stdout.substring(0, diffLimit);
-  } else {
-    const diffResult = await spawnAsync(
-        'git',
-        ['diff', 'HEAD~1'],
-        { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS }
-    );
-    if (!diffResult.code)
-      commitInfo.revision!.diff = diffResult.stdout.substring(0, diffLimit);
-  }
+async function gitDiff(gitDir: string, ci?: CIInfo): Promise<string | undefined> {
+  const diffLimit = 100_000;
+  const baseHash = ci?.baseHash ?? 'HEAD~1';
+
+  const pullDiffResult = await spawnAsync(
+      'git',
+      ['diff', baseHash],
+      { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS }
+  );
+  if (!pullDiffResult.code)
+    return pullDiffResult.stdout.substring(0, diffLimit);
 }

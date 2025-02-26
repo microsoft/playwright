@@ -14,23 +14,40 @@
  * limitations under the License.
  */
 
-export interface GitCommitInfo {
-  revision?: {
-    id?: string;
-    author?: string;
-    email?: string;
-    subject?: string;
-    timestamp?: number;
-    link?: string;
-    diff?: string;
-  },
-  pull_request?: {
-    link?: string;
-    diff?: string;
-    base?: string;
-    title?: string;
-  },
-  ci?: {
-    link?: string;
-  }
-}
+export type GitCommitInfo = {
+  shortHash: string;
+  hash: string;
+  subject: string;
+  body: string;
+  author: {
+    name: string;
+    email: string;
+    time: number;
+  };
+  committer: {
+    name: string;
+    email: string
+    time: number;
+  };
+  branch: string;
+};
+
+export type CIInfo = {
+  commitHref: string;
+  buildHref?: string;
+  commitHash?: string;
+  baseHash?: string;
+  branch?: string;
+};
+
+export type UserMetadataWithCommitInfo = {
+  ci?: CIInfo;
+  gitCommit?: GitCommitInfo | 'generate';
+  gitDiff?: string | 'generate';
+};
+
+export type MetadataWithCommitInfo = {
+  ci?: CIInfo;
+  gitCommit?: GitCommitInfo;
+  gitDiff?: string;
+};
