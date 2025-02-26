@@ -34,6 +34,8 @@ export type GitCommitInfo = {
 
 export type CIInfo = {
   commitHref: string;
+  prHref?: string;
+  prTitle?: string;
   buildHref?: string;
   commitHash?: string;
   baseHash?: string;

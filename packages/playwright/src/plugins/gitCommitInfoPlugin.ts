@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
+
 import { spawnAsync } from 'playwright-core/lib/utils';
 
 import type { TestRunnerPlugin } from './';
@@ -37,7 +39,7 @@ export const gitCommitInfoPlugin = (options?: GitCommitInfoPluginOptions): TestR
 
     setup: async (config: FullConfig, configDir: string) => {
       const metadata = config.metadata as UserMetadataWithCommitInfo;
-      const ci = ciInfo();
+      const ci = await ciInfo();
       if (!metadata.ci && ci)
         metadata.ci = ci;
 
@@ -62,10 +64,19 @@ export const gitCommitInfoPlugin = (options?: GitCommitInfoPluginOptions): TestR
   };
 };
 
-function ciInfo(): CIInfo | undefined {
+async function ciInfo(): Promise<CIInfo | undefined> {
   if (process.env.GITHUB_ACTIONS) {
+    let pr: { title: string, number: number } | undefined;
+    try {
+      const json = JSON.parse(await fs.promises.readFile(process.env.GITHUB_EVENT_PATH!, 'utf8'));
+      pr = { title: json.pull_request.title, number: json.pull_request.number };
+    } catch {
+    }
+
     return {
       commitHref: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`,
+      prHref: pr ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/pull/${pr.number}` : undefined,
+      prTitle: pr ? pr.title : undefined,
       buildHref: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
       commitHash: process.env.GITHUB_SHA,
       baseHash: process.env.GITHUB_BASE_REF,
@@ -76,6 +87,7 @@ function ciInfo(): CIInfo | undefined {
   if (process.env.GITLAB_CI) {
     return {
       commitHref: `${process.env.CI_PROJECT_URL}/-/commit/${process.env.CI_COMMIT_SHA}`,
+      prHref: process.env.CI_MERGE_REQUEST_IID ? `${process.env.CI_PROJECT_URL}/-/merge_requests/${process.env.CI_MERGE_REQUEST_IID}` : undefined,
       buildHref: process.env.CI_JOB_URL,
       commitHash: process.env.CI_COMMIT_SHA,
       baseHash: process.env.CI_COMMIT_BEFORE_SHA,
