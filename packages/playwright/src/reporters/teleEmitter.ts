@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
+import path from 'path';
 
 import { createGuid } from 'playwright-core/lib/utils';
 
@@ -184,8 +184,15 @@ export class TeleReporterEmitter implements ReporterV2 {
       dependencies: project.dependencies,
       snapshotDir: this._relativePath(project.snapshotDir),
       teardown: project.teardown,
+      use: this._serializeProjectUseOptions(project.use),
     };
     return report;
+  }
+
+  private _serializeProjectUseOptions(use: reporterTypes.FullProject['use']): Record<string, any> {
+    return {
+      testIdAttribute: use.testIdAttribute,
+    };
   }
 
   private _serializeSuite(suite: reporterTypes.Suite): teleReceiver.JsonSuite {

@@ -408,7 +408,7 @@ Here is an example fixture that automatically attaches debug logs when the test 
 
 ```js title="my-test.ts"
 import debug from 'debug';
-import * as fs from 'fs';
+import fs from 'fs';
 import { test as base } from '@playwright/test';
 
 export const test = base.extend<{ saveLogs: void }>({

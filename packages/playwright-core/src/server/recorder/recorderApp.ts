@@ -15,8 +15,8 @@
  */
 
 import { EventEmitter } from 'events';
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
 import { isUnderTest } from '../utils/debug';
 import { mime } from '../../utilsBundle';

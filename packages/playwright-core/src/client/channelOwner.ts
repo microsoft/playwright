@@ -38,21 +38,20 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
   readonly _channel: T;
   readonly _initializer: channels.InitializerTraits<T>;
   _logger: Logger | undefined;
-  readonly _platform: Platform;
   readonly _instrumentation: ClientInstrumentation;
   private _eventToSubscriptionMapping: Map<string, string> = new Map();
   private _isInternalType = false;
   _wasCollected: boolean = false;
 
   constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: channels.InitializerTraits<T>) {
-    super();
+    const connection = parent instanceof ChannelOwner ? parent._connection : parent;
+    super(connection._platform);
     this.setMaxListeners(0);
-    this._connection = parent instanceof ChannelOwner ? parent._connection : parent;
+    this._connection = connection;
     this._type = type;
     this._guid = guid;
     this._parent = parent instanceof ChannelOwner ? parent : undefined;
     this._instrumentation = this._connection._instrumentation;
-    this._platform = this._connection.platform;
 
     this._connection._objects.set(guid, this);
     if (this._parent) {
@@ -60,7 +59,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       this._logger = this._parent._logger;
     }
 
-    this._channel = this._createChannel(new EventEmitter());
+    this._channel = this._createChannel(new EventEmitter(connection._platform));
     this._initializer = initializer;
   }
 
@@ -142,6 +141,14 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     };
   }
 
+  private _validatorToWireContext(): ValidatorContext {
+    return {
+      tChannelImpl: tChannelImplToWire,
+      binary: this._connection.rawBuffers() ? 'buffer' : 'toBase64',
+      isUnderTest: () => this._platform.isUnderTest(),
+    };
+  }
+
   private _createChannel(base: Object): T {
     const channel = new Proxy(base, {
       get: (obj: any, prop: string | symbol) => {
@@ -150,7 +157,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
           if (validator) {
             return async (params: any) => {
               return await this._wrapApiCall(async apiZone => {
-                const validatedParams = validator(params, '', { tChannelImpl: tChannelImplToWire, binary: this._connection.rawBuffers() ? 'buffer' : 'toBase64' });
+                const validatedParams = validator(params, '', this._validatorToWireContext());
                 if (!apiZone.isInternal && !apiZone.reported) {
                   // Reporting/tracing/logging this api call for the first time.
                   apiZone.params = params;
@@ -192,7 +199,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       }
       return result;
     } catch (e) {
-      const innerError = ((process.env.PWDEBUGIMPL || this._platform.isUnderTest()) && e.stack) ? '\n<inner error>\n' + e.stack : '';
+      const innerError = ((this._platform.showInternalStackFrames() || this._platform.isUnderTest()) && e.stack) ? '\n<inner error>\n' + e.stack : '';
       if (apiZone.apiName && !apiZone.apiName.includes('<anonymous>'))
         e.message = apiZone.apiName + ': ' + e.message;
       const stackFrames = '\n' + stringifyStackFrames(stackTrace.frames).join('\n') + innerError;

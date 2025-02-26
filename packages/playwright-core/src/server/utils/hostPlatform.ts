@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as os from 'os';
+import os from 'os';
 
 import { getLinuxDistributionInfoSync } from './linuxUtils';
 

@@ -60,7 +60,9 @@ Example:
     'ff-beta': 'firefox-beta',
     'wk': 'webkit',
   }[args[0].toLowerCase()] ?? args[0].toLowerCase();
-  const descriptors = [browsersJSON.browsers.find(b => b.name === browserName)];
+  const descriptors = browsersJSON.browsers.filter(b =>
+    b.name === browserName || b.name === `${browserName}-headless-shell`
+  );
 
   if (!descriptors.every(d => !!d)) {
     console.log(`Unknown browser "${browserName}"`);
@@ -94,18 +96,6 @@ Example:
     console.log('\nUpdating browser version in browsers.json...');
     for (const descriptor of descriptors)
       descriptor.browserVersion = browserVersion;
-
-    // 4.1 chromium-headless-shell is equal to chromium version.
-    if (browserName === 'chromium') {
-      const headlessShellBrowser = await browsersJSON.browsers.find(b => b.name === 'chromium-headless-shell');
-      headlessShellBrowser.revision = revision;
-      headlessShellBrowser.browserVersion = browserVersion;
-    } else if (browserName === 'chromium-tip-of-tree') {
-      const tipOfTreeBrowser = await browsersJSON.browsers.find(b => b.name === 'chromium-tip-of-tree-headless-shell');
-      tipOfTreeBrowser.revision = revision;
-      tipOfTreeBrowser.browserVersion = browserVersion;
-    }
-
     fs.writeFileSync(path.join(CORE_PATH, 'browsers.json'), JSON.stringify(browsersJSON, null, 2) + '\n');
   }
 
@@ -118,8 +108,9 @@ Example:
     // 6. Update docs.
     console.log('\nUpdating documentation...');
     try {
-      process.stdout.write(execSync('npm run --silent doc'));
+      execSync('npm run doc', { stdio: 'inherit' });
     } catch (e) {
+      console.log('npm run doc failed with non-zero exit code. This might have updated generated files.');
     }
   }
   console.log(`\nRolled ${browserName} to ${revision}`);

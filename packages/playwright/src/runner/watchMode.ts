@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
+import path from 'path';
 import readline from 'readline';
 import { EventEmitter } from 'stream';
 

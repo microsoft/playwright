@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
+import path from 'path';
 
 import * as babel from '@babel/core';
 import traverseFunction from '@babel/traverse';

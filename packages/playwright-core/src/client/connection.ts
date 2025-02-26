@@ -78,15 +78,13 @@ export class Connection extends EventEmitter {
   toImpl: ((client: ChannelOwner) => any) | undefined;
   private _tracingCount = 0;
   readonly _instrumentation: ClientInstrumentation;
-  readonly platform: Platform;
   // Used from @playwright/test fixtures -> TODO remove?
   readonly headers: HeadersArray;
 
   constructor(platform: Platform, localUtils?: LocalUtils, instrumentation?: ClientInstrumentation, headers: HeadersArray = []) {
-    super();
+    super(platform);
     this._instrumentation = instrumentation || createInstrumentation();
     this._localUtils = localUtils;
-    this.platform = platform;
     this._rootObject = new Root(this);
     this.headers = headers;
   }
@@ -136,9 +134,9 @@ export class Connection extends EventEmitter {
     const type = object._type;
     const id = ++this._lastId;
     const message = { id, guid, method, params };
-    if (this.platform.isLogEnabled('channel')) {
+    if (this._platform.isLogEnabled('channel')) {
       // Do not include metadata in debug logs to avoid noise.
-      this.platform.log('channel', 'SEND> ' + JSON.stringify(message));
+      this._platform.log('channel', 'SEND> ' + JSON.stringify(message));
     }
     const location = frames[0] ? { file: frames[0].file, line: frames[0].line, column: frames[0].column } : undefined;
     const metadata: channels.Metadata = { apiName, location, internal: !apiName, stepId };
@@ -146,8 +144,16 @@ export class Connection extends EventEmitter {
       this._localUtils?.addStackToTracingNoReply({ callData: { stack: frames, id } }).catch(() => {});
     // We need to exit zones before calling into the server, otherwise
     // when we receive events from the server, we would be in an API zone.
-    this.platform.zones.empty.run(() => this.onmessage({ ...message, metadata }));
+    this._platform.zones.empty.run(() => this.onmessage({ ...message, metadata }));
     return await new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject, apiName, type, method }));
+  }
+
+  private _validatorFromWireContext(): ValidatorContext {
+    return {
+      tChannelImpl: this._tChannelImplFromWire.bind(this),
+      binary: this._rawBuffers ? 'buffer' : 'fromBase64',
+      isUnderTest: () => this._platform.isUnderTest(),
+    };
   }
 
   dispatch(message: object) {
@@ -156,25 +162,25 @@ export class Connection extends EventEmitter {
 
     const { id, guid, method, params, result, error, log } = message as any;
     if (id) {
-      if (this.platform.isLogEnabled('channel'))
-        this.platform.log('channel', '<RECV ' + JSON.stringify(message));
+      if (this._platform.isLogEnabled('channel'))
+        this._platform.log('channel', '<RECV ' + JSON.stringify(message));
       const callback = this._callbacks.get(id);
       if (!callback)
         throw new Error(`Cannot find command to respond: ${id}`);
       this._callbacks.delete(id);
       if (error && !result) {
         const parsedError = parseError(error);
-        rewriteErrorMessage(parsedError, parsedError.message + formatCallLog(this.platform, log));
+        rewriteErrorMessage(parsedError, parsedError.message + formatCallLog(this._platform, log));
         callback.reject(parsedError);
       } else {
         const validator = findValidator(callback.type, callback.method, 'Result');
-        callback.resolve(validator(result, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._rawBuffers ? 'buffer' : 'fromBase64' }));
+        callback.resolve(validator(result, '', this._validatorFromWireContext()));
       }
       return;
     }
 
-    if (this.platform.isLogEnabled('channel'))
-      this.platform.log('channel', '<EVENT ' + JSON.stringify(message));
+    if (this._platform.isLogEnabled('channel'))
+      this._platform.log('channel', '<EVENT ' + JSON.stringify(message));
     if (method === '__create__') {
       this._createRemoteObject(guid, params.type, params.guid, params.initializer);
       return;
@@ -198,7 +204,7 @@ export class Connection extends EventEmitter {
     }
 
     const validator = findValidator(object._type, method, 'Event');
-    (object._channel as any).emit(method, validator(params, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._rawBuffers ? 'buffer' : 'fromBase64' }));
+    (object._channel as any).emit(method, validator(params, '', this._validatorFromWireContext()));
   }
 
   close(cause?: string) {
@@ -229,7 +235,7 @@ export class Connection extends EventEmitter {
       throw new Error(`Cannot find parent object ${parentGuid} to create ${guid}`);
     let result: ChannelOwner<any>;
     const validator = findValidator(type, '', 'Initializer');
-    initializer = validator(initializer, '', { tChannelImpl: this._tChannelImplFromWire.bind(this), binary: this._rawBuffers ? 'buffer' : 'fromBase64' });
+    initializer = validator(initializer, '', this._validatorFromWireContext());
     switch (type) {
       case 'Android':
         result = new Android(parent, type, guid, initializer);

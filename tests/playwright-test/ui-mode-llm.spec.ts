@@ -44,7 +44,7 @@ test('openai', async ({ runUITest, server }) => {
       });
     `,
   }, {
-    OPENAI_API_KEY: 'fake-key',
+    EXPERIMENTAL_OPENAI_API_KEY: 'fake-key',
     OPENAI_BASE_URL: server.PREFIX,
   });
 
@@ -84,7 +84,7 @@ test('anthropic', async ({ runUITest, server }) => {
       });
     `,
   }, {
-    ANTHROPIC_API_KEY: 'fake-key',
+    EXPERIMENTAL_ANTHROPIC_API_KEY: 'fake-key',
     ANTHROPIC_BASE_URL: server.PREFIX,
   });
 

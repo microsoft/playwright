@@ -275,6 +275,19 @@ for (const bundle of bundles) {
   });
 }
 
+// Build/watch playwright-client.
+steps.push({
+  command: 'npm',
+  args: [
+    'run',
+    watchMode ? 'watch' : 'build',
+    ...(withSourceMaps ? ['--', '--sourcemap'] : [])
+  ],
+  shell: true,
+  cwd: path.join(__dirname, '..', '..', 'packages', 'playwright-client'),
+  concurrent: true,
+});
+
 // Build/watch trace viewer service worker.
 steps.push({
   command: 'npx',

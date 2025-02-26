@@ -71,6 +71,8 @@ test.describe('toHaveText with text', () => {
     await expect(locator).toHaveText('text CONTENT', { ignoreCase: true });
     // Should support falsy ignoreCase.
     await expect(locator).not.toHaveText('TEXT', { ignoreCase: false });
+    // Should normalize soft hyphens.
+    await expect(locator).toHaveText('T\u00ade\u00adxt content');
   });
 
   test('pass contain', async ({ page }) => {

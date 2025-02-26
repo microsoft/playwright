@@ -596,7 +596,7 @@ test('should understand worker fixture params in overrides calling base', async 
       ]};
     `,
   });
-  const outputs = result.results.map(r => r.stdout[0].text.replace(/\s/g, ''));
+  const outputs = result.results.map(r => r.stdout.filter(output => 'text' in output)[0].text.replace(/\s/g, ''));
   expect(outputs.sort()).toEqual(['foo-p1-override-bar', 'foo-p2-override-bar', 'foo-p3-override-bar']);
 });
 

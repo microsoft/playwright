@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
 import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone } from 'playwright-core/lib/utils';
 
@@ -23,6 +23,7 @@ import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutMana
 import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
+import { FloatingPromiseScope } from './floatingPromiseScope';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo } from '../../types/test';
@@ -67,6 +68,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _startTime: number;
   readonly _startWallTime: number;
   readonly _tracing: TestTracing;
+  readonly _floatingPromiseScope: FloatingPromiseScope = new FloatingPromiseScope();
 
   _wasInterrupted = false;
   _lastStepId = 0;

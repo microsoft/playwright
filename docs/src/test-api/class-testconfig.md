@@ -239,7 +239,7 @@ export default defineConfig({
 
 Metadata contains key-value pairs to be included in the report. For example, HTML report will display it as key-value pairs, and JSON report will include metadata serialized as json.
 
-See also [`property: TestConfig.populateGitInfo`] that populates metadata.
+Providing `'git.commit.info': {}` property will populate it with the git commit details. This is useful for CI/CD environments.
 
 **Usage**
 
@@ -291,7 +291,7 @@ Here is an example that uses [`method: TestInfo.outputPath`] to create a tempora
 
 ```js
 import { test, expect } from '@playwright/test';
-import * as fs from 'fs';
+import fs from 'fs';
 
 test('example test', async ({}, testInfo) => {
   const file = testInfo.outputPath('temporary-file.txt');
@@ -325,26 +325,6 @@ This path will serve as the base directory for each test file snapshot directory
 
 ## property: TestConfig.snapshotPathTemplate = %%-test-config-snapshot-path-template-%%
 * since: v1.28
-
-## property: TestConfig.populateGitInfo
-* since: v1.51
-- type: ?<[boolean]>
-
-Whether to populate `'git.commit.info'` field of the [`property: TestConfig.metadata`] with Git commit info and CI/CD information.
-
-This information will appear in the HTML and JSON reports and is available in the Reporter API.
-
-On Github Actions, this feature is enabled by default.
-
-**Usage**
-
-```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
-
-export default defineConfig({
-  populateGitInfo: !!process.env.CI,
-});
-```
 
 ## property: TestConfig.preserveOutput
 * since: v1.10
@@ -680,7 +660,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   webServer: {
     command: 'npm run start',
-    url: 'http://127.0.0.1:3000',
+    url: 'http://localhost:3000',
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
   },
@@ -709,19 +689,19 @@ export default defineConfig({
   webServer: [
     {
       command: 'npm run start',
-      url: 'http://127.0.0.1:3000',
+      url: 'http://localhost:3000',
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     },
     {
       command: 'npm run backend',
-      url: 'http://127.0.0.1:3333',
+      url: 'http://localhost:3333',
       timeout: 120 * 1000,
       reuseExistingServer: !process.env.CI,
     }
   ],
   use: {
-    baseURL: 'http://127.0.0.1:3000',
+    baseURL: 'http://localhost:3000',
   },
 });
 ```

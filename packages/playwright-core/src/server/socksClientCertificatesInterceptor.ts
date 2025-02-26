@@ -15,10 +15,10 @@
  */
 
 import { EventEmitter } from 'events';
-import * as http2 from 'http2';
-import * as net from 'net';
-import * as stream from 'stream';
-import * as tls from 'tls';
+import http2 from 'http2';
+import net from 'net';
+import stream from 'stream';
+import tls from 'tls';
 
 import { SocksProxy } from './utils/socksProxy';
 import { ManualPromise, escapeHTML, generateSelfSignedCertificate, rewriteErrorMessage } from '../utils';

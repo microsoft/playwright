@@ -20,7 +20,7 @@ import { BrowserContext } from '../browserContext';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { Page } from '../page';
-import { BidiExecutionContext } from './bidiExecutionContext';
+import { BidiExecutionContext, createHandle } from './bidiExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
 import { BidiNetworkManager } from './bidiNetworkManager';
 import { BidiPDF } from './bidiPdf';
@@ -130,7 +130,6 @@ export class BidiPage implements PageDelegate {
     const frame = this._page._frameManager.frame(realmInfo.context);
     if (!frame)
       return;
-    const delegate = new BidiExecutionContext(this._session, realmInfo);
     let worldName: types.World;
     if (!realmInfo.sandbox) {
       worldName = 'main';
@@ -141,8 +140,8 @@ export class BidiPage implements PageDelegate {
     } else {
       return;
     }
+    const delegate = new BidiExecutionContext(this._session, realmInfo);
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
-    (context as any)[contextDelegateSymbol] = delegate;
     frame._contextCreated(worldName, context);
     this._realmToContext.set(realmInfo.realm, context);
   }
@@ -242,7 +241,7 @@ export class BidiPage implements PageDelegate {
       return;
     const callFrame = params.stackTrace?.callFrames[0];
     const location = callFrame ?? { url: '', lineNumber: 1, columnNumber: 1 };
-    this._page._addConsoleMessage(entry.method, entry.args.map(arg => context.createHandle({ objectId: (arg as any).handle, ...arg })), location, params.text || undefined);
+    this._page._addConsoleMessage(entry.method, entry.args.map(arg => createHandle(context, arg)), location, params.text || undefined);
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
@@ -431,10 +430,6 @@ export class BidiPage implements PageDelegate {
     return executionContext.frameIdForWindowHandle(windowHandle);
   }
 
-  isElementHandle(remoteObject: bidi.Script.RemoteValue): boolean {
-    return remoteObject.type === 'node';
-  }
-
   async getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null> {
     const box = await handle.evaluate(element => {
       if (!(element instanceof Element))
@@ -532,10 +527,7 @@ export class BidiPage implements PageDelegate {
     const fromContext = toBidiExecutionContext(handle._context);
     const nodeId = await fromContext.nodeIdForElementHandle(handle);
     const executionContext = toBidiExecutionContext(to);
-    const objectId = await executionContext.remoteObjectForNodeId(nodeId);
-    if (objectId)
-      return to.createHandle(objectId) as dom.ElementHandle<T>;
-    throw new Error('Failed to adopt element handle.');
+    return await executionContext.remoteObjectForNodeId(to, nodeId) as dom.ElementHandle<T>;
   }
 
   async getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
@@ -586,7 +578,5 @@ function addMainBinding(callback: (arg: any) => void) {
 }
 
 function toBidiExecutionContext(executionContext: dom.FrameExecutionContext): BidiExecutionContext {
-  return (executionContext as any)[contextDelegateSymbol] as BidiExecutionContext;
+  return executionContext.delegate as BidiExecutionContext;
 }
-
-const contextDelegateSymbol = Symbol('delegate');

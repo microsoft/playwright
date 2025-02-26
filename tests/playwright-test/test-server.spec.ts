@@ -120,6 +120,31 @@ test('file watching', async ({ startTestServer, writeFiles }, testInfo) => {
   ]);
 });
 
+test('should list tests with testIdAttribute', async ({ startTestServer, writeFiles }) => {
+  await writeFiles({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('foo', () => {});
+      `,
+    'playwright.config.ts': `
+        module.exports = {
+        projects: [{
+          name: 'chromium',
+          use: {
+            testIdAttribute: 'testId',
+          }
+        }]
+      };
+      `,
+  });
+
+  const testServerConnection = await startTestServer();
+  const events = await testServerConnection.listFiles({});
+  const onProject = events.report.find(e => e.method === 'onProject').params.project;
+  expect(onProject.name).toBe('chromium');
+  expect(onProject.use.testIdAttribute).toBe('testId');
+});
+
 test('stdio interception', async ({ startTestServer, writeFiles }) => {
   const testServerConnection = await startTestServer();
   await testServerConnection.initialize({ interceptStdio: true });

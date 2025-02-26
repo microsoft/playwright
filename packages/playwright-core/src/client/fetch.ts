@@ -338,16 +338,18 @@ export class APIResponse implements api.APIResponse {
   }
 
   async body(): Promise<Buffer> {
-    try {
-      const result = await this._request._channel.fetchResponseBody({ fetchUid: this._fetchUid() });
-      if (result.binary === undefined)
-        throw new Error('Response has been disposed');
-      return result.binary;
-    } catch (e) {
-      if (isTargetClosedError(e))
-        throw new Error('Response has been disposed');
-      throw e;
-    }
+    return await this._request._wrapApiCall(async () => {
+      try {
+        const result = await this._request._channel.fetchResponseBody({ fetchUid: this._fetchUid() });
+        if (result.binary === undefined)
+          throw new Error('Response has been disposed');
+        return result.binary;
+      } catch (e) {
+        if (isTargetClosedError(e))
+          throw new Error('Response has been disposed');
+        throw e;
+      }
+    }, true);
   }
 
   async text(): Promise<string> {

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
 import { gracefullyProcessExitDoNotHang } from '../../../utils';
 import { isUnderTest } from '../../../utils';
@@ -143,12 +143,12 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
     response.statusCode = 302;
     response.setHeader('Location', urlPath);
 
-    if (process.env.OPENAI_API_KEY)
-      response.appendHeader('Set-Cookie', `openai_api_key=${process.env.OPENAI_API_KEY}`);
+    if (process.env.EXPERIMENTAL_OPENAI_API_KEY)
+      response.appendHeader('Set-Cookie', `openai_api_key=${process.env.EXPERIMENTAL_OPENAI_API_KEY}`);
     if (process.env.OPENAI_BASE_URL)
       response.appendHeader('Set-Cookie', `openai_base_url=${process.env.OPENAI_BASE_URL}`);
-    if (process.env.ANTHROPIC_API_KEY)
-      response.appendHeader('Set-Cookie', `anthropic_api_key=${process.env.ANTHROPIC_API_KEY}`);
+    if (process.env.EXPERIMENTAL_ANTHROPIC_API_KEY)
+      response.appendHeader('Set-Cookie', `anthropic_api_key=${process.env.EXPERIMENTAL_ANTHROPIC_API_KEY}`);
     if (process.env.ANTHROPIC_BASE_URL)
       response.appendHeader('Set-Cookie', `anthropic_base_url=${process.env.ANTHROPIC_BASE_URL}`);
 

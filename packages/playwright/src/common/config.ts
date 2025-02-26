@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 import { getPackageJsonPath, mergeObjects } from '../util';
 
@@ -48,7 +48,6 @@ export class FullConfigInternal {
   readonly plugins: TestRunnerPluginRegistration[];
   readonly projects: FullProjectInternal[] = [];
   readonly singleTSConfigPath?: string;
-  readonly populateGitInfo: boolean;
   cliArgs: string[] = [];
   cliGrep: string | undefined;
   cliGrepInvert: string | undefined;
@@ -78,7 +77,6 @@ export class FullConfigInternal {
     const privateConfiguration = (userConfig as any)['@playwright/test'];
     this.plugins = (privateConfiguration?.plugins || []).map((p: any) => ({ factory: p }));
     this.singleTSConfigPath = pathResolve(configDir, userConfig.tsconfig);
-    this.populateGitInfo = takeFirst(userConfig.populateGitInfo, defaultPopulateGitInfo);
 
     this.globalSetups = (Array.isArray(userConfig.globalSetup) ? userConfig.globalSetup : [userConfig.globalSetup]).map(s => resolveScript(s, configDir)).filter(script => script !== undefined);
     this.globalTeardowns = (Array.isArray(userConfig.globalTeardown) ? userConfig.globalTeardown : [userConfig.globalTeardown]).map(s => resolveScript(s, configDir)).filter(script => script !== undefined);
@@ -94,7 +92,7 @@ export class FullConfigInternal {
       fullyParallel: takeFirst(configCLIOverrides.fullyParallel, userConfig.fullyParallel, false),
       globalSetup: this.globalSetups[0] ?? null,
       globalTeardown: this.globalTeardowns[0] ?? null,
-      globalTimeout: takeFirst(configCLIOverrides.globalTimeout, userConfig.globalTimeout, 0),
+      globalTimeout: takeFirst(configCLIOverrides.debug ? 0 : undefined, configCLIOverrides.globalTimeout, userConfig.globalTimeout, 0),
       grep: takeFirst(userConfig.grep, defaultGrep),
       grepInvert: takeFirst(userConfig.grepInvert, null),
       maxFailures: takeFirst(configCLIOverrides.debug ? 1 : undefined, configCLIOverrides.maxFailures, userConfig.maxFailures, 0),
@@ -301,7 +299,6 @@ function resolveScript(id: string | undefined, rootDir: string): string | undefi
 
 export const defaultGrep = /.*/;
 export const defaultReporter = process.env.CI ? 'dot' : 'list';
-const defaultPopulateGitInfo = process.env.GITHUB_ACTIONS === 'true';
 
 const configInternalSymbol = Symbol('configInternalSymbol');
 

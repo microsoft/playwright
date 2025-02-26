@@ -17,7 +17,6 @@
 import { ansi2html } from '@web/ansi2html';
 import * as React from 'react';
 import './testErrorView.css';
-import * as icons from './icons';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
 import type { TestResult } from './types';
@@ -27,7 +26,7 @@ import { useGitCommitInfo } from './metadataView';
 export const TestErrorView: React.FC<{ error: string; testId?: string; result?: TestResult }> = ({ error, testId, result }) => {
   return (
     <CodeSnippet code={error} testId={testId}>
-      <div style={{ float: 'right', padding: '5px' }}>
+      <div style={{ float: 'right', margin: 10 }}>
         <PromptButton error={error} result={result} />
       </div>
     </CodeSnippet>
@@ -51,14 +50,15 @@ const PromptButton: React.FC<{
   const gitCommitInfo = useGitCommitInfo();
   const prompt = React.useMemo(() => fixTestPrompt(
       error,
-      gitCommitInfo?.['pull.diff'] ?? gitCommitInfo?.['revision.diff'],
+      gitCommitInfo?.pull_request?.diff ?? gitCommitInfo?.revision?.diff,
       result?.attachments.find(a => a.name === 'pageSnapshot')?.body
   ), [gitCommitInfo, result, error]);
 
   const [copied, setCopied] = React.useState(false);
 
   return <button
-    className='prompt-button'
+    className='button'
+    style={{ minWidth: 100 }}
     onClick={async () => {
       await navigator.clipboard.writeText(prompt);
       setCopied(true);
@@ -66,7 +66,7 @@ const PromptButton: React.FC<{
         setCopied(false);
       }, 3000);
     }}>
-    {copied ? <span className='prompt-button-copied'>Copied <icons.copy/></span> : 'Fix with AI'}
+    {copied ? 'Copied' : 'Copy as Prompt'}
   </button>;
 };
 

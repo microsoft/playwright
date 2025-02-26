@@ -21,7 +21,7 @@
 // USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import events from 'events';
-import { EventEmitter } from '../../../packages/playwright-core/lib/client/eventEmitter';
+import { EventEmitter } from './utils';
 import { setUnderTest } from '../../../packages/playwright-core/lib/server/utils/debug';
 import { test, expect } from '@playwright/test';
 import * as common from './utils';

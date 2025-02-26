@@ -16,8 +16,8 @@
 
 /* eslint-disable no-console */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
 import { program } from 'playwright-core/lib/cli/program';
 import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
@@ -337,6 +337,9 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     overrides.use = overrides.use || {};
     overrides.use.trace = options.trace;
   }
+  if (overrides.tsconfig && !fs.existsSync(overrides.tsconfig))
+    throw new Error(`--tsconfig "${options.tsconfig}" does not exist`);
+
   return overrides;
 }
 

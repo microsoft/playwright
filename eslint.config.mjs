@@ -177,12 +177,19 @@ const noBooleanCompareRules = {
   '@typescript-eslint/no-unnecessary-boolean-literal-compare': 2,
 };
 
-const noRestrictedGlobalsRules = {
+const noWebGlobalsRules = {
   'no-restricted-globals': [
     'error',
     { 'name': 'window' },
     { 'name': 'document' },
     { 'name': 'globalThis' },
+  ],
+};
+
+const noNodeGlobalsRules = {
+  'no-restricted-globals': [
+    'error',
+    { 'name': 'process' },
   ],
 };
 
@@ -249,7 +256,19 @@ export default [{
   files: ['packages/playwright-core/src/server/injected/**/*.ts'],
   languageOptions: languageOptionsWithTsConfig,
   rules: {
-    ...noRestrictedGlobalsRules,
+    ...noWebGlobalsRules,
+    ...noFloatingPromisesRules,
+    ...noBooleanCompareRules,
+  }
+}, {
+  files: [
+    'packages/playwright-core/src/client/**/*.ts',
+    'packages/playwright-core/src/protocol/**/*.ts',
+    'packages/playwright-core/src/utils/**/*.ts',
+  ],
+  languageOptions: languageOptionsWithTsConfig,
+  rules: {
+    ...noNodeGlobalsRules,
     ...noFloatingPromisesRules,
     ...noBooleanCompareRules,
   }

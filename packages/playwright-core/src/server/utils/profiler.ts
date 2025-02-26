@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
 const profileDir = process.env.PWTEST_PROFILE_DIR || '';
 

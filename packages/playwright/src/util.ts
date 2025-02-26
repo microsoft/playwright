@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import * as url from 'url';
+import fs from 'fs';
+import path from 'path';
+import url from 'url';
 import util from 'util';
 
 import { parseStackFrame, sanitizeForFilePath, calculateSha1, isRegExp, isString, stringifyStackFrames } from 'playwright-core/lib/utils';
@@ -55,7 +55,7 @@ export function filterStackFile(file: string) {
 export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
   const frames: StackFrame[] = [];
   for (const line of rawStack) {
-    const frame = parseStackFrame(line, path.sep);
+    const frame = parseStackFrame(line, path.sep, !!process.env.PWDEBUGIMPL);
     if (!frame || !frame.file)
       continue;
     if (!filterStackFile(frame.file))

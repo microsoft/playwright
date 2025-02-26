@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
 import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 import { isRegExp } from 'playwright-core/lib/utils';
@@ -253,6 +253,13 @@ function validateConfig(file: string, config: Config) {
       throw errorWithFile(file, `config.workers must be a positive number`);
     else if (typeof config.workers === 'string' && !config.workers.endsWith('%'))
       throw errorWithFile(file, `config.workers must be a number or percentage`);
+  }
+
+  if ('tsconfig' in config && config.tsconfig !== undefined) {
+    if (typeof config.tsconfig !== 'string')
+      throw errorWithFile(file, `config.tsconfig must be a string`);
+    if (!fs.existsSync(path.resolve(file, '..', config.tsconfig)))
+      throw errorWithFile(file, `config.tsconfig does not exist`);
   }
 }
 

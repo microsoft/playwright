@@ -371,7 +371,7 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * import { test, expect } from '@playwright/test';
-   * import * as fs from 'fs';
+   * import fs from 'fs';
    *
    * test('example test', async ({}, testInfo) => {
    *   const file = testInfo.outputPath('temporary-file.txt');
@@ -884,7 +884,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * export default defineConfig({
    *   webServer: {
    *     command: 'npm run start',
-   *     url: 'http://127.0.0.1:3000',
+   *     url: 'http://localhost:3000',
    *     timeout: 120 * 1000,
    *     reuseExistingServer: !process.env.CI,
    *   },
@@ -915,19 +915,19 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *   webServer: [
    *     {
    *       command: 'npm run start',
-   *       url: 'http://127.0.0.1:3000',
+   *       url: 'http://localhost:3000',
    *       timeout: 120 * 1000,
    *       reuseExistingServer: !process.env.CI,
    *     },
    *     {
    *       command: 'npm run backend',
-   *       url: 'http://127.0.0.1:3333',
+   *       url: 'http://localhost:3333',
    *       timeout: 120 * 1000,
    *       reuseExistingServer: !process.env.CI,
    *     }
    *   ],
    *   use: {
-   *     baseURL: 'http://127.0.0.1:3000',
+   *     baseURL: 'http://localhost:3000',
    *   },
    * });
    * ```
@@ -1285,9 +1285,8 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * Metadata contains key-value pairs to be included in the report. For example, HTML report will display it as
    * key-value pairs, and JSON report will include metadata serialized as json.
    *
-   * See also
-   * [testConfig.populateGitInfo](https://playwright.dev/docs/api/class-testconfig#test-config-populate-git-info) that
-   * populates metadata.
+   * Providing `'git.commit.info': {}` property will populate it with the git commit details. This is useful for CI/CD
+   * environments.
    *
    * **Usage**
    *
@@ -1349,7 +1348,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * import { test, expect } from '@playwright/test';
-   * import * as fs from 'fs';
+   * import fs from 'fs';
    *
    * test('example test', async ({}, testInfo) => {
    *   const file = testInfo.outputPath('temporary-file.txt');
@@ -1359,29 +1358,6 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   outputDir?: string;
-
-  /**
-   * Whether to populate `'git.commit.info'` field of the
-   * [testConfig.metadata](https://playwright.dev/docs/api/class-testconfig#test-config-metadata) with Git commit info
-   * and CI/CD information.
-   *
-   * This information will appear in the HTML and JSON reports and is available in the Reporter API.
-   *
-   * On Github Actions, this feature is enabled by default.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   populateGitInfo: !!process.env.CI,
-   * });
-   * ```
-   *
-   */
-  populateGitInfo?: boolean;
 
   /**
    * Whether to preserve test output in the
@@ -8514,7 +8490,8 @@ interface LocatorAssertions {
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
      * box `#FF00FF` (customized by
      * [`maskColor`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-screenshot-1-option-mask-color))
-     * that completely covers its bounding box.
+     * that completely covers its bounding box. The mask is also applied to invisible elements, see
+     * [Matching only visible elements](https://playwright.dev/docs/locators#matching-only-visible-elements) to disable that.
      */
     mask?: Array<Locator>;
 
@@ -8606,7 +8583,8 @@ interface LocatorAssertions {
      * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
      * box `#FF00FF` (customized by
      * [`maskColor`](https://playwright.dev/docs/api/class-locatorassertions#locator-assertions-to-have-screenshot-2-option-mask-color))
-     * that completely covers its bounding box.
+     * that completely covers its bounding box. The mask is also applied to invisible elements, see
+     * [Matching only visible elements](https://playwright.dev/docs/locators#matching-only-visible-elements) to disable that.
      */
     mask?: Array<Locator>;
 
@@ -9215,7 +9193,7 @@ export interface TestInfo {
    *
    * ```js
    * import { test, expect } from '@playwright/test';
-   * import * as fs from 'fs';
+   * import fs from 'fs';
    *
    * test('example test', async ({}, testInfo) => {
    *   const file = testInfo.outputPath('dir', 'temporary-file.txt');
@@ -9768,7 +9746,8 @@ export interface PageAssertionsToHaveScreenshotOptions {
    * Specify locators that should be masked when the screenshot is taken. Masked elements will be overlaid with a pink
    * box `#FF00FF` (customized by
    * [`maskColor`](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-screenshot-1-option-mask-color))
-   * that completely covers its bounding box.
+   * that completely covers its bounding box. The mask is also applied to invisible elements, see
+   * [Matching only visible elements](https://playwright.dev/docs/locators#matching-only-visible-elements) to disable that.
    */
   mask?: Array<Locator>;
 

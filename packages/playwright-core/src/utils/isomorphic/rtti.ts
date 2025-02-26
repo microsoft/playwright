@@ -27,5 +27,3 @@ export function isObject(obj: any): obj is NonNullable<object> {
 export function isError(obj: any): obj is Error {
   return obj instanceof Error || (obj && Object.getPrototypeOf(obj)?.name === 'Error');
 }
-
-export const isLikelyNpxGlobal = () => process.argv.length >= 2 && process.argv[1].includes('_npx');

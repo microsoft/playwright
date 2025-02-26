@@ -15,8 +15,8 @@
  */
 
 
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
 import { escapeTemplateString, isString, sanitizeForFilePath } from 'playwright-core/lib/utils';
 

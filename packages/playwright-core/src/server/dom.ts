@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
+import fs from 'fs';
 
 import * as js from './javascript';
 import { ProgressController } from './progress';
@@ -83,12 +83,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return js.evaluateExpression(this, expression, { ...options, returnByValue: false }, arg);
   }
 
-  override createHandle(remoteObject: js.RemoteObject): js.JSHandle {
-    if (this.frame._page._delegate.isElementHandle(remoteObject))
-      return new ElementHandle(this, remoteObject.objectId!);
-    return super.createHandle(remoteObject);
-  }
-
   injectedScript(): Promise<js.JSHandle<InjectedScript>> {
     if (!this._injectedScriptPromise) {
       const custom: string[] = [];
@@ -111,7 +105,11 @@ export class FrameExecutionContext extends js.ExecutionContext {
         );
         })();
       `;
-      this._injectedScriptPromise = this.rawEvaluateHandle(source).then(objectId => new js.JSHandle(this, 'object', 'InjectedScript', objectId));
+      this._injectedScriptPromise = this.rawEvaluateHandle(source)
+          .then(handle => {
+            handle._setPreview('InjectedScript');
+            return handle;
+          });
     }
     return this._injectedScriptPromise;
   }

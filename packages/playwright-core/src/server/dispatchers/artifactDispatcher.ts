@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
+import fs from 'fs';
 
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import { StreamDispatcher } from './streamDispatcher';
