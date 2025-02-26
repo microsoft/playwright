@@ -113,6 +113,22 @@ export class MultiTraceModel {
     return this.actions.findLast(a => a.error);
   }
 
+  /**
+   * Heuristic to toggle API testing UI. 
+   */
+  isAPITrace(): boolean | undefined {
+    if (this.browserName)
+      return false;
+
+    if (this.hasStepData) {
+      const setupDone = this.actions.some(a => a.apiName === 'Before Hooks' && a.endTime > 0);
+      if (!setupDone) // until the setup is done, we can't tell if it's an API test.
+        return undefined;
+    }
+
+    return true;
+  }
+
   private _errorDescriptorsFromActions(): ErrorDescription[] {
     const errors: ErrorDescription[] = [];
     for (const action of this.actions || []) {

@@ -118,6 +118,16 @@ export const renderAction = (
   const { errors, warnings } = modelUtil.stats(action);
   const showAttachments = !!action.attachments?.length && !!revealAttachment;
 
+  let apiName = action.apiName;
+  if (apiName === 'apiRequestContext.get')
+    apiName = 'GET';
+  else if (apiName === 'apiRequestContext.post')
+    apiName = 'POST';
+  else if (apiName === 'apiRequestContext.put')
+    apiName = 'PUT';
+  else if (apiName === 'apiRequestContext.delete')
+    apiName = 'DELETE';
+
   const parameterString = actionParameterDisplayString(action, sdkLanguage || 'javascript');
 
   const isSkipped = action.class === 'Test' && action.method === 'step' && action.annotations?.some(a => a.type === 'skip');
@@ -129,8 +139,8 @@ export const renderAction = (
   else if (!isLive)
     time = '-';
   return <>
-    <div className='action-title' title={action.apiName}>
-      <span>{action.apiName}</span>
+    <div className='action-title' title={apiName}>
+      <span>{apiName}</span>
       {parameterString &&
           (parameterString.type === 'locator' ? (
             <>

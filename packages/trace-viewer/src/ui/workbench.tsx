@@ -36,13 +36,14 @@ import { AnnotationsTab } from './annotationsTab';
 import type { Boundaries } from './geometry';
 import { InspectorTab } from './inspectorTab';
 import { ToolbarButton } from '@web/components/toolbarButton';
-import { useSetting, msToString, clsx } from '@web/uiUtils';
+import { useSetting, msToString, clsx, useMemoWithMemory } from '@web/uiUtils';
 import type { Entry } from '@trace/har';
 import './workbench.css';
 import { testStatusIcon, testStatusText } from './testUtils';
 import type { UITestStatus } from './testUtils';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import type { HighlightedElement } from './snapshotTab';
+import { NetworkResourceDetails } from './networkResourceDetails';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -84,6 +85,8 @@ export const Workbench: React.FunctionComponent<{
   }, []);
 
   const sources = React.useMemo(() => model?.sources || new Map<string, modelUtil.SourceModel>(), [model]);
+
+  const isAPITrace = useMemoWithMemory(() => model?.isAPITrace(), false, [model]);
 
   React.useEffect(() => {
     setSelectedTime(undefined);
@@ -247,15 +250,15 @@ export const Workbench: React.FunctionComponent<{
   };
 
   const tabs: TabbedPaneTabModel[] = [
-    inspectorTab,
+    !isAPITrace && inspectorTab,
     callTab,
     logTab,
     errorsTab,
     consoleTab,
-    networkTab,
+    !isAPITrace && networkTab,
     sourceTab,
     attachmentsTab,
-  ];
+  ].filter(v => !!v);
 
   if (annotations !== undefined) {
     const annotationsTab: TabbedPaneTabModel = {
@@ -320,8 +323,30 @@ export const Workbench: React.FunctionComponent<{
     component: <MetadataView model={model}/>
   };
 
+  const selectedResource = selectedAction ? networkModel.resources.findLast(r => (r._monotonicTime ?? 0) < selectedAction.endTime) : undefined;
+  const displayedResource = selectedResource ?? networkModel.resources[0];
+  const networkView = displayedResource && (
+    <NetworkResourceDetails
+      resource={displayedResource}
+      sdkLanguage={sdkLanguage}
+      startTimeOffset={0}
+    />
+  );
+
+  const snapshotsTabView = (
+    <SnapshotTabsView
+      action={activeAction}
+      model={model}
+      sdkLanguage={sdkLanguage}
+      testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
+      isInspecting={isInspecting}
+      setIsInspecting={setIsInspecting}
+      highlightedElement={highlightedElement}
+      setHighlightedElement={elementPicked} />
+  );
+
   return <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
-    {!hideTimeline && <Timeline
+    {(!hideTimeline && !isAPITrace) && <Timeline
       model={model}
       consoleEntries={consoleModel.entries}
       boundaries={boundaries}
@@ -341,15 +366,7 @@ export const Workbench: React.FunctionComponent<{
         orientation='horizontal'
         sidebarIsFirst
         settingName='actionListSidebar'
-        main={<SnapshotTabsView
-          action={activeAction}
-          model={model}
-          sdkLanguage={sdkLanguage}
-          testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
-          isInspecting={isInspecting}
-          setIsInspecting={setIsInspecting}
-          highlightedElement={highlightedElement}
-          setHighlightedElement={elementPicked} />}
+        main={isAPITrace ? networkView : snapshotsTabView}
         sidebar={
           <TabbedPane
             tabs={[actionsTab, metadataTab]}

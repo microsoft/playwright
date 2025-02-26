@@ -258,3 +258,16 @@ export function useCookies() {
   }, []);
   return cookies;
 }
+
+/**
+ * Returns result of `fn()`. If `fn` returns undefined, returns last non-undefined value.
+ */
+export function useMemoWithMemory<T>(fn: () => T | undefined, initialValue: T, deps: React.DependencyList) {
+  const [value, setValue] = React.useState<T>(initialValue);
+  React.useEffect(() => {
+    const value = fn();
+    if (value !== undefined)
+      setValue(value);
+  }, deps);
+  return value;
+}
