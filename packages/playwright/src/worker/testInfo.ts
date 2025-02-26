@@ -20,7 +20,7 @@ import path from 'path';
 import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
-import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength, parsePathMultiExt } from '../util';
+import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { FloatingPromiseScope } from './floatingPromiseScope';
@@ -463,9 +463,11 @@ export class TestInfoImpl implements TestInfo {
     return sanitizeForFilePath(trimLongString(fullTitleWithoutSpec));
   }
 
-  _resolveSnapshotPath(template: string | undefined, defaultTemplate: string, pathSegments: string[]) {
+  _resolveSnapshotPath(template: string | undefined, defaultTemplate: string, pathSegments: string[], extension?: string) {
     const subPath = path.join(...pathSegments);
-    const parsedSubPath = parsePathMultiExt(subPath);
+    const dir = path.dirname(subPath);
+    const ext = extension ?? path.extname(subPath);
+    const name = path.basename(subPath, ext);
     const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
@@ -481,8 +483,8 @@ export class TestInfoImpl implements TestInfo {
         .replace(/\{(.)?testName\}/g, '$1' + this._fsSanitizedTestName())
         .replace(/\{(.)?testFileName\}/g, '$1' + parsedRelativeTestFilePath.base)
         .replace(/\{(.)?testFilePath\}/g, '$1' + relativeTestFilePath)
-        .replace(/\{(.)?arg\}/g, '$1' + path.join(parsedSubPath.dir, parsedSubPath.name))
-        .replace(/\{(.)?ext\}/g, parsedSubPath.ext ? '$1' + parsedSubPath.ext : '');
+        .replace(/\{(.)?arg\}/g, '$1' + path.join(dir, name))
+        .replace(/\{(.)?ext\}/g, ext ? '$1' + ext : '');
 
     return path.normalize(path.resolve(this._configInternal.configDir, snapshotPath));
   }

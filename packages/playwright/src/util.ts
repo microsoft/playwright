@@ -200,39 +200,13 @@ export function trimLongString(s: string, length = 100) {
   return s.substring(0, start) + middle + s.slice(-end);
 }
 
-function findNthFromEnd(string: string, searchString: string, n: number) {
-  let i = string.length;
-  while (n--) {
-    const pos = string.lastIndexOf(searchString, i - 1);
-    if (pos === -1)
-      break;
-    i = pos;
-  }
-  return i;
-}
-
-function multiExtname(filePath: string, maximum = 2): string {
-  const basename = path.basename(filePath);
-  const startOfExtension = findNthFromEnd(basename, '.', maximum);
-  return basename.substring(startOfExtension);
-}
-
-export function parsePathMultiExt(filePath: string, maximum = 2) {
-  const startOfExtension = findNthFromEnd(filePath, '.', maximum);
-  const result = path.parse(filePath.substring(0, startOfExtension) + '.ext');
-  result.base = filePath.substring(0, startOfExtension);
-  result.ext = filePath.substring(startOfExtension);
-  return result;
-}
-
 export function addSuffixToFilePath(filePath: string, suffix: string): string {
-  const ext = multiExtname(filePath);
+  const ext = path.extname(filePath);
   const base = filePath.substring(0, filePath.length - ext.length);
   return base + suffix + ext;
 }
 
-export function sanitizeFilePathBeforeExtension(filePath: string): string {
-  const ext = multiExtname(filePath);
+export function sanitizeFilePathBeforeExtension(filePath: string, ext = path.extname(filePath)): string {
   const base = filePath.substring(0, filePath.length - ext.length);
   return sanitizeForFilePath(base) + ext;
 }
