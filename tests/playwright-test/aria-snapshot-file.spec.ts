@@ -18,8 +18,6 @@ import { test, expect } from './playwright-test-fixtures';
 import fs from 'fs';
 import path from 'path';
 
-// TODO: this is where to change some tests
-
 test.describe.configure({ mode: 'parallel' });
 
 test('should match snapshot with name', async ({ runInlineTest }, testInfo) => {
