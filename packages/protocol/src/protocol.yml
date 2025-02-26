@@ -520,7 +520,6 @@ ContextOptions:
     extraHTTPHeaders:
       type: array?
       items: NameValue
-    apiRequestFailsOnErrorStatus: boolean?
     offline: boolean?
     httpCredentials:
       type: object?
@@ -752,7 +751,7 @@ Playwright:
         extraHTTPHeaders:
           type: array?
           items: NameValue
-        apiRequestFailsOnErrorStatus: boolean?
+        failOnStatusCode: boolean?
         clientCertificates:
           type: array?
           items:
