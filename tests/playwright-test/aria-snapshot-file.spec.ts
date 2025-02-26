@@ -128,7 +128,7 @@ test('should generate snapshot name', async ({ runInlineTest }, testInfo) => {
   expect(snapshot2).toBe('- heading "hello world 2" [level=1]');
 });
 
-test('backwads compat with .yml extension', async ({ runInlineTest }) => {
+test('backwards compat with .yml extension', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts-snapshots/test-1.yml': `
       - heading "hello old world"
