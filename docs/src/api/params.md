@@ -1173,6 +1173,11 @@ Note that outer and inner locators must belong to the same frame. Inner locator 
 
 Matches elements that do not contain specified text somewhere inside, possibly in a child or a descendant element. When passed a [string], matching is case-insensitive and searches for a substring.
 
+## locator-option-visible
+- `visible` <[boolean]>
+
+Only matches visible or invisible elements.
+
 ## locator-options-list-v1.14
 - %%-locator-option-has-text-%%
 - %%-locator-option-has-%%

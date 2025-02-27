@@ -13218,6 +13218,11 @@ export interface Locator {
      * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
+
+    /**
+     * Only matches visible or invisible elements.
+     */
+    visible?: boolean;
   }): Locator;
 
   /**
@@ -14608,17 +14613,6 @@ export interface Locator {
      */
     trial?: boolean;
   }): Promise<void>;
-
-  /**
-   * Returns a locator that only matches [visible](https://playwright.dev/docs/actionability#visible) elements.
-   * @param options
-   */
-  visible(options?: {
-    /**
-     * Whether to match visible or invisible elements.
-     */
-    visible?: boolean;
-  }): Locator;
 
   /**
    * Returns when element specified by locator satisfies the
