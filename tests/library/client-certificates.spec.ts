@@ -955,6 +955,8 @@ test.describe('browser', () => {
           matches: [
             'https://www.hello.com:443/path',
             'https://www.sub.hello.com/path',
+            'https://10.0.0.1/path',
+            'https://[::1]/path',
           ],
           nonMatches: [
             'https://www.any.com:8443/path',
