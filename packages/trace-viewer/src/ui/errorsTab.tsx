@@ -29,6 +29,7 @@ import { AIConversation } from './aiConversation';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { useIsLLMAvailable, useLLMChat } from './llm';
 import { useAsyncMemo } from '@web/uiUtils';
+import { useSources } from './sourceTab';
 
 const CommitInfoContext = React.createContext<MetadataWithCommitInfo | undefined>(undefined);
 
@@ -53,18 +54,47 @@ function usePageSnapshot(actions: modelUtil.ActionTraceEventInContext[]) {
   }, [actions], undefined);
 }
 
+function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, modelUtil.SourceModel>, width: number) {
+  const selectedFrame = stack?.[0];
+  const { source } = useSources(stack, 0, sources);
+  return React.useMemo(() => {
+    if (!source.content)
+      return '';
+
+    const targetLine = selectedFrame?.line ?? 0;
+
+    const lines = source.content.split('\n');
+    const start = Math.max(0, targetLine - width);
+    const end = Math.min(lines.length, targetLine + width);
+    const lineNumberWidth = String(end).length;
+    const codeFrame = lines.slice(start, end).map((line, i) => {
+      const lineNumber = start + i + 1;
+      const paddedLineNumber = String(lineNumber).padStart(lineNumberWidth, ' ');
+      if (lineNumber !== targetLine)
+        return `  ${(paddedLineNumber)} | ${line}`;
+
+      let highlightLine = `> ${paddedLineNumber} | ${line}`;
+      if (selectedFrame?.column)
+        highlightLine += `\n${' '.repeat(4 + lineNumberWidth + selectedFrame.column)}^`;
+      return highlightLine;
+    }).join('\n');
+    return codeFrame;
+  }, [source, selectedFrame, width]);
+}
+
 const CopyPromptButton: React.FC<{
   error: string;
+  codeFrame: string;
   pageSnapshot?: string;
   diff?: string;
-}> = ({ error, pageSnapshot, diff }) => {
+}> = ({ error, codeFrame, pageSnapshot, diff }) => {
   const prompt = React.useMemo(
       () => fixTestPrompt(
-          error,
+          error + '\n\n' + codeFrame,
           diff,
           pageSnapshot
       ),
-      [error, diff, pageSnapshot]
+      [error, diff, codeFrame, pageSnapshot]
   );
 
   return (
@@ -97,7 +127,7 @@ export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined):
   }, [model]);
 }
 
-function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSource }: { message: string, error: ErrorDescription, errorId: string, sdkLanguage: Language, pageSnapshot?: string, revealInSource: (error: ErrorDescription) => void  }) {
+function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSource, sources }: { message: string, error: ErrorDescription, errorId: string, sdkLanguage: Language, pageSnapshot?: string, revealInSource: (error: ErrorDescription) => void, sources: Map<string, modelUtil.SourceModel> }) {
   const [showLLM, setShowLLM] = React.useState(false);
   const llmAvailable = useIsLLMAvailable();
   const metadata = useCommitInfo();
@@ -110,6 +140,8 @@ function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSou
     location = file + ':' + stackFrame.line;
     longLocation = stackFrame.file + ':' + stackFrame.line;
   }
+
+  const codeFrame = useCodeFrame(error.stack, sources, 3);
 
   return <div style={{ display: 'flex', flexDirection: 'column', overflowX: 'clip' }}>
     <div className='hbox' style={{
@@ -127,7 +159,7 @@ function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSou
       <span style={{ position: 'absolute', right: '5px' }}>
         {llmAvailable
           ? <FixWithAIButton conversationId={errorId} onChange={setShowLLM} value={showLLM} error={message} diff={metadata?.gitDiff} pageSnapshot={pageSnapshot} />
-          : <CopyPromptButton error={message} pageSnapshot={pageSnapshot} diff={metadata?.gitDiff} />}
+          : <CopyPromptButton error={message} codeFrame={codeFrame} pageSnapshot={pageSnapshot} diff={metadata?.gitDiff} />}
       </span>
     </div>
 
@@ -179,9 +211,10 @@ export const ErrorsTab: React.FunctionComponent<{
   errorsModel: ErrorsTabModel,
   actions: modelUtil.ActionTraceEventInContext[],
   wallTime: number,
+  sources: Map<string, modelUtil.SourceModel>,
   sdkLanguage: Language,
   revealInSource: (error: ErrorDescription) => void,
-}> = ({ errorsModel, sdkLanguage, revealInSource, actions, wallTime }) => {
+}> = ({ errorsModel, sdkLanguage, revealInSource, actions, wallTime, sources }) => {
   const pageSnapshot = usePageSnapshot(actions);
 
   if (!errorsModel.errors.size)
@@ -190,7 +223,7 @@ export const ErrorsTab: React.FunctionComponent<{
   return <div className='fill' style={{ overflow: 'auto' }}>
     {[...errorsModel.errors.entries()].map(([message, error]) => {
       const errorId = `error-${wallTime}-${message}`;
-      return <Error key={errorId} errorId={errorId} message={message} error={error} revealInSource={revealInSource} sdkLanguage={sdkLanguage} pageSnapshot={pageSnapshot} />;
+      return <Error key={errorId} errorId={errorId} message={message} error={error} sources={sources} revealInSource={revealInSource} sdkLanguage={sdkLanguage} pageSnapshot={pageSnapshot} />;
     })}
   </div>;
 };
