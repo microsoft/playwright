@@ -51,8 +51,8 @@ export const Events = {
   },
 
   APIRequestContext: {
-    APIRequest: 'apiRequest',
-    APIRequestFinished: 'apiRequestfinished',
+    APIRequest: 'apirequest',
+    APIRequestFinished: 'apirequestfinished',
   },
 
   BrowserServer: {

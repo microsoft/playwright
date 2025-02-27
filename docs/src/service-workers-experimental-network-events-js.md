@@ -67,6 +67,9 @@ Additionally, any network request made by the **Page** (including its sub-[Frame
 * [`method: Request.serviceWorker`] will be set to `null`, and [`method: Request.frame`] will return the [Frame]
 * [`method: Response.fromServiceWorker`] will return `true` (if a Service Worker's fetch handler was registered)
 
+Any requests made by **APIRequestContext** will have
+* [`event: APIRequestContext.apiRequest`] and its corresponding event ([`event: BrowserContext.apiRequestFinished`])
+
 Many Service Worker implementations simply execute the request from the page (possibly with some custom caching/offline logic omitted for simplicity):
 
 ```js title="transparent-service-worker.js"

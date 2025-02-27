@@ -20,7 +20,7 @@ import { APIRequestEvent, APIRequestFinishedEvent } from 'playwright-core/src/se
 
 it('APIRequestContext.Events.Request', async ({ context, server }) => {
   const requests: APIRequestEvent[] = [];
-  context.request.on('apiRequest', request => {
+  context.request.on('apirequest', request => {
     requests.push(request);
   });
   await context.request.fetch(server.EMPTY_PAGE);
@@ -38,7 +38,7 @@ it('APIRequestContext.Events.RequestFinished', async ({ context, server }) => {
 
   const finishedRequests: APIRequestFinishedEvent[] = [];
 
-  context.request.on('apiRequestfinished', request => finishedRequests.push(request));
+  context.request.on('apirequestfinished', request => finishedRequests.push(request));
   await context.request.fetch(server.EMPTY_PAGE);
 
   const request = finishedRequests[0];
@@ -49,11 +49,11 @@ it('APIRequestContext.Events.RequestFinished', async ({ context, server }) => {
 
 it('should fire events in proper order', async ({ context, server }) => {
   const events: string[] = [];
-  context.request.on('apiRequest', () => events.push('apiRequest'));
-  context.request.on('apiRequestfinished', () => events.push('apiRequestfinished'));
+  context.request.on('apirequest', () => events.push('apirequest'));
+  context.request.on('apirequestfinished', () => events.push('apirequestfinished'));
   await context.request.fetch(server.EMPTY_PAGE);
   expect(events).toEqual([
-    'apiRequest',
-    'apiRequestfinished'
+    'apirequest',
+    'apirequestfinished'
   ]);
 });

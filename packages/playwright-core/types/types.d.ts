@@ -19,7 +19,6 @@ import { Readable } from 'stream';
 import { ReadStream } from 'fs';
 import { Protocol } from './protocol';
 import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
-import {APIRequestEvent, APIRequestFinishedEvent} from "playwright-core/lib/server/fetch";
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state?: 'visible'|'attached';
@@ -17850,6 +17849,72 @@ export interface APIRequest {
  */
 export interface APIRequestContext {
   /**
+   * Emitted when a request is issued from any requests created through this context. The [APIRequestEvent] object is
+   * read-only.
+   */
+  on(event: 'apirequest', listener: (aPIRequestEvent: APIRequestEvent) => any): this;
+
+  /**
+   * Emitted when a request finishes in any requests created through this context. The sequence of events is
+   * `apirequest` and `apirequestfinished`
+   */
+  on(event: 'apirequestfinished', listener: (aPIRequestFinishedEvent: APIRequestFinishedEvent) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'apirequest', listener: (aPIRequestEvent: APIRequestEvent) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'apirequestfinished', listener: (aPIRequestFinishedEvent: APIRequestFinishedEvent) => any): this;
+
+  /**
+   * Emitted when a request is issued from any requests created through this context. The [APIRequestEvent] object is
+   * read-only.
+   */
+  addListener(event: 'apirequest', listener: (aPIRequestEvent: APIRequestEvent) => any): this;
+
+  /**
+   * Emitted when a request finishes in any requests created through this context. The sequence of events is
+   * `apirequest` and `apirequestfinished`
+   */
+  addListener(event: 'apirequestfinished', listener: (aPIRequestFinishedEvent: APIRequestFinishedEvent) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'apirequest', listener: (aPIRequestEvent: APIRequestEvent) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'apirequestfinished', listener: (aPIRequestFinishedEvent: APIRequestFinishedEvent) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'apirequest', listener: (aPIRequestEvent: APIRequestEvent) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'apirequestfinished', listener: (aPIRequestFinishedEvent: APIRequestFinishedEvent) => any): this;
+
+  /**
+   * Emitted when a request is issued from any requests created through this context. The [APIRequestEvent] object is
+   * read-only.
+   */
+  prependListener(event: 'apirequest', listener: (aPIRequestEvent: APIRequestEvent) => any): this;
+
+  /**
+   * Emitted when a request finishes in any requests created through this context. The sequence of events is
+   * `apirequest` and `apirequestfinished`
+   */
+  prependListener(event: 'apirequestfinished', listener: (aPIRequestFinishedEvent: APIRequestFinishedEvent) => any): this;
+
+  /**
    * Sends HTTP(S) [DELETE](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE) request and returns its
    * response. The method will populate request cookies from the context and update context cookies from the response.
    * The method will automatically follow redirects.
@@ -18666,17 +18731,6 @@ export interface APIRequestContext {
   }>;
 
   [Symbol.asyncDispose](): Promise<void>;
-
-  /**
-   * Emitted when a request is issued from API request context. The event will be emitted after the request is issued
-   */
-  on(event: 'apiRequest', listener: (request: APIRequestEvent) => any): this;
-
-  /**
-   * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
-   * sequence of events is `request`, `response` and `requestfinished`.
-   */
-  on(event: 'apiRequestfinished', listener: (request: APIRequestFinishedEvent) => any): this;
 }
 
 /**

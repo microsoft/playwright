@@ -120,18 +120,6 @@ with sync_playwright() as p:
     assert await response.body() == '{"status": "ok"}'
 ```
 
-## event: APIRequestContext.apiRequest
-- argument: <[APIRequestEvent]>
-
-Emitted when a request is issued from any pages created through this context.
-The [APIRequestEvent] object is read-only.
-
-## event: APIRequestContext.apiRequestFinished
-- argument: <[APIRequestFinishedEvent]>
-
-Emitted when a request finishes successfully after downloading the response body. For a successful response, the
-sequence of events is `request` and `requestfinished`.
-
 ## method: APIRequestContext.createFormData
 * since: v1.23
 * langs: csharp
@@ -927,3 +915,17 @@ Returns storage state for this request context, contains current cookies and loc
 - `indexedDB` ?<boolean>
 
 Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.
+
+## event: APIRequestContext.apiRequest
+* since: v1.51
+- argument: <[APIRequestEvent]>
+
+Emitted when a request is issued from any requests created through this context.
+The [APIRequestEvent] object is read-only.
+
+## event: APIRequestContext.apiRequestFinished
+* since: v1.51
+- argument: <[APIRequestFinishedEvent]>
+
+Emitted when a request finishes in any requests created through this context. The
+sequence of events is `apirequest` and `apirequestfinished`
