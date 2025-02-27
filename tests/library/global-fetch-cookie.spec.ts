@@ -376,7 +376,7 @@ it('should preserve local storage on import/export of storage state', async ({ p
   };
   const request = await playwright.request.newContext({ storageState });
   await request.get(server.EMPTY_PAGE);
-  const exportedState = await request.storageState();
+  const exportedState = await request.storageState({ indexedDB: true });
   expect(exportedState).toEqual(storageState);
   await request.dispose();
 });

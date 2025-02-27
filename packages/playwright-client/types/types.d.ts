@@ -9267,14 +9267,15 @@ export interface BrowserContext {
   /**
    * Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB
    * snapshot.
-   *
-   * **NOTE** IndexedDBs with typed arrays are currently not supported.
-   *
    * @param options
    */
   storageState(options?: {
     /**
-     * Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.
+     * Set to `true` to include IndexedDB in the storage state snapshot. If your application uses IndexedDB to store
+     * authentication tokens, like Firebase Authentication, enable this.
+     *
+     * **NOTE** IndexedDBs with typed arrays are currently not supported.
+     *
      */
     indexedDB?: boolean;
 
@@ -18558,7 +18559,7 @@ export interface APIRequestContext {
    */
   storageState(options?: {
     /**
-     * Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.
+     * Set to `true` to include IndexedDB in the storage state snapshot.
      */
     indexedDB?: boolean;
 
