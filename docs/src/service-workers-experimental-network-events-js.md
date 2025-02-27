@@ -68,7 +68,7 @@ Additionally, any network request made by the **Page** (including its sub-[Frame
 * [`method: Response.fromServiceWorker`] will return `true` (if a Service Worker's fetch handler was registered)
 
 Any requests made by **APIRequestContext** will have
-* [`event: APIRequestContext.apiRequest`] and its corresponding event ([`event: BrowserContext.apiRequestFinished`])
+* [`event: APIRequestContext.apiRequest`] and its corresponding event ([`event: APIRequestContext.apiRequestFinished`])
 
 Many Service Worker implementations simply execute the request from the page (possibly with some custom caching/offline logic omitted for simplicity):
 
