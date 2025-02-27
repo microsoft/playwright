@@ -111,6 +111,7 @@ it('should work with glob', async () => {
   expect(urlMatches(undefined, 'http://playwright.dev/', 'h*://playwright.dev')).toBeTruthy();
   expect(urlMatches(undefined, 'http://api.playwright.dev/?x=y', 'http://*.playwright.dev?x=y')).toBeTruthy();
   expect(urlMatches(undefined, 'http://playwright.dev/foo/bar', '**/foo/**')).toBeTruthy();
+  expect(urlMatches('http://playwright.dev', 'http://playwright.dev/?x=y', '?x=y')).toBeTruthy();
   expect(urlMatches('http://playwright.dev/foo/', 'http://playwright.dev/foo/bar?x=y', './bar?x=y')).toBeTruthy();
 
   // This is not supported, we treat ? as a query separator.
