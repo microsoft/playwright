@@ -270,7 +270,8 @@ export class TerminalReporter implements ReporterV2 {
     if (full && summary.failuresToPrint.length && !this._omitFailures)
       this._printFailures(summary.failuresToPrint);
     this._printSlowTests();
-    this._printWarnings();
+    // TODO: 1.52: Make warning display prettier
+    // this._printWarnings();
     this._printSummary(summaryMessage);
   }
 
