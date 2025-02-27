@@ -9274,7 +9274,8 @@ export interface BrowserContext {
    */
   storageState(options?: {
     /**
-     * Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.
+     * Set to `true` to include IndexedDB in the storage state snapshot. If your application uses IndexedDB to store
+     * authentication tokens, like Firebase Authentication, enable this.
      */
     indexedDB?: boolean;
 
@@ -18558,7 +18559,7 @@ export interface APIRequestContext {
    */
   storageState(options?: {
     /**
-     * Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.
+     * Set to `true` to include IndexedDB in the storage state snapshot.
      */
     indexedDB?: boolean;
 

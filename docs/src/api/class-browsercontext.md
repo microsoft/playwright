@@ -1549,7 +1549,8 @@ IndexedDBs with typed arrays are currently not supported.
 * since: v1.51
 - `indexedDB` ?<boolean>
 
-Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.
+Set to `true` to include IndexedDB in the storage state snapshot.
+If your application uses IndexedDB to store authentication tokens, like Firebase Authentication, enable this.
 
 ## property: BrowserContext.tracing
 * since: v1.12
