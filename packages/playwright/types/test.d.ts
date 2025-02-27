@@ -1443,7 +1443,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
     max: number;
 
     /**
-     * Test duration in milliseconds that is considered slow. Defaults to 15 seconds.
+     * Test file duration in milliseconds that is considered slow. Defaults to 5 minutes.
      */
     threshold: number;
   };
@@ -1895,12 +1895,12 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   reportSlowTests: null|{
     /**
-     * The maximum number of slow test files to report. Defaults to `5`.
+     * The maximum number of slow test files to report.
      */
     max: number;
 
     /**
-     * Test duration in milliseconds that is considered slow. Defaults to 15 seconds.
+     * Test file duration in milliseconds that is considered slow.
      */
     threshold: number;
   };
