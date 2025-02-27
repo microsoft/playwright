@@ -50,6 +50,11 @@ export const Events = {
     RequestFinished: 'requestfinished',
   },
 
+  APIRequestContext: {
+    APIRequest: 'apiRequest',
+    APIRequestFinished: 'apiRequestfinished',
+  },
+
   BrowserServer: {
     Close: 'close',
   },

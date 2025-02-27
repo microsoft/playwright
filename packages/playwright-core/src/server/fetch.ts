@@ -63,6 +63,7 @@ type FetchRequestOptions = {
 type HeadersObject = Readonly<{ [name: string]: string }>;
 
 export type APIRequestEvent = {
+  guid: string,
   url: URL,
   method: string,
   headers: HeadersObject,
@@ -294,6 +295,7 @@ export abstract class APIRequestContext extends SdkObject {
       return { name, value };
     }) || [];
     const requestEvent: APIRequestEvent = {
+      guid: createGuid(),
       url,
       method: options.method!,
       headers: options.headers,

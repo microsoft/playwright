@@ -19,11 +19,11 @@ import { Dispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { WorkerDispatcher } from './pageDispatcher';
 import { TracingDispatcher } from './tracingDispatcher';
+import { APIRequestContext, APIRequestEvent, APIRequestFinishedEvent } from '../fetch';
+import { BrowserContextDispatcher } from './browserContextDispatcher';
 
-import type { APIRequestContext } from '../fetch';
 import type { CallMetadata } from '../instrumentation';
 import type { Request, Response, Route } from '../network';
-import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { RootDispatcher } from './dispatcher';
 import type { PageDispatcher } from './pageDispatcher';
 import type * as channels from '@protocol/channels';
@@ -193,8 +193,16 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
       tracing,
     });
 
+
     this.adopt(tracing);
+    this.addObjectListener(APIRequestContext.Events.Request, (request: APIRequestEvent) =>  {
+      this._dispatchEvent('apiRequest', request);
+    });
+    this.addObjectListener(APIRequestContext.Events.RequestFinished, (request: APIRequestFinishedEvent) =>  {
+      this._dispatchEvent('apiRequestFinished', request);
+    });
   }
+
 
   async storageState(params: channels.APIRequestContextStorageStateParams): Promise<channels.APIRequestContextStorageStateResult> {
     return this._object.storageState(params.indexedDB);

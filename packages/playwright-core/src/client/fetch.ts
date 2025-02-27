@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { APIRequestEvent, APIRequestFinishedEvent } from 'playwright-core/lib/server/fetch';
+
 import { toClientCertificatesProtocol } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { TargetClosedError, isTargetClosedError } from './errors';
@@ -23,6 +25,7 @@ import { assert } from '../utils/isomorphic/assert';
 import { mkdirIfNeeded } from './fileUtils';
 import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { isString } from '../utils/isomorphic/rtti';
+import { Events } from './events';
 
 import type { Playwright } from './playwright';
 import type { ClientCertificate, FilePayload, Headers, SetStorageState, StorageState } from './types';
@@ -98,7 +101,11 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.APIRequestContextInitializer) {
     super(parent, type, guid, initializer);
-    this._tracing = Tracing.from(initializer.tracing);
+    this._tracing = Tracing.from(initializer.tracing!);
+    this._channel.on('apiRequest', request => {
+      this._onRequest(request);
+    });
+    this._channel.on('apiRequestFinished', params => this._onRequestFinished(params));
   }
 
   async [Symbol.asyncDispose]() {
@@ -268,6 +275,14 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
       await this._platform.fs().promises.writeFile(options.path, JSON.stringify(state, undefined, 2), 'utf8');
     }
     return state;
+  }
+
+  private _onRequest(request: APIRequestEvent) {
+    this.emit(Events.APIRequestContext.APIRequest, request);
+  }
+
+  private _onRequestFinished(params: APIRequestFinishedEvent) {
+    this.emit(Events.APIRequestContext.APIRequestFinished, params);
   }
 }
 

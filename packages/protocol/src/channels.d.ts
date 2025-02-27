@@ -337,9 +337,11 @@ export type FormField = {
 
 // ----------- APIRequestContext -----------
 export type APIRequestContextInitializer = {
-  tracing: TracingChannel,
+  tracing?: TracingChannel,
 };
 export interface APIRequestContextEventTarget {
+  on(event: 'apiRequest', callback: (params: APIRequestContextApiRequestEvent) => void): this;
+  on(event: 'apiRequestFinished', callback: (params: APIRequestContextApiRequestFinishedEvent) => void): this;
 }
 export interface APIRequestContextChannel extends APIRequestContextEventTarget, Channel {
   _type_APIRequestContext: boolean;
@@ -350,6 +352,43 @@ export interface APIRequestContextChannel extends APIRequestContextEventTarget, 
   disposeAPIResponse(params: APIRequestContextDisposeAPIResponseParams, metadata?: CallMetadata): Promise<APIRequestContextDisposeAPIResponseResult>;
   dispose(params: APIRequestContextDisposeParams, metadata?: CallMetadata): Promise<APIRequestContextDisposeResult>;
 }
+export type APIRequestContextApiRequestEvent = {
+  guid: string,
+  url: URL,
+  method: string,
+  headers: any,
+  cookies: NameValue[],
+  postData?: Binary,
+};
+export type APIRequestContextApiRequestFinishedEvent = {
+  requestEvent: {
+    guid: string,
+    url: URL,
+    method: string,
+    headers: any,
+    cookies: NameValue[],
+  },
+  httpVersion: string,
+  headers: any,
+  cookies: NetworkCookie[],
+  rawHeaders: string[],
+  statusCode: number,
+  statusMessage: string,
+  body?: Binary,
+  timings: {
+    blocked?: number,
+    dns?: number,
+    connect?: number,
+    send: number,
+    wait: number,
+    receive: number,
+    ssl?: number,
+    comment?: string,
+  },
+  serverIPAddress?: string,
+  serverPort?: number,
+  securityDetails?: SecurityDetails,
+};
 export type APIRequestContextFetchParams = {
   url: string,
   encodedParams?: string,
@@ -428,6 +467,8 @@ export type APIRequestContextDisposeOptions = {
 export type APIRequestContextDisposeResult = void;
 
 export interface APIRequestContextEvents {
+  'apiRequest': APIRequestContextApiRequestEvent;
+  'apiRequestFinished': APIRequestContextApiRequestFinishedEvent;
 }
 
 export type APIResponse = {

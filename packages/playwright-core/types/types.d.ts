@@ -19,6 +19,7 @@ import { Readable } from 'stream';
 import { ReadStream } from 'fs';
 import { Protocol } from './protocol';
 import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
+import {APIRequestEvent, APIRequestFinishedEvent} from "playwright-core/lib/server/fetch";
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state?: 'visible'|'attached';
@@ -18665,6 +18666,18 @@ export interface APIRequestContext {
   }>;
 
   [Symbol.asyncDispose](): Promise<void>;
+
+
+  /**
+   * Emitted when a request is issued from API request context. The event will be emitted after the request is issued
+   */
+  on(event: 'apiRequest', listener: (request: APIRequestEvent) => any): this;
+
+  /**
+   * Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+   * sequence of events is `request`, `response` and `requestfinished`.
+   */
+  on(event: 'apiRequestfinished', listener: (request: APIRequestFinishedEvent) => any): this;
 }
 
 /**

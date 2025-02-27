@@ -120,6 +120,18 @@ with sync_playwright() as p:
     assert await response.body() == '{"status": "ok"}'
 ```
 
+## event: APIRequestContext.apiRequest
+- argument: <[APIRequestEvent]>
+
+Emitted when a request is issued from any pages created through this context.
+The [APIRequestEvent] object is read-only.
+
+## event: APIRequestContext.apiRequestFinished
+- argument: <[APIRequestFinishedEvent]>
+
+Emitted when a request finishes successfully after downloading the response body. For a successful response, the
+sequence of events is `request` and `requestfinished`.
+
 ## method: APIRequestContext.createFormData
 * since: v1.23
 * langs: csharp

@@ -128,6 +128,13 @@ export const tEnum = (e: string[]): Validator => {
     return arg;
   };
 };
+export const tURL = (arg: any, path: string, context: ValidatorContext) => {
+  if (arg instanceof URL)
+    return arg;
+  if (typeof arg === 'string')
+    return new URL(arg);
+  throw new ValidationError(`${path}: expected URL, got ${typeof arg}`);
+};
 export const tChannel = (names: '*' | string[]): Validator => {
   return (arg: any, path: string, context: ValidatorContext) => {
     return context.tChannelImpl(names, arg, path, context);

@@ -313,7 +313,6 @@ RecordHarOptions:
     urlRegexSource: string?
     urlRegexFlags: string?
 
-
 FormField:
   type: object
   properties:
@@ -330,7 +329,7 @@ APIRequestContext:
   type: interface
 
   initializer:
-    tracing: Tracing
+    tracing: Tracing?
 
   commands:
 
@@ -394,6 +393,54 @@ APIRequestContext:
       parameters:
         reason: string?
 
+  events:
+    apiRequest:
+      parameters:
+        guid: string
+        url: URL
+        method: string
+        headers: json
+        cookies:
+          type: array
+          items: NameValue
+        postData: binary?
+    apiRequestFinished:
+      parameters:
+        requestEvent:
+          type: object
+          properties:
+            guid: string
+            url: URL
+            method: string
+            headers: json
+            cookies:
+              type: array
+              items: NameValue
+        httpVersion: string
+        headers: json
+        cookies:
+          type: array
+          items: NetworkCookie
+        rawHeaders:
+          type: array
+          items: string
+        statusCode: number
+        statusMessage: string
+        body: binary?
+        timings:
+          type: object
+          properties:
+            blocked: number?
+            dns: number?
+            connect: number?
+            send: number
+            wait: number
+            receive: number
+            ssl: number?
+            comment: string?
+        serverIPAddress: string?
+        serverPort: number?
+        securityDetails: SecurityDetails?
 
 APIResponse:
   type: object
