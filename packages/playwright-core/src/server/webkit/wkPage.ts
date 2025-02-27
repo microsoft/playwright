@@ -29,6 +29,7 @@ import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { TargetClosedError } from '../errors';
 import { helper } from '../helper';
+import { kBuiltinsScript } from '../javascript';
 import * as network from '../network';
 import {  PageBinding  } from '../page';
 import { Page } from '../page';
@@ -774,6 +775,7 @@ export class WKPage implements PageDelegate {
 
   private _calculateBootstrapScript(): string {
     const scripts: string[] = [];
+    scripts.push(kBuiltinsScript);
     if (!this._page.context()._options.isMobile) {
       scripts.push('delete window.orientation');
       scripts.push('delete window.ondevicemotion');

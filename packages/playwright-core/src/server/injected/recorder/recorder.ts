@@ -22,6 +22,7 @@ import type { InjectedScript } from '../injectedScript';
 import type { ElementText } from '../selectorUtils';
 import type * as actions from '@recorder/actions';
 import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
+import type { Builtins } from '../../isomorphic/builtins';
 
 export interface RecorderDelegate {
   performAction?(action: actions.PerformOnRecordAction): Promise<void>;
@@ -207,7 +208,7 @@ class InspectTool implements RecorderTool {
 
 class RecordActionTool implements RecorderTool {
   private _recorder: Recorder;
-  private _performingActions = new Set<actions.PerformOnRecordAction>();
+  private _performingActions: Builtins.Set<actions.PerformOnRecordAction>;
   private _hoveredModel: HighlightModelWithSelector | null = null;
   private _hoveredElement: HTMLElement | null = null;
   private _activeModel: HighlightModelWithSelector | null = null;
@@ -216,6 +217,7 @@ class RecordActionTool implements RecorderTool {
 
   constructor(recorder: Recorder) {
     this._recorder = recorder;
+    this._performingActions = new recorder.injectedScript.builtins.Set();
   }
 
   cursor() {
@@ -269,7 +271,7 @@ class RecordActionTool implements RecorderTool {
           modifiers: modifiersForEvent(event),
           clickCount: event.detail
         },
-        timeout: this._recorder.injectedScript.builtinSetTimeout(() => this._commitPendingClickAction(), 200)
+        timeout: this._recorder.injectedScript.builtins.setTimeout(() => this._commitPendingClickAction(), 200)
       };
     }
   }
@@ -306,7 +308,7 @@ class RecordActionTool implements RecorderTool {
 
   private _cancelPendingClickAction() {
     if (this._pendingClickAction)
-      clearTimeout(this._pendingClickAction.timeout);
+      this._recorder.injectedScript.builtins.clearTimeout(this._pendingClickAction.timeout);
     this._pendingClickAction = undefined;
   }
 
@@ -612,11 +614,12 @@ class TextAssertionTool implements RecorderTool {
   private _hoverHighlight: HighlightModelWithSelector | null = null;
   private _action: actions.AssertAction | null = null;
   private _dialog: Dialog;
-  private _textCache = new Map<Element | ShadowRoot, ElementText>();
+  private _textCache: Builtins.Map<Element | ShadowRoot, ElementText>;
   private _kind: 'text' | 'value' | 'snapshot';
 
   constructor(recorder: Recorder, kind: 'text' | 'value' | 'snapshot') {
     this._recorder = recorder;
+    this._textCache = new recorder.injectedScript.builtins.Map();
     this._kind = kind;
     this._dialog = new Dialog(recorder);
   }
@@ -963,7 +966,7 @@ class Overlay {
     else
       element = this._assertValuesToggle;
     element.classList.add('succeeded');
-    this._recorder.injectedScript.builtinSetTimeout(() => element.classList.remove('succeeded'), 2000);
+    this._recorder.injectedScript.builtins.setTimeout(() => element.classList.remove('succeeded'), 2000);
   }
 
   private _hideOverlay() {
@@ -1098,10 +1101,10 @@ export class Recorder {
     let recreationInterval: number | undefined;
     const recreate = () => {
       this.highlight.install();
-      recreationInterval = this.injectedScript.builtinSetTimeout(recreate, 500);
+      recreationInterval = this.injectedScript.builtins.setTimeout(recreate, 500);
     };
-    recreationInterval = this.injectedScript.builtinSetTimeout(recreate, 500);
-    this._listeners.push(() => this.injectedScript.builtinClearTimeout(recreationInterval));
+    recreationInterval = this.injectedScript.builtins.setTimeout(recreate, 500);
+    this._listeners.push(() => this.injectedScript.builtins.clearTimeout(recreationInterval));
 
     this.highlight.appendChild(createSvgElement(this.document, clipPaths));
     this.overlay?.install();

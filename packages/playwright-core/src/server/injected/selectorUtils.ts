@@ -18,6 +18,7 @@ import { getAriaLabelledByElements } from './roleUtils';
 import { normalizeWhiteSpace } from '../../utils/isomorphic/stringUtils';
 
 import type { AttributeSelectorPart } from '../../utils/isomorphic/selectorParser';
+import type { Builtins } from '../isomorphic/builtins';
 
 export function matchesComponentAttribute(obj: any, attr: AttributeSelectorPart) {
   for (const token of attr.jsonPath) {
@@ -61,7 +62,7 @@ export function shouldSkipForTextMatching(element: Element | ShadowRoot) {
 export type ElementText = { full: string, normalized: string, immediate: string[] };
 export type TextMatcher = (text: ElementText) => boolean;
 
-export function elementText(cache: Map<Element | ShadowRoot, ElementText>, root: Element | ShadowRoot): ElementText {
+export function elementText(cache: Builtins.Map<Element | ShadowRoot, ElementText>, root: Element | ShadowRoot): ElementText {
   let value = cache.get(root);
   if (value === undefined) {
     value = { full: '', normalized: '', immediate: [] };
@@ -97,7 +98,7 @@ export function elementText(cache: Map<Element | ShadowRoot, ElementText>, root:
   return value;
 }
 
-export function elementMatchesText(cache: Map<Element | ShadowRoot, ElementText>, element: Element, matcher: TextMatcher): 'none' | 'self' | 'selfAndChildren' {
+export function elementMatchesText(cache: Builtins.Map<Element | ShadowRoot, ElementText>, element: Element, matcher: TextMatcher): 'none' | 'self' | 'selfAndChildren' {
   if (shouldSkipForTextMatching(element))
     return 'none';
   if (!matcher(elementText(cache, element)))
@@ -111,7 +112,7 @@ export function elementMatchesText(cache: Map<Element | ShadowRoot, ElementText>
   return 'self';
 }
 
-export function getElementLabels(textCache: Map<Element | ShadowRoot, ElementText>, element: Element): ElementText[] {
+export function getElementLabels(textCache: Builtins.Map<Element | ShadowRoot, ElementText>, element: Element): ElementText[] {
   const labels = getAriaLabelledByElements(element);
   if (labels)
     return labels.map(label => elementText(textCache, label));

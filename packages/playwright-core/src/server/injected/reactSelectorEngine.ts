@@ -19,6 +19,7 @@ import { matchesComponentAttribute } from './selectorUtils';
 import { parseAttributeSelector } from '../../utils/isomorphic/selectorParser';
 
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
+import type { Builtins } from '../isomorphic/builtins';
 
 type ComponentNode = {
   key?: any,
@@ -191,7 +192,7 @@ function findReactRoots(root: Document | ShadowRoot, roots: ReactVNode[] = []): 
   return roots;
 }
 
-export const ReactEngine: SelectorEngine = {
+export const createReactEngine = (builtins: Builtins): SelectorEngine => ({
   queryAll(scope: SelectorRoot, selector: string): Element[] {
     const { name, attributes } = parseAttributeSelector(selector, false);
 
@@ -213,11 +214,11 @@ export const ReactEngine: SelectorEngine = {
       }
       return true;
     })).flat();
-    const allRootElements: Set<Element> = new Set();
+    const allRootElements: Builtins.Set<Element> = new builtins.Set();
     for (const treeNode of treeNodes) {
       for (const domNode of treeNode.rootElements)
         allRootElements.add(domNode);
     }
     return [...allRootElements];
   }
-};
+});

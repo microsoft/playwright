@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+import { createBuiltins } from '../isomorphic/builtins';
+
+import type { Builtins } from '../isomorphic/builtins';
+
 export type WebSocketMessage = string | ArrayBufferLike | Blob | ArrayBufferView;
 export type WSData = { data: string, isBase64: boolean };
 
@@ -36,7 +40,9 @@ export type APIRequest = ConnectRequest | PassthroughRequest | EnsureOpenedReque
 // eslint-disable-next-line no-restricted-globals
 type GlobalThis = typeof globalThis;
 
-export function inject(globalThis: GlobalThis) {
+export function inject(globalThis: GlobalThis, builtinsProperty: string | undefined) {
+  const builtins: Builtins = (builtinsProperty ? (globalThis as any)[builtinsProperty] : undefined) || createBuiltins(globalThis);
+
   if ((globalThis as any).__pwWebSocketDispatch)
     return;
 
@@ -87,7 +93,7 @@ export function inject(globalThis: GlobalThis) {
 
   const binding = (globalThis as any).__pwWebSocketBinding as (message: BindingPayload) => void;
   const NativeWebSocket: typeof WebSocket = globalThis.WebSocket;
-  const idToWebSocket = new Map<string, WebSocketMock>();
+  const idToWebSocket = new builtins.Map<string, WebSocketMock>();
   (globalThis as any).__pwWebSocketDispatch = (request: APIRequest) => {
     const ws = idToWebSocket.get(request.id);
     if (!ws)

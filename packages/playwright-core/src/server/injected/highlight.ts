@@ -103,14 +103,14 @@ export class Highlight {
 
   runHighlightOnRaf(selector: ParsedSelector) {
     if (this._rafRequest)
-      cancelAnimationFrame(this._rafRequest);
+      this._injectedScript.builtins.cancelAnimationFrame(this._rafRequest);
     this.updateHighlight(this._injectedScript.querySelectorAll(selector, this._injectedScript.document.documentElement), { tooltipText: asLocator(this._language, stringifySelector(selector)) });
-    this._rafRequest = this._injectedScript.builtinRequestAnimationFrame(() => this.runHighlightOnRaf(selector));
+    this._rafRequest = this._injectedScript.builtins.requestAnimationFrame(() => this.runHighlightOnRaf(selector));
   }
 
   uninstall() {
     if (this._rafRequest)
-      cancelAnimationFrame(this._rafRequest);
+      this._injectedScript.builtins.cancelAnimationFrame(this._rafRequest);
     this._glassPaneElement.remove();
   }
 

@@ -358,7 +358,7 @@ it('should report event.buttons', async ({ page, browserName }) => {
     function onEvent(event) {
       logs.push({ type: event.type, buttons: event.buttons });
     }
-    await new Promise(window.builtinRequestAnimationFrame);
+    await new Promise(window.builtins.requestAnimationFrame);
     return logs;
   });
   await page.mouse.move(20, 20);

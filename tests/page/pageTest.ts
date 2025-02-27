@@ -40,7 +40,7 @@ export const test = impl;
 export async function rafraf(target: Page | Frame, count = 1) {
   for (let i = 0; i < count; i++) {
     await target.evaluate(async () => {
-      await new Promise(f => window.builtinRequestAnimationFrame(() => window.builtinRequestAnimationFrame(f)));
+      await new Promise(f => window.builtins.requestAnimationFrame(() => window.builtins.requestAnimationFrame(f)));
     });
   }
 }

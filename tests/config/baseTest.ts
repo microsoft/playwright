@@ -22,6 +22,7 @@ import type { ServerFixtures, ServerWorkerOptions } from './serverFixtures';
 import { serverFixtures } from './serverFixtures';
 import { platformTest } from './platformFixtures';
 import { testModeTest } from './testModeFixtures';
+import type { Builtins } from '../../packages/playwright-core/src/server/isomorphic/builtins';
 
 export const base = test;
 
@@ -44,13 +45,6 @@ export function step<This extends Object, Args extends any[], Return>(
 
 declare global {
   interface Window {
-    builtinSetTimeout: WindowOrWorkerGlobalScope['setTimeout'],
-    builtinClearTimeout: WindowOrWorkerGlobalScope['setTimeout'],
-    builtinSetInterval: WindowOrWorkerGlobalScope['setInterval'],
-    builtinClearInterval: WindowOrWorkerGlobalScope['clearInterval'],
-    builtinRequestAnimationFrame: AnimationFrameProvider['requestAnimationFrame'],
-    builtinCancelAnimationFrame: AnimationFrameProvider['cancelAnimationFrame'],
-    builtinPerformance: WindowOrWorkerGlobalScope['performance'],
-    builtinDate: typeof Date,
+    builtins: Builtins;
   }
 }

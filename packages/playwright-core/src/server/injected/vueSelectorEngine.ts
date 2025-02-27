@@ -19,6 +19,7 @@ import { matchesComponentAttribute } from './selectorUtils';
 import { parseAttributeSelector } from '../../utils/isomorphic/selectorParser';
 
 import type { SelectorEngine, SelectorRoot } from './selectorEngine';
+import type { Builtins } from '../isomorphic/builtins';
 
 type ComponentNode = {
   name: string,
@@ -215,11 +216,11 @@ function filterComponentsTree(treeNode: ComponentNode, searchFn: (node: Componen
 }
 
 type VueRoot = {version: number, root: VueVNode};
-function findVueRoots(root: Document | ShadowRoot, roots: VueRoot[] = []): VueRoot[] {
+function findVueRoots(builtins: Builtins, root: Document | ShadowRoot, roots: VueRoot[] = []): VueRoot[] {
   const document = root.ownerDocument || root;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
   // Vue2 roots are referred to from elements.
-  const vue2Roots: Set<VueVNode> = new Set();
+  const vue2Roots = new builtins.Set<VueVNode>();
   do {
     const node = walker.currentNode;
     if ((node as any).__vue__)
@@ -229,7 +230,7 @@ function findVueRoots(root: Document | ShadowRoot, roots: VueRoot[] = []): VueRo
       roots.push({ root: (node as any)._vnode.component, version: 3 });
     const shadowRoot = node instanceof Element ? node.shadowRoot : null;
     if (shadowRoot)
-      findVueRoots(shadowRoot, roots);
+      findVueRoots(builtins, shadowRoot, roots);
   } while (walker.nextNode());
   for (const vue2root of vue2Roots) {
     roots.push({
@@ -240,11 +241,11 @@ function findVueRoots(root: Document | ShadowRoot, roots: VueRoot[] = []): VueRo
   return roots;
 }
 
-export const VueEngine: SelectorEngine = {
+export const createVueEngine = (builtins: Builtins): SelectorEngine => ({
   queryAll(scope: SelectorRoot, selector: string): Element[] {
     const document = scope.ownerDocument || scope;
     const { name, attributes } = parseAttributeSelector(selector, false);
-    const vueRoots = findVueRoots(document);
+    const vueRoots = findVueRoots(builtins, document);
     const trees = vueRoots.map(vueRoot => vueRoot.version === 3 ? buildComponentsTreeVue3(vueRoot.root) : buildComponentsTreeVue2(vueRoot.root));
     const treeNodes = trees.map(tree => filterComponentsTree(tree, treeNode => {
       if (name && treeNode.name !== name)
@@ -257,11 +258,11 @@ export const VueEngine: SelectorEngine = {
       }
       return true;
     })).flat();
-    const allRootElements: Set<Element> = new Set();
+    const allRootElements = new builtins.Set<Element>();
     for (const treeNode of treeNodes) {
       for (const rootElement of treeNode.rootElements)
         allRootElements.add(rootElement);
     }
     return [...allRootElements];
   }
-};
+});
