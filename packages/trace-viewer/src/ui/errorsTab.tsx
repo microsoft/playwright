@@ -79,7 +79,7 @@ function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, mode
       return highlightLine;
     }).join('\n');
     return codeFrame;
-  }, [source, selectedFrame]);
+  }, [source, selectedFrame, width]);
 }
 
 const CopyPromptButton: React.FC<{
