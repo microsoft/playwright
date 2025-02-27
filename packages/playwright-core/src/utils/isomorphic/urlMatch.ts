@@ -51,13 +51,14 @@ export function globToRegex(glob: string): RegExp {
 
     switch (c) {
       case '?':
-        tokens.push('.');
+        // Unescaped ? is treated same as escaped.
+        tokens.push('\\?');
         break;
       case '[':
-        tokens.push('[');
+        tokens.push('\\[');
         break;
       case ']':
-        tokens.push(']');
+        tokens.push('\\]');
         break;
       case '{':
         inGroup = true;
@@ -113,18 +114,16 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
       if (token === '.' || token === '..' || token === '')
         return token;
       // Handle special case of http*://
-      if (index === 0 && token.endsWith(':')) {
+      if (index === 0 && token.endsWith(':'))
         return mapToken(token, 'http:');
-      } else {
-        const questionIndex = token.indexOf('?');
-        if (questionIndex === -1)
-          return mapToken(token, `$_${index}_$`);
-        if (questionIndex === 0)
-          return mapToken(token, `?$_${index}_$`);
-        const newPrefix = mapToken(token.substring(0, questionIndex), `$_${index}_$`);
-        const newSuffix = mapToken(token.substring(questionIndex), `?$_${index}_$`);
-        return newPrefix + newSuffix;
-      }
+      const questionIndex = token.indexOf('?');
+      if (questionIndex === -1)
+        return mapToken(token, `$_${index}_$`);
+      if (questionIndex === 0)
+        return mapToken(token, `?$_${index}_$`);
+      const newPrefix = mapToken(token.substring(0, questionIndex), `$_${index}_$`);
+      const newSuffix = mapToken(token.substring(questionIndex), `?$_${index}_$`);
+      return newPrefix + newSuffix;
     }).join('/');
     let resolved = constructURLBasedOnBaseURL(baseURL, relativePath);
     for (const [token, original] of tokenMap)

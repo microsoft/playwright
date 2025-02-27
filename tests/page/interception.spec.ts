@@ -76,7 +76,6 @@ it('should work with glob', async () => {
   expect(globToRegex('*.js').test('https://localhost:8080/foo.js')).toBeFalsy();
   expect(globToRegex('https://**/*.js').test('https://localhost:8080/foo.js')).toBeTruthy();
   expect(globToRegex('http://localhost:8080/simple/path.js').test('http://localhost:8080/simple/path.js')).toBeTruthy();
-  expect(globToRegex('http://localhost:8080/?imple/path.js').test('http://localhost:8080/Simple/path.js')).toBeTruthy();
   expect(globToRegex('**/{a,b}.js').test('https://localhost:8080/a.js')).toBeTruthy();
   expect(globToRegex('**/{a,b}.js').test('https://localhost:8080/b.js')).toBeTruthy();
   expect(globToRegex('**/{a,b}.js').test('https://localhost:8080/c.js')).toBeFalsy();
@@ -90,20 +89,20 @@ it('should work with glob', async () => {
   expect(globToRegex('http://localhost:3000/signin-oidc*').test('http://localhost:3000/signin-oidc/foo')).toBeFalsy();
   expect(globToRegex('http://localhost:3000/signin-oidc*').test('http://localhost:3000/signin-oidcnice')).toBeTruthy();
 
-  // range []
-  expect(globToRegex('**/api/v[0-9]').test('http://example.com/api/v1')).toBeTruthy();
+  // range [] is NOT supported
+  expect(globToRegex('**/api/v[0-9]').test('http://example.com/api/v[0-9]')).toBeTruthy();
   expect(globToRegex('**/api/v[0-9]').test('http://example.com/api/version')).toBeFalsy();
 
   // query params
   expect(globToRegex('**/api\\?param').test('http://example.com/api?param')).toBeTruthy();
   expect(globToRegex('**/api\\?param').test('http://example.com/api-param')).toBeFalsy();
-  expect(globToRegex('**/three-columns/settings.html\\?**id=[a-z]**').test('http://mydomain:8080/blah/blah/three-columns/settings.html?id=settings-e3c58efe-02e9-44b0-97ac-dd138100cf7c&blah')).toBeTruthy();
+  expect(globToRegex('**/three-columns/settings.html\\?**id=settings-**').test('http://mydomain:8080/blah/blah/three-columns/settings.html?id=settings-e3c58efe-02e9-44b0-97ac-dd138100cf7c&blah')).toBeTruthy();
 
   expect(globToRegex('\\?')).toEqual(/^\?$/);
   expect(globToRegex('\\')).toEqual(/^\\$/);
   expect(globToRegex('\\\\')).toEqual(/^\\$/);
   expect(globToRegex('\\[')).toEqual(/^\[$/);
-  expect(globToRegex('[a-z]')).toEqual(/^[a-z]$/);
+  expect(globToRegex('[a-z]')).toEqual(/^\[a-z\]$/);
   expect(globToRegex('$^+.\\*()|\\?\\{\\}\\[\\]')).toEqual(/^\$\^\+\.\*\(\)\|\?\{\}\[\]$/);
 
   expect(urlMatches(undefined, 'http://playwright.dev/', 'http://playwright.dev')).toBeTruthy();
@@ -115,20 +114,24 @@ it('should work with glob', async () => {
   expect(urlMatches('http://playwright.dev/foo/', 'http://playwright.dev/foo/bar?x=y', './bar?x=y')).toBeTruthy();
 
   // This is not supported, we treat ? as a query separator.
+  expect(globToRegex('http://localhost:8080/?imple/path.js').test('http://localhost:8080/Simple/path.js')).toBeFalsy();
   expect(urlMatches(undefined, 'http://playwright.dev/', 'http://playwright.?ev')).toBeFalsy();
+  expect(urlMatches(undefined, 'http://playwright./?ev', 'http://playwright.?ev')).toBeTruthy();
+  expect(urlMatches(undefined, 'http://playwright.dev/foo', 'http://playwright.dev/f??')).toBeFalsy();
+  expect(urlMatches(undefined, 'http://playwright.dev/f??', 'http://playwright.dev/f??')).toBeTruthy();
 });
 
 it('should intercept by glob', async function({ page, server, isAndroid }) {
   it.skip(isAndroid);
 
   await page.goto(server.EMPTY_PAGE);
-  await page.route('http://localhos**/?oo', async route => {
+  await page.route('http://localhos**?*oo', async route => {
     await route.fulfill({
       status: 200,
       body: 'intercepted',
     });
   });
-  const result = await page.evaluate(url => fetch(url).then(r => r.text()), server.PREFIX + '/foo');
+  const result = await page.evaluate(url => fetch(url).then(r => r.text()), server.PREFIX + '/?foo');
   expect(result).toBe('intercepted');
 });
 
