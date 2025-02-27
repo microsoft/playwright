@@ -194,7 +194,7 @@ class SocksProxyConnection {
         callback();
       }
     });
-    const secureContext = this.socksProxy.secureContextMap.get(new URL(`https://${this.host}:${this.port}`).origin);
+    const secureContext = this.socksProxy.secureContextForOrigin(new URL(`https://${this.host}:${this.port}`).origin);
     const fixtures = {
       __testHookLookup: (this._options as any).__testHookLookup
     };
@@ -296,8 +296,9 @@ class SocksProxyConnection {
 export class ClientCertificatesProxy {
   _socksProxy: SocksProxy;
   private _connections: Map<string, SocksProxyConnection> = new Map();
+  private _patterns: Pattern[] = [];
   ignoreHTTPSErrors: boolean | undefined;
-  secureContextMap: Map<string, tls.SecureContext> = new Map();
+  private _secureContextMap: Map<string, tls.SecureContext> = new Map();
   alpnCache: ALPNCache;
   proxyAgentFromOptions: ReturnType<typeof createProxyAgent> | undefined;
 
@@ -336,7 +337,14 @@ export class ClientCertificatesProxy {
     // Step 1. Group certificates by origin.
     const origin2certs = new Map<string, types.BrowserContextOptions['clientCertificates']>();
     for (const cert of clientCertificates || []) {
-      const origin = normalizeOrigin(cert.origin);
+      const pattern = Pattern.fromString(cert.origin);
+      if (pattern === undefined) {
+        debugLogger.log('client-certificates', `Invalid client certificate pattern: ${cert.origin}`);
+        continue;
+      } else {
+        this._patterns.push(pattern);
+      }
+      const origin = pattern.normalizedOrigin;
       const certs = origin2certs.get(origin) || [];
       certs.push(cert);
       origin2certs.set(origin, certs);
@@ -345,12 +353,19 @@ export class ClientCertificatesProxy {
     // Step 2. Create secure contexts for each origin.
     for (const [origin, certs] of origin2certs) {
       try {
-        this.secureContextMap.set(origin, tls.createSecureContext(convertClientCertificatesToTLSOptions(certs)));
+        this._secureContextMap.set(origin, tls.createSecureContext(convertClientCertificatesToTLSOptions(certs)));
       } catch (error) {
         error = rewriteOpenSSLErrorIfNeeded(error);
         throw rewriteErrorMessage(error, `Failed to load client certificate: ${error.message}`);
       }
     }
+  }
+
+  public secureContextForOrigin(origin: string): tls.SecureContext | undefined {
+    const pattern = this._patterns.find(p => p.matches(origin));
+    if (!pattern)
+      return undefined;
+    return this._secureContextMap.get(pattern.normalizedOrigin);
   }
 
   public async listen() {
@@ -397,7 +412,7 @@ export function getMatchingTLSOptionsForOrigin(
   origin: string
 ): Pick<https.RequestOptions, 'pfx' | 'key' | 'cert'> | undefined {
   const matchingCerts = clientCertificates?.filter(c =>
-    normalizeOrigin(c.origin) === origin
+    Pattern.fromString(c.origin)?.matches(origin)
   );
   return convertClientCertificatesToTLSOptions(matchingCerts);
 }
@@ -415,4 +430,172 @@ export function rewriteOpenSSLErrorIfNeeded(error: Error): Error {
     'For more details, see https://github.com/openssl/openssl/blob/master/README-PROVIDERS.md#the-legacy-provider',
     'You could probably modernize the certificate by following the steps at https://github.com/nodejs/node/issues/40672#issuecomment-1243648223',
   ].join('\n'));
+}
+
+export class Pattern {
+  private readonly _scheme: string;
+  private readonly _isSchemeWildcard: boolean;
+  private readonly _host: string;
+  private readonly _isDomainWildcard: boolean;
+  private readonly _isSubdomainWildcard: boolean;
+  private readonly _port: string;
+  private readonly _isPortWildcard: boolean;
+  private readonly _host_parts: string[];
+  private readonly _implicitPort: string;
+  private readonly _normalizedOrigin: string;
+  constructor(scheme: string, isSchemeWildcard: boolean, host: string, isDomainWildcard: boolean, isSubdomainWildcard: boolean, port: string, isPortWildcard: boolean) {
+    this._scheme = scheme;
+    this._isSchemeWildcard = isSchemeWildcard;
+    this._host = host;
+    this._isDomainWildcard = isDomainWildcard;
+    this._isSubdomainWildcard = isSubdomainWildcard;
+    this._port = port;
+    this._isPortWildcard = isPortWildcard;
+    this._host_parts = this._host.split('.').reverse();
+    this._implicitPort = this._scheme === 'https' ? '443' : (this._scheme === 'http' ? '80' : '');
+    this._normalizedOrigin = `${this._isSchemeWildcard ? '*' : this._scheme}://${this._isSubdomainWildcard ? '[*.]' : ''}${this._isDomainWildcard ? '*' : this._host}${this._isPortWildcard ? ':*' : this._port ? `:${this._port}` : ''}`;
+  }
+
+  get scheme() {
+    return this._scheme;
+  }
+
+  get host() {
+    return this._host;
+  }
+
+  get port() {
+    return this._port;
+  }
+
+  get isSchemeWildcard() {
+    return this._isSchemeWildcard;
+  }
+
+  get isDomainWildcard() {
+    return this._isDomainWildcard;
+  }
+
+  get isSubdomainWildcard() {
+    return this._isSubdomainWildcard;
+  }
+
+  get isPortWildcard() {
+    return this._isPortWildcard;
+  }
+
+  get normalizedOrigin() {
+    return this._normalizedOrigin;
+  }
+
+  matches(url: string): boolean {
+    const urlObj = new URL(url);
+    const urlScheme = urlObj.protocol.replace(':', '');
+    if (!this._isSchemeWildcard && this._scheme !== urlScheme)
+      return false;
+
+    let urlPort = urlObj.port;
+    if (urlPort === '')
+      urlPort = urlScheme === 'https' ? '443' : (urlScheme === 'http' ? '80' : '');
+    let patternPort = this._port;
+    if (patternPort === '')
+      patternPort = this._implicitPort;
+
+    if (!this._isPortWildcard && patternPort !== urlPort)
+      return false;
+
+    const urlHostParts = urlObj.hostname.split('.').reverse();
+
+    if (this._isDomainWildcard)
+      return true;
+
+    if (this._host_parts.length > urlHostParts.length)
+      return false;
+
+    for (let i = 0; i < this._host_parts.length; i++) {
+      if (this._host_parts[i] !== '*' && this._host_parts[i] !== urlHostParts[i])
+        return false;
+    }
+
+    if (this._host_parts.length < urlHostParts.length)
+      return this._isSubdomainWildcard;
+
+    return true;
+  }
+
+  static fromString(pattern: string, defaultScheme: string = 'https') {
+
+    let restPattern = pattern;
+    let scheme = '';
+    let host = '';
+    let port = '';
+    let isSchemeWildcard = false;
+    let isDomainWildcard = false;
+    let isSubdomainWildcard = false;
+    let isPortWildcard = false;
+
+    const schemeIndex = pattern.indexOf('://');
+    if (schemeIndex !== -1) {
+      scheme = restPattern.substring(0, schemeIndex);
+      restPattern = restPattern.substring(schemeIndex + 3);
+    } else {
+      scheme = defaultScheme;
+    }
+    // skip userinfo
+    const userInfoIndex = restPattern.indexOf('@');
+    if (userInfoIndex !== -1)
+      restPattern = restPattern.substring(schemeIndex + 1);
+
+    isSchemeWildcard = scheme === '*';
+    isSubdomainWildcard = restPattern.startsWith('[*.]');
+    if (isSubdomainWildcard)
+      restPattern = restPattern.substring(4);
+
+    // literal ipv6 address
+    if (restPattern.startsWith('[')) {
+      const closingBracketIndex = restPattern.indexOf(']');
+      if (closingBracketIndex === -1)
+        return undefined;
+      host = restPattern.substring(1, closingBracketIndex);
+      restPattern = restPattern.substring(closingBracketIndex + 1);
+    } else {
+      // ipv4 or domain
+      const slashIndex = restPattern.indexOf('/');
+      const portIndex = restPattern.indexOf(':');
+      host = restPattern;
+      if (slashIndex !== -1 && (portIndex === -1 || slashIndex < portIndex)) {
+        host = restPattern.substring(0, slashIndex);
+        restPattern = restPattern.substring(slashIndex);
+      } else if (portIndex !== -1) {
+        host = restPattern.substring(0, portIndex);
+        restPattern = restPattern.substring(portIndex);
+      } else {
+        restPattern = '';
+      }
+    }
+    if (host === '*')
+      isDomainWildcard = true;
+
+    const portIndex = restPattern.indexOf(':');
+    if (portIndex !== -1) {
+      if (restPattern.startsWith(':*')) {
+        isPortWildcard = true;
+        port = '*';
+        restPattern = restPattern.substring(2);
+        if (!restPattern.startsWith('/') || restPattern === '')
+          return undefined;
+      } else {
+        const slashIndex = restPattern.indexOf('/');
+        if (slashIndex !== -1) {
+          port = restPattern.substring(1, slashIndex);
+          restPattern = restPattern.substring(slashIndex);
+        } else {
+          port = restPattern.substring(1);
+          restPattern = '';
+        }
+      }
+    }
+    return new Pattern(scheme, isSchemeWildcard, host, isDomainWildcard, isSubdomainWildcard, port, isPortWildcard);
+  }
+
 }

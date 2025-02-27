@@ -25,6 +25,7 @@ import type net from 'net';
 import type { BrowserContextOptions } from 'packages/playwright-test';
 import { setupSocksForwardingServer } from '../config/proxy';
 import { LookupAddress } from 'dns';
+import { Pattern } from '../../packages/playwright-core/lib/server/socksClientCertificatesInterceptor';
 const { createHttpsServer, createHttp2Server } = require('../../packages/playwright-core/lib/utils');
 
 type TestOptions = {
@@ -168,6 +169,32 @@ test.describe('fetch', () => {
     });
     const response = await request.get(serverURL);
     expect(response.url()).toBe(serverURL);
+    expect(response.status()).toBe(200);
+    expect(await response.text()).toContain('Hello Alice, your certificate was issued by localhost!');
+    await request.dispose();
+  });
+
+  test('pass with trusted client certificates using pattern', async ({ playwright, startCCServer, asset }) => {
+    const serverURL = await startCCServer();
+    const __testHookLookup = (hostname: string): LookupAddress[] => {
+      if (hostname === 'www.hello.local') {
+        return [
+          { address: '127.0.0.1', family: 4 },
+        ];
+      }
+      return [];
+    };
+
+    const request = await playwright.request.newContext({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: `https://[*.]hello.local:${new URL(serverURL).port}`,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+    });
+    const response = await request.get(`https://www.hello.local:${new URL(serverURL).port}`, { __testHookLookup });
+    expect(response.url()).toBe(`https://www.hello.local:${new URL(serverURL).port}/`);
     expect(response.status()).toBe(200);
     expect(await response.text()).toContain('Hello Alice, your certificate was issued by localhost!');
     await request.dispose();
@@ -333,6 +360,33 @@ test.describe('browser', () => {
       }],
     });
     await page.goto(serverURL);
+    await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
+    await page.close();
+  });
+
+  test('should pass with matching certificates when using pattern', async ({ browser, startCCServer, asset, browserName, isMac }) => {
+    const serverURL = await startCCServer({ useFakeLocalhost: browserName === 'webkit' && isMac });
+    const __testHookLookup = (hostname: string): LookupAddress[] => {
+      if (hostname === 'www.hello.local') {
+        return [
+          { address: '127.0.0.1', family: 4 },
+        ];
+      }
+      return [];
+    };
+    const context = await browser.newContext({
+      ignoreHTTPSErrors: true,
+      clientCertificates: [{
+        origin: `https://[*.]hello.local:${new URL(serverURL).port}`,
+        certPath: asset('client-certificates/client/trusted/cert.pem'),
+        keyPath: asset('client-certificates/client/trusted/key.pem'),
+      }],
+      ...
+      {  __testHookLookup } as any
+    });
+    const page = await context.newPage();
+    const requestURL = `https://www.hello.local:${new URL(serverURL).port}`;
+    await page.goto(requestURL);
     await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
     await page.close();
   });
@@ -890,6 +944,81 @@ test.describe('browser', () => {
       });
       await page.goto(serverURL);
       await expect(page.getByTestId('message')).toHaveText('Hello Alice, your certificate was issued by localhost!');
+    });
+  });
+
+  test.describe('patterns', () => {
+    test('should match patterns correctly', async () => {
+      const testCases = [
+        {
+          pattern: 'https://*/path',
+          matches: [
+            'https://www.hello.com:443/path',
+            'https://www.sub.hello.com/path',
+          ],
+          nonMatches: [
+            'https://www.any.com:8443/path',
+            'http://www.any.com:443/path',
+          ]
+        },
+        {
+          pattern: 'https://*.*/path',
+          matches: [
+            'https://hello.com/path',
+          ],
+          nonMatches: [
+            'https://hello/path',
+            'http://www.hello.com/path',
+          ]
+        },
+        {
+          pattern: 'https://www.hello.com:443/path',
+          matches: [
+            'https://www.hello.com/path',
+          ],
+          nonMatches: [
+            'https://www.hello.com:8443/path',
+            'http://www.hello.com:443/path',
+          ]
+        },
+        {
+          pattern: 'https://[*.]*.hello.com/path',
+          matches: [
+            'https://www.foo.bar.hello.com/path',
+          ],
+          nonMatches: [
+            'https://hello.com/path',
+            'http://hello.com/path',
+          ]
+        },
+        {
+          pattern: 'https://*/path',
+          matches: [
+            'https://www.hello.com/path',
+          ],
+          nonMatches: [
+            'https://www.hello.com:8443/path',
+            'http://www.hello.com/path',
+          ]
+        },
+        {
+          pattern: '*/path',
+          matches: [
+            'https://www.hello.com/path',
+          ],
+          nonMatches: [
+            'http://www.hello.com/path',
+          ]
+        },
+      ];
+      for (const testCase of testCases) {
+        const pattern = Pattern.fromString(testCase.pattern);
+        expect(pattern).toBeTruthy();
+        for (const url of testCase.matches)
+          expect(pattern.matches(url), `Expected pattern "${testCase.pattern}" to match URL "${url}"`).toBe(true);
+        for (const url of testCase.nonMatches)
+          expect(pattern.matches(url), `Expected pattern "${testCase.pattern}" to NOT match URL "${url}"`).toBe(false);
+      }
     });
   });
 });
