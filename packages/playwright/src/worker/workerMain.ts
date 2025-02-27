@@ -328,7 +328,8 @@ export class WorkerMain extends ProcessRunner {
         return;
       if (!testInfo._floatingPromiseScope.hasFloatingPromises())
         return;
-      testInfo.annotations.push({ type: 'warning', description: `Some async calls were not awaited by the end of ${functionDescription}. This can cause flakiness.` });
+      // TODO: 1.52: Actually build annotations
+      // testInfo.annotations.push({ type: 'warning', description: `Some async calls were not awaited by the end of ${functionDescription}. This can cause flakiness.` });
       testInfo._floatingPromiseScope.clear();
     };
 
