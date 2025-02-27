@@ -48,7 +48,6 @@ export class FullConfigInternal {
   readonly plugins: TestRunnerPluginRegistration[];
   readonly projects: FullProjectInternal[] = [];
   readonly singleTSConfigPath?: string;
-  readonly populateGitInfo: boolean;
   readonly recreateWorkerAfterFailure: boolean;
   cliArgs: string[] = [];
   cliGrep: string | undefined;
@@ -79,7 +78,6 @@ export class FullConfigInternal {
     const privateConfiguration = (userConfig as any)['@playwright/test'];
     this.plugins = (privateConfiguration?.plugins || []).map((p: any) => ({ factory: p }));
     this.singleTSConfigPath = pathResolve(configDir, userConfig.tsconfig);
-    this.populateGitInfo = takeFirst(userConfig.populateGitInfo, defaultPopulateGitInfo);
 
     this.globalSetups = (Array.isArray(userConfig.globalSetup) ? userConfig.globalSetup : [userConfig.globalSetup]).map(s => resolveScript(s, configDir)).filter(script => script !== undefined);
     this.globalTeardowns = (Array.isArray(userConfig.globalTeardown) ? userConfig.globalTeardown : [userConfig.globalTeardown]).map(s => resolveScript(s, configDir)).filter(script => script !== undefined);
@@ -97,14 +95,14 @@ export class FullConfigInternal {
       fullyParallel: takeFirst(configCLIOverrides.fullyParallel, userConfig.fullyParallel, false),
       globalSetup: this.globalSetups[0] ?? null,
       globalTeardown: this.globalTeardowns[0] ?? null,
-      globalTimeout: takeFirst(configCLIOverrides.globalTimeout, userConfig.globalTimeout, 0),
+      globalTimeout: takeFirst(configCLIOverrides.debug ? 0 : undefined, configCLIOverrides.globalTimeout, userConfig.globalTimeout, 0),
       grep: takeFirst(userConfig.grep, defaultGrep),
       grepInvert: takeFirst(userConfig.grepInvert, null),
       maxFailures: takeFirst(configCLIOverrides.debug ? 1 : undefined, configCLIOverrides.maxFailures, userConfig.maxFailures, 0),
       metadata: userConfig.metadata,
       preserveOutput: takeFirst(userConfig.preserveOutput, 'always'),
       reporter: takeFirst(configCLIOverrides.reporter, resolveReporters(userConfig.reporter, configDir), [[defaultReporter]]),
-      reportSlowTests: takeFirst(userConfig.reportSlowTests, { max: 5, threshold: 15000 }),
+      reportSlowTests: takeFirst(userConfig.reportSlowTests, { max: 5, threshold: 300_000 /* 5 minutes */ }),
       quiet: takeFirst(configCLIOverrides.quiet, userConfig.quiet, false),
       projects: [],
       shard: takeFirst(configCLIOverrides.shard, userConfig.shard, null),
@@ -304,7 +302,6 @@ function resolveScript(id: string | undefined, rootDir: string): string | undefi
 
 export const defaultGrep = /.*/;
 export const defaultReporter = process.env.CI ? 'dot' : 'list';
-const defaultPopulateGitInfo = process.env.GITHUB_ACTIONS === 'true';
 
 const configInternalSymbol = Symbol('configInternalSymbol');
 

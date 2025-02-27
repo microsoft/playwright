@@ -17,7 +17,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   use: {
     // Base URL to use in actions like `await page.goto('/')`.
-    baseURL: 'http://127.0.0.1:3000',
+    baseURL: 'http://localhost:3000',
 
     // Populates context with given storage state.
     storageState: 'state.json',

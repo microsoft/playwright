@@ -21,8 +21,12 @@ Creates new instances of [APIRequestContext].
 ### option: APIRequest.newContext.extraHTTPHeaders = %%-context-option-extrahttpheaders-%%
 * since: v1.16
 
-### option: APIRequest.newContext.apiRequestFailsOnErrorStatus = %%-context-option-apiRequestFailsOnErrorStatus-%%
+### option: APIRequest.newContext.failOnStatusCode
 * since: v1.51
+- `failOnStatusCode` <[boolean]>
+
+Whether to throw on response codes other than 2xx and 3xx. By default response object is returned
+for all status codes.
 
 ### option: APIRequest.newContext.httpCredentials = %%-context-option-httpcredentials-%%
 * since: v1.16
@@ -67,25 +71,7 @@ Methods like [`method: APIRequestContext.get`] take the base URL into considerat
     - `localStorage` <[Array]<[Object]>>
       - `name` <[string]>
       - `value` <[string]>
-    - `indexedDB` ?<[Array]<[Object]>> indexedDB to set for context
-      - `name` <[string]> database name
-      - `version` <[int]> database version
-      - `stores` <[Array]<[Object]>>
-        - `name` <[string]>
-        - `keyPath` ?<[string]>
-        - `keyPathArray` ?<[Array]<[string]>>
-        - `autoIncrement` <[boolean]>
-        - `indexes` <[Array]<[Object]>>
-          - `name` <[string]>
-          - `keyPath` ?<[string]>
-          - `keyPathArray` ?<[Array]<[string]>>
-          - `unique` <[boolean]>
-          - `multiEntry` <[boolean]>
-        - `records` <[Array]<[Object]>>
-          - `key` ?<[Object]>
-          - `keyEncoded` ?<[Object]> if `key` is not JSON-serializable, this contains an encoded version that preserves types.
-          - `value` ?<[Object]>
-          - `valueEncoded` ?<[Object]> if `value` is not JSON-serializable, this contains an encoded version that preserves types.
+    - `indexedDB` ?<[Array]<[unknown]>> indexedDB to set for context
 
 Populates context with given storage state. This option can be used to initialize context with logged-in information
 obtained via [`method: BrowserContext.storageState`] or [`method: APIRequestContext.storageState`]. Either a path to the

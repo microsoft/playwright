@@ -27,25 +27,8 @@ import { CopyToClipboard } from './copyToClipboard';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
 
-export const SourceTab: React.FunctionComponent<{
-  stack?: StackFrame[],
-  stackFrameLocation: 'bottom' | 'right',
-  sources: Map<string, SourceModel>,
-  rootDir?: string,
-  fallbackLocation?: SourceLocation,
-  onOpenExternally?: (location: SourceLocation) => void,
-}> = ({ stack, sources, rootDir, fallbackLocation, stackFrameLocation, onOpenExternally }) => {
-  const [lastStack, setLastStack] = React.useState<StackFrame[] | undefined>();
-  const [selectedFrame, setSelectedFrame] = React.useState<number>(0);
-
-  React.useEffect(() => {
-    if (lastStack !== stack) {
-      setLastStack(stack);
-      setSelectedFrame(0);
-    }
-  }, [stack, lastStack, setLastStack, setSelectedFrame]);
-
-  const { source, highlight, targetLine, fileName, location } = useAsyncMemo<{ source: SourceModel, targetLine?: number, fileName?: string, highlight: SourceHighlight[], location?: SourceLocation }>(async () => {
+export function useSources(stack: StackFrame[] | undefined, selectedFrame: number, sources: Map<string, SourceModel>, rootDir?: string, fallbackLocation?: SourceLocation) {
+  return useAsyncMemo<{ source: SourceModel, targetLine?: number, fileName?: string, highlight: SourceHighlight[], location?: SourceLocation }>(async () => {
     const actionLocation = stack?.[selectedFrame];
     const shouldUseFallback = !actionLocation?.file;
     if (shouldUseFallback && !fallbackLocation)
@@ -84,6 +67,27 @@ export const SourceTab: React.FunctionComponent<{
     }
     return { source, highlight, targetLine, fileName, location };
   }, [stack, selectedFrame, rootDir, fallbackLocation], { source: { errors: [], content: 'Loading\u2026' }, highlight: [] });
+}
+
+export const SourceTab: React.FunctionComponent<{
+  stack?: StackFrame[],
+  stackFrameLocation: 'bottom' | 'right',
+  sources: Map<string, SourceModel>,
+  rootDir?: string,
+  fallbackLocation?: SourceLocation,
+  onOpenExternally?: (location: SourceLocation) => void,
+}> = ({ stack, sources, rootDir, fallbackLocation, stackFrameLocation, onOpenExternally }) => {
+  const [lastStack, setLastStack] = React.useState<StackFrame[] | undefined>();
+  const [selectedFrame, setSelectedFrame] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    if (lastStack !== stack) {
+      setLastStack(stack);
+      setSelectedFrame(0);
+    }
+  }, [stack, lastStack, setLastStack, setSelectedFrame]);
+
+  const { source, highlight, targetLine, fileName, location } = useSources(stack, selectedFrame, sources, rootDir, fallbackLocation);
 
   const openExternally = React.useCallback(() => {
     if (!location)

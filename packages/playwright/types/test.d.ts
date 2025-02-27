@@ -884,7 +884,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * export default defineConfig({
    *   webServer: {
    *     command: 'npm run start',
-   *     url: 'http://127.0.0.1:3000',
+   *     url: 'http://localhost:3000',
    *     timeout: 120 * 1000,
    *     reuseExistingServer: !process.env.CI,
    *   },
@@ -915,19 +915,19 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *   webServer: [
    *     {
    *       command: 'npm run start',
-   *       url: 'http://127.0.0.1:3000',
+   *       url: 'http://localhost:3000',
    *       timeout: 120 * 1000,
    *       reuseExistingServer: !process.env.CI,
    *     },
    *     {
    *       command: 'npm run backend',
-   *       url: 'http://127.0.0.1:3333',
+   *       url: 'http://localhost:3333',
    *       timeout: 120 * 1000,
    *       reuseExistingServer: !process.env.CI,
    *     }
    *   ],
    *   use: {
-   *     baseURL: 'http://127.0.0.1:3000',
+   *     baseURL: 'http://localhost:3000',
    *   },
    * });
    * ```
@@ -1284,10 +1284,11 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Metadata contains key-value pairs to be included in the report. For example, HTML report will display it as
    * key-value pairs, and JSON report will include metadata serialized as json.
+   * - Providing `gitCommit: 'generate'` property will populate it with the git commit details.
+   * - Providing `gitDiff: 'generate'` property will populate it with the git diff details.
    *
-   * See also
-   * [testConfig.populateGitInfo](https://playwright.dev/docs/api/class-testconfig#test-config-populate-git-info) that
-   * populates metadata.
+   * On selected CI providers, both will be generated automatically. Specifying values will prevent the automatic
+   * generation.
    *
    * **Usage**
    *
@@ -1359,29 +1360,6 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    */
   outputDir?: string;
-
-  /**
-   * Whether to populate `'git.commit.info'` field of the
-   * [testConfig.metadata](https://playwright.dev/docs/api/class-testconfig#test-config-metadata) with Git commit info
-   * and CI/CD information.
-   *
-   * This information will appear in the HTML and JSON reports and is available in the Reporter API.
-   *
-   * On Github Actions, this feature is enabled by default.
-   *
-   * **Usage**
-   *
-   * ```js
-   * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
-   *
-   * export default defineConfig({
-   *   populateGitInfo: !!process.env.CI,
-   * });
-   * ```
-   *
-   */
-  populateGitInfo?: boolean;
 
   /**
    * Whether to preserve test output in the
@@ -1467,7 +1445,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
     max: number;
 
     /**
-     * Test duration in milliseconds that is considered slow. Defaults to 15 seconds.
+     * Test file duration in milliseconds that is considered slow. Defaults to 5 minutes.
      */
     threshold: number;
   };
@@ -1919,12 +1897,12 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    */
   reportSlowTests: null|{
     /**
-     * The maximum number of slow test files to report. Defaults to `5`.
+     * The maximum number of slow test files to report.
      */
     max: number;
 
     /**
-     * Test duration in milliseconds that is considered slow. Defaults to 15 seconds.
+     * Test file duration in milliseconds that is considered slow.
      */
     threshold: number;
   };
@@ -8817,14 +8795,14 @@ interface LocatorAssertions {
   /**
    * Asserts that the target element matches the given [accessibility snapshot](https://playwright.dev/docs/aria-snapshots).
    *
-   * Snapshot is stored in a separate `.yml` file in a location configured by `expect.toMatchAriaSnapshot.pathTemplate`
-   * and/or `snapshotPathTemplate` properties in the configuration file.
+   * Snapshot is stored in a separate `.snapshot.yml` file in a location configured by
+   * `expect.toMatchAriaSnapshot.pathTemplate` and/or `snapshotPathTemplate` properties in the configuration file.
    *
    * **Usage**
    *
    * ```js
    * await expect(page.locator('body')).toMatchAriaSnapshot();
-   * await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'body.yml' });
+   * await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'body.snapshot.yml' });
    * ```
    *
    * @param options
@@ -8926,13 +8904,25 @@ interface PageAssertions {
    * **Usage**
    *
    * ```js
-   * await expect(page).toHaveURL(/.*checkout/);
+   * // Check for the page URL to be 'https://playwright.dev/docs/intro' (including query string)
+   * await expect(page).toHaveURL('https://playwright.dev/docs/intro');
+   *
+   * // Check for the page URL to contain 'doc', followed by an optional 's', followed by '/'
+   * await expect(page).toHaveURL(/docs?\//);
+   *
+   * // Check for the predicate to be satisfied
+   * // For example: verify query strings
+   * await expect(page).toHaveURL(url => {
+   *   const params = url.searchParams;
+   *   return params.has('search') && params.has('options') && params.get('id') === '5';
+   * });
    * ```
    *
-   * @param url Expected URL string, RegExp, or predicate receiving [URL] to match. When a
-   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
-   * options was provided and the passed URL is a path, it gets merged via the
-   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+   * @param url Expected URL string, RegExp, or predicate receiving [URL] to match. When
+   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) is provided via the
+   * context options and the `url` argument is a string, the two values are merged via the
+   * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor and used for the comparison
+   * against the current browser URL.
    * @param options
    */
   toHaveURL(url: string|RegExp|((url: URL) => boolean), options?: {

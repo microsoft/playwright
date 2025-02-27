@@ -708,9 +708,13 @@ Playwright uses simplified glob patterns for URL matching in network interceptio
   - A double `**` matches any characters including `/`
 1. Question mark `?` matches any single character except `/`
 1. Curly braces `{}` can be used to match a list of options separated by commas `,`
+1. Square brackets `[]` can be used to match a set of characters
+1. Backslash `\` can be used to escape any of special characters (note to escape backslash itself as `\\`)
 
 Examples:
 - `https://example.com/*.js` matches `https://example.com/file.js` but not `https://example.com/path/file.js`
+- `https://example.com/\\?page=1` matches `https://example.com/?page=1` but not `https://example.com`
+- `**/v[0-9]*` matches `https://example.com/v1/` but not `https://example.com/vote/`
 - `**/*.js` matches both `https://example.com/file.js` and `https://example.com/path/file.js`
 - `**/*.{png,jpg,jpeg}` matches all image requests
 

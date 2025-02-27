@@ -372,6 +372,13 @@ test('display:contents should be visible when contents are visible', async ({ pa
   await expect(page.getByRole('button')).toHaveCount(1);
 });
 
+test('should remove soft hyphens and zero-width spaces', async ({ page }) => {
+  await page.setContent(`
+    <button>1\u00ad2\u200b3</button>
+  `);
+  expect.soft(await getNameAndRole(page, 'button')).toEqual({ role: 'button', name: '123' });
+});
+
 test('label/labelled-by aria-hidden with descendants', async ({ page }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29796' });
 

@@ -35,4 +35,3 @@ export type TestRunnerPluginRegistration = {
 };
 
 export { webServer } from './webServerPlugin';
-export { gitCommitInfo } from './gitCommitInfoPlugin';

@@ -510,7 +510,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
 async function prepareStorageState(platform: Platform, options: BrowserContextOptions): Promise<channels.BrowserNewContextParams['storageState']> {
   if (typeof options.storageState !== 'string')
-    return options.storageState;
+    return options.storageState as any;
   try {
     return JSON.parse(await platform.fs().promises.readFile(options.storageState, 'utf8'));
   } catch (e) {

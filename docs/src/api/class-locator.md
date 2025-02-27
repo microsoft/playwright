@@ -1090,6 +1090,9 @@ await rowLocator
 ### option: Locator.filter.hasNotText = %%-locator-option-has-not-text-%%
 * since: v1.33
 
+### option: Locator.filter.visible = %%-locator-option-visible-%%
+* since: v1.51
+
 ## method: Locator.first
 * since: v1.14
 - returns: <[Locator]>
@@ -2332,7 +2335,7 @@ This method expects [Locator] to point to an
 ## async method: Locator.tap
 * since: v1.14
 
-Perform a tap gesture on the element matching the locator.
+Perform a tap gesture on the element matching the locator. For examples of emulating other gestures by manually dispatching touch events, see the [emulating legacy touch events](../touch-events.md) page.
 
 **Details**
 

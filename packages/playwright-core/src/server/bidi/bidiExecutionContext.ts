@@ -61,7 +61,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 
-  async rawEvaluateHandle(expression: string): Promise<js.ObjectId> {
+  async rawEvaluateHandle(context: js.ExecutionContext, expression: string): Promise<js.JSHandle> {
     const response = await this._session.send('script.evaluate', {
       expression,
       target: this._target,
@@ -72,7 +72,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     });
     if (response.type === 'success') {
       if ('handle' in response.result)
-        return response.result.handle!;
+        return createHandle(context, response.result);
       throw new js.JavaScriptErrorInEvaluate('Cannot get handle: ' + JSON.stringify(response.result));
     }
     if (response.type === 'exception')
@@ -80,14 +80,14 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
   }
 
-  async evaluateWithArguments(functionDeclaration: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
+  async evaluateWithArguments(functionDeclaration: string, returnByValue: boolean, utilityScript: js.JSHandle, values: any[], handles: js.JSHandle[]): Promise<any> {
     const response = await this._session.send('script.callFunction', {
       functionDeclaration,
       target: this._target,
       arguments: [
         { handle: utilityScript._objectId! },
         ...values.map(BidiSerializer.serialize),
-        ...objectIds.map(handle => ({ handle })),
+        ...handles.map(handle => ({ handle: handle._objectId! })),
       ],
       resultOwnership: returnByValue ? undefined : bidi.Script.ResultOwnership.Root, // Necessary for the handle to be returned.
       serializationOptions: returnByValue ? {} : { maxObjectDepth: 0, maxDomDepth: 0 },
@@ -121,10 +121,12 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     return map;
   }
 
-  async releaseHandle(objectId: js.ObjectId): Promise<void> {
+  async releaseHandle(handle: js.JSHandle): Promise<void> {
+    if (!handle._objectId)
+      return;
     await this._session.send('script.disown', {
       target: this._target,
-      handles: [objectId],
+      handles: [handle._objectId],
     });
   }
 

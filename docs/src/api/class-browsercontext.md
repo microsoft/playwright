@@ -1511,31 +1511,9 @@ Whether to emulate network being offline for the browser context.
     - `localStorage` <[Array]<[Object]>>
       - `name` <[string]>
       - `value` <[string]>
-    - `indexedDB` <[Array]<[Object]>>
-      - `name` <[string]>
-      - `version` <[int]>
-      - `stores` <[Array]<[Object]>>
-        - `name` <[string]>
-        - `keyPath` ?<[string]>
-        - `keyPathArray` ?<[Array]<[string]>>
-        - `autoIncrement` <[boolean]>
-        - `indexes` <[Array]<[Object]>>
-          - `name` <[string]>
-          - `keyPath` ?<[string]>
-          - `keyPathArray` ?<[Array]<[string]>>
-          - `unique` <[boolean]>
-          - `multiEntry` <[boolean]>
-        - `records` <[Array]<[Object]>>
-          - `key` ?<[Object]>
-          - `keyEncoded` ?<[Object]> if `key` is not JSON-serializable, this contains an encoded version that preserves types.
-          - `value` ?<[Object]>
-          - `valueEncoded` ?<[Object]> if `value` is not JSON-serializable, this contains an encoded version that preserves types.
+    - `indexedDB` <[Array]<[unknown]>>
 
 Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB snapshot.
-
-:::note
-IndexedDBs with typed arrays are currently not supported.
-:::
 
 ## async method: BrowserContext.storageState
 * since: v1.8
@@ -1549,7 +1527,12 @@ IndexedDBs with typed arrays are currently not supported.
 * since: v1.51
 - `indexedDB` ?<boolean>
 
-Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.
+Set to `true` to include IndexedDB in the storage state snapshot.
+If your application uses IndexedDB to store authentication tokens, like Firebase Authentication, enable this.
+
+:::note
+IndexedDBs with typed arrays are currently not supported.
+:::
 
 ## property: BrowserContext.tracing
 * since: v1.12

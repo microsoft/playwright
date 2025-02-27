@@ -29,7 +29,7 @@ class Locator {
   element: Element | undefined;
   elements: Element[] | undefined;
 
-  constructor(injectedScript: InjectedScript, selector: string, options?: { hasText?: string | RegExp, hasNotText?: string | RegExp, has?: Locator, hasNot?: Locator }) {
+  constructor(injectedScript: InjectedScript, selector: string, options?: { hasText?: string | RegExp, hasNotText?: string | RegExp, has?: Locator, hasNot?: Locator, visible?: boolean }) {
     if (options?.hasText)
       selector += ` >> internal:has-text=${escapeForTextSelector(options.hasText, false)}`;
     if (options?.hasNotText)
@@ -38,6 +38,8 @@ class Locator {
       selector += ` >> internal:has=` + JSON.stringify(options.has[selectorSymbol]);
     if (options?.hasNot)
       selector += ` >> internal:has-not=` + JSON.stringify(options.hasNot[selectorSymbol]);
+    if (options?.visible !== undefined)
+      selector += ` >> visible=${options.visible ? 'true' : 'false'}`;
     this[selectorSymbol] = selector;
     if (selector) {
       const parsed = injectedScript.parseSelector(selector);
@@ -46,7 +48,7 @@ class Locator {
     }
     const selectorBase = selector;
     const self = this as any;
-    self.locator = (selector: string, options?: { hasText?: string | RegExp, has?: Locator }): Locator => {
+    self.locator = (selector: string, options?: { hasText?: string | RegExp, hasNotText?: string | RegExp, has?: Locator, hasNot?: Locator }): Locator => {
       return new Locator(injectedScript, selectorBase ? selectorBase + ' >> ' + selector : selector, options);
     };
     self.getByTestId = (testId: string): Locator => self.locator(getByTestIdSelector(injectedScript.testIdAttributeNameForStrictErrorAndConsoleCodegen(), testId));
@@ -56,7 +58,7 @@ class Locator {
     self.getByText = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByTextSelector(text, options));
     self.getByTitle = (text: string | RegExp, options?: { exact?: boolean }): Locator => self.locator(getByTitleSelector(text, options));
     self.getByRole = (role: string, options: ByRoleOptions = {}): Locator => self.locator(getByRoleSelector(role, options));
-    self.filter = (options?: { hasText?: string | RegExp, has?: Locator }): Locator => new Locator(injectedScript, selector, options);
+    self.filter = (options?: { hasText?: string | RegExp, hasNotText?: string | RegExp, has?: Locator, hasNot?: Locator, visible?: boolean }): Locator => new Locator(injectedScript, selector, options);
     self.first = (): Locator => self.locator('nth=0');
     self.last = (): Locator => self.locator('nth=-1');
     self.nth = (index: number): Locator => self.locator(`nth=${index}`);

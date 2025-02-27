@@ -23,8 +23,6 @@ import { LongStandingScope } from '../utils/isomorphic/manualPromise';
 import type * as dom from './dom';
 import type { UtilityScript } from './injected/utilityScript';
 
-export type ObjectId = string;
-
 interface TaggedAsJSHandle<T> {
   __jshandle: T;
 }
@@ -49,10 +47,10 @@ export type SmartHandle<T> = T extends Node ? dom.ElementHandle<T> : JSHandle<T>
 
 export interface ExecutionContextDelegate {
   rawEvaluateJSON(expression: string): Promise<any>;
-  rawEvaluateHandle(expression: string): Promise<ObjectId>;
-  evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle<any>, values: any[], objectIds: ObjectId[]): Promise<any>;
+  rawEvaluateHandle(context: ExecutionContext, expression: string): Promise<JSHandle>;
+  evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: JSHandle, values: any[], handles: JSHandle[]): Promise<any>;
   getProperties(object: JSHandle): Promise<Map<string, JSHandle>>;
-  releaseHandle(objectId: ObjectId): Promise<void>;
+  releaseHandle(handle: JSHandle): Promise<void>;
 }
 
 export class ExecutionContext extends SdkObject {
@@ -79,21 +77,21 @@ export class ExecutionContext extends SdkObject {
     return this._raceAgainstContextDestroyed(this.delegate.rawEvaluateJSON(expression));
   }
 
-  rawEvaluateHandle(expression: string): Promise<ObjectId> {
-    return this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(expression));
+  rawEvaluateHandle(expression: string): Promise<JSHandle> {
+    return this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(this, expression));
   }
 
-  async evaluateWithArguments(expression: string, returnByValue: boolean, values: any[], objectIds: ObjectId[]): Promise<any> {
+  async evaluateWithArguments(expression: string, returnByValue: boolean, values: any[], handles: JSHandle[]): Promise<any> {
     const utilityScript = await this._utilityScript();
-    return this._raceAgainstContextDestroyed(this.delegate.evaluateWithArguments(expression, returnByValue, utilityScript, values, objectIds));
+    return this._raceAgainstContextDestroyed(this.delegate.evaluateWithArguments(expression, returnByValue, utilityScript, values, handles));
   }
 
   getProperties(object: JSHandle): Promise<Map<string, JSHandle>> {
     return this._raceAgainstContextDestroyed(this.delegate.getProperties(object));
   }
 
-  releaseHandle(objectId: ObjectId): Promise<void> {
-    return this.delegate.releaseHandle(objectId);
+  releaseHandle(handle: JSHandle): Promise<void> {
+    return this.delegate.releaseHandle(handle);
   }
 
   adoptIfNeeded(handle: JSHandle): Promise<JSHandle> | null {
@@ -108,7 +106,11 @@ export class ExecutionContext extends SdkObject {
         ${utilityScriptSource.source}
         return new (module.exports.UtilityScript())(${isUnderTest()});
       })();`;
-      this._utilityScriptPromise = this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(source).then(objectId => new JSHandle(this, 'object', 'UtilityScript', objectId)));
+      this._utilityScriptPromise = this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(this, source))
+          .then(handle => {
+            handle._setPreview('UtilityScript');
+            return handle;
+          });
     }
     return this._utilityScriptPromise;
   }
@@ -122,13 +124,13 @@ export class JSHandle<T = any> extends SdkObject {
   __jshandle: T = true as any;
   readonly _context: ExecutionContext;
   _disposed = false;
-  readonly _objectId: ObjectId | undefined;
+  readonly _objectId: string | undefined;
   readonly _value: any;
   private _objectType: string;
   protected _preview: string;
   private _previewCallback: ((preview: string) => void) | undefined;
 
-  constructor(context: ExecutionContext, type: string, preview: string | undefined, objectId?: ObjectId, value?: any) {
+  constructor(context: ExecutionContext, type: string, preview: string | undefined, objectId?: string, value?: any) {
     super(context, 'handle');
     this._context = context;
     this._objectId = objectId;
@@ -185,7 +187,7 @@ export class JSHandle<T = any> extends SdkObject {
     if (!this._objectId)
       return this._value;
     const script = `(utilityScript, ...args) => utilityScript.jsonValue(...args)`;
-    return this._context.evaluateWithArguments(script, true, [true], [this._objectId]);
+    return this._context.evaluateWithArguments(script, true, [true], [this]);
   }
 
   asElement(): dom.ElementHandle | null {
@@ -197,7 +199,7 @@ export class JSHandle<T = any> extends SdkObject {
       return;
     this._disposed = true;
     if (this._objectId) {
-      this._context.releaseHandle(this._objectId).catch(e => {});
+      this._context.releaseHandle(this).catch(e => {});
       if ((globalThis as any).leakedJSHandles)
         (globalThis as any).leakedJSHandles.delete(this);
     }
@@ -254,11 +256,11 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
     return { fallThrough: handle };
   }));
 
-  const utilityScriptObjectIds: ObjectId[] = [];
+  const utilityScriptObjects: JSHandle[] = [];
   for (const handle of await Promise.all(handles)) {
     if (handle._context !== context)
       throw new JavaScriptErrorInEvaluate('JSHandles can be evaluated only in the context they were created!');
-    utilityScriptObjectIds.push(handle._objectId!);
+    utilityScriptObjects.push(handle);
   }
 
   // See UtilityScript for arguments.
@@ -266,7 +268,7 @@ export async function evaluateExpression(context: ExecutionContext, expression: 
 
   const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)`;
   try {
-    return await context.evaluateWithArguments(script, options.returnByValue || false, utilityScriptValues, utilityScriptObjectIds);
+    return await context.evaluateWithArguments(script, options.returnByValue || false, utilityScriptValues, utilityScriptObjects);
   } finally {
     toDispose.map(handlePromise => handlePromise.then(handle => handle.dispose()));
   }

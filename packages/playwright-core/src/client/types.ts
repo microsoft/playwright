@@ -37,11 +37,11 @@ export type SelectOptionOptions = { force?: boolean, timeout?: number };
 export type FilePayload = { name: string, mimeType: string, buffer: Buffer };
 export type StorageState = {
   cookies: channels.NetworkCookie[],
-  origins: channels.OriginStorage[],
+  origins: (Omit<channels.OriginStorage, 'indexedDB'> & { indexedDB: unknown[] })[],
 };
 export type SetStorageState = {
   cookies?: channels.SetNetworkCookie[],
-  origins?: channels.SetOriginStorage[]
+  origins?: (Omit<channels.SetOriginStorage, 'indexedDB'> & { indexedDB?: unknown[] })[]
 };
 
 export type LifecycleEvent = channels.LifecycleEvent;

@@ -22,7 +22,7 @@ import { msToString } from './utils';
 import { AutoChip } from './chip';
 import { TestErrorView } from './testErrorView';
 import * as icons from './icons';
-import { MetadataView, useMetadata } from './metadataView';
+import { isMetadataEmpty, MetadataView } from './metadataView';
 
 export const TestFilesView: React.FC<{
   tests: TestFileSummary[],
@@ -67,13 +67,12 @@ export const TestFilesHeader: React.FC<{
   metadataVisible: boolean,
   toggleMetadataVisible: () => void,
 }> = ({ report, filteredStats, metadataVisible, toggleMetadataVisible }) => {
-  const metadataEntries = useMetadata();
   if (!report)
     return null;
   return <>
     <div className='mx-1' style={{ display: 'flex', marginTop: 10 }}>
       <div className='test-file-header-info'>
-        {metadataEntries.length > 0 && <div className='metadata-toggle' role='button' onClick={toggleMetadataVisible} title={metadataVisible ? 'Hide metadata' : 'Show metadata'}>
+        {!isMetadataEmpty(report.metadata) && <div className='metadata-toggle' role='button' onClick={toggleMetadataVisible} title={metadataVisible ? 'Hide metadata' : 'Show metadata'}>
           {metadataVisible ? icons.downArrow() : icons.rightArrow()}Metadata
         </div>}
         {report.projectNames.length === 1 && !!report.projectNames[0] && <div data-testid='project-name'>Project: {report.projectNames[0]}</div>}
@@ -83,7 +82,7 @@ export const TestFilesHeader: React.FC<{
       <div data-testid='overall-time' style={{ color: 'var(--color-fg-subtle)', marginRight: '10px' }}>{report ? new Date(report.startTime).toLocaleString() : ''}</div>
       <div data-testid='overall-duration' style={{ color: 'var(--color-fg-subtle)' }}>Total time: {msToString(report.duration ?? 0)}</div>
     </div>
-    {metadataVisible && <MetadataView/>}
+    {metadataVisible && <MetadataView metadata={report.metadata}/>}
     {!!report.errors.length && <AutoChip header='Errors' dataTestId='report-errors'>
       {report.errors.map((error, index) => <TestErrorView key={'test-report-error-message-' + index} error={error}></TestErrorView>)}
     </AutoChip>}

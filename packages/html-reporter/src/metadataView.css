@@ -37,10 +37,6 @@
   line-height: 24px;
 }
 
-.metadata-section {
-  align-items: center;
-}
-
 .metadata-properties {
   display: flex;
   flex-direction: column;
@@ -57,9 +53,8 @@
   border-bottom: 1px solid var(--color-border-default);
 }
 
-.git-commit-info a {
+.metadata-view a {
   color: var(--color-fg-default);
-  font-weight: 600;
 }
 
 .copyable-property {

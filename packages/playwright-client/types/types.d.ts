@@ -9267,14 +9267,15 @@ export interface BrowserContext {
   /**
    * Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB
    * snapshot.
-   *
-   * **NOTE** IndexedDBs with typed arrays are currently not supported.
-   *
    * @param options
    */
   storageState(options?: {
     /**
-     * Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.
+     * Set to `true` to include IndexedDB in the storage state snapshot. If your application uses IndexedDB to store
+     * authentication tokens, like Firebase Authentication, enable this.
+     *
+     * **NOTE** IndexedDBs with typed arrays are currently not supported.
+     *
      */
     indexedDB?: boolean;
 
@@ -9316,49 +9317,7 @@ export interface BrowserContext {
         value: string;
       }>;
 
-      indexedDB: Array<{
-        name: string;
-
-        version: number;
-
-        stores: Array<{
-          name: string;
-
-          keyPath?: string;
-
-          keyPathArray?: Array<string>;
-
-          autoIncrement: boolean;
-
-          indexes: Array<{
-            name: string;
-
-            keyPath?: string;
-
-            keyPathArray?: Array<string>;
-
-            unique: boolean;
-
-            multiEntry: boolean;
-          }>;
-
-          records: Array<{
-            key?: Object;
-
-            /**
-             * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
-             */
-            keyEncoded?: Object;
-
-            value?: Object;
-
-            /**
-             * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
-             */
-            valueEncoded?: Object;
-          }>;
-        }>;
-      }>;
+      indexedDB: Array<unknown>;
     }>;
   }>;
 
@@ -9740,12 +9699,6 @@ export interface Browser {
      * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
      */
     acceptDownloads?: boolean;
-
-    /**
-     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
-     * default, response object is returned for all status codes.
-     */
-    apiRequestFailsOnErrorStatus?: boolean;
 
     /**
      * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
@@ -10135,55 +10088,7 @@ export interface Browser {
         /**
          * indexedDB to set for context
          */
-        indexedDB?: Array<{
-          /**
-           * database name
-           */
-          name: string;
-
-          /**
-           * database version
-           */
-          version: number;
-
-          stores: Array<{
-            name: string;
-
-            keyPath?: string;
-
-            keyPathArray?: Array<string>;
-
-            autoIncrement: boolean;
-
-            indexes: Array<{
-              name: string;
-
-              keyPath?: string;
-
-              keyPathArray?: Array<string>;
-
-              unique: boolean;
-
-              multiEntry: boolean;
-            }>;
-
-            records: Array<{
-              key?: Object;
-
-              /**
-               * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
-               */
-              keyEncoded?: Object;
-
-              value?: Object;
-
-              /**
-               * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
-               */
-              valueEncoded?: Object;
-            }>;
-          }>;
-        }>;
+        indexedDB?: Array<unknown>;
       }>;
     };
 
@@ -13224,6 +13129,11 @@ export interface Locator {
      * `<article><div>Playwright</div></article>`.
      */
     hasText?: string|RegExp;
+
+    /**
+     * Only matches visible or invisible elements.
+     */
+    visible?: boolean;
   }): Locator;
 
   /**
@@ -14426,7 +14336,8 @@ export interface Locator {
   }): Promise<void>;
 
   /**
-   * Perform a tap gesture on the element matching the locator.
+   * Perform a tap gesture on the element matching the locator. For examples of emulating other gestures by manually
+   * dispatching touch events, see the [emulating legacy touch events](https://playwright.dev/docs/touch-events) page.
    *
    * **Details**
    *
@@ -14811,12 +14722,6 @@ export interface BrowserType<Unused = {}> {
      * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
      */
     acceptDownloads?: boolean;
-
-    /**
-     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
-     * default, response object is returned for all status codes.
-     */
-    apiRequestFailsOnErrorStatus?: boolean;
 
     /**
      * **NOTE** Use custom browser args at your own risk, as some of them may break Playwright functionality.
@@ -16709,12 +16614,6 @@ export interface AndroidDevice {
     acceptDownloads?: boolean;
 
     /**
-     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
-     * default, response object is returned for all status codes.
-     */
-    apiRequestFailsOnErrorStatus?: boolean;
-
-    /**
      * **NOTE** Use custom browser args at your own risk, as some of them may break Playwright functionality.
      *
      * Additional arguments to pass to the browser instance. The list of Chromium flags can be found
@@ -17561,12 +17460,6 @@ export interface APIRequest {
    */
   newContext(options?: {
     /**
-     * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
-     * default, response object is returned for all status codes.
-     */
-    apiRequestFailsOnErrorStatus?: boolean;
-
-    /**
      * Methods like
      * [apiRequestContext.get(url[, options])](https://playwright.dev/docs/api/class-apirequestcontext#api-request-context-get)
      * take the base URL into consideration by using the
@@ -17640,6 +17533,12 @@ export interface APIRequest {
      * An object containing additional HTTP headers to be sent with every request. Defaults to none.
      */
     extraHTTPHeaders?: { [key: string]: string; };
+
+    /**
+     * Whether to throw on response codes other than 2xx and 3xx. By default response object is returned for all status
+     * codes.
+     */
+    failOnStatusCode?: boolean;
 
     /**
      * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
@@ -17742,55 +17641,7 @@ export interface APIRequest {
         /**
          * indexedDB to set for context
          */
-        indexedDB?: Array<{
-          /**
-           * database name
-           */
-          name: string;
-
-          /**
-           * database version
-           */
-          version: number;
-
-          stores: Array<{
-            name: string;
-
-            keyPath?: string;
-
-            keyPathArray?: Array<string>;
-
-            autoIncrement: boolean;
-
-            indexes: Array<{
-              name: string;
-
-              keyPath?: string;
-
-              keyPathArray?: Array<string>;
-
-              unique: boolean;
-
-              multiEntry: boolean;
-            }>;
-
-            records: Array<{
-              key?: Object;
-
-              /**
-               * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
-               */
-              keyEncoded?: Object;
-
-              value?: Object;
-
-              /**
-               * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
-               */
-              valueEncoded?: Object;
-            }>;
-          }>;
-        }>;
+        indexedDB?: Array<unknown>;
       }>;
     };
 
@@ -18564,7 +18415,7 @@ export interface APIRequestContext {
    */
   storageState(options?: {
     /**
-     * Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.
+     * Set to `true` to include IndexedDB in the storage state snapshot.
      */
     indexedDB?: boolean;
 
@@ -18606,49 +18457,7 @@ export interface APIRequestContext {
         value: string;
       }>;
 
-      indexedDB: Array<{
-        name: string;
-
-        version: number;
-
-        stores: Array<{
-          name: string;
-
-          keyPath?: string;
-
-          keyPathArray?: Array<string>;
-
-          autoIncrement: boolean;
-
-          indexes: Array<{
-            name: string;
-
-            keyPath?: string;
-
-            keyPathArray?: Array<string>;
-
-            unique: boolean;
-
-            multiEntry: boolean;
-          }>;
-
-          records: Array<{
-            key?: Object;
-
-            /**
-             * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
-             */
-            keyEncoded?: Object;
-
-            value?: Object;
-
-            /**
-             * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
-             */
-            valueEncoded?: Object;
-          }>;
-        }>;
-      }>;
+      indexedDB: Array<unknown>;
     }>;
   }>;
 
@@ -21310,6 +21119,9 @@ export interface Selectors {
 /**
  * The Touchscreen class operates in main-frame CSS pixels relative to the top-left corner of the viewport. Methods on
  * the touchscreen can only be used in browser contexts that have been initialized with `hasTouch` set to true.
+ *
+ * This class is limited to emulating tap gestures. For examples of other gestures simulated by manually dispatching
+ * touch events, see the [emulating legacy touch events](https://playwright.dev/docs/touch-events) page.
  */
 export interface Touchscreen {
   /**
@@ -22143,12 +21955,6 @@ export interface BrowserContextOptions {
   acceptDownloads?: boolean;
 
   /**
-   * An object containing an option to throw an error when API request returns status codes other than 2xx and 3xx. By
-   * default, response object is returned for all status codes.
-   */
-  apiRequestFailsOnErrorStatus?: boolean;
-
-  /**
    * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
    * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
    * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
@@ -22503,55 +22309,7 @@ export interface BrowserContextOptions {
       /**
        * indexedDB to set for context
        */
-      indexedDB?: Array<{
-        /**
-         * database name
-         */
-        name: string;
-
-        /**
-         * database version
-         */
-        version: number;
-
-        stores: Array<{
-          name: string;
-
-          keyPath?: string;
-
-          keyPathArray?: Array<string>;
-
-          autoIncrement: boolean;
-
-          indexes: Array<{
-            name: string;
-
-            keyPath?: string;
-
-            keyPathArray?: Array<string>;
-
-            unique: boolean;
-
-            multiEntry: boolean;
-          }>;
-
-          records: Array<{
-            key?: Object;
-
-            /**
-             * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
-             */
-            keyEncoded?: Object;
-
-            value?: Object;
-
-            /**
-             * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
-             */
-            valueEncoded?: Object;
-          }>;
-        }>;
-      }>;
+      indexedDB?: Array<unknown>;
     }>;
   };
 

@@ -44,23 +44,23 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     return payload.result!.value;
   }
 
-  async rawEvaluateHandle(expression: string): Promise<js.ObjectId> {
+  async rawEvaluateHandle(context: js.ExecutionContext, expression: string): Promise<js.JSHandle> {
     const payload = await this._session.send('Runtime.evaluate', {
       expression,
       returnByValue: false,
       executionContextId: this._executionContextId,
     }).catch(rewriteError);
     checkException(payload.exceptionDetails);
-    return payload.result!.objectId!;
+    return createHandle(context, payload.result!);
   }
 
-  async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
+  async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle, values: any[], handles: js.JSHandle[]): Promise<any> {
     const payload = await this._session.send('Runtime.callFunction', {
       functionDeclaration: expression,
       args: [
         { objectId: utilityScript._objectId, value: undefined },
         ...values.map(value => ({ value })),
-        ...objectIds.map(objectId => ({ objectId, value: undefined })),
+        ...handles.map(handle => ({ objectId: handle._objectId!, value: undefined })),
       ],
       returnByValue,
       executionContextId: this._executionContextId
@@ -82,10 +82,12 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
     return result;
   }
 
-  async releaseHandle(objectId: js.ObjectId): Promise<void> {
+  async releaseHandle(handle: js.JSHandle): Promise<void> {
+    if (!handle._objectId)
+      return;
     await this._session.send('Runtime.disposeObject', {
       executionContextId: this._executionContextId,
-      objectId
+      objectId: handle._objectId,
     });
   }
 }

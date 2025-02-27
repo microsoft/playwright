@@ -46,24 +46,24 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     return remoteObject.value;
   }
 
-  async rawEvaluateHandle(expression: string): Promise<js.ObjectId> {
+  async rawEvaluateHandle(context: js.ExecutionContext, expression: string): Promise<js.JSHandle> {
     const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.evaluate', {
       expression,
       contextId: this._contextId,
     }).catch(rewriteError);
     if (exceptionDetails)
       throw new js.JavaScriptErrorInEvaluate(getExceptionMessage(exceptionDetails));
-    return remoteObject.objectId!;
+    return createHandle(context, remoteObject);
   }
 
-  async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle<any>, values: any[], objectIds: string[]): Promise<any> {
+  async evaluateWithArguments(expression: string, returnByValue: boolean, utilityScript: js.JSHandle, values: any[], handles: js.JSHandle[]): Promise<any> {
     const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.callFunctionOn', {
       functionDeclaration: expression,
       objectId: utilityScript._objectId,
       arguments: [
         { objectId: utilityScript._objectId },
         ...values.map(value => ({ value })),
-        ...objectIds.map(objectId => ({ objectId })),
+        ...handles.map(handle => ({ objectId: handle._objectId! })),
       ],
       returnByValue,
       awaitPromise: true,
@@ -88,8 +88,10 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
     return result;
   }
 
-  async releaseHandle(objectId: js.ObjectId): Promise<void> {
-    await releaseObject(this._client, objectId);
+  async releaseHandle(handle: js.JSHandle): Promise<void> {
+    if (!handle._objectId)
+      return;
+    await releaseObject(this._client, handle._objectId);
   }
 }
 

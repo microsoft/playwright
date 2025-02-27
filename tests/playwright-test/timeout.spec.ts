@@ -164,6 +164,26 @@ test('should ignore test.setTimeout when debugging', async ({ runInlineTest }) =
   expect(result.passed).toBe(1);
 });
 
+test('should ignore globalTimeout when debugging', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34911' },
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        globalTimeout: 100,
+      };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('my test', async ({ }) => {
+        await new Promise(f => setTimeout(f, 2000));
+      });
+    `
+  }, { debug: true });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
 test('should respect fixture timeout', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.spec.ts': `

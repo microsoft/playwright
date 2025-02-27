@@ -1,19 +1,13 @@
 ---
 id: touch-events
-title: "Emulating touch events"
+title: "Emulating legacy touch events"
 ---
 
 ## Introduction
 
-Mobile web sites may listen to [touch events](https://developer.mozilla.org/en-US/docs/Web/API/Touch_events) and react to user touch gestures such as swipe, pinch, tap etc. To test this functionality you can manually generate [TouchEvent]s in the page context using [`method: Locator.evaluate`].
+Web applications that handle [touch events](https://developer.mozilla.org/en-US/docs/Web/API/Touch_events) to respond to gestures like swipe, pinch, and tap can be tested by manually dispatching [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)s to the page. The examples below demonstrate how to use [`method: Locator.dispatchEvent`] and pass [Touch](https://developer.mozilla.org/en-US/docs/Web/API/Touch) points as arguments.
 
-If your web application relies on [pointer events](https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events) instead of touch events, you can use [`method: Locator.click`] and raw [`Mouse`] events to simulate a single-finger touch, and this will trigger all the same pointer events.
-
-### Dispatching TouchEvent
-
-You can dispatch touch events to the page using [`method: Locator.dispatchEvent`]. [Touch](https://developer.mozilla.org/en-US/docs/Web/API/Touch) points can be passed as arguments, see examples below.
-
-#### Emulating pan gesture
+### Emulating pan gesture
 
 In the example below, we emulate pan gesture that is expected to move the map. The app under test only uses `clientX/clientY` coordinates of the touch point, so we initialize just that. In a more complex scenario you may need to also set `pageX/pageY/screenX/screenY`, if your app needs them.
 
@@ -69,7 +63,7 @@ test(`pan gesture to move the map`, async ({ page }) => {
 });
 ```
 
-#### Emulating pinch gesture
+### Emulating pinch gesture
 
 In the example below, we emulate pinch gesture, i.e. two touch points moving closer to each other. It is expected to zoom out the map. The app under test only uses `clientX/clientY` coordinates of touch points, so we initialize just that. In a more complex scenario you may need to also set `pageX/pageY/screenX/screenY`, if your app needs them.
 

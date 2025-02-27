@@ -17,6 +17,8 @@
 import { ManualPromise, monotonicTime } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utils';
 
+import { debugTest, formatLocation } from '../util';
+
 import type { Location } from '../../types/testReporter';
 
 export type TimeSlot = {
@@ -76,9 +78,7 @@ export class TimeoutManager {
     return slot.timeout > 0 && (slot.elapsed >= slot.timeout - 1);
   }
 
-  async withRunnable<T>(runnable: RunnableDescription | undefined, cb: () => Promise<T>): Promise<T> {
-    if (!runnable)
-      return await cb();
+  async withRunnable<T>(runnable: RunnableDescription, cb: () => Promise<T>): Promise<T> {
     if (this._running)
       throw new Error(`Internal error: duplicate runnable`);
     const running = this._running = {
@@ -89,7 +89,13 @@ export class TimeoutManager {
       timer: undefined,
       timeoutPromise: new ManualPromise(),
     };
+    let debugTitle = '';
     try {
+      if (debugTest.enabled) {
+        debugTitle = runnable.fixture ? `${runnable.fixture.phase} "${runnable.fixture.title}"` : runnable.type;
+        const location = runnable.location ? ` at "${formatLocation(runnable.location)}"` : ``;
+        debugTest(`started ${debugTitle}${location}`);
+      }
       this._updateTimeout(running);
       return await Promise.race([
         cb(),
@@ -101,6 +107,8 @@ export class TimeoutManager {
       running.timer = undefined;
       running.slot.elapsed += monotonicTime() - running.start;
       this._running = undefined;
+      if (debugTest.enabled)
+        debugTest(`finished ${debugTitle}`);
     }
   }
 
