@@ -193,7 +193,7 @@ test.describe('fetch', () => {
         keyPath: asset('client-certificates/client/trusted/key.pem'),
       }],
     });
-    const response = await request.get(`https://www.hello.local:${new URL(serverURL).port}`, { __testHookLookup });
+    const response = await request.get(`https://www.hello.local:${new URL(serverURL).port}`, { __testHookLookup } as any);
     expect(response.url()).toBe(`https://www.hello.local:${new URL(serverURL).port}/`);
     expect(response.status()).toBe(200);
     expect(await response.text()).toContain('Hello Alice, your certificate was issued by localhost!');
