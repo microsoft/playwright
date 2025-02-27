@@ -71,7 +71,7 @@ export function source() {
     }
   }
 
-  const typedArrayCtors: Record<TypedArrayKind, Function> = {
+  const typedArrayConstructors: Record<TypedArrayKind, Function> = {
     i8: Int8Array,
     ui8: Uint8Array,
     ui8c: Uint8ClampedArray,
@@ -159,7 +159,7 @@ export function source() {
       if ('h' in value)
         return handles[value.h];
       if ('ta' in value)
-        return base64ToTypedArray(value.ta.b, typedArrayCtors[value.ta.k]);
+        return base64ToTypedArray(value.ta.b, typedArrayConstructors[value.ta.k]);
     }
     return value;
   }
@@ -227,7 +227,7 @@ export function source() {
       return { u: value.toJSON() };
     if (isRegExp(value))
       return { r: { p: value.source, f: value.flags } };
-    for (const [k, ctor] of Object.entries(typedArrayCtors) as [TypedArrayKind, Function][]) {
+    for (const [k, ctor] of Object.entries(typedArrayConstructors) as [TypedArrayKind, Function][]) {
       if (value instanceof ctor)
         return { ta: { b: typedArrayToBase64(value), k } };
     }
