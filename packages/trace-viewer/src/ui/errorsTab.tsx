@@ -62,7 +62,7 @@ function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, mode
       return '';
 
     const targetLine = selectedFrame?.line ?? 0;
-  
+
     const lines = source.content.split('\n');
     const start = Math.max(0, targetLine - width);
     const end = Math.min(lines.length, targetLine + width);
