@@ -101,18 +101,38 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
     // Allow http(s) baseURL to match ws(s) urls.
     if (baseURL && /^https?:\/\//.test(baseURL) && /^wss?:\/\//.test(urlString))
       baseURL = baseURL.replace(/^http/, 'ws');
-    // Resolve match relative to baseURL only if baseURL is set and match is not an absolute URL.
-    // Otherwise, leave it unchanged to prevent the URL constructor from interpreting glob symbols
-    // like ?, {, and }, which could alter the pattern.
-    if (baseURL && !parseURL(match))
-      match = constructURLBasedOnBaseURL(baseURL, match);
+
+    const tokenMap = new Map<string, string>();
+    function mapToken(original: string, replacement: string) {
+      tokenMap.set(replacement, original);
+      return replacement;
+    }
+    // Glob symbols may be escaped in the URL and some of them such as ? affect resolution,
+    // so we replace them with safe components first.
+    const relativePath = match.split('/').map((token, index) => {
+      if (token === '.' || token === '..' || token === '')
+        return token;
+      // Handle special case of http*://
+      if (index === 0 && token.endsWith(':')) {
+        return mapToken(token, 'http:');
+      } else {
+        const questionIndex = token.indexOf('?');
+        if (questionIndex === -1)
+          return mapToken(token, `$_${index}_$`);
+        if (questionIndex === 0)
+          return mapToken(token, `?$_${index}_$`);
+        const newPrefix = mapToken(token.substring(0, questionIndex), `$_${index}_$`);
+        const newSuffix = mapToken(token.substring(questionIndex), `?$_${index}_$`);
+        return newPrefix + newSuffix;
+      }
+    }).join('/');
+    let resolved = constructURLBasedOnBaseURL(baseURL, relativePath);
+    for (const [token, original] of tokenMap)
+      resolved = resolved.replace(token, original);
+    match = resolved;
   }
-  if (isString(match)) {
-    const tryWithoutTrailingSlash = urlString.endsWith('/') && !match.endsWith('/');
+  if (isString(match))
     match = globToRegex(match);
-    if (tryWithoutTrailingSlash && match.test(urlString.substring(0, urlString.length - 1)))
-      return true;
-  }
   if (isRegExp(match))
     return match.test(urlString);
   const url = parseURL(urlString);

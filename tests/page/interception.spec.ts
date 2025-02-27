@@ -105,13 +105,23 @@ it('should work with glob', async () => {
   expect(globToRegex('\\[')).toEqual(/^\[$/);
   expect(globToRegex('[a-z]')).toEqual(/^[a-z]$/);
   expect(globToRegex('$^+.\\*()|\\?\\{\\}\\[\\]')).toEqual(/^\$\^\+\.\*\(\)\|\?\{\}\[\]$/);
+
+  expect(urlMatches(undefined, 'http://playwright.dev/', 'http://playwright.dev')).toBeTruthy();
+  expect(urlMatches(undefined, 'http://playwright.dev/?a=b', 'http://playwright.dev?a=b')).toBeTruthy();
+  expect(urlMatches(undefined, 'http://playwright.dev/', 'h*://playwright.dev')).toBeTruthy();
+  expect(urlMatches(undefined, 'http://api.playwright.dev/?x=y', 'http://*.playwright.dev?x=y')).toBeTruthy();
+  expect(urlMatches(undefined, 'http://playwright.dev/foo/bar', '**/foo/**')).toBeTruthy();
+  expect(urlMatches('http://playwright.dev/foo/', 'http://playwright.dev/foo/bar?x=y', './bar?x=y')).toBeTruthy();
+
+  // This is not supported, we treat ? as a query separator.
+  expect(urlMatches(undefined, 'http://playwright.dev/', 'http://playwright.?ev')).toBeFalsy();
 });
 
 it('should intercept by glob', async function({ page, server, isAndroid }) {
   it.skip(isAndroid);
 
   await page.goto(server.EMPTY_PAGE);
-  await page.route('http://localhos*?/?oo', async route => {
+  await page.route('http://localhos**/?oo', async route => {
     await route.fulfill({
       status: 200,
       body: 'intercepted',
