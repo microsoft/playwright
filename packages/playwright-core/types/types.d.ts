@@ -18667,7 +18667,6 @@ export interface APIRequestContext {
 
   [Symbol.asyncDispose](): Promise<void>;
 
-
   /**
    * Emitted when a request is issued from API request context. The event will be emitted after the request is issued
    */
