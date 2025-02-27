@@ -35,6 +35,7 @@ export type LocatorOptions = {
   hasNotText?: string | RegExp;
   has?: Locator;
   hasNot?: Locator;
+  visible?: boolean;
 };
 
 export class Locator implements api.Locator {
@@ -64,6 +65,9 @@ export class Locator implements api.Locator {
         throw new Error(`Inner "hasNot" locator must belong to the same frame.`);
       this._selector += ` >> internal:has-not=` + JSON.stringify(locator._selector);
     }
+
+    if (options?.visible !== undefined)
+      this._selector += ` >> visible=${options.visible ? 'true' : 'false'}`;
 
     if (this._frame._platform.inspectCustom)
       (this as any)[this._frame._platform.inspectCustom] = () => this._inspect();
@@ -150,7 +154,7 @@ export class Locator implements api.Locator {
     return await this._frame._highlight(this._selector);
   }
 
-  locator(selectorOrLocator: string | Locator, options?: LocatorOptions): Locator {
+  locator(selectorOrLocator: string | Locator, options?: Omit<LocatorOptions, 'visible'>): Locator {
     if (isString(selectorOrLocator))
       return new Locator(this._frame, this._selector + ' >> ' + selectorOrLocator, options);
     if (selectorOrLocator._frame !== this._frame)
@@ -216,11 +220,6 @@ export class Locator implements api.Locator {
 
   nth(index: number): Locator {
     return new Locator(this._frame, this._selector + ` >> nth=${index}`);
-  }
-
-  visible(options: { visible?: boolean } = {}): Locator {
-    const { visible = true } = options;
-    return new Locator(this._frame, this._selector + ` >> visible=${visible ? 'true' : 'false'}`);
   }
 
   and(locator: Locator): Locator {

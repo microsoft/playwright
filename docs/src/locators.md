@@ -751,10 +751,10 @@ page.locator("x-details", new Page.LocatorOptions().setHasText("Details"))
     .click();
 ```
 ```python async
-await page.locator("x-details", has_text="Details" ).click()
+await page.locator("x-details", has_text="Details").click()
 ```
 ```python sync
-page.locator("x-details", has_text="Details" ).click()
+page.locator("x-details", has_text="Details").click()
 ```
 ```csharp
 await page
@@ -1310,19 +1310,19 @@ Consider a page with two buttons, the first invisible and the second [visible](.
 * This will only find a second button, because it is visible, and then click it.
 
   ```js
-  await page.locator('button').visible().click();
+  await page.locator('button').filter({ visible: true }).click();
   ```
   ```java
-  page.locator("button").visible().click();
+  page.locator("button").filter(new Locator.FilterOptions.setVisible(true)).click();
   ```
   ```python async
-  await page.locator("button").visible().click()
+  await page.locator("button").filter(visible=True).click()
   ```
   ```python sync
-  page.locator("button").visible().click()
+  page.locator("button").filter(visible=True).click()
   ```
   ```csharp
-  await page.Locator("button").Visible().ClickAsync();
+  await page.Locator("button").Filter(new() { Visible = true }).ClickAsync();
   ```
 
 ## Lists
