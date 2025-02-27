@@ -432,6 +432,16 @@ export function rewriteOpenSSLErrorIfNeeded(error: Error): Error {
   ].join('\n'));
 }
 
+/*
+  Pattern is a pattern that matches a URL. Based on the Chromium
+  implementation, used in content policies:
+  https://source.chromium.org/chromium/chromium/src/+/main:components/content_settings/core/common/content_settings_pattern.h;l=248;drc=20799f4c32d950ce93d495f44eec648400f38a19
+
+  Example: "https://[*.].hello.com/path"
+
+  The only difference is that we don't support the precedence rules and
+  paths patterns are not implemented.
+*/
 export class Pattern {
   private readonly _scheme: string;
   private readonly _isSchemeWildcard: boolean;
