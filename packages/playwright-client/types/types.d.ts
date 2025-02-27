@@ -17,6 +17,7 @@
 import { ChildProcess } from 'child_process';
 import { Readable } from 'stream';
 import { ReadStream } from 'fs';
+import type { IncomingHttpHeaders } from 'http';
 import { Protocol } from './protocol';
 import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
 
@@ -17852,67 +17853,1135 @@ export interface APIRequestContext {
    * Emitted when a request is issued from any requests created through this context. The [APIRequestEvent] object is
    * read-only.
    */
-  on(event: 'apirequest', listener: (aPIRequestEvent: APIRequestEvent) => any): this;
+  on(event: 'apirequest', listener: (data: {
+    /**
+     * request GUID
+     */
+    guid: string;
+
+    /**
+     * request URL
+     */
+    url: URL;
+
+    /**
+     * request method
+     */
+    method: string;
+
+    /**
+     * request headers
+     */
+    headers: { [key: string]: string; };
+
+    cookies: Array<{
+      name: string;
+
+      value: string;
+    }>;
+
+    /**
+     * request post data
+     */
+    postData?: Buffer;
+  }) => any): this;
 
   /**
    * Emitted when a request finishes in any requests created through this context. The sequence of events is
    * `apirequest` and `apirequestfinished`
    */
-  on(event: 'apirequestfinished', listener: (aPIRequestFinishedEvent: APIRequestFinishedEvent) => any): this;
+  on(event: 'apirequestfinished', listener: (data: {
+    /**
+     * HTTP version
+     */
+    httpVersion: string;
+
+    /**
+     * raw headers
+     */
+    rawHeaders: Array<string>;
+
+    /**
+     * status code
+     */
+    statusCode: number;
+
+    /**
+     * status message
+     */
+    statusMessage: string;
+
+    /**
+     * response body
+     */
+    body?: Buffer;
+
+    /**
+     * response headers
+     */
+    headers: IncomingHttpHeaders;
+
+    /**
+     * server IP address
+     */
+    serverIPAddress?: string;
+
+    /**
+     * server port
+     */
+    serverPort?: number;
+
+    timings: {
+      blocked?: number;
+
+      dns?: number;
+
+      connect?: number;
+
+      send: number;
+
+      wait: number;
+
+      receive: number;
+
+      ssl?: number;
+
+      comment?: string;
+    };
+
+    cookies: Array<{
+      name: string;
+
+      value: string;
+
+      domain: string;
+
+      path: string;
+
+      /**
+       * Unix time in seconds.
+       */
+      expires: number;
+
+      httpOnly: boolean;
+
+      secure: boolean;
+
+      sameSite: "Strict"|"Lax"|"None";
+    }>;
+
+    /**
+     * security details
+     */
+    securityDetails?: {
+      /**
+       * Common Name component of the Issuer field. from the certificate. This should only be used for informational
+       * purposes. Optional.
+       */
+      issuer?: string;
+
+      /**
+       * The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
+       */
+      protocol?: string;
+
+      /**
+       * Common Name component of the Subject field from the certificate. This should only be used for informational
+       * purposes. Optional.
+       */
+      subjectName?: string;
+
+      /**
+       * Unix timestamp (in seconds) specifying when this cert becomes valid. Optional.
+       */
+      validFrom?: number;
+
+      /**
+       * Unix timestamp (in seconds) specifying when this cert becomes invalid. Optional.
+       */
+      validTo?: number;
+    };
+
+    /**
+     * request event object
+     */
+    requestEvent: {
+      /**
+       * request GUID
+       */
+      guid: string;
+
+      /**
+       * request URL
+       */
+      url: URL;
+
+      /**
+       * request method
+       */
+      method: string;
+
+      /**
+       * request headers
+       */
+      headers: { [key: string]: string; };
+
+      cookies: Array<{
+        name: string;
+
+        value: string;
+      }>;
+
+      /**
+       * request post data
+       */
+      postData?: Buffer;
+    };
+  }) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'apirequest', listener: (aPIRequestEvent: APIRequestEvent) => any): this;
+  once(event: 'apirequest', listener: (data: {
+    /**
+     * request GUID
+     */
+    guid: string;
+
+    /**
+     * request URL
+     */
+    url: URL;
+
+    /**
+     * request method
+     */
+    method: string;
+
+    /**
+     * request headers
+     */
+    headers: { [key: string]: string; };
+
+    cookies: Array<{
+      name: string;
+
+      value: string;
+    }>;
+
+    /**
+     * request post data
+     */
+    postData?: Buffer;
+  }) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'apirequestfinished', listener: (aPIRequestFinishedEvent: APIRequestFinishedEvent) => any): this;
+  once(event: 'apirequestfinished', listener: (data: {
+    /**
+     * HTTP version
+     */
+    httpVersion: string;
+
+    /**
+     * raw headers
+     */
+    rawHeaders: Array<string>;
+
+    /**
+     * status code
+     */
+    statusCode: number;
+
+    /**
+     * status message
+     */
+    statusMessage: string;
+
+    /**
+     * response body
+     */
+    body?: Buffer;
+
+    /**
+     * response headers
+     */
+    headers: IncomingHttpHeaders;
+
+    /**
+     * server IP address
+     */
+    serverIPAddress?: string;
+
+    /**
+     * server port
+     */
+    serverPort?: number;
+
+    timings: {
+      blocked?: number;
+
+      dns?: number;
+
+      connect?: number;
+
+      send: number;
+
+      wait: number;
+
+      receive: number;
+
+      ssl?: number;
+
+      comment?: string;
+    };
+
+    cookies: Array<{
+      name: string;
+
+      value: string;
+
+      domain: string;
+
+      path: string;
+
+      /**
+       * Unix time in seconds.
+       */
+      expires: number;
+
+      httpOnly: boolean;
+
+      secure: boolean;
+
+      sameSite: "Strict"|"Lax"|"None";
+    }>;
+
+    /**
+     * security details
+     */
+    securityDetails?: {
+      /**
+       * Common Name component of the Issuer field. from the certificate. This should only be used for informational
+       * purposes. Optional.
+       */
+      issuer?: string;
+
+      /**
+       * The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
+       */
+      protocol?: string;
+
+      /**
+       * Common Name component of the Subject field from the certificate. This should only be used for informational
+       * purposes. Optional.
+       */
+      subjectName?: string;
+
+      /**
+       * Unix timestamp (in seconds) specifying when this cert becomes valid. Optional.
+       */
+      validFrom?: number;
+
+      /**
+       * Unix timestamp (in seconds) specifying when this cert becomes invalid. Optional.
+       */
+      validTo?: number;
+    };
+
+    /**
+     * request event object
+     */
+    requestEvent: {
+      /**
+       * request GUID
+       */
+      guid: string;
+
+      /**
+       * request URL
+       */
+      url: URL;
+
+      /**
+       * request method
+       */
+      method: string;
+
+      /**
+       * request headers
+       */
+      headers: { [key: string]: string; };
+
+      cookies: Array<{
+        name: string;
+
+        value: string;
+      }>;
+
+      /**
+       * request post data
+       */
+      postData?: Buffer;
+    };
+  }) => any): this;
 
   /**
    * Emitted when a request is issued from any requests created through this context. The [APIRequestEvent] object is
    * read-only.
    */
-  addListener(event: 'apirequest', listener: (aPIRequestEvent: APIRequestEvent) => any): this;
+  addListener(event: 'apirequest', listener: (data: {
+    /**
+     * request GUID
+     */
+    guid: string;
+
+    /**
+     * request URL
+     */
+    url: URL;
+
+    /**
+     * request method
+     */
+    method: string;
+
+    /**
+     * request headers
+     */
+    headers: { [key: string]: string; };
+
+    cookies: Array<{
+      name: string;
+
+      value: string;
+    }>;
+
+    /**
+     * request post data
+     */
+    postData?: Buffer;
+  }) => any): this;
 
   /**
    * Emitted when a request finishes in any requests created through this context. The sequence of events is
    * `apirequest` and `apirequestfinished`
    */
-  addListener(event: 'apirequestfinished', listener: (aPIRequestFinishedEvent: APIRequestFinishedEvent) => any): this;
+  addListener(event: 'apirequestfinished', listener: (data: {
+    /**
+     * HTTP version
+     */
+    httpVersion: string;
+
+    /**
+     * raw headers
+     */
+    rawHeaders: Array<string>;
+
+    /**
+     * status code
+     */
+    statusCode: number;
+
+    /**
+     * status message
+     */
+    statusMessage: string;
+
+    /**
+     * response body
+     */
+    body?: Buffer;
+
+    /**
+     * response headers
+     */
+    headers: IncomingHttpHeaders;
+
+    /**
+     * server IP address
+     */
+    serverIPAddress?: string;
+
+    /**
+     * server port
+     */
+    serverPort?: number;
+
+    timings: {
+      blocked?: number;
+
+      dns?: number;
+
+      connect?: number;
+
+      send: number;
+
+      wait: number;
+
+      receive: number;
+
+      ssl?: number;
+
+      comment?: string;
+    };
+
+    cookies: Array<{
+      name: string;
+
+      value: string;
+
+      domain: string;
+
+      path: string;
+
+      /**
+       * Unix time in seconds.
+       */
+      expires: number;
+
+      httpOnly: boolean;
+
+      secure: boolean;
+
+      sameSite: "Strict"|"Lax"|"None";
+    }>;
+
+    /**
+     * security details
+     */
+    securityDetails?: {
+      /**
+       * Common Name component of the Issuer field. from the certificate. This should only be used for informational
+       * purposes. Optional.
+       */
+      issuer?: string;
+
+      /**
+       * The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
+       */
+      protocol?: string;
+
+      /**
+       * Common Name component of the Subject field from the certificate. This should only be used for informational
+       * purposes. Optional.
+       */
+      subjectName?: string;
+
+      /**
+       * Unix timestamp (in seconds) specifying when this cert becomes valid. Optional.
+       */
+      validFrom?: number;
+
+      /**
+       * Unix timestamp (in seconds) specifying when this cert becomes invalid. Optional.
+       */
+      validTo?: number;
+    };
+
+    /**
+     * request event object
+     */
+    requestEvent: {
+      /**
+       * request GUID
+       */
+      guid: string;
+
+      /**
+       * request URL
+       */
+      url: URL;
+
+      /**
+       * request method
+       */
+      method: string;
+
+      /**
+       * request headers
+       */
+      headers: { [key: string]: string; };
+
+      cookies: Array<{
+        name: string;
+
+        value: string;
+      }>;
+
+      /**
+       * request post data
+       */
+      postData?: Buffer;
+    };
+  }) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'apirequest', listener: (aPIRequestEvent: APIRequestEvent) => any): this;
+  removeListener(event: 'apirequest', listener: (data: {
+    /**
+     * request GUID
+     */
+    guid: string;
+
+    /**
+     * request URL
+     */
+    url: URL;
+
+    /**
+     * request method
+     */
+    method: string;
+
+    /**
+     * request headers
+     */
+    headers: { [key: string]: string; };
+
+    cookies: Array<{
+      name: string;
+
+      value: string;
+    }>;
+
+    /**
+     * request post data
+     */
+    postData?: Buffer;
+  }) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'apirequestfinished', listener: (aPIRequestFinishedEvent: APIRequestFinishedEvent) => any): this;
+  removeListener(event: 'apirequestfinished', listener: (data: {
+    /**
+     * HTTP version
+     */
+    httpVersion: string;
+
+    /**
+     * raw headers
+     */
+    rawHeaders: Array<string>;
+
+    /**
+     * status code
+     */
+    statusCode: number;
+
+    /**
+     * status message
+     */
+    statusMessage: string;
+
+    /**
+     * response body
+     */
+    body?: Buffer;
+
+    /**
+     * response headers
+     */
+    headers: IncomingHttpHeaders;
+
+    /**
+     * server IP address
+     */
+    serverIPAddress?: string;
+
+    /**
+     * server port
+     */
+    serverPort?: number;
+
+    timings: {
+      blocked?: number;
+
+      dns?: number;
+
+      connect?: number;
+
+      send: number;
+
+      wait: number;
+
+      receive: number;
+
+      ssl?: number;
+
+      comment?: string;
+    };
+
+    cookies: Array<{
+      name: string;
+
+      value: string;
+
+      domain: string;
+
+      path: string;
+
+      /**
+       * Unix time in seconds.
+       */
+      expires: number;
+
+      httpOnly: boolean;
+
+      secure: boolean;
+
+      sameSite: "Strict"|"Lax"|"None";
+    }>;
+
+    /**
+     * security details
+     */
+    securityDetails?: {
+      /**
+       * Common Name component of the Issuer field. from the certificate. This should only be used for informational
+       * purposes. Optional.
+       */
+      issuer?: string;
+
+      /**
+       * The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
+       */
+      protocol?: string;
+
+      /**
+       * Common Name component of the Subject field from the certificate. This should only be used for informational
+       * purposes. Optional.
+       */
+      subjectName?: string;
+
+      /**
+       * Unix timestamp (in seconds) specifying when this cert becomes valid. Optional.
+       */
+      validFrom?: number;
+
+      /**
+       * Unix timestamp (in seconds) specifying when this cert becomes invalid. Optional.
+       */
+      validTo?: number;
+    };
+
+    /**
+     * request event object
+     */
+    requestEvent: {
+      /**
+       * request GUID
+       */
+      guid: string;
+
+      /**
+       * request URL
+       */
+      url: URL;
+
+      /**
+       * request method
+       */
+      method: string;
+
+      /**
+       * request headers
+       */
+      headers: { [key: string]: string; };
+
+      cookies: Array<{
+        name: string;
+
+        value: string;
+      }>;
+
+      /**
+       * request post data
+       */
+      postData?: Buffer;
+    };
+  }) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'apirequest', listener: (aPIRequestEvent: APIRequestEvent) => any): this;
+  off(event: 'apirequest', listener: (data: {
+    /**
+     * request GUID
+     */
+    guid: string;
+
+    /**
+     * request URL
+     */
+    url: URL;
+
+    /**
+     * request method
+     */
+    method: string;
+
+    /**
+     * request headers
+     */
+    headers: { [key: string]: string; };
+
+    cookies: Array<{
+      name: string;
+
+      value: string;
+    }>;
+
+    /**
+     * request post data
+     */
+    postData?: Buffer;
+  }) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'apirequestfinished', listener: (aPIRequestFinishedEvent: APIRequestFinishedEvent) => any): this;
+  off(event: 'apirequestfinished', listener: (data: {
+    /**
+     * HTTP version
+     */
+    httpVersion: string;
+
+    /**
+     * raw headers
+     */
+    rawHeaders: Array<string>;
+
+    /**
+     * status code
+     */
+    statusCode: number;
+
+    /**
+     * status message
+     */
+    statusMessage: string;
+
+    /**
+     * response body
+     */
+    body?: Buffer;
+
+    /**
+     * response headers
+     */
+    headers: IncomingHttpHeaders;
+
+    /**
+     * server IP address
+     */
+    serverIPAddress?: string;
+
+    /**
+     * server port
+     */
+    serverPort?: number;
+
+    timings: {
+      blocked?: number;
+
+      dns?: number;
+
+      connect?: number;
+
+      send: number;
+
+      wait: number;
+
+      receive: number;
+
+      ssl?: number;
+
+      comment?: string;
+    };
+
+    cookies: Array<{
+      name: string;
+
+      value: string;
+
+      domain: string;
+
+      path: string;
+
+      /**
+       * Unix time in seconds.
+       */
+      expires: number;
+
+      httpOnly: boolean;
+
+      secure: boolean;
+
+      sameSite: "Strict"|"Lax"|"None";
+    }>;
+
+    /**
+     * security details
+     */
+    securityDetails?: {
+      /**
+       * Common Name component of the Issuer field. from the certificate. This should only be used for informational
+       * purposes. Optional.
+       */
+      issuer?: string;
+
+      /**
+       * The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
+       */
+      protocol?: string;
+
+      /**
+       * Common Name component of the Subject field from the certificate. This should only be used for informational
+       * purposes. Optional.
+       */
+      subjectName?: string;
+
+      /**
+       * Unix timestamp (in seconds) specifying when this cert becomes valid. Optional.
+       */
+      validFrom?: number;
+
+      /**
+       * Unix timestamp (in seconds) specifying when this cert becomes invalid. Optional.
+       */
+      validTo?: number;
+    };
+
+    /**
+     * request event object
+     */
+    requestEvent: {
+      /**
+       * request GUID
+       */
+      guid: string;
+
+      /**
+       * request URL
+       */
+      url: URL;
+
+      /**
+       * request method
+       */
+      method: string;
+
+      /**
+       * request headers
+       */
+      headers: { [key: string]: string; };
+
+      cookies: Array<{
+        name: string;
+
+        value: string;
+      }>;
+
+      /**
+       * request post data
+       */
+      postData?: Buffer;
+    };
+  }) => any): this;
 
   /**
    * Emitted when a request is issued from any requests created through this context. The [APIRequestEvent] object is
    * read-only.
    */
-  prependListener(event: 'apirequest', listener: (aPIRequestEvent: APIRequestEvent) => any): this;
+  prependListener(event: 'apirequest', listener: (data: {
+    /**
+     * request GUID
+     */
+    guid: string;
+
+    /**
+     * request URL
+     */
+    url: URL;
+
+    /**
+     * request method
+     */
+    method: string;
+
+    /**
+     * request headers
+     */
+    headers: { [key: string]: string; };
+
+    cookies: Array<{
+      name: string;
+
+      value: string;
+    }>;
+
+    /**
+     * request post data
+     */
+    postData?: Buffer;
+  }) => any): this;
 
   /**
    * Emitted when a request finishes in any requests created through this context. The sequence of events is
    * `apirequest` and `apirequestfinished`
    */
-  prependListener(event: 'apirequestfinished', listener: (aPIRequestFinishedEvent: APIRequestFinishedEvent) => any): this;
+  prependListener(event: 'apirequestfinished', listener: (data: {
+    /**
+     * HTTP version
+     */
+    httpVersion: string;
+
+    /**
+     * raw headers
+     */
+    rawHeaders: Array<string>;
+
+    /**
+     * status code
+     */
+    statusCode: number;
+
+    /**
+     * status message
+     */
+    statusMessage: string;
+
+    /**
+     * response body
+     */
+    body?: Buffer;
+
+    /**
+     * response headers
+     */
+    headers: IncomingHttpHeaders;
+
+    /**
+     * server IP address
+     */
+    serverIPAddress?: string;
+
+    /**
+     * server port
+     */
+    serverPort?: number;
+
+    timings: {
+      blocked?: number;
+
+      dns?: number;
+
+      connect?: number;
+
+      send: number;
+
+      wait: number;
+
+      receive: number;
+
+      ssl?: number;
+
+      comment?: string;
+    };
+
+    cookies: Array<{
+      name: string;
+
+      value: string;
+
+      domain: string;
+
+      path: string;
+
+      /**
+       * Unix time in seconds.
+       */
+      expires: number;
+
+      httpOnly: boolean;
+
+      secure: boolean;
+
+      sameSite: "Strict"|"Lax"|"None";
+    }>;
+
+    /**
+     * security details
+     */
+    securityDetails?: {
+      /**
+       * Common Name component of the Issuer field. from the certificate. This should only be used for informational
+       * purposes. Optional.
+       */
+      issuer?: string;
+
+      /**
+       * The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
+       */
+      protocol?: string;
+
+      /**
+       * Common Name component of the Subject field from the certificate. This should only be used for informational
+       * purposes. Optional.
+       */
+      subjectName?: string;
+
+      /**
+       * Unix timestamp (in seconds) specifying when this cert becomes valid. Optional.
+       */
+      validFrom?: number;
+
+      /**
+       * Unix timestamp (in seconds) specifying when this cert becomes invalid. Optional.
+       */
+      validTo?: number;
+    };
+
+    /**
+     * request event object
+     */
+    requestEvent: {
+      /**
+       * request GUID
+       */
+      guid: string;
+
+      /**
+       * request URL
+       */
+      url: URL;
+
+      /**
+       * request method
+       */
+      method: string;
+
+      /**
+       * request headers
+       */
+      headers: { [key: string]: string; };
+
+      cookies: Array<{
+        name: string;
+
+        value: string;
+      }>;
+
+      /**
+       * request post data
+       */
+      postData?: Buffer;
+    };
+  }) => any): this;
 
   /**
    * Sends HTTP(S) [DELETE](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/DELETE) request and returns its

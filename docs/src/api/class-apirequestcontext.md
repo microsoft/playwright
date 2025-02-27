@@ -918,14 +918,68 @@ Defaults to `true`. Set to `false` to omit IndexedDB from snapshot.
 
 ## event: APIRequestContext.apiRequest
 * since: v1.51
-- argument: <[APIRequestEvent]>
+- argument: <[Object]>
+  - `guid` <[string]> request GUID
+  - `url` <[URL]> request URL
+  - `method` <[string]> request method
+  - `headers` <[Object]<[string], [string]>> request headers
+  - `cookies` <[Array]<[Object]>>
+    - `name` <[string]>
+    - `value` <[string]>
+  - `postData` ?<[Buffer]> request post data
 
 Emitted when a request is issued from any requests created through this context.
 The [APIRequestEvent] object is read-only.
 
 ## event: APIRequestContext.apiRequestFinished
 * since: v1.51
-- argument: <[APIRequestFinishedEvent]>
+- argument: <[Object]>
+  - `httpVersion` <[string]> HTTP version
+  - `rawHeaders` <[Array]<[string]>> raw headers
+  - `statusCode` <[int]> status code
+  - `statusMessage` <[string]> status message
+  - `body` ?<[Buffer]> response body
+  - `headers` <[IncomingHttpHeaders]>> response headers
+  - `serverIPAddress` ?<[string]> server IP address
+  - `serverPort` ?<[int]> server port
+  - `timings` <[Object]>
+    - `blocked` ?<[int]>
+    - `dns` ?<[int]>
+    - `connect` ?<[int]>
+    - `send` <[int]>
+    - `wait` <[int]>
+    - `receive` <[int]>
+    - `ssl` ?<[int]>
+    - `comment` ?<[string]>
+  - `cookies` <[Array]<[Object]>>
+    - `name` <[string]>
+    - `value` <[string]>
+    - `domain` <[string]>
+    - `path` <[string]>
+    - `expires` <[float]> Unix time in seconds.
+    - `httpOnly` <[boolean]>
+    - `secure` <[boolean]>
+    - `sameSite` <[SameSiteAttribute]<"Strict"|"Lax"|"None">>
+  - `securityDetails` ?<[Object]> security details
+    - `issuer` ?<[string]> Common Name component of the Issuer field.
+      from the certificate. This should only be used for informational purposes. Optional.
+    - `protocol` ?<[string]> The specific TLS protocol used. (e.g. `TLS 1.3`). Optional.
+    - `subjectName` ?<[string]> Common Name component of the Subject
+      field from the certificate. This should only be used for informational purposes. Optional.
+    - `validFrom` ?<[float]> Unix timestamp (in seconds) specifying
+      when this cert becomes valid. Optional.
+    - `validTo` ?<[float]> Unix timestamp (in seconds) specifying
+      when this cert becomes invalid. Optional.
+  - `requestEvent` <[Object]> request event object
+    - `guid` <[string]> request GUID
+    - `url` <[URL]> request URL
+    - `method` <[string]> request method
+    - `headers` <[Object]<[string], [string]>> request headers
+    - `cookies` <[Array]<[Object]>>
+      - `name` <[string]>
+      - `value` <[string]>
+    - `postData` ?<[Buffer]> request post data
+
 
 Emitted when a request finishes in any requests created through this context. The
 sequence of events is `apirequest` and `apirequestfinished`

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { APIRequestEvent, APIRequestFinishedEvent } from 'playwright-core/lib/server/fetch';
 
 import { toClientCertificatesProtocol } from './browserContext';
 import { ChannelOwner } from './channelOwner';
@@ -27,6 +26,7 @@ import { headersObjectToArray } from '../utils/isomorphic/headers';
 import { isString } from '../utils/isomorphic/rtti';
 import { Events } from './events';
 
+import type { APIRequestEvent, APIRequestFinishedEvent } from 'playwright-core/lib/server/fetch';
 import type { Playwright } from './playwright';
 import type { ClientCertificate, FilePayload, Headers, SetStorageState, StorageState } from './types';
 import type { Serializable } from '../../types/structs';

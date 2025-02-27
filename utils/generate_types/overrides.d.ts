@@ -16,6 +16,7 @@
 import { ChildProcess } from 'child_process';
 import { Readable } from 'stream';
 import { ReadStream } from 'fs';
+import type { IncomingHttpHeaders } from 'http';
 import { Protocol } from './protocol';
 import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
 
