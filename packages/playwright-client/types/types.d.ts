@@ -9317,49 +9317,7 @@ export interface BrowserContext {
         value: string;
       }>;
 
-      indexedDB: Array<{
-        name: string;
-
-        version: number;
-
-        stores: Array<{
-          name: string;
-
-          keyPath?: string;
-
-          keyPathArray?: Array<string>;
-
-          autoIncrement: boolean;
-
-          indexes: Array<{
-            name: string;
-
-            keyPath?: string;
-
-            keyPathArray?: Array<string>;
-
-            unique: boolean;
-
-            multiEntry: boolean;
-          }>;
-
-          records: Array<{
-            key?: Object;
-
-            /**
-             * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
-             */
-            keyEncoded?: Object;
-
-            value?: Object;
-
-            /**
-             * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
-             */
-            valueEncoded?: Object;
-          }>;
-        }>;
-      }>;
+      indexedDB: Array<unknown>;
     }>;
   }>;
 
@@ -10130,55 +10088,7 @@ export interface Browser {
         /**
          * indexedDB to set for context
          */
-        indexedDB?: Array<{
-          /**
-           * database name
-           */
-          name: string;
-
-          /**
-           * database version
-           */
-          version: number;
-
-          stores: Array<{
-            name: string;
-
-            keyPath?: string;
-
-            keyPathArray?: Array<string>;
-
-            autoIncrement: boolean;
-
-            indexes: Array<{
-              name: string;
-
-              keyPath?: string;
-
-              keyPathArray?: Array<string>;
-
-              unique: boolean;
-
-              multiEntry: boolean;
-            }>;
-
-            records: Array<{
-              key?: Object;
-
-              /**
-               * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
-               */
-              keyEncoded?: Object;
-
-              value?: Object;
-
-              /**
-               * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
-               */
-              valueEncoded?: Object;
-            }>;
-          }>;
-        }>;
+        indexedDB?: Array<unknown>;
       }>;
     };
 
@@ -17737,55 +17647,7 @@ export interface APIRequest {
         /**
          * indexedDB to set for context
          */
-        indexedDB?: Array<{
-          /**
-           * database name
-           */
-          name: string;
-
-          /**
-           * database version
-           */
-          version: number;
-
-          stores: Array<{
-            name: string;
-
-            keyPath?: string;
-
-            keyPathArray?: Array<string>;
-
-            autoIncrement: boolean;
-
-            indexes: Array<{
-              name: string;
-
-              keyPath?: string;
-
-              keyPathArray?: Array<string>;
-
-              unique: boolean;
-
-              multiEntry: boolean;
-            }>;
-
-            records: Array<{
-              key?: Object;
-
-              /**
-               * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
-               */
-              keyEncoded?: Object;
-
-              value?: Object;
-
-              /**
-               * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
-               */
-              valueEncoded?: Object;
-            }>;
-          }>;
-        }>;
+        indexedDB?: Array<unknown>;
       }>;
     };
 
@@ -18601,49 +18463,7 @@ export interface APIRequestContext {
         value: string;
       }>;
 
-      indexedDB: Array<{
-        name: string;
-
-        version: number;
-
-        stores: Array<{
-          name: string;
-
-          keyPath?: string;
-
-          keyPathArray?: Array<string>;
-
-          autoIncrement: boolean;
-
-          indexes: Array<{
-            name: string;
-
-            keyPath?: string;
-
-            keyPathArray?: Array<string>;
-
-            unique: boolean;
-
-            multiEntry: boolean;
-          }>;
-
-          records: Array<{
-            key?: Object;
-
-            /**
-             * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
-             */
-            keyEncoded?: Object;
-
-            value?: Object;
-
-            /**
-             * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
-             */
-            valueEncoded?: Object;
-          }>;
-        }>;
-      }>;
+      indexedDB: Array<unknown>;
     }>;
   }>;
 
@@ -22495,55 +22315,7 @@ export interface BrowserContextOptions {
       /**
        * indexedDB to set for context
        */
-      indexedDB?: Array<{
-        /**
-         * database name
-         */
-        name: string;
-
-        /**
-         * database version
-         */
-        version: number;
-
-        stores: Array<{
-          name: string;
-
-          keyPath?: string;
-
-          keyPathArray?: Array<string>;
-
-          autoIncrement: boolean;
-
-          indexes: Array<{
-            name: string;
-
-            keyPath?: string;
-
-            keyPathArray?: Array<string>;
-
-            unique: boolean;
-
-            multiEntry: boolean;
-          }>;
-
-          records: Array<{
-            key?: Object;
-
-            /**
-             * if `key` is not JSON-serializable, this contains an encoded version that preserves types.
-             */
-            keyEncoded?: Object;
-
-            value?: Object;
-
-            /**
-             * if `value` is not JSON-serializable, this contains an encoded version that preserves types.
-             */
-            valueEncoded?: Object;
-          }>;
-        }>;
-      }>;
+      indexedDB?: Array<unknown>;
     }>;
   };
 
