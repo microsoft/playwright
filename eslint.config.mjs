@@ -218,11 +218,25 @@ const noBooleanCompareRules = {
 };
 
 const noWebGlobalsRules = {
+  // This should contain every bulitin from builtins.ts.
   "no-restricted-globals": [
     "error",
-    { name: "window" },
-    { name: "document" },
-    { name: "globalThis" },
+    { "name": "window" },
+    { "name": "document" },
+    { "name": "globalThis" },
+    { "name": "setTimeout" },
+    { "name": "clearTimeout" },
+    { "name": "setInterval" },
+    { "name": "clearInterval" },
+    { "name": "requestAnimationFrame" },
+    { "name": "cancelAnimationFrame" },
+    { "name": "requestIdleCallback" },
+    { "name": "cancelIdleCallback" },
+    { "name": "performance" },
+    { "name": "eval" },
+    { "name": "Date" },
+    { "name": "Map" },
+    { "name": "Set" },
   ],
 };
 
@@ -358,6 +372,8 @@ export default [
       "packages/playwright-core/src/server/injected/**/*.ts",
       "packages/playwright-core/src/server/isomorphic/**/*.ts",
       "packages/playwright-core/src/utils/isomorphic/**/*.ts",
+      "packages/playwright-core/src/server/pageBinding.ts",
+      "packages/playwright-core/src/server/storageScript.ts",
     ],
     languageOptions: languageOptionsWithTsConfig,
     rules: {

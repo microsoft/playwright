@@ -1101,7 +1101,7 @@ it('ensure events are dispatched in the individual tasks', async ({ page, browse
     function onClick(name) {
       console.log(`click ${name}`);
 
-      window.builtinSetTimeout(function() {
+      window.builtins.setTimeout(function() {
         console.log(`timeout ${name}`);
       }, 0);
 

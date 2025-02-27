@@ -16,8 +16,9 @@
 
 import { SdkObject } from './instrumentation';
 import * as utilityScriptSource from '../generated/utilityScriptSource';
-import { isUnderTest } from '../utils';
-import { serializeAsCallArgument } from './isomorphic/utilityScriptSerializers';
+import { createGuid, isUnderTest } from '../utils';
+import { createBuiltins } from './isomorphic/builtins';
+import { source } from './isomorphic/utilityScriptSerializers';
 import { LongStandingScope } from '../utils/isomorphic/manualPromise';
 
 import type * as dom from './dom';
@@ -44,6 +45,12 @@ export type Func0<R> = string | (() => R | Promise<R>);
 export type Func1<Arg, R> = string | ((arg: Unboxed<Arg>) => R | Promise<R>);
 export type FuncOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R | Promise<R>);
 export type SmartHandle<T> = T extends Node ? dom.ElementHandle<T> : JSHandle<T>;
+
+export const kBuiltinsProperty = createGuid();
+
+const utilityScriptSerializers = source(createBuiltins(globalThis));
+export const parseEvaluationResultValue = utilityScriptSerializers.parseEvaluationResultValue;
+export const serializeAsCallArgument = utilityScriptSerializers.serializeAsCallArgument;
 
 export interface ExecutionContextDelegate {
   rawEvaluateJSON(expression: string): Promise<any>;
@@ -104,7 +111,7 @@ export class ExecutionContext extends SdkObject {
       (() => {
         const module = {};
         ${utilityScriptSource.source}
-        return new (module.exports.UtilityScript())(${isUnderTest()});
+        return new (module.exports.UtilityScript())(${isUnderTest()}, '${kBuiltinsProperty}');
       })();`;
       this._utilityScriptPromise = this._raceAgainstContextDestroyed(this.delegate.rawEvaluateHandle(this, source))
           .then(handle => {
