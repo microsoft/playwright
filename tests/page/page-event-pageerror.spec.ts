@@ -70,7 +70,7 @@ it('should contain the Error.name property', async ({ page }) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => {
-      window.builtinSetTimeout(() => {
+      window.builtins.setTimeout(() => {
         const error = new Error('my-message');
         error.name = 'my-name';
         throw error;
@@ -85,7 +85,7 @@ it('should support an empty Error.name property', async ({ page }) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => {
-      window.builtinSetTimeout(() => {
+      window.builtins.setTimeout(() => {
         const error = new Error('my-message');
         error.name = '';
         throw error;
@@ -107,7 +107,7 @@ it('should handle odd values', async ({ page }) => {
     const [error] = await Promise.all([
       page.waitForEvent('pageerror'),
       page.evaluate(value => {
-        window.builtinSetTimeout(() => { throw value; }, 0);
+        window.builtins.setTimeout(() => { throw value; }, 0);
       }, value),
     ]);
     expect(error.message).toBe(message);
@@ -118,7 +118,7 @@ it('should handle object', async ({ page, browserName }) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => {
-      window.builtinSetTimeout(() => { throw {}; }, 0);
+      window.builtins.setTimeout(() => { throw {}; }, 0);
     }),
   ]);
   expect(error.message).toBe(browserName === 'chromium' ? 'Object' : '[object Object]');
@@ -128,7 +128,7 @@ it('should handle window', async ({ page, browserName }) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => {
-      window.builtinSetTimeout(() => { throw window; }, 0);
+      window.builtins.setTimeout(() => { throw window; }, 0);
     }),
   ]);
   expect(error.message).toBe(browserName === 'chromium' ? 'Window' : '[object Window]');

@@ -20,7 +20,7 @@ import { Browser } from '../browser';
 import { BrowserContext, assertBrowserContextIsNotOwned, verifyGeolocation } from '../browserContext';
 import { TargetClosedError } from '../errors';
 import * as network from '../network';
-import { PageBinding } from '../page';
+import { kBuiltinsScript, PageBinding } from '../page';
 import { ConnectionEvents, FFConnection  } from './ffConnection';
 import { FFPage } from './ffPage';
 
@@ -185,6 +185,7 @@ export class FFBrowserContext extends BrowserContext {
     const promises: Promise<any>[] = [
       super._initialize(),
       this._browser.session.send('Browser.addBinding', { browserContextId: this._browserContextId, name: PageBinding.kPlaywrightBinding, script: '' }),
+      this._updateInitScripts(),
     ];
     if (this._options.acceptDownloads !== 'internal-browser-default') {
       promises.push(this._browser.session.send('Browser.setDownloadOptions', {
@@ -377,7 +378,7 @@ export class FFBrowserContext extends BrowserContext {
   private async _updateInitScripts() {
     const bindingScripts = [...this._pageBindings.values()].map(binding => binding.initScript.source);
     const initScripts = this.initScripts.map(script => script.source);
-    await this._browser.session.send('Browser.setInitScripts', { browserContextId: this._browserContextId, scripts: [...bindingScripts, ...initScripts].map(script => ({ script })) });
+    await this._browser.session.send('Browser.setInitScripts', { browserContextId: this._browserContextId, scripts: [kBuiltinsScript.source, ...bindingScripts, ...initScripts].map(script => ({ script })) });
   }
 
   async doUpdateRequestInterception(): Promise<void> {

@@ -17,6 +17,7 @@
 import { Page } from '../page';
 import { Dispatcher, existingDispatcher } from './dispatcher';
 import { PageDispatcher } from './pageDispatcher';
+import { kBuiltinsProperty } from '../javascript';
 import * as webSocketMockSource from '../../generated/webSocketMockSource';
 import { createGuid } from '../utils/crypto';
 import { urlMatches } from '../../utils/isomorphic/urlMatch';
@@ -96,7 +97,7 @@ export class WebSocketRouteDispatcher extends Dispatcher<{ guid: string }, chann
         (() => {
           const module = {};
           ${webSocketMockSource.source}
-          (module.exports.inject())(globalThis);
+          (module.exports.inject())(globalThis, '${kBuiltinsProperty}');
         })();
       `, kInitScriptName);
     }

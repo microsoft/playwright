@@ -210,7 +210,7 @@ test('should prioritize exact timeout over default timeout', async ({ page, play
 test('should work with no timeout', async ({ page, server }) => {
   const [chooser] = await Promise.all([
     page.waitForEvent('filechooser', { timeout: 0 }),
-    page.evaluate(() => window.builtinSetTimeout(() => {
+    page.evaluate(() => window.builtins.setTimeout(() => {
       const el = document.createElement('input');
       el.type = 'file';
       el.click();

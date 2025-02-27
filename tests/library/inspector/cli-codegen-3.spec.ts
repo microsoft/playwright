@@ -849,7 +849,7 @@ await page.GetByRole(AriaRole.Textbox, new() { Name = \"Coun\\\"try\" }).ClickAs
     const { recorder } = await openRecorder();
 
     const hydrate = () => {
-      window.builtinSetTimeout(() => {
+      window.builtins.setTimeout(() => {
         document.documentElement.innerHTML = '<p>Post-Hydration Content</p>';
       }, 500);
     };
