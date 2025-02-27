@@ -630,7 +630,8 @@ class ArtifactsRecorder {
 
     this._pageSnapshotRecorder = new SnapshotRecorder(this, pageSnapshot, 'pageSnapshot', 'text/plain', '.snapshot.yml', async (page, path) => {
       const ariaSnapshot = await page.locator('body').ariaSnapshot({ timeout: 5000 });
-      await fs.promises.writeFile(path, ariaSnapshot);
+      const header = `# ${this._testInfo.titlePath.join(' >> ')}\n# ARIA snapshot of the page contents after test ${this._testInfo._isFailure() ? 'failed' : 'finished'}\n`;
+      await fs.promises.writeFile(path, header + ariaSnapshot);
     });
   }
 

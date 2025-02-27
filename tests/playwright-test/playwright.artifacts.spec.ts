@@ -459,6 +459,12 @@ test('should work with pageSnapshot: on', async ({ runInlineTest }, testInfo) =>
     '  test-failed-1.snapshot.yml',
     '  test-failed-2.snapshot.yml',
   ]);
+
+  expect(fs.readFileSync(testInfo.outputPath('test-results', 'artifacts-failing', 'test-failed-1.snapshot.yml'), { encoding: 'utf-8' })).toEqual(`
+# artifacts.spec.ts >> failing
+# ARIA snapshot of the page contents after test failed
+- text: I am the page
+  `.trim());
 });
 
 test('should work with pageSnapshot: only-on-failure', async ({ runInlineTest }, testInfo) => {
