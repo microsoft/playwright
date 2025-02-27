@@ -411,7 +411,7 @@ export class SocksProxy extends EventEmitter implements SocksConnectionClient {
 
   private async _handleDirect(request: SocksSocketRequestedPayload) {
     try {
-      const socket = await createSocket(request.host, request.port);
+      const socket = await createSocket({ host: request.host, port: request.port });
       socket.on('data', data => this._connections.get(request.uid)?.sendData(data));
       socket.on('error', error => {
         this._connections.get(request.uid)?.error(error.message);
@@ -540,7 +540,7 @@ export class SocksProxyHandler extends EventEmitter {
     try {
       if (this._redirectPortForTest)
         port = this._redirectPortForTest;
-      const socket = await createSocket(host, port);
+      const socket = await createSocket({ host, port });
       socket.on('data', data => {
         const payload: SocksSocketDataPayload = { uid, data };
         this.emit(SocksProxyHandler.Events.SocksData, payload);

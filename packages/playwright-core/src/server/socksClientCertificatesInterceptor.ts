@@ -139,10 +139,14 @@ class SocksProxyConnection {
   }
 
   async connect() {
+    const fixtures = {
+      __testHookLookup: (this._options as any).__testHookLookup
+    };
+
     if (this.socksProxy.proxyAgentFromOptions)
       this.target = await this.socksProxy.proxyAgentFromOptions.callback(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
     else
-      this.target = await createSocket(rewriteToLocalhostIfNeeded(this.host), this.port);
+      this.target = await createSocket({ host: rewriteToLocalhostIfNeeded(this.host), port: this.port, ...fixtures });
 
     this.target.once('close', this._targetCloseEventListener);
     this.target.once('error', error => this.socksProxy._socksProxy.sendSocketError({ uid: this.uid, error: error.message }));
