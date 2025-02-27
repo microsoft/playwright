@@ -1297,7 +1297,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.metadata-view')).toMatchAriaSnapshot(`
         - list:
           - listitem:
-            - link "https://playwright.dev/microsoft/playwright-example-for-test/commit/example-sha"
+            - link "My PR"
+          - listitem: /William <shakespeare@example.local>/
         - list:
           - listitem: "foo : value1"
           - listitem: "bar : {\\"prop\\":\\"value2\\"}"

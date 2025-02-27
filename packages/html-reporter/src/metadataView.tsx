@@ -61,8 +61,8 @@ const InnerMetadataView: React.FC<{ metadata: Metadata }> = params => {
   if (!hasMetadata)
     return;
   return <div className='metadata-view'>
-    {commitInfo.ci && <CiInfoView info={commitInfo.ci}/>}
-    {commitInfo.gitCommit && <GitCommitInfoView link={commitInfo.ci?.commitHref} info={commitInfo.gitCommit}/>}
+    {commitInfo.ci && !commitInfo.gitCommit && <CiInfoView info={commitInfo.ci}/>}
+    {commitInfo.gitCommit && <GitCommitInfoView ci={commitInfo.ci} commit={commitInfo.gitCommit}/>}
     {otherEntries.length > 0 && (commitInfo.gitCommit || commitInfo.ci) && <div className='metadata-separator' />}
     <div className='metadata-section metadata-properties' role='list'>
       {otherEntries.map(([propertyName, value]) => {
@@ -82,32 +82,27 @@ const InnerMetadataView: React.FC<{ metadata: Metadata }> = params => {
 };
 
 const CiInfoView: React.FC<{ info: CIInfo }> = ({ info }) => {
-  const link = info.commitHref;
+  const title = info.prTitle || `Commit ${info.commitHash}`;
+  const link = info.prHref || info.commitHref;
   return <div className='metadata-section' role='list'>
     <div role='listitem'>
-      <a href={link} target='_blank' rel='noopener noreferrer' title={link}>
-        {link}
-      </a>
+      <a href={link} target='_blank' rel='noopener noreferrer' title={title}>{title}</a>
     </div>
   </div>;
 };
 
-const GitCommitInfoView: React.FC<{ link?: string, info: GitCommitInfo }> = ({ link, info }) => {
-  const subject = info.subject;
-  const email = ` <${info.author.email}>`;
-  const author = `${info.author.name}${email}`;
-  const shortTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(info.committer.time);
-  const longTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(info.committer.time);
+const GitCommitInfoView: React.FC<{ ci?: CIInfo, commit: GitCommitInfo }> = ({ ci, commit }) => {
+  const title = ci?.prTitle || commit.subject;
+  const link = ci?.prHref || ci?.commitHref;
+  const email = ` <${commit.author.email}>`;
+  const author = `${commit.author.name}${email}`;
+  const shortTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(commit.committer.time);
+  const longTimestamp = Intl.DateTimeFormat(undefined, { dateStyle: 'full', timeStyle: 'long' }).format(commit.committer.time);
 
   return <div className='metadata-section' role='list'>
     <div role='listitem'>
-      {link ? (
-        <a href={link} target='_blank' rel='noopener noreferrer' title={subject}>
-          {subject}
-        </a>
-      ) : <span title={subject}>
-        {subject}
-      </span>}
+      {link && <a href={link} target='_blank' rel='noopener noreferrer' title={title}>{title}</a>}
+      {!link && <span title={title}>{title}</span>}
     </div>
     <div role='listitem' className='hbox'>
       <span className='mr-1'>{author}</span>
