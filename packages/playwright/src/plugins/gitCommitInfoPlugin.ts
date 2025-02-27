@@ -122,14 +122,10 @@ async function gitCommitInfo(gitDir: string): Promise<GitCommitInfo | undefined>
     '%ct', // committer date, UNIX timestamp
     '',    // branch
   ];
-  const commitInfoResult = await spawnAsync(
-      `git log -1 --pretty=format:"${tokens.join(separator)}" && git rev-parse --abbrev-ref HEAD`, [],
-      { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS, shell: true }
-  );
-  if (commitInfoResult.code)
+  const output = await runGit(`git log -1 --pretty=format:"${tokens.join(separator)}" && git rev-parse --abbrev-ref HEAD`, gitDir);
+  if (!output)
     return undefined;
-  const showOutput = commitInfoResult.stdout.trim();
-  const [hash, shortHash, subject, body, authorName, authorEmail, authorTime, committerName, committerEmail, committerTime, branch] = showOutput.split(separator);
+  const [hash, shortHash, subject, body, authorName, authorEmail, authorTime, committerName, committerEmail, committerTime, branch] = output.split(separator);
 
   return {
     shortHash,
@@ -152,13 +148,36 @@ async function gitCommitInfo(gitDir: string): Promise<GitCommitInfo | undefined>
 
 async function gitDiff(gitDir: string, ci?: CIInfo): Promise<string | undefined> {
   const diffLimit = 100_000;
-  const baseHash = ci?.baseHash ?? 'HEAD~1';
+  if (ci) {
+    // First try the diff against the base branch.
+    const diff = await runGit(`git diff ${ci.baseHash}`, gitDir);
+    if (diff)
+      return diff.substring(0, diffLimit);
 
-  const pullDiffResult = await spawnAsync(
-      'git',
-      ['diff', baseHash],
-      { stdio: 'pipe', cwd: gitDir, timeout: GIT_OPERATIONS_TIMEOUT_MS }
+    // Grow history for shallow checkout.
+    const output = await runGit('git fetch --deepen=1 && git show HEAD', gitDir);
+    return output?.substring(0, diffLimit);
+  }
+
+  // Check dirty state first.
+  const uncommitted = await runGit('git diff', gitDir);
+  if (uncommitted)
+    return uncommitted.substring(0, diffLimit);
+
+  // Assume non-shallow checkout on local.
+  const diff = await runGit('git diff HEAD~1', gitDir);
+  return diff?.substring(0, diffLimit);
+}
+
+async function runGit(command: string, cwd: string): Promise<string | undefined> {
+  const result = await spawnAsync(
+      command,
+      [],
+      { stdio: 'pipe', cwd, timeout: GIT_OPERATIONS_TIMEOUT_MS, shell: true }
   );
-  if (!pullDiffResult.code)
-    return pullDiffResult.stdout.substring(0, diffLimit);
+  if (result.code) {
+    // eslint-disable-next-line no-console
+    console.error(`Failed to run ${command}: ${result.stderr}`);
+  }
+  return result.code ? undefined : result.stdout.trim();
 }
