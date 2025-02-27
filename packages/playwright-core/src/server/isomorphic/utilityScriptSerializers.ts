@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+type TypedArrayKind = 'i8' | 'ui8' | 'ui8c' | 'i16' | 'ui16' | 'i32' | 'ui32' | 'f32' | 'f64' | 'bi64' | 'bui64';
+
 export type SerializedValue =
     undefined | boolean | number | string |
     { v: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0' } |
@@ -25,7 +27,8 @@ export type SerializedValue =
     { a: SerializedValue[], id: number } |
     { o: { k: string, v: SerializedValue }[], id: number } |
     { ref: number } |
-    { h: number };
+    { h: number } |
+    { ta: { b: string, k: TypedArrayKind } };
 
 export type HandleOrValue = { h: number } | { fallThrough: any };
 
@@ -66,6 +69,42 @@ export function source() {
     } catch (error) {
       return false;
     }
+  }
+
+  const typedArrayCtors: Record<TypedArrayKind, Function> = {
+    i8: Int8Array,
+    ui8: Uint8Array,
+    ui8c: Uint8ClampedArray,
+    i16: Int16Array,
+    ui16: Uint16Array,
+    i32: Int32Array,
+    ui32: Uint32Array,
+    // TODO: add Float16Array once it's in baseline
+    f32: Float32Array,
+    f64: Float64Array,
+    bi64: BigInt64Array,
+    bui64: BigUint64Array,
+  };
+
+  function typedArrayToBase64(array: any) {
+    if (globalThis.Buffer)
+      return Buffer.from(array).toString('base64');
+
+    const binary = Array.from(new Uint8Array(array.buffer)).map(b => String.fromCharCode(b)).join('');
+    return btoa(binary);
+  }
+
+  function base64ToTypedArray(base64: string, TypedArrayConstructor: any) {
+    if (globalThis.Buffer) {
+      const buf = Buffer.from(base64, 'base64');
+      return new TypedArrayConstructor(buf.buffer, buf.byteOffset, buf.byteLength / buf.BYTES_PER_ELEMENT);
+    }
+
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++)
+      bytes[i] = binary.charCodeAt(i);
+    return new TypedArrayConstructor(bytes.buffer);
   }
 
   function parseEvaluationResultValue(value: SerializedValue, handles: any[] = [], refs: Map<number, object> = new Map()): any {
@@ -119,6 +158,8 @@ export function source() {
       }
       if ('h' in value)
         return handles[value.h];
+      if ('ta' in value)
+        return base64ToTypedArray(value.ta.b, typedArrayCtors[value.ta.k]);
     }
     return value;
   }
@@ -186,6 +227,10 @@ export function source() {
       return { u: value.toJSON() };
     if (isRegExp(value))
       return { r: { p: value.source, f: value.flags } };
+    for (const [k, ctor] of Object.entries(typedArrayCtors) as [TypedArrayKind, Function][]) {
+      if (value instanceof ctor)
+        return { ta: { b: typedArrayToBase64(value), k } };
+    }
 
     const id = visitorInfo.visited.get(value);
     if (id)

@@ -1530,10 +1530,6 @@ Returns storage state for this browser context, contains current cookies, local 
 Set to `true` to include IndexedDB in the storage state snapshot.
 If your application uses IndexedDB to store authentication tokens, like Firebase Authentication, enable this.
 
-:::note
-IndexedDBs with typed arrays are currently not supported.
-:::
-
 ## property: BrowserContext.tracing
 * since: v1.12
 - type: <[Tracing]>
