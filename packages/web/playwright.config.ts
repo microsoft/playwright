@@ -19,8 +19,7 @@ import type { ReporterDescription } from '@playwright/test';
 
 const reporters = () => {
   const result: ReporterDescription[] = process.env.CI ? [
-    ['html'],
-    ['blob'],
+    ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
   ] : [
     ['html']
   ];
