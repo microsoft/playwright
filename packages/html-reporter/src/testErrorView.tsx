@@ -21,9 +21,14 @@ import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
 import type { TestResult } from './types';
 import { fixTestPrompt } from '@web/components/prompts';
-import { useGitCommitInfo } from './metadataView';
+import { useHTMLReport } from './reportContext';
+import type { MetadataWithCommitInfo } from '@playwright/isomorphic/types';
 
-export const TestErrorView: React.FC<{ error: string; testId?: string; result?: TestResult }> = ({ error, testId, result }) => {
+export const TestErrorView: React.FC<{
+  error: string;
+  testId?: string;
+  result?: TestResult
+}> = ({ error, testId, result }) => {
   return (
     <CodeSnippet code={error} testId={testId}>
       <div style={{ float: 'right', margin: 10 }}>
@@ -47,12 +52,13 @@ const PromptButton: React.FC<{
   error: string;
   result?: TestResult;
 }> = ({ error, result }) => {
-  const gitCommitInfo = useGitCommitInfo();
+  const report = useHTMLReport();
+  const commitInfo = report?.metadata as MetadataWithCommitInfo | undefined;
   const prompt = React.useMemo(() => fixTestPrompt(
       error,
-      gitCommitInfo?.pull_request?.diff ?? gitCommitInfo?.revision?.diff,
+      commitInfo?.gitDiff,
       result?.attachments.find(a => a.name === 'pageSnapshot')?.body
-  ), [gitCommitInfo, result, error]);
+  ), [commitInfo, result, error]);
 
   const [copied, setCopied] = React.useState(false);
 

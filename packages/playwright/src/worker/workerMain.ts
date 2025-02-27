@@ -115,12 +115,12 @@ export class WorkerMain extends ProcessRunner {
       const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {});
       const runnable = { type: 'teardown' } as const;
       // We have to load the project to get the right deadline below.
-      await fakeTestInfo._runAsStage({ title: 'worker cleanup', runnable }, () => this._loadIfNeeded()).catch(() => {});
+      await fakeTestInfo._runWithTimeout(runnable, () => this._loadIfNeeded()).catch(() => {});
       await this._fixtureRunner.teardownScope('test', fakeTestInfo, runnable).catch(() => {});
       await this._fixtureRunner.teardownScope('worker', fakeTestInfo, runnable).catch(() => {});
       // Close any other browsers launched in this process. This includes anything launched
       // manually in the test/hooks and internal browsers like Playwright Inspector.
-      await fakeTestInfo._runAsStage({ title: 'worker cleanup', runnable }, () => gracefullyCloseAll()).catch(() => {});
+      await fakeTestInfo._runWithTimeout(runnable, () => gracefullyCloseAll()).catch(() => {});
       this._fatalErrors.push(...fakeTestInfo.errors);
     } catch (e) {
       this._fatalErrors.push(testInfoError(e));
@@ -330,8 +330,8 @@ export class WorkerMain extends ProcessRunner {
       testInfo._floatingPromiseScope.clear();
     };
 
-    await testInfo._runAsStage({ title: 'setup and test' }, async () => {
-      await testInfo._runAsStage({ title: 'start tracing', runnable: { type: 'test' } }, async () => {
+    await (async () => {
+      await testInfo._runWithTimeout({ type: 'test' }, async () => {
         // Ideally, "trace" would be an config-level option belonging to the
         // test runner instead of a fixture belonging to Playwright.
         // However, for backwards compatibility, we have to read it from a fixture today.
@@ -356,7 +356,7 @@ export class WorkerMain extends ProcessRunner {
       await removeFolders([testInfo.outputDir]);
 
       let testFunctionParams: object | null = null;
-      await testInfo._runAsStage({ title: 'Before Hooks', stepInfo: { category: 'hook' } }, async () => {
+      await testInfo._runAsStep({ title: 'Before Hooks', category: 'hook' }, async () => {
         // Run "beforeAll" hooks, unless already run during previous tests.
         for (const suite of suites)
           await this._runBeforeAllHooksForSuite(suite, testInfo);
@@ -376,13 +376,13 @@ export class WorkerMain extends ProcessRunner {
         return;
       }
 
-      await testInfo._runAsStage({ title: 'test function', runnable: { type: 'test' } }, async () => {
+      await testInfo._runWithTimeout({ type: 'test' }, async () => {
         // Now run the test itself.
         const fn = test.fn; // Extract a variable to get a better stack trace ("myTest" vs "TestCase.myTest [as fn]").
         await fn(testFunctionParams, testInfo);
         checkForFloatingPromises('the test');
       });
-    }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
+    })().catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
     // Update duration, so it is available in fixture teardown and afterEach hooks.
     testInfo.duration = testInfo._timeoutManager.defaultSlot().elapsed | 0;
@@ -393,12 +393,12 @@ export class WorkerMain extends ProcessRunner {
     // After hooks get an additional timeout.
     const afterHooksTimeout = calculateMaxTimeout(this._project.project.timeout, testInfo.timeout);
     const afterHooksSlot = { timeout: afterHooksTimeout, elapsed: 0 };
-    await testInfo._runAsStage({ title: 'After Hooks', stepInfo: { category: 'hook' } }, async () => {
+    await testInfo._runAsStep({ title: 'After Hooks', category: 'hook' }, async () => {
       let firstAfterHooksError: Error | undefined;
 
       try {
         // Run "immediately upon test function finish" callback.
-        await testInfo._runAsStage({ title: 'on-test-function-finish', runnable: { type: 'test', slot: afterHooksSlot } }, async () => testInfo._onDidFinishTestFunction?.());
+        await testInfo._runWithTimeout({ type: 'test', slot: afterHooksSlot }, async () => testInfo._onDidFinishTestFunction?.());
       } catch (error) {
         firstAfterHooksError = firstAfterHooksError ?? error;
       }
@@ -448,7 +448,7 @@ export class WorkerMain extends ProcessRunner {
       // Mark as "cleaned up" early to avoid running cleanup twice.
       this._didRunFullCleanup = true;
 
-      await testInfo._runAsStage({ title: 'Worker Cleanup', stepInfo: { category: 'hook' } }, async () => {
+      await testInfo._runAsStep({ title: 'Worker Cleanup', category: 'hook' }, async () => {
         let firstWorkerCleanupError: Error | undefined;
 
         // Give it more time for the full cleanup.
@@ -481,7 +481,7 @@ export class WorkerMain extends ProcessRunner {
     }
 
     const tracingSlot = { timeout: this._project.project.timeout, elapsed: 0 };
-    await testInfo._runAsStage({ title: 'stop tracing', runnable: { type: 'test', slot: tracingSlot } }, async () => {
+    await testInfo._runWithTimeout({ type: 'test', slot: tracingSlot }, async () => {
       await testInfo._tracing.stopIfNeeded();
     }).catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
@@ -534,7 +534,7 @@ export class WorkerMain extends ProcessRunner {
     let firstError: Error | undefined;
     for (const hook of this._collectHooksAndModifiers(suite, type, testInfo)) {
       try {
-        await testInfo._runAsStage({ title: hook.title, stepInfo: { category: 'hook', location: hook.location } }, async () => {
+        await testInfo._runAsStep({ title: hook.title, category: 'hook', location: hook.location }, async () => {
           // Separate time slot for each beforeAll/afterAll hook.
           const timeSlot = { timeout: this._project.project.timeout, elapsed: 0 };
           const runnable = { type: hook.type, slot: timeSlot, location: hook.location };
@@ -587,7 +587,7 @@ export class WorkerMain extends ProcessRunner {
         continue;
       }
       try {
-        await testInfo._runAsStage({ title: hook.title, stepInfo: { category: 'hook', location: hook.location } }, async () => {
+        await testInfo._runAsStep({ title: hook.title, category: 'hook', location: hook.location }, async () => {
           await this._fixtureRunner.resolveParametersAndRunFunction(hook.fn, testInfo, 'test', runnable);
         });
       } catch (error) {

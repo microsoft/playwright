@@ -51,7 +51,7 @@ import type { Readable, TransformCallback } from 'stream';
 type FetchRequestOptions = {
   userAgent: string;
   extraHTTPHeaders?: HeadersArray;
-  apiRequestFailsOnErrorStatus?: boolean;
+  failOnStatusCode?: boolean;
   httpCredentials?: HTTPCredentials;
   proxy?: ProxySettings;
   timeoutSettings: TimeoutSettings;
@@ -213,7 +213,7 @@ export abstract class APIRequestContext extends SdkObject {
     });
     const fetchUid = this._storeResponseBody(fetchResponse.body);
     this.fetchLog.set(fetchUid, controller.metadata.log);
-    const failOnStatusCode = params.failOnStatusCode !== undefined ? params.failOnStatusCode : !!defaults.apiRequestFailsOnErrorStatus;
+    const failOnStatusCode = params.failOnStatusCode !== undefined ? params.failOnStatusCode : !!defaults.failOnStatusCode;
     if (failOnStatusCode && (fetchResponse.status < 200 || fetchResponse.status >= 400)) {
       let responseText = '';
       if (fetchResponse.body.byteLength) {
@@ -610,7 +610,7 @@ export class BrowserContextAPIRequestContext extends APIRequestContext {
     return {
       userAgent: this._context._options.userAgent || this._context._browser.userAgent(),
       extraHTTPHeaders: this._context._options.extraHTTPHeaders,
-      apiRequestFailsOnErrorStatus: this._context._options.apiRequestFailsOnErrorStatus,
+      failOnStatusCode: undefined,
       httpCredentials: this._context._options.httpCredentials,
       proxy: this._context._options.proxy || this._context._browser.options.proxy,
       timeoutSettings: this._context._timeoutSettings,
@@ -662,7 +662,7 @@ export class GlobalAPIRequestContext extends APIRequestContext {
       baseURL: options.baseURL,
       userAgent: options.userAgent || getUserAgent(),
       extraHTTPHeaders: options.extraHTTPHeaders,
-      apiRequestFailsOnErrorStatus: !!options.apiRequestFailsOnErrorStatus,
+      failOnStatusCode: !!options.failOnStatusCode,
       ignoreHTTPSErrors: !!options.ignoreHTTPSErrors,
       httpCredentials: options.httpCredentials,
       clientCertificates: options.clientCertificates,
@@ -695,7 +695,7 @@ export class GlobalAPIRequestContext extends APIRequestContext {
     return this._cookieStore.cookies(url);
   }
 
-  override async storageState(indexedDB = true): Promise<channels.APIRequestContextStorageStateResult> {
+  override async storageState(indexedDB = false): Promise<channels.APIRequestContextStorageStateResult> {
     return {
       cookies: this._cookieStore.allCookies(),
       origins: (this._origins || []).map(origin => ({ ...origin, indexedDB: indexedDB ? origin.indexedDB : [] })),

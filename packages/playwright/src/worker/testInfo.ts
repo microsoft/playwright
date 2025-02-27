@@ -20,7 +20,7 @@ import path from 'path';
 import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
-import { debugTest, filteredStackTrace, formatLocation, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
+import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { FloatingPromiseScope } from './floatingPromiseScope';
@@ -50,15 +50,7 @@ export interface TestStepInternal {
   error?: TestInfoErrorImpl;
   infectParentStepsWithError?: boolean;
   box?: boolean;
-  isStage?: boolean;
 }
-
-export type TestStage = {
-  title: string;
-  stepInfo?: { category: 'hook' | 'fixture', location?: Location };
-  runnable?: RunnableDescription;
-  step?: TestStepInternal;
-};
 
 export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
@@ -235,28 +227,27 @@ export class TestInfoImpl implements TestInfo {
     }
   }
 
-  private _findLastStageStep(steps: TestStepInternal[]): TestStepInternal | undefined {
-    // Find the deepest step that is marked as isStage and has not finished yet.
+  private _findLastPredefinedStep(steps: TestStepInternal[]): TestStepInternal | undefined {
+    // Find the deepest predefined step that has not finished yet.
     for (let i = steps.length - 1; i >= 0; i--) {
-      const child = this._findLastStageStep(steps[i].steps);
+      const child = this._findLastPredefinedStep(steps[i].steps);
       if (child)
         return child;
-      if (steps[i].isStage && !steps[i].endWallTime)
+      if ((steps[i].category === 'hook' || steps[i].category === 'fixture') && !steps[i].endWallTime)
         return steps[i];
     }
   }
 
   private _parentStep() {
-    return currentZone().data<TestStepInternal>('stepZone')
-      ?? this._findLastStageStep(this._steps); // If no parent step on stack, assume the current stage as parent.
+    return currentZone().data<TestStepInternal>('stepZone') ?? this._findLastPredefinedStep(this._steps);
   }
 
   _addStep(data: Omit<TestStepInternal, 'complete' | 'stepId' | 'steps' | 'attachmentIndices' | 'info'>, parentStep?: TestStepInternal): TestStepInternal {
     const stepId = `${data.category}@${++this._lastStepId}`;
 
-    if (data.isStage) {
-      // Predefined stages form a fixed hierarchy - use the current one as parent.
-      parentStep = this._findLastStageStep(this._steps);
+    if (data.category === 'hook' || data.category === 'fixture') {
+      // Predefined steps form a fixed hierarchy - use the current one as parent.
+      parentStep = this._findLastPredefinedStep(this._steps);
     } else {
       if (!parentStep)
         parentStep = this._parentStep();
@@ -355,21 +346,23 @@ export class TestInfoImpl implements TestInfo {
     this._tracing.appendForError(serialized);
   }
 
-  async _runAsStage(stage: TestStage, cb: () => Promise<any>) {
-    if (debugTest.enabled) {
-      const location = stage.runnable?.location ? ` at "${formatLocation(stage.runnable.location)}"` : ``;
-      debugTest(`started stage "${stage.title}"${location}`);
-    }
-    stage.step = stage.stepInfo ? this._addStep({ ...stage.stepInfo, title: stage.title, isStage: true }) : undefined;
-
+  async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture', location?: Location }, cb: () => Promise<any>) {
+    const step = this._addStep(stepInfo);
     try {
-      await this._timeoutManager.withRunnable(stage.runnable, async () => {
+      await cb();
+      step.complete({});
+    } catch (error) {
+      step.complete({ error });
+      throw error;
+    }
+  }
+
+  async _runWithTimeout(runnable: RunnableDescription, cb: () => Promise<any>) {
+    try {
+      await this._timeoutManager.withRunnable(runnable, async () => {
         try {
           await cb();
         } catch (e) {
-          // Only handle errors directly thrown by the user code.
-          if (!stage.runnable)
-            throw e;
           if (this._allowSkips && (e instanceof SkipError)) {
             if (this.status === 'passed')
               this.status = 'skipped';
@@ -377,7 +370,7 @@ export class TestInfoImpl implements TestInfo {
             // Unfortunately, we have to handle user errors and timeout errors differently.
             // Consider the following scenario:
             // - locator.click times out
-            // - all stages containing the test function finish with TimeoutManagerError
+            // - all steps containing the test function finish with TimeoutManagerError
             // - test finishes, the page is closed and this triggers locator.click error
             // - we would like to present the locator.click error to the user
             // - therefore, we need a try/catch inside the "run with timeout" block and capture the error
@@ -386,16 +379,12 @@ export class TestInfoImpl implements TestInfo {
           throw e;
         }
       });
-      stage.step?.complete({});
     } catch (error) {
       // When interrupting, we arrive here with a TimeoutManagerError, but we should not
       // consider it a timeout.
-      if (!this._wasInterrupted && (error instanceof TimeoutManagerError) && stage.runnable)
+      if (!this._wasInterrupted && (error instanceof TimeoutManagerError))
         this._failWithError(error);
-      stage.step?.complete({ error });
       throw error;
-    } finally {
-      debugTest(`finished stage "${stage.title}"`);
     }
   }
 
@@ -430,7 +419,7 @@ export class TestInfoImpl implements TestInfo {
     } else {
       // trace viewer has no means of representing attachments outside of a step, so we create an artificial action
       const callId = `attach@${++this._lastStepId}`;
-      this._tracing.appendBeforeActionForStep(callId, this._findLastStageStep(this._steps)?.stepId, 'attach', `attach "${attachment.name}"`, undefined, []);
+      this._tracing.appendBeforeActionForStep(callId, this._findLastPredefinedStep(this._steps)?.stepId, 'attach', `attach "${attachment.name}"`, undefined, []);
       this._tracing.appendAfterActionForStep(callId, undefined, [attachment]);
     }
 
@@ -463,9 +452,11 @@ export class TestInfoImpl implements TestInfo {
     return sanitizeForFilePath(trimLongString(fullTitleWithoutSpec));
   }
 
-  _resolveSnapshotPath(template: string | undefined, defaultTemplate: string, pathSegments: string[]) {
+  _resolveSnapshotPath(template: string | undefined, defaultTemplate: string, pathSegments: string[], extension?: string) {
     const subPath = path.join(...pathSegments);
-    const parsedSubPath = path.parse(subPath);
+    const dir = path.dirname(subPath);
+    const ext = extension ?? path.extname(subPath);
+    const name = path.basename(subPath, ext);
     const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
@@ -481,8 +472,8 @@ export class TestInfoImpl implements TestInfo {
         .replace(/\{(.)?testName\}/g, '$1' + this._fsSanitizedTestName())
         .replace(/\{(.)?testFileName\}/g, '$1' + parsedRelativeTestFilePath.base)
         .replace(/\{(.)?testFilePath\}/g, '$1' + relativeTestFilePath)
-        .replace(/\{(.)?arg\}/g, '$1' + path.join(parsedSubPath.dir, parsedSubPath.name))
-        .replace(/\{(.)?ext\}/g, parsedSubPath.ext ? '$1' + parsedSubPath.ext : '');
+        .replace(/\{(.)?arg\}/g, '$1' + path.join(dir, name))
+        .replace(/\{(.)?ext\}/g, ext ? '$1' + ext : '');
 
     return path.normalize(path.resolve(this._configInternal.configDir, snapshotPath));
   }

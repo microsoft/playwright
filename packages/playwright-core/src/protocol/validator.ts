@@ -407,7 +407,7 @@ scheme.PlaywrightNewRequestParams = tObject({
   userAgent: tOptional(tString),
   ignoreHTTPSErrors: tOptional(tBoolean),
   extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
-  apiRequestFailsOnErrorStatus: tOptional(tBoolean),
+  failOnStatusCode: tOptional(tBoolean),
   clientCertificates: tOptional(tArray(tObject({
     origin: tString,
     cert: tOptional(tBinary),
@@ -637,7 +637,6 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   })),
   permissions: tOptional(tArray(tString)),
   extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
-  apiRequestFailsOnErrorStatus: tOptional(tBoolean),
   offline: tOptional(tBoolean),
   httpCredentials: tOptional(tObject({
     username: tString,
@@ -725,7 +724,6 @@ scheme.BrowserNewContextParams = tObject({
   })),
   permissions: tOptional(tArray(tString)),
   extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
-  apiRequestFailsOnErrorStatus: tOptional(tBoolean),
   offline: tOptional(tBoolean),
   httpCredentials: tOptional(tObject({
     username: tString,
@@ -796,7 +794,6 @@ scheme.BrowserNewContextForReuseParams = tObject({
   })),
   permissions: tOptional(tArray(tString)),
   extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
-  apiRequestFailsOnErrorStatus: tOptional(tBoolean),
   offline: tOptional(tBoolean),
   httpCredentials: tOptional(tObject({
     username: tString,
@@ -2704,7 +2701,6 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   })),
   permissions: tOptional(tArray(tString)),
   extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
-  apiRequestFailsOnErrorStatus: tOptional(tBoolean),
   offline: tOptional(tBoolean),
   httpCredentials: tOptional(tObject({
     username: tString,

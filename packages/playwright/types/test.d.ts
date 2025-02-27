@@ -1284,9 +1284,11 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Metadata contains key-value pairs to be included in the report. For example, HTML report will display it as
    * key-value pairs, and JSON report will include metadata serialized as json.
+   * - Providing `gitCommit: 'generate'` property will populate it with the git commit details.
+   * - Providing `gitDiff: 'generate'` property will populate it with the git diff details.
    *
-   * Providing `'git.commit.info': {}` property will populate it with the git commit details. This is useful for CI/CD
-   * environments.
+   * On selected CI providers, both will be generated automatically. Specifying values will prevent the automatic
+   * generation.
    *
    * **Usage**
    *
@@ -8791,14 +8793,14 @@ interface LocatorAssertions {
   /**
    * Asserts that the target element matches the given [accessibility snapshot](https://playwright.dev/docs/aria-snapshots).
    *
-   * Snapshot is stored in a separate `.yml` file in a location configured by `expect.toMatchAriaSnapshot.pathTemplate`
-   * and/or `snapshotPathTemplate` properties in the configuration file.
+   * Snapshot is stored in a separate `.snapshot.yml` file in a location configured by
+   * `expect.toMatchAriaSnapshot.pathTemplate` and/or `snapshotPathTemplate` properties in the configuration file.
    *
    * **Usage**
    *
    * ```js
    * await expect(page.locator('body')).toMatchAriaSnapshot();
-   * await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'body.yml' });
+   * await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'body.snapshot.yml' });
    * ```
    *
    * @param options

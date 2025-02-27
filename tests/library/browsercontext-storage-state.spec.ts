@@ -110,7 +110,7 @@ it('should round-trip through the file', async ({ contextFactory }, testInfo) =>
   });
 
   const path = testInfo.outputPath('storage-state.json');
-  const state = await context.storageState({ path });
+  const state = await context.storageState({ path, indexedDB: true });
   const written = await fs.promises.readFile(path, 'utf8');
   expect(JSON.stringify(state, undefined, 2)).toBe(written);
 
@@ -365,7 +365,7 @@ it('should support IndexedDB', async ({ page, server, contextFactory }) => {
   await page.getByLabel('Mins').fill('1');
   await page.getByText('Add Task').click();
 
-  const storageState = await page.context().storageState();
+  const storageState = await page.context().storageState({ indexedDB: true });
   expect(storageState.origins).toEqual([
     {
       origin: server.PREFIX,
@@ -438,7 +438,7 @@ it('should support IndexedDB', async ({ page, server, contextFactory }) => {
   ]);
 
   const context = await contextFactory({ storageState });
-  expect(await context.storageState()).toEqual(storageState);
+  expect(await context.storageState({ indexedDB: true })).toEqual(storageState);
 
   const recreatedPage = await context.newPage();
   await recreatedPage.goto(server.PREFIX + '/to-do-notifications/index.html');
@@ -448,5 +448,5 @@ it('should support IndexedDB', async ({ page, server, contextFactory }) => {
         - text: /Pet the cat/
   `);
 
-  expect(await context.storageState({ indexedDB: false })).toEqual({ cookies: [], origins: [] });
+  expect(await context.storageState()).toEqual({ cookies: [], origins: [] });
 });
