@@ -429,7 +429,7 @@ export default defineConfig({
 * since: v1.10
 - type: ?<[null]|[Object]>
   - `max` <[int]> The maximum number of slow test files to report. Defaults to `5`.
-  - `threshold` <[float]> Test duration in milliseconds that is considered slow. Defaults to 15 seconds.
+  - `threshold` <[float]> Test file duration in milliseconds that is considered slow. Defaults to 5 minutes.
 
 Whether to report slow test files. Pass `null` to disable this feature.
 

@@ -99,7 +99,7 @@ export class FullConfigInternal {
       metadata: userConfig.metadata,
       preserveOutput: takeFirst(userConfig.preserveOutput, 'always'),
       reporter: takeFirst(configCLIOverrides.reporter, resolveReporters(userConfig.reporter, configDir), [[defaultReporter]]),
-      reportSlowTests: takeFirst(userConfig.reportSlowTests, { max: 5, threshold: 15000 }),
+      reportSlowTests: takeFirst(userConfig.reportSlowTests, { max: 5, threshold: 300_000 /* 5 minutes */ }),
       quiet: takeFirst(configCLIOverrides.quiet, userConfig.quiet, false),
       projects: [],
       shard: takeFirst(configCLIOverrides.shard, userConfig.shard, null),
