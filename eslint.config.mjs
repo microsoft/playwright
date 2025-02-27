@@ -253,7 +253,11 @@ export default [{
     'no-console': 'off'
   }
 }, {
-  files: ['packages/playwright-core/src/server/injected/**/*.ts'],
+  files: [
+    'packages/playwright-core/src/server/injected/**/*.ts',
+    'packages/playwright-core/src/server/isomorphic/**/*.ts',
+    'packages/playwright-core/src/utils/isomorphic/**/*.ts',
+  ],
   languageOptions: languageOptionsWithTsConfig,
   rules: {
     ...noWebGlobalsRules,
