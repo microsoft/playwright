@@ -67,7 +67,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
   });
   ```
 
-* HTML reporter now shows any data put into [`property: TestConfig.metadata`].
+* HTML reporter now shows the contents of [`property: TestConfig.metadata`].
 
 ### Miscellaneous
 
