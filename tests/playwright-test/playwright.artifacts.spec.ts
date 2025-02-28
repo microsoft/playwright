@@ -461,10 +461,7 @@ test('should work with PW_TEST_PAGE_SNAPSHOT=on', async ({ runInlineTest }, test
 test('should work with pageSnapshot: only-on-failure', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
-    'playwright.config.ts': `
-      module.exports = { use: { pageSnapshot: 'only-on-failure' } };
-    `,
-  }, { workers: 1 });
+  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'only-on-failure' });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(5);
