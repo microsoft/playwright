@@ -432,6 +432,7 @@ test('should work with pageSnapshot: on', async ({ runInlineTest }, testInfo) =>
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(5);
   expect(result.failed).toBe(5);
+  expect(result.output).not.toContain('attachment #1: pageSnapshot');
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     '.last-run.json',
     'artifacts-failing',
