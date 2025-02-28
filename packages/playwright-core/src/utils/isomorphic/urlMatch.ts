@@ -115,7 +115,7 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
         return token;
       // Handle special case of http*://
       if (index === 0 && token.endsWith(':'))
-        return mapToken(token, 'http:');
+        return mapToken(token, 'pw-matcher-schema:');
       const questionIndex = token.indexOf('?');
       if (questionIndex === -1)
         return mapToken(token, `$_${index}_$`);
