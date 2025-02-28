@@ -53,7 +53,7 @@
         "ubuntu20.04-x64": "2092",
         "ubuntu20.04-arm64": "2092"
       },
-      "browserVersion": "18.2"
+      "browserVersion": "18.4"
     },
     {
       "name": "ffmpeg",
