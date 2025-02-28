@@ -1527,7 +1527,7 @@ Returns storage state for this browser context, contains current cookies, local 
 * since: v1.51
 - `indexedDB` ?<boolean>
 
-Set to `true` to include IndexedDB in the storage state snapshot.
+Set to `true` to include [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) in the storage state snapshot.
 If your application uses IndexedDB to store authentication tokens, like Firebase Authentication, enable this.
 
 :::note
