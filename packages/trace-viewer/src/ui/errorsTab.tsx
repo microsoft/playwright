@@ -54,7 +54,7 @@ function usePageSnapshot(actions: modelUtil.ActionTraceEventInContext[]) {
   }, [actions], undefined);
 }
 
-function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, modelUtil.SourceModel>, window: (targetline: number, length: number) => [start: number, end: number]) {
+function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, modelUtil.SourceModel>, frameWindow: (targetline: number, length: number) => [start: number, end: number]) {
   const selectedFrame = stack?.[0];
   const { source } = useSources(stack, 0, sources);
   return React.useMemo(() => {
@@ -64,7 +64,7 @@ function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, mode
     const targetLine = selectedFrame?.line ?? 0;
 
     const lines = source.content.split('\n');
-    const [windowStart, windowEnd] = window(targetLine, lines.length);
+    const [windowStart, windowEnd] = frameWindow(targetLine, lines.length);
     const start = Math.max(0, windowStart);
     const end = Math.min(lines.length, windowEnd);
     const lineNumberWidth = String(end).length;
@@ -80,7 +80,7 @@ function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, mode
       return highlightLine;
     }).join('\n');
     return codeFrame;
-  }, [source, selectedFrame, window]);
+  }, [source, selectedFrame, frameWindow]);
 }
 
 const CopyPromptButton: React.FC<{
