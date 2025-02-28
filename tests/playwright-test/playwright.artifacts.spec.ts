@@ -421,10 +421,10 @@ test('should take screenshot when page is closed in afterEach', async ({ runInli
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fails', 'test-failed-1.png'))).toBeTruthy();
 });
 
-test('should work with PW_TEST_PAGE_SNAPSHOT=on', async ({ runInlineTest }, testInfo) => {
+test('should attach pageSnapshot with PLAYWRIGHT_COPY_PROMPT', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
-  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'on' });
+  }, { workers: 1 }, { PLAYWRIGHT_COPY_PROMPT: '1' });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(5);
@@ -452,31 +452,6 @@ test('should work with PW_TEST_PAGE_SNAPSHOT=on', async ({ runInlineTest }, test
     'artifacts-two-contexts',
     '  test-finished-1.snapshot.yml',
     '  test-finished-2.snapshot.yml',
-    'artifacts-two-contexts-failing',
-    '  test-failed-1.snapshot.yml',
-    '  test-failed-2.snapshot.yml',
-  ]);
-});
-
-test('should work with pageSnapshot: only-on-failure', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    ...testFiles,
-  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'only-on-failure' });
-
-  expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(5);
-  expect(result.failed).toBe(5);
-  expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
-    '.last-run.json',
-    'artifacts-failing',
-    '  test-failed-1.snapshot.yml',
-    'artifacts-own-context-failing',
-    '  test-failed-1.snapshot.yml',
-    'artifacts-persistent-failing',
-    '  test-failed-1.snapshot.yml',
-    'artifacts-shared-shared-failing',
-    '  test-failed-1.snapshot.yml',
-    '  test-failed-2.snapshot.yml',
     'artifacts-two-contexts-failing',
     '  test-failed-1.snapshot.yml',
     '  test-failed-2.snapshot.yml',
