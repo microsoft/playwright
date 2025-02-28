@@ -1247,7 +1247,7 @@ test('should record trace after fixture teardown timeout', {
         await page.evaluate(() => console.log('from the page'));
       });
     `,
-  }, { trace: 'on', timeout: '3000' }, { DEBUG: 'pw:test', PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { trace: 'on', timeout: '3000' }, { DEBUG: 'pw:test' });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 
