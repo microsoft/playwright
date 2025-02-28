@@ -240,6 +240,10 @@ class PageHandler {
     await this._pageTarget.setViewportSize(viewportSize === null ? undefined : viewportSize);
   }
 
+  async ['Page.setZoom']({zoom}) {
+    await this._pageTarget.setZoom(zoom);
+  }
+
   async ['Runtime.evaluate'](options) {
     return await this._contentPage.send('evaluate', options);
   }
