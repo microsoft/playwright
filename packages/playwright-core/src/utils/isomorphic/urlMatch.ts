@@ -95,6 +95,8 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
 
     const tokenMap = new Map<string, string>();
     function mapToken(original: string, replacement: string) {
+      if (original.length === 0)
+        return '';
       tokenMap.set(replacement, original);
       return replacement;
     }
@@ -112,8 +114,8 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
       const questionIndex = token.indexOf('?');
       if (questionIndex === -1)
         return mapToken(token, `$_${index}_$`);
-      const newPrefix = (questionIndex === 0) ? '' : mapToken(token.substring(0, questionIndex), `$_${index}_$`);
-      const newSuffix = (questionIndex === (token.length - 1)) ? '' : mapToken(token.substring(questionIndex), `?$_${index}_$`);
+      const newPrefix = mapToken(token.substring(0, questionIndex), `$_${index}_$`);
+      const newSuffix = mapToken(token.substring(questionIndex), `?$_${index}_$`);
       return newPrefix + newSuffix;
     }).join('/');
     let resolved = constructURLBasedOnBaseURL(baseURL, relativePath);
