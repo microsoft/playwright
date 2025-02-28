@@ -7,7 +7,7 @@
 ```js
 import { test, expect } from '@playwright/test';
 
-test('basic test', async ({ page, browserName }, TestStepInfo) => {
+test('basic test', async ({ page, browserName }) => {
   await test.step('check some behavior', async step => {
     await step.skip(browserName === 'webkit', 'The feature is not available in WebKit');
     // ... rest of the step code
@@ -102,7 +102,7 @@ test('my test', async ({ page }) => {
 ## method: TestStepInfo.skip#2
 * since: v1.51
 
-Conditionally skip the currently running step with an optional description. Useful for steps that should not be executed in some cases.
+Conditionally abort the currently running step and mark it as skipped with an optional description. Useful for steps that should not be executed in some cases.
 
 **Usage**
 
