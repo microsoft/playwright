@@ -101,7 +101,7 @@ export function source() {
      */
     if ('toBase64' in array)
       return array.toBase64();
-    const binary = Array.from(new Uint8Array(array.buffer)).map(b => String.fromCharCode(b)).join('');
+    const binary = Array.from(new Uint8Array(array.buffer, array.byteOffset, array.byteLength)).map(b => String.fromCharCode(b)).join('');
     return btoa(binary);
   }
 
