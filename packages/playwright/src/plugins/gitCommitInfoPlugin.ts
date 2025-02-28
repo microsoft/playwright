@@ -145,10 +145,15 @@ async function gitCommitInfo(gitDir: string): Promise<GitCommitInfo | undefined>
 async function gitDiff(gitDir: string, ci?: CIInfo): Promise<string | undefined> {
   const diffLimit = 100_000;
   if (ci) {
-    // First try the diff against the base branch.
+    // First try the diff against the base hash.
     const diff = await runGit(`git diff ${ci.baseHash}`, gitDir);
     if (diff)
       return diff.substring(0, diffLimit);
+
+    // Prepend origin/ for GHA.
+    const diff2 = await runGit(`git diff origin/${ci.baseHash}`, gitDir);
+    if (diff2)
+      return diff2.substring(0, diffLimit);
 
     // Grow history for shallow checkout.
     const output = await runGit('git fetch --deepen=1 && git show HEAD', gitDir);
@@ -171,7 +176,7 @@ async function runGit(command: string, cwd: string): Promise<string | undefined>
       [],
       { stdio: 'pipe', cwd, timeout: GIT_OPERATIONS_TIMEOUT_MS, shell: true }
   );
-  if (result.code) {
+  if (result.code && process.env.DEBUG_GIT_COMMIT_INFO) {
     // eslint-disable-next-line no-console
     console.error(`Failed to run ${command}: ${result.stderr}`);
   }
