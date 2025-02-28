@@ -50,15 +50,6 @@ export function globToRegex(glob: string): RegExp {
     }
 
     switch (c) {
-      case '?':
-        tokens.push('.');
-        break;
-      case '[':
-        tokens.push('[');
-        break;
-      case ']':
-        tokens.push(']');
-        break;
       case '{':
         inGroup = true;
         tokens.push('(');
@@ -101,7 +92,36 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
     // Allow http(s) baseURL to match ws(s) urls.
     if (baseURL && /^https?:\/\//.test(baseURL) && /^wss?:\/\//.test(urlString))
       baseURL = baseURL.replace(/^http/, 'ws');
-    match = constructURLBasedOnBaseURL(baseURL, match);
+
+    const tokenMap = new Map<string, string>();
+    function mapToken(original: string, replacement: string) {
+      if (original.length === 0)
+        return '';
+      tokenMap.set(replacement, original);
+      return replacement;
+    }
+    // Escaped `\\?` behaves the same as `?` in our glob patterns.
+    match = match.replaceAll(/\\\\\?/g, '?');
+    // Glob symbols may be escaped in the URL and some of them such as ? affect resolution,
+    // so we replace them with safe components first.
+    const relativePath = match.split('/').map((token, index) => {
+      if (token === '.' || token === '..' || token === '')
+        return token;
+      // Handle special case of http*://, note that the new schema has to be
+      // a web schema so that slashes are properly inserted after domain.
+      if (index === 0 && token.endsWith(':'))
+        return mapToken(token, 'http:');
+      const questionIndex = token.indexOf('?');
+      if (questionIndex === -1)
+        return mapToken(token, `$_${index}_$`);
+      const newPrefix = mapToken(token.substring(0, questionIndex), `$_${index}_$`);
+      const newSuffix = mapToken(token.substring(questionIndex), `?$_${index}_$`);
+      return newPrefix + newSuffix;
+    }).join('/');
+    let resolved = constructURLBasedOnBaseURL(baseURL, relativePath);
+    for (const [token, original] of tokenMap)
+      resolved = resolved.replace(token, original);
+    match = resolved;
   }
   if (isString(match))
     match = globToRegex(match);
