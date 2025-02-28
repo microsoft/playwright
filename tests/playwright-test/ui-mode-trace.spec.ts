@@ -504,7 +504,8 @@ test('should show copy prompt button in errors tab', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.spec.ts': `
 import { test, expect } from '@playwright/test';
-test('fails', async () => {
+test('fails', async ({ page }) => {
+  await page.setContent('<button>Submit</button>');
   expect(1).toBe(2);
 });
     `.trim(),
@@ -518,10 +519,10 @@ test('fails', async () => {
   const prompt = await page.evaluate(() => navigator.clipboard.readText());
   expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
   expect(prompt.replaceAll('\r\n', '\n'), 'contains codeframe').toContain(`
-  1 | import { test, expect } from '@playwright/test';
-  2 | test('fails', async () => {
-> 3 |   expect(1).toBe(2);
+  2 | test('fails', async ({ page }) => {
+  3 |   await page.setContent('<button>Submit</button>');
+> 4 |   expect(1).toBe(2);
                   ^
-  4 | });
+  5 | });
     `.trim());
 });
