@@ -5800,6 +5800,9 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
    * Mark a test step as "skip" to temporarily disable its execution, useful for steps that are currently failing and
    * planned for a near-term fix. Playwright will not run the step.
    *
+   * We recommend [testStepInfo.skip()](https://playwright.dev/docs/api/class-teststepinfo#test-step-info-skip-1)
+   * instead.
+   *
    * **Usage**
    *
    * You can declare a skipped step, and Playwright will not run it.
@@ -9658,14 +9661,45 @@ export interface TestStepInfo {
   }): Promise<void>;
 
   /**
-   * Unconditionally skip the currently running step. Test step is immediately aborted. This is similar to
-   * [test.step.skip(title, body[, options])](https://playwright.dev/docs/api/class-test#test-step-skip).
+   * Abort the currently running step and mark it as skipped. Useful for steps that are currently failing and planned
+   * for a near-term fix.
+   *
+   * **Usage**
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('my test', async ({ page }) => {
+   *   await test.step('check expectations', async () => {
+   *     test.skip();
+   *     // step body below will not run
+   *     // ...
+   *   });
+   * });
+   * ```
+   *
    */
   skip(): void;
 
   /**
-   * Conditionally skips the currently running step with an optional description. This is similar to
-   * [test.step.skip(title, body[, options])](https://playwright.dev/docs/api/class-test#test-step-skip).
+   * Conditionally skip the currently running step with an optional description. Useful for steps that should not be
+   * executed in some cases.
+   *
+   * **Usage**
+   *
+   * ```js
+   * import { test, expect } from '@playwright/test';
+   *
+   * test('my test', async ({ page, isMobile }) => {
+   *   await test.step('check desktop expectations', async () => {
+   *     test.skip(isMobile, 'not present in the mobile layout');
+   *
+   *     // step body below will not run
+   *     // ...
+   *   });
+   * });
+   * ```
+   *
    * @param condition A skip condition. Test step is skipped when the condition is `true`.
    * @param description Optional description that will be reflected in a test report.
    */
