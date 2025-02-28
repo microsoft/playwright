@@ -50,16 +50,6 @@ export function globToRegex(glob: string): RegExp {
     }
 
     switch (c) {
-      case '?':
-        // Unescaped ? is treated same as escaped.
-        tokens.push('\\?');
-        break;
-      case '[':
-        tokens.push('\\[');
-        break;
-      case ']':
-        tokens.push('\\]');
-        break;
       case '{':
         inGroup = true;
         tokens.push('(');
@@ -115,7 +105,7 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
         return token;
       // Handle special case of http*://
       if (index === 0 && token.endsWith(':'))
-        return mapToken(token, 'pw-matcher-schema:');
+        return mapToken(token, 'http:');
       const questionIndex = token.indexOf('?');
       if (questionIndex === -1)
         return mapToken(token, `$_${index}_$`);
