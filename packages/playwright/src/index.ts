@@ -322,7 +322,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     clientInstrumentation.removeListener(csiListener);
     await artifactsRecorder.didFinishTest();
 
-    if (process.env.PW_TEST_COPY_PROMPT && (testInfo as TestInfoImpl)._isFailure())
+    if (process.env.PLAYWRIGHT_COPY_PROMPT && (testInfo as TestInfoImpl)._isFailure())
       await testInfo.attach('testSource', { path: testInfo.file, contentType: 'application/javascript' });
   }, { auto: 'all-hooks-included',  title: 'trace recording', box: true, timeout: 0 } as any],
 

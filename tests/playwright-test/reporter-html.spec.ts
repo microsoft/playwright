@@ -2814,14 +2814,18 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
 
       await page.getByRole('link', { name: 'sample' }).click();
-      await page.getByRole('button', { name: 'Copy as Prompt' }).click();
-      const prompt = await page.evaluate(() => navigator.clipboard.readText());
-      expect(prompt, 'first line').toContain(`Playwright test failed.`);
-      expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
-      expect(prompt, 'contains snapshot').toContain('- button "Click me"');
-      expect(prompt, 'contains diff').toContain(`+            expect(2).toBe(3);`);
-      expect(prompt, 'contains sources').toContain('test file:\n```ts');
+
+      await expect(async () => {
+        await page.getByRole('button', { name: 'Copy as Prompt' }).click();
+        const prompt = await page.evaluate(() => navigator.clipboard.readText());
+        expect(prompt, 'first line').toContain(`Playwright test failed.`);
+        expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
+        expect(prompt, 'contains snapshot').toContain('- button "Click me"');
+        expect(prompt, 'contains diff').toContain(`+            expect(2).toBe(3);`);
+        expect(prompt, 'contains sources').toContain('test file:\n```ts');
+      }).toPass();
     });
+
   });
 }
 
