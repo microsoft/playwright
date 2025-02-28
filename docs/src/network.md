@@ -706,7 +706,7 @@ Playwright uses simplified glob patterns for URL matching in network interceptio
 1. Asterisks:
   - A single `*` matches any characters except `/`
   - A double `**` matches any characters including `/`
-1. Question mark `?` matches only question mark `?`. Uf you want to match any character, use `*` instead.
+1. Question mark `?` matches only question mark `?`. If you want to match any character, use `*` instead.
 1. Curly braces `{}` can be used to match a list of options separated by commas `,`
 1. Backslash `\` can be used to escape any of special characters (note to escape backslash itself as `\\`)
 
