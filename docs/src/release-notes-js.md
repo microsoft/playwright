@@ -40,15 +40,19 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
   });
   ```
 
-* Set `gitCommit: 'generate'` property in [`property: TestConfig.metadata`] to capture git information that will be shown in a test report.
+* Set option [`property: TestConfig.captureGitInfo`] to capture git information into [`property: TestConfig.metadata`].
 
   ```js title="playwright.config.ts"
   import { defineConfig } from '@playwright/test';
 
   export default defineConfig({
-    metadata: { gitCommit: 'generate' },
+    captureGitInfo: { commit: true, diff: true }
   });
   ```
+
+  HTML report will show this information when available:
+
+  ![Git information in the report](https://github.com/user-attachments/assets/9ca4a05a-1485-4521-826b-50568babec3f)
 
 ### Test runner
 

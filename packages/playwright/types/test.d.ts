@@ -962,9 +962,9 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * - These settings control whether git information is captured and stored in the config
    *   [testConfig.metadata](https://playwright.dev/docs/api/class-testconfig#test-config-metadata).
-   * - The structure of the git commit metadata is not documented and is a subject to change.
+   * - The structure of the git commit metadata is subject to change.
    * - Default values for these settings depend on the environment. When tests run as a part of CI where it is safe to
-   *   obtain git information, the default value is true, false otherise.
+   *   obtain git information, the default value is true, false otherwise.
    *
    * **Usage**
    *
