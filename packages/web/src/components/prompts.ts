@@ -19,7 +19,7 @@ function stripAnsiEscapes(str: string): string {
   return str.replace(ansiRegex, '');
 }
 
-export function fixTestPrompt(error: string, diff?: string, pageSnapshot?: string) {
+export function fixTestPrompt(error: string, diff?: string, pageSnapshot?: string, source?: string) {
   const promptParts = [
     `My Playwright test failed.`,
     `Explain why, be concise, respect Playwright best practices.`,
@@ -47,6 +47,16 @@ export function fixTestPrompt(error: string, diff?: string, pageSnapshot?: strin
         'Local changes:',
         '```diff',
         diff,
+        '```',
+    );
+  }
+
+  if (source) {
+    promptParts.push(
+        '',
+        'test file:',
+        '```ts',
+        source,
         '```',
     );
   }

@@ -2820,6 +2820,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
       expect(prompt, 'contains snapshot').toContain('- button "Click me"');
       expect(prompt, 'contains diff').toContain(`+            expect(2).toBe(3);`);
+      expect(prompt, 'contains sources').toContain('test file:\n```ts');
     });
   });
 }

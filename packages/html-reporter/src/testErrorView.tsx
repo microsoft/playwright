@@ -23,6 +23,7 @@ import type { TestResult } from './types';
 import { fixTestPrompt } from '@web/components/prompts';
 import { useHTMLReport } from './reportContext';
 import type { MetadataWithCommitInfo } from '@playwright/isomorphic/types';
+import { useAsyncMemo } from '@web/uiUtils';
 
 export const TestErrorView: React.FC<{
   error: string;
@@ -48,18 +49,32 @@ export const CodeSnippet = ({ code, children, testId }: React.PropsWithChildren<
   );
 };
 
+function useAttachment(result: TestResult | undefined, name: string) {
+  return useAsyncMemo(async () => {
+    const attachment = result?.attachments.find(a => a.name === name);
+    if (!attachment)
+      return;
+    if (attachment.body)
+      return attachment.body;
+    const response = await fetch(attachment.path!);
+    return await response.text();
+  }, [result, name], undefined);
+}
+
 const PromptButton: React.FC<{
   error: string;
   result?: TestResult;
 }> = ({ error, result }) => {
   const report = useHTMLReport();
   const commitInfo = report?.metadata as MetadataWithCommitInfo | undefined;
-  const pageSnapshot = result?.attachments.find(a => a.name === 'pageSnapshot')?.body;
+  const pageSnapshot = useAttachment(result, 'pageSnapshot');
+  const sources = useAttachment(result, 'testSource');
   const prompt = React.useMemo(() => fixTestPrompt(
       error,
       commitInfo?.gitDiff,
-      pageSnapshot
-  ), [commitInfo, pageSnapshot, error]);
+      pageSnapshot,
+      sources,
+  ), [commitInfo, pageSnapshot, error, sources]);
 
   const [copied, setCopied] = React.useState(false);
 
