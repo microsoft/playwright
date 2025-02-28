@@ -54,7 +54,7 @@ function usePageSnapshot(actions: modelUtil.ActionTraceEventInContext[]) {
   }, [actions], undefined);
 }
 
-function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, modelUtil.SourceModel>) {
+function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, modelUtil.SourceModel>, window: (targetline: number, length: number) => [start: number, end: number]) {
   const selectedFrame = stack?.[0];
   const { source } = useSources(stack, 0, sources);
   return React.useMemo(() => {
@@ -64,8 +64,9 @@ function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, mode
     const targetLine = selectedFrame?.line ?? 0;
 
     const lines = source.content.split('\n');
-    const start = 0;
-    const end = lines.length;
+    const [windowStart, windowEnd] = window(targetLine, lines.length);
+    const start = Math.max(0, windowStart);
+    const end = Math.min(lines.length, windowEnd);
     const lineNumberWidth = String(end).length;
     const codeFrame = lines.slice(start, end).map((line, i) => {
       const lineNumber = start + i + 1;
@@ -141,7 +142,7 @@ function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSou
     longLocation = stackFrame.file + ':' + stackFrame.line;
   }
 
-  const codeFrame = useCodeFrame(error.stack, sources);
+  const codeFrame = useCodeFrame(error.stack, sources, (targetline, length) => [0, length]);
 
   return <div style={{ display: 'flex', flexDirection: 'column', overflowX: 'clip' }}>
     <div className='hbox' style={{
