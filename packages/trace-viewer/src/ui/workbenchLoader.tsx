@@ -72,6 +72,29 @@ export const WorkbenchLoader: React.FunctionComponent<{
     document.addEventListener('paste', listener);
     return () => document.removeEventListener('paste', listener);
   });
+  React.useEffect(() => {
+    const listener = async (e: MessageEvent) => {
+      if (!e.data.b64trace)
+        return;
+
+      const bytes = atob(e.data.b64trace);
+      const arrayBuffer = new ArrayBuffer(bytes.length);
+      const uint8Array = new Uint8Array(arrayBuffer);
+
+      for (let i = 0; i < bytes.length; i++)
+        uint8Array[i] = bytes.charCodeAt(i);
+
+      const traceBlob = new Blob([uint8Array], { type: 'application/zip' });
+      const traceFile = new File([traceBlob], 'trace.zip', { type: 'application/zip' });
+      const dataTransfer = new DataTransfer();
+
+      dataTransfer.items.add(traceFile);
+
+      processTraceFiles(dataTransfer.files);
+    };
+    window.addEventListener('message', listener);
+    return () => window.removeEventListener('message', listener);
+  });
 
   const handleDropEvent = React.useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
