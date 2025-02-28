@@ -103,7 +103,8 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
     const relativePath = match.split('/').map((token, index) => {
       if (token === '.' || token === '..' || token === '')
         return token;
-      // Handle special case of http*://
+      // Handle special case of http*://, note that the new schema has to be
+      // a web schema so that slashes are properly inserted after domain.
       if (index === 0 && token.endsWith(':'))
         return mapToken(token, 'http:');
       const questionIndex = token.indexOf('?');
