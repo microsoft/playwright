@@ -71,6 +71,14 @@ export function source() {
     }
   }
 
+  function isTypedArray(obj: any, constructor: Function): boolean {
+    try {
+      return obj instanceof constructor || Object.prototype.toString.call(obj) === `[object ${constructor.name}]`;
+    } catch (error) {
+      return false;
+    }
+  }
+
   const typedArrayConstructors: Record<TypedArrayKind, Function> = {
     i8: Int8Array,
     ui8: Uint8Array,
@@ -87,6 +95,8 @@ export function source() {
   };
 
   function typedArrayToBase64(array: any) {
+    if ('toBase64' in array)
+      return array.toBase64();
     const binary = Array.from(new Uint8Array(array.buffer)).map(b => String.fromCharCode(b)).join('');
     return btoa(binary);
   }
@@ -220,7 +230,7 @@ export function source() {
     if (isRegExp(value))
       return { r: { p: value.source, f: value.flags } };
     for (const [k, ctor] of Object.entries(typedArrayConstructors) as [TypedArrayKind, Function][]) {
-      if (value instanceof ctor)
+      if (isTypedArray(value, ctor))
         return { ta: { b: typedArrayToBase64(value), k } };
     }
 
