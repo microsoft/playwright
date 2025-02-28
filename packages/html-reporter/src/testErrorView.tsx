@@ -54,13 +54,17 @@ const PromptButton: React.FC<{
 }> = ({ error, result }) => {
   const report = useHTMLReport();
   const commitInfo = report?.metadata as MetadataWithCommitInfo | undefined;
+  const pageSnapshot = result?.attachments.find(a => a.name === 'pageSnapshot')?.body;
   const prompt = React.useMemo(() => fixTestPrompt(
       error,
       commitInfo?.gitDiff,
-      result?.attachments.find(a => a.name === 'pageSnapshot')?.body
-  ), [commitInfo, result, error]);
+      pageSnapshot
+  ), [commitInfo, pageSnapshot, error]);
 
   const [copied, setCopied] = React.useState(false);
+
+  if (!pageSnapshot)
+    return;
 
   return <button
     className='button'

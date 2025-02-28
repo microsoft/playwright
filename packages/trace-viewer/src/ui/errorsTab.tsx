@@ -97,6 +97,9 @@ const CopyPromptButton: React.FC<{
       [error, diff, codeFrame, pageSnapshot]
   );
 
+  if (!pageSnapshot)
+    return;
+
   return (
     <CopyToClipboardTextButton
       value={prompt}
