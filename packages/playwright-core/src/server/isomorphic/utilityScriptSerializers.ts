@@ -87,19 +87,11 @@ export function source() {
   };
 
   function typedArrayToBase64(array: any) {
-    if (globalThis.Buffer)
-      return Buffer.from(array).toString('base64');
-
     const binary = Array.from(new Uint8Array(array.buffer)).map(b => String.fromCharCode(b)).join('');
     return btoa(binary);
   }
 
   function base64ToTypedArray(base64: string, TypedArrayConstructor: any) {
-    if (globalThis.Buffer) {
-      const buf = Buffer.from(base64, 'base64');
-      return new TypedArrayConstructor(buf.buffer, buf.byteOffset, buf.byteLength / buf.BYTES_PER_ELEMENT);
-    }
-
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++)
