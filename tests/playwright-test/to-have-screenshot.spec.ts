@@ -619,9 +619,6 @@ test('should write missing expectations locally twice and attach them', async ({
   const result = await runInlineTest({
     ...playwrightConfig({
       snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
-      use: {
-        pageSnapshot: 'off',
-      },
     }),
     'a.spec.js': `
       const { test, expect } = require('@playwright/test');
@@ -693,9 +690,6 @@ test('should attach missing expectations to right step', async ({ runInlineTest 
     `,
     ...playwrightConfig({
       reporter: [['dot'], ['./reporter']],
-      use: {
-        pageSnapshot: 'off',
-      }
     }),
     'a.spec.js': `
       const { test, expect } = require('@playwright/test');
@@ -1126,9 +1120,6 @@ test('should attach expected/actual/diff when sizes are different', async ({ run
   const result = await runInlineTest({
     ...playwrightConfig({
       snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
-      use: {
-        pageSnapshot: 'off',
-      },
     }),
     '__screenshots__/a.spec.js/snapshot.png': createImage(2, 2),
     'a.spec.js': `
@@ -1387,9 +1378,6 @@ test('should trim+sanitize attachment names and paths', async ({ runInlineTest }
   const result = await runInlineTest({
     ...playwrightConfig({
       snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
-      use: {
-        pageSnapshot: 'off',
-      }
     }),
     'a.spec.js': `
       const { test, expect } = require('@playwright/test');

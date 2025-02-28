@@ -2805,6 +2805,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         GITHUB_SHA: 'example-sha',
         GITHUB_REF_NAME: '42/merge',
         GITHUB_BASE_REF: 'HEAD~1',
+        PLAYWRIGHT_COPY_PROMPT: '1',
       });
 
       expect(result.exitCode).toBe(1);

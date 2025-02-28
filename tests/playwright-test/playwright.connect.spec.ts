@@ -221,7 +221,6 @@ test('should record trace', async ({ runInlineTest }) => {
     'browserContext.newPage',
     'expect.toBe',
     'After Hooks',
-    'locator.ariaSnapshot',
     'fixture: page',
     'fixture: context',
     'Worker Cleanup',
