@@ -384,6 +384,7 @@ class PageTarget {
     this._linkedBrowser = tab.linkedBrowser;
     this._browserContext = browserContext;
     this._viewportSize = undefined;
+    this._zoom = 1;
     this._initialDPPX = this._linkedBrowser.browsingContext.overrideDPPX;
     this._url = 'about:blank';
     this._openerId = opener ? opener.id() : undefined;
@@ -496,6 +497,7 @@ class PageTarget {
     this.updateUserAgent(browsingContext);
     this.updatePlatform(browsingContext);
     this.updateDPPXOverride(browsingContext);
+    this.updateZoom(browsingContext);
     this.updateEmulatedMedia(browsingContext);
     this.updateColorSchemeOverride(browsingContext);
     this.updateReducedMotionOverride(browsingContext);
@@ -534,7 +536,16 @@ class PageTarget {
   }
 
   updateDPPXOverride(browsingContext = undefined) {
-    (browsingContext || this._linkedBrowser.browsingContext).overrideDPPX = this._browserContext.deviceScaleFactor || this._initialDPPX;
+    browsingContext ||= this._linkedBrowser.browsingContext;
+    const dppx = this._zoom * (this._browserContext.deviceScaleFactor || this._initialDPPX);
+    browsingContext.overrideDPPX = dppx;
+  }
+
+  async updateZoom(browsingContext = undefined) {
+    browsingContext ||= this._linkedBrowser.browsingContext;
+    // Update dpr first, and then UI zoom.
+    this.updateDPPXOverride(browsingContext);
+    browsingContext.fullZoom = this._zoom;
   }
 
   _updateModalDialogs() {
@@ -584,7 +595,7 @@ class PageTarget {
       const toolbarTop = stackRect.y;
       this._window.resizeBy(width - this._window.innerWidth, height + toolbarTop - this._window.innerHeight);
 
-      await this._channel.connect('').send('awaitViewportDimensions', { width, height });
+      await this._channel.connect('').send('awaitViewportDimensions', { width: width / this._zoom, height: height / this._zoom });
     } else {
       this._linkedBrowser.style.removeProperty('width');
       this._linkedBrowser.style.removeProperty('height');
@@ -596,8 +607,8 @@ class PageTarget {
 
       const actualSize = this._linkedBrowser.getBoundingClientRect();
       await this._channel.connect('').send('awaitViewportDimensions', {
-        width: actualSize.width,
-        height: actualSize.height,
+        width: actualSize.width / this._zoom,
+        height: actualSize.height / this._zoom,
       });
     }
   }
@@ -648,6 +659,14 @@ class PageTarget {
   async setViewportSize(viewportSize) {
     this._viewportSize = viewportSize;
     await this.updateViewportSize();
+  }
+
+  async setZoom(zoom) {
+    // This is default range from the ZoomManager.
+    if (zoom < 0.3 || zoom > 5)
+      throw new Error('Invalid zoom value, must be between 0.3 and 5');
+    this._zoom = zoom;
+    await this.updateZoom();
   }
 
   close(runBeforeUnload = false) {
