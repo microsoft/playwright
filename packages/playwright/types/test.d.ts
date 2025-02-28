@@ -962,9 +962,9 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * - These settings control whether git information is captured and stored in the config
    *   [testConfig.metadata](https://playwright.dev/docs/api/class-testconfig#test-config-metadata).
-   * - The structure of the git commit metadata is not documented and is a subject to change.
+   * - The structure of the git commit metadata is subject to change.
    * - Default values for these settings depend on the environment. When tests run as a part of CI where it is safe to
-   *   obtain git information, the default value is true, false otherise.
+   *   obtain git information, the default value is true, false otherwise.
    *
    * **Usage**
    *
@@ -5824,7 +5824,8 @@ export interface TestType<TestArgs extends {}, WorkerArgs extends {}> {
   <T>(title: string, body: (step: TestStepInfo) => T | Promise<T>, options?: { box?: boolean, location?: Location, timeout?: number }): Promise<T>;
     /**
    * Mark a test step as "skip" to temporarily disable its execution, useful for steps that are currently failing and
-   * planned for a near-term fix. Playwright will not run the step.
+   * planned for a near-term fix. Playwright will not run the step. See also
+   * [testStepInfo.skip(condition[, description])](https://playwright.dev/docs/api/class-teststepinfo#test-step-info-skip-2).
    *
    * We recommend [testStepInfo.skip()](https://playwright.dev/docs/api/class-teststepinfo#test-step-info-skip-1)
    * instead.
@@ -9587,7 +9588,7 @@ export interface TestInfoError {
  * ```js
  * import { test, expect } from '@playwright/test';
  *
- * test('basic test', async ({ page, browserName }, TestStepInfo) => {
+ * test('basic test', async ({ page, browserName }) => {
  *   await test.step('check some behavior', async step => {
  *     await step.skip(browserName === 'webkit', 'The feature is not available in WebKit');
  *     // ... rest of the step code
@@ -9686,8 +9687,8 @@ export interface TestStepInfo {
   skip(): void;
 
   /**
-   * Conditionally skip the currently running step with an optional description. Useful for steps that should not be
-   * executed in some cases.
+   * Conditionally abort the currently running step and mark it as skipped with an optional description. Useful for
+   * steps that should not be executed in some cases.
    *
    * **Usage**
    *
