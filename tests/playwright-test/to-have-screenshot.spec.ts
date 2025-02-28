@@ -631,7 +631,7 @@ test('should write missing expectations locally twice and attach them', async ({
         console.log('\\n%%' + JSON.stringify(testInfo.attachments));
       });
     `,
-  }, undefined, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  });
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
@@ -697,7 +697,7 @@ test('should attach missing expectations to right step', async ({ runInlineTest 
         await expect(page).toHaveScreenshot('snapshot.png');
       });
     `,
-  }, { reporter: '' }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { reporter: '' });
 
   expect(result.exitCode).toBe(1);
   expect(result.outputLines).toEqual(['expect.toHaveScreenshot(snapshot.png): snapshot-expected.png, snapshot-actual.png']);
@@ -1131,7 +1131,7 @@ test('should attach expected/actual/diff when sizes are different', async ({ run
         await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
-  }, undefined, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  });
 
   expect(result.exitCode).toBe(1);
   const outputText = result.output;
@@ -1392,7 +1392,7 @@ test('should trim+sanitize attachment names and paths', async ({ runInlineTest }
         await expect.soft(page).toHaveScreenshot(['dir', name]);
       });
     `
-  }, undefined, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  });
 
   expect(result.exitCode).toBe(1);
   const attachments = result.output.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];

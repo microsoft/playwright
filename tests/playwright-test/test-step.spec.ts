@@ -202,7 +202,7 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
         });
       });
     `
-  }, { reporter: '', workers: 1, timeout: 2000 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { reporter: '', workers: 1, timeout: 2000 });
 
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toBe(`
@@ -597,7 +597,7 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
         await page.click('div');
       });
     `
-  }, { reporter: '' }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { reporter: '' });
 
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toBe(`
@@ -1239,7 +1239,7 @@ test('should report api step failure', async ({ runInlineTest }) => {
         await page.click('input', { timeout: 1 });
       });
     `
-  }, { reporter: '', workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { reporter: '', workers: 1 });
 
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toBe(`

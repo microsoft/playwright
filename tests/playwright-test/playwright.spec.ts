@@ -500,7 +500,7 @@ test('should work with video: on-first-retry', async ({ runInlineTest }) => {
         test.expect(1 + 1).toBe(1);
       });
     `,
-  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);

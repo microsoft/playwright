@@ -249,7 +249,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const pageSnapshot = process.env.PW_TEST_PAGE_SNAPSHOT as SnapshotRecorderMode ?? 'only-on-failure';
+    const pageSnapshot = process.env.PLAYWRIGHT_COPY_PROMPT ? 'on' : 'off';
     const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, pageSnapshot);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 

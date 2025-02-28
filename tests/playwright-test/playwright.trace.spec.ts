@@ -80,7 +80,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
         expect(1).toBe(2);
       });
     `,
-  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(2);
@@ -308,7 +308,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
         await request.get('${server.EMPTY_PAGE}');
       });
     `,
-  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
@@ -652,7 +652,7 @@ test('should show non-expect error in trace', async ({ runInlineTest }, testInfo
         expect(1).toBe(2);
       });
     `,
-  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
@@ -930,7 +930,7 @@ test('should record nested steps, even after timeout', async ({ runInlineTest },
         });
       });
     `,
-  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
@@ -1164,7 +1164,7 @@ test('should record trace for manually created context in a failed test', async 
         expect(1).toBe(2);
       });
     `,
-  }, { trace: 'on' }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { trace: 'on' });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 

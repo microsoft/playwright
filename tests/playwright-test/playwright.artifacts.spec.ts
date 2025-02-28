@@ -130,7 +130,7 @@ test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
     'playwright.config.ts': `
       module.exports = { use: { screenshot: 'on' } };
     `,
-  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(5);
@@ -170,7 +170,7 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
     'playwright.config.ts': `
       module.exports = { use: { screenshot: 'only-on-failure' } };
     `,
-  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(5);
@@ -207,7 +207,7 @@ test('should work with screenshot: on-first-failure', async ({ runInlineTest }, 
         use: { screenshot: 'on-first-failure' }
       };
     `,
-  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
@@ -233,7 +233,7 @@ test('should work with screenshot: only-on-failure & fullPage', async ({ runInli
     'playwright.config.ts': `
       module.exports = { use: { screenshot: { mode: 'only-on-failure', fullPage: true } } };
     `,
-  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { workers: 1 });
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
@@ -254,7 +254,7 @@ test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
     'playwright.config.ts': `
       module.exports = { use: { trace: 'on' } };
     `,
-  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(5);
@@ -290,7 +290,7 @@ test('should work with trace: retain-on-failure', async ({ runInlineTest }, test
     'playwright.config.ts': `
       module.exports = { use: { trace: 'retain-on-failure' } };
     `,
-  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { workers: 1 });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(5);
@@ -316,7 +316,7 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
     'playwright.config.ts': `
       module.exports = { use: { trace: 'on-first-retry' } };
     `,
-  }, { workers: 1, retries: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { workers: 1, retries: 1 });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(5);
@@ -342,7 +342,7 @@ test('should work with trace: on-all-retries', async ({ runInlineTest }, testInf
     'playwright.config.ts': `
       module.exports = { use: { trace: 'on-all-retries' } };
     `,
-  }, { workers: 1, retries: 2 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { workers: 1, retries: 2 });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(5);
@@ -378,7 +378,7 @@ test('should work with trace: retain-on-first-failure', async ({ runInlineTest }
     'playwright.config.ts': `
       module.exports = { use: { trace: 'retain-on-first-failure' } };
     `,
-  }, { workers: 1, retries: 2 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
+  }, { workers: 1, retries: 2 });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(5);
