@@ -339,6 +339,8 @@ export class TerminalReporter implements ReporterV2 {
   }
 }
 
+const hiddenAttachments = new Set(['pageSnapshot']);
+
 export function formatFailure(screen: Screen, config: FullConfig, test: TestCase, index?: number): string {
   const lines: string[] = [];
   const header = formatTestHeader(screen, config, test, { indent: '  ', index, mode: 'error' });
@@ -357,6 +359,8 @@ export function formatFailure(screen: Screen, config: FullConfig, test: TestCase
     resultLines.push(...errors.map(error => '\n' + error.message));
     for (let i = 0; i < result.attachments.length; ++i) {
       const attachment = result.attachments[i];
+      if (hiddenAttachments.has(attachment.name))
+        continue;
       const hasPrintableContent = attachment.contentType.startsWith('text/');
       if (!attachment.path && !hasPrintableContent)
         continue;
