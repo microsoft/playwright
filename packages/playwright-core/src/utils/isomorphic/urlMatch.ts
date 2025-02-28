@@ -88,7 +88,7 @@ export function urlMatchesEqual(match1: URLMatch, match2: URLMatch) {
 export function urlMatches(baseURL: string | undefined, urlString: string, match: URLMatch | undefined): boolean {
   if (match === undefined || match === '')
     return true;
-  if (isString(match)) {
+  if (isString(match) && !match.startsWith('*')) {
     // Allow http(s) baseURL to match ws(s) urls.
     if (baseURL && /^https?:\/\//.test(baseURL) && /^wss?:\/\//.test(urlString))
       baseURL = baseURL.replace(/^http/, 'ws');
