@@ -517,7 +517,7 @@ test('fails', async () => {
   await page.locator('.tab-errors').getByRole('button', { name: 'Copy as Prompt' }).click();
   const prompt = await page.evaluate(() => navigator.clipboard.readText());
   expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
-  expect(prompt, 'contains codeframe').toContain(`
+  expect(prompt.replaceAll('\r\n', '\n'), 'contains codeframe').toContain(`
   1 | import { test, expect } from '@playwright/test';
   2 | test('fails', async () => {
 > 3 |   expect(1).toBe(2);
