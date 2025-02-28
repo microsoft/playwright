@@ -80,7 +80,7 @@ function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, mode
       return highlightLine;
     }).join('\n');
     return codeFrame;
-  }, [source, selectedFrame]);
+  }, [source, selectedFrame, window]);
 }
 
 const CopyPromptButton: React.FC<{
@@ -142,7 +142,7 @@ function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSou
     longLocation = stackFrame.file + ':' + stackFrame.line;
   }
 
-  const codeFrame = useCodeFrame(error.stack, sources, (targetline, length) => [0, length]);
+  const codeFrame = useCodeFrame(error.stack, sources, React.useCallback((targetline, length) => [0, length], []));
 
   return <div style={{ display: 'flex', flexDirection: 'column', overflowX: 'clip' }}>
     <div className='hbox' style={{
