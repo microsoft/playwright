@@ -59,7 +59,7 @@ test('should stop tracing with trace: on-first-retry, when not retrying', async 
 test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'on', pageSnapshot: 'off' } };
+      module.exports = { use: { trace: 'on' } };
     `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -80,7 +80,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
         expect(1).toBe(2);
       });
     `,
-  }, { workers: 1 });
+  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(2);
@@ -290,7 +290,7 @@ test('should work in serial mode', async ({ runInlineTest }, testInfo) => {
 test('should not override trace file in afterAll', async ({ runInlineTest, server }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'retain-on-failure', pageSnapshot: 'off' } };
+      module.exports = { use: { trace: 'retain-on-failure' } };
     `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -308,7 +308,7 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
         await request.get('${server.EMPTY_PAGE}');
       });
     `,
-  }, { workers: 1 });
+  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
@@ -642,7 +642,7 @@ test('should expand expect.toPass', async ({ runInlineTest }, testInfo) => {
 test('should show non-expect error in trace', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { trace: { mode: 'on' }, pageSnapshot: 'off' } };
+      module.exports = { use: { trace: { mode: 'on' } } };
     `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -652,7 +652,7 @@ test('should show non-expect error in trace', async ({ runInlineTest }, testInfo
         expect(1).toBe(2);
       });
     `,
-  }, { workers: 1 });
+  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
@@ -850,7 +850,7 @@ test('should record nested steps, even after timeout', async ({ runInlineTest },
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
-        use: { trace: { mode: 'on' }, pageSnapshot: 'off' },
+        use: { trace: { mode: 'on' } },
         timeout: 5000,
       };
     `,
@@ -930,7 +930,7 @@ test('should record nested steps, even after timeout', async ({ runInlineTest },
         });
       });
     `,
-  }, { workers: 1 });
+  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
@@ -1156,9 +1156,6 @@ test('should record trace for manually created context in a failed test', async 
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31541' });
 
   const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { use: { pageSnapshot: 'off' } };
-    `,
     'a.spec.ts': `
       import { test, expect } from '@playwright/test';
       test('fail', async ({ browser }) => {
@@ -1167,7 +1164,7 @@ test('should record trace for manually created context in a failed test', async 
         expect(1).toBe(2);
       });
     `,
-  }, { trace: 'on' });
+  }, { trace: 'on' }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 
@@ -1237,9 +1234,6 @@ test('should record trace after fixture teardown timeout', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/30718' },
 }, async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'playwright.config.ts': `
-      module.exports = { use: { pageSnapshot: 'off' } };
-    `,
     'a.spec.ts': `
       import { test as base, expect } from '@playwright/test';
       const test = base.extend({
@@ -1253,7 +1247,7 @@ test('should record trace after fixture teardown timeout', {
         await page.evaluate(() => console.log('from the page'));
       });
     `,
-  }, { trace: 'on', timeout: '3000' }, { DEBUG: 'pw:test' });
+  }, { trace: 'on', timeout: '3000' }, { DEBUG: 'pw:test', PW_TEST_PAGE_SNAPSHOT: 'off' });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
 

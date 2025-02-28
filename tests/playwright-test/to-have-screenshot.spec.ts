@@ -619,9 +619,6 @@ test('should write missing expectations locally twice and attach them', async ({
   const result = await runInlineTest({
     ...playwrightConfig({
       snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
-      use: {
-        pageSnapshot: 'off',
-      },
     }),
     'a.spec.js': `
       const { test, expect } = require('@playwright/test');
@@ -634,7 +631,7 @@ test('should write missing expectations locally twice and attach them', async ({
         console.log('\\n%%' + JSON.stringify(testInfo.attachments));
       });
     `,
-  });
+  }, undefined, { PW_TEST_PAGE_SNAPSHOT: 'off' });
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
@@ -693,9 +690,6 @@ test('should attach missing expectations to right step', async ({ runInlineTest 
     `,
     ...playwrightConfig({
       reporter: [['dot'], ['./reporter']],
-      use: {
-        pageSnapshot: 'off',
-      }
     }),
     'a.spec.js': `
       const { test, expect } = require('@playwright/test');
@@ -703,7 +697,7 @@ test('should attach missing expectations to right step', async ({ runInlineTest 
         await expect(page).toHaveScreenshot('snapshot.png');
       });
     `,
-  }, { reporter: '' });
+  }, { reporter: '' }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
 
   expect(result.exitCode).toBe(1);
   expect(result.outputLines).toEqual(['expect.toHaveScreenshot(snapshot.png): snapshot-expected.png, snapshot-actual.png']);
@@ -1126,9 +1120,6 @@ test('should attach expected/actual/diff when sizes are different', async ({ run
   const result = await runInlineTest({
     ...playwrightConfig({
       snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
-      use: {
-        pageSnapshot: 'off',
-      },
     }),
     '__screenshots__/a.spec.js/snapshot.png': createImage(2, 2),
     'a.spec.js': `
@@ -1140,7 +1131,7 @@ test('should attach expected/actual/diff when sizes are different', async ({ run
         await expect(page).toHaveScreenshot('snapshot.png', { timeout: 2000 });
       });
     `
-  });
+  }, undefined, { PW_TEST_PAGE_SNAPSHOT: 'off' });
 
   expect(result.exitCode).toBe(1);
   const outputText = result.output;
@@ -1387,9 +1378,6 @@ test('should trim+sanitize attachment names and paths', async ({ runInlineTest }
   const result = await runInlineTest({
     ...playwrightConfig({
       snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
-      use: {
-        pageSnapshot: 'off',
-      }
     }),
     'a.spec.js': `
       const { test, expect } = require('@playwright/test');
@@ -1404,7 +1392,7 @@ test('should trim+sanitize attachment names and paths', async ({ runInlineTest }
         await expect.soft(page).toHaveScreenshot(['dir', name]);
       });
     `
-  });
+  }, undefined, { PW_TEST_PAGE_SNAPSHOT: 'off' });
 
   expect(result.exitCode).toBe(1);
   const attachments = result.output.split('\n').filter(l => l.startsWith('## ')).map(l => l.substring(3)).map(l => JSON.parse(l))[0];

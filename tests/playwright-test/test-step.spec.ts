@@ -192,9 +192,6 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
     'playwright.config.ts': `
       module.exports = {
         reporter: './reporter',
-        use: {
-          pageSnapshot: 'off',
-        }
       };
     `,
     'a.test.ts': `
@@ -205,7 +202,7 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
         });
       });
     `
-  }, { reporter: '', workers: 1, timeout: 2000 });
+  }, { reporter: '', workers: 1, timeout: 2000 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
 
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toBe(`
@@ -580,9 +577,6 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
     'playwright.config.ts': `
       module.exports = {
         reporter: './reporter',
-        use: {
-          pageSnapshot: 'off',
-        }
       };
     `,
     'a.test.ts': `
@@ -603,7 +597,7 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
         await page.click('div');
       });
     `
-  }, { reporter: '' });
+  }, { reporter: '' }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
 
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toBe(`
@@ -1236,9 +1230,6 @@ test('should report api step failure', async ({ runInlineTest }) => {
     'playwright.config.ts': `
       module.exports = {
         reporter: './reporter',
-        use: {
-          pageSnapshot: 'off',
-        }
       };
     `,
     'a.test.ts': `
@@ -1248,7 +1239,7 @@ test('should report api step failure', async ({ runInlineTest }) => {
         await page.click('input', { timeout: 1 });
       });
     `
-  }, { reporter: '', workers: 1 });
+  }, { reporter: '', workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
 
   expect(result.exitCode).toBe(1);
   expect(stripAnsi(result.output)).toBe(`

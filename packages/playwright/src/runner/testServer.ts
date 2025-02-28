@@ -312,7 +312,6 @@ export class TestServerDispatcher implements TestServerInterface {
         ...(params.trace === 'off' ? { trace: 'off' } : {}),
         ...(params.video === 'on' || params.video === 'off' ? { video: params.video } : {}),
         ...(params.headed !== undefined ? { headless: !params.headed } : {}),
-        ...(params.pageSnapshot ? { pageSnapshot: params.pageSnapshot } : undefined),
         _optionContextReuseMode: params.reuseContext ? 'when-possible' : undefined,
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
       },
@@ -324,6 +323,7 @@ export class TestServerDispatcher implements TestServerInterface {
       process.env.PW_LIVE_TRACE_STACKS = '1';
     else
       process.env.PW_LIVE_TRACE_STACKS = undefined;
+    process.env.PW_TEST_PAGE_SNAPSHOT = params.pageSnapshot;
 
     const wireReporter = await this._wireReporter(e => this._dispatchEvent('report', e));
     const config = await this._loadConfigOrReportError(new InternalReporter([wireReporter]), overrides);

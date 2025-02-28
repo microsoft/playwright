@@ -485,7 +485,7 @@ test('should work with video: retain-on-failure', async ({ runInlineTest }) => {
 test('should work with video: on-first-retry', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
-      module.exports = { use: { video: 'on-first-retry', pageSnapshot: 'off' }, retries: 1, name: 'chromium' };
+      module.exports = { use: { video: 'on-first-retry' }, retries: 1, name: 'chromium' };
     `,
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -500,7 +500,7 @@ test('should work with video: on-first-retry', async ({ runInlineTest }) => {
         test.expect(1 + 1).toBe(1);
       });
     `,
-  }, { workers: 1 });
+  }, { workers: 1 }, { PW_TEST_PAGE_SNAPSHOT: 'off' });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
