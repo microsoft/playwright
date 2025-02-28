@@ -630,7 +630,7 @@ class ArtifactsRecorder {
       await page.screenshot({ ...screenshotOptions, timeout: 5000, path, caret: 'initial' });
     });
 
-    this._pageSnapshotRecorder = new SnapshotRecorder(this, pageSnapshot, 'pageSnapshot', 'text/plain', '.snapshot.yml', async (page, path) => {
+    this._pageSnapshotRecorder = new SnapshotRecorder(this, pageSnapshot, 'pageSnapshot', 'text/yaml', '.aria.yml', async (page, path) => {
       const ariaSnapshot = await page.locator('body').ariaSnapshot({ timeout: 5000 });
       await fs.promises.writeFile(path, ariaSnapshot);
     });

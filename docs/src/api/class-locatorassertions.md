@@ -2263,13 +2263,13 @@ assertThat(page.locator("body")).matchesAriaSnapshot("""
 
 Asserts that the target element matches the given [accessibility snapshot](../aria-snapshots.md).
 
-Snapshot is stored in a separate `.snapshot.yml` file in a location configured by `expect.toMatchAriaSnapshot.pathTemplate` and/or `snapshotPathTemplate` properties in the configuration file.
+Snapshot is stored in a separate `.aria.yml` file in a location configured by `expect.toMatchAriaSnapshot.pathTemplate` and/or `snapshotPathTemplate` properties in the configuration file.
 
 **Usage**
 
 ```js
 await expect(page.locator('body')).toMatchAriaSnapshot();
-await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'body.snapshot.yml' });
+await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'body.aria.yml' });
 ```
 
 ### option: LocatorAssertions.toMatchAriaSnapshot#2.name
