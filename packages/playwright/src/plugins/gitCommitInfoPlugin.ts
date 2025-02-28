@@ -21,30 +21,26 @@ import { spawnAsync } from 'playwright-core/lib/utils';
 import type { TestRunnerPlugin } from './';
 import type { FullConfig } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
-import type { GitCommitInfo, CIInfo, UserMetadataWithCommitInfo } from '../isomorphic/types';
+import type { GitCommitInfo, CIInfo, MetadataWithCommitInfo } from '../isomorphic/types';
 
 const GIT_OPERATIONS_TIMEOUT_MS = 3000;
 
 export const addGitCommitInfoPlugin = (fullConfig: FullConfigInternal) => {
-  fullConfig.plugins.push({ factory: gitCommitInfoPlugin });
+  fullConfig.plugins.push({ factory: gitCommitInfoPlugin.bind(null, fullConfig) });
 };
 
-type GitCommitInfoPluginOptions = {
-  directory?: string;
-};
-
-export const gitCommitInfoPlugin = (options?: GitCommitInfoPluginOptions): TestRunnerPlugin => {
+const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin => {
   return {
     name: 'playwright:git-commit-info',
 
     setup: async (config: FullConfig, configDir: string) => {
-      const metadata = config.metadata as UserMetadataWithCommitInfo;
+      const metadata = config.metadata as MetadataWithCommitInfo;
       const ci = await ciInfo();
       if (!metadata.ci && ci)
         metadata.ci = ci;
 
-      if ((ci && !metadata.gitCommit) || metadata.gitCommit === 'generate') {
-        const git = await gitCommitInfo(options?.directory || configDir).catch(e => {
+      if (fullConfig.captureGitInfo?.commit || (fullConfig.captureGitInfo?.commit === undefined && ci)) {
+        const git = await gitCommitInfo(configDir).catch(e => {
           // eslint-disable-next-line no-console
           console.error('Failed to get git commit info', e);
         });
@@ -52,8 +48,8 @@ export const gitCommitInfoPlugin = (options?: GitCommitInfoPluginOptions): TestR
           metadata.gitCommit = git;
       }
 
-      if ((ci && !metadata.gitDiff) || metadata.gitDiff === 'generate') {
-        const diffResult = await gitDiff(options?.directory || configDir, ci).catch(e => {
+      if (fullConfig.captureGitInfo?.diff || (fullConfig.captureGitInfo?.diff === undefined && ci)) {
+        const diffResult = await gitDiff(configDir, ci).catch(e => {
           // eslint-disable-next-line no-console
           console.error('Failed to get git diff', e);
         });

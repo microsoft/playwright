@@ -36,6 +36,26 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.captureGitInfo
+* since: v1.51
+- type: ?<[Object]>
+  - `commit` ?<boolean> Whether to capture commit information such as hash, author, timestamp.
+  - `diff` ?<boolean> Whether to capture commit diff.
+
+* These settings control whether git information is captured and stored in the config [`property: TestConfig.metadata`].
+* The structure of the git commit metadata is subject to change.
+* Default values for these settings depend on the environment. When tests run as a part of CI where it is safe to obtain git information, the default value is true, false otherwise.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  captureGitInfo: { commit: true, diff: true }
+});
+```
+
 ## property: TestConfig.expect
 * since: v1.10
 - type: ?<[Object]>
@@ -238,11 +258,6 @@ export default defineConfig({
 - type: ?<[Metadata]>
 
 Metadata contains key-value pairs to be included in the report. For example, HTML report will display it as key-value pairs, and JSON report will include metadata serialized as json.
-
-* Providing `gitCommit: 'generate'` property will populate it with the git commit details.
-* Providing `gitDiff: 'generate'` property will populate it with the git diff details.
-
-On selected CI providers, both will be generated automatically. Specifying values will prevent the automatic generation.
 
 **Usage**
 

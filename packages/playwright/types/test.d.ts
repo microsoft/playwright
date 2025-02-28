@@ -960,6 +960,37 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   };
 
   /**
+   * - These settings control whether git information is captured and stored in the config
+   *   [testConfig.metadata](https://playwright.dev/docs/api/class-testconfig#test-config-metadata).
+   * - The structure of the git commit metadata is not documented and is a subject to change.
+   * - Default values for these settings depend on the environment. When tests run as a part of CI where it is safe to
+   *   obtain git information, the default value is true, false otherise.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   captureGitInfo: { commit: true, diff: true }
+   * });
+   * ```
+   *
+   */
+  captureGitInfo?: {
+    /**
+     * Whether to capture commit information such as hash, author, timestamp.
+     */
+    commit?: boolean;
+
+    /**
+     * Whether to capture commit diff.
+     */
+    diff?: boolean;
+  };
+
+  /**
    * Configuration for the `expect` assertion library. Learn more about [various timeouts](https://playwright.dev/docs/test-timeouts).
    *
    * **Usage**
@@ -1284,11 +1315,6 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   /**
    * Metadata contains key-value pairs to be included in the report. For example, HTML report will display it as
    * key-value pairs, and JSON report will include metadata serialized as json.
-   * - Providing `gitCommit: 'generate'` property will populate it with the git commit details.
-   * - Providing `gitDiff: 'generate'` property will populate it with the git diff details.
-   *
-   * On selected CI providers, both will be generated automatically. Specifying values will prevent the automatic
-   * generation.
    *
    * **Usage**
    *
