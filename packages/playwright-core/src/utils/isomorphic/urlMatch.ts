@@ -88,7 +88,7 @@ export function urlMatchesEqual(match1: URLMatch, match2: URLMatch) {
 export function urlMatches(baseURL: string | undefined, urlString: string, match: URLMatch | undefined): boolean {
   if (match === undefined || match === '')
     return true;
-  if (isString(match) && !match.startsWith('*')) {
+  if (isString(match)) {
     // Allow http(s) baseURL to match ws(s) urls.
     if (baseURL && /^https?:\/\//.test(baseURL) && /^wss?:\/\//.test(urlString))
       baseURL = baseURL.replace(/^http/, 'ws');
@@ -98,6 +98,8 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
       tokenMap.set(replacement, original);
       return replacement;
     }
+    // Escaped `\\?` behaves the same as `?` in our glob patterns.
+    match = match.replaceAll(/\\\\\?/g, '?');
     // Glob symbols may be escaped in the URL and some of them such as ? affect resolution,
     // so we replace them with safe components first.
     const relativePath = match.split('/').map((token, index) => {
@@ -110,10 +112,8 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
       const questionIndex = token.indexOf('?');
       if (questionIndex === -1)
         return mapToken(token, `$_${index}_$`);
-      if (questionIndex === 0)
-        return mapToken(token, `?$_${index}_$`);
-      const newPrefix = mapToken(token.substring(0, questionIndex), `$_${index}_$`);
-      const newSuffix = mapToken(token.substring(questionIndex), `?$_${index}_$`);
+      const newPrefix = (questionIndex === 0) ? '' : mapToken(token.substring(0, questionIndex), `$_${index}_$`);
+      const newSuffix = (questionIndex === (token.length - 1)) ? '' : mapToken(token.substring(questionIndex), `?$_${index}_$`);
       return newPrefix + newSuffix;
     }).join('/');
     let resolved = constructURLBasedOnBaseURL(baseURL, relativePath);

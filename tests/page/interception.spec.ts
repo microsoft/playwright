@@ -119,6 +119,10 @@ it('should work with glob', async () => {
   expect(urlMatches(undefined, 'http://playwright./?ev', 'http://playwright.?ev')).toBeTruthy();
   expect(urlMatches(undefined, 'http://playwright.dev/foo', 'http://playwright.dev/f??')).toBeFalsy();
   expect(urlMatches(undefined, 'http://playwright.dev/f??', 'http://playwright.dev/f??')).toBeTruthy();
+  expect(urlMatches(undefined, 'http://playwright.dev/?x=y', 'http://playwright.dev\\?x=y')).toBeTruthy();
+  expect(urlMatches(undefined, 'http://playwright.dev/?x=y', 'http://playwright.dev/\\?x=y')).toBeTruthy();
+  expect(urlMatches('http://playwright.dev/foo', 'http://playwright.dev/foo?bar', '?bar')).toBeTruthy();
+  expect(urlMatches('http://playwright.dev/foo', 'http://playwright.dev/foo?bar', '\\\\?bar')).toBeTruthy();
 });
 
 it('should intercept by glob', async function({ page, server, isAndroid }) {
