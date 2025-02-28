@@ -9273,9 +9273,6 @@ export interface BrowserContext {
     /**
      * Set to `true` to include IndexedDB in the storage state snapshot. If your application uses IndexedDB to store
      * authentication tokens, like Firebase Authentication, enable this.
-     *
-     * **NOTE** IndexedDBs with typed arrays are currently not supported.
-     *
      */
     indexedDB?: boolean;
 
