@@ -504,13 +504,16 @@ test('should show copy prompt button in errors tab', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.spec.ts': `
 import { test, expect } from '@playwright/test';
+test('passes', async () => {
+  expect(1).toBe(1);
+});
 test('fails', async () => {
   expect(1).toBe(2);
 });
     `.trim(),
   });
 
-  await page.getByText('fails').dblclick();
+  await page.getByTitle('Run all').click();
 
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.getByText('Errors', { exact: true }).click();
@@ -519,9 +522,12 @@ test('fails', async () => {
   expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
   expect(prompt, 'contains codeframe').toContain(`
   1 | import { test, expect } from '@playwright/test';
-  2 | test('fails', async () => {
-> 3 |   expect(1).toBe(2);
-                  ^
+  2 | test('passes', async () => {
+  3 |   expect(1).toBe(1);
   4 | });
+  5 | test('fails', async () => {
+> 6 |   expect(1).toBe(2);
+                  ^
+  7 | });
     `.trim());
 });

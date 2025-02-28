@@ -54,7 +54,7 @@ function usePageSnapshot(actions: modelUtil.ActionTraceEventInContext[]) {
   }, [actions], undefined);
 }
 
-function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, modelUtil.SourceModel>, width: number) {
+function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, modelUtil.SourceModel>) {
   const selectedFrame = stack?.[0];
   const { source } = useSources(stack, 0, sources);
   return React.useMemo(() => {
@@ -64,8 +64,8 @@ function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, mode
     const targetLine = selectedFrame?.line ?? 0;
 
     const lines = source.content.split('\n');
-    const start = Math.max(0, targetLine - width);
-    const end = Math.min(lines.length, targetLine + width);
+    const start = 0;
+    const end = lines.length;
     const lineNumberWidth = String(end).length;
     const codeFrame = lines.slice(start, end).map((line, i) => {
       const lineNumber = start + i + 1;
@@ -79,7 +79,7 @@ function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, mode
       return highlightLine;
     }).join('\n');
     return codeFrame;
-  }, [source, selectedFrame, width]);
+  }, [source, selectedFrame]);
 }
 
 const CopyPromptButton: React.FC<{
@@ -141,7 +141,7 @@ function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSou
     longLocation = stackFrame.file + ':' + stackFrame.line;
   }
 
-  const codeFrame = useCodeFrame(error.stack, sources, 3);
+  const codeFrame = useCodeFrame(error.stack, sources);
 
   return <div style={{ display: 'flex', flexDirection: 'column', overflowX: 'clip' }}>
     <div className='hbox' style={{
