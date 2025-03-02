@@ -73,15 +73,13 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
     throw new Error('JSX mount notation is not supported');
 
   const componentCtor = asClassComponent(component.type);
+  const props = extractParams(component);
 
   class App extends componentCtor {
     constructor(options = {}) {
-      if (!isObjectComponent(component))
-        throw new Error('JSX mount notation is not supported');
-
       super({
         target: rootElement,
-        props: extractParams(component),
+        props,
         ...options
       });
     }
