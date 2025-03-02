@@ -17,9 +17,9 @@
 // @ts-check
 
 // This file is injected into the registry as text, no dependencies are allowed.
-
-import { asClassComponent } from 'svelte/legacy';
 import { createRawSnippet } from "svelte";
+// TODO: Remove after dumping svelte4 support
+import { asClassComponent } from 'svelte/legacy';
 
 /** @typedef {import('../playwright-ct-core/types/component').Component} Component */
 /** @typedef {import('../playwright-ct-core/types/component').ObjectComponent} ObjectComponent */
@@ -80,9 +80,8 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 
   /** @type {SvelteComponent | undefined} */
   let svelteComponent;
-  for (const hook of window.__pw_hooks_before_mount || []) {
+  for (const hook of window.__pw_hooks_before_mount || [])
     svelteComponent = await hook({ hooksConfig, App });
-  }
 
   if (!svelteComponent) {
     svelteComponent = new App();
@@ -90,11 +89,11 @@ window.playwrightMount = async (component, rootElement, hooksConfig) => {
 
   rootElement[__pwSvelteComponentKey] = svelteComponent;
 
-  for (const hook of window.__pw_hooks_after_mount || [])
-    await hook({ hooksConfig, svelteComponent });
-
   for (const [key, listener] of Object.entries(component.on || {}))
     svelteComponent.$on(key, event => listener(event.detail));
+
+  for (const hook of window.__pw_hooks_after_mount || [])
+    await hook({ hooksConfig, svelteComponent });
 };
 
 window.playwrightUnmount = async rootElement => {
@@ -113,8 +112,8 @@ window.playwrightUpdate = async (rootElement, component) => {
   if (!svelteComponent)
     throw new Error('Component was not mounted');
 
-  svelteComponent.$set(extractParams(component));
-
   for (const [key, listener] of Object.entries(component.on || {}))
     svelteComponent.$on(key, event => listener(event.detail));
+
+  svelteComponent.$set(extractParams(component));
 };

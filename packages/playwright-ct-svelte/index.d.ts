@@ -16,8 +16,8 @@
 
 import type { Snippet } from "svelte"
 import type {
-  SvelteComponent as V4Component,
-  Component as V5Component,
+  SvelteComponent,
+  Component,
   ComponentProps
 } from 'svelte/types/runtime';
 import type { TestType, Locator } from '@playwright/experimental-ct-core';
@@ -26,9 +26,12 @@ type ComponentSlot = Snippet | string;
 type ComponentSlots = Record<string, ComponentSlot> & { default?: ComponentSlot };
 type ComponentEvents = Record<string, Function>;
 
+// TODO: Remove after dumping svelte4 support
+type InteropComponent = (new (...args: unknown[]) => SvelteComponent) | Component
+
 export interface MountOptions<
   HooksConfig,
-  Component extends (new (...args: any[]) => V4Component) | V5Component
+  Component extends InteropComponent
 > {
   props?: ComponentProps<InstanceType<Component>>;
   slots?: ComponentSlots;
@@ -37,7 +40,7 @@ export interface MountOptions<
 }
 
 export interface MountResult<
-  Component extends (new (...args: any[]) => V4Component) | V5Component
+  Component extends InteropComponent
 > extends Locator {
   unmount(): Promise<void>;
   update(options: {
@@ -49,7 +52,7 @@ export interface MountResult<
 export const test: TestType<{
   mount<
     HooksConfig,
-    Component extends (new (...args: any[]) => V4Component) | V5Component
+    Component extends InteropComponent
   >(
     component: Component,
     options?: MountOptions<HooksConfig, InstanceType<Component>>

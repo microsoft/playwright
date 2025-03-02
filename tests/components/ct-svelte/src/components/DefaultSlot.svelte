@@ -5,7 +5,7 @@ const {children} = $props()
 <div>
   <h1>Welcome!</h1>
   <main>
-    {@render children?.()}
+    {@render children()}
   </main>
   <footer>
     Thanks for visiting.
