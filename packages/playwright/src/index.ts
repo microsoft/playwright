@@ -716,7 +716,7 @@ class ArtifactsRecorder {
       const prompt = fixTestPrompt(
           formatError(externalScreen, error).message,
           metadata.gitDiff,
-          this._pageSnapshot
+          this._pageSnapshot // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
       );
       this._testInfo.attachments.push({
         name: 'errorPrompt',
