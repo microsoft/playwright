@@ -130,14 +130,14 @@ export class MultiTraceModel {
   }
 
   private _errorDescriptorsFromTestRunner(): ErrorDescription[] {
-    const errorPrompts: string[] = []
+    const errorPrompts: string[] = [];
     for (const action of this.actions) {
       for (const attachment of action.attachments ?? []) {
         if (attachment.name === 'errorPrompt')
           errorPrompts.push(attachmentURL({ ...attachment, traceUrl: action.context.traceUrl }));
       }
     }
-  
+
     return this.errors.filter(e => !!e.message).map((error, i) => ({
       stack: error.stack,
       message: error.message,
