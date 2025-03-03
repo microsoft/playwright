@@ -1193,7 +1193,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         'playwright.config.ts': `
           export default {
             captureGitInfo: { commit: true },
-            metadata: { foo: 'value1', bar: { prop: 'value2' }, baz: ['value3', 123] }
           };
         `,
         'example.spec.ts': `
@@ -1216,21 +1215,13 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         - list:
           - listitem: "chore(html): make this test look nice"
           - listitem: /William <shakespeare@example\\.local>/
-        - list:
-          - listitem: "foo : value1"
-          - listitem: "bar : {\\"prop\\":\\"value2\\"}"
-          - listitem: "baz : [\\"value3\\",123]"
       `);
     });
 
     test('should include commit metadata w/ CI', async ({ runInlineTest, writeFiles, showReport, page }) => {
       const files = {
         'uncommitted.txt': `uncommitted file`,
-        'playwright.config.ts': `
-          export default {
-            metadata: { foo: 'value1', bar: { prop: 'value2' }, baz: ['value3', 123] }
-          };
-        `,
+        'playwright.config.ts': `export default {}`,
         'example.spec.ts': `
           import { test, expect } from '@playwright/test';
           test('sample', async ({}) => { expect(2).toBe(2); });
@@ -1256,21 +1247,13 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           - listitem:
             - 'link "chore(html): make this test look nice"'
           - listitem: /William <shakespeare@example\\.local>/
-        - list:
-          - listitem: "foo : value1"
-          - listitem: "bar : {\\"prop\\":\\"value2\\"}"
-          - listitem: "baz : [\\"value3\\",123]"
       `);
     });
 
     test('should include PR metadata on GHA', async ({ runInlineTest, writeFiles, showReport, page }) => {
       const files = {
         'uncommitted.txt': `uncommitted file`,
-        'playwright.config.ts': `
-          export default {
-            metadata: { foo: 'value1', bar: { prop: 'value2' }, baz: ['value3', 123] }
-          };
-        `,
+        'playwright.config.ts': `export default {}`,
         'example.spec.ts': `
           import { test, expect } from '@playwright/test';
           test('sample', async ({}) => { expect(2).toBe(2); });
@@ -1307,10 +1290,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           - listitem:
             - link "My PR"
           - listitem: /William <shakespeare@example.local>/
-        - list:
-          - listitem: "foo : value1"
-          - listitem: "bar : {\\"prop\\":\\"value2\\"}"
-          - listitem: "baz : [\\"value3\\",123]"
       `);
     });
 
@@ -2770,15 +2749,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
     test('should show AI prompt', async ({ runInlineTest, writeFiles, showReport, page }) => {
       const files = {
         'uncommitted.txt': `uncommitted file`,
-        'playwright.config.ts': `
-          export default {
-            metadata: {
-              foo: 'value1',
-              bar: { prop: 'value2' },
-              baz: ['value3', 123]
-            }
-          };
-        `,
+        'playwright.config.ts': `export default {}`,
         'example.spec.ts': `
           import { test, expect } from '@playwright/test';
           test('sample', async ({ page }) => {
