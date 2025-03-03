@@ -2813,7 +2813,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(prompt, 'first line').toContain(`Playwright test failed.`);
       expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
       expect(prompt, 'contains snapshot').toContain('- button "Click me"');
-      expect(prompt, 'contains diff').not.toContain(`+            expect(2).toBe(3);`); // TODO: fix this. testInfo doesn't get updated metadata
+      expect(prompt, 'contains diff').toContain(`+            expect(2).toBe(3);`);
     });
   });
 }
