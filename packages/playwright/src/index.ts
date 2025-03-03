@@ -20,9 +20,9 @@ import path from 'path';
 import * as playwrightLibrary from 'playwright-core';
 import { setBoxedStackPrefixes, asLocator, createGuid, currentZone, debugMode, isString, jsonStringifyForceASCII } from 'playwright-core/lib/utils';
 
-import { fixTestPrompt } from './isomorphic/prompts';
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
+import { fixTestPrompt } from './reporters/base';
 
 import type { MetadataWithCommitInfo } from './isomorphic/types';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';

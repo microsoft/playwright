@@ -673,3 +673,50 @@ export function resolveOutputFile(reporterName: string, options: {
 
   return { outputFile, outputDir };
 }
+
+export function fixTestPrompt(error: TestError, testFile: { path: string, contents: string }, diff?: string, pageSnapshot?: string) {
+  const promptParts = [
+    `My Playwright test failed.`,
+    `Explain why, be concise, respect Playwright best practices.`,
+    '',
+    'Error:',
+    '',
+    '```js',
+    formatError(externalScreen, {
+      ...error,
+      snippet: undefined,
+    }).message,
+    '```',
+  ];
+
+  if (pageSnapshot) {
+    promptParts.push(
+        '',
+        'Page snapshot:',
+        '```yaml',
+        pageSnapshot,
+        '```',
+    );
+  }
+
+  if (diff) {
+    promptParts.push(
+        '',
+        'Local changes:',
+        '```diff',
+        diff,
+        '```',
+    );
+  }
+
+  promptParts.push(
+      '',
+      'Test file:',
+      '```ts',
+      `// ${testFile.path}`,
+      testFile.contents,
+      '```',
+  );
+
+  return promptParts.join('\n');
+}
