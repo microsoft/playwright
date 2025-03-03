@@ -71,8 +71,6 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
   });
   ```
 
-* HTML reporter now shows the contents of [`property: TestConfig.metadata`].
-
 ### Miscellaneous
 
 * New option `contrast` for methods [`method: Page.emulateMedia`] and [`method: Browser.newContext`] allows to emulate the `prefers-contrast` media feature.
