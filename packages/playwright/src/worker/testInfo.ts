@@ -220,7 +220,7 @@ export class TestInfoImpl implements TestInfo {
       this._timeoutManager.slow();
     } else if (type === 'skip' || type === 'fixme') {
       this.expectedStatus = 'skipped';
-      throw new SkipError('Test is skipped: ' + (description || ''));
+      throw new TestSkipError('Test is skipped: ' + (description || ''));
     } else if (type === 'fail') {
       if (this.expectedStatus !== 'skipped')
         this.expectedStatus = 'failed';
@@ -363,7 +363,7 @@ export class TestInfoImpl implements TestInfo {
         try {
           await cb();
         } catch (e) {
-          if (this._allowSkips && (e instanceof SkipError)) {
+          if (this._allowSkips && (e instanceof TestSkipError)) {
             if (this.status === 'passed')
               this.status = 'skipped';
           } else {
@@ -523,7 +523,7 @@ export class TestStepInfoImpl implements TestStepInfo {
     try {
       return await body(this);
     } catch (e) {
-      if (e instanceof SkipError)
+      if (e instanceof StepSkipError)
         return undefined as T;
       throw e;
     }
@@ -544,11 +544,14 @@ export class TestStepInfoImpl implements TestStepInfo {
       return;
     const description = args[1] as (string|undefined);
     this.annotations.push({ type: 'skip', description });
-    throw new SkipError(description);
+    throw new StepSkipError(description);
   }
 }
 
-export class SkipError extends Error {
+export class TestSkipError extends Error {
+}
+
+export class StepSkipError extends Error {
 }
 
 const stepSymbol = Symbol('step');
