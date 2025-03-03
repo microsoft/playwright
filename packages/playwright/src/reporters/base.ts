@@ -434,7 +434,7 @@ export function formatResultFailure(screen: Screen, test: TestCase, result: Test
     errorDetails.push({
       message: indent(formattedError.message, initialIndent),
       location: formattedError.location,
-      prompt: errorPrompts[i].body?.toString('utf-8'),
+      prompt: errorPrompts[i]?.body?.toString('utf-8'),
     });
   });
   return errorDetails;
