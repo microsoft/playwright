@@ -20,7 +20,7 @@ import './testErrorView.css';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
 import type { TestResult } from './types';
-import { fixTestPrompt } from '@web/components/prompts';
+import { fixTestPrompt } from '@playwright/isomorphic/prompts';
 import { useHTMLReport } from './reportContext';
 import type { MetadataWithCommitInfo } from '@playwright/isomorphic/types';
 

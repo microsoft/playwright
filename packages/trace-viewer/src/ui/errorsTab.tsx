@@ -23,7 +23,7 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import type { StackFrame } from '@protocol/channels';
 import { CopyToClipboardTextButton } from './copyToClipboard';
 import { attachmentURL } from './attachmentsTab';
-import { fixTestPrompt } from '@web/components/prompts';
+import { fixTestPrompt } from '@testIsomorphic/prompts';
 import type { MetadataWithCommitInfo } from '@testIsomorphic/types';
 import { AIConversation } from './aiConversation';
 import { ToolbarButton } from '@web/components/toolbarButton';
