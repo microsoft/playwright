@@ -37,9 +37,7 @@ import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
 import { DefaultSettingsView } from './defaultSettingsView';
-import { CommitInfoProvider } from './errorsTab';
 import { LLMProvider } from './llm';
-import type { MetadataWithCommitInfo } from '@testIsomorphic/types';
 
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
@@ -433,15 +431,13 @@ export const UIModeView: React.FC<{}> = ({
           <XtermWrapper source={xtermDataSource}></XtermWrapper>
         </div>
         <div className={clsx('vbox', isShowingOutput && 'hidden')}>
-          <CommitInfoProvider commitInfo={testModel?.config.metadata as MetadataWithCommitInfo}>
-            <TraceView
-              pathSeparator={queryParams.pathSeparator}
-              item={selectedItem}
-              rootDir={testModel?.config?.rootDir}
-              revealSource={revealSource}
-              onOpenExternally={location => testServerConnection?.openNoReply({ location: { file: location.file, line: location.line, column: location.column } })}
-            />
-          </CommitInfoProvider>
+          <TraceView
+            pathSeparator={queryParams.pathSeparator}
+            item={selectedItem}
+            rootDir={testModel?.config?.rootDir}
+            revealSource={revealSource}
+            onOpenExternally={location => testServerConnection?.openNoReply({ location: { file: location.file, line: location.line, column: location.column } })}
+          />
         </div>
       </div>}
       sidebar={<div className='vbox ui-mode-sidebar'>

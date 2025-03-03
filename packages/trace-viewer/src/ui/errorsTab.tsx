@@ -21,21 +21,10 @@ import { PlaceholderPanel } from './placeholderPanel';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { CopyToClipboardTextButton } from './copyToClipboard';
-import type { MetadataWithCommitInfo } from '@testIsomorphic/types';
 import { AIConversation } from './aiConversation';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { useIsLLMAvailable, useLLMChat } from './llm';
 import { useAsyncMemo } from '@web/uiUtils';
-
-const CommitInfoContext = React.createContext<MetadataWithCommitInfo | undefined>(undefined);
-
-export function CommitInfoProvider({ children, commitInfo }: React.PropsWithChildren<{ commitInfo: MetadataWithCommitInfo }>) {
-  return <CommitInfoContext.Provider value={commitInfo}>{children}</CommitInfoContext.Provider>;
-}
-
-export function useCommitInfo() {
-  return React.useContext(CommitInfoContext);
-}
 
 const CopyPromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
   return (
