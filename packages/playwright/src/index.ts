@@ -23,7 +23,7 @@ import { setBoxedStackPrefixes, asLocator, createGuid, currentZone, debugMode, i
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
 
-import type { Fixtures, PageSnapshotMode, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
+import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import type { ApiCallData, ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
@@ -76,7 +76,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   screenshot: ['off', { scope: 'worker', option: true }],
   video: ['off', { scope: 'worker', option: true }],
   trace: ['off', { scope: 'worker', option: true }],
-  pageSnapshot: ['only-on-failure', { scope: 'worker', option: true }],
 
   _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
     const options: LaunchOptions = {
@@ -244,12 +243,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     playwright._defaultContextNavigationTimeout = undefined;
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
-  _setupArtifacts: [async ({ playwright, screenshot, pageSnapshot }, use, testInfo) => {
+  _setupArtifacts: [async ({ playwright, screenshot }, use, testInfo) => {
     // This fixture has a separate zero-timeout slot to ensure that artifact collection
     // happens even after some fixtures or hooks time out.
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
+    const pageSnapshot = process.env.PLAYWRIGHT_COPY_PROMPT ? 'on' : 'off';
     const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, pageSnapshot);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
@@ -519,6 +519,8 @@ function connectOptionsFromEnv() {
   };
 }
 
+type SnapshotRecorderMode = 'on' | 'off' | 'only-on-failure' | 'on-first-failure';
+
 class SnapshotRecorder {
   private _ordinal = 0;
   private _temporary: string[] = [];
@@ -526,7 +528,7 @@ class SnapshotRecorder {
 
   constructor(
     private _artifactsRecorder: ArtifactsRecorder,
-    private _mode: ScreenshotMode | PageSnapshotMode,
+    private _mode: SnapshotRecorderMode,
     private _name: string,
     private _contentType: string,
     private _extension: string,
@@ -618,7 +620,7 @@ class ArtifactsRecorder {
   private _pageSnapshotRecorder: SnapshotRecorder;
   private _screenshotRecorder: SnapshotRecorder;
 
-  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, pageSnapshot: PageSnapshotMode) {
+  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, pageSnapshot: SnapshotRecorderMode) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
@@ -628,7 +630,7 @@ class ArtifactsRecorder {
       await page.screenshot({ ...screenshotOptions, timeout: 5000, path, caret: 'initial' });
     });
 
-    this._pageSnapshotRecorder = new SnapshotRecorder(this, pageSnapshot, 'pageSnapshot', 'text/plain', '.snapshot.yml', async (page, path) => {
+    this._pageSnapshotRecorder = new SnapshotRecorder(this, pageSnapshot, 'pageSnapshot', 'text/yaml', '.aria.yml', async (page, path) => {
       const ariaSnapshot = await page.locator('body').ariaSnapshot({ timeout: 5000 });
       await fs.promises.writeFile(path, ariaSnapshot);
     });

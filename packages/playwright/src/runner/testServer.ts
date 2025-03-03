@@ -312,7 +312,6 @@ export class TestServerDispatcher implements TestServerInterface {
         ...(params.trace === 'off' ? { trace: 'off' } : {}),
         ...(params.video === 'on' || params.video === 'off' ? { video: params.video } : {}),
         ...(params.headed !== undefined ? { headless: !params.headed } : {}),
-        ...(params.pageSnapshot ? { pageSnapshot: params.pageSnapshot } : undefined),
         _optionContextReuseMode: params.reuseContext ? 'when-possible' : undefined,
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
       },

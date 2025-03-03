@@ -265,7 +265,7 @@ export function resolveReporterOutputPath(defaultValue: string, configDir: strin
   return path.resolve(basePath, defaultValue);
 }
 
-export async function normalizeAndSaveAttachment(outputPath: string, name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}): Promise<{ name: string; path?: string | undefined; body?: Buffer | undefined; contentType: string; }> {
+export async function normalizeAndSaveAttachment(outputPath: string, name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}): Promise<{ name: string; path?: string; body?: Buffer; contentType: string; }> {
   if (options.path === undefined && options.body === undefined)
     return { name, contentType: 'text/plain' };
   if ((options.path !== undefined ? 1 : 0) + (options.body !== undefined ? 1 : 0) !== 1)

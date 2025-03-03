@@ -327,3 +327,31 @@ test.describe('report location', () => {
     expect(fs.existsSync(testInfo.outputPath('foo', 'bar', 'baz', 'my-report.json'))).toBe(true);
   });
 });
+
+test('should report parallelIndex', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'tests/a.spec.js': `
+      import { test, expect } from '@playwright/test';
+      const fs = require('fs');
+      test.describe.configure({ mode: 'parallel' });
+      test('test 1 passes!', async ({}) => {
+        await new Promise(f => setTimeout(f, 1000));
+      });
+      test('test 2 fails!', async ({}) => {
+        expect(1 + 1).toBe(3);
+        await new Promise(f => setTimeout(f, 1000));
+      });
+      test('test 3 passes!', async ({}) => {
+        await new Promise(f => setTimeout(f, 1000));
+      });
+    `
+  }, { 'workers': '2', 'reporter': 'json' });
+  expect(result.passed).toBe(2);
+  expect(result.failed).toBe(1);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].workerIndex).toBe(0);
+  expect(result.report.suites[0].specs[1].tests[0].results[0].workerIndex).toBe(1);
+  expect(result.report.suites[0].specs[2].tests[0].results[0].workerIndex).toBe(2);
+  expect(result.report.suites[0].specs[0].tests[0].results[0].parallelIndex).toBe(0);
+  expect(result.report.suites[0].specs[1].tests[0].results[0].parallelIndex).toBe(1);
+  expect(result.report.suites[0].specs[2].tests[0].results[0].parallelIndex).toBe(1);
+});

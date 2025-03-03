@@ -1,7 +1,7 @@
 name: Report regression
 description: Functionality that used to work and does not any more
 title: "[Regression]: "
-
+type: Bug
 body:
   - type: markdown
     attributes:

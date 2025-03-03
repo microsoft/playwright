@@ -7,7 +7,7 @@
 ```js
 import { test, expect } from '@playwright/test';
 
-test('basic test', async ({ page, browserName }, TestStepInfo) => {
+test('basic test', async ({ page, browserName }) => {
   await test.step('check some behavior', async step => {
     await step.skip(browserName === 'webkit', 'The feature is not available in WebKit');
     // ... rest of the step code
@@ -83,12 +83,41 @@ Path on the filesystem to the attached file. Mutually exclusive with [`option: b
 ## method: TestStepInfo.skip#1
 * since: v1.51
 
-Unconditionally skip the currently running step. Test step is immediately aborted. This is similar to [`method: Test.step.skip`].
+Abort the currently running step and mark it as skipped. Useful for steps that are currently failing and planned for a near-term fix.
+
+**Usage**
+
+```js
+import { test, expect } from '@playwright/test';
+
+test('my test', async ({ page }) => {
+  await test.step('check expectations', async () => {
+    test.skip();
+    // step body below will not run
+    // ...
+  });
+});
+```
 
 ## method: TestStepInfo.skip#2
 * since: v1.51
 
-Conditionally skips the currently running step with an optional description. This is similar to [`method: Test.step.skip`].
+Conditionally abort the currently running step and mark it as skipped with an optional description. Useful for steps that should not be executed in some cases.
+
+**Usage**
+
+```js
+import { test, expect } from '@playwright/test';
+
+test('my test', async ({ page, isMobile }) => {
+  await test.step('check desktop expectations', async () => {
+    test.skip(isMobile, 'not present in the mobile layout');
+
+    // step body below will not run
+    // ...
+  });
+});
+```
 
 ### param: TestStepInfo.skip#2.condition
 * since: v1.51

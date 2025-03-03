@@ -1,7 +1,7 @@
 {
   "name": "@playwright/client",
   "private": true,
-  "version": "1.51.0-next",
+  "version": "0.0.0",
   "description": "A thin client for Playwright",
   "repository": {
     "type": "git",
@@ -29,6 +29,6 @@
     "watch": "esbuild ./src/index.ts --outdir=lib --format=cjs --bundle --platform=node --target=ES2019 --watch"
   },
   "dependencies": {
-    "playwright-core": "1.51.0-next"
+    "playwright-core": "1.52.0-next"
   }
 }

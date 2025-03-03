@@ -3975,9 +3975,9 @@ export interface Page {
    *
    * **NOTE** Enabling routing disables http cache.
    *
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing. When a
-   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
-   * options was provided and the passed URL is a path, it gets merged via the
+   * @param url A glob pattern, regex pattern, or predicate that receives a [URL] to match during routing. If
+   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) is set in the
+   * context options and the provided URL is a string that does not start with `*`, it is resolved using the
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
    * @param options
@@ -9069,9 +9069,9 @@ export interface BrowserContext {
    *
    * **NOTE** Enabling routing disables http cache.
    *
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing. When a
-   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
-   * options was provided and the passed URL is a path, it gets merged via the
+   * @param url A glob pattern, regex pattern, or predicate that receives a [URL] to match during routing. If
+   * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) is set in the
+   * context options and the provided URL is a string that does not start with `*`, it is resolved using the
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
    * @param options
@@ -9272,8 +9272,9 @@ export interface BrowserContext {
    */
   storageState(options?: {
     /**
-     * Set to `true` to include IndexedDB in the storage state snapshot. If your application uses IndexedDB to store
-     * authentication tokens, like Firebase Authentication, enable this.
+     * Set to `true` to include [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) in the storage
+     * state snapshot. If your application uses IndexedDB to store authentication tokens, like Firebase Authentication,
+     * enable this.
      *
      * **NOTE** IndexedDBs with typed arrays are currently not supported.
      *

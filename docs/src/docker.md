@@ -94,10 +94,15 @@ docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_prof
 }
 ```
 
-:::note
-Using `--ipc=host` is recommended when using Chrome ([Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc)). Chrome can run out of memory without this flag.
-:::
+### Recommended Docker Configuration
 
+When running Playwright in Docker, the following configuration is recommended:
+
+1. **Using [`--init`](https://docs.docker.com/reference/cli/docker/container/run/#init)** Docker flag is recommended to avoid special treatment for processes with PID=1. This is a common reason for zombie processes.
+
+1. **Using `--ipc=host`** is recommended when using Chromium. Without it, Chromium can run out of memory and crash. Learn more about this option in [Docker docs](https://docs.docker.com/reference/cli/docker/container/run/#ipc).
+
+1. **If seeing weird errors when launching Chromium**, try running your container with `docker run --cap-add=SYS_ADMIN` when developing locally.
 
 ### Using on CI
 

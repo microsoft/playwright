@@ -42,12 +42,6 @@ export type CIInfo = {
   branch?: string;
 };
 
-export type UserMetadataWithCommitInfo = {
-  ci?: CIInfo;
-  gitCommit?: GitCommitInfo | 'generate';
-  gitDiff?: string | 'generate';
-};
-
 export type MetadataWithCommitInfo = {
   ci?: CIInfo;
   gitCommit?: GitCommitInfo;

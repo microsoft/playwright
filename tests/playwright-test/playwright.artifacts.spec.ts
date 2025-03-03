@@ -128,7 +128,7 @@ test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { screenshot: 'on', pageSnapshot: 'off' } };
+      module.exports = { use: { screenshot: 'on' } };
     `,
   }, { workers: 1 });
 
@@ -168,7 +168,7 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { screenshot: 'only-on-failure', pageSnapshot: 'off' } };
+      module.exports = { use: { screenshot: 'only-on-failure' } };
     `,
   }, { workers: 1 });
 
@@ -204,7 +204,7 @@ test('should work with screenshot: on-first-failure', async ({ runInlineTest }, 
     'playwright.config.ts': `
       module.exports = {
         retries: 1,
-        use: { screenshot: 'on-first-failure', pageSnapshot: 'off' }
+        use: { screenshot: 'on-first-failure' }
       };
     `,
   }, { workers: 1 });
@@ -231,7 +231,7 @@ test('should work with screenshot: only-on-failure & fullPage', async ({ runInli
     });
     `,
     'playwright.config.ts': `
-      module.exports = { use: { screenshot: { mode: 'only-on-failure', fullPage: true }, pageSnapshot: 'off' } };
+      module.exports = { use: { screenshot: { mode: 'only-on-failure', fullPage: true } } };
     `,
   }, { workers: 1 });
   expect(result.exitCode).toBe(1);
@@ -252,7 +252,7 @@ test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'on', pageSnapshot: 'off' } };
+      module.exports = { use: { trace: 'on' } };
     `,
   }, { workers: 1 });
 
@@ -288,7 +288,7 @@ test('should work with trace: retain-on-failure', async ({ runInlineTest }, test
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'retain-on-failure', pageSnapshot: 'off' } };
+      module.exports = { use: { trace: 'retain-on-failure' } };
     `,
   }, { workers: 1 });
 
@@ -314,7 +314,7 @@ test('should work with trace: on-first-retry', async ({ runInlineTest }, testInf
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'on-first-retry', pageSnapshot: 'off' } };
+      module.exports = { use: { trace: 'on-first-retry' } };
     `,
   }, { workers: 1, retries: 1 });
 
@@ -340,7 +340,7 @@ test('should work with trace: on-all-retries', async ({ runInlineTest }, testInf
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'on-all-retries', pageSnapshot: 'off' } };
+      module.exports = { use: { trace: 'on-all-retries' } };
     `,
   }, { workers: 1, retries: 2 });
 
@@ -376,7 +376,7 @@ test('should work with trace: retain-on-first-failure', async ({ runInlineTest }
   const result = await runInlineTest({
     ...testFiles,
     'playwright.config.ts': `
-      module.exports = { use: { trace: 'retain-on-first-failure', pageSnapshot: 'off' } };
+      module.exports = { use: { trace: 'retain-on-first-failure' } };
     `,
   }, { workers: 1, retries: 2 });
 
@@ -421,13 +421,10 @@ test('should take screenshot when page is closed in afterEach', async ({ runInli
   expect(fs.existsSync(testInfo.outputPath('test-results', 'a-fails', 'test-failed-1.png'))).toBeTruthy();
 });
 
-test('should work with pageSnapshot: on', async ({ runInlineTest }, testInfo) => {
+test('should attach pageSnapshot with PLAYWRIGHT_COPY_PROMPT', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     ...testFiles,
-    'playwright.config.ts': `
-      module.exports = { use: { pageSnapshot: 'on' } };
-    `,
-  }, { workers: 1 });
+  }, { workers: 1 }, { PLAYWRIGHT_COPY_PROMPT: '1' });
 
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(5);
@@ -435,56 +432,28 @@ test('should work with pageSnapshot: on', async ({ runInlineTest }, testInfo) =>
   expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
     '.last-run.json',
     'artifacts-failing',
-    '  test-failed-1.snapshot.yml',
+    '  test-failed-1.aria.yml',
     'artifacts-own-context-failing',
-    '  test-failed-1.snapshot.yml',
+    '  test-failed-1.aria.yml',
     'artifacts-own-context-passing',
-    '  test-finished-1.snapshot.yml',
+    '  test-finished-1.aria.yml',
     'artifacts-passing',
-    '  test-finished-1.snapshot.yml',
+    '  test-finished-1.aria.yml',
     'artifacts-persistent-failing',
-    '  test-failed-1.snapshot.yml',
+    '  test-failed-1.aria.yml',
     'artifacts-persistent-passing',
-    '  test-finished-1.snapshot.yml',
+    '  test-finished-1.aria.yml',
     'artifacts-shared-shared-failing',
-    '  test-failed-1.snapshot.yml',
-    '  test-failed-2.snapshot.yml',
+    '  test-failed-1.aria.yml',
+    '  test-failed-2.aria.yml',
     'artifacts-shared-shared-passing',
-    '  test-finished-1.snapshot.yml',
-    '  test-finished-2.snapshot.yml',
+    '  test-finished-1.aria.yml',
+    '  test-finished-2.aria.yml',
     'artifacts-two-contexts',
-    '  test-finished-1.snapshot.yml',
-    '  test-finished-2.snapshot.yml',
+    '  test-finished-1.aria.yml',
+    '  test-finished-2.aria.yml',
     'artifacts-two-contexts-failing',
-    '  test-failed-1.snapshot.yml',
-    '  test-failed-2.snapshot.yml',
-  ]);
-});
-
-test('should work with pageSnapshot: only-on-failure', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    ...testFiles,
-    'playwright.config.ts': `
-      module.exports = { use: { pageSnapshot: 'only-on-failure' } };
-    `,
-  }, { workers: 1 });
-
-  expect(result.exitCode).toBe(1);
-  expect(result.passed).toBe(5);
-  expect(result.failed).toBe(5);
-  expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
-    '.last-run.json',
-    'artifacts-failing',
-    '  test-failed-1.snapshot.yml',
-    'artifacts-own-context-failing',
-    '  test-failed-1.snapshot.yml',
-    'artifacts-persistent-failing',
-    '  test-failed-1.snapshot.yml',
-    'artifacts-shared-shared-failing',
-    '  test-failed-1.snapshot.yml',
-    '  test-failed-2.snapshot.yml',
-    'artifacts-two-contexts-failing',
-    '  test-failed-1.snapshot.yml',
-    '  test-failed-2.snapshot.yml',
+    '  test-failed-1.aria.yml',
+    '  test-failed-2.aria.yml',
   ]);
 });

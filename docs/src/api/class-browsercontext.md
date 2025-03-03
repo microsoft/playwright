@@ -1203,9 +1203,7 @@ Enabling routing disables http cache.
 * since: v1.8
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
-A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
-When a [`option: Browser.newContext.baseURL`] via the context options was provided and the passed URL is a path,
-it gets merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+A glob pattern, regex pattern, or predicate that receives a [URL] to match during routing. If [`option: Browser.newContext.baseURL`] is set in the context options and the provided URL is a string that does not start with `*`, it is resolved using the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: BrowserContext.route.handler
 * since: v1.8
@@ -1527,7 +1525,7 @@ Returns storage state for this browser context, contains current cookies, local 
 * since: v1.51
 - `indexedDB` ?<boolean>
 
-Set to `true` to include IndexedDB in the storage state snapshot.
+Set to `true` to include [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) in the storage state snapshot.
 If your application uses IndexedDB to store authentication tokens, like Firebase Authentication, enable this.
 
 :::note

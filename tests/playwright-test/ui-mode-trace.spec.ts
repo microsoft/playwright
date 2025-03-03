@@ -503,12 +503,13 @@ test('skipped steps should have an indicator', async ({ runUITest }) => {
 test('should show copy prompt button in errors tab', async ({ runUITest }) => {
   const { page } = await runUITest({
     'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('fails', async () => {
-        expect(1).toBe(2);
-      });
-    `,
-  });
+import { test, expect } from '@playwright/test';
+test('fails', async ({ page }) => {
+  await page.setContent('<button>Submit</button>');
+  expect(1).toBe(2);
+});
+    `.trim(),
+  }, { PLAYWRIGHT_COPY_PROMPT: '1' });
 
   await page.getByText('fails').dblclick();
 
@@ -517,4 +518,11 @@ test('should show copy prompt button in errors tab', async ({ runUITest }) => {
   await page.locator('.tab-errors').getByRole('button', { name: 'Copy as Prompt' }).click();
   const prompt = await page.evaluate(() => navigator.clipboard.readText());
   expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
+  expect(prompt.replaceAll('\r\n', '\n'), 'contains codeframe').toContain(`
+  2 | test('fails', async ({ page }) => {
+  3 |   await page.setContent('<button>Submit</button>');
+> 4 |   expect(1).toBe(2);
+                  ^
+  5 | });
+    `.trim());
 });

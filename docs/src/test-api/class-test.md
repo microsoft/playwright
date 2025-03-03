@@ -1771,7 +1771,9 @@ Specifies a custom location for the step to be shown in test reports and trace v
 * since: v1.50
 - returns: <[void]>
 
-Mark a test step as "skip" to temporarily disable its execution, useful for steps that are currently failing and planned for a near-term fix. Playwright will not run the step.
+Mark a test step as "skip" to temporarily disable its execution, useful for steps that are currently failing and planned for a near-term fix. Playwright will not run the step. See also [`method: TestStepInfo.skip#2`].
+
+We recommend [`method: TestStepInfo.skip#1`] instead.
 
 **Usage**
 

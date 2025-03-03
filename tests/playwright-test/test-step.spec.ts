@@ -192,9 +192,6 @@ test('should not report nested after hooks', async ({ runInlineTest }) => {
     'playwright.config.ts': `
       module.exports = {
         reporter: './reporter',
-        use: {
-          pageSnapshot: 'off',
-        }
       };
     `,
     'a.test.ts': `
@@ -580,9 +577,6 @@ test('should not mark page.close as failed when page.click fails', async ({ runI
     'playwright.config.ts': `
       module.exports = {
         reporter: './reporter',
-        use: {
-          pageSnapshot: 'off',
-        }
       };
     `,
     'a.test.ts': `
@@ -1236,9 +1230,6 @@ test('should report api step failure', async ({ runInlineTest }) => {
     'playwright.config.ts': `
       module.exports = {
         reporter: './reporter',
-        use: {
-          pageSnapshot: 'off',
-        }
       };
     `,
     'a.test.ts': `
