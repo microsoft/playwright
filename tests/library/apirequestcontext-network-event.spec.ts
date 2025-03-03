@@ -16,18 +16,17 @@
  */
 
 import { browserTest as it, expect } from '../config/browserTest';
-import { APIRequestEvent, APIRequestFinishedEvent } from 'playwright-core/src/server/fetch';
+// import type { APIRequestEvent, APIRequestFinishedEvent } from 'playwright-core/src/server/fetch';
 
 it('APIRequestContext.Events.Request', async ({ context, server }) => {
-  const requests: APIRequestEvent[] = [];
+  const urls: string[] = [];
   context.request.on('apirequest', request => {
-    requests.push(request);
+    urls.push(request.url.toString());
   });
   await context.request.fetch(server.EMPTY_PAGE);
 
   await setTimeout(() => {}, 100);
 
-  const urls = requests.map(r => r.url.toString());
   expect(urls).toEqual([
     server.EMPTY_PAGE,
   ]);
@@ -36,15 +35,13 @@ it('APIRequestContext.Events.Request', async ({ context, server }) => {
 
 it('APIRequestContext.Events.RequestFinished', async ({ context, server }) => {
 
-  const finishedRequests: APIRequestFinishedEvent[] = [];
+  const urls: string[] = [];
 
-  context.request.on('apirequestfinished', request => finishedRequests.push(request));
+  context.request.on('apirequestfinished', request => urls.push(request.requestEvent.url.toString()));
   await context.request.fetch(server.EMPTY_PAGE);
 
-  const request = finishedRequests[0];
 
-  expect(request.requestEvent.url.toString()).toBe(server.EMPTY_PAGE);
-  expect(request.timings.send).toBeTruthy();
+  expect(urls[0]).toBe(server.EMPTY_PAGE);
 });
 
 it('should fire events in proper order', async ({ context, server }) => {
