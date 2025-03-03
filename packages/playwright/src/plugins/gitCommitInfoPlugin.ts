@@ -62,10 +62,10 @@ const gitCommitInfoPlugin = (fullConfig: FullConfigInternal): TestRunnerPlugin =
 
 async function ciInfo(): Promise<CIInfo | undefined> {
   if (process.env.GITHUB_ACTIONS) {
-    let pr: { title: string, number: number } | undefined;
+    let pr: { title: string, number: number, baseHash: string } | undefined;
     try {
       const json = JSON.parse(await fs.promises.readFile(process.env.GITHUB_EVENT_PATH!, 'utf8'));
-      pr = { title: json.pull_request.title, number: json.pull_request.number };
+      pr = { title: json.pull_request.title, number: json.pull_request.number, baseHash: json.pull_request.base.sha };
     } catch {
     }
 
@@ -75,7 +75,7 @@ async function ciInfo(): Promise<CIInfo | undefined> {
       prTitle: pr ? pr.title : undefined,
       buildHref: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
       commitHash: process.env.GITHUB_SHA,
-      baseHash: process.env.GITHUB_BASE_REF,
+      baseHash: pr ? pr.baseHash : process.env.GITHUB_BASE_REF,
       branch: process.env.GITHUB_REF_NAME,
     };
   }
@@ -144,15 +144,11 @@ async function gitCommitInfo(gitDir: string): Promise<GitCommitInfo | undefined>
 
 async function gitDiff(gitDir: string, ci?: CIInfo): Promise<string | undefined> {
   const diffLimit = 100_000;
-  if (ci) {
+  if (ci?.baseHash) {
     // First try the diff against the base branch.
-    const diff = await runGit(`git diff ${ci.baseHash}`, gitDir);
+    const diff = await runGit(`git fetch origin ${ci.baseHash} && git diff ${ci.baseHash} HEAD`, gitDir);
     if (diff)
       return diff.substring(0, diffLimit);
-
-    // Grow history for shallow checkout.
-    const output = await runGit('git fetch --deepen=1 && git show HEAD', gitDir);
-    return output?.substring(0, diffLimit);
   }
 
   // Check dirty state first.
@@ -171,7 +167,7 @@ async function runGit(command: string, cwd: string): Promise<string | undefined>
       [],
       { stdio: 'pipe', cwd, timeout: GIT_OPERATIONS_TIMEOUT_MS, shell: true }
   );
-  if (result.code) {
+  if (process.env.DEBUG_GIT_COMMIT_INFO && result.code) {
     // eslint-disable-next-line no-console
     console.error(`Failed to run ${command}: ${result.stderr}`);
   }
