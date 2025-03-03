@@ -20,6 +20,7 @@ import type * as trace from '@trace/trace';
 import type { ActionTraceEvent } from '@trace/trace';
 import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
 import type { StackFrame } from '@protocol/channels';
+import { attachmentURL } from './attachmentsTab';
 
 const contextSymbol = Symbol('context');
 const nextInContextSymbol = Symbol('next');
@@ -49,10 +50,11 @@ export type ActionTreeItem = {
   action?: ActionTraceEventInContext;
 };
 
-type ErrorDescription = {
+export type ErrorDescription = {
   action?: ActionTraceEventInContext;
   stack?: StackFrame[];
   message: string;
+  promptURL?: string;
 };
 
 export class MultiTraceModel {
@@ -128,16 +130,19 @@ export class MultiTraceModel {
   }
 
   private _errorDescriptorsFromTestRunner(): ErrorDescription[] {
-    const errors: ErrorDescription[] = [];
-    for (const error of this.errors || []) {
-      if (!error.message)
-        continue;
-      errors.push({
-        stack: error.stack,
-        message: error.message
-      });
+    const errorPrompts: string[] = []
+    for (const action of this.actions) {
+      for (const attachment of action.attachments ?? []) {
+        if (attachment.name === 'errorPrompt')
+          errorPrompts.push(attachmentURL({ ...attachment, traceUrl: action.context.traceUrl }));
+      }
     }
-    return errors;
+  
+    return this.errors.filter(e => !!e.message).map((error, i) => ({
+      stack: error.stack,
+      message: error.message,
+      promptURL: errorPrompts[i],
+    }));
   }
 }
 

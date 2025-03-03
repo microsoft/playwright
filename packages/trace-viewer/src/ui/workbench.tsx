@@ -193,13 +193,13 @@ export const Workbench: React.FunctionComponent<{
     id: 'errors',
     title: 'Errors',
     errorCount: errorsModel.errors.size,
-    render: () => <ErrorsTab errorsModel={errorsModel} sources={sources} sdkLanguage={sdkLanguage} revealInSource={error => {
+    render: () => <ErrorsTab errorsModel={errorsModel} sdkLanguage={sdkLanguage} revealInSource={error => {
       if (error.action)
         setSelectedAction(error.action);
       else
         setRevealedError(error);
       selectPropertiesTab('source');
-    }} actions={model?.actions ?? []} wallTime={model?.wallTime ?? 0} />
+    }} wallTime={model?.wallTime ?? 0} />
   };
 
   // Fallback location w/o action stands for file / test.
