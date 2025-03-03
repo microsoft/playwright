@@ -542,7 +542,7 @@ class SnapshotRecorder {
     this._ordinal = this.testInfo.attachments.filter(a => a.name === this._name).length;
   }
 
-  private shouldCaptureUponFinish() {
+  shouldCaptureUponFinish() {
     return this._mode === 'on' ||
         (this._mode === 'only-on-failure' && this.testInfo._isFailure()) ||
         (this._mode === 'on-first-failure' && this.testInfo._isFailure() && this.testInfo.retry === 0);
@@ -706,7 +706,8 @@ class ArtifactsRecorder {
     await this._screenshotRecorder.persistTemporary();
     await this._pageSnapshotRecorder.persistTemporary();
 
-    await this._attachErrorPrompts();
+    if (this._pageSnapshotRecorder.shouldCaptureUponFinish())
+      await this._attachErrorPrompts();
   }
 
   private async _attachErrorPrompts() {
