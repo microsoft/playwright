@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-export function fixTestPrompt(error: string, diff?: string, pageSnapshot?: string) {
+import { TestError } from '../../types/testReporter';
+import { externalScreen, formatError } from '../reporters/base';
+
+export function fixTestPrompt(error: TestError, testFile: { path: string, contents: string }, diff?: string, pageSnapshot?: string) {
   const promptParts = [
     `My Playwright test failed.`,
     `Explain why, be concise, respect Playwright best practices.`,
@@ -22,7 +25,10 @@ export function fixTestPrompt(error: string, diff?: string, pageSnapshot?: strin
     'Error:',
     '',
     '```js',
-    error,
+    formatError(externalScreen, {
+      ...error,
+      snippet: undefined,
+    }).message,
     '```',
   ];
 
@@ -45,6 +51,15 @@ export function fixTestPrompt(error: string, diff?: string, pageSnapshot?: strin
         '```',
     );
   }
+
+  promptParts.push(
+      '',
+      'Test file:',
+      '```ts',
+      `// ${testFile.path}`,
+      testFile.contents,
+      '```',
+  );
 
   return promptParts.join('\n');
 }

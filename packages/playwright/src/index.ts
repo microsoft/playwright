@@ -23,7 +23,6 @@ import { setBoxedStackPrefixes, asLocator, createGuid, currentZone, debugMode, i
 import { fixTestPrompt } from './isomorphic/prompts';
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { externalScreen, formatError } from './reporters/base';
 
 import type { MetadataWithCommitInfo } from './isomorphic/types';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
@@ -707,16 +706,21 @@ class ArtifactsRecorder {
     await this._screenshotRecorder.persistTemporary();
     await this._pageSnapshotRecorder.persistTemporary();
 
-    this._attachErrorPrompts();
+    await this._attachErrorPrompts();
   }
 
-  private _attachErrorPrompts() {
+  private async _attachErrorPrompts() {
+    const file = {
+      path: this._testInfo.file,
+      contents: await fs.promises.readFile(this._testInfo.file, 'utf-8'),
+    };
     for (const error of this._testInfo.errors) {
       const metadata = this._testInfo.config.metadata as MetadataWithCommitInfo;
       const prompt = fixTestPrompt(
-          formatError(externalScreen, error).message,
+          error,
+          file,
           metadata.gitDiff,
-          this._pageSnapshot // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
+          this._pageSnapshot, // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
       );
       this._testInfo.attachments.push({
         name: 'errorPrompt',
