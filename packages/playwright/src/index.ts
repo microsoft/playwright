@@ -20,9 +20,12 @@ import path from 'path';
 import * as playwrightLibrary from 'playwright-core';
 import { setBoxedStackPrefixes, asLocator, createGuid, currentZone, debugMode, isString, jsonStringifyForceASCII } from 'playwright-core/lib/utils';
 
+import { fixTestPrompt } from './isomorphic/prompts';
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
+import { externalScreen, formatError } from './reporters/base';
 
+import type { MetadataWithCommitInfo } from './isomorphic/types';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
@@ -321,7 +324,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     clientInstrumentation.removeListener(csiListener);
     await artifactsRecorder.didFinishTest();
-
   }, { auto: 'all-hooks-included',  title: 'trace recording', box: true, timeout: 0 } as any],
 
   _contextFactory: [async ({ browser, video, _reuseContext, _combinedContextOptions /** mitigate dep-via-auto lack of traceability */ }, use, testInfo) => {
@@ -619,6 +621,7 @@ class ArtifactsRecorder {
 
   private _pageSnapshotRecorder: SnapshotRecorder;
   private _screenshotRecorder: SnapshotRecorder;
+  private _pageSnapshot?: string;
 
   constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, pageSnapshot: SnapshotRecorderMode) {
     this._playwright = playwright;
@@ -632,6 +635,7 @@ class ArtifactsRecorder {
 
     this._pageSnapshotRecorder = new SnapshotRecorder(this, pageSnapshot, 'pageSnapshot', 'text/yaml', '.aria.yml', async (page, path) => {
       const ariaSnapshot = await page.locator('body').ariaSnapshot({ timeout: 5000 });
+      this._pageSnapshot ??= ariaSnapshot;
       await fs.promises.writeFile(path, ariaSnapshot);
     });
   }
@@ -702,6 +706,24 @@ class ArtifactsRecorder {
 
     await this._screenshotRecorder.persistTemporary();
     await this._pageSnapshotRecorder.persistTemporary();
+
+    this._attachErrorPrompts();
+  }
+
+  private _attachErrorPrompts() {
+    for (const error of this._testInfo.errors) {
+      const metadata = this._testInfo.config.metadata as MetadataWithCommitInfo;
+      const prompt = fixTestPrompt(
+          formatError(externalScreen, error).message,
+          metadata.gitDiff,
+          this._pageSnapshot
+      );
+      this._testInfo.attachments.push({
+        name: 'errorPrompt',
+        contentType: 'text/markdown',
+        body: Buffer.from(prompt),
+      });
+    }
   }
 
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {

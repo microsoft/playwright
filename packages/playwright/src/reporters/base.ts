@@ -34,6 +34,7 @@ export const kOutputSymbol = Symbol('output');
 type ErrorDetails = {
   message: string;
   location?: Location;
+  prompt?: string;
 };
 
 type TestSummary = {
@@ -98,6 +99,14 @@ export const nonTerminalScreen: Screen = {
 // Internal output for post-processing, should always contain real colors.
 export const internalScreen: Screen = {
   colors: realColors,
+  isTTY: false,
+  ttyWidth: 0,
+  resolveFiles: 'rootDir',
+};
+
+// External output e.g. for copy&paste or file system, should never contain colors.
+export const externalScreen: Screen = {
+  colors: noColors,
   isTTY: false,
   ttyWidth: 0,
   resolveFiles: 'rootDir',
@@ -419,13 +428,15 @@ export function formatResultFailure(screen: Screen, test: TestCase, result: Test
     });
   }
 
-  for (const error of result.errors) {
+  const errorPrompts = result.attachments.filter(a => a.name === 'errorPrompt');
+  result.errors.forEach((error, i) => {
     const formattedError = formatError(screen, error);
     errorDetails.push({
       message: indent(formattedError.message, initialIndent),
       location: formattedError.location,
+      prompt: errorPrompts[i].body?.toString('utf-8'),
     });
-  }
+  });
   return errorDetails;
 }
 
@@ -496,7 +507,10 @@ export function formatError(screen: Screen, error: TestError): ErrorDetails {
   // Now that we filter out internals from our stack traces, we can safely render
   // the helper / original exception locations.
   const parsedStack = stack ? prepareErrorStack(stack) : undefined;
-  tokens.push(parsedStack?.message || message);
+  let parsedMessage = parsedStack?.message || message;
+  if (!screen.colors.enabled)
+    parsedMessage = stripAnsiEscapes(parsedMessage);
+  tokens.push(parsedMessage);
 
   if (error.snippet) {
     let snippet = error.snippet;

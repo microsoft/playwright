@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');
-function stripAnsiEscapes(str: string): string {
-  return str.replace(ansiRegex, '');
-}
-
 export function fixTestPrompt(error: string, diff?: string, pageSnapshot?: string) {
   const promptParts = [
     `My Playwright test failed.`,
@@ -27,7 +22,7 @@ export function fixTestPrompt(error: string, diff?: string, pageSnapshot?: strin
     'Error:',
     '',
     '```js',
-    stripAnsiEscapes(error),
+    error,
     '```',
   ];
 
