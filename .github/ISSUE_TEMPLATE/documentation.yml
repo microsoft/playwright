@@ -1,6 +1,7 @@
 name: Documentation 📖
 description: Submit a request to add or update documentation
 title: '[Docs]: '
+type: Bug
 labels: ['Documentation :book:']
 body:
   - type: markdown
