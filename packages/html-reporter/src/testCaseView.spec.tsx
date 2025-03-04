@@ -222,7 +222,7 @@ const testCaseWithTwoAttempts: TestCase = {
   results: [
     {
       ...result,
-      errors: [{ message: 'Error message' }],
+      errors: ['Error message'],
       status: 'failed',
       duration: 50,
     },
