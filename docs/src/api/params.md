@@ -676,13 +676,13 @@ Emulates `'forced-colors'` media feature, supported values are `'active'`, `'non
 
 ## context-option-contrast
 * langs: js, java
-- `contrast` <null|[ForcedColors]<"no-preference"|"more">>
+- `contrast` <null|[Contrast]<"no-preference"|"more">>
 
 Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See [`method: Page.emulateMedia`] for more details. Passing `null` resets emulation to system defaults. Defaults to `'no-preference'`.
 
 ## context-option-contrast-csharp-python
 * langs: csharp, python
-- `contrast` <[ForcedColors]<"no-preference"|"more"|"null">>
+- `contrast` <[Contrast]<"no-preference"|"more"|"null">>
 
 Emulates `'prefers-contrast'` media feature, supported values are `'no-preference'`, `'more'`. See [`method: Page.emulateMedia`] for more details. Passing `'null'` resets emulation to system defaults. Defaults to `'no-preference'`.
 

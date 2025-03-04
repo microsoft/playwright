@@ -190,6 +190,8 @@ for (const [name, item] of Object.entries(protocol)) {
   } else if (item.type === 'object') {
     if (Object.keys(item.properties).length === 0)
       continue;
+    if (['AXNode', 'SetNetworkCookie', 'NetworkCookie', 'IndexedDBDatabase', 'SetOriginStorage', 'OriginStorage'].includes(name))
+      continue;
     const init = objectType(item.properties, '', false, name);
     writeCSharpClass(name, null, init.ts);
   }
