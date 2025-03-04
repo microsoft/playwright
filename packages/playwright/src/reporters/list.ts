@@ -17,7 +17,8 @@
 import { getAsBooleanFromENV } from 'playwright-core/lib/utils';
 import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 
-import { TerminalReporter, stepSuffix, stripAnsiEscapes } from './base';
+import { TerminalReporter, stepSuffix } from './base';
+import { stripAnsiEscapes } from '../util';
 
 import type { FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 

@@ -51,6 +51,7 @@ export type SerializedConfig = {
   location: ConfigLocation;
   configCLIOverrides: ConfigCLIOverrides;
   compilationCache?: SerializedCompilationCache;
+  metadata?: string;
 };
 
 export type ProcessInitParams = {
@@ -147,6 +148,11 @@ export function serializeConfig(config: FullConfigInternal, passCompilationCache
     configCLIOverrides: config.configCLIOverrides,
     compilationCache: passCompilationCache ? serializeCompilationCache() : undefined,
   };
+
+  try {
+    result.metadata = JSON.stringify(config.config.metadata);
+  } catch (error) {}
+
   return result;
 }
 

@@ -20,7 +20,7 @@ import path from 'path';
 
 import { getPackageJsonPath, mergeObjects } from '../util';
 
-import type { Config, Fixtures, Project, ReporterDescription } from '../../types/test';
+import type { Config, Fixtures, Metadata, Project, ReporterDescription } from '../../types/test';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { Matcher } from '../util';
 import type { ConfigCLIOverrides } from './ipc';
@@ -65,7 +65,7 @@ export class FullConfigInternal {
   globalSetups: string[] = [];
   globalTeardowns: string[] = [];
 
-  constructor(location: ConfigLocation, userConfig: Config, configCLIOverrides: ConfigCLIOverrides) {
+  constructor(location: ConfigLocation, userConfig: Config, configCLIOverrides: ConfigCLIOverrides, metadata?: Metadata) {
     if (configCLIOverrides.projects && userConfig.projects)
       throw new Error(`Cannot use --browser option when configuration file defines projects. Specify browserName in the projects instead.`);
 
@@ -98,7 +98,7 @@ export class FullConfigInternal {
       grep: takeFirst(userConfig.grep, defaultGrep),
       grepInvert: takeFirst(userConfig.grepInvert, null),
       maxFailures: takeFirst(configCLIOverrides.debug ? 1 : undefined, configCLIOverrides.maxFailures, userConfig.maxFailures, 0),
-      metadata: userConfig.metadata,
+      metadata: metadata ?? userConfig.metadata,
       preserveOutput: takeFirst(userConfig.preserveOutput, 'always'),
       reporter: takeFirst(configCLIOverrides.reporter, resolveReporters(userConfig.reporter, configDir), [[defaultReporter]]),
       reportSlowTests: takeFirst(userConfig.reportSlowTests, { max: 5, threshold: 300_000 /* 5 minutes */ }),

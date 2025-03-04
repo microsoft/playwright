@@ -516,12 +516,13 @@ test('should work with video: on-first-retry', async ({ runInlineTest }) => {
   const videoFailRetry = fs.readdirSync(dirRetry).find(file => file.endsWith('webm'));
   expect(videoFailRetry).toBeTruthy();
 
-  expect(result.report.suites[0].specs[1].tests[0].results[0].attachments).toEqual([]);
+  const errorPrompt = expect.objectContaining({ name: '_prompt-0' });
+  expect(result.report.suites[0].specs[1].tests[0].results[0].attachments).toEqual([errorPrompt]);
   expect(result.report.suites[0].specs[1].tests[0].results[1].attachments).toEqual([{
     name: 'video',
     contentType: 'video/webm',
     path: path.join(dirRetry, videoFailRetry!),
-  }]);
+  }, errorPrompt]);
 });
 
 test('should work with video size', async ({ runInlineTest }) => {

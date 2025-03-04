@@ -20,86 +20,14 @@ import type * as modelUtil from './modelUtil';
 import { PlaceholderPanel } from './placeholderPanel';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { StackFrame } from '@protocol/channels';
 import { CopyToClipboardTextButton } from './copyToClipboard';
-import { attachmentURL } from './attachmentsTab';
-import { fixTestPrompt } from '@web/components/prompts';
-import type { MetadataWithCommitInfo } from '@testIsomorphic/types';
 import { AIConversation } from './aiConversation';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { useIsLLMAvailable, useLLMChat } from './llm';
 import { useAsyncMemo } from '@web/uiUtils';
-import { useSources } from './sourceTab';
+import { attachmentURL } from './attachmentsTab';
 
-const CommitInfoContext = React.createContext<MetadataWithCommitInfo | undefined>(undefined);
-
-export function CommitInfoProvider({ children, commitInfo }: React.PropsWithChildren<{ commitInfo: MetadataWithCommitInfo }>) {
-  return <CommitInfoContext.Provider value={commitInfo}>{children}</CommitInfoContext.Provider>;
-}
-
-export function useCommitInfo() {
-  return React.useContext(CommitInfoContext);
-}
-
-function usePageSnapshot(actions: modelUtil.ActionTraceEventInContext[]) {
-  return useAsyncMemo<string | undefined>(async () => {
-    for (const action of actions) {
-      for (const attachment of action.attachments ?? []) {
-        if (attachment.name === 'pageSnapshot') {
-          const response = await fetch(attachmentURL({ ...attachment, traceUrl: action.context.traceUrl }));
-          return await response.text();
-        }
-      }
-    }
-  }, [actions], undefined);
-}
-
-function useCodeFrame(stack: StackFrame[] | undefined, sources: Map<string, modelUtil.SourceModel>, width: number) {
-  const selectedFrame = stack?.[0];
-  const { source } = useSources(stack, 0, sources);
-  return React.useMemo(() => {
-    if (!source.content)
-      return '';
-
-    const targetLine = selectedFrame?.line ?? 0;
-
-    const lines = source.content.split('\n');
-    const start = Math.max(0, targetLine - width);
-    const end = Math.min(lines.length, targetLine + width);
-    const lineNumberWidth = String(end).length;
-    const codeFrame = lines.slice(start, end).map((line, i) => {
-      const lineNumber = start + i + 1;
-      const paddedLineNumber = String(lineNumber).padStart(lineNumberWidth, ' ');
-      if (lineNumber !== targetLine)
-        return `  ${(paddedLineNumber)} | ${line}`;
-
-      let highlightLine = `> ${paddedLineNumber} | ${line}`;
-      if (selectedFrame?.column)
-        highlightLine += `\n${' '.repeat(4 + lineNumberWidth + selectedFrame.column)}^`;
-      return highlightLine;
-    }).join('\n');
-    return codeFrame;
-  }, [source, selectedFrame, width]);
-}
-
-const CopyPromptButton: React.FC<{
-  error: string;
-  codeFrame: string;
-  pageSnapshot?: string;
-  diff?: string;
-}> = ({ error, codeFrame, pageSnapshot, diff }) => {
-  const prompt = React.useMemo(
-      () => fixTestPrompt(
-          error + '\n\n' + codeFrame,
-          diff,
-          pageSnapshot
-      ),
-      [error, diff, codeFrame, pageSnapshot]
-  );
-
-  if (!pageSnapshot)
-    return;
-
+const CopyPromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
   return (
     <CopyToClipboardTextButton
       value={prompt}
@@ -110,30 +38,24 @@ const CopyPromptButton: React.FC<{
   );
 };
 
-export type ErrorDescription = {
-  action?: modelUtil.ActionTraceEventInContext;
-  stack?: StackFrame[];
-};
-
 type ErrorsTabModel = {
-  errors: Map<string, ErrorDescription>;
+  errors: Map<string, modelUtil.ErrorDescription>;
 };
 
 export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined): ErrorsTabModel {
   return React.useMemo(() => {
     if (!model)
       return { errors: new Map() };
-    const errors = new Map<string, ErrorDescription>();
+    const errors = new Map<string, modelUtil.ErrorDescription>();
     for (const error of model.errorDescriptors)
       errors.set(error.message, error);
     return { errors };
   }, [model]);
 }
 
-function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSource, sources }: { message: string, error: ErrorDescription, errorId: string, sdkLanguage: Language, pageSnapshot?: string, revealInSource: (error: ErrorDescription) => void, sources: Map<string, modelUtil.SourceModel> }) {
+function Error({ message, error, errorId, sdkLanguage, revealInSource }: { message: string, error: modelUtil.ErrorDescription, errorId: string, sdkLanguage: Language, revealInSource: (error: modelUtil.ErrorDescription) => void }) {
   const [showLLM, setShowLLM] = React.useState(false);
   const llmAvailable = useIsLLMAvailable();
-  const metadata = useCommitInfo();
 
   let location: string | undefined;
   let longLocation: string | undefined;
@@ -144,7 +66,12 @@ function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSou
     longLocation = stackFrame.file + ':' + stackFrame.line;
   }
 
-  const codeFrame = useCodeFrame(error.stack, sources, 3);
+  const prompt = useAsyncMemo(async () => {
+    if (!error.prompt)
+      return;
+    const response = await fetch(attachmentURL(error.prompt));
+    return await response.text();
+  }, [error], undefined);
 
   return <div style={{ display: 'flex', flexDirection: 'column', overflowX: 'clip' }}>
     <div className='hbox' style={{
@@ -160,9 +87,11 @@ function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSou
         @ <span title={longLocation} onClick={() => revealInSource(error)}>{location}</span>
       </div>}
       <span style={{ position: 'absolute', right: '5px' }}>
-        {llmAvailable
-          ? <FixWithAIButton conversationId={errorId} onChange={setShowLLM} value={showLLM} error={message} diff={metadata?.gitDiff} pageSnapshot={pageSnapshot} />
-          : <CopyPromptButton error={message} codeFrame={codeFrame} pageSnapshot={pageSnapshot} diff={metadata?.gitDiff} />}
+        {prompt && (
+          llmAvailable
+            ? <FixWithAIButton conversationId={errorId} onChange={setShowLLM} value={showLLM} prompt={prompt} />
+            : <CopyPromptButton prompt={prompt} />
+        )}
       </span>
     </div>
 
@@ -172,7 +101,7 @@ function Error({ message, error, errorId, sdkLanguage, pageSnapshot, revealInSou
   </div>;
 }
 
-function FixWithAIButton({ conversationId, value, onChange, error, diff, pageSnapshot }: { conversationId: string, value: boolean, onChange: React.Dispatch<React.SetStateAction<boolean>>, error: string, diff?: string, pageSnapshot?: string }) {
+function FixWithAIButton({ conversationId, value, onChange, prompt }: { conversationId: string, value: boolean, onChange: React.Dispatch<React.SetStateAction<boolean>>, prompt: string }) {
   const chat = useLLMChat();
 
   return <ToolbarButton
@@ -184,20 +113,15 @@ function FixWithAIButton({ conversationId, value, onChange, error, diff, pageSna
           `Don't include many headings in your output. Make sure what you're saying is correct, and take into account whether there might be a bug in the app.`
         ].join('\n'));
 
-        let content = `Here's the error: ${error}`;
-        let displayContent = `Help me with the error above.`;
+        let displayPrompt = `Help me with the error above.`;
+        const hasDiff = prompt.includes('Local changes:');
+        const hasSnapshot = prompt.includes('Page snapshot:');
+        if (hasDiff)
+          displayPrompt += ` Take the code diff${hasSnapshot ? ' and page snapshot' : ''} into account.`;
+        else if (hasSnapshot)
+          displayPrompt += ` Take the page snapshot into account.`;
 
-        if (diff)
-          content += `\n\nCode diff:\n${diff}`;
-        if (pageSnapshot)
-          content += `\n\nPage snapshot:\n${pageSnapshot}`;
-
-        if (diff)
-          displayContent += ` Take the code diff${pageSnapshot ? ' and page snapshot' : ''} into account.`;
-        else if (pageSnapshot)
-          displayContent += ` Take the page snapshot into account.`;
-
-        conversation.send(content, displayContent);
+        conversation.send(prompt, displayPrompt);
       }
 
       onChange(v => !v);
@@ -212,21 +136,17 @@ function FixWithAIButton({ conversationId, value, onChange, error, diff, pageSna
 
 export const ErrorsTab: React.FunctionComponent<{
   errorsModel: ErrorsTabModel,
-  actions: modelUtil.ActionTraceEventInContext[],
   wallTime: number,
-  sources: Map<string, modelUtil.SourceModel>,
   sdkLanguage: Language,
-  revealInSource: (error: ErrorDescription) => void,
-}> = ({ errorsModel, sdkLanguage, revealInSource, actions, wallTime, sources }) => {
-  const pageSnapshot = usePageSnapshot(actions);
-
+  revealInSource: (error: modelUtil.ErrorDescription) => void,
+}> = ({ errorsModel, sdkLanguage, revealInSource, wallTime }) => {
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
 
   return <div className='fill' style={{ overflow: 'auto' }}>
     {[...errorsModel.errors.entries()].map(([message, error]) => {
       const errorId = `error-${wallTime}-${message}`;
-      return <Error key={errorId} errorId={errorId} message={message} error={error} sources={sources} revealInSource={revealInSource} sdkLanguage={sdkLanguage} pageSnapshot={pageSnapshot} />;
+      return <Error key={errorId} errorId={errorId} message={message} error={error} revealInSource={revealInSource} sdkLanguage={sdkLanguage} />;
     })}
   </div>;
 };

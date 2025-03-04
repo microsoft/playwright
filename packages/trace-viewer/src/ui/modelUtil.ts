@@ -49,10 +49,11 @@ export type ActionTreeItem = {
   action?: ActionTraceEventInContext;
 };
 
-type ErrorDescription = {
+export type ErrorDescription = {
   action?: ActionTraceEventInContext;
   stack?: StackFrame[];
   message: string;
+  prompt?: trace.AfterActionTraceEventAttachment & { traceUrl: string };
 };
 
 export class MultiTraceModel {
@@ -128,16 +129,19 @@ export class MultiTraceModel {
   }
 
   private _errorDescriptorsFromTestRunner(): ErrorDescription[] {
-    const errors: ErrorDescription[] = [];
-    for (const error of this.errors || []) {
-      if (!error.message)
-        continue;
-      errors.push({
-        stack: error.stack,
-        message: error.message
-      });
+    const errorPrompts: Record<string, trace.AfterActionTraceEventAttachment & { traceUrl: string }> = {};
+    for (const action of this.actions) {
+      for (const attachment of action.attachments ?? []) {
+        if (attachment.name.startsWith('_prompt-'))
+          errorPrompts[attachment.name] = { ...attachment, traceUrl: action.context.traceUrl };
+      }
     }
-    return errors;
+
+    return this.errors.filter(e => !!e.message).map((error, i) => ({
+      stack: error.stack,
+      message: error.message,
+      prompt: errorPrompts[`_prompt-${i}`],
+    }));
   }
 }
 

@@ -91,7 +91,7 @@ export const defineConfig = (...configs: any[]) => {
 export async function deserializeConfig(data: SerializedConfig): Promise<FullConfigInternal> {
   if (data.compilationCache)
     addToCompilationCache(data.compilationCache);
-  return await loadConfig(data.location, data.configCLIOverrides);
+  return await loadConfig(data.location, data.configCLIOverrides, undefined, data.metadata ? JSON.parse(data.metadata) : undefined);
 }
 
 async function loadUserConfig(location: ConfigLocation): Promise<Config> {
@@ -101,7 +101,7 @@ async function loadUserConfig(location: ConfigLocation): Promise<Config> {
   return object as Config;
 }
 
-export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLIOverrides, ignoreProjectDependencies = false): Promise<FullConfigInternal> {
+export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLIOverrides, ignoreProjectDependencies = false, metadata?: Config['metadata']): Promise<FullConfigInternal> {
   // 1. Setup tsconfig; configure ESM loader with tsconfig and compilation cache.
   setSingleTSConfig(overrides?.tsconfig);
   await configureESMLoader();
@@ -109,7 +109,7 @@ export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLI
   // 2. Load and validate playwright config.
   const userConfig = await loadUserConfig(location);
   validateConfig(location.resolvedConfigFile || '<default config>', userConfig);
-  const fullConfig = new FullConfigInternal(location, userConfig, overrides || {});
+  const fullConfig = new FullConfigInternal(location, userConfig, overrides || {}, metadata);
   fullConfig.defineConfigWasUsed = !!(userConfig as any)[kDefineConfigWasUsed];
   if (ignoreProjectDependencies) {
     for (const project of fullConfig.projects) {
