@@ -61,7 +61,7 @@ export const SplitView: React.FC<SplitViewProps> = ({
   }
 
   document.body.style.userSelect = resizing ? 'none' : 'inherit';
-  let resizerStyle: any = {};
+  let resizerStyle: any = { display: sidebarHidden ? 'none' : undefined };
   if (orientation === 'vertical') {
     if (sidebarIsFirst)
       resizerStyle = { top: resizing ? 0 : size - 4, bottom: resizing ? 0 : undefined, height: resizing ? 'initial' : 8 };
@@ -76,8 +76,8 @@ export const SplitView: React.FC<SplitViewProps> = ({
 
   return <div className={clsx('split-view', orientation, sidebarIsFirst && 'sidebar-first')} ref={ref}>
     <div className='split-view-main'>{main}</div>
-    {!sidebarHidden && <div style={{ flexBasis: size }} className='split-view-sidebar'>{sidebar}</div>}
-    {!sidebarHidden && <div
+    <div style={{ flexBasis: size, display: sidebarHidden ? 'none' : undefined }} className='split-view-sidebar'>{sidebar}</div>
+    <div
       style={resizerStyle}
       className='split-view-resizer'
       onMouseDown={event => setResizing({ offset: orientation === 'vertical' ? event.clientY : event.clientX, size })}
@@ -99,6 +99,6 @@ export const SplitView: React.FC<SplitViewProps> = ({
             setHSize(size * window.devicePixelRatio);
         }
       }}
-    ></div>}
+    ></div>
   </div>;
 };
