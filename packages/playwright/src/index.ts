@@ -663,8 +663,13 @@ class ArtifactsRecorder {
 
     await this._screenshotRecorder.captureTemporary(context);
 
-    if (!process.env.PLAYWRIGHT_NO_COPY_PROMPT && this._testInfo.errors.length > 0)
-      this._pageSnapshot ??= await context.pages()[0]?.locator('body').ariaSnapshot({ timeout: 5000 }).catch(() => undefined); // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
+    if (!process.env.PLAYWRIGHT_NO_COPY_PROMPT && this._testInfo.errors.length > 0) {
+      try {
+        const page = context.pages()[0];
+        // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
+        this._pageSnapshot ??= await page?.locator('body').ariaSnapshot({ timeout: 5000 });
+      } catch {}
+    }
   }
 
   async didCreateRequestContext(context: APIRequestContext) {
