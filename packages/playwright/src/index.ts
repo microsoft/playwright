@@ -22,7 +22,7 @@ import { setBoxedStackPrefixes, asLocator, createGuid, currentZone, debugMode, i
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { compilePromptForError } from './common/prompts';
+import { stripAnsiEscapes } from './util';
 
 import type { MetadataWithCommitInfo } from './isomorphic/types';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
@@ -722,22 +722,54 @@ class ArtifactsRecorder {
   }
 
   private async _attachErrorPrompts() {
-    const file = {
-      path: this._testInfo.file,
-      contents: await fs.promises.readFile(this._testInfo.file, 'utf-8'),
-    };
+    const testSources = await fs.promises.readFile(this._testInfo.file, 'utf-8');
     for (const [index, error] of this._testInfo.errors.entries()) {
       const metadata = this._testInfo.config.metadata as MetadataWithCommitInfo;
-      const prompt = compilePromptForError(
-          error,
-          file,
-          metadata.gitDiff,
-          this._pageSnapshot, // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
+
+      const promptParts = [
+        `My Playwright test failed.`,
+        `Explain why, be concise, respect Playwright best practices.`,
+        '',
+        'Error:',
+        '',
+        '```js',
+        stripAnsiEscapes(error.stack || error.message || ''),
+        '```',
+      ];
+
+      if (this._pageSnapshot) {
+        promptParts.push(
+            '',
+            'Page snapshot:',
+            '```yaml',
+            this._pageSnapshot, // // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
+            '```',
+        );
+      }
+
+      if (metadata.gitDiff) {
+        promptParts.push(
+            '',
+            'Local changes:',
+            '```diff',
+            metadata.gitDiff,
+            '```',
+        );
+      }
+
+      promptParts.push(
+          '',
+          'Test file:',
+          '```ts',
+          `// ${this._testInfo.file}`,
+          testSources,
+          '```',
       );
+
       this._testInfo.attachments.push({
         name: `_prompt-${index}`,
         contentType: 'text/markdown',
-        body: Buffer.from(prompt),
+        body: Buffer.from(promptParts.join('\n')),
       });
     }
   }

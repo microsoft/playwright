@@ -21,7 +21,7 @@ import { parseStackFrame } from 'playwright-core/lib/utils';
 import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import { colors as realColors, noColors } from 'playwright-core/lib/utils';
 
-import { resolveReporterOutputPath } from '../util';
+import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 import { getEastAsianWidth } from '../utilsBundle';
 
 import type { ReporterV2 } from './reporterV2';
@@ -99,14 +99,6 @@ export const nonTerminalScreen: Screen = {
 // Internal output for post-processing, should always contain real colors.
 export const internalScreen: Screen = {
   colors: realColors,
-  isTTY: false,
-  ttyWidth: 0,
-  resolveFiles: 'rootDir',
-};
-
-// External output e.g. for copy&paste or file system, should never contain colors.
-export const externalScreen: Screen = {
-  colors: noColors,
   isTTY: false,
   ttyWidth: 0,
   resolveFiles: 'rootDir',
@@ -511,8 +503,13 @@ export function formatError(screen: Screen, error: TestError): ErrorDetails {
   const parsedStack = stack ? prepareErrorStack(stack) : undefined;
   tokens.push(parsedStack?.message || message);
 
-  if (error.snippet)
-    tokens.push('', error.snippet);
+  if (error.snippet) {
+    let snippet = error.snippet;
+    if (!screen.colors.enabled)
+      snippet = stripAnsiEscapes(snippet);
+    tokens.push('');
+    tokens.push(snippet);
+  }
 
   if (parsedStack && parsedStack.stackLines.length)
     tokens.push(screen.colors.dim(parsedStack.stackLines.join('\n')));
@@ -526,7 +523,7 @@ export function formatError(screen: Screen, error: TestError): ErrorDetails {
 
   return {
     location,
-    message: screen.colors.enabled ? tokens.join('\n') : stripAnsiEscapes(tokens.join('\n')),
+    message: tokens.join('\n'),
   };
 }
 
@@ -563,11 +560,6 @@ export function prepareErrorStack(stack: string): {
     break;
   }
   return { message, stackLines, location };
-}
-
-const ansiRegex = new RegExp('([\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~])))', 'g');
-export function stripAnsiEscapes(str: string): string {
-  return str.replace(ansiRegex, '');
 }
 
 function characterWidth(c: string) {
