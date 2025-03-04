@@ -757,11 +757,11 @@ class ArtifactsRecorder {
           '```',
       );
 
-      this._testInfo.attachments.push({
+      this._testInfo._attach({
         name: `_prompt-${index}`,
         contentType: 'text/markdown',
         body: Buffer.from(promptParts.join('\n')),
-      });
+      }, undefined);
     }
   }
 
