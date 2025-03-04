@@ -242,7 +242,7 @@ test('should run by project', async ({ runUITest }) => {
   `);
 
   await page.getByText('Status:').click();
-  await page.getByLabel('bar').setChecked(true);
+  await page.getByRole('checkbox', { name: 'bar' }).setChecked(true);
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ❌ a.test.ts
