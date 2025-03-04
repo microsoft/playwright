@@ -371,7 +371,7 @@ export const UIModeView: React.FC<{}> = ({
         testServerConnection?.stopTestsNoReply({});
       } else if (e.code === 'F5') {
         e.preventDefault();
-        runTests('bounce-if-busy', visibleTestIds);
+        runTests('bounce-if-busy', expanded ? visibleTestIds : testTree.collectTestIds(selectedItem.treeItem));
       }
     };
     addEventListener('keydown', onShortcutEvent);
@@ -421,15 +421,12 @@ export const UIModeView: React.FC<{}> = ({
     {!expanded && (
       <div className='vbox ui-mode-sidebar collapsed'>
         <img src='playwright-logo.svg' alt='Playwright logo' />
-        <ToolbarButton icon='chevron-right' title='Expand' onClick={() => setExpanded(true)} />
+        <ToolbarButton icon='chevron-right' title='Expand sidebar' onClick={() => setExpanded(true)} />
         {(!isRunningTest || isLoading)
           ? <ToolbarButton
             icon='play'
-            title='Run all — F5'
-            onClick={() => {
-              runTests('bounce-if-busy', testTree.collectTestIds(selectedItem.treeItem));
-              setSelectedItem({ ...selectedItem })
-            }}
+            title='Run test — F5'
+            onClick={() => runTests('bounce-if-busy', testTree.collectTestIds(selectedItem.treeItem))}
             disabled={isLoading}
           />
           : <ToolbarButton icon='debug-stop' title={'Stop — ' + (isMac ? '⇧F5' : 'Shift + F5')} onClick={() => testServerConnection?.stopTests({})}/>}
@@ -474,7 +471,7 @@ export const UIModeView: React.FC<{}> = ({
             {outputContainsError && <div title='Output contains error' style={{ position: 'absolute', top: 2, right: 2, width: 7, height: 7, borderRadius: '50%', backgroundColor: 'var(--vscode-notificationsErrorIcon-foreground)' }} />}
           </div>
           {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-list-warningForeground)' }} title='Playwright browsers are missing' onClick={openInstallDialog} />}
-          <ToolbarButton icon='chevron-left' title='Collapse' onClick={() => setExpanded(false)} />
+          <ToolbarButton icon='chevron-left' title='Collapse sidebar' onClick={() => setExpanded(false)} />
         </Toolbar>
         <FiltersView
           filterText={filterText}
