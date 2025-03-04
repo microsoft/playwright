@@ -91,7 +91,7 @@ export const defineConfig = (...configs: any[]) => {
 export async function deserializeConfig(data: SerializedConfig): Promise<FullConfigInternal> {
   if (data.compilationCache)
     addToCompilationCache(data.compilationCache);
-  return await loadConfig(data.location, data.configCLIOverrides, undefined, data.metadata);
+  return await loadConfig(data.location, data.configCLIOverrides, undefined, data.metadata ? JSON.parse(data.metadata) : undefined);
 }
 
 async function loadUserConfig(location: ConfigLocation): Promise<Config> {

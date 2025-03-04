@@ -51,7 +51,7 @@ export type SerializedConfig = {
   location: ConfigLocation;
   configCLIOverrides: ConfigCLIOverrides;
   compilationCache?: SerializedCompilationCache;
-  metadata: FullConfigInternal['config']['metadata'];
+  metadata?: string;
 };
 
 export type ProcessInitParams = {
@@ -147,8 +147,15 @@ export function serializeConfig(config: FullConfigInternal, passCompilationCache
     location: { configDir: config.configDir, resolvedConfigFile: config.config.configFile },
     configCLIOverrides: config.configCLIOverrides,
     compilationCache: passCompilationCache ? serializeCompilationCache() : undefined,
-    metadata: config.config.metadata,
   };
+
+  try {
+    result.metadata = JSON.stringify(config.config.metadata);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to serialize config metadata', error);
+  }
+
   return result;
 }
 
