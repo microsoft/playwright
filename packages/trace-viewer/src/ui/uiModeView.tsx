@@ -422,6 +422,17 @@ export const UIModeView: React.FC<{}> = ({
       <div className='vbox ui-mode-sidebar collapsed'>
         <img src='playwright-logo.svg' alt='Playwright logo' />
         <ToolbarButton icon='chevron-right' title='Expand' onClick={() => setExpanded(true)} />
+        {(!isRunningTest || isLoading)
+          ? <ToolbarButton
+            icon='play'
+            title='Run all — F5'
+            onClick={() => {
+              runTests('bounce-if-busy', testTree.collectTestIds(selectedItem.treeItem));
+              setSelectedItem({ ...selectedItem })
+            }}
+            disabled={isLoading}
+          />
+          : <ToolbarButton icon='debug-stop' title={'Stop — ' + (isMac ? '⇧F5' : 'Shift + F5')} onClick={() => testServerConnection?.stopTests({})}/>}
       </div>
     )}
     <SplitView
