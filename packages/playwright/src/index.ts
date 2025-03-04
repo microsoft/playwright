@@ -618,6 +618,7 @@ class ArtifactsRecorder {
   private _startedCollectingArtifacts: symbol;
 
   private _screenshotRecorder: SnapshotRecorder;
+  private _attachedErrorPrompts = false;
 
   constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
     this._playwright = playwright;
@@ -661,6 +662,7 @@ class ArtifactsRecorder {
     await this._stopTracing(context.tracing);
 
     await this._screenshotRecorder.captureTemporary(context);
+    await this._attachErrorPrompts(context);
   }
 
   async didCreateRequestContext(context: APIRequestContext) {
@@ -692,13 +694,18 @@ class ArtifactsRecorder {
     })));
 
     await this._screenshotRecorder.persistTemporary();
-    if (!process.env.PLAYWRIGHT_NO_COPY_PROMPT && leftoverContexts.length > 0)
-      await this._attachErrorPrompts(leftoverContexts[0]);
   }
 
   private async _attachErrorPrompts(context: BrowserContext) {
+    if (process.env.PLAYWRIGHT_NO_COPY_PROMPT)
+      return;
+
     if (this._testInfo.errors.length === 0)
       return;
+
+    if (this._attachedErrorPrompts)
+      return;
+    this._attachedErrorPrompts = true;
 
     let pageSnapshot: string | undefined;
     const page = context.pages()[0];
