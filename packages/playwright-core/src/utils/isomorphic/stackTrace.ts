@@ -134,6 +134,34 @@ export function splitErrorMessage(message: string): { name: string, message: str
   };
 }
 
+export function parseErrorStack(stack: string, pathSeparator: string, showInternalStackFrames: boolean = false): {
+  message: string;
+  stackLines: string[];
+  location?: StackFrame;
+} {
+  const lines = stack.split('\n');
+  let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
+  if (firstStackLine === -1)
+    firstStackLine = lines.length;
+  const message = lines.slice(0, firstStackLine).join('\n');
+  const stackLines = lines.slice(firstStackLine);
+  let location: StackFrame | undefined;
+  for (const line of stackLines) {
+    const frame = parseStackFrame(line, pathSeparator, showInternalStackFrames);
+    if (!frame || !frame.file)
+      continue;
+    if (belongsToNodeModules(frame.file, pathSeparator))
+      continue;
+    location = { file: frame.file, column: frame.column || 0, line: frame.line || 0 };
+    break;
+  }
+  return { message, stackLines, location };
+}
+
+function belongsToNodeModules(file: string, pathSeparator: string) {
+  return file.includes(`${pathSeparator}node_modules${pathSeparator}`);
+}
+
 const re = new RegExp('^' +
   // Sometimes we strip out the '    at' because it's noisy
   '(?:\\s*at )?' +

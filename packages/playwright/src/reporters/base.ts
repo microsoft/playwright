@@ -16,8 +16,7 @@
 
 import path from 'path';
 
-import { getPackageManagerExecCommand } from 'playwright-core/lib/utils';
-import { parseStackFrame } from 'playwright-core/lib/utils';
+import { getPackageManagerExecCommand, parseErrorStack } from 'playwright-core/lib/utils';
 import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import { colors as realColors, noColors } from 'playwright-core/lib/utils';
 
@@ -540,23 +539,7 @@ export function prepareErrorStack(stack: string): {
   stackLines: string[];
   location?: Location;
 } {
-  const lines = stack.split('\n');
-  let firstStackLine = lines.findIndex(line => line.startsWith('    at '));
-  if (firstStackLine === -1)
-    firstStackLine = lines.length;
-  const message = lines.slice(0, firstStackLine).join('\n');
-  const stackLines = lines.slice(firstStackLine);
-  let location: Location | undefined;
-  for (const line of stackLines) {
-    const frame = parseStackFrame(line, path.sep, !!process.env.PWDEBUGIMPL);
-    if (!frame || !frame.file)
-      continue;
-    if (belongsToNodeModules(frame.file))
-      continue;
-    location = { file: frame.file, column: frame.column || 0, line: frame.line || 0 };
-    break;
-  }
-  return { message, stackLines, location };
+  return parseErrorStack(stack, path.sep, !!process.env.PWDEBUGIMPL);
 }
 
 function characterWidth(c: string) {
@@ -609,10 +592,6 @@ export function fitToWidth(line: string, width: number, prefix?: string): string
     }
   }
   return taken.reverse().join('');
-}
-
-function belongsToNodeModules(file: string) {
-  return file.includes(`${path.sep}node_modules${path.sep}`);
 }
 
 function resolveFromEnv(name: string): string | undefined {
