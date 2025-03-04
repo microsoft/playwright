@@ -1422,6 +1422,9 @@ export class InjectedScript {
         received = getAriaRole(element) || '';
       } else if (expression === 'to.have.title') {
         received = this.document.title;
+      } else if (expression === 'to.have.url') {
+        // Note: this is used by all language ports except for javascript.
+        received = this.document.location.href;
       } else if (expression === 'to.have.value') {
         element = this.retarget(element, 'follow-label')!;
         if (element.nodeName !== 'INPUT' && element.nodeName !== 'TEXTAREA' && element.nodeName !== 'SELECT')
