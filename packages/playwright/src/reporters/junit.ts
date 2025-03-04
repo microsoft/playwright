@@ -20,10 +20,10 @@ import path from 'path';
 import { getAsBooleanFromENV } from 'playwright-core/lib/utils';
 
 import { formatFailure, nonTerminalScreen, resolveOutputFile } from './base';
+import { stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
 import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
-import { stripAnsiEscapes } from '../util';
 
 type JUnitOptions = {
   outputFile?: string,
