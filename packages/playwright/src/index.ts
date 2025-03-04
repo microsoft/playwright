@@ -723,8 +723,8 @@ class ArtifactsRecorder {
 
   private async _attachErrorPrompts() {
     const file = {
-      path: this._testInfo.file,
-      contents: await fs.promises.readFile(this._testInfo.file, 'utf-8'),
+      path: this._testInfo.titlePath.join(' >> '),
+      contents: this._testInfo.fn.toString(),
     };
     for (const [index, error] of this._testInfo.errors.entries()) {
       const metadata = this._testInfo.config.metadata as MetadataWithCommitInfo;
