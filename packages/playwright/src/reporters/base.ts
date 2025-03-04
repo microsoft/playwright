@@ -428,7 +428,7 @@ export function formatResultFailure(screen: Screen, test: TestCase, result: Test
     });
   }
 
-  const errorPrompts = result.attachments.filter(a => a.name === 'errorPrompt');
+  const errorPrompts = result.attachments.filter(a => a.name === '_prompt');
   result.errors.forEach((error, i) => {
     const formattedError = formatError(screen, error);
     errorDetails.push({

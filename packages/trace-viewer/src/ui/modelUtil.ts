@@ -133,7 +133,7 @@ export class MultiTraceModel {
     const errorPrompts: string[] = [];
     for (const action of this.actions) {
       for (const attachment of action.attachments ?? []) {
-        if (attachment.name === 'errorPrompt')
+        if (attachment.name === '_prompt')
           errorPrompts.push(attachmentURL({ ...attachment, traceUrl: action.context.traceUrl }));
       }
     }

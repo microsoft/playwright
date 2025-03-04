@@ -724,7 +724,7 @@ class ArtifactsRecorder {
           this._pageSnapshot, // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
       );
       this._testInfo.attachments.push({
-        name: 'errorPrompt',
+        name: '_prompt',
         contentType: 'text/markdown',
         body: Buffer.from(prompt),
       });
