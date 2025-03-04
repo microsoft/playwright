@@ -1750,3 +1750,58 @@ test('should toggle canvas rendering', async ({ runAndTrace, page }) => {
 
   expect(snapshotRequest.url()).toContain('shouldPopulateCanvasFromScreenshot');
 });
+
+test('should render blob trace received from message', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer([], { host: 'localhost' });
+
+  await expect(traceViewer.page.locator('.drop-target')).toBeVisible();
+  await expect(traceViewer.actionTitles).not.toBeVisible();
+
+  await traceViewer.page.evaluate(trace => {
+    const uint8Array = Uint8Array.from(atob(trace), c => c.charCodeAt(0));
+
+    window.postMessage({
+      method: 'load',
+      params: {
+        trace: new Blob([uint8Array], { type: 'application/zip' }),
+      }
+    }, '*');
+  }, fs.readFileSync(traceFile, 'base64'));
+
+  await expect(traceViewer.page.locator('.drop-target')).not.toBeVisible();
+  await expect(traceViewer.actionTitles).toHaveText([
+    /browserContext.newPage/,
+    /page.gotodata:text\/html,<!DOCTYPE html><html>Hello world<\/html>/,
+    /page.setContent/,
+    /expect.toHaveTextlocator\('button'\)/,
+    /expect.toBeHiddengetByTestId\('amazing-btn'\)/,
+    /expect.toBeHiddengetByTestId\(\/amazing-btn-regex\/\)/,
+    /page.evaluate/,
+    /page.evaluate/,
+    /locator.clickgetByText\('Click'\)/,
+    /page.waitForNavigation/,
+    /page.waitForResponse/,
+    /page.waitForTimeout/,
+    /page.gotohttp:\/\/localhost:\d+\/frames\/frame.html/,
+    /page.setViewportSize/,
+  ]);
+});
+
+test("shouldn't render not-blob trace received from message", async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer([], { host: 'localhost' });
+
+  await expect(traceViewer.page.locator('.drop-target')).toBeVisible();
+  await expect(traceViewer.actionTitles).not.toBeVisible();
+
+  await traceViewer.page.evaluate(trace => {
+    window.postMessage({
+      method: 'load',
+      params: {
+        trace,
+      }
+    }, '*');
+  }, fs.readFileSync(traceFile, 'base64'));
+
+  await expect(traceViewer.page.locator('.drop-target')).toBeVisible();
+  await expect(traceViewer.actionTitles).not.toBeVisible();
+});

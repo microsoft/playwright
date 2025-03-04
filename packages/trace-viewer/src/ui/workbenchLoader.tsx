@@ -73,19 +73,13 @@ export const WorkbenchLoader: React.FunctionComponent<{
     return () => document.removeEventListener('paste', listener);
   });
   React.useEffect(() => {
-    const listener = async (e: MessageEvent) => {
-      if (!e.data.b64trace)
+    const listener = (e: MessageEvent) => {
+      const { method, params } = e.data;
+
+      if (method !== 'load' || !(params?.trace instanceof Blob))
         return;
 
-      const bytes = atob(e.data.b64trace);
-      const arrayBuffer = new ArrayBuffer(bytes.length);
-      const uint8Array = new Uint8Array(arrayBuffer);
-
-      for (let i = 0; i < bytes.length; i++)
-        uint8Array[i] = bytes.charCodeAt(i);
-
-      const traceBlob = new Blob([uint8Array], { type: 'application/zip' });
-      const traceFile = new File([traceBlob], 'trace.zip', { type: 'application/zip' });
+      const traceFile = new File([params.trace], 'trace.zip', { type: 'application/zip' });
       const dataTransfer = new DataTransfer();
 
       dataTransfer.items.add(traceFile);
