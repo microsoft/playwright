@@ -226,6 +226,10 @@ jobs:
       matrix:
         os: [ubuntu-22.04, macos-13, windows-latest]
         headed: ['--headed', '']
+        exclude:
+          # Tested in tests_primary.yml already
+          - os: ubuntu-22.04
+            headed: ''
     steps:
     - uses: actions/checkout@v4
     - uses: ./.github/actions/run-test
