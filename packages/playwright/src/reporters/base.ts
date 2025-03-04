@@ -21,7 +21,7 @@ import { parseStackFrame } from 'playwright-core/lib/utils';
 import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 import { colors as realColors, noColors } from 'playwright-core/lib/utils';
 
-import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
+import { ansiRegex, resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 import { getEastAsianWidth } from '../utilsBundle';
 
 import type { ReporterV2 } from './reporterV2';
