@@ -81,7 +81,7 @@ export const TestResultView: React.FC<{
     [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
     const otherAttachmentAnchors = [...otherAttachments].map(a => `attachment-${attachments.indexOf(a)}`);
     const diffs = groupImageDiffs(screenshots, result);
-    const errors = classifyErrors(result.errors, diffs);
+    const errors = classifyErrors(result.errors, diffs, result.attachments);
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors };
   }, [result]);
 
@@ -90,7 +90,7 @@ export const TestResultView: React.FC<{
       {errors.map((error, index) => {
         if (error.type === 'screenshot')
           return <TestScreenshotErrorView key={'test-result-error-message-' + index} errorPrefix={error.errorPrefix} diff={error.diff!} errorSuffix={error.errorSuffix}></TestScreenshotErrorView>;
-        return <TestErrorView key={'test-result-error-message-' + index} error={error.error!} result={result}></TestErrorView>;
+        return <TestErrorView key={'test-result-error-message-' + index} error={error.error!} prompt={error.prompt}></TestErrorView>;
       })}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
@@ -144,8 +144,8 @@ export const TestResultView: React.FC<{
   </div>;
 };
 
-function classifyErrors(testErrors: string[], diffs: ImageDiff[]) {
-  return testErrors.map(error => {
+function classifyErrors(testErrors: string[], diffs: ImageDiff[], attachments: TestAttachment[]) {
+  return testErrors.map((error, i) => {
     const firstLine = error.split('\n')[0];
     if (firstLine.includes('toHaveScreenshot') || firstLine.includes('toMatchSnapshot')) {
       const matchingDiff = diffs.find(diff => {
@@ -164,7 +164,9 @@ function classifyErrors(testErrors: string[], diffs: ImageDiff[]) {
         return { type: 'screenshot', diff: matchingDiff, errorPrefix, errorSuffix };
       }
     }
-    return { type: 'regular', error };
+
+    const prompt = attachments.find(a => a.name === `_prompt-${i}`)?.body;
+    return { type: 'regular', error, prompt };
   });
 }
 

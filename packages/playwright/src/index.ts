@@ -22,7 +22,9 @@ import { setBoxedStackPrefixes, asLocator, createGuid, currentZone, debugMode, i
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
+import { stripAnsiEscapes } from './util';
 
+import type { MetadataWithCommitInfo } from './isomorphic/types';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
@@ -249,8 +251,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const pageSnapshot = process.env.PLAYWRIGHT_COPY_PROMPT ? 'on' : 'off';
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, pageSnapshot);
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
     const tracingGroupSteps: TestStepInternal[] = [];
@@ -321,7 +322,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     clientInstrumentation.removeListener(csiListener);
     await artifactsRecorder.didFinishTest();
-
   }, { auto: 'all-hooks-included',  title: 'trace recording', box: true, timeout: 0 } as any],
 
   _contextFactory: [async ({ browser, video, _reuseContext, _combinedContextOptions /** mitigate dep-via-auto lack of traceability */ }, use, testInfo) => {
@@ -617,10 +617,10 @@ class ArtifactsRecorder {
   private _reusedContexts = new Set<BrowserContext>();
   private _startedCollectingArtifacts: symbol;
 
-  private _pageSnapshotRecorder: SnapshotRecorder;
   private _screenshotRecorder: SnapshotRecorder;
+  private _pageSnapshot: string | undefined;
 
-  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, pageSnapshot: SnapshotRecorderMode) {
+  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
@@ -629,11 +629,6 @@ class ArtifactsRecorder {
     this._screenshotRecorder = new SnapshotRecorder(this, normalizeScreenshotMode(screenshot), 'screenshot', 'image/png', '.png', async (page, path) => {
       await page.screenshot({ ...screenshotOptions, timeout: 5000, path, caret: 'initial' });
     });
-
-    this._pageSnapshotRecorder = new SnapshotRecorder(this, pageSnapshot, 'pageSnapshot', 'text/yaml', '.aria.yml', async (page, path) => {
-      const ariaSnapshot = await page.locator('body').ariaSnapshot({ timeout: 5000 });
-      await fs.promises.writeFile(path, ariaSnapshot);
-    });
   }
 
   async willStartTest(testInfo: TestInfoImpl) {
@@ -641,7 +636,6 @@ class ArtifactsRecorder {
     testInfo._onDidFinishTestFunction = () => this.didFinishTestFunction();
 
     this._screenshotRecorder.fixOrdinal();
-    this._pageSnapshotRecorder.fixOrdinal();
 
     // Process existing contexts.
     await Promise.all(this._playwright._allContexts().map(async context => {
@@ -668,7 +662,14 @@ class ArtifactsRecorder {
     await this._stopTracing(context.tracing);
 
     await this._screenshotRecorder.captureTemporary(context);
-    await this._pageSnapshotRecorder.captureTemporary(context);
+
+    if (!process.env.PLAYWRIGHT_NO_COPY_PROMPT && this._testInfo.errors.length > 0) {
+      try {
+        const page = context.pages()[0];
+        // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
+        this._pageSnapshot ??= await page?.locator('body').ariaSnapshot({ timeout: 5000 });
+      } catch {}
+    }
   }
 
   async didCreateRequestContext(context: APIRequestContext) {
@@ -683,7 +684,6 @@ class ArtifactsRecorder {
 
   async didFinishTestFunction() {
     await this._screenshotRecorder.maybeCapture();
-    await this._pageSnapshotRecorder.maybeCapture();
   }
 
   async didFinishTest() {
@@ -701,7 +701,71 @@ class ArtifactsRecorder {
     })));
 
     await this._screenshotRecorder.persistTemporary();
-    await this._pageSnapshotRecorder.persistTemporary();
+    await this._attachErrorPrompts();
+  }
+
+  private async _attachErrorPrompts() {
+    if (process.env.PLAYWRIGHT_NO_COPY_PROMPT)
+      return;
+
+    if (this._testInfo.errors.length === 0)
+      return;
+
+    const testSources = await fs.promises.readFile(this._testInfo.file, 'utf-8');
+    for (const [index, error] of this._testInfo.errors.entries()) {
+      if (this._testInfo.attachments.find(a => a.name === `_prompt-${index}`))
+        continue;
+
+      const metadata = this._testInfo.config.metadata as MetadataWithCommitInfo;
+
+      const promptParts = [
+        `My Playwright test failed.`,
+        `Explain why, be concise, respect Playwright best practices.`,
+        '',
+        `Failed test: ${this._testInfo.titlePath.join(' >> ')}`,
+        '',
+        'Error:',
+        '',
+        '```',
+        stripAnsiEscapes(error.stack || error.message || ''),
+        '```',
+      ];
+
+      if (this._pageSnapshot) {
+        promptParts.push(
+            '',
+            'Page snapshot:',
+            '```yaml',
+            this._pageSnapshot,
+            '```',
+        );
+      }
+
+      if (metadata.gitDiff) {
+        promptParts.push(
+            '',
+            'Local changes:',
+            '```diff',
+            metadata.gitDiff,
+            '```',
+        );
+      }
+
+      promptParts.push(
+          '',
+          'Test file:',
+          '```ts',
+          `// ${this._testInfo.file}`,
+          testSources,
+          '```',
+      );
+
+      this._testInfo._attach({
+        name: `_prompt-${index}`,
+        contentType: 'text/markdown',
+        body: Buffer.from(promptParts.join('\n')),
+      }, undefined);
+    }
   }
 
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {

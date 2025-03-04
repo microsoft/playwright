@@ -19,21 +19,19 @@ import * as React from 'react';
 import './testErrorView.css';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
-import type { TestResult } from './types';
-import { fixTestPrompt } from '@web/components/prompts';
-import { useHTMLReport } from './reportContext';
-import type { MetadataWithCommitInfo } from '@playwright/isomorphic/types';
 
 export const TestErrorView: React.FC<{
   error: string;
   testId?: string;
-  result?: TestResult
-}> = ({ error, testId, result }) => {
+  prompt?: string;
+}> = ({ error, testId, prompt }) => {
   return (
     <CodeSnippet code={error} testId={testId}>
-      <div style={{ float: 'right', margin: 10 }}>
-        <PromptButton error={error} result={result} />
-      </div>
+      {prompt && (
+        <div style={{ float: 'right', margin: 10 }}>
+          <PromptButton prompt={prompt} />
+        </div>
+      )}
     </CodeSnippet>
   );
 };
@@ -48,24 +46,8 @@ export const CodeSnippet = ({ code, children, testId }: React.PropsWithChildren<
   );
 };
 
-const PromptButton: React.FC<{
-  error: string;
-  result?: TestResult;
-}> = ({ error, result }) => {
-  const report = useHTMLReport();
-  const commitInfo = report?.metadata as MetadataWithCommitInfo | undefined;
-  const pageSnapshot = result?.attachments.find(a => a.name === 'pageSnapshot')?.body;
-  const prompt = React.useMemo(() => fixTestPrompt(
-      error,
-      commitInfo?.gitDiff,
-      pageSnapshot
-  ), [commitInfo, pageSnapshot, error]);
-
+const PromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
   const [copied, setCopied] = React.useState(false);
-
-  if (!pageSnapshot)
-    return;
-
   return <button
     className='button'
     style={{ minWidth: 100 }}
