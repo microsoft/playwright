@@ -721,7 +721,7 @@ class ArtifactsRecorder {
         '',
         'Error:',
         '',
-        '```js',
+        '```',
         stripAnsiEscapes(error.stack || error.message || ''),
         '```',
       ];
