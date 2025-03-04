@@ -39,7 +39,7 @@
     },
     {
       "name": "webkit",
-      "revision": "2140",
+      "revision": "2141",
       "installByDefault": true,
       "revisionOverrides": {
         "debian11-x64": "2105",
@@ -50,6 +50,8 @@
         "mac11-arm64": "1816",
         "mac12": "2009",
         "mac12-arm64": "2009",
+        "mac13": "2140",
+        "mac13-arm64": "2140",
         "ubuntu20.04-x64": "2092",
         "ubuntu20.04-arm64": "2092"
       },
