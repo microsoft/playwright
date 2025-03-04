@@ -34,7 +34,6 @@ export const kOutputSymbol = Symbol('output');
 type ErrorDetails = {
   message: string;
   location?: Location;
-  prompt?: string;
 };
 
 type TestSummary = {
@@ -422,15 +421,13 @@ export function formatResultFailure(screen: Screen, test: TestCase, result: Test
     });
   }
 
-  const attachments = Object.fromEntries(result.attachments.map(a => [a.name, a]));
-  result.errors.forEach((error, i) => {
+  for (const error of result.errors) {
     const formattedError = formatError(screen, error);
     errorDetails.push({
       message: indent(formattedError.message, initialIndent),
       location: formattedError.location,
-      prompt: attachments[`_prompt-${i}`]?.body?.toString('utf-8'),
     });
-  });
+  }
   return errorDetails;
 }
 

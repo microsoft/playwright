@@ -81,7 +81,7 @@ export const TestResultView: React.FC<{
     [...screenshots, ...videos, ...traces].forEach(a => otherAttachments.delete(a));
     const otherAttachmentAnchors = [...otherAttachments].map(a => `attachment-${attachments.indexOf(a)}`);
     const diffs = groupImageDiffs(screenshots, result);
-    const errors = classifyErrors(result.errors, diffs);
+    const errors = classifyErrors(result.errors, diffs, result.attachments);
     return { screenshots: [...screenshots], videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors };
   }, [result]);
 
@@ -144,8 +144,8 @@ export const TestResultView: React.FC<{
   </div>;
 };
 
-function classifyErrors(testErrors: TestResult['errors'], diffs: ImageDiff[]) {
-  return testErrors.map(({ message: error, prompt }) => {
+function classifyErrors(testErrors: string[], diffs: ImageDiff[], attachments: TestAttachment[]) {
+  return testErrors.map((error, i) => {
     const firstLine = error.split('\n')[0];
     if (firstLine.includes('toHaveScreenshot') || firstLine.includes('toMatchSnapshot')) {
       const matchingDiff = diffs.find(diff => {
@@ -164,6 +164,8 @@ function classifyErrors(testErrors: TestResult['errors'], diffs: ImageDiff[]) {
         return { type: 'screenshot', diff: matchingDiff, errorPrefix, errorSuffix };
       }
     }
+
+    const prompt = attachments.find(a => a.name === `_prompt-${i}`)?.body; 
     return { type: 'regular', error, prompt };
   });
 }

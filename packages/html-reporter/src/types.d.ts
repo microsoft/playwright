@@ -95,7 +95,7 @@ export type TestResult = {
   startTime: string;
   duration: number;
   steps: TestStep[];
-  errors: { message: string, prompt?: string }[];
+  errors: string[];
   attachments: TestAttachment[];
   status: 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
 };
