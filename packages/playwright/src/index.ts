@@ -541,7 +541,7 @@ class SnapshotRecorder {
     this._ordinal = this.testInfo.attachments.filter(a => a.name === this._name).length;
   }
 
-  shouldCaptureUponFinish() {
+  private shouldCaptureUponFinish() {
     return this._mode === 'on' ||
         (this._mode === 'only-on-failure' && this.testInfo._isFailure()) ||
         (this._mode === 'on-first-failure' && this.testInfo._isFailure() && this.testInfo.retry === 0);
@@ -698,18 +698,12 @@ class ArtifactsRecorder {
     })));
 
     await this._screenshotRecorder.persistTemporary();
-    if (this._errorPrompts) {
-      await this._takePageSnapshot();
-      await this._attachErrorPrompts();
-    }
+    if (this._errorPrompts && leftoverContexts.length > 0)
+      await this._attachErrorPrompts(leftoverContexts[0]);
   }
 
-  private async _takePageSnapshot(context?: BrowserContext) {
+  private async _takePageSnapshot(context: BrowserContext) {
     if (this._pageSnapshot)
-      return;
-
-    context ??= this._playwright._allContexts()[0];
-    if (!context)
       return;
 
     const page = context.pages()[0];
@@ -721,7 +715,12 @@ class ArtifactsRecorder {
     } catch {}
   }
 
-  private async _attachErrorPrompts() {
+  private async _attachErrorPrompts(context: BrowserContext) {
+    if (this._testInfo.errors.length === 0)
+      return;
+
+    await this._takePageSnapshot(context);
+
     const testSources = await fs.promises.readFile(this._testInfo.file, 'utf-8');
     for (const [index, error] of this._testInfo.errors.entries()) {
       const metadata = this._testInfo.config.metadata as MetadataWithCommitInfo;
@@ -729,6 +728,8 @@ class ArtifactsRecorder {
       const promptParts = [
         `My Playwright test failed.`,
         `Explain why, be concise, respect Playwright best practices.`,
+        '',
+        `Failed test: ${this._testInfo.titlePath.join(' >> ')}`,
         '',
         'Error:',
         '',

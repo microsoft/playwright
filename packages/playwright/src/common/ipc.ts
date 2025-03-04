@@ -151,10 +151,7 @@ export function serializeConfig(config: FullConfigInternal, passCompilationCache
 
   try {
     result.metadata = JSON.stringify(config.config.metadata);
-  } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to serialize config metadata', error);
-  }
+  } catch (error) {}
 
   return result;
 }
