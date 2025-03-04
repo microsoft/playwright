@@ -108,3 +108,13 @@
   color: var(--vscode-input-foreground);
   background-color: var(--vscode-input-background);
 }
+
+.ui-mode-sidebar.collapsed {
+  display: flex;
+  flex-direction: column;
+  justify-items: center;
+  align-items: center;
+  gap: 8px;
+  border-right: 1px solid var(--vscode-panel-border);
+  padding: 3px 3px 3px 0px;
+}

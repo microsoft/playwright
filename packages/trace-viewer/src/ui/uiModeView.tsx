@@ -401,7 +401,7 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, [closeInstallDialog, testServerConnection]);
 
-  return <LLMProvider><div className='vbox ui-mode'>
+  return <LLMProvider><div className='hbox ui-mode'>
     {!hasBrowsers && <dialog ref={dialogRef}>
       <div className='title'><span className='codicon codicon-lightbulb'></span>Install browsers</div>
       <div className='body'>
@@ -417,6 +417,13 @@ export const UIModeView: React.FC<{}> = ({
       <div className='title'>UI Mode disconnected</div>
       <div><a href='#' onClick={() => window.location.href = '/'}>Reload the page</a> to reconnect</div>
     </div>}
+
+    {!expanded && (
+      <div className='vbox ui-mode-sidebar collapsed'>
+        <img src='playwright-logo.svg' alt='Playwright logo' />
+        <ToolbarButton icon='chevron-right' title='Expand' onClick={() => setExpanded(true)} />
+      </div>
+    )}
     <SplitView
       sidebarSize={250}
       minSidebarSize={150}
@@ -445,6 +452,7 @@ export const UIModeView: React.FC<{}> = ({
           </CommitInfoProvider>
         </div>
       </div>}
+      sidebarHidden={!expanded}
       sidebar={<div className='vbox ui-mode-sidebar'>
         <Toolbar noShadow={true} noMinHeight={true}>
           <img src='playwright-logo.svg' alt='Playwright logo' />
@@ -455,10 +463,7 @@ export const UIModeView: React.FC<{}> = ({
             {outputContainsError && <div title='Output contains error' style={{ position: 'absolute', top: 2, right: 2, width: 7, height: 7, borderRadius: '50%', backgroundColor: 'var(--vscode-notificationsErrorIcon-foreground)' }} />}
           </div>
           {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-list-warningForeground)' }} title='Playwright browsers are missing' onClick={openInstallDialog} />}
-          <div
-              className={clsx('codicon', 'codicon-chevron-left')}
-              style={{ cursor: 'pointer', color: 'var(--vscode-foreground)', marginLeft: '5px' }}
-              onClick={() => setExpanded(false)} />
+          <ToolbarButton icon='chevron-left' title='Collapse' onClick={() => setExpanded(false)} />
         </Toolbar>
         <FiltersView
           filterText={filterText}
