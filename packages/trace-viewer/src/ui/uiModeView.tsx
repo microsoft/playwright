@@ -71,6 +71,7 @@ const isMac = navigator.platform === 'MacIntel';
 
 export const UIModeView: React.FC<{}> = ({
 }) => {
+  const [expanded, setExpanded] = React.useState(true);
   const [filterText, setFilterText] = React.useState<string>('');
   const [isShowingOutput, setIsShowingOutput] = React.useState<boolean>(false);
   const [outputContainsError, setOutputContainsError] = React.useState(false);
@@ -454,6 +455,10 @@ export const UIModeView: React.FC<{}> = ({
             {outputContainsError && <div title='Output contains error' style={{ position: 'absolute', top: 2, right: 2, width: 7, height: 7, borderRadius: '50%', backgroundColor: 'var(--vscode-notificationsErrorIcon-foreground)' }} />}
           </div>
           {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-list-warningForeground)' }} title='Playwright browsers are missing' onClick={openInstallDialog} />}
+          <div
+              className={clsx('codicon', 'codicon-chevron-left')}
+              style={{ cursor: 'pointer', color: 'var(--vscode-foreground)', marginLeft: '5px' }}
+              onClick={() => setExpanded(false)} />
         </Toolbar>
         <FiltersView
           filterText={filterText}
