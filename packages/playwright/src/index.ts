@@ -713,6 +713,9 @@ class ArtifactsRecorder {
 
     const testSources = await fs.promises.readFile(this._testInfo.file, 'utf-8');
     for (const [index, error] of this._testInfo.errors.entries()) {
+      if (this._testInfo.attachments.find(a => a.name === `_prompt-${index}`))
+        continue;
+
       const metadata = this._testInfo.config.metadata as MetadataWithCommitInfo;
 
       const promptParts = [

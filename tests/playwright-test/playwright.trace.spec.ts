@@ -335,7 +335,6 @@ test('should not override trace file in afterAll', async ({ runInlineTest, serve
     '    apiRequestContext.get',
     '    fixture: request',
     '      apiRequestContext.dispose',
-    '    attach "_prompt-0"',
     'Worker Cleanup',
     '  fixture: browser',
   ]);
@@ -999,7 +998,6 @@ test('should record nested steps, even after timeout', async ({ runInlineTest },
     '      barPage teardown',
     '      step in barPage teardown',
     '        page.close',
-    '    attach "_prompt-0"',
     'Worker Cleanup',
     '  fixture: browser',
   ]);
