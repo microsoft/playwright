@@ -64,7 +64,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-22.04]
     runs-on: ${{ matrix.os }}
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
