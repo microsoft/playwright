@@ -130,18 +130,18 @@ export class MultiTraceModel {
   }
 
   private _errorDescriptorsFromTestRunner(): ErrorDescription[] {
-    const errorPrompts: string[] = [];
+    const errorPrompts: Record<string, string> = {};
     for (const action of this.actions) {
       for (const attachment of action.attachments ?? []) {
-        if (attachment.name === '_prompt')
-          errorPrompts.push(attachmentURL({ ...attachment, traceUrl: action.context.traceUrl }));
+        if (attachment.name.startsWith('_prompt-'))
+          errorPrompts[attachment.name] = attachmentURL({ ...attachment, traceUrl: action.context.traceUrl });
       }
     }
 
     return this.errors.filter(e => !!e.message).map((error, i) => ({
       stack: error.stack,
       message: error.message,
-      promptURL: errorPrompts[i],
+      promptURL: errorPrompts[`_prompt-${i}`],
     }));
   }
 }

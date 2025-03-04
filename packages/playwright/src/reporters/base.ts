@@ -430,13 +430,13 @@ export function formatResultFailure(screen: Screen, test: TestCase, result: Test
     });
   }
 
-  const errorPrompts = result.attachments.filter(a => a.name === '_prompt');
+  const attachments = Object.fromEntries(result.attachments.map(a => [a.name, a]));
   result.errors.forEach((error, i) => {
     const formattedError = formatError(screen, error);
     errorDetails.push({
       message: indent(formattedError.message, initialIndent),
       location: formattedError.location,
-      prompt: errorPrompts[i]?.body?.toString('utf-8'),
+      prompt: attachments[`_prompt-${i}`]?.body?.toString('utf-8'),
     });
   });
   return errorDetails;

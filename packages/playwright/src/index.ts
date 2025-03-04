@@ -715,7 +715,7 @@ class ArtifactsRecorder {
       path: this._testInfo.file,
       contents: await fs.promises.readFile(this._testInfo.file, 'utf-8'),
     };
-    for (const error of this._testInfo.errors) {
+    for (const [index, error] of this._testInfo.errors.entries()) {
       const metadata = this._testInfo.config.metadata as MetadataWithCommitInfo;
       const prompt = compilePromptForError(
           error,
@@ -724,7 +724,7 @@ class ArtifactsRecorder {
           this._pageSnapshot, // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
       );
       this._testInfo.attachments.push({
-        name: '_prompt',
+        name: `_prompt-${index + 1}`,
         contentType: 'text/markdown',
         body: Buffer.from(prompt),
       });
