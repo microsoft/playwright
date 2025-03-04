@@ -24,9 +24,9 @@ import { open } from 'playwright-core/lib/utilsBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 
-import { formatError, formatResultFailure, internalScreen, stripAnsiEscapes } from './base';
+import { formatError, formatResultFailure, internalScreen } from './base';
 import { codeFrameColumns } from '../transform/babelBundle';
-import { resolveReporterOutputPath } from '../util';
+import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
 import type { Metadata } from '../../types/test';
