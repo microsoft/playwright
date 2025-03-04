@@ -25,6 +25,7 @@ import { AIConversation } from './aiConversation';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { useIsLLMAvailable, useLLMChat } from './llm';
 import { useAsyncMemo } from '@web/uiUtils';
+import { attachmentURL } from './attachmentsTab';
 
 const CopyPromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
   return (
@@ -66,9 +67,9 @@ function Error({ message, error, errorId, sdkLanguage, revealInSource }: { messa
   }
 
   const prompt = useAsyncMemo(async () => {
-    if (!error.promptURL)
+    if (!error.prompt)
       return;
-    const response = await fetch(error.promptURL);
+    const response = await fetch(attachmentURL(error.prompt));
     return await response.text();
   }, [error], undefined);
 

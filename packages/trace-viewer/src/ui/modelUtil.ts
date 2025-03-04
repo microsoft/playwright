@@ -20,7 +20,6 @@ import type * as trace from '@trace/trace';
 import type { ActionTraceEvent } from '@trace/trace';
 import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
 import type { StackFrame } from '@protocol/channels';
-import { attachmentURL } from './attachmentsTab';
 
 const contextSymbol = Symbol('context');
 const nextInContextSymbol = Symbol('next');
@@ -54,7 +53,7 @@ export type ErrorDescription = {
   action?: ActionTraceEventInContext;
   stack?: StackFrame[];
   message: string;
-  promptURL?: string;
+  prompt?: trace.AfterActionTraceEventAttachment & { traceUrl: string };
 };
 
 export class MultiTraceModel {
@@ -130,18 +129,18 @@ export class MultiTraceModel {
   }
 
   private _errorDescriptorsFromTestRunner(): ErrorDescription[] {
-    const errorPrompts: Record<string, string> = {};
+    const errorPrompts: Record<string, trace.AfterActionTraceEventAttachment & { traceUrl: string }> = {};
     for (const action of this.actions) {
       for (const attachment of action.attachments ?? []) {
         if (attachment.name.startsWith('_prompt-'))
-          errorPrompts[attachment.name] = attachmentURL({ ...attachment, traceUrl: action.context.traceUrl });
+          errorPrompts[attachment.name] = { ...attachment, traceUrl: action.context.traceUrl };
       }
     }
 
     return this.errors.filter(e => !!e.message).map((error, i) => ({
       stack: error.stack,
       message: error.message,
-      promptURL: errorPrompts[`_prompt-${i}`],
+      prompt: errorPrompts[`_prompt-${i}`],
     }));
   }
 }
