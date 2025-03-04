@@ -3,6 +3,7 @@
 ../utilsBundle.ts
 ../transform
 ../isomorphic/teleReceiver.ts
+../reporters/base.ts
 
 [testType.ts]
 ../matchers/expect.ts

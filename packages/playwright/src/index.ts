@@ -22,7 +22,7 @@ import { setBoxedStackPrefixes, asLocator, createGuid, currentZone, debugMode, i
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { fixTestPrompt } from './reporters/base';
+import { compilePromptForError } from './common/prompts';
 
 import type { MetadataWithCommitInfo } from './isomorphic/types';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
@@ -717,7 +717,7 @@ class ArtifactsRecorder {
     };
     for (const error of this._testInfo.errors) {
       const metadata = this._testInfo.config.metadata as MetadataWithCommitInfo;
-      const prompt = fixTestPrompt(
+      const prompt = compilePromptForError(
           error,
           file,
           metadata.gitDiff,
