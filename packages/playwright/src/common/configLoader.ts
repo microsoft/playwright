@@ -109,8 +109,7 @@ export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLI
   // 2. Load and validate playwright config.
   const userConfig = await loadUserConfig(location);
   validateConfig(location.resolvedConfigFile || '<default config>', userConfig);
-  userConfig.metadata = metadata ?? userConfig.metadata;
-  const fullConfig = new FullConfigInternal(location, userConfig, overrides || {});
+  const fullConfig = new FullConfigInternal(location, userConfig, overrides || {}, metadata);
   fullConfig.defineConfigWasUsed = !!(userConfig as any)[kDefineConfigWasUsed];
   if (ignoreProjectDependencies) {
     for (const project of fullConfig.projects) {
