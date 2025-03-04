@@ -618,7 +618,7 @@ class ArtifactsRecorder {
   private _startedCollectingArtifacts: symbol;
 
   private _screenshotRecorder: SnapshotRecorder;
-  private _attachedErrorPrompts = false;
+  private _pageSnapshot: string | undefined;
 
   constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
     this._playwright = playwright;
@@ -662,7 +662,9 @@ class ArtifactsRecorder {
     await this._stopTracing(context.tracing);
 
     await this._screenshotRecorder.captureTemporary(context);
-    await this._attachErrorPrompts(context);
+
+    if (!this._pageSnapshot && this._testInfo.errors.length > 0)
+      this._pageSnapshot = await context.pages()[0]?.locator('body').ariaSnapshot({ timeout: 5000 }).catch(() => undefined); // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
   }
 
   async didCreateRequestContext(context: APIRequestContext) {
@@ -694,27 +696,15 @@ class ArtifactsRecorder {
     })));
 
     await this._screenshotRecorder.persistTemporary();
+    await this._attachErrorPrompts();
   }
 
-  private async _attachErrorPrompts(context: BrowserContext) {
+  private async _attachErrorPrompts() {
     if (process.env.PLAYWRIGHT_NO_COPY_PROMPT)
       return;
 
     if (this._testInfo.errors.length === 0)
       return;
-
-    if (this._attachedErrorPrompts)
-      return;
-    this._attachedErrorPrompts = true;
-
-    let pageSnapshot: string | undefined;
-    const page = context.pages()[0];
-    if (!page)
-      return;
-
-    try {
-      pageSnapshot = await page.locator('body').ariaSnapshot({ timeout: 5000 });  // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
-    } catch {}
 
     const testSources = await fs.promises.readFile(this._testInfo.file, 'utf-8');
     for (const [index, error] of this._testInfo.errors.entries()) {
@@ -733,12 +723,12 @@ class ArtifactsRecorder {
         '```',
       ];
 
-      if (pageSnapshot) {
+      if (this._pageSnapshot) {
         promptParts.push(
             '',
             'Page snapshot:',
             '```yaml',
-            pageSnapshot,
+            this._pageSnapshot,
             '```',
         );
       }
