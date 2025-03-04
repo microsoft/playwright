@@ -366,6 +366,8 @@ export function formatFailure(screen: Screen, config: FullConfig, test: TestCase
     resultLines.push(...errors.map(error => '\n' + error.message));
     for (let i = 0; i < result.attachments.length; ++i) {
       const attachment = result.attachments[i];
+      if (attachment.name.startsWith('_'))
+        continue;
       const hasPrintableContent = attachment.contentType.startsWith('text/');
       if (!attachment.path && !hasPrintableContent)
         continue;
