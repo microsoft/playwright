@@ -336,10 +336,18 @@ await Expect(Page).ToHaveURLAsync(new Regex(".*checkout"));
 
 ### param: PageAssertions.toHaveURL.url
 * since: v1.18
+* langs: js
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 Expected URL string, RegExp, or predicate receiving [URL] to match.
 When [`option: Browser.newContext.baseURL`] is provided via the context options and the `url` argument is a string, the two values are merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor and used for the comparison against the current browser URL.
+
+### param: PageAssertions.toHaveURL.urlOrRegExp
+* since: v1.18
+* langs: csharp, python, java
+- `urlOrRegExp` <[string]|[RegExp]>
+
+Expected URL string or RegExp.
 
 ### option: PageAssertions.toHaveURL.ignoreCase
 * since: v1.44
