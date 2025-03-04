@@ -251,8 +251,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const pageSnapshot = process.env.PLAYWRIGHT_COPY_PROMPT ? 'on' : 'off';
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, pageSnapshot);
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, !!process.env.PLAYWRIGHT_COPY_PROMPT);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
     const tracingGroupSteps: TestStepInternal[] = [];
@@ -618,11 +617,11 @@ class ArtifactsRecorder {
   private _reusedContexts = new Set<BrowserContext>();
   private _startedCollectingArtifacts: symbol;
 
-  private _pageSnapshotRecorder: SnapshotRecorder;
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot?: string;
+  private _errorPrompts: boolean;
 
-  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, pageSnapshot: SnapshotRecorderMode) {
+  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, errorPrompts: boolean) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
@@ -631,12 +630,7 @@ class ArtifactsRecorder {
     this._screenshotRecorder = new SnapshotRecorder(this, normalizeScreenshotMode(screenshot), 'screenshot', 'image/png', '.png', async (page, path) => {
       await page.screenshot({ ...screenshotOptions, timeout: 5000, path, caret: 'initial' });
     });
-
-    this._pageSnapshotRecorder = new SnapshotRecorder(this, pageSnapshot, 'pageSnapshot', 'text/yaml', '.aria.yml', async (page, path) => {
-      const ariaSnapshot = await page.locator('body').ariaSnapshot({ timeout: 5000 });
-      this._pageSnapshot ??= ariaSnapshot;
-      await fs.promises.writeFile(path, ariaSnapshot);
-    });
+    this._errorPrompts = errorPrompts;
   }
 
   async willStartTest(testInfo: TestInfoImpl) {
@@ -644,7 +638,6 @@ class ArtifactsRecorder {
     testInfo._onDidFinishTestFunction = () => this.didFinishTestFunction();
 
     this._screenshotRecorder.fixOrdinal();
-    this._pageSnapshotRecorder.fixOrdinal();
 
     // Process existing contexts.
     await Promise.all(this._playwright._allContexts().map(async context => {
@@ -671,7 +664,9 @@ class ArtifactsRecorder {
     await this._stopTracing(context.tracing);
 
     await this._screenshotRecorder.captureTemporary(context);
-    await this._pageSnapshotRecorder.captureTemporary(context);
+
+    if (this._errorPrompts)
+      await this._takePageSnapshot(context);
   }
 
   async didCreateRequestContext(context: APIRequestContext) {
@@ -686,7 +681,6 @@ class ArtifactsRecorder {
 
   async didFinishTestFunction() {
     await this._screenshotRecorder.maybeCapture();
-    await this._pageSnapshotRecorder.maybeCapture();
   }
 
   async didFinishTest() {
@@ -704,10 +698,27 @@ class ArtifactsRecorder {
     })));
 
     await this._screenshotRecorder.persistTemporary();
-    await this._pageSnapshotRecorder.persistTemporary();
-
-    if (this._pageSnapshotRecorder.shouldCaptureUponFinish())
+    if (this._errorPrompts) {
+      await this._takePageSnapshot();
       await this._attachErrorPrompts();
+    }
+  }
+
+  private async _takePageSnapshot(context?: BrowserContext) {
+    if (this._pageSnapshot)
+      return;
+
+    context ??= this._playwright._allContexts()[0];
+    if (!context)
+      return;
+
+    const page = context.pages()[0];
+    if (!page)
+      return;
+
+    try {
+      this._pageSnapshot = await page.locator('body').ariaSnapshot({ timeout: 5000 });
+    } catch {}
   }
 
   private async _attachErrorPrompts() {
