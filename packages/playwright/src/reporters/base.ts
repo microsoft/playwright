@@ -509,18 +509,10 @@ export function formatError(screen: Screen, error: TestError): ErrorDetails {
   // Now that we filter out internals from our stack traces, we can safely render
   // the helper / original exception locations.
   const parsedStack = stack ? prepareErrorStack(stack) : undefined;
-  let parsedMessage = parsedStack?.message || message;
-  if (!screen.colors.enabled)
-    parsedMessage = stripAnsiEscapes(parsedMessage);
-  tokens.push(parsedMessage);
+  tokens.push(parsedStack?.message || message);
 
-  if (error.snippet) {
-    let snippet = error.snippet;
-    if (!screen.colors.enabled)
-      snippet = stripAnsiEscapes(snippet);
-    tokens.push('');
-    tokens.push(snippet);
-  }
+  if (error.snippet)
+    tokens.push('', error.snippet);
 
   if (parsedStack && parsedStack.stackLines.length)
     tokens.push(screen.colors.dim(parsedStack.stackLines.join('\n')));
@@ -534,7 +526,7 @@ export function formatError(screen: Screen, error: TestError): ErrorDetails {
 
   return {
     location,
-    message: tokens.join('\n'),
+    message: screen.colors.enabled ? tokens.join('\n') : stripAnsiEscapes(tokens.join('\n')),
   };
 }
 
