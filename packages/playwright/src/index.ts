@@ -251,7 +251,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, !process.env.PLAYWRIGHT_NO_COPY_PROMPT);
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
     const tracingGroupSteps: TestStepInternal[] = [];
@@ -618,10 +618,8 @@ class ArtifactsRecorder {
   private _startedCollectingArtifacts: symbol;
 
   private _screenshotRecorder: SnapshotRecorder;
-  private _pageSnapshot?: string;
-  private _errorPrompts: boolean;
 
-  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, errorPrompts: boolean) {
+  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
@@ -630,7 +628,6 @@ class ArtifactsRecorder {
     this._screenshotRecorder = new SnapshotRecorder(this, normalizeScreenshotMode(screenshot), 'screenshot', 'image/png', '.png', async (page, path) => {
       await page.screenshot({ ...screenshotOptions, timeout: 5000, path, caret: 'initial' });
     });
-    this._errorPrompts = errorPrompts;
   }
 
   async willStartTest(testInfo: TestInfoImpl) {
@@ -664,9 +661,6 @@ class ArtifactsRecorder {
     await this._stopTracing(context.tracing);
 
     await this._screenshotRecorder.captureTemporary(context);
-
-    if (this._errorPrompts)
-      await this._takePageSnapshot(context);
   }
 
   async didCreateRequestContext(context: APIRequestContext) {
@@ -698,28 +692,22 @@ class ArtifactsRecorder {
     })));
 
     await this._screenshotRecorder.persistTemporary();
-    if (this._errorPrompts && leftoverContexts.length > 0)
+    if (!process.env.PLAYWRIGHT_NO_COPY_PROMPT && leftoverContexts.length > 0)
       await this._attachErrorPrompts(leftoverContexts[0]);
-  }
-
-  private async _takePageSnapshot(context: BrowserContext) {
-    if (this._pageSnapshot)
-      return;
-
-    const page = context.pages()[0];
-    if (!page)
-      return;
-
-    try {
-      this._pageSnapshot = await page.locator('body').ariaSnapshot({ timeout: 5000 });
-    } catch {}
   }
 
   private async _attachErrorPrompts(context: BrowserContext) {
     if (this._testInfo.errors.length === 0)
       return;
 
-    await this._takePageSnapshot(context);
+    let pageSnapshot: string | undefined;
+    const page = context.pages()[0];
+    if (!page)
+      return;
+
+    try {
+      pageSnapshot = await page.locator('body').ariaSnapshot({ timeout: 5000 });  // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
+    } catch {}
 
     const testSources = await fs.promises.readFile(this._testInfo.file, 'utf-8');
     for (const [index, error] of this._testInfo.errors.entries()) {
@@ -738,12 +726,12 @@ class ArtifactsRecorder {
         '```',
       ];
 
-      if (this._pageSnapshot) {
+      if (pageSnapshot) {
         promptParts.push(
             '',
             'Page snapshot:',
             '```yaml',
-            this._pageSnapshot, // // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
+            pageSnapshot,
             '```',
         );
       }
