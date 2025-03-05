@@ -103,11 +103,11 @@ export const AttachmentsTab: React.FunctionComponent<{
     for (const action of model?.actions || []) {
       const traceUrl = action.context.traceUrl;
       for (const attachment of action.attachments || []) {
-        if (attachment.name.startsWith("_prompt-"))
-          continue
+        if (attachment.name.startsWith('_prompt-'))
+          continue;
         attachments.add({ ...attachment, traceUrl });
       }
-        
+
     }
     const diffMap = new Map<string, { expected: Attachment | undefined, actual: Attachment | undefined, diff: Attachment | undefined }>();
 
