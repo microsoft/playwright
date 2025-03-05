@@ -56,7 +56,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
   HTML report will show this information when available:
 
-  ![Git information in the report](https://github.com/user-attachments/assets/9ca4a05a-1485-4521-826b-50568babec3f)
+  ![Git information in the report](https://github.com/user-attachments/assets/f5b3f6f4-aa08-4a24-816c-7edf33ef0c37)
 
 ### Test runner
 
