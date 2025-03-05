@@ -304,7 +304,7 @@ export type SetOriginStorage = {
 export type OriginStorage = {
   origin: string,
   localStorage: NameValue[],
-  indexedDB: IndexedDBDatabase[],
+  indexedDB?: IndexedDBDatabase[],
 };
 
 export type SerializedError = {
