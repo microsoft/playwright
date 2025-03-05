@@ -458,7 +458,6 @@ test('attachments tab shows all but top-level .push attachments', async ({ runUI
       - treeitem /step/:
         - group:
           - treeitem /attach \\"foo-attach\\"/
-      - treeitem /attach \\"bar-push\\"/
       - treeitem /attach \\"bar-attach\\"/
   `);
   await page.getByRole('tab', { name: 'Attachments' }).click();
