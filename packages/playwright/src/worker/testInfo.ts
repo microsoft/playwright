@@ -414,17 +414,10 @@ export class TestInfoImpl implements TestInfo {
 
   _attach(attachment: TestInfo['attachments'][0], stepId: string | undefined) {
     const index = this._attachmentsPush(attachment) - 1;
-    if (stepId) {
+    if (stepId)
       this._stepMap.get(stepId)!.attachmentIndices.push(index);
-    } else {
-      // trace viewer has no means of representing attachments outside of a step,
-      // so we create an artificial action that's hidden in the UI
-      // the alternative would be to have one hidden step at the end with all top-level attachments,
-      // but that would delay useful information in live traces.
-      const callId = `attach@${++this._lastStepId}`;
-      this._tracing.appendBeforeActionForStep(callId, this._findLastPredefinedStep(this._steps)?.stepId, 'attach', `_attach "${attachment.name}"`, undefined, []);
-      this._tracing.appendAfterActionForStep(callId, undefined, [attachment]);
-    }
+    else
+      this._tracing.appendTopLevelAttachment(attachment);
 
     this._onAttach({
       testId: this.testId,
