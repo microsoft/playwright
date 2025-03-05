@@ -58,7 +58,7 @@ const PromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
         setCopied(false);
       }, 3000);
     }}>
-    {copied ? 'Copied' : 'Copy as Prompt'}
+    {copied ? 'Copied' : 'Copy prompt'}
   </button>;
 };
 
