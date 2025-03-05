@@ -9675,8 +9675,8 @@ export interface TestStepInfo {
    * import { test, expect } from '@playwright/test';
    *
    * test('my test', async ({ page }) => {
-   *   await test.step('check expectations', async () => {
-   *     test.skip();
+   *   await test.step('check expectations', async step => {
+   *     step.skip();
    *     // step body below will not run
    *     // ...
    *   });
@@ -9696,9 +9696,8 @@ export interface TestStepInfo {
    * import { test, expect } from '@playwright/test';
    *
    * test('my test', async ({ page, isMobile }) => {
-   *   await test.step('check desktop expectations', async () => {
-   *     test.skip(isMobile, 'not present in the mobile layout');
-   *
+   *   await test.step('check desktop expectations', async step => {
+   *     step.skip(isMobile, 'not present in the mobile layout');
    *     // step body below will not run
    *     // ...
    *   });
