@@ -58,8 +58,6 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
   ![Git information in the report](https://github.com/user-attachments/assets/9ca4a05a-1485-4521-826b-50568babec3f)
 
-### Test runner
-
 * A new [TestStepInfo] object is now available in test steps. You can add step attachments or skip the step under some conditions.
 
   ```js
