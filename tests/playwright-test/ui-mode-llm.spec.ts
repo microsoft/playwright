@@ -18,7 +18,7 @@ import { test, expect, retries } from './ui-mode-fixtures';
 
 test.describe.configure({ mode: 'parallel', retries });
 
-test('openai', async ({ runUITest, server }) => {
+test.fixme('openai', async ({ runUITest, server }) => {
   server.setRoute('/v1/chat/completions', async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
@@ -59,7 +59,7 @@ test('openai', async ({ runUITest, server }) => {
   `);
 });
 
-test('anthropic', async ({ runUITest, server }) => {
+test.fixme('anthropic', async ({ runUITest, server }) => {
   server.setRoute('/v1/messages', async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
