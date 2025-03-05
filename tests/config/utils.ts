@@ -165,6 +165,8 @@ export async function parseTrace(file: string): Promise<{ resources: Map<string,
   const { rootItem } = buildActionTree(model.actions);
   const actionTree: string[] = [];
   const visit = (actionItem: ActionTreeItem, indent: string) => {
+    if (actionItem.action.apiName.startsWith('attach "_prompt-"'))
+      return;
     actionTree.push(`${indent}${actionItem.action?.apiName || actionItem.id}`);
     for (const child of actionItem.children)
       visit(child, indent + '  ');

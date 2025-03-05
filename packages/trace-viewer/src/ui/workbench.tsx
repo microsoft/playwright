@@ -164,7 +164,8 @@ export const Workbench: React.FunctionComponent<{
   const networkModel = useNetworkTabModel(model, selectedTime);
   const errorsModel = useErrorsTabModel(model);
   const attachments = React.useMemo(() => {
-    return model?.actions.map(a => a.attachments || []).flat() || [];
+    const attachments = model?.actions.flatMap(a => a.attachments ?? []) ?? [];
+    return attachments.filter(a => !a.name.startsWith('_prompt-'));
   }, [model]);
 
   const sdkLanguage = model?.sdkLanguage || 'javascript';
