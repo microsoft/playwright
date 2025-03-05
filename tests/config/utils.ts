@@ -173,7 +173,7 @@ export async function parseTrace(file: string): Promise<{ resources: Map<string,
   };
   rootItem.children.forEach(a => visit(a, ''));
   return {
-    apiNames: model.actions.map(a => a.apiName),
+    apiNames: model.actions.map(a => a.apiName).filter(a => !a.startsWith('attach "_prompt-"')),
     resources: backend.entries,
     actions: model.actions,
     events: model.events,
