@@ -12,6 +12,8 @@ export default defineConfig({
   /* Maximum time one test can run for. */
   timeout: 15_000,
 
+  captureGitInfo: { commit: true, diff: true },
+
   expect: {
 
     /**

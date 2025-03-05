@@ -519,9 +519,11 @@ test('fails', async ({ page }) => {
   const prompt = await page.evaluate(() => navigator.clipboard.readText());
   expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
   expect(prompt.replaceAll('\r\n', '\n'), 'contains test sources').toContain(`
-test('fails', async ({ page }) => {
-  await page.setContent('<button>Submit</button>');
-  expect(1).toBe(2);
-});
+  1 | import { test, expect } from '@playwright/test';
+  2 | test('fails', async ({ page }) => {
+  3 |   await page.setContent('<button>Submit</button>');
+> 4 |   expect(1).toBe(2);
+    |             ^ Error: expect(received).toBe(expected) // Object.is equality
+  5 | });
     `.trim());
 });

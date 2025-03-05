@@ -22,15 +22,15 @@ import { setBoxedStackPrefixes, asLocator, createGuid, currentZone, debugMode, i
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { stripAnsiEscapes } from './util';
+import { attachErrorPrompts } from './prompt';
 
-import type { MetadataWithCommitInfo } from './isomorphic/types';
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import type { ApiCallData, ClientInstrumentation, ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
 import type { Playwright as PlaywrightImpl } from '../../playwright-core/src/client/playwright';
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing, Video } from 'playwright-core';
+
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
@@ -619,6 +619,7 @@ class ArtifactsRecorder {
 
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot: string | undefined;
+  private _sourceCache: Map<string, string> = new Map();
 
   constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
     this._playwright = playwright;
@@ -701,71 +702,7 @@ class ArtifactsRecorder {
     })));
 
     await this._screenshotRecorder.persistTemporary();
-    await this._attachErrorPrompts();
-  }
-
-  private async _attachErrorPrompts() {
-    if (process.env.PLAYWRIGHT_NO_COPY_PROMPT)
-      return;
-
-    if (this._testInfo.errors.length === 0)
-      return;
-
-    const testSources = await fs.promises.readFile(this._testInfo.file, 'utf-8');
-    for (const [index, error] of this._testInfo.errors.entries()) {
-      if (this._testInfo.attachments.find(a => a.name === `_prompt-${index}`))
-        continue;
-
-      const metadata = this._testInfo.config.metadata as MetadataWithCommitInfo;
-
-      const promptParts = [
-        `My Playwright test failed.`,
-        `Explain why, be concise, respect Playwright best practices.`,
-        '',
-        `Failed test: ${this._testInfo.titlePath.join(' >> ')}`,
-        '',
-        'Error:',
-        '',
-        '```',
-        stripAnsiEscapes(error.stack || error.message || ''),
-        '```',
-      ];
-
-      if (this._pageSnapshot) {
-        promptParts.push(
-            '',
-            'Page snapshot:',
-            '```yaml',
-            this._pageSnapshot,
-            '```',
-        );
-      }
-
-      if (metadata.gitDiff) {
-        promptParts.push(
-            '',
-            'Local changes:',
-            '```diff',
-            metadata.gitDiff,
-            '```',
-        );
-      }
-
-      promptParts.push(
-          '',
-          'Test file:',
-          '```ts',
-          `// ${this._testInfo.file}`,
-          testSources,
-          '```',
-      );
-
-      this._testInfo._attach({
-        name: `_prompt-${index}`,
-        contentType: 'text/markdown',
-        body: Buffer.from(promptParts.join('\n')),
-      }, undefined);
-    }
+    await attachErrorPrompts(this._testInfo, this._sourceCache, this._pageSnapshot);
   }
 
   private async _startTraceChunkOnContextCreation(tracing: Tracing) {
