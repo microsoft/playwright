@@ -8,7 +8,7 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.51
 
-### Highlights
+### StorageState for indexedDB
 
 * New option [`option: BrowserContext.storageState.indexedDB`] for [`method: BrowserContext.storageState`] allows to save and restore IndexedDB contents. Useful when your application uses [IndexedDB API](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) to store authentication tokens, like Firebase Authentication.
 
@@ -29,11 +29,15 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
   });
   ```
 
-* New "Copy as Prompt" button on errors in the HTML report, trace viewer and UI mode. Click to copy a pre-filled LLM prompt that contains the error message and useful context for fixing the error.
+### Copy as prompt
+
+New "Copy as Prompt" button on errors in the HTML report, trace viewer and UI mode. Click to copy a pre-filled LLM prompt that contains the error message and useful context for fixing the error.
 
   ![Copy as Prompt](https://github.com/user-attachments/assets/f3654407-dd6d-4240-9845-0d96df2bf30a)
 
-* New option [`option: Locator.filter.visible`] for [`method: Locator.filter`] allows matching only visible elements.
+### Filter visible elements
+
+New option [`option: Locator.filter.visible`] for [`method: Locator.filter`] allows matching only visible elements.
 
   ```js title="example.spec.ts"
   test('some test', async ({ page }) => {
@@ -44,7 +48,9 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
   });
   ```
 
-* Set option [`property: TestConfig.captureGitInfo`] to capture git information into [`property: TestConfig.metadata`].
+### Git information in HTML report
+
+Set option [`property: TestConfig.captureGitInfo`] to capture git information into [`property: TestConfig.metadata`].
 
   ```js title="playwright.config.ts"
   import { defineConfig } from '@playwright/test';
@@ -56,11 +62,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
   HTML report will show this information when available:
 
-  ![Git information in the report](https://github.com/user-attachments/assets/9ca4a05a-1485-4521-826b-50568babec3f)
+  ![Git information in the report](https://github.com/user-attachments/assets/f5b3f6f4-aa08-4a24-816c-7edf33ef0c37)
 
-### Test runner
+### Test Step improvements
 
-* A new [TestStepInfo] object is now available in test steps. You can add step attachments or skip the step under some conditions.
+A new [TestStepInfo] object is now available in test steps. You can add step attachments or skip the step under some conditions.
 
   ```js
   test('some test', async ({ page, isMobile }) => {
