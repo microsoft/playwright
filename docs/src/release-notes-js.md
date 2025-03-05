@@ -29,6 +29,10 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
   });
   ```
 
+* New "Copy as Prompt" button on errors in the HTML report, trace viewer and UI mode. Click to copy a pre-filled LLM prompt that contains the error message and useful context for fixing the error.
+
+  ![Copy as Prompt](https://github.com/user-attachments/assets/f3654407-dd6d-4240-9845-0d96df2bf30a)
+
 * New option [`option: Locator.filter.visible`] for [`method: Locator.filter`] allows matching only visible elements.
 
   ```js title="example.spec.ts"
