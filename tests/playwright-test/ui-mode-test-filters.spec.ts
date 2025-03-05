@@ -143,9 +143,9 @@ test('should filter by project', async ({ runUITest }) => {
   await expect(page.getByText('Projects: foo')).toBeVisible();
 
   await page.getByText('Status:').click();
-  await expect(page.getByLabel('foo')).toBeChecked();
-  await expect(page.getByLabel('bar')).not.toBeChecked();
-  await page.getByLabel('bar').setChecked(true);
+  await expect(page.getByRole('checkbox', { name: 'foo' })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: 'bar' })).not.toBeChecked();
+  await page.getByRole('checkbox', { name: 'bar' }).setChecked(true);
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts

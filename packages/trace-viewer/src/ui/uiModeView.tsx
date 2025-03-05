@@ -69,6 +69,7 @@ const isMac = navigator.platform === 'MacIntel';
 
 export const UIModeView: React.FC<{}> = ({
 }) => {
+  const [expanded, setExpanded] = React.useState(true);
   const [filterText, setFilterText] = React.useState<string>('');
   const [isShowingOutput, setIsShowingOutput] = React.useState<boolean>(false);
   const [outputContainsError, setOutputContainsError] = React.useState(false);
@@ -368,7 +369,7 @@ export const UIModeView: React.FC<{}> = ({
         testServerConnection?.stopTestsNoReply({});
       } else if (e.code === 'F5') {
         e.preventDefault();
-        runTests('bounce-if-busy', visibleTestIds);
+        runTests('bounce-if-busy', expanded ? visibleTestIds : testTree.collectTestIds(selectedItem.treeItem));
       }
     };
     addEventListener('keydown', onShortcutEvent);
@@ -398,7 +399,7 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, [closeInstallDialog, testServerConnection]);
 
-  return <LLMProvider><div className='vbox ui-mode'>
+  return <LLMProvider><div className='hbox ui-mode'>
     {!hasBrowsers && <dialog ref={dialogRef}>
       <div className='title'><span className='codicon codicon-lightbulb'></span>Install browsers</div>
       <div className='body'>
@@ -414,6 +415,21 @@ export const UIModeView: React.FC<{}> = ({
       <div className='title'>UI Mode disconnected</div>
       <div><a href='#' onClick={() => window.location.href = '/'}>Reload the page</a> to reconnect</div>
     </div>}
+
+    {!expanded && (
+      <div className='vbox ui-mode-sidebar collapsed'>
+        <img src='playwright-logo.svg' alt='Playwright logo' />
+        <ToolbarButton icon='chevron-right' title='Expand sidebar' onClick={() => setExpanded(true)} />
+        {(!isRunningTest || isLoading)
+          ? <ToolbarButton
+            icon='play'
+            title='Run test — F5'
+            onClick={() => runTests('bounce-if-busy', testTree.collectTestIds(selectedItem.treeItem))}
+            disabled={isLoading}
+          />
+          : <ToolbarButton icon='debug-stop' title={'Stop — ' + (isMac ? '⇧F5' : 'Shift + F5')} onClick={() => testServerConnection?.stopTests({})}/>}
+      </div>
+    )}
     <SplitView
       sidebarSize={250}
       minSidebarSize={150}
@@ -440,6 +456,7 @@ export const UIModeView: React.FC<{}> = ({
           />
         </div>
       </div>}
+      sidebarHidden={!expanded}
       sidebar={<div className='vbox ui-mode-sidebar'>
         <Toolbar noShadow={true} noMinHeight={true}>
           <img src='playwright-logo.svg' alt='Playwright logo' />
@@ -450,6 +467,7 @@ export const UIModeView: React.FC<{}> = ({
             {outputContainsError && <div title='Output contains error' style={{ position: 'absolute', top: 2, right: 2, width: 7, height: 7, borderRadius: '50%', backgroundColor: 'var(--vscode-notificationsErrorIcon-foreground)' }} />}
           </div>
           {!hasBrowsers && <ToolbarButton icon='lightbulb-autofix' style={{ color: 'var(--vscode-list-warningForeground)' }} title='Playwright browsers are missing' onClick={openInstallDialog} />}
+          <ToolbarButton icon='chevron-left' title='Collapse sidebar' onClick={() => setExpanded(false)} />
         </Toolbar>
         <FiltersView
           filterText={filterText}
