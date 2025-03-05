@@ -9,9 +9,8 @@ import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page, browserName }) => {
   await test.step('check some behavior', async step => {
-    await step.skip(browserName === 'webkit', 'The feature is not available in WebKit');
+    step.skip(browserName === 'webkit', 'The feature is not available in WebKit');
     // ... rest of the step code
-    await page.check('input');
   });
 });
 ```
