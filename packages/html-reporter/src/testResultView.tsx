@@ -72,7 +72,7 @@ export const TestResultView: React.FC<{
   result: TestResult,
 }> = ({ test, result }) => {
   const { screenshots, videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors } = React.useMemo(() => {
-    const attachments = result.attachments;
+    const attachments = result.attachments.filter(a => !a.name.startsWith('_'));
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
     const screenshotAnchors = [...screenshots].map(a => `attachment-${attachments.indexOf(a)}`);
     const videos = attachments.filter(a => a.contentType.startsWith('video/'));
