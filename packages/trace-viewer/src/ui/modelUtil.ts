@@ -56,6 +56,8 @@ export type ErrorDescription = {
   prompt?: trace.AfterActionTraceEventAttachment & { traceUrl: string };
 };
 
+export type Attachment = trace.AfterActionTraceEventAttachment & { traceUrl: string };
+
 export class MultiTraceModel {
   readonly startTime: number;
   readonly endTime: number;
@@ -67,6 +69,8 @@ export class MultiTraceModel {
   readonly options: trace.BrowserContextEventOptions;
   readonly pages: PageEntry[];
   readonly actions: ActionTraceEventInContext[];
+  readonly attachments: Attachment[];
+  readonly visibleAttachments: Attachment[];
   readonly events: (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[];
   readonly stdio: trace.StdioTraceEvent[];
   readonly errors: trace.ErrorTraceEvent[];
@@ -107,6 +111,9 @@ export class MultiTraceModel {
     this.resources.sort((a1, a2) => a1._monotonicTime! - a2._monotonicTime!);
     this.errorDescriptors = this.hasStepData ? this._errorDescriptorsFromTestRunner() : this._errorDescriptorsFromActions();
     this.sources = collectSources(this.actions, this.errorDescriptors);
+
+    this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, traceUrl: action.context.traceUrl })) ?? []);
+    this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_prompt-'));
   }
 
   failedAction() {
@@ -129,18 +136,10 @@ export class MultiTraceModel {
   }
 
   private _errorDescriptorsFromTestRunner(): ErrorDescription[] {
-    const errorPrompts: Record<string, trace.AfterActionTraceEventAttachment & { traceUrl: string }> = {};
-    for (const action of this.actions) {
-      for (const attachment of action.attachments ?? []) {
-        if (attachment.name.startsWith('_prompt-'))
-          errorPrompts[attachment.name] = { ...attachment, traceUrl: action.context.traceUrl };
-      }
-    }
-
     return this.errors.filter(e => !!e.message).map((error, i) => ({
       stack: error.stack,
       message: error.message,
-      prompt: errorPrompts[`_prompt-${i}`],
+      prompt: this.attachments.find(a => a.name === `_prompt-${i}`),
     }));
   }
 }

@@ -163,9 +163,6 @@ export const Workbench: React.FunctionComponent<{
   const consoleModel = useConsoleTabModel(model, selectedTime);
   const networkModel = useNetworkTabModel(model, selectedTime);
   const errorsModel = useErrorsTabModel(model);
-  const attachments = React.useMemo(() => {
-    return model?.actions.map(a => a.attachments || []).flat() || [];
-  }, [model]);
 
   const sdkLanguage = model?.sdkLanguage || 'javascript';
 
@@ -241,7 +238,7 @@ export const Workbench: React.FunctionComponent<{
   const attachmentsTab: TabbedPaneTabModel = {
     id: 'attachments',
     title: 'Attachments',
-    count: attachments.length,
+    count: model?.visibleAttachments.length,
     render: () => <AttachmentsTab model={model} revealedAttachment={revealedAttachment} />
   };
 
