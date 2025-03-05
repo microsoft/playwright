@@ -113,7 +113,7 @@ export class MultiTraceModel {
     this.sources = collectSources(this.actions, this.errorDescriptors);
 
     this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, traceUrl: action.context.traceUrl })) ?? []);
-    this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_prompt-'));
+    this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_'));
   }
 
   failedAction() {
