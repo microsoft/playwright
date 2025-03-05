@@ -9318,7 +9318,7 @@ export interface BrowserContext {
         value: string;
       }>;
 
-      indexedDB: Array<unknown>;
+      indexedDB?: Array<unknown>;
     }>;
   }>;
 
@@ -18458,7 +18458,7 @@ export interface APIRequestContext {
         value: string;
       }>;
 
-      indexedDB: Array<unknown>;
+      indexedDB?: Array<unknown>;
     }>;
   }>;
 
