@@ -223,7 +223,7 @@ test('should record trace', async ({ runInlineTest }) => {
     'After Hooks',
     'fixture: page',
     'fixture: context',
-    'attach "_prompt-0"',
+    '_attach "_prompt-0"',
     'Worker Cleanup',
     'fixture: browser',
   ]);

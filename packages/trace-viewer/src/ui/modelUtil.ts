@@ -20,6 +20,7 @@ import type * as trace from '@trace/trace';
 import type { ActionTraceEvent } from '@trace/trace';
 import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
 import type { StackFrame } from '@protocol/channels';
+import { kTopLevelAttachmentPrefix } from '@testIsomorphic/util';
 
 const contextSymbol = Symbol('context');
 const nextInContextSymbol = Symbol('next');
@@ -338,6 +339,8 @@ export function buildActionTree(actions: ActionTraceEventInContext[]): { rootIte
 
   const rootItem: ActionTreeItem = { id: '', parent: undefined, children: [] };
   for (const item of itemMap.values()) {
+    if (item.action?.apiName.startsWith(kTopLevelAttachmentPrefix))
+      continue;
     const parent = item.action!.parentId ? itemMap.get(item.action!.parentId) || rootItem : rootItem;
     parent.children.push(item);
     item.parent = parent;
