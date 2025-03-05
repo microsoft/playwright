@@ -4,6 +4,51 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.51
+
+### Highlights
+
+* New option [`option: BrowserContext.storageState.indexedDB`] for [`method: BrowserContext.storageState`] allows to save and restore IndexedDB contents. Useful when your application uses [IndexedDB API](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) to store authentication tokens, like Firebase Authentication.
+
+  Here is an example following the [authentication guide](./auth.md#reusing-signed-in-state):
+
+  ```java
+  // Save storage state into the file. Make sure to include IndexedDB.
+  context.storageState(new BrowserContext.StorageStateOptions()
+      .setPath(Paths.get("state.json"))
+      .setIndexedDB(true));
+
+  // Create a new context with the saved storage state.
+  BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+      .setStorageStatePath(Paths.get("state.json")));
+  ```
+
+* New option [`option: Locator.filter.visible`] for [`method: Locator.filter`] allows matching only visible elements.
+
+  ```java
+  // Ignore invisible todo items.
+  Locator todoItems = page.getByTestId("todo-item")
+      .filter(new Locator.FilterOptions().setVisible(true));
+  // Check there are exactly 3 visible ones.
+  assertThat(todoItems).hasCount(3);
+  ```
+
+* New option `setContrast` for methods [`method: Page.emulateMedia`] and [`method: Browser.newContext`] allows to emulate the `prefers-contrast` media feature.
+
+* New option [`option: APIRequest.newContext.failOnStatusCode`] makes all fetch requests made through the [APIRequestContext] throw on response codes other than 2xx and 3xx.
+
+### Browser Versions
+
+* Chromium 134.0.6998.35
+* Mozilla Firefox 135.0
+* WebKit 18.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 133
+* Microsoft Edge 133
+
+
 ## Version 1.50
 
 ### Miscellaneous
