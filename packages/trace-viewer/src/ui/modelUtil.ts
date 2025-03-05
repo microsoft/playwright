@@ -106,14 +106,13 @@ export class MultiTraceModel {
     this.hasSource = contexts.some(c => c.hasSource);
     this.hasStepData = contexts.some(context => context.origin === 'testRunner');
     this.resources = [...contexts.map(c => c.resources)].flat();
+    this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, traceUrl: action.context.traceUrl })) ?? []);
+    this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_'));
 
     this.events.sort((a1, a2) => a1.time - a2.time);
     this.resources.sort((a1, a2) => a1._monotonicTime! - a2._monotonicTime!);
     this.errorDescriptors = this.hasStepData ? this._errorDescriptorsFromTestRunner() : this._errorDescriptorsFromActions();
     this.sources = collectSources(this.actions, this.errorDescriptors);
-
-    this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, traceUrl: action.context.traceUrl })) ?? []);
-    this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_'));
   }
 
   failedAction() {
