@@ -14,8 +14,9 @@
   limitations under the License.
 */
 
-import type { EffectCallback } from 'react';
 import React from 'react';
+
+import type { EffectCallback } from 'react';
 
 // Recalculates the value when dependencies change.
 export function useAsyncMemo<T>(fn: () => Promise<T>, deps: React.DependencyList, initialValue: T, resetValue?: T) {

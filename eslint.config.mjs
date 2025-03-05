@@ -21,6 +21,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import stylistic from '@stylistic/eslint-plugin';
 import importRules from 'eslint-plugin-import';
+import { fixupConfigRules } from '@eslint/compat';
+import { FlatCompat } from '@eslint/eslintrc';
+import js from '@eslint/js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,15 +43,16 @@ const ignores = [
   'index.d.ts',
   'node_modules/',
   'output/',
+  '**/playwright-report/',
   'packages/*/lib/',
-  'packages/html-reporter/**',
   'packages/playwright-core/src/generated/*',
   'packages/playwright-core/src/third_party/',
   'packages/playwright-core/types/*',
   'packages/playwright-ct-core/src/generated/*',
-  'packages/recorder/**',
-  'packages/trace-viewer/**',
-  'packages/web/**',
+  'packages/html-reporter/bundle.ts',
+  'packages/html-reporter/playwright.config.ts',
+  'packages/html-reporter/playwright/*',
+  'packages/html-reporter/vite.config.ts',
   'test-results/',
   'tests/assets/',
   'tests/components/',
@@ -216,13 +220,56 @@ const languageOptionsWithTsConfig = {
   },
 };
 
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+  recommendedConfig: js.configs.recommended,
+  allConfig: js.configs.all
+});
+const reactBaseConfig = fixupConfigRules(compat.extends('plugin:react/recommended', 'plugin:react-hooks/recommended'));
+const reactFiles = [
+  `packages/html-reporter/src/**/*.ts`,
+  `packages/html-reporter/src/**/*.tsx`,
+  `packages/recorder/src/**/*.ts`,
+  `packages/recorder/src/**/*.tsx`,
+  `packages/trace-viewer/src/**/*.ts`,
+  `packages/trace-viewer/src/**/*.tsx`,
+  `packages/web/src/**/*.ts`,
+  `packages/web/src/**/*.tsx`,
+];
+
+function packageSection(packageName) {
+  return {
+    files: [
+      `packages/${packageName}/src/**/*.ts`,
+      `packages/${packageName}/src/**/*.tsx`,
+      `packages/web/src/**/*.ts`,
+      `packages/web/src/**/*.tsx`,
+    ],
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: 9,
+      sourceType: 'module',
+      parserOptions: {
+        project: path.join(__dirname, 'packages', packageName, 'tsconfig.json'),
+      },
+    },
+    rules: {
+      ...baseRules,
+      'no-console': 2,
+    }
+  };
+}
+
 export default [{
   ignores,
 }, {
-  files: ['**/*.ts'],
+  files: ['**/*.ts', '**/*.tsx'],
   plugins,
   languageOptions,
   rules: baseRules,
+  settings: {
+    react: { version: 'detect' },
+  },
 }, {
   files: ['packages/**/*.ts'],
   languageOptions: languageOptionsWithTsConfig,
@@ -289,4 +336,12 @@ export default [{
   rules: {
     ...noFloatingPromisesRules,
   }
-}];
+},
+  ...reactBaseConfig.map(config => ({
+    ...config,
+    files: reactFiles,
+  })),
+  packageSection('html-reporter'),
+  packageSection('recorder'),
+  packageSection('trace-viewer'),
+];
