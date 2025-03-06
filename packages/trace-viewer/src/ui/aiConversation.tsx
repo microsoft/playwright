@@ -56,7 +56,7 @@ export function AIConversationView({ history, onSend, onCancel, apiName }: { his
   }, [onSend]);
 
   return (
-    <div className='chat-container'>
+    <div className='chat-container' role='region' aria-label='Chat'>
       <div className='chat-scroll'>
         <p className='chat-disclaimer'>Chat based on {apiName}. Check for mistakes.<hr/></p>
 

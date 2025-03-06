@@ -18,7 +18,7 @@ import { test, expect, retries } from './ui-mode-fixtures';
 
 test.describe.configure({ mode: 'parallel', retries });
 
-test.fixme('openai', async ({ runUITest, server }) => {
+test('openai', async ({ runUITest, server }) => {
   server.setRoute('/v1/chat/completions', async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
@@ -51,14 +51,14 @@ test.fixme('openai', async ({ runUITest, server }) => {
   await page.getByTitle('Run all').click();
   await page.getByText('Errors', { exact: true }).click();
   await page.getByRole('button', { name: 'Fix with AI' }).click();
-  await expect(page.getByRole('tabpanel', { name: 'Errors' })).toMatchAriaSnapshot(`
-    - tabpanel "Errors":
-      - text: Help me with the error above. Take the page snapshot into account.
+  await expect(page.getByRole('region', { name: 'Chat' })).toMatchAriaSnapshot(`
+    - region "Chat":
+      - text: Help me with the error. What's going wrong?
       - text: This is a mock response
   `);
 });
 
-test.fixme('anthropic', async ({ runUITest, server }) => {
+test('anthropic', async ({ runUITest, server }) => {
   server.setRoute('/v1/messages', async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', '*');
@@ -91,9 +91,9 @@ test.fixme('anthropic', async ({ runUITest, server }) => {
   await page.getByTitle('Run all').click();
   await page.getByText('Errors', { exact: true }).click();
   await page.getByRole('button', { name: 'Fix with AI' }).click();
-  await expect(page.getByRole('tabpanel', { name: 'Errors' })).toMatchAriaSnapshot(`
-    - tabpanel "Errors":
-      - text: Help me with the error above. Take the page snapshot into account.
+  await expect(page.getByRole('region', { name: 'Chat' })).toMatchAriaSnapshot(`
+    - region "Chat":
+      - text: Help me with the error. What's going wrong?
       - text: This is a mock response
   `);
 });
