@@ -173,7 +173,7 @@ scheme.SetOriginStorage = tObject({
 scheme.OriginStorage = tObject({
   origin: tString,
   localStorage: tArray(tType('NameValue')),
-  indexedDB: tArray(tType('IndexedDBDatabase')),
+  indexedDB: tOptional(tArray(tType('IndexedDBDatabase'))),
 });
 scheme.SerializedError = tObject({
   error: tOptional(tObject({

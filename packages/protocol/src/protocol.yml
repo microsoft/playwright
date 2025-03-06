@@ -279,7 +279,7 @@ OriginStorage:
       type: array
       items: NameValue
     indexedDB:
-      type: array
+      type: array?
       items: IndexedDBDatabase
 
 SerializedError:
