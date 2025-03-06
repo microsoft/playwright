@@ -960,11 +960,8 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   };
 
   /**
-   * - These settings control whether git information is captured and stored in the config
-   *   [testConfig.metadata](https://playwright.dev/docs/api/class-testconfig#test-config-metadata).
-   * - The structure of the git commit metadata is subject to change.
-   * - Default values for these settings depend on the environment. When tests run as a part of CI where it is safe to
-   *   obtain git information, the default value is true, false otherwise.
+   * These settings control whether git information is captured and stored in the config
+   * [testConfig.metadata](https://playwright.dev/docs/api/class-testconfig#test-config-metadata).
    *
    * **Usage**
    *
@@ -977,10 +974,20 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * });
    * ```
    *
+   * **Details**
+   * - Capturing `commit` information is useful when you'd like to see it in your HTML (or a third party) report.
+   * - Capturing `diff` information is useful to enrich the report with the actual source diff. This information can
+   *   be used to provide intelligent advice on how to fix the test.
+   *
+   * **NOTE** Default values for these settings depend on the environment. When tests run as a part of CI where it is
+   * safe to obtain git information, the default value is `true`, `false` otherwise.
+   *
+   * **NOTE** The structure of the git commit metadata is subject to change.
+   *
    */
   captureGitInfo?: {
     /**
-     * Whether to capture commit information such as hash, author, timestamp.
+     * Whether to capture commit and pull request information such as hash, author, timestamp.
      */
     commit?: boolean;
 
@@ -9590,9 +9597,8 @@ export interface TestInfoError {
  *
  * test('basic test', async ({ page, browserName }) => {
  *   await test.step('check some behavior', async step => {
- *     await step.skip(browserName === 'webkit', 'The feature is not available in WebKit');
+ *     step.skip(browserName === 'webkit', 'The feature is not available in WebKit');
  *     // ... rest of the step code
- *     await page.check('input');
  *   });
  * });
  * ```
@@ -9675,8 +9681,8 @@ export interface TestStepInfo {
    * import { test, expect } from '@playwright/test';
    *
    * test('my test', async ({ page }) => {
-   *   await test.step('check expectations', async () => {
-   *     test.skip();
+   *   await test.step('check expectations', async step => {
+   *     step.skip();
    *     // step body below will not run
    *     // ...
    *   });
@@ -9696,9 +9702,8 @@ export interface TestStepInfo {
    * import { test, expect } from '@playwright/test';
    *
    * test('my test', async ({ page, isMobile }) => {
-   *   await test.step('check desktop expectations', async () => {
-   *     test.skip(isMobile, 'not present in the mobile layout');
-   *
+   *   await test.step('check desktop expectations', async step => {
+   *     step.skip(isMobile, 'not present in the mobile layout');
    *     // step body below will not run
    *     // ...
    *   });

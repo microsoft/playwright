@@ -71,22 +71,19 @@ async function ciInfo(): Promise<CIInfo | undefined> {
 
     return {
       commitHref: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/commit/${process.env.GITHUB_SHA}`,
-      prHref: pr ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/pull/${pr.number}` : undefined,
-      prTitle: pr ? pr.title : undefined,
-      buildHref: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
       commitHash: process.env.GITHUB_SHA,
-      baseHash: pr ? pr.baseHash : process.env.GITHUB_BASE_REF,
-      branch: process.env.GITHUB_REF_NAME,
+      prHref: pr ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/pull/${pr.number}` : undefined,
+      prTitle: pr?.title,
+      prBaseHash: pr?.baseHash,
+      buildHref: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
     };
   }
 
   if (process.env.GITLAB_CI) {
     return {
       commitHref: `${process.env.CI_PROJECT_URL}/-/commit/${process.env.CI_COMMIT_SHA}`,
-      prHref: process.env.CI_MERGE_REQUEST_IID ? `${process.env.CI_PROJECT_URL}/-/merge_requests/${process.env.CI_MERGE_REQUEST_IID}` : undefined,
-      buildHref: process.env.CI_JOB_URL,
       commitHash: process.env.CI_COMMIT_SHA,
-      baseHash: process.env.CI_COMMIT_BEFORE_SHA,
+      buildHref: process.env.CI_JOB_URL,
       branch: process.env.CI_COMMIT_REF_NAME,
     };
   }
@@ -95,7 +92,6 @@ async function ciInfo(): Promise<CIInfo | undefined> {
     return {
       commitHref: process.env.BUILD_URL,
       commitHash: process.env.GIT_COMMIT,
-      baseHash: process.env.GIT_PREVIOUS_COMMIT,
       branch: process.env.GIT_BRANCH,
     };
   }
@@ -144,12 +140,16 @@ async function gitCommitInfo(gitDir: string): Promise<GitCommitInfo | undefined>
 
 async function gitDiff(gitDir: string, ci?: CIInfo): Promise<string | undefined> {
   const diffLimit = 100_000;
-  if (ci?.baseHash) {
-    // First try the diff against the base branch.
-    const diff = await runGit(`git fetch origin ${ci.baseHash} && git diff ${ci.baseHash} HEAD`, gitDir);
+  if (ci?.prBaseHash) {
+    await runGit(`git fetch origin ${ci.prBaseHash}`, gitDir);
+    const diff = await runGit(`git diff ${ci.prBaseHash} HEAD`, gitDir);
     if (diff)
       return diff.substring(0, diffLimit);
   }
+
+  // Do not attempt to diff on CI commit.
+  if (ci)
+    return;
 
   // Check dirty state first.
   const uncommitted = await runGit('git diff', gitDir);

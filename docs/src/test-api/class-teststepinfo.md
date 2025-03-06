@@ -9,9 +9,8 @@ import { test, expect } from '@playwright/test';
 
 test('basic test', async ({ page, browserName }) => {
   await test.step('check some behavior', async step => {
-    await step.skip(browserName === 'webkit', 'The feature is not available in WebKit');
+    step.skip(browserName === 'webkit', 'The feature is not available in WebKit');
     // ... rest of the step code
-    await page.check('input');
   });
 });
 ```
@@ -91,8 +90,8 @@ Abort the currently running step and mark it as skipped. Useful for steps that a
 import { test, expect } from '@playwright/test';
 
 test('my test', async ({ page }) => {
-  await test.step('check expectations', async () => {
-    test.skip();
+  await test.step('check expectations', async step => {
+    step.skip();
     // step body below will not run
     // ...
   });
@@ -110,9 +109,8 @@ Conditionally abort the currently running step and mark it as skipped with an op
 import { test, expect } from '@playwright/test';
 
 test('my test', async ({ page, isMobile }) => {
-  await test.step('check desktop expectations', async () => {
-    test.skip(isMobile, 'not present in the mobile layout');
-
+  await test.step('check desktop expectations', async step => {
+    step.skip(isMobile, 'not present in the mobile layout');
     // step body below will not run
     // ...
   });

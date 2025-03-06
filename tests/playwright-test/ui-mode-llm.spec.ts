@@ -46,7 +46,6 @@ test.fixme('openai', async ({ runUITest, server }) => {
   }, {
     EXPERIMENTAL_OPENAI_API_KEY: 'fake-key',
     OPENAI_BASE_URL: server.PREFIX,
-    PLAYWRIGHT_COPY_PROMPT: '1',
   });
 
   await page.getByTitle('Run all').click();
@@ -87,7 +86,6 @@ test.fixme('anthropic', async ({ runUITest, server }) => {
   }, {
     EXPERIMENTAL_ANTHROPIC_API_KEY: 'fake-key',
     ANTHROPIC_BASE_URL: server.PREFIX,
-    PLAYWRIGHT_COPY_PROMPT: '1',
   });
 
   await page.getByTitle('Run all').click();

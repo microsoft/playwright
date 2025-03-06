@@ -508,13 +508,13 @@ test('fails', async ({ page }) => {
   expect(1).toBe(2);
 });
     `.trim(),
-  }, { PLAYWRIGHT_COPY_PROMPT: '1' });
+  });
 
   await page.getByText('fails').dblclick();
 
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.getByText('Errors', { exact: true }).click();
-  await page.locator('.tab-errors').getByRole('button', { name: 'Copy as Prompt' }).click();
+  await page.locator('.tab-errors').getByRole('button', { name: 'Copy prompt' }).click();
   const prompt = await page.evaluate(() => navigator.clipboard.readText());
   expect(prompt, 'contains error').toContain('expect(received).toBe(expected)');
   expect(prompt.replaceAll('\r\n', '\n'), 'contains test sources').toContain(`
