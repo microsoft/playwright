@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
+import { kTopLevelAttachmentPrefix } from '@testIsomorphic/util';
+
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { ActionTraceEvent } from '@trace/trace';
 import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
 import type { StackFrame } from '@protocol/channels';
-import { kTopLevelAttachmentPrefix } from '@testIsomorphic/util';
 
 const contextSymbol = Symbol('context');
 const nextInContextSymbol = Symbol('next');
