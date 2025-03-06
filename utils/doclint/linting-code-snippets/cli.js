@@ -160,7 +160,6 @@ class JSLintingService extends LintingService {
       baseConfig,
       plugins: /** @type {any}*/({
         '@stylistic': (await import('@stylistic/eslint-plugin')).default,
-        'notice': await import('eslint-plugin-notice'),
       }),
       ignore: false,
       overrideConfig: {

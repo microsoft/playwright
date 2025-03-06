@@ -15,6 +15,7 @@
  */
 
 import { devices, defineConfig } from '@playwright/experimental-ct-react';
+
 import type { ReporterDescription } from '@playwright/test';
 
 const reporters = () => {

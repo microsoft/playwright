@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-import type { FrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
 import { rewriteURLForCustomProtocol, SnapshotRenderer } from './snapshotRenderer';
-import type { PageEntry } from '../types/entries';
 import { LRUCache } from './lruCache';
+
+import type { FrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
+import type { PageEntry } from '../types/entries';
+
 
 export class SnapshotStorage {
   private _frameSnapshots = new Map<string, {
