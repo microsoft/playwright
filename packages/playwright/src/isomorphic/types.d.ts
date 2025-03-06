@@ -36,9 +36,9 @@ export type CIInfo = {
   commitHref: string;
   prHref?: string;
   prTitle?: string;
+  prBaseHash?: string;
   buildHref?: string;
   commitHash?: string;
-  baseHash?: string;
   branch?: string;
 };
 
