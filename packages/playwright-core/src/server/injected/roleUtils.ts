@@ -1005,13 +1005,12 @@ function isNativelyDisabled(element: Element) {
   return isNativeFormControl && (element.hasAttribute('disabled') || belongsToDisabledFieldSet(element));
 }
 
-function belongsToDisabledFieldSet(element: Element | null): boolean {
-  if (!element)
+function belongsToDisabledFieldSet(element: Element): boolean {
+  const fieldSetElement = element?.closest('FIELDSET[DISABLED]');
+  if (!fieldSetElement)
     return false;
-  if (elementSafeTagName(element) === 'FIELDSET' && element.hasAttribute('disabled'))
-    return true;
-  // fieldset does not work across shadow boundaries.
-  return belongsToDisabledFieldSet(element.parentElement);
+  const legendElement = fieldSetElement.querySelector(':scope > LEGEND');
+  return !legendElement || !legendElement.contains(element);
 }
 
 function hasExplicitAriaDisabled(element: Element | undefined): boolean {
