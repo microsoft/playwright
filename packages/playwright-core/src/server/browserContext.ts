@@ -527,7 +527,7 @@ export abstract class BrowserContext extends SdkObject {
         continue;
       try {
         const storage: storageScript.Storage = await page.mainFrame().nonStallingEvaluateInExistingContext(collectScript, 'utility');
-        if (storage.localStorage.length || storage.indexedDB.length)
+        if (storage.localStorage.length || storage.indexedDB?.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
         originsToSave.delete(origin);
       } catch {
@@ -547,7 +547,7 @@ export abstract class BrowserContext extends SdkObject {
         const frame = page.mainFrame();
         await frame.goto(internalMetadata, origin);
         const storage: storageScript.Storage = await frame.evaluateExpression(collectScript, { world: 'utility' });
-        if (storage.localStorage.length || storage.indexedDB.length)
+        if (storage.localStorage.length || storage.indexedDB?.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
       }
       await page.close(internalMetadata);
