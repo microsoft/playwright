@@ -524,7 +524,6 @@ type SnapshotRecorderMode = 'on' | 'off' | 'only-on-failure' | 'on-first-failure
 class SnapshotRecorder {
   private _ordinal = 0;
   private _temporary: string[] = [];
-  private _snapshottedSymbol = Symbol('snapshotted');
 
   constructor(
     private _artifactsRecorder: ArtifactsRecorder,
@@ -590,9 +589,11 @@ class SnapshotRecorder {
   }
 
   private async _snapshotPage(page: Page, temporary: boolean) {
-    if ((page as any)[this._snapshottedSymbol])
+    // Make sure we do not snapshot the same page twice for a single TestInfo,
+    // which is reused between beforeAll(s), test and afterAll(s).
+    if ((page as any)[this.testInfo._uniqueSymbol])
       return;
-    (page as any)[this._snapshottedSymbol] = true;
+    (page as any)[this.testInfo._uniqueSymbol] = true;
     try {
       const path = temporary ? this._createTemporaryArtifact(createGuid() + this._extension) : this._createAttachmentPath();
       await this._doSnapshot(page, path);
