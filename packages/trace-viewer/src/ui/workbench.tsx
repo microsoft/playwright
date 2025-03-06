@@ -42,6 +42,8 @@ import { testStatusIcon, testStatusText } from './testUtils';
 import type { UITestStatus } from './testUtils';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import type { HighlightedElement } from './snapshotTab';
+import { useIsLLMAvailable } from './llm';
+import { ChatView } from './aiConversation';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -68,6 +70,7 @@ export const Workbench: React.FunctionComponent<{
   const [highlightedElement, setHighlightedElement] = React.useState<HighlightedElement>({ lastEdited: 'none' });
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
+  const llmAvailable = useIsLLMAvailable();
 
   const setSelectedAction = React.useCallback((action: modelUtil.ActionTraceEventInContext | undefined) => {
     setSelectedCallId(action?.callId);
@@ -316,59 +319,67 @@ export const Workbench: React.FunctionComponent<{
     component: <MetadataView model={model}/>
   };
 
-  return <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
-    {!hideTimeline && <Timeline
-      model={model}
-      consoleEntries={consoleModel.entries}
-      boundaries={boundaries}
-      highlightedAction={highlightedAction}
-      highlightedEntry={highlightedEntry}
-      highlightedConsoleEntry={highlightedConsoleMessage}
-      onSelected={onActionSelected}
-      sdkLanguage={sdkLanguage}
-      selectedTime={selectedTime}
-      setSelectedTime={setSelectedTime}
-    />}
-    <SplitView
-      sidebarSize={250}
-      orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'
-      main={<SplitView
-        sidebarSize={250}
-        orientation='horizontal'
-        sidebarIsFirst
-        settingName='actionListSidebar'
-        main={<SnapshotTabsView
-          action={activeAction}
+  return <SplitView
+    main={
+      <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
+        {!hideTimeline && <Timeline
           model={model}
+          consoleEntries={consoleModel.entries}
+          boundaries={boundaries}
+          highlightedAction={highlightedAction}
+          highlightedEntry={highlightedEntry}
+          highlightedConsoleEntry={highlightedConsoleMessage}
+          onSelected={onActionSelected}
           sdkLanguage={sdkLanguage}
-          testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
-          isInspecting={isInspecting}
-          setIsInspecting={setIsInspecting}
-          highlightedElement={highlightedElement}
-          setHighlightedElement={elementPicked} />}
-        sidebar={
-          <TabbedPane
-            tabs={[actionsTab, metadataTab]}
-            selectedTab={selectedNavigatorTab}
-            setSelectedTab={setSelectedNavigatorTab}
-          />
-        }
-      />}
-      sidebar={<TabbedPane
-        tabs={tabs}
-        selectedTab={selectedPropertiesTab}
-        setSelectedTab={selectPropertiesTab}
-        rightToolbar={[
-          sidebarLocation === 'bottom' ?
-            <ToolbarButton title='Dock to right' icon='layout-sidebar-right-off' onClick={() => {
-              setSidebarLocation('right');
-            }} /> :
-            <ToolbarButton title='Dock to bottom' icon='layout-panel-off' onClick={() => {
-              setSidebarLocation('bottom');
-            }} />
-        ]}
-        mode={sidebarLocation === 'bottom' ? 'default' : 'select'}
-      />}
-    />
-  </div>;
+          selectedTime={selectedTime}
+          setSelectedTime={setSelectedTime}
+        />}
+        <SplitView
+          sidebarSize={250}
+          orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'
+          main={<SplitView
+            sidebarSize={250}
+            orientation='horizontal'
+            sidebarIsFirst
+            settingName='actionListSidebar'
+            main={<SnapshotTabsView
+              action={activeAction}
+              model={model}
+              sdkLanguage={sdkLanguage}
+              testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
+              isInspecting={isInspecting}
+              setIsInspecting={setIsInspecting}
+              highlightedElement={highlightedElement}
+              setHighlightedElement={elementPicked} />}
+            sidebar={
+              <TabbedPane
+                tabs={[actionsTab, metadataTab]}
+                selectedTab={selectedNavigatorTab}
+                setSelectedTab={setSelectedNavigatorTab}
+              />
+            }
+          />}
+          sidebar={<TabbedPane
+            tabs={tabs}
+            selectedTab={selectedPropertiesTab}
+            setSelectedTab={selectPropertiesTab}
+            rightToolbar={[
+              sidebarLocation === 'bottom' ?
+                <ToolbarButton title='Dock to right' icon='layout-sidebar-right-off' onClick={() => {
+                  setSidebarLocation('right');
+                }} /> :
+                <ToolbarButton title='Dock to bottom' icon='layout-panel-off' onClick={() => {
+                  setSidebarLocation('bottom');
+                }} />
+            ]}
+            mode={sidebarLocation === 'bottom' ? 'default' : 'select'}
+          />}
+        />
+      </div>
+    }
+    sidebarSize={250}
+    orientation='horizontal'
+    sidebarHidden={!llmAvailable}
+    sidebar={llmAvailable && <ChatView />}
+  />;
 };

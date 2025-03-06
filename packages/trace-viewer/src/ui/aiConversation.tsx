@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Markdown from 'markdown-to-jsx';
 import './aiConversation.css';
 import { clsx } from '@web/uiUtils';
-import { useLLMConversation } from './llm';
+import { useLLMChat, useLLMConversation } from './llm';
 
 export function AIConversation({ conversationId }: { conversationId: string }) {
   const [history, conversation] = useLLMConversation(conversationId);
@@ -32,24 +32,26 @@ export function AIConversation({ conversationId }: { conversationId: string }) {
 
   return (
     <div className='chat-container'>
-      <p className='chat-disclaimer'>Chat based on {conversation.chat.api.name}. Check for mistakes.</p>
-      <hr/>
-      <div className='messages-container'>
-        {history.filter(({ role }) => role !== 'developer').map((message, index) => (
-          <div
-            key={'' + index}
-            className={clsx('message', message.role === 'user' && 'user-message')}
-          >
-            {message.role === 'assistant' && (
-              <div className='message-icon'>
-                <img src='playwright-logo.svg' />
+      <div className='chat-scroll'>
+        <p className='chat-disclaimer'>Chat based on {conversation.chat.api.name}. Check for mistakes.<hr/></p>
+
+        <div className='messages-container'>
+          {history.filter(({ role }) => role !== 'developer').map((message, index) => (
+            <div
+              key={'' + index}
+              className={clsx('message', message.role === 'user' && 'user-message')}
+            >
+              {message.role === 'assistant' && (
+                <div className='message-icon'>
+                  <img src='playwright-logo.svg' />
+                </div>
+              )}
+              <div className='message-content'>
+                <Markdown options={{ disableParsingRawHTML: true }}>{message.displayContent ?? message.content}</Markdown>
               </div>
-            )}
-            <div className='message-content'>
-              <Markdown options={{ disableParsingRawHTML: true }}>{message.displayContent ?? message.content}</Markdown>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <div className='input-form'>
@@ -79,6 +81,26 @@ export function AIConversation({ conversationId }: { conversationId: string }) {
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+export function ChatView() {
+  const chat = useLLMChat();
+  const [conversationId, setConversationId] = useState<string | undefined>(chat.conversations.keys().next().value);
+
+  useEffect(() => {
+    if (conversationId)
+      return;
+
+    const id = crypto.randomUUID();
+    chat.startConversation(id, '');
+    setConversationId(id);
+  }, [chat, conversationId]);
+
+  return (
+    <div className='chat-view'>
+      {conversationId && <AIConversation conversationId={conversationId} />}
     </div>
   );
 }
