@@ -27,7 +27,7 @@ export function AIConversation({ conversationId, setConversationId }: { conversa
     return <AIConversationView
       history={history}
       apiName={chat.api.name}
-      onSend={content => () => {
+      onSend={content => {
         const id = crypto.randomUUID();
         const conversation = chat.startConversation(id, '');
         conversation.send(content);

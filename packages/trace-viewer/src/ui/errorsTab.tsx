@@ -21,7 +21,6 @@ import { PlaceholderPanel } from './placeholderPanel';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { CopyToClipboardTextButton } from './copyToClipboard';
-import { AIConversation } from './aiConversation';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { useIsLLMAvailable, useLLMChat } from './llm';
 import { useAsyncMemo } from '@web/uiUtils';
