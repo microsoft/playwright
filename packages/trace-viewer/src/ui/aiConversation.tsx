@@ -97,7 +97,7 @@ export function AIConversationView({ history, onSend, sending, onCancel, apiName
         {sending ? (
           <button type='button' className='send-button' onClick={evt => {
             evt.preventDefault();
-            onCancel();
+            onCancel?.();
           }}>
             Cancel
           </button>
