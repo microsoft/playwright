@@ -320,63 +320,61 @@ export const Workbench: React.FunctionComponent<{
     component: <MetadataView model={model}/>
   };
 
-  const workbench = (
-    <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
-      {!hideTimeline && <Timeline
-        model={model}
-        consoleEntries={consoleModel.entries}
-        boundaries={boundaries}
-        highlightedAction={highlightedAction}
-        highlightedEntry={highlightedEntry}
-        highlightedConsoleEntry={highlightedConsoleMessage}
-        onSelected={onActionSelected}
-        sdkLanguage={sdkLanguage}
-        selectedTime={selectedTime}
-        setSelectedTime={setSelectedTime}
-      />}
-      <SplitView
+  const workbench = <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
+    {!hideTimeline && <Timeline
+      model={model}
+      consoleEntries={consoleModel.entries}
+      boundaries={boundaries}
+      highlightedAction={highlightedAction}
+      highlightedEntry={highlightedEntry}
+      highlightedConsoleEntry={highlightedConsoleMessage}
+      onSelected={onActionSelected}
+      sdkLanguage={sdkLanguage}
+      selectedTime={selectedTime}
+      setSelectedTime={setSelectedTime}
+    />}
+    <SplitView
+      sidebarSize={250}
+      orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'
+      main={<SplitView
         sidebarSize={250}
-        orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'
-        main={<SplitView
-          sidebarSize={250}
-          orientation='horizontal'
-          sidebarIsFirst
-          settingName='actionListSidebar'
-          main={<SnapshotTabsView
-            action={activeAction}
-            model={model}
-            sdkLanguage={sdkLanguage}
-            testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
-            isInspecting={isInspecting}
-            setIsInspecting={setIsInspecting}
-            highlightedElement={highlightedElement}
-            setHighlightedElement={elementPicked} />}
-          sidebar={
-            <TabbedPane
-              tabs={[actionsTab, metadataTab]}
-              selectedTab={selectedNavigatorTab}
-              setSelectedTab={setSelectedNavigatorTab}
-            />
-          }
-        />}
-        sidebar={<TabbedPane
-          tabs={tabs}
-          selectedTab={selectedPropertiesTab}
-          setSelectedTab={selectPropertiesTab}
-          rightToolbar={[
-            sidebarLocation === 'bottom' ?
-              <ToolbarButton title='Dock to right' icon='layout-sidebar-right-off' onClick={() => {
-                setSidebarLocation('right');
-              }} /> :
-              <ToolbarButton title='Dock to bottom' icon='layout-panel-off' onClick={() => {
-                setSidebarLocation('bottom');
-              }} />
-          ]}
-          mode={sidebarLocation === 'bottom' ? 'default' : 'select'}
-        />}
-      />
-    </div>
-  );
+        orientation='horizontal'
+        sidebarIsFirst
+        settingName='actionListSidebar'
+        main={<SnapshotTabsView
+          action={activeAction}
+          model={model}
+          sdkLanguage={sdkLanguage}
+          testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
+          isInspecting={isInspecting}
+          setIsInspecting={setIsInspecting}
+          highlightedElement={highlightedElement}
+          setHighlightedElement={elementPicked} />}
+        sidebar={
+          <TabbedPane
+            tabs={[actionsTab, metadataTab]}
+            selectedTab={selectedNavigatorTab}
+            setSelectedTab={setSelectedNavigatorTab}
+          />
+        }
+      />}
+      sidebar={<TabbedPane
+        tabs={tabs}
+        selectedTab={selectedPropertiesTab}
+        setSelectedTab={selectPropertiesTab}
+        rightToolbar={[
+          sidebarLocation === 'bottom' ?
+            <ToolbarButton title='Dock to right' icon='layout-sidebar-right-off' onClick={() => {
+              setSidebarLocation('right');
+            }} /> :
+            <ToolbarButton title='Dock to bottom' icon='layout-panel-off' onClick={() => {
+              setSidebarLocation('bottom');
+            }} />
+        ]}
+        mode={sidebarLocation === 'bottom' ? 'default' : 'select'}
+      />}
+    />
+  </div>;
 
   return <SplitView
     main={workbench}
