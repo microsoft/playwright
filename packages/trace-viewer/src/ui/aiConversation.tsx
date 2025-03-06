@@ -13,27 +13,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import Markdown from 'markdown-to-jsx';
 import './aiConversation.css';
 import { clsx } from '@web/uiUtils';
-import { useLLMChat, useLLMConversation } from './llm';
+import { LLMMessage, useLLMChat } from './llm';
 
-export function AIConversation({ conversationId }: { conversationId: string }) {
-  const [history, conversation] = useLLMConversation(conversationId);
+export function AIConversation({ conversationId, setConversationId }: { conversationId?: string, setConversationId(id: string): void; }) {
+  const chat = useLLMChat();
+  const conversation = conversationId ? chat.getConversation(conversationId) : undefined;
+
+  if (!conversation) {
+    return <AIConversationView
+      history={[]}
+      apiName={chat.api.name}
+      onSend={content => () => {
+        const id = crypto.randomUUID();
+        const conversation = chat.startConversation(id, '');
+        conversation.send(content);
+        setConversationId(id);
+      }}
+    />;
+  }
+
+  return (
+    <AIConversationView
+      history={conversation.history}
+      apiName={chat.api.name}
+      onSend={content => conversation.send(content)}
+      onCancel={conversation.isSending() ? () => conversation.abortSending() : undefined}
+    />
+  );
+}
+
+export function AIConversationView({ history, onSend, onCancel, apiName }: { history: LLMMessage[], onSend(message: string): void, onCancel?(): void; apiName: string; }) {
   const [input, setInput] = useState('');
-
   const onSubmit = useCallback(() => {
     setInput(content => {
-      conversation.send(content);
+      onSend(content);
       return '';
     });
-  }, [conversation]);
+  }, [onSend]);
 
   return (
     <div className='chat-container'>
       <div className='chat-scroll'>
-        <p className='chat-disclaimer'>Chat based on {conversation.chat.api.name}. Check for mistakes.<hr/></p>
+        <p className='chat-disclaimer'>Chat based on {apiName}. Check for mistakes.<hr/></p>
 
         <div className='messages-container'>
           {history.filter(({ role }) => role !== 'developer').map((message, index) => (
@@ -68,10 +93,10 @@ export function AIConversation({ conversationId }: { conversationId: string }) {
           placeholder='Ask a question...'
           className='message-input'
         />
-        {conversation.isSending() ? (
+        {onCancel ? (
           <button type='button' className='send-button' onClick={evt => {
             evt.preventDefault();
-            conversation.abortSending();
+            onCancel();
           }}>
             Cancel
           </button>
@@ -81,26 +106,6 @@ export function AIConversation({ conversationId }: { conversationId: string }) {
           </button>
         )}
       </div>
-    </div>
-  );
-}
-
-export function ChatView() {
-  const chat = useLLMChat();
-  const [conversationId, setConversationId] = useState<string | undefined>(chat.conversations.keys().next().value);
-
-  useEffect(() => {
-    if (conversationId)
-      return;
-
-    const id = crypto.randomUUID();
-    chat.startConversation(id, '');
-    setConversationId(id);
-  }, [chat, conversationId]);
-
-  return (
-    <div className='chat-view'>
-      {conversationId && <AIConversation conversationId={conversationId} />}
     </div>
   );
 }
