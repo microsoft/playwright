@@ -30,11 +30,11 @@ import { Toolbar } from '@web/components/toolbar';
 function useSources(stack: StackFrame[] | undefined, selectedFrame: number, sources: Map<string, SourceModel>, rootDir?: string, fallbackLocation?: SourceLocation) {
   return useAsyncMemo<{ source: SourceModel, targetLine?: number, fileName?: string, highlight: SourceHighlight[], location?: SourceLocation }>(async () => {
     const actionLocation = stack?.[selectedFrame];
-    const shouldUseFallback = !actionLocation?.file;
-    if (shouldUseFallback && !fallbackLocation)
+    const location = actionLocation?.file ? actionLocation : fallbackLocation;
+    if (!location)
       return { source: { file: '', errors: [], content: undefined }, targetLine: 0, highlight: [] };
 
-    const file = shouldUseFallback ? fallbackLocation!.file : actionLocation.file;
+    const file = location.file;
     let source = sources.get(file);
     // Fallback location can fall outside the sources model.
     if (!source) {
@@ -42,8 +42,7 @@ function useSources(stack: StackFrame[] | undefined, selectedFrame: number, sour
       sources.set(file, source);
     }
 
-    const location = shouldUseFallback ? fallbackLocation! : actionLocation;
-    const targetLine = shouldUseFallback ? fallbackLocation?.line || source.errors[0]?.line || 0 : actionLocation.line;
+    const targetLine = location?.line || source.errors[0]?.line || 0;
     const fileName = rootDir && file.startsWith(rootDir) ? file.substring(rootDir.length + 1) : file;
     const highlight: SourceHighlight[] = source.errors.map(e => ({ type: 'error', line: e.line, message: e.message }));
     highlight.push({ line: targetLine, type: 'running' });
@@ -51,7 +50,7 @@ function useSources(stack: StackFrame[] | undefined, selectedFrame: number, sour
     // After the source update, but before the test run, don't trust the cache.
     if (fallbackLocation?.source?.content !== undefined) {
       source.content = fallbackLocation.source.content;
-    } else if (source.content === undefined || shouldUseFallback) {
+    } else if (source.content === undefined || (location === fallbackLocation)) {
       const sha1 = await calculateSha1(file);
       try {
         let response = await fetch(`sha1/src@${sha1}.txt`);
