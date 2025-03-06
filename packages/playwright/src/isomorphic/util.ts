@@ -14,36 +14,4 @@
  * limitations under the License.
  */
 
-export type GitCommitInfo = {
-  shortHash: string;
-  hash: string;
-  subject: string;
-  body: string;
-  author: {
-    name: string;
-    email: string;
-    time: number;
-  };
-  committer: {
-    name: string;
-    email: string
-    time: number;
-  };
-  branch: string;
-};
-
-export type CIInfo = {
-  commitHref: string;
-  prHref?: string;
-  prTitle?: string;
-  prBaseHash?: string;
-  buildHref?: string;
-  commitHash?: string;
-  branch?: string;
-};
-
-export type MetadataWithCommitInfo = {
-  ci?: CIInfo;
-  gitCommit?: GitCommitInfo;
-  gitDiff?: string;
-};
+export const kTopLevelAttachmentPrefix = '_attach';
