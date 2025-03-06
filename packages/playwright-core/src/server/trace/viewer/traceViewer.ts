@@ -132,25 +132,30 @@ export async function installRootRedirect(server: HttpServer, traceUrls: string[
   for (const reporter of options.reporter || [])
     params.append('reporter', reporter);
 
+  const cookies: string[] = [];
+  if (process.env.EXPERIMENTAL_OPENAI_API_KEY)
+    cookies.push(`openai_api_key=${process.env.EXPERIMENTAL_OPENAI_API_KEY}`);
+  if (process.env.OPENAI_BASE_URL)
+    cookies.push(`openai_base_url=${process.env.OPENAI_BASE_URL}`);
+  if (process.env.EXPERIMENTAL_ANTHROPIC_API_KEY)
+    cookies.push(`anthropic_api_key=${process.env.EXPERIMENTAL_ANTHROPIC_API_KEY}`);
+  if (process.env.ANTHROPIC_BASE_URL)
+    cookies.push(`anthropic_base_url=${process.env.ANTHROPIC_BASE_URL}`);
+
   let baseUrl = '.';
   if (process.env.PW_HMR) {
     baseUrl = 'http://localhost:44223'; // port is hardcoded in build.js
     params.set('server', server.urlPrefix('precise'));
+    params.set('cookies', cookies.join(';'));
   }
 
-  const urlPath  = `${baseUrl}/trace/${options.webApp || 'index.html'}?${params.toString()}`;
+  const urlPath = `${baseUrl}/trace/${options.webApp || 'index.html'}?${params.toString()}`;
   server.routePath('/', (_, response) => {
     response.statusCode = 302;
     response.setHeader('Location', urlPath);
 
-    if (process.env.EXPERIMENTAL_OPENAI_API_KEY)
-      response.appendHeader('Set-Cookie', `openai_api_key=${process.env.EXPERIMENTAL_OPENAI_API_KEY}`);
-    if (process.env.OPENAI_BASE_URL)
-      response.appendHeader('Set-Cookie', `openai_base_url=${process.env.OPENAI_BASE_URL}`);
-    if (process.env.EXPERIMENTAL_ANTHROPIC_API_KEY)
-      response.appendHeader('Set-Cookie', `anthropic_api_key=${process.env.EXPERIMENTAL_ANTHROPIC_API_KEY}`);
-    if (process.env.ANTHROPIC_BASE_URL)
-      response.appendHeader('Set-Cookie', `anthropic_base_url=${process.env.ANTHROPIC_BASE_URL}`);
+    for (const cookie of cookies)
+      response.appendHeader('Set-Cookie', cookie);
 
     response.end();
     return true;
@@ -202,7 +207,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
     await syncLocalStorageWithSettings(page, 'traceviewer');
 
   if (isUnderTest())
-    page.on('close', () => context.close({ reason: 'Trace viewer closed' }).catch(() => {}));
+    page.on('close', () => context.close({ reason: 'Trace viewer closed' }).catch(() => { }));
 
   await page.mainFrame().goto(serverSideCallMetadata(), url);
   return page;
@@ -212,7 +217,7 @@ export async function openTraceInBrowser(url: string) {
   // eslint-disable-next-line no-console
   console.log('\nListening on ' + url);
   if (!isUnderTest())
-    await open(url.replace('0.0.0.0', 'localhost')).catch(() => {});
+    await open(url.replace('0.0.0.0', 'localhost')).catch(() => { });
 }
 
 class StdinServer implements Transport {

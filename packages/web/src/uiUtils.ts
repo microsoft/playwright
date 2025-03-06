@@ -32,7 +32,7 @@ export function useAsyncMemo<T>(fn: () => Promise<T>, deps: React.DependencyList
     return () => {
       canceled = true;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
   return value;
 }
@@ -252,7 +252,8 @@ export function useFlash(): [boolean, EffectCallback] {
 
 export function useCookies() {
   const cookies = React.useMemo(() => {
-    return document.cookie.split('; ').filter(v => v.includes('=')).map(kv => {
+    const cookie = new URLSearchParams(location.search).get('cookies') ?? document.cookie; // in PW_HMR mode, we pass cookies via params because we don't control the origin
+    return cookie.split('; ').filter(v => v.includes('=')).map(kv => {
       const separator = kv.indexOf('=');
       return [kv.substring(0, separator), kv.substring(separator + 1)];
     });
