@@ -249,12 +249,13 @@ export function useIsLLMAvailable() {
   return !!React.useContext(llmContext);
 }
 
-export function useLLMConversation(id: string) {
-  const conversation = useLLMChat().getConversation(id);
-  if (!conversation)
-    throw new Error('No conversation found for id: ' + id);
-  const [history, setHistory] = React.useState(conversation.history);
+export function useLLMConversation(id?: string): readonly [LLMMessage[], Conversation | undefined] {
+  const chat = useLLMChat();
+  const conversation = id ? chat.getConversation(id) : undefined;
+  const [history, setHistory] = React.useState(conversation?.history ?? []);
   React.useEffect(() => {
+    if (!conversation)
+      return;
     function update() {
       setHistory([...conversation!.history]);
     }

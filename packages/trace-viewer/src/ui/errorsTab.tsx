@@ -56,14 +56,12 @@ export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined):
 function Error({
   message,
   error,
-  errorId,
   sdkLanguage,
   revealInSource,
   revealConversation
 }: {
   message: string,
   error: modelUtil.ErrorDescription,
-  errorId: string,
   sdkLanguage: Language,
   revealInSource: (error: modelUtil.ErrorDescription) => void,
   revealConversation(id: string): void,
@@ -102,7 +100,7 @@ function Error({
       <span style={{ position: 'absolute', right: '5px' }}>
         {prompt && (
           llmAvailable
-            ? <FixWithAIButton conversationId={errorId} revealConversation={revealConversation} prompt={prompt} />
+            ? <FixWithAIButton revealConversation={revealConversation} prompt={prompt} />
             : <CopyPromptButton prompt={prompt} />
         )}
       </span>
@@ -112,30 +110,28 @@ function Error({
   </div>;
 }
 
-function FixWithAIButton({ conversationId, revealConversation, prompt }: { conversationId: string, revealConversation(id: string): void, prompt: string }) {
+function FixWithAIButton({ revealConversation, prompt }: { revealConversation(id: string): void, prompt: string }) {
   const chat = useLLMChat();
 
   return <ToolbarButton
     onClick={() => {
-      if (!chat.getConversation(conversationId)) {
-        const conversation = chat.startConversation(conversationId, [
-          `My Playwright test failed. What's going wrong?`,
-          `Please give me a suggestion how to fix it, and then explain what went wrong. Be very concise and apply Playwright best practices.`,
-          `Don't include many headings in your output. Make sure what you're saying is correct, and take into account whether there might be a bug in the app.`
-        ].join('\n'));
+      const id = crypto.randomUUID();
+      const conversation = chat.startConversation(id, [
+        `My Playwright test failed. What's going wrong?`,
+        `Please give me a suggestion how to fix it, and then explain what went wrong. Be very concise and apply Playwright best practices.`,
+        `Don't include many headings in your output. Make sure what you're saying is correct, and take into account whether there might be a bug in the app.`
+      ].join('\n'));
 
-        let displayPrompt = `Help me with the error. What's going wrong?`;
-        const hasDiff = prompt.includes('Local changes:');
-        const hasSnapshot = prompt.includes('Page snapshot:');
-        if (hasDiff)
-          displayPrompt += ` Take the code diff${hasSnapshot ? ' and page snapshot' : ''} into account.`;
-        else if (hasSnapshot)
-          displayPrompt += ` Take the page snapshot into account.`;
+      let displayPrompt = `Help me with the error. What's going wrong?`;
+      const hasDiff = prompt.includes('Local changes:');
+      const hasSnapshot = prompt.includes('Page snapshot:');
+      if (hasDiff)
+        displayPrompt += ` Take the code diff${hasSnapshot ? ' and page snapshot' : ''} into account.`;
+      else if (hasSnapshot)
+        displayPrompt += ` Take the page snapshot into account.`;
 
-        conversation.send(prompt, displayPrompt);
-      }
-
-      revealConversation(conversationId);
+      conversation.send(prompt, displayPrompt);
+      revealConversation(id);
     }}
     style={{ width: '96px', justifyContent: 'center' }}
     title='Fix with AI'
@@ -158,7 +154,7 @@ export const ErrorsTab: React.FunctionComponent<{
   return <div className='fill' style={{ overflow: 'auto' }}>
     {[...errorsModel.errors.entries()].map(([message, error]) => {
       const errorId = `error-${wallTime}-${message}`;
-      return <Error key={errorId} errorId={errorId} message={message} error={error} revealInSource={revealInSource} sdkLanguage={sdkLanguage} revealConversation={revealConversation} />;
+      return <Error key={errorId} message={message} error={error} revealInSource={revealInSource} sdkLanguage={sdkLanguage} revealConversation={revealConversation} />;
     })}
   </div>;
 };

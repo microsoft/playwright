@@ -17,15 +17,15 @@ import { useCallback, useState } from 'react';
 import Markdown from 'markdown-to-jsx';
 import './aiConversation.css';
 import { clsx } from '@web/uiUtils';
-import { LLMMessage, useLLMChat } from './llm';
+import { LLMMessage, useLLMChat, useLLMConversation } from './llm';
 
 export function AIConversation({ conversationId, setConversationId }: { conversationId?: string, setConversationId(id: string): void; }) {
   const chat = useLLMChat();
-  const conversation = conversationId ? chat.getConversation(conversationId) : undefined;
+  const [history, conversation] = useLLMConversation(conversationId);
 
   if (!conversation) {
     return <AIConversationView
-      history={[]}
+      history={history}
       apiName={chat.api.name}
       onSend={content => () => {
         const id = crypto.randomUUID();
@@ -38,7 +38,7 @@ export function AIConversation({ conversationId, setConversationId }: { conversa
 
   return (
     <AIConversationView
-      history={conversation.history}
+      history={history}
       apiName={chat.api.name}
       onSend={content => conversation.send(content)}
       onCancel={conversation.isSending() ? () => conversation.abortSending() : undefined}
