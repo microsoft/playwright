@@ -41,12 +41,13 @@ export function AIConversation({ conversationId, setConversationId }: { conversa
       history={history}
       apiName={chat.api.name}
       onSend={content => conversation.send(content)}
-      onCancel={conversation.isSending() ? () => conversation.abortSending() : undefined}
+      sending={conversation.isSending()}
+      onCancel={() => conversation.abortSending()}
     />
   );
 }
 
-export function AIConversationView({ history, onSend, onCancel, apiName }: { history: LLMMessage[], onSend(message: string): void, onCancel?(): void; apiName: string; }) {
+export function AIConversationView({ history, onSend, sending, onCancel, apiName }: { history: LLMMessage[], onSend(message: string): void, sending?: boolean, onCancel?(): void; apiName: string; }) {
   const [input, setInput] = useState('');
   const onSubmit = useCallback(() => {
     setInput(content => {
@@ -93,7 +94,7 @@ export function AIConversationView({ history, onSend, onCancel, apiName }: { his
           placeholder='Ask a question...'
           className='message-input'
         />
-        {onCancel ? (
+        {sending ? (
           <button type='button' className='send-button' onClick={evt => {
             evt.preventDefault();
             onCancel();
