@@ -39,12 +39,10 @@ export default defineConfig({
 ## property: TestConfig.captureGitInfo
 * since: v1.51
 - type: ?<[Object]>
-  - `commit` ?<boolean> Whether to capture commit information such as hash, author, timestamp.
+  - `commit` ?<boolean> Whether to capture commit and pull request information such as hash, author, timestamp.
   - `diff` ?<boolean> Whether to capture commit diff.
 
-* These settings control whether git information is captured and stored in the config [`property: TestConfig.metadata`].
-* The structure of the git commit metadata is subject to change.
-* Default values for these settings depend on the environment. When tests run as a part of CI where it is safe to obtain git information, the default value is true, false otherwise.
+These settings control whether git information is captured and stored in the config [`property: TestConfig.metadata`].
 
 **Usage**
 
@@ -55,6 +53,20 @@ export default defineConfig({
   captureGitInfo: { commit: true, diff: true }
 });
 ```
+
+**Details**
+
+* Capturing `commit` information is useful when you'd like to see it in your HTML (or a third party) report.
+* Capturing `diff` information is useful to enrich the report with the actual source diff. This information can be used to provide intelligent advice on how to fix the test.
+
+:::note
+Default values for these settings depend on the environment. When tests run as a part of CI where it is safe to obtain git information, the default value is `true`, `false` otherwise.
+:::
+
+:::note
+The structure of the git commit metadata is subject to change.
+:::
+
 
 ## property: TestConfig.expect
 * since: v1.10
