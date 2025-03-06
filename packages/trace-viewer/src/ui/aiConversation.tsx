@@ -49,12 +49,12 @@ export function AIConversation({ conversationId, setConversationId }: { conversa
 
 export function AIConversationView({ history, onSend, sending, onCancel, apiName }: { history: LLMMessage[], onSend(message: string): void, sending?: boolean, onCancel?(): void; apiName: string; }) {
   const [input, setInput] = useState('');
-  const onSubmit = useCallback(() => {
+  const onSubmit = () => {
     setInput(content => {
       onSend(content);
       return '';
     });
-  }, [onSend]);
+  };
 
   return (
     <div className='chat-container' role='region' aria-label='Chat'>
