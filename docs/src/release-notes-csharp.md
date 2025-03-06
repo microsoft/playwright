@@ -4,6 +4,54 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.51
+
+### Highlights
+
+* New option [`option: BrowserContext.storageState.indexedDB`] for [`method: BrowserContext.storageState`] allows to save and restore IndexedDB contents. Useful when your application uses [IndexedDB API](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) to store authentication tokens, like Firebase Authentication.
+
+  Here is an example following the [authentication guide](./auth.md#reusing-signed-in-state):
+
+  ```csharp
+  // Save storage state into the file. Make sure to include IndexedDB.
+  await context.StorageStateAsync(new()
+  {
+      Path = "../../../playwright/.auth/state.json",
+      IndexedDB = true
+  });
+
+  // Create a new context with the saved storage state.
+  var context = await browser.NewContextAsync(new()
+  {
+      StorageStatePath = "../../../playwright/.auth/state.json"
+  });
+  ```
+
+* New option [`option: Locator.filter.visible`] for [`method: Locator.filter`] allows matching only visible elements.
+
+  ```csharp
+  // Ignore invisible todo items.
+  var todoItems = Page.GetByTestId("todo-item").Filter(new() { Visible = true });
+  // Check there are exactly 3 visible ones.
+  await Expect(todoItems).ToHaveCountAsync(3);
+  ```
+
+* New option `Contrast` for methods [`method: Page.emulateMedia`] and [`method: Browser.newContext`] allows to emulate the `prefers-contrast` media feature.
+
+* New option [`option: APIRequest.newContext.failOnStatusCode`] makes all fetch requests made through the [APIRequestContext] throw on response codes other than 2xx and 3xx.
+
+### Browser Versions
+
+* Chromium 134.0.6998.35
+* Mozilla Firefox 135.0
+* WebKit 18.4
+
+This version was also tested against the following stable channels:
+
+* Google Chrome 133
+* Microsoft Edge 133
+
+
 ## Version 1.50
 
 ### Support for Xunit
