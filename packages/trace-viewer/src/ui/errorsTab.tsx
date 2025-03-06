@@ -63,7 +63,7 @@ function Error({
   error: modelUtil.ErrorDescription,
   sdkLanguage: Language,
   revealInSource: (error: modelUtil.ErrorDescription) => void,
-  revealConversation(id: string): void,
+  revealConversation: (id: string) => void,
 }) {
   const llmAvailable = useIsLLMAvailable();
 
@@ -109,7 +109,7 @@ function Error({
   </div>;
 }
 
-function FixWithAIButton({ revealConversation, prompt }: { revealConversation(id: string): void, prompt: string }) {
+function FixWithAIButton({ revealConversation, prompt }: { revealConversation: (id: string) => void, prompt: string }) {
   const chat = useLLMChat();
 
   return <ToolbarButton
@@ -145,7 +145,7 @@ export const ErrorsTab: React.FunctionComponent<{
   wallTime: number,
   sdkLanguage: Language,
   revealInSource: (error: modelUtil.ErrorDescription) => void,
-  revealConversation(id: string): void;
+  revealConversation: (id: string) => void;
 }> = ({ errorsModel, sdkLanguage, revealInSource, revealConversation, wallTime }) => {
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
