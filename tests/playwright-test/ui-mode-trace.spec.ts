@@ -508,7 +508,7 @@ test('fails', async ({ page }) => {
   expect(1).toBe(2);
 });
     `.trim(),
-  }, { PLAYWRIGHT_COPY_PROMPT: '1' });
+  });
 
   await page.getByText('fails').dblclick();
 

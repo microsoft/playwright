@@ -30,8 +30,22 @@ export async function attachErrorPrompts(testInfo: TestInfo, sourceCache: Map<st
   if (process.env.PLAYWRIGHT_NO_COPY_PROMPT)
     return;
 
+  const meaningfulSingleLineErrors = new Set(testInfo.errors.filter(e => e.message && !e.message.includes('\n')).map(e => e.message!));
+  for (const error of testInfo.errors) {
+    for (const singleLineError of meaningfulSingleLineErrors.keys()) {
+      if (error.message?.includes(singleLineError))
+        meaningfulSingleLineErrors.delete(singleLineError);
+    }
+  }
+
   for (const [index, error] of testInfo.errors.entries()) {
+    if (!error.message)
+      return;
     if (testInfo.attachments.find(a => a.name === `_prompt-${index}`))
+      continue;
+
+    // Skip errors that are just a single line - they are likely to already be the error message.
+    if (!error.message.includes('\n') && !meaningfulSingleLineErrors.has(error.message))
       continue;
 
     const metadata = testInfo.config.metadata as MetadataWithCommitInfo;
