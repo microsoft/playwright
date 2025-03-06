@@ -151,10 +151,8 @@ test('should work with screenshot: on', async ({ runInlineTest }, testInfo) => {
     '  test-finished-1.png',
     'artifacts-shared-shared-failing',
     '  test-failed-1.png',
-    '  test-failed-2.png',
     'artifacts-shared-shared-passing',
     '  test-finished-1.png',
-    '  test-finished-2.png',
     'artifacts-two-contexts',
     '  test-finished-1.png',
     '  test-finished-2.png',
@@ -185,7 +183,6 @@ test('should work with screenshot: only-on-failure', async ({ runInlineTest }, t
     '  test-failed-1.png',
     'artifacts-shared-shared-failing',
     '  test-failed-1.png',
-    '  test-failed-2.png',
     'artifacts-two-contexts-failing',
     '  test-failed-1.png',
     '  test-failed-2.png',
@@ -247,6 +244,37 @@ test('should work with screenshot: only-on-failure & fullPage', async ({ runInli
   );
   expect.soft(screenshotFailure).toMatchSnapshot('screenshot-grid-fullpage.png');
 });
+
+test('should capture a single screenshot on failure when afterAll fails', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      let page;
+      test.use({ screenshot: 'only-on-failure' });
+      test.beforeAll(async ({ browser }) => {
+        page = await browser.newPage();
+      });
+      test.afterAll(async () => {
+        await page.setContent('this is afterAll');
+        expect(1).toBe(2);
+        await page.close();
+      });
+      test('passes', async () => {
+        await page.setContent('this is test');
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    '.last-run.json',
+    'a-passes',
+    '  test-failed-1.png',
+  ]);
+});
+
 
 test('should work with trace: on', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
