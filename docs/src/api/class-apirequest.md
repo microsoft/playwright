@@ -71,7 +71,6 @@ Methods like [`method: APIRequestContext.get`] take the base URL into considerat
     - `localStorage` <[Array]<[Object]>>
       - `name` <[string]>
       - `value` <[string]>
-    - `indexedDB` ?<[Array]<[unknown]>> indexedDB to set for context
 
 Populates context with given storage state. This option can be used to initialize context with logged-in information
 obtained via [`method: BrowserContext.storageState`] or [`method: APIRequestContext.storageState`]. Either a path to the

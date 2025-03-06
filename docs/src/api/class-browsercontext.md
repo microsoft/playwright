@@ -1509,7 +1509,6 @@ Whether to emulate network being offline for the browser context.
     - `localStorage` <[Array]<[Object]>>
       - `name` <[string]>
       - `value` <[string]>
-    - `indexedDB` <[Array]<[unknown]>>
 
 Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB snapshot.
 

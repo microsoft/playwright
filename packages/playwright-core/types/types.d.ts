@@ -9317,8 +9317,6 @@ export interface BrowserContext {
 
         value: string;
       }>;
-
-      indexedDB: Array<unknown>;
     }>;
   }>;
 
@@ -10085,11 +10083,6 @@ export interface Browser {
 
           value: string;
         }>;
-
-        /**
-         * indexedDB to set for context
-         */
-        indexedDB?: Array<unknown>;
       }>;
     };
 
@@ -17638,11 +17631,6 @@ export interface APIRequest {
 
           value: string;
         }>;
-
-        /**
-         * indexedDB to set for context
-         */
-        indexedDB?: Array<unknown>;
       }>;
     };
 
@@ -18457,8 +18445,6 @@ export interface APIRequestContext {
 
         value: string;
       }>;
-
-      indexedDB: Array<unknown>;
     }>;
   }>;
 
@@ -22306,11 +22292,6 @@ export interface BrowserContextOptions {
 
         value: string;
       }>;
-
-      /**
-       * indexedDB to set for context
-       */
-      indexedDB?: Array<unknown>;
     }>;
   };
 
