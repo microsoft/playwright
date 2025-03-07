@@ -42,6 +42,8 @@ import { testStatusIcon, testStatusText } from './testUtils';
 import type { UITestStatus } from './testUtils';
 import type { AfterActionTraceEventAttachment } from '@trace/trace';
 import type { HighlightedElement } from './snapshotTab';
+import { useIsLLMAvailable } from './llm';
+import { AIConversation } from './aiConversation';
 
 export const Workbench: React.FunctionComponent<{
   model?: modelUtil.MultiTraceModel,
@@ -68,6 +70,8 @@ export const Workbench: React.FunctionComponent<{
   const [highlightedElement, setHighlightedElement] = React.useState<HighlightedElement>({ lastEdited: 'none' });
   const [selectedTime, setSelectedTime] = React.useState<Boundaries | undefined>();
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
+  const [conversationId, setConversationId] = React.useState<string>();
+  const llmAvailable = useIsLLMAvailable();
 
   const setSelectedAction = React.useCallback((action: modelUtil.ActionTraceEventInContext | undefined) => {
     setSelectedCallId(action?.callId);
@@ -195,7 +199,7 @@ export const Workbench: React.FunctionComponent<{
       else
         setRevealedError(error);
       selectPropertiesTab('source');
-    }} wallTime={model?.wallTime ?? 0} />
+    }} wallTime={model?.wallTime ?? 0} revealConversation={setConversationId} />
   };
 
   // Fallback location w/o action stands for file / test.
@@ -316,7 +320,7 @@ export const Workbench: React.FunctionComponent<{
     component: <MetadataView model={model}/>
   };
 
-  return <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
+  const workbench = <div className='vbox workbench' {...(inert ? { inert: 'true' } : {})}>
     {!hideTimeline && <Timeline
       model={model}
       consoleEntries={consoleModel.entries}
@@ -371,4 +375,12 @@ export const Workbench: React.FunctionComponent<{
       />}
     />
   </div>;
+
+  return <SplitView
+    main={workbench}
+    sidebarSize={250}
+    orientation='horizontal'
+    sidebarHidden={!llmAvailable}
+    sidebar={llmAvailable && <AIConversation conversationId={conversationId} setConversationId={setConversationId} />}
+  />;
 };
