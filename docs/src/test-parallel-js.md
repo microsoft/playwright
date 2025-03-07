@@ -214,6 +214,134 @@ There is no guarantee about the order of test execution across the files, becaus
 
 When you **disable parallel test execution**, Playwright Test runs test files in alphabetical order. You can use some naming convention to control the test order, for example `001-user-signin-flow.spec.ts`, `002-create-new-document.spec.ts` and so on.
 
+### Parallel and Serial Test Execution Example
+
+This section demonstrates how to combine parallel and serial test suites in Playwright. In this example, the root suite runs tests in parallel by default. However, specific nested suites are configured to run serially. This means that while parallel tests execute concurrently, serial suites wait for their previous tests to finish before starting the next one. This approach is useful when you have some tests that depend on shared state or require sequential execution.
+
+```js title="tests/example.spec.ts"
+// Important: import our fixtures.
+import { test } from '@playwright/test';
+
+test.describe("parallel suite root", () => {
+  test.beforeAll(async () => {
+    /* global setup */
+  });
+  test.beforeEach(async ({ page }) => {
+    /* pre-test actions */
+    // Wait for 10 seconds
+    await page.waitForTimeout(10000);
+  });
+  test("Parallel Root Test 1", async ({ page }) => {
+    /* test actions */
+    console.log(`${test.info().title} W${test.info().parallelIndex + 1}`);
+  });
+  test.describe("serial nested suite 1", () => {
+    test.describe.configure({ mode: "serial" });
+    test("Serial Nested 1 Test 1", async ({ page }) => {
+      /* test actions */
+      console.log(`${test.info().title} W${test.info().parallelIndex + 1}`);
+    });
+    test("Serial Nested 1 Test 2 (Waiting for Serial Test 1)", async ({ page }) => {
+      /* test actions */
+      console.log(`${test.info().title} W${test.info().parallelIndex + 1}`);
+    });
+  });
+  test.describe("serial nested suite 2", () => {
+    test.describe.configure({ mode: "serial" });
+    test("Serial Nested 2 Test 1", async ({ page }) => {
+      /* test actions */
+      console.log(`${test.info().title} W${test.info().parallelIndex + 1}`);
+    });
+    test("Serial Nested 2 Test 2 (Waiting for Serial Nested 2 Test 1)", async ({ page }) => {
+      /* test actions */
+      console.log(`${test.info().title} W${test.info().parallelIndex + 1}`);
+    });
+  });
+  test.describe("parallel nested suite 1", () => {
+    test.describe.configure({ mode: "serial" });
+    test("Parallel Nested 1 Test 1", async ({ page }) => {
+      /* test actions */
+      console.log(`${test.info().title} W${test.info().parallelIndex + 1}`);
+    });
+    test("Parallel Nested 1 Test 2", async ({ page }) => {
+      /* test actions */
+      console.log(`${test.info().title} W${test.info().parallelIndex + 1}`);
+    });
+  });
+  test.describe("parallel nested suite 2", () => {
+    test.describe.configure({ mode: "serial" });
+    test("Parallel Nested 2 Test 1", async ({ page }) => {
+      /* test actions */
+      console.log(`${test.info().title} W${test.info().parallelIndex + 1}`);
+    });
+    test("Parallel Nested 2 Test 2", async ({ page }) => {
+      /* test actions */
+      console.log(`${test.info().title} W${test.info().parallelIndex + 1}`);
+    });
+  });
+  test("Parallel Root Test 2", async ({ page }) => {
+    /* test actions */
+    console.log(`${test.info().title} W${test.info().parallelIndex + 1}`);
+  });
+  test.afterEach(async ({ page }) => {
+    /* cleanup actions */
+  });
+  test.afterAll(async () => {
+    /* global cleanup */
+  });
+});
+```
+**Running the Tests with 16 Workers**
+
+Even if you specify more workers than there are tests, Playwright will only use the required amount. This example uses 16 workers to illustrate that unused workers do nothing, and serial suites still wait for the prior tests in the suite to complete. Run the following command in your terminal:
+
+```bash
+npx playwright test --workers=16
+```
+**Simplified Console Output**
+
+When running the tests, you might see output similar to the following:
+
+```csharp title="Console Output"
+npx playwright test --workers=16
+Running 10 tests using 6 workers
+
+[chromium] › parallel suite root › serial nested suite 1 › Serial Nested 1 Test 1
+Serial Nested 1 Test 1 W1
+
+[chromium] › parallel suite root › serial nested suite 2 › Serial Nested 2 Test 1
+Serial Nested 2 Test 1 W2
+
+[chromium] › parallel suite root › parallel nested suite 1 › Parallel Nested 1 Test 1
+Parallel Nested 1 Test 1 W3
+
+[chromium] › parallel suite root › parallel nested suite 2 › Parallel Nested 2 Test 1
+Parallel Nested 2 Test 1 W4
+
+[chromium] › parallel suite root › Parallel Root Test 1
+Parallel Root Test 1 W5
+
+[chromium] › parallel suite root › Parallel Root Test 2
+Parallel Root Test 2 W6
+
+[chromium] › parallel suite root › serial nested suite 1 › Serial Nested 1 Test 2 (Waiting for Serial Test 1)
+Serial Nested 1 Test 2 (Waiting for Serial Test 1) W1
+
+[chromium] › parallel suite root › serial nested suite 2 › Serial Nested 2 Test 2 (Waiting for Serial Nested 2 Test 1)
+Serial Nested 2 Test 2 (Waiting for Serial Nested 2 Test 1) W2
+
+[chromium] › parallel suite root › parallel nested suite 1 › Parallel Nested 1 Test 2
+Parallel Nested 1 Test 2 W3
+
+[chromium] › parallel suite root › parallel nested suite 2 › Parallel Nested 2 Test 2
+Parallel Nested 2 Test 2 W4
+
+10 passed (39.4s)
+
+To open the last HTML report, run:
+npx playwright show-report test-results-html
+```
+
 ### Use a "test list" file
 
 :::warning
@@ -246,7 +374,6 @@ export default function createTests() {
 ```
 
 You can create a test list file that will control the order of tests - first run `feature-b` tests, then `feature-a` tests. Note how each test file is wrapped in a `test.describe()` block that calls the function where tests are defined. This way `test.use()` calls only affect tests from a single file.
-
 
 ```js title="test.list.ts"
 import { test } from '@playwright/test';
