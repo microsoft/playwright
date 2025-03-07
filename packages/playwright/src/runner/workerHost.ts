@@ -83,6 +83,10 @@ export class WorkerHost extends ProcessHost {
     return this._hash;
   }
 
+  projectId() {
+    return this._params.projectId;
+  }
+
   didFail() {
     return this._didFail;
   }

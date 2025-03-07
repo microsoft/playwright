@@ -392,3 +392,35 @@ export default defineConfig({
 ```
 
 Use [`property: TestConfig.use`] to change this option for all projects.
+
+## property: TestProject.workers
+* since: v1.52
+- type: ?<[int]|[string]>
+
+The maximum number of concurrent worker processes to use for parallelizing tests from this project. Can also be set as percentage of logical CPU cores, e.g. `'50%'.`
+
+This could be useful, for example, when all tests from a project share a single resource like a test account, and therefore cannot be executed in parallel. Limiting workers to one for such a project will prevent simultaneous use of the shared resource.
+
+Note that the global [`property: TestConfig.workers`] limit applies to the total number of worker processes. However, Playwright will limit the number of workers used for this project by the value of [`property: TestProject.workers`].
+
+By default, there is no limit per project. See [`property: TestConfig.workers`] for the default of the total worker limit.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  workers: 10,  // total workers limit
+
+  projects: [
+    {
+      name: 'runs in parallel',
+    },
+    {
+      name: 'one at a time',
+      workers: 1,  // workers limit for this project
+    },
+  ],
+});
+```
