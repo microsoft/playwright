@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.33.1",
+    "@modelcontextprotocol/sdk": "^1.6.1",
     "openai": "^4.79.1"
   }
 }
