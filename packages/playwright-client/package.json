@@ -29,6 +29,6 @@
     "watch": "esbuild ./src/index.ts --outdir=lib --format=cjs --bundle --platform=node --target=ES2019 --watch"
   },
   "dependencies": {
-    "playwright-core": "1.51.0"
+    "playwright-core": "1.51.1"
   }
 }
