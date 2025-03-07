@@ -38,6 +38,7 @@ export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
 export class Dispatcher {
   private _workerSlots: { busy: boolean, worker?: WorkerHost, jobDispatcher?: JobDispatcher }[] = [];
   private _queue: TestGroup[] = [];
+  private _workerLimitPerProjectId = new Map<string, number>();
   private _queuedOrRunningHashCount = new Map<string, number>();
   private _finished = new ManualPromise<void>();
   private _isStopped = true;
@@ -53,27 +54,48 @@ export class Dispatcher {
     this._config = config;
     this._reporter = reporter;
     this._failureTracker = failureTracker;
+    for (const project of config.projects) {
+      if (project.workers)
+        this._workerLimitPerProjectId.set(project.id, project.workers);
+    }
   }
 
   private async _scheduleJob() {
-    // 1. Find a job to run.
-    if (this._isStopped || !this._queue.length)
+    // 1. Find a job/worker combination to run.
+    if (this._isStopped)
       return;
-    const job = this._queue[0];
 
-    // 2. Find a worker with the same hash, or just some free worker.
-    let index = this._workerSlots.findIndex(w => !w.busy && w.worker && w.worker.hash() === job.workerHash && !w.worker.didSendStop());
-    if (index === -1)
-      index = this._workerSlots.findIndex(w => !w.busy);
-    // No workers available, bail out.
-    if (index === -1)
+    let jobIndex = -1;
+    let workerIndex = -1;
+    for (let index = 0; index < this._queue.length; index++) {
+      const job = this._queue[index];
+
+      // 2.1 Respect the project worker limit.
+      const projectIdWorkerLimit = this._workerLimitPerProjectId.get(job.projectId);
+      if (projectIdWorkerLimit) {
+        const runningWorkersWithSameProjectId = this._workerSlots.filter(w => w.busy && w.worker && w.worker.projectId() === job.projectId).length;
+        if (runningWorkersWithSameProjectId >= projectIdWorkerLimit)
+          continue;
+      }
+
+      // 2.2. Find a worker with the same hash, or just some free worker.
+      workerIndex = this._workerSlots.findIndex(w => !w.busy && w.worker && w.worker.hash() === job.workerHash && !w.worker.didSendStop());
+      if (workerIndex === -1)
+        workerIndex = this._workerSlots.findIndex(w => !w.busy);
+      jobIndex = index;
+      break;
+    }
+
+    // 2.3. No workers available, bail out.
+    if (jobIndex === -1)
       return;
 
     // 3. Claim both the job and the worker, run the job and release the worker.
-    this._queue.shift();
-    this._workerSlots[index].busy = true;
-    await this._startJobInWorker(index, job);
-    this._workerSlots[index].busy = false;
+    const job = this._queue[jobIndex];
+    this._queue.splice(jobIndex, 1);
+    this._workerSlots[workerIndex].busy = true;
+    await this._startJobInWorker(workerIndex, job);
+    this._workerSlots[workerIndex].busy = false;
 
     // 4. Check the "finished" condition.
     this._checkFinished();

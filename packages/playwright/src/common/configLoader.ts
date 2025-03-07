@@ -248,13 +248,6 @@ function validateConfig(file: string, config: Config) {
       throw errorWithFile(file, `config.updateSnapshots must be one of "all", "changed", "missing" or "none"`);
   }
 
-  if ('workers' in config && config.workers !== undefined) {
-    if (typeof config.workers === 'number' && config.workers <= 0)
-      throw errorWithFile(file, `config.workers must be a positive number`);
-    else if (typeof config.workers === 'string' && !config.workers.endsWith('%'))
-      throw errorWithFile(file, `config.workers must be a number or percentage`);
-  }
-
   if ('tsconfig' in config && config.tsconfig !== undefined) {
     if (typeof config.tsconfig !== 'string')
       throw errorWithFile(file, `config.tsconfig must be a string`);
@@ -319,6 +312,13 @@ function validateProject(file: string, project: Project, title: string) {
   if ('ignoreSnapshots' in project && project.ignoreSnapshots !== undefined) {
     if (typeof project.ignoreSnapshots !== 'boolean')
       throw errorWithFile(file, `${title}.ignoreSnapshots must be a boolean`);
+  }
+
+  if ('workers' in project && project.workers !== undefined) {
+    if (typeof project.workers === 'number' && project.workers <= 0)
+      throw errorWithFile(file, `${title}.workers must be a positive number`);
+    else if (typeof project.workers === 'string' && !project.workers.endsWith('%'))
+      throw errorWithFile(file, `${title}.workers must be a number or percentage`);
   }
 }
 
