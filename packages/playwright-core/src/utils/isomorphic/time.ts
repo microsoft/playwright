@@ -15,5 +15,5 @@
  */
 
 export function monotonicTime(): number {
-  return (performance.now() * 1000 | 0) / 1000;
+  return Math.floor(performance.now() * 1000) / 1000;
 }
