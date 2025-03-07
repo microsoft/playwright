@@ -1,14 +1,11 @@
-<script lang="ts">
+<script>
 import { update, remountCount } from '../store'
-import { createEventDispatcher } from "svelte";
-export let count: number;
-const dispatch = createEventDispatcher();
+/** @type {{count: number; onsubmit: (msg: string) => void}} */
+const { count, onsubmit } = $props()
 update();
 </script>
 
-<button on:click={() => dispatch('submit', 'hello')}>
+<button onclick={() => onsubmit('hello')}>
   <span data-testid="props">{count}</span>
   <span data-testid="remount-count">{remountCount}</span>
-  <slot name="main" />
-  <slot />
 </button>
