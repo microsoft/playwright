@@ -1,12 +1,11 @@
 /**
- * Copyright 2017 Google Inc. All rights reserved.
- * Modifications copyright (c) Microsoft Corporation.
+ * Copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,20 +14,19 @@
  * limitations under the License.
  */
 
-import { ManualPromise } from 'playwright-core/lib/utils';
+import type * as playwright from 'playwright';
 
-import type playwright from 'playwright';
-
-export async function waitForNetwork<R>(page: playwright.Page, callback: () => Promise<R>): Promise<R> {
+export async function waitForCompletion<R>(page: playwright.Page, callback: () => Promise<R>): Promise<R> {
   const requests = new Set<playwright.Request>();
   let frameNavigated = false;
-  const waitBarrier = new ManualPromise();
+  let waitCallback: () => void = () => {};
+  const waitBarrier = new Promise<void>(f => { waitCallback = f; });
 
   const requestListener = (request: playwright.Request) => requests.add(request);
   const requestFinishedListener = (request: playwright.Request) => {
     requests.delete(request);
     if (!requests.size)
-      waitBarrier.resolve();
+      waitCallback();
   };
 
   const frameNavigateListener = (frame: playwright.Frame) => {
@@ -38,13 +36,13 @@ export async function waitForNetwork<R>(page: playwright.Page, callback: () => P
     dispose();
     clearTimeout(timeout);
     void frame.waitForLoadState('load').then(() => {
-      waitBarrier.resolve();
+      waitCallback();
     });
   };
 
   const onTimeout = () => {
     dispose();
-    waitBarrier.resolve();
+    waitCallback();
   };
 
   page.on('request', requestListener);
@@ -62,7 +60,7 @@ export async function waitForNetwork<R>(page: playwright.Page, callback: () => P
   try {
     const result = await callback();
     if (!requests.size && !frameNavigated)
-      waitBarrier.resolve();
+      waitCallback();
     await waitBarrier;
     await page.evaluate(() => new Promise(f => setTimeout(f, 1000)));
     return result;

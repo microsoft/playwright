@@ -14,6 +14,22 @@
  * limitations under the License.
  */
 
-const { call } = require('./lib/tools/computer-20241022');
+import { Server } from './server';
+import { navigate, wait, pressKey } from '../tools/common';
+import { screenshot, moveMouse, click, drag, type } from '../tools/screenshot';
 
-module.exports = { call };
+const server = new Server({
+  name: 'Playwright screenshot-based browser server',
+  version: '0.0.1',
+  tools: [
+    navigate,
+    screenshot,
+    moveMouse,
+    click,
+    drag,
+    type,
+    pressKey,
+    wait,
+  ]
+});
+server.start();
