@@ -108,6 +108,24 @@ export default defineConfig({
 });
 ```
 
+## property: TestConfig.failOnFlakyTests
+* since: v1.52
+- type: ?<[boolean]>
+
+Whether to exit with an error if any tests are marked as flaky. Useful on CI.
+
+Also available in the [command line](../test-cli.md) with the `--fail-on-flaky-tests` option.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  failOnFlakyTests: !!process.env.CI,
+});
+```
+
 ## property: TestConfig.forbidOnly
 * since: v1.10
 - type: ?<[boolean]>
